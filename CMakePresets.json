@@ -1,0 +1,72 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "mingw-i686-debug",
+      "displayName": "Windows x86 Debug (MinGW)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/mingw-i686-debug",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-i686.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "condition": {
+        "type": "anyOf",
+        "conditions": [
+          {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Darwin"
+          },
+          {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Linux"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mingw-i686-release",
+      "displayName": "Windows x86 Release (MinGW)",
+      "inherits": "mingw-i686-debug",
+      "binaryDir": "${sourceDir}/build/mingw-i686-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-msvc-x86",
+      "displayName": "Windows x86 Release (Visual Studio)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "Win32",
+      "binaryDir": "${sourceDir}/build/windows-msvc-x86",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "mingw-i686-debug",
+      "configurePreset": "mingw-i686-debug"
+    },
+    {
+      "name": "mingw-i686-release",
+      "configurePreset": "mingw-i686-release"
+    },
+    {
+      "name": "windows-msvc-x86-release",
+      "configurePreset": "windows-msvc-x86",
+      "configuration": "Release"
+    }
+  ]
+}
