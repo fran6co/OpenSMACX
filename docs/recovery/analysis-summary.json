@@ -48,6 +48,10 @@
   },
   "canonical_functions": 6000,
   "format_version": 1,
+  "outputs": {
+    "analysis_correlation_sha256": "baeda3792ae92c3915e1284051d35372eb506d334ffa0b7b22b933bfe7de7a58",
+    "priorities_sha256": "13e4ab33ae55e9d157c06117ce12aee4b60e80df3566d0dd5d2bc6ea340b9896"
+  },
   "priorities": {
     "bindings_by_category": {
       "crt_ownership": 8,
