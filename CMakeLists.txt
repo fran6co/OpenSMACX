@@ -7,6 +7,23 @@ set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
     "Directory used for extracted proprietary game data")
 set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requirements.txt installed")
 set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
+set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe" CACHE FILEPATH
+    "User-owned executable used to prepare the local hybrid image")
+set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" CACHE PATH
+    "Output directory for the local-only hybrid image pack")
+
+if(OPENSMACX_PYTHON)
+    set(OPENSMACX_PYTHON_EXECUTABLE "${OPENSMACX_PYTHON}")
+else()
+    find_program(OPENSMACX_PYTHON_EXECUTABLE NAMES python3 python)
+    if(NOT OPENSMACX_PYTHON_EXECUTABLE)
+        if(CMAKE_HOST_WIN32)
+            set(OPENSMACX_PYTHON_EXECUTABLE python)
+        else()
+            set(OPENSMACX_PYTHON_EXECUTABLE python3)
+        endif()
+    endif()
+endif()
 
 if(NOT WIN32)
     message(FATAL_ERROR
@@ -116,13 +133,25 @@ install(TARGETS OpenSMACX
     ARCHIVE DESTINATION lib
 )
 
-if(OPENSMACX_GAME_INSTALLER)
-    if(NOT OPENSMACX_PYTHON)
-        find_program(OPENSMACX_PYTHON NAMES python3 python REQUIRED)
-    endif()
+add_custom_target(prepare-hybrid-image
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/prepare_hybrid_image.py"
+        --exe "${OPENSMACX_LEGACY_EXE}"
+        --output "${OPENSMACX_HYBRID_DIR}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/prepare_hybrid_image.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/priorities.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
+    USES_TERMINAL
+    VERBATIM
+)
 
+if(OPENSMACX_GAME_INSTALLER)
     set(OPENSMACX_STAGE_COMMAND
-        "${OPENSMACX_PYTHON}"
+        "${OPENSMACX_PYTHON_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/setup_game.py"
         --installer "${OPENSMACX_GAME_INSTALLER}"
         --dll "$<TARGET_FILE:OpenSMACX>"

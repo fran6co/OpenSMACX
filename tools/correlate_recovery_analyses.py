@@ -393,6 +393,11 @@ def main():
                 **ghidra_metadata,
             },
         },
+        "outputs": {
+            "analysis_correlation_sha256": sha256(
+                args.output_dir / "analysis-correlation.csv"),
+            "priorities_sha256": sha256(args.output_dir / "priorities.csv"),
+        },
         "priorities": {
             "total": len(priorities),
             "by_tier": dict(sorted(Counter(row["priority"] for row in priorities).items())),

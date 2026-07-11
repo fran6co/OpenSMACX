@@ -27,13 +27,17 @@ fixed addresses from `temp.cpp`.
 The intended progression is:
 
 1. Keep the Wine build as the behavioral reference.
-2. Inventory each original data and function binding by subsystem.
-3. Finish and regression-test the corresponding reverse-engineered implementation.
-4. Replace fixed globals with explicitly owned state while preserving serialized layouts.
-5. Move independent code into a platform-neutral core library.
-6. Add a standalone main loop after startup, input, rendering, and save/load no longer call the
+2. Use the local hybrid image to preserve the original PE layout while replacements are incomplete.
+3. Inventory each original data and function binding by subsystem.
+4. Finish and regression-test the corresponding reverse-engineered implementation.
+5. Replace fixed globals with explicitly owned state while preserving serialized layouts.
+6. Move independent code into a platform-neutral core library.
+7. Add a standalone main loop after startup, input, rendering, and save/load no longer call the
    original executable.
-7. Add SDL-based native platform services for macOS, Linux, and Windows.
+8. Add SDL-based native platform services for macOS, Linux, and Windows.
+
+The hybrid artifact contract and its strict local-only boundary are documented in
+`docs/HYBRID.md`.
 
 Differential tests should run equivalent operations in the original Wine process and the native
 implementation with identical inputs and random seeds. This is especially important for map

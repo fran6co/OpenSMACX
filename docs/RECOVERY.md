@@ -92,3 +92,18 @@ Functions recovered after the legacy import table was fixed can be redirected at
 Each runtime redirect validates an original-code byte signature before installing an x86 relative
 jump. A signature mismatch fails DLL loading; this guards the patched function but is not a
 substitute for validating the complete executable hash during staging.
+
+## Hybrid image input
+
+The recovery inventory can be projected onto a supported user-owned executable as a deterministic
+local image pack:
+
+```sh
+.opensmacx/venv/bin/python tools/prepare_hybrid_image.py
+```
+
+The command accepts the canonical IDB input or the executable independently analyzed by Ghidra. It
+rejects other executable hashes because matching virtual addresses alone do not prove matching
+function bodies. For the Ghidra build, `legacy-functions.json` uses Ghidra body ranges only where
+the analyses share an entry point; candidates with ambiguous or missing correlations receive no
+byte hash. See `docs/HYBRID.md` for the artifact contract and distribution boundary.
