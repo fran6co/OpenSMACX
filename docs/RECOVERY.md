@@ -23,9 +23,10 @@ The command deterministically writes:
   fixed-address source bindings.
 
 The IDB itself remains the primary analysis database because it contains the retained community
-names, prototypes, and comments. Ghidra should analyze the same executable independently and map
-its functions to this inventory by virtual address. Side-by-side decompiler output can then be
-reviewed without discarding the IDA annotations.
+names, prototypes, and comments. Ghidra should preferably analyze the exact same executable and map
+its functions to this inventory by virtual address. The correlation summary records executable
+hashes and labels mismatched inputs as `cross_build`; that evidence is useful for shared entry
+points, but it is not proof of identical function bodies.
 
 The call graph uses Capstone to decode the original bytes stored in the IDB. Direct calls to a
 function start or one of its interior addresses are mapped to that function; interior targets are
@@ -55,3 +56,25 @@ target cannot be established statically from the call instruction alone.
 Use `docs/recovery-overrides.csv` for reviewed exceptions and prioritization. Addresses must be IDA
 function starts. Regeneration fails on duplicate or unknown override addresses so manual decisions
 cannot silently drift after database changes.
+
+## Independent analysis
+
+Ghidra 12.1 or newer can analyze the original executable and export address-keyed metadata:
+
+```sh
+python3 tools/run_ghidra_analysis.py --exe /path/to/terranx.exe
+python3 tools/correlate_recovery_analyses.py --ida-idc /path/to/ida-export.idc
+```
+
+The correlation step writes `analysis-correlation.csv`, `analysis-summary.json`, and
+`priorities.csv` under `docs/recovery`. Boundary relationships are recorded rather than reconciled
+automatically: `exact` has the same complete body ranges, `entry_range` shares the entry point and
+primary range but differs in tails, and `start_only` shares only the entry point. `containing` and
+`split` indicate a primary-range disagreement, while `missing` means no primary-range overlap was
+found.
+
+The priority score puts all live original-function bindings first, including bindings whose source
+annotation takes precedence in `recovery_state` and CRT/library bindings. It then ranks unrecovered
+game functions while excluding ordinary library and thunk code.
+Canonical callers are weighted more heavily than callees. Analyzer agreement contributes only a
+small confidence bonus and cannot outweigh runtime impact.

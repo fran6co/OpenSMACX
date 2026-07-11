@@ -1,0 +1,60 @@
+{
+  "analyses": {
+    "ghidra": {
+      "extra_entry_points": 5950,
+      "functions": 9918,
+      "ghidra_version": "12.1.2",
+      "input_sha256": "ed7079a2fb952b2cdece076eeb6291943740c7200525b260885aea1b82835d6b",
+      "language": "x86:LE:32:default",
+      "program_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "relations": {
+        "containing": 2,
+        "entry_range": 385,
+        "exact": 3529,
+        "missing": 2029,
+        "split": 1,
+        "start_only": 54
+      },
+      "shared_entry_points": 3968,
+      "thunks": 24
+    },
+    "ida9": {
+      "by_binary_kind": {
+        "game": 4676,
+        "library": 637,
+        "thunk": 34
+      },
+      "extra_entry_points": 12,
+      "functions": 5347,
+      "input_sha256": "42032fc2807f7dec6de1ed6efb9d18a70668a015f23e32d58149c9d9952bc0a7",
+      "relations": {
+        "containing": 2,
+        "entry_range": 55,
+        "exact": 5264,
+        "missing": 661,
+        "split": 2,
+        "start_only": 16
+      },
+      "shared_entry_points": 5335
+    }
+  },
+  "binary_identity": {
+    "canonical_program_sha256": "7d1933da68a3326ac97464849a209a5f127606f5bd7a6abfe9985cd3ce044767",
+    "comparison_mode": "cross_build",
+    "ghidra_matches_canonical": false,
+    "ghidra_program_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+    "ida9_program_sha256": "unknown"
+  },
+  "canonical_functions": 6000,
+  "format_version": 1,
+  "priorities": {
+    "by_tier": {
+      "P0": 38,
+      "P1": 122,
+      "P2": 389,
+      "P3": 4604
+    },
+    "original_dependencies": 38,
+    "total": 5153
+  }
+}
