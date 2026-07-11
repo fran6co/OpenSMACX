@@ -48,13 +48,21 @@
   "canonical_functions": 6000,
   "format_version": 1,
   "priorities": {
+    "bindings_by_category": {
+      "crt_ownership": 8,
+      "game_service": 16,
+      "legacy_diagnostic": 1,
+      "platform_service": 3,
+      "source_fallback": 3,
+      "timer_callback": 4
+    },
     "by_tier": {
-      "P0": 38,
+      "P0": 35,
       "P1": 122,
       "P2": 389,
       "P3": 4604
     },
-    "original_dependencies": 38,
-    "total": 5153
+    "original_dependencies": 35,
+    "total": 5150
   }
 }
