@@ -68,11 +68,6 @@ func30 *turn_timer = (func30 *)0x0050EF10;
 
 // testing
 func8 *parse_string_OG = (func8 *)0x00625880;
-func12 *enemy_capabilities_OG = (func12 *)0x00560DD0;
-//
-funct5 *value_of_base_OG = (funct5 *)0x0054CB50;
-funct4 *best_defender_OG = (funct4 *)0x005044D0;
-///
 char1032 *stringTemp = (char1032 *)0x009B86A0;
 char256 *ParseStrBuffer = (char256 *)0x009BB5E8;
 

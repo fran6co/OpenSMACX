@@ -78,3 +78,7 @@ annotation takes precedence in `recovery_state` and CRT/library bindings. It the
 game functions while excluding ordinary library and thunk code.
 Canonical callers are weighted more heavily than callees. Analyzer agreement contributes only a
 small confidence bonus and cannot outweigh runtime impact.
+
+Every live function binding must have an entry in `docs/recovery-binding-classifications.csv`.
+Correlation fails when a binding is unclassified, keeping CRT ownership, platform services, timer
+callbacks, source fallbacks, and unrecovered game services visible as distinct migration work.

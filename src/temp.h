@@ -93,14 +93,6 @@ extern func30 *turn_timer;
 // testing
 typedef int *func8(LPSTR, LPSTR);
 extern func8 *parse_string_OG;
-typedef void func12(int);
-extern func12 *enemy_capabilities_OG;
-///
-typedef int funct5(int, uint32_t, uint32_t, uint32_t, BOOL);
-extern funct5 *value_of_base_OG;
-typedef uint32_t funct4(uint32_t, int, BOOL);
-extern funct4 *best_defender_OG;
-//
 extern char1032 *stringTemp;
 extern char256 *ParseStrBuffer;
 

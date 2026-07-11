@@ -1,0 +1,36 @@
+symbol,category,strategy,notes
+_malloc,crt_ownership,replace_after_ownership_boundary,Allocations currently cross the executable/DLL CRT boundary
+_free,crt_ownership,replace_after_ownership_boundary,Allocations currently cross the executable/DLL CRT boundary
+_fopen,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
+_srand,crt_ownership,replace_with_owned_rng,Preserve original random sequence until deterministic tests exist
+_fread,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
+_fwrite,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
+_fgetc,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
+_fputc,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
+load_faction_art,game_service,recover_faction_art,Own faction art loading and refresh state
+draw_map,game_service,recover_map_render,Separate map-state updates from presentation
+wave_it,game_service,recover_audio_event,Route game audio events through a platform service
+X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
+popp,game_service,recover_script_popup,Replace parameterized popup orchestration
+fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction after map loading
+mapwin_terrain_fixup,game_service,recover_map_render,Replace map-window terrain cache updates
+world_rainfall,game_service,recover_world_generation,Complete deterministic rainfall generation
+wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
+base_at,game_service,recover_map_query,Replace high-traffic base coordinate lookup first
+save_daemon,game_service,recover_save_orchestration,Own save serialization and filesystem lifecycle
+load_daemon,game_service,recover_load_orchestration,Own load deserialization and state restoration
+social_set,game_service,recover_social_model,Complete social model state application
+consider_designs,game_service,recover_ai_design,Recover AI unit design orchestration
+popb,game_service,recover_script_popup,Replace base popup orchestration
+draw_radius,game_service,recover_map_render,Separate radius state from map presentation
+alt_set,game_service,recover_map_mutation,Complete altitude mutation and dependent updates
+blink_timer,timer_callback,recover_timer_callback,Replace original UI blink callback
+blink2_timer,timer_callback,recover_timer_callback,Replace secondary UI blink callback
+line_timer,timer_callback,recover_timer_callback,Replace line animation callback
+turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
+parse_string_OG,source_fallback,finish_source_implementation,Remove fallback after parse_string differential tests pass
+tech_val_OG,legacy_diagnostic,preserve_exported_diagnostic,Staged patching redirects tech_val so comparison is useful only with an unpatched executable
+do_video,platform_service,recover_video_pump,Separate video processing from Win32 message pumping
+check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
+do_net,platform_service,recover_network_pump,Define network dispatch service and no-network behavior
+do_non_input_,source_fallback,validate_source_implementation,Retain original fallback until Win32 message-loop behavior is tested

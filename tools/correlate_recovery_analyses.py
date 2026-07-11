@@ -13,6 +13,8 @@ import re
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CANONICAL = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_CANONICAL_SUMMARY = REPO_ROOT / "docs" / "recovery" / "summary.json"
+DEFAULT_BINDING_CLASSIFICATIONS = (
+    REPO_ROOT / "docs" / "recovery-binding-classifications.csv")
 DEFAULT_IDC = REPO_ROOT / "terranx.exe.idc"
 DEFAULT_GHIDRA = REPO_ROOT / "docs" / "recovery" / "ghidra-functions.csv"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "recovery"
@@ -80,6 +82,30 @@ def load_canonical(path):
             "call_target_count_value": int(row["call_target_count"]),
         })
     return functions
+
+
+def load_binding_classifications(path):
+    with path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        required = {"symbol", "category", "strategy", "notes"}
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise RuntimeError(
+                f"{path} must contain columns: {', '.join(sorted(required))}")
+        rows = list(reader)
+    classifications = {}
+    for row in rows:
+        symbol = row["symbol"].strip()
+        if not symbol:
+            raise RuntimeError("binding classification has an empty symbol")
+        if symbol in classifications:
+            raise RuntimeError(f"duplicate binding classification: {symbol}")
+        for field in ("category", "strategy", "notes"):
+            row[field] = row[field].strip()
+            if not row[field]:
+                raise RuntimeError(
+                    f"binding classification {symbol} has an empty {field}")
+        classifications[symbol] = row
+    return classifications
 
 
 def load_idc(path):
@@ -183,16 +209,39 @@ def main():
     parser.add_argument("--canonical", type=Path, default=DEFAULT_CANONICAL)
     parser.add_argument("--canonical-summary", type=Path,
                         default=DEFAULT_CANONICAL_SUMMARY)
+    parser.add_argument("--binding-classifications", type=Path,
+                        default=DEFAULT_BINDING_CLASSIFICATIONS)
     parser.add_argument("--ida-idc", type=Path, default=DEFAULT_IDC)
     parser.add_argument("--ghidra", type=Path, default=DEFAULT_GHIDRA)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
-    for path in (args.canonical, args.canonical_summary, args.ida_idc, args.ghidra):
+    for path in (args.canonical, args.canonical_summary,
+                 args.binding_classifications, args.ida_idc, args.ghidra):
         if not path.is_file():
             parser.error(f"input not found: {path}")
 
     canonical = load_canonical(args.canonical)
     canonical_summary = json.loads(args.canonical_summary.read_text(encoding="utf-8"))
+    binding_classifications = load_binding_classifications(
+        args.binding_classifications)
+    current_binding_symbols = {
+        symbol.strip()
+        for function in canonical
+        for symbol in function["original_dependencies"].split("|")
+        if symbol.strip()
+    }
+    missing_classifications = sorted(
+        current_binding_symbols - set(binding_classifications))
+    stale_classifications = sorted(
+        set(binding_classifications) - current_binding_symbols)
+    if missing_classifications:
+        raise RuntimeError(
+            "unclassified original function bindings: " +
+            ", ".join(missing_classifications))
+    if stale_classifications:
+        raise RuntimeError(
+            "classifications without live function bindings: " +
+            ", ".join(stale_classifications))
     ida_functions = load_idc(args.ida_idc)
     ghidra_functions, ghidra_metadata = load_ghidra(args.ghidra)
     analyses = {
@@ -221,7 +270,11 @@ def main():
                 entry_agreement += 1
         correlated.append(row)
 
-        dependency = bool(function["original_dependencies"])
+        dependency_symbols = [
+            symbol.strip() for symbol in function["original_dependencies"].split("|")
+            if symbol.strip()
+        ]
+        dependency = bool(dependency_symbols)
         if not dependency and not (
                 function["binary_kind"] == "game" and
                 function["recovery_state"] == "unrecovered"):
@@ -248,6 +301,14 @@ def main():
             "caller_count": function["caller_count"],
             "call_target_count": function["call_target_count"],
             "recovery_state": function["recovery_state"],
+            "binding_category": ";".join(sorted({
+                binding_classifications[symbol]["category"]
+                for symbol in dependency_symbols
+            })),
+            "binding_strategy": ";".join(sorted({
+                binding_classifications[symbol]["strategy"]
+                for symbol in dependency_symbols
+            })),
             "analysis_entry_agreement": entry_agreement,
             "ida9_relation": row["ida9_relation"],
             "ghidra_relation": row["ghidra_relation"],
@@ -267,8 +328,8 @@ def main():
     write_csv(args.output_dir / "analysis-correlation.csv", correlation_fields, correlated)
     priority_fields = [
         "rank", "priority", "score", "address", "name", "size", "caller_count",
-        "call_target_count", "recovery_state", "analysis_entry_agreement", "ida9_relation",
-        "ghidra_relation", "prototype",
+        "call_target_count", "recovery_state", "binding_category", "binding_strategy",
+        "analysis_entry_agreement", "ida9_relation", "ghidra_relation", "prototype",
     ]
     write_csv(args.output_dir / "priorities.csv", priority_fields, priorities)
 
@@ -318,6 +379,9 @@ def main():
             "by_tier": dict(sorted(Counter(row["priority"] for row in priorities).items())),
             "original_dependencies": sum(
                 row["priority"] == "P0" for row in priorities),
+            "bindings_by_category": dict(sorted(Counter(
+                row["binding_category"] for row in priorities
+                if row["priority"] == "P0").items())),
         },
     }
     (args.output_dir / "analysis-summary.json").write_text(
