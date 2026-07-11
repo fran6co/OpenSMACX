@@ -15,9 +15,9 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 31,
+      "original_dependency": 30,
       "redirect_name_match": 37,
-      "source_complete": 447,
+      "source_complete": 448,
       "source_in_progress": 5,
       "thunk": 33,
       "unrecovered": 5115
@@ -1318,15 +1318,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 452,
-    "matched_function_starts": 452,
-    "unique_addresses": 452,
+    "annotations": 453,
+    "matched_function_starts": 453,
+    "unique_addresses": 453,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 162,
-      "function": 35
+      "function": 34
     },
     "items": [
       {
@@ -1442,7 +1442,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:30",
+        "location": "src/base.cpp:31",
         "symbol": "Facility",
         "type": "RulesFacility *"
       },
@@ -1451,7 +1451,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:31",
+        "location": "src/base.cpp:32",
         "symbol": "Citizen",
         "type": "RulesCitizen *"
       },
@@ -1460,7 +1460,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:32",
+        "location": "src/base.cpp:33",
         "symbol": "Bases",
         "type": "Base *"
       },
@@ -1469,7 +1469,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:33",
+        "location": "src/base.cpp:34",
         "symbol": "SecretProject",
         "type": "BaseSecretProject *"
       },
@@ -1478,7 +1478,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:34",
+        "location": "src/base.cpp:35",
         "symbol": "BaseIDCurrentSelected",
         "type": "int *"
       },
@@ -1487,7 +1487,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:35",
+        "location": "src/base.cpp:36",
         "symbol": "BaseCurrentCount",
         "type": "int *"
       },
@@ -1496,7 +1496,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:36",
+        "location": "src/base.cpp:37",
         "symbol": "BaseFindDist",
         "type": "int *"
       },
@@ -1505,7 +1505,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:37",
+        "location": "src/base.cpp:38",
         "symbol": "BaseCurrent",
         "type": "Base **"
       },
@@ -1514,7 +1514,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:38",
+        "location": "src/base.cpp:39",
         "symbol": "ScnVictFacilityObj",
         "type": "uint32_t *"
       },
@@ -1523,7 +1523,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:39",
+        "location": "src/base.cpp:40",
         "symbol": "BaseUpkeepStage",
         "type": "uint32_t *"
       },
@@ -1532,7 +1532,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:40",
+        "location": "src/base.cpp:41",
         "symbol": "BaseCurrentConvoyFrom",
         "type": "uint32_t *"
       },
@@ -1541,7 +1541,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:41",
+        "location": "src/base.cpp:42",
         "symbol": "BaseCurrentConvoyTo",
         "type": "uint32_t *"
       },
@@ -1550,7 +1550,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:42",
+        "location": "src/base.cpp:43",
         "symbol": "BaseCurrentGrowthRate",
         "type": "int *"
       },
@@ -1559,7 +1559,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:43",
+        "location": "src/base.cpp:44",
         "symbol": "BaseCurrentVehPacifismCount",
         "type": "uint32_t *"
       },
@@ -1568,7 +1568,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:44",
+        "location": "src/base.cpp:45",
         "symbol": "BaseCurrentForcesSupported",
         "type": "uint32_t *"
       },
@@ -1577,7 +1577,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/base.cpp:45",
+        "location": "src/base.cpp:46",
         "symbol": "BaseCurrentForcesMaintCost",
         "type": "uint32_t *"
       },
@@ -2527,20 +2527,11 @@
         "type": "func11 *"
       },
       {
-        "address": "0x004E3A50",
-        "function": "?base_at@@YAHHH@Z",
-        "function_address": "0x004E3A50",
-        "kind": "function",
-        "location": "src/temp.cpp:54",
-        "symbol": "base_at",
-        "type": "func14 *"
-      },
-      {
         "address": "0x005A94F0",
         "function": "?save_daemon@@YAHPAD@Z",
         "function_address": "0x005A94F0",
         "kind": "function",
-        "location": "src/temp.cpp:55",
+        "location": "src/temp.cpp:54",
         "symbol": "save_daemon",
         "type": "func15 *"
       },
@@ -2549,7 +2540,7 @@
         "function": "?load_daemon@@YAHPADH@Z",
         "function_address": "0x005A9760",
         "kind": "function",
-        "location": "src/temp.cpp:56",
+        "location": "src/temp.cpp:55",
         "symbol": "load_daemon",
         "type": "func16 *"
       },
@@ -2558,7 +2549,7 @@
         "function": "?social_set@@YAXH@Z",
         "function_address": "0x005B4600",
         "kind": "function",
-        "location": "src/temp.cpp:57",
+        "location": "src/temp.cpp:56",
         "symbol": "social_set",
         "type": "func19 *"
       },
@@ -2567,7 +2558,7 @@
         "function": "?consider_designs@@YAXH@Z",
         "function_address": "0x00581260",
         "kind": "function",
-        "location": "src/temp.cpp:58",
+        "location": "src/temp.cpp:57",
         "symbol": "consider_designs",
         "type": "func19 *"
       },
@@ -2576,7 +2567,7 @@
         "function": "?popb@@YAHPBDHHPBDPAUSprite@@@Z",
         "function_address": "0x0048C650",
         "kind": "function",
-        "location": "src/temp.cpp:59",
+        "location": "src/temp.cpp:58",
         "symbol": "popb",
         "type": "func20 *"
       },
@@ -2585,7 +2576,7 @@
         "function": "?draw_radius@@YAXHHHH@Z",
         "function_address": "0x0046AEF0",
         "kind": "function",
-        "location": "src/temp.cpp:60",
+        "location": "src/temp.cpp:59",
         "symbol": "draw_radius",
         "type": "func21 *"
       },
@@ -2594,7 +2585,7 @@
         "function": "?alt_set@@YAXHHH@Z",
         "function_address": "0x00591290",
         "kind": "function",
-        "location": "src/temp.cpp:61",
+        "location": "src/temp.cpp:60",
         "symbol": "alt_set",
         "type": "func22 *"
       },
@@ -2603,7 +2594,7 @@
         "function": "?blink_timer@@YAXH@Z",
         "function_address": "0x0050EA40",
         "kind": "function",
-        "location": "src/temp.cpp:64",
+        "location": "src/temp.cpp:63",
         "symbol": "blink_timer",
         "type": "func30 *"
       },
@@ -2612,7 +2603,7 @@
         "function": "?blink2_timer@@YAXH@Z",
         "function_address": "0x0050EE30",
         "kind": "function",
-        "location": "src/temp.cpp:65",
+        "location": "src/temp.cpp:64",
         "symbol": "blink2_timer",
         "type": "func30 *"
       },
@@ -2621,7 +2612,7 @@
         "function": "?line_timer@@YAXH@Z",
         "function_address": "0x0050EE80",
         "kind": "function",
-        "location": "src/temp.cpp:66",
+        "location": "src/temp.cpp:65",
         "symbol": "line_timer",
         "type": "func30 *"
       },
@@ -2630,7 +2621,7 @@
         "function": "?turn_timer@@YAXH@Z",
         "function_address": "0x0050EF10",
         "kind": "function",
-        "location": "src/temp.cpp:67",
+        "location": "src/temp.cpp:66",
         "symbol": "turn_timer",
         "type": "func30 *"
       },
@@ -2639,7 +2630,7 @@
         "function": "?parse_string@@YAHPADPAD@Z",
         "function_address": "0x00625880",
         "kind": "function",
-        "location": "src/temp.cpp:70",
+        "location": "src/temp.cpp:69",
         "symbol": "parse_string_OG",
         "type": "func8 *"
       },
@@ -2648,7 +2639,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:71",
+        "location": "src/temp.cpp:70",
         "symbol": "stringTemp",
         "type": "char1032 *"
       },
@@ -2657,7 +2648,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:72",
+        "location": "src/temp.cpp:71",
         "symbol": "ParseStrBuffer",
         "type": "char256 *"
       },
@@ -2666,7 +2657,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:75",
+        "location": "src/temp.cpp:74",
         "symbol": "BufferStrHeight",
         "type": "int *"
       },
@@ -2675,7 +2666,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:76",
+        "location": "src/temp.cpp:75",
         "symbol": "ParseNumTable",
         "type": "int *"
       },
@@ -2684,7 +2675,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:77",
+        "location": "src/temp.cpp:76",
         "symbol": "ParseStrPlurality",
         "type": "int *"
       },
@@ -2693,7 +2684,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:78",
+        "location": "src/temp.cpp:77",
         "symbol": "ParseStrGender",
         "type": "int *"
       },
@@ -2702,7 +2693,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:79",
+        "location": "src/temp.cpp:78",
         "symbol": "HandleMain",
         "type": "HWND *"
       },
@@ -2711,7 +2702,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:81",
+        "location": "src/temp.cpp:80",
         "symbol": "UnkBitfield1",
         "type": "uint32_t *"
       },
@@ -2720,7 +2711,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:83",
+        "location": "src/temp.cpp:82",
         "symbol": "FilefindPath",
         "type": "Filefind *"
       },
@@ -2729,7 +2720,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:84",
+        "location": "src/temp.cpp:83",
         "symbol": "MainInterfaceVar",
         "type": "MainInterface *"
       },
@@ -2738,7 +2729,7 @@
         "function": "?tech_val@@YAHHHH@Z",
         "function_address": "0x005BCBE0",
         "kind": "function",
-        "location": "src/temp.cpp:651",
+        "location": "src/temp.cpp:650",
         "symbol": "tech_val_OG",
         "type": "func13 *"
       },
@@ -2747,7 +2738,7 @@
         "function": "?do_video@@YAXXZ",
         "function_address": "0x00636300",
         "kind": "function",
-        "location": "src/temp.cpp:694",
+        "location": "src/temp.cpp:693",
         "symbol": "do_video",
         "type": "func_msg *"
       },
@@ -2756,7 +2747,7 @@
         "function": "?check_net@@YAXXZ",
         "function_address": "0x0062D5D0",
         "kind": "function",
-        "location": "src/temp.cpp:695",
+        "location": "src/temp.cpp:694",
         "symbol": "check_net",
         "type": "func_msg *"
       },
@@ -2765,7 +2756,7 @@
         "function": "?do_net@@YAXXZ",
         "function_address": "0x0062D5B0",
         "kind": "function",
-        "location": "src/temp.cpp:696",
+        "location": "src/temp.cpp:695",
         "symbol": "do_net",
         "type": "func_msg *"
       },
@@ -2774,7 +2765,7 @@
         "function": "?do_non_input@@YAXXZ",
         "function_address": "0x005FCA30",
         "kind": "function",
-        "location": "src/temp.cpp:697",
+        "location": "src/temp.cpp:696",
         "symbol": "do_non_input_",
         "type": "func_msg *"
       },
@@ -2783,7 +2774,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/temp.cpp:699",
+        "location": "src/temp.cpp:698",
         "symbol": "MsgStatus",
         "type": "uint32_t *"
       },
@@ -3103,7 +3094,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 35,
-    "total": 197
+    "matched_function_starts": 34,
+    "total": 196
   }
 }

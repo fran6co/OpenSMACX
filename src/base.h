@@ -391,6 +391,8 @@ struct Base {
     int unk_12; // effectively unused, only set to 0 by base_init()
 };
 
+static_assert(sizeof(Base) == 0x134, "Base layout must match terranx.exe");
+
 struct RulesFacility {
     LPSTR name;
     LPSTR effect;
@@ -513,6 +515,7 @@ extern uint32_t *BaseCurrentForcesMaintCost; // Minerals expended for Forces Sup
 DLLEXPORT BOOL __cdecl has_fac(int facility_id, uint32_t base_id, int queue_count);
 DLLEXPORT void __cdecl set_base(uint32_t base_id);
 DLLEXPORT void __cdecl say_base(LPSTR base_str, int base_id);
+DLLEXPORT int __cdecl base_at(int x, int y);
 DLLEXPORT int __cdecl base_find(int x, int y);
 DLLEXPORT int __cdecl base_find(int x, int y, uint32_t faction_id);
 DLLEXPORT int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2, 

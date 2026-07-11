@@ -21,6 +21,7 @@
 #include "alpha.h"
 #include "faction.h"
 #include "game.h"
+#include "log.h"
 #include "map.h"
 #include "strings.h"
 #include "text.h"
@@ -90,6 +91,29 @@ void __cdecl say_base(LPSTR base_str, int base_id) {
     std::string output = (base_id >= 0) ? Bases[base_id].name_string : label_get(25); // 'NONE'
     // assumes 1032 char buffer via stringTemp, eventually remove
     strcat_s(base_str, 1032, output.c_str());
+}
+
+/*
+Purpose: Return the base at the specified map coordinates and repair stale base map bits.
+Original Offset: 004E3A50
+Return Value: Base id or -1 when no base is present
+Status: Complete - testing
+
+The original also displays a debug-only BASEBIT popup and focuses the internal console when the map
+bit has no matching base. The state repair behavior is retained without those UI diagnostics.
+*/
+int __cdecl base_at(int x, int y) {
+    if (!on_map(x, y) || !(bit_at(x, y) & BIT_BASE_IN_TILE)) {
+        return -1;
+    }
+    for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+        if (Bases[base_id].x == x && Bases[base_id].y == y) {
+            return base_id;
+        }
+    }
+    log_say("Base Bits Error  (x, y)", x, y, 0);
+    rebuild_base_bits();
+    return -1;
 }
 
 /*

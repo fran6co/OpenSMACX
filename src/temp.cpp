@@ -51,7 +51,6 @@ func9 *fixup_landmarks = (func9 *)0x00592940;
 func9 *mapwin_terrain_fixup = (func9 *)0x00471240;
 func9 *world_rainfall = (func9 *)0x005C4470;
 func11 *wants_to_attack_ = (func11 *)0x0055BC80;
-func14 *base_at = (func14 *)0x004E3A50;
 func15 *save_daemon = (func15 *)0x005A94F0;
 func16 *load_daemon = (func16 *)0x005A9760;
 func19 *social_set = (func19 *)0x005B4600;

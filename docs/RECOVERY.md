@@ -87,3 +87,8 @@ small confidence bonus and cannot outweigh runtime impact.
 Every live function binding must have an entry in `docs/recovery-binding-classifications.csv`.
 Correlation fails when a binding is unclassified, keeping CRT ownership, platform services, timer
 callbacks, source fallbacks, and unrecovered game services visible as distinct migration work.
+
+Functions recovered after the legacy import table was fixed can be redirected at process attach.
+Each runtime redirect validates an original-code byte signature before installing an x86 relative
+jump. A signature mismatch fails DLL loading; this guards the patched function but is not a
+substitute for validating the complete executable hash during staging.
