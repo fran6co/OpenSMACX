@@ -390,7 +390,7 @@ def export_inventory(args):
         with inventory_path.open("w", newline="", encoding="utf-8") as file:
             fieldnames = [
                 "address", "end_address", "size", "segment", "name", "prototype",
-                "binary_kind", "flags", "source_locations", "source_statuses",
+                "body_ranges", "binary_kind", "flags", "source_locations", "source_statuses",
                 "redirect_exports", "original_dependencies", "recovery_state",
                 "priority", "notes", "comments", "call_target_count", "caller_count",
             ]
@@ -404,6 +404,9 @@ def export_inventory(args):
                     "segment": function["segment"],
                     "name": function["name"],
                     "prototype": function["prototype"],
+                    "body_ranges": ";".join(
+                        f"0x{start:08X}-0x{end:08X}"
+                        for start, end in function["chunks"]),
                     "binary_kind": function["binary_kind"],
                     "flags": ";".join(function["flag_names"]),
                     "source_locations": flatten(
