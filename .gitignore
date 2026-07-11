@@ -274,3 +274,5 @@ __pycache__/
 /#ImportAdder
 /tools/terranx_original.exe
 /.opensmacx/
+/terranx.exe.idc
+/terranx.exe.i64

@@ -26,7 +26,7 @@
       },
       "extra_entry_points": 12,
       "functions": 5347,
-      "input_sha256": "42032fc2807f7dec6de1ed6efb9d18a70668a015f23e32d58149c9d9952bc0a7",
+      "input_sha256": "7cf12c7a57d4c4cd8a91998ac45d355105de4f418666aa89d43682efdad7bafe",
       "relations": {
         "containing": 2,
         "entry_range": 55,
@@ -35,7 +35,8 @@
         "split": 2,
         "start_only": 16
       },
-      "shared_entry_points": 5335
+      "shared_entry_points": 5335,
+      "source_idc_sha256": "42032fc2807f7dec6de1ed6efb9d18a70668a015f23e32d58149c9d9952bc0a7"
     }
   },
   "binary_identity": {
