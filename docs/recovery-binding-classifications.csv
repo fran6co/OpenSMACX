@@ -16,7 +16,6 @@ fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction 
 mapwin_terrain_fixup,game_service,recover_map_render,Replace map-window terrain cache updates
 world_rainfall,game_service,recover_world_generation,Complete deterministic rainfall generation
 wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
-base_at,game_service,recover_map_query,Replace high-traffic base coordinate lookup first
 save_daemon,game_service,recover_save_orchestration,Own save serialization and filesystem lifecycle
 load_daemon,game_service,recover_load_orchestration,Own load deserialization and state restoration
 social_set,game_service,recover_social_model,Complete social model state application

@@ -67,8 +67,6 @@ extern func9 *mapwin_terrain_fixup;
 extern func9 *world_rainfall;
 typedef BOOL func11(int, int, int);
 extern func11 *wants_to_attack_;
-typedef int func14(int, int);
-extern func14 *base_at;
 typedef uint32_t func15(LPCSTR);
 extern func15 *save_daemon;
 typedef uint32_t func16(LPCSTR, BOOL);

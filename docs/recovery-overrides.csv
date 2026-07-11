@@ -1,1 +1,2 @@
 address,recovery_state,priority,notes
+0x004E3A50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
