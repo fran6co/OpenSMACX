@@ -1,2 +1,4 @@
+capstone==5.0.6
 pefile==2024.8.26
+python-idb==0.8.0
 undname==0.2
