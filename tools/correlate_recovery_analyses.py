@@ -15,7 +15,7 @@ DEFAULT_CANONICAL = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_CANONICAL_SUMMARY = REPO_ROOT / "docs" / "recovery" / "summary.json"
 DEFAULT_BINDING_CLASSIFICATIONS = (
     REPO_ROOT / "docs" / "recovery-binding-classifications.csv")
-DEFAULT_IDC = REPO_ROOT / "terranx.exe.idc"
+DEFAULT_IDA = REPO_ROOT / "docs" / "recovery" / "ida9-functions.csv"
 DEFAULT_GHIDRA = REPO_ROOT / "docs" / "recovery" / "ghidra-functions.csv"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "recovery"
 ADD_FUNCTION_RE = re.compile(
@@ -137,6 +137,24 @@ def load_idc(path):
     return functions
 
 
+def load_ida(path):
+    with path.open(newline="", encoding="utf-8-sig") as file:
+        rows = list(csv.DictReader(file))
+    functions = [{
+        "start": int(row["address"], 0),
+        "end": int(row["end_address"], 0),
+        "size": int(row["size"]),
+        "body_ranges_value": parse_ranges(row["body_ranges"]),
+        "name": row["name"],
+        "prototype": row["prototype"],
+        "flags": int(row["flags"], 0),
+    } for row in rows]
+    metadata = {
+        "source_idc_sha256": rows[0]["source_idc_sha256"] if rows else "",
+    }
+    return functions, metadata
+
+
 def load_ghidra(path):
     with path.open(newline="", encoding="utf-8-sig") as file:
         rows = list(csv.DictReader(file))
@@ -211,12 +229,12 @@ def main():
                         default=DEFAULT_CANONICAL_SUMMARY)
     parser.add_argument("--binding-classifications", type=Path,
                         default=DEFAULT_BINDING_CLASSIFICATIONS)
-    parser.add_argument("--ida-idc", type=Path, default=DEFAULT_IDC)
+    parser.add_argument("--ida", type=Path, default=DEFAULT_IDA)
     parser.add_argument("--ghidra", type=Path, default=DEFAULT_GHIDRA)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
     for path in (args.canonical, args.canonical_summary,
-                 args.binding_classifications, args.ida_idc, args.ghidra):
+                 args.binding_classifications, args.ida, args.ghidra):
         if not path.is_file():
             parser.error(f"input not found: {path}")
 
@@ -242,7 +260,7 @@ def main():
         raise RuntimeError(
             "classifications without live function bindings: " +
             ", ".join(stale_classifications))
-    ida_functions = load_idc(args.ida_idc)
+    ida_functions, ida_metadata = load_ida(args.ida)
     ghidra_functions, ghidra_metadata = load_ghidra(args.ghidra)
     analyses = {
         "ida9": AnalysisIndex(ida_functions),
@@ -358,7 +376,8 @@ def main():
         "analyses": {
             "ida9": {
                 "functions": len(ida_functions),
-                "input_sha256": sha256(args.ida_idc),
+                "input_sha256": sha256(args.ida),
+                **ida_metadata,
                 "by_binary_kind": dict(sorted(ida_kinds.items())),
                 "shared_entry_points": len(canonical_starts & ida_starts),
                 "extra_entry_points": len(ida_starts - canonical_starts),

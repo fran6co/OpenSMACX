@@ -63,7 +63,8 @@ Ghidra 12.1 or newer can analyze the original executable and export address-keye
 
 ```sh
 python3 tools/run_ghidra_analysis.py --exe /path/to/terranx.exe
-python3 tools/correlate_recovery_analyses.py --ida-idc /path/to/ida-export.idc
+python3 tools/export_idc_functions.py --idc /path/to/ida-export.idc
+python3 tools/correlate_recovery_analyses.py
 ```
 
 The correlation step writes `analysis-correlation.csv`, `analysis-summary.json`, and
@@ -72,6 +73,10 @@ automatically: `exact` has the same complete body ranges, `entry_range` shares t
 primary range but differs in tails, and `start_only` shares only the entry point. `containing` and
 `split` indicate a primary-range disagreement, while `missing` means no primary-range overlap was
 found.
+
+The raw IDC and IDA 9 `.i64` database remain local. The normalized `ida9-functions.csv` retains
+only function boundaries, flags, names, prototypes, and body ranges needed for reproducible
+correlation. The older annotated IDB remains checked in because it is the canonical recovery source.
 
 The priority score puts all live original-function bindings first, including bindings whose source
 annotation takes precedence in `recovery_state` and CRT/library bindings. It then ranks unrecovered
