@@ -2,7 +2,7 @@
 
 import argparse
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import subprocess
 import sys
 
@@ -12,12 +12,23 @@ from setup_game import find_wine
 def main():
     parser = argparse.ArgumentParser(description="Run a staged OpenSMACX game")
     parser.add_argument("--game-dir", required=True)
+    parser.add_argument("--executable", default="terranx_opensmacx.exe",
+                        help="Staged executable filename")
     parser.add_argument("--wine")
     parser.add_argument("--wine-prefix")
     args = parser.parse_args()
 
     game_dir = Path(args.game_dir).expanduser().resolve()
-    executable = game_dir / "terranx_opensmacx.exe"
+    executable_name = PureWindowsPath(args.executable)
+    if (not args.executable or executable_name.drive or executable_name.root or
+            len(executable_name.parts) != 1 or ":" in args.executable or
+            not args.executable.casefold().endswith(".exe")):
+        parser.error(f"invalid executable filename: {args.executable!r}")
+    executable = game_dir / args.executable
+    if executable.is_symlink():
+        parser.error(f"executable must not be a symlink: {executable}")
+    if executable.resolve().parent != game_dir:
+        parser.error(f"executable is outside the game directory: {executable}")
     if not executable.is_file():
         parser.error(f"patched executable not found: {executable}")
 

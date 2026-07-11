@@ -5,13 +5,14 @@ standalone source-built executable. It preserves a supported user-owned PE file 
 code and data can continue to occupy their original virtual addresses while individual subsystems
 are replaced. It is not itself a new executable or a distributable build product.
 
-## Prepare the image
+## Build the hybrid executable
 
 Install `tools/requirements.txt`, place the supported executable at
 `.opensmacx/game/terranx_original.exe`, and run:
 
 ```sh
 .opensmacx/venv/bin/python tools/prepare_hybrid_image.py
+.opensmacx/venv/bin/python tools/assemble_hybrid_image.py
 ```
 
 An existing CMake configuration can invoke the same operation:
@@ -19,11 +20,34 @@ An existing CMake configuration can invoke the same operation:
 ```sh
 cmake --preset mingw-i686-release \
   -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
-cmake --build --preset mingw-i686-release --target prepare-hybrid-image
+cmake --build --preset mingw-i686-release --target assemble-hybrid-executable
 ```
 
-Override `OPENSMACX_LEGACY_EXE` and `OPENSMACX_HYBRID_DIR` to use other local paths. The generated
-directory defaults to `.opensmacx/hybrid-image/`, which is ignored by Git.
+`prepare-hybrid-image` creates the verified pack. `assemble-hybrid-executable` consumes that pack
+and reconstructs `.opensmacx/hybrid/terranx_legacy.exe`. The assembled file must have the source
+SHA-256 recorded by the pack, satisfy the PE32/i386 manifest fields, and remain outside the pack so
+pack ownership validation cannot be bypassed by generated extras.
+
+To build the DLL, assemble the PE, add the 462-import OpenSMACX ABI, and redirect the implemented
+functions in one command, run:
+
+```sh
+cmake --build --preset mingw-i686-release --target stage-hybrid-game
+```
+
+This writes `.opensmacx/game/terranx_hybrid.exe` alongside the existing local game data. Launch it
+with:
+
+```sh
+.opensmacx/venv/bin/python tools/run_game.py \
+  --game-dir .opensmacx/game \
+  --executable terranx_hybrid.exe \
+  --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
+  --wine-prefix .opensmacx/wineprefix
+```
+
+Override `OPENSMACX_LEGACY_EXE`, `OPENSMACX_HYBRID_DIR`, and `OPENSMACX_HYBRID_EXE` to use other
+local paths. All default outputs remain under `.opensmacx/`, which is ignored by Git.
 
 ## Artifact contract
 
@@ -51,11 +75,16 @@ pack if publication fails. The generator also reconstructs the complete source i
 refuses to publish the pack if any byte is missing or changed. Relocation entries in the compact
 sidecar are encoded as `[type, page_offset]` pairs.
 
+The assembler validates the complete pack before reading it, requires contiguous coverage of the
+source file, checks the function and relocation sidecars against the manifest, reconstructs the PE
+in memory, and verifies its source hash and header contract before publishing it. An existing output
+is replaced only when it already has the expected source hash.
+
 ## Distribution boundary
 
-Everything under the generated directory derives from a proprietary executable and must remain
-local. Do not commit, package, upload, or distribute it. Source code, recovery metadata, and the
-generator are the only repository artifacts.
+The pack, assembled legacy PE, and staged hybrid executable all derive from a proprietary
+executable and must remain local. Do not commit, package, upload, or distribute them. Source code,
+recovery metadata, and the generator/assembler tools are the only repository artifacts.
 
 The future native target must not consume this pack. Its release gate must require all of the
 following:

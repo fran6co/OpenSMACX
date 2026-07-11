@@ -46,11 +46,19 @@ This verifies the installer, extracts the locally owned assets, applies the bund
 files, validates all 462 DLL imports, and writes the playable installation under
 `.opensmacx/game/`. Proprietary files remain ignored by Git.
 
+The local hybrid workflow reconstructs the supported executable from its verified image pack before
+applying OpenSMACX. See `docs/HYBRID.md`, or build it with:
+
+```sh
+cmake --build --preset mingw-i686-release --target stage-hybrid-game
+```
+
 Launch it with:
 
 ```sh
 .opensmacx/venv/bin/python tools/run_game.py \
   --game-dir .opensmacx/game \
+  --executable terranx_hybrid.exe \
   --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
   --wine-prefix .opensmacx/wineprefix
 ```
