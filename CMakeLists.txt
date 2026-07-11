@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.20)
 
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX)
 
+set(OPENSMACX_GAME_INSTALLER "" CACHE FILEPATH "Path to the locally owned GOG installer")
+set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
+    "Directory used for extracted proprietary game data")
+set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requirements.txt installed")
+set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
+
 if(NOT WIN32)
     message(FATAL_ERROR
         "The current OpenSMACX target is a Windows DLL. "
@@ -109,3 +115,28 @@ install(TARGETS OpenSMACX
     LIBRARY DESTINATION .
     ARCHIVE DESTINATION lib
 )
+
+if(OPENSMACX_GAME_INSTALLER)
+    if(NOT OPENSMACX_PYTHON)
+        find_program(OPENSMACX_PYTHON NAMES python3 python REQUIRED)
+    endif()
+
+    set(OPENSMACX_STAGE_COMMAND
+        "${OPENSMACX_PYTHON}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/setup_game.py"
+        --installer "${OPENSMACX_GAME_INSTALLER}"
+        --dll "$<TARGET_FILE:OpenSMACX>"
+        --output "${OPENSMACX_GAME_DIR}"
+        --reuse
+    )
+    if(OPENSMACX_WINE)
+        list(APPEND OPENSMACX_STAGE_COMMAND --wine "${OPENSMACX_WINE}")
+    endif()
+
+    add_custom_target(stage-game
+        COMMAND ${OPENSMACX_STAGE_COMMAND}
+        DEPENDS OpenSMACX
+        USES_TERMINAL
+        VERBATIM
+    )
+endif()
