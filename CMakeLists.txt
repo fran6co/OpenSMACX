@@ -77,6 +77,7 @@ set_target_properties(OpenSMACX PROPERTIES
 )
 
 if(MINGW)
+    target_sources(OpenSMACX PRIVATE src/OpenSMACX.def)
     target_compile_options(OpenSMACX PRIVATE
         -pedantic
         -Wall
@@ -88,6 +89,7 @@ if(MINGW)
         -Wno-comment
         -Wno-parentheses
         -Wno-unknown-pragmas
+        -fkeep-inline-functions
         $<$<CONFIG:Debug>:-Og>
         $<$<CONFIG:Release>:-O2>
         $<$<CONFIG:Release>:-fno-delete-null-pointer-checks>
@@ -96,6 +98,7 @@ if(MINGW)
     target_link_options(OpenSMACX PRIVATE
         $<$<CONFIG:Release>:-s>
         $<$<CONFIG:Release>:-static>
+        $<$<CONFIG:Release>:-Wl,--allow-multiple-definition>
     )
 elseif(MSVC)
     target_compile_options(OpenSMACX PRIVATE /W4)

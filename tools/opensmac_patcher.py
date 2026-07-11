@@ -1,20 +1,99 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 # v1.0 : initial
 
 # built-in libraries
 import argparse
+import hashlib
 import mmap
 import os
+from pathlib import Path
 import shutil
 import struct
 import subprocess
 # use pip to install
 import pefile
 
+EXPECTED_IMAGE_BASE = 0x00400000
+EXPECTED_IMPORT_COUNT = 462
+EXPECTED_IMPORT_ADDER_HASH = "ab07b61697c69ea7f4603a14bf92f5a40aaa85acd55401a830d0d68c41a7f599"
+EXPECTED_IMPORT_ANCHORS = {
+    0: b"??0Heap@@QAE@XZ",
+    104: b"?tech_name@@YAHPAD@Z",
+    461: b"?near_landmark@@YAHHH@Z",
+}
+IMAGE_FILE_MACHINE_I386 = 0x014C
+PE32_MAGIC = 0x010B
+SUPPORTED_EXE_HASHES = {
+    # GOG Planetary Pack 1.1 (77244), original and bundled PRACX variants.
+    "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+    "84432e3a1465a05f32b5bb70693f5c4099661d5c1511dbbf27233b4890071b1c",
+}
+
 count = 0 # functions patched counter
+patched_offsets = set()
+
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def validate_pe32(path, expect_dll):
+    pe = pefile.PE(str(path), fast_load=True)
+    try:
+        if pe.FILE_HEADER.Machine != IMAGE_FILE_MACHINE_I386:
+            raise RuntimeError(f"{path} is not an i386 PE image")
+        if pe.OPTIONAL_HEADER.Magic != PE32_MAGIC:
+            raise RuntimeError(f"{path} is not a PE32 image")
+        is_dll = bool(pe.FILE_HEADER.Characteristics & 0x2000)
+        if is_dll != expect_dll:
+            kind = "DLL" if expect_dll else "executable"
+            raise RuntimeError(f"{path} is not a PE32 {kind}")
+        if not expect_dll and pe.OPTIONAL_HEADER.ImageBase != EXPECTED_IMAGE_BASE:
+            raise RuntimeError(
+                f"{path} has image base 0x{pe.OPTIONAL_HEADER.ImageBase:08X}; "
+                f"expected 0x{EXPECTED_IMAGE_BASE:08X}")
+    finally:
+        pe.close()
+
+
+def run_import_adder(helper, exe_path, output_dir, wine):
+    if os.name == "nt":
+        command = [str(helper), str(exe_path)]
+    else:
+        wine_path = shutil.which(wine) if not os.path.isabs(wine) else wine
+        if not wine_path or not Path(wine_path).is_file():
+            raise RuntimeError(
+                f"Wine executable '{wine}' was not found; pass it with --wine")
+        command = [wine_path, str(helper), str(exe_path)]
+
+    result = subprocess.run(
+        command,
+        cwd=str(output_dir),
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    if result.stdout:
+        print(result.stdout.rstrip())
 
 def patch_call_bytes(file):
+    offset = file.tell()
+    if offset in patched_offsets:
+        raise RuntimeError(f"patch offset 0x{offset:08X} is duplicated")
+    patched_offsets.add(offset)
+
+    original = file.read(6)
+    if len(original) != 6:
+        raise RuntimeError(f"patch offset 0x{offset:08X} is outside the executable")
+    if original[:2] == b"\xFF\x25":
+        raise RuntimeError(f"patch offset 0x{offset:08X} is already redirected")
+    file.seek(offset)
     file.write_byte(0xFF)
     file.write_byte(0x25)
     global count
@@ -25,26 +104,86 @@ parser = argparse.ArgumentParser(description="Redirect Functions Patcher")
 parser.add_argument("-e",    "--exe", help="Input exe", required=True)
 parser.add_argument("-d",    "--dll", help="Input dll", required=True)
 parser.add_argument("-o", "--output", help="Output folder path to write exe + dll to", required=True)
+parser.add_argument("--import-adder", help="Path to ImportAdder.exe")
+parser.add_argument("--wine", default=os.environ.get("WINE", "wine"),
+                    help="Wine executable used on macOS and Linux")
+parser.add_argument("--allow-unsupported", action="store_true",
+                    help="Allow an executable hash that is not known to the patcher")
 args = parser.parse_args()
-exe_path = os.path.normpath(args.output) + "\\terranx_opensmacx.exe"
+
+source_exe = Path(args.exe).expanduser().resolve()
+source_dll = Path(args.dll).expanduser().resolve()
+output_dir = Path(args.output).expanduser().resolve()
+helper = (Path(args.import_adder).expanduser().resolve() if args.import_adder else
+          Path(__file__).resolve().with_name("ImportAdder.exe"))
+exe_path = output_dir / "terranx_opensmacx.exe"
+dll_path = output_dir / "OpenSMACX.dll"
+
+for path in (source_exe, source_dll, helper):
+    if not path.is_file():
+        parser.error(f"file not found: {path}")
+
+validate_pe32(source_exe, expect_dll=False)
+validate_pe32(source_dll, expect_dll=True)
+
+dll_pe = pefile.PE(str(source_dll))
+try:
+    export_names = [symbol.name for symbol in dll_pe.DIRECTORY_ENTRY_EXPORT.symbols]
+    is_mingw_dll = any(name and name.startswith(b"_Z") for name in export_names)
+finally:
+    dll_pe.close()
+expected_patch_count = EXPECTED_IMPORT_COUNT - (2 if is_mingw_dll else 0)
+
+exe_hash = sha256(source_exe)
+if exe_hash not in SUPPORTED_EXE_HASHES and not args.allow_unsupported:
+    parser.error(
+        f"unsupported terranx.exe SHA-256 {exe_hash}; "
+        "use --allow-unsupported only after verifying every patch offset")
+helper_hash = sha256(helper)
+if helper_hash != EXPECTED_IMPORT_ADDER_HASH and not args.allow_unsupported:
+    parser.error(
+        f"unsupported ImportAdder.exe SHA-256 {helper_hash}; "
+        "its import order is part of the patching ABI")
+
+output_dir.mkdir(parents=True, exist_ok=True)
 
 # copying exe+dll to SMACX directory
-shutil.copy2(args.exe, exe_path)
-shutil.copy2(args.dll, args.output)
+shutil.copy2(source_exe, exe_path)
+if source_dll != dll_path:
+    shutil.copy2(source_dll, dll_path)
 
 print("Adding imports + copying binary...")
-argsIA = ("ImportAdder.exe", exe_path)
-popen = subprocess.Popen(argsIA, stdout=subprocess.PIPE)
-popen.wait()
+run_import_adder(helper, exe_path, output_dir, args.wine)
 print("Imports added successfully...")
 
 print("Getting address of first import...")
 addr = 0
 pe = pefile.PE(exe_path)
 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-    dll_name = entry.dll.decode('utf-8')
-    if dll_name == "OpenSMACX.dll":
+    dll_name = entry.dll.decode("utf-8")
+    if dll_name.casefold() == "opensmacx.dll".casefold():
+        if len(entry.imports) != EXPECTED_IMPORT_COUNT:
+            raise RuntimeError(
+                f"OpenSMACX.dll has {len(entry.imports)} imports; "
+                f"expected {EXPECTED_IMPORT_COUNT}")
+        for index, expected_name in EXPECTED_IMPORT_ANCHORS.items():
+            if entry.imports[index].name != expected_name:
+                raise RuntimeError(
+                    f"OpenSMACX import {index} is {entry.imports[index].name!r}; "
+                    f"expected {expected_name!r}")
+        exported_names = set(export_names)
+        missing_exports = [
+            item.name for item in entry.imports if item.name not in exported_names
+        ]
+        if missing_exports:
+            raise RuntimeError(
+                f"OpenSMACX.dll does not export {len(missing_exports)} imported symbols; "
+                f"first missing symbol: {missing_exports[0]!r}")
         addr = entry.imports[0].address
+        break
+pe.close()
+if not addr:
+    raise RuntimeError("ImportAdder did not add the OpenSMACX.dll import table")
 print("Address of first import found: 0x%08X" % addr)
 
 
@@ -1286,12 +1425,14 @@ with open(exe_path, "r+b") as f:
     bin_app.seek(0x0017D510) # ?transport_val@@YAIIII@Z
     patch_call_bytes(bin_app)
     bin_app.write(struct.pack("<L", addr+4*210))
-    bin_app.seek(0x0017D560) # ?say_offense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
-    patch_call_bytes(bin_app)
-    bin_app.write(struct.pack("<L", addr+4*211))
-    bin_app.seek(0x0017D6D0) # ?say_defense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
-    patch_call_bytes(bin_app)
-    bin_app.write(struct.pack("<L", addr+4*212))
+    # GCC's std::string ABI is incompatible with the original MSVC executable.
+    if not is_mingw_dll:
+        bin_app.seek(0x0017D560) # ?say_offense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
+        patch_call_bytes(bin_app)
+        bin_app.write(struct.pack("<L", addr+4*211))
+        bin_app.seek(0x0017D6D0) # ?say_defense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
+        patch_call_bytes(bin_app)
+        bin_app.write(struct.pack("<L", addr+4*212))
     bin_app.seek(0x0017D7D0) # ?say_stats_3@@YAXPADI@Z
     patch_call_bytes(bin_app)
     bin_app.write(struct.pack("<L", addr+4*213))
@@ -1464,5 +1605,10 @@ with open(exe_path, "r+b") as f:
     patch_call_bytes(bin_app)
     bin_app.write(struct.pack("<L", addr+4*440))
     #
+    if count != expected_patch_count:
+        raise RuntimeError(
+            f"redirected {count} functions; expected {expected_patch_count}")
+    bin_app.flush()
+    bin_app.close()
     print("Functions redirected: %d" % count)
     print("Done!")

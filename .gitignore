@@ -13,6 +13,7 @@
 *.vcxproj.filters
 *.txt
 !CMakeLists.txt
+!tools/requirements.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
