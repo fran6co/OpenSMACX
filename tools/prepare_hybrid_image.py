@@ -426,7 +426,7 @@ def build_file_layout(pe, source, output):
     return header, sections, gaps, overlay, layout
 
 
-def validate_existing_output(output):
+def validate_hybrid_image(output):
     manifest_path = output / "manifest.json"
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -487,6 +487,7 @@ def validate_existing_output(output):
         if "size" in artifact and path.stat().st_size != artifact["size"]:
             raise RuntimeError(
                 f"refusing to replace modified hybrid image: {output}")
+    return manifest
 
 
 def replace_output(temporary, output):
@@ -496,7 +497,7 @@ def replace_output(temporary, output):
             raise RuntimeError(f"output exists and is not a regular directory: {output}")
         entries = list(output.iterdir())
         if entries:
-            validate_existing_output(output)
+            validate_hybrid_image(output)
         backup = Path(tempfile.mkdtemp(
             prefix=f".{output.name}-previous-", dir=output.parent))
         backup.rmdir()

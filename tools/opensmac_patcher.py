@@ -4,6 +4,7 @@
 
 # built-in libraries
 import argparse
+import atexit
 import hashlib
 import mmap
 import os
@@ -11,6 +12,7 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
+import tempfile
 # use pip to install
 import pefile
 
@@ -29,6 +31,7 @@ SUPPORTED_EXE_HASHES = {
     "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
     "84432e3a1465a05f32b5bb70693f5c4099661d5c1511dbbf27233b4890071b1c",
 }
+OUTPUT_EXE_NAMES = {"terranx_opensmacx.exe", "terranx_hybrid.exe"}
 
 count = 0 # functions patched counter
 patched_offsets = set()
@@ -104,6 +107,8 @@ parser = argparse.ArgumentParser(description="Redirect Functions Patcher")
 parser.add_argument("-e",    "--exe", help="Input exe", required=True)
 parser.add_argument("-d",    "--dll", help="Input dll", required=True)
 parser.add_argument("-o", "--output", help="Output folder path to write exe + dll to", required=True)
+parser.add_argument("--exe-name", default="terranx_opensmacx.exe",
+                    help="Filename for the patched executable")
 parser.add_argument("--import-adder", help="Path to ImportAdder.exe")
 parser.add_argument("--wine", default=os.environ.get("WINE", "wine"),
                     help="Wine executable used on macOS and Linux")
@@ -116,7 +121,9 @@ source_dll = Path(args.dll).expanduser().resolve()
 output_dir = Path(args.output).expanduser().resolve()
 helper = (Path(args.import_adder).expanduser().resolve() if args.import_adder else
           Path(__file__).resolve().with_name("ImportAdder.exe"))
-exe_path = output_dir / "terranx_opensmacx.exe"
+if args.exe_name.casefold() not in OUTPUT_EXE_NAMES:
+    parser.error(f"invalid executable filename: {args.exe_name!r}")
+final_exe_path = output_dir / args.exe_name
 dll_path = output_dir / "OpenSMACX.dll"
 
 for path in (source_exe, source_dll, helper):
@@ -146,11 +153,65 @@ if helper_hash != EXPECTED_IMPORT_ADDER_HASH and not args.allow_unsupported:
         "its import order is part of the patching ABI")
 
 output_dir.mkdir(parents=True, exist_ok=True)
+if final_exe_path.is_symlink() or (
+        final_exe_path.exists() and not final_exe_path.is_file()):
+    parser.error(f"invalid executable destination: {final_exe_path}")
+if dll_path.is_symlink() or (dll_path.exists() and not dll_path.is_file()):
+    parser.error(f"invalid DLL destination: {dll_path}")
+
+descriptor, temporary_name = tempfile.mkstemp(
+    prefix=f".{args.exe_name}-", suffix=".exe", dir=output_dir)
+os.close(descriptor)
+exe_path = Path(temporary_name)
+temporary_paths = [exe_path]
+
+
+def cleanup_temporary_outputs():
+    for path in temporary_paths:
+        path.unlink(missing_ok=True)
+
+
+atexit.register(cleanup_temporary_outputs)
+
+dll_temporary = None
+if source_dll != dll_path:
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=".OpenSMACX.dll-", suffix=".dll", dir=output_dir)
+    os.close(descriptor)
+    dll_temporary = Path(temporary_name)
+    temporary_paths.append(dll_temporary)
+
+
+def publish_outputs(outputs):
+    backups = {}
+    published = []
+    try:
+        for _, destination in outputs:
+            if not destination.exists():
+                continue
+            descriptor, backup_name = tempfile.mkstemp(
+                prefix=f".{destination.name}-previous-", dir=output_dir)
+            os.close(descriptor)
+            backup = Path(backup_name)
+            backup.unlink()
+            destination.replace(backup)
+            backups[destination] = backup
+        for temporary, destination in outputs:
+            temporary.replace(destination)
+            published.append(destination)
+    except Exception:
+        for destination in published:
+            destination.unlink(missing_ok=True)
+        for destination, backup in backups.items():
+            backup.replace(destination)
+        raise
+    for backup in backups.values():
+        backup.unlink(missing_ok=True)
 
 # copying exe+dll to SMACX directory
 shutil.copy2(source_exe, exe_path)
-if source_dll != dll_path:
-    shutil.copy2(source_dll, dll_path)
+if dll_temporary is not None:
+    shutil.copy2(source_dll, dll_temporary)
 
 print("Adding imports + copying binary...")
 run_import_adder(helper, exe_path, output_dir, args.wine)
@@ -188,8 +249,7 @@ print("Address of first import found: 0x%08X" % addr)
 
 
 print("Patching: ", exe_path)
-with open(exe_path, "r+b") as f:
-    bin_app = mmap.mmap(f.fileno(), 0)
+with open(exe_path, "r+b") as f, mmap.mmap(f.fileno(), 0) as bin_app:
     # next: 462
     #
 
@@ -1609,6 +1669,13 @@ with open(exe_path, "r+b") as f:
         raise RuntimeError(
             f"redirected {count} functions; expected {expected_patch_count}")
     bin_app.flush()
-    bin_app.close()
     print("Functions redirected: %d" % count)
-    print("Done!")
+
+outputs = []
+if dll_temporary is not None:
+    outputs.append((dll_temporary, dll_path))
+outputs.append((exe_path, final_exe_path))
+publish_outputs(outputs)
+atexit.unregister(cleanup_temporary_outputs)
+print(f"Patched executable published at {final_exe_path}")
+print("Done!")

@@ -11,6 +11,8 @@ set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe" CACHE FILE
     "User-owned executable used to prepare the local hybrid image")
 set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" CACHE PATH
     "Output directory for the local-only hybrid image pack")
+set(OPENSMACX_HYBRID_EXE "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid/terranx_legacy.exe"
+    CACHE FILEPATH "Assembled executable path for the local hybrid image")
 
 if(OPENSMACX_PYTHON)
     set(OPENSMACX_PYTHON_EXECUTABLE "${OPENSMACX_PYTHON}")
@@ -145,6 +147,37 @@ add_custom_target(prepare-hybrid-image
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
+    USES_TERMINAL
+    VERBATIM
+)
+
+add_custom_target(assemble-hybrid-executable
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/assemble_hybrid_image.py"
+        --image "${OPENSMACX_HYBRID_DIR}"
+        --output "${OPENSMACX_HYBRID_EXE}"
+    DEPENDS
+        prepare-hybrid-image
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/assemble_hybrid_image.py"
+    USES_TERMINAL
+    VERBATIM
+)
+
+set(OPENSMACX_HYBRID_STAGE_COMMAND
+    "${OPENSMACX_PYTHON_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/opensmac_patcher.py"
+    --exe "${OPENSMACX_HYBRID_EXE}"
+    --dll "$<TARGET_FILE:OpenSMACX>"
+    --output "${OPENSMACX_GAME_DIR}"
+    --exe-name terranx_hybrid.exe
+)
+if(OPENSMACX_WINE)
+    list(APPEND OPENSMACX_HYBRID_STAGE_COMMAND --wine "${OPENSMACX_WINE}")
+endif()
+
+add_custom_target(stage-hybrid-game
+    COMMAND ${OPENSMACX_HYBRID_STAGE_COMMAND}
+    DEPENDS OpenSMACX assemble-hybrid-executable
     USES_TERMINAL
     VERBATIM
 )
