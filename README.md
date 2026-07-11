@@ -9,6 +9,60 @@ Tested with CodeBlocks 20.03 using GCC 8.1.0 compiler. Project file (cbp) courte
 The patcher script found under tools is compatible with the latest GOG version as well as the most
 recent version of my unofficial patch. Cursory testing shows it is compatible with PRACX.
 
+## CMake build
+
+OpenSMACX still runs inside the original 32-bit Windows executable. The current CMake target is
+therefore a PE32 DLL, including when it is built from macOS or Linux. A native executable requires
+the remaining fixed-address code and data references to be reverse engineered first; see
+`docs/PORTING.md`.
+
+The macOS and Linux build uses an i686 MinGW cross-compiler. On macOS with Homebrew:
+
+```sh
+brew install cmake ninja mingw-w64 innoextract
+python3 -m venv .opensmacx/venv
+.opensmacx/venv/bin/python -m pip install -r tools/requirements.txt
+cmake --preset mingw-i686-release
+cmake --build --preset mingw-i686-release
+```
+
+The output is `build/mingw-i686-release/OpenSMACX.dll`. CMake rejects native and 64-bit targets so
+that an incompatible DLL cannot be produced accidentally.
+
+## macOS setup and launch
+
+Install a Wine distribution with 32-bit WoW64 support. On Apple Silicon, Wine itself runs through
+Rosetta 2. Then configure the local GOG installer and Wine paths:
+
+```sh
+cmake --preset mingw-i686-release \
+  -DOPENSMACX_GAME_INSTALLER="$HOME/Downloads/setup_sid_meiers_alpha_centauri_planetary_pack_1.1_pracx_ddraw_(77244).exe" \
+  -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python" \
+  -DOPENSMACX_WINE="/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine"
+cmake --build --preset mingw-i686-release --target stage-game
+```
+
+This verifies the installer, extracts the locally owned assets, applies the bundled PRACX/DDraw
+files, validates all 462 DLL imports, and writes the playable installation under
+`.opensmacx/game/`. Proprietary files remain ignored by Git.
+
+Launch it with:
+
+```sh
+.opensmacx/venv/bin/python tools/run_game.py \
+  --game-dir .opensmacx/game \
+  --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
+  --wine-prefix .opensmacx/wineprefix
+```
+
+On macOS the launcher starts the Wine application through Launch Services, which is required for
+the native window driver. On Linux it invokes the configured Wine executable directly. Windows can
+build the `windows-msvc-x86-release` preset and run the staged executable without Wine.
+
+The MinGW DLL exports aliases for the 462 MSVC names expected by `ImportAdder.exe`. The two
+functions returning `std::string` remain unredirected in MinGW builds because the GCC and original
+MSVC standard-library ABIs are incompatible; the original executable continues to provide them.
+
 You can follow development progress, discuss ideas or issues here:  
 https://alphacentauri2.info/index.php?board=23.0
 
