@@ -44,10 +44,12 @@ def main():
         if sys.platform == "darwin" and len(wine_path.parents) >= 5:
             application = wine_path.parents[4]
             if application.suffix == ".app":
-                command = [
-                    "open", "-n", "-a", application.stem,
-                    "--args", str(executable),
-                ]
+                command = ["open", "-n", "-a", application.stem]
+                if "WINEPREFIX" in environment:
+                    command.extend([
+                        "--env", f"WINEPREFIX={environment['WINEPREFIX']}",
+                    ])
+                command.extend(["--args", str(executable)])
             else:
                 command = [wine, str(executable)]
         else:

@@ -64,8 +64,9 @@ Launch it with:
 ```
 
 On macOS the launcher starts the Wine application through Launch Services, which is required for
-the native window driver. On Linux it invokes the configured Wine executable directly. Windows can
-build the `windows-msvc-x86-release` preset and run the staged executable without Wine.
+the native window driver, and explicitly passes the configured Wine prefix to the application. On
+Linux it invokes the configured Wine executable directly. Windows can build the
+`windows-msvc-x86-release` preset and run the staged executable without Wine.
 
 The MinGW DLL exports aliases for the 462 MSVC names expected by `ImportAdder.exe`. The two
 functions returning `std::string` remain unredirected in MinGW builds because the GCC and original
