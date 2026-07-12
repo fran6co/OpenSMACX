@@ -27,3 +27,25 @@
 int MainInterface::set_bubble_text(uint32_t button_id, LPCSTR text) {
     return flat_button_[button_id].set_bubble_text(text);
 }
+
+/*
+Purpose: Clear the interface message; the legacy implementation is intentionally empty.
+Original Offset: 0045C170
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::clear_message() {
+}
+
+/*
+Purpose: Update the desktop; the legacy implementation is intentionally empty.
+Original Offset: 0058EE50
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl desktop_update() {
+}
+
+void __fastcall main_interface_clear_message_redirect(MainInterface *self, void *) {
+    self->clear_message();
+}

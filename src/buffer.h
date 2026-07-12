@@ -32,6 +32,8 @@ class DLLEXPORT Buffer {
   void set_text_color2(int color1, int color2, int color3, int color4);
   void set_text_color3(int color1, int color2, int color3, int color4);
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
+  int init_class();
+  void close_class();
 
  private:
   typedef int32_t Dib;
@@ -120,3 +122,5 @@ void __fastcall buffer_set_text_color3_redirect(
     Buffer *self, void *, int color1, int color2, int color3, int color4);
 void __fastcall buffer_set_text_color_hyper_redirect(
     Buffer *self, void *, int color1, int color2, int color3, int color4);
+int __cdecl buffer_init_class_redirect();
+void __cdecl buffer_close_class_redirect();

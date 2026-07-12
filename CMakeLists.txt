@@ -54,6 +54,7 @@ set(OPENSMACX_SOURCES
     src/caviar.cpp
     src/council.cpp
     src/dialog.cpp
+    src/dialogs.cpp
     src/dllmain.cpp
     src/faction.cpp
     src/filemap.cpp

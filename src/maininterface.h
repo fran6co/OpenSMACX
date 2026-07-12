@@ -32,6 +32,7 @@ class DLLEXPORT MainInterface : GraphicWin {
   ~MainInterface() { ; }
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
+  void clear_message();
 
  private:
   uint32_t field_A14_;
@@ -306,3 +307,6 @@ class DLLEXPORT MainInterface : GraphicWin {
   Time time1_;
   Time time2_;
 };
+
+void __fastcall main_interface_clear_message_redirect(MainInterface *self, void *);
+DLLEXPORT void __cdecl desktop_update();
