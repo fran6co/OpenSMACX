@@ -17,3 +17,22 @@
  */
 #include "stdafx.h"
 #include "basepop.h"
+
+/*
+Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
+Original Offset: 00601B80
+Return Value: n/a
+Status: Complete
+*/
+void BasePop::set_loc(int x, int y) {
+    if (x != 0x2000) {
+        loc_a_ = x;
+    }
+    if (y != 0x2000) {
+        loc_b_ = y;
+    }
+}
+
+void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y) {
+    self->set_loc(x, y);
+}

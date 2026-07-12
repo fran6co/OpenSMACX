@@ -25,6 +25,7 @@ class DLLEXPORT ButtonGroup {
  public:
   ButtonGroup() { ; }
   ~ButtonGroup() { ; }
+  void add(BaseButton *button);
 
  private:
   BaseButton *buttons_[32];
@@ -34,3 +35,8 @@ class DLLEXPORT ButtonGroup {
   uint32_t field_8C_;
   uint32_t field_90_;
 };
+
+static_assert(sizeof(ButtonGroup) == 0x94,
+              "ButtonGroup layout must match the original executable");
+
+void __fastcall button_group_add_redirect(ButtonGroup *self, void *, BaseButton *button);

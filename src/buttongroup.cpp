@@ -17,3 +17,19 @@
  */
 #include "stdafx.h"
 #include "buttongroup.h"
+
+/*
+Purpose: Add a button to the group and link the button back to it.
+Original Offset: 0062B850
+Return Value: n/a
+Status: Complete
+*/
+void ButtonGroup::add(BaseButton *button) {
+    buttons_[count_] = button;
+    button->group_ = this;
+    count_++;
+}
+
+void __fastcall button_group_add_redirect(ButtonGroup *self, void *, BaseButton *button) {
+    self->add(button);
+}

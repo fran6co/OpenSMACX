@@ -18,7 +18,9 @@
 #include "stdafx.h"
 #include "autosound.h"
 #include "base.h"
+#include "basepop.h"
 #include "buffer.h"
+#include "buttongroup.h"
 #include "dialog.h"
 #include "win.h"
 
@@ -29,7 +31,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 12;
+constexpr size_t RedirectCount = 14;
 
 struct RedirectState {
     uint8_t *address;
@@ -191,6 +193,18 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&do_sound_redirect),
             {0x33, 0xC0, 0xC3, 0x90, 0x90, 0x90, 0x90, 0x90,
              0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90},
+        },
+        {
+            0x00601B80,
+            reinterpret_cast<uintptr_t>(&base_pop_set_loc_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x3D, 0x00, 0x20, 0x00,
+             0x00, 0x74, 0x06, 0x89, 0x81, 0xF8, 0x30, 0x00},
+        },
+        {
+            0x0062B850,
+            reinterpret_cast<uintptr_t>(&button_group_add_redirect),
+            {0x8B, 0x91, 0x80, 0x00, 0x00, 0x00, 0x8B, 0x44,
+             0x24, 0x04, 0x89, 0x04, 0x91, 0x89, 0x88, 0xA8},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {
