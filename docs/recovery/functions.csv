@@ -2698,7 +2698,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004E2460,0x004E248F,47,.text,sub_4e2460,,0x004E2460-0x004E248F,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004E2490,0x004E25A5,309,.text,??0AlphaNet@@QAE@XZ,void (__thiscall ??0AlphaNet@@QAE@XZ)(AlphaNet* this),0x004E2490-0x004E25A5;0x0065C610-0x0065C630,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x004E25B0,0x004E25D8,40,.text,?close@AlphaNet@@QAEXXZ,void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this),0x004E25B0-0x004E25D8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,14
-0x004E25E0,0x004E2607,39,.text,?pid_2_idx@AlphaNet@@QAEHK@Z,"int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)",0x004E25E0-0x004E2607,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,20
+0x004E25E0,0x004E2607,39,.text,?pid_2_idx@AlphaNet@@QAEHK@Z,"int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)",0x004E25E0-0x004E2607,game,frame;sp_ready;purged_ok,src/alphanet.cpp:15,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,20
 0x004E2610,0x004E2653,67,.text,?pid_2_who@AlphaNet@@QAEHK@Z,"int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)",0x004E2610-0x004E2653,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x004E2660,0x004E26A8,72,.text,?who_2_pid@AlphaNet@@QAEHH@Z,"int (__thiscall ?who_2_pid@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)",0x004E2660-0x004E26A8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,4
 0x004E26B0,0x004E26DC,44,.text,?who_2_idx@AlphaNet@@QAEXH@Z,"void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)",0x004E26B0-0x004E26DC,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1

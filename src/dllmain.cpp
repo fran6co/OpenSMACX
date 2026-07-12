@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "alphanet.h"
 #include "autosound.h"
 #include "base.h"
 #include "basepop.h"
@@ -34,7 +35,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 24;
+constexpr size_t RedirectCount = 25;
 
 struct RedirectState {
     uint8_t *address;
@@ -268,6 +269,12 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&dialogs_close_redirect),
             {0xC3, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
              0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90},
+        },
+        {
+            0x004E25E0,
+            reinterpret_cast<uintptr_t>(&alpha_net_pid_to_idx_redirect),
+            {0x55, 0x8B, 0xEC, 0x8B, 0x55, 0x08, 0xB8, 0x01,
+             0x00, 0x00, 0x00, 0x81, 0xC1, 0x28, 0x09, 0x00},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {
