@@ -26,6 +26,7 @@ class DLLEXPORT BasePop : GraphicWin {
  public:
   BasePop() { ; }
   ~BasePop() { ; }
+  void set_loc(int x, int y);
 
  private:
   uint32_t field_A14_;
@@ -89,7 +90,7 @@ class DLLEXPORT BasePop : GraphicWin {
   uint32_t field_21C4_;
   uint32_t field_21C8_;
   uint32_t field_21CC_;
-  //Dialogs dialogs_;
+  uint8_t dialogs_[0xC94];
   uint32_t field_2E64_;
   uint32_t field_2E68_;
   uint32_t field_2E6C_;
@@ -338,3 +339,8 @@ class DLLEXPORT BasePop : GraphicWin {
   LPSTR cancel_text_;
   uint32_t field_322C_;
 };
+
+static_assert(sizeof(BasePop) == 0x3230,
+              "BasePop layout must match the original executable");
+
+void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y);

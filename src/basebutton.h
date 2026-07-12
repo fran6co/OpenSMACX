@@ -25,6 +25,8 @@ class ButtonGroup; // forward declaration
   * BaseButton class
   */
 class DLLEXPORT BaseButton : GraphicWin {
+  friend class ButtonGroup;
+
  public:
   BaseButton() { ; }
   ~BaseButton() { ; }
