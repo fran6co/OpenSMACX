@@ -10,6 +10,8 @@ import subprocess
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 DEFAULT_OUTPUT = REPO_ROOT / "docs" / "recovery" / "ghidra-functions.csv"
+DEFAULT_REFERENCES_OUTPUT = (
+    REPO_ROOT / "docs" / "recovery" / "ghidra-interior-references.csv")
 DEFAULT_PROJECT_DIR = REPO_ROOT / "build" / "ghidra-projects"
 
 
@@ -54,6 +56,8 @@ def main():
         description="Run Ghidra headlessly and export function metadata")
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--references-output", type=Path,
+                        default=DEFAULT_REFERENCES_OUTPUT)
     parser.add_argument("--project-dir", type=Path, default=DEFAULT_PROJECT_DIR)
     parser.add_argument("--ghidra-home",
                         help="Ghidra root or path to analyzeHeadless")
@@ -62,11 +66,13 @@ def main():
 
     exe = args.exe.expanduser().resolve()
     output = args.output.expanduser().resolve()
+    references_output = args.references_output.expanduser().resolve()
     project_dir = args.project_dir.expanduser().resolve()
     if not exe.is_file():
         parser.error(f"executable not found: {exe}")
     project_dir.mkdir(parents=True, exist_ok=True)
     output.parent.mkdir(parents=True, exist_ok=True)
+    references_output.parent.mkdir(parents=True, exist_ok=True)
 
     analyze_headless = locate_analyze_headless(args.ghidra_home)
     script_dir = Path(__file__).resolve().parent / "ghidra"
@@ -81,6 +87,7 @@ def main():
         "-max-cpu", str(args.max_cpu),
         "-scriptPath", str(script_dir),
         "-postScript", "ExportFunctions.java", str(output),
+        "-postScript", "ExportInteriorReferences.java", str(references_output),
         "-deleteProject",
     ]
     subprocess.run(command, check=True, env=environment)

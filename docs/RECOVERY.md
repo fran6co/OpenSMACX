@@ -74,6 +74,11 @@ primary range but differs in tails, and `start_only` shares only the entry point
 `split` indicate a primary-range disagreement, while `missing` means no primary-range overlap was
 found.
 
+Ghidra also exports `ghidra-interior-references.csv`, containing only references from outside a
+function to one of its interior addresses. Local assembly-island extraction uses this evidence to
+reject bodies that have externally reachable secondary entries. Its hash is bound into
+`analysis-summary.json` with the Ghidra function inventory.
+
 The raw IDC and IDA 9 `.i64` database remain local. The normalized `ida9-functions.csv` retains
 only function boundaries, flags, names, prototypes, and body ranges needed for reproducible
 correlation. The older annotated IDB remains checked in because it is the canonical recovery source.

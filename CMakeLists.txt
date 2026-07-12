@@ -13,6 +13,11 @@ set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" C
     "Output directory for the local-only hybrid image pack")
 set(OPENSMACX_HYBRID_EXE "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid/terranx_legacy.exe"
     CACHE FILEPATH "Assembled executable path for the local hybrid image")
+set(OPENSMACX_LEGACY_LEAF_DIR "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves"
+    CACHE PATH "Output directory for generated local legacy leaf assembly")
+set(OPENSMACX_LEGACY_LEAF_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves.obj"
+    CACHE FILEPATH "Generated local legacy leaf COFF object")
 
 if(OPENSMACX_PYTHON)
     set(OPENSMACX_PYTHON_EXECUTABLE "${OPENSMACX_PYTHON}")
@@ -181,6 +186,62 @@ add_custom_target(stage-hybrid-game
     USES_TERMINAL
     VERBATIM
 )
+
+set(OPENSMACX_LEGACY_LEAF_ASSEMBLY
+    "${OPENSMACX_LEGACY_LEAF_DIR}/legacy-leaves.S")
+set(OPENSMACX_LEGACY_LEAF_MANIFEST
+    "${OPENSMACX_LEGACY_LEAF_DIR}/manifest.json")
+set(OPENSMACX_LEGACY_LEAF_SYMBOLS
+    "${OPENSMACX_LEGACY_LEAF_DIR}/symbols.csv")
+
+add_custom_command(
+    OUTPUT
+        "${OPENSMACX_LEGACY_LEAF_ASSEMBLY}"
+        "${OPENSMACX_LEGACY_LEAF_MANIFEST}"
+        "${OPENSMACX_LEGACY_LEAF_SYMBOLS}"
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+        --exe "${OPENSMACX_LEGACY_EXE}"
+        --output "${OPENSMACX_LEGACY_LEAF_DIR}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
+    USES_TERMINAL
+    VERBATIM
+)
+add_custom_target(extract-legacy-leaves
+    DEPENDS
+        "${OPENSMACX_LEGACY_LEAF_ASSEMBLY}"
+        "${OPENSMACX_LEGACY_LEAF_MANIFEST}"
+        "${OPENSMACX_LEGACY_LEAF_SYMBOLS}"
+)
+
+if(MINGW)
+    get_filename_component(OPENSMACX_LEGACY_LEAF_OBJECT_DIR
+        "${OPENSMACX_LEGACY_LEAF_OBJECT}" DIRECTORY)
+    add_custom_command(
+        OUTPUT "${OPENSMACX_LEGACY_LEAF_OBJECT}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${OPENSMACX_LEGACY_LEAF_OBJECT_DIR}"
+        COMMAND "${CMAKE_CXX_COMPILER}"
+            -x assembler-with-cpp
+            -c "${OPENSMACX_LEGACY_LEAF_ASSEMBLY}"
+            -o "${OPENSMACX_LEGACY_LEAF_OBJECT}"
+        DEPENDS "${OPENSMACX_LEGACY_LEAF_ASSEMBLY}"
+        USES_TERMINAL
+        VERBATIM
+    )
+    add_custom_target(assemble-legacy-leaves
+        DEPENDS "${OPENSMACX_LEGACY_LEAF_OBJECT}"
+    )
+endif()
 
 if(OPENSMACX_GAME_INSTALLER)
     set(OPENSMACX_STAGE_COMMAND
