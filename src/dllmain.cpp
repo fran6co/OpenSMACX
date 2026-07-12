@@ -16,9 +16,11 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "autosound.h"
 #include "base.h"
 #include "buffer.h"
 #include "dialog.h"
+#include "win.h"
 
 #include <cstdint>
 #include <cstring>
@@ -27,7 +29,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 10;
+constexpr size_t RedirectCount = 12;
 
 struct RedirectState {
     uint8_t *address;
@@ -177,6 +179,18 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&dialog_set_text_color3_redirect),
             {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
              0x89, 0x81, 0x84, 0x00, 0x00, 0x00, 0x8B, 0x44},
+        },
+        {
+            0x005FA7E0,
+            reinterpret_cast<uintptr_t>(&in_box),
+            {0x8B, 0x44, 0x24, 0x0C, 0x8B, 0x4C, 0x24, 0x04,
+             0x3B, 0x08, 0x7D, 0x03, 0x33, 0xC0, 0xC3, 0x3B},
+        },
+        {
+            0x005FD2B0,
+            reinterpret_cast<uintptr_t>(&do_sound_redirect),
+            {0x33, 0xC0, 0xC3, 0x90, 0x90, 0x90, 0x90, 0x90,
+             0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {

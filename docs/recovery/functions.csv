@@ -4385,7 +4385,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FA770,0x005FA78E,30,.text,??_GPullDown@@UAEPAXI@Z,"void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)",0x005FA770-0x005FA78E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005FA790,0x005FA79B,11,.text,??3PullDown@@SAXPAXI@Z,,0x005FA790-0x005FA79B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FA7A0,0x005FA7DB,59,.text,?in_box@@YAHHHHHHH@Z,,0x005FA7A0-0x005FA7DB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x005FA7E0,0x005FA814,52,.text,?in_box@@YAHHHPAURECT@@@Z,,0x005FA7E0-0x005FA814,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,24
+0x005FA7E0,0x005FA814,52,.text,?in_box@@YAHHHPAURECT@@@Z,,0x005FA7E0-0x005FA814,game,hidden;sp_ready;purged_ok,src/win.cpp:23,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,24
 0x005FA820,0x005FA82B,11,.text,?clear@Spot@@QAEXXZ,void (__thiscall ?clear@Spot@@QAEXXZ)(Spot* this),0x005FA820-0x005FA82B,game,hidden;sp_ready;purged_ok,,,?clear@Spot@@QAEXXZ,,redirect_name_match,,,,0,0
 0x005FA830,0x005FA85E,46,.text,?shutdown@Spot@@QAEXXZ,void (__thiscall ?shutdown@Spot@@QAEXXZ)(Spot* this),0x005FA830-0x005FA85E,game,hidden;sp_ready;purged_ok,src/spot.cpp:24,Complete,?shutdown@Spot@@QAEXXZ,,source_complete,,,,1,9
 0x005FA860,0x005FA86D,13,.text,??0Spot@@QAE@XZ,void (__thiscall ??0Spot@@QAE@XZ)(Spot* this),0x005FA860-0x005FA86D,game,hidden;sp_ready;purged_ok,,,??0Spot@@QAE@XZ,,redirect_name_match,,,,0,19
@@ -4467,7 +4467,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FD280,0x005FD281,1,.text,nullsub_192,,0x005FD280-0x005FD281,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FD290,0x005FD291,1,.text,nullsub_193,,0x005FD290-0x005FD291,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FD2A0,0x005FD2A1,1,.text,nullsub_194,,0x005FD2A0-0x005FD2A1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x005FD2B0,0x005FD2B3,3,.text,?do_sound@@YAXXZ,,0x005FD2B0-0x005FD2B3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,21
+0x005FD2B0,0x005FD2B3,3,.text,?do_sound@@YAXXZ,,0x005FD2B0-0x005FD2B3,game,hidden;sp_ready;purged_ok,src/autosound.cpp:23,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,21
 0x005FD2C0,0x005FD308,72,.text,sub_5fd2c0,,0x005FD2C0-0x005FD308,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD310,0x005FD35D,77,.text,sub_5fd310,,0x005FD310-0x005FD35D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD360,0x005FD36B,11,.text,?do_all_sounds@@YAXXZ,,0x005FD360-0x005FD36B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0

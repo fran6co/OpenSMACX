@@ -265,3 +265,5 @@ class DLLEXPORT Win {
   Scroll *scroll_vert_;
   Scroll *scroll_horz_;
 };
+
+DLLEXPORT BOOL __cdecl in_box(int x, int y, const RECT *rect);
