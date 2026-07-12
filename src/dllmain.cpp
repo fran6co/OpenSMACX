@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "base.h"
+#include "buffer.h"
 
 #include <cstdint>
 #include <cstring>
@@ -25,6 +26,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
+constexpr size_t RedirectCount = 6;
 
 struct RedirectState {
     uint8_t *address;
@@ -33,7 +35,13 @@ struct RedirectState {
     bool installed;
 };
 
-RedirectState BaseAtRedirect = {};
+struct RedirectSpec {
+    uintptr_t original_address;
+    uintptr_t replacement_address;
+    uint8_t signature[SignatureSize];
+};
+
+RedirectState Redirects[RedirectCount] = {};
 
 bool restore_redirect(RedirectState &state) {
     if (!state.installed) {
@@ -107,23 +115,81 @@ bool redirect_function(RedirectState &state, uintptr_t original_address,
     return false;
 }
 
+bool install_redirects() {
+    const RedirectSpec specs[RedirectCount] = {
+        {
+            0x004E3A50,
+            reinterpret_cast<uintptr_t>(&base_at),
+            {0x55, 0x8B, 0xEC, 0x53, 0x56, 0x57, 0x8B, 0x7D,
+             0x0C, 0x85, 0xFF, 0x0F, 0x8C, 0x16, 0x01, 0x00},
+        },
+        {
+            0x005DAC70,
+            reinterpret_cast<uintptr_t>(&buffer_set_font_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x85, 0xC0, 0x75, 0x08,
+             0xB8, 0x03, 0x00, 0x00, 0x00, 0xC2, 0x10, 0x00},
+        },
+        {
+            0x005DACB0,
+            reinterpret_cast<uintptr_t>(&buffer_set_text_color_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x81, 0x3C, 0x05, 0x00, 0x00, 0x8B, 0x44},
+        },
+        {
+            0x005DACE0,
+            reinterpret_cast<uintptr_t>(&buffer_set_text_color2_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x81, 0x40, 0x05, 0x00, 0x00, 0x8B, 0x44},
+        },
+        {
+            0x005DAD10,
+            reinterpret_cast<uintptr_t>(&buffer_set_text_color3_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x81, 0x44, 0x05, 0x00, 0x00, 0x8B, 0x44},
+        },
+        {
+            0x005DAD40,
+            reinterpret_cast<uintptr_t>(&buffer_set_text_color_hyper_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x81, 0x48, 0x05, 0x00, 0x00, 0x8B, 0x44},
+        },
+    };
+    for (size_t index = 0; index < RedirectCount; index++) {
+        if (redirect_function(
+                Redirects[index], specs[index].original_address,
+                specs[index].replacement_address, specs[index].signature)) {
+            continue;
+        }
+        while (index > 0) {
+            index--;
+            if (!restore_redirect(Redirects[index])) {
+                TerminateProcess(GetCurrentProcess(), ERROR_INVALID_STATE);
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+bool restore_redirects() {
+    bool restored = true;
+    for (size_t index = RedirectCount; index > 0; index--) {
+        if (!restore_redirect(Redirects[index - 1])) {
+            restored = false;
+        }
+    }
+    return restored;
+}
+
 } // namespace
 
 BOOL APIENTRY DllMain(HMODULE hModule, uint32_t ul_reason_for_call, LPVOID reserved) {
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hModule);
-        {
-            const uint8_t base_at_signature[16] = {
-                0x55, 0x8B, 0xEC, 0x53, 0x56, 0x57, 0x8B, 0x7D,
-                0x0C, 0x85, 0xFF, 0x0F, 0x8C, 0x16, 0x01, 0x00,
-            };
-            return redirect_function(
-                BaseAtRedirect,
-                0x004E3A50, reinterpret_cast<uintptr_t>(&base_at), base_at_signature);
-        }
+        return install_redirects();
     case DLL_PROCESS_DETACH:
-        if (!reserved && !restore_redirect(BaseAtRedirect)) {
+        if (!reserved && !restore_redirects()) {
             TerminateProcess(GetCurrentProcess(), ERROR_INVALID_STATE);
         }
         return true;

@@ -434,13 +434,16 @@ def validate_hybrid_image(output):
         raise RuntimeError(
             f"refusing to replace unrecognized output directory: {output}") from error
     if (manifest.get("artifact_kind") != "local_legacy_pe_image" or
-            manifest.get("format_version") != 1 or
+            manifest.get("format_version") not in {1, 2} or
             manifest.get("distribution") != "local_only"):
         raise RuntimeError(
             f"refusing to replace unrecognized output directory: {output}")
 
     artifacts = [*manifest.get("file_layout", [])]
-    for key in ("legacy_functions", "relocations"):
+    artifact_keys = ["legacy_functions", "relocations"]
+    if manifest["format_version"] == 2:
+        artifact_keys.append("source_replacements")
+    for key in artifact_keys:
         artifacts.append(manifest.get(key, {}))
     expected = {"manifest.json"}
     for artifact in artifacts:
