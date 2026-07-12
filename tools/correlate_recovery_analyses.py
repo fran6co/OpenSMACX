@@ -17,6 +17,8 @@ DEFAULT_BINDING_CLASSIFICATIONS = (
     REPO_ROOT / "docs" / "recovery-binding-classifications.csv")
 DEFAULT_IDA = REPO_ROOT / "docs" / "recovery" / "ida9-functions.csv"
 DEFAULT_GHIDRA = REPO_ROOT / "docs" / "recovery" / "ghidra-functions.csv"
+DEFAULT_GHIDRA_REFERENCES = (
+    REPO_ROOT / "docs" / "recovery" / "ghidra-interior-references.csv")
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "recovery"
 ADD_FUNCTION_RE = re.compile(
     r"add_func\(0x([0-9A-Fa-f]+),\s*0x([0-9A-Fa-f]+)\);")
@@ -231,10 +233,13 @@ def main():
                         default=DEFAULT_BINDING_CLASSIFICATIONS)
     parser.add_argument("--ida", type=Path, default=DEFAULT_IDA)
     parser.add_argument("--ghidra", type=Path, default=DEFAULT_GHIDRA)
+    parser.add_argument("--ghidra-references", type=Path,
+                        default=DEFAULT_GHIDRA_REFERENCES)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
     for path in (args.canonical, args.canonical_summary,
-                 args.binding_classifications, args.ida, args.ghidra):
+                 args.binding_classifications, args.ida, args.ghidra,
+                 args.ghidra_references):
         if not path.is_file():
             parser.error(f"input not found: {path}")
 
@@ -386,6 +391,8 @@ def main():
             "ghidra": {
                 "functions": len(ghidra_functions),
                 "input_sha256": sha256(args.ghidra),
+                "interior_references_input_sha256": sha256(
+                    args.ghidra_references),
                 "shared_entry_points": len(canonical_starts & ghidra_starts),
                 "extra_entry_points": len(ghidra_starts - canonical_starts),
                 "thunks": sum(function["is_thunk"] for function in ghidra_functions),

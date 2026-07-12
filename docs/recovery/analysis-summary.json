@@ -5,6 +5,7 @@
       "functions": 9918,
       "ghidra_version": "12.1.2",
       "input_sha256": "ed7079a2fb952b2cdece076eeb6291943740c7200525b260885aea1b82835d6b",
+      "interior_references_input_sha256": "97048dece2b7e388076e7521ea08bb7753210e83ad66e75185aa03ceca2ed67e",
       "language": "x86:LE:32:default",
       "program_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
       "relations": {

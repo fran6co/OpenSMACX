@@ -80,6 +80,21 @@ source file, checks the function and relocation sidecars against the manifest, r
 in memory, and verifies its source hash and header contract before publishing it. An existing output
 is replaced only when it already has the expected source hash.
 
+## Local assembly islands
+
+Self-contained unrecovered leaves can be extracted into a local x86 COFF object so a future hybrid
+link can resolve them by symbol and replace them individually with source:
+
+```sh
+cmake --build --preset mingw-i686-release --target assemble-legacy-leaves
+```
+
+The extractor accepts only exact cross-build function boundaries with one contiguous body, complete
+x86 decoding, at least one return, and no calls, external branches, nested entries, PE relocations,
+segment memory, absolute memory, or image-address immediates. Each accepted body is emitted into its
+own `.text$legacy$<address>` section with a stable `opensmacx_legacy_<address>` symbol. See
+`docs/LEGACY_ISLANDS.md` for the ownership and release rules.
+
 ## Distribution boundary
 
 The pack, assembled legacy PE, and staged hybrid executable all derive from a proprietary
