@@ -17,3 +17,13 @@
  */
 #include "stdafx.h"
 #include "win.h"
+
+/*
+Purpose: Determine whether a point is inside a rectangle using Win32 edge semantics.
+Original Offset: 005FA7E0
+Return Value: Is the point inside the rectangle? true/false
+Status: Complete
+*/
+BOOL __cdecl in_box(int x, int y, const RECT *rect) {
+    return x >= rect->left && x < rect->right && y >= rect->top && y < rect->bottom;
+}

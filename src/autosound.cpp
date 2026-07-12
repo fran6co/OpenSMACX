@@ -17,3 +17,17 @@
  */
 #include "stdafx.h"
 #include "autosound.h"
+
+/*
+Purpose: Legacy sound processing hook retained as a no-op.
+Original Offset: 005FD2B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl do_sound() {
+}
+
+int __cdecl do_sound_redirect() {
+    do_sound();
+    return 0;
+}

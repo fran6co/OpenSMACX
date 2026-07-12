@@ -65,3 +65,6 @@ class DLLEXPORT AutoSound {
   int val_36_;
   int val_37_;
 };
+
+DLLEXPORT void __cdecl do_sound();
+int __cdecl do_sound_redirect();
