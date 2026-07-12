@@ -1,10 +1,14 @@
 address,recovery_state,priority,notes
+0x0045C170,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x004E3A50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x0058EE50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DAC70,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DACB0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DACE0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DAD10,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DAD40,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005DF570,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005DF580,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FA7E0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FD2B0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00601B80,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
@@ -12,6 +16,7 @@ address,recovery_state,priority,notes
 0x00609C90,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00609CC0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00609CF0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00612960,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00616BC0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00616DA0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x006182A0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation

@@ -89,6 +89,25 @@ void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4
     color_hyper_val_4_ = color4;
 }
 
+/*
+Purpose: Initialize shared Buffer state; the legacy implementation has no state to initialize.
+Original Offset: 005DF570
+Return Value: No errors (0)
+Status: Complete
+*/
+int Buffer::init_class() {
+    return 0;
+}
+
+/*
+Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
+Original Offset: 005DF580
+Return Value: n/a
+Status: Complete
+*/
+void Buffer::close_class() {
+}
+
 int __fastcall buffer_set_font_redirect(
     Buffer *self, void *, Font *font1, Font *font2, Font *font3, Font *font4) {
     return self->set_font(font1, font2, font3, font4);
@@ -112,4 +131,11 @@ void __fastcall buffer_set_text_color3_redirect(
 void __fastcall buffer_set_text_color_hyper_redirect(
     Buffer *self, void *, int color1, int color2, int color3, int color4) {
     self->set_text_color_hyper(color1, color2, color3, color4);
+}
+
+int __cdecl buffer_init_class_redirect() {
+    return 0;
+}
+
+void __cdecl buffer_close_class_redirect() {
 }
