@@ -32,7 +32,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 17;
+constexpr size_t RedirectCount = 19;
 
 struct RedirectState {
     uint8_t *address;
@@ -224,6 +224,18 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&caviar_set_scaling_redirect),
             {0x8B, 0x44, 0x24, 0x04, 0x89, 0x81, 0xD5, 0x00,
              0x00, 0x00, 0xC2, 0x04, 0x00, 0x90, 0x90, 0x90},
+        },
+        {
+            0x006182A0,
+            reinterpret_cast<uintptr_t>(&caviar_set_camera_direct_redirect),
+            {0x8B, 0x54, 0x24, 0x04, 0x85, 0xD2, 0x74, 0x74,
+             0x8B, 0x44, 0x24, 0x08, 0x85, 0xC0, 0x74, 0x6C},
+        },
+        {
+            0x006183C0,
+            reinterpret_cast<uintptr_t>(&caviar_get_scaling_redirect),
+            {0xD9, 0x81, 0xD5, 0x00, 0x00, 0x00, 0xC3, 0x90,
+             0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {

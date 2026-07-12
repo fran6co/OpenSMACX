@@ -9,6 +9,14 @@
  */
 #pragma once
 
+struct VOX_Vect {
+  float values[3];
+};
+
+struct VOX_Matrix {
+  float values[3][3];
+};
+
 class DLLEXPORT CaviarData {
  public:
   CaviarData();
@@ -20,8 +28,10 @@ class DLLEXPORT CaviarData {
 class DLLEXPORT Caviar {
  public:
   Caviar();
+  void set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix);
   void set_scaling(float scaling);
   void set_scaling_bits(uint32_t scaling_bits);
+  float get_scaling();
 
  private:
   float scene_scale_;
@@ -35,5 +45,8 @@ static_assert(sizeof(Caviar) == 0x13D0,
 
 CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *);
 Caviar *__fastcall caviar_construct_redirect(Caviar *self, void *);
+void __fastcall caviar_set_camera_direct_redirect(
+    Caviar *self, void *, const VOX_Vect *camera, const VOX_Matrix *matrix);
 uint32_t __fastcall caviar_set_scaling_redirect(
     Caviar *self, void *, uint32_t scaling_bits);
+float __fastcall caviar_get_scaling_redirect(Caviar *self, void *);
