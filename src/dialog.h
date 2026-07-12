@@ -27,6 +27,11 @@ class DLLEXPORT Dialog {
   Dialog() { ; }
   ~Dialog() { ; }
 
+  int set_dialog_font(Font *font1, Font *font2, Font *font3);
+  void set_dialog_text_color(int color1, int color2, int color3, int color4);
+  void set_dialog_text_color2(int color1, int color2, int color3, int color4);
+  void set_dialog_text_color3(int color1, int color2, int color3, int color4);
+
  private:
   LPVOID vtable_;
   Heap heap_;
@@ -86,3 +91,14 @@ class DLLEXPORT Dialog {
   uint32_t state_flag_;
   uint32_t field_F0_;
 };
+
+static_assert(sizeof(Dialog) == 0xF4, "Dialog layout must match the original executable");
+
+int __fastcall dialog_set_font_redirect(
+    Dialog *self, void *, Font *font1, Font *font2, Font *font3);
+void __fastcall dialog_set_text_color_redirect(
+    Dialog *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall dialog_set_text_color2_redirect(
+    Dialog *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall dialog_set_text_color3_redirect(
+    Dialog *self, void *, int color1, int color2, int color3, int color4);
