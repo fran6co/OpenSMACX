@@ -45,6 +45,18 @@ with:
   --wine-prefix .opensmacx/wineprefix
 ```
 
+Run the automated startup gate with:
+
+```sh
+cmake --build --preset mingw-i686-release --target smoke-hybrid-game
+```
+
+The smoke harness snapshots matching processes before launch, captures Wine loader diagnostics,
+and requires the hybrid executable, `OpenSMACX.dll`, `prax.dll`, Wine's built-in `DDRAW.dll`, and a
+DirectDraw surface flip. It fails on unhandled-exception diagnostics and writes
+`hybrid-smoke-result.json` beside the build output. It never terminates pre-existing or newly
+launched game processes.
+
 Override `OPENSMACX_LEGACY_EXE`, `OPENSMACX_HYBRID_DIR`, and `OPENSMACX_HYBRID_EXE` to use other
 local hybrid paths. `OPENSMACX_LEGACY_LEAF_EXE` remains the independently analyzed pre-PRACX
 executable used for local island extraction. All default outputs remain under `.opensmacx/`, which

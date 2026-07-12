@@ -101,14 +101,14 @@ Other completed corrections and checks:
 - Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 150 islands.
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle and explicitly passes `WINEPREFIX`.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
+- `tools/smoke_hybrid_game.py` automates that gate, records pre-existing and new process IDs, validates module and rendering markers, rejects unhandled exceptions, and writes a JSON result without terminating processes.
 - `~/Desktop/backtrace.txt` is manually saved and cannot be used as an automatic crash signal.
 
 ## Next Steps
 
-1. Add an automated hybrid launch harness that captures Wine diagnostics, detects crashes, verifies expected modules and rendering startup, and never terminates pre-existing processes.
-2. Add a deterministic gameplay scenario driver that loads a known local test save, issues unit movement and end-turn commands through in-process functions, asserts state, writes machine-readable results, and exits.
-3. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
-4. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
+1. Add a deterministic gameplay scenario driver that loads a known local test save, issues unit movement and end-turn commands through in-process functions, asserts state, writes machine-readable results, and exits.
+2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
+3. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
 
 ## Relevant Files
 
@@ -133,6 +133,8 @@ Other completed corrections and checks:
 - `docs/recovery/summary.json`: canonical recovery-state counts.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
 - `tools/test_extract_legacy_leaves.py`: 12 island-classifier regression tests.
+- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.
+- `tools/test_smoke_hybrid_game.py`: source-owned smoke-diagnostics parser tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.

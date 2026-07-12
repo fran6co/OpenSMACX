@@ -9,6 +9,10 @@ set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
     "Directory used for extracted proprietary game data")
 set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requirements.txt installed")
 set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
+set(OPENSMACX_WINE_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/wineprefix"
+    CACHE PATH "Wine prefix used to run the staged game")
+set(OPENSMACX_HYBRID_SMOKE_SECONDS 20 CACHE STRING
+    "Seconds to observe a staged hybrid smoke launch")
 set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx.exe" CACHE FILEPATH
     "User-owned executable used to prepare the local hybrid image")
 set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" CACHE PATH
@@ -211,6 +215,11 @@ if(BUILD_TESTING)
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
         )
     endif()
+
+    add_test(NAME hybrid-smoke-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_smoke_hybrid_game.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
@@ -265,6 +274,33 @@ endif()
 add_custom_target(stage-hybrid-game
     COMMAND ${OPENSMACX_HYBRID_STAGE_COMMAND}
     DEPENDS OpenSMACX assemble-hybrid-executable
+    USES_TERMINAL
+    VERBATIM
+)
+
+set(OPENSMACX_HYBRID_SMOKE_COMMAND
+    "${OPENSMACX_PYTHON_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/smoke_hybrid_game.py"
+    --game-dir "${OPENSMACX_GAME_DIR}"
+    --executable terranx_hybrid.exe
+    --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+    --duration "${OPENSMACX_HYBRID_SMOKE_SECONDS}"
+    --log "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke.log"
+    --result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke-result.json"
+)
+if(OPENSMACX_WINE)
+    list(APPEND OPENSMACX_HYBRID_SMOKE_COMMAND --wine "${OPENSMACX_WINE}")
+endif()
+
+add_custom_target(smoke-hybrid-game
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_smoke_hybrid_game.py"
+    COMMAND ${OPENSMACX_HYBRID_SMOKE_COMMAND}
+    DEPENDS
+        stage-hybrid-game
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/smoke_hybrid_game.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_smoke_hybrid_game.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_game.py"
     USES_TERMINAL
     VERBATIM
 )
