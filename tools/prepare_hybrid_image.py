@@ -14,7 +14,7 @@ import pefile
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
+DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx.exe"
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_PRIORITIES = REPO_ROOT / "docs" / "recovery" / "priorities.csv"
 DEFAULT_SUMMARY = REPO_ROOT / "docs" / "recovery" / "summary.json"
@@ -23,6 +23,10 @@ DEFAULT_ANALYSIS_SUMMARY = (
 DEFAULT_CORRELATION = (
     REPO_ROOT / "docs" / "recovery" / "analysis-correlation.csv")
 DEFAULT_OUTPUT = REPO_ROOT / ".opensmacx" / "hybrid-image"
+SUPPORTED_RUNTIME_HASHES = {
+    # GOG Planetary Pack 1.1 bundled PRACX executable.
+    "84432e3a1465a05f32b5bb70693f5c4099661d5c1511dbbf27233b4890071b1c",
+}
 
 
 def sha256_bytes(data):
@@ -35,6 +39,18 @@ def sha256_file(path):
         for chunk in iter(lambda: file.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def classify_source_binary(source_hash, canonical_hash, ghidra_hash):
+    if source_hash == canonical_hash:
+        return "same_binary"
+    if source_hash == ghidra_hash:
+        return "independently_analyzed_cross_build"
+    if source_hash in SUPPORTED_RUNTIME_HASHES:
+        return "hash_pinned_runtime_build"
+    raise RuntimeError(
+        f"unsupported executable SHA-256: {source_hash}; input must match "
+        "the canonical, independently analyzed, or hash-pinned runtime binary")
 
 
 def hexadecimal(value, width=8):
@@ -258,14 +274,8 @@ def build_function_map(pe, source, functions_path, priorities_path, summary_path
         raise RuntimeError("recovery summaries identify different canonical executables")
     ghidra_hash = analysis_summary["binary_identity"]["ghidra_program_sha256"]
     source_hash = sha256_bytes(source)
-    if source_hash == canonical_hash:
-        source_relation = "same_binary"
-    elif source_hash == ghidra_hash:
-        source_relation = "independently_analyzed_cross_build"
-    else:
-        raise RuntimeError(
-            f"unsupported executable SHA-256: {source_hash}; input must match "
-            "the canonical or independently analyzed recovery binary")
+    source_relation = classify_source_binary(
+        source_hash, canonical_hash, ghidra_hash)
 
     result = []
     mapped_count = 0
@@ -283,7 +293,7 @@ def build_function_map(pe, source, functions_path, priorities_path, summary_path
             source_address = function["address"]
             source_ranges = function["body_ranges"]
             mapping_state = "mapped"
-        else:
+        elif source_relation == "independently_analyzed_cross_build":
             analysis_relation = correlation["ghidra_relation"]
             source_address = correlation["ghidra_address"] or None
             source_ranges = correlation["ghidra_body_ranges"]
@@ -293,6 +303,11 @@ def build_function_map(pe, source, functions_path, priorities_path, summary_path
                 mapping_state = "ambiguous"
             else:
                 mapping_state = "unmapped"
+        else:
+            analysis_relation = "not_analyzed"
+            source_address = None
+            source_ranges = ""
+            mapping_state = "unmapped"
 
         ranges = []
         body = bytearray()

@@ -9,14 +9,16 @@ set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
     "Directory used for extracted proprietary game data")
 set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requirements.txt installed")
 set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
-set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe" CACHE FILEPATH
+set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx.exe" CACHE FILEPATH
     "User-owned executable used to prepare the local hybrid image")
 set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" CACHE PATH
     "Output directory for the local-only hybrid image pack")
-set(OPENSMACX_HYBRID_EXE "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid/terranx_legacy.exe"
+set(OPENSMACX_HYBRID_EXE "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid/terranx_pracx_legacy.exe"
     CACHE FILEPATH "Assembled executable path for the local hybrid image")
 set(OPENSMACX_LEGACY_LEAF_DIR "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves"
     CACHE PATH "Output directory for generated local legacy leaf assembly")
+set(OPENSMACX_LEGACY_LEAF_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe"
+    CACHE FILEPATH "Independently analyzed executable used to extract local legacy leaves")
 set(OPENSMACX_LEGACY_LEAF_OBJECT
     "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves.obj"
     CACHE FILEPATH "Generated local legacy leaf COFF object")
@@ -219,11 +221,14 @@ install(TARGETS OpenSMACX
 
 add_custom_target(prepare-hybrid-image
     COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_prepare_hybrid_image.py"
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/prepare_hybrid_image.py"
         --exe "${OPENSMACX_LEGACY_EXE}"
         --output "${OPENSMACX_HYBRID_DIR}"
     DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/prepare_hybrid_image.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_prepare_hybrid_image.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/priorities.csv"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
@@ -280,7 +285,7 @@ add_custom_command(
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
     COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
-        --exe "${OPENSMACX_LEGACY_EXE}"
+        --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
         --output "${OPENSMACX_LEGACY_LEAF_DIR}"
     DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"

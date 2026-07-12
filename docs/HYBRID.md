@@ -7,8 +7,7 @@ are replaced. It is not itself a new executable or a distributable build product
 
 ## Build the hybrid executable
 
-Install `tools/requirements.txt`, place the supported executable at
-`.opensmacx/game/terranx_original.exe`, and run:
+Install `tools/requirements.txt`, stage the supported game files under `.opensmacx/game/`, and run:
 
 ```sh
 .opensmacx/venv/bin/python tools/prepare_hybrid_image.py
@@ -24,7 +23,7 @@ cmake --build --preset mingw-i686-release --target assemble-hybrid-executable
 ```
 
 `prepare-hybrid-image` creates the verified pack. `assemble-hybrid-executable` consumes that pack
-and reconstructs `.opensmacx/hybrid/terranx_legacy.exe`. The assembled file must have the source
+and reconstructs `.opensmacx/hybrid/terranx_pracx_legacy.exe`. The assembled file must have the source
 SHA-256 recorded by the pack, satisfy the PE32/i386 manifest fields, and remain outside the pack so
 pack ownership validation cannot be bypassed by generated extras.
 
@@ -47,7 +46,15 @@ with:
 ```
 
 Override `OPENSMACX_LEGACY_EXE`, `OPENSMACX_HYBRID_DIR`, and `OPENSMACX_HYBRID_EXE` to use other
-local paths. All default outputs remain under `.opensmacx/`, which is ignored by Git.
+local hybrid paths. `OPENSMACX_LEGACY_LEAF_EXE` remains the independently analyzed pre-PRACX
+executable used for local island extraction. All default outputs remain under `.opensmacx/`, which
+is ignored by Git.
+
+On macOS, always use `tools/run_game.py` rather than invoking the Wine CLI directly. The launcher
+uses Launch Services for the native window driver and explicitly passes the configured Wine prefix.
+The hybrid defaults to the hash-pinned PRACX executable because it works with Wine's built-in
+DirectDraw. The pre-PRACX executable reaches an unsupported DirectDraw path on current Wine, while
+forcing the bundled native DDrawCompat proxy is not compatible with Wine Staging 11.10.
 
 ## Artifact contract
 
@@ -62,11 +69,12 @@ local paths. All default outputs remain under `.opensmacx/`, which is ignored by
 
 `relocations.json` contains every parsed base-relocation block and entry. `legacy-functions.json`
 maps the current recovery backlog from `priorities.csv` to source file ranges and byte hashes. The
-map records whether the executable is the canonical IDB input or the independently analyzed Ghidra
-cross-build. On the cross-build, only `exact`, `entry_range`, and `start_only` same-entry
-correlations use Ghidra body ranges and receive byte hashes. `containing`, `split`, and `missing`
-candidates remain explicitly ambiguous or unmapped instead of being projected by canonical address.
-Inputs matching neither analysis are rejected.
+map records whether the executable is the canonical IDB input, the independently analyzed Ghidra
+cross-build, or the hash-pinned PRACX runtime build. On the cross-build, only `exact`,
+`entry_range`, and `start_only` same-entry correlations use Ghidra body ranges and receive byte
+hashes. `containing`, `split`, and `missing` candidates remain explicitly ambiguous or unmapped.
+The PRACX runtime build is accepted for local compatibility but all function mappings are marked
+`not_analyzed` and unmapped rather than projected by canonical address. Other inputs are rejected.
 
 Generation is deterministic for the same inputs: absolute paths and timestamps are excluded, JSON
 keys are sorted, and every blob is content-hashed. Output is first completed in a temporary
