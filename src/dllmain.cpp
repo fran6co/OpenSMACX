@@ -21,6 +21,7 @@
 #include "basepop.h"
 #include "buffer.h"
 #include "buttongroup.h"
+#include "caviar.h"
 #include "dialog.h"
 #include "win.h"
 
@@ -31,7 +32,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 14;
+constexpr size_t RedirectCount = 17;
 
 struct RedirectState {
     uint8_t *address;
@@ -205,6 +206,24 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&button_group_add_redirect),
             {0x8B, 0x91, 0x80, 0x00, 0x00, 0x00, 0x8B, 0x44,
              0x24, 0x04, 0x89, 0x04, 0x91, 0x89, 0x88, 0xA8},
+        },
+        {
+            0x00616BC0,
+            reinterpret_cast<uintptr_t>(&caviar_data_construct_redirect),
+            {0x8B, 0xC1, 0x33, 0xC9, 0x89, 0x08, 0x89, 0x48,
+             0x04, 0x89, 0x48, 0x08, 0xC3, 0x90, 0x90, 0x90},
+        },
+        {
+            0x00616DA0,
+            reinterpret_cast<uintptr_t>(&caviar_construct_redirect),
+            {0x8B, 0xC1, 0x56, 0xBE, 0xC8, 0x00, 0x00, 0x00,
+             0x33, 0xC9, 0x8D, 0x90, 0x50, 0x07, 0x00, 0x00},
+        },
+        {
+            0x006183B0,
+            reinterpret_cast<uintptr_t>(&caviar_set_scaling_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x89, 0x81, 0xD5, 0x00,
+             0x00, 0x00, 0xC2, 0x04, 0x00, 0x90, 0x90, 0x90},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {

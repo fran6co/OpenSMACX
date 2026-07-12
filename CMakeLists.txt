@@ -51,6 +51,7 @@ set(OPENSMACX_SOURCES
     src/basepop.cpp
     src/buffer.cpp
     src/buttongroup.cpp
+    src/caviar.cpp
     src/council.cpp
     src/dialog.cpp
     src/dllmain.cpp
