@@ -41,6 +41,7 @@ class DLLEXPORT Font {
   int width(LPSTR input);
   int width(LPSTR input, size_t max_len);
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
+  bool is_initialized() const { return font_obj_ != NULL; }
 
   // eventually make atomic for thread safety
   static HDC FontHDC;

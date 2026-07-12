@@ -27,6 +27,12 @@ class DLLEXPORT Buffer {
   Buffer() { ; }
   ~Buffer() { ; }
 
+  int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
+  void set_text_color(int color1, int color2, int color3, int color4);
+  void set_text_color2(int color1, int color2, int color3, int color4);
+  void set_text_color3(int color1, int color2, int color3, int color4);
+  void set_text_color_hyper(int color1, int color2, int color3, int color4);
+
  private:
   typedef int32_t Dib;
   
@@ -101,3 +107,16 @@ class DLLEXPORT Buffer {
   int8_t field_580_;
   uint32_t field_584_;
 };
+
+static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
+
+int __fastcall buffer_set_font_redirect(
+    Buffer *self, void *, Font *font1, Font *font2, Font *font3, Font *font4);
+void __fastcall buffer_set_text_color_redirect(
+    Buffer *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall buffer_set_text_color2_redirect(
+    Buffer *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall buffer_set_text_color3_redirect(
+    Buffer *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall buffer_set_text_color_hyper_redirect(
+    Buffer *self, void *, int color1, int color2, int color3, int color4);
