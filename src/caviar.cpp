@@ -54,6 +54,20 @@ Caviar::Caviar() {
 }
 
 /*
+Purpose: Copy a camera position and orientation directly into the renderer state.
+Original Offset: 006182A0
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix) {
+    if (camera && matrix) {
+        auto *bytes = reinterpret_cast<uint8_t *>(this);
+        memcpy(bytes + 0xA5, camera, sizeof(*camera));
+        memcpy(bytes + 0xB1, matrix, sizeof(*matrix));
+    }
+}
+
+/*
 Purpose: Set the Caviar renderer scaling factor.
 Original Offset: 006183B0
 Return Value: n/a
@@ -68,6 +82,18 @@ void Caviar::set_scaling_bits(uint32_t scaling_bits) {
            &scaling_bits, sizeof(scaling_bits));
 }
 
+/*
+Purpose: Read the Caviar renderer scaling factor.
+Original Offset: 006183C0
+Return Value: Current scaling factor
+Status: Complete
+*/
+float Caviar::get_scaling() {
+    float scaling;
+    memcpy(&scaling, reinterpret_cast<uint8_t *>(this) + 0xD5, sizeof(scaling));
+    return scaling;
+}
+
 CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *) {
     return new (self) CaviarData;
 }
@@ -76,8 +102,17 @@ Caviar *__fastcall caviar_construct_redirect(Caviar *self, void *) {
     return new (self) Caviar;
 }
 
+void __fastcall caviar_set_camera_direct_redirect(
+    Caviar *self, void *, const VOX_Vect *camera, const VOX_Matrix *matrix) {
+    self->set_camera_direct(camera, matrix);
+}
+
 uint32_t __fastcall caviar_set_scaling_redirect(
     Caviar *self, void *, uint32_t scaling_bits) {
     self->set_scaling_bits(scaling_bits);
     return scaling_bits;
+}
+
+float __fastcall caviar_get_scaling_redirect(Caviar *self, void *) {
+    return self->get_scaling();
 }
