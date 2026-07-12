@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "base.h"
 #include "buffer.h"
+#include "dialog.h"
 
 #include <cstdint>
 #include <cstring>
@@ -26,7 +27,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 6;
+constexpr size_t RedirectCount = 10;
 
 struct RedirectState {
     uint8_t *address;
@@ -152,6 +153,30 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&buffer_set_text_color_hyper_redirect),
             {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
              0x89, 0x81, 0x48, 0x05, 0x00, 0x00, 0x8B, 0x44},
+        },
+        {
+            0x00609C60,
+            reinterpret_cast<uintptr_t>(&dialog_set_font_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x85, 0xC0, 0x75, 0x08,
+             0xB8, 0x03, 0x00, 0x00, 0x00, 0xC2, 0x0C, 0x00},
+        },
+        {
+            0x00609C90,
+            reinterpret_cast<uintptr_t>(&dialog_set_text_color_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x41, 0x7C, 0x8B, 0x44, 0x24, 0x0C, 0x89},
+        },
+        {
+            0x00609CC0,
+            reinterpret_cast<uintptr_t>(&dialog_set_text_color2_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x81, 0x80, 0x00, 0x00, 0x00, 0x8B, 0x44},
+        },
+        {
+            0x00609CF0,
+            reinterpret_cast<uintptr_t>(&dialog_set_text_color3_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x89, 0x81, 0x84, 0x00, 0x00, 0x00, 0x8B, 0x44},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {
