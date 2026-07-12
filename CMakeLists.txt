@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX)
 
+include(CTest)
+
 set(OPENSMACX_GAME_INSTALLER "" CACHE FILEPATH "Path to the locally owned GOG installer")
 set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
     "Directory used for extracted proprietary game data")
@@ -45,6 +47,7 @@ endif()
 
 set(OPENSMACX_SOURCES
     src/alpha.cpp
+    src/alphanet.cpp
     src/autosound.cpp
     src/base.cpp
     src/basebutton.cpp
@@ -132,8 +135,80 @@ if(MINGW)
         $<$<CONFIG:Release>:-static>
         $<$<CONFIG:Release>:-Wl,--allow-multiple-definition>
     )
+
+    set(OPENSMACX_ALPHANET_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/alphanet.cpp.obj")
+    add_custom_target(verify-recovery-abi
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
+            --nm "${CMAKE_NM}"
+            --objdump "${CMAKE_OBJDUMP}"
+            --object "${OPENSMACX_ALPHANET_OBJECT}"
+        DEPENDS OpenSMACX
+        USES_TERMINAL
+        VERBATIM
+    )
 elseif(MSVC)
     target_compile_options(OpenSMACX PRIVATE /W4)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(recovery-leaf-tests
+        tests/recovery_leaf_tests.cpp
+        src/alphanet.cpp
+        src/win.cpp
+    )
+    target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
+    target_compile_definitions(recovery-leaf-tests PRIVATE BUILD_DLL)
+    set_target_properties(recovery-leaf-tests PROPERTIES
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+
+    if(MINGW)
+        target_compile_options(recovery-leaf-tests PRIVATE
+            -pedantic
+            -Wall
+            -Wextra
+            -Wshadow
+            -Wcast-align
+            -Wfloat-conversion
+            -Wuseless-cast
+            -Wno-comment
+            -Wno-parentheses
+            -Wno-unknown-pragmas
+            $<$<CONFIG:Debug>:-Og>
+            $<$<CONFIG:Release>:-O2>
+        )
+    endif()
+
+    if(CMAKE_CROSSCOMPILING)
+        set(OPENSMACX_RECOVERY_TEST_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:recovery-leaf-tests>"
+        )
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_RECOVERY_TEST_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_test(NAME recovery-leaf-tests
+            COMMAND ${OPENSMACX_RECOVERY_TEST_COMMAND}
+        )
+    else()
+        add_test(NAME recovery-leaf-tests COMMAND recovery-leaf-tests)
+    endif()
+
+    if(MINGW)
+        add_test(NAME recovery-abi
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
+                --nm "${CMAKE_NM}"
+                --objdump "${CMAKE_OBJDUMP}"
+                --object "${OPENSMACX_ALPHANET_OBJECT}"
+        )
+    endif()
 endif()
 
 install(TARGETS OpenSMACX
