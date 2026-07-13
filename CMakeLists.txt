@@ -68,6 +68,7 @@ set(OPENSMACX_SOURCES
     src/base.cpp
     src/basebutton.cpp
     src/basepop.cpp
+    src/basepop_font.cpp
     src/buffer.cpp
     src/buttongroup.cpp
     src/caviar.cpp
@@ -159,6 +160,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scenario.cpp.obj")
     set(OPENSMACX_BUTTON_GROUP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buttongroup.cpp.obj")
+    set(OPENSMACX_BASEPOP_FONT_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
@@ -167,6 +170,7 @@ if(MINGW)
             --object "${OPENSMACX_ALPHANET_OBJECT}"
             --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
             --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
+            --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -179,6 +183,7 @@ if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
+        src/basepop_font.cpp
         src/buttongroup.cpp
         src/win.cpp
     )
@@ -234,6 +239,7 @@ if(BUILD_TESTING)
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
                 --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
                 --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
+                --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
         )
     endif()
 

@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--object", required=True)
     parser.add_argument("--scenario-object")
     parser.add_argument("--button-group-object")
+    parser.add_argument("--basepop-font-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -55,6 +56,36 @@ def main():
         fail("could not locate the AlphaNet fastcall adapter in disassembly")
     if not re.search(r"\bret\s+\$0x4\b", adapter.group("body")):
         fail("AlphaNet fastcall adapter does not pop its one stack argument")
+
+    if args.basepop_font_object:
+        basepop_headers = run([args.objdump, "-f", args.basepop_font_object])
+        if "file format pe-i386" not in basepop_headers:
+            fail("BasePop font object is not a 32-bit PE COFF object")
+        basepop_symbols = run([args.nm, "--defined-only", args.basepop_font_object])
+        required_basepop_symbols = {
+            "BasePop string-font setter":
+                "__ZN7BasePop15set_string_fontEP4FontS1_S1_S1_",
+            "BasePop string-font adapter":
+                "@_Z33base_pop_set_string_font_redirectP7BasePopPvP4FontS3_S3_S3_@24",
+        }
+        for description, symbol in required_basepop_symbols.items():
+            if symbol not in basepop_symbols:
+                fail(f"missing required BasePop symbol: {description}")
+        basepop_disassembly = run(
+            [args.objdump, "-d", "-C", args.basepop_font_object])
+        for description, label in (
+                ("BasePop string-font setter",
+                 "BasePop::set_string_font(Font*, Font*, Font*, Font*)"),
+                ("BasePop string-font adapter",
+                 "@_Z33base_pop_set_string_font_redirectP7BasePopPvP4FontS3_S3_S3_@24")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                basepop_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            if not returns or any(value != "10" for value in returns):
+                fail(f"{description} does not pop all four stack arguments")
 
     if args.button_group_object:
         button_headers = run([args.objdump, "-f", args.button_group_object])
