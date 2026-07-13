@@ -60,6 +60,11 @@ class GameplayScenarioToolTests(unittest.TestCase):
         validate_report(resolved, False, 3, 3, 5, True)
         with self.assertRaisesRegex(RuntimeError, "resolved movement"):
             validate_report(execution, False, 3, 3, 5, True)
+        advanced = dict(resolved, turn_advanced=True, initial_turn=12,
+                        advanced_turn=13, mission_year=2173)
+        validate_report(advanced, False, 3, 3, 5, True, True)
+        with self.assertRaisesRegex(RuntimeError, "turn advancement"):
+            validate_report(resolved, False, 3, 3, 5, True, True)
         with self.assertRaisesRegex(RuntimeError, "failed"):
             validate_report({"status": "failed", "error": "load_daemon_failed"}, False)
         with self.assertRaisesRegex(RuntimeError, "expected passing"):

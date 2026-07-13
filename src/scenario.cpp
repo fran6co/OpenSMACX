@@ -28,6 +28,7 @@ constexpr uintptr_t LoadFlagsAddress = 0x00453F70;
 constexpr uintptr_t MainInterfaceAddress = 0x007B0CB8;
 constexpr uintptr_t CurrentFactionAddress = 0x00939284;
 constexpr uintptr_t ActionGoToAddress = 0x004CB310;
+constexpr uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
 constexpr uintptr_t ExitTurnLoopAddress = 0x009B2068;
 constexpr uintptr_t ControlTurnPhaseAddress = 0x009B2070;
 constexpr size_t ConsoleSelectedVehicleOffset = 0x23BDC;
@@ -50,6 +51,7 @@ ActionGoToFunction ActionGoTo = reinterpret_cast<ActionGoToFunction>(ActionGoToA
 enum class ScenarioPhase {
     Inactive,
     Loaded,
+    AwaitingAdvance,
     Finished,
 };
 
@@ -59,12 +61,14 @@ struct ScenarioState {
     char result_path[1024];
     bool inspect_only;
     bool resolve_movement;
+    bool advance_turn;
     int vehicle_id;
     int target_x;
     int target_y;
     int initial_turn;
     int initial_x;
     int initial_y;
+    int movement_cost;
 };
 
 ScenarioState State = {};
@@ -143,6 +147,12 @@ bool configure_scenario() {
     char resolve[8];
     State.resolve_movement = read_environment(
         "OPENSMACX_SCENARIO_RESOLVE", resolve, sizeof(resolve));
+    char advance[8];
+    State.advance_turn = read_environment(
+        "OPENSMACX_SCENARIO_ADVANCE", advance, sizeof(advance));
+    if (State.advance_turn) {
+        State.resolve_movement = true;
+    }
     if (!State.inspect_only
         && (!parse_environment_int("OPENSMACX_SCENARIO_VEHICLE", State.vehicle_id)
             || !parse_environment_int("OPENSMACX_SCENARIO_X", State.target_x)
@@ -293,6 +303,14 @@ void execute_commands(Console *self) {
         finish_failure("invalid_movement_fixture_stack");
         return;
     }
+    if (State.advance_turn) {
+        for (int vehicle = 0; vehicle < *VehCurrentCount; vehicle++) {
+            if (get_triad(vehicle) == TRIAD_AIR) {
+                finish_failure("turn_fixture_contains_air_vehicle");
+                return;
+            }
+        }
+    }
 
     write_progress("before_move_order");
     go_to(State.vehicle_id, 0, State.target_x, State.target_y);
@@ -307,6 +325,7 @@ void execute_commands(Console *self) {
     }
     int movement_cost = static_cast<int>(Vehs[State.vehicle_id].moves_expended)
         - initial_moves_expended;
+    State.movement_cost = movement_cost;
     bool order_cleared = Vehs[State.vehicle_id].order == ORDER_NONE;
     bool movement_resolved = State.resolve_movement
         && Vehs[State.vehicle_id].x == State.target_x
@@ -328,6 +347,11 @@ void execute_commands(Console *self) {
         && *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) == 0;
     bool passed = movement_ordered && end_turn_requested
         && (!State.resolve_movement || movement_resolved);
+    if (passed && State.advance_turn) {
+        State.phase = ScenarioPhase::AwaitingAdvance;
+        write_progress("awaiting_turn_advance");
+        return;
+    }
     const char *status = passed ? "passed" : "failed";
 
     char output[1024];
@@ -368,11 +392,13 @@ void __cdecl scenario_opening_movie(char *movie_name) {
 
 extern "C" {
 volatile int ScenarioTrampolineAction = 0;
+volatile int ScenarioTurnAdvanceAction = 0;
 }
 
 extern "C" void __cdecl scenario_human_turn_ready(Console *self) {
     ScenarioTrampolineAction = 0;
-    if (State.phase == ScenarioPhase::Inactive) {
+    if (State.phase == ScenarioPhase::Inactive
+        || State.phase == ScenarioPhase::AwaitingAdvance) {
         return;
     }
     ScenarioTrampolineAction = 2;
@@ -395,6 +421,75 @@ extern "C" void __cdecl scenario_human_turn_ready(Console *self) {
     }
 }
 
+extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
+    ScenarioTurnAdvanceAction = 0;
+    if (State.phase != ScenarioPhase::AwaitingAdvance) {
+        return;
+    }
+    ScenarioTurnAdvanceAction = 1;
+    int advanced_turn = *TurnCurrentNum;
+    uint32_t expected_year = game_year(advanced_turn);
+    bool turn_advanced = caller_return == TurnUpkeepCallerReturn
+        && advanced_turn == State.initial_turn + 1
+        && *MissionYearCurrent == expected_year
+        && Vehs[State.vehicle_id].x == State.target_x
+        && Vehs[State.vehicle_id].y == State.target_y;
+    if (!turn_advanced) {
+        char failure[768];
+        int failure_size = snprintf(failure, sizeof(failure),
+            "{\n"
+            "  \"status\": \"failed\",\n"
+            "  \"error\": \"turn_advance_validation_failed\",\n"
+            "  \"caller_return\": %u,\n"
+            "  \"expected_caller_return\": %u,\n"
+            "  \"initial_turn\": %d,\n"
+            "  \"advanced_turn\": %d,\n"
+            "  \"mission_year\": %u,\n"
+            "  \"expected_year\": %u,\n"
+            "  \"vehicle_position\": [%d, %d],\n"
+            "  \"target\": [%d, %d]\n"
+            "}\n",
+            static_cast<unsigned int>(caller_return),
+            static_cast<unsigned int>(TurnUpkeepCallerReturn),
+            State.initial_turn, advanced_turn, *MissionYearCurrent, expected_year,
+            Vehs[State.vehicle_id].x, Vehs[State.vehicle_id].y,
+            State.target_x, State.target_y);
+        State.phase = ScenarioPhase::Finished;
+        *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+        if (failure_size > 0 && static_cast<size_t>(failure_size) < sizeof(failure)) {
+            write_bytes(failure, static_cast<DWORD>(failure_size));
+        }
+        return;
+    }
+
+    char output[1024];
+    int size = snprintf(output, sizeof(output),
+        "{\n"
+        "  \"status\": \"passed\",\n"
+        "  \"turn\": %d,\n"
+        "  \"initial_turn\": %d,\n"
+        "  \"advanced_turn\": %d,\n"
+        "  \"mission_year\": %u,\n"
+        "  \"vehicle\": %d,\n"
+        "  \"start\": [%d, %d],\n"
+        "  \"target\": [%d, %d],\n"
+        "  \"movement_ordered\": true,\n"
+        "  \"movement_resolved\": true,\n"
+        "  \"order_cleared\": true,\n"
+        "  \"movement_cost\": %d,\n"
+        "  \"end_turn_requested\": true,\n"
+        "  \"turn_advanced\": true\n"
+        "}\n",
+        advanced_turn, State.initial_turn, advanced_turn, *MissionYearCurrent,
+        State.vehicle_id, State.initial_x, State.initial_y,
+        State.target_x, State.target_y, State.movement_cost);
+    State.phase = ScenarioPhase::Finished;
+    *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+    if (size > 0 && static_cast<size_t>(size) < sizeof(output)) {
+        write_bytes(output, static_cast<DWORD>(size));
+    }
+}
+
 #ifdef __GNUC__
 __attribute__((naked)) void scenario_human_turn_trampoline() {
     __asm__ __volatile__(
@@ -404,14 +499,16 @@ __attribute__((naked)) void scenario_human_turn_trampoline() {
         "pushl %esi\n\t"
         "call _scenario_human_turn_ready\n\t"
         "addl $4, %esp\n\t"
+        "cmpl $0, _ScenarioTrampolineAction\n\t"
+        "jne 1f\n\t"
         "popal\n\t"
         "popfl\n\t"
-        "cmpl $0, _ScenarioTrampolineAction\n\t"
-        "je 1f\n\t"
-        "pushl $0x005147b9\n\t"
+        "pushl $0x0051418f\n\t"
         "ret\n\t"
         "1:\n\t"
-        "pushl $0x0051418f\n\t"
+        "popal\n\t"
+        "popfl\n\t"
+        "pushl $0x005147b9\n\t"
         "ret\n\t");
 }
 #else
@@ -423,14 +520,63 @@ __declspec(naked) void scenario_human_turn_trampoline() {
         push esi
         call scenario_human_turn_ready
         add esp, 4
+        cmp ScenarioTrampolineAction, 0
+        jne exit_human_turn
         popad
         popfd
-        cmp ScenarioTrampolineAction, 0
-        je continue_human_turn
+        push 0051418Fh
+        ret
+    exit_human_turn:
+        popad
+        popfd
         push 005147B9h
         ret
-    continue_human_turn:
-        push 0051418Fh
+    }
+}
+#endif
+
+#ifdef __GNUC__
+__attribute__((naked)) void scenario_turn_advance_trampoline() {
+    __asm__ __volatile__(
+        "pushfl\n\t"
+        "pushal\n\t"
+        "pushl 4(%ebp)\n\t"
+        "call _scenario_turn_advanced\n\t"
+        "addl $4, %esp\n\t"
+        "cmpl $0, _ScenarioTurnAdvanceAction\n\t"
+        "jne 1f\n\t"
+        "popal\n\t"
+        "popfl\n\t"
+        "pushl $0x00525af9\n\t"
+        "pushl $0x0046fb10\n\t"
+        "ret\n\t"
+        "1:\n\t"
+        "popal\n\t"
+        "popfl\n\t"
+        "movl $0x005282ce, 4(%ebp)\n\t"
+        "pushl $0x00526026\n\t"
+        "ret\n\t");
+}
+#else
+__declspec(naked) void scenario_turn_advance_trampoline() {
+    __asm {
+        pushfd
+        pushad
+        push dword ptr [ebp + 4]
+        call scenario_turn_advanced
+        add esp, 4
+        cmp ScenarioTurnAdvanceAction, 0
+        jne exit_upkeep
+        popad
+        popfd
+        push 00525AF9h
+        push 0046FB10h
+        ret
+    exit_upkeep:
+        popad
+        popfd
+        mov dword ptr [ebp + 4], 005282CEh
+        push 00526026h
         ret
     }
 }
