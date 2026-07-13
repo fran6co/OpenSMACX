@@ -102,6 +102,16 @@ int Dialog::id_to_pos(int id) {
     return entry_position_;
 }
 
+/*
+Purpose: Select a dialog item by its bounded list ID.
+Original Offset: 006099D0
+Return Value: n/a
+Status: Complete
+*/
+void Dialog::set_selected_id(int id) {
+    selected_position_ = id_to_pos(id);
+}
+
 int __fastcall dialog_set_font_redirect(
     Dialog *self, void *, Font *font1, Font *font2, Font *font3) {
     return self->set_dialog_font(font1, font2, font3);
@@ -125,4 +135,8 @@ void __fastcall dialog_set_text_color3_redirect(
 
 int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id) {
     return self->id_to_pos(id);
+}
+
+void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id) {
+    self->set_selected_id(id);
 }
