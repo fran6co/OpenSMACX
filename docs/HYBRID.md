@@ -54,8 +54,49 @@ cmake --build --preset mingw-i686-release --target smoke-hybrid-game
 The smoke harness snapshots matching processes before launch, captures Wine loader diagnostics,
 and requires the hybrid executable, `OpenSMACX.dll`, `prax.dll`, Wine's built-in `DDRAW.dll`, and a
 DirectDraw surface flip. It fails on unhandled-exception diagnostics and writes
-`hybrid-smoke-result.json` beside the build output. It never terminates pre-existing or newly
-launched game processes.
+`hybrid-smoke-result.json` beside the build output. Runtime tests use the dedicated
+`OPENSMACX_WINE_PREFIX` (a separate `wineprefix` under each build directory by default), reject any
+existing prefix without the OpenSMACX ownership marker, and stop that prefix before and after each
+launch. They never issue a global Wine shutdown or touch another prefix.
+
+## Deterministic gameplay gate
+
+The gameplay driver loads a local save through the in-process load path, reaches the active human
+turn seam, issues a source-owned `go_to` command, verifies the resulting movement order and
+waypoint, requests the recovered end-turn state, writes JSON, and exits before script- or
+popup-driven upkeep. It does not claim that movement was resolved or that the next turn began.
+
+Keep the fixture under `OPENSMACX_GAME_DIR`; saves are proprietary local test data and must remain
+ignored. Configure a fixture and inspect it before choosing a legal vehicle and adjacent target:
+
+```sh
+cmake --preset mingw-i686-release \
+  -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python" \
+  -DOPENSMACX_GAMEPLAY_SCENARIO_SAVE="scenarios/Alpha Centauri Scenarios/1Explore/Explore.SC"
+cmake --build --preset mingw-i686-release --target inspect-gameplay-scenario
+```
+
+The inspection result reports the loaded turn, current faction, a movable candidate vehicle, and
+adjacent-tile occupancy, terrain, base, and movement-cost diagnostics. Configure an empty on-map
+adjacent target compatible with the candidate's triad and run the assertion gate:
+
+```sh
+cmake --preset mingw-i686-release \
+  -DOPENSMACX_GAMEPLAY_SCENARIO_VEHICLE=0 \
+  -DOPENSMACX_GAMEPLAY_SCENARIO_X=23 \
+  -DOPENSMACX_GAMEPLAY_SCENARIO_Y=27
+cmake --build --preset mingw-i686-release --target run-gameplay-scenario
+```
+
+The targets run the source-owned host tests, restage the hybrid, and write
+`gameplay-scenario-result.json` and `gameplay-scenario.log` beside the build output. The host runner
+snapshots matching processes before launch, terminates the scenario processes after their terminal
+result, verifies their removal, and rejects fatal Wine diagnostics. Each launch uses a local
+random-token executable alias. Cleanup stops every process in the dedicated owned prefix, then uses
+the alias to terminate any lingering Launch Services wrapper and assert that no scenario process
+survived; use `--leave-running` only for manual diagnosis. No process outside that prefix is
+affected.
+`OPENSMACX_GAMEPLAY_SCENARIO_TIMEOUT` controls the result timeout.
 
 Override `OPENSMACX_LEGACY_EXE`, `OPENSMACX_HYBRID_DIR`, and `OPENSMACX_HYBRID_EXE` to use other
 local hybrid paths. `OPENSMACX_LEGACY_LEAF_EXE` remains the independently analyzed pre-PRACX

@@ -26,6 +26,7 @@
 #include "dialog.h"
 #include "dialogs.h"
 #include "maininterface.h"
+#include "scenario.h"
 #include "win.h"
 
 #include <cstdint>
@@ -35,7 +36,8 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 25;
+constexpr size_t RedirectCount = 26;
+constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
     uint8_t *address;
@@ -51,6 +53,7 @@ struct RedirectSpec {
 };
 
 RedirectState Redirects[RedirectCount] = {};
+RedirectState CallRedirects[CallRedirectCount] = {};
 
 bool restore_redirect(RedirectState &state) {
     if (!state.installed) {
@@ -102,6 +105,48 @@ bool redirect_function(RedirectState &state, uintptr_t original_address,
     uint8_t patch[PatchSize] = {0xE9, 0, 0, 0, 0};
     uint32_t relative_jump = replacement_address - (original_address + PatchSize);
     memcpy(&patch[1], &relative_jump, sizeof(relative_jump));
+
+    state.address = original;
+    memcpy(state.original, original, PatchSize);
+    if (!VirtualProtect(
+            original, PatchSize, PAGE_EXECUTE_READWRITE, &state.original_protection)) {
+        return false;
+    }
+    memcpy(original, patch, PatchSize);
+    state.installed = true;
+    BOOL flushed = FlushInstructionCache(GetCurrentProcess(), original, PatchSize);
+    DWORD ignored_protection;
+    BOOL protected_ = VirtualProtect(
+        original, PatchSize, state.original_protection, &ignored_protection);
+    if (flushed && protected_) {
+        return true;
+    }
+    if (!restore_redirect(state)) {
+        TerminateProcess(GetCurrentProcess(), ERROR_INVALID_STATE);
+    }
+    return false;
+}
+
+bool redirect_call(RedirectState &state, uintptr_t call_address,
+                   uintptr_t replacement_address,
+                   const uint8_t expected_signature[SignatureSize]) {
+    static_assert(sizeof(uintptr_t) == sizeof(uint32_t), "runtime redirects require PE32");
+    auto *original = reinterpret_cast<uint8_t *>(call_address);
+    MEMORY_BASIC_INFORMATION memory_info;
+    if (VirtualQuery(original, &memory_info, sizeof(memory_info)) != sizeof(memory_info)
+        || memory_info.State != MEM_COMMIT || (memory_info.Protect & PAGE_GUARD) != 0) {
+        return false;
+    }
+    uintptr_t region_end = reinterpret_cast<uintptr_t>(memory_info.BaseAddress)
+        + memory_info.RegionSize;
+    if (call_address > region_end || SignatureSize > region_end - call_address
+        || memcmp(original, expected_signature, SignatureSize) != 0) {
+        return false;
+    }
+
+    uint8_t patch[PatchSize] = {0xE8, 0, 0, 0, 0};
+    uint32_t relative_call = replacement_address - (call_address + PatchSize);
+    memcpy(&patch[1], &relative_call, sizeof(relative_call));
 
     state.address = original;
     memcpy(state.original, original, PatchSize);
@@ -274,7 +319,13 @@ bool install_redirects() {
             0x004E25E0,
             reinterpret_cast<uintptr_t>(&alpha_net_pid_to_idx_redirect),
             {0x55, 0x8B, 0xEC, 0x8B, 0x55, 0x08, 0xB8, 0x01,
-             0x00, 0x00, 0x00, 0x81, 0xC1, 0x28, 0x09, 0x00},
+              0x00, 0x00, 0x00, 0x81, 0xC1, 0x28, 0x09, 0x00},
+        },
+        {
+            0x00514189,
+            reinterpret_cast<uintptr_t>(&scenario_human_turn_trampoline),
+            {0x89, 0xBE, 0x24, 0x3D, 0x02, 0x00, 0x39, 0x3D,
+             0x70, 0x20, 0x9B, 0x00, 0x0F, 0x84, 0xB4, 0x00},
         },
     };
     for (size_t index = 0; index < RedirectCount; index++) {
@@ -291,11 +342,50 @@ bool install_redirects() {
         }
         return false;
     }
+
+    const RedirectSpec call_specs[CallRedirectCount] = {
+        {
+            0x0052AB6D,
+            reinterpret_cast<uintptr_t>(&scenario_opening_movie),
+            {0xE8, 0x6E, 0x90, 0xED, 0xFF, 0x83, 0xC4, 0x04,
+             0x6A, 0x10, 0xFF, 0xD3, 0xF6, 0xC4, 0x80, 0x75},
+        },
+        {
+            0x0052AC4A,
+            reinterpret_cast<uintptr_t>(&scenario_top_menu),
+            {0xE8, 0x11, 0x37, 0x06, 0x00, 0x83, 0xC4, 0x04,
+             0x85, 0xC0, 0x0F, 0x85, 0xB9, 0x00, 0x00, 0x00},
+        },
+    };
+    for (size_t index = 0; index < CallRedirectCount; index++) {
+        if (redirect_call(CallRedirects[index], call_specs[index].original_address,
+                          call_specs[index].replacement_address,
+                          call_specs[index].signature)) {
+            continue;
+        }
+        while (index > 0) {
+            index--;
+            if (!restore_redirect(CallRedirects[index])) {
+                TerminateProcess(GetCurrentProcess(), ERROR_INVALID_STATE);
+            }
+        }
+        for (size_t redirect = RedirectCount; redirect > 0; redirect--) {
+            if (!restore_redirect(Redirects[redirect - 1])) {
+                TerminateProcess(GetCurrentProcess(), ERROR_INVALID_STATE);
+            }
+        }
+        return false;
+    }
     return true;
 }
 
 bool restore_redirects() {
     bool restored = true;
+    for (size_t index = CallRedirectCount; index > 0; index--) {
+        if (!restore_redirect(CallRedirects[index - 1])) {
+            restored = false;
+        }
+    }
     for (size_t index = RedirectCount; index > 0; index--) {
         if (!restore_redirect(Redirects[index - 1])) {
             restored = false;
