@@ -97,6 +97,9 @@ def main():
             "Dialog ID lookup": "__ZN6Dialog9id_to_posEi",
             "Dialog ID lookup adapter":
                 "@_Z25dialog_id_to_pos_redirectP6DialogPvi@12",
+            "Dialog selected-ID setter": "__ZN6Dialog15set_selected_idEi",
+            "Dialog selected-ID adapter":
+                "@_Z31dialog_set_selected_id_redirectP6DialogPvi@12",
         }
         for description, symbol in required_dialog_symbols.items():
             if symbol not in dialog_symbols:
@@ -105,7 +108,10 @@ def main():
         for description, label in (
                 ("Dialog ID lookup", "Dialog::id_to_pos(int)"),
                 ("Dialog ID lookup adapter",
-                 "@_Z25dialog_id_to_pos_redirectP6DialogPvi@12")):
+                 "@_Z25dialog_id_to_pos_redirectP6DialogPvi@12"),
+                ("Dialog selected-ID setter", "Dialog::set_selected_id(int)"),
+                ("Dialog selected-ID adapter",
+                 "@_Z31dialog_set_selected_id_redirectP6DialogPvi@12")):
             match = re.search(
                 rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
                 dialog_disassembly, re.DOTALL)

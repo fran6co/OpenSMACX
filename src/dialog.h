@@ -51,6 +51,7 @@ class DLLEXPORT Dialog {
   void set_dialog_text_color2(int color1, int color2, int color3, int color4);
   void set_dialog_text_color3(int color1, int color2, int color3, int color4);
   int id_to_pos(int id);
+  void set_selected_id(int id);
 
  private:
   LPVOID vtable_;
@@ -108,7 +109,7 @@ class DLLEXPORT Dialog {
   uint32_t field_E0_;
   uint32_t field_E4_;
   uint32_t field_E8_;
-  uint32_t state_flag_;
+  int selected_position_;
   uint32_t field_F0_;
 };
 
@@ -123,3 +124,4 @@ void __fastcall dialog_set_text_color2_redirect(
 void __fastcall dialog_set_text_color3_redirect(
     Dialog *self, void *, int color1, int color2, int color3, int color4);
 int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id);
+void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id);
