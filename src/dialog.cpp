@@ -75,6 +75,33 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
     text_color_3d_ = color4;
 }
 
+/*
+Purpose: Find an item ID's bounded position in the dialog string list.
+Original Offset: 00609AF0
+Return Value: Matching position, or the configured entry count on a miss
+Status: Complete
+*/
+int Dialog::id_to_pos(int id) {
+    if (entry_head_) {
+        int traversed = 0;
+        int count = entry_count_;
+        entry_position_ = 0;
+        current_entry_ = entry_head_;
+        if (count > 0) {
+            do {
+                DialogEntry *entry = current_entry_;
+                if (entry->id == id) {
+                    break;
+                }
+                entry_position_++;
+                traversed++;
+                current_entry_ = entry->next;
+            } while (traversed < count);
+        }
+    }
+    return entry_position_;
+}
+
 int __fastcall dialog_set_font_redirect(
     Dialog *self, void *, Font *font1, Font *font2, Font *font3) {
     return self->set_dialog_font(font1, font2, font3);
@@ -93,4 +120,9 @@ void __fastcall dialog_set_text_color2_redirect(
 void __fastcall dialog_set_text_color3_redirect(
     Dialog *self, void *, int color1, int color2, int color3, int color4) {
     self->set_dialog_text_color3(color1, color2, color3, color4);
+}
+
+
+int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id) {
+    return self->id_to_pos(id);
 }

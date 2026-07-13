@@ -19,6 +19,25 @@
 #include "font.h"
 #include "heap.h"
 
+#include <cstddef>
+
+struct DialogEntry {
+  uint32_t vtable;
+  int id;
+  void *payload;
+  DialogEntry *next;
+  DialogEntry *previous;
+  uint32_t secondary_vtable;
+  void *heap;
+};
+
+static_assert(sizeof(DialogEntry) == 0x1C,
+              "DialogEntry layout must match the original executable");
+static_assert(offsetof(DialogEntry, id) == 0x4,
+              "DialogEntry ID offset must match the original executable");
+static_assert(offsetof(DialogEntry, next) == 0xC,
+              "DialogEntry next offset must match the original executable");
+
  /*
   * Dialog class
   */
@@ -31,6 +50,7 @@ class DLLEXPORT Dialog {
   void set_dialog_text_color(int color1, int color2, int color3, int color4);
   void set_dialog_text_color2(int color1, int color2, int color3, int color4);
   void set_dialog_text_color3(int color1, int color2, int color3, int color4);
+  int id_to_pos(int id);
 
  private:
   LPVOID vtable_;
@@ -78,10 +98,10 @@ class DLLEXPORT Dialog {
   uint32_t field_B8_;
   uint32_t field_BC_;
   uint32_t field_C0_;
-  uint32_t field_C4_;
-  uint32_t field_C8_;
-  uint32_t field_CC_;
-  uint32_t field_D0_;
+  DialogEntry *entry_head_;
+  DialogEntry *current_entry_;
+  int entry_count_;
+  int entry_position_;
   uint32_t field_D4_;
   uint32_t field_D8_;
   uint32_t field_DC_;
@@ -102,3 +122,4 @@ void __fastcall dialog_set_text_color2_redirect(
     Dialog *self, void *, int color1, int color2, int color3, int color4);
 void __fastcall dialog_set_text_color3_redirect(
     Dialog *self, void *, int color1, int color2, int color3, int color4);
+int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id);
