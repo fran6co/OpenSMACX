@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--scenario-object")
     parser.add_argument("--button-group-object")
     parser.add_argument("--basepop-font-object")
+    parser.add_argument("--dialog-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -86,6 +87,33 @@ def main():
             returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != "10" for value in returns):
                 fail(f"{description} does not pop all four stack arguments")
+
+    if args.dialog_object:
+        dialog_headers = run([args.objdump, "-f", args.dialog_object])
+        if "file format pe-i386" not in dialog_headers:
+            fail("Dialog object is not a 32-bit PE COFF object")
+        dialog_symbols = run([args.nm, "--defined-only", args.dialog_object])
+        required_dialog_symbols = {
+            "Dialog ID lookup": "__ZN6Dialog9id_to_posEi",
+            "Dialog ID lookup adapter":
+                "@_Z25dialog_id_to_pos_redirectP6DialogPvi@12",
+        }
+        for description, symbol in required_dialog_symbols.items():
+            if symbol not in dialog_symbols:
+                fail(f"missing required Dialog symbol: {description}")
+        dialog_disassembly = run([args.objdump, "-d", "-C", args.dialog_object])
+        for description, label in (
+                ("Dialog ID lookup", "Dialog::id_to_pos(int)"),
+                ("Dialog ID lookup adapter",
+                 "@_Z25dialog_id_to_pos_redirectP6DialogPvi@12")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                dialog_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            if not returns or any(value != "4" for value in returns):
+                fail(f"{description} does not pop its single stack argument")
 
     if args.button_group_object:
         button_headers = run([args.objdump, "-f", args.button_group_object])

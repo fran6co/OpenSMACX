@@ -2,7 +2,9 @@
 #include "../src/alphanet.h"
 #include "../src/basepop.h"
 #include "../src/buttongroup.h"
+#include "../src/dialog.h"
 
+#include <climits>
 #include <cstring>
 #include <new>
 
@@ -165,6 +167,159 @@ void test_base_pop_string_font() {
     expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
+template <typename T>
+void write_at(uint8_t *storage, size_t offset, const T &value) {
+    std::memcpy(storage + offset, &value, sizeof(value));
+}
+
+void seed_dialog(uint8_t *storage, uint8_t *expected) {
+    seed_storage(storage, expected, sizeof(Dialog) + 32);
+}
+
+void test_dialog_id_to_pos() {
+    alignas(Dialog) uint8_t storage[sizeof(Dialog) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *dialog = new (storage + 16) Dialog;
+
+    seed_dialog(storage, expected);
+    DialogEntry *null_entry = nullptr;
+    const int stale_position = -7;
+    write_at(storage, 16 + 0xC4, null_entry);
+    write_at(storage, 16 + 0xD0, stale_position);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(dialog->id_to_pos(123) == stale_position);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_dialog(storage, expected);
+    auto *invalid_entry = reinterpret_cast<DialogEntry *>(1);
+    const int negative_count = INT_MIN;
+    write_at(storage, 16 + 0xC4, invalid_entry);
+    write_at(storage, 16 + 0xCC, negative_count);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, invalid_entry);
+    const int zero = 0;
+    write_at(expected, 16 + 0xD0, zero);
+    expect(dialog_id_to_pos_redirect(dialog, nullptr, INT_MAX) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, invalid_entry);
+    write_at(storage, 16 + 0xCC, zero);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, invalid_entry);
+    write_at(expected, 16 + 0xD0, zero);
+    expect(dialog->id_to_pos(INT_MIN) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    struct GuardedEntry {
+        uint8_t prefix[16];
+        DialogEntry entry;
+        uint8_t suffix[16];
+    } entries[3];
+    uint8_t entries_expected[sizeof(entries)];
+    seed_storage(reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+    entries[0].entry.id = 10;
+    entries[1].entry.id = 20;
+    entries[2].entry.id = 30;
+    entries[0].entry.next = &entries[1].entry;
+    entries[1].entry.next = &entries[2].entry;
+    entries[2].entry.next = &entries[0].entry;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+
+    seed_dialog(storage, expected);
+    DialogEntry *head = &entries[0].entry;
+    const int three = 3;
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    DialogEntry *second = &entries[1].entry;
+    const int one = 1;
+    write_at(expected, 16 + 0xC8, second);
+    write_at(expected, 16 + 0xD0, one);
+    expect(dialog->id_to_pos(20) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    entries[2].entry.id = 20;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, second);
+    write_at(expected, 16 + 0xD0, one);
+    expect(dialog->id_to_pos(20) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    entries[1].entry.id = 21;
+    entries[2].entry.id = 30;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    DialogEntry *third = &entries[2].entry;
+    const int two = 2;
+    write_at(expected, 16 + 0xC8, third);
+    write_at(expected, 16 + 0xD0, two);
+    expect(dialog->id_to_pos(30) == 2);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, head);
+    write_at(expected, 16 + 0xD0, three);
+    expect(dialog_id_to_pos_redirect(dialog, nullptr, -1) == 3);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, two);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, third);
+    write_at(expected, 16 + 0xD0, two);
+    expect(dialog->id_to_pos(INT_MIN) == 2);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    entries[1].entry.next = invalid_entry;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, two);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, invalid_entry);
+    write_at(expected, 16 + 0xD0, two);
+    expect(dialog->id_to_pos(-1) == 2);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    entries[0].entry.id = INT_MAX;
+    entries[0].entry.next = invalid_entry;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, one);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, head);
+    write_at(expected, 16 + 0xD0, zero);
+    expect(dialog->id_to_pos(INT_MAX) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+}
+
 }  // namespace
 
 int main() {
@@ -172,5 +327,6 @@ int main() {
     test_in_box_edges();
     test_button_group_lifecycle();
     test_base_pop_string_font();
+    test_dialog_id_to_pos();
     return failures == 0 ? 0 : 1;
 }
