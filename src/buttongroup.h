@@ -23,8 +23,10 @@
   */
 class DLLEXPORT ButtonGroup {
  public:
-  ButtonGroup() { ; }
-  ~ButtonGroup() { ; }
+  ButtonGroup();
+  ~ButtonGroup();
+  void close();
+  void init(int group_id, int flags);
   void add(BaseButton *button);
 
  private:
@@ -40,3 +42,7 @@ static_assert(sizeof(ButtonGroup) == 0x94,
               "ButtonGroup layout must match the original executable");
 
 void __fastcall button_group_add_redirect(ButtonGroup *self, void *, BaseButton *button);
+ButtonGroup *__fastcall button_group_construct_redirect(ButtonGroup *self, void *);
+uint32_t __fastcall button_group_close_redirect(ButtonGroup *self, void *);
+int __fastcall button_group_init_redirect(
+    ButtonGroup *self, void *, int group_id, int flags);

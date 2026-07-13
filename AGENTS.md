@@ -24,9 +24,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,125 candidates.
+- Current recovery backlog: 5,122 candidates.
 - Current local legacy-island count: 150, reduced from 174.
-- Source-recovery `DllMain` redirects: 25. The gameplay gate installs inactive-pass-through active-turn and post-increment upkeep hooks plus two call-site hooks; scenario behavior activates only when its environment is configured.
+- Source-recovery `DllMain` redirects: 28. The gameplay gate installs inactive-pass-through active-turn and post-increment upkeep hooks plus two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -72,6 +72,7 @@ Recovered source includes:
 - Four `Dialog` font and color setters.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc` and `ButtonGroup::add`.
+- `ButtonGroup` construction, close, and initialization.
 - `CaviarData` and `Caviar` constructors, scaling, camera state, and scaling getter.
 - `MainInterface::clear_message`, `desktop_update`, Buffer lifecycle hooks, and `Dialogs::close`.
 - `AlphaNet::pid_2_idx` and its fastcall-to-thiscall runtime adapter.
@@ -80,6 +81,7 @@ Other completed corrections and checks:
 
 - Fixed a latent `BasePop` layout hole with a `0xC94` placeholder. `BasePop` has verified size `0x3230`.
 - Added verified layouts for `CaviarData`, `Caviar`, `ButtonGroup`, `Buffer`, and `Dialog`.
+- ButtonGroup lifecycle tests verify the exact preserved `0x84..0x8B` constructor/close hole, complete initialization, object canaries, destructor behavior, and adapter return values.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
 - All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, and independent review.
@@ -89,7 +91,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after AlphaNet is 5,125 priorities and 150 islands.
+- Regenerated state after ButtonGroup lifecycle recovery is 5,122 priorities and 150 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -117,7 +119,7 @@ Other completed corrections and checks:
 
 - `src/alphanet.h`: committed aligned `AlphaNet` layout and adapter declaration.
 - `src/alphanet.cpp`: committed `AlphaNet::pid_2_idx` implementation.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 25 source recoveries plus the gameplay gate's active-turn and call-site hooks.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 28 source recoveries plus the gameplay gate's active-turn and call-site hooks.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -131,7 +133,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,125 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,122 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/summary.json`: canonical recovery-state counts.
