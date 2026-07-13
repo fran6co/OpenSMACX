@@ -27,6 +27,7 @@ class DLLEXPORT BasePop : GraphicWin {
   BasePop() { ; }
   ~BasePop() { ; }
   void set_loc(int x, int y);
+  int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
 
  private:
   uint32_t field_A14_;
@@ -344,3 +345,5 @@ static_assert(sizeof(BasePop) == 0x3230,
               "BasePop layout must match the original executable");
 
 void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y);
+int __fastcall base_pop_set_string_font_redirect(
+    BasePop *self, void *, Font *font1, Font *font2, Font *font3, Font *font4);
