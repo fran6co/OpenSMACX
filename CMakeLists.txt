@@ -157,6 +157,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/alphanet.cpp.obj")
     set(OPENSMACX_SCENARIO_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scenario.cpp.obj")
+    set(OPENSMACX_BUTTON_GROUP_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buttongroup.cpp.obj")
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
@@ -164,6 +166,7 @@ if(MINGW)
             --objdump "${CMAKE_OBJDUMP}"
             --object "${OPENSMACX_ALPHANET_OBJECT}"
             --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
+            --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -176,6 +179,7 @@ if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
+        src/buttongroup.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
@@ -229,6 +233,7 @@ if(BUILD_TESTING)
                 --objdump "${CMAKE_OBJDUMP}"
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
                 --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
+                --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
         )
     endif()
 

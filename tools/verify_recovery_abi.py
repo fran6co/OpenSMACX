@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--objdump", required=True)
     parser.add_argument("--object", required=True)
     parser.add_argument("--scenario-object")
+    parser.add_argument("--button-group-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -54,6 +55,56 @@ def main():
         fail("could not locate the AlphaNet fastcall adapter in disassembly")
     if not re.search(r"\bret\s+\$0x4\b", adapter.group("body")):
         fail("AlphaNet fastcall adapter does not pop its one stack argument")
+
+    if args.button_group_object:
+        button_headers = run([args.objdump, "-f", args.button_group_object])
+        if "file format pe-i386" not in button_headers:
+            fail("ButtonGroup object is not a 32-bit PE COFF object")
+        button_symbols = run([args.nm, "--defined-only", args.button_group_object])
+        required_button_symbols = {
+            "ButtonGroup constructor": "__ZN11ButtonGroupC1Ev",
+            "ButtonGroup destructor": "__ZN11ButtonGroupD1Ev",
+            "ButtonGroup close": "__ZN11ButtonGroup5closeEv",
+            "ButtonGroup init": "__ZN11ButtonGroup4initEii",
+            "ButtonGroup constructor adapter":
+                "@_Z31button_group_construct_redirectP11ButtonGroupPv@8",
+            "ButtonGroup close adapter":
+                "@_Z27button_group_close_redirectP11ButtonGroupPv@8",
+            "ButtonGroup init adapter":
+                "@_Z26button_group_init_redirectP11ButtonGroupPvii@16",
+        }
+        for description, symbol in required_button_symbols.items():
+            if symbol not in button_symbols:
+                fail(f"missing required ButtonGroup symbol: {description}")
+
+        button_disassembly = run(
+            [args.objdump, "-d", "-C", args.button_group_object])
+
+        def button_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                button_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate ButtonGroup function in disassembly: {label}")
+            return match.group("body")
+
+        init_body = button_body("ButtonGroup::init(int, int)")
+        if not re.search(r"\bret\s+\$0x8\b", init_body):
+            fail("ButtonGroup::init does not use two-argument thiscall cleanup")
+        constructor_adapter = button_body(
+            "@_Z31button_group_construct_redirectP11ButtonGroupPv@8")
+        if not re.search(r"\bret\b", constructor_adapter) or re.search(
+                r"\bret\s+\$", constructor_adapter):
+            fail("ButtonGroup constructor adapter does not use plain fastcall return")
+        close_adapter = button_body(
+            "@_Z27button_group_close_redirectP11ButtonGroupPv@8")
+        if not re.search(r"\bret\b", close_adapter) or re.search(
+                r"\bret\s+\$", close_adapter):
+            fail("ButtonGroup close adapter does not use plain fastcall return")
+        init_adapter = button_body(
+            "@_Z26button_group_init_redirectP11ButtonGroupPvii@16")
+        if not re.search(r"\bret\s+\$0x8\b", init_adapter):
+            fail("ButtonGroup init adapter does not pop its two stack arguments")
 
     if not args.scenario_object:
         return
