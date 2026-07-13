@@ -12,7 +12,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Use extracted COFF symbols as the differential oracle only for conservative self-contained legacy leaves. Functions with calls, absolute globals, relocations, or process state must be exercised at their original address inside the verified hybrid process.
 - Keep all proprietary oracle assembly, objects, fixtures derived from original bytes, and runtime artifacts local and ignored. Commit only source-owned tests and tooling.
 - Smoke launches do not exercise uncommon paths such as multiplayer. Add isolated source-level tests.
-- Do not terminate pre-existing Wine or game processes without permission. An old high-CPU `terranx_hybrid.exe` process was observed.
+- Runtime tests use a dedicated marker-protected Wine prefix and stop only that prefix. The scenario runner additionally tracks its per-run random executable alias. Never issue a global Wine shutdown or terminate unrelated processes.
 - Keep proprietary runtime and tool data ignored under `.opensmacx/` and `build/`.
 - Never commit or distribute generated assembly or object files.
 - Keep each eligible legacy island as a separate symbol and section so it can be replaced independently.
@@ -26,7 +26,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Thunks: 35.
 - Current recovery backlog: 5,125 candidates.
 - Current local legacy-island count: 150, reduced from 174.
-- Committed `DllMain` redirects: 25.
+- Source-recovery `DllMain` redirects: 25. The gameplay gate installs one inactive-pass-through active-turn hook and two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -87,8 +87,8 @@ Other completed corrections and checks:
 ### Recovery Verification
 
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
-- CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine when it is not configured explicitly.
-- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, and fastcall adapter cleanup.
+- CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
+- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and the gameplay trampoline's overwritten instruction, preserved state, callback stack cleanup, and continuations.
 - Regenerated state after AlphaNet is 5,125 priorities and 150 islands.
 
 ### Hybrid Runtime Compatibility
@@ -101,12 +101,15 @@ Other completed corrections and checks:
 - Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 150 islands.
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle and explicitly passes `WINEPREFIX`.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
-- `tools/smoke_hybrid_game.py` automates that gate, records pre-existing and new process IDs, validates module and rendering markers, rejects unhandled exceptions, and writes a JSON result without terminating processes.
+- `tools/smoke_hybrid_game.py` automates that gate, validates module and rendering markers, rejects unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
+- `tools/run_gameplay_scenario.py` loads a local ignored save, inspects legal movement candidates, or asserts source `go_to` movement-order state and the end-turn request before popup/script upkeep.
+- The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`.
+- The gameplay trampoline at the verified `Console::human_turn` seam preserves registers and flags, executes the overwritten store, and selects either the ordinary or early-exit continuation.
 - `~/Desktop/backtrace.txt` is manually saved and cannot be used as an automatic crash signal.
 
 ## Next Steps
 
-1. Add a deterministic gameplay scenario driver that loads a known local test save, issues unit movement and end-turn commands through in-process functions, asserts state, writes machine-readable results, and exits.
+1. Add a separate deterministic continuation fixture for resolved movement and later-turn advancement without relying on popup/script-driven upkeep.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 3. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
 
@@ -114,7 +117,8 @@ Other completed corrections and checks:
 
 - `src/alphanet.h`: committed aligned `AlphaNet` layout and adapter declaration.
 - `src/alphanet.cpp`: committed `AlphaNet::pid_2_idx` implementation.
-- `src/dllmain.cpp`: transactional signature-checked redirects; currently 25 specifications with AlphaNet.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 25 source recoveries plus the gameplay gate's active-turn and call-site hooks.
+- `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
 - `src/buffer.h`, `src/buffer.cpp`: recovered Buffer setters and lifecycle hooks.
@@ -135,6 +139,10 @@ Other completed corrections and checks:
 - `tools/test_extract_legacy_leaves.py`: 12 island-classifier regression tests.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.
 - `tools/test_smoke_hybrid_game.py`: source-owned smoke-diagnostics parser tests.
+- `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
+- `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
+- `tools/run_gameplay_scenario.py`: deterministic scenario launcher, result validator, and owned-process cleanup.
+- `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
@@ -150,4 +158,4 @@ Other completed corrections and checks:
 
 ## Current Blocker
 
-There is no recovery or tooling blocker. Runtime evidence is currently process/log based; visible UI and gameplay progression are not automated yet. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine or game processes to make room for a test.
+There is no recovery or tooling blocker. The gameplay gate currently verifies movement-order issuance and end-turn request state, not resolved movement or next-turn advancement. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.

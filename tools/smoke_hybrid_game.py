@@ -5,10 +5,17 @@ import json
 import os
 from pathlib import Path, PureWindowsPath
 import re
+import secrets
 import subprocess
 import sys
 import time
 
+from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
+from runtime_process import (
+    matching_scenario_process_ids,
+    stage_scenario_executable,
+    stop_executable_processes,
+)
 from setup_game import find_wine
 
 
@@ -133,23 +140,33 @@ def main():
     game_dir = Path(args.game_dir).expanduser().resolve()
     log_path = Path(args.log).expanduser().resolve()
     result_path = Path(args.result).expanduser().resolve()
-    wine_prefix = (Path(args.wine_prefix).expanduser().resolve()
+    wine_prefix = (Path(args.wine_prefix).expanduser().absolute()
                    if args.wine_prefix else None)
     report = {
         "duration_seconds": args.duration,
         "status": "failed",
     }
 
+    prefix_prepared = False
+    process = None
+    scenario_executable = None
     try:
         if args.duration <= 0:
             raise RuntimeError("duration must be positive")
+        if os.name != "nt" and wine_prefix is None:
+            raise RuntimeError("a dedicated --wine-prefix is required")
         if not log_path.parent.is_dir() or not result_path.parent.is_dir():
             raise RuntimeError("log and result parent directories must exist")
+        if os.name != "nt":
+            prepare_owned_wine_prefix(wine_prefix, args.wine)
+            prefix_prepared = True
         executable = validate_executable(game_dir, args.executable)
-        before = matching_process_ids(executable)
+        scenario_executable = stage_scenario_executable(
+            executable, secrets.token_hex(16))
+        before = matching_scenario_process_ids(scenario_executable)
         log_path.write_text("", encoding="utf-8")
         process, log_file = launch(
-            executable, args.wine, wine_prefix, log_path)
+            scenario_executable, args.wine, wine_prefix, log_path)
         try:
             deadline = time.monotonic() + args.duration
             while time.monotonic() < deadline:
@@ -162,12 +179,13 @@ def main():
                 log_file.close()
 
         diagnostics = log_path.read_text(encoding="utf-8", errors="replace")
-        analysis = analyze_diagnostics(diagnostics, executable.name)
-        after = matching_process_ids(executable)
+        analysis = analyze_diagnostics(diagnostics, scenario_executable.name)
+        after = matching_scenario_process_ids(scenario_executable)
         new_processes = sorted(after - before)
         report.update({
             **analysis,
             "executable": str(executable),
+            "launch_executable": str(scenario_executable),
             "log": str(log_path),
             "new_processes": new_processes,
             "preexisting_processes": sorted(before),
@@ -184,6 +202,24 @@ def main():
         report["status"] = "passed"
     except (OSError, subprocess.CalledProcessError, RuntimeError) as error:
         report["error"] = str(error)
+    finally:
+        try:
+            if os.name == "nt" and process is not None and process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5.0)
+            elif prefix_prepared:
+                stop_owned_wine_prefix(wine_prefix, args.wine)
+            if (scenario_executable is not None
+                    and not stop_executable_processes(scenario_executable)):
+                raise RuntimeError("smoke processes did not terminate")
+            if scenario_executable is not None:
+                scenario_executable.unlink(missing_ok=True)
+            report["runtime_stopped"] = True
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired,
+                RuntimeError) as error:
+            report["status"] = "failed"
+            report["runtime_stopped"] = False
+            report["error"] = f"runtime cleanup failed: {error}"
     result_path.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"Hybrid smoke result: {report['status']}")

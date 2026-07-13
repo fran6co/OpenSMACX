@@ -9,10 +9,20 @@ set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
     "Directory used for extracted proprietary game data")
 set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requirements.txt installed")
 set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
-set(OPENSMACX_WINE_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/wineprefix"
-    CACHE PATH "Wine prefix used to run the staged game")
+set(OPENSMACX_WINE_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/wineprefix"
+    CACHE PATH "Dedicated owned Wine prefix used only by this build's runtime tests")
 set(OPENSMACX_HYBRID_SMOKE_SECONDS 20 CACHE STRING
     "Seconds to observe a staged hybrid smoke launch")
+set(OPENSMACX_GAMEPLAY_SCENARIO_SAVE "" CACHE STRING
+    "Local fixture path relative to OPENSMACX_GAME_DIR")
+set(OPENSMACX_GAMEPLAY_SCENARIO_VEHICLE "" CACHE STRING
+    "Vehicle ID used by the deterministic gameplay scenario")
+set(OPENSMACX_GAMEPLAY_SCENARIO_X "" CACHE STRING
+    "Destination X coordinate used by the deterministic gameplay scenario")
+set(OPENSMACX_GAMEPLAY_SCENARIO_Y "" CACHE STRING
+    "Destination Y coordinate used by the deterministic gameplay scenario")
+set(OPENSMACX_GAMEPLAY_SCENARIO_TIMEOUT 60 CACHE STRING
+    "Seconds to wait for a deterministic gameplay scenario result")
 set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx.exe" CACHE FILEPATH
     "User-owned executable used to prepare the local hybrid image")
 set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" CACHE PATH
@@ -83,6 +93,7 @@ set(OPENSMACX_SOURCES
     src/probe.cpp
     src/random.cpp
     src/scroll.cpp
+    src/scenario.cpp
     src/spot.cpp
     src/sprite.cpp
     src/stdafx.cpp
@@ -144,12 +155,15 @@ if(MINGW)
 
     set(OPENSMACX_ALPHANET_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/alphanet.cpp.obj")
+    set(OPENSMACX_SCENARIO_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scenario.cpp.obj")
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
             --nm "${CMAKE_NM}"
             --objdump "${CMAKE_OBJDUMP}"
             --object "${OPENSMACX_ALPHANET_OBJECT}"
+            --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -194,6 +208,7 @@ if(BUILD_TESTING)
             "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
             --executable "$<TARGET_FILE:recovery-leaf-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
         )
         if(OPENSMACX_WINE)
             list(APPEND OPENSMACX_RECOVERY_TEST_COMMAND
@@ -213,12 +228,18 @@ if(BUILD_TESTING)
                 --nm "${CMAKE_NM}"
                 --objdump "${CMAKE_OBJDUMP}"
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
+                --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
         )
     endif()
 
     add_test(NAME hybrid-smoke-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_smoke_hybrid_game.py"
+    )
+
+    add_test(NAME gameplay-scenario-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
     )
 endif()
 
@@ -300,7 +321,55 @@ add_custom_target(smoke-hybrid-game
         stage-hybrid-game
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/smoke_hybrid_game.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_smoke_hybrid_game.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_game.py"
+    USES_TERMINAL
+    VERBATIM
+)
+
+set(OPENSMACX_GAMEPLAY_SCENARIO_COMMAND
+    "${OPENSMACX_PYTHON_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_gameplay_scenario.py"
+    --game-dir "${OPENSMACX_GAME_DIR}"
+    --executable terranx_hybrid.exe
+    --save "${OPENSMACX_GAMEPLAY_SCENARIO_SAVE}"
+    --result "${CMAKE_CURRENT_BINARY_DIR}/gameplay-scenario-result.json"
+    --log "${CMAKE_CURRENT_BINARY_DIR}/gameplay-scenario.log"
+    --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+    --timeout "${OPENSMACX_GAMEPLAY_SCENARIO_TIMEOUT}"
+)
+if(OPENSMACX_WINE)
+    list(APPEND OPENSMACX_GAMEPLAY_SCENARIO_COMMAND --wine "${OPENSMACX_WINE}")
+endif()
+
+add_custom_target(inspect-gameplay-scenario
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
+    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND} --inspect
+    DEPENDS
+        stage-hybrid-game
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_gameplay_scenario.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
+    USES_TERMINAL
+    VERBATIM
+)
+
+add_custom_target(run-gameplay-scenario
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
+    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND}
+        --vehicle "${OPENSMACX_GAMEPLAY_SCENARIO_VEHICLE}"
+        --x "${OPENSMACX_GAMEPLAY_SCENARIO_X}"
+        --y "${OPENSMACX_GAMEPLAY_SCENARIO_Y}"
+    DEPENDS
+        stage-hybrid-game
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_gameplay_scenario.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
     USES_TERMINAL
     VERBATIM
 )
