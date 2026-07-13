@@ -102,14 +102,14 @@ Other completed corrections and checks:
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle and explicitly passes `WINEPREFIX`.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
 - `tools/smoke_hybrid_game.py` automates that gate, validates module and rendering markers, rejects unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
-- `tools/run_gameplay_scenario.py` loads a local ignored save, inspects legal movement candidates, or asserts source `go_to` movement-order state and the end-turn request before popup/script upkeep.
-- The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`.
+- `tools/run_gameplay_scenario.py` loads a local ignored save, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
+- The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
 - The gameplay trampoline at the verified `Console::human_turn` seam preserves registers and flags, executes the overwritten store, and selects either the ordinary or early-exit continuation.
 - `~/Desktop/backtrace.txt` is manually saved and cannot be used as an automatic crash signal.
 
 ## Next Steps
 
-1. Add a separate deterministic continuation fixture for resolved movement and later-turn advancement without relying on popup/script-driven upkeep.
+1. Add a deterministic turn-advancement fixture that exits immediately after the turn/year increment and before popup/script-driven upkeep.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 3. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
 
@@ -158,4 +158,4 @@ Other completed corrections and checks:
 
 ## Current Blocker
 
-There is no recovery or tooling blocker. The gameplay gate currently verifies movement-order issuance and end-turn request state, not resolved movement or next-turn advancement. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.
+There is no recovery or tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, and end-turn request state, but not next-turn advancement. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.

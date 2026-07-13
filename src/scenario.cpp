@@ -27,6 +27,7 @@ constexpr uintptr_t OpeningMovieAddress = 0x00403BE0;
 constexpr uintptr_t LoadFlagsAddress = 0x00453F70;
 constexpr uintptr_t MainInterfaceAddress = 0x007B0CB8;
 constexpr uintptr_t CurrentFactionAddress = 0x00939284;
+constexpr uintptr_t ActionGoToAddress = 0x004CB310;
 constexpr uintptr_t ExitTurnLoopAddress = 0x009B2068;
 constexpr uintptr_t ControlTurnPhaseAddress = 0x009B2070;
 constexpr size_t ConsoleSelectedVehicleOffset = 0x23BDC;
@@ -38,11 +39,13 @@ using TopMenuFunction = int (__cdecl *)(int);
 using OpeningMovieFunction = void (__cdecl *)(char *);
 using LoadFlagsFunction = void (__cdecl *)();
 using InterfaceRefreshFunction = void (__fastcall *)(void *, void *);
+using ActionGoToFunction = void (__cdecl *)(int);
 
 TopMenuFunction OriginalTopMenu = reinterpret_cast<TopMenuFunction>(TopMenuAddress);
 OpeningMovieFunction OriginalOpeningMovie =
     reinterpret_cast<OpeningMovieFunction>(OpeningMovieAddress);
 LoadFlagsFunction LoadFlags = reinterpret_cast<LoadFlagsFunction>(LoadFlagsAddress);
+ActionGoToFunction ActionGoTo = reinterpret_cast<ActionGoToFunction>(ActionGoToAddress);
 
 enum class ScenarioPhase {
     Inactive,
@@ -55,6 +58,7 @@ struct ScenarioState {
     char save_path[1024];
     char result_path[1024];
     bool inspect_only;
+    bool resolve_movement;
     int vehicle_id;
     int target_x;
     int target_y;
@@ -136,6 +140,9 @@ bool configure_scenario() {
     char inspect[8];
     State.inspect_only = read_environment(
         "OPENSMACX_SCENARIO_INSPECT", inspect, sizeof(inspect));
+    char resolve[8];
+    State.resolve_movement = read_environment(
+        "OPENSMACX_SCENARIO_RESOLVE", resolve, sizeof(resolve));
     if (!State.inspect_only
         && (!parse_environment_int("OPENSMACX_SCENARIO_VEHICLE", State.vehicle_id)
             || !parse_environment_int("OPENSMACX_SCENARIO_X", State.target_x)
@@ -251,10 +258,12 @@ void execute_commands(Console *self) {
         return;
     }
     bool adjacent = false;
+    int movement_direction = -1;
     for (int index = 1; index < RadiusRange[1]; index++) {
         if (xrange(Vehs[State.vehicle_id].x + RadiusOffsetX[index]) == State.target_x
             && Vehs[State.vehicle_id].y + RadiusOffsetY[index] == State.target_y) {
             adjacent = true;
+            movement_direction = index - 1;
             break;
         }
     }
@@ -273,20 +282,53 @@ void execute_commands(Console *self) {
     State.initial_turn = *TurnCurrentNum;
     State.initial_x = Vehs[State.vehicle_id].x;
     State.initial_y = Vehs[State.vehicle_id].y;
+    int initial_moves_expended = Vehs[State.vehicle_id].moves_expended;
+    int expected_cost = hex_cost(
+        Vehs[State.vehicle_id].proto_id, Vehs[State.vehicle_id].faction_id,
+        State.initial_x, State.initial_y, State.target_x, State.target_y, false);
+    bool singleton_stack = Vehs[State.vehicle_id].next_veh_id_stack == -1
+        && Vehs[State.vehicle_id].prev_veh_id_stack == -1;
+    bool source_occupied = (bit_at(State.initial_x, State.initial_y) & BIT_VEH_IN_TILE) != 0;
+    if (State.resolve_movement && (!singleton_stack || !source_occupied)) {
+        finish_failure("invalid_movement_fixture_stack");
+        return;
+    }
 
     write_progress("before_move_order");
     go_to(State.vehicle_id, 0, State.target_x, State.target_y);
     write_progress("after_move_order");
-    request_end_turn(self);
-    auto *bytes = reinterpret_cast<uint8_t *>(self);
     bool movement_ordered = Vehs[State.vehicle_id].order == ORDER_MOVE_TO
         && Vehs[State.vehicle_id].waypoint_x[0] == State.target_x
         && Vehs[State.vehicle_id].waypoint_y[0] == State.target_y;
+    if (State.resolve_movement && movement_ordered) {
+        write_progress("before_move_resolution");
+        ActionGoTo(State.vehicle_id);
+        write_progress("after_move_resolution");
+    }
+    int movement_cost = static_cast<int>(Vehs[State.vehicle_id].moves_expended)
+        - initial_moves_expended;
+    bool order_cleared = Vehs[State.vehicle_id].order == ORDER_NONE;
+    bool movement_resolved = State.resolve_movement
+        && Vehs[State.vehicle_id].x == State.target_x
+        && Vehs[State.vehicle_id].y == State.target_y
+        && movement_cost == expected_cost
+        && Vehs[State.vehicle_id].unk_5 == movement_direction
+        && order_cleared
+        && veh_moves(State.vehicle_id) == 0
+        && veh_at(State.target_x, State.target_y) == State.vehicle_id
+        && (bit_at(State.target_x, State.target_y) & BIT_VEH_IN_TILE) != 0
+        && (bit_at(State.initial_x, State.initial_y) & BIT_VEH_IN_TILE) == 0
+        && Vehs[State.vehicle_id].next_veh_id_stack == -1
+        && Vehs[State.vehicle_id].prev_veh_id_stack == -1;
+    request_end_turn(self);
+    auto *bytes = reinterpret_cast<uint8_t *>(self);
     bool end_turn_requested = (*GameState & STATE_UNK_2) != 0
         && *reinterpret_cast<int *>(ControlTurnPhaseAddress) == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) == 0;
-    const char *status = movement_ordered && end_turn_requested ? "passed" : "failed";
+    bool passed = movement_ordered && end_turn_requested
+        && (!State.resolve_movement || movement_resolved);
+    const char *status = passed ? "passed" : "failed";
 
     char output[1024];
     int size = snprintf(output, sizeof(output),
@@ -297,11 +339,16 @@ void execute_commands(Console *self) {
         "  \"start\": [%d, %d],\n"
         "  \"target\": [%d, %d],\n"
         "  \"movement_ordered\": %s,\n"
+        "  \"movement_resolved\": %s,\n"
+        "  \"order_cleared\": %s,\n"
+        "  \"movement_cost\": %d,\n"
         "  \"end_turn_requested\": %s\n"
         "}\n",
         status, State.initial_turn, State.vehicle_id,
         State.initial_x, State.initial_y, State.target_x, State.target_y,
         movement_ordered ? "true" : "false",
+        movement_resolved ? "true" : "false",
+        order_cleared ? "true" : "false", movement_cost,
         end_turn_requested ? "true" : "false");
     State.phase = ScenarioPhase::Finished;
     *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;

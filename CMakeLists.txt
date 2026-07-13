@@ -374,6 +374,24 @@ add_custom_target(run-gameplay-scenario
     VERBATIM
 )
 
+add_custom_target(run-gameplay-resolution
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
+    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND}
+        --vehicle "${OPENSMACX_GAMEPLAY_SCENARIO_VEHICLE}"
+        --x "${OPENSMACX_GAMEPLAY_SCENARIO_X}"
+        --y "${OPENSMACX_GAMEPLAY_SCENARIO_Y}"
+        --resolve
+    DEPENDS
+        stage-hybrid-game
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_gameplay_scenario.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
+    USES_TERMINAL
+    VERBATIM
+)
+
 set(OPENSMACX_LEGACY_LEAF_ASSEMBLY
     "${OPENSMACX_LEGACY_LEAF_DIR}/legacy-leaves.S")
 set(OPENSMACX_LEGACY_LEAF_MANIFEST
