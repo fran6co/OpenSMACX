@@ -38,7 +38,7 @@ def wine_path(path):
     return "Z:" + str(path).replace("/", "\\")
 
 
-def validate_report(report, inspect, vehicle=None, x=None, y=None):
+def validate_report(report, inspect, vehicle=None, x=None, y=None, resolve=False):
     status = report.get("status")
     if status == "failed":
         raise RuntimeError(f"scenario failed: {report.get('error', 'unknown_error')}")
@@ -76,6 +76,11 @@ def validate_report(report, inspect, vehicle=None, x=None, y=None):
             or not isinstance(start, list) or len(start) != 2
             or any(type(value) is not int for value in start)):
         raise RuntimeError(f"expected passing scenario result, got {status!r}")
+    if resolve and (report.get("movement_resolved") is not True
+                    or report.get("order_cleared") is not True
+                    or type(report.get("movement_cost")) is not int
+                    or report["movement_cost"] <= 0):
+        raise RuntimeError("expected resolved movement result")
 
 
 def fatal_diagnostics(text):
@@ -105,7 +110,8 @@ def launch(executable, wine, wine_prefix, variables, log_path):
     for name in (
             "OPENSMACX_SCENARIO_SAVE", "OPENSMACX_SCENARIO_RESULT",
             "OPENSMACX_SCENARIO_INSPECT", "OPENSMACX_SCENARIO_VEHICLE",
-            "OPENSMACX_SCENARIO_X", "OPENSMACX_SCENARIO_Y"):
+            "OPENSMACX_SCENARIO_X", "OPENSMACX_SCENARIO_Y",
+            "OPENSMACX_SCENARIO_RESOLVE"):
         environment.pop(name, None)
     environment.update(variables)
     if wine_prefix:
@@ -151,6 +157,8 @@ def main():
     parser.add_argument("--wine-prefix")
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("--inspect", action="store_true")
+    parser.add_argument("--resolve", action="store_true",
+                        help="Resolve the issued movement order before asserting state")
     parser.add_argument("--vehicle", type=int)
     parser.add_argument("--x", type=int)
     parser.add_argument("--y", type=int)
@@ -202,6 +210,7 @@ def main():
             "OPENSMACX_SCENARIO_VEHICLE": "",
             "OPENSMACX_SCENARIO_X": "",
             "OPENSMACX_SCENARIO_Y": "",
+            "OPENSMACX_SCENARIO_RESOLVE": "",
         }
         if args.inspect:
             variables["OPENSMACX_SCENARIO_INSPECT"] = "1"
@@ -211,6 +220,8 @@ def main():
                 "OPENSMACX_SCENARIO_X": str(args.x),
                 "OPENSMACX_SCENARIO_Y": str(args.y),
             })
+            if args.resolve:
+                variables["OPENSMACX_SCENARIO_RESOLVE"] = "1"
 
         process, log_file = launch(
             scenario_executable, args.wine, wine_prefix, variables, log_path)
@@ -241,7 +252,8 @@ def main():
         if report.get("status") == "running":
             raise RuntimeError(
                 f"scenario stalled in phase {report.get('phase', 'unknown')!r}")
-        validate_report(report, args.inspect, args.vehicle, args.x, args.y)
+        validate_report(
+            report, args.inspect, args.vehicle, args.x, args.y, args.resolve)
         if os.name != "nt":
             owned_processes.update(matching_scenario_process_ids(scenario_executable))
         new_processes = set(owned_processes)

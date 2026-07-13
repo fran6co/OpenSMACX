@@ -55,6 +55,11 @@ class GameplayScenarioToolTests(unittest.TestCase):
             "start": [2, 4], "target": [3, 5],
         }
         validate_report(execution, False, 3, 3, 5)
+        resolved = dict(execution, movement_resolved=True, order_cleared=True,
+                        movement_cost=3)
+        validate_report(resolved, False, 3, 3, 5, True)
+        with self.assertRaisesRegex(RuntimeError, "resolved movement"):
+            validate_report(execution, False, 3, 3, 5, True)
         with self.assertRaisesRegex(RuntimeError, "failed"):
             validate_report({"status": "failed", "error": "load_daemon_failed"}, False)
         with self.assertRaisesRegex(RuntimeError, "expected passing"):

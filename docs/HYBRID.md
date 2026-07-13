@@ -64,7 +64,8 @@ launch. They never issue a global Wine shutdown or touch another prefix.
 The gameplay driver loads a local save through the in-process load path, reaches the active human
 turn seam, issues a source-owned `go_to` command, verifies the resulting movement order and
 waypoint, requests the recovered end-turn state, writes JSON, and exits before script- or
-popup-driven upkeep. It does not claim that movement was resolved or that the next turn began.
+popup-driven upkeep. The separate resolution mode dispatches that order through the verified
+`action_go_to` path and asserts actual relocation; neither mode claims that the next turn began.
 
 Keep the fixture under `OPENSMACX_GAME_DIR`; saves are proprietary local test data and must remain
 ignored. Configure a fixture and inspect it before choosing a legal vehicle and adjacent target:
@@ -87,6 +88,15 @@ cmake --preset mingw-i686-release \
   -DOPENSMACX_GAMEPLAY_SCENARIO_Y=27
 cmake --build --preset mingw-i686-release --target run-gameplay-scenario
 ```
+
+Resolve the same order through pathfinding and vehicle relocation with:
+
+```sh
+cmake --build --preset mingw-i686-release --target run-gameplay-resolution
+```
+
+The resolution gate requires the destination coordinates and map occupancy, exact movement cost,
+recorded direction, cleared order, exhausted moves, and singleton stack links to match the fixture.
 
 The targets run the source-owned host tests, restage the hybrid, and write
 `gameplay-scenario-result.json` and `gameplay-scenario.log` beside the build output. The host runner
