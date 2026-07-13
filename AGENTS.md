@@ -26,7 +26,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Thunks: 35.
 - Current recovery backlog: 5,125 candidates.
 - Current local legacy-island count: 150, reduced from 174.
-- Source-recovery `DllMain` redirects: 25. The gameplay gate installs one inactive-pass-through active-turn hook and two call-site hooks; scenario behavior activates only when its environment is configured.
+- Source-recovery `DllMain` redirects: 25. The gameplay gate installs inactive-pass-through active-turn and post-increment upkeep hooks plus two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -88,7 +88,7 @@ Other completed corrections and checks:
 
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
-- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and the gameplay trampoline's overwritten instruction, preserved state, callback stack cleanup, and continuations.
+- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
 - Regenerated state after AlphaNet is 5,125 priorities and 150 islands.
 
 ### Hybrid Runtime Compatibility
@@ -105,13 +105,13 @@ Other completed corrections and checks:
 - `tools/run_gameplay_scenario.py` loads a local ignored save, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
 - The gameplay trampoline at the verified `Console::human_turn` seam preserves registers and flags, executes the overwritten store, and selects either the ordinary or early-exit continuation.
+- The post-increment trampoline verifies the single-player `turn_upkeep` caller, turn/year state, and resolved vehicle position, then exits before later popup/script upkeep through the normal epilogues. The local fixture advances turn 12 to 13 and mission year 2113.
 - `~/Desktop/backtrace.txt` is manually saved and cannot be used as an automatic crash signal.
 
 ## Next Steps
 
-1. Add a deterministic turn-advancement fixture that exits immediately after the turn/year increment and before popup/script-driven upkeep.
+1. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
-3. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
 
 ## Relevant Files
 
@@ -158,4 +158,4 @@ Other completed corrections and checks:
 
 ## Current Blocker
 
-There is no recovery or tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, and end-turn request state, but not next-turn advancement. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.
+There is no recovery or tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, end-turn request state, and the next turn/year increment before later upkeep. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.

@@ -66,13 +66,23 @@ def main():
         "scenario human-turn callback": "_scenario_human_turn_ready",
         "scenario human-turn trampoline": "__Z30scenario_human_turn_trampolinev",
         "scenario trampoline action": "_ScenarioTrampolineAction",
+        "scenario turn-advance callback": "_scenario_turn_advanced",
+        "scenario turn-advance trampoline": "__Z32scenario_turn_advance_trampolinev",
+        "scenario turn-advance action": "_ScenarioTurnAdvanceAction",
     }
     for description, symbol in required_scenario_symbols.items():
         if symbol not in scenario_symbols:
             fail(f"missing required scenario symbol: {description}")
-    if not re.search(r"^00000000 B _ScenarioTrampolineAction$",
-                     scenario_symbols, re.MULTILINE):
-        fail("scenario trampoline action is not the verified .bss relocation target")
+    action_offsets = {}
+    for symbol in ("_ScenarioTrampolineAction", "_ScenarioTurnAdvanceAction"):
+        match = re.search(
+            rf"^([0-9a-f]{{8}}) B {re.escape(symbol)}$",
+            scenario_symbols, re.MULTILINE)
+        if not match:
+            fail(f"scenario action lacks a .bss offset: {symbol}")
+        action_offsets[symbol] = int(match.group(1), 16)
+    if set(action_offsets.values()) != {0, 4}:
+        fail("scenario actions do not occupy distinct verified .bss slots")
 
     scenario_disassembly = run([args.objdump, "-d", "-r", "-C", args.scenario_object])
     trampoline = re.search(
@@ -92,13 +102,15 @@ def main():
         r"push\s+%esi",
         r"call\s+[0-9a-f]+\s+<scenario_human_turn_ready>",
         r"add\s+\$0x4,%esp",
+        rf"cmpl\s+\$0x0,0x{action_offsets['_ScenarioTrampolineAction']:x}",
+        r"jne\s+[0-9a-f]+\s+<scenario_human_turn_trampoline\(\)\+0x[0-9a-f]+>",
         r"popa",
         r"popf",
-        r"cmpl\s+\$0x0,0x0",
-        r"je\s+[0-9a-f]+\s+<scenario_human_turn_trampoline\(\)\+0x[0-9a-f]+>",
-        r"push\s+\$0x5147b9",
-        r"ret",
         r"push\s+\$0x51418f",
+        r"ret",
+        r"popa",
+        r"popf",
+        r"push\s+\$0x5147b9",
         r"ret",
     )
     if len(instructions) < len(required_instructions):
@@ -108,6 +120,44 @@ def main():
             fail(f"scenario trampoline instruction {actual!r} does not match {pattern!r}")
     if not re.search(r"dir32\s+\.bss", trampoline_body):
         fail("scenario trampoline action comparison lacks its .bss relocation")
+
+    turn_trampoline = re.search(
+        r"<scenario_turn_advance_trampoline\(\)>:"
+        r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+        scenario_disassembly, re.DOTALL)
+    if not turn_trampoline:
+        fail("could not locate scenario turn-advance trampoline in disassembly")
+    turn_body = turn_trampoline.group("body")
+    turn_instructions = re.findall(
+        r"^\s*[0-9a-f]+:\s+(?:[0-9a-f]{2}\s+)+(?P<asm>[a-z].*)$",
+        turn_body, re.MULTILINE | re.IGNORECASE)
+    required_turn_instructions = (
+        r"pushf",
+        r"pusha",
+        r"push\s+0x4\(%ebp\)",
+        r"call\s+[0-9a-f]+\s+<scenario_turn_advanced>",
+        r"add\s+\$0x4,%esp",
+        rf"cmpl\s+\$0x0,0x{action_offsets['_ScenarioTurnAdvanceAction']:x}",
+        r"jne\s+[0-9a-f]+\s+<scenario_turn_advance_trampoline\(\)\+0x[0-9a-f]+>",
+        r"popa",
+        r"popf",
+        r"push\s+\$0x525af9",
+        r"push\s+\$0x46fb10",
+        r"ret",
+        r"popa",
+        r"popf",
+        r"movl\s+\$0x5282ce,0x4\(%ebp\)",
+        r"push\s+\$0x526026",
+        r"ret",
+    )
+    if len(turn_instructions) < len(required_turn_instructions):
+        fail("scenario turn-advance trampoline has too few instructions")
+    for actual, pattern in zip(turn_instructions, required_turn_instructions):
+        if not re.fullmatch(pattern, actual.strip()):
+            fail(
+                f"scenario turn-advance instruction {actual!r} does not match {pattern!r}")
+    if not re.search(r"dir32\s+\.bss", turn_body):
+        fail("scenario turn-advance comparison lacks its .bss relocation")
 
 
 if __name__ == "__main__":

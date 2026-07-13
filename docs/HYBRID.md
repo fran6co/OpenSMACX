@@ -98,6 +98,16 @@ cmake --build --preset mingw-i686-release --target run-gameplay-resolution
 The resolution gate requires the destination coordinates and map occupancy, exact movement cost,
 recorded direction, cleared order, exhausted moves, and singleton stack links to match the fixture.
 
+Advance through the authentic turn/year increment, while exiting before later upkeep, with:
+
+```sh
+cmake --build --preset mingw-i686-release --target run-gameplay-advancement
+```
+
+This mode requires resolved movement, a fixture without air vehicles, the verified single-player
+`turn_upkeep` caller, `TurnCurrentNum + 1`, and `MissionYearCurrent == game_year(TurnCurrentNum)`.
+It then routes through the normal `turn_upkeep` epilogue and `control_turn` exit check.
+
 The targets run the source-owned host tests, restage the hybrid, and write
 `gameplay-scenario-result.json` and `gameplay-scenario.log` beside the build output. The host runner
 snapshots matching processes before launch, terminates the scenario processes after their terminal
