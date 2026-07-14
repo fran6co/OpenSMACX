@@ -5119,17 +5119,17 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x006253D0,0x006256CC,764,.text,?on_redraw@ImageButton@@QAEXXZ,void (__thiscall ?on_redraw@ImageButton@@QAEXXZ)(ImageButton* this),0x006253D0-0x006256CC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
 0x006256D0,0x006256EE,30,.text,??_GImageButton@@UAEPAXI@Z,"void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)",0x006256D0-0x006256EE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x006256F0,0x006256FB,11,.text,??3ImageButton@@SAXPAXI@Z,,0x006256F0-0x006256FB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x00625700,0x00625716,22,.text,??__ERand@@YAXXZ,,0x00625700-0x00625716,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x00625720,0x0062572B,11,.text,??__FRand@@YAXXZ,,0x00625720-0x0062572B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x00625730,0x00625739,9,.text,??0Random@@QAE@XZ,void (__thiscall ??0Random@@QAE@XZ)(Random* this),0x00625730-0x00625739,game,hidden;sp_ready;purged_ok,,,??0Random@@QAE@XZ,,redirect_name_match,,,,0,5
-0x00625740,0x00625747,7,.text,??1Random@@QAE@XZ,void (__thiscall ??1Random@@QAE@XZ)(Random* this),0x00625740-0x00625747,game,hidden;sp_ready;purged_ok,,,??1Random@@QAE@XZ,,redirect_name_match,,,,0,5
-0x00625750,0x00625763,19,.text,?reseed@Random@@QAEXK@Z,"void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)",0x00625750-0x00625763,game,sp_ready;purged_ok,src/random.cpp:23,Complete,,,source_complete,,,,0,5
-0x00625770,0x006257A7,55,.text,?get@Random@@QAEIHH@Z,"unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)",0x00625770-0x006257A7,game,hidden;sp_ready;purged_ok,src/random.cpp:31,Complete,,,source_complete,,,,0,5
-0x006257B0,0x006257DA,42,.text,?get@Random@@QAENXZ,unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this),0x006257B0-0x006257DA,game,hidden;sp_ready;purged_ok,src/random.cpp:47,Complete,?get@Random@@QAENXZ,,source_complete,,,,0,0
-0x006257E0,0x006257F9,25,.text,?random_reseed@@YAXK@Z,,0x006257E0-0x006257F9,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,6
-0x00625800,0x00625806,6,.text,?random_get@@YAIXZ,,0x00625800-0x00625806,game,hidden;sp_ready;purged_ok,,,?random_get@@YAIXZ,,redirect_name_match,,,,0,0
-0x00625810,0x0062584F,63,.text,?random@@YAIHH@Z,,0x00625810-0x0062584F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,38
-0x00625850,0x00625880,48,.text,?random@@YANXZ,,0x00625850-0x00625880,game,hidden;sp_ready;purged_ok,,,?random@@YANXZ,,redirect_name_match,,,,0,0
+0x00625700,0x00625716,22,.text,??__ERand@@YAXXZ,,0x00625700-0x00625716,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned initializer,,1,0
+0x00625720,0x0062572B,11,.text,??__FRand@@YAXXZ,,0x00625720-0x0062572B,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned exit cleanup,,0,0
+0x00625730,0x00625739,9,.text,??0Random@@QAE@XZ,void (__thiscall ??0Random@@QAE@XZ)(Random* this),0x00625730-0x00625739,game,hidden;sp_ready;purged_ok,,,??0Random@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,0,5
+0x00625740,0x00625747,7,.text,??1Random@@QAE@XZ,void (__thiscall ??1Random@@QAE@XZ)(Random* this),0x00625740-0x00625747,game,hidden;sp_ready;purged_ok,,,??1Random@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,0,5
+0x00625750,0x00625763,19,.text,?reseed@Random@@QAEXK@Z,"void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)",0x00625750-0x00625763,game,sp_ready;purged_ok,src/random.cpp:25,Complete,,,source_complete,,,,0,5
+0x00625770,0x006257A7,55,.text,?get@Random@@QAEIHH@Z,"unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)",0x00625770-0x006257A7,game,hidden;sp_ready;purged_ok,src/random.cpp:33,Complete,,,source_complete,,,,0,5
+0x006257B0,0x006257DA,42,.text,?get@Random@@QAENXZ,unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this),0x006257B0-0x006257DA,game,hidden;sp_ready;purged_ok,src/random.cpp:49,Complete,?get@Random@@QAENXZ,,source_complete,,,,0,0
+0x006257E0,0x006257F9,25,.text,?random_reseed@@YAXK@Z,,0x006257E0-0x006257F9,game,sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned reseed wrapper,,0,6
+0x00625800,0x00625806,6,.text,?random_get@@YAIXZ,,0x00625800-0x00625806,game,hidden;sp_ready;purged_ok,,,?random_get@@YAIXZ,,source_complete,,Staged hybrid export redirect calls the source-owned seed getter,,0,0
+0x00625810,0x0062584F,63,.text,?random@@YAIHH@Z,,0x00625810-0x0062584F,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned integer generator,,0,38
+0x00625850,0x00625880,48,.text,?random@@YANXZ,,0x00625850-0x00625880,game,hidden;sp_ready;purged_ok,,,?random@@YANXZ,,source_complete,,Staged hybrid export redirect calls the source-owned floating generator,,0,0
 0x00625880,0x00625DDD,1373,.text,?parse_string@@YAHPADPAD@Z,"int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)",0x00625880-0x00625DDD,game,sp_ready;purged_ok,src/general.cpp:355,WIP,,parse_string_OG,source_in_progress,,,,7,23
 0x00625E30,0x00625E4D,29,.text,?parse_num@@YAHHH@Z,,0x00625E30-0x00625E4D,game,hidden;sp_ready;purged_ok,src/general.cpp:196,Complete,,,source_complete,,,,0,87
 0x00625E50,0x00625EB3,99,.text,?parse_say@@YAHHHHH@Z,"int (__cdecl ?parse_say@@YAHHHHH@Z)(int id, int input, int gender, int pluralality)",0x00625E50-0x00625EB3,game,sp_ready;purged_ok,src/general.cpp:210,Complete,,,source_complete,,,,2,40

@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "random.h"
 
+#include <cstring>
+
 /*
 Purpose: Update the seed value. The original code had some convoluted XORs that served no purpose.
 Original Offset: 00625750
@@ -33,7 +35,7 @@ Return Value: Random unsigned integer within bounds
 Status: Complete
 */
 uint32_t Random::get(uint32_t min, uint32_t max) {
-    if (min > max) {
+    if (static_cast<int32_t>(min) > static_cast<int32_t>(max)) {
         uint32_t temp = min;
         min = max;
         max = temp;
@@ -50,14 +52,16 @@ Status: Complete
 */
 double Random::get() {
     seed_ = seed_ * 0x19660D + 0x3C6EF35F;
-    uint32_t temp = (seed_ & 0x7FFFFF) | 0x3F800000; // FPU logic?
-    return *reinterpret_cast<double *>(&temp) - 1.0;
+    const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
+    float unit;
+    std::memcpy(&unit, &bits, sizeof(unit));
+    return static_cast<double>(unit) - 1.0;
 }
 
 // global
 Random *Rand = (Random *)0x009BB568;
 
-void __cdecl random_rand() { *Rand = *(new Random()); atexit(random_rand_exit); } // 00625700
+void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); } // 00625700
 
 void __cdecl random_rand_exit() { Rand->~Random(); } // 00625720
 

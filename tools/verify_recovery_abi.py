@@ -28,6 +28,7 @@ def main():
     parser.add_argument("--font-object")
     parser.add_argument("--filemap-object")
     parser.add_argument("--heap-object")
+    parser.add_argument("--random-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--strings-object")
@@ -648,6 +649,121 @@ def main():
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Strings destructor does not use a plain thiscall return")
+
+    if args.random_object:
+        headers = run([args.objdump, "-f", args.random_object])
+        if "file format pe-i386" not in headers:
+            fail("Random object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.random_object])
+        required_symbols = {
+            "Random constructor": "__ZN6RandomC1Ev",
+            "Random destructor": "__ZN6RandomD1Ev",
+            "Random integer generator": "__ZN6Random3getEjj",
+            "Random floating generator": "__ZN6Random3getEv",
+            "random initializer": "__Z11random_randv",
+            "random exit cleanup": "__Z16random_rand_exitv",
+            "random reseed wrapper": "__Z13random_reseedj",
+            "random_get wrapper": "__Z10random_getv",
+            "random integer wrapper": "__Z6randomjj",
+            "random floating wrapper": "__Z6randomv",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Random symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.random_object])
+
+        def random_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Random function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = random_body("Random::Random()")
+        if not re.search(r"\bmovl\s+\$0x0,\(%ecx\)", constructor):
+            fail("Random constructor does not clear the seed")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Random constructor does not return this in EAX")
+
+        destructor = random_body("Random::~Random()")
+        if not re.search(r"\bmovl\s+\$0x0,\(%ecx\)", destructor):
+            fail("Random destructor does not clear the seed")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("Random destructor does not use a plain thiscall return")
+
+        integer_generator = random_body("Random::get(unsigned int, unsigned int)")
+        if not re.search(r"\b(?:jg|jle|cmovg|cmovle)\b", integer_generator):
+            fail("Random integer generator does not order bounds as signed integers")
+        for constant in ("0x19660d", "0x3c6ef35f"):
+            if constant not in integer_generator:
+                fail("Random integer generator does not use the legacy LCG")
+        if not re.search(r"\bret\s+\$0x8\b", integer_generator):
+            fail("Random integer generator does not pop both thiscall arguments")
+
+        floating_generator = random_body("Random::get()")
+        subtract = re.search(r"\bfsub[^\n]*", floating_generator)
+        if not subtract or not re.search(r"\bflds\b", floating_generator[:subtract.start()]):
+            fail("Random floating generator does not load the synthesized single")
+        if re.search(r"\bfldl\b", floating_generator[:subtract.start()]):
+            fail("Random floating generator reads beyond its four-byte temporary")
+        for constant in ("0x19660d", "0x3c6ef35f", "0x7fffff", "0x3f800000"):
+            if constant not in floating_generator:
+                fail("Random floating generator does not use the legacy bit construction")
+
+        initializer = random_body("random_rand()")
+        if "operator new" in initializer:
+            fail("random initializer retains the non-legacy allocation leak")
+        if "atexit" not in initializer:
+            fail("random initializer does not register exit cleanup")
+        clears_seed = re.search(r"\bmovl\s+\$0x0,\(%e?\w+\)", initializer)
+        calls_reseed = "Random::reseed(unsigned int)" in initializer
+        if not clears_seed and not calls_reseed:
+            fail("random initializer does not reset the global seed")
+
+        exit_cleanup = random_body("random_rand_exit()")
+        clears_seed = re.search(r"\bmovl\s+\$0x0,\(%e?\w+\)", exit_cleanup)
+        calls_destructor = "Random::~Random()" in exit_cleanup
+        if not clears_seed and not calls_destructor:
+            fail("random exit cleanup does not clear the global seed")
+
+        reseed_wrapper = random_body("random_reseed(unsigned int)")
+        writes_seed = re.search(r"\bmov[^\n]*\(%e?\w+\)", reseed_wrapper)
+        calls_reseed = "Random::reseed(unsigned int)" in reseed_wrapper
+        if not writes_seed and not calls_reseed:
+            fail("random reseed wrapper does not update the global seed")
+        if not re.search(r"\bret\b", reseed_wrapper) or re.search(
+                r"\bret\s+\$", reseed_wrapper):
+            fail("random reseed wrapper does not use a plain cdecl return")
+
+        get_wrapper = random_body("random_get()")
+        if re.search(r"\bcall\b", get_wrapper):
+            fail("random_get wrapper unexpectedly calls another function")
+        if len(re.findall(r"\bmov", get_wrapper)) < 2:
+            fail("random_get wrapper does not read the global generator seed")
+
+        integer_wrapper = random_body("random(unsigned int, unsigned int)")
+        delegates_integer = "Random::get(unsigned int, unsigned int)" in integer_wrapper
+        if not delegates_integer and not re.search(
+                r"\b(?:jg|jle|cmovg|cmovle)\b", integer_wrapper):
+            fail("random integer wrapper neither delegates nor orders signed bounds")
+        if not re.search(r"\bret\b", integer_wrapper) or re.search(
+                r"\bret\s+\$", integer_wrapper):
+            fail("random integer wrapper does not use a plain cdecl return")
+
+        floating_wrapper = random_body("random()")
+        delegates_floating = "Random::get()" in floating_wrapper
+        if not delegates_floating:
+            subtract = re.search(r"\bfsub[^\n]*", floating_wrapper)
+            if not subtract or not re.search(r"\bflds\b", floating_wrapper[:subtract.start()]):
+                fail("random floating wrapper neither delegates nor synthesizes a single")
+            if re.search(r"\bfldl\b", floating_wrapper[:subtract.start()]):
+                fail("random floating wrapper reads beyond its four-byte temporary")
+        if not re.search(r"\bret\b", floating_wrapper) or re.search(
+                r"\bret\s+\$", floating_wrapper):
+            fail("random floating wrapper does not use a plain cdecl return")
 
     if not args.scenario_object:
         return

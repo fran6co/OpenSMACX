@@ -5,6 +5,7 @@
 #include "../src/dialog.h"
 #include "../src/filemap.h"
 #include "../src/font.h"
+#include "../src/random.h"
 #include "../src/spot.h"
 #include "../src/stringstruct.h"
 #include "../src/strings.h"
@@ -14,6 +15,7 @@
 
 #include <climits>
 #include <cstring>
+#include <float.h>
 #include <new>
 
 void __cdecl purge_spaces(LPSTR input) {
@@ -856,6 +858,118 @@ void test_strings_lifecycle() {
     }
 }
 
+uint32_t expected_random_seed(uint32_t seed) {
+    return seed * 0x19660DU + 0x3C6EF35FU;
+}
+
+uint32_t expected_random_int(uint32_t seed, uint32_t min, uint32_t max) {
+    if (static_cast<int32_t>(min) > static_cast<int32_t>(max)) {
+        const uint32_t temporary = min;
+        min = max;
+        max = temporary;
+    }
+    const uint32_t range = max - min;
+    return ((range * (expected_random_seed(seed) & 0xFFFFU)) >> 16) + min;
+}
+
+double expected_random_double(uint32_t seed) {
+    const uint32_t bits = (expected_random_seed(seed) & 0x7FFFFFU) | 0x3F800000U;
+    float unit = 0.0f;
+    std::memcpy(&unit, &bits, sizeof(unit));
+    return static_cast<double>(unit) - 1.0;
+}
+
+void test_random_exports() {
+    const int failures_before = failures;
+    static_assert(sizeof(Random) == 4, "Random fixture requires the legacy layout");
+    alignas(Random) uint8_t storage[sizeof(Random) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Random));
+    auto *generator = new (storage + 16) Random;
+    expect(generator == reinterpret_cast<Random *>(storage + 16));
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Random constructor", storage, expected, sizeof(storage));
+
+    const uint32_t destructor_seed = 0x89ABCDEFU;
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16, destructor_seed);
+    std::memcpy(expected, storage, sizeof(storage));
+    const uint32_t zero = 0;
+    write_at(expected, 16, zero);
+    generator->~Random();
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Random destructor", storage, expected, sizeof(storage));
+
+    struct IntegerFixture {
+        uint32_t seed;
+        uint32_t min;
+        uint32_t max;
+    };
+    const IntegerFixture integer_fixtures[] = {
+        {0, 0, 100},
+        {0xFFFFFFFFU, 100, 0},
+        {0x12345678U, static_cast<uint32_t>(-10), 10},
+        {0x87654321U, 10, static_cast<uint32_t>(-10)},
+        {0xDEADBEEFU, static_cast<uint32_t>(INT_MIN), static_cast<uint32_t>(INT_MAX)},
+        {0xCAFEBABEU, 17, 17},
+    };
+    for (const IntegerFixture &fixture : integer_fixtures) {
+        generator->reseed(fixture.seed);
+        expect(generator->get(fixture.min, fixture.max)
+               == expected_random_int(fixture.seed, fixture.min, fixture.max));
+        expect(generator->get_seed() == expected_random_seed(fixture.seed));
+    }
+
+    Rand = generator;
+    generator->reseed(0xA5A5A5A5U);
+    expect(random_get() == 0xA5A5A5A5U);
+    expect(generator->get_seed() == 0xA5A5A5A5U);
+    const uint32_t wrapper_min = static_cast<uint32_t>(-200);
+    const uint32_t wrapper_max = 300;
+    expect(random(wrapper_min, wrapper_max)
+           == expected_random_int(0xA5A5A5A5U, wrapper_min, wrapper_max));
+    expect(generator->get_seed() == expected_random_seed(0xA5A5A5A5U));
+
+    const uint32_t floating_seeds[] = {
+        0, 1, 0x12345678U, 0x7FFFFFFFU, 0x80000000U, 0xFFFFFFFFU,
+    };
+    for (uint32_t seed : floating_seeds) {
+        generator->reseed(seed);
+        _clearfp();
+        const double actual = generator->get();
+        const unsigned int status = _statusfp();
+        _clearfp();
+        const double expected_value = expected_random_double(seed);
+        expect(std::memcmp(&actual, &expected_value, sizeof(actual)) == 0);
+        expect(status == 0);
+        expect(generator->get_seed() == expected_random_seed(seed));
+
+        generator->reseed(seed);
+        _clearfp();
+        const double wrapper_actual = random();
+        const unsigned int wrapper_status = _statusfp();
+        _clearfp();
+        expect(std::memcmp(&wrapper_actual, &expected_value, sizeof(wrapper_actual)) == 0);
+        expect(wrapper_status == 0);
+        expect(generator->get_seed() == expected_random_seed(seed));
+    }
+
+    static Random exit_generator;
+    Rand = &exit_generator;
+    exit_generator.reseed(0x55555555U);
+    random_rand();
+    expect(exit_generator.get_seed() == 0);
+    random_reseed(0xABCDEF01U);
+    expect(exit_generator.get_seed() == 0xABCDEF01U);
+    random_rand_exit();
+    expect(exit_generator.get_seed() == 0);
+    if (failures != failures_before) {
+        std::fprintf(stderr, "Random export fixture failed\n");
+    }
+}
+
 void seed_dialog(uint8_t *storage, uint8_t *expected) {
     seed_storage(storage, expected, sizeof(Dialog) + 32);
 }
@@ -1622,6 +1736,7 @@ int main() {
     test_filemap_lifecycle();
     test_heap_lifecycle();
     test_strings_lifecycle();
+    test_random_exports();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();
