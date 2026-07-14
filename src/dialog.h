@@ -55,6 +55,7 @@ class DLLEXPORT Dialog {
   int id_to_pos(int id);
   void set_selected_id(int id);
   int get_selected_id();
+  int pos_to_id(int position);
 
  private:
   LPVOID vtable_;
@@ -129,3 +130,4 @@ void __fastcall dialog_set_text_color3_redirect(
 int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id);
 void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id);
 int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *);
+int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position);
