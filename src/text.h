@@ -35,7 +35,7 @@ class DLLEXPORT Text {
           buffer_item_ = (LPSTR)mem_get(size);
       }
   }
-  ~Text() { shutdown(); } // 00608C00
+  ~Text() noexcept(false); // 00608C00
 
   int init(size_t size);
   void shutdown();

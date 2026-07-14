@@ -187,6 +187,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/spot_recovery.cpp.obj")
     set(OPENSMACX_STRINGS_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/strings.cpp.obj")
+    set(OPENSMACX_TEXT_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/text_recovery.cpp.obj")
     set(OPENSMACX_TEXT_INDEX_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
     set(OPENSMACX_TIME_OBJECT
@@ -209,6 +211,7 @@ if(MINGW)
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --strings-object "${OPENSMACX_STRINGS_OBJECT}"
+            --text-object "${OPENSMACX_TEXT_OBJECT}"
             --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
             --time-object "${OPENSMACX_TIME_OBJECT}"
         DEPENDS OpenSMACX
@@ -300,6 +303,7 @@ if(BUILD_TESTING)
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --strings-object "${OPENSMACX_STRINGS_OBJECT}"
+                --text-object "${OPENSMACX_TEXT_OBJECT}"
                 --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
                 --time-object "${OPENSMACX_TIME_OBJECT}"
         )
