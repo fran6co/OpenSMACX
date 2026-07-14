@@ -16,8 +16,8 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 30,
-      "redirect_name_match": 20,
-      "source_complete": 501,
+      "redirect_name_match": 17,
+      "source_complete": 504,
       "source_in_progress": 5,
       "thunk": 33,
       "unrecovered": 5079

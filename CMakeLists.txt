@@ -81,6 +81,7 @@ set(OPENSMACX_SOURCES
     src/flatbutton.cpp
     src/flic.cpp
     src/font.cpp
+    src/font_recovery.cpp
     src/game.cpp
     src/general.cpp
     src/graphicwin.cpp
@@ -168,6 +169,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
     set(OPENSMACX_DIALOG_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
+    set(OPENSMACX_FONT_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
     set(OPENSMACX_SPOT_OBJECT
@@ -184,6 +187,7 @@ if(MINGW)
             --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
+            --font-object "${OPENSMACX_FONT_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
@@ -202,6 +206,7 @@ if(BUILD_TESTING)
         src/basepop_font.cpp
         src/buttongroup.cpp
         src/dialog.cpp
+        src/font_recovery.cpp
         src/spot_recovery.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp
@@ -263,6 +268,7 @@ if(BUILD_TESTING)
                 --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
+                --font-object "${OPENSMACX_FONT_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"

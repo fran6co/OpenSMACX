@@ -3,6 +3,7 @@
 #include "../src/basepop.h"
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
+#include "../src/font.h"
 #include "../src/spot.h"
 #include "../src/stringstruct.h"
 #include "../src/strings.h"
@@ -68,6 +69,12 @@ LPVOID __cdecl mem_get(size_t size) {
 }
 
 int heap_shutdown_calls = 0;
+int font_close_calls = 0;
+int font_init_calls = 0;
+Font *font_init_this = nullptr;
+LPCSTR font_init_name = nullptr;
+int font_init_height = 0;
+uint32_t font_init_style = 0;
 
 void Heap::shutdown() {
     ++heap_shutdown_calls;
@@ -97,6 +104,40 @@ void Spot::shutdown() {
 }
 
 void Time::close() {
+}
+
+int Font::init(LPCSTR font_name, int height, uint32_t style) {
+    ++font_init_calls;
+    font_init_this = this;
+    font_init_name = font_name;
+    font_init_height = height;
+    font_init_style = style;
+    return 13;
+}
+
+void Font::close() {
+    ++font_close_calls;
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
+    const int negative_one = -1;
+    const int zero = 0;
+    std::memcpy(bytes, &negative_one, sizeof(negative_one));
+    std::memcpy(bytes + 0xC, &zero, sizeof(zero));
+    std::memcpy(bytes + 0x10, &zero, sizeof(zero));
+    std::memcpy(bytes + 0x18, &zero, sizeof(zero));
+    std::memcpy(bytes + 0x1C, &zero, sizeof(zero));
+    HGDIOBJ font_object = nullptr;
+    std::memcpy(&font_object, bytes + 8, sizeof(font_object));
+    if (font_object) {
+        font_object = nullptr;
+        std::memcpy(bytes + 8, &font_object, sizeof(font_object));
+    }
+    LPSTR file_name = nullptr;
+    std::memcpy(&file_name, bytes + 0x24, sizeof(file_name));
+    if (file_name) {
+        std::free(file_name);
+        file_name = nullptr;
+        std::memcpy(bytes + 0x24, &file_name, sizeof(file_name));
+    }
 }
 
 LPSTR Strings::put(LPCSTR input) {
@@ -545,6 +586,79 @@ void test_spot_lifecycle() {
     std::memcpy(expected, storage, sizeof(storage));
     std::memset(expected + 16, 0, sizeof(Spot));
     spot->~Spot();
+    expect_storage_bytes(storage, expected, sizeof(storage));
+}
+
+void expect_font_close(uint8_t *expected, size_t offset) {
+    const int negative_one = -1;
+    const int zero = 0;
+    HGDIOBJ null_font = nullptr;
+    LPSTR null_file = nullptr;
+    write_at(expected, offset, negative_one);
+    write_at(expected, offset + 8, null_font);
+    write_at(expected, offset + 0xC, zero);
+    write_at(expected, offset + 0x10, zero);
+    write_at(expected, offset + 0x18, zero);
+    write_at(expected, offset + 0x1C, zero);
+    write_at(expected, offset + 0x24, null_file);
+}
+
+void test_font_lifecycle() {
+    static_assert(sizeof(Font) == 0x28, "Font fixture requires the legacy layout");
+    alignas(Font) uint8_t storage[sizeof(Font) + 32];
+    uint8_t expected[sizeof(storage)];
+    const int negative_one = -1;
+    const int zero = 0;
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(expected, 16, negative_one);
+    for (size_t offset : {4U, 8U, 0xCU, 0x10U, 0x18U, 0x1CU, 0x24U}) {
+        write_at(expected, 16 + offset, zero);
+    }
+    auto *font = new (storage + 16) Font;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    char font_name[] = "Fixture Font";
+    const int height = -17;
+    const int style = static_cast<int>(0x80000005U);
+    font_init_calls = 0;
+    font_init_this = nullptr;
+    font_init_name = nullptr;
+    font_init_height = 0;
+    font_init_style = 0;
+    font = new (storage + 16) Font(font_name, height, style);
+    expect(font == reinterpret_cast<Font *>(storage + 16));
+    expect(font_init_calls == 1);
+    expect(font_init_this == font);
+    expect(font_init_name == font_name);
+    expect(font_init_height == height);
+    expect(font_init_style == static_cast<uint32_t>(style));
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    HGDIOBJ font_object = reinterpret_cast<HGDIOBJ>(1);
+    LPSTR file_name = static_cast<LPSTR>(std::malloc(8));
+    write_at(storage, 16 + 8, font_object);
+    write_at(storage, 16 + 0x24, file_name);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect_font_close(expected, 16);
+    font_close_calls = 0;
+    font->~Font();
+    expect(font_close_calls == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    font = new (storage + 16) Font;
+    HGDIOBJ null_font = nullptr;
+    LPSTR null_file = nullptr;
+    write_at(storage, 16 + 8, null_font);
+    write_at(storage, 16 + 0x24, null_file);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect_font_close(expected, 16);
+    font_close_calls = 0;
+    font->~Font();
+    expect(font_close_calls == 1);
     expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
@@ -1309,6 +1423,7 @@ int main() {
     test_text_index_lifecycle();
     test_text_clear_index();
     test_spot_lifecycle();
+    test_font_lifecycle();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();
