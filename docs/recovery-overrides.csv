@@ -26,6 +26,9 @@ address,recovery_state,priority,notes
 0x005FD740,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD7A0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD800,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
+0x005FDF40,source_complete,,Staged hybrid export redirect calls the source-owned constructor
+0x005FDF60,source_complete,,Staged hybrid export redirect calls the source-owned destructor
+0x005FE270,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD2B0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00601B80,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x006046F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
