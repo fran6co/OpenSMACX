@@ -35,7 +35,8 @@ cmake --build --preset mingw-i686-release --target stage-hybrid-game
 ```
 
 This writes `.opensmacx/game/terranx_hybrid.exe` alongside the existing local game data. Launch it
-with:
+with. The launcher temporarily skips PRACX intro movies by default; add `--play-intro-movie` to retain
+the configured movie player for a manual run:
 
 ```sh
 .opensmacx/venv/bin/python tools/run_game.py \
@@ -51,18 +52,22 @@ Run the automated startup gate with:
 cmake --build --preset mingw-i686-release --target smoke-hybrid-game
 ```
 
-The smoke harness snapshots matching processes before launch, captures Wine loader diagnostics,
-and requires the hybrid executable, `OpenSMACX.dll`, `prax.dll`, Wine's built-in `DDRAW.dll`, and a
-DirectDraw surface flip. It fails on unhandled-exception diagnostics and writes
+The smoke harness snapshots matching processes before launch and captures Wine loader diagnostics.
+It requires the hybrid executable, `OpenSMACX.dll`, `prax.dll`, Wine's built-in `DDRAW.dll`, no
+unhandled-exception diagnostics, and a game process that survives the observation window. A DirectDraw
+surface flip is recorded as stronger rendering evidence when Wine emits that trace. It writes
 `hybrid-smoke-result.json` beside the build output. Runtime tests use the dedicated
 `OPENSMACX_WINE_PREFIX` (a separate `wineprefix` under each build directory by default), reject any
 existing prefix without the OpenSMACX ownership marker, and stop that prefix before and after each
 launch. They never issue a global Wine shutdown or touch another prefix.
+For reliable Wine startup, the smoke and scenario launchers temporarily set PRACX's
+`MoviePlayerCommand` to an owned no-op batch file, then restore the exact original
+`Alpha Centauri.ini` bytes and remove the batch after the owned runtime stops.
 
 ## Deterministic gameplay gate
 
-The gameplay driver loads a local save through the in-process load path, reaches the active human
-turn seam, issues a source-owned `go_to` command, verifies the resulting movement order and
+The gameplay driver loads a local save through the in-process load path and deterministically invokes
+the verified active-human-turn handler after refresh. It issues a source-owned `go_to` command, verifies the resulting movement order and
 waypoint, requests the recovered end-turn state, writes JSON, and exits before script- or
 popup-driven upkeep. The separate resolution mode dispatches that order through the verified
 `action_go_to` path and asserts actual relocation; neither mode claims that the next turn began.

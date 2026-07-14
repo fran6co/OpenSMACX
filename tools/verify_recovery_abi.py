@@ -156,10 +156,13 @@ def main():
         required_symbols = {
             "StringStruct current ID": "__ZN12StringStruct10current_idEv",
             "StringStruct current entry": "__ZN12StringStruct13current_entryEv",
+            "StringStruct next entry": "__ZN12StringStruct10next_entryEv",
             "StringStruct current ID adapter":
                 "@_Z33string_struct_current_id_redirectP12StringStructPv@8",
             "StringStruct current entry adapter":
                 "@_Z36string_struct_current_entry_redirectP12StringStructPv@8",
+            "StringStruct next entry adapter":
+                "@_Z33string_struct_next_entry_redirectP12StringStructPv@8",
         }
         for description, symbol in required_symbols.items():
             if symbol not in symbols:
@@ -168,10 +171,13 @@ def main():
         for description, label in (
                 ("StringStruct current ID", "StringStruct::current_id()"),
                 ("StringStruct current entry", "StringStruct::current_entry()"),
+                ("StringStruct next entry", "StringStruct::next_entry()"),
                 ("StringStruct current ID adapter",
                  "@_Z33string_struct_current_id_redirectP12StringStructPv@8"),
                 ("StringStruct current entry adapter",
-                 "@_Z36string_struct_current_entry_redirectP12StringStructPv@8")):
+                 "@_Z36string_struct_current_entry_redirectP12StringStructPv@8"),
+                ("StringStruct next entry adapter",
+                 "@_Z33string_struct_next_entry_redirectP12StringStructPv@8")):
             match = re.search(
                 rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
                 disassembly, re.DOTALL)
@@ -181,7 +187,8 @@ def main():
             if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
                 fail(f"{description} does not use a plain no-argument return")
             if description in (
-                    "StringStruct current ID", "StringStruct current entry") and re.search(
+                    "StringStruct current ID", "StringStruct current entry",
+                    "StringStruct next entry") and re.search(
                         r"\bcall\b", body):
                 fail(f"{description} unexpectedly contains a call")
 

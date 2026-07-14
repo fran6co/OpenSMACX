@@ -20,12 +20,15 @@
 #include <climits>
 #include <cstring>
 
+extern "C" void __cdecl scenario_human_turn_ready(Console *self);
+
 namespace {
 
 constexpr uintptr_t TopMenuAddress = 0x0058E360;
 constexpr uintptr_t OpeningMovieAddress = 0x00403BE0;
 constexpr uintptr_t LoadFlagsAddress = 0x00453F70;
 constexpr uintptr_t MainInterfaceAddress = 0x007B0CB8;
+constexpr uintptr_t ConsoleAddress = 0x009156B0;
 constexpr uintptr_t CurrentFactionAddress = 0x00939284;
 constexpr uintptr_t ActionGoToAddress = 0x004CB310;
 constexpr uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
@@ -599,5 +602,6 @@ int __cdecl scenario_top_menu(int mode) {
     write_progress("after_load");
     refresh_loaded_game();
     write_progress("after_refresh");
+    scenario_human_turn_ready(reinterpret_cast<Console *>(ConsoleAddress));
     return 0;
 }

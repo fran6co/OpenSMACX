@@ -24,9 +24,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,115 candidates.
-- Current local legacy-island count: 145, reduced from 174.
-- Source-recovery `DllMain` redirects: 35. The gameplay gate installs inactive-pass-through active-turn and post-increment upkeep hooks plus two call-site hooks; scenario behavior activates only when its environment is configured.
+- Current recovery backlog: 5,114 candidates.
+- Current local legacy-island count: 144, reduced from 174.
+- Source-recovery `DllMain` redirects: 36. The gameplay gate installs inactive-pass-through active-turn and post-increment upkeep hooks plus two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -70,7 +70,7 @@ Recovered source includes:
 
 - Five `Buffer` font and color setters.
 - Four `Dialog` font and color setters plus bounded ID/position lookup, selection, and selected-ID retrieval.
-- `StringStruct::current_id` and `current_entry`.
+- `StringStruct::current_id`, `current_entry`, and `next_entry`.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
@@ -89,6 +89,7 @@ Other completed corrections and checks:
 - Dialog selected-ID tests cover forward/backward cursor restoration, upper and lower out-of-range positions, null heads, and legacy `INT_MIN` wrapping.
 - Dialog position-to-ID tests verify explicit positions ignore selection state while preserving the same bounded forward/backward and wrapping semantics.
 - StringStruct accessor tests verify the head-only guard, poison stale cursors, exact ID/payload offsets, ignored count/position fields, and complete object/entry canaries.
+- StringStruct advance tests cover empty lists, circular traversal, count/position mismatch, exact-equality reset, and signed-position wrapping.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
 - All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, and independent review.
@@ -98,7 +99,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after StringStruct accessor recovery is 5,115 priorities and 145 islands.
+- Regenerated state after StringStruct advance recovery is 5,114 priorities and 144 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -107,11 +108,11 @@ Other completed corrections and checks:
 - Forcing the bundled native DDrawCompat proxy also fails fast on this Wine version.
 - Hybrid staging defaults to the hash-pinned PRACX executable at `.opensmacx/game/terranx.exe` and publishes all 460 expected import redirects.
 - The packer labels PRACX `hash_pinned_runtime_build`; all recovery body mappings are `not_analyzed` and unmapped rather than projected from canonical addresses.
-- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 145 islands.
-- Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle and explicitly passes `WINEPREFIX`.
+- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 144 islands.
+- Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
-- `tools/smoke_hybrid_game.py` automates that gate, validates module and rendering markers, rejects unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
-- `tools/run_gameplay_scenario.py` loads a local ignored save, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
+- `tools/smoke_hybrid_game.py` automates that gate, validates module markers, process survival, and rendering when Wine emits a flip trace; it rejects unhandled exceptions and stops the dedicated owned test prefix while removing its per-run executable alias.
+- `tools/run_gameplay_scenario.py` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
 - The gameplay trampoline at the verified `Console::human_turn` seam preserves registers and flags, executes the overwritten store, and selects either the ordinary or early-exit continuation.
 - The post-increment trampoline verifies the single-player `turn_upkeep` caller, turn/year state, and resolved vehicle position, then exits before later popup/script upkeep through the normal epilogues. The local fixture advances turn 12 to 13 and mission year 2113.
@@ -126,13 +127,13 @@ Other completed corrections and checks:
 
 - `src/alphanet.h`: committed aligned `AlphaNet` layout and adapter declaration.
 - `src/alphanet.cpp`: committed `AlphaNet::pid_2_idx` implementation.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 35 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 36 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
 - `src/buffer.h`, `src/buffer.cpp`: recovered Buffer setters and lifecycle hooks.
 - `src/dialog.h`, `src/dialog.cpp`: recovered Dialog setters, bounded ID/position lookup, selection, and selected-ID retrieval.
-- `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload accessors.
+- `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance accessors.
 - `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
 - `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
@@ -142,13 +143,14 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,115 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,114 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/summary.json`: canonical recovery-state counts.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
 - `tools/test_extract_legacy_leaves.py`: 12 island-classifier regression tests.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.
+- `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
 - `tools/test_smoke_hybrid_game.py`: source-owned smoke-diagnostics parser tests.
 - `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
 - `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
@@ -161,7 +163,7 @@ Other completed corrections and checks:
 - `docs/HYBRID.md`: local hybrid workflow.
 - `CMakeLists.txt`: source list, hybrid targets, and legacy-island targets.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
-- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 145-island manifest.
+- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 144-island manifest.
 - `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
 - `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
 - `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.

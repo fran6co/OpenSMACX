@@ -37,7 +37,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 37;
+constexpr size_t RedirectCount = 38;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -183,6 +183,12 @@ bool install_redirects() {
             reinterpret_cast<uintptr_t>(&string_struct_current_entry_redirect),
             {0x8B, 0x41, 0x08, 0x85, 0xC0, 0x74, 0x07, 0x8B,
              0x41, 0x0C, 0x8B, 0x40, 0x08, 0xC3, 0x33, 0xC0},
+        },
+        {
+            0x00402500,
+            reinterpret_cast<uintptr_t>(&string_struct_next_entry_redirect),
+            {0x8B, 0x41, 0x08, 0x85, 0xC0, 0x75, 0x03, 0x33,
+             0xC0, 0xC3, 0x8B, 0x41, 0x0C, 0x8B, 0x50, 0x0C},
         },
         {
             0x004E3A50,
