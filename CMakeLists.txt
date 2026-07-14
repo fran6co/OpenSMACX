@@ -78,6 +78,7 @@ set(OPENSMACX_SOURCES
     src/dllmain.cpp
     src/faction.cpp
     src/filemap.cpp
+    src/filemap_recovery.cpp
     src/flatbutton.cpp
     src/flic.cpp
     src/font.cpp
@@ -172,6 +173,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
     set(OPENSMACX_FONT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
+    set(OPENSMACX_FILEMAP_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
     set(OPENSMACX_SPOT_OBJECT
@@ -191,6 +194,7 @@ if(MINGW)
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
             --font-object "${OPENSMACX_FONT_OBJECT}"
+            --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
@@ -210,6 +214,7 @@ if(BUILD_TESTING)
         src/basepop_font.cpp
         src/buttongroup.cpp
         src/dialog.cpp
+        src/filemap_recovery.cpp
         src/font_recovery.cpp
         src/spot_recovery.cpp
         src/stringstruct.cpp
@@ -274,6 +279,7 @@ if(BUILD_TESTING)
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
                 --font-object "${OPENSMACX_FONT_OBJECT}"
+                --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"

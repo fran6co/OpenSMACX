@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--basepop-font-object")
     parser.add_argument("--dialog-object")
     parser.add_argument("--font-object")
+    parser.add_argument("--filemap-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--text-index-object")
@@ -510,6 +511,51 @@ def main():
         if "Time::TimeModal" not in release_modal or not re.search(
                 r"\bmovl\s+\$0x0,", release_modal):
             fail("Time release-modal method does not clear modal state")
+
+    if args.filemap_object:
+        headers = run([args.objdump, "-f", args.filemap_object])
+        if "file format pe-i386" not in headers:
+            fail("Filemap object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.filemap_object])
+        required_symbols = {
+            "Filemap constructor": "__ZN7FilemapC1Ev",
+            "Filemap destructor": "__ZN7FilemapD1Ev",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Filemap symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.filemap_object])
+
+        def filemap_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Filemap function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = filemap_body("Filemap::Filemap()")
+        for pattern in (
+                r"\bmovl\s+\$0x0,\(%ecx\)",
+                r"\bmovl\s+\$0xffffffff,0x4\(%ecx\)",
+                r"\bmovl\s+\$0x0,0x8\(%ecx\)"):
+            if not re.search(pattern, constructor):
+                fail("Filemap constructor does not initialize its three legacy fields")
+        if re.search(r"\bmov[^\n]*0xc\(%ecx\)", constructor):
+            fail("Filemap constructor overwrites preserved file size")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Filemap constructor does not return this in EAX")
+
+        destructor = filemap_body("Filemap::~Filemap()")
+        if re.search(r"\bmov[^\n]*0xc\(%e?\w+\)", destructor):
+            fail("Filemap destructor overwrites preserved file size")
+        if "UnmapViewOfFile" not in destructor:
+            fail("Filemap destructor does not contain mapped-view cleanup")
+        if len(re.findall(r"CloseHandle", destructor)) != 2:
+            fail("Filemap destructor does not contain both handle cleanup paths")
+        if not re.search(r"\bmovl\s+\$0x0,0x4\(%e?\w+\)", destructor):
+            fail("Filemap destructor does not clear a closed file handle")
 
     if not args.scenario_object:
         return
