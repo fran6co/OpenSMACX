@@ -100,6 +100,7 @@ set(OPENSMACX_SOURCES
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringstruct.cpp
+    src/text_recovery.cpp
     src/strings.cpp
     src/technology.cpp
     src/temp.cpp
@@ -194,6 +195,7 @@ if(BUILD_TESTING)
         src/buttongroup.cpp
         src/dialog.cpp
         src/stringstruct.cpp
+        src/text_recovery.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

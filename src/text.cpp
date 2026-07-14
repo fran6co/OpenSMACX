@@ -222,7 +222,7 @@ Status: Complete
 int Text::item_hex() {
     return htoi(item());
 }
-
+#include "text_recovery.h"
 // global
 Text *Txt = (Text *)0x009B7BA0;
 LPSTR *TextBufferGetPtr = (LPSTR *)0x009B7D00;
@@ -242,7 +242,7 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550
     return Txt->open(src_id, section_id);
 }
 
-LPSTR __cdecl text_get() { return Txt->get(); } // 005FD570
+LPSTR __cdecl text_get() { return text_get_source(Txt); } // 005FD570
 
 LPSTR __cdecl text_string() { return Txt->string(); } // 005FD5E0
 
@@ -250,7 +250,7 @@ LPSTR __cdecl text_item() { return Txt->item(); } // 005FD670
 
 LPSTR __cdecl text_item_string() { return Txt->item_string(); } // 005FD6D0
 
-int __cdecl text_item_number() { return Txt->item_number(); } // 005FD740
+int __cdecl text_item_number() { return text_item_number_source(Txt); } // 005FD740
 
 int __cdecl text_item_binary() { return Txt->item_binary(); } // 005FD7A0
 
