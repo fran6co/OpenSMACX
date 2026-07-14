@@ -4,6 +4,7 @@
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
 #include "../src/stringstruct.h"
+#include "../src/strings.h"
 #include "../src/text_recovery.h"
 
 #include <climits>
@@ -33,6 +34,20 @@ void __cdecl kill_lf(LPSTR input) {
 
 int __cdecl stoi(LPCSTR input) {
     return std::atoi(input);
+}
+
+LPVOID __cdecl mem_get(size_t size) {
+    return std::malloc(size);
+}
+
+void Heap::shutdown() {
+}
+
+LPSTR Strings::put(LPCSTR input) {
+    const size_t size = std::strlen(input) + 1;
+    auto *const output = static_cast<LPSTR>(std::malloc(size));
+    std::memcpy(output, input, size);
+    return output;
 }
 
 BOOL __cdecl in_box(int x, int y, const RECT *rect);
@@ -135,6 +150,43 @@ void test_text_get_and_item_number() {
     expect(text_item_number_source(text) == -42);
     expect(std::strcmp(item_buffer, "-42") == 0);
     current = items + 7;
+    expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+    std::fclose(file);
+}
+
+void test_text_string_helpers() {
+    alignas(Text) uint8_t storage[sizeof(Text)]{};
+    auto *text = reinterpret_cast<Text *>(storage);
+    char get_buffer[512]{};
+    char item_buffer[512]{};
+    LPSTR get_pointer = get_buffer;
+    LPSTR item_pointer = item_buffer;
+    FILE *file = std::tmpfile();
+    Strings strings;
+
+    expect(file != nullptr);
+    if (!file) {
+        return;
+    }
+    set_text_pointer(text, 0x154, &file);
+    set_text_pointer(text, 0x158, &get_pointer);
+    set_text_pointer(text, 0x15C, &item_pointer);
+
+    std::fputs("  stored line  \n", file);
+    std::rewind(file);
+    LPSTR stored = text_string_source(text, &strings);
+    expect(stored != get_buffer);
+    expect(std::strcmp(stored, "stored line") == 0);
+    expect(std::strcmp(get_buffer, "stored line") == 0);
+
+    char items[] = "  item string ,ignored";
+    void *current = items;
+    set_text_pointer(text, 0x150, &current);
+    stored = text_item_string_source(text, &strings);
+    expect(stored != item_buffer);
+    expect(std::strcmp(stored, "item string") == 0);
+    expect(std::strcmp(item_buffer, "item string") == 0);
+    current = items + 15;
     expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
     std::fclose(file);
 }
@@ -1009,6 +1061,7 @@ int main() {
     test_alpha_net_pid_to_idx();
     test_in_box_edges();
     test_text_get_and_item_number();
+    test_text_string_helpers();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();

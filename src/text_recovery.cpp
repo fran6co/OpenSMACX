@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "text_recovery.h"
+#include "strings.h"
 
 #include <cstddef>
 
@@ -47,6 +48,10 @@ LPSTR __cdecl text_get_source(Text *text) {
     return value->buffer_get;
 }
 
+LPSTR __cdecl text_string_source(Text *text, Strings *strings) {
+    return strings->put(text_get_source(text));
+}
+
 LPSTR __cdecl text_item_source(Text *text) {
     TextState *const value = state(text);
     LPSTR parse = value->buffer_item;
@@ -59,6 +64,10 @@ LPSTR __cdecl text_item_source(Text *text) {
     }
     purge_spaces(value->buffer_item);
     return value->buffer_item;
+}
+
+LPSTR __cdecl text_item_string_source(Text *text, Strings *strings) {
+    return strings->put(text_item_source(text));
 }
 
 int __cdecl text_item_number_source(Text *text) {

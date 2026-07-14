@@ -74,7 +74,7 @@ Recovered source includes:
 - Five `Buffer` font and color setters.
 - Four `Dialog` font and color setters plus bounded ID/position lookup, selection, and selected-ID retrieval.
 - `StringStruct::current_id`, `current_entry`, `next_entry`, and `seek_id`.
-- `text_get`, `text_item`, and `text_item_number` through the staged hybrid export redirects.
+- `text_get`, `text_string`, `text_item`, `text_item_string`, and `text_item_number` through the staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.

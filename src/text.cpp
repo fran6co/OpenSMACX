@@ -244,11 +244,13 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550
 
 LPSTR __cdecl text_get() { return text_get_source(Txt); } // 005FD570
 
-LPSTR __cdecl text_string() { return Txt->string(); } // 005FD5E0
+LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); } // 005FD5E0
 
 LPSTR __cdecl text_item() { return text_item_source(Txt); } // 005FD670
 
-LPSTR __cdecl text_item_string() { return Txt->item_string(); } // 005FD6D0
+LPSTR __cdecl text_item_string() {
+    return text_item_string_source(Txt, StringTable);
+} // 005FD6D0
 
 int __cdecl text_item_number() { return text_item_number_source(Txt); } // 005FD740
 
