@@ -23,7 +23,11 @@
   */
 class DLLEXPORT Strings : Heap {
  public:
-  Strings() : is_populated_(false) { } // 006168D0
+  Strings() : is_populated_(false) {
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+  } // 006168D0
   ~Strings() { Heap::shutdown(); }     // 006169C0
 
   BOOL init(size_t mem_size);
@@ -34,6 +38,10 @@ class DLLEXPORT Strings : Heap {
  private:
   BOOL is_populated_; // (+20) -> set to true when table is created
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Strings) == 0x18, "Strings layout must match the legacy ABI");
+#endif
 
 // global
 extern Strings *StringTable;

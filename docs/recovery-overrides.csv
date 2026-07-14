@@ -52,6 +52,8 @@ address,recovery_state,priority,notes
 0x00616200,source_complete,,Staged hybrid export redirect calls the source-owned destructor
 0x00616860,source_complete,,Staged hybrid export redirect calls the source-owned method
 0x00616870,source_complete,,Staged hybrid export redirect calls the source-owned method
+0x006168D0,source_complete,,Staged hybrid export redirect calls the source-owned constructor
+0x006169C0,source_complete,,Staged hybrid export redirect calls the source-owned destructor
 0x00618EA0,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x00618EC0,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x00618EE0,source_complete,,Staged hybrid export redirect calls the source-owned destructor
