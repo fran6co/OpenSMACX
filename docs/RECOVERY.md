@@ -79,6 +79,33 @@ function to one of its interior addresses. Local assembly-island extraction uses
 reject bodies that have externally reachable secondary entries. Its hash is bound into
 `analysis-summary.json` with the Ghidra function inventory.
 
+### External analysis leads
+
+`docs/recovery/external-analysis-sources.json` records immutable identities for useful historical
+analysis notes that are not licensed for redistribution. These artifacts are hypothesis sources,
+not authoritative metadata or behavioral oracles. Do not commit their prose, generated
+disassembly, game text, or derived assembly.
+
+Fetch the exact cataloged snapshots into ignored local storage, then correlate either the Yitzi
+function notebook or Dio address labels:
+
+```sh
+.opensmacx/venv/bin/python tools/fetch_external_analysis.py
+.opensmacx/venv/bin/python tools/correlate_external_analysis.py \
+  --source-path Information/Yitzi/functionlisting.txt
+.opensmacx/venv/bin/python tools/correlate_external_analysis.py \
+  --source-path "Information/Dio/Label addresses in assembly code.txt"
+.opensmacx/venv/bin/python tools/build_export_recovery_queue.py
+```
+
+The tools validate cataloged sizes and SHA-256 values. Correlation outputs contain only source line
+numbers, addresses, canonical function identities, and per-function lead counts under ignored
+`.opensmacx/external-analysis/`; each summary is bound to its cataloged source path and hash. Every
+useful lead must still be verified independently against the hash-bound canonical executable before
+source, tests, or metadata are committed.
+The exported-first queue combines reviewed recovery state, canonical call counts, and local external
+lead density while keeping all generated correlations ignored.
+
 The raw IDC and IDA 9 `.i64` database remain local. The normalized `ida9-functions.csv` retains
 only function boundaries, flags, names, prototypes, and body ranges needed for reproducible
 correlation. The older annotated IDB remains checked in because it is the canonical recovery source.
