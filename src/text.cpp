@@ -232,11 +232,15 @@ void __cdecl text_txt() { *Txt = *(new Text(512)); atexit(text_txt_exit); } // 0
 
 void __cdecl text_txt_exit() { Txt->~Text(); } // 005FD460
 
-void __cdecl text_set_get_ptr() { *TextBufferGetPtr = Txt->get_buffer_get(); } // 005FD4C0
+void __cdecl text_set_get_ptr() { // 005FD4C0
+    text_set_get_ptr_source(Txt, TextBufferGetPtr);
+}
 
-void __cdecl text_set_item_ptr() { *TextBufferItemPtr = Txt->get_buffer_item(); } // 005FD4D0
+void __cdecl text_set_item_ptr() { // 005FD4D0
+    text_set_item_ptr_source(Txt, TextBufferItemPtr);
+}
 
-void __cdecl text_close() { Txt->close(); } // 005FD530
+void __cdecl text_close() { text_close_source(Txt); } // 005FD530
 
 BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550
     return Txt->open(src_id, section_id);

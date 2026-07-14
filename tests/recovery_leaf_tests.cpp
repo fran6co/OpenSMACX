@@ -146,6 +146,13 @@ void test_text_get_and_item_number() {
     set_text_pointer(text, 0x158, &get_pointer);
     set_text_pointer(text, 0x15C, &item_pointer);
 
+    LPSTR published_get = nullptr;
+    LPSTR published_item = nullptr;
+    text_set_get_ptr_source(text, &published_get);
+    text_set_item_ptr_source(text, &published_item);
+    expect(published_get == get_buffer);
+    expect(published_item == item_buffer);
+
     std::fputs("  first line  \n", file);
     std::rewind(file);
     expect(text_get_source(text) == get_buffer);
@@ -193,8 +200,9 @@ void test_text_get_and_item_number() {
         expect(text_get_number_source(text, 0, 10) == 0);
         expect(text_get_number_source(text, 0, 10) == 7);
         expect(text_get_number_source(text, 0, 10) == 10);
-        std::fclose(numbers);
+        text_close_source(text);
     }
+    set_text_pointer(text, 0x154, &file);
 
     current = items;
     set_text_pointer(text, 0x150, &current);
@@ -203,7 +211,10 @@ void test_text_get_and_item_number() {
     expect(std::strcmp(item_buffer, "-42") == 0);
     current = items + 7;
     expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
-    std::fclose(file);
+    text_close_source(text);
+    FILE *null_file = nullptr;
+    expect(std::memcmp(storage + 0x154, &null_file, sizeof(null_file)) == 0);
+    text_close_source(text);
 }
 
 void test_text_string_helpers() {

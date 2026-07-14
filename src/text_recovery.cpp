@@ -32,6 +32,22 @@ TextState *state(Text *text) {
 
 } // namespace
 
+void __cdecl text_close_source(Text *text) {
+    TextState *const value = state(text);
+    if (value->text_file) {
+        fclose(value->text_file);
+        value->text_file = nullptr;
+    }
+}
+
+void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output) {
+    *output = state(text)->buffer_get;
+}
+
+void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output) {
+    *output = state(text)->buffer_item;
+}
+
 LPSTR __cdecl text_get_source(Text *text) {
     TextState *const value = state(text);
     if (feof(value->text_file)) {
