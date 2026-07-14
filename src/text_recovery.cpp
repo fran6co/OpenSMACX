@@ -47,7 +47,7 @@ LPSTR __cdecl text_get_source(Text *text) {
     return value->buffer_get;
 }
 
-int __cdecl text_item_number_source(Text *text) {
+LPSTR __cdecl text_item_source(Text *text) {
     TextState *const value = state(text);
     LPSTR parse = value->buffer_item;
     while (*value->current_pos != 0 && *value->current_pos != ',') {
@@ -58,5 +58,9 @@ int __cdecl text_item_number_source(Text *text) {
         ++value->current_pos;
     }
     purge_spaces(value->buffer_item);
-    return stoi(value->buffer_item);
+    return value->buffer_item;
+}
+
+int __cdecl text_item_number_source(Text *text) {
+    return stoi(text_item_source(text));
 }
