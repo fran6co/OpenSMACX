@@ -76,6 +76,7 @@ Recovered source includes:
 - `StringStruct::current_id`, `current_entry`, `next_entry`, and `seek_id`.
 - `text_get`, `text_string`, `text_item`, `text_item_string`, `text_item_number`, `text_item_binary`, and `text_item_hex` through the staged hybrid export redirects.
 - `text_get_number` through the staged hybrid export redirect.
+- `text_close`, `text_set_get_ptr`, and `text_set_item_ptr` through the staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
