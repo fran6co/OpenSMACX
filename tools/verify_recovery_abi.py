@@ -157,12 +157,16 @@ def main():
             "StringStruct current ID": "__ZN12StringStruct10current_idEv",
             "StringStruct current entry": "__ZN12StringStruct13current_entryEv",
             "StringStruct next entry": "__ZN12StringStruct10next_entryEv",
+            "StringStruct ID seek": "__ZN12StringStruct7seek_idEi",
+            "StringStruct ID seek bridge": "_string_struct_seek_id_source",
             "StringStruct current ID adapter":
                 "@_Z33string_struct_current_id_redirectP12StringStructPv@8",
             "StringStruct current entry adapter":
                 "@_Z36string_struct_current_entry_redirectP12StringStructPv@8",
             "StringStruct next entry adapter":
                 "@_Z33string_struct_next_entry_redirectP12StringStructPv@8",
+            "StringStruct ID seek adapter":
+                "@_Z30string_struct_seek_id_redirectP12StringStructPvi@12",
         }
         for description, symbol in required_symbols.items():
             if symbol not in symbols:
@@ -189,8 +193,34 @@ def main():
             if description in (
                     "StringStruct current ID", "StringStruct current entry",
                     "StringStruct next entry") and re.search(
-                        r"\bcall\b", body):
+                r"\bcall\b", body):
                 fail(f"{description} unexpectedly contains a call")
+        for description, label in (
+                ("StringStruct ID seek", "StringStruct::seek_id(int)"),
+                ("StringStruct ID seek adapter",
+                 "@_Z30string_struct_seek_id_redirectP12StringStructPvi@12")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", body)
+            if description == "StringStruct ID seek":
+                if not returns or any(value != "4" for value in returns):
+                    fail("StringStruct ID seek does not pop its stack argument")
+                if re.search(r"\bcall\b", body):
+                    fail("StringStruct ID seek unexpectedly contains a call")
+            elif (len(returns) != 1 or returns[0] != "4"
+                  or len(re.findall(r"\bcall\b", body)) != 1
+                  or not re.search(
+                      r"\bpush\s+0x4\(%esp\)\s*\n[^\n]*"
+                      r"\bpush\s+%ecx\s*\n[^\n]*"
+                      r"\bcall\s+[0-9a-f]+ <string_struct_seek_id_source>\s*\n"
+                      r"[^\n]*\badd\s+\$0x8,%esp\s*\n[^\n]*"
+                      r"\bcmp\s+%eax,%eax\s*\n[^\n]*"
+                      r"\bret\s+\$0x4\b", body)):
+                fail("StringStruct ID seek adapter does not preserve flags and cleanup")
 
     if args.button_group_object:
         button_headers = run([args.objdump, "-f", args.button_group_object])

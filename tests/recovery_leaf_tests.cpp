@@ -797,6 +797,133 @@ void test_string_struct_next_entry() {
         reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
 }
 
+void test_string_struct_seek_id() {
+    alignas(StringStruct) uint8_t storage[sizeof(StringStruct) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *strings = new (storage + 16) StringStruct;
+    StringStructEntry *null_entry = nullptr;
+    auto *invalid_entry = reinterpret_cast<StringStructEntry *>(1);
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, null_entry);
+    write_at(storage, 16 + 0x0C, invalid_entry);
+    write_at(storage, 16 + 0x10, INT_MIN);
+    write_at(storage, 16 + 0x14, INT_MAX);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(strings->seek_id(INT_MIN) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, invalid_entry);
+    write_at(storage, 16 + 0x0C, null_entry);
+    write_at(storage, 16 + 0x10, INT_MIN);
+    write_at(storage, 16 + 0x14, INT_MAX);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, invalid_entry);
+    const int zero = 0;
+    write_at(expected, 16 + 0x14, zero);
+    expect(strings->seek_id(INT_MAX) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    struct GuardedEntry {
+        uint8_t prefix[16];
+        StringStructEntry entry;
+        uint8_t suffix[16];
+    } entries[3];
+    uint8_t entries_expected[sizeof(entries)];
+    seed_storage(reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+    entries[0].entry.id = INT_MIN;
+    entries[1].entry.id = 0;
+    entries[2].entry.id = INT_MAX;
+    entries[0].entry.next = &entries[1].entry;
+    entries[1].entry.next = &entries[2].entry;
+    entries[2].entry.next = &entries[0].entry;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    StringStructEntry *head = &entries[0].entry;
+    StringStructEntry *second = &entries[1].entry;
+    const int one = 1;
+    const int three = 3;
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x0C, invalid_entry);
+    write_at(storage, 16 + 0x10, zero);
+    write_at(storage, 16 + 0x14, INT_MAX);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, head);
+    write_at(expected, 16 + 0x14, zero);
+    expect(strings->seek_id(INT_MAX) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x0C, invalid_entry);
+    write_at(storage, 16 + 0x10, three);
+    write_at(storage, 16 + 0x14, INT_MAX);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC, second);
+    write_at(expected, 16 + 0x14, one);
+    expect(string_struct_seek_id_redirect(strings, nullptr, zero) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x10, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, head);
+    write_at(expected, 16 + 0x14, zero);
+    expect(strings->seek_id(INT_MIN) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x10, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    StringStructEntry *third = &entries[2].entry;
+    const int two = 2;
+    write_at(expected, 16 + 0x0C, third);
+    write_at(expected, 16 + 0x14, two);
+    expect(strings->seek_id(INT_MAX) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    entries[2].entry.id = zero;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x10, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, second);
+    write_at(expected, 16 + 0x14, one);
+    expect(strings->seek_id(zero) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    entries[2].entry.id = INT_MAX;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x10, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, head);
+    write_at(expected, 16 + 0x14, three);
+    expect(strings->seek_id(17) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    entries[2].entry.next = null_entry;
+    std::memcpy(entries_expected, entries, sizeof(entries));
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, head);
+    write_at(storage, 16 + 0x10, three);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, null_entry);
+    write_at(expected, 16 + 0x14, three);
+    expect(strings->seek_id(17) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+}
+
 }  // namespace
 
 int main() {
@@ -810,5 +937,6 @@ int main() {
     test_dialog_pos_to_id();
     test_string_struct_current_accessors();
     test_string_struct_next_entry();
+    test_string_struct_seek_id();
     return failures == 0 ? 0 : 1;
 }
