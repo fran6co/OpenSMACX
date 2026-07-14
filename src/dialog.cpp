@@ -112,6 +112,41 @@ void Dialog::set_selected_id(int id) {
     selected_position_ = id_to_pos(id);
 }
 
+/*
+Purpose: Restore the selected list position and return its item ID.
+Original Offset: 00609A50
+Return Value: Selected item ID, or zero when the list head is null
+Status: Complete
+*/
+int Dialog::get_selected_id() {
+    int position = selected_position_;
+    int count = entry_count_;
+    if (count == INT_MIN || position < count) {
+        current_entry_ = entry_head_;
+        if (position < 0) {
+            int distance = position == INT_MIN ? INT_MIN : -position;
+            if (distance <= count) {
+                while (distance > 0) {
+                    current_entry_ = current_entry_->previous;
+                    distance--;
+                }
+                uint32_t normalized =
+                    static_cast<uint32_t>(position) + static_cast<uint32_t>(count);
+                memcpy(&position, &normalized, sizeof(position));
+                entry_position_ = position;
+            }
+        } else {
+            int distance = position;
+            while (distance > 0) {
+                current_entry_ = current_entry_->next;
+                distance--;
+            }
+            entry_position_ = position;
+        }
+    }
+    return entry_head_ ? current_entry_->id : 0;
+}
+
 int __fastcall dialog_set_font_redirect(
     Dialog *self, void *, Font *font1, Font *font2, Font *font3) {
     return self->set_dialog_font(font1, font2, font3);
@@ -139,4 +174,8 @@ int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id) {
 
 void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id) {
     self->set_selected_id(id);
+}
+
+int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *) {
+    return self->get_selected_id();
 }
