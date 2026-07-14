@@ -5,6 +5,7 @@
 #include "../src/dialog.h"
 #include "../src/filemap.h"
 #include "../src/font.h"
+#include "../src/log.h"
 #include "../src/random.h"
 #include "../src/spot.h"
 #include "../src/stringstruct.h"
@@ -79,6 +80,12 @@ LPCSTR font_init_name = nullptr;
 int font_init_height = 0;
 uint32_t font_init_style = 0;
 int time_close_calls = 0;
+int env_open_calls = 0;
+#if defined(__MINGW32__)
+int env_close_calls = 0;
+#endif
+LPCSTR env_open_source = nullptr;
+LPCSTR env_open_mode = nullptr;
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
 
@@ -153,6 +160,22 @@ void Font::close() {
         std::memcpy(bytes + 0x24, &file_name, sizeof(file_name));
     }
 }
+
+FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
+    ++env_open_calls;
+    env_open_source = source;
+    env_open_mode = mode;
+    return std::tmpfile();
+}
+
+#if defined(__MINGW32__)
+extern "C" int __real_fclose(FILE *file);
+
+extern "C" int __wrap_fclose(FILE *file) {
+    ++env_close_calls;
+    return __real_fclose(file);
+}
+#endif
 
 LPSTR Strings::put(LPCSTR input) {
     const size_t size = std::strlen(input) + 1;
@@ -463,6 +486,15 @@ void test_base_pop_string_font() {
 template <typename T>
 void write_at(uint8_t *storage, size_t offset, const T &value) {
     std::memcpy(storage + offset, &value, sizeof(value));
+}
+
+template <typename T>
+void write_at_volatile(uint8_t *storage, size_t offset, const T &value) {
+    auto *target = reinterpret_cast<volatile uint8_t *>(storage + offset);
+    const auto *source = reinterpret_cast<const uint8_t *>(&value);
+    for (size_t index = 0; index < sizeof(value); ++index) {
+        target[index] = source[index];
+    }
 }
 
 void expect_heap_clear(uint8_t *expected, size_t heap_offset) {
@@ -967,6 +999,154 @@ void test_random_exports() {
     expect(exit_generator.get_seed() == 0);
     if (failures != failures_before) {
         std::fprintf(stderr, "Random export fixture failed\n");
+    }
+}
+
+void test_log_lifecycle_and_wrappers() {
+    const int failures_before = failures;
+    int stage_failures = failures;
+    static_assert(sizeof(Log) == 8, "Log fixture requires the legacy layout");
+    alignas(Log) uint8_t storage[sizeof(Log) + 32];
+    uint8_t expected[sizeof(storage)];
+    LPSTR null_file = nullptr;
+    const BOOL zero_state = 0;
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(expected, 16, null_file);
+    write_at(expected, 16 + 4, zero_state);
+    auto *log = new (storage + 16) Log;
+    expect(log == reinterpret_cast<Log *>(storage + 16));
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Log default constructor", storage, expected, sizeof(storage));
+    if (failures != stage_failures) {
+        std::fprintf(stderr, "Log default-constructor expectations failed\n");
+    }
+    stage_failures = failures;
+
+    seed_storage(storage, expected, sizeof(storage));
+    const BOOL preserved_state = static_cast<BOOL>(0x13572468U);
+    write_at_volatile(storage, 16 + 4, preserved_state);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16, null_file);
+    env_open_calls = 0;
+    log = new (storage + 16) Log(nullptr);
+    expect(log == reinterpret_cast<Log *>(storage + 16));
+    expect(env_open_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Log null constructor", storage, expected, sizeof(storage));
+    if (failures != stage_failures) {
+        std::fprintf(stderr, "Log null-constructor expectations failed\n");
+    }
+    stage_failures = failures;
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at_volatile(storage, 16 + 4, preserved_state);
+    char file_name[] = "fixture.log";
+    env_open_calls = 0;
+#if defined(__MINGW32__)
+    env_close_calls = 0;
+#endif
+    env_open_source = nullptr;
+    env_open_mode = nullptr;
+    log = new (storage + 16) Log(file_name);
+    LPSTR allocated_file = nullptr;
+    std::memcpy(&allocated_file, storage + 16, sizeof(allocated_file));
+    expect(allocated_file != nullptr);
+    if (allocated_file) {
+        expect(std::strcmp(allocated_file, file_name) == 0);
+    }
+    expect(env_open_calls == 1);
+#if defined(__MINGW32__)
+    expect(env_close_calls == 1);
+#endif
+    expect(env_open_source && std::strcmp(env_open_source, file_name) == 0);
+    expect(env_open_mode && std::strcmp(env_open_mode, "wt") == 0);
+    expect(std::memcmp(storage + 16 + 4, &preserved_state, sizeof(preserved_state)) == 0);
+    if (failures != stage_failures) {
+        BOOL actual_state = 0;
+        std::memcpy(&actual_state, storage + 16 + 4, sizeof(actual_state));
+        std::fprintf(stderr,
+            "Log filename-constructor expectations failed: file=%p calls=%d source=%s mode=%s state=0x%x\n",
+            allocated_file, env_open_calls, env_open_source ? env_open_source : "(null)",
+            env_open_mode ? env_open_mode : "(null)", static_cast<unsigned int>(actual_state));
+    }
+    stage_failures = failures;
+
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16, null_file);
+    log->~Log();
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Log destructor", storage, expected, sizeof(storage));
+    if (failures != stage_failures) {
+        std::fprintf(stderr, "Log destructor expectations failed\n");
+    }
+    stage_failures = failures;
+
+    seed_storage(storage, expected, sizeof(storage));
+    log = new (storage + 16) Log;
+    LPSTR file_pointer = file_name;
+    write_at(storage, 16, file_pointer);
+    std::memcpy(expected, storage, sizeof(storage));
+    Logging = reinterpret_cast<Log *>(storage + 16);
+    env_open_calls = 0;
+#if defined(__MINGW32__)
+    env_close_calls = 0;
+#endif
+    env_open_source = nullptr;
+    env_open_mode = nullptr;
+    log_reset();
+    expect(env_open_calls == 1);
+#if defined(__MINGW32__)
+    expect(env_close_calls == 1);
+#endif
+    expect(env_open_source == file_name);
+    expect(env_open_mode && std::strcmp(env_open_mode, "wt") == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    if (failures != stage_failures) {
+        std::fprintf(stderr, "Log reset expectations failed\n");
+    }
+    stage_failures = failures;
+
+    log_set_state(FALSE);
+    const BOOL disabled = TRUE;
+    write_at(expected, 16 + 4, disabled);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    log_set_state(INT_MIN);
+    write_at(expected, 16 + 4, zero_state);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    if (failures != stage_failures) {
+        std::fprintf(stderr, "Log state expectations failed\n");
+    }
+    stage_failures = failures;
+    write_at(storage, 16, null_file);
+    log->~Log();
+
+    alignas(Log) static uint8_t exit_storage[sizeof(Log)]{};
+    Logging = reinterpret_cast<Log *>(exit_storage);
+    write_at_volatile(exit_storage, 4, preserved_state);
+    env_open_calls = 0;
+#if defined(__MINGW32__)
+    env_close_calls = 0;
+#endif
+    log_logging();
+    LPSTR global_file = nullptr;
+    std::memcpy(&global_file, exit_storage, sizeof(global_file));
+    expect(global_file && std::strcmp(global_file, "logfile.txt") == 0);
+    expect(std::memcmp(exit_storage + 4, &preserved_state, sizeof(preserved_state)) == 0);
+    expect(env_open_calls == 1);
+#if defined(__MINGW32__)
+    expect(env_close_calls == 1);
+#endif
+    log_logging_exit();
+    std::memcpy(&global_file, exit_storage, sizeof(global_file));
+    expect(global_file == nullptr);
+    expect(std::memcmp(exit_storage + 4, &preserved_state, sizeof(preserved_state)) == 0);
+    if (failures != stage_failures) {
+        std::fprintf(stderr, "Log global-lifecycle expectations failed\n");
+    }
+    new (exit_storage) Log;
+    if (failures != failures_before) {
+        std::fprintf(stderr, "Log lifecycle fixture failed\n");
     }
 }
 
@@ -1737,6 +1917,7 @@ int main() {
     test_heap_lifecycle();
     test_strings_lifecycle();
     test_random_exports();
+    test_log_lifecycle_and_wrappers();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();

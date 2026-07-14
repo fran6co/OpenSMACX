@@ -5134,21 +5134,21 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00625E30,0x00625E4D,29,.text,?parse_num@@YAHHH@Z,,0x00625E30-0x00625E4D,game,hidden;sp_ready;purged_ok,src/general.cpp:196,Complete,,,source_complete,,,,0,87
 0x00625E50,0x00625EB3,99,.text,?parse_say@@YAHHHHH@Z,"int (__cdecl ?parse_say@@YAHHHHH@Z)(int id, int input, int gender, int pluralality)",0x00625E50-0x00625EB3,game,sp_ready;purged_ok,src/general.cpp:210,Complete,,,source_complete,,,,2,40
 0x00625EC0,0x00625F1A,90,.text,?parse_says@@YAHHPADHH@Z,"int (__cdecl ?parse_says@@YAHHPADHH@Z)(int nID, int8* input, int gender, int pluralality)",0x00625EC0-0x00625F1A,game,sp_ready;purged_ok,src/general.cpp:232,Complete,,,source_complete,,,,1,199
-0x00625F20,0x00625F8B,107,.text,??__ELogging@@YAXXZ,,0x00625F20-0x00625F8B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,0
-0x00625F90,0x00625FAD,29,.text,??__FLogging@@YAXXZ,,0x00625F90-0x00625FAD,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x00625FB0,0x00625FC0,16,.text,??0Log@@QAE@XZ,Log* (__thiscall ??0Log@@QAE@XZ)(Log* this),0x00625FB0-0x00625FC0,game,hidden;sp_ready;purged_ok,,,??0Log@@QAE@XZ,,redirect_name_match,,,,0,1
-0x00625FC0,0x00626016,86,.text,??0Log@@QAE@PAD@Z,"Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)",0x00625FC0-0x00626016,game,sp_ready;purged_ok,,,,,unrecovered,,,,5,0
-0x00626020,0x0062603A,26,.text,??1Log@@QAE@XZ,void (__thiscall ??1Log@@QAE@XZ)(Log* this),0x00626020-0x0062603A,game,sp_ready;purged_ok,,,??1Log@@QAE@XZ,,redirect_name_match,,,,1,1
-0x00626040,0x006260C3,131,.text,?init@Log@@QAEHPAD@Z,"int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)",0x00626040-0x006260C3,game,hidden;sp_ready;purged_ok,src/log.cpp:24,Complete,,,source_complete,,,,6,2
-0x006260D0,0x006260EC,28,.text,?reset@Log@@QAEXXZ,void (__thiscall ?reset@Log@@QAEXXZ)(Log* this),0x006260D0-0x006260EC,game,hidden;sp_ready;purged_ok,src/log.cpp:49,Complete,?reset@Log@@QAEXXZ,,source_complete,,,,2,2
-0x006260F0,0x0062618B,155,.text,?say@Log@@QAEXPADPADHHH@Z,"void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)",0x006260F0-0x0062618B,game,sp_ready;purged_ok,src/log.cpp:62,Complete,,,source_complete,,,,3,1
-0x00626190,0x0062622B,155,.text,?say_hex@Log@@QAEXPADPADHHH@Z,"void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)",0x00626190-0x0062622B,game,hidden;sp_ready;purged_ok,src/log.cpp:80,Complete,,,source_complete,,,,3,0
-0x00626230,0x0062624F,31,.text,?log_reset@@YAXXZ,,0x00626230-0x0062624F,game,hidden;sp_ready;purged_ok,,,?log_reset@@YAXXZ,,redirect_name_match,,,,2,2
+0x00625F20,0x00625F8B,107,.text,??__ELogging@@YAXXZ,,0x00625F20-0x00625F8B,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned initializer,,6,0
+0x00625F90,0x00625FAD,29,.text,??__FLogging@@YAXXZ,,0x00625F90-0x00625FAD,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned exit cleanup,,1,0
+0x00625FB0,0x00625FC0,16,.text,??0Log@@QAE@XZ,Log* (__thiscall ??0Log@@QAE@XZ)(Log* this),0x00625FB0-0x00625FC0,game,hidden;sp_ready;purged_ok,,,??0Log@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,0,1
+0x00625FC0,0x00626016,86,.text,??0Log@@QAE@PAD@Z,"Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)",0x00625FC0-0x00626016,game,sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned filename constructor,,5,0
+0x00626020,0x0062603A,26,.text,??1Log@@QAE@XZ,void (__thiscall ??1Log@@QAE@XZ)(Log* this),0x00626020-0x0062603A,game,sp_ready;purged_ok,,,??1Log@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,1,1
+0x00626040,0x006260C3,131,.text,?init@Log@@QAEHPAD@Z,"int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)",0x00626040-0x006260C3,game,hidden;sp_ready;purged_ok,src/log.cpp:26,Complete,,,source_complete,,,,6,2
+0x006260D0,0x006260EC,28,.text,?reset@Log@@QAEXXZ,void (__thiscall ?reset@Log@@QAEXXZ)(Log* this),0x006260D0-0x006260EC,game,hidden;sp_ready;purged_ok,src/log.cpp:51,Complete,?reset@Log@@QAEXXZ,,source_complete,,,,2,2
+0x006260F0,0x0062618B,155,.text,?say@Log@@QAEXPADPADHHH@Z,"void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)",0x006260F0-0x0062618B,game,sp_ready;purged_ok,src/log.cpp:64,Complete,,,source_complete,,,,3,1
+0x00626190,0x0062622B,155,.text,?say_hex@Log@@QAEXPADPADHHH@Z,"void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)",0x00626190-0x0062622B,game,hidden;sp_ready;purged_ok,src/log.cpp:82,Complete,,,source_complete,,,,3,0
+0x00626230,0x0062624F,31,.text,?log_reset@@YAXXZ,,0x00626230-0x0062624F,game,hidden;sp_ready;purged_ok,,,?log_reset@@YAXXZ,,source_complete,,Staged hybrid export redirect calls the source-owned reset wrapper,,2,2
 0x00626250,0x006262E9,153,.text,?log_say@@YAXPADPADHHH@Z,,0x00626250-0x006262E9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,25
 0x006262F0,0x0062634C,92,.text,?log_say@@YAXPADHHH@Z,,0x006262F0-0x0062634C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,98
 0x00626350,0x006263E9,153,.text,?log_say_hex@@YAXPADPADHHH@Z,,0x00626350-0x006263E9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x006263F0,0x0062644C,92,.text,?log_say_hex@@YAXPADHHH@Z,,0x006263F0-0x0062644C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,4
-0x00626450,0x00626461,17,.text,?log_set_state@@YAXH@Z,,0x00626450-0x00626461,game,sp_ready;purged_ok,,,?log_set_state@@YAXH@Z,,redirect_name_match,,,,0,5
+0x00626450,0x00626461,17,.text,?log_set_state@@YAXH@Z,,0x00626450-0x00626461,game,sp_ready;purged_ok,,,?log_set_state@@YAXH@Z,,source_complete,,Staged hybrid export redirect calls the source-owned state wrapper,,0,5
 0x00626470,0x00626540,208,.text,sub_626470,,0x00626470-0x00626540,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x00626540,0x00626597,87,.text,sub_626540,,0x00626540-0x00626597,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x006265A0,0x00626613,115,.text,?scan_out_line_poly@@YAIHH@Z,,0x006265A0-0x00626613,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0

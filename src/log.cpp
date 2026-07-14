@@ -19,6 +19,8 @@
 #include "temp.h"
 #include "log.h"
 
+#include <new>
+
 /*
 Purpose: Initialize a log file.
 Original Offset: 00626040
@@ -98,7 +100,7 @@ Log *Logging = (Log *)0x009BBFF8;
 BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
 
 void __cdecl log_logging() { // 00625F20
-    *Logging = *(new Log("logfile.txt")); 
+    new (Logging) Log("logfile.txt");
     atexit(log_logging_exit);
 }
 

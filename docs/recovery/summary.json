@@ -16,11 +16,11 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 30,
-      "redirect_name_match": 5,
-      "source_complete": 522,
+      "redirect_name_match": 1,
+      "source_complete": 529,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 5073
+      "unrecovered": 5070
     },
     "total": 6000,
     "with_comments": 17,
@@ -1973,7 +1973,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/log.cpp:97",
+        "location": "src/log.cpp:99",
         "symbol": "Logging",
         "type": "Log *"
       },
@@ -1982,7 +1982,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/log.cpp:98",
+        "location": "src/log.cpp:100",
         "symbol": "IsLoggingDisabled",
         "type": "BOOL *"
       },
