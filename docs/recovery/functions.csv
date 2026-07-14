@@ -4482,7 +4482,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FD550,0x005FD565,21,.text,?text_open@@YAHPADPAD@Z,"int (__cdecl ?text_open@@YAHPADPAD@Z)(int8* srcFileID, int8* sectionID)",0x005FD550-0x005FD565,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,34
 0x005FD570,0x005FD5D2,98,.text,?text_get@@YAPADXZ,,0x005FD570-0x005FD5D2,game,hidden;sp_ready;purged_ok,,,?text_get@@YAPADXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,3,54
 0x005FD5E0,0x005FD663,131,.text,?text_string@@YAPADXZ,,0x005FD5E0-0x005FD663,game,hidden;sp_ready;purged_ok,,,?text_string@@YAPADXZ,,redirect_name_match,,,,4,1
-0x005FD670,0x005FD6C7,87,.text,?text_item@@YAPADXZ,,0x005FD670-0x005FD6C7,game,sp_ready;purged_ok,,,?text_item@@YAPADXZ,,redirect_name_match,,,,1,20
+0x005FD670,0x005FD6C7,87,.text,?text_item@@YAPADXZ,,0x005FD670-0x005FD6C7,game,sp_ready;purged_ok,,,?text_item@@YAPADXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,1,20
 0x005FD6D0,0x005FD732,98,.text,?text_item_string@@YAPADXZ,,0x005FD6D0-0x005FD732,game,hidden;sp_ready;purged_ok,,,?text_item_string@@YAPADXZ,,redirect_name_match,,,,2,2
 0x005FD740,0x005FD79D,93,.text,?text_item_number@@YAHXZ,,0x005FD740-0x005FD79D,game,hidden;sp_ready;purged_ok,,,?text_item_number@@YAHXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,2,18
 0x005FD7A0,0x005FD7FD,93,.text,?text_item_binary@@YAHXZ,,0x005FD7A0-0x005FD7FD,game,hidden;sp_ready;purged_ok,,,?text_item_binary@@YAHXZ,,redirect_name_match,,,,2,4

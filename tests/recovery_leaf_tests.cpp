@@ -124,6 +124,14 @@ void test_text_get_and_item_number() {
     current = items;
     set_text_pointer(text, 0x150, &current);
     std::memset(item_buffer, 0xA5, sizeof(item_buffer));
+    expect(text_item_source(text) == item_buffer);
+    expect(std::strcmp(item_buffer, "-42") == 0);
+    current = items + 7;
+    expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+
+    current = items;
+    set_text_pointer(text, 0x150, &current);
+    std::memset(item_buffer, 0xA5, sizeof(item_buffer));
     expect(text_item_number_source(text) == -42);
     expect(std::strcmp(item_buffer, "-42") == 0);
     current = items + 7;
