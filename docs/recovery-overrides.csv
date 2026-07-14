@@ -1,4 +1,5 @@
 address,recovery_state,priority,notes
+0x00401560,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00401640,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00402500,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00402530,source_complete,,Runtime redirect installed by DllMain after byte-signature validation

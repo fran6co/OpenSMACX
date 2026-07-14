@@ -54,6 +54,34 @@ int StringStruct::next_entry() {
     return current_->payload;
 }
 
+/*
+Purpose: Position the string-list cursor at the first matching item ID.
+Original Offset: 00401560
+Return Value: One when found, otherwise zero
+Status: Complete
+*/
+int StringStruct::seek_id(int id) {
+    int result = 0;
+    if (head_) {
+        current_position_ = 0;
+        current_ = head_;
+        if (entry_count_ > 0) {
+            int traversed = 0;
+            do {
+                StringStructEntry *entry = current_;
+                if (entry->id == id) {
+                    result = 1;
+                    break;
+                }
+                current_position_++;
+                traversed++;
+                current_ = entry->next;
+            } while (traversed < entry_count_);
+        }
+    }
+    return result;
+}
+
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *) {
     return self->current_id();
 }
@@ -65,3 +93,31 @@ int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *) 
 int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *) {
     return self->next_entry();
 }
+
+extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) {
+    return self->seek_id(id);
+}
+
+#ifdef __GNUC__
+int __fastcall string_struct_seek_id_redirect(StringStruct *, void *, int) {
+    __asm__(
+        "pushl 4(%esp)\n\t"
+        "pushl %ecx\n\t"
+        "call _string_struct_seek_id_source\n\t"
+        "addl $8, %esp\n\t"
+        "cmpl %eax, %eax\n\t"
+        "ret $4\n\t");
+}
+#else
+__declspec(naked) int __fastcall string_struct_seek_id_redirect(
+        StringStruct *, void *, int) {
+    __asm {
+        push dword ptr [esp + 4]
+        push ecx
+        call string_struct_seek_id_source
+        add esp, 8
+        cmp eax, eax
+        ret 4
+    }
+}
+#endif
