@@ -22,9 +22,8 @@
   */
 class DLLEXPORT Filemap {
  public:
-  Filemap() // 00628380
-      : map_view_addr_(NULL), file_(INVALID_HANDLE_VALUE), file_map_(NULL), file_size_(0) { }
-  ~Filemap() { close(); }  // 006283E0
+  Filemap();  // 00628380
+  ~Filemap(); // 006283E0
 
   Filemap *init(LPCSTR file_name, BOOL is_sequential);
   Filemap *init(LPCSTR file_name);
@@ -42,3 +41,7 @@ class DLLEXPORT Filemap {
   HANDLE file_map_;      // (+8)
   uint32_t file_size_;   // (+12)
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Filemap) == 0x10, "Filemap layout must match the legacy ABI");
+#endif

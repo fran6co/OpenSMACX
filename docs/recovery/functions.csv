@@ -5208,10 +5208,10 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00628220,0x0062828B,107,.text,sub_628220,,0x00628220-0x0062828B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,10
 0x00628290,0x006282D1,65,.text,sub_628290,,0x00628290-0x006282D1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006282E0,0x00628377,151,.text,sub_6282e0,,0x006282E0-0x00628377,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
-0x00628380,0x00628397,23,.text,??0Filemap@@QAE@XZ,void (__thiscall ??0Filemap@@QAE@XZ)(Filemap* this),0x00628380-0x00628397,game,sp_ready;purged_ok,,,??0Filemap@@QAE@XZ,,redirect_name_match,,,,0,15
+0x00628380,0x00628397,23,.text,??0Filemap@@QAE@XZ,void (__thiscall ??0Filemap@@QAE@XZ)(Filemap* this),0x00628380-0x00628397,game,sp_ready;purged_ok,,,??0Filemap@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,0,15
 0x006283A0,0x006283BA,26,.text,?init@Filemap@@QAEHPADH@Z,"int (__thiscall ?init@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)",0x006283A0-0x006283BA,game,sp_ready;purged_ok,src/filemap.cpp:25,Complete,,,source_complete,,,,1,0
 0x006283C0,0x006283D5,21,.text,?init@Filemap@@QAEHPAD@Z,"int (__thiscall ?init@Filemap@@QAEHPAD@Z)(Filemap* this, int8*)",0x006283C0-0x006283D5,game,sp_ready;purged_ok,src/filemap.cpp:36,Complete,,,source_complete,,,,1,0
-0x006283E0,0x00628423,67,.text,??1Filemap@@QAE@XZ,void (__thiscall ??1Filemap@@QAE@XZ)(Filemap* this),0x006283E0-0x00628423,game,sp_ready;purged_ok,,,??1Filemap@@QAE@XZ,,redirect_name_match,,,,0,15
+0x006283E0,0x00628423,67,.text,??1Filemap@@QAE@XZ,void (__thiscall ??1Filemap@@QAE@XZ)(Filemap* this),0x006283E0-0x00628423,game,sp_ready;purged_ok,,,??1Filemap@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,0,15
 0x00628430,0x00628539,265,.text,?open_read@Filemap@@QAEHPADH@Z,"int (__thiscall ?open_read@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)",0x00628430-0x00628539,game,sp_ready;purged_ok,src/filemap.cpp:48,Complete,,,source_complete,,,,1,8
 0x00628540,0x0062864C,268,.text,?open@Filemap@@QAEHPADH@Z,"int (__thiscall ?open@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)",0x00628540-0x0062864C,game,hidden;sp_ready;purged_ok,src/filemap.cpp:79,Complete,,,source_complete,,,,1,6
 0x00628650,0x006287B3,355,.text,?create@Filemap@@QAEHPADKH@Z,"int (__thiscall ?create@Filemap@@QAEHPADKH@Z)(Filemap* this, int8* lpFileName, ULONG lDistanceToMove, int)",0x00628650-0x006287B3,game,sp_ready;purged_ok,src/filemap.cpp:110,Complete,,,source_complete,,,,1,6

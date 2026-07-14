@@ -3,6 +3,7 @@
 #include "../src/basepop.h"
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
+#include "../src/filemap.h"
 #include "../src/font.h"
 #include "../src/spot.h"
 #include "../src/stringstruct.h"
@@ -708,6 +709,58 @@ void test_time_lifecycle_and_modal() {
     Time::TimeModal = reinterpret_cast<Time *>(1);
     timer->release_modal();
     expect(Time::TimeModal == nullptr);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+}
+
+void test_filemap_lifecycle() {
+    static_assert(sizeof(Filemap) == 0x10, "Filemap fixture requires the legacy layout");
+    alignas(Filemap) uint8_t storage[sizeof(Filemap) + 32];
+    uint8_t expected[sizeof(storage)];
+    LPVOID null_view = nullptr;
+    HANDLE invalid_file = INVALID_HANDLE_VALUE;
+    HANDLE null_handle = nullptr;
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(expected, 16, null_view);
+    write_at(expected, 16 + 4, invalid_file);
+    write_at(expected, 16 + 8, null_handle);
+    auto *filemap = new (storage + 16) Filemap;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    HANDLE mapping = CreateFileMappingA(
+        INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, 4096, nullptr);
+    LPVOID view = mapping ? MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, 4096) : nullptr;
+    HANDLE file = CreateEventA(nullptr, FALSE, FALSE, nullptr);
+    expect(mapping != nullptr);
+    expect(view != nullptr);
+    expect(file != nullptr);
+    if (mapping && view && file) {
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16, view);
+        write_at(storage, 16 + 4, file);
+        write_at(storage, 16 + 8, mapping);
+        std::memcpy(expected, storage, sizeof(storage));
+        write_at(expected, 16, null_view);
+        write_at(expected, 16 + 4, null_handle);
+        write_at(expected, 16 + 8, null_handle);
+        filemap->~Filemap();
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    } else {
+        if (view) {
+            UnmapViewOfFile(view);
+        }
+        if (mapping) {
+            CloseHandle(mapping);
+        }
+        if (file) {
+            CloseHandle(file);
+        }
+    }
+
+    seed_storage(storage, expected, sizeof(storage));
+    filemap = new (storage + 16) Filemap;
+    std::memcpy(expected, storage, sizeof(storage));
+    filemap->~Filemap();
     expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
@@ -1474,6 +1527,7 @@ int main() {
     test_spot_lifecycle();
     test_font_lifecycle();
     test_time_lifecycle_and_modal();
+    test_filemap_lifecycle();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();
