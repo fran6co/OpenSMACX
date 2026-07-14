@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--button-group-object")
     parser.add_argument("--basepop-font-object")
     parser.add_argument("--dialog-object")
+    parser.add_argument("--string-struct-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -146,6 +147,43 @@ def main():
                 fail(f"{description} does not use a plain no-argument return")
             if description == "Dialog selected-ID getter" and re.search(r"\bcall\b", body):
                 fail("Dialog selected-ID getter retains an external call")
+
+    if args.string_struct_object:
+        headers = run([args.objdump, "-f", args.string_struct_object])
+        if "file format pe-i386" not in headers:
+            fail("StringStruct object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.string_struct_object])
+        required_symbols = {
+            "StringStruct current ID": "__ZN12StringStruct10current_idEv",
+            "StringStruct current entry": "__ZN12StringStruct13current_entryEv",
+            "StringStruct current ID adapter":
+                "@_Z33string_struct_current_id_redirectP12StringStructPv@8",
+            "StringStruct current entry adapter":
+                "@_Z36string_struct_current_entry_redirectP12StringStructPv@8",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required StringStruct symbol: {description}")
+        disassembly = run([args.objdump, "-d", "-C", args.string_struct_object])
+        for description, label in (
+                ("StringStruct current ID", "StringStruct::current_id()"),
+                ("StringStruct current entry", "StringStruct::current_entry()"),
+                ("StringStruct current ID adapter",
+                 "@_Z33string_struct_current_id_redirectP12StringStructPv@8"),
+                ("StringStruct current entry adapter",
+                 "@_Z36string_struct_current_entry_redirectP12StringStructPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+                fail(f"{description} does not use a plain no-argument return")
+            if description in (
+                    "StringStruct current ID", "StringStruct current entry") and re.search(
+                        r"\bcall\b", body):
+                fail(f"{description} unexpectedly contains a call")
 
     if args.button_group_object:
         button_headers = run([args.objdump, "-f", args.button_group_object])

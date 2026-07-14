@@ -50,8 +50,8 @@
   "canonical_functions": 6000,
   "format_version": 1,
   "outputs": {
-    "analysis_correlation_sha256": "8208779ef9bd6cb9521faaf2d5db8204932317c602765c907b3cf6f4db1962e2",
-    "priorities_sha256": "f0f0d57e6219523b8fc6e150686f5e75ec0a67a9971d3a769dd0b2b4f6955aba"
+    "analysis_correlation_sha256": "404192bb59f1cd2b7262f9f12a6161151f8f15e4c9ffe13b2961b5e2153c5c7f",
+    "priorities_sha256": "ca0beb030a8f40df8e1690e71e414414060611616d04317616c1f05936c2eea0"
   },
   "priorities": {
     "bindings_by_category": {
@@ -65,10 +65,10 @@
     "by_tier": {
       "P0": 34,
       "P1": 111,
-      "P2": 375,
-      "P3": 4597
+      "P2": 374,
+      "P3": 4596
     },
     "original_dependencies": 34,
-    "total": 5117
+    "total": 5115
   }
 }

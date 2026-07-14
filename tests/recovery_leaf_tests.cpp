@@ -3,6 +3,7 @@
 #include "../src/basepop.h"
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
+#include "../src/stringstruct.h"
 
 #include <climits>
 #include <cstring>
@@ -659,6 +660,46 @@ void test_dialog_pos_to_id() {
         reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
 }
 
+void test_string_struct_current_accessors() {
+    alignas(StringStruct) uint8_t storage[sizeof(StringStruct) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *strings = new (storage + 16) StringStruct;
+    StringStructEntry *null_entry = nullptr;
+    auto *invalid_entry = reinterpret_cast<StringStructEntry *>(1);
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, null_entry);
+    write_at(storage, 16 + 0x0C, invalid_entry);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(strings->current_id() == 0);
+    expect(string_struct_current_entry_redirect(strings, nullptr) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    struct GuardedEntry {
+        uint8_t prefix[16];
+        StringStructEntry entry;
+        uint8_t suffix[16];
+    } guarded;
+    uint8_t entry_expected[sizeof(guarded)];
+    seed_storage(reinterpret_cast<uint8_t *>(&guarded), entry_expected, sizeof(guarded));
+    guarded.entry.id = INT_MIN;
+    guarded.entry.payload = INT_MAX;
+    std::memcpy(entry_expected, &guarded, sizeof(guarded));
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, invalid_entry);
+    StringStructEntry *current = &guarded.entry;
+    write_at(storage, 16 + 0x0C, current);
+    write_at(storage, 16 + 0x10, INT_MIN);
+    write_at(storage, 16 + 0x14, INT_MAX);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(string_struct_current_id_redirect(strings, nullptr) == INT_MIN);
+    expect(strings->current_entry() == INT_MAX);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(&guarded), entry_expected, sizeof(guarded));
+}
+
 }  // namespace
 
 int main() {
@@ -670,5 +711,6 @@ int main() {
     test_dialog_set_selected_id();
     test_dialog_get_selected_id();
     test_dialog_pos_to_id();
+    test_string_struct_current_accessors();
     return failures == 0 ? 0 : 1;
 }

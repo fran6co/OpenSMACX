@@ -27,6 +27,7 @@
 #include "dialogs.h"
 #include "maininterface.h"
 #include "scenario.h"
+#include "stringstruct.h"
 #include "win.h"
 
 #include <cstdint>
@@ -36,7 +37,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 35;
+constexpr size_t RedirectCount = 37;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -171,6 +172,18 @@ bool redirect_call(RedirectState &state, uintptr_t call_address,
 
 bool install_redirects() {
     const RedirectSpec specs[RedirectCount] = {
+        {
+            0x00401640,
+            reinterpret_cast<uintptr_t>(&string_struct_current_id_redirect),
+            {0x8B, 0x41, 0x08, 0x85, 0xC0, 0x74, 0x07, 0x8B,
+             0x41, 0x0C, 0x8B, 0x40, 0x04, 0xC3, 0x33, 0xC0},
+        },
+        {
+            0x00402530,
+            reinterpret_cast<uintptr_t>(&string_struct_current_entry_redirect),
+            {0x8B, 0x41, 0x08, 0x85, 0xC0, 0x74, 0x07, 0x8B,
+             0x41, 0x0C, 0x8B, 0x40, 0x08, 0xC3, 0x33, 0xC0},
+        },
         {
             0x004E3A50,
             reinterpret_cast<uintptr_t>(&base_at),
