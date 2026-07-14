@@ -177,6 +177,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
     set(OPENSMACX_HEAP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
+    set(OPENSMACX_LOG_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
     set(OPENSMACX_RANDOM_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/random.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
@@ -202,6 +204,7 @@ if(MINGW)
             --font-object "${OPENSMACX_FONT_OBJECT}"
             --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
             --heap-object "${OPENSMACX_HEAP_OBJECT}"
+            --log-object "${OPENSMACX_LOG_OBJECT}"
             --random-object "${OPENSMACX_RANDOM_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
@@ -225,6 +228,7 @@ if(BUILD_TESTING)
         src/dialog.cpp
         src/filemap_recovery.cpp
         src/font_recovery.cpp
+        src/log.cpp
         src/random.cpp
         src/spot_recovery.cpp
         src/stringstruct.cpp
@@ -256,7 +260,7 @@ if(BUILD_TESTING)
             $<$<CONFIG:Debug>:-Og>
             $<$<CONFIG:Release>:-O2>
         )
-        target_link_options(recovery-leaf-tests PRIVATE -static)
+        target_link_options(recovery-leaf-tests PRIVATE -static -Wl,--wrap=fclose)
     endif()
 
     if(CMAKE_CROSSCOMPILING)
@@ -291,6 +295,7 @@ if(BUILD_TESTING)
                 --font-object "${OPENSMACX_FONT_OBJECT}"
                 --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
                 --heap-object "${OPENSMACX_HEAP_OBJECT}"
+                --log-object "${OPENSMACX_LOG_OBJECT}"
                 --random-object "${OPENSMACX_RANDOM_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"

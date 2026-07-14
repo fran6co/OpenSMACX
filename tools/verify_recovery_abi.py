@@ -28,6 +28,7 @@ def main():
     parser.add_argument("--font-object")
     parser.add_argument("--filemap-object")
     parser.add_argument("--heap-object")
+    parser.add_argument("--log-object")
     parser.add_argument("--random-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
@@ -649,6 +650,111 @@ def main():
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Strings destructor does not use a plain thiscall return")
+
+    if args.log_object:
+        headers = run([args.objdump, "-f", args.log_object])
+        if "file format pe-i386" not in headers:
+            fail("Log object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.log_object])
+        required_symbols = {
+            "Log default constructor": "__ZN3LogC1Ev",
+            "Log filename constructor": "__ZN3LogC1EPKc",
+            "Log destructor": "__ZN3LogD1Ev",
+            "Log initializer": "__Z11log_loggingv",
+            "Log exit cleanup": "__Z16log_logging_exitv",
+            "Log reset wrapper": "__Z9log_resetv",
+            "Log state wrapper": "__Z13log_set_statei",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Log symbol: {description}")
+
+        raw_disassembly = run([args.objdump, "-d", "-r", args.log_object])
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.log_object])
+
+        def log_exact_body(symbol):
+            match = re.search(
+                rf"<{re.escape(symbol)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                raw_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate exact Log symbol in disassembly: {symbol}")
+            return match.group("body")
+
+        def log_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Log function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = log_exact_body("__ZN3LogC1Ev")
+        for pattern in (
+                r"\bmovl\s+\$0x0,\(%ecx\)",
+                r"\bmovl\s+\$0x0,0x4\(%ecx\)"):
+            if not re.search(pattern, constructor):
+                fail("Log default constructor does not clear both fields")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Log default constructor does not return this in EAX")
+        if not re.search(r"\bret\b", constructor) or re.search(
+                r"\bret\s+\$", constructor):
+            fail("Log default constructor does not use a plain thiscall return")
+
+        filename_constructor = log_exact_body("__ZN3LogC1EPKc")
+        if not re.search(r"\bmovl\s+\$0x0,\(%e(?:cx|bx|si|di)\)",
+                         filename_constructor):
+            fail("Log filename constructor does not clear the filename field")
+        if re.search(r"\bmov[^\n]*,0x4\(%e(?:cx|bx|si|di)\)",
+                     filename_constructor):
+            fail("Log filename constructor overwrites preserved disabled state")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", filename_constructor):
+            fail("Log filename constructor does not return this in EAX")
+        if not re.search(r"\bret\s+\$0x4\b", filename_constructor):
+            fail("Log filename constructor does not pop its stack argument")
+
+        destructor = log_exact_body("__ZN3LogD1Ev")
+        if "free" not in destructor or not re.search(
+                r"\bmovl\s+\$0x0,\(%e(?:cx|bx|si|di)\)", destructor):
+            fail("Log destructor does not free and clear the filename")
+        if re.search(r"\bmov[^\n]*,0x4\(%e(?:cx|bx|si|di)\)", destructor):
+            fail("Log destructor overwrites preserved disabled state")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("Log destructor does not use a plain thiscall return")
+
+        initializer = log_body("log_logging()")
+        if "operator new" in initializer:
+            fail("Log initializer retains the non-legacy allocation leak")
+        if "atexit" not in initializer:
+            fail("Log initializer does not register exit cleanup")
+        calls_constructor = "Log::Log(char const*)" in initializer
+        inlines_constructor = "mem_get" in initializer and "env_open" in initializer
+        if not calls_constructor and not inlines_constructor:
+            fail("Log initializer neither constructs nor initializes the global log")
+
+        exit_cleanup = log_body("log_logging_exit()")
+        calls_destructor = "Log::~Log()" in exit_cleanup
+        inlines_destructor = "free" in exit_cleanup and re.search(
+            r"\bmovl\s+\$0x0,\(%e(?:ax|cx|bx|si|di)\)", exit_cleanup)
+        if not calls_destructor and not inlines_destructor:
+            fail("Log exit cleanup neither destroys nor clears the global log")
+
+        reset_wrapper = log_body("log_reset()")
+        if "Log::reset()" not in reset_wrapper and "env_open" not in reset_wrapper:
+            fail("Log reset wrapper neither delegates nor resets the global log")
+
+        state_wrapper = log_body("log_set_state(int)")
+        if not re.search(r"\bsete\b", state_wrapper) or not re.search(
+                r"\bmov[^\n]*,0x4\(%e(?:ax|cx|bx|si|di)\)", state_wrapper):
+            fail("Log state wrapper does not invert and store the requested state")
+
+        for description, body in (
+                ("Log initializer", initializer),
+                ("Log exit cleanup", exit_cleanup),
+                ("Log reset wrapper", reset_wrapper),
+                ("Log state wrapper", state_wrapper)):
+            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+                fail(f"{description} does not use a plain cdecl return")
 
     if args.random_object:
         headers = run([args.objdump, "-f", args.random_object])

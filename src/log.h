@@ -23,8 +23,12 @@
   */
 class DLLEXPORT Log {
  public:
-  Log() : log_file_(0), is_disabled_(false) { }           // 00625FB0
-  Log(LPCSTR input) : log_file_(0), is_disabled_(false) { // 00625FC0
+  Log() : log_file_(nullptr), is_disabled_(false) {
+#if defined(__GNUC__) && defined(__i386__)
+      __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+  } // 00625FB0
+  Log(LPCSTR input) : log_file_(nullptr) { // 00625FC0
       if (input) {
           size_t len = strlen(input) + 1;
           log_file_ = (LPSTR)mem_get(len);
@@ -33,8 +37,16 @@ class DLLEXPORT Log {
               reset();
           }
       }
+#if defined(__GNUC__) && defined(__i386__)
+      __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
   }
-  ~Log() { if (log_file_) { free(log_file_); log_file_ = 0; } } // 00626020
+  ~Log() {
+      if (log_file_) {
+          free(log_file_);
+          *reinterpret_cast<LPSTR volatile *>(&log_file_) = nullptr;
+      }
+  } // 00626020
 
   int init(LPCSTR input);
   void reset();
@@ -47,6 +59,10 @@ class DLLEXPORT Log {
   LPSTR log_file_;
   BOOL is_disabled_;
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Log) == 8, "Log layout must match the legacy ABI");
+#endif
 
 // global
 extern Log *Logging;
