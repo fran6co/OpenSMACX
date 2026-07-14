@@ -3,10 +3,12 @@
 #include "../src/basepop.h"
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
+#include "../src/spot.h"
 #include "../src/stringstruct.h"
 #include "../src/strings.h"
 #include "../src/text_recovery.h"
 #include "../src/textindex.h"
+#include "../src/time.h"
 
 #include <climits>
 #include <cstring>
@@ -82,6 +84,19 @@ void Heap::shutdown() {
     std::memcpy(bytes + 8, &null_pointer, sizeof(null_pointer));
     std::memcpy(bytes + 12, &zero, sizeof(zero));
     std::memcpy(bytes + 16, &zero, sizeof(zero));
+}
+
+void Spot::shutdown() {
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
+    LPVOID spots = nullptr;
+    std::memcpy(&spots, bytes, sizeof(spots));
+    if (spots) {
+        std::free(spots);
+    }
+    clear();
+}
+
+void Time::close() {
 }
 
 LPSTR Strings::put(LPCSTR input) {
@@ -494,6 +509,43 @@ void test_text_clear_index() {
     if (failures != failures_before) {
         std::fprintf(stderr, "TextIndex clear fixture failed\n");
     }
+}
+
+void test_spot_lifecycle() {
+    static_assert(sizeof(Spot) == 0xC, "Spot fixture requires the legacy layout");
+    alignas(Spot) uint8_t storage[sizeof(Spot) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Spot));
+    auto *spot = new (storage + 16) Spot;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Spot));
+    spot->clear();
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    LPVOID spots = std::malloc(8);
+    const uint32_t max_count = 7;
+    const uint32_t add_count = 5;
+    write_at(storage, 16, spots);
+    write_at(storage, 16 + 4, max_count);
+    write_at(storage, 16 + 8, add_count);
+    std::memcpy(expected, storage, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Spot));
+    spot->~Spot();
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    spot = new (storage + 16) Spot;
+    write_at(storage, 16 + 4, max_count);
+    write_at(storage, 16 + 8, add_count);
+    std::memcpy(expected, storage, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Spot));
+    spot->~Spot();
+    expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
 void seed_dialog(uint8_t *storage, uint8_t *expected) {
@@ -1256,6 +1308,7 @@ int main() {
     test_text_string_helpers();
     test_text_index_lifecycle();
     test_text_clear_index();
+    test_spot_lifecycle();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();

@@ -22,10 +22,10 @@
   */
 class DLLEXPORT Spot {
  public:
-  Spot() : spots_(0), max_count_(0), add_count_(0) { } // 005FA860
-  ~Spot() { shutdown(); }                              // 005FA870
+  Spot();  // 005FA860
+  ~Spot(); // 005FA870
 
-  void clear() { spots_ = 0;  max_count_ = 0; add_count_ = 0; } // 005FA820
+  void clear(); // 005FA820
   void shutdown();
   void init(uint32_t count);
   void replace(int position, int type, int left, int top, int length, int width);
@@ -47,3 +47,7 @@ class DLLEXPORT Spot {
   uint32_t max_count_;
   uint32_t add_count_;
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Spot) == 0xC, "Spot layout must match the legacy ABI");
+#endif

@@ -96,6 +96,7 @@ set(OPENSMACX_SOURCES
     src/scroll.cpp
     src/scenario.cpp
     src/spot.cpp
+    src/spot_recovery.cpp
     src/sprite.cpp
     src/stdafx.cpp
     src/stringbox.cpp
@@ -169,6 +170,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
+    set(OPENSMACX_SPOT_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/spot_recovery.cpp.obj")
     set(OPENSMACX_TEXT_INDEX_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
     add_custom_target(verify-recovery-abi
@@ -182,6 +185,7 @@ if(MINGW)
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
+            --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
@@ -198,6 +202,7 @@ if(BUILD_TESTING)
         src/basepop_font.cpp
         src/buttongroup.cpp
         src/dialog.cpp
+        src/spot_recovery.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp
         src/textindex_recovery.cpp
@@ -259,6 +264,7 @@ if(BUILD_TESTING)
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
+                --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
         )
     endif()
