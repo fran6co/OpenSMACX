@@ -263,6 +263,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
     )
+
+    add_test(NAME external-analysis-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_external_analysis.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX

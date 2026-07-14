@@ -35,6 +35,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Canonical IDB input SHA-256: `7d1933da68a3326ac97464849a209a5f127606f5bd7a6abfe9985cd3ce044767`.
 - Canonical IDB SHA-256: `6ffdcf2d6644f2c1b19c218d3b1b293b4e442d56b8cf1f537b0403608ff866fa`.
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
+- Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
+- Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
+- The exported-first queue covers all 462 DEF exports: 37 unverified exact-name replacements, eight mapped unrecovered functions, 370 source-complete mappings, and 47 unresolved or ambiguous mappings.
 
 ## Completed Work
 
@@ -123,7 +126,7 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Select the next known-layout recovery candidate and repeat the behavioral, ABI, build, metadata, island, staging, and runtime gates.
+1. Recover exported functions first, beginning with the externally corroborated Text wrappers, while skipping blocked exports rather than stalling the queue.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
@@ -149,7 +152,12 @@ Other completed corrections and checks:
 - `docs/recovery/priorities.csv`: currently regenerated to 5,113 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
+- `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
 - `docs/recovery/summary.json`: canonical recovery-state counts.
+- `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
+- `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
+- `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
+- `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
 - `tools/test_extract_legacy_leaves.py`: 12 island-classifier regression tests.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.

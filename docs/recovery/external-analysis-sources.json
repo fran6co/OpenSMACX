@@ -1,0 +1,55 @@
+{
+  "format_version": 1,
+  "repository": {
+    "revision": "e892f24a7338cde9471f11d253ae2ca46dd8d00b",
+    "url": "https://github.com/Dionysus1/OpenSMACX",
+    "license_status": "no_license_found",
+    "usage_policy": "hypothesis_only_local_input"
+  },
+  "artifacts": [
+    {
+      "path": "Information/Dio/Label addresses in assembly code.txt",
+      "url": "https://github.com/Dionysus1/OpenSMACX/blob/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Dio/Label%20addresses%20in%20assembly%20code.txt",
+      "download_url": "https://raw.githubusercontent.com/Dionysus1/OpenSMACX/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Dio/Label%20addresses%20in%20assembly%20code.txt",
+      "git_blob_sha1": "d0831f7bd4be1e702f64e605c66d84435f71c393",
+      "sha256": "6e320905e7286cdbfd6d3fb9258adfbe8fc1caed828428bb571057de06c4adac",
+      "size": 90093,
+      "encoding": "windows-1252",
+      "kind": "generated_disassembly_with_game_text",
+      "handling": "never_commit_or_redistribute"
+    },
+    {
+      "path": "Information/Yitzi/alphaxvariables.txt",
+      "url": "https://github.com/Dionysus1/OpenSMACX/blob/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Yitzi/alphaxvariables.txt",
+      "download_url": "https://raw.githubusercontent.com/Dionysus1/OpenSMACX/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Yitzi/alphaxvariables.txt",
+      "git_blob_sha1": "4563807bbf698dd10c7542e5fab1c1e1f0ee5d71",
+      "sha256": "b23955a4402011b658f3b6e0a71dd282b2f799692480a88553c1f61d53296408",
+      "size": 10552,
+      "encoding": "ascii",
+      "kind": "human_patch_design_notes",
+      "handling": "local_hypotheses_require_independent_verification"
+    },
+    {
+      "path": "Information/Yitzi/functionlisting.txt",
+      "url": "https://github.com/Dionysus1/OpenSMACX/blob/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Yitzi/functionlisting.txt",
+      "download_url": "https://raw.githubusercontent.com/Dionysus1/OpenSMACX/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Yitzi/functionlisting.txt",
+      "git_blob_sha1": "6c44e6b10526617f04e182b7066c1114aba8bb8e",
+      "sha256": "784465561df62fdd13bd06a780b0ba11420afa04a4fd656146458c138586c0f8",
+      "size": 6866,
+      "encoding": "ascii",
+      "kind": "human_function_notes",
+      "handling": "local_hypotheses_require_independent_verification"
+    },
+    {
+      "path": "Information/Yitzi/variables.txt",
+      "url": "https://github.com/Dionysus1/OpenSMACX/blob/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Yitzi/variables.txt",
+      "download_url": "https://raw.githubusercontent.com/Dionysus1/OpenSMACX/e892f24a7338cde9471f11d253ae2ca46dd8d00b/Information/Yitzi/variables.txt",
+      "git_blob_sha1": "e631b4b2e5dcfce84a652f55d556cb14d835dec0",
+      "sha256": "5bfe2596629102b4c7e68f88b9a403476c99c4c5918ab7393e847eedfc3bec31",
+      "size": 3237,
+      "encoding": "ascii",
+      "kind": "human_layout_notes",
+      "handling": "local_hypotheses_require_independent_verification"
+    }
+  ]
+}
