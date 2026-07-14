@@ -22,8 +22,14 @@
   */
 class DLLEXPORT Random {
  public:
-  Random() : seed_(0) { }  // 00625730
-  ~Random() { seed_ = 0; } // 00625740
+  Random() : seed_(0) {
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+  } // 00625730
+  ~Random() {
+    *reinterpret_cast<uint32_t volatile *>(&seed_) = 0;
+  } // 00625740
 
   void reseed(uint32_t new_seed);
   uint32_t get(uint32_t min, uint32_t max);
@@ -34,6 +40,10 @@ class DLLEXPORT Random {
  private:
   uint32_t seed_;
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Random) == 4, "Random layout must match the legacy ABI");
+#endif
 
 // global
 extern Random *Rand;
