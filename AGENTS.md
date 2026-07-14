@@ -74,6 +74,7 @@ Recovered source includes:
 - Five `Buffer` font and color setters.
 - Four `Dialog` font and color setters plus bounded ID/position lookup, selection, and selected-ID retrieval.
 - `StringStruct::current_id`, `current_entry`, `next_entry`, and `seek_id`.
+- `text_get` and `text_item_number` through the staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
@@ -140,6 +141,7 @@ Other completed corrections and checks:
 - `src/buffer.h`, `src/buffer.cpp`: recovered Buffer setters and lifecycle hooks.
 - `src/dialog.h`, `src/dialog.cpp`: recovered Dialog setters, bounded ID/position lookup, selection, and selected-ID retrieval.
 - `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance/seek accessors.
+- `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text get and numeric-item source helpers.
 - `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
 - `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.

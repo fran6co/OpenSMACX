@@ -4,10 +4,36 @@
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
 #include "../src/stringstruct.h"
+#include "../src/text_recovery.h"
 
 #include <climits>
 #include <cstring>
 #include <new>
+
+void __cdecl purge_spaces(LPSTR input) {
+    char *first = input;
+    while (*first == ' ') {
+        ++first;
+    }
+    if (first != input) {
+        std::memmove(input, first, std::strlen(first) + 1);
+    }
+    size_t length = std::strlen(input);
+    while (length != 0 && input[length - 1] == ' ') {
+        input[--length] = 0;
+    }
+}
+
+void __cdecl kill_lf(LPSTR input) {
+    char *newline = std::strrchr(input, '\n');
+    if (newline) {
+        *newline = 0;
+    }
+}
+
+int __cdecl stoi(LPCSTR input) {
+    return std::atoi(input);
+}
 
 BOOL __cdecl in_box(int x, int y, const RECT *rect);
 
@@ -58,6 +84,51 @@ void test_in_box_edges() {
     expect(!in_box(29, 40, &rect));
     expect(!in_box(9, 20, &rect));
     expect(!in_box(10, 19, &rect));
+}
+
+void set_text_pointer(Text *text, size_t offset, const void *value) {
+    std::memcpy(reinterpret_cast<uint8_t *>(text) + offset, value, sizeof(void *));
+}
+
+void test_text_get_and_item_number() {
+    alignas(Text) uint8_t storage[sizeof(Text)]{};
+    auto *text = reinterpret_cast<Text *>(storage);
+    char get_buffer[512]{};
+    char item_buffer[512]{};
+    LPSTR get_pointer = get_buffer;
+    LPSTR item_pointer = item_buffer;
+    FILE *file = std::tmpfile();
+
+    expect(file != nullptr);
+    if (!file) {
+        return;
+    }
+    set_text_pointer(text, 0x154, &file);
+    set_text_pointer(text, 0x158, &get_pointer);
+    set_text_pointer(text, 0x15C, &item_pointer);
+
+    std::fputs("  first line  \n", file);
+    std::rewind(file);
+    expect(text_get_source(text) == get_buffer);
+    expect(std::strcmp(get_buffer, "first line") == 0);
+    void *current = get_buffer;
+    expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+
+    expect(text_get_source(text) == get_buffer);
+    expect(get_buffer[0] == 0);
+    get_buffer[0] = 'x';
+    expect(text_get_source(text) == nullptr);
+    expect(get_buffer[0] == 0);
+
+    char items[] = "  -42 ,ignored";
+    current = items;
+    set_text_pointer(text, 0x150, &current);
+    std::memset(item_buffer, 0xA5, sizeof(item_buffer));
+    expect(text_item_number_source(text) == -42);
+    expect(std::strcmp(item_buffer, "-42") == 0);
+    current = items + 7;
+    expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+    std::fclose(file);
 }
 
 void expect_storage_bytes(
@@ -929,6 +1000,7 @@ void test_string_struct_seek_id() {
 int main() {
     test_alpha_net_pid_to_idx();
     test_in_box_edges();
+    test_text_get_and_item_number();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();
