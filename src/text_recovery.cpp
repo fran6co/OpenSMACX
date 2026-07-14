@@ -73,3 +73,11 @@ LPSTR __cdecl text_item_string_source(Text *text, Strings *strings) {
 int __cdecl text_item_number_source(Text *text) {
     return stoi(text_item_source(text));
 }
+
+int __cdecl text_item_binary_source(Text *text) {
+    return btoi(text_item_source(text));
+}
+
+int __cdecl text_item_hex_source(Text *text) {
+    return htoi(text_item_source(text));
+}

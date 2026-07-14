@@ -4485,8 +4485,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FD670,0x005FD6C7,87,.text,?text_item@@YAPADXZ,,0x005FD670-0x005FD6C7,game,sp_ready;purged_ok,,,?text_item@@YAPADXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,1,20
 0x005FD6D0,0x005FD732,98,.text,?text_item_string@@YAPADXZ,,0x005FD6D0-0x005FD732,game,hidden;sp_ready;purged_ok,,,?text_item_string@@YAPADXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,2,2
 0x005FD740,0x005FD79D,93,.text,?text_item_number@@YAHXZ,,0x005FD740-0x005FD79D,game,hidden;sp_ready;purged_ok,,,?text_item_number@@YAHXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,2,18
-0x005FD7A0,0x005FD7FD,93,.text,?text_item_binary@@YAHXZ,,0x005FD7A0-0x005FD7FD,game,hidden;sp_ready;purged_ok,,,?text_item_binary@@YAHXZ,,redirect_name_match,,,,2,4
-0x005FD800,0x005FD85D,93,.text,?text_item_hex@@YAHXZ,,0x005FD800-0x005FD85D,game,hidden;sp_ready;purged_ok,,,?text_item_hex@@YAHXZ,,redirect_name_match,,,,2,0
+0x005FD7A0,0x005FD7FD,93,.text,?text_item_binary@@YAHXZ,,0x005FD7A0-0x005FD7FD,game,hidden;sp_ready;purged_ok,,,?text_item_binary@@YAHXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,2,4
+0x005FD800,0x005FD85D,93,.text,?text_item_hex@@YAHXZ,,0x005FD800-0x005FD85D,game,hidden;sp_ready;purged_ok,,,?text_item_hex@@YAHXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,2,0
 0x005FD860,0x005FD87F,31,.text,??0Text@@QAE@@Z,_Text* (__thiscall ??0Text@@QAE@@Z)(_Text* this),0x005FD860-0x005FD87F,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FD880,0x005FD8CF,79,.text,??0Text@@QAE@H@Z,"_Text* (__thiscall ??0Text@@QAE@H@Z)(_Text* this, int)",0x005FD880-0x005FD8CF,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005FD8D0,0x005FD969,153,.text,?init@Text@@QAEHH@Z,"int (__thiscall ?init@Text@@QAEHH@Z)(_Text* this, int)",0x005FD8D0-0x005FD969,game,hidden;sp_ready;purged_ok,src/text.cpp:28,Complete,,,source_complete,,,,3,0

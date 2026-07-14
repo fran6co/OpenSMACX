@@ -36,6 +36,26 @@ int __cdecl stoi(LPCSTR input) {
     return std::atoi(input);
 }
 
+int __cdecl btoi(LPCSTR input) {
+    int result = 0;
+    while (*input == '0' || *input == '1') {
+        result = result * 2 + *input++ - '0';
+    }
+    return result;
+}
+
+int __cdecl htoi(LPCSTR input) {
+    int result = 0;
+    while ((*input >= '0' && *input <= '9')
+           || (*input >= 'a' && *input <= 'f')
+           || (*input >= 'A' && *input <= 'F')) {
+        result *= 16;
+        result += *input <= '9' ? *input - '0' : (*input & ~0x20) - '7';
+        ++input;
+    }
+    return result;
+}
+
 LPVOID __cdecl mem_get(size_t size) {
     return std::malloc(size);
 }
@@ -142,6 +162,22 @@ void test_text_get_and_item_number() {
     expect(text_item_source(text) == item_buffer);
     expect(std::strcmp(item_buffer, "-42") == 0);
     current = items + 7;
+    expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+
+    char binary[] = "10110,ignored";
+    current = binary;
+    set_text_pointer(text, 0x150, &current);
+    expect(text_item_binary_source(text) == 22);
+    expect(std::strcmp(item_buffer, "10110") == 0);
+    current = binary + 6;
+    expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+
+    char hexadecimal[] = "1aF,ignored";
+    current = hexadecimal;
+    set_text_pointer(text, 0x150, &current);
+    expect(text_item_hex_source(text) == 431);
+    expect(std::strcmp(item_buffer, "1aF") == 0);
+    current = hexadecimal + 4;
     expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
 
     current = items;
