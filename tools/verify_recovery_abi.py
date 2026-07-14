@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--basepop-font-object")
     parser.add_argument("--dialog-object")
     parser.add_argument("--string-struct-object")
+    parser.add_argument("--spot-object")
     parser.add_argument("--text-index-object")
     args = parser.parse_args()
 
@@ -330,6 +331,54 @@ def main():
         if not re.search(r"\bret\b", clear_helper) or re.search(
                 r"\bret\s+\$", clear_helper):
             fail("TextIndex clear helper does not use a plain cdecl return")
+
+    if args.spot_object:
+        headers = run([args.objdump, "-f", args.spot_object])
+        if "file format pe-i386" not in headers:
+            fail("Spot object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.spot_object])
+        required_symbols = {
+            "Spot constructor": "__ZN4SpotC1Ev",
+            "Spot destructor": "__ZN4SpotD1Ev",
+            "Spot clear": "__ZN4Spot5clearEv",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Spot symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.spot_object])
+
+        def spot_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Spot function in disassembly: {label}")
+            return match.group("body")
+
+        for description, label in (
+                ("constructor", "Spot::Spot()"),
+                ("clear", "Spot::clear()")):
+            body = spot_body(label)
+            for field in ("", "0x4", "0x8"):
+                target = rf"{field}\(%ecx\)" if field else r"\(%ecx\)"
+                if not re.search(rf"\bmovl\s+\$0x0,{target}", body):
+                    fail(f"Spot {description} does not clear field {field or '0x0'}")
+            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+                fail(f"Spot {description} does not use a plain thiscall return")
+
+        destructor = spot_body("Spot::~Spot()")
+        clears_fields = all(re.search(pattern, destructor) for pattern in (
+            r"\bmovl\s+\$0x0,\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x4\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x8\(%e?\w+\)",
+        ))
+        calls_shutdown = "Spot::shutdown()" in destructor
+        if not clears_fields and not calls_shutdown:
+            fail("Spot destructor neither clears all fields nor calls Spot::shutdown")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("Spot destructor does not use a plain thiscall return")
 
     if not args.scenario_object:
         return
