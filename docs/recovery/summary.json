@@ -17,10 +17,10 @@
       "external_library": 332,
       "original_dependency": 30,
       "redirect_name_match": 37,
-      "source_complete": 478,
+      "source_complete": 479,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 5085
+      "unrecovered": 5084
     },
     "total": 6000,
     "with_comments": 17,
@@ -1318,9 +1318,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 483,
-    "matched_function_starts": 483,
-    "unique_addresses": 483,
+    "annotations": 484,
+    "matched_function_starts": 484,
+    "unique_addresses": 484,
     "unmatched_addresses": []
   },
   "source_bindings": {

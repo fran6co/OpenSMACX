@@ -100,6 +100,9 @@ def main():
             "Dialog selected-ID setter": "__ZN6Dialog15set_selected_idEi",
             "Dialog selected-ID adapter":
                 "@_Z31dialog_set_selected_id_redirectP6DialogPvi@12",
+            "Dialog selected-ID getter": "__ZN6Dialog15get_selected_idEv",
+            "Dialog selected-ID getter adapter":
+                "@_Z31dialog_get_selected_id_redirectP6DialogPv@8",
         }
         for description, symbol in required_dialog_symbols.items():
             if symbol not in dialog_symbols:
@@ -120,6 +123,20 @@ def main():
             returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != "4" for value in returns):
                 fail(f"{description} does not pop its single stack argument")
+        for description, label in (
+                ("Dialog selected-ID getter", "Dialog::get_selected_id()"),
+                ("Dialog selected-ID getter adapter",
+                 "@_Z31dialog_get_selected_id_redirectP6DialogPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                dialog_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+                fail(f"{description} does not use a plain no-argument return")
+            if description == "Dialog selected-ID getter" and re.search(r"\bcall\b", body):
+                fail("Dialog selected-ID getter retains an external call")
 
     if args.button_group_object:
         button_headers = run([args.objdump, "-f", args.button_group_object])

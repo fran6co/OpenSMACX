@@ -37,6 +37,8 @@ static_assert(offsetof(DialogEntry, id) == 0x4,
               "DialogEntry ID offset must match the original executable");
 static_assert(offsetof(DialogEntry, next) == 0xC,
               "DialogEntry next offset must match the original executable");
+static_assert(offsetof(DialogEntry, previous) == 0x10,
+              "DialogEntry previous offset must match the original executable");
 
  /*
   * Dialog class
@@ -52,6 +54,7 @@ class DLLEXPORT Dialog {
   void set_dialog_text_color3(int color1, int color2, int color3, int color4);
   int id_to_pos(int id);
   void set_selected_id(int id);
+  int get_selected_id();
 
  private:
   LPVOID vtable_;
@@ -125,3 +128,4 @@ void __fastcall dialog_set_text_color3_redirect(
     Dialog *self, void *, int color1, int color2, int color3, int color4);
 int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id);
 void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id);
+int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *);
