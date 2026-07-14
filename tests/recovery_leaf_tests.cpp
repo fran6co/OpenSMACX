@@ -80,6 +80,8 @@ LPCSTR font_init_name = nullptr;
 int font_init_height = 0;
 uint32_t font_init_style = 0;
 int time_close_calls = 0;
+int text_shutdown_calls = 0;
+Text *text_shutdown_this = nullptr;
 int env_open_calls = 0;
 #if defined(__MINGW32__)
 int env_close_calls = 0;
@@ -88,6 +90,11 @@ LPCSTR env_open_source = nullptr;
 LPCSTR env_open_mode = nullptr;
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
+
+void Text::shutdown() {
+    ++text_shutdown_calls;
+    text_shutdown_this = this;
+}
 
 void Heap::shutdown() {
     ++heap_shutdown_calls;
@@ -495,6 +502,23 @@ void write_at_volatile(uint8_t *storage, size_t offset, const T &value) {
     for (size_t index = 0; index < sizeof(value); ++index) {
         target[index] = source[index];
     }
+}
+
+void test_text_destructor_thunk() {
+    static_assert(sizeof(Text) == 0x160, "Text fixture requires the legacy layout");
+    alignas(Text) uint8_t storage[sizeof(Text) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    auto *text = new (storage + 16) Text;
+    std::memcpy(expected, storage, sizeof(storage));
+    text_shutdown_calls = 0;
+    text_shutdown_this = nullptr;
+    text->~Text();
+
+    expect(text_shutdown_calls == 1);
+    expect(text_shutdown_this == text);
+    expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
 void expect_heap_clear(uint8_t *expected, size_t heap_offset) {
@@ -1908,6 +1932,7 @@ int main() {
     test_in_box_edges();
     test_text_get_and_item_number();
     test_text_string_helpers();
+    test_text_destructor_thunk();
     test_text_index_lifecycle();
     test_text_clear_index();
     test_spot_lifecycle();

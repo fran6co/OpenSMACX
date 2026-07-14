@@ -33,6 +33,7 @@ def main():
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--strings-object")
+    parser.add_argument("--text-object")
     parser.add_argument("--text-index-object")
     parser.add_argument("--time-object")
     args = parser.parse_args()
@@ -870,6 +871,30 @@ def main():
         if not re.search(r"\bret\b", floating_wrapper) or re.search(
                 r"\bret\s+\$", floating_wrapper):
             fail("random floating wrapper does not use a plain cdecl return")
+
+    if args.text_object:
+        headers = run([args.objdump, "-f", args.text_object])
+        if "file format pe-i386" not in headers:
+            fail("Text object is not a 32-bit PE COFF object")
+        section_headers = run([args.objdump, "-h", args.text_object])
+        if "COMDAT __ZN4TextD1Ev" in section_headers:
+            fail("Text destructor remains an inline COMDAT implementation")
+        symbols = run([args.nm, "--defined-only", args.text_object])
+        if "__ZN4TextD1Ev" not in symbols:
+            fail("missing required Text destructor symbol")
+
+        disassembly = run([args.objdump, "-d", "-r", args.text_object])
+        match = re.search(
+            r"<__ZN4TextD1Ev>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            disassembly, re.DOTALL)
+        if not match:
+            fail("could not locate exact Text destructor in disassembly")
+        destructor = match.group("body")
+        if not re.match(
+                r"\s*[0-9a-f]+:\s+e9\s+00\s+00\s+00\s+00\s+"
+                r"jmp[^\n]*\n\s*[0-9a-f]+:\s+DISP32\s+"
+                r"__ZN4Text8shutdownEv\b", destructor):
+            fail("Text destructor is not a direct tail jump to shutdown")
 
     if not args.scenario_object:
         return

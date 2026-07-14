@@ -32,6 +32,17 @@ TextState *state(Text *text) {
 
 } // namespace
 
+#if defined(__GNUC__) && defined(__i386__)
+__attribute__((naked))
+#endif
+Text::~Text() noexcept(false) {
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__("jmp __ZN4Text8shutdownEv");
+#else
+    shutdown();
+#endif
+}
+
 void __cdecl text_close_source(Text *text) {
     TextState *const value = state(text);
     if (value->text_file) {
