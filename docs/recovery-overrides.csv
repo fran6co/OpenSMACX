@@ -6,6 +6,7 @@ address,recovery_state,priority,notes
 0x0045C170,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x004E25E0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x004E3A50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00585120,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x0058EE50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DAC70,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DACB0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
