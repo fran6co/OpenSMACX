@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--button-group-object")
     parser.add_argument("--basepop-font-object")
     parser.add_argument("--dialog-object")
+    parser.add_argument("--font-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--text-index-object")
@@ -310,6 +311,8 @@ def main():
             fail("TextIndex constructor does not clear the Heap error byte")
         if not re.search(r"\bmovb\s+\$0x0,\(%ecx\)", constructor):
             fail("TextIndex constructor does not terminate the filename")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("TextIndex constructor does not return this in EAX")
         if not re.search(r"\bret\b", constructor) or re.search(
                 r"\bret\s+\$", constructor):
             fail("TextIndex constructor does not use a plain thiscall return")
@@ -364,6 +367,9 @@ def main():
                 target = rf"{field}\(%ecx\)" if field else r"\(%ecx\)"
                 if not re.search(rf"\bmovl\s+\$0x0,{target}", body):
                     fail(f"Spot {description} does not clear field {field or '0x0'}")
+            if description == "constructor" and not re.search(
+                    r"\bmov\s+%e(?:cx|bx|si|di),%eax", body):
+                fail("Spot constructor does not return this in EAX")
             if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
                 fail(f"Spot {description} does not use a plain thiscall return")
 
@@ -379,6 +385,69 @@ def main():
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Spot destructor does not use a plain thiscall return")
+
+    if args.font_object:
+        headers = run([args.objdump, "-f", args.font_object])
+        if "file format pe-i386" not in headers:
+            fail("Font object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.font_object])
+        required_symbols = {
+            "Font default constructor": "__ZN4FontC1Ev",
+            "Font initializing constructor": "__ZN4FontC1EPcii",
+            "Font destructor": "__ZN4FontD1Ev",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Font symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.font_object])
+
+        def font_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Font function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = font_body("Font::Font()")
+        if not re.search(r"\bmovl\s+\$0xffffffff,\(%ecx\)", constructor):
+            fail("Font default constructor does not initialize field 0x0 to -1")
+        for field in ("4", "8", "c", "10", "18", "1c", "24"):
+            if not re.search(rf"\bmovl\s+\$0x0,0x{field}\(%ecx\)", constructor):
+                fail(f"Font default constructor does not clear field 0x{field}")
+        for preserved in ("14", "20"):
+            if re.search(rf"\bmov[^\n]*0x{preserved}\(%ecx\)", constructor):
+                fail(f"Font default constructor overwrites preserved field 0x{preserved}")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Font default constructor does not return this in EAX")
+        if not re.search(r"\bret\b", constructor) or re.search(
+                r"\bret\s+\$", constructor):
+            fail("Font default constructor does not use a plain thiscall return")
+
+        initializing_constructor = font_body("Font::Font(char*, int, int)")
+        if not re.search(r"\bret\s+\$0xc\b", initializing_constructor):
+            fail("Font initializing constructor does not pop its three arguments")
+        if not re.search(
+                r"\bmov\s+%e(?:cx|bx|si|di),%eax", initializing_constructor):
+            fail("Font initializing constructor does not return this in EAX")
+
+        destructor = font_body("Font::~Font()")
+        calls_close = "Font::close()" in destructor
+        clears_fields = all(re.search(pattern, destructor) for pattern in (
+            r"\bmovl\s+\$0xffffffff,\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x8\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0xc\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x10\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x18\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x1c\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x24\(%e?\w+\)",
+        ))
+        if not calls_close and not clears_fields:
+            fail("Font destructor neither performs full cleanup nor calls Font::close")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("Font destructor does not use a plain thiscall return")
 
     if not args.scenario_object:
         return

@@ -79,6 +79,7 @@ Recovered source includes:
 - `text_close`, `text_set_get_ptr`, and `text_set_item_ptr` through the staged hybrid export redirects.
 - `TextIndex` construction, destruction, and `text_clear_index` through staged hybrid export redirects.
 - `Spot` construction, destruction, and clearing through staged hybrid export redirects.
+- Both `Font` constructors and the destructor through staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
@@ -102,6 +103,8 @@ Other completed corrections and checks:
 - StringStruct seek uses a C-linkage bridge whose fastcall adapter explicitly restores the original return flags in Debug and Release.
 - TextIndex lifecycle tests verify the exact `0x118` layout, constructor/destructor writes, one Heap shutdown, active-only global clearing, preserved filenames, skipped entries, and complete array canaries.
 - Spot lifecycle tests verify the exact `0xC` layout, full clear behavior, both destructor branches, and complete object canaries.
+- Font lifecycle tests verify the exact `0x28` layout, preserved `0x14` and `0x20` fields, constructor forwarding, both resource-cleanup branches, and complete object canaries.
+- Recovered TextIndex, Spot, and Font constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
 - All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, and independent review.

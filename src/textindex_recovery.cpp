@@ -3,6 +3,9 @@
 
 TextIndex::TextIndex() : section_count_(0) {
     file_name_[0] = 0;
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
 }
 
 TextIndex::~TextIndex() {

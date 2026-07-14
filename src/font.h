@@ -22,17 +22,9 @@
   */
 class DLLEXPORT Font {
  public:
-  Font()
-      : unk_1_(-1), 
-        is_fot_set_(0), 
-        font_obj_(0), 
-        line_height_(0), 
-        height_(0), 
-        ascent_(0), 
-        descent_(0),
-        fot_file_name_(0) { } // 00618EA0
-  Font(LPSTR font_name, int height, int style) { init(font_name, height, style); } // 00618EC0
-  ~Font() { close(); } // 00618EE0
+  Font(); // 00618EA0
+  Font(LPSTR font_name, int height, int style); // 00618EC0
+  ~Font(); // 00618EE0
 
   // int UNK1(int, int, int, int) { return 1; } // no direct references
   int init(LPCSTR font_name, int height, uint32_t style);
@@ -61,6 +53,10 @@ class DLLEXPORT Font {
   int pad_; // padding? no references
   LPSTR fot_file_name_;
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
+#endif
 
 // global
 extern Font **FontDefaultPtr;
