@@ -103,6 +103,9 @@ def main():
             "Dialog selected-ID getter": "__ZN6Dialog15get_selected_idEv",
             "Dialog selected-ID getter adapter":
                 "@_Z31dialog_get_selected_id_redirectP6DialogPv@8",
+            "Dialog position lookup": "__ZN6Dialog9pos_to_idEi",
+            "Dialog position lookup adapter":
+                "@_Z25dialog_pos_to_id_redirectP6DialogPvi@12",
         }
         for description, symbol in required_dialog_symbols.items():
             if symbol not in dialog_symbols:
@@ -114,7 +117,10 @@ def main():
                  "@_Z25dialog_id_to_pos_redirectP6DialogPvi@12"),
                 ("Dialog selected-ID setter", "Dialog::set_selected_id(int)"),
                 ("Dialog selected-ID adapter",
-                 "@_Z31dialog_set_selected_id_redirectP6DialogPvi@12")):
+                 "@_Z31dialog_set_selected_id_redirectP6DialogPvi@12"),
+                ("Dialog position lookup", "Dialog::pos_to_id(int)"),
+                ("Dialog position lookup adapter",
+                 "@_Z25dialog_pos_to_id_redirectP6DialogPvi@12")):
             match = re.search(
                 rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
                 dialog_disassembly, re.DOTALL)
@@ -123,6 +129,9 @@ def main():
             returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != "4" for value in returns):
                 fail(f"{description} does not pop its single stack argument")
+            if description == "Dialog position lookup" and re.search(
+                    r"\bcall\b", match.group("body")):
+                fail("Dialog position lookup retains an external call")
         for description, label in (
                 ("Dialog selected-ID getter", "Dialog::get_selected_id()"),
                 ("Dialog selected-ID getter adapter",

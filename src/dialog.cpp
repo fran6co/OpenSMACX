@@ -147,6 +147,40 @@ int Dialog::get_selected_id() {
     return entry_head_ ? current_entry_->id : 0;
 }
 
+/*
+Purpose: Restore an explicit list position and return its item ID.
+Original Offset: 00609B50
+Return Value: Item ID at the requested position, or zero when the list head is null
+Status: Complete
+*/
+int Dialog::pos_to_id(int position) {
+    int count = entry_count_;
+    if (count == INT_MIN || position < count) {
+        current_entry_ = entry_head_;
+        if (position < 0) {
+            int distance = position == INT_MIN ? INT_MIN : -position;
+            if (distance <= count) {
+                while (distance > 0) {
+                    current_entry_ = current_entry_->previous;
+                    distance--;
+                }
+                uint32_t normalized =
+                    static_cast<uint32_t>(position) + static_cast<uint32_t>(count);
+                memcpy(&position, &normalized, sizeof(position));
+                entry_position_ = position;
+            }
+        } else {
+            int distance = position;
+            while (distance > 0) {
+                current_entry_ = current_entry_->next;
+                distance--;
+            }
+            entry_position_ = position;
+        }
+    }
+    return entry_head_ ? current_entry_->id : 0;
+}
+
 int __fastcall dialog_set_font_redirect(
     Dialog *self, void *, Font *font1, Font *font2, Font *font3) {
     return self->set_dialog_font(font1, font2, font3);
@@ -178,4 +212,8 @@ void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id) {
 
 int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *) {
     return self->get_selected_id();
+}
+
+int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position) {
+    return self->pos_to_id(position);
 }
