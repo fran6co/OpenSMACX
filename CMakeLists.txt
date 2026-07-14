@@ -99,6 +99,7 @@ set(OPENSMACX_SOURCES
     src/sprite.cpp
     src/stdafx.cpp
     src/stringbox.cpp
+    src/stringstruct.cpp
     src/strings.cpp
     src/technology.cpp
     src/temp.cpp
@@ -164,6 +165,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
     set(OPENSMACX_DIALOG_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
+    set(OPENSMACX_STRING_STRUCT_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
@@ -174,6 +177,7 @@ if(MINGW)
             --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
+            --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -189,6 +193,7 @@ if(BUILD_TESTING)
         src/basepop_font.cpp
         src/buttongroup.cpp
         src/dialog.cpp
+        src/stringstruct.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
@@ -245,6 +250,7 @@ if(BUILD_TESTING)
                 --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
+                --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
         )
     endif()
 
