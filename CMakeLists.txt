@@ -175,6 +175,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
     set(OPENSMACX_FILEMAP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
+    set(OPENSMACX_HEAP_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
     set(OPENSMACX_SPOT_OBJECT
@@ -195,6 +197,7 @@ if(MINGW)
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
             --font-object "${OPENSMACX_FONT_OBJECT}"
             --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
+            --heap-object "${OPENSMACX_HEAP_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
@@ -280,6 +283,7 @@ if(BUILD_TESTING)
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
                 --font-object "${OPENSMACX_FONT_OBJECT}"
                 --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
+                --heap-object "${OPENSMACX_HEAP_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"

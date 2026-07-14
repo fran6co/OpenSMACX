@@ -11,6 +11,7 @@ TextIndex::TextIndex() : section_count_(0) {
 TextIndex::~TextIndex() {
     section_count_ = 0;
     file_name_[0] = 0;
+    heap_.shutdown();
 }
 
 void text_clear_index_source(TextIndex *indexes) {

@@ -82,6 +82,7 @@ Recovered source includes:
 - Both `Font` constructors and the destructor through staged hybrid export redirects.
 - `Time` construction, destruction, and modal-state setters through staged hybrid export redirects.
 - `Filemap` construction and destruction through staged hybrid export redirects.
+- `Heap` construction and destruction through staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
@@ -106,9 +107,10 @@ Other completed corrections and checks:
 - TextIndex lifecycle tests verify the exact `0x118` layout, constructor/destructor writes, one Heap shutdown, active-only global clearing, preserved filenames, skipped entries, and complete array canaries.
 - Spot lifecycle tests verify the exact `0xC` layout, full clear behavior, both destructor branches, and complete object canaries.
 - Font lifecycle tests verify the exact `0x28` layout, preserved `0x14` and `0x20` fields, constructor forwarding, both resource-cleanup branches, and complete object canaries.
-- Recovered TextIndex, Spot, Font, Time, and Filemap constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
+- Recovered TextIndex, Spot, Font, Time, Filemap, and Heap constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
 - Time lifecycle tests verify the exact `0x28` layout, complete reset state, constructor return, destructor delegation, modal publication/clearing, and complete object canaries.
 - Filemap lifecycle tests verify the exact `0x10` layout, preserved file-size field, conditional handle/view cleanup, constructor return, and complete object canaries.
+- Heap lifecycle tests verify the exact `0x14` layout, direct destructor cleanup without shutdown delegation, all five fields, and complete object canaries. ABI checks separately verify byte-only writes preserve the three padding bytes.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
 - All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, and independent review.

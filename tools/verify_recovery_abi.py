@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--dialog-object")
     parser.add_argument("--font-object")
     parser.add_argument("--filemap-object")
+    parser.add_argument("--heap-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--text-index-object")
@@ -556,6 +557,52 @@ def main():
             fail("Filemap destructor does not contain both handle cleanup paths")
         if not re.search(r"\bmovl\s+\$0x0,0x4\(%e?\w+\)", destructor):
             fail("Filemap destructor does not clear a closed file handle")
+
+    if args.heap_object:
+        headers = run([args.objdump, "-f", args.heap_object])
+        if "file format pe-i386" not in headers:
+            fail("Heap object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.heap_object])
+        required_symbols = {
+            "Heap constructor": "__ZN4HeapC1Ev",
+            "Heap destructor": "__ZN4HeapD1Ev",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Heap symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.heap_object])
+
+        def heap_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Heap function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = heap_body("Heap::Heap()")
+        if not re.search(r"\bmovb\s+\$0x0,\(%ecx\)", constructor):
+            fail("Heap constructor does not clear only the byte-sized error flags")
+        for field in ("4", "8", "c", "10"):
+            if not re.search(rf"\bmovl\s+\$0x0,0x{field}\(%ecx\)", constructor):
+                fail(f"Heap constructor does not clear field 0x{field}")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Heap constructor does not return this in EAX")
+
+        destructor = heap_body("Heap::~Heap()")
+        if "Heap::shutdown()" in destructor:
+            fail("Heap destructor delegates instead of performing legacy direct cleanup")
+        if not re.search(r"\bfree\b", destructor):
+            fail("Heap destructor does not contain direct allocation cleanup")
+        if not re.search(r"\bmovb\s+\$0x0,\(%e?\w+\)", destructor):
+            fail("Heap destructor does not clear only the byte-sized error flags")
+        for field in ("4", "8", "c", "10"):
+            if not re.search(rf"\bmovl\s+\$0x0,0x{field}\(%e?\w+\)", destructor):
+                fail(f"Heap destructor does not clear field 0x{field}")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("Heap destructor does not use a plain thiscall return")
 
     if not args.scenario_object:
         return
