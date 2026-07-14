@@ -56,6 +56,10 @@ int __cdecl htoi(LPCSTR input) {
     return result;
 }
 
+int __cdecl range(int input, int min, int max) {
+    return input < min ? min : (input > max ? max : input);
+}
+
 LPVOID __cdecl mem_get(size_t size) {
     return std::malloc(size);
 }
@@ -179,6 +183,18 @@ void test_text_get_and_item_number() {
     expect(std::strcmp(item_buffer, "1aF") == 0);
     current = hexadecimal + 4;
     expect(std::memcmp(storage + 0x150, &current, sizeof(current)) == 0);
+
+    FILE *numbers = std::tmpfile();
+    expect(numbers != nullptr);
+    if (numbers) {
+        std::fputs("-4\n7\n99\n", numbers);
+        std::rewind(numbers);
+        set_text_pointer(text, 0x154, &numbers);
+        expect(text_get_number_source(text, 0, 10) == 0);
+        expect(text_get_number_source(text, 0, 10) == 7);
+        expect(text_get_number_source(text, 0, 10) == 10);
+        std::fclose(numbers);
+    }
 
     current = items;
     set_text_pointer(text, 0x150, &current);

@@ -81,3 +81,8 @@ int __cdecl text_item_binary_source(Text *text) {
 int __cdecl text_item_hex_source(Text *text) {
     return htoi(text_item_source(text));
 }
+
+int __cdecl text_get_number_source(Text *text, int min, int max) {
+    text_get_source(text);
+    return range(text_item_number_source(text), min, max);
+}

@@ -259,6 +259,5 @@ int __cdecl text_item_binary() { return text_item_binary_source(Txt); } // 005FD
 int __cdecl text_item_hex() { return text_item_hex_source(Txt); } // 005FD800
 
 int __cdecl text_get_number(int min, int max) { // 00585120
-    text_get(); 
-    return range(text_item_number(), min, max);
+    return text_get_number_source(Txt, min, max);
 }

@@ -3313,7 +3313,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00584E40,0x00584F33,243,.text,?chas_name@@YAHPAD@Z,,0x00584E40-0x00584F33,game,frame;hidden;sp_ready;purged_ok,src/alpha.cpp:77,Complete,?chas_name@@YAHPAD@Z,,source_complete,,,,5,1
 0x00584F40,0x00585030,240,.text,?weap_name@@YAHPAD@Z,,0x00584F40-0x00585030,game,frame;hidden;sp_ready;purged_ok,src/alpha.cpp:103,Complete,?weap_name@@YAHPAD@Z,,source_complete,,,,5,1
 0x00585030,0x00585120,240,.text,?arm_name@@YAHPAD@Z,,0x00585030-0x00585120,game,frame;hidden;sp_ready;purged_ok,src/alpha.cpp:129,Complete,?arm_name@@YAHPAD@Z,,source_complete,,,,5,1
-0x00585120,0x00585150,48,.text,?text_get_number@@YAHHH@Z,"int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)",0x00585120-0x00585150,game,frame;hidden;sp_ready;purged_ok,,,?text_get_number@@YAHHH@Z,,redirect_name_match,,,,2,0
+0x00585120,0x00585150,48,.text,?text_get_number@@YAHHH@Z,"int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)",0x00585120-0x00585150,game,frame;hidden;sp_ready;purged_ok,,,?text_get_number@@YAHHH@Z,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,2,0
 0x00585150,0x00585164,20,.text,?tech_item@@YAHXZ,,0x00585150-0x00585164,game,hidden;sp_ready;purged_ok,src/alpha.cpp:155,Complete,?tech_item@@YAHXZ,,source_complete,,,,3,0
 0x00585170,0x00585E26,3254,.text,?read_basic_rules@@YAHXZ,,0x00585170-0x00585E26,game,sp_ready;purged_ok,src/alpha.cpp:166,Complete,?read_basic_rules@@YAHXZ,,source_complete,,,,6,1
 0x00585E30,0x00585FDB,427,.text,?read_tech@@YAHXZ,,0x00585E30-0x00585FDB,game,frame;sp_ready;purged_ok,src/alpha.cpp:296,Complete,?read_tech@@YAHXZ,,source_complete,,,,12,1
