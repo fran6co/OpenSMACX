@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--text-index-object")
+    parser.add_argument("--time-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -448,6 +449,67 @@ def main():
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Font destructor does not use a plain thiscall return")
+
+    if args.time_object:
+        headers = run([args.objdump, "-f", args.time_object])
+        if "file format pe-i386" not in headers:
+            fail("Time object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.time_object])
+        required_symbols = {
+            "Time constructor": "__ZN4TimeC1Ev",
+            "Time destructor": "__ZN4TimeD1Ev",
+            "Time set-modal method": "__ZN4Time9set_modalEv",
+            "Time release-modal method": "__ZN4Time13release_modalEv",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Time symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.time_object])
+
+        def time_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Time function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = time_body("Time::Time()")
+        for field in ("", "0x4", "0x8", "0xc", "0x10", "0x14", "0x18", "0x1c", "0x24"):
+            target = rf"{field}\(%ecx\)" if field else r"\(%ecx\)"
+            if not re.search(rf"\bmovl\s+\$0x0,{target}", constructor):
+                fail(f"Time constructor does not clear field {field or '0x0'}")
+        if not re.search(r"\bmovl\s+\$0x5,0x20\(%ecx\)", constructor):
+            fail("Time constructor does not initialize resolution to five")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Time constructor does not return this in EAX")
+
+        destructor = time_body("Time::~Time()")
+        calls_close = "Time::close()" in destructor
+        clears_fields = all(re.search(pattern, destructor) for pattern in (
+            r"\bmovl\s+\$0x0,\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x4\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x8\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0xc\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x10\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x14\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x18\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x1c\(%e?\w+\)",
+            r"\bmovl\s+\$0x5,0x20\(%e?\w+\)",
+            r"\bmovl\s+\$0x0,0x24\(%e?\w+\)",
+        ))
+        if not calls_close and not clears_fields:
+            fail("Time destructor neither performs full cleanup nor calls Time::close")
+
+        set_modal = time_body("Time::set_modal()")
+        if "Time::TimeModal" not in set_modal or not re.search(
+                r"\bmov\s+%ecx,", set_modal):
+            fail("Time set-modal method does not publish this")
+        release_modal = time_body("Time::release_modal()")
+        if "Time::TimeModal" not in release_modal or not re.search(
+                r"\bmovl\s+\$0x0,", release_modal):
+            fail("Time release-modal method does not clear modal state")
 
     if not args.scenario_object:
         return

@@ -24,18 +24,8 @@
   */
 class DLLEXPORT Time {
  public:
-  Time() // 006161D0
-      : unk_tgl_(0),
-        id_event_(0), 
-        callback1_(0), 
-        callback2_(0), 
-        cb_param2_(0), 
-        cb_param1_(0),
-        count_(0), 
-        unk_1_(0), 
-        resolution_(5), 
-        unk_2_(0) { }
-  ~Time() { close(); } // 00616200
+  Time(); // 006161D0
+  ~Time(); // 00616200
   
   void init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);
   void init(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, uint32_t res);
@@ -49,8 +39,8 @@ class DLLEXPORT Time {
   uint32_t pulse();
   void stop();
   void close();
-  void set_modal() { TimeModal = this; }  // 00616860
-  void release_modal() { TimeModal = 0; } // 00616870
+  void set_modal();     // 00616860
+  void release_modal(); // 00616870
 
   // eventually make atomic for thread safety
   static Time *TimeModal;
@@ -73,6 +63,10 @@ class DLLEXPORT Time {
   uint32_t resolution_;
   int unk_2_;
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Time) == 0x28, "Time layout must match the legacy ABI");
+#endif
 
 // global
 extern Time *TurnTimer;
