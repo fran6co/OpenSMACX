@@ -254,9 +254,9 @@ LPSTR __cdecl text_item_string() {
 
 int __cdecl text_item_number() { return text_item_number_source(Txt); } // 005FD740
 
-int __cdecl text_item_binary() { return Txt->item_binary(); } // 005FD7A0
+int __cdecl text_item_binary() { return text_item_binary_source(Txt); } // 005FD7A0
 
-int __cdecl text_item_hex() { return Txt->item_hex(); } // 005FD800
+int __cdecl text_item_hex() { return text_item_hex_source(Txt); } // 005FD800
 
 int __cdecl text_get_number(int min, int max) { // 00585120
     text_get(); 
