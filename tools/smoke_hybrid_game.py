@@ -11,6 +11,7 @@ import sys
 import time
 
 from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
+from movie_skip import configure_intro_movie_skip, restore_intro_movie_config
 from runtime_process import (
     matching_scenario_process_ids,
     stage_scenario_executable,
@@ -52,6 +53,17 @@ def analyze_diagnostics(text, executable_name):
         "missing_markers": missing,
         "rendering_started": rendering_started,
     }
+
+
+def validate_smoke(analysis, new_processes):
+    if analysis["fatal_lines"]:
+        raise RuntimeError("Wine diagnostics contain an unhandled exception")
+    if analysis["missing_markers"]:
+        raise RuntimeError(
+            "missing loader markers: " + ", ".join(analysis["missing_markers"]))
+    if not new_processes:
+        raise RuntimeError("the launched game process did not survive the smoke window")
+    return "surface_flip" if analysis["rendering_started"] else "process_survival"
 
 
 def matching_process_ids(executable):
@@ -135,6 +147,8 @@ def main():
     parser.add_argument("--duration", type=float, default=20.0)
     parser.add_argument("--log", required=True)
     parser.add_argument("--result", required=True)
+    parser.add_argument("--play-intro-movie", action="store_true",
+                        help="Leave PRACX's configured movie player enabled")
     args = parser.parse_args()
 
     game_dir = Path(args.game_dir).expanduser().resolve()
@@ -150,6 +164,7 @@ def main():
     prefix_prepared = False
     process = None
     scenario_executable = None
+    movie_config = None
     try:
         if args.duration <= 0:
             raise RuntimeError("duration must be positive")
@@ -161,6 +176,9 @@ def main():
             prepare_owned_wine_prefix(wine_prefix, args.wine)
             prefix_prepared = True
         executable = validate_executable(game_dir, args.executable)
+        if not args.play_intro_movie:
+            movie_config = configure_intro_movie_skip(game_dir, secrets.token_hex(16))
+            report["intro_movie_skipped"] = True
         scenario_executable = stage_scenario_executable(
             executable, secrets.token_hex(16))
         before = matching_scenario_process_ids(scenario_executable)
@@ -190,15 +208,7 @@ def main():
             "new_processes": new_processes,
             "preexisting_processes": sorted(before),
         })
-        if analysis["fatal_lines"]:
-            raise RuntimeError("Wine diagnostics contain an unhandled exception")
-        if analysis["missing_markers"]:
-            raise RuntimeError(
-                "missing loader markers: " + ", ".join(analysis["missing_markers"]))
-        if not analysis["rendering_started"]:
-            raise RuntimeError("DirectDraw rendering did not reach a surface flip")
-        if not new_processes and not before:
-            raise RuntimeError("the launched game process did not survive the smoke window")
+        report["runtime_evidence"] = validate_smoke(analysis, new_processes)
         report["status"] = "passed"
     except (OSError, subprocess.CalledProcessError, RuntimeError) as error:
         report["error"] = str(error)
@@ -220,6 +230,13 @@ def main():
             report["status"] = "failed"
             report["runtime_stopped"] = False
             report["error"] = f"runtime cleanup failed: {error}"
+        finally:
+            if movie_config is not None:
+                try:
+                    restore_intro_movie_config(*movie_config)
+                except OSError as error:
+                    report["status"] = "failed"
+                    report["error"] = f"movie configuration cleanup failed: {error}"
     result_path.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"Hybrid smoke result: {report['status']}")

@@ -33,6 +33,7 @@ class DLLEXPORT StringStruct {
  public:
   int current_id();
   int current_entry();
+  int next_entry();
 
  private:
   uint32_t primary_abi_word_;
@@ -51,3 +52,4 @@ static_assert(sizeof(StringStruct) == 0x24,
 
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
+int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);

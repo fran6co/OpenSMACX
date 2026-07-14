@@ -6,7 +6,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from owned_wine_prefix import claim_owned_wine_prefix, prepare_owned_wine_prefix
-from smoke_hybrid_game import analyze_diagnostics
+from movie_skip import (
+    configure_intro_movie_skip,
+    restore_intro_movie_config,
+)
+from smoke_hybrid_game import analyze_diagnostics, validate_smoke
 
 
 class AnalyzeDiagnosticsTests(unittest.TestCase):
@@ -36,6 +40,25 @@ Loaded DDRAW.dll: native
             "err:seh:NtRaiseException Unhandled exception code c0000409",
             "terranx_hybrid.exe")
         self.assertEqual(len(result["fatal_lines"]), 1)
+
+    def test_accepts_surviving_hybrid_without_flip_trace(self):
+        result = analyze_diagnostics("""
+Loaded terranx_hybrid.exe: native
+Loaded OpenSMACX.dll: native
+Loaded prax.dll: native
+Loaded DDRAW.dll: builtin
+""", "terranx_hybrid.exe")
+        self.assertEqual(validate_smoke(result, [123]), "process_survival")
+
+    def test_rejects_missing_flip_when_game_exited(self):
+        result = analyze_diagnostics("""
+Loaded terranx_hybrid.exe: native
+Loaded OpenSMACX.dll: native
+Loaded prax.dll: native
+Loaded DDRAW.dll: builtin
+""", "terranx_hybrid.exe")
+        with self.assertRaisesRegex(RuntimeError, "did not survive"):
+            validate_smoke(result, [])
 
     def test_owned_prefix_rejects_an_unmarked_existing_directory(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -68,6 +91,41 @@ Loaded DDRAW.dll: native
                 [call.args[0][1] for call in run.call_args_list],
                 ["-k", "-w"],
             )
+
+    def test_intro_movie_skip_replaces_and_restores_pracx_command(self):
+        with tempfile.TemporaryDirectory() as directory:
+            game_dir = Path(directory)
+            ini_path = game_dir / "Alpha Centauri.ini"
+            original = b"[Game]\r\nFoo=Bar\r\n[PRACX]\r\nMoviePlayerCommand=old\r\n"
+            ini_path.write_bytes(original)
+
+            config = configure_intro_movie_skip(game_dir, "token")
+
+            configured = ini_path.read_text(encoding="ascii")
+            self.assertIn("MoviePlayerCommand=cmd.exe /c .\\.opensmacx-movie-skip-token.bat",
+                          configured)
+            self.assertEqual(config[2].read_bytes(), b"@exit /b 0\r\n")
+            restore_intro_movie_config(*config)
+            self.assertEqual(ini_path.read_bytes(), original)
+            self.assertFalse(config[2].exists())
+
+    def test_intro_movie_skip_removes_created_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            game_dir = Path(directory)
+            config = configure_intro_movie_skip(game_dir, "token")
+
+            self.assertIn(b"[PRACX]", config[0].read_bytes())
+            restore_intro_movie_config(*config)
+            self.assertFalse(config[0].exists())
+
+    def test_intro_movie_skip_rejects_symlinked_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            game_dir = Path(directory)
+            target = game_dir / "target.ini"
+            target.write_text("[PRACX]\n", encoding="ascii")
+            (game_dir / "Alpha Centauri.ini").symlink_to(target)
+            with self.assertRaisesRegex(RuntimeError, "invalid game configuration"):
+                configure_intro_movie_skip(game_dir, "token")
 
 
 if __name__ == "__main__":

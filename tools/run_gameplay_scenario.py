@@ -10,6 +10,7 @@ import sys
 import time
 
 from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
+from movie_skip import configure_intro_movie_skip, restore_intro_movie_config
 from runtime_process import (
     command_runs_scenario_executable,
     matching_scenario_process_ids,
@@ -114,6 +115,7 @@ def cleanup_owned_processes(
 
 def launch(executable, wine, wine_prefix, variables, log_path):
     environment = os.environ.copy()
+    environment["WINEDEBUG"] = "+seh,+tid"
     for name in (
             "OPENSMACX_SCENARIO_SAVE", "OPENSMACX_SCENARIO_RESULT",
             "OPENSMACX_SCENARIO_INSPECT", "OPENSMACX_SCENARIO_VEHICLE",
@@ -138,6 +140,7 @@ def launch(executable, wine, wine_prefix, variables, log_path):
             command = ["open", "-n", "-a", application.stem]
             if wine_prefix:
                 command.extend(["--env", f"WINEPREFIX={wine_prefix}"])
+            command.extend(["--env", "WINEDEBUG=+seh,+tid"])
             for name, value in variables.items():
                 command.extend(["--env", f"{name}={value}"])
             command.extend(["--stderr", str(log_path), "--args", str(executable)])
@@ -173,6 +176,8 @@ def main():
     parser.add_argument("--y", type=int)
     parser.add_argument("--leave-running", action="store_true",
                         help="Do not terminate processes created by this scenario run")
+    parser.add_argument("--play-intro-movie", action="store_true",
+                        help="Leave PRACX's configured movie player enabled")
     args = parser.parse_args()
     if args.advance:
         args.resolve = True
@@ -202,6 +207,7 @@ def main():
     before = set()
     launched = False
     owned_processes = set()
+    movie_config = None
     token = secrets.token_hex(16)
     try:
         executable = validate_executable(game_dir, args.executable)
@@ -212,6 +218,8 @@ def main():
         if os.name != "nt":
             prepare_owned_wine_prefix(wine_prefix, args.wine)
         scenario_executable = stage_scenario_executable(executable, token)
+        if not args.play_intro_movie:
+            movie_config = configure_intro_movie_skip(game_dir, token)
 
         variables = {
             "OPENSMACX_SCENARIO_SAVE": (str(fixture) if os.name == "nt" else wine_path(fixture)),
@@ -303,6 +311,8 @@ def main():
                     scenario_executable, process, args.wine, wine_prefix)
             if not matching_scenario_process_ids(scenario_executable):
                 scenario_executable.unlink(missing_ok=True)
+        if movie_config is not None:
+            restore_intro_movie_config(*movie_config)
 
 
 if __name__ == "__main__":
