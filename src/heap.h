@@ -16,14 +16,31 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <cstdlib>
 
  /*
   * Heap class: Handles managing or allocating memory.
   */
 class DLLEXPORT Heap {
  public:
-  Heap() : err_flags_(0), base_(0), current_(0), base_size_(0), free_size_(0) { } // 005D4560
-  ~Heap() { shutdown(); }                                                         // 005D4580
+  Heap() : err_flags_(0), base_(nullptr), current_(nullptr), base_size_(0), free_size_(0) {
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+  } // 005D4560
+  ~Heap() {
+    if (base_) {
+      std::free(base_);
+    }
+    err_flags_ = 0;
+    base_ = nullptr;
+    current_ = nullptr;
+    base_size_ = 0;
+    free_size_ = 0;
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "r"(this) : "memory");
+#endif
+  } // 005D4580
 
   void shutdown();
   void squeeze(int toggle);
@@ -40,3 +57,7 @@ class DLLEXPORT Heap {
   size_t base_size_; // (+12) -> size of total memory
   size_t free_size_; // (+16) -> size of free available memory
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(Heap) == 0x14, "Heap layout must match the legacy ABI");
+#endif

@@ -764,6 +764,59 @@ void test_filemap_lifecycle() {
     expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
+void test_heap_lifecycle() {
+    const int failures_before = failures;
+    static_assert(sizeof(Heap) == 0x14, "Heap fixture requires the legacy layout");
+    alignas(Heap) uint8_t storage[sizeof(Heap) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    expected[16] = 0;
+    std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
+    auto *heap = new (storage + 16) Heap;
+    std::memcpy(expected + 17, storage + 17, 3);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Heap constructor", storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    LPVOID base = std::malloc(8);
+    const size_t base_size = 0x12345678U;
+    const size_t free_size = 0x87654321U;
+    write_at(storage, 16 + 4, base);
+    write_at(storage, 16 + 8, base);
+    write_at(storage, 16 + 0xC, base_size);
+    write_at(storage, 16 + 0x10, free_size);
+    std::memcpy(expected, storage, sizeof(storage));
+    expected[16] = 0;
+    std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
+    heap_shutdown_calls = 0;
+    heap->~Heap();
+    std::memcpy(expected + 17, storage + 17, 3);
+    expect(heap_shutdown_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Heap allocated destructor", storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    LPVOID null_base = nullptr;
+    LPVOID poison_current = reinterpret_cast<LPVOID>(0x12345678U);
+    write_at(storage, 16 + 4, null_base);
+    write_at(storage, 16 + 8, poison_current);
+    write_at(storage, 16 + 0xC, base_size);
+    write_at(storage, 16 + 0x10, free_size);
+    std::memcpy(expected, storage, sizeof(storage));
+    expected[16] = 0;
+    std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
+    heap_shutdown_calls = 0;
+    heap->~Heap();
+    std::memcpy(expected + 17, storage + 17, 3);
+    expect(heap_shutdown_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Heap empty destructor", storage, expected, sizeof(storage));
+    if (failures != failures_before) {
+        std::fprintf(stderr, "Heap lifecycle fixture failed\n");
+    }
+}
+
 void seed_dialog(uint8_t *storage, uint8_t *expected) {
     seed_storage(storage, expected, sizeof(Dialog) + 32);
 }
@@ -1528,6 +1581,7 @@ int main() {
     test_font_lifecycle();
     test_time_lifecycle_and_modal();
     test_filemap_lifecycle();
+    test_heap_lifecycle();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();
