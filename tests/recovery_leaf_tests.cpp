@@ -817,6 +817,45 @@ void test_heap_lifecycle() {
     }
 }
 
+void test_strings_lifecycle() {
+    const int failures_before = failures;
+    static_assert(sizeof(Strings) == 0x18, "Strings fixture requires the legacy layout");
+    alignas(Strings) uint8_t storage[sizeof(Strings) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    expected[16] = 0;
+    std::memset(expected + 16 + 4, 0, sizeof(Strings) - 4);
+    auto *strings = new (storage + 16) Strings;
+    std::memcpy(expected + 17, storage + 17, 3);
+    expect(strings == reinterpret_cast<Strings *>(storage + 16));
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Strings constructor", storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    LPVOID base = std::malloc(8);
+    const size_t base_size = 0x12345678U;
+    const size_t free_size = 0x87654321U;
+    const BOOL is_populated = static_cast<BOOL>(0x13572468U);
+    write_at(storage, 16 + 4, base);
+    write_at(storage, 16 + 8, base);
+    write_at(storage, 16 + 0xC, base_size);
+    write_at(storage, 16 + 0x10, free_size);
+    write_at(storage, 16 + 0x14, is_populated);
+    std::memcpy(expected, storage, sizeof(storage));
+    expected[16] = 0;
+    std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
+    heap_shutdown_calls = 0;
+    strings->~Strings();
+    std::memcpy(expected + 17, storage + 17, 3);
+    expect(heap_shutdown_calls == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    report_storage_mismatch("Strings destructor", storage, expected, sizeof(storage));
+    if (failures != failures_before) {
+        std::fprintf(stderr, "Strings lifecycle fixture failed\n");
+    }
+}
+
 void seed_dialog(uint8_t *storage, uint8_t *expected) {
     seed_storage(storage, expected, sizeof(Dialog) + 32);
 }
@@ -1582,6 +1621,7 @@ int main() {
     test_time_lifecycle_and_modal();
     test_filemap_lifecycle();
     test_heap_lifecycle();
+    test_strings_lifecycle();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();

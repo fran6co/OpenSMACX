@@ -30,6 +30,7 @@ def main():
     parser.add_argument("--heap-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
+    parser.add_argument("--strings-object")
     parser.add_argument("--text-index-object")
     parser.add_argument("--time-object")
     args = parser.parse_args()
@@ -603,6 +604,50 @@ def main():
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Heap destructor does not use a plain thiscall return")
+
+    if args.strings_object:
+        headers = run([args.objdump, "-f", args.strings_object])
+        if "file format pe-i386" not in headers:
+            fail("Strings object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.strings_object])
+        required_symbols = {
+            "Strings constructor": "__ZN7StringsC1Ev",
+            "Strings destructor": "__ZN7StringsD1Ev",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required Strings symbol: {description}")
+
+        disassembly = run([args.objdump, "-d", "-r", "-C", args.strings_object])
+
+        def strings_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Strings function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = strings_body("Strings::Strings()")
+        if not re.search(r"\bmovb\s+\$0x0,\(%ecx\)", constructor):
+            fail("Strings constructor does not preserve Heap padding")
+        for field in ("4", "8", "c", "10", "14"):
+            if not re.search(rf"\bmovl\s+\$0x0,0x{field}\(%ecx\)", constructor):
+                fail(f"Strings constructor does not clear field 0x{field}")
+        if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
+            fail("Strings constructor does not return this in EAX")
+        if not re.search(r"\bret\b", constructor) or re.search(
+                r"\bret\s+\$", constructor):
+            fail("Strings constructor does not use a plain thiscall return")
+
+        destructor = strings_body("Strings::~Strings()")
+        if len(re.findall(r"DISP32\s+Heap::shutdown\(\)", destructor)) != 1:
+            fail("Strings destructor does not invoke one Heap shutdown")
+        if re.search(r"\bmov[^\n]*0x14\(%e?\w+\)", destructor):
+            fail("Strings destructor overwrites preserved populated state")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("Strings destructor does not use a plain thiscall return")
 
     if not args.scenario_object:
         return

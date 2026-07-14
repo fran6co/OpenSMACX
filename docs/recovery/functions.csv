@@ -4976,12 +4976,12 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00616890,0x00616897,7,.text,?close_class@Time@@QAAXXZ,,0x00616890-0x00616897,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006168A0,0x006168B6,22,.text,??__EStringTable@@YAXXZ,,0x006168A0-0x006168B6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x006168C0,0x006168CA,10,.text,??__FStringTable@@YAXXZ,,0x006168C0-0x006168CA,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x006168D0,0x006168E3,19,.text,??0Strings@@QAE@XZ,void (__thiscall ??0Strings@@QAE@XZ)(Strings* this),0x006168D0-0x006168E3,game,hidden;sp_ready;purged_ok,,,??0Strings@@QAE@XZ,,redirect_name_match,,,,1,1
+0x006168D0,0x006168E3,19,.text,??0Strings@@QAE@XZ,void (__thiscall ??0Strings@@QAE@XZ)(Strings* this),0x006168D0-0x006168E3,game,hidden;sp_ready;purged_ok,,,??0Strings@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,1,1
 0x006168F0,0x00616950,96,.text,?init@Strings@@QAEHH@Z,"int (__thiscall ?init@Strings@@QAEHH@Z)(Strings* this, int)",0x006168F0-0x00616950,game,hidden;sp_ready;purged_ok,src/strings.cpp:23,Complete,,,source_complete,,,,5,4
 0x00616950,0x00616963,19,.text,?shutdown@Strings@@QAEHXZ,int (__thiscall ?shutdown@Strings@@QAEHXZ)(Strings* this),0x00616950-0x00616963,game,hidden;sp_ready;purged_ok,src/strings.cpp:41,Complete,,,source_complete,,,,1,4
 0x00616970,0x0061699D,45,.text,?put@Strings@@QAEHPAD@Z,"int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)",0x00616970-0x0061699D,game,hidden;sp_ready;purged_ok,src/strings.cpp:52,Complete,,,source_complete,,,,3,5
 0x006169A0,0x006169BB,27,.text,?get@Strings@@QAEHH@Z,"int (__thiscall ?get@Strings@@QAEHH@Z)(Strings* this, int)",0x006169A0-0x006169BB,game,sp_ready;purged_ok,src/strings.cpp:65,Complete,,,source_complete,,,,0,290
-0x006169C0,0x006169C5,5,.text,??1Strings@@QAE@XZ,void (__thiscall ??1Strings@@QAE@XZ)(Strings* this),0x006169C0-0x006169C5,thunk,thunk;sp_ready;purged_ok,,,??1Strings@@QAE@XZ,,redirect_name_match,,,,0,0
+0x006169C0,0x006169C5,5,.text,??1Strings@@QAE@XZ,void (__thiscall ??1Strings@@QAE@XZ)(Strings* this),0x006169C0-0x006169C5,thunk,thunk;sp_ready;purged_ok,,,??1Strings@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,0,0
 0x006169D0,0x006169F7,39,.text,?labels_shutdown@@YAXXZ,,0x006169D0-0x006169F7,game,hidden;sp_ready;purged_ok,src/alpha.cpp:1500,Complete,?labels_shutdown@@YAXXZ,,source_complete,,,,1,4
 0x00616A00,0x00616A93,147,.text,?labels_init@@YAHXZ,,0x00616A00-0x00616A93,game,hidden;sp_ready;purged_ok,src/alpha.cpp:1476,Complete,?labels_init@@YAHXZ,,source_complete,,,,7,3
 0x00616AA0,0x00616AB6,22,.text,??__Eg_CAVIAR_BUFFER_1@@YAXXZ,,0x00616AA0-0x00616AB6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
