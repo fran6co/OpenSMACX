@@ -24,7 +24,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,113 candidates.
+- Current recovery backlog: 5,111 candidates.
 - Current local legacy-island count: 143, reduced from 174.
 - `DllMain` entry redirects: 39, comprising 37 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
@@ -80,6 +80,7 @@ Recovered source includes:
 - `TextIndex` construction, destruction, and `text_clear_index` through staged hybrid export redirects.
 - `Spot` construction, destruction, and clearing through staged hybrid export redirects.
 - Both `Font` constructors and the destructor through staged hybrid export redirects.
+- `Time` construction, destruction, and modal-state setters through staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
@@ -104,7 +105,8 @@ Other completed corrections and checks:
 - TextIndex lifecycle tests verify the exact `0x118` layout, constructor/destructor writes, one Heap shutdown, active-only global clearing, preserved filenames, skipped entries, and complete array canaries.
 - Spot lifecycle tests verify the exact `0xC` layout, full clear behavior, both destructor branches, and complete object canaries.
 - Font lifecycle tests verify the exact `0x28` layout, preserved `0x14` and `0x20` fields, constructor forwarding, both resource-cleanup branches, and complete object canaries.
-- Recovered TextIndex, Spot, and Font constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
+- Recovered TextIndex, Spot, Font, and Time constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
+- Time lifecycle tests verify the exact `0x28` layout, complete reset state, constructor return, destructor delegation, modal publication/clearing, and complete object canaries.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
 - All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, and independent review.
@@ -114,7 +116,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after StringStruct seek recovery is 5,113 priorities and 143 islands.
+- Regenerated state after Time lifecycle recovery is 5,111 priorities and 143 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -160,7 +162,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,113 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,111 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.

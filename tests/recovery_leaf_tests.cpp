@@ -75,6 +75,9 @@ Font *font_init_this = nullptr;
 LPCSTR font_init_name = nullptr;
 int font_init_height = 0;
 uint32_t font_init_style = 0;
+int time_close_calls = 0;
+Time *Time::TimeModal = nullptr;
+int Time::TimeInitCount = 0;
 
 void Heap::shutdown() {
     ++heap_shutdown_calls;
@@ -104,6 +107,14 @@ void Spot::shutdown() {
 }
 
 void Time::close() {
+    ++time_close_calls;
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
+    const int zero = 0;
+    const uint32_t resolution = 5;
+    for (size_t offset = 0; offset < sizeof(Time); offset += 4) {
+        std::memcpy(bytes + offset, &zero, sizeof(zero));
+    }
+    std::memcpy(bytes + 0x20, &resolution, sizeof(resolution));
 }
 
 int Font::init(LPCSTR font_name, int height, uint32_t style) {
@@ -659,6 +670,44 @@ void test_font_lifecycle() {
     font_close_calls = 0;
     font->~Font();
     expect(font_close_calls == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+}
+
+void expect_time_closed(uint8_t *expected, size_t offset) {
+    const uint32_t resolution = 5;
+    std::memset(expected + offset, 0, sizeof(Time));
+    write_at(expected, offset + 0x20, resolution);
+}
+
+void test_time_lifecycle_and_modal() {
+    static_assert(sizeof(Time) == 0x28, "Time fixture requires the legacy layout");
+    alignas(Time) uint8_t storage[sizeof(Time) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    expect_time_closed(expected, 16);
+    auto *timer = new (storage + 16) Time;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(expected, storage, sizeof(storage));
+    expect_time_closed(expected, 16);
+    time_close_calls = 0;
+    timer->~Time();
+    expect(time_close_calls == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    timer = new (storage + 16) Time;
+    std::memcpy(expected, storage, sizeof(storage));
+    Time::TimeModal = nullptr;
+    timer->set_modal();
+    expect(Time::TimeModal == timer);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    Time::TimeModal = reinterpret_cast<Time *>(1);
+    timer->release_modal();
+    expect(Time::TimeModal == nullptr);
     expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
@@ -1424,6 +1473,7 @@ int main() {
     test_text_clear_index();
     test_spot_lifecycle();
     test_font_lifecycle();
+    test_time_lifecycle_and_modal();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();

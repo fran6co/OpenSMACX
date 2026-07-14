@@ -4956,8 +4956,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00616030,0x00616135,261,.text,?text_position@EditBox@@QAEXH@Z,"void (__thiscall ?text_position@EditBox@@QAEXH@Z)(EditBox* this, int)",0x00616030-0x00616135,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,3
 0x00616140,0x00616196,86,.text,?pass_dialog_focus@EditBox@@QAEXXZ,void (__thiscall ?pass_dialog_focus@EditBox@@QAEXXZ)(EditBox* this),0x00616140-0x00616196,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x006161A0,0x006161CA,42,.text,?UNK2@EditBox@@QAEXXZ,void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this),0x006161A0-0x006161CA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x006161D0,0x006161F6,38,.text,??0Time@@QAE@XZ,void (__thiscall ??0Time@@QAE@XZ)(Time* this),0x006161D0-0x006161F6,game,hidden;sp_ready;purged_ok,,,??0Time@@QAE@XZ,,redirect_name_match,,,,0,19
-0x00616200,0x00616260,96,.text,??1Time@@QAE@XZ,void (__thiscall ??1Time@@QAE@XZ)(Time* this),0x00616200-0x00616260,game,hidden;sp_ready;purged_ok,,,??1Time@@QAE@XZ,,redirect_name_match,,,,1,30
+0x006161D0,0x006161F6,38,.text,??0Time@@QAE@XZ,void (__thiscall ??0Time@@QAE@XZ)(Time* this),0x006161D0-0x006161F6,game,hidden;sp_ready;purged_ok,,,??0Time@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,0,19
+0x00616200,0x00616260,96,.text,??1Time@@QAE@XZ,void (__thiscall ??1Time@@QAE@XZ)(Time* this),0x00616200-0x00616260,game,hidden;sp_ready;purged_ok,,,??1Time@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,1,30
 0x00616260,0x006162CE,110,.text,?init@Time@@QAEXP6AXH@ZHHH@Z,"void (__thiscall ?init@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int)",0x00616260-0x006162CE,game,hidden;sp_ready;purged_ok,src/time.cpp:27,Complete,,,source_complete,,,,1,4
 0x006162D0,0x00616342,114,.text,?init@Time@@QAEXP6AXHH@ZHHHH@Z,"void (__thiscall ?init@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)",0x006162D0-0x00616342,game,sp_ready;purged_ok,src/time.cpp:46,Complete,,,source_complete,,,,1,5
 0x00616350,0x00616405,181,.text,?start@Time@@QAEXP6AXH@ZHHH@Z,"int (__thiscall ?start@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)",0x00616350-0x00616405,game,hidden;sp_ready;purged_ok,src/time.cpp:66,Complete,,,source_complete,,,,1,11
@@ -4970,8 +4970,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00616780,0x006167E0,96,.text,?close@Time@@QAEXXZ,void (__thiscall ?close@Time@@QAEXXZ)(Time* this),0x00616780-0x006167E0,game,hidden;sp_ready;purged_ok,src/time.cpp:215,Complete,?close@Time@@QAEXXZ,,source_complete,,,,1,16
 0x006167E0,0x0061681C,60,.text,?TimerProc@Time@@QAEXPAXIIK@Z,"void (__thiscall ?TimerProc@Time@@QAEXPAXIIK@Z)(Time* this, HWND hwnd, uint32_t msg, uint32_t* idEvent, uint32_t dwTime)",0x006167E0-0x0061681C,game,sp_ready;purged_ok,src/time.cpp:234,Complete,,,source_complete,,,,0,0
 0x00616820,0x0061685C,60,.text,?MultimediaProc@Time@@QAEXIIKKK@Z,"void (__thiscall ?MultimediaProc@Time@@QAEXIIKKK@Z)(Time* this, UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, unsigned int)",0x00616820-0x0061685C,game,hidden;sp_ready;purged_ok,src/time.cpp:249,Complete,,,source_complete,,,,0,0
-0x00616860,0x00616867,7,.text,?set_modal@Time@@QAAXXZ,,0x00616860-0x00616867,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
-0x00616870,0x0061687B,11,.text,?release_modal@Time@@QAAXXZ,,0x00616870-0x0061687B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,4
+0x00616860,0x00616867,7,.text,?set_modal@Time@@QAAXXZ,,0x00616860-0x00616867,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned method,,0,2
+0x00616870,0x0061687B,11,.text,?release_modal@Time@@QAAXXZ,,0x00616870-0x0061687B,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned method,,0,4
 0x00616880,0x0061688E,14,.text,?init_class@Time@@QAAHXZ,,0x00616880-0x0061688E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00616890,0x00616897,7,.text,?close_class@Time@@QAAXXZ,,0x00616890-0x00616897,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006168A0,0x006168B6,22,.text,??__EStringTable@@YAXXZ,,0x006168A0-0x006168B6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
