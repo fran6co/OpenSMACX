@@ -115,9 +115,5 @@ int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt) { // 005FE2
 }
 
 void __cdecl text_clear_index() { // 005FE270
-    for (int i = 0; i < MaxTextIndexNum; i++) {
-        if (TxtIndex[i].get_count()) {
-            TxtIndex[i].shutdown();
-        }
-    }
+    text_clear_index_source(TxtIndex);
 }

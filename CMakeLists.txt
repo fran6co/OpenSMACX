@@ -107,6 +107,7 @@ set(OPENSMACX_SOURCES
     src/terraforming.cpp
     src/text.cpp
     src/textindex.cpp
+    src/textindex_recovery.cpp
     src/time.cpp
     src/veh.cpp
     src/win.cpp
@@ -168,6 +169,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
+    set(OPENSMACX_TEXT_INDEX_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
@@ -179,6 +182,7 @@ if(MINGW)
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
+            --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -196,6 +200,7 @@ if(BUILD_TESTING)
         src/dialog.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp
+        src/textindex_recovery.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
@@ -221,6 +226,7 @@ if(BUILD_TESTING)
             $<$<CONFIG:Debug>:-Og>
             $<$<CONFIG:Release>:-O2>
         )
+        target_link_options(recovery-leaf-tests PRIVATE -static)
     endif()
 
     if(CMAKE_CROSSCOMPILING)
@@ -253,6 +259,7 @@ if(BUILD_TESTING)
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
+                --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
         )
     endif()
 

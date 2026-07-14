@@ -6,6 +6,7 @@
 #include "../src/stringstruct.h"
 #include "../src/strings.h"
 #include "../src/text_recovery.h"
+#include "../src/textindex.h"
 
 #include <climits>
 #include <cstring>
@@ -64,7 +65,23 @@ LPVOID __cdecl mem_get(size_t size) {
     return std::malloc(size);
 }
 
+int heap_shutdown_calls = 0;
+
 void Heap::shutdown() {
+    ++heap_shutdown_calls;
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
+    LPVOID base = nullptr;
+    std::memcpy(&base, bytes + 4, sizeof(base));
+    if (base) {
+        std::free(base);
+    }
+    bytes[0] = 0;
+    LPVOID null_pointer = nullptr;
+    const size_t zero = 0;
+    std::memcpy(bytes + 4, &null_pointer, sizeof(null_pointer));
+    std::memcpy(bytes + 8, &null_pointer, sizeof(null_pointer));
+    std::memcpy(bytes + 12, &zero, sizeof(zero));
+    std::memcpy(bytes + 16, &zero, sizeof(zero));
 }
 
 LPSTR Strings::put(LPCSTR input) {
@@ -261,6 +278,17 @@ void expect_storage_bytes(
     }
 }
 
+void report_storage_mismatch(
+        const char *fixture, const uint8_t *storage, const uint8_t *expected, size_t size) {
+    for (size_t index = 0; index < size; ++index) {
+        if (storage[index] != expected[index]) {
+            std::fprintf(stderr, "%s mismatch at 0x%zx: 0x%02x != 0x%02x\n",
+                fixture, index, storage[index], expected[index]);
+            return;
+        }
+    }
+}
+
 void seed_storage(uint8_t *storage, uint8_t *expected, size_t size) {
     for (size_t index = 0; index < size; ++index) {
         storage[index] = static_cast<uint8_t>(0x35U + index * 17U);
@@ -365,6 +393,107 @@ void test_base_pop_string_font() {
 template <typename T>
 void write_at(uint8_t *storage, size_t offset, const T &value) {
     std::memcpy(storage + offset, &value, sizeof(value));
+}
+
+void expect_heap_clear(uint8_t *expected, size_t heap_offset) {
+    expected[heap_offset] = 0;
+    LPVOID null_pointer = nullptr;
+    const size_t zero = 0;
+    write_at(expected, heap_offset + 4, null_pointer);
+    write_at(expected, heap_offset + 8, null_pointer);
+    write_at(expected, heap_offset + 12, zero);
+    write_at(expected, heap_offset + 16, zero);
+}
+
+void test_text_index_lifecycle() {
+    const int failures_before = failures;
+    static_assert(sizeof(Heap) == 0x14, "Heap fixture requires the legacy layout");
+    static_assert(sizeof(TextIndex) == 0x118, "TextIndex fixture requires the legacy layout");
+
+    alignas(TextIndex) uint8_t storage[sizeof(TextIndex) + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+    const uint32_t zero_count = 0;
+    write_at(expected, 16 + 0x100, zero_count);
+    expected[16] = 0;
+    expect_heap_clear(expected, 16 + 0x104);
+
+    auto *index = new (storage + 16) TextIndex;
+    int phase_failures = failures;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    if (failures != phase_failures) {
+        report_storage_mismatch("TextIndex constructor", storage, expected, sizeof(storage));
+    }
+
+    seed_storage(storage, expected, sizeof(storage));
+    const uint32_t section_count = 3;
+    LPVOID base = std::malloc(8);
+    LPVOID current = base;
+    const size_t base_size = 8;
+    const size_t free_size = 4;
+    write_at(storage, 16 + 0x100, section_count);
+    write_at(storage, 16 + 0x108, base);
+    write_at(storage, 16 + 0x10C, current);
+    write_at(storage, 16 + 0x110, base_size);
+    write_at(storage, 16 + 0x114, free_size);
+    std::memcpy(expected, storage, sizeof(storage));
+    expected[16] = 0;
+    write_at(expected, 16 + 0x100, zero_count);
+    expect_heap_clear(expected, 16 + 0x104);
+    heap_shutdown_calls = 0;
+    index->~TextIndex();
+    expect(heap_shutdown_calls == 1);
+    phase_failures = failures;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    if (failures != phase_failures) {
+        report_storage_mismatch("TextIndex destructor", storage, expected, sizeof(storage));
+    }
+    if (failures != failures_before) {
+        std::fprintf(stderr, "TextIndex lifecycle fixture failed\n");
+    }
+}
+
+void test_text_clear_index() {
+    const int failures_before = failures;
+    constexpr size_t entry_size = 0x118;
+    const uint32_t zero_count = 0;
+    alignas(TextIndex) uint8_t storage[MaxTextIndexNum * entry_size + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        new (storage + 16 + static_cast<size_t>(i) * entry_size) TextIndex;
+    }
+    const uint32_t counts[MaxTextIndexNum] = {0, 1, UINT32_MAX, 0};
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        uint8_t *entry = storage + 16 + static_cast<size_t>(i) * entry_size;
+        std::memset(entry, 0x41 + i, 0x100);
+        write_at(entry, 0x100, counts[i]);
+        entry[0x104] = static_cast<uint8_t>(0x51 + i);
+        LPVOID null_pointer = nullptr;
+        LPVOID poison_current = reinterpret_cast<LPVOID>(
+            0x11110000U + static_cast<uint32_t>(i));
+        const size_t base_size = static_cast<size_t>(0x2000 + i);
+        const size_t free_size = static_cast<size_t>(0x1000 + i);
+        write_at(entry, 0x108, null_pointer);
+        write_at(entry, 0x10C, poison_current);
+        write_at(entry, 0x110, base_size);
+        write_at(entry, 0x114, free_size);
+    }
+    std::memcpy(expected, storage, sizeof(storage));
+    for (int i = 1; i <= 2; ++i) {
+        const size_t entry_offset = 16 + static_cast<size_t>(i) * entry_size;
+        write_at(expected, entry_offset + 0x100, zero_count);
+        expect_heap_clear(expected, entry_offset + 0x104);
+    }
+
+    heap_shutdown_calls = 0;
+    text_clear_index_source(reinterpret_cast<TextIndex *>(storage + 16));
+    expect(heap_shutdown_calls == 2);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    if (failures != failures_before) {
+        std::fprintf(stderr, "TextIndex clear fixture failed\n");
+    }
 }
 
 void seed_dialog(uint8_t *storage, uint8_t *expected) {
@@ -1125,6 +1254,8 @@ int main() {
     test_in_box_edges();
     test_text_get_and_item_number();
     test_text_string_helpers();
+    test_text_index_lifecycle();
+    test_text_clear_index();
     test_button_group_lifecycle();
     test_base_pop_string_font();
     test_dialog_id_to_pos();

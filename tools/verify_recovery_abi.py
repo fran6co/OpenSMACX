@@ -4,13 +4,14 @@ import argparse
 import re
 import subprocess
 import sys
+from typing import NoReturn
 
 
 def run(command):
     return subprocess.run(command, check=True, text=True, capture_output=True).stdout
 
 
-def fail(message):
+def fail(message) -> NoReturn:
     raise RuntimeError(message)
 
 
@@ -25,6 +26,7 @@ def main():
     parser.add_argument("--basepop-font-object")
     parser.add_argument("--dialog-object")
     parser.add_argument("--string-struct-object")
+    parser.add_argument("--text-index-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -271,6 +273,63 @@ def main():
             "@_Z26button_group_init_redirectP11ButtonGroupPvii@16")
         if not re.search(r"\bret\s+\$0x8\b", init_adapter):
             fail("ButtonGroup init adapter does not pop its two stack arguments")
+
+    if args.text_index_object:
+        headers = run([args.objdump, "-f", args.text_index_object])
+        if "file format pe-i386" not in headers:
+            fail("TextIndex object is not a 32-bit PE COFF object")
+        symbols = run([args.nm, "--defined-only", args.text_index_object])
+        required_symbols = {
+            "TextIndex constructor": "__ZN9TextIndexC1Ev",
+            "TextIndex destructor": "__ZN9TextIndexD1Ev",
+            "TextIndex clear helper": "__Z23text_clear_index_sourceP9TextIndex",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required TextIndex symbol: {description}")
+
+        disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.text_index_object])
+
+        def text_index_body(label):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate TextIndex function in disassembly: {label}")
+            return match.group("body")
+
+        constructor = text_index_body("TextIndex::TextIndex()")
+        if re.search(r"\bcall\b", constructor):
+            fail("TextIndex constructor unexpectedly contains a call")
+        for field in ("100", "108", "10c", "110", "114"):
+            if not re.search(rf"\bmovl\s+\$0x0,0x{field}\(%ecx\)", constructor):
+                fail(f"TextIndex constructor does not clear field 0x{field}")
+        if not re.search(r"\bmovb\s+\$0x0,0x104\(%ecx\)", constructor):
+            fail("TextIndex constructor does not clear the Heap error byte")
+        if not re.search(r"\bmovb\s+\$0x0,\(%ecx\)", constructor):
+            fail("TextIndex constructor does not terminate the filename")
+        if not re.search(r"\bret\b", constructor) or re.search(
+                r"\bret\s+\$", constructor):
+            fail("TextIndex constructor does not use a plain thiscall return")
+
+        destructor = text_index_body("TextIndex::~TextIndex()")
+        if not re.search(r"\bmovl\s+\$0x0,0x100\(%e?bx\)", destructor):
+            fail("TextIndex destructor does not clear the section count")
+        if not re.search(r"\bmovb\s+\$0x0,\(%e?bx\)", destructor):
+            fail("TextIndex destructor does not terminate the filename")
+        if len(re.findall(r"DISP32\s+Heap::shutdown\(\)", destructor)) != 1:
+            fail("TextIndex destructor does not invoke one Heap shutdown")
+        if not re.search(r"\bret\b", destructor) or re.search(
+                r"\bret\s+\$", destructor):
+            fail("TextIndex destructor does not use a plain thiscall return")
+
+        clear_helper = text_index_body("text_clear_index_source(TextIndex*)")
+        if len(re.findall(r"DISP32\s+Heap::shutdown\(\)", clear_helper)) != 1:
+            fail("TextIndex clear helper does not contain one Heap shutdown call site")
+        if not re.search(r"\bret\b", clear_helper) or re.search(
+                r"\bret\s+\$", clear_helper):
+            fail("TextIndex clear helper does not use a plain cdecl return")
 
     if not args.scenario_object:
         return
