@@ -93,27 +93,6 @@ int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
 // global
 TextIndex *TxtIndex = (TextIndex *)0x009B7D08;
 
-void __cdecl text_make_index(LPCSTR source_txt) { // 005FE1F0
-    for (int i = 0; i < MaxTextIndexNum; i++) {
-        if (!TxtIndex[i].get_count()) {
-            TxtIndex[i].make_index(source_txt);
-            break;
-        }
-    }
-}
-
-int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt) { // 005FE230
-    for (int i = 0; i < MaxTextIndexNum; i++) {
-        if (TxtIndex[i].get_count()) {
-            int addr = TxtIndex[i].search_index(source_txt, section_txt);
-            if (addr >= 0) {
-                return addr;
-            }
-        }
-    }
-    return -1;
-}
-
 void __cdecl text_clear_index() { // 005FE270
     text_clear_index_source(TxtIndex);
 }
