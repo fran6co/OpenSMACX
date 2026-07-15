@@ -929,6 +929,8 @@ def main():
             "Text default constructor": "__ZN4TextC1Ev",
             "Text sized constructor": "__ZN4TextC1Ej",
             "Text destructor": "__ZN4TextD1Ev",
+            "Text global initializer": "__Z8text_txtv",
+            "Text global exit cleanup": "__Z13text_txt_exitv",
             "text_open wrapper": "__Z9text_openPKcS0_",
         }
         for description, symbol in required_symbols.items():
@@ -983,6 +985,32 @@ def main():
             fail("Text sized constructor does not return this in EAX")
         if not re.search(r"\bret\s+\$0x4\b", sized_constructor):
             fail("Text sized constructor does not pop its stack argument")
+
+        initializer = text_body("__Z8text_txtv")
+        if "operator new" in initializer or "__Znwj" in initializer:
+            fail("Text global initializer retains the temporary allocation leak")
+        calls_constructor = "__ZN4TextC1Ej" in initializer
+        inlines_constructor = (
+            len(re.findall(r"DISP32\s+__Z7mem_getj\b", initializer)) == 2
+            and all(f"0x{field}" in initializer
+                    for field in ("150", "154", "158", "15c")))
+        if "_Txt" not in initializer or not (
+                calls_constructor or inlines_constructor):
+            fail("Text global initializer does not construct the process-owned object")
+        if "atexit" not in initializer:
+            fail("Text global initializer does not register exit cleanup")
+        if not re.search(r"\bret\b", initializer) or re.search(
+                r"\bret\s+\$", initializer):
+            fail("Text global initializer does not use a plain cdecl return")
+
+        exit_cleanup = text_body("__Z13text_txt_exitv")
+        if "_Txt" not in exit_cleanup or "__ZN4TextD1Ev" not in exit_cleanup:
+            fail("Text global exit cleanup does not destroy the process-owned object")
+        plain_return = re.search(r"\bret\b", exit_cleanup) and not re.search(
+            r"\bret\s+\$", exit_cleanup)
+        tail_jump = re.search(r"\bjmp[^\n]*__ZN4TextD1Ev", exit_cleanup)
+        if not plain_return and not tail_jump:
+            fail("Text global exit cleanup does not use a plain cdecl return")
 
         match = re.search(
             r"<__ZN4TextD1Ev>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",

@@ -21,6 +21,8 @@ address,recovery_state,priority,notes
 0x005FA820,source_complete,,Staged hybrid export redirect calls the source-owned method
 0x005FA860,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x005FA870,source_complete,,Staged hybrid export redirect calls the source-owned destructor
+0x005FD400,source_complete,,Staged hybrid export redirect calls the source-owned initializer
+0x005FD460,source_complete,,Staged hybrid export redirect calls the source-owned exit cleanup
 0x005FD4C0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD4D0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD530,source_complete,,Staged hybrid export redirect calls the source-owned wrapper

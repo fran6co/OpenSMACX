@@ -72,6 +72,8 @@ bool mem_get_scripted = false;
 int mem_get_calls = 0;
 size_t mem_get_sizes[2] = {};
 LPVOID mem_get_results[2] = {};
+int atexit_calls = 0;
+void (__cdecl *atexit_callback)() = nullptr;
 
 LPVOID __cdecl mem_get(size_t size) {
     const int call = mem_get_calls++;
@@ -233,6 +235,12 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
 
 #if defined(__MINGW32__)
 extern "C" int __real_fclose(FILE *file);
+
+extern "C" int __wrap_atexit(void (__cdecl *callback)()) {
+    ++atexit_calls;
+    atexit_callback = callback;
+    return 0;
+}
 
 extern "C" int __wrap_fclose(FILE *file) {
     ++env_close_calls;
@@ -619,6 +627,78 @@ void test_text_constructors() {
     }
     mem_get_scripted = false;
     mem_get_calls = 0;
+}
+
+void test_text_global_lifecycle() {
+    alignas(Text) static uint8_t exit_storage[sizeof(Text)];
+    uint8_t expected[sizeof(exit_storage)];
+    seed_storage(exit_storage, expected, sizeof(exit_storage));
+    expected[0] = 0;
+    const uint32_t zero = 0;
+    write_at(expected, 0x150, zero);
+    write_at(expected, 0x154, zero);
+
+    LPVOID first = std::malloc(1);
+    LPVOID second = std::malloc(1);
+    write_at(expected, 0x158, first);
+    write_at(expected, 0x15C, second);
+    Txt = reinterpret_cast<Text *>(exit_storage);
+    mem_get_scripted = true;
+    mem_get_calls = 0;
+    mem_get_results[0] = first;
+    mem_get_results[1] = second;
+    text_shutdown_calls = 0;
+    text_shutdown_this = nullptr;
+    atexit_calls = 0;
+    atexit_callback = nullptr;
+
+    text_txt();
+    expect(mem_get_calls == 2);
+    expect(mem_get_sizes[0] == 512);
+    expect(mem_get_sizes[1] == 512);
+#if defined(__MINGW32__)
+    expect(atexit_calls == 1);
+    expect(atexit_callback == text_txt_exit);
+#endif
+    expect_storage_bytes(exit_storage, expected, sizeof(exit_storage));
+
+    text_txt_exit();
+    expect(text_shutdown_calls == 1);
+    expect(text_shutdown_this == Txt);
+    expect_storage_bytes(exit_storage, expected, sizeof(exit_storage));
+
+    std::free(first);
+    std::free(second);
+
+    seed_storage(exit_storage, expected, sizeof(exit_storage));
+    expected[0] = 0;
+    write_at(expected, 0x150, zero);
+    write_at(expected, 0x154, zero);
+    write_at(expected, 0x158, zero);
+    write_at(expected, 0x15C, zero);
+    mem_get_calls = 0;
+    mem_get_results[0] = nullptr;
+    mem_get_results[1] = reinterpret_cast<LPVOID>(0x13572468U);
+    text_shutdown_calls = 0;
+    text_shutdown_this = nullptr;
+    atexit_calls = 0;
+    atexit_callback = nullptr;
+
+    text_txt();
+    expect(mem_get_calls == 1);
+    expect(mem_get_sizes[0] == 512);
+#if defined(__MINGW32__)
+    expect(atexit_calls == 1);
+    expect(atexit_callback == text_txt_exit);
+#endif
+    expect_storage_bytes(exit_storage, expected, sizeof(exit_storage));
+    text_txt_exit();
+    expect(text_shutdown_calls == 1);
+    expect(text_shutdown_this == Txt);
+
+    mem_get_scripted = false;
+    mem_get_calls = 0;
+    new (exit_storage) Text;
 }
 
 void test_text_destructor_thunk() {
@@ -2199,6 +2279,7 @@ int main() {
     test_text_get_and_item_number();
     test_text_string_helpers();
     test_text_constructors();
+    test_text_global_lifecycle();
     test_text_destructor_thunk();
     test_text_open_wrapper();
     test_text_index_lifecycle();

@@ -4472,8 +4472,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FD310,0x005FD35D,77,.text,sub_5fd310,,0x005FD310-0x005FD35D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD360,0x005FD36B,11,.text,?do_all_sounds@@YAXXZ,,0x005FD360-0x005FD36B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FD370,0x005FD3F2,130,.text,?flush_timer@@YAXXZ,,0x005FD370-0x005FD3F2,game,sp_ready;purged_ok,src/time.cpp:298,Complete,?flush_timer@@YAXXZ,,source_complete,,,,0,8
-0x005FD400,0x005FD456,86,.text,??__ETxt@@YAXXZ,,0x005FD400-0x005FD456,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
-0x005FD460,0x005FD4B5,85,.text,??__FTxt@@YAXXZ,,0x005FD460-0x005FD4B5,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
+0x005FD400,0x005FD456,86,.text,??__ETxt@@YAXXZ,,0x005FD400-0x005FD456,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned initializer,,2,0
+0x005FD460,0x005FD4B5,85,.text,??__FTxt@@YAXXZ,,0x005FD460-0x005FD4B5,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned exit cleanup,,2,0
 0x005FD4C0,0x005FD4CB,11,.text,?text_set_get_ptr@@YAXXZ,,0x005FD4C0-0x005FD4CB,game,sp_ready;purged_ok,,,?text_set_get_ptr@@YAXXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,0,0
 0x005FD4D0,0x005FD4DB,11,.text,?text_set_item_ptr@@YAXXZ,,0x005FD4D0-0x005FD4DB,game,hidden;sp_ready;purged_ok,,,?text_set_item_ptr@@YAXXZ,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,0,0
 0x005FD4E0,0x005FD507,39,.text,??__ETxtIndex@@YAXXZ,,0x005FD4E0-0x005FD507,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0

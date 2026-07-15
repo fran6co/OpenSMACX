@@ -24,7 +24,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,097 candidates.
+- Current recovery backlog: 5,095 candidates.
 - Current local legacy-island count: 143, reduced from 174.
 - `DllMain` entry redirects: 39, comprising 37 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
@@ -78,7 +78,7 @@ Recovered source includes:
 - `text_get_number` through the staged hybrid export redirect.
 - `text_close`, `text_set_get_ptr`, and `text_set_item_ptr` through the staged hybrid export redirects.
 - `text_open` through the staged hybrid export redirect.
-- `Text` construction and destruction through staged hybrid export redirects.
+- `Text` construction, destruction, and global lifecycle through staged hybrid export redirects.
 - `TextIndex` construction, destruction, `text_make_index`, `text_search_index`, and `text_clear_index` through staged hybrid export redirects.
 - `Spot` construction, destruction, and clearing through staged hybrid export redirects.
 - Both `Font` constructors and the destructor through staged hybrid export redirects.
@@ -112,6 +112,7 @@ Other completed corrections and checks:
 - TextIndex lifecycle tests verify the exact `0x118` layout, constructor/destructor writes, one Heap shutdown, active-only global clearing, preserved filenames, skipped entries, and complete array canaries.
 - TextIndex wrapper tests verify first-free insertion, full-array no-ops, sparse ordered searches, continuation after all negative results, zero-valued success, exact argument forwarding, and complete array canaries.
 - Text constructor tests verify exact field writes, preserved path storage, first-allocation failure short-circuiting, both allocation sizes and results, complete object canaries, and both constructor return conventions.
+- Text global lifecycle tests verify in-place process-owned construction, both 512-byte allocations, preserved object storage, unconditional exit registration after allocation failure, cleanup delegation, and the absence of the previous temporary allocation leak.
 - Text destructor tests verify its exact `0x160` layout, one shutdown delegation, complete object canaries, and a non-COMDAT direct tail jump in Debug and Release.
 - Text open-wrapper tests verify exact object and argument forwarding, nullable inputs, unnormalized return values, and complete object canaries.
 - Spot lifecycle tests verify the exact `0xC` layout, full clear behavior, both destructor branches, and complete object canaries.
@@ -133,7 +134,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after Text constructor recovery is 5,097 priorities and 143 islands.
+- Regenerated state after Text global lifecycle recovery is 5,095 priorities and 143 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -181,7 +182,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,097 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,095 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
