@@ -82,6 +82,11 @@ uint32_t font_init_style = 0;
 int time_close_calls = 0;
 int text_shutdown_calls = 0;
 Text *text_shutdown_this = nullptr;
+int text_open_calls = 0;
+Text *text_open_this = nullptr;
+LPCSTR text_open_source_arg = nullptr;
+LPCSTR text_open_section_arg = nullptr;
+BOOL text_open_result = FALSE;
 int env_open_calls = 0;
 #if defined(__MINGW32__)
 int env_close_calls = 0;
@@ -90,10 +95,19 @@ LPCSTR env_open_source = nullptr;
 LPCSTR env_open_mode = nullptr;
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
+Text *Txt = nullptr;
 
 void Text::shutdown() {
     ++text_shutdown_calls;
     text_shutdown_this = this;
+}
+
+BOOL Text::open(LPCSTR source, LPCSTR section) {
+    ++text_open_calls;
+    text_open_this = this;
+    text_open_source_arg = source;
+    text_open_section_arg = section;
+    return text_open_result;
 }
 
 void Heap::shutdown() {
@@ -519,6 +533,41 @@ void test_text_destructor_thunk() {
     expect(text_shutdown_calls == 1);
     expect(text_shutdown_this == text);
     expect_storage_bytes(storage, expected, sizeof(storage));
+}
+
+void test_text_open_wrapper() {
+    alignas(Text) uint8_t storage[sizeof(Text) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    auto *text = new (storage + 16) Text;
+    std::memcpy(expected, storage, sizeof(storage));
+    Txt = text;
+    char source[] = "fixture.txt";
+    char section[] = "SECTION";
+    text_open_calls = 0;
+    text_open_this = nullptr;
+    text_open_source_arg = nullptr;
+    text_open_section_arg = nullptr;
+    text_open_result = static_cast<BOOL>(0x13572468U);
+
+    expect(text_open(source, section) == text_open_result);
+    expect(text_open_calls == 1);
+    expect(text_open_this == text);
+    expect(text_open_source_arg == source);
+    expect(text_open_section_arg == section);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    text_open_result = FALSE;
+    expect(text_open(nullptr, nullptr) == FALSE);
+    expect(text_open_calls == 2);
+    expect(text_open_this == text);
+    expect(text_open_source_arg == nullptr);
+    expect(text_open_section_arg == nullptr);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    Txt = nullptr;
+    text->~Text();
 }
 
 void expect_heap_clear(uint8_t *expected, size_t heap_offset) {
@@ -1933,6 +1982,7 @@ int main() {
     test_text_get_and_item_number();
     test_text_string_helpers();
     test_text_destructor_thunk();
+    test_text_open_wrapper();
     test_text_index_lifecycle();
     test_text_clear_index();
     test_spot_lifecycle();

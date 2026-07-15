@@ -43,6 +43,10 @@ Text::~Text() noexcept(false) {
 #endif
 }
 
+BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550
+    return Txt->open(src_id, section_id);
+}
+
 void __cdecl text_close_source(Text *text) {
     TextState *const value = state(text);
     if (value->text_file) {

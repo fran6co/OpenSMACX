@@ -24,6 +24,7 @@ address,recovery_state,priority,notes
 0x005FD4C0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD4D0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD530,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
+0x005FD550,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD570,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD5E0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FD670,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
