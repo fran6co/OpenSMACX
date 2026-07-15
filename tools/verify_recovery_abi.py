@@ -292,6 +292,8 @@ def main():
             "TextIndex constructor": "__ZN9TextIndexC1Ev",
             "TextIndex destructor": "__ZN9TextIndexD1Ev",
             "TextIndex clear helper": "__Z23text_clear_index_sourceP9TextIndex",
+            "TextIndex make wrapper": "__Z15text_make_indexPKc",
+            "TextIndex search wrapper": "__Z17text_search_indexPKcS0_",
         }
         for description, symbol in required_symbols.items():
             if symbol not in symbols:
@@ -341,6 +343,21 @@ def main():
         if not re.search(r"\bret\b", clear_helper) or re.search(
                 r"\bret\s+\$", clear_helper):
             fail("TextIndex clear helper does not use a plain cdecl return")
+
+        make_wrapper = text_index_body("text_make_index(char const*)")
+        if "TxtIndex" not in make_wrapper or "TextIndex::make_index(char const*)" not in make_wrapper:
+            fail("TextIndex make wrapper does not use the global array and member method")
+        if not re.search(r"\bret\b", make_wrapper) or re.search(
+                r"\bret\s+\$", make_wrapper):
+            fail("TextIndex make wrapper does not use a plain cdecl return")
+
+        search_wrapper = text_index_body(
+            "text_search_index(char const*, char const*)")
+        if "TxtIndex" not in search_wrapper or "TextIndex::search_index(char const*, char const*)" not in search_wrapper:
+            fail("TextIndex search wrapper does not use the global array and member method")
+        if not re.search(r"\bret\b", search_wrapper) or re.search(
+                r"\bret\s+\$", search_wrapper):
+            fail("TextIndex search wrapper does not use a plain cdecl return")
 
     if args.spot_object:
         headers = run([args.objdump, "-f", args.spot_object])

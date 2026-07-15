@@ -87,6 +87,14 @@ Text *text_open_this = nullptr;
 LPCSTR text_open_source_arg = nullptr;
 LPCSTR text_open_section_arg = nullptr;
 BOOL text_open_result = FALSE;
+int text_index_make_calls = 0;
+TextIndex *text_index_make_this = nullptr;
+LPCSTR text_index_make_source = nullptr;
+int text_index_search_calls = 0;
+TextIndex *text_index_search_this[MaxTextIndexNum] = {};
+LPCSTR text_index_search_source[MaxTextIndexNum] = {};
+LPCSTR text_index_search_section[MaxTextIndexNum] = {};
+int text_index_search_results[MaxTextIndexNum] = {};
 int env_open_calls = 0;
 #if defined(__MINGW32__)
 int env_close_calls = 0;
@@ -96,6 +104,7 @@ LPCSTR env_open_mode = nullptr;
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
 Text *Txt = nullptr;
+TextIndex *TxtIndex = nullptr;
 
 void Text::shutdown() {
     ++text_shutdown_calls;
@@ -108,6 +117,27 @@ BOOL Text::open(LPCSTR source, LPCSTR section) {
     text_open_source_arg = source;
     text_open_section_arg = section;
     return text_open_result;
+}
+
+void TextIndex::make_index(LPCSTR source) {
+    ++text_index_make_calls;
+    text_index_make_this = this;
+    text_index_make_source = source;
+}
+
+int TextIndex::search_index(LPCSTR source, LPCSTR section) {
+    const int call = text_index_search_calls++;
+    if (call < MaxTextIndexNum) {
+        text_index_search_this[call] = this;
+        text_index_search_source[call] = source;
+        text_index_search_section[call] = section;
+    }
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        if (this == &TxtIndex[i]) {
+            return text_index_search_results[i];
+        }
+    }
+    return -1;
 }
 
 void Heap::shutdown() {
@@ -669,6 +699,107 @@ void test_text_clear_index() {
     if (failures != failures_before) {
         std::fprintf(stderr, "TextIndex clear fixture failed\n");
     }
+}
+
+void test_text_index_wrappers() {
+    constexpr size_t entry_size = sizeof(TextIndex);
+    alignas(TextIndex) uint8_t storage[MaxTextIndexNum * entry_size + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+    TxtIndex = reinterpret_cast<TextIndex *>(storage + 16);
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        new (&TxtIndex[i]) TextIndex;
+    }
+
+    const uint32_t make_counts[MaxTextIndexNum] = {1, UINT32_MAX, 0, 0};
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        write_at(storage, 16 + static_cast<size_t>(i) * entry_size + 0x100,
+                 make_counts[i]);
+    }
+    std::memcpy(expected, storage, sizeof(storage));
+    char source[] = "fixture";
+    text_index_make_calls = 0;
+    text_index_make_this = nullptr;
+    text_index_make_source = nullptr;
+    text_make_index(source);
+    expect(text_index_make_calls == 1);
+    expect(text_index_make_this == &TxtIndex[2]);
+    expect(text_index_make_source == source);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    const uint32_t full_counts[MaxTextIndexNum] = {1, 2, 3, 4};
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        write_at(storage, 16 + static_cast<size_t>(i) * entry_size + 0x100,
+                 full_counts[i]);
+    }
+    std::memcpy(expected, storage, sizeof(storage));
+    text_index_make_calls = 0;
+    text_make_index(nullptr);
+    expect(text_index_make_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    const uint32_t search_counts[MaxTextIndexNum] = {0, 1, UINT32_MAX, 1};
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        write_at(storage, 16 + static_cast<size_t>(i) * entry_size + 0x100,
+                 search_counts[i]);
+        text_index_search_results[i] = -1;
+        text_index_search_this[i] = nullptr;
+        text_index_search_source[i] = nullptr;
+        text_index_search_section[i] = nullptr;
+    }
+    text_index_search_results[1] = INT_MIN;
+    text_index_search_results[2] = 0;
+    text_index_search_results[3] = 0x2468;
+    std::memcpy(expected, storage, sizeof(storage));
+    char section[] = "SECTION";
+    text_index_search_calls = 0;
+    expect(text_search_index(source, section) == 0);
+    expect(text_index_search_calls == 2);
+    expect(text_index_search_this[0] == &TxtIndex[1]);
+    expect(text_index_search_this[1] == &TxtIndex[2]);
+    expect(text_index_search_source[0] == source);
+    expect(text_index_search_source[1] == source);
+    expect(text_index_search_section[0] == section);
+    expect(text_index_search_section[1] == section);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    text_index_search_results[1] = 0x2468;
+    text_index_search_calls = 0;
+    expect(text_search_index(source, section) == 0x2468);
+    expect(text_index_search_calls == 1);
+    expect(text_index_search_this[0] == &TxtIndex[1]);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        write_at(storage, 16 + static_cast<size_t>(i) * entry_size + 0x100,
+                 full_counts[i]);
+        text_index_search_results[i] = i == 0 ? INT_MIN : -i;
+    }
+    std::memcpy(expected, storage, sizeof(storage));
+    text_index_search_calls = 0;
+    expect(text_search_index(source, section) == -1);
+    expect(text_index_search_calls == MaxTextIndexNum);
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        expect(text_index_search_this[i] == &TxtIndex[i]);
+        expect(text_index_search_source[i] == source);
+        expect(text_index_search_section[i] == section);
+    }
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        const uint32_t zero = 0;
+        write_at(storage, 16 + static_cast<size_t>(i) * entry_size + 0x100, zero);
+    }
+    std::memcpy(expected, storage, sizeof(storage));
+    text_index_search_calls = 0;
+    expect(text_search_index(nullptr, nullptr) == -1);
+    expect(text_index_search_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        TxtIndex[i].~TextIndex();
+    }
+    TxtIndex = nullptr;
 }
 
 void test_spot_lifecycle() {
@@ -1998,6 +2129,7 @@ int main() {
     test_text_open_wrapper();
     test_text_index_lifecycle();
     test_text_clear_index();
+    test_text_index_wrappers();
     test_spot_lifecycle();
     test_font_lifecycle();
     test_time_lifecycle_and_modal();
