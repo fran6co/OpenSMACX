@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 
 from fetch_external_analysis import validated_relative_path
+from local_artifact import require_local_artifact_path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -125,9 +126,9 @@ def output_stem(source_path):
     return re.sub(r"[^a-z0-9]+", "-", source_path.lower()).strip("-")
 
 
-def write_correlations(path, source_path, source_sha256, rows):
+def write_correlations(path, source_path, source_sha256, inventory_sha256, rows):
     fieldnames = [
-        "source_path", "source_sha256", "line", "address", "relation",
+        "source_path", "source_sha256", "inventory_sha256", "line", "address", "relation",
         "canonical_address", "canonical_name", "recovery_state",
     ]
     with path.open("w", newline="", encoding="utf-8") as file:
@@ -137,6 +138,7 @@ def write_correlations(path, source_path, source_sha256, rows):
             writer.writerow({
                 "source_path": source_path,
                 "source_sha256": source_sha256,
+                "inventory_sha256": inventory_sha256,
                 "line": line_number,
                 "address": f"0x{address:08X}",
                 "relation": relation or "missing",
@@ -146,9 +148,10 @@ def write_correlations(path, source_path, source_sha256, rows):
             })
 
 
-def write_summary(path, source_path, source_sha256, rows):
+def write_summary(path, source_path, source_sha256, inventory_sha256, rows):
     fieldnames = [
-        "source_path", "source_sha256", "canonical_address", "canonical_name",
+        "source_path", "source_sha256", "inventory_sha256",
+        "canonical_address", "canonical_name",
         "recovery_state", "lead_count", "entry_count", "interior_count",
     ]
     with path.open("w", newline="", encoding="utf-8") as file:
@@ -158,6 +161,7 @@ def write_summary(path, source_path, source_sha256, rows):
             writer.writerow({
                 "source_path": source_path,
                 "source_sha256": source_sha256,
+                "inventory_sha256": inventory_sha256,
                 **row,
             })
 
@@ -190,12 +194,27 @@ def main():
         parser.error(f"artifact kind does not contain function addresses: {artifact['kind']}")
     entries, ranges = load_inventory(args.inventory)
     rows = correlate_leads(leads, entries, ranges)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        output_dir = require_local_artifact_path(
+            args.output_dir, "external-correlation output")
+    except RuntimeError as error:
+        parser.error(str(error))
+    output_dir.mkdir(parents=True, exist_ok=True)
     stem = output_stem(args.source_path)
-    correlations = args.output_dir / f"{stem}-correlation.csv"
-    summary = args.output_dir / f"{stem}-summary.csv"
-    write_correlations(correlations, args.source_path, actual_sha256, rows)
-    write_summary(summary, args.source_path, actual_sha256, rows)
+    try:
+        correlations = require_local_artifact_path(
+            output_dir / f"{stem}-correlation.csv",
+            "external-correlation output")
+        summary = require_local_artifact_path(
+            output_dir / f"{stem}-summary.csv",
+            "external-correlation summary")
+    except RuntimeError as error:
+        parser.error(str(error))
+    inventory_sha256 = hashlib.sha256(args.inventory.read_bytes()).hexdigest()
+    write_correlations(
+        correlations, args.source_path, actual_sha256, inventory_sha256, rows)
+    write_summary(
+        summary, args.source_path, actual_sha256, inventory_sha256, rows)
     print(f"Correlated {len(rows)} address leads to {correlations}")
     print(f"Wrote per-function summary to {summary}")
 

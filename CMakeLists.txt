@@ -33,6 +33,9 @@ set(OPENSMACX_LEGACY_LEAF_DIR "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves"
     CACHE PATH "Output directory for generated local legacy leaf assembly")
 set(OPENSMACX_LEGACY_LEAF_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe"
     CACHE FILEPATH "Independently analyzed executable used to extract local legacy leaves")
+set(OPENSMACX_RECOVERY_IDB
+    "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb"
+    CACHE FILEPATH "Ignored hash-pinned canonical IDB used to regenerate recovery metadata")
 set(OPENSMACX_LEGACY_LEAF_OBJECT
     "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves.obj"
     CACHE FILEPATH "Generated local legacy leaf COFF object")
@@ -40,6 +43,48 @@ set(OPENSMACX_RECOVERY_ORACLE_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/recovery-oracles")
 set(OPENSMACX_RECOVERY_ORACLE_OBJECT
     "${CMAKE_CURRENT_BINARY_DIR}/recovery-oracles.obj")
+
+function(opensmacx_require_local_artifact_path variable)
+    get_filename_component(candidate "${${variable}}" ABSOLUTE
+        BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    get_filename_component(local_root "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx" ABSOLUTE)
+    get_filename_component(build_root "${CMAKE_CURRENT_SOURCE_DIR}/build" ABSOLUTE)
+    set(component "${candidate}")
+    while(TRUE)
+        if(IS_SYMLINK "${component}")
+            message(FATAL_ERROR
+                "${variable} must not contain symlink components: ${component}")
+        endif()
+        get_filename_component(parent "${component}" DIRECTORY)
+        if(parent STREQUAL component)
+            break()
+        endif()
+        set(component "${parent}")
+    endwhile()
+    if(candidate STREQUAL local_root OR candidate STREQUAL build_root)
+        message(FATAL_ERROR
+            "${variable} must be below the ignored .opensmacx or build directory")
+    endif()
+    string(FIND "${candidate}/" "${local_root}/" local_prefix)
+    string(FIND "${candidate}/" "${build_root}/" build_prefix)
+    if(NOT local_prefix EQUAL 0 AND NOT build_prefix EQUAL 0)
+        message(FATAL_ERROR
+            "${variable} must be inside the ignored .opensmacx or build directory: ${candidate}")
+    endif()
+    set(${variable} "${candidate}" PARENT_SCOPE)
+endfunction()
+
+foreach(variable IN ITEMS
+        OPENSMACX_GAME_DIR
+        OPENSMACX_WINE_PREFIX
+        OPENSMACX_HYBRID_DIR
+        OPENSMACX_HYBRID_EXE
+        OPENSMACX_LEGACY_LEAF_DIR
+        OPENSMACX_LEGACY_LEAF_OBJECT
+        OPENSMACX_RECOVERY_ORACLE_DIR
+        OPENSMACX_RECOVERY_ORACLE_OBJECT)
+    opensmacx_require_local_artifact_path(${variable})
+endforeach()
 
 if(OPENSMACX_PYTHON)
     set(OPENSMACX_PYTHON_EXECUTABLE "${OPENSMACX_PYTHON}")
@@ -270,7 +315,8 @@ if(BUILD_TESTING)
         target_link_options(recovery-leaf-tests PRIVATE
             -static
             -Wl,--wrap=atexit
-            -Wl,--wrap=fclose)
+            -Wl,--wrap=fclose
+            -Wl,--wrap=free)
     endif()
 
     if(CMAKE_CROSSCOMPILING)
@@ -338,6 +384,51 @@ install(TARGETS OpenSMACX
     ARCHIVE DESTINATION lib
 )
 
+set(OPENSMACX_METADATA_VERIFY_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/recovery-metadata-verify")
+add_custom_target(verify-recovery-metadata
+    COMMAND "${CMAKE_COMMAND}" -E rm -rf "${OPENSMACX_METADATA_VERIFY_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${OPENSMACX_METADATA_VERIFY_DIR}"
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
+        --idb "${OPENSMACX_RECOVERY_IDB}"
+        --output-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
+        --canonical "${OPENSMACX_METADATA_VERIFY_DIR}/functions.csv"
+        --canonical-summary "${OPENSMACX_METADATA_VERIFY_DIR}/summary.json"
+        --output-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${OPENSMACX_METADATA_VERIFY_DIR}/functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${OPENSMACX_METADATA_VERIFY_DIR}/callgraph.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/callgraph.json"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${OPENSMACX_METADATA_VERIFY_DIR}/summary.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${OPENSMACX_METADATA_VERIFY_DIR}/analysis-correlation.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${OPENSMACX_METADATA_VERIFY_DIR}/priorities.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/priorities.csv"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${OPENSMACX_METADATA_VERIFY_DIR}/analysis-summary.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
+    DEPENDS
+        "${OPENSMACX_RECOVERY_IDB}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ida9-functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
+    USES_TERMINAL
+    VERBATIM
+)
+
 add_custom_target(prepare-hybrid-image
     COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_prepare_hybrid_image.py"
@@ -346,11 +437,13 @@ add_custom_target(prepare-hybrid-image
         --exe "${OPENSMACX_LEGACY_EXE}"
         --output "${OPENSMACX_HYBRID_DIR}"
     DEPENDS
+        verify-recovery-metadata
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/prepare_hybrid_image.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_prepare_hybrid_image.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/priorities.csv"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
     USES_TERMINAL
@@ -376,6 +469,7 @@ set(OPENSMACX_HYBRID_STAGE_COMMAND
     --dll "$<TARGET_FILE:OpenSMACX>"
     --output "${OPENSMACX_GAME_DIR}"
     --exe-name terranx_hybrid.exe
+    --wine-prefix "${OPENSMACX_WINE_PREFIX}"
 )
 if(OPENSMACX_WINE)
     list(APPEND OPENSMACX_HYBRID_STAGE_COMMAND --wine "${OPENSMACX_WINE}")
@@ -383,7 +477,13 @@ endif()
 
 add_custom_target(stage-hybrid-game
     COMMAND ${OPENSMACX_HYBRID_STAGE_COMMAND}
-    DEPENDS OpenSMACX assemble-hybrid-executable
+    DEPENDS
+        OpenSMACX
+        assemble-hybrid-executable
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/opensmac_patcher.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
     USES_TERMINAL
     VERBATIM
 )
@@ -413,6 +513,8 @@ add_custom_target(smoke-hybrid-game
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_game.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/setup_game.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
     USES_TERMINAL
     VERBATIM
 )
@@ -442,6 +544,7 @@ add_custom_target(inspect-gameplay-scenario
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
     USES_TERMINAL
     VERBATIM
 )
@@ -459,6 +562,7 @@ add_custom_target(run-gameplay-scenario
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
     USES_TERMINAL
     VERBATIM
 )
@@ -477,6 +581,7 @@ add_custom_target(run-gameplay-resolution
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
     USES_TERMINAL
     VERBATIM
 )
@@ -495,6 +600,7 @@ add_custom_target(run-gameplay-advancement
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
     USES_TERMINAL
     VERBATIM
 )
@@ -518,7 +624,9 @@ add_custom_command(
         --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
         --output "${OPENSMACX_LEGACY_LEAF_DIR}"
     DEPENDS
+        "${OPENSMACX_LEGACY_LEAF_EXE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
@@ -575,9 +683,12 @@ if(MINGW)
                 --address 0x004E2610
                 --address 0x004E2660
                 --address 0x004E26B0
+                --address 0x00625750
+                --address 0x00625770
             DEPENDS
                 "${OPENSMACX_LEGACY_LEAF_EXE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
                 "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
@@ -602,6 +713,7 @@ if(MINGW)
         add_executable(recovery-oracle-tests EXCLUDE_FROM_ALL
             tests/recovery_oracle_tests.cpp
             src/alphanet.cpp
+            src/random.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)
@@ -648,6 +760,7 @@ if(OPENSMACX_GAME_INSTALLER)
         --installer "${OPENSMACX_GAME_INSTALLER}"
         --dll "$<TARGET_FILE:OpenSMACX>"
         --output "${OPENSMACX_GAME_DIR}"
+        --wine-prefix "${OPENSMACX_WINE_PREFIX}"
         --reuse
     )
     if(OPENSMACX_WINE)
@@ -656,7 +769,28 @@ if(OPENSMACX_GAME_INSTALLER)
 
     add_custom_target(stage-game
         COMMAND ${OPENSMACX_STAGE_COMMAND}
-        DEPENDS OpenSMACX
+        DEPENDS
+            OpenSMACX
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/opensmac_patcher.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/setup_game.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
+        USES_TERMINAL
+        VERBATIM
+    )
+endif()
+
+if(MINGW AND BUILD_TESTING)
+    add_custom_target(verify-recovery-batch
+        COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
+        DEPENDS
+            verify-recovery-metadata
+            verify-recovery-abi
+            verify-recovery-oracles
+            recovery-leaf-tests
+            assemble-legacy-leaves
+            smoke-hybrid-game
         USES_TERMINAL
         VERBATIM
     )

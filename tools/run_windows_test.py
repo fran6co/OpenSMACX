@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 
 from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
-from setup_game import find_wine
+from wine_runtime import find_wine
 
 
 def main():

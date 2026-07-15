@@ -79,6 +79,8 @@ artifacts/
 *.vssscc
 .builds
 *.pidb
+*.idb
+*.i64
 *.svclog
 *.scc
 
@@ -275,4 +277,3 @@ __pycache__/
 /tools/terranx_original.exe
 /.opensmacx/
 /terranx.exe.idc
-/terranx.exe.i64

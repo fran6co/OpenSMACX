@@ -23,7 +23,12 @@
   */
 class DLLEXPORT Heap {
  public:
-  Heap() : err_flags_(0), base_(nullptr), current_(nullptr), base_size_(0), free_size_(0) {
+  Heap() {
+    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+    base_ = nullptr;
+    current_ = nullptr;
+    base_size_ = 0;
+    free_size_ = 0;
 #if defined(__GNUC__) && defined(__i386__)
     __asm__ __volatile__("" : : "a"(this) : "memory");
 #endif
@@ -32,7 +37,7 @@ class DLLEXPORT Heap {
     if (base_) {
       std::free(base_);
     }
-    err_flags_ = 0;
+    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
     base_ = nullptr;
     current_ = nullptr;
     base_size_ = 0;

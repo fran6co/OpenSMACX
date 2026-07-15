@@ -24,6 +24,8 @@ from capstone import (
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_REG_INVALID
 import pefile
 
+from local_artifact import require_local_artifact_path
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -95,14 +97,7 @@ def select_rows(correlations, requested_addresses):
 
 
 def validate_output_path(output):
-    output = output.expanduser().resolve()
-    allowed_roots = (
-        (REPO_ROOT / ".opensmacx").resolve(),
-        (REPO_ROOT / "build").resolve(),
-    )
-    if not any(root in output.parents for root in allowed_roots):
-        raise RuntimeError(
-            "output must be inside the ignored .opensmacx/ or build/ directory")
+    return require_local_artifact_path(output)
 
 
 def is_relative_branch(instruction):
@@ -346,7 +341,7 @@ def replace_output(temporary, output):
 def extract(exe_path, correlation_path, analysis_summary_path, functions_path,
             ghidra_path, ghidra_references_path, output, max_size,
             requested_addresses=()):
-    validate_output_path(output)
+    output = validate_output_path(output)
     source = exe_path.read_bytes()
     source_hash = sha256_bytes(source)
     if source_hash not in SUPPORTED_EXE_HASHES:
@@ -572,7 +567,7 @@ def main():
             args.functions,
             args.ghidra,
             args.ghidra_references,
-            args.output.expanduser().resolve(),
+            args.output.expanduser().absolute(),
             args.max_size,
             args.address,
         )

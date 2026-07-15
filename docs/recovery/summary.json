@@ -27,7 +27,7 @@
   },
   "inputs": {
     "definition": "src/OpenSMACX.def",
-    "idb": "terranx_ORIG_200_v3_7.5.SP3.idb",
+    "idb": ".opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb",
     "idb_sha256": "6ffdcf2d6644f2c1b19c218d3b1b293b4e442d56b8cf1f537b0403608ff866fa",
     "original_input_path": "/Users/scient/Desktop/terranx_ORIG_200.exe",
     "original_input_sha256": "7d1933da68a3326ac97464849a209a5f127606f5bd7a6abfe9985cd3ce044767",

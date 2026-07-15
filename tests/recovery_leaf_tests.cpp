@@ -118,6 +118,8 @@ LPCSTR env_open_mode = nullptr;
 bool env_open_fails = false;
 bool capture_closed_file = false;
 char closed_file_output[256] = {};
+void *tracked_free_pointer = nullptr;
+int tracked_free_calls = 0;
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
 Text *Txt = nullptr;
@@ -238,6 +240,7 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
 
 #if defined(__MINGW32__)
 extern "C" int __real_fclose(FILE *file);
+extern "C" void __real_free(void *pointer);
 
 extern "C" int __wrap_atexit(void (__cdecl *callback)()) {
     ++atexit_calls;
@@ -255,6 +258,13 @@ extern "C" int __wrap_fclose(FILE *file) {
         closed_file_output[size] = 0;
     }
     return __real_fclose(file);
+}
+
+extern "C" void __wrap_free(void *pointer) {
+    if (pointer == tracked_free_pointer) {
+        ++tracked_free_calls;
+    }
+    __real_free(pointer);
 }
 #endif
 
@@ -275,6 +285,14 @@ void expect(bool condition) {
     if (!condition) {
         ++failures;
     }
+}
+
+void expect_tracked_free_calls(int expected) {
+#if defined(__MINGW32__)
+    expect(tracked_free_calls == expected);
+#else
+    static_cast<void>(expected);
+#endif
 }
 
 void test_alpha_net_pid_to_idx() {
@@ -1085,7 +1103,10 @@ void test_spot_lifecycle() {
     write_at(storage, 16 + 8, add_count);
     std::memcpy(expected, storage, sizeof(storage));
     std::memset(expected + 16, 0, sizeof(Spot));
+    tracked_free_pointer = spots;
+    tracked_free_calls = 0;
     spot->~Spot();
+    expect_tracked_free_calls(1);
     expect_storage_bytes(storage, expected, sizeof(storage));
 
     seed_storage(storage, expected, sizeof(storage));
@@ -1094,7 +1115,10 @@ void test_spot_lifecycle() {
     write_at(storage, 16 + 8, add_count);
     std::memcpy(expected, storage, sizeof(storage));
     std::memset(expected + 16, 0, sizeof(Spot));
+    tracked_free_pointer = reinterpret_cast<void *>(0x87654321U);
+    tracked_free_calls = 0;
     spot->~Spot();
+    expect_tracked_free_calls(0);
     expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
@@ -1255,6 +1279,9 @@ void test_filemap_lifecycle() {
         write_at(expected, 16 + 8, null_handle);
         filemap->~Filemap();
         expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(!UnmapViewOfFile(view));
+        expect(!CloseHandle(file));
+        expect(!CloseHandle(mapping));
     } else {
         if (view) {
             UnmapViewOfFile(view);
@@ -1284,7 +1311,6 @@ void test_heap_lifecycle() {
     expected[16] = 0;
     std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
     auto *heap = new (storage + 16) Heap;
-    std::memcpy(expected + 17, storage + 17, 3);
     expect_storage_bytes(storage, expected, sizeof(storage));
     report_storage_mismatch("Heap constructor", storage, expected, sizeof(storage));
 
@@ -1300,9 +1326,11 @@ void test_heap_lifecycle() {
     expected[16] = 0;
     std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
     heap_shutdown_calls = 0;
+    tracked_free_pointer = base;
+    tracked_free_calls = 0;
     heap->~Heap();
-    std::memcpy(expected + 17, storage + 17, 3);
     expect(heap_shutdown_calls == 0);
+    expect_tracked_free_calls(1);
     expect_storage_bytes(storage, expected, sizeof(storage));
     report_storage_mismatch("Heap allocated destructor", storage, expected, sizeof(storage));
 
@@ -1317,9 +1345,11 @@ void test_heap_lifecycle() {
     expected[16] = 0;
     std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
     heap_shutdown_calls = 0;
+    tracked_free_pointer = reinterpret_cast<void *>(0x87654321U);
+    tracked_free_calls = 0;
     heap->~Heap();
-    std::memcpy(expected + 17, storage + 17, 3);
     expect(heap_shutdown_calls == 0);
+    expect_tracked_free_calls(0);
     expect_storage_bytes(storage, expected, sizeof(storage));
     report_storage_mismatch("Heap empty destructor", storage, expected, sizeof(storage));
     if (failures != failures_before) {
@@ -1337,7 +1367,6 @@ void test_strings_lifecycle() {
     expected[16] = 0;
     std::memset(expected + 16 + 4, 0, sizeof(Strings) - 4);
     auto *strings = new (storage + 16) Strings;
-    std::memcpy(expected + 17, storage + 17, 3);
     expect(strings == reinterpret_cast<Strings *>(storage + 16));
     expect_storage_bytes(storage, expected, sizeof(storage));
     report_storage_mismatch("Strings constructor", storage, expected, sizeof(storage));
@@ -1356,9 +1385,11 @@ void test_strings_lifecycle() {
     expected[16] = 0;
     std::memset(expected + 16 + 4, 0, sizeof(Heap) - 4);
     heap_shutdown_calls = 0;
+    tracked_free_pointer = base;
+    tracked_free_calls = 0;
     strings->~Strings();
-    std::memcpy(expected + 17, storage + 17, 3);
     expect(heap_shutdown_calls == 1);
+    expect_tracked_free_calls(1);
     expect_storage_bytes(storage, expected, sizeof(storage));
     report_storage_mismatch("Strings destructor", storage, expected, sizeof(storage));
     if (failures != failures_before) {
@@ -1467,8 +1498,12 @@ void test_random_exports() {
     static Random exit_generator;
     Rand = &exit_generator;
     exit_generator.reseed(0x55555555U);
+    atexit_calls = 0;
+    atexit_callback = nullptr;
     random_rand();
     expect(exit_generator.get_seed() == 0);
+    expect(atexit_calls == 1);
+    expect(atexit_callback == random_rand_exit);
     random_reseed(0xABCDEF01U);
     expect(exit_generator.get_seed() == 0xABCDEF01U);
     random_rand_exit();
@@ -1550,12 +1585,94 @@ void test_log_lifecycle_and_wrappers() {
 
     std::memcpy(expected, storage, sizeof(storage));
     write_at(expected, 16, null_file);
+    tracked_free_pointer = allocated_file;
+    tracked_free_calls = 0;
     log->~Log();
+    expect_tracked_free_calls(1);
     expect_storage_bytes(storage, expected, sizeof(storage));
     report_storage_mismatch("Log destructor", storage, expected, sizeof(storage));
     if (failures != stage_failures) {
         std::fprintf(stderr, "Log destructor expectations failed\n");
     }
+    stage_failures = failures;
+
+    seed_storage(storage, expected, sizeof(storage));
+    log = new (storage + 16) Log;
+    std::memcpy(expected, storage, sizeof(storage));
+    mem_get_calls = 0;
+    env_open_calls = 0;
+    expect(log->init(nullptr) == 16);
+    expect(mem_get_calls == 0);
+    expect(env_open_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    char *old_file = static_cast<char *>(std::malloc(16));
+    std::strcpy(old_file, "old.log");
+    write_at(storage, 16, old_file);
+    write_at(storage, 16 + 4, preserved_state);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16, null_file);
+    mem_get_scripted = true;
+    mem_get_calls = 0;
+    mem_get_results[0] = nullptr;
+    tracked_free_pointer = old_file;
+    tracked_free_calls = 0;
+    expect(log->init("new.log") == 4);
+    expect(mem_get_calls == 1);
+    expect(mem_get_sizes[0] == 8);
+    expect_tracked_free_calls(1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    log = new (storage + 16) Log;
+    write_at(storage, 16 + 4, preserved_state);
+    char *failed_open_file = static_cast<char *>(std::malloc(9));
+    mem_get_calls = 0;
+    mem_get_results[0] = failed_open_file;
+    env_open_calls = 0;
+    env_open_fails = true;
+    expect(log->init("fail.log") == 6);
+    expect(mem_get_calls == 1);
+    expect(mem_get_sizes[0] == 9);
+    expect(std::strcmp(failed_open_file, "fail.log") == 0);
+    expect(env_open_calls == 1);
+    expect(env_open_mode && std::strcmp(env_open_mode, "wt") == 0);
+    std::memcpy(expected, storage, sizeof(storage));
+    tracked_free_pointer = failed_open_file;
+    tracked_free_calls = 0;
+    log->~Log();
+    expect_tracked_free_calls(1);
+    write_at(expected, 16, null_file);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    log = new (storage + 16) Log;
+    write_at(storage, 16 + 4, preserved_state);
+    char *successful_file = static_cast<char *>(std::malloc(12));
+    mem_get_calls = 0;
+    mem_get_results[0] = successful_file;
+    env_open_calls = 0;
+    env_open_fails = false;
+#if defined(__MINGW32__)
+    env_close_calls = 0;
+#endif
+    expect(log->init("success.log") == 0);
+    expect(mem_get_calls == 1);
+    expect(mem_get_sizes[0] == 12);
+    expect(std::strcmp(successful_file, "success.log") == 0);
+    expect(env_open_calls == 1);
+#if defined(__MINGW32__)
+    expect(env_close_calls == 1);
+#endif
+    std::memcpy(expected, storage, sizeof(storage));
+    tracked_free_pointer = successful_file;
+    tracked_free_calls = 0;
+    log->~Log();
+    expect_tracked_free_calls(1);
+    write_at(expected, 16, null_file);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    mem_get_scripted = false;
+    mem_get_results[0] = nullptr;
     stage_failures = failures;
 
     seed_storage(storage, expected, sizeof(storage));
@@ -1692,6 +1809,8 @@ void test_log_lifecycle_and_wrappers() {
     Logging = reinterpret_cast<Log *>(exit_storage);
     write_at_volatile(exit_storage, 4, preserved_state);
     env_open_calls = 0;
+    atexit_calls = 0;
+    atexit_callback = nullptr;
 #if defined(__MINGW32__)
     env_close_calls = 0;
 #endif
@@ -1701,6 +1820,8 @@ void test_log_lifecycle_and_wrappers() {
     expect(global_file && std::strcmp(global_file, "logfile.txt") == 0);
     expect(std::memcmp(exit_storage + 4, &preserved_state, sizeof(preserved_state)) == 0);
     expect(env_open_calls == 1);
+    expect(atexit_calls == 1);
+    expect(atexit_callback == log_logging_exit);
 #if defined(__MINGW32__)
     expect(env_close_calls == 1);
 #endif

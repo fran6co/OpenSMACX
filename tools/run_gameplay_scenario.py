@@ -18,7 +18,7 @@ from runtime_process import (
     stage_scenario_executable,
     stop_executable_processes,
 )
-from setup_game import find_wine
+from wine_runtime import find_wine
 from smoke_hybrid_game import FATAL_PATTERNS, matching_process_ids, validate_executable
 
 

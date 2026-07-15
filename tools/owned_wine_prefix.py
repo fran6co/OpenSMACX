@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from setup_game import find_wine
+from wine_runtime import find_wine
 
 
 OWNER_MARKER = ".opensmacx-test-owned"
@@ -12,9 +12,11 @@ INITIALIZED_MARKER = ".opensmacx-test-initialized"
 OWNER_CONTENT = "OpenSMACX dedicated runtime test prefix\n"
 
 
-def claim_owned_wine_prefix(prefix):
-    if prefix.is_symlink():
-        raise RuntimeError(f"test Wine prefix must not be a symlink: {prefix}")
+def validate_owned_wine_prefix(prefix):
+    prefix = prefix.expanduser().absolute()
+    if prefix.resolve(strict=False) != prefix:
+        raise RuntimeError(
+            f"test Wine prefix must not contain symlinks: {prefix}")
     marker = prefix / OWNER_MARKER
     if prefix.exists():
         if not prefix.is_dir():
@@ -23,9 +25,15 @@ def claim_owned_wine_prefix(prefix):
                 or marker.read_text(encoding="ascii") != OWNER_CONTENT):
             raise RuntimeError(
                 f"refusing to own unmarked existing Wine prefix: {prefix}")
+    return prefix
+
+
+def claim_owned_wine_prefix(prefix):
+    prefix = validate_owned_wine_prefix(prefix)
+    if prefix.exists():
         return False
     prefix.mkdir(parents=True)
-    marker.write_text(OWNER_CONTENT, encoding="ascii")
+    (prefix / OWNER_MARKER).write_text(OWNER_CONTENT, encoding="ascii")
     return True
 
 
@@ -62,6 +70,10 @@ def prepare_owned_wine_prefix(prefix, wine):
     wineboot, _ = wine_prefix_tools(wine)
     initialized = prefix / INITIALIZED_MARKER
     try:
+        if initialized.is_symlink() or (
+                initialized.exists() and not initialized.is_file()):
+            raise RuntimeError(
+                f"test Wine initialization marker is not a regular file: {initialized}")
         if not initialized.is_file():
             environment = prefix_environment(prefix)
             subprocess.run(

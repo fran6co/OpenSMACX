@@ -8,6 +8,8 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import ssl
 import urllib.request
 
+from local_artifact import require_local_artifact_path
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CATALOG = REPO_ROOT / "docs" / "recovery" / "external-analysis-sources.json"
@@ -42,6 +44,14 @@ def tls_context():
 
 
 def fetch_artifact(artifact, output_dir):
+    output_dir = require_local_artifact_path(
+        output_dir, "external-analysis output")
+    destination = require_local_artifact_path(
+        output_dir / validated_relative_path(artifact["path"]),
+        "external-analysis artifact")
+    if not destination.is_relative_to(output_dir):
+        raise RuntimeError(
+            f"artifact destination escapes output directory: {artifact['path']}")
     request = urllib.request.Request(
         artifact["download_url"], headers={"User-Agent": "OpenSMACX-recovery"})
     with urllib.request.urlopen(request, timeout=120, context=tls_context()) as response:
@@ -53,12 +63,7 @@ def fetch_artifact(artifact, output_dir):
     if digest != artifact["sha256"]:
         raise RuntimeError(
             f"SHA-256 mismatch for {artifact['path']}: expected {artifact['sha256']}, got {digest}")
-    destination = output_dir / validated_relative_path(artifact["path"])
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if not destination.parent.resolve().is_relative_to(output_dir.resolve()):
-        raise RuntimeError(f"artifact destination escapes output directory: {artifact['path']}")
-    if destination.is_symlink():
-        raise RuntimeError(f"artifact destination must not be a symlink: {destination}")
     destination.write_bytes(data)
     return destination
 
@@ -82,9 +87,14 @@ def main():
     missing = selected - {artifact["path"] for artifact in artifacts}
     if missing:
         parser.error(f"source paths are absent from catalog: {', '.join(sorted(missing))}")
-    for artifact in artifacts:
-        destination = fetch_artifact(artifact, args.output)
-        print(f"Fetched {artifact['path']} to {destination}")
+    try:
+        output = require_local_artifact_path(
+            args.output, "external-analysis output")
+        for artifact in artifacts:
+            destination = fetch_artifact(artifact, output)
+            print(f"Fetched {artifact['path']} to {destination}")
+    except (OSError, RuntimeError) as error:
+        parser.error(str(error))
 
 
 if __name__ == "__main__":

@@ -12,12 +12,16 @@ import tempfile
 
 import pefile
 
+from local_artifact import require_local_artifact_path
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx.exe"
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_PRIORITIES = REPO_ROOT / "docs" / "recovery" / "priorities.csv"
 DEFAULT_SUMMARY = REPO_ROOT / "docs" / "recovery" / "summary.json"
+DEFAULT_BINDING_CLASSIFICATIONS = (
+    REPO_ROOT / "docs" / "recovery-binding-classifications.csv")
 DEFAULT_ANALYSIS_SUMMARY = (
     REPO_ROOT / "docs" / "recovery" / "analysis-summary.json")
 DEFAULT_CORRELATION = (
@@ -219,8 +223,17 @@ def read_virtual_range(pe, source, start_va, end_va):
         "does not map to raw bytes in the source executable")
 
 
+def validate_analysis_input_hashes(analysis_summary, inputs):
+    expected_inputs = analysis_summary.get("inputs", {})
+    for key, path, description in inputs:
+        if sha256_file(path) != expected_inputs.get(key):
+            raise RuntimeError(
+                f"{description} does not match the analysis summary")
+
+
 def build_function_map(pe, source, functions_path, priorities_path, summary_path,
-                       analysis_summary_path, correlation_path):
+                       binding_classifications_path, analysis_summary_path,
+                       correlation_path):
     with functions_path.open(newline="", encoding="utf-8-sig") as file:
         function_rows = list(csv.DictReader(file))
     with priorities_path.open(newline="", encoding="utf-8-sig") as file:
@@ -252,6 +265,12 @@ def build_function_map(pe, source, functions_path, priorities_path, summary_path
     if sha256_file(priorities_path) != analysis_summary["outputs"][
             "priorities_sha256"]:
         raise RuntimeError("recovery priorities do not match their analysis summary")
+    validate_analysis_input_hashes(analysis_summary, (
+        ("canonical_inventory_sha256", functions_path, "canonical inventory"),
+        ("canonical_summary_sha256", summary_path, "canonical summary"),
+        ("binding_classifications_sha256", binding_classifications_path,
+         "binding classifications"),
+    ))
     relation_counts = Counter(row["ghidra_relation"] for row in correlation_rows)
     if dict(sorted(relation_counts.items())) != analysis_summary["analyses"]["ghidra"]["relations"]:
         raise RuntimeError("analysis correlation and summary relation counts differ")
@@ -531,7 +550,9 @@ def replace_output(temporary, output):
 
 
 def generate(exe_path, functions_path, priorities_path, summary_path,
-             analysis_summary_path, correlation_path, output):
+             binding_classifications_path, analysis_summary_path,
+             correlation_path, output):
+    output = require_local_artifact_path(output, "hybrid image output")
     source = exe_path.read_bytes()
     try:
         pe = pefile.PE(data=source, fast_load=False)
@@ -549,7 +570,8 @@ def generate(exe_path, functions_path, priorities_path, summary_path,
         header, sections, gaps, overlay, layout = build_file_layout(pe, source, temporary)
         function_map = build_function_map(
             pe, source, functions_path, priorities_path, summary_path,
-            analysis_summary_path, correlation_path)
+            binding_classifications_path, analysis_summary_path,
+            correlation_path)
         function_map_path = temporary / "legacy-functions.json"
         write_json(function_map_path, function_map)
         relocations = get_relocations(pe)
@@ -633,6 +655,8 @@ def main():
     parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
     parser.add_argument("--priorities", type=Path, default=DEFAULT_PRIORITIES)
     parser.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)
+    parser.add_argument("--binding-classifications", type=Path,
+                        default=DEFAULT_BINDING_CLASSIFICATIONS)
     parser.add_argument("--analysis-summary", type=Path,
                         default=DEFAULT_ANALYSIS_SUMMARY)
     parser.add_argument("--correlation", type=Path, default=DEFAULT_CORRELATION)
@@ -643,23 +667,23 @@ def main():
     args.functions = args.functions.expanduser().resolve()
     args.priorities = args.priorities.expanduser().resolve()
     args.summary = args.summary.expanduser().resolve()
+    args.binding_classifications = args.binding_classifications.expanduser().resolve()
     args.analysis_summary = args.analysis_summary.expanduser().resolve()
     args.correlation = args.correlation.expanduser().resolve()
     inputs = (args.exe, args.functions, args.priorities, args.summary,
-              args.analysis_summary, args.correlation)
+              args.binding_classifications, args.analysis_summary,
+              args.correlation)
     for path in inputs:
         if not path.is_file():
             parser.error(f"input not found: {path}")
-    output = args.output.expanduser().resolve()
-    if output == Path(output.anchor):
-        parser.error("refusing to use a filesystem root as output")
-
     try:
+        output = require_local_artifact_path(args.output, "hybrid image output")
         generate(
             args.exe,
             args.functions,
             args.priorities,
             args.summary,
+            args.binding_classifications,
             args.analysis_summary,
             args.correlation,
             output,

@@ -652,6 +652,12 @@ def main():
                 fail(f"Heap constructor does not clear field 0x{field}")
         if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
             fail("Heap constructor does not return this in EAX")
+        if (re.search(r"\bmov(?:w|l)\s+[^,\n]+,\(%e(?:ax|bx|cx|dx|si|di)\)",
+                      constructor)
+                or re.search(
+                    r"\bmov\w*\s+[^,\n]+,0x[123]\(%e(?:ax|bx|cx|dx|si|di)\)",
+                    constructor)):
+            fail("Heap constructor overwrites legacy padding")
 
         destructor = heap_body("Heap::~Heap()")
         if "Heap::shutdown()" in destructor:
@@ -663,6 +669,12 @@ def main():
         for field in ("4", "8", "c", "10"):
             if not re.search(rf"\bmovl\s+\$0x0,0x{field}\(%e?\w+\)", destructor):
                 fail(f"Heap destructor does not clear field 0x{field}")
+        if (re.search(r"\bmov(?:w|l)\s+[^,\n]+,\(%e(?:ax|bx|cx|dx|si|di)\)",
+                      destructor)
+                or re.search(
+                    r"\bmov\w*\s+[^,\n]+,0x[123]\(%e(?:ax|bx|cx|dx|si|di)\)",
+                    destructor)):
+            fail("Heap destructor overwrites legacy padding")
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Heap destructor does not use a plain thiscall return")
@@ -698,6 +710,12 @@ def main():
                 fail(f"Strings constructor does not clear field 0x{field}")
         if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
             fail("Strings constructor does not return this in EAX")
+        if (re.search(r"\bmov(?:w|l)\s+[^,\n]+,\(%e(?:ax|bx|cx|dx|si|di)\)",
+                      constructor)
+                or re.search(
+                    r"\bmov\w*\s+[^,\n]+,0x[123]\(%e(?:ax|bx|cx|dx|si|di)\)",
+                    constructor)):
+            fail("Strings constructor overwrites Heap padding")
         if not re.search(r"\bret\b", constructor) or re.search(
                 r"\bret\s+\$", constructor):
             fail("Strings constructor does not use a plain thiscall return")
@@ -720,6 +738,7 @@ def main():
             "Log default constructor": "__ZN3LogC1Ev",
             "Log filename constructor": "__ZN3LogC1EPKc",
             "Log destructor": "__ZN3LogD1Ev",
+            "Log init method": "__ZN3Log4initEPKc",
             "Log initializer": "__Z11log_loggingv",
             "Log exit cleanup": "__Z16log_logging_exitv",
             "Log reset wrapper": "__Z9log_resetv",
@@ -792,6 +811,12 @@ def main():
         if not re.search(r"\bret\b", destructor) or re.search(
                 r"\bret\s+\$", destructor):
             fail("Log destructor does not use a plain thiscall return")
+
+        init_method = log_exact_body("__ZN3Log4initEPKc")
+        init_returns = re.findall(
+            r"\bret(?:\s+\$0x([0-9a-f]+))?\b", init_method)
+        if not init_returns or any(value != "4" for value in init_returns):
+            fail("Log::init does not pop its one stack argument on every return path")
 
         initializer = log_body("log_logging()")
         if "operator new" in initializer:

@@ -1,15 +1,23 @@
 #include "../src/stdafx.h"
 #include "../src/alphanet.h"
+#include "../src/random.h"
 
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <float.h>
 
 class LegacyAlphaNet {
  public:
     int pid_2_who(uint32_t) asm("_opensmacx_legacy_004E2610");
     int who_2_pid(int) asm("_opensmacx_legacy_004E2660");
     int who_2_idx(int) asm("_opensmacx_legacy_004E26B0");
+};
+
+class LegacyRandom {
+ public:
+    void reseed(uint32_t) asm("_opensmacx_legacy_00625750");
+    uint32_t get(uint32_t, uint32_t) asm("_opensmacx_legacy_00625770");
 };
 
 namespace {
@@ -30,6 +38,31 @@ struct Fixture {
         return reinterpret_cast<LegacyAlphaNet *>(storage + CanarySize);
     }
 };
+
+struct RandomFixture {
+    alignas(Random) uint8_t storage[sizeof(Random) + CanarySize * 2];
+
+    Random *source() {
+        return reinterpret_cast<Random *>(storage + CanarySize);
+    }
+
+    LegacyRandom *legacy() {
+        return reinterpret_cast<LegacyRandom *>(storage + CanarySize);
+    }
+};
+
+void initialize(RandomFixture &fixture, uint32_t seed) {
+    std::memset(fixture.storage, 0xA5, sizeof(fixture.storage));
+    std::memcpy(fixture.storage + CanarySize, &seed, sizeof(seed));
+}
+
+bool canaries_intact(const RandomFixture &fixture) {
+    uint8_t canary[CanarySize];
+    std::memset(canary, 0xA5, sizeof(canary));
+    return std::memcmp(fixture.storage, canary, CanarySize) == 0
+        && std::memcmp(fixture.storage + CanarySize + sizeof(Random),
+                       canary, CanarySize) == 0;
+}
 
 void initialize(Fixture &fixture) {
     std::memset(fixture.storage, 0xA5, sizeof(fixture.storage));
@@ -148,6 +181,64 @@ int main() {
             || !unchanged(legacy_before, legacy)) {
         std::fprintf(stderr, "first-match duplicate behavior mismatch\n");
         ++failures;
+    }
+
+    const uint32_t reseed_values[] = {
+        0U, 1U, 0x7FFFFFFFU, 0x80000000U, 0xFFFFFFFFU,
+    };
+    for (uint32_t seed : reseed_values) {
+        RandomFixture source_fixture{};
+        RandomFixture legacy_fixture{};
+        initialize(source_fixture, 0xA55AA55AU);
+        initialize(legacy_fixture, 0xA55AA55AU);
+        source_fixture.source()->reseed(seed);
+        legacy_fixture.legacy()->reseed(seed);
+        if (std::memcmp(source_fixture.storage, legacy_fixture.storage,
+                        sizeof(source_fixture.storage)) != 0
+                || !canaries_intact(source_fixture)
+                || !canaries_intact(legacy_fixture)) {
+            std::fprintf(stderr, "Random reseed mismatch for 0x%08x\n", seed);
+            ++failures;
+        }
+    }
+
+    struct IntegerFixture {
+        uint32_t seed;
+        uint32_t min;
+        uint32_t max;
+    };
+    const IntegerFixture integer_fixtures[] = {
+        {0U, 0U, 0U},
+        {1U, 0U, 1U},
+        {0xFFFFFFFFU, 1U, 0xFFFFFFFFU},
+        {0x12345678U, 0x80000000U, 0x7FFFFFFFU},
+        {0x87654321U, 0xFFFFFFFFU, 0x80000000U},
+        {0xA5A5A5A5U, 123U, 456U},
+    };
+    for (const IntegerFixture &fixture : integer_fixtures) {
+        RandomFixture source_fixture{};
+        RandomFixture legacy_fixture{};
+        initialize(source_fixture, fixture.seed);
+        initialize(legacy_fixture, fixture.seed);
+        _clearfp();
+        const uint32_t source_result = source_fixture.source()->get(
+            fixture.min, fixture.max);
+        const unsigned int source_status = _statusfp();
+        _clearfp();
+        const uint32_t legacy_result = legacy_fixture.legacy()->get(
+            fixture.min, fixture.max);
+        const unsigned int legacy_status = _statusfp();
+        _clearfp();
+        if (source_result != legacy_result || source_status != legacy_status
+                || std::memcmp(source_fixture.storage, legacy_fixture.storage,
+                               sizeof(source_fixture.storage)) != 0
+                || !canaries_intact(source_fixture)
+                || !canaries_intact(legacy_fixture)) {
+            std::fprintf(stderr,
+                "Random integer mismatch for seed 0x%08x, bounds 0x%08x..0x%08x\n",
+                fixture.seed, fixture.min, fixture.max);
+            ++failures;
+        }
     }
 
     return failures == 0 ? 0 : 1;

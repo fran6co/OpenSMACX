@@ -6,6 +6,8 @@ from pathlib import Path
 import shutil
 import subprocess
 
+from local_artifact import require_local_artifact_path
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -67,7 +69,11 @@ def main():
     exe = args.exe.expanduser().resolve()
     output = args.output.expanduser().resolve()
     references_output = args.references_output.expanduser().resolve()
-    project_dir = args.project_dir.expanduser().resolve()
+    try:
+        project_dir = require_local_artifact_path(
+            args.project_dir, "Ghidra project directory")
+    except RuntimeError as error:
+        parser.error(str(error))
     if not exe.is_file():
         parser.error(f"executable not found: {exe}")
     project_dir.mkdir(parents=True, exist_ok=True)

@@ -14,6 +14,15 @@ python3 -m pip install -r tools/requirements.txt
 python3 tools/export_recovery_inventory.py
 ```
 
+The hash-pinned annotated IDB is a local proprietary analysis input. Place the verified database at
+`.opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb`, or pass its ignored local path with `--idb`.
+The exporter rejects any database whose SHA-256 is not explicitly supported. Never commit or
+distribute an IDB because it retains original executable bytes.
+
+All tools that write proprietary or derived local artifacts restrict their outputs to nonsymlinked
+descendants of `.opensmacx/` or `build/`. The checks reject both direct symlinks and symlinked parent
+components so a nonexistent output leaf cannot escape through an existing link.
+
 The command deterministically writes:
 
 - `docs/recovery/functions.csv`: all IDA functions, types, classifications, source evidence, and
@@ -22,11 +31,11 @@ The command deterministically writes:
 - `docs/recovery/summary.json`: input hashes, coverage counts, unresolved matches, and all active
   fixed-address source bindings.
 
-The IDB itself remains the primary analysis database because it contains the retained community
-names, prototypes, and comments. Ghidra should preferably analyze the exact same executable and map
-its functions to this inventory by virtual address. The correlation summary records executable
-hashes and labels mismatched inputs as `cross_build`; that evidence is useful for shared entry
-points, but it is not proof of identical function bodies.
+The local IDB remains the primary analysis database because it contains the retained community names,
+prototypes, and comments. Ghidra should preferably analyze the exact same executable and map its
+functions to this inventory by virtual address. The correlation summary records executable hashes
+and labels mismatched inputs as `cross_build`; that evidence is useful for shared entry points, but
+it is not proof of identical function bodies.
 
 The call graph uses Capstone to decode the original bytes stored in the IDB. Direct calls to a
 function start or one of its interior addresses are mapped to that function; interior targets are
@@ -106,9 +115,10 @@ source, tests, or metadata are committed.
 The exported-first queue combines reviewed recovery state, canonical call counts, and local external
 lead density while keeping all generated correlations ignored.
 
-The raw IDC and IDA 9 `.i64` database remain local. The normalized `ida9-functions.csv` retains
-only function boundaries, flags, names, prototypes, and body ranges needed for reproducible
-correlation. The older annotated IDB remains checked in because it is the canonical recovery source.
+The raw IDC, annotated IDB, and IDA 9 `.i64` database remain local. The normalized
+`ida9-functions.csv` retains only function boundaries, flags, names, prototypes, and body ranges
+needed for reproducible correlation. Committed recovery metadata is hash-bound to the local analysis
+inputs without distributing those databases.
 
 The priority score puts all live original-function bindings first, including bindings whose source
 annotation takes precedence in `recovery_state` and CRT/library bindings. It then ranks unrecovered
@@ -119,6 +129,24 @@ small confidence bonus and cannot outweigh runtime impact.
 Every live function binding must have an entry in `docs/recovery-binding-classifications.csv`.
 Correlation fails when a binding is unclassified, keeping CRT ownership, platform services, timer
 callbacks, source fallbacks, and unrecovered game services visible as distinct migration work.
+
+Before staging a recovery batch, regenerate the catalogs and compare them with the committed state:
+
+```sh
+cmake --build --preset mingw-i686-release --target verify-recovery-metadata
+```
+
+The target regenerates all canonical and correlation outputs under the ignored build directory and
+fails on any difference. `prepare-hybrid-image` depends on this check. The local-only umbrella target
+also runs behavioral tests, ABI checks, differential oracles, island regeneration, staging, and the
+runtime smoke gate:
+
+```sh
+cmake --build --preset mingw-i686-release --target verify-recovery-batch
+```
+
+Run the source and ABI portions in both Debug and Release; the distributable build remains independent
+of the local IDB, original executable, and generated oracle objects.
 
 Functions recovered after the legacy import table was fixed can be redirected at process attach.
 Each runtime redirect validates an original-code byte signature before installing an x86 relative

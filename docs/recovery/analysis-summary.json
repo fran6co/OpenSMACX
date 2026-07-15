@@ -49,6 +49,11 @@
   },
   "canonical_functions": 6000,
   "format_version": 1,
+  "inputs": {
+    "binding_classifications_sha256": "cb5aa24ee8597513f4668c34d02e6dd5cb8dbcb0b190477c43ff70ff63ddf058",
+    "canonical_inventory_sha256": "a8fc71620c6fb9e3de9779b9bcff72d12235232a42e4bdd0502282825f6766e5",
+    "canonical_summary_sha256": "a1e3c229e0a291acb36635e0ca9360267ca2495077a42763c1855db2fd3d1c0d"
+  },
   "outputs": {
     "analysis_correlation_sha256": "382ecd9329a7ac4a207f54e9b632e2fabda958d6f902469473b49d9df402ea06",
     "priorities_sha256": "734eae26ef10a1b058b5c3d77eb370b36562e1e695f301527982805131734664"

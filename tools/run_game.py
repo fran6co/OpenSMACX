@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 from movie_skip import configure_intro_movie_skip, restore_intro_movie_config
-from setup_game import find_wine
+from wine_runtime import find_wine
 
 
 def main():

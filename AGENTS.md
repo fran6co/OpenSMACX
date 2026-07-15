@@ -14,6 +14,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Smoke launches do not exercise uncommon paths such as multiplayer. Add isolated source-level tests.
 - Runtime tests use a dedicated marker-protected Wine prefix and stop only that prefix. The scenario runner additionally tracks its per-run random executable alias. Never issue a global Wine shutdown or terminate unrelated processes.
 - Keep proprietary runtime and tool data ignored under `.opensmacx/` and `build/`.
+- Local artifact paths must have no symlink components; configure-time and Python checks reject writes that could escape or alias another artifact.
 - Never commit or distribute generated assembly or object files.
 - Keep each eligible legacy island as a separate symbol and section so it can be replaced independently.
 - Do not revert unrelated worktree changes.
@@ -34,6 +35,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Ghidra executable SHA-256: `01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf`.
 - Canonical IDB input SHA-256: `7d1933da68a3326ac97464849a209a5f127606f5bd7a6abfe9985cd3ce044767`.
 - Canonical IDB SHA-256: `6ffdcf2d6644f2c1b19c218d3b1b293b4e442d56b8cf1f537b0403608ff866fa`.
+- Persistent ignored canonical IDB: `.opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb`; analysis databases contain proprietary bytes and must never be committed.
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
@@ -50,6 +52,10 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - `f186b39 Recover base coordinate lookup`
 - `cc47ad1 Add local hybrid image bootstrap`
 - `6565518 Add verified hybrid executable workflow`
+- The canonical IDB now lives only at the ignored, hash-pinned `.opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb`; IDA databases are prohibited repository artifacts.
+- `verify-recovery-metadata` deterministically regenerates and compares every canonical/correlation output, and hybrid staging depends on it.
+- `verify-recovery-batch` builds and runs behavioral tests, ABI checks, differential oracles, ordinary island regeneration, metadata verification, staging, and runtime smoke.
+- All proprietary-producing paths are restricted to nonsymlinked descendants of `.opensmacx/` or `build/`.
 
 ### Legacy Island Tooling
 
@@ -72,6 +78,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - `4cec2b6 Recover TextIndex wrapper exports`
 - `0fcede4 Recover Text constructors`
 - `328a566 Recover Text global lifecycle exports`
+- `7b85aa7 Recover AlphaNet identity lookups`
 
 Recovered source includes:
 
@@ -126,6 +133,7 @@ Other completed corrections and checks:
 - Time lifecycle tests verify the exact `0x28` layout, complete reset state, constructor return, destructor delegation, modal publication/clearing, signed counter wrapping, and complete object canaries.
 - Filemap lifecycle tests verify the exact `0x10` layout, preserved file-size field, conditional handle/view cleanup, constructor return, and complete object canaries.
 - Heap lifecycle tests verify the exact `0x14` layout, direct destructor cleanup without shutdown delegation, all five fields, and complete object canaries. ABI checks separately verify byte-only writes preserve the three padding bytes.
+- Heap byte fields use explicit volatile writes so optimized inline construction, destruction, and shutdown preserve the three legacy padding bytes in Release as well as Debug.
 - Strings lifecycle tests verify the exact `0x18` layout, one Heap shutdown, preserved populated state, constructor return, and complete object canaries.
 - Random tests verify the exact four-byte layout, lifecycle writes, signed bound ordering including negative and wrapping ranges, exact LCG seed transitions, bit-identical floating results, clean x87 status, and all six global entry points.
 - Log tests verify the exact eight-byte layout, constructor/destructor writes, preserved initialized-constructor state, filename allocation and copying, reset mode, global placement construction, exit cleanup, state inversion, constructor returns, all four output formats, append arguments, open failure, every disable gate, and complete object canaries.
@@ -139,8 +147,10 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID and identity slots, signed identities, first-match duplicates with distinct payloads, zero IDs, exact scan boundaries, complete object canaries, all four redirect adapters, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- `verify-recovery-oracles` extracts explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups against source with identical fixtures in Debug and Release.
+- `verify-recovery-oracles` extracts explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups plus `Random::reseed` and integer `Random::get` against source with identical fixtures in Debug and Release.
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
+- Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
+- The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
 - Regenerated state after the AlphaNet lookup recovery is 5,088 priorities, 546 source-complete functions, and 140 islands.
 
 ### Hybrid Runtime Compatibility
@@ -153,7 +163,8 @@ Other completed corrections and checks:
 - Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 140 islands.
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
-- `tools/smoke_hybrid_game.py` automates that gate, validates module markers, process survival, and rendering when Wine emits a flip trace; it rejects unhandled exceptions and stops the dedicated owned test prefix while removing its per-run executable alias.
+- `tools/smoke_hybrid_game.py` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
+- ImportAdder runs only in the marker-protected build Wine prefix, receives an explicit `WINEPREFIX`, and stops only that prefix after every invocation.
 - `tools/run_gameplay_scenario.py` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
 - Repeated advancement runs can still stall inside legacy `action_go_to` or while awaiting upkeep; the same movement-resolution stall reproduces with the `StringStruct::seek_id` redirect disabled. Hybrid smoke remains the mandatory per-recovery runtime gate until that legacy scenario path is made deterministic.
@@ -163,7 +174,7 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Continue the general recovery backlog now that all 462 DEF exports have been mapped or identified as source-only compatibility exports.
+1. Recover the reviewed Win/Scroll geometry and paging leaves, then the Menu accessors and PullDown item-state functions.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
@@ -199,10 +210,11 @@ Other completed corrections and checks:
 - `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
-- `tools/test_extract_legacy_leaves.py`: 19 classifier, explicit-selection, and output-ownership regression tests.
+- `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
+- `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.
 - `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
-- `tools/test_smoke_hybrid_game.py`: source-owned smoke-diagnostics parser tests.
+- `tools/test_smoke_hybrid_game.py`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
 - `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
 - `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
 - `tools/run_gameplay_scenario.py`: deterministic scenario launcher, result validator, and owned-process cleanup.
@@ -212,11 +224,11 @@ Other completed corrections and checks:
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
 - `docs/HYBRID.md`: local hybrid workflow.
-- `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet identity lookup fixtures.
+- `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet identity and Random state-transition fixtures.
 - `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
 - `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 140-island manifest.
-- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit three-function AlphaNet oracle manifest.
+- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit five-function AlphaNet/Random oracle manifest.
 - `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
 - `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
 - `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.

@@ -10,6 +10,7 @@ import tempfile
 import pefile
 
 from prepare_hybrid_image import sha256_file, validate_hybrid_image
+from local_artifact import require_local_artifact_path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -159,6 +160,7 @@ def write_output(output, image, digest):
 
 
 def assemble(image_dir, output):
+    output = require_local_artifact_path(output, "assembled executable output")
     if image_dir.is_symlink() or not image_dir.is_dir():
         raise RuntimeError(f"hybrid image directory not found: {image_dir}")
     try:
@@ -190,11 +192,9 @@ def main():
                         help="Assembled local executable path")
     args = parser.parse_args()
     image_dir = args.image.expanduser().resolve()
-    output_arg = args.output.expanduser()
-    output = output_arg.parent.resolve() / output_arg.name
-    if output == Path(output.anchor):
-        parser.error("refusing to use a filesystem root as output")
     try:
+        output = require_local_artifact_path(
+            args.output, "assembled executable output")
         assemble(image_dir, output)
     except (KeyError, OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))
