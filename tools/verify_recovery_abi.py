@@ -882,6 +882,8 @@ def main():
         symbols = run([args.nm, "--defined-only", args.text_object])
         if "__ZN4TextD1Ev" not in symbols:
             fail("missing required Text destructor symbol")
+        if "__Z9text_openPKcS0_" not in symbols:
+            fail("missing required text_open wrapper symbol")
 
         disassembly = run([args.objdump, "-d", "-r", args.text_object])
         match = re.search(
@@ -895,6 +897,18 @@ def main():
                 r"jmp[^\n]*\n\s*[0-9a-f]+:\s+DISP32\s+"
                 r"__ZN4Text8shutdownEv\b", destructor):
             fail("Text destructor is not a direct tail jump to shutdown")
+
+        match = re.search(
+            r"<__Z9text_openPKcS0_>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            disassembly, re.DOTALL)
+        if not match:
+            fail("could not locate text_open wrapper in disassembly")
+        text_open = match.group("body")
+        if "_Txt" not in text_open or "__ZN4Text4openEPKcS1_" not in text_open:
+            fail("text_open wrapper does not delegate through the global Text instance")
+        if not re.search(r"\bret\b", text_open) or re.search(
+                r"\bret\s+\$", text_open):
+            fail("text_open wrapper does not use a plain cdecl return")
 
     if not args.scenario_object:
         return

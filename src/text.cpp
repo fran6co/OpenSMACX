@@ -242,10 +242,6 @@ void __cdecl text_set_item_ptr() { // 005FD4D0
 
 void __cdecl text_close() { text_close_source(Txt); } // 005FD530
 
-BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550
-    return Txt->open(src_id, section_id);
-}
-
 LPSTR __cdecl text_get() { return text_get_source(Txt); } // 005FD570
 
 LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); } // 005FD5E0
