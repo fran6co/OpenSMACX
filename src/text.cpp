@@ -228,10 +228,6 @@ Text *Txt = (Text *)0x009B7BA0;
 LPSTR *TextBufferGetPtr = (LPSTR *)0x009B7D00;
 LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
 
-void __cdecl text_txt() { *Txt = *(new Text(512)); atexit(text_txt_exit); } // 005FD400
-
-void __cdecl text_txt_exit() { Txt->~Text(); } // 005FD460
-
 void __cdecl text_set_get_ptr() { // 005FD4C0
     text_set_get_ptr_source(Txt, TextBufferGetPtr);
 }

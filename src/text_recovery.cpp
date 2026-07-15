@@ -3,6 +3,7 @@
 #include "strings.h"
 
 #include <cstddef>
+#include <new>
 
 namespace {
 
@@ -61,6 +62,15 @@ Text::~Text() noexcept(false) {
 #else
     shutdown();
 #endif
+}
+
+void __cdecl text_txt() { // 005FD400
+    new (Txt) Text(512);
+    atexit(text_txt_exit);
+}
+
+void __cdecl text_txt_exit() { // 005FD460
+    Txt->~Text();
 }
 
 BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550

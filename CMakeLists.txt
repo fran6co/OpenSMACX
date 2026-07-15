@@ -263,7 +263,10 @@ if(BUILD_TESTING)
             $<$<CONFIG:Debug>:-Og>
             $<$<CONFIG:Release>:-O2>
         )
-        target_link_options(recovery-leaf-tests PRIVATE -static -Wl,--wrap=fclose)
+        target_link_options(recovery-leaf-tests PRIVATE
+            -static
+            -Wl,--wrap=atexit
+            -Wl,--wrap=fclose)
     endif()
 
     if(CMAKE_CROSSCOMPILING)
