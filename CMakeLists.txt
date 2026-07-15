@@ -36,6 +36,10 @@ set(OPENSMACX_LEGACY_LEAF_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe"
 set(OPENSMACX_LEGACY_LEAF_OBJECT
     "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves.obj"
     CACHE FILEPATH "Generated local legacy leaf COFF object")
+set(OPENSMACX_RECOVERY_ORACLE_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/recovery-oracles")
+set(OPENSMACX_RECOVERY_ORACLE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/recovery-oracles.obj")
 
 if(OPENSMACX_PYTHON)
     set(OPENSMACX_PYTHON_EXECUTABLE "${OPENSMACX_PYTHON}")
@@ -549,6 +553,92 @@ if(MINGW)
     add_custom_target(assemble-legacy-leaves
         DEPENDS "${OPENSMACX_LEGACY_LEAF_OBJECT}"
     )
+
+    if(BUILD_TESTING)
+        set(OPENSMACX_RECOVERY_ORACLE_ASSEMBLY
+            "${OPENSMACX_RECOVERY_ORACLE_DIR}/legacy-leaves.S")
+        set(OPENSMACX_RECOVERY_ORACLE_MANIFEST
+            "${OPENSMACX_RECOVERY_ORACLE_DIR}/manifest.json")
+        set(OPENSMACX_RECOVERY_ORACLE_SYMBOLS
+            "${OPENSMACX_RECOVERY_ORACLE_DIR}/symbols.csv")
+        add_custom_command(
+            OUTPUT
+                "${OPENSMACX_RECOVERY_ORACLE_ASSEMBLY}"
+                "${OPENSMACX_RECOVERY_ORACLE_MANIFEST}"
+                "${OPENSMACX_RECOVERY_ORACLE_SYMBOLS}"
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+                --output "${OPENSMACX_RECOVERY_ORACLE_DIR}"
+                --address 0x004E2610
+                --address 0x004E2660
+                --address 0x004E26B0
+            DEPENDS
+                "${OPENSMACX_LEGACY_LEAF_EXE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_extract_legacy_leaves.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
+            USES_TERMINAL
+            VERBATIM
+        )
+        add_custom_command(
+            OUTPUT "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
+            COMMAND "${CMAKE_CXX_COMPILER}"
+                -x assembler-with-cpp
+                -c "${OPENSMACX_RECOVERY_ORACLE_ASSEMBLY}"
+                -o "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
+            DEPENDS "${OPENSMACX_RECOVERY_ORACLE_ASSEMBLY}"
+            USES_TERMINAL
+            VERBATIM
+        )
+        set_source_files_properties("${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
+            PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
+        add_executable(recovery-oracle-tests EXCLUDE_FROM_ALL
+            tests/recovery_oracle_tests.cpp
+            src/alphanet.cpp
+            "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
+        )
+        target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)
+        target_compile_definitions(recovery-oracle-tests PRIVATE BUILD_DLL)
+        target_compile_options(recovery-oracle-tests PRIVATE
+            -pedantic
+            -Wall
+            -Wextra
+            -Wshadow
+            -Wcast-align
+            -Wfloat-conversion
+            -Wuseless-cast
+            -Wno-comment
+            -Wno-parentheses
+            -Wno-unknown-pragmas
+            $<$<CONFIG:Debug>:-Og>
+            $<$<CONFIG:Release>:-O2>
+        )
+        target_link_options(recovery-oracle-tests PRIVATE -static)
+
+        set(OPENSMACX_RECOVERY_ORACLE_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:recovery-oracle-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+        )
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_RECOVERY_ORACLE_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_custom_target(verify-recovery-oracles
+            COMMAND ${OPENSMACX_RECOVERY_ORACLE_COMMAND}
+            DEPENDS recovery-oracle-tests
+            USES_TERMINAL
+            VERBATIM
+        )
+    endif()
 endif()
 
 if(OPENSMACX_GAME_INSTALLER)

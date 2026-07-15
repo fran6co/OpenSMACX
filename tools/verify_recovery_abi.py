@@ -45,30 +45,47 @@ def main():
     symbols = run([args.nm, "--defined-only", args.object])
     required_symbols = {
         "AlphaNet::pid_2_idx(unsigned int)": r"_ZN8AlphaNet9pid_2_idxEj",
+        "AlphaNet::pid_2_who(unsigned int)": r"_ZN8AlphaNet9pid_2_whoEj",
+        "AlphaNet::who_2_pid(int)": r"_ZN8AlphaNet9who_2_pidEi",
+        "AlphaNet::who_2_idx(int)": r"_ZN8AlphaNet9who_2_idxEi",
         "alpha_net_pid_to_idx_redirect": r"@_Z29alpha_net_pid_to_idx_redirectP8AlphaNetPvj@12",
+        "alpha_net_pid_to_who_redirect": r"@_Z29alpha_net_pid_to_who_redirectP8AlphaNetPvj@12",
+        "alpha_net_who_to_pid_redirect": r"@_Z29alpha_net_who_to_pid_redirectP8AlphaNetPvi@12",
+        "alpha_net_who_to_idx_redirect": r"@_Z29alpha_net_who_to_idx_redirectP8AlphaNetPvi@12",
     }
     for description, symbol in required_symbols.items():
         if symbol not in symbols:
             fail(f"missing required AlphaNet symbol: {description}")
 
     disassembly = run([args.objdump, "-d", "-C", args.object])
-    method = re.search(
-        r"<AlphaNet::pid_2_idx\(unsigned int\)>:"
-        r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
-        disassembly, re.DOTALL)
-    if not method:
-        fail("could not locate AlphaNet::pid_2_idx in disassembly")
-    if not re.search(r"\bret\s+\$0x4\b", method.group("body")):
-        fail("AlphaNet::pid_2_idx does not use one-argument thiscall cleanup")
+    for description, label in (
+            ("AlphaNet::pid_2_idx", "AlphaNet::pid_2_idx(unsigned int)"),
+            ("AlphaNet::pid_2_who", "AlphaNet::pid_2_who(unsigned int)"),
+            ("AlphaNet::who_2_pid", "AlphaNet::who_2_pid(int)"),
+            ("AlphaNet::who_2_idx", "AlphaNet::who_2_idx(int)")):
+        method = re.search(
+            rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            disassembly, re.DOTALL)
+        if not method:
+            fail(f"could not locate {description} in disassembly")
+        if not re.search(r"\bret\s+\$0x4\b", method.group("body")):
+            fail(f"{description} does not use one-argument thiscall cleanup")
+        if description != "AlphaNet::pid_2_idx" and re.search(
+                r"\bcall\b", method.group("body")):
+            fail(f"{description} unexpectedly contains a call")
 
-    adapter = re.search(
-        r"<@_Z29alpha_net_pid_to_idx_redirectP8AlphaNetPvj@12>:"
-        r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
-        disassembly, re.DOTALL)
-    if not adapter:
-        fail("could not locate the AlphaNet fastcall adapter in disassembly")
-    if not re.search(r"\bret\s+\$0x4\b", adapter.group("body")):
-        fail("AlphaNet fastcall adapter does not pop its one stack argument")
+    for description, label in (
+            ("PID-to-index", "@_Z29alpha_net_pid_to_idx_redirectP8AlphaNetPvj@12"),
+            ("PID-to-identity", "@_Z29alpha_net_pid_to_who_redirectP8AlphaNetPvj@12"),
+            ("identity-to-PID", "@_Z29alpha_net_who_to_pid_redirectP8AlphaNetPvi@12"),
+            ("identity-to-index", "@_Z29alpha_net_who_to_idx_redirectP8AlphaNetPvi@12")):
+        adapter = re.search(
+            rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            disassembly, re.DOTALL)
+        if not adapter:
+            fail(f"could not locate the AlphaNet {description} adapter in disassembly")
+        if not re.search(r"\bret\s+\$0x4\b", adapter.group("body")):
+            fail(f"AlphaNet {description} adapter does not pop its stack argument")
 
     if args.basepop_font_object:
         basepop_headers = run([args.objdump, "-f", args.basepop_font_object])

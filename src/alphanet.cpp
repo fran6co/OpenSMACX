@@ -28,7 +28,80 @@ int AlphaNet::pid_2_idx(uint32_t process_id) {
     return 0;
 }
 
+/*
+Purpose: Convert a multiplayer process ID to its signed player identity.
+Original Offset: 004E2610
+Return Value: Player identity; process ID not found (0)
+Status: Complete
+*/
+int AlphaNet::pid_2_who(uint32_t process_id) {
+    const auto *bytes = reinterpret_cast<const uint8_t *>(this);
+    for (int slot = 0; slot < 7; ++slot) {
+        uint32_t candidate;
+        memcpy(&candidate, bytes + 0x928 + slot * 0x19C, sizeof(candidate));
+        if (candidate == process_id) {
+            int8_t identity;
+            memcpy(&identity, bytes + 0x92C + slot * 0x19C, sizeof(identity));
+            return identity;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Convert a signed multiplayer player identity to its process ID.
+Original Offset: 004E2660
+Return Value: Process ID; player identity not found (0)
+Status: Complete
+*/
+int AlphaNet::who_2_pid(int identity) {
+    const auto *bytes = reinterpret_cast<const uint8_t *>(this);
+    for (int slot = 0; slot < 7; ++slot) {
+        int8_t candidate;
+        memcpy(&candidate, bytes + 0x92C + slot * 0x19C, sizeof(candidate));
+        if (candidate == identity) {
+            int process_id;
+            memcpy(&process_id, bytes + 0x928 + slot * 0x19C, sizeof(process_id));
+            return process_id;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Convert a signed multiplayer player identity to its one-based index.
+Original Offset: 004E26B0
+Return Value: Player index (1-7); player identity not found (0)
+Status: Complete
+*/
+int AlphaNet::who_2_idx(int identity) {
+    const auto *bytes = reinterpret_cast<const uint8_t *>(this);
+    for (int slot = 0; slot < 7; ++slot) {
+        int8_t candidate;
+        memcpy(&candidate, bytes + 0x92C + slot * 0x19C, sizeof(candidate));
+        if (candidate == identity) {
+            return slot + 1;
+        }
+    }
+    return 0;
+}
+
 int __fastcall alpha_net_pid_to_idx_redirect(
     AlphaNet *self, void *, uint32_t process_id) {
     return self->pid_2_idx(process_id);
+}
+
+int __fastcall alpha_net_pid_to_who_redirect(
+    AlphaNet *self, void *, uint32_t process_id) {
+    return self->pid_2_who(process_id);
+}
+
+int __fastcall alpha_net_who_to_pid_redirect(
+    AlphaNet *self, void *, int identity) {
+    return self->who_2_pid(identity);
+}
+
+int __fastcall alpha_net_who_to_idx_redirect(
+    AlphaNet *self, void *, int identity) {
+    return self->who_2_idx(identity);
 }

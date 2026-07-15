@@ -12,14 +12,23 @@
 class DLLEXPORT AlphaNet {
  public:
   int pid_2_idx(uint32_t process_id);
+  int pid_2_who(uint32_t process_id);
+  int who_2_pid(int identity);
+  int who_2_idx(int identity);
 
  private:
   uint32_t alignment_;
-  uint8_t data_[0x12D0];
+  uint8_t data_[0x149C];
 };
 
-static_assert(sizeof(AlphaNet) == 0x12D4,
-              "AlphaNet recovered layout must cover all process-id slots");
+static_assert(sizeof(AlphaNet) == 0x14A0,
+              "AlphaNet recovered layout must include its trailing Heap");
 
 int __fastcall alpha_net_pid_to_idx_redirect(
     AlphaNet *self, void *, uint32_t process_id);
+int __fastcall alpha_net_pid_to_who_redirect(
+    AlphaNet *self, void *, uint32_t process_id);
+int __fastcall alpha_net_who_to_pid_redirect(
+    AlphaNet *self, void *, int identity);
+int __fastcall alpha_net_who_to_idx_redirect(
+    AlphaNet *self, void *, int identity);
