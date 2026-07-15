@@ -24,7 +24,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,103 candidates.
+- Current recovery backlog: 5,101 candidates.
 - Current local legacy-island count: 143, reduced from 174.
 - `DllMain` entry redirects: 39, comprising 37 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
@@ -37,7 +37,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
-- The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements, four mapped unrecovered functions, 411 source-complete mappings, and 47 unresolved or ambiguous mappings.
+- The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements, two mapped unrecovered functions, 413 source-complete mappings, and 47 unresolved or ambiguous mappings.
 
 ## Completed Work
 
@@ -82,7 +82,7 @@ Recovered source includes:
 - `TextIndex` construction, destruction, and `text_clear_index` through staged hybrid export redirects.
 - `Spot` construction, destruction, and clearing through staged hybrid export redirects.
 - Both `Font` constructors and the destructor through staged hybrid export redirects.
-- `Time` construction, destruction, and modal-state setters through staged hybrid export redirects.
+- `Time` construction, destruction, modal-state setters, and class counter lifecycle through staged hybrid export redirects.
 - `Filemap` construction and destruction through staged hybrid export redirects.
 - `Heap` construction and destruction through staged hybrid export redirects.
 - `Strings` construction and destruction through staged hybrid export redirects.
@@ -115,7 +115,7 @@ Other completed corrections and checks:
 - Spot lifecycle tests verify the exact `0xC` layout, full clear behavior, both destructor branches, and complete object canaries.
 - Font lifecycle tests verify the exact `0x28` layout, preserved `0x14` and `0x20` fields, constructor forwarding, both resource-cleanup branches, and complete object canaries.
 - Recovered TextIndex, Spot, Font, Time, Filemap, Heap, Strings, Random, and Log constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
-- Time lifecycle tests verify the exact `0x28` layout, complete reset state, constructor return, destructor delegation, modal publication/clearing, and complete object canaries.
+- Time lifecycle tests verify the exact `0x28` layout, complete reset state, constructor return, destructor delegation, modal publication/clearing, signed counter wrapping, and complete object canaries.
 - Filemap lifecycle tests verify the exact `0x10` layout, preserved file-size field, conditional handle/view cleanup, constructor return, and complete object canaries.
 - Heap lifecycle tests verify the exact `0x14` layout, direct destructor cleanup without shutdown delegation, all five fields, and complete object canaries. ABI checks separately verify byte-only writes preserve the three padding bytes.
 - Strings lifecycle tests verify the exact `0x18` layout, one Heap shutdown, preserved populated state, constructor return, and complete object canaries.
@@ -131,7 +131,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after `text_open` recovery is 5,103 priorities and 143 islands.
+- Regenerated state after Time class lifecycle recovery is 5,101 priorities and 143 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -179,7 +179,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,103 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,101 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
