@@ -5144,10 +5144,10 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x006260F0,0x0062618B,155,.text,?say@Log@@QAEXPADPADHHH@Z,"void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)",0x006260F0-0x0062618B,game,sp_ready;purged_ok,src/log.cpp:64,Complete,,,source_complete,,,,3,1
 0x00626190,0x0062622B,155,.text,?say_hex@Log@@QAEXPADPADHHH@Z,"void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)",0x00626190-0x0062622B,game,hidden;sp_ready;purged_ok,src/log.cpp:82,Complete,,,source_complete,,,,3,0
 0x00626230,0x0062624F,31,.text,?log_reset@@YAXXZ,,0x00626230-0x0062624F,game,hidden;sp_ready;purged_ok,,,?log_reset@@YAXXZ,,source_complete,,Staged hybrid export redirect calls the source-owned reset wrapper,,2,2
-0x00626250,0x006262E9,153,.text,?log_say@@YAXPADPADHHH@Z,,0x00626250-0x006262E9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,25
-0x006262F0,0x0062634C,92,.text,?log_say@@YAXPADHHH@Z,,0x006262F0-0x0062634C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,98
-0x00626350,0x006263E9,153,.text,?log_say_hex@@YAXPADPADHHH@Z,,0x00626350-0x006263E9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
-0x006263F0,0x0062644C,92,.text,?log_say_hex@@YAXPADHHH@Z,,0x006263F0-0x0062644C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,4
+0x00626250,0x006262E9,153,.text,?log_say@@YAXPADPADHHH@Z,,0x00626250-0x006262E9,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,3,25
+0x006262F0,0x0062634C,92,.text,?log_say@@YAXPADHHH@Z,,0x006262F0-0x0062634C,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,3,98
+0x00626350,0x006263E9,153,.text,?log_say_hex@@YAXPADPADHHH@Z,,0x00626350-0x006263E9,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,3,1
+0x006263F0,0x0062644C,92,.text,?log_say_hex@@YAXPADHHH@Z,,0x006263F0-0x0062644C,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned wrapper,,3,4
 0x00626450,0x00626461,17,.text,?log_set_state@@YAXH@Z,,0x00626450-0x00626461,game,sp_ready;purged_ok,,,?log_set_state@@YAXH@Z,,source_complete,,Staged hybrid export redirect calls the source-owned state wrapper,,0,5
 0x00626470,0x00626540,208,.text,sub_626470,,0x00626470-0x00626540,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x00626540,0x00626597,87,.text,sub_626540,,0x00626540-0x00626597,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0

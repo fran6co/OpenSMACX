@@ -115,6 +115,9 @@ int env_close_calls = 0;
 #endif
 LPCSTR env_open_source = nullptr;
 LPCSTR env_open_mode = nullptr;
+bool env_open_fails = false;
+bool capture_closed_file = false;
+char closed_file_output[256] = {};
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
 Text *Txt = nullptr;
@@ -230,7 +233,7 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
     ++env_open_calls;
     env_open_source = source;
     env_open_mode = mode;
-    return std::tmpfile();
+    return env_open_fails ? nullptr : std::tmpfile();
 }
 
 #if defined(__MINGW32__)
@@ -244,6 +247,13 @@ extern "C" int __wrap_atexit(void (__cdecl *callback)()) {
 
 extern "C" int __wrap_fclose(FILE *file) {
     ++env_close_calls;
+    if (capture_closed_file) {
+        std::fflush(file);
+        std::fseek(file, 0, SEEK_SET);
+        const size_t size = std::fread(
+            closed_file_output, 1, sizeof(closed_file_output) - 1, file);
+        closed_file_output[size] = 0;
+    }
     return __real_fclose(file);
 }
 #endif
@@ -1484,6 +1494,97 @@ void test_log_lifecycle_and_wrappers() {
     log_set_state(INT_MIN);
     write_at(expected, 16 + 4, zero_state);
     expect_storage_bytes(storage, expected, sizeof(storage));
+
+    static BOOL logging_disabled = FALSE;
+    IsLoggingDisabled = &logging_disabled;
+    capture_closed_file = true;
+    struct LogOutputFixture {
+        bool hex;
+        LPCSTR second;
+        LPCSTR expected_output;
+    };
+    const LogOutputFixture output_fixtures[] = {
+        {false, "second", "first second 1 -2 3\n"},
+        {false, nullptr, "first 1 -2 3\n"},
+        {true, "second", "first second 0001 abcd ffffffff\n"},
+        {true, nullptr, "first 0001 abcd ffffffff\n"},
+    };
+    const auto invoke_log_output = [](const LogOutputFixture &fixture) {
+        if (fixture.hex) {
+            if (fixture.second) {
+                log_say_hex("first", fixture.second, 1, 0xABCD, -1);
+            } else {
+                log_say_hex("first", 1, 0xABCD, -1);
+            }
+        } else if (fixture.second) {
+            log_say("first", fixture.second, 1, -2, 3);
+        } else {
+            log_say("first", 1, -2, 3);
+        }
+    };
+    for (const LogOutputFixture &fixture : output_fixtures) {
+        env_open_calls = 0;
+#if defined(__MINGW32__)
+        env_close_calls = 0;
+#endif
+        env_open_source = nullptr;
+        env_open_mode = nullptr;
+        closed_file_output[0] = 0;
+        invoke_log_output(fixture);
+        expect(env_open_calls == 1);
+        expect(env_open_source == file_name);
+        expect(env_open_mode && std::strcmp(env_open_mode, "at") == 0);
+#if defined(__MINGW32__)
+        expect(env_close_calls == 1);
+        expect(std::strcmp(closed_file_output, fixture.expected_output) == 0);
+#endif
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    env_open_fails = true;
+    for (const LogOutputFixture &fixture : output_fixtures) {
+        env_open_calls = 0;
+#if defined(__MINGW32__)
+        env_close_calls = 0;
+#endif
+        env_open_source = nullptr;
+        env_open_mode = nullptr;
+        invoke_log_output(fixture);
+        expect(env_open_calls == 1);
+        expect(env_open_source == file_name);
+        expect(env_open_mode && std::strcmp(env_open_mode, "at") == 0);
+#if defined(__MINGW32__)
+        expect(env_close_calls == 0);
+#endif
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+    env_open_fails = false;
+
+    const BOOL disabled_state = TRUE;
+    for (const LogOutputFixture &fixture : output_fixtures) {
+        for (int gate = 0; gate < 3; ++gate) {
+            write_at(storage, 16, file_pointer);
+            write_at(storage, 16 + 4, zero_state);
+            logging_disabled = FALSE;
+            if (gate == 0) {
+                write_at(storage, 16 + 4, disabled_state);
+            } else if (gate == 1) {
+                logging_disabled = TRUE;
+            } else {
+                write_at(storage, 16, null_file);
+            }
+            uint8_t gate_expected[sizeof(storage)];
+            std::memcpy(gate_expected, storage, sizeof(storage));
+            env_open_calls = 0;
+            invoke_log_output(fixture);
+            expect(env_open_calls == 0);
+            expect_storage_bytes(storage, gate_expected, sizeof(storage));
+        }
+    }
+    logging_disabled = FALSE;
+    write_at(storage, 16, file_pointer);
+    write_at(storage, 16 + 4, zero_state);
+    capture_closed_file = false;
     if (failures != stage_failures) {
         std::fprintf(stderr, "Log state expectations failed\n");
     }

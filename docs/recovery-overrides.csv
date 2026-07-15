@@ -84,6 +84,10 @@ address,recovery_state,priority,notes
 0x00625FC0,source_complete,,Staged hybrid export redirect calls the source-owned filename constructor
 0x00626020,source_complete,,Staged hybrid export redirect calls the source-owned destructor
 0x00626230,source_complete,,Staged hybrid export redirect calls the source-owned reset wrapper
+0x00626250,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
+0x006262F0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
+0x00626350,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
+0x006263F0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x00626450,source_complete,,Staged hybrid export redirect calls the source-owned state wrapper
 0x00628380,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x006283E0,source_complete,,Staged hybrid export redirect calls the source-owned destructor
