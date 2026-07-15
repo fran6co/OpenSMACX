@@ -1,7 +1,10 @@
 #include "../src/stdafx.h"
 #include "../src/alphanet.h"
 #include "../src/random.h"
+#include "../src/scroll.h"
+#include "../src/win.h"
 
+#include <climits>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -18,6 +21,18 @@ class LegacyRandom {
  public:
     void reseed(uint32_t) asm("_opensmacx_legacy_00625750");
     uint32_t get(uint32_t, uint32_t) asm("_opensmacx_legacy_00625770");
+};
+
+class LegacyWin {
+ public:
+    int move(int, int) asm("_opensmacx_legacy_005ED7D0");
+    void set_vert_paging(int) asm("_opensmacx_legacy_005EE0F0");
+    void set_horz_paging(int) asm("_opensmacx_legacy_005EE110");
+};
+
+class LegacyScroll {
+ public:
+    void set_border_color(int) asm("_opensmacx_legacy_00605B10");
 };
 
 namespace {
@@ -50,6 +65,65 @@ struct RandomFixture {
         return reinterpret_cast<LegacyRandom *>(storage + CanarySize);
     }
 };
+
+struct WinFixture {
+    alignas(Win) uint8_t storage[sizeof(Win) + CanarySize * 2];
+
+    Win *source() {
+        return reinterpret_cast<Win *>(storage + CanarySize);
+    }
+
+    LegacyWin *legacy() {
+        return reinterpret_cast<LegacyWin *>(storage + CanarySize);
+    }
+};
+
+struct ScrollFixture {
+    alignas(Scroll) uint8_t storage[sizeof(Scroll) + CanarySize * 2];
+
+    Scroll *source() {
+        return reinterpret_cast<Scroll *>(storage + CanarySize);
+    }
+
+    LegacyScroll *legacy() {
+        return reinterpret_cast<LegacyScroll *>(storage + CanarySize);
+    }
+};
+
+void initialize_bytes(uint8_t *storage, size_t storage_size, size_t object_size) {
+    std::memset(storage, 0xA5, storage_size);
+    for (size_t offset = 0; offset < object_size; ++offset) {
+        storage[CanarySize + offset] = static_cast<uint8_t>(0x35U + offset * 17U);
+    }
+}
+
+void initialize(WinFixture &fixture) {
+    initialize_bytes(fixture.storage, sizeof(fixture.storage), sizeof(Win));
+}
+
+void initialize(ScrollFixture &fixture) {
+    initialize_bytes(fixture.storage, sizeof(fixture.storage), sizeof(Scroll));
+}
+
+template <typename T>
+void write_object(uint8_t *storage, size_t offset, const T &value) {
+    std::memcpy(storage + CanarySize + offset, &value, sizeof(value));
+}
+
+int int_from_bits(uint32_t bits) {
+    int value;
+    static_assert(sizeof(value) == sizeof(bits), "oracle requires 32-bit int");
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+bool canaries_intact(const uint8_t *storage, size_t object_size) {
+    uint8_t canary[CanarySize];
+    std::memset(canary, 0xA5, sizeof(canary));
+    return std::memcmp(storage, canary, sizeof(canary)) == 0
+        && std::memcmp(storage + CanarySize + object_size,
+                       canary, sizeof(canary)) == 0;
+}
 
 void initialize(RandomFixture &fixture, uint32_t seed) {
     std::memset(fixture.storage, 0xA5, sizeof(fixture.storage));
@@ -238,6 +312,152 @@ int main() {
                 "Random integer mismatch for seed 0x%08x, bounds 0x%08x..0x%08x\n",
                 fixture.seed, fixture.min, fixture.max);
             ++failures;
+        }
+    }
+
+    struct MoveFixture {
+        uint32_t flags;
+        uint32_t x;
+        uint32_t y;
+        uint32_t left;
+        uint32_t top;
+        uint32_t right;
+        uint32_t bottom;
+    };
+    const MoveFixture move_fixtures[] = {
+        {0U, 100U, 200U, 10U, 20U, 50U, 80U},
+        {0xFFFFFFFDU, 0xFFFFFF9CU, 0x0000012CU,
+         0x00000032U, 0xFFFFFFCEU, 0x00000096U, 0x0000004BU},
+        {2U, 0x80000000U, 0x7FFFFFFFU,
+         0x7FFFFFFFU, 0x80000000U, 0x80000005U, 0x7FFFFFF0U},
+        {0xA5A5A5A6U, 0xFFFFFFFFU, 0U,
+         0x80000000U, 0xFFFFFFFFU, 0x7FFFFFFFU, 0x80000000U},
+    };
+    for (const MoveFixture &fixture : move_fixtures) {
+        WinFixture source_window{};
+        WinFixture legacy_window{};
+        initialize(source_window);
+        initialize(legacy_window);
+        const size_t target = (fixture.flags & 2U) ? 0x14C : 0x13C;
+        for (WinFixture *window : {&source_window, &legacy_window}) {
+            write_object(window->storage, 0x9C, fixture.flags);
+            write_object(window->storage, target, fixture.left);
+            write_object(window->storage, target + 4, fixture.top);
+            write_object(window->storage, target + 8, fixture.right);
+            write_object(window->storage, target + 12, fixture.bottom);
+        }
+        const int source_result = source_window.source()->move(
+            int_from_bits(fixture.x), int_from_bits(fixture.y));
+        const int legacy_result = legacy_window.legacy()->move(
+            int_from_bits(fixture.x), int_from_bits(fixture.y));
+        if (source_result != legacy_result || source_result != 0
+                || std::memcmp(source_window.storage, legacy_window.storage,
+                               sizeof(source_window.storage)) != 0
+                || !canaries_intact(source_window.storage, sizeof(Win))
+                || !canaries_intact(legacy_window.storage, sizeof(Win))) {
+            std::fprintf(stderr, "Win::move mismatch for flags 0x%08x\n",
+                         fixture.flags);
+            ++failures;
+        }
+    }
+
+    const uint32_t paging_values[] = {
+        0U, 1U, 0xFFFFFFFFU, 0x80000000U, 0x7FFFFFFFU, 0xA55AA55AU,
+    };
+    for (int vertical = 0; vertical < 2; ++vertical) {
+        for (uint32_t paging_bits : paging_values) {
+            WinFixture source_window{};
+            WinFixture legacy_window{};
+            ScrollFixture source_scroll{};
+            ScrollFixture legacy_scroll{};
+            initialize(source_window);
+            initialize(legacy_window);
+            initialize(source_scroll);
+            initialize(legacy_scroll);
+            const size_t pointer_offset = vertical ? 0x43C : 0x440;
+            Scroll *source_pointer = source_scroll.source();
+            Scroll *legacy_pointer = reinterpret_cast<Scroll *>(
+                legacy_scroll.storage + CanarySize);
+            write_object(source_window.storage, pointer_offset, source_pointer);
+            write_object(legacy_window.storage, pointer_offset, legacy_pointer);
+            WinFixture source_window_before = source_window;
+            WinFixture legacy_window_before = legacy_window;
+            const int paging = int_from_bits(paging_bits);
+            if (vertical) {
+                source_window.source()->set_vert_paging(paging);
+                legacy_window.legacy()->set_vert_paging(paging);
+            } else {
+                source_window.source()->set_horz_paging(paging);
+                legacy_window.legacy()->set_horz_paging(paging);
+            }
+            if (std::memcmp(source_scroll.storage, legacy_scroll.storage,
+                            sizeof(source_scroll.storage)) != 0
+                    || std::memcmp(source_window.storage, source_window_before.storage,
+                                   sizeof(source_window.storage)) != 0
+                    || std::memcmp(legacy_window.storage, legacy_window_before.storage,
+                                   sizeof(legacy_window.storage)) != 0
+                    || !canaries_intact(source_scroll.storage, sizeof(Scroll))
+                    || !canaries_intact(legacy_scroll.storage, sizeof(Scroll))) {
+                std::fprintf(stderr, "Win paging mismatch for %s value 0x%08x\n",
+                             vertical ? "vertical" : "horizontal", paging_bits);
+                ++failures;
+            }
+        }
+    }
+
+    for (int vertical = 0; vertical < 2; ++vertical) {
+        WinFixture null_source{};
+        WinFixture null_legacy{};
+        initialize(null_source);
+        initialize(null_legacy);
+        Scroll *null_scroll = nullptr;
+        const size_t pointer_offset = vertical ? 0x43C : 0x440;
+        write_object(null_source.storage, pointer_offset, null_scroll);
+        write_object(null_legacy.storage, pointer_offset, null_scroll);
+        WinFixture null_source_before = null_source;
+        WinFixture null_legacy_before = null_legacy;
+        if (vertical) {
+            null_source.source()->set_vert_paging(INT_MIN);
+            null_legacy.legacy()->set_vert_paging(INT_MIN);
+        } else {
+            null_source.source()->set_horz_paging(INT_MAX);
+            null_legacy.legacy()->set_horz_paging(INT_MAX);
+        }
+        if (std::memcmp(null_source.storage, null_source_before.storage,
+                        sizeof(null_source.storage)) != 0
+                || std::memcmp(null_legacy.storage, null_legacy_before.storage,
+                               sizeof(null_legacy.storage)) != 0) {
+            std::fprintf(stderr, "Win null %s paging mismatch\n",
+                         vertical ? "vertical" : "horizontal");
+            ++failures;
+        }
+    }
+
+    const uint32_t border_colors[] = {
+        0xFFFFFFFFU, 0U, 1U, 0x80000000U, 0x7FFFFFFFU,
+    };
+    const uint32_t thicknesses[] = {
+        0xFFFFFFFFU, 0U, 1U, 2U, 0x80000000U, 0x7FFFFFFFU,
+    };
+    for (uint32_t color : border_colors) {
+        for (uint32_t thickness : thicknesses) {
+            ScrollFixture source_scroll{};
+            ScrollFixture legacy_scroll{};
+            initialize(source_scroll);
+            initialize(legacy_scroll);
+            write_object(source_scroll.storage, 0xA60, thickness);
+            write_object(legacy_scroll.storage, 0xA60, thickness);
+            source_scroll.source()->set_border_color(int_from_bits(color));
+            legacy_scroll.legacy()->set_border_color(int_from_bits(color));
+            if (std::memcmp(source_scroll.storage, legacy_scroll.storage,
+                            sizeof(source_scroll.storage)) != 0
+                    || !canaries_intact(source_scroll.storage, sizeof(Scroll))
+                    || !canaries_intact(legacy_scroll.storage, sizeof(Scroll))) {
+                std::fprintf(stderr,
+                    "Scroll border mismatch for color 0x%08x, thickness 0x%08x\n",
+                    color, thickness);
+                ++failures;
+            }
         }
     }
 

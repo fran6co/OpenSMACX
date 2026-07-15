@@ -47,3 +47,6 @@ class DLLEXPORT GraphicWin : Win {
   uint32_t field_A0C_;
   uint32_t field_A10_;
 };
+
+static_assert(sizeof(GraphicWin) == 0xA14,
+              "GraphicWin layout must match the legacy ABI");

@@ -7,12 +7,14 @@
 #include "../src/font.h"
 #include "../src/log.h"
 #include "../src/random.h"
+#include "../src/scroll.h"
 #include "../src/spot.h"
 #include "../src/stringstruct.h"
 #include "../src/strings.h"
 #include "../src/text_recovery.h"
 #include "../src/textindex.h"
 #include "../src/time.h"
+#include "../src/win.h"
 
 #include <climits>
 #include <cstring>
@@ -689,6 +691,214 @@ void write_at_volatile(uint8_t *storage, size_t offset, const T &value) {
     const auto *source = reinterpret_cast<const uint8_t *>(&value);
     for (size_t index = 0; index < sizeof(value); ++index) {
         target[index] = source[index];
+    }
+}
+
+int int_from_bits(uint32_t bits) {
+    int value;
+    static_assert(sizeof(value) == sizeof(bits), "tests require 32-bit int");
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+void test_win_move() {
+    struct MoveCase {
+        uint32_t flags;
+        uint32_t x;
+        uint32_t y;
+        uint32_t left;
+        uint32_t top;
+        uint32_t right;
+        uint32_t bottom;
+    };
+    const MoveCase cases[] = {
+        {0U, 100U, 200U, 10U, 20U, 50U, 80U},
+        {0xFFFFFFFDU, 0xFFFFFF9CU, 0x0000012CU,
+         0x00000032U, 0xFFFFFFCEU, 0x00000096U, 0x0000004BU},
+        {2U, 0x80000000U, 0x7FFFFFFFU,
+         0x7FFFFFFFU, 0x80000000U, 0x80000005U, 0x7FFFFFF0U},
+        {0xA5A5A5A6U, 0xFFFFFFFFU, 0U,
+         0x80000000U, 0xFFFFFFFFU, 0x7FFFFFFFU, 0x80000000U},
+    };
+
+    for (const MoveCase &fixture : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Win) uint8_t storage[sizeof(Win) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x9C, fixture.flags);
+            const uint32_t decoy_rect[4] = {
+                0x11223344U, 0x55667788U, 0x99AABBCCU, 0xDDEEFF00U,
+            };
+            const size_t target = (fixture.flags & 2U) ? 0x14C : 0x13C;
+            const size_t decoy = (fixture.flags & 2U) ? 0x13C : 0x14C;
+            std::memcpy(storage + 16 + decoy, decoy_rect, sizeof(decoy_rect));
+            write_at(storage, 16 + target, fixture.left);
+            write_at(storage, 16 + target + 4, fixture.top);
+            write_at(storage, 16 + target + 8, fixture.right);
+            write_at(storage, 16 + target + 12, fixture.bottom);
+            std::memcpy(expected, storage, sizeof(storage));
+            const uint32_t dx = fixture.x - fixture.left;
+            const uint32_t dy = fixture.y - fixture.top;
+            write_at(expected, 16 + target, fixture.x);
+            write_at(expected, 16 + target + 4, fixture.y);
+            write_at(expected, 16 + target + 8, fixture.right + dx);
+            write_at(expected, 16 + target + 12, fixture.bottom + dy);
+
+            auto *window = reinterpret_cast<Win *>(storage + 16);
+            const int result = use_adapter
+                ? win_move_redirect(window, nullptr,
+                                    int_from_bits(fixture.x), int_from_bits(fixture.y))
+                : window->move(int_from_bits(fixture.x), int_from_bits(fixture.y));
+            expect(result == 0);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
+void test_win_paging() {
+    const uint32_t values[] = {
+        0U, 1U, 0xFFFFFFFFU, 0x80000000U, 0x7FFFFFFFU, 0xA55AA55AU,
+    };
+    for (int vertical = 0; vertical < 2; ++vertical) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            for (uint32_t bits : values) {
+                alignas(Win) uint8_t win_storage[sizeof(Win) + 32];
+                alignas(Scroll) uint8_t vertical_storage[sizeof(Scroll) + 32];
+                alignas(Scroll) uint8_t horizontal_storage[sizeof(Scroll) + 32];
+                uint8_t win_expected[sizeof(win_storage)];
+                uint8_t vertical_expected[sizeof(vertical_storage)];
+                uint8_t horizontal_expected[sizeof(horizontal_storage)];
+                seed_storage(win_storage, win_expected, sizeof(win_storage));
+                seed_storage(vertical_storage, vertical_expected,
+                             sizeof(vertical_storage));
+                seed_storage(horizontal_storage, horizontal_expected,
+                             sizeof(horizontal_storage));
+                auto *vertical_scroll = reinterpret_cast<Scroll *>(
+                    vertical_storage + 16);
+                auto *horizontal_scroll = reinterpret_cast<Scroll *>(
+                    horizontal_storage + 16);
+                write_at(win_storage, 16 + 0x43C, vertical_scroll);
+                write_at(win_storage, 16 + 0x440, horizontal_scroll);
+                std::memcpy(win_expected, win_storage, sizeof(win_storage));
+                std::memcpy(vertical_expected, vertical_storage,
+                            sizeof(vertical_storage));
+                std::memcpy(horizontal_expected, horizontal_storage,
+                            sizeof(horizontal_storage));
+                uint8_t *selected_expected = vertical
+                    ? vertical_expected : horizontal_expected;
+                write_at(selected_expected, 16 + 0xA40, bits);
+
+                auto *window = reinterpret_cast<Win *>(win_storage + 16);
+                const int paging = int_from_bits(bits);
+                if (vertical) {
+                    if (use_adapter) {
+                        win_set_vert_paging_redirect(window, nullptr, paging);
+                    } else {
+                        window->set_vert_paging(paging);
+                    }
+                } else if (use_adapter) {
+                    win_set_horz_paging_redirect(window, nullptr, paging);
+                } else {
+                    window->set_horz_paging(paging);
+                }
+                expect_storage_bytes(win_storage, win_expected, sizeof(win_storage));
+                expect_storage_bytes(vertical_storage, vertical_expected,
+                                     sizeof(vertical_storage));
+                expect_storage_bytes(horizontal_storage, horizontal_expected,
+                                     sizeof(horizontal_storage));
+            }
+        }
+    }
+
+    for (int vertical = 0; vertical < 2; ++vertical) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Win) uint8_t null_storage[sizeof(Win) + 32];
+            uint8_t null_expected[sizeof(null_storage)];
+            seed_storage(null_storage, null_expected, sizeof(null_storage));
+            Scroll *null_scroll = nullptr;
+            write_at(null_storage, 16 + (vertical ? 0x43C : 0x440), null_scroll);
+            std::memcpy(null_expected, null_storage, sizeof(null_storage));
+            auto *null_window = reinterpret_cast<Win *>(null_storage + 16);
+            if (vertical) {
+                if (use_adapter) {
+                    win_set_vert_paging_redirect(null_window, nullptr, INT_MIN);
+                } else {
+                    null_window->set_vert_paging(INT_MIN);
+                }
+            } else if (use_adapter) {
+                win_set_horz_paging_redirect(null_window, nullptr, INT_MAX);
+            } else {
+                null_window->set_horz_paging(INT_MAX);
+            }
+            expect_storage_bytes(null_storage, null_expected, sizeof(null_storage));
+        }
+    }
+
+    alignas(Win) uint8_t alias_win_storage[sizeof(Win) + 32];
+    alignas(Scroll) uint8_t alias_scroll_storage[sizeof(Scroll) + 32];
+    uint8_t alias_win_expected[sizeof(alias_win_storage)];
+    uint8_t alias_scroll_expected[sizeof(alias_scroll_storage)];
+    seed_storage(alias_win_storage, alias_win_expected, sizeof(alias_win_storage));
+    seed_storage(alias_scroll_storage, alias_scroll_expected,
+                 sizeof(alias_scroll_storage));
+    auto *alias_scroll = reinterpret_cast<Scroll *>(alias_scroll_storage + 16);
+    write_at(alias_win_storage, 16 + 0x43C, alias_scroll);
+    write_at(alias_win_storage, 16 + 0x440, alias_scroll);
+    std::memcpy(alias_win_expected, alias_win_storage, sizeof(alias_win_storage));
+    std::memcpy(alias_scroll_expected, alias_scroll_storage,
+                sizeof(alias_scroll_storage));
+    const uint32_t alias_value = 0x89ABCDEFU;
+    write_at(alias_scroll_expected, 16 + 0xA40, alias_value);
+    auto *alias_window = reinterpret_cast<Win *>(alias_win_storage + 16);
+    win_set_horz_paging_redirect(
+        alias_window, nullptr, int_from_bits(alias_value));
+    expect_storage_bytes(alias_win_storage, alias_win_expected,
+                         sizeof(alias_win_storage));
+    expect_storage_bytes(alias_scroll_storage, alias_scroll_expected,
+                         sizeof(alias_scroll_storage));
+}
+
+void test_scroll_border_color() {
+    const uint32_t colors[] = {
+        0xFFFFFFFFU, 0U, 1U, 0x80000000U, 0x7FFFFFFFU,
+    };
+    const uint32_t thicknesses[] = {
+        0xFFFFFFFFU, 0U, 1U, 2U, 0x80000000U, 0x7FFFFFFFU,
+    };
+    for (uint32_t color : colors) {
+        for (uint32_t thickness : thicknesses) {
+            for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+                uint8_t expected[sizeof(storage)];
+                seed_storage(storage, expected, sizeof(storage));
+                const uint32_t old_color = 0x13579BDFU;
+                const uint32_t old_rect[4] = {
+                    0x11111111U, 0x22222222U, 0x33333333U, 0x44444444U,
+                };
+                write_at(storage, 16 + 0xA1C, old_color);
+                std::memcpy(storage + 16 + 0xA4C, old_rect, sizeof(old_rect));
+                write_at(storage, 16 + 0xA60, thickness);
+                std::memcpy(expected, storage, sizeof(storage));
+                const uint32_t inset = color == 0xFFFFFFFFU ? 0U : 1U;
+                const uint32_t extent = color == 0xFFFFFFFFU
+                    ? thickness : thickness - 1U;
+                write_at(expected, 16 + 0xA1C, color);
+                write_at(expected, 16 + 0xA4C, inset);
+                write_at(expected, 16 + 0xA50, inset);
+                write_at(expected, 16 + 0xA54, extent);
+                write_at(expected, 16 + 0xA58, extent);
+
+                auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+                if (use_adapter) {
+                    scroll_set_border_color_redirect(
+                        scroll, nullptr, int_from_bits(color));
+                } else {
+                    scroll->set_border_color(int_from_bits(color));
+                }
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
     }
 }
 
@@ -2595,6 +2805,9 @@ int main() {
     test_alpha_net_pid_to_idx();
     test_alpha_net_identity_lookups();
     test_in_box_edges();
+    test_win_move();
+    test_win_paging();
+    test_scroll_border_color();
     test_text_get_and_item_number();
     test_text_string_helpers();
     test_text_constructors();
