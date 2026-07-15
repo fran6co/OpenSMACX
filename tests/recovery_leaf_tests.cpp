@@ -68,7 +68,19 @@ int __cdecl range(int input, int min, int max) {
     return input < min ? min : (input > max ? max : input);
 }
 
+bool mem_get_scripted = false;
+int mem_get_calls = 0;
+size_t mem_get_sizes[2] = {};
+LPVOID mem_get_results[2] = {};
+
 LPVOID __cdecl mem_get(size_t size) {
+    const int call = mem_get_calls++;
+    if (call < 2) {
+        mem_get_sizes[call] = size;
+    }
+    if (mem_get_scripted) {
+        return call < 2 ? mem_get_results[call] : nullptr;
+    }
     return std::malloc(size);
 }
 
@@ -546,6 +558,67 @@ void write_at_volatile(uint8_t *storage, size_t offset, const T &value) {
     for (size_t index = 0; index < sizeof(value); ++index) {
         target[index] = source[index];
     }
+}
+
+void expect_text_constructor_state(uint8_t *expected) {
+    const uint32_t zero = 0;
+    expected[16] = 0;
+    write_at(expected, 16 + 0x150, zero);
+    write_at(expected, 16 + 0x154, zero);
+    write_at(expected, 16 + 0x158, zero);
+    write_at(expected, 16 + 0x15C, zero);
+}
+
+void test_text_constructors() {
+    static_assert(sizeof(Text) == 0x160, "Text fixture requires the legacy layout");
+    alignas(Text) uint8_t storage[sizeof(Text) + 32];
+    uint8_t expected[sizeof(storage)];
+
+    seed_storage(storage, expected, sizeof(storage));
+    expect_text_constructor_state(expected);
+    auto *text = new (storage + 16) Text;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    text->~Text();
+
+    struct AllocationScenario {
+        bool first_succeeds;
+        bool second_succeeds;
+        int expected_calls;
+    };
+    const AllocationScenario scenarios[] = {
+        {false, false, 1},
+        {true, false, 2},
+        {true, true, 2},
+    };
+    constexpr size_t requested_size = 0x1357;
+    for (const AllocationScenario &scenario : scenarios) {
+        LPVOID first = scenario.first_succeeds ? std::malloc(1) : nullptr;
+        LPVOID second = scenario.second_succeeds ? std::malloc(1) : nullptr;
+        mem_get_scripted = true;
+        mem_get_calls = 0;
+        mem_get_sizes[0] = 0;
+        mem_get_sizes[1] = 0;
+        mem_get_results[0] = first;
+        mem_get_results[1] = second;
+
+        seed_storage(storage, expected, sizeof(storage));
+        expect_text_constructor_state(expected);
+        write_at(expected, 16 + 0x158, first);
+        write_at(expected, 16 + 0x15C, second);
+        text = new (storage + 16) Text(requested_size);
+
+        expect(mem_get_calls == scenario.expected_calls);
+        expect(mem_get_sizes[0] == requested_size);
+        if (scenario.expected_calls == 2) {
+            expect(mem_get_sizes[1] == requested_size);
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        text->~Text();
+        std::free(first);
+        std::free(second);
+    }
+    mem_get_scripted = false;
+    mem_get_calls = 0;
 }
 
 void test_text_destructor_thunk() {
@@ -2125,6 +2198,7 @@ int main() {
     test_in_box_edges();
     test_text_get_and_item_number();
     test_text_string_helpers();
+    test_text_constructors();
     test_text_destructor_thunk();
     test_text_open_wrapper();
     test_text_index_lifecycle();

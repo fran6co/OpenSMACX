@@ -32,6 +32,26 @@ TextState *state(Text *text) {
 
 } // namespace
 
+Text::Text()
+    : current_pos_(nullptr), text_file_(nullptr), buffer_get_(nullptr), buffer_item_(nullptr) {
+    file_name_[0] = 0;
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+Text::Text(size_t size)
+    : current_pos_(nullptr), text_file_(nullptr), buffer_get_(nullptr), buffer_item_(nullptr) {
+    file_name_[0] = 0;
+    buffer_get_ = static_cast<LPSTR>(mem_get(size));
+    if (buffer_get_) {
+        buffer_item_ = static_cast<LPSTR>(mem_get(size));
+    }
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
 #if defined(__GNUC__) && defined(__i386__)
 __attribute__((naked))
 #endif

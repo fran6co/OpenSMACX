@@ -24,7 +24,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,099 candidates.
+- Current recovery backlog: 5,097 candidates.
 - Current local legacy-island count: 143, reduced from 174.
 - `DllMain` entry redirects: 39, comprising 37 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
@@ -78,7 +78,7 @@ Recovered source includes:
 - `text_get_number` through the staged hybrid export redirect.
 - `text_close`, `text_set_get_ptr`, and `text_set_item_ptr` through the staged hybrid export redirects.
 - `text_open` through the staged hybrid export redirect.
-- `Text` destruction through the staged hybrid export redirect.
+- `Text` construction and destruction through staged hybrid export redirects.
 - `TextIndex` construction, destruction, `text_make_index`, `text_search_index`, and `text_clear_index` through staged hybrid export redirects.
 - `Spot` construction, destruction, and clearing through staged hybrid export redirects.
 - Both `Font` constructors and the destructor through staged hybrid export redirects.
@@ -111,11 +111,12 @@ Other completed corrections and checks:
 - StringStruct seek uses a C-linkage bridge whose fastcall adapter explicitly restores the original return flags in Debug and Release.
 - TextIndex lifecycle tests verify the exact `0x118` layout, constructor/destructor writes, one Heap shutdown, active-only global clearing, preserved filenames, skipped entries, and complete array canaries.
 - TextIndex wrapper tests verify first-free insertion, full-array no-ops, sparse ordered searches, continuation after all negative results, zero-valued success, exact argument forwarding, and complete array canaries.
+- Text constructor tests verify exact field writes, preserved path storage, first-allocation failure short-circuiting, both allocation sizes and results, complete object canaries, and both constructor return conventions.
 - Text destructor tests verify its exact `0x160` layout, one shutdown delegation, complete object canaries, and a non-COMDAT direct tail jump in Debug and Release.
 - Text open-wrapper tests verify exact object and argument forwarding, nullable inputs, unnormalized return values, and complete object canaries.
 - Spot lifecycle tests verify the exact `0xC` layout, full clear behavior, both destructor branches, and complete object canaries.
 - Font lifecycle tests verify the exact `0x28` layout, preserved `0x14` and `0x20` fields, constructor forwarding, both resource-cleanup branches, and complete object canaries.
-- Recovered TextIndex, Spot, Font, Time, Filemap, Heap, Strings, Random, and Log constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
+- Recovered Text, TextIndex, Spot, Font, Time, Filemap, Heap, Strings, Random, and Log constructors explicitly preserve the legacy `EAX = this` return in Debug and Release.
 - Time lifecycle tests verify the exact `0x28` layout, complete reset state, constructor return, destructor delegation, modal publication/clearing, signed counter wrapping, and complete object canaries.
 - Filemap lifecycle tests verify the exact `0x10` layout, preserved file-size field, conditional handle/view cleanup, constructor return, and complete object canaries.
 - Heap lifecycle tests verify the exact `0x14` layout, direct destructor cleanup without shutdown delegation, all five fields, and complete object canaries. ABI checks separately verify byte-only writes preserve the three padding bytes.
@@ -132,7 +133,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after TextIndex wrapper recovery is 5,099 priorities and 143 islands.
+- Regenerated state after Text constructor recovery is 5,097 priorities and 143 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -154,7 +155,7 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Recover exported functions first, beginning with the externally corroborated Text wrappers, while skipping blocked exports rather than stalling the queue.
+1. Recover exported functions first by resolving the remaining ambiguous or missing mappings, while skipping blocked exports rather than stalling the queue.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
@@ -170,7 +171,7 @@ Other completed corrections and checks:
 - `src/random.h`, `src/random.cpp`: verified Random layout, lifecycle, signed-range generation, and exact floating transfer.
 - `src/log.h`, `src/log.cpp`: verified Log layout, lifecycle, global initialization/cleanup, reset, and state control.
 - `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance/seek accessors.
-- `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text destructor, get, and numeric-item source helpers.
+- `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text constructors, destructor, open wrapper, get, and numeric-item source helpers.
 - `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
 - `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
@@ -180,7 +181,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,099 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,097 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
