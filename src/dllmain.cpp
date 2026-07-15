@@ -37,7 +37,7 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 39;
+constexpr size_t RedirectCount = 42;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -171,7 +171,7 @@ bool redirect_call(RedirectState &state, uintptr_t call_address,
 }
 
 bool install_redirects() {
-    const RedirectSpec specs[RedirectCount] = {
+    const RedirectSpec specs[] = {
         {
             0x00401560,
             reinterpret_cast<uintptr_t>(&string_struct_seek_id_redirect),
@@ -395,6 +395,24 @@ bool install_redirects() {
               0x00, 0x00, 0x00, 0x81, 0xC1, 0x28, 0x09, 0x00},
         },
         {
+            0x004E2610,
+            reinterpret_cast<uintptr_t>(&alpha_net_pid_to_who_redirect),
+            {0x55, 0x8B, 0xEC, 0x56, 0x8B, 0x75, 0x08, 0xB8,
+             0x01, 0x00, 0x00, 0x00, 0x8D, 0x91, 0x28, 0x09},
+        },
+        {
+            0x004E2660,
+            reinterpret_cast<uintptr_t>(&alpha_net_who_to_pid_redirect),
+            {0x55, 0x8B, 0xEC, 0x56, 0x8B, 0x75, 0x08, 0x57,
+             0xB8, 0x01, 0x00, 0x00, 0x00, 0x8D, 0x91, 0x2C},
+        },
+        {
+            0x004E26B0,
+            reinterpret_cast<uintptr_t>(&alpha_net_who_to_idx_redirect),
+            {0x55, 0x8B, 0xEC, 0x8B, 0x55, 0x08, 0x56, 0xB8,
+             0x01, 0x00, 0x00, 0x00, 0x81, 0xC1, 0x2C, 0x09},
+        },
+        {
             0x00514189,
             reinterpret_cast<uintptr_t>(&scenario_human_turn_trampoline),
             {0x89, 0xBE, 0x24, 0x3D, 0x02, 0x00, 0x39, 0x3D,
@@ -407,6 +425,8 @@ bool install_redirects() {
              0x9A, 0x00, 0x3B, 0xC3, 0x0F, 0x84, 0xA9, 0x00},
         },
     };
+    static_assert(sizeof(specs) / sizeof(specs[0]) == RedirectCount,
+                  "redirect state count must match the redirect catalog");
     for (size_t index = 0; index < RedirectCount; index++) {
         if (redirect_function(
                 Redirects[index], specs[index].original_address,
@@ -422,7 +442,7 @@ bool install_redirects() {
         return false;
     }
 
-    const RedirectSpec call_specs[CallRedirectCount] = {
+    const RedirectSpec call_specs[] = {
         {
             0x0052AB6D,
             reinterpret_cast<uintptr_t>(&scenario_opening_movie),
@@ -436,6 +456,8 @@ bool install_redirects() {
              0x85, 0xC0, 0x0F, 0x85, 0xB9, 0x00, 0x00, 0x00},
         },
     };
+    static_assert(sizeof(call_specs) / sizeof(call_specs[0]) == CallRedirectCount,
+                  "call redirect state count must match the redirect catalog");
     for (size_t index = 0; index < CallRedirectCount; index++) {
         if (redirect_call(CallRedirects[index], call_specs[index].original_address,
                           call_specs[index].replacement_address,

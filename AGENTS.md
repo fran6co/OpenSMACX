@@ -24,9 +24,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,091 candidates.
-- Current local legacy-island count: 143, reduced from 174.
-- `DllMain` entry redirects: 39, comprising 37 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- Current recovery backlog: 5,088 candidates.
+- Current local legacy-island count: 140, reduced from 174.
+- `DllMain` entry redirects: 42, comprising 40 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -97,11 +97,12 @@ Recovered source includes:
 - `ButtonGroup` construction, close, and initialization.
 - `CaviarData` and `Caviar` constructors, scaling, camera state, and scaling getter.
 - `MainInterface::clear_message`, `desktop_update`, Buffer lifecycle hooks, and `Dialogs::close`.
-- `AlphaNet::pid_2_idx` and its fastcall-to-thiscall runtime adapter.
+- `AlphaNet::pid_2_idx`, `pid_2_who`, `who_2_pid`, and `who_2_idx` plus their fastcall-to-thiscall runtime adapters.
 
 Other completed corrections and checks:
 
 - Fixed a latent `BasePop` layout hole with a `0xC94` placeholder. `BasePop` has verified size `0x3230`.
+- Corrected the `AlphaNet` layout to `0x14A0`; the constructor initializes its trailing `Heap` at offset `0x148C`.
 - Added verified layouts for `CaviarData`, `Caviar`, `ButtonGroup`, `Buffer`, and `Dialog`.
 - ButtonGroup lifecycle tests verify the exact preserved `0x84..0x8B` constructor/close hole, complete initialization, object canaries, destructor behavior, and adapter return values.
 - BasePop string-font tests cover null and uninitialized primary fonts, all four verified field offsets, return codes, and full-object canaries.
@@ -135,10 +136,12 @@ Other completed corrections and checks:
 
 ### Recovery Verification
 
-- The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
+- The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID and identity slots, signed identities, first-match duplicates with distinct payloads, zero IDs, exact scan boundaries, complete object canaries, all four redirect adapters, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after Log wrapper recovery is 5,091 priorities and 143 islands.
+- `verify-recovery-oracles` extracts explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups against source with identical fixtures in Debug and Release.
+- Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
+- Regenerated state after the AlphaNet lookup recovery is 5,088 priorities, 546 source-complete functions, and 140 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -147,7 +150,7 @@ Other completed corrections and checks:
 - Forcing the bundled native DDrawCompat proxy also fails fast on this Wine version.
 - Hybrid staging defaults to the hash-pinned PRACX executable at `.opensmacx/game/terranx.exe` and publishes all 460 expected import redirects.
 - The packer labels PRACX `hash_pinned_runtime_build`; all recovery body mappings are `not_analyzed` and unmapped rather than projected from canonical addresses.
-- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 143 islands.
+- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 140 islands.
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
 - `tools/smoke_hybrid_game.py` automates that gate, validates module markers, process survival, and rendering when Wine emits a flip trace; it rejects unhandled exceptions and stops the dedicated owned test prefix while removing its per-run executable alias.
@@ -165,9 +168,9 @@ Other completed corrections and checks:
 
 ## Relevant Files
 
-- `src/alphanet.h`: committed aligned `AlphaNet` layout and adapter declaration.
-- `src/alphanet.cpp`: committed `AlphaNet::pid_2_idx` implementation.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 37 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks.
+- `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
+- `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 40 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -186,7 +189,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,091 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,088 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
@@ -196,7 +199,7 @@ Other completed corrections and checks:
 - `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
-- `tools/test_extract_legacy_leaves.py`: 12 island-classifier regression tests.
+- `tools/test_extract_legacy_leaves.py`: 19 classifier, explicit-selection, and output-ownership regression tests.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.
 - `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
 - `tools/test_smoke_hybrid_game.py`: source-owned smoke-diagnostics parser tests.
@@ -209,9 +212,11 @@ Other completed corrections and checks:
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
 - `docs/HYBRID.md`: local hybrid workflow.
-- `CMakeLists.txt`: source list, hybrid targets, and legacy-island targets.
+- `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet identity lookup fixtures.
+- `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
-- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 143-island manifest.
+- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 140-island manifest.
+- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit three-function AlphaNet oracle manifest.
 - `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
 - `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
 - `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.

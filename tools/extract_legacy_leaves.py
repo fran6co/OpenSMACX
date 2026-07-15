@@ -79,6 +79,32 @@ def load_rows(path):
         return list(csv.DictReader(file))
 
 
+def select_rows(correlations, requested_addresses):
+    requested = set(requested_addresses)
+    if not requested:
+        return [row for row in correlations
+                if row["binary_kind"] == "game"
+                and row["recovery_state"] == "unrecovered"]
+    available = {int(row["address"], 0) for row in correlations}
+    missing = requested - available
+    if missing:
+        addresses = ", ".join(hexadecimal(address) for address in sorted(missing))
+        raise RuntimeError(f"requested addresses are absent from correlation: {addresses}")
+    return [row for row in correlations
+            if int(row["address"], 0) in requested]
+
+
+def validate_output_path(output):
+    output = output.expanduser().resolve()
+    allowed_roots = (
+        (REPO_ROOT / ".opensmacx").resolve(),
+        (REPO_ROOT / "build").resolve(),
+    )
+    if not any(root in output.parents for root in allowed_roots):
+        raise RuntimeError(
+            "output must be inside the ignored .opensmacx/ or build/ directory")
+
+
 def is_relative_branch(instruction):
     return (instruction.group(CS_GRP_JUMP) or
             instruction.mnemonic in {
@@ -318,7 +344,9 @@ def replace_output(temporary, output):
 
 
 def extract(exe_path, correlation_path, analysis_summary_path, functions_path,
-            ghidra_path, ghidra_references_path, output, max_size):
+            ghidra_path, ghidra_references_path, output, max_size,
+            requested_addresses=()):
+    validate_output_path(output)
     source = exe_path.read_bytes()
     source_hash = sha256_bytes(source)
     if source_hash not in SUPPORTED_EXE_HASHES:
@@ -397,11 +425,13 @@ def extract(exe_path, correlation_path, analysis_summary_path, functions_path,
 
     reasons = Counter()
     candidates = []
-    reviewed = 0
-    for row in correlations:
-        if row["binary_kind"] != "game" or row["recovery_state"] != "unrecovered":
+    reviewed_rows = select_rows(correlations, requested_addresses)
+    reviewed_unrecovered = sum(
+        row["recovery_state"] == "unrecovered" for row in reviewed_rows)
+    for row in reviewed_rows:
+        if row["binary_kind"] != "game":
+            reasons["non_game_function"] += 1
             continue
-        reviewed += 1
         if row["ghidra_relation"] != "exact":
             reasons["non_exact_analysis"] += 1
             continue
@@ -432,6 +462,14 @@ def extract(exe_path, correlation_path, analysis_summary_path, functions_path,
             "symbol": symbol,
         })
     candidates.sort(key=lambda item: int(item["address"], 0))
+    if requested_addresses:
+        extracted = {int(item["address"], 0) for item in candidates}
+        rejected = set(requested_addresses) - extracted
+        if rejected:
+            addresses = ", ".join(
+                hexadecimal(address) for address in sorted(rejected))
+            raise RuntimeError(
+                f"requested addresses are not eligible legacy leaves: {addresses}")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=f".{output.name}-", dir=output.parent))
@@ -463,10 +501,13 @@ def extract(exe_path, correlation_path, analysis_summary_path, functions_path,
                           for item in candidates],
             "open_source_ready": False,
             "proprietary_blob_count": len(candidates),
+            "requested_addresses": [
+                hexadecimal(address) for address in sorted(set(requested_addresses))],
             "rejected_by_reason": dict(sorted(
                 (reason, count) for reason, count in reasons.items()
                 if reason != "candidate")),
-            "reviewed_unrecovered_functions": reviewed,
+            "reviewed_functions": len(reviewed_rows),
+            "reviewed_unrecovered_functions": reviewed_unrecovered,
             "source": {
                 "file_name": exe_path.name,
                 "sha256": source_hash,
@@ -488,7 +529,10 @@ def extract(exe_path, correlation_path, analysis_summary_path, functions_path,
         pe.close()
 
     print(f"Extracted {len(candidates)} conservative legacy leaves to {output}")
-    print(f"Reviewed unrecovered game functions: {reviewed}")
+    if requested_addresses:
+        print(f"Reviewed explicitly requested functions: {len(reviewed_rows)}")
+    else:
+        print(f"Reviewed unrecovered game functions: {reviewed_unrecovered}")
 
 
 def main():
@@ -504,6 +548,9 @@ def main():
                         default=DEFAULT_GHIDRA_REFERENCES)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--max-size", type=int, default=512)
+    parser.add_argument(
+        "--address", action="append", default=[], type=lambda value: int(value, 0),
+        help="extract only this canonical function start, even when source-complete")
     args = parser.parse_args()
     if args.max_size <= 0:
         parser.error("--max-size must be positive")
@@ -527,6 +574,7 @@ def main():
             args.ghidra_references,
             args.output.expanduser().resolve(),
             args.max_size,
+            args.address,
         )
     except (OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))

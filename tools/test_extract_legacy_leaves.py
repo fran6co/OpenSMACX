@@ -5,7 +5,12 @@ import unittest
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs
 
-from extract_legacy_leaves import classify_function
+from extract_legacy_leaves import (
+    REPO_ROOT,
+    classify_function,
+    select_rows,
+    validate_output_path,
+)
 
 
 class LegacyLeafClassificationTest(unittest.TestCase):
@@ -85,6 +90,46 @@ class LegacyLeafClassificationTest(unittest.TestCase):
         self.assertEqual(
             self.classify(bytes.fromhex("90C3"), references=references),
             "contains_external_interior_reference")
+
+
+class LegacyLeafSelectionTest(unittest.TestCase):
+    ROWS = [
+        {"address": "0x00401000", "binary_kind": "game",
+         "recovery_state": "unrecovered"},
+        {"address": "0x00402000", "binary_kind": "game",
+         "recovery_state": "source_complete"},
+        {"address": "0x00403000", "binary_kind": "library",
+         "recovery_state": "unrecovered"},
+    ]
+
+    def test_default_selection_uses_unrecovered_game_functions(self):
+        self.assertEqual(select_rows(self.ROWS, []), [self.ROWS[0]])
+
+    def test_explicit_selection_includes_recovered_function(self):
+        self.assertEqual(
+            select_rows(self.ROWS, [0x00402000]), [self.ROWS[1]])
+
+    def test_explicit_selection_rejects_unknown_address(self):
+        with self.assertRaisesRegex(RuntimeError, "0x00404000"):
+            select_rows(self.ROWS, [0x00404000])
+
+
+class LegacyLeafOutputTest(unittest.TestCase):
+    def test_accepts_ignored_output_roots(self):
+        validate_output_path((REPO_ROOT / "build" / "oracle-test").resolve())
+        validate_output_path((REPO_ROOT / ".opensmacx" / "oracle-test").resolve())
+
+    def test_rejects_tracked_output_location(self):
+        with self.assertRaisesRegex(RuntimeError, "ignored .opensmacx/ or build/"):
+            validate_output_path((REPO_ROOT / "docs" / "oracle-test").resolve())
+
+    def test_rejects_parent_traversal_out_of_ignored_root(self):
+        with self.assertRaisesRegex(RuntimeError, "ignored .opensmacx/ or build/"):
+            validate_output_path(REPO_ROOT / "build" / ".." / "docs" / "oracle-test")
+
+    def test_rejects_replacing_an_ignored_root(self):
+        with self.assertRaisesRegex(RuntimeError, "ignored .opensmacx/ or build/"):
+            validate_output_path((REPO_ROOT / "build").resolve())
 
 
 if __name__ == "__main__":

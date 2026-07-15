@@ -305,6 +305,102 @@ void test_alpha_net_pid_to_idx() {
     expect(empty_network.pid_2_idx(0) == 1);
 }
 
+void test_alpha_net_identity_lookups() {
+    alignas(AlphaNet) uint8_t storage[sizeof(AlphaNet) + 32];
+    std::memset(storage, 0xA5, sizeof(storage));
+    auto *network = reinterpret_cast<AlphaNet *>(storage + 16);
+    constexpr size_t first_pid_offset = 0x928;
+    constexpr size_t identity_offset = 0x92C;
+    constexpr size_t slot_stride = 0x19C;
+    const uint32_t process_ids[7] = {
+        0U, 1U, 0x7FFFFFFFU, 0x80000000U, 0xFFFFFFFFU, 123U, 456U,
+    };
+    const int8_t identities[7] = {
+        0, 1, 0x7F, static_cast<int8_t>(0x80),
+        static_cast<int8_t>(0xFF), 42, -42,
+    };
+    const uint32_t lower_decoy_pid = 789U;
+    const int8_t lower_decoy_identity = 2;
+    const uint32_t upper_decoy_pid = 790U;
+    const int8_t upper_decoy_identity = 3;
+
+    for (int slot = 0; slot < 7; ++slot) {
+        std::memcpy(reinterpret_cast<uint8_t *>(network)
+                        + first_pid_offset + slot * slot_stride,
+                    &process_ids[slot], sizeof(process_ids[slot]));
+        std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + identity_offset + slot * slot_stride,
+                    &identities[slot], sizeof(identities[slot]));
+    }
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + first_pid_offset - slot_stride,
+                &lower_decoy_pid, sizeof(lower_decoy_pid));
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + identity_offset - slot_stride,
+                &lower_decoy_identity, sizeof(lower_decoy_identity));
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + first_pid_offset + 7 * slot_stride,
+                &upper_decoy_pid, sizeof(upper_decoy_pid));
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + identity_offset + 7 * slot_stride,
+                &upper_decoy_identity, sizeof(upper_decoy_identity));
+    uint8_t expected[sizeof(storage)];
+    std::memcpy(expected, storage, sizeof(storage));
+
+    for (int slot = 0; slot < 7; ++slot) {
+        const int identity = static_cast<int>(identities[slot]);
+        expect(network->pid_2_who(process_ids[slot]) == identity);
+        expect(alpha_net_pid_to_who_redirect(
+                   network, nullptr, process_ids[slot]) == identity);
+        expect(static_cast<uint32_t>(network->who_2_pid(identity))
+               == process_ids[slot]);
+        expect(static_cast<uint32_t>(alpha_net_who_to_pid_redirect(
+                   network, nullptr, identity)) == process_ids[slot]);
+        expect(network->who_2_idx(identity) == slot + 1);
+        expect(alpha_net_who_to_idx_redirect(
+                   network, nullptr, identity) == slot + 1);
+    }
+
+    expect(network->pid_2_who(lower_decoy_pid) == 0);
+    expect(network->pid_2_who(upper_decoy_pid) == 0);
+    expect(alpha_net_pid_to_who_redirect(network, nullptr, lower_decoy_pid) == 0);
+    expect(alpha_net_pid_to_who_redirect(network, nullptr, upper_decoy_pid) == 0);
+    expect(network->who_2_pid(lower_decoy_identity) == 0);
+    expect(network->who_2_pid(upper_decoy_identity) == 0);
+    expect(alpha_net_who_to_pid_redirect(
+               network, nullptr, lower_decoy_identity) == 0);
+    expect(alpha_net_who_to_pid_redirect(
+               network, nullptr, upper_decoy_identity) == 0);
+    expect(network->who_2_idx(lower_decoy_identity) == 0);
+    expect(network->who_2_idx(upper_decoy_identity) == 0);
+    expect(network->who_2_idx(128) == 0);
+    expect(network->who_2_idx(-129) == 0);
+    expect(std::memcmp(storage, expected, sizeof(storage)) == 0);
+
+    const uint32_t duplicate_pid = process_ids[1];
+    const int8_t later_pid_identity = 77;
+    const int8_t duplicate_identity = identities[1];
+    const uint32_t later_identity_pid = process_ids[6];
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + first_pid_offset + 5 * slot_stride,
+                &duplicate_pid, sizeof(duplicate_pid));
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + identity_offset + 5 * slot_stride,
+                &later_pid_identity, sizeof(later_pid_identity));
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + first_pid_offset + 6 * slot_stride,
+                &later_identity_pid, sizeof(later_identity_pid));
+    std::memcpy(reinterpret_cast<uint8_t *>(network)
+                    + identity_offset + 6 * slot_stride,
+                &duplicate_identity, sizeof(duplicate_identity));
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(network->pid_2_who(duplicate_pid) == identities[1]);
+    expect(static_cast<uint32_t>(network->who_2_pid(duplicate_identity))
+           == process_ids[1]);
+    expect(network->who_2_idx(duplicate_identity) == 2);
+    expect(std::memcmp(storage, expected, sizeof(storage)) == 0);
+}
+
 void test_in_box_edges() {
     const RECT rect = {10, 20, 30, 40};
 
@@ -2376,6 +2472,7 @@ void test_string_struct_seek_id() {
 
 int main() {
     test_alpha_net_pid_to_idx();
+    test_alpha_net_identity_lookups();
     test_in_box_edges();
     test_text_get_and_item_number();
     test_text_string_helpers();

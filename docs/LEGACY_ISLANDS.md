@@ -31,6 +31,19 @@ because exact bytes are emitted with `.byte`; this does not prove references are
 the linker from repairing any missed reference. The extractor therefore rejects reference-bearing
 candidates before emission. The object remains architecture- and ABI-specific and proprietary.
 
+Extractor output is restricted to ignored subdirectories of `.opensmacx/` or `build/`. An explicit
+`--address` selects an eligible canonical function even after it is marked source-complete, allowing
+the local implementation to remain a differential oracle without restoring it to the ordinary
+legacy-island inventory. The CMake `verify-recovery-oracles` target builds and runs the currently
+configured source-versus-original fixtures:
+
+```sh
+cmake --build --preset mingw-i686-release --target verify-recovery-oracles
+```
+
+The generated assembly, object, manifest, and executable remain local-only and must not be committed
+or distributed.
+
 ## Conservative eligibility
 
 An unrecovered game function is accepted only when all of these conditions hold:
