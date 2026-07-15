@@ -17,7 +17,7 @@ from runtime_process import (
     stage_scenario_executable,
     stop_executable_processes,
 )
-from setup_game import find_wine
+from wine_runtime import find_wine
 
 
 FATAL_PATTERNS = (
@@ -25,31 +25,82 @@ FATAL_PATTERNS = (
     re.compile(r"wine: Unhandled", re.IGNORECASE),
     re.compile(r"err:seh:NtRaiseException Unhandled", re.IGNORECASE),
 )
+LOADER_RECORD = re.compile(
+    r'^(?P<context>[0-9A-F]+)(?::[0-9A-F]+)?:.*'
+    r'\bLoaded\s+L?"(?P<path>[^"]+)"\s+at\s+'
+    r'(?:0x)?[0-9A-F]+:\s*(?P<kind>native|builtin)\s*$',
+    re.IGNORECASE,
+)
+CONTEXT_RECORD = re.compile(
+    r"^(?P<context>[0-9A-F]+)(?::[0-9A-F]+)?:", re.IGNORECASE)
+LOADER_FAILURE_PATTERNS = (
+    re.compile(
+        r"\b(?:failed|unable|could not|cannot)\s+to\s+load\b",
+        re.IGNORECASE),
+    re.compile(r"\bload(?:ing)?\b.*\bfailed\b", re.IGNORECASE),
+    re.compile(r"\bmodule\b.*\bnot found\b", re.IGNORECASE),
+    re.compile(r"\bimport\b.*\b(?:failed|unresolved)\b", re.IGNORECASE),
+)
+
+
+def diagnostic_context(line):
+    match = CONTEXT_RECORD.search(line)
+    return match.group("context").casefold() if match else None
 
 
 def analyze_diagnostics(text, executable_name):
     lines = text.splitlines()
-    lowered = text.casefold()
+    loaded = {}
+    for line in lines:
+        match = LOADER_RECORD.search(line)
+        if match:
+            context = match.group("context").casefold()
+            name = PureWindowsPath(match.group("path")).name.casefold()
+            loaded.setdefault(context, {}).setdefault(name, set()).add(
+                match.group("kind").casefold())
     required = {
-        "executable": executable_name.casefold(),
-        "opensmacx": "opensmacx.dll",
-        "pracx": "prax.dll",
+        "executable": (executable_name.casefold(), "native"),
+        "opensmacx": ("opensmacx.dll", "native"),
+        "pracx": ("prax.dll", "native"),
+        "builtin_ddraw": ("ddraw.dll", "builtin"),
     }
-    missing = [name for name, marker in required.items() if marker not in lowered]
-    builtin_ddraw = any(
-        "ddraw.dll" in line.casefold() and "builtin" in line.casefold()
-        for line in lines)
-    if not builtin_ddraw:
-        missing.append("builtin_ddraw")
+    executable, executable_kind = required["executable"]
+    game_contexts = [
+        context for context, modules in loaded.items()
+        if executable_kind in modules.get(executable, set())
+    ]
+    best_context = None
+    if game_contexts:
+        best_context = max(sorted(game_contexts), key=lambda context: sum(
+            kind in loaded[context].get(name, set())
+            for name, kind in required.values()))
+    missing = list(required) if best_context is None else [
+        label for label, (name, kind) in required.items()
+        if kind not in loaded[best_context].get(name, set())
+    ]
     fatal_lines = [
         line for line in lines
         if any(pattern.search(line) for pattern in FATAL_PATTERNS)
     ]
+    required_names = {name for name, _ in required.values()}
+    loader_failure_lines = []
+    for line in lines:
+        context = diagnostic_context(line)
+        if game_contexts and context not in game_contexts:
+            continue
+        folded = line.casefold()
+        generic_required_failure = (
+            any(name in folded for name in required_names)
+            and any(pattern.search(line) for pattern in LOADER_FAILURE_PATTERNS))
+        if generic_required_failure:
+            loader_failure_lines.append(line)
     rendering_started = any(
-        "ddraw_surface" in line.casefold() and "flip" in line.casefold()
+        (not game_contexts or diagnostic_context(line) in game_contexts)
+        and "ddraw_surface" in line.casefold() and "flip" in line.casefold()
         for line in lines)
     return {
         "fatal_lines": fatal_lines,
+        "loader_failure_lines": loader_failure_lines,
         "missing_markers": missing,
         "rendering_started": rendering_started,
     }
@@ -58,6 +109,8 @@ def analyze_diagnostics(text, executable_name):
 def validate_smoke(analysis, new_processes):
     if analysis["fatal_lines"]:
         raise RuntimeError("Wine diagnostics contain an unhandled exception")
+    if analysis["loader_failure_lines"]:
+        raise RuntimeError("Wine diagnostics contain a module or import load failure")
     if analysis["missing_markers"]:
         raise RuntimeError(
             "missing loader markers: " + ", ".join(analysis["missing_markers"]))

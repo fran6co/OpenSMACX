@@ -126,7 +126,8 @@ affected.
 Override `OPENSMACX_LEGACY_EXE`, `OPENSMACX_HYBRID_DIR`, and `OPENSMACX_HYBRID_EXE` to use other
 local hybrid paths. `OPENSMACX_LEGACY_LEAF_EXE` remains the independently analyzed pre-PRACX
 executable used for local island extraction. All default outputs remain under `.opensmacx/`, which
-is ignored by Git.
+is ignored by Git. Proprietary output paths must be nonsymlinked descendants of `.opensmacx/` or
+`build/`; configuration and source-owned tools reject symlinked parent components.
 
 On macOS, always use `tools/run_game.py` rather than invoking the Wine CLI directly. The launcher
 uses Launch Services for the native window driver and explicitly passes the configured Wine prefix.

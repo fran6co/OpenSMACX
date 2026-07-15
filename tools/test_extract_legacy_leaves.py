@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
+from pathlib import Path
+import tempfile
 import unittest
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs
@@ -11,6 +13,7 @@ from extract_legacy_leaves import (
     select_rows,
     validate_output_path,
 )
+from local_artifact import require_local_artifact_path
 
 
 class LegacyLeafClassificationTest(unittest.TestCase):
@@ -130,6 +133,26 @@ class LegacyLeafOutputTest(unittest.TestCase):
     def test_rejects_replacing_an_ignored_root(self):
         with self.assertRaisesRegex(RuntimeError, "ignored .opensmacx/ or build/"):
             validate_output_path((REPO_ROOT / "build").resolve())
+
+    def test_shared_artifact_policy_returns_normalized_path(self):
+        expected = (REPO_ROOT / "build" / "oracle-test").resolve()
+        self.assertEqual(
+            require_local_artifact_path(
+                REPO_ROOT / ".opensmacx" / ".." / "build" / "oracle-test"),
+            expected)
+
+    def test_shared_artifact_policy_rejects_symlinked_ancestor(self):
+        with tempfile.TemporaryDirectory(
+                dir=REPO_ROOT / "build") as local_directory:
+            with tempfile.TemporaryDirectory() as external_directory:
+                link = Path(local_directory) / "link"
+                link.symlink_to(Path(external_directory), target_is_directory=True)
+                with self.assertRaisesRegex(
+                        RuntimeError, "must not contain symlinks"):
+                    require_local_artifact_path(link / "artifact.bin")
+                with self.assertRaisesRegex(
+                        RuntimeError, "must not contain symlinks"):
+                    validate_output_path(link / "artifact.bin")
 
 
 if __name__ == "__main__":

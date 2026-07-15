@@ -369,6 +369,12 @@ def main():
     summary = {
         "format_version": 1,
         "canonical_functions": len(canonical),
+        "inputs": {
+            "binding_classifications_sha256": sha256(
+                args.binding_classifications),
+            "canonical_inventory_sha256": sha256(args.canonical),
+            "canonical_summary_sha256": sha256(args.canonical_summary),
+        },
         "binary_identity": {
             "canonical_program_sha256": canonical_program_hash,
             "ghidra_program_sha256": ghidra_program_hash,

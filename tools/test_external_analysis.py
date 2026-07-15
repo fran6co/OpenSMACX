@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 import csv
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -21,7 +22,7 @@ from build_export_recovery_queue import (
     queue_rows,
     symbol_stem,
 )
-from fetch_external_analysis import validated_relative_path
+from fetch_external_analysis import fetch_artifact, validated_relative_path
 
 
 class ExternalAnalysisTests(unittest.TestCase):
@@ -109,28 +110,49 @@ class ExternalAnalysisTests(unittest.TestCase):
             catalog.write_text(json.dumps({"artifacts": [{
                 "path": "source.txt", "sha256": "abc",
                 "kind": "human_function_notes"}]}), encoding="utf-8")
+            inventory = root / "functions.csv"
+            inventory.write_text("address,name\n", encoding="utf-8")
+            inventory_sha256 = hashlib.sha256(inventory.read_bytes()).hexdigest()
             summary = root / "source-txt-summary.csv"
             with summary.open("w", newline="", encoding="utf-8") as file:
                 writer = csv.DictWriter(file, fieldnames=[
-                    "source_path", "source_sha256", "canonical_address",
+                    "source_path", "source_sha256", "inventory_sha256", "canonical_address",
                     "lead_count"])
                 writer.writeheader()
                 writer.writerow({
                     "source_path": "source.txt", "source_sha256": "abc",
+                    "inventory_sha256": inventory_sha256,
                     "canonical_address": "0x00401000", "lead_count": 2})
-            counts, _ = load_external_counts(root, catalog)
+            counts, _ = load_external_counts(root, catalog, inventory)
             self.assertEqual(counts["0x00401000"], 2)
             summary.write_text(
                 "source_path,source_sha256,canonical_address,lead_count\n"
                 "source.txt,bad,0x00401000,2\n", encoding="utf-8")
             with self.assertRaises(RuntimeError):
-                load_external_counts(root, catalog)
+                load_external_counts(root, catalog, inventory)
             summary.write_text(
-                "source_path,source_sha256,canonical_address,lead_count\n"
-                "source.txt,abc,0x00401000,2\n", encoding="utf-8")
+                "source_path,source_sha256,inventory_sha256,canonical_address,lead_count\n"
+                f"source.txt,abc,{inventory_sha256},0x00401000,2\n", encoding="utf-8")
             summary.rename(root / "untrusted-summary.csv")
-            counts, _ = load_external_counts(root, catalog)
+            counts, _ = load_external_counts(root, catalog, inventory)
             self.assertFalse(counts)
+
+    def test_fetch_rejects_symlinked_destination_before_creating_children(self):
+        with tempfile.TemporaryDirectory(
+                dir=Path(__file__).resolve().parent.parent / "build") as local_directory:
+            with tempfile.TemporaryDirectory() as external_directory:
+                output = Path(local_directory)
+                (output / "Information").symlink_to(
+                    Path(external_directory), target_is_directory=True)
+                artifact = {
+                    "download_url": "https://invalid.example/source.txt",
+                    "path": "Information/nested/source.txt",
+                    "sha256": "unused",
+                    "size": 0,
+                }
+                with self.assertRaisesRegex(RuntimeError, "must not contain symlinks"):
+                    fetch_artifact(artifact, output)
+                self.assertFalse((Path(external_directory) / "nested").exists())
 
 
 if __name__ == "__main__":

@@ -3,9 +3,12 @@
 import argparse
 from collections import defaultdict
 import csv
+import hashlib
 import json
 from pathlib import Path
 import re
+
+from local_artifact import require_local_artifact_path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -63,7 +66,7 @@ def map_exports(exports, functions):
     return mapped
 
 
-def load_external_counts(directory, catalog_path):
+def load_external_counts(directory, catalog_path, inventory_path=DEFAULT_INVENTORY):
     counts = defaultdict(int)
     sources = defaultdict(set)
     if not directory.is_dir():
@@ -74,6 +77,7 @@ def load_external_counts(directory, catalog_path):
         for artifact in catalog["artifacts"]
         if artifact["kind"] in {
             "human_function_notes", "generated_disassembly_with_game_text"}}
+    inventory_sha256 = hashlib.sha256(inventory_path.read_bytes()).hexdigest()
     for source_path, source_sha256 in sorted(expected.items()):
         path = directory / (
             re.sub(r"[^a-z0-9]+", "-", source_path.lower()).strip("-")
@@ -85,10 +89,12 @@ def load_external_counts(directory, catalog_path):
         if not rows:
             continue
         if (rows[0].get("source_path") != source_path
-                or rows[0].get("source_sha256") != source_sha256):
+                or rows[0].get("source_sha256") != source_sha256
+                or rows[0].get("inventory_sha256") != inventory_sha256):
             raise RuntimeError(f"external summary provenance mismatch: {path}")
         if any(row.get("source_path") != source_path
-               or row.get("source_sha256") != source_sha256 for row in rows):
+               or row.get("source_sha256") != source_sha256
+               or row.get("inventory_sha256") != inventory_sha256 for row in rows):
             raise RuntimeError(f"mixed external summary provenance: {path}")
         source_name = re.sub(r"[^a-z0-9]+", "-", source_path.lower()).strip("-")
         for row in rows:
@@ -146,25 +152,30 @@ def main():
         if not path.is_file():
             parser.error(f"input not found: {path}")
     external_counts, external_sources = load_external_counts(
-        args.external_dir, args.catalog)
+        args.external_dir, args.catalog, args.inventory)
     rows = queue_rows(
         map_exports(load_exports(args.definition), load_inventory(args.inventory)),
         external_counts, external_sources)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        output = require_local_artifact_path(
+            args.output, "export recovery queue output")
+    except RuntimeError as error:
+        parser.error(str(error))
+    output.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
         "rank", "tier", "export_name", "implementation_symbol", "mapping",
         "canonical_address", "canonical_name", "recovery_state", "binary_kind",
         "size", "caller_count", "call_target_count", "external_lead_count",
         "external_sources",
     ]
-    with args.output.open("w", newline="", encoding="utf-8") as file:
+    with output.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
     counts = defaultdict(int)
     for row in rows:
         counts[row["tier"]] += 1
-    print(f"Wrote {len(rows)} exports to {args.output}")
+    print(f"Wrote {len(rows)} exports to {output}")
     print("Tiers: " + ", ".join(f"{tier}={counts[tier]}" for tier in sorted(counts)))
 
 

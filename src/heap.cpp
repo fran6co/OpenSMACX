@@ -29,7 +29,7 @@ void Heap::shutdown() {
     if (base_) {
         free(base_);
     }
-    err_flags_ = 0;
+    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
     base_ = 0;
     current_ = 0;
     base_size_ = 0;

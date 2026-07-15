@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
+import tempfile
 import unittest
 
-from prepare_hybrid_image import classify_source_binary
+from prepare_hybrid_image import (
+    classify_source_binary,
+    sha256_file,
+    validate_analysis_input_hashes,
+)
 
 
 class SourceBinaryClassificationTests(unittest.TestCase):
@@ -26,6 +32,18 @@ class SourceBinaryClassificationTests(unittest.TestCase):
     def test_unknown_binary(self):
         with self.assertRaisesRegex(RuntimeError, "unsupported executable SHA-256"):
             classify_source_binary("unknown", "canonical", "ghidra")
+
+    def test_analysis_inputs_require_exact_hashes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bindings.csv"
+            path.write_text("symbol,category\n", encoding="ascii")
+            summary = {"inputs": {"binding_classifications_sha256": sha256_file(path)}}
+            inputs = (("binding_classifications_sha256", path,
+                       "binding classifications"),)
+            validate_analysis_input_hashes(summary, inputs)
+            path.write_text("symbol,category\nchanged,test\n", encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "binding classifications"):
+                validate_analysis_input_hashes(summary, inputs)
 
 
 if __name__ == "__main__":

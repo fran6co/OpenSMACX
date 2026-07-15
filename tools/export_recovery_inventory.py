@@ -18,11 +18,16 @@ from idb.idapython import IDAPython
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_IDB = REPO_ROOT / "terranx_ORIG_200_v3_7.5.SP3.idb"
+DEFAULT_IDB = (
+    REPO_ROOT / ".opensmacx" / "analysis" /
+    "terranx_ORIG_200_v3_7.5.SP3.idb")
 DEFAULT_SOURCE_DIR = REPO_ROOT / "src"
 DEFAULT_DEFINITION = DEFAULT_SOURCE_DIR / "OpenSMACX.def"
 DEFAULT_OVERRIDES = REPO_ROOT / "docs" / "recovery-overrides.csv"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "recovery"
+SUPPORTED_IDB_HASHES = {
+    "6ffdcf2d6644f2c1b19c218d3b1b293b4e442d56b8cf1f537b0403608ff866fa",
+}
 
 OFFSET_RE = re.compile(r"Original Offset:\s*(?:0x)?([0-9A-Fa-f]{6,8})\b")
 STATUS_RE = re.compile(r"Status:\s*(.+)")
@@ -545,6 +550,9 @@ def main():
     for path in (args.idb, args.source_dir, args.definition):
         if not path.exists():
             parser.error(f"input not found: {path}")
+    idb_hash = sha256(args.idb)
+    if idb_hash not in SUPPORTED_IDB_HASHES:
+        parser.error(f"unsupported IDB SHA-256: {idb_hash}")
     export_inventory(args)
 
 

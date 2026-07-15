@@ -16,6 +16,13 @@ import tempfile
 # use pip to install
 import pefile
 
+from local_artifact import require_local_artifact_path
+from owned_wine_prefix import (
+    prefix_environment,
+    prepare_owned_wine_prefix,
+    stop_owned_wine_prefix,
+)
+
 EXPECTED_IMAGE_BASE = 0x00400000
 EXPECTED_IMPORT_COUNT = 462
 EXPECTED_IMPORT_ADDER_HASH = "ab07b61697c69ea7f4603a14bf92f5a40aaa85acd55401a830d0d68c41a7f599"
@@ -64,24 +71,32 @@ def validate_pe32(path, expect_dll):
         pe.close()
 
 
-def run_import_adder(helper, exe_path, output_dir, wine):
+def run_import_adder(helper, exe_path, output_dir, wine, wine_prefix):
     if os.name == "nt":
         command = [str(helper), str(exe_path)]
+        environment = None
     else:
         wine_path = shutil.which(wine) if not os.path.isabs(wine) else wine
         if not wine_path or not Path(wine_path).is_file():
             raise RuntimeError(
                 f"Wine executable '{wine}' was not found; pass it with --wine")
         command = [wine_path, str(helper), str(exe_path)]
+        prepare_owned_wine_prefix(wine_prefix, wine)
+        environment = prefix_environment(wine_prefix)
 
-    result = subprocess.run(
-        command,
-        cwd=str(output_dir),
-        check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            command,
+            cwd=str(output_dir),
+            env=environment,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    finally:
+        if os.name != "nt":
+            stop_owned_wine_prefix(wine_prefix, wine)
     if result.stdout:
         print(result.stdout.rstrip())
 
@@ -112,15 +127,24 @@ parser.add_argument("--exe-name", default="terranx_opensmacx.exe",
 parser.add_argument("--import-adder", help="Path to ImportAdder.exe")
 parser.add_argument("--wine", default=os.environ.get("WINE", "wine"),
                     help="Wine executable used on macOS and Linux")
+parser.add_argument("--wine-prefix",
+                    help="Dedicated marker-protected Wine prefix for ImportAdder")
 parser.add_argument("--allow-unsupported", action="store_true",
                     help="Allow an executable hash that is not known to the patcher")
 args = parser.parse_args()
 
 source_exe = Path(args.exe).expanduser().resolve()
 source_dll = Path(args.dll).expanduser().resolve()
-output_dir = Path(args.output).expanduser().resolve()
+try:
+    output_dir = require_local_artifact_path(args.output, "patched game output")
+except RuntimeError as error:
+    parser.error(str(error))
 helper = (Path(args.import_adder).expanduser().resolve() if args.import_adder else
           Path(__file__).resolve().with_name("ImportAdder.exe"))
+wine_prefix = (Path(args.wine_prefix).expanduser().absolute()
+               if args.wine_prefix else None)
+if os.name != "nt" and wine_prefix is None:
+    parser.error("a dedicated --wine-prefix is required for ImportAdder")
 if args.exe_name.casefold() not in OUTPUT_EXE_NAMES:
     parser.error(f"invalid executable filename: {args.exe_name!r}")
 final_exe_path = output_dir / args.exe_name
@@ -214,7 +238,7 @@ if dll_temporary is not None:
     shutil.copy2(source_dll, dll_temporary)
 
 print("Adding imports + copying binary...")
-run_import_adder(helper, exe_path, output_dir, args.wine)
+run_import_adder(helper, exe_path, output_dir, args.wine, wine_prefix)
 print("Imports added successfully...")
 
 print("Getting address of first import...")
