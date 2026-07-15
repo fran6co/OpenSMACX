@@ -23,18 +23,8 @@
   */
 class DLLEXPORT Text {
  public:
-  Text() : current_pos_(0), text_file_(0), buffer_get_(0), buffer_item_(0) { // 005FD860
-      file_name_[0] = 0;
-      file_path_[0] = 0;
-  }
-  Text(size_t size) : current_pos_(0), text_file_(0), buffer_get_(0), buffer_item_(0) { // 005FD880
-      file_name_[0] = 0; 
-      file_path_[0] = 0;
-      buffer_get_ = (LPSTR)mem_get(size);
-      if (buffer_get_) {
-          buffer_item_ = (LPSTR)mem_get(size);
-      }
-  }
+  Text(); // 005FD860
+  Text(size_t size); // 005FD880
   ~Text() noexcept(false); // 00608C00
 
   int init(size_t size);

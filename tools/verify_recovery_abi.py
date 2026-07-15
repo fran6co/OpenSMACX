@@ -919,15 +919,71 @@ def main():
         if "file format pe-i386" not in headers:
             fail("Text object is not a 32-bit PE COFF object")
         section_headers = run([args.objdump, "-h", args.text_object])
-        if "COMDAT __ZN4TextD1Ev" in section_headers:
-            fail("Text destructor remains an inline COMDAT implementation")
+        if any(symbol in section_headers for symbol in (
+                "COMDAT __ZN4TextC1Ev",
+                "COMDAT __ZN4TextC1Ej",
+                "COMDAT __ZN4TextD1Ev")):
+            fail("Text lifecycle functions remain inline COMDAT implementations")
         symbols = run([args.nm, "--defined-only", args.text_object])
-        if "__ZN4TextD1Ev" not in symbols:
-            fail("missing required Text destructor symbol")
-        if "__Z9text_openPKcS0_" not in symbols:
-            fail("missing required text_open wrapper symbol")
+        required_symbols = {
+            "Text default constructor": "__ZN4TextC1Ev",
+            "Text sized constructor": "__ZN4TextC1Ej",
+            "Text destructor": "__ZN4TextD1Ev",
+            "text_open wrapper": "__Z9text_openPKcS0_",
+        }
+        for description, symbol in required_symbols.items():
+            if symbol not in symbols:
+                fail(f"missing required symbol: {description}")
 
         disassembly = run([args.objdump, "-d", "-r", args.text_object])
+
+        def text_body(symbol):
+            match = re.search(
+                rf"<{re.escape(symbol)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate exact Text function in disassembly: {symbol}")
+            return match.group("body")
+
+        default_constructor = text_body("__ZN4TextC1Ev")
+        for field in ("150", "154", "158", "15c"):
+            if not re.search(
+                    rf"\bmovl\s+\$0x0,0x{field}\(%e(?:ax|cx|bx|si|di)\)",
+                    default_constructor):
+                fail(f"Text default constructor does not clear field 0x{field}")
+        if not re.search(r"\bmovb\s+\$0x0,\(%e(?:ax|cx|bx|si|di)\)",
+                         default_constructor):
+            fail("Text default constructor does not terminate the filename")
+        if re.search(r"\bmov[^\n]*,0x50\(%e(?:ax|cx|bx|si|di)\)",
+                     default_constructor):
+            fail("Text default constructor overwrites the preserved path")
+        if not re.search(r"\bmov\s+%e(?:ax|cx|bx|si|di),%eax",
+                         default_constructor):
+            fail("Text default constructor does not return this in EAX")
+        if not re.search(r"\bret\b", default_constructor) or re.search(
+                r"\bret\s+\$", default_constructor):
+            fail("Text default constructor does not use a plain thiscall return")
+
+        sized_constructor = text_body("__ZN4TextC1Ej")
+        for field in ("150", "154", "158", "15c"):
+            if not re.search(
+                    rf"\bmovl\s+\$0x0,0x{field}\(%e(?:ax|cx|bx|si|di)\)",
+                    sized_constructor):
+                fail(f"Text sized constructor does not clear field 0x{field}")
+        if not re.search(r"\bmovb\s+\$0x0,\(%e(?:ax|cx|bx|si|di)\)",
+                         sized_constructor):
+            fail("Text sized constructor does not terminate the filename")
+        if re.search(r"\bmov[^\n]*,0x50\(%e(?:ax|cx|bx|si|di)\)",
+                     sized_constructor):
+            fail("Text sized constructor overwrites the preserved path")
+        if len(re.findall(r"DISP32\s+__Z7mem_getj\b", sized_constructor)) != 2:
+            fail("Text sized constructor does not contain two allocation call sites")
+        if not re.search(r"\bmov\s+%e(?:ax|cx|bx|si|di),%eax",
+                         sized_constructor):
+            fail("Text sized constructor does not return this in EAX")
+        if not re.search(r"\bret\s+\$0x4\b", sized_constructor):
+            fail("Text sized constructor does not pop its stack argument")
+
         match = re.search(
             r"<__ZN4TextD1Ev>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
             disassembly, re.DOTALL)
