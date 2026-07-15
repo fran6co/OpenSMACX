@@ -24,7 +24,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,095 candidates.
+- Current recovery backlog: 5,091 candidates.
 - Current local legacy-island count: 143, reduced from 174.
 - `DllMain` entry redirects: 39, comprising 37 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
@@ -37,7 +37,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
-- The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements or mapped unrecovered functions, 415 source-complete mappings, and 47 unresolved or ambiguous mappings.
+- The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements or mapped unrecovered functions, 415 exact source-complete mappings, and 47 name-ambiguous rows manually resolved as 45 source-complete mappings and two source-only compatibility exports.
 
 ## Completed Work
 
@@ -68,6 +68,10 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - `bff2dd7 Recover Caviar camera state`
 - `051c045 Recover legacy null operation hooks`
 - `d169b50 Recover multiplayer process lookup`
+- `23a0c86 Recover Time class lifecycle exports`
+- `4cec2b6 Recover TextIndex wrapper exports`
+- `0fcede4 Recover Text constructors`
+- `328a566 Recover Text global lifecycle exports`
 
 Recovered source includes:
 
@@ -87,7 +91,7 @@ Recovered source includes:
 - `Heap` construction and destruction through staged hybrid export redirects.
 - `Strings` construction and destruction through staged hybrid export redirects.
 - `Random` initialization, lifecycle, reseeding, seed retrieval, and both global generation wrappers through staged hybrid export redirects.
-- `Log` initialization, exit cleanup, both constructors, destruction, reset, and state control through staged hybrid export redirects.
+- `Log` initialization, exit cleanup, both constructors, destruction, reset, all four decimal/hexadecimal output wrappers, and state control through staged hybrid export redirects.
 - `in_box` and `do_sound`.
 - `BasePop::set_loc`, `BasePop::set_string_font`, and `ButtonGroup::add`.
 - `ButtonGroup` construction, close, and initialization.
@@ -123,7 +127,7 @@ Other completed corrections and checks:
 - Heap lifecycle tests verify the exact `0x14` layout, direct destructor cleanup without shutdown delegation, all five fields, and complete object canaries. ABI checks separately verify byte-only writes preserve the three padding bytes.
 - Strings lifecycle tests verify the exact `0x18` layout, one Heap shutdown, preserved populated state, constructor return, and complete object canaries.
 - Random tests verify the exact four-byte layout, lifecycle writes, signed bound ordering including negative and wrapping ranges, exact LCG seed transitions, bit-identical floating results, clean x87 status, and all six global entry points.
-- Log tests verify the exact eight-byte layout, constructor/destructor writes, preserved initialized-constructor state, filename allocation and copying, reset mode, global placement construction, exit cleanup, state inversion, constructor returns, and complete object canaries.
+- Log tests verify the exact eight-byte layout, constructor/destructor writes, preserved initialized-constructor state, filename allocation and copying, reset mode, global placement construction, exit cleanup, state inversion, constructor returns, all four output formats, append arguments, open failure, every disable gate, and complete object canaries.
 - Random floating generation now transfers the synthesized IEEE single without the previous out-of-bounds eight-byte type pun.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
@@ -134,7 +138,7 @@ Other completed corrections and checks:
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID slots, duplicate and zero IDs, the redirect adapter, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
 - The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup, and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- Regenerated state after Text global lifecycle recovery is 5,095 priorities and 143 islands.
+- Regenerated state after Log wrapper recovery is 5,091 priorities and 143 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -156,7 +160,7 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Recover exported functions first by resolving the remaining ambiguous or missing mappings, while skipping blocked exports rather than stalling the queue.
+1. Continue the general recovery backlog now that all 462 DEF exports have been mapped or identified as source-only compatibility exports.
 2. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
@@ -170,7 +174,7 @@ Other completed corrections and checks:
 - `src/buffer.h`, `src/buffer.cpp`: recovered Buffer setters and lifecycle hooks.
 - `src/dialog.h`, `src/dialog.cpp`: recovered Dialog setters, bounded ID/position lookup, selection, and selected-ID retrieval.
 - `src/random.h`, `src/random.cpp`: verified Random layout, lifecycle, signed-range generation, and exact floating transfer.
-- `src/log.h`, `src/log.cpp`: verified Log layout, lifecycle, global initialization/cleanup, reset, and state control.
+- `src/log.h`, `src/log.cpp`: verified Log layout, lifecycle, global initialization/cleanup, reset, decimal/hexadecimal output wrappers, and state control.
 - `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance/seek accessors.
 - `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text constructors, destructor, open wrapper, get, and numeric-item source helpers.
 - `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
@@ -182,7 +186,7 @@ Other completed corrections and checks:
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,095 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,091 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.

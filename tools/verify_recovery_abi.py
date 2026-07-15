@@ -706,7 +706,13 @@ def main():
             "Log initializer": "__Z11log_loggingv",
             "Log exit cleanup": "__Z16log_logging_exitv",
             "Log reset wrapper": "__Z9log_resetv",
+            "Log decimal two-string wrapper": "__Z7log_sayPKcS0_iii",
+            "Log decimal one-string wrapper": "__Z7log_sayPKciii",
+            "Log hexadecimal two-string wrapper": "__Z11log_say_hexPKcS0_iii",
+            "Log hexadecimal one-string wrapper": "__Z11log_say_hexPKciii",
             "Log state wrapper": "__Z13log_set_statei",
+            "Log global object": "_Logging",
+            "Log global disable flag": "_IsLoggingDisabled",
         }
         for description, symbol in required_symbols.items():
             if symbol not in symbols:
@@ -730,6 +736,11 @@ def main():
             if not match:
                 fail(f"could not locate Log function in disassembly: {label}")
             return match.group("body")
+
+        def uses_log_data_offset(body, offset):
+            return re.search(
+                rf"\bmov\s+0x{offset:x},%e(?:ax|cx|dx|bx|si|di)\s*\n"
+                rf"\s*[0-9a-f]+:\s+dir32\s+\.data\b", body)
 
         constructor = log_exact_body("__ZN3LogC1Ev")
         for pattern in (
@@ -785,6 +796,36 @@ def main():
         reset_wrapper = log_body("log_reset()")
         if "Log::reset()" not in reset_wrapper and "env_open" not in reset_wrapper:
             fail("Log reset wrapper neither delegates nor resets the global log")
+
+        for description, label, member in (
+                ("decimal two-string", "log_say(char const*, char const*, int, int, int)", "Log::say("),
+                ("decimal one-string", "log_say(char const*, int, int, int)", "Log::say("),
+                ("hexadecimal two-string", "log_say_hex(char const*, char const*, int, int, int)", "Log::say_hex("),
+                ("hexadecimal one-string", "log_say_hex(char const*, int, int, int)", "Log::say_hex(")):
+            wrapper = log_body(label)
+            if not uses_log_data_offset(wrapper, 4):
+                fail(f"Log {description} wrapper does not use the global object")
+            delegates = member in wrapper
+            inlines_output = "env_open" in wrapper
+            if not delegates and not inlines_output:
+                fail(f"Log {description} wrapper neither delegates nor writes output")
+            if inlines_output and (not uses_log_data_offset(wrapper, 0)
+                                   or len(re.findall(
+                                       r"\bdir32\s+\.data\b", wrapper)) < 2
+                                   or not re.search(
+                                       r"\bmov\s+0x4\(%e(?:ax|cx|dx|bx|si|di)\),"
+                                       r"%e(?:ax|cx|dx|bx|si|di)", wrapper)):
+                fail(f"Log {description} inlined wrapper omits a disable guard")
+            if not re.search(r"\bret\b", wrapper) or re.search(
+                    r"\bret\s+\$", wrapper):
+                fail(f"Log {description} wrapper does not use a plain cdecl return")
+
+        for description, label in (
+                ("decimal", "Log::say(char const*, char const*, int, int, int)"),
+                ("hexadecimal", "Log::say_hex(char const*, char const*, int, int, int)")):
+            member_body = log_body(label)
+            if not uses_log_data_offset(member_body, 0):
+                fail(f"Log {description} member omits the global disable guard")
 
         state_wrapper = log_body("log_set_state(int)")
         if not re.search(r"\bsete\b", state_wrapper) or not re.search(
