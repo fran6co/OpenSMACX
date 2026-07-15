@@ -29,10 +29,14 @@ class DLLEXPORT Scroll : GraphicWin {
   Scroll() { ; }
   ~Scroll() { ; }
 
+  void set_border_color(int color);
+
  private:
+  friend class Win;
+
   uint32_t field_A14_;
   uint32_t field_A18_;
-  uint32_t border_color_;
+  int border_color_;
   uint32_t field_A20_;
   uint32_t field_A24_;
   uint32_t field_A28_;
@@ -41,15 +45,12 @@ class DLLEXPORT Scroll : GraphicWin {
   uint32_t field_A34_;
   uint32_t field_A38_;
   uint32_t field_A3C_;
-  uint32_t paging_;
+  int paging_;
   uint32_t field_A44_;
   uint32_t field_A48_;
-  uint32_t field_A4C_;
-  uint32_t field_A50_;
-  uint32_t bar_thickness1_;
-  uint32_t bar_thickness2_;
+  RECT thumb_rect_;
   uint32_t color_;
-  uint32_t bar_thickness3_;
+  int bar_thickness_;
   Buffer *buffer_;
   uint32_t bevel_thickness_;
   uint32_t bevel_upper_;
@@ -73,3 +74,9 @@ class DLLEXPORT Scroll : GraphicWin {
   uint32_t field_2144_;
   uint32_t field_2148_;
 };
+
+static_assert(sizeof(Scroll) == 0x214C,
+              "Scroll layout must match the legacy ABI");
+
+void __fastcall scroll_set_border_color_redirect(
+    Scroll *self, void *, int color);

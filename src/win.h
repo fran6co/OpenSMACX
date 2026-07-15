@@ -33,6 +33,10 @@ class DLLEXPORT Win {
   Win() { ; }
   ~Win() { ; }
 
+  int move(int x, int y);
+  void set_vert_paging(int paging);
+  void set_horz_paging(int paging);
+
  private:
   AutoSound auto_sound_;
   uint32_t field_98_;
@@ -72,14 +76,8 @@ class DLLEXPORT Win {
   uint32_t field_130_;
   uint32_t field_134_;
   uint32_t field_138_;
-  uint32_t field_13C_;
-  uint32_t field_140_;
-  uint32_t field_144_;
-  uint32_t field_148_;
-  uint32_t field_14C_;
-  uint32_t field_150_;
-  uint32_t field_154_;
-  uint32_t field_158_;
+  RECT outer_rect_;
+  RECT client_rect_;
   uint32_t field_15C_;
   uint32_t field_160_;
   uint32_t field_164_;
@@ -265,5 +263,11 @@ class DLLEXPORT Win {
   Scroll *scroll_vert_;
   Scroll *scroll_horz_;
 };
+
+static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
+
+int __fastcall win_move_redirect(Win *self, void *, int x, int y);
+void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging);
+void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging);
 
 DLLEXPORT BOOL __cdecl in_box(int x, int y, const RECT *rect);

@@ -230,6 +230,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
     set(OPENSMACX_RANDOM_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/random.cpp.obj")
+    set(OPENSMACX_SCROLL_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
     set(OPENSMACX_SPOT_OBJECT
@@ -242,6 +244,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
     set(OPENSMACX_TIME_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/time_recovery.cpp.obj")
+    set(OPENSMACX_WIN_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win.cpp.obj")
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
@@ -257,12 +261,14 @@ if(MINGW)
             --heap-object "${OPENSMACX_HEAP_OBJECT}"
             --log-object "${OPENSMACX_LOG_OBJECT}"
             --random-object "${OPENSMACX_RANDOM_OBJECT}"
+            --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --strings-object "${OPENSMACX_STRINGS_OBJECT}"
             --text-object "${OPENSMACX_TEXT_OBJECT}"
             --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
             --time-object "${OPENSMACX_TIME_OBJECT}"
+            --win-object "${OPENSMACX_WIN_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -282,6 +288,7 @@ if(BUILD_TESTING)
         src/font_recovery.cpp
         src/log.cpp
         src/random.cpp
+        src/scroll.cpp
         src/spot_recovery.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp
@@ -353,12 +360,14 @@ if(BUILD_TESTING)
                 --heap-object "${OPENSMACX_HEAP_OBJECT}"
                 --log-object "${OPENSMACX_LOG_OBJECT}"
                 --random-object "${OPENSMACX_RANDOM_OBJECT}"
+                --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --strings-object "${OPENSMACX_STRINGS_OBJECT}"
                 --text-object "${OPENSMACX_TEXT_OBJECT}"
                 --text-index-object "${OPENSMACX_TEXT_INDEX_OBJECT}"
                 --time-object "${OPENSMACX_TIME_OBJECT}"
+                --win-object "${OPENSMACX_WIN_OBJECT}"
         )
     endif()
 
@@ -685,6 +694,10 @@ if(MINGW)
                 --address 0x004E26B0
                 --address 0x00625750
                 --address 0x00625770
+                --address 0x005ED7D0
+                --address 0x005EE0F0
+                --address 0x005EE110
+                --address 0x00605B10
             DEPENDS
                 "${OPENSMACX_LEGACY_LEAF_EXE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
@@ -714,6 +727,8 @@ if(MINGW)
             tests/recovery_oracle_tests.cpp
             src/alphanet.cpp
             src/random.cpp
+            src/scroll.cpp
+            src/win.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)

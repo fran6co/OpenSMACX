@@ -30,12 +30,14 @@ def main():
     parser.add_argument("--heap-object")
     parser.add_argument("--log-object")
     parser.add_argument("--random-object")
+    parser.add_argument("--scroll-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--strings-object")
     parser.add_argument("--text-object")
     parser.add_argument("--text-index-object")
     parser.add_argument("--time-object")
+    parser.add_argument("--win-object")
     args = parser.parse_args()
 
     headers = run([args.objdump, "-f", args.object])
@@ -86,6 +88,73 @@ def main():
             fail(f"could not locate the AlphaNet {description} adapter in disassembly")
         if not re.search(r"\bret\s+\$0x4\b", adapter.group("body")):
             fail(f"AlphaNet {description} adapter does not pop its stack argument")
+
+    if args.win_object:
+        win_headers = run([args.objdump, "-f", args.win_object])
+        if "file format pe-i386" not in win_headers:
+            fail("Win object is not a 32-bit PE COFF object")
+        win_symbols = run([args.nm, "--defined-only", args.win_object])
+        required_win_symbols = {
+            "Win move": "__ZN3Win4moveEii",
+            "Win vertical paging": "__ZN3Win15set_vert_pagingEi",
+            "Win horizontal paging": "__ZN3Win15set_horz_pagingEi",
+            "Win move adapter": "@_Z17win_move_redirectP3WinPvii@16",
+            "Win vertical paging adapter":
+                "@_Z28win_set_vert_paging_redirectP3WinPvi@12",
+            "Win horizontal paging adapter":
+                "@_Z28win_set_horz_paging_redirectP3WinPvi@12",
+        }
+        for description, symbol in required_win_symbols.items():
+            if symbol not in win_symbols:
+                fail(f"missing required Win symbol: {description}")
+        win_disassembly = run([args.objdump, "-d", "-C", args.win_object])
+        for description, label, stack_bytes in (
+                ("Win move", "Win::move(int, int)", "8"),
+                ("Win vertical paging", "Win::set_vert_paging(int)", "4"),
+                ("Win horizontal paging", "Win::set_horz_paging(int)", "4"),
+                ("Win move adapter", "@_Z17win_move_redirectP3WinPvii@16", "8"),
+                ("Win vertical paging adapter",
+                 "@_Z28win_set_vert_paging_redirectP3WinPvi@12", "4"),
+                ("Win horizontal paging adapter",
+                 "@_Z28win_set_horz_paging_redirectP3WinPvi@12", "4")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                win_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(
+                r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            if not returns or any(value != stack_bytes for value in returns):
+                fail(f"{description} does not pop {stack_bytes} stack bytes")
+
+    if args.scroll_object:
+        scroll_headers = run([args.objdump, "-f", args.scroll_object])
+        if "file format pe-i386" not in scroll_headers:
+            fail("Scroll object is not a 32-bit PE COFF object")
+        scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
+        required_scroll_symbols = {
+            "Scroll border-color setter": "__ZN6Scroll16set_border_colorEi",
+            "Scroll border-color adapter":
+                "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12",
+        }
+        for description, symbol in required_scroll_symbols.items():
+            if symbol not in scroll_symbols:
+                fail(f"missing required Scroll symbol: {description}")
+        scroll_disassembly = run(
+            [args.objdump, "-d", "-C", args.scroll_object])
+        for description, label in (
+                ("Scroll border-color setter", "Scroll::set_border_color(int)"),
+                ("Scroll border-color adapter",
+                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                scroll_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(
+                r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            if not returns or any(value != "4" for value in returns):
+                fail(f"{description} does not pop its stack argument")
 
     if args.basepop_font_object:
         basepop_headers = run([args.objdump, "-f", args.basepop_font_object])
