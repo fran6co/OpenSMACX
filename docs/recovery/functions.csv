@@ -4972,8 +4972,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00616820,0x0061685C,60,.text,?MultimediaProc@Time@@QAEXIIKKK@Z,"void (__thiscall ?MultimediaProc@Time@@QAEXIIKKK@Z)(Time* this, UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, unsigned int)",0x00616820-0x0061685C,game,hidden;sp_ready;purged_ok,src/time.cpp:249,Complete,,,source_complete,,,,0,0
 0x00616860,0x00616867,7,.text,?set_modal@Time@@QAAXXZ,,0x00616860-0x00616867,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned method,,0,2
 0x00616870,0x0061687B,11,.text,?release_modal@Time@@QAAXXZ,,0x00616870-0x0061687B,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned method,,0,4
-0x00616880,0x0061688E,14,.text,?init_class@Time@@QAAHXZ,,0x00616880-0x0061688E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x00616890,0x00616897,7,.text,?close_class@Time@@QAAXXZ,,0x00616890-0x00616897,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,1
+0x00616880,0x0061688E,14,.text,?init_class@Time@@QAAHXZ,,0x00616880-0x0061688E,game,hidden;sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned initializer,,0,1
+0x00616890,0x00616897,7,.text,?close_class@Time@@QAAXXZ,,0x00616890-0x00616897,game,sp_ready;purged_ok,,,,,source_complete,,Staged hybrid export redirect calls the source-owned cleanup,,0,1
 0x006168A0,0x006168B6,22,.text,??__EStringTable@@YAXXZ,,0x006168A0-0x006168B6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x006168C0,0x006168CA,10,.text,??__FStringTable@@YAXXZ,,0x006168C0-0x006168CA,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x006168D0,0x006168E3,19,.text,??0Strings@@QAE@XZ,void (__thiscall ??0Strings@@QAE@XZ)(Strings* this),0x006168D0-0x006168E3,game,hidden;sp_ready;purged_ok,,,??0Strings@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,1,1

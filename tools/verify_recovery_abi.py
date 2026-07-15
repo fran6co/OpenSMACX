@@ -460,12 +460,19 @@ def main():
         headers = run([args.objdump, "-f", args.time_object])
         if "file format pe-i386" not in headers:
             fail("Time object is not a 32-bit PE COFF object")
+        section_headers = run([args.objdump, "-h", args.time_object])
+        if any(symbol in section_headers for symbol in (
+                "COMDAT __ZN4Time10init_classEv",
+                "COMDAT __ZN4Time11close_classEv")):
+            fail("Time class lifecycle wrappers remain inline COMDAT implementations")
         symbols = run([args.nm, "--defined-only", args.time_object])
         required_symbols = {
             "Time constructor": "__ZN4TimeC1Ev",
             "Time destructor": "__ZN4TimeD1Ev",
             "Time set-modal method": "__ZN4Time9set_modalEv",
             "Time release-modal method": "__ZN4Time13release_modalEv",
+            "Time class initializer": "__ZN4Time10init_classEv",
+            "Time class cleanup": "__ZN4Time11close_classEv",
         }
         for description, symbol in required_symbols.items():
             if symbol not in symbols:
@@ -516,6 +523,24 @@ def main():
         if "Time::TimeModal" not in release_modal or not re.search(
                 r"\bmovl\s+\$0x0,", release_modal):
             fail("Time release-modal method does not clear modal state")
+
+        initializer = time_body("Time::init_class()")
+        if "Time::TimeInitCount" not in initializer or not re.search(
+                r"\b(?:inc|add)\w*\b", initializer):
+            fail("Time class initializer does not increment the global count")
+        if not re.search(r"\b(?:xor\s+%eax,%eax|mov\s+\$0x0,%eax)", initializer):
+            fail("Time class initializer does not return zero")
+        if not re.search(r"\bret\b", initializer) or re.search(
+                r"\bret\s+\$", initializer):
+            fail("Time class initializer does not use a plain cdecl return")
+
+        cleanup = time_body("Time::close_class()")
+        if "Time::TimeInitCount" not in cleanup or not re.search(
+                r"\b(?:dec|sub)\w*\b", cleanup):
+            fail("Time class cleanup does not decrement the global count")
+        if not re.search(r"\bret\b", cleanup) or re.search(
+                r"\bret\s+\$", cleanup):
+            fail("Time class cleanup does not use a plain cdecl return")
 
     if args.filemap_object:
         headers = run([args.objdump, "-f", args.filemap_object])

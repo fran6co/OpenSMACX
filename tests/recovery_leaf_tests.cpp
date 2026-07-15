@@ -817,6 +817,19 @@ void test_time_lifecycle_and_modal() {
     timer->release_modal();
     expect(Time::TimeModal == nullptr);
     expect_storage_bytes(storage, expected, sizeof(storage));
+
+    Time::TimeInitCount = 0;
+    expect(Time::init_class() == 0);
+    expect(Time::TimeInitCount == 1);
+    Time::close_class();
+    expect(Time::TimeInitCount == 0);
+
+    Time::TimeInitCount = INT_MAX;
+    expect(Time::init_class() == 0);
+    expect(Time::TimeInitCount == INT_MIN);
+    Time::TimeInitCount = INT_MIN;
+    Time::close_class();
+    expect(Time::TimeInitCount == INT_MAX);
 }
 
 void test_filemap_lifecycle() {

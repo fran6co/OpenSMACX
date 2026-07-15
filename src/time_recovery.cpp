@@ -28,3 +28,12 @@ void Time::set_modal() {
 void Time::release_modal() {
     TimeModal = nullptr;
 }
+
+int __cdecl Time::init_class() {
+    TimeInitCount = static_cast<int>(static_cast<uint32_t>(TimeInitCount) + 1U);
+    return 0;
+}
+
+void __cdecl Time::close_class() {
+    TimeInitCount = static_cast<int>(static_cast<uint32_t>(TimeInitCount) - 1U);
+}

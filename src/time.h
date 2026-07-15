@@ -48,8 +48,8 @@ class DLLEXPORT Time {
   static void TimerProc(HWND hwnd, uint32_t msg, UINT_PTR id_timer, DWORD elapsed);
   static void MultimediaProc(uint32_t timer_id, uint32_t msg, DWORD_PTR dw_user, DWORD_PTR dw1,
                              DWORD_PTR dw2);
-  static int __cdecl init_class() { ++TimeInitCount; return 0; } // 00616880
-  static void __cdecl close_class() { --TimeInitCount; }         // 00616890
+  static int __cdecl init_class();  // 00616880
+  static void __cdecl close_class(); // 00616890
 
  private:
   int unk_tgl_; // some kind of toggle or type
