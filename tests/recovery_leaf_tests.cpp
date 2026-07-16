@@ -904,6 +904,77 @@ void test_scroll_border_color() {
     }
 }
 
+void test_scroll_sprite_setters() {
+    struct Geometry {
+        uint32_t width;
+        uint32_t stored_height;
+        bool horizontal;
+    };
+    const Geometry geometries[] = {
+        {100U, 0xFFFFFFECU, true},
+        {20U, 0xFFFFFF9CU, false},
+        {20U, 0xFFFFFFECU, false},
+        {1U, 1U, true},
+        {0x80000001U, 0x80000000U, true},
+        {0x80000000U, 0x80000000U, false},
+    };
+    Sprite *sprite_sets[][3] = {
+        {nullptr, nullptr, nullptr},
+        {reinterpret_cast<Sprite *>(0x10101010U),
+         reinterpret_cast<Sprite *>(0x20202020U),
+         reinterpret_cast<Sprite *>(0x30303030U)},
+        {reinterpret_cast<Sprite *>(0x45454545U),
+         reinterpret_cast<Sprite *>(0x56565656U),
+         reinterpret_cast<Sprite *>(0x45454545U)},
+    };
+
+    for (const Geometry &geometry : geometries) {
+        for (Sprite **sprites : sprite_sets) {
+            for (int right = 0; right < 2; ++right) {
+                for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                    alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+                    uint8_t expected[sizeof(storage)];
+                    seed_storage(storage, expected, sizeof(storage));
+                    write_at(storage, 16 + 0x4C4, geometry.width);
+                    write_at(storage, 16 + 0x4C8, geometry.stored_height);
+                    std::memcpy(expected, storage, sizeof(storage));
+
+                    const size_t primary_offset = right ? 0xA94 : 0xA7C;
+                    for (size_t index = 0; index < 3; ++index) {
+                        write_at(expected, 16 + primary_offset
+                            + index * sizeof(Sprite *), sprites[index]);
+                    }
+                    if (geometry.horizontal) {
+                        const size_t button_offset = right ? 0x2108 : 0x15BC;
+                        for (size_t index = 0; index < 3; ++index) {
+                            write_at(expected, 16 + button_offset
+                                + index * sizeof(Sprite *), sprites[index]);
+                        }
+                    }
+
+                    auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+                    if (right && use_adapter) {
+                        expect(scroll_set_sprite_right_redirect(
+                            scroll, nullptr, sprites[0], sprites[1], sprites[2])
+                            == sprites[0]);
+                    } else if (right) {
+                        scroll->set_sprite_right(
+                            sprites[0], sprites[1], sprites[2]);
+                    } else if (use_adapter) {
+                        expect(scroll_set_sprite_left_redirect(
+                            scroll, nullptr, sprites[0], sprites[1], sprites[2])
+                            == sprites[0]);
+                    } else {
+                        scroll->set_sprite_left(
+                            sprites[0], sprites[1], sprites[2]);
+                    }
+                    expect_storage_bytes(storage, expected, sizeof(storage));
+                }
+            }
+        }
+    }
+}
+
 struct ThumbRectCase {
     const char *name;
     uint32_t flags;
@@ -3336,6 +3407,7 @@ int main() {
     test_win_move();
     test_win_paging();
     test_scroll_border_color();
+    test_scroll_sprite_setters();
     test_scroll_compute_thumb_rect();
     test_pull_down_item_state();
     test_pull_down_get_selected();

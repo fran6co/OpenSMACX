@@ -35,6 +35,10 @@ class LegacyWin {
 class LegacyScroll {
  public:
     void set_border_color(int) asm("_opensmacx_legacy_00605B10");
+    Sprite *set_sprite_left(Sprite *, Sprite *, Sprite *)
+        asm("_opensmacx_legacy_00605BE0");
+    Sprite *set_sprite_right(Sprite *, Sprite *, Sprite *)
+        asm("_opensmacx_legacy_00605C30");
     RECT *compute_thumb_rect(RECT *) asm("_opensmacx_legacy_00606C50");
 };
 
@@ -629,6 +633,73 @@ int main() {
                     "Scroll border mismatch for color 0x%08x, thickness 0x%08x\n",
                     color, thickness);
                 ++failures;
+            }
+        }
+    }
+
+    struct SpriteSetterCase {
+        const char *name;
+        uint32_t width;
+        uint32_t stored_height;
+    };
+    const SpriteSetterCase sprite_setter_cases[] = {
+        {"horizontal", 100U, 0xFFFFFFECU},
+        {"vertical", 20U, 0xFFFFFF9CU},
+        {"equal dimensions", 20U, 0xFFFFFFECU},
+        {"signed comparison", 1U, 1U},
+        {"negated INT_MIN horizontal", 0x80000001U, 0x80000000U},
+        {"negated INT_MIN equal", 0x80000000U, 0x80000000U},
+    };
+    Sprite *sprite_sets[][3] = {
+        {nullptr, nullptr, nullptr},
+        {reinterpret_cast<Sprite *>(0x10101010U),
+         reinterpret_cast<Sprite *>(0x20202020U),
+         reinterpret_cast<Sprite *>(0x30303030U)},
+        {reinterpret_cast<Sprite *>(0x45454545U),
+         reinterpret_cast<Sprite *>(0x56565656U),
+         reinterpret_cast<Sprite *>(0x45454545U)},
+    };
+    for (const SpriteSetterCase &test : sprite_setter_cases) {
+        for (Sprite **sprites : sprite_sets) {
+            for (int right = 0; right < 2; ++right) {
+                ScrollFixture source_scroll{};
+                ScrollFixture legacy_scroll{};
+                initialize(source_scroll);
+                initialize(legacy_scroll);
+                write_object(source_scroll.storage, 0x4C4, test.width);
+                write_object(legacy_scroll.storage, 0x4C4, test.width);
+                write_object(source_scroll.storage, 0x4C8, test.stored_height);
+                write_object(legacy_scroll.storage, 0x4C8, test.stored_height);
+                Sprite *source_result = right
+                    ? scroll_set_sprite_right_redirect(
+                        source_scroll.source(), nullptr,
+                        sprites[0], sprites[1], sprites[2])
+                    : scroll_set_sprite_left_redirect(
+                        source_scroll.source(), nullptr,
+                        sprites[0], sprites[1], sprites[2]);
+                Sprite *legacy_result = right
+                    ? legacy_scroll.legacy()->set_sprite_right(
+                        sprites[0], sprites[1], sprites[2])
+                    : legacy_scroll.legacy()->set_sprite_left(
+                        sprites[0], sprites[1], sprites[2]);
+                if (source_result != sprites[0]
+                        || legacy_result != sprites[0]
+                        || std::memcmp(source_scroll.storage,
+                                       legacy_scroll.storage,
+                                       sizeof(source_scroll.storage)) != 0
+                        || !canaries_intact(
+                            source_scroll.storage, sizeof(Scroll))
+                        || !canaries_intact(
+                            legacy_scroll.storage, sizeof(Scroll))) {
+                    std::fprintf(stderr,
+                        "Scroll %s sprite setter mismatch for %s\n",
+                        right ? "right" : "left", test.name);
+                    report_difference(test.name, "object",
+                                      source_scroll.storage,
+                                      legacy_scroll.storage,
+                                      sizeof(source_scroll.storage));
+                    ++failures;
+                }
             }
         }
     }
