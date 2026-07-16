@@ -1,5 +1,7 @@
 #include "../src/stdafx.h"
 #include "../src/alphanet.h"
+#include "../src/menu.h"
+#include "../src/pulldown.h"
 #include "../src/random.h"
 #include "../src/scroll.h"
 #include "../src/win.h"
@@ -33,6 +35,23 @@ class LegacyWin {
 class LegacyScroll {
  public:
     void set_border_color(int) asm("_opensmacx_legacy_00605B10");
+};
+
+class LegacyMenu {
+ public:
+    MenuProc set_menu_proc(MenuProc) asm("_opensmacx_legacy_005FB820");
+    int id_to_index(int) asm("_opensmacx_legacy_005FB990");
+};
+
+class LegacyPullDown {
+ public:
+    int hide_item(int) asm("_opensmacx_legacy_005F8CB0");
+    int show_item(int) asm("_opensmacx_legacy_005F8D20");
+    int disable_item(int) asm("_opensmacx_legacy_005F8D90");
+    int enable_item(int) asm("_opensmacx_legacy_005F8DF0");
+    int check_item(int) asm("_opensmacx_legacy_005F9040");
+    int uncheck_item(int) asm("_opensmacx_legacy_005F90A0");
+    int get_selected() asm("_opensmacx_legacy_005F9F40");
 };
 
 namespace {
@@ -90,6 +109,39 @@ struct ScrollFixture {
     }
 };
 
+struct MenuFixture {
+    alignas(Menu) uint8_t storage[sizeof(Menu) + CanarySize * 2];
+
+    Menu *source() {
+        return reinterpret_cast<Menu *>(storage + CanarySize);
+    }
+
+    LegacyMenu *legacy() {
+        return reinterpret_cast<LegacyMenu *>(storage + CanarySize);
+    }
+};
+
+struct PullDownFixture {
+    alignas(PullDown) uint8_t storage[sizeof(PullDown) + CanarySize * 2];
+
+    PullDown *source() {
+        return reinterpret_cast<PullDown *>(storage + CanarySize);
+    }
+
+    LegacyPullDown *legacy() {
+        return reinterpret_cast<LegacyPullDown *>(storage + CanarySize);
+    }
+};
+
+enum class PullOperation {
+    Hide,
+    Show,
+    Disable,
+    Enable,
+    Check,
+    Uncheck,
+};
+
 void initialize_bytes(uint8_t *storage, size_t storage_size, size_t object_size) {
     std::memset(storage, 0xA5, storage_size);
     for (size_t offset = 0; offset < object_size; ++offset) {
@@ -104,6 +156,85 @@ void initialize(WinFixture &fixture) {
 void initialize(ScrollFixture &fixture) {
     initialize_bytes(fixture.storage, sizeof(fixture.storage), sizeof(Scroll));
 }
+
+void initialize(MenuFixture &fixture) {
+    initialize_bytes(fixture.storage, sizeof(fixture.storage), sizeof(Menu));
+}
+
+void initialize(PullDownFixture &fixture) {
+    initialize_bytes(fixture.storage, sizeof(fixture.storage), sizeof(PullDown));
+}
+
+void fill_menu_ids(MenuFixture &fixture) {
+    for (int index = 0; index < 15; ++index) {
+        const int id = 1000 + index;
+        std::memcpy(fixture.storage + CanarySize + 0xA38 + index * 0x14,
+                    &id, sizeof(id));
+    }
+}
+
+void fill_pull_ids(PullDownFixture &fixture) {
+    for (int index = 0; index < 64; ++index) {
+        const int id = 1000 + index;
+        std::memcpy(fixture.storage + CanarySize + 0xA20 + index * 0x14,
+                    &id, sizeof(id));
+    }
+}
+
+uint32_t pull_flags(PullOperation operation) {
+    const uint32_t preserved = 0xA5A50004U;
+    switch (operation) {
+      case PullOperation::Hide:
+        return preserved | 1U;
+      case PullOperation::Enable:
+        return preserved | 2U;
+      case PullOperation::Uncheck:
+        return preserved | 8U;
+      case PullOperation::Show:
+      case PullOperation::Disable:
+      case PullOperation::Check:
+        return preserved;
+    }
+    return preserved;
+}
+
+int call_source(PullDown *pull, PullOperation operation, int id) {
+    switch (operation) {
+      case PullOperation::Hide:
+        return pull->hide_item(id);
+      case PullOperation::Show:
+        return pull->show_item(id);
+      case PullOperation::Disable:
+        return pull->disable_item(id);
+      case PullOperation::Enable:
+        return pull->enable_item(id);
+      case PullOperation::Check:
+        return pull->check_item(id);
+      case PullOperation::Uncheck:
+        return pull->uncheck_item(id);
+    }
+    return 0;
+}
+
+int call_legacy(LegacyPullDown *pull, PullOperation operation, int id) {
+    switch (operation) {
+      case PullOperation::Hide:
+        return pull->hide_item(id);
+      case PullOperation::Show:
+        return pull->show_item(id);
+      case PullOperation::Disable:
+        return pull->disable_item(id);
+      case PullOperation::Enable:
+        return pull->enable_item(id);
+      case PullOperation::Check:
+        return pull->check_item(id);
+      case PullOperation::Uncheck:
+        return pull->uncheck_item(id);
+    }
+    return 0;
+}
+
+void __cdecl oracle_menu_proc(int) {}
 
 template <typename T>
 void write_object(uint8_t *storage, size_t offset, const T &value) {
@@ -459,6 +590,216 @@ int main() {
                 ++failures;
             }
         }
+    }
+
+    const PullOperation pull_operations[] = {
+        PullOperation::Hide,
+        PullOperation::Show,
+        PullOperation::Disable,
+        PullOperation::Enable,
+        PullOperation::Check,
+        PullOperation::Uncheck,
+    };
+    const int pull_indices[] = {0, 31, 63};
+    const int pull_ids[] = {INT_MIN, 17, INT_MAX};
+    for (PullOperation operation : pull_operations) {
+        for (int target_case = 0; target_case < 3; ++target_case) {
+            PullDownFixture source_pull{};
+            PullDownFixture legacy_pull{};
+            initialize(source_pull);
+            initialize(legacy_pull);
+            fill_pull_ids(source_pull);
+            fill_pull_ids(legacy_pull);
+            const int index = pull_indices[target_case];
+            const int id = pull_ids[target_case];
+            const size_t item_offset = 0xA18 + index * 0x14;
+            const uint32_t flags = pull_flags(operation);
+            const uint32_t visible = operation == PullOperation::Hide
+                ? 0U : operation == PullOperation::Show
+                ? 0x7FFFFFFFU : 0x13579BDFU;
+            for (PullDownFixture *pull : {&source_pull, &legacy_pull}) {
+                write_object(pull->storage, item_offset + 8, id);
+                write_object(pull->storage, item_offset + 0xC, flags);
+                write_object(pull->storage, 0xF20, INT_MIN);
+                write_object(pull->storage, 0xF2C, visible);
+            }
+            const int source_result = call_source(source_pull.source(), operation, id);
+            const int legacy_result = call_legacy(legacy_pull.legacy(), operation, id);
+            if (source_result != legacy_result
+                    || std::memcmp(source_pull.storage, legacy_pull.storage,
+                                   sizeof(source_pull.storage)) != 0
+                    || !canaries_intact(source_pull.storage, sizeof(PullDown))
+                    || !canaries_intact(legacy_pull.storage, sizeof(PullDown))) {
+                std::fprintf(stderr,
+                    "PullDown mutation mismatch for operation %d, index %d\n",
+                    static_cast<int>(operation), index);
+                ++failures;
+            }
+        }
+
+        PullDownFixture source_miss{};
+        PullDownFixture legacy_miss{};
+        initialize(source_miss);
+        initialize(legacy_miss);
+        fill_pull_ids(source_miss);
+        fill_pull_ids(legacy_miss);
+        const int sentinel = -1;
+        const int requested = 77;
+        for (PullDownFixture *pull : {&source_miss, &legacy_miss}) {
+            write_object(pull->storage, 0xA20 + 0x14, sentinel);
+            write_object(pull->storage, 0xA20 + 2 * 0x14, requested);
+        }
+        const int source_result = call_source(
+            source_miss.source(), operation, requested);
+        const int legacy_result = call_legacy(
+            legacy_miss.legacy(), operation, requested);
+        if (source_result != legacy_result
+                || std::memcmp(source_miss.storage, legacy_miss.storage,
+                               sizeof(source_miss.storage)) != 0) {
+            std::fprintf(stderr, "PullDown miss mismatch for operation %d\n",
+                         static_cast<int>(operation));
+            ++failures;
+        }
+    }
+
+    for (PullOperation operation : {PullOperation::Hide, PullOperation::Show}) {
+        PullDownFixture source_pull{};
+        PullDownFixture legacy_pull{};
+        initialize(source_pull);
+        initialize(legacy_pull);
+        fill_pull_ids(source_pull);
+        fill_pull_ids(legacy_pull);
+        const uint32_t flags = operation == PullOperation::Hide
+            ? 0xA5A50004U : 0xA5A50005U;
+        const uint32_t visible = 0x89ABCDEFU;
+        for (PullDownFixture *pull : {&source_pull, &legacy_pull}) {
+            write_object(pull->storage, 0xA24 + 2 * 0x14, flags);
+            write_object(pull->storage, 0xF2C, visible);
+        }
+        const int source_result = call_source(source_pull.source(), operation, 1002);
+        const int legacy_result = call_legacy(legacy_pull.legacy(), operation, 1002);
+        if (source_result != legacy_result
+                || std::memcmp(source_pull.storage, legacy_pull.storage,
+                               sizeof(source_pull.storage)) != 0) {
+            std::fprintf(stderr, "PullDown stable-state mismatch for operation %d\n",
+                         static_cast<int>(operation));
+            ++failures;
+        }
+    }
+
+    const int selected_indices[] = {
+        -1, 0, 31, 63, -2, 64, 65, INT_MIN, INT_MAX,
+    };
+    for (int selected : selected_indices) {
+        for (int disabled = 0; disabled < 2; ++disabled) {
+            if (selected == -1 && disabled) {
+                continue;
+            }
+            PullDownFixture source_pull{};
+            PullDownFixture legacy_pull{};
+            initialize(source_pull);
+            initialize(legacy_pull);
+            for (PullDownFixture *pull : {&source_pull, &legacy_pull}) {
+                write_object(pull->storage, 0xF28, selected);
+                if (selected != -1) {
+                    const uint32_t offset = 0xA24U
+                        + static_cast<uint32_t>(selected) * 0x14U;
+                    const uint32_t flags = disabled ? 2U : 0xCU;
+                    write_object(pull->storage, offset, flags);
+                }
+            }
+            PullDownFixture selected_source_before = source_pull;
+            PullDownFixture selected_legacy_before = legacy_pull;
+            const int source_result = source_pull.source()->get_selected();
+            const int legacy_result = legacy_pull.legacy()->get_selected();
+            if (source_result != legacy_result
+                    || std::memcmp(source_pull.storage,
+                                   selected_source_before.storage,
+                                   sizeof(source_pull.storage)) != 0
+                    || std::memcmp(legacy_pull.storage,
+                                   selected_legacy_before.storage,
+                                   sizeof(legacy_pull.storage)) != 0) {
+                std::fprintf(stderr,
+                    "PullDown selection mismatch for index %d, disabled %d\n",
+                    selected, disabled);
+                ++failures;
+            }
+        }
+    }
+
+    for (MenuProc proc : {static_cast<MenuProc>(nullptr), &oracle_menu_proc}) {
+        MenuFixture source_menu{};
+        MenuFixture legacy_menu{};
+        initialize(source_menu);
+        initialize(legacy_menu);
+        const MenuProc source_result = menu_set_menu_proc_redirect(
+            source_menu.source(), nullptr, proc);
+        const MenuProc legacy_result = legacy_menu.legacy()->set_menu_proc(proc);
+        if (source_result != legacy_result || source_result != proc
+                || std::memcmp(source_menu.storage, legacy_menu.storage,
+                               sizeof(source_menu.storage)) != 0
+                || !canaries_intact(source_menu.storage, sizeof(Menu))
+                || !canaries_intact(legacy_menu.storage, sizeof(Menu))) {
+            std::fprintf(stderr, "Menu callback mismatch\n");
+            ++failures;
+        }
+    }
+
+    struct MenuLookupFixture {
+        int index;
+        int id;
+    };
+    const MenuLookupFixture menu_lookups[] = {
+        {0, INT_MIN}, {7, 17}, {14, INT_MAX},
+    };
+    for (const MenuLookupFixture &lookup : menu_lookups) {
+        MenuFixture source_menu{};
+        MenuFixture legacy_menu{};
+        initialize(source_menu);
+        initialize(legacy_menu);
+        fill_menu_ids(source_menu);
+        fill_menu_ids(legacy_menu);
+        for (MenuFixture *menu : {&source_menu, &legacy_menu}) {
+            write_object(menu->storage, 0xA38 + lookup.index * 0x14, lookup.id);
+            write_object(menu->storage, 0xA18, INT_MIN);
+        }
+        MenuFixture lookup_source_before = source_menu;
+        MenuFixture lookup_legacy_before = legacy_menu;
+        const int source_result = source_menu.source()->id_to_index(lookup.id);
+        const int legacy_result = legacy_menu.legacy()->id_to_index(lookup.id);
+        if (source_result != legacy_result
+                || std::memcmp(source_menu.storage,
+                               lookup_source_before.storage,
+                               sizeof(source_menu.storage)) != 0
+                || std::memcmp(legacy_menu.storage,
+                               lookup_legacy_before.storage,
+                               sizeof(legacy_menu.storage)) != 0) {
+            std::fprintf(stderr, "Menu lookup mismatch for index %d\n", lookup.index);
+            ++failures;
+        }
+    }
+
+    MenuFixture source_menu_miss{};
+    MenuFixture legacy_menu_miss{};
+    initialize(source_menu_miss);
+    initialize(legacy_menu_miss);
+    fill_menu_ids(source_menu_miss);
+    fill_menu_ids(legacy_menu_miss);
+    const int menu_sentinel = -1;
+    const int menu_requested = 77;
+    for (MenuFixture *menu : {&source_menu_miss, &legacy_menu_miss}) {
+        write_object(menu->storage, 0xA38 + 2 * 0x14, menu_sentinel);
+        write_object(menu->storage, 0xA38 + 3 * 0x14, menu_requested);
+    }
+    const int source_menu_result = source_menu_miss.source()->id_to_index(
+        menu_requested);
+    const int legacy_menu_result = legacy_menu_miss.legacy()->id_to_index(
+        menu_requested);
+    if (source_menu_result != legacy_menu_result
+            || std::memcmp(source_menu_miss.storage, legacy_menu_miss.storage,
+                           sizeof(source_menu_miss.storage)) != 0) {
+        std::fprintf(stderr, "Menu sentinel lookup mismatch\n");
+        ++failures;
     }
 
     return failures == 0 ? 0 : 1;

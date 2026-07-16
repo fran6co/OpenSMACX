@@ -6,6 +6,8 @@
 #include "../src/filemap.h"
 #include "../src/font.h"
 #include "../src/log.h"
+#include "../src/menu.h"
+#include "../src/pulldown.h"
 #include "../src/random.h"
 #include "../src/scroll.h"
 #include "../src/spot.h"
@@ -899,6 +901,321 @@ void test_scroll_border_color() {
                 expect_storage_bytes(storage, expected, sizeof(storage));
             }
         }
+    }
+}
+
+enum class PullDownOperation {
+    Hide,
+    Show,
+    Disable,
+    Enable,
+    Check,
+    Uncheck,
+};
+
+int call_pull_down_mutator(
+        PullDown *pull_down, PullDownOperation operation, int id, bool adapter) {
+    switch (operation) {
+      case PullDownOperation::Hide:
+        return adapter
+            ? pull_down_hide_item_redirect(pull_down, nullptr, id)
+            : pull_down->hide_item(id);
+      case PullDownOperation::Show:
+        return adapter
+            ? pull_down_show_item_redirect(pull_down, nullptr, id)
+            : pull_down->show_item(id);
+      case PullDownOperation::Disable:
+        return adapter
+            ? pull_down_disable_item_redirect(pull_down, nullptr, id)
+            : pull_down->disable_item(id);
+      case PullDownOperation::Enable:
+        return adapter
+            ? pull_down_enable_item_redirect(pull_down, nullptr, id)
+            : pull_down->enable_item(id);
+      case PullDownOperation::Check:
+        return adapter
+            ? pull_down_check_item_redirect(pull_down, nullptr, id)
+            : pull_down->check_item(id);
+      case PullDownOperation::Uncheck:
+        return adapter
+            ? pull_down_uncheck_item_redirect(pull_down, nullptr, id)
+            : pull_down->uncheck_item(id);
+    }
+    return -1;
+}
+
+uint32_t initial_pull_down_flags(PullDownOperation operation) {
+    const uint32_t preserved = 0xA5A50004U;
+    switch (operation) {
+      case PullDownOperation::Hide:
+      case PullDownOperation::Enable:
+      case PullDownOperation::Uncheck:
+        return preserved | (operation == PullDownOperation::Hide ? 1U
+            : operation == PullDownOperation::Enable ? 2U : 8U);
+      case PullDownOperation::Show:
+      case PullDownOperation::Disable:
+      case PullDownOperation::Check:
+        return preserved;
+    }
+    return preserved;
+}
+
+uint32_t expected_pull_down_flags(
+        PullDownOperation operation, uint32_t flags) {
+    switch (operation) {
+      case PullDownOperation::Hide:
+        return flags & ~1U;
+      case PullDownOperation::Show:
+        return flags | 1U;
+      case PullDownOperation::Disable:
+        return flags | 2U;
+      case PullDownOperation::Enable:
+        return flags & ~2U;
+      case PullDownOperation::Check:
+        return flags | 8U;
+      case PullDownOperation::Uncheck:
+        return flags & ~8U;
+    }
+    return flags;
+}
+
+void fill_pull_down_ids(uint8_t *storage) {
+    for (int index = 0; index < 64; ++index) {
+        const int id = 1000 + index;
+        write_at(storage, 16 + 0xA20 + static_cast<size_t>(index) * 0x14, id);
+    }
+}
+
+void test_pull_down_item_state() {
+    const PullDownOperation operations[] = {
+        PullDownOperation::Hide,
+        PullDownOperation::Show,
+        PullDownOperation::Disable,
+        PullDownOperation::Enable,
+        PullDownOperation::Check,
+        PullDownOperation::Uncheck,
+    };
+    const int target_indices[] = {0, 31, 63};
+    const int target_ids[] = {INT_MIN, 17, INT_MAX};
+    for (PullDownOperation operation : operations) {
+        for (int target_case = 0; target_case < 3; ++target_case) {
+            for (int adapter = 0; adapter < 2; ++adapter) {
+                alignas(PullDown) uint8_t storage[sizeof(PullDown) + 32];
+                uint8_t expected[sizeof(storage)];
+                seed_storage(storage, expected, sizeof(storage));
+                fill_pull_down_ids(storage);
+                const int target_index = target_indices[target_case];
+                const int target_id = target_ids[target_case];
+                const size_t item_offset = 0xA18
+                    + static_cast<size_t>(target_index) * 0x14;
+                write_at(storage, 16 + item_offset + 8, target_id);
+                const uint32_t flags = initial_pull_down_flags(operation);
+                write_at(storage, 16 + item_offset + 0xC, flags);
+                const int ignored_count = INT_MIN;
+                write_at(storage, 16 + 0xF20, ignored_count);
+                const uint32_t visible_bits = operation == PullDownOperation::Hide
+                    ? 0U : operation == PullDownOperation::Show
+                    ? 0x7FFFFFFFU : 0x13579BDFU;
+                write_at(storage, 16 + 0xF2C, visible_bits);
+                storage[16 + 0xF34] = 0x7E;
+                std::memcpy(expected, storage, sizeof(storage));
+                write_at(expected, 16 + item_offset + 0xC,
+                         expected_pull_down_flags(operation, flags));
+                if (operation == PullDownOperation::Hide) {
+                    const uint32_t decremented = visible_bits - 1U;
+                    write_at(expected, 16 + 0xF2C, decremented);
+                } else if (operation == PullDownOperation::Show) {
+                    const uint32_t incremented = visible_bits + 1U;
+                    write_at(expected, 16 + 0xF2C, incremented);
+                }
+                expected[16 + 0xF34] = 1;
+
+                auto *pull_down = reinterpret_cast<PullDown *>(storage + 16);
+                expect(call_pull_down_mutator(
+                           pull_down, operation, target_id, adapter != 0) == 0);
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+
+    for (PullDownOperation operation : operations) {
+        for (int miss_case = 0; miss_case < 3; ++miss_case) {
+            alignas(PullDown) uint8_t storage[sizeof(PullDown) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            fill_pull_down_ids(storage);
+            int requested_id = 77;
+            if (miss_case == 0) {
+                const int sentinel = -1;
+                write_at(storage, 16 + 0xA20 + 0x14, sentinel);
+                write_at(storage, 16 + 0xA20 + 2 * 0x14, requested_id);
+            } else if (miss_case == 1) {
+                requested_id = -1;
+            } else {
+                requested_id = 999;
+            }
+            const int ignored_count = INT_MAX;
+            write_at(storage, 16 + 0xF20, ignored_count);
+            std::memcpy(expected, storage, sizeof(storage));
+            auto *pull_down = reinterpret_cast<PullDown *>(storage + 16);
+            expect(call_pull_down_mutator(
+                       pull_down, operation, requested_id, false) == 11);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    for (PullDownOperation operation : {
+            PullDownOperation::Hide, PullDownOperation::Show}) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            alignas(PullDown) uint8_t storage[sizeof(PullDown) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            fill_pull_down_ids(storage);
+            const int id = 1002;
+            const uint32_t flags = operation == PullDownOperation::Hide
+                ? 0xA5A50004U : 0xA5A50005U;
+            write_at(storage, 16 + 0xA24 + 2 * 0x14, flags);
+            const uint32_t visible = 0x89ABCDEFU;
+            write_at(storage, 16 + 0xF2C, visible);
+            std::memcpy(expected, storage, sizeof(storage));
+            expected[16 + 0xF34] = 1;
+            auto *pull_down = reinterpret_cast<PullDown *>(storage + 16);
+            expect(call_pull_down_mutator(
+                       pull_down, operation, id, adapter != 0) == 0);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    alignas(PullDown) uint8_t duplicate_storage[sizeof(PullDown) + 32];
+    uint8_t duplicate_expected[sizeof(duplicate_storage)];
+    seed_storage(duplicate_storage, duplicate_expected, sizeof(duplicate_storage));
+    fill_pull_down_ids(duplicate_storage);
+    const int duplicate_id = 12345;
+    write_at(duplicate_storage, 16 + 0xA20 + 1 * 0x14, duplicate_id);
+    write_at(duplicate_storage, 16 + 0xA20 + 40 * 0x14, duplicate_id);
+    const uint32_t duplicate_flags = 0x40U;
+    write_at(duplicate_storage, 16 + 0xA24 + 1 * 0x14, duplicate_flags);
+    write_at(duplicate_storage, 16 + 0xA24 + 40 * 0x14, duplicate_flags);
+    std::memcpy(duplicate_expected, duplicate_storage, sizeof(duplicate_storage));
+    const uint32_t disabled_flags = duplicate_flags | 2U;
+    write_at(duplicate_expected, 16 + 0xA24 + 1 * 0x14, disabled_flags);
+    duplicate_expected[16 + 0xF34] = 1;
+    auto *duplicate_pull_down = reinterpret_cast<PullDown *>(duplicate_storage + 16);
+    expect(pull_down_disable_item_redirect(
+               duplicate_pull_down, nullptr, duplicate_id) == 0);
+    expect_storage_bytes(
+        duplicate_storage, duplicate_expected, sizeof(duplicate_storage));
+}
+
+void test_pull_down_get_selected() {
+    struct SelectionCase {
+        int index;
+        bool disabled;
+    };
+    const SelectionCase cases[] = {
+        {-1, false}, {0, false}, {31, true}, {63, false},
+        {-2, false}, {64, true}, {65, false}, {INT_MIN, true}, {INT_MAX, false},
+    };
+    for (const SelectionCase &fixture : cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            alignas(PullDown) uint8_t storage[sizeof(PullDown) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0xF28, fixture.index);
+            if (fixture.index != -1) {
+                const uint32_t offset = 0xA24U
+                    + static_cast<uint32_t>(fixture.index) * 0x14U;
+                const uint32_t flags = fixture.disabled ? 0xA5A50002U : 0xA5A5000CU;
+                write_at(storage, 16 + offset, flags);
+            }
+            std::memcpy(expected, storage, sizeof(storage));
+            auto *pull_down = reinterpret_cast<PullDown *>(storage + 16);
+            const int result = adapter
+                ? pull_down_get_selected_redirect(pull_down, nullptr)
+                : pull_down->get_selected();
+            expect(result == (fixture.index == -1 || fixture.disabled
+                              ? -1 : fixture.index));
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
+void __cdecl menu_proc_fixture(int) {}
+
+void test_menu_accessors() {
+    for (MenuProc proc : {static_cast<MenuProc>(nullptr), &menu_proc_fixture}) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(expected, 16 + 0xA14, proc);
+            auto *menu = reinterpret_cast<Menu *>(storage + 16);
+            if (adapter) {
+                expect(menu_set_menu_proc_redirect(menu, nullptr, proc) == proc);
+            } else {
+                menu->set_menu_proc(proc);
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    struct LookupCase {
+        int target_index;
+        int id;
+    };
+    const LookupCase lookup_cases[] = {
+        {0, INT_MIN}, {7, 17}, {14, INT_MAX},
+    };
+    for (const LookupCase &fixture : lookup_cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            for (int index = 0; index < 15; ++index) {
+                const int id = 1000 + index;
+                write_at(storage, 16 + 0xA38 + index * 0x14, id);
+            }
+            write_at(storage, 16 + 0xA38 + fixture.target_index * 0x14,
+                     fixture.id);
+            const int ignored_count = INT_MIN;
+            write_at(storage, 16 + 0xA18, ignored_count);
+            std::memcpy(expected, storage, sizeof(storage));
+            auto *menu = reinterpret_cast<Menu *>(storage + 16);
+            const int result = adapter
+                ? menu_id_to_index_redirect(menu, nullptr, fixture.id)
+                : menu->id_to_index(fixture.id);
+            expect(result == fixture.target_index);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    for (int miss_case = 0; miss_case < 4; ++miss_case) {
+        alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        for (int index = 0; index < 15; ++index) {
+            const int id = 1000 + index;
+            write_at(storage, 16 + 0xA38 + index * 0x14, id);
+        }
+        int requested = 77;
+        if (miss_case == 0) {
+            const int sentinel = -1;
+            write_at(storage, 16 + 0xA38 + 2 * 0x14, sentinel);
+            write_at(storage, 16 + 0xA38 + 3 * 0x14, requested);
+        } else if (miss_case == 1) {
+            requested = -1;
+        } else if (miss_case == 2) {
+            write_at(storage, 16 + 0xA38 + 1 * 0x14, requested);
+            write_at(storage, 16 + 0xA38 + 8 * 0x14, requested);
+        } else {
+            requested = 999;
+        }
+        std::memcpy(expected, storage, sizeof(storage));
+        auto *menu = reinterpret_cast<Menu *>(storage + 16);
+        const int result = menu->id_to_index(requested);
+        const int expected_result = miss_case == 2 ? 1 : -1;
+        expect(result == expected_result);
+        expect_storage_bytes(storage, expected, sizeof(storage));
     }
 }
 
@@ -2808,6 +3125,9 @@ int main() {
     test_win_move();
     test_win_paging();
     test_scroll_border_color();
+    test_pull_down_item_state();
+    test_pull_down_get_selected();
+    test_menu_accessors();
     test_text_get_and_item_number();
     test_text_string_helpers();
     test_text_constructors();

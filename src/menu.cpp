@@ -17,3 +17,39 @@
  */
 #include "stdafx.h"
 #include "menu.h"
+
+/*
+Purpose: Set the callback invoked for menu events.
+Original Offset: 005FB820
+Status: Complete
+*/
+void Menu::set_menu_proc(MenuProc proc) {
+    proc_ = proc;
+}
+
+/*
+Purpose: Find the first menu entry with the requested ID.
+Original Offset: 005FB990
+Status: Complete
+*/
+int Menu::id_to_index(int id) {
+    for (int index = 0; index < 15; ++index) {
+        if (entries_[index].id == -1) {
+            break;
+        }
+        if (entries_[index].id == id) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+MenuProc __fastcall menu_set_menu_proc_redirect(
+        Menu *self, void *, MenuProc proc) {
+    self->set_menu_proc(proc);
+    return proc;
+}
+
+int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id) {
+    return self->id_to_index(id);
+}

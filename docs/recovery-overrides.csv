@@ -23,10 +23,19 @@ address,recovery_state,priority,notes
 0x005ED7D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005EE0F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005EE110,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F8CB0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F8D20,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F8D90,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F8DF0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F9040,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F90A0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F9F40,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FA7E0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FA820,source_complete,,Staged hybrid export redirect calls the source-owned method
 0x005FA860,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x005FA870,source_complete,,Staged hybrid export redirect calls the source-owned destructor
+0x005FB820,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005FB990,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FD400,source_complete,,Staged hybrid export redirect calls the source-owned initializer
 0x005FD460,source_complete,,Staged hybrid export redirect calls the source-owned exit cleanup
 0x005FD4C0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper

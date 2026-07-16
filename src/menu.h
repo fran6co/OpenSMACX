@@ -19,6 +19,24 @@
 #include "graphicwin.h"
 #include "spot.h"
 
+class PullDown;
+
+typedef void (__cdecl *MenuProc)(int);
+
+struct MenuEntry {
+  int id;
+  char *text;
+  uint8_t flags;
+  uint8_t padding[3];
+  char *mnemonic;
+  PullDown *pull_down;
+};
+
+static_assert(sizeof(MenuEntry) == 0x14,
+              "MenuEntry layout must match the legacy ABI");
+static_assert(offsetof(MenuEntry, flags) == 0x8,
+              "MenuEntry flags offset must match the legacy ABI");
+
  /*
   * Menu class
   */
@@ -27,13 +45,22 @@ class DLLEXPORT Menu : GraphicWin {
   Menu() { ; }
   ~Menu() { ; }
 
+  void set_menu_proc(MenuProc proc);
+  int id_to_index(int id);
+
  private:
-  uint32_t proc_;
-  uint32_t field_A18_;
+  MenuProc proc_;
+  int count_;
   uint32_t field_A1C_;
   uint32_t field_A20_;
   uint32_t field_A24_;
   uint32_t field_A28_;
   Spot spot_;
-  uint32_t array_[15][5];
+  MenuEntry entries_[15];
 };
+
+static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
+
+MenuProc __fastcall menu_set_menu_proc_redirect(
+    Menu *self, void *, MenuProc proc);
+int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id);

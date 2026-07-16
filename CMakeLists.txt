@@ -143,6 +143,7 @@ set(OPENSMACX_SOURCES
     src/palette.cpp
     src/path.cpp
     src/probe.cpp
+    src/pulldown.cpp
     src/random.cpp
     src/scroll.cpp
     src/scenario.cpp
@@ -228,6 +229,10 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
     set(OPENSMACX_LOG_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
+    set(OPENSMACX_MENU_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/menu.cpp.obj")
+    set(OPENSMACX_PULLDOWN_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/pulldown.cpp.obj")
     set(OPENSMACX_RANDOM_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/random.cpp.obj")
     set(OPENSMACX_SCROLL_OBJECT
@@ -260,6 +265,8 @@ if(MINGW)
             --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
             --heap-object "${OPENSMACX_HEAP_OBJECT}"
             --log-object "${OPENSMACX_LOG_OBJECT}"
+            --menu-object "${OPENSMACX_MENU_OBJECT}"
+            --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
             --random-object "${OPENSMACX_RANDOM_OBJECT}"
             --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
@@ -287,6 +294,8 @@ if(BUILD_TESTING)
         src/filemap_recovery.cpp
         src/font_recovery.cpp
         src/log.cpp
+        src/menu.cpp
+        src/pulldown.cpp
         src/random.cpp
         src/scroll.cpp
         src/spot_recovery.cpp
@@ -359,6 +368,8 @@ if(BUILD_TESTING)
                 --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
                 --heap-object "${OPENSMACX_HEAP_OBJECT}"
                 --log-object "${OPENSMACX_LOG_OBJECT}"
+                --menu-object "${OPENSMACX_MENU_OBJECT}"
+                --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
                 --random-object "${OPENSMACX_RANDOM_OBJECT}"
                 --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
@@ -698,6 +709,15 @@ if(MINGW)
                 --address 0x005EE0F0
                 --address 0x005EE110
                 --address 0x00605B10
+                --address 0x005F8CB0
+                --address 0x005F8D20
+                --address 0x005F8D90
+                --address 0x005F8DF0
+                --address 0x005F9040
+                --address 0x005F90A0
+                --address 0x005F9F40
+                --address 0x005FB820
+                --address 0x005FB990
             DEPENDS
                 "${OPENSMACX_LEGACY_LEAF_EXE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
@@ -726,6 +746,8 @@ if(MINGW)
         add_executable(recovery-oracle-tests EXCLUDE_FROM_ALL
             tests/recovery_oracle_tests.cpp
             src/alphanet.cpp
+            src/menu.cpp
+            src/pulldown.cpp
             src/random.cpp
             src/scroll.cpp
             src/win.cpp
