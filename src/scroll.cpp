@@ -37,6 +37,35 @@ void write_bits(void *object, size_t offset, uint32_t value) {
     memcpy(static_cast<uint8_t *>(object) + offset, &value, sizeof(value));
 }
 
+void write_sprite(void *object, size_t offset, Sprite *sprite) {
+    static_assert(sizeof(uintptr_t) == sizeof(uint32_t),
+                  "Scroll sprite pointers require the 32-bit legacy ABI");
+    const uintptr_t bits = reinterpret_cast<uintptr_t>(sprite);
+    *reinterpret_cast<volatile uintptr_t *>(
+        static_cast<uint8_t *>(object) + offset) = bits;
+}
+
+uint32_t read_volatile_bits(const void *object, size_t offset) {
+    return *reinterpret_cast<const volatile uint32_t *>(
+        static_cast<const uint8_t *>(object) + offset);
+}
+
+void set_sprite_triplet(void *object, size_t primary_offset,
+                        size_t button_offset, Sprite *sprite1,
+                        Sprite *sprite2, Sprite *sprite3) {
+    write_sprite(object, primary_offset, sprite1);
+    write_sprite(object, primary_offset + 4, sprite2);
+    write_sprite(object, primary_offset + 8, sprite3);
+
+    const uint32_t height = 0U - read_volatile_bits(object, 0x4C8);
+    const uint32_t width = read_volatile_bits(object, 0x4C4);
+    if (long_from_bits(width) > long_from_bits(height)) {
+        write_sprite(object, button_offset, sprite1);
+        write_sprite(object, button_offset + 4, sprite2);
+        write_sprite(object, button_offset + 8, sprite3);
+    }
+}
+
 uint32_t arithmetic_shift_right_one(uint32_t value) {
     return (value >> 1U) | (value & 0x80000000U);
 }
@@ -92,6 +121,26 @@ void Scroll::set_border_color(int color) {
     thumb_rect_.top = inset;
     thumb_rect_.right = extent;
     thumb_rect_.bottom = extent;
+}
+
+/*
+Purpose: Set the left scrollbar sprites and horizontal button sprites.
+Original Offset: 00605BE0
+Status: Complete
+*/
+void Scroll::set_sprite_left(
+        Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    set_sprite_triplet(this, 0xA7C, 0x15BC, sprite1, sprite2, sprite3);
+}
+
+/*
+Purpose: Set the right scrollbar sprites and horizontal button sprites.
+Original Offset: 00605C30
+Status: Complete
+*/
+void Scroll::set_sprite_right(
+        Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    set_sprite_triplet(this, 0xA94, 0x2108, sprite1, sprite2, sprite3);
 }
 
 /*
@@ -196,6 +245,18 @@ void Scroll::compute_thumb_rect(RECT *rect) {
 void __fastcall scroll_set_border_color_redirect(
         Scroll *self, void *, int color) {
     self->set_border_color(color);
+}
+
+Sprite *__fastcall scroll_set_sprite_left_redirect(
+        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    self->set_sprite_left(sprite1, sprite2, sprite3);
+    return sprite1;
+}
+
+Sprite *__fastcall scroll_set_sprite_right_redirect(
+        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    self->set_sprite_right(sprite1, sprite2, sprite3);
+    return sprite1;
 }
 
 RECT *__fastcall scroll_compute_thumb_rect_redirect(

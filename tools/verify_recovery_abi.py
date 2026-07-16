@@ -136,10 +136,18 @@ def main():
         scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
         required_scroll_symbols = {
             "Scroll border-color setter": "__ZN6Scroll16set_border_colorEi",
+            "Scroll left-sprite setter":
+                "__ZN6Scroll15set_sprite_leftEP6SpriteS1_S1_",
+            "Scroll right-sprite setter":
+                "__ZN6Scroll16set_sprite_rightEP6SpriteS1_S1_",
             "Scroll thumb computation":
                 "__ZN6Scroll18compute_thumb_rectEP7tagRECT",
             "Scroll border-color adapter":
                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12",
+            "Scroll left-sprite adapter":
+                "@_Z31scroll_set_sprite_left_redirectP6ScrollPvP6SpriteS3_S3_@20",
+            "Scroll right-sprite adapter":
+                "@_Z32scroll_set_sprite_right_redirectP6ScrollPvP6SpriteS3_S3_@20",
             "Scroll thumb-computation adapter":
                 "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12",
         }
@@ -148,23 +156,66 @@ def main():
                 fail(f"missing required Scroll symbol: {description}")
         scroll_disassembly = run(
             [args.objdump, "-d", "-C", args.scroll_object])
-        for description, label in (
-                ("Scroll border-color setter", "Scroll::set_border_color(int)"),
+        scroll_bodies = {}
+        for description, label, stack_bytes in (
+                ("Scroll border-color setter", "Scroll::set_border_color(int)", "4"),
+                ("Scroll left-sprite setter",
+                 "Scroll::set_sprite_left(Sprite*, Sprite*, Sprite*)", "c"),
+                ("Scroll right-sprite setter",
+                 "Scroll::set_sprite_right(Sprite*, Sprite*, Sprite*)", "c"),
                 ("Scroll border-color adapter",
-                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12"),
+                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12", "4"),
+                ("Scroll left-sprite adapter",
+                 "@_Z31scroll_set_sprite_left_redirectP6ScrollPvP6SpriteS3_S3_@20",
+                 "c"),
+                ("Scroll right-sprite adapter",
+                 "@_Z32scroll_set_sprite_right_redirectP6ScrollPvP6SpriteS3_S3_@20",
+                 "c"),
                 ("Scroll thumb computation",
-                 "Scroll::compute_thumb_rect(tagRECT*)"),
+                 "Scroll::compute_thumb_rect(tagRECT*)", "4"),
                 ("Scroll thumb-computation adapter",
-                 "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12")):
+                 "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12",
+                 "4")):
             match = re.search(
                 rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
                 scroll_disassembly, re.DOTALL)
             if not match:
                 fail(f"could not locate {description} in disassembly")
+            scroll_bodies[label] = match.group("body")
             returns = re.findall(
                 r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
-            if not returns or any(value != "4" for value in returns):
-                fail(f"{description} does not pop its stack argument")
+            if not returns or any(value != stack_bytes for value in returns):
+                fail(f"{description} does not pop {stack_bytes} stack bytes")
+
+        sprite_setters = (
+            ("left", "Scroll::set_sprite_left(Sprite*, Sprite*, Sprite*)",
+             "@_Z31scroll_set_sprite_left_redirectP6ScrollPvP6SpriteS3_S3_@20",
+             (0xA7C, 0xA80, 0xA84, 0x4C8, 0x4C4,
+              0x15BC, 0x15C0, 0x15C4)),
+            ("right", "Scroll::set_sprite_right(Sprite*, Sprite*, Sprite*)",
+             "@_Z32scroll_set_sprite_right_redirectP6ScrollPvP6SpriteS3_S3_@20",
+             (0xA94, 0xA98, 0xA9C, 0x4C8, 0x4C4,
+              0x2108, 0x210C, 0x2110)),
+        )
+        for side, method_label, adapter_label, offsets in sprite_setters:
+            for description, body in (
+                    (f"Scroll {side}-sprite setter", scroll_bodies[method_label]),
+                    (f"Scroll {side}-sprite adapter", scroll_bodies[adapter_label])):
+                offset_matches = [
+                    re.search(rf"\b0x{offset:x}\b", body) for offset in offsets]
+                if all(offset_matches):
+                    positions = [
+                        match.start() for match in offset_matches if match]
+                    if positions != sorted(positions):
+                        fail(f"{description} does not preserve legacy access order")
+                elif not re.search(
+                        rf"\bcall\b.*<{re.escape(method_label)}>", body) \
+                        and "adapter" in description:
+                    fail(f"{description} lacks ordered sprite stores or method call")
+                elif "setter" in description and not re.search(
+                        r"\bcall\b.*<\(anonymous namespace\)::set_sprite_triplet",
+                        body):
+                    fail(f"{description} lacks ordered sprite stores or helper call")
         thumb_adapter = re.search(
             r"<@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12>:"
             r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",

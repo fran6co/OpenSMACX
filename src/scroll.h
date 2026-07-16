@@ -30,6 +30,8 @@ class DLLEXPORT Scroll : GraphicWin {
   ~Scroll() { ; }
 
   void set_border_color(int color);
+  void set_sprite_left(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
+  void set_sprite_right(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
   void compute_thumb_rect(RECT *rect);
 
  private:
@@ -81,5 +83,9 @@ static_assert(sizeof(Scroll) == 0x214C,
 
 void __fastcall scroll_set_border_color_redirect(
     Scroll *self, void *, int color);
+Sprite *__fastcall scroll_set_sprite_left_redirect(
+    Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
+Sprite *__fastcall scroll_set_sprite_right_redirect(
+    Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
 RECT *__fastcall scroll_compute_thumb_rect_redirect(
     Scroll *self, void *, RECT *rect);

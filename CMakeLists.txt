@@ -710,6 +710,8 @@ if(MINGW)
                 --address 0x005EE0F0
                 --address 0x005EE110
                 --address 0x00605B10
+                --address 0x00605BE0
+                --address 0x00605C30
                 --address 0x00606C50
                 --address 0x005F8CB0
                 --address 0x005F8D20
