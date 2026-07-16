@@ -42,6 +42,9 @@ class LegacyScroll {
     RECT *compute_thumb_rect(RECT *) asm("_opensmacx_legacy_00606C50");
 };
 
+RECT *__cdecl legacy_expand_rect(RECT *, int, int)
+    asm("_opensmacx_legacy_00606F00");
+
 class LegacyMenu {
  public:
     MenuProc set_menu_proc(MenuProc) asm("_opensmacx_legacy_005FB820");
@@ -701,6 +704,52 @@ int main() {
                     ++failures;
                 }
             }
+        }
+    }
+
+    struct ExpandRectCase {
+        const char *name;
+        uint32_t rect[4];
+        uint32_t horizontal;
+        uint32_t vertical;
+    };
+    const ExpandRectCase expand_rect_cases[] = {
+        {"zero", {0U, 0U, 0U, 0U}, 0U, 0U},
+        {"positive", {10U, 20U, 30U, 40U}, 3U, 4U},
+        {"negative", {10U, 20U, 30U, 40U},
+         0xFFFFFFFFU, 0xFFFFFFFEU},
+        {"signed extremes",
+         {0x80000000U, 0x7FFFFFFFU, 0xFFFFFFFFU, 0U},
+         0x80000000U, 0x7FFFFFFFU},
+        {"wrapping", {0U, 0xFFFFFFFFU, 0x7FFFFFFFU, 0x80000000U},
+         0x7FFFFFFFU, 0x80000000U},
+    };
+    for (const ExpandRectCase &test : expand_rect_cases) {
+        alignas(RECT) uint8_t source_storage[sizeof(RECT) + CanarySize * 2];
+        alignas(RECT) uint8_t legacy_storage[sizeof(RECT) + CanarySize * 2];
+        initialize_bytes(source_storage, sizeof(source_storage), sizeof(RECT));
+        initialize_bytes(legacy_storage, sizeof(legacy_storage), sizeof(RECT));
+        std::memcpy(source_storage + CanarySize, test.rect, sizeof(test.rect));
+        std::memcpy(legacy_storage + CanarySize, test.rect, sizeof(test.rect));
+        auto *source_rect = reinterpret_cast<RECT *>(
+            source_storage + CanarySize);
+        auto *legacy_rect = reinterpret_cast<RECT *>(
+            legacy_storage + CanarySize);
+        RECT *source_result = expand_rect(
+            source_rect, int_from_bits(test.horizontal),
+            int_from_bits(test.vertical));
+        RECT *legacy_result = legacy_expand_rect(
+            legacy_rect, int_from_bits(test.horizontal),
+            int_from_bits(test.vertical));
+        if (source_result != source_rect || legacy_result != legacy_rect
+                || std::memcmp(source_storage, legacy_storage,
+                               sizeof(source_storage)) != 0
+                || !canaries_intact(source_storage, sizeof(RECT))
+                || !canaries_intact(legacy_storage, sizeof(RECT))) {
+            std::fprintf(stderr, "RECT expansion mismatch for %s\n", test.name);
+            report_difference(test.name, "RECT", source_storage,
+                              legacy_storage, sizeof(source_storage));
+            ++failures;
         }
     }
 

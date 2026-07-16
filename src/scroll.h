@@ -81,6 +81,7 @@ class DLLEXPORT Scroll : GraphicWin {
 static_assert(sizeof(Scroll) == 0x214C,
               "Scroll layout must match the legacy ABI");
 
+RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 void __fastcall scroll_set_border_color_redirect(
     Scroll *self, void *, int color);
 Sprite *__fastcall scroll_set_sprite_left_redirect(

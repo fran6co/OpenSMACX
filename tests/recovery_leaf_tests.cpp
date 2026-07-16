@@ -904,6 +904,43 @@ void test_scroll_border_color() {
     }
 }
 
+void test_expand_rect() {
+    struct ExpandRectCase {
+        uint32_t rect[4];
+        uint32_t horizontal;
+        uint32_t vertical;
+    };
+    const ExpandRectCase cases[] = {
+        {{0U, 0U, 0U, 0U}, 0U, 0U},
+        {{10U, 20U, 30U, 40U}, 3U, 4U},
+        {{10U, 20U, 30U, 40U}, 0xFFFFFFFFU, 0xFFFFFFFEU},
+        {{0x80000000U, 0x7FFFFFFFU, 0xFFFFFFFFU, 0U},
+         0x80000000U, 0x7FFFFFFFU},
+        {{0U, 0xFFFFFFFFU, 0x7FFFFFFFU, 0x80000000U},
+         0x7FFFFFFFU, 0x80000000U},
+    };
+
+    for (const ExpandRectCase &test : cases) {
+        alignas(RECT) uint8_t storage[sizeof(RECT) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        std::memcpy(storage + 16, test.rect, sizeof(test.rect));
+        std::memcpy(expected, storage, sizeof(storage));
+        uint32_t expected_rect[4];
+        std::memcpy(expected_rect, test.rect, sizeof(expected_rect));
+        expected_rect[0] -= test.horizontal;
+        expected_rect[2] += test.horizontal;
+        expected_rect[1] -= test.vertical;
+        expected_rect[3] += test.vertical;
+        std::memcpy(expected + 16, expected_rect, sizeof(expected_rect));
+
+        auto *rect = reinterpret_cast<RECT *>(storage + 16);
+        expect(expand_rect(rect, int_from_bits(test.horizontal),
+                           int_from_bits(test.vertical)) == rect);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+}
+
 void test_scroll_sprite_setters() {
     struct Geometry {
         uint32_t width;
@@ -3407,6 +3444,7 @@ int main() {
     test_win_move();
     test_win_paging();
     test_scroll_border_color();
+    test_expand_rect();
     test_scroll_sprite_setters();
     test_scroll_compute_thumb_rect();
     test_pull_down_item_state();
