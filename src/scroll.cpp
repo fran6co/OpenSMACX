@@ -124,6 +124,26 @@ void Scroll::set_border_color(int color) {
 }
 
 /*
+Purpose: Expand a rectangle horizontally and vertically.
+Original Offset: 00606F00
+Status: Complete
+*/
+RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
+    volatile RECT *ordered_rect = rect;
+    const uint32_t horizontal_bits = static_cast<uint32_t>(horizontal);
+    const uint32_t vertical_bits = static_cast<uint32_t>(vertical);
+    ordered_rect->left = long_from_bits(
+        static_cast<uint32_t>(ordered_rect->left) - horizontal_bits);
+    ordered_rect->right = long_from_bits(
+        static_cast<uint32_t>(ordered_rect->right) + horizontal_bits);
+    ordered_rect->top = long_from_bits(
+        static_cast<uint32_t>(ordered_rect->top) - vertical_bits);
+    ordered_rect->bottom = long_from_bits(
+        static_cast<uint32_t>(ordered_rect->bottom) + vertical_bits);
+    return rect;
+}
+
+/*
 Purpose: Set the left scrollbar sprites and horizontal button sprites.
 Original Offset: 00605BE0
 Status: Complete

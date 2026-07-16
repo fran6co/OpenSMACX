@@ -135,6 +135,7 @@ def main():
             fail("Scroll object is not a 32-bit PE COFF object")
         scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
         required_scroll_symbols = {
+            "RECT expansion helper": "__Z11expand_rectP7tagRECTii",
             "Scroll border-color setter": "__ZN6Scroll16set_border_colorEi",
             "Scroll left-sprite setter":
                 "__ZN6Scroll15set_sprite_leftEP6SpriteS1_S1_",
@@ -156,6 +157,32 @@ def main():
                 fail(f"missing required Scroll symbol: {description}")
         scroll_disassembly = run(
             [args.objdump, "-d", "-C", args.scroll_object])
+        expand_rect_match = re.search(
+            r"<expand_rect\(tagRECT\*, int, int\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        if not expand_rect_match:
+            fail("could not locate RECT expansion helper in disassembly")
+        expand_rect_body = expand_rect_match.group("body")
+        if (not re.search(r"\bret\s*$", expand_rect_body, re.MULTILINE)
+                or re.search(r"\bret\s+\$", expand_rect_body)):
+            fail("RECT expansion helper is not cdecl")
+        rect_accesses = []
+        rect_operands = (
+            (0, r"(?:^|[\s,])\(%(?!e?sp\))[a-z0-9]+\)"),
+            (8, r"\b0x8\(%(?!e?sp\))[a-z0-9]+\)"),
+            (4, r"\b0x4\(%(?!e?sp\))[a-z0-9]+\)"),
+            (12, r"\b0xc\(%(?!e?sp\))[a-z0-9]+\)"),
+        )
+        for line in expand_rect_body.splitlines():
+            for offset, operand in rect_operands:
+                if re.search(operand, line):
+                    rect_accesses.append(offset)
+                    break
+        if rect_accesses not in (
+                [0, 8, 4, 12],
+                [0, 0, 8, 8, 4, 4, 12, 12]):
+            fail("RECT expansion helper does not preserve field access order")
         scroll_bodies = {}
         for description, label, stack_bytes in (
                 ("Scroll border-color setter", "Scroll::set_border_color(int)", "4"),
