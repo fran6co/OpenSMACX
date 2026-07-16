@@ -136,8 +136,12 @@ def main():
         scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
         required_scroll_symbols = {
             "Scroll border-color setter": "__ZN6Scroll16set_border_colorEi",
+            "Scroll thumb computation":
+                "__ZN6Scroll18compute_thumb_rectEP7tagRECT",
             "Scroll border-color adapter":
                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12",
+            "Scroll thumb-computation adapter":
+                "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12",
         }
         for description, symbol in required_scroll_symbols.items():
             if symbol not in scroll_symbols:
@@ -147,7 +151,11 @@ def main():
         for description, label in (
                 ("Scroll border-color setter", "Scroll::set_border_color(int)"),
                 ("Scroll border-color adapter",
-                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12")):
+                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12"),
+                ("Scroll thumb computation",
+                 "Scroll::compute_thumb_rect(tagRECT*)"),
+                ("Scroll thumb-computation adapter",
+                 "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12")):
             match = re.search(
                 rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
                 scroll_disassembly, re.DOTALL)
@@ -157,6 +165,28 @@ def main():
                 r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != "4" for value in returns):
                 fail(f"{description} does not pop its stack argument")
+        thumb_adapter = re.search(
+            r"<@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        if not thumb_adapter or not re.search(
+                r"\blea\b.*0xa4c.*%eax", thumb_adapter.group("body")):
+            fail("Scroll thumb-computation adapter does not return the internal RECT")
+        thumb_method = re.search(
+            r"<Scroll::compute_thumb_rect\(tagRECT\*\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        signed_divide = re.search(
+            r"<\(anonymous namespace\)::signed_divide\(unsigned int, unsigned int\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        if (not thumb_method or not re.search(
+                r"\bcall\b.*<\(anonymous namespace\)::signed_divide",
+                thumb_method.group("body"))):
+            fail("Scroll thumb computation does not call its signed divider")
+        if not signed_divide or not re.search(
+                r"\bidivl?\b", signed_divide.group("body")):
+            fail("Scroll signed divider lacks an IDIV instruction")
 
     if args.menu_object:
         menu_headers = run([args.objdump, "-f", args.menu_object])

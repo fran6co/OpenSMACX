@@ -904,6 +904,217 @@ void test_scroll_border_color() {
     }
 }
 
+struct ThumbRectCase {
+    const char *name;
+    uint32_t flags;
+    uint32_t border_color;
+    uint32_t width;
+    uint32_t stored_height;
+    uint32_t minimum;
+    uint32_t maximum;
+    uint32_t position;
+    uint32_t drag_coordinate;
+    uint32_t rect[4];
+};
+
+uint32_t arithmetic_shift_right_one(uint32_t value) {
+    return (value >> 1U) | (value & 0x80000000U);
+}
+
+uint32_t signed_min_bits(uint32_t left, uint32_t right) {
+    return int_from_bits(left) < int_from_bits(right) ? left : right;
+}
+
+void expected_thumb_rect(
+        const ThumbRectCase &fixture, uint32_t rect[4], uint32_t &drag_coordinate) {
+    rect[2] -= rect[0];
+    rect[0] = 0;
+    rect[3] -= rect[1];
+    rect[1] = 0;
+    if (fixture.border_color != 0xFFFFFFFFU) {
+        for (int index = 0; index < 4; ++index) {
+            ++rect[index];
+        }
+    }
+
+    const uint32_t extent = rect[2] - rect[0];
+    const uint32_t height = 0U - fixture.stored_height;
+    const bool horizontal = int_from_bits(fixture.width) > int_from_bits(height);
+    const uint32_t axis_length = horizontal ? fixture.width : height;
+    const bool no_end_buttons = (fixture.flags & 2U) != 0;
+    uint32_t offset;
+
+    if (drag_coordinate == 0xFFFFFFFFU) {
+        offset = no_end_buttons ? 0U : extent + 1U;
+        uint32_t adjustment = 0xFFFFFFFFU - (no_end_buttons
+            ? extent : extent * 3U);
+        if (fixture.border_color != 0xFFFFFFFFU) {
+            adjustment -= 2U;
+        }
+        if (fixture.maximum != fixture.minimum) {
+            const uint32_t numerator = (fixture.position - fixture.minimum)
+                * (axis_length + adjustment);
+            const int64_t quotient = static_cast<int64_t>(int_from_bits(numerator))
+                / static_cast<int64_t>(
+                    int_from_bits(fixture.maximum - fixture.minimum));
+            offset += static_cast<uint32_t>(quotient);
+        }
+    } else {
+        const uint32_t far_edge = rect[0] + extent;
+        const uint32_t candidate = drag_coordinate
+            + arithmetic_shift_right_one(extent);
+        const uint32_t upper = axis_length - (no_end_buttons
+            ? far_edge : far_edge * 2U);
+        const uint32_t limited = signed_min_bits(candidate, upper);
+        if (no_end_buttons) {
+            offset = int_from_bits(limited) < 0 ? 0U : limited;
+        } else if (int_from_bits(far_edge) > int_from_bits(limited)) {
+            offset = far_edge;
+        } else {
+            offset = limited;
+        }
+        drag_coordinate = 0xFFFFFFFFU;
+    }
+
+    if (horizontal) {
+        rect[0] += offset;
+        rect[2] += offset;
+    } else {
+        rect[1] += offset;
+        rect[3] += offset;
+    }
+}
+
+void initialize_thumb_case(uint8_t *storage, const ThumbRectCase &fixture) {
+    write_at(storage, 16 + 0x4C4, fixture.width);
+    write_at(storage, 16 + 0x4C8, fixture.stored_height);
+    write_at(storage, 16 + 0xA14, fixture.flags);
+    write_at(storage, 16 + 0xA1C, fixture.border_color);
+    write_at(storage, 16 + 0xA20, fixture.minimum);
+    write_at(storage, 16 + 0xA24, fixture.maximum);
+    write_at(storage, 16 + 0xA2C, fixture.position);
+    write_at(storage, 16 + 0xA3C, fixture.drag_coordinate);
+    std::memcpy(storage + 16 + 0xA4C, fixture.rect, sizeof(fixture.rect));
+}
+
+void test_scroll_compute_thumb_rect() {
+    const ThumbRectCase cases[] = {
+        {"horizontal no-buttons minimum", 0xA5A50002U, 0xFFFFFFFFU,
+         200U, 0xFFFFFFECU, 0U, 100U, 0U, 0xFFFFFFFFU,
+         {3U, 4U, 13U, 14U}},
+        {"horizontal buttons midpoint", 0xA5A50000U, 0U,
+         300U, 0xFFFFFFECU, 0xFFFFFFF6U, 10U, 0U, 0xFFFFFFFFU,
+         {5U, 7U, 25U, 37U}},
+        {"horizontal outside range", 0U, 1U,
+         100U, 0xFFFFFFF0U, 0U, 10U, 15U, 0xFFFFFFFFU,
+         {0U, 0U, 8U, 12U}},
+        {"vertical no-buttons truncation", 2U, 0xFFFFFFFFU,
+         20U, 0xFFFFFF38U, 0U, 8U, 3U, 0xFFFFFFFFU,
+         {9U, 11U, 19U, 41U}},
+        {"equal dimensions choose vertical", 0U, 0U,
+         20U, 0xFFFFFFECU, 0U, 10U, 5U, 0xFFFFFFFFU,
+         {2U, 3U, 12U, 23U}},
+        {"equal endpoints", 0U, 0xFFFFFFFFU,
+         120U, 0xFFFFFFF0U, 7U, 7U, 0x80000000U, 0xFFFFFFFFU,
+         {4U, 8U, 16U, 24U}},
+        {"reversed range", 2U, 0U,
+         160U, 0xFFFFFFE0U, 10U, 0xFFFFFFF6U, 0U, 0xFFFFFFFFU,
+         {6U, 9U, 17U, 30U}},
+        {"wrapping static arithmetic", 0U, 0x80000000U,
+         0x7FFFFFF0U, 0xFFFFFFE0U, 0x70000000U, 0x90000000U,
+         0x80000001U, 0xFFFFFFFFU,
+         {0x70000000U, 0x11111111U, 0xF0000010U, 0x33333333U}},
+        {"horizontal drag below", 2U, 0xFFFFFFFFU,
+         100U, 0xFFFFFFECU, 0U, 10U, 5U, 0xFFFFFF80U,
+         {3U, 4U, 13U, 14U}},
+        {"horizontal drag above", 2U, 0U,
+         100U, 0xFFFFFFECU, 0U, 10U, 5U, 200U,
+         {3U, 4U, 13U, 14U}},
+        {"horizontal drag buttons inside", 0U, 0xFFFFFFFFU,
+         140U, 0xFFFFFFECU, 0U, 10U, 5U, 37U,
+         {2U, 4U, 14U, 20U}},
+        {"horizontal drag crossed bounds", 0U, 0U,
+         10U, 0xFFFFFFFCU, 0U, 10U, 5U, 0U,
+         {0U, 0U, 20U, 6U}},
+        {"vertical drag no-buttons", 2U, 0xFFFFFFFFU,
+         12U, 0xFFFFFF80U, 0U, 10U, 5U, 57U,
+         {1U, 4U, 9U, 40U}},
+        {"vertical drag buttons", 0U, 0U,
+         12U, 0xFFFFFF80U, 0U, 10U, 5U, 90U,
+         {1U, 4U, 9U, 40U}},
+        {"vertical nonsquare extent", 0U, 0xFFFFFFFFU,
+         10U, 0xFFFFFF00U, 0U, 10U, 5U, 20U,
+         {7U, 9U, 12U, 109U}},
+        {"horizontal wrapped lower", 0U, 0xFFFFFFFFU,
+         100U, 0xFFFFFFECU, 0U, 10U, 5U, 0U,
+         {0U, 0U, 0x80000000U, 10U}},
+        {"vertical wrapped lower", 0U, 0xFFFFFFFFU,
+         10U, 0xFFFFFF9CU, 0U, 10U, 5U, 0U,
+         {0U, 0U, 0x80000000U, 10U}},
+    };
+
+    for (const ThumbRectCase &fixture : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+            uint8_t expected[sizeof(storage)];
+            alignas(RECT) uint8_t output_storage[sizeof(RECT) + 32];
+            uint8_t output_expected[sizeof(output_storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            seed_storage(output_storage, output_expected, sizeof(output_storage));
+            initialize_thumb_case(storage, fixture);
+            std::memcpy(expected, storage, sizeof(storage));
+
+            uint32_t expected_rect[4];
+            std::memcpy(expected_rect, fixture.rect, sizeof(expected_rect));
+            uint32_t expected_drag = fixture.drag_coordinate;
+            expected_thumb_rect(fixture, expected_rect, expected_drag);
+            write_at(expected, 16 + 0xA3C, expected_drag);
+            std::memcpy(expected + 16 + 0xA4C,
+                        expected_rect, sizeof(expected_rect));
+            std::memcpy(output_expected + 16,
+                        expected_rect, sizeof(expected_rect));
+
+            auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+            auto *output = reinterpret_cast<RECT *>(output_storage + 16);
+            const int failures_before = failures;
+            if (use_adapter) {
+                expect(scroll_compute_thumb_rect_redirect(
+                           scroll, nullptr, output)
+                       == reinterpret_cast<RECT *>(storage + 16 + 0xA4C));
+            } else {
+                scroll->compute_thumb_rect(output);
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect_storage_bytes(
+                output_storage, output_expected, sizeof(output_storage));
+            if (failures != failures_before) {
+                report_storage_mismatch(
+                    fixture.name, storage, expected, sizeof(storage));
+                report_storage_mismatch(fixture.name, output_storage,
+                                        output_expected, sizeof(output_storage));
+            }
+        }
+    }
+
+    alignas(Scroll) uint8_t alias_storage[sizeof(Scroll) + 32];
+    uint8_t alias_expected[sizeof(alias_storage)];
+    seed_storage(alias_storage, alias_expected, sizeof(alias_storage));
+    initialize_thumb_case(alias_storage, cases[1]);
+    std::memcpy(alias_expected, alias_storage, sizeof(alias_storage));
+    uint32_t alias_rect[4];
+    std::memcpy(alias_rect, cases[1].rect, sizeof(alias_rect));
+    uint32_t alias_drag = cases[1].drag_coordinate;
+    expected_thumb_rect(cases[1], alias_rect, alias_drag);
+    write_at(alias_expected, 16 + 0xA3C, alias_drag);
+    std::memcpy(alias_expected + 16 + 0xA4C, alias_rect, sizeof(alias_rect));
+    auto *alias_scroll = reinterpret_cast<Scroll *>(alias_storage + 16);
+    auto *alias_rect_pointer = reinterpret_cast<RECT *>(
+        alias_storage + 16 + 0xA4C);
+    expect(scroll_compute_thumb_rect_redirect(
+               alias_scroll, nullptr, alias_rect_pointer) == alias_rect_pointer);
+    expect_storage_bytes(alias_storage, alias_expected, sizeof(alias_storage));
+}
+
 enum class PullDownOperation {
     Hide,
     Show,
@@ -3125,6 +3336,7 @@ int main() {
     test_win_move();
     test_win_paging();
     test_scroll_border_color();
+    test_scroll_compute_thumb_rect();
     test_pull_down_item_state();
     test_pull_down_get_selected();
     test_menu_accessors();

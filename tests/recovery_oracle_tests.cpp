@@ -35,6 +35,7 @@ class LegacyWin {
 class LegacyScroll {
  public:
     void set_border_color(int) asm("_opensmacx_legacy_00605B10");
+    RECT *compute_thumb_rect(RECT *) asm("_opensmacx_legacy_00606C50");
 };
 
 class LegacyMenu {
@@ -142,6 +143,19 @@ enum class PullOperation {
     Uncheck,
 };
 
+struct ThumbOracleCase {
+    const char *name;
+    uint32_t flags;
+    uint32_t border_color;
+    uint32_t width;
+    uint32_t stored_height;
+    uint32_t minimum;
+    uint32_t maximum;
+    uint32_t position;
+    uint32_t drag_coordinate;
+    uint32_t rect[4];
+};
+
 void initialize_bytes(uint8_t *storage, size_t storage_size, size_t object_size) {
     std::memset(storage, 0xA5, storage_size);
     for (size_t offset = 0; offset < object_size; ++offset) {
@@ -241,6 +255,20 @@ void write_object(uint8_t *storage, size_t offset, const T &value) {
     std::memcpy(storage + CanarySize + offset, &value, sizeof(value));
 }
 
+void initialize(ScrollFixture &fixture, const ThumbOracleCase &test) {
+    initialize(fixture);
+    write_object(fixture.storage, 0x4C4, test.width);
+    write_object(fixture.storage, 0x4C8, test.stored_height);
+    write_object(fixture.storage, 0xA14, test.flags);
+    write_object(fixture.storage, 0xA1C, test.border_color);
+    write_object(fixture.storage, 0xA20, test.minimum);
+    write_object(fixture.storage, 0xA24, test.maximum);
+    write_object(fixture.storage, 0xA2C, test.position);
+    write_object(fixture.storage, 0xA3C, test.drag_coordinate);
+    std::memcpy(fixture.storage + CanarySize + 0xA4C,
+                test.rect, sizeof(test.rect));
+}
+
 int int_from_bits(uint32_t bits) {
     int value;
     static_assert(sizeof(value) == sizeof(bits), "oracle requires 32-bit int");
@@ -254,6 +282,19 @@ bool canaries_intact(const uint8_t *storage, size_t object_size) {
     return std::memcmp(storage, canary, sizeof(canary)) == 0
         && std::memcmp(storage + CanarySize + object_size,
                        canary, sizeof(canary)) == 0;
+}
+
+void report_difference(const char *fixture, const char *area,
+                       const uint8_t *source, const uint8_t *legacy,
+                       size_t size) {
+    for (size_t offset = 0; offset < size; ++offset) {
+        if (source[offset] != legacy[offset]) {
+            std::fprintf(stderr,
+                "%s %s mismatch at 0x%zx: 0x%02x != 0x%02x\n",
+                fixture, area, offset, source[offset], legacy[offset]);
+            return;
+        }
+    }
 }
 
 void initialize(RandomFixture &fixture, uint32_t seed) {
@@ -589,6 +630,138 @@ int main() {
                     color, thickness);
                 ++failures;
             }
+        }
+    }
+
+    const ThumbOracleCase thumb_cases[] = {
+        {"horizontal no-buttons minimum", 0xA5A50002U, 0xFFFFFFFFU,
+         200U, 0xFFFFFFECU, 0U, 100U, 0U, 0xFFFFFFFFU,
+         {3U, 4U, 13U, 14U}},
+        {"horizontal buttons midpoint", 0xA5A50000U, 0U,
+         300U, 0xFFFFFFECU, 0xFFFFFFF6U, 10U, 0U, 0xFFFFFFFFU,
+         {5U, 7U, 25U, 37U}},
+        {"vertical truncation", 2U, 0xFFFFFFFFU,
+         20U, 0xFFFFFF38U, 0U, 8U, 3U, 0xFFFFFFFFU,
+         {9U, 11U, 19U, 41U}},
+        {"equal dimensions", 0U, 0U,
+         20U, 0xFFFFFFECU, 0U, 10U, 5U, 0xFFFFFFFFU,
+         {2U, 3U, 12U, 23U}},
+        {"reversed range", 2U, 0U,
+         160U, 0xFFFFFFE0U, 10U, 0xFFFFFFF6U, 0U, 0xFFFFFFFFU,
+         {6U, 9U, 17U, 30U}},
+        {"wrapping static arithmetic", 0U, 0x80000000U,
+         0x7FFFFFF0U, 0xFFFFFFE0U, 0x70000000U, 0x90000000U,
+         0x80000001U, 0xFFFFFFFFU,
+         {0x70000000U, 0x11111111U, 0xF0000010U, 0x33333333U}},
+        {"horizontal drag below", 2U, 0xFFFFFFFFU,
+         100U, 0xFFFFFFECU, 0U, 10U, 5U, 0xFFFFFF80U,
+         {3U, 4U, 13U, 14U}},
+        {"horizontal drag above", 2U, 0U,
+         100U, 0xFFFFFFECU, 0U, 10U, 5U, 200U,
+         {3U, 4U, 13U, 14U}},
+        {"horizontal crossed bounds", 0U, 0U,
+         10U, 0xFFFFFFFCU, 0U, 10U, 5U, 0U,
+         {0U, 0U, 20U, 6U}},
+        {"vertical drag", 0U, 0U,
+         12U, 0xFFFFFF80U, 0U, 10U, 5U, 90U,
+         {1U, 4U, 9U, 40U}},
+        {"vertical nonsquare", 0U, 0xFFFFFFFFU,
+         10U, 0xFFFFFF00U, 0U, 10U, 5U, 20U,
+         {7U, 9U, 12U, 109U}},
+        {"horizontal wrapped lower", 0U, 0xFFFFFFFFU,
+         100U, 0xFFFFFFECU, 0U, 10U, 5U, 0U,
+         {0U, 0U, 0x80000000U, 10U}},
+        {"vertical wrapped lower", 0U, 0xFFFFFFFFU,
+         10U, 0xFFFFFF9CU, 0U, 10U, 5U, 0U,
+         {0U, 0U, 0x80000000U, 10U}},
+    };
+    for (const ThumbOracleCase &test : thumb_cases) {
+        ScrollFixture source_scroll{};
+        ScrollFixture legacy_scroll{};
+        alignas(RECT) uint8_t source_output[sizeof(RECT) + CanarySize * 2];
+        alignas(RECT) uint8_t legacy_output[sizeof(RECT) + CanarySize * 2];
+        initialize(source_scroll, test);
+        initialize(legacy_scroll, test);
+        initialize_bytes(source_output, sizeof(source_output), sizeof(RECT));
+        initialize_bytes(legacy_output, sizeof(legacy_output), sizeof(RECT));
+        auto *source_rect = reinterpret_cast<RECT *>(source_output + CanarySize);
+        auto *legacy_rect = reinterpret_cast<RECT *>(legacy_output + CanarySize);
+        RECT *source_result = scroll_compute_thumb_rect_redirect(
+            source_scroll.source(), nullptr, source_rect);
+        RECT *legacy_result = legacy_scroll.legacy()->compute_thumb_rect(legacy_rect);
+        if (source_result != reinterpret_cast<RECT *>(
+                    source_scroll.storage + CanarySize + 0xA4C)
+                || legacy_result != reinterpret_cast<RECT *>(
+                    legacy_scroll.storage + CanarySize + 0xA4C)
+                || std::memcmp(source_scroll.storage, legacy_scroll.storage,
+                               sizeof(source_scroll.storage)) != 0
+                || std::memcmp(source_output, legacy_output,
+                               sizeof(source_output)) != 0
+                || !canaries_intact(source_scroll.storage, sizeof(Scroll))
+                || !canaries_intact(legacy_scroll.storage, sizeof(Scroll))
+                || !canaries_intact(source_output, sizeof(RECT))
+                || !canaries_intact(legacy_output, sizeof(RECT))) {
+            std::fprintf(stderr, "Scroll thumb mismatch for %s\n", test.name);
+            report_difference(test.name, "object",
+                              source_scroll.storage, legacy_scroll.storage,
+                              sizeof(source_scroll.storage));
+            report_difference(test.name, "output",
+                              source_output, legacy_output,
+                              sizeof(source_output));
+            ++failures;
+        }
+    }
+
+    ScrollFixture source_alias{};
+    ScrollFixture legacy_alias{};
+    initialize(source_alias, thumb_cases[1]);
+    initialize(legacy_alias, thumb_cases[1]);
+    auto *source_alias_rect = reinterpret_cast<RECT *>(
+        source_alias.storage + CanarySize + 0xA4C);
+    auto *legacy_alias_rect = reinterpret_cast<RECT *>(
+        legacy_alias.storage + CanarySize + 0xA4C);
+    RECT *source_alias_result = scroll_compute_thumb_rect_redirect(
+        source_alias.source(), nullptr, source_alias_rect);
+    RECT *legacy_alias_result = legacy_alias.legacy()->compute_thumb_rect(
+        legacy_alias_rect);
+    if (source_alias_result != source_alias_rect
+            || legacy_alias_result != legacy_alias_rect
+            || std::memcmp(source_alias.storage, legacy_alias.storage,
+                           sizeof(source_alias.storage)) != 0) {
+        std::fprintf(stderr, "Scroll aliased thumb mismatch\n");
+        ++failures;
+    }
+
+    const size_t overlap_offsets[] = {0xA3C, 0xA48, 0xA50};
+    for (size_t overlap_offset : overlap_offsets) {
+        ScrollFixture source_overlap{};
+        ScrollFixture legacy_overlap{};
+        const ThumbOracleCase &test = overlap_offset == 0xA3C
+            ? thumb_cases[6] : thumb_cases[1];
+        initialize(source_overlap, test);
+        initialize(legacy_overlap, test);
+        auto *source_overlap_rect = reinterpret_cast<RECT *>(
+            source_overlap.storage + CanarySize + overlap_offset);
+        auto *legacy_overlap_rect = reinterpret_cast<RECT *>(
+            legacy_overlap.storage + CanarySize + overlap_offset);
+        RECT *source_overlap_result = scroll_compute_thumb_rect_redirect(
+            source_overlap.source(), nullptr, source_overlap_rect);
+        RECT *legacy_overlap_result = legacy_overlap.legacy()->compute_thumb_rect(
+            legacy_overlap_rect);
+        if (source_overlap_result != reinterpret_cast<RECT *>(
+                    source_overlap.storage + CanarySize + 0xA4C)
+                || legacy_overlap_result != reinterpret_cast<RECT *>(
+                    legacy_overlap.storage + CanarySize + 0xA4C)
+                || std::memcmp(source_overlap.storage, legacy_overlap.storage,
+                               sizeof(source_overlap.storage)) != 0
+                || !canaries_intact(source_overlap.storage, sizeof(Scroll))
+                || !canaries_intact(legacy_overlap.storage, sizeof(Scroll))) {
+            std::fprintf(stderr,
+                "Scroll overlapping thumb mismatch at 0x%zx\n", overlap_offset);
+            report_difference("Scroll overlapping thumb", "object",
+                              source_overlap.storage, legacy_overlap.storage,
+                              sizeof(source_overlap.storage));
+            ++failures;
         }
     }
 
