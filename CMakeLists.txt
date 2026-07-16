@@ -700,6 +700,7 @@ if(MINGW)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
                 --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
                 --output "${OPENSMACX_RECOVERY_ORACLE_DIR}"
+                --max-size 1024
                 --address 0x004E2610
                 --address 0x004E2660
                 --address 0x004E26B0
@@ -709,6 +710,7 @@ if(MINGW)
                 --address 0x005EE0F0
                 --address 0x005EE110
                 --address 0x00605B10
+                --address 0x00606C50
                 --address 0x005F8CB0
                 --address 0x005F8D20
                 --address 0x005F8D90
