@@ -29,6 +29,8 @@ def main():
     parser.add_argument("--filemap-object")
     parser.add_argument("--heap-object")
     parser.add_argument("--log-object")
+    parser.add_argument("--menu-object")
+    parser.add_argument("--pulldown-object")
     parser.add_argument("--random-object")
     parser.add_argument("--scroll-object")
     parser.add_argument("--string-struct-object")
@@ -155,6 +157,128 @@ def main():
                 r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != "4" for value in returns):
                 fail(f"{description} does not pop its stack argument")
+
+    if args.menu_object:
+        menu_headers = run([args.objdump, "-f", args.menu_object])
+        if "file format pe-i386" not in menu_headers:
+            fail("Menu object is not a 32-bit PE COFF object")
+        menu_symbols = run([args.nm, "--defined-only", args.menu_object])
+        required_menu_symbols = {
+            "Menu callback setter": "__ZN4Menu13set_menu_procEPU5cdeclFviE",
+            "Menu ID lookup": "__ZN4Menu11id_to_indexEi",
+            "Menu callback adapter":
+                "@_Z27menu_set_menu_proc_redirectP4MenuPvPU5cdeclFviE@12",
+            "Menu ID lookup adapter":
+                "@_Z25menu_id_to_index_redirectP4MenuPvi@12",
+        }
+        for description, symbol in required_menu_symbols.items():
+            if symbol not in menu_symbols:
+                fail(f"missing required Menu symbol: {description}")
+        menu_disassembly = run([args.objdump, "-d", "-C", args.menu_object])
+        for description, label in (
+                ("Menu callback setter",
+                 "Menu::set_menu_proc(void ( cdecl*)(int))"),
+                ("Menu ID lookup", "Menu::id_to_index(int)"),
+                ("Menu callback adapter",
+                 "@_Z27menu_set_menu_proc_redirectP4MenuPvPU5cdeclFviE@12"),
+                ("Menu ID lookup adapter",
+                 "@_Z25menu_id_to_index_redirectP4MenuPvi@12")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                menu_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(
+                r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            if not returns or any(value != "4" for value in returns):
+                fail(f"{description} does not pop its stack argument")
+
+    if args.pulldown_object:
+        pulldown_headers = run([args.objdump, "-f", args.pulldown_object])
+        if "file format pe-i386" not in pulldown_headers:
+            fail("PullDown object is not a 32-bit PE COFF object")
+        pulldown_symbols = run(
+            [args.nm, "--defined-only", args.pulldown_object])
+        required_pulldown_symbols = {
+            "PullDown hide": "__ZN8PullDown9hide_itemEi",
+            "PullDown show": "__ZN8PullDown9show_itemEi",
+            "PullDown disable": "__ZN8PullDown12disable_itemEi",
+            "PullDown enable": "__ZN8PullDown11enable_itemEi",
+            "PullDown check": "__ZN8PullDown10check_itemEi",
+            "PullDown uncheck": "__ZN8PullDown12uncheck_itemEi",
+            "PullDown selection": "__ZN8PullDown12get_selectedEv",
+            "PullDown hide adapter":
+                "@_Z28pull_down_hide_item_redirectP8PullDownPvi@12",
+            "PullDown show adapter":
+                "@_Z28pull_down_show_item_redirectP8PullDownPvi@12",
+            "PullDown disable adapter":
+                "@_Z31pull_down_disable_item_redirectP8PullDownPvi@12",
+            "PullDown enable adapter":
+                "@_Z30pull_down_enable_item_redirectP8PullDownPvi@12",
+            "PullDown check adapter":
+                "@_Z29pull_down_check_item_redirectP8PullDownPvi@12",
+            "PullDown uncheck adapter":
+                "@_Z31pull_down_uncheck_item_redirectP8PullDownPvi@12",
+            "PullDown selection adapter":
+                "@_Z31pull_down_get_selected_redirectP8PullDownPv@8",
+        }
+        for description, symbol in required_pulldown_symbols.items():
+            if symbol not in pulldown_symbols:
+                fail(f"missing required PullDown symbol: {description}")
+        pulldown_disassembly = run(
+            [args.objdump, "-d", "-C", args.pulldown_object])
+        stack_argument_functions = (
+            ("PullDown hide", "PullDown::hide_item(int)", None),
+            ("PullDown show", "PullDown::show_item(int)", None),
+            ("PullDown disable", "PullDown::disable_item(int)", None),
+            ("PullDown enable", "PullDown::enable_item(int)", None),
+            ("PullDown check", "PullDown::check_item(int)", None),
+            ("PullDown uncheck", "PullDown::uncheck_item(int)", None),
+            ("PullDown hide adapter",
+             "@_Z28pull_down_hide_item_redirectP8PullDownPvi@12",
+             "PullDown::hide_item(int)"),
+            ("PullDown show adapter",
+             "@_Z28pull_down_show_item_redirectP8PullDownPvi@12",
+             "PullDown::show_item(int)"),
+            ("PullDown disable adapter",
+             "@_Z31pull_down_disable_item_redirectP8PullDownPvi@12",
+             "PullDown::disable_item(int)"),
+            ("PullDown enable adapter",
+             "@_Z30pull_down_enable_item_redirectP8PullDownPvi@12",
+             "PullDown::enable_item(int)"),
+            ("PullDown check adapter",
+             "@_Z29pull_down_check_item_redirectP8PullDownPvi@12",
+             "PullDown::check_item(int)"),
+            ("PullDown uncheck adapter",
+             "@_Z31pull_down_uncheck_item_redirectP8PullDownPvi@12",
+             "PullDown::uncheck_item(int)"),
+        )
+        for description, label, tail_target in stack_argument_functions:
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                pulldown_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(
+                r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            tail_jump = tail_target and re.search(
+                rf"\bjmp\s+[0-9a-f]+\s+<{re.escape(tail_target)}>",
+                match.group("body"))
+            if (not returns or any(value != "4" for value in returns)) \
+                    and not tail_jump:
+                fail(f"{description} does not pop its stack argument")
+        for description, label in (
+                ("PullDown selection", "PullDown::get_selected()"),
+                ("PullDown selection adapter",
+                 "@_Z31pull_down_get_selected_redirectP8PullDownPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                pulldown_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            if not re.search(r"\bret\b", match.group("body")) or re.search(
+                    r"\bret\s+\$", match.group("body")):
+                fail(f"{description} unexpectedly pops a stack argument")
 
     if args.basepop_font_object:
         basepop_headers = run([args.objdump, "-f", args.basepop_font_object])
