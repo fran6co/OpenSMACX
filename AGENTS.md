@@ -65,6 +65,14 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - The Ghidra interior-reference sidecar contains 2,574 references and is hash-bound in `analysis-summary.json`.
 - Initial extraction produced 174 islands and 174 COFF globals in `pe-i386` format with no relocations.
 
+### Static Recompilation Pilot
+
+- A time-boxed local-only pilot statically lowers `Wave_Device::is_group_disabled` at `0x004C5460` into explicit CPU-state C++ basic blocks under ignored per-preset build directories.
+- Debug and Release verification pass deterministic fresh regeneration, complete source/oracle provenance checks, pe-i386 and `thiscall` ABI checks, standalone execution, and original-byte differential fixtures for full `EAX`, partial `EDX`, defined flags, stack movement, object memory, and canaries.
+- The compiler-generated boundary is deliberately a result-only adapter; exact volatile-register and flag equivalence belongs to the explicit-state core.
+- The pilot does not change recovery state and generated C++, assembly, objects, manifests, and executables remain local proprietary-derived artifacts.
+- The value gate stopped expansion: the leaf duplicates the simpler exact-island mechanism, while validating call-bearing `Wave_Device::enable` at `0x004C51C0` would require a disproportionate separate canonical-process injection harness because PRACX recovery bodies are unmapped.
+
 ### Source Recoveries
 
 - `4d9361e Recover Buffer font and color setters`
@@ -199,11 +207,10 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Run a time-boxed local-only static-recompilation micro-pilot on `Wave_Device::is_group_disabled` at `0x004C5460`; generated bodies remain ignored proprietary-derived artifacts, do not change recovery state, and must provide value beyond the existing exact island before expansion.
-2. Recover the Scroll init wrappers at `0x00605840` through `0x00605960`, including required `GraphicWin` and `BaseButton` initializer dependencies, then its constructor, close, and primary init at `0x006051D0` through `0x006054D0`.
-3. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-4. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
-5. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
+1. Recover the Scroll init wrappers at `0x00605840` through `0x00605960`, including required `GraphicWin` and `BaseButton` initializer dependencies, then its constructor, close, and primary init at `0x006051D0` through `0x006054D0`.
+2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
+3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
+4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
 
@@ -243,6 +250,8 @@ Other completed corrections and checks:
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
 - `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
+- `tools/static_recompile_pilot.py`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
+- `tools/test_static_recompile_pilot.py`, `tools/verify_static_recompile_pilot.py`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
 - `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local Scroll-oracle result validation.
 - `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
@@ -257,6 +266,8 @@ Other completed corrections and checks:
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
 - `docs/HYBRID.md`: local hybrid workflow.
 - `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet, Random, Win, Scroll, Menu, and PullDown fixtures.
+- `tests/static_recompile_pilot_tests.cpp`: generated-only and original-byte differential fixtures for the time-boxed static recompilation leaf.
+- `docs/STATIC_RECOMPILATION.md`: local-only provenance policy, commands, value gate, and stopped pilot outcome.
 - `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
 - `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 124-island manifest.
