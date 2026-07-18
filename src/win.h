@@ -273,3 +273,9 @@ void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging);
 void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging);
 
 DLLEXPORT BOOL __cdecl in_box(int x, int y, const RECT *rect);
+DLLEXPORT int __cdecl in_box(
+    int x, int y, int left, int top, int width, int height);
+RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
+int __cdecl rect_center(RECT *rect, int *x, int *y);
+int __fastcall tutwin_rect_center_redirect(
+    void *self, void *, RECT *rect, int *x, int *y);

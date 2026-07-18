@@ -16,6 +16,7 @@
 #include "../src/text_recovery.h"
 #include "../src/textindex.h"
 #include "../src/time.h"
+#include "../src/vector.h"
 #include "../src/win.h"
 
 #include <climits>
@@ -701,6 +702,279 @@ int int_from_bits(uint32_t bits) {
     static_assert(sizeof(value) == sizeof(bits), "tests require 32-bit int");
     std::memcpy(&value, &bits, sizeof(value));
     return value;
+}
+
+float float_from_bits(uint32_t bits) {
+    float value;
+    static_assert(sizeof(value) == sizeof(bits), "tests require binary32 float");
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+uint32_t midpoint_bits(uint32_t near_edge, uint32_t far_edge) {
+    const uint32_t delta = far_edge - near_edge;
+    const uint32_t adjusted = delta + (delta >> 31);
+    const uint32_t half = (adjusted >> 1) | (adjusted & 0x80000000U);
+    return near_edge + half;
+}
+
+uint32_t reference_rect_center(
+        uint8_t *storage, size_t rect_offset, size_t x_offset, size_t y_offset) {
+    uint32_t left;
+    uint32_t right;
+    std::memcpy(&left, storage + rect_offset, sizeof(left));
+    std::memcpy(&right, storage + rect_offset + 8, sizeof(right));
+    const uint32_t x = midpoint_bits(left, right);
+    std::memcpy(storage + x_offset, &x, sizeof(x));
+
+    uint32_t top;
+    uint32_t bottom;
+    std::memcpy(&top, storage + rect_offset + 4, sizeof(top));
+    std::memcpy(&bottom, storage + rect_offset + 12, sizeof(bottom));
+    const uint32_t y = midpoint_bits(top, bottom);
+    std::memcpy(storage + y_offset, &y, sizeof(y));
+    return y;
+}
+
+void test_geometry_helpers() {
+    struct RectCase {
+        uint32_t x;
+        uint32_t y;
+        uint32_t width;
+        uint32_t height;
+    };
+    const RectCase rect_cases[] = {
+        {0, 0, 0, 0},
+        {10, 20, 30, 40},
+        {0xFFFFFFFFU, 0x80000000U, 2, 0x80000000U},
+        {0x7FFFFFFFU, 0x80000000U, 0x7FFFFFFFU, 0xFFFFFFFFU},
+    };
+    for (const RectCase &test : rect_cases) {
+        alignas(RECT) uint8_t storage[sizeof(RECT) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(expected, 16, test.x);
+        write_at(expected, 20, test.y);
+        write_at(expected, 24, test.x + test.width);
+        write_at(expected, 28, test.y + test.height);
+        auto *rect = reinterpret_cast<RECT *>(storage + 16);
+        expect(make_rect(rect, int_from_bits(test.x), int_from_bits(test.y),
+                         int_from_bits(test.width), int_from_bits(test.height)) == rect);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    struct BoxCase {
+        uint32_t x;
+        uint32_t y;
+        uint32_t left;
+        uint32_t top;
+        uint32_t width;
+        uint32_t height;
+        int expected;
+    };
+    const BoxCase box_cases[] = {
+        {10, 20, 10, 20, 30, 40, 1},
+        {39, 59, 10, 20, 30, 40, 1},
+        {40, 59, 10, 20, 30, 40, 0},
+        {39, 60, 10, 20, 30, 40, 0},
+        {9, 20, 10, 20, 30, 40, 0},
+        {10, 19, 10, 20, 30, 40, 0},
+        {0x80000000U, 0, 0x7FFFFFFFU, 0, 1, 1, 0},
+        {0x7FFFFFFFU, 0, 0x80000000U, 0, 0xFFFFFFFFU, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0},
+    };
+    for (const BoxCase &test : box_cases) {
+        expect(in_box(int_from_bits(test.x), int_from_bits(test.y),
+                      int_from_bits(test.left), int_from_bits(test.top),
+                      int_from_bits(test.width), int_from_bits(test.height))
+               == test.expected);
+    }
+
+    struct CenterCase {
+        size_t x_offset;
+        size_t y_offset;
+        bool use_adapter;
+    };
+    const CenterCase center_cases[] = {
+        {40, 44, false},
+        {40, 40, true},
+        {20, 44, false},
+        {28, 44, true},
+    };
+    const uint32_t rectangles[][4] = {
+        {10, 20, 30, 40},
+        {10, 20, 5, 13},
+        {0x80000000U, 0x7FFFFFFFU, 0x7FFFFFFFU, 0x80000000U},
+    };
+    for (const auto &rectangle : rectangles) {
+        for (const CenterCase &test : center_cases) {
+            alignas(RECT) uint8_t storage[64];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            std::memcpy(storage + 16, rectangle, sizeof(rectangle));
+            std::memcpy(expected, storage, sizeof(storage));
+            const uint32_t expected_result = reference_rect_center(
+                expected, 16, test.x_offset, test.y_offset);
+            auto *rect = reinterpret_cast<RECT *>(storage + 16);
+            auto *x = reinterpret_cast<int *>(storage + test.x_offset);
+            auto *y = reinterpret_cast<int *>(storage + test.y_offset);
+            const int result = test.use_adapter
+                ? tutwin_rect_center_redirect(
+                    reinterpret_cast<void *>(0x13579BDFU), nullptr, rect, x, y)
+                : rect_center(rect, x, y);
+            expect(static_cast<uint32_t>(result) == expected_result);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
+void set_vector_bits(uint8_t *object, const uint32_t (&values)[3]) {
+    std::memcpy(object, values, sizeof(values));
+}
+
+void test_vector_lifecycle() {
+    alignas(Vector) uint8_t storage[sizeof(Vector) + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Vector));
+    auto *vector = new (storage + 16) Vector;
+    expect(vector == reinterpret_cast<Vector *>(storage + 16));
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Vector));
+    vector->close();
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Vector));
+    expect(vector_construct_redirect(vector, nullptr) == vector);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(expected + 16, 0, sizeof(Vector));
+    expect(vector_close_redirect(vector, nullptr) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+}
+
+enum class VectorOperation {
+    Subtract,
+    AddAssign,
+    SubtractAssign,
+    Scale,
+};
+
+void call_vector_operation(VectorOperation operation, bool use_adapter,
+                           Vector *left, Vector *output, Vector *right) {
+    switch (operation) {
+      case VectorOperation::Subtract:
+        if (use_adapter) {
+            expect(vector_subtract_redirect(left, nullptr, output, right) == output);
+        } else {
+            left->__mi(*output, *right);
+        }
+        return;
+      case VectorOperation::AddAssign:
+        if (use_adapter) {
+            expect(vector_add_assign_redirect(left, nullptr, right) == left);
+        } else {
+            left->__apl(*right);
+        }
+        return;
+      case VectorOperation::SubtractAssign:
+        if (use_adapter) {
+            expect(vector_subtract_assign_redirect(left, nullptr, right) == left);
+        } else {
+            left->__ami(*right);
+        }
+        return;
+      case VectorOperation::Scale:
+        if (use_adapter) {
+            expect(vector_scale_redirect(left, nullptr, output, 0x40000000U) == output);
+        } else {
+            left->scale(*output, float_from_bits(0x40000000U));
+        }
+        return;
+    }
+}
+
+void test_vector_arithmetic() {
+    const uint32_t left_values[3] = {0x3FC00000U, 0xC0000000U, 0x40800000U};
+    const uint32_t right_values[3] = {0x3F000000U, 0x40400000U, 0xC1000000U};
+    const uint32_t expected_values[][3] = {
+        {0x3F800000U, 0xC0A00000U, 0x41400000U},
+        {0x40000000U, 0x3F800000U, 0xC0800000U},
+        {0x3F800000U, 0xC0A00000U, 0x41400000U},
+        {0x40400000U, 0xC0800000U, 0x41000000U},
+    };
+    const VectorOperation operations[] = {
+        VectorOperation::Subtract,
+        VectorOperation::AddAssign,
+        VectorOperation::SubtractAssign,
+        VectorOperation::Scale,
+    };
+    for (size_t operation = 0; operation < 4; ++operation) {
+        for (bool use_adapter : {false, true}) {
+            alignas(Vector) uint8_t left_storage[sizeof(Vector) + 32];
+            alignas(Vector) uint8_t right_storage[sizeof(Vector) + 32];
+            alignas(Vector) uint8_t output_storage[sizeof(Vector) + 32];
+            uint8_t expected_left[sizeof(left_storage)];
+            uint8_t expected_right[sizeof(right_storage)];
+            uint8_t expected_output[sizeof(output_storage)];
+            seed_storage(left_storage, expected_left, sizeof(left_storage));
+            seed_storage(right_storage, expected_right, sizeof(right_storage));
+            seed_storage(output_storage, expected_output, sizeof(output_storage));
+            set_vector_bits(left_storage + 16, left_values);
+            set_vector_bits(right_storage + 16, right_values);
+            std::memcpy(expected_left, left_storage, sizeof(left_storage));
+            std::memcpy(expected_right, right_storage, sizeof(right_storage));
+            std::memcpy(expected_output, output_storage, sizeof(output_storage));
+            if (operations[operation] == VectorOperation::Subtract) {
+                set_vector_bits(expected_output + 16, expected_values[operation]);
+            } else if (operations[operation] == VectorOperation::Scale) {
+                set_vector_bits(expected_left + 16, expected_values[operation]);
+                set_vector_bits(expected_output + 16, expected_values[operation]);
+            } else {
+                set_vector_bits(expected_left + 16, expected_values[operation]);
+            }
+            call_vector_operation(
+                operations[operation], use_adapter,
+                reinterpret_cast<Vector *>(left_storage + 16),
+                reinterpret_cast<Vector *>(output_storage + 16),
+                reinterpret_cast<Vector *>(right_storage + 16));
+            expect_storage_bytes(left_storage, expected_left, sizeof(left_storage));
+            expect_storage_bytes(right_storage, expected_right, sizeof(right_storage));
+            expect_storage_bytes(output_storage, expected_output, sizeof(output_storage));
+        }
+    }
+
+    alignas(Vector) uint32_t overlap[6] = {
+        0x3F800000U, 0x40000000U, 0x40400000U,
+        0x40800000U, 0x40A00000U, 0xA5A5A5A5U,
+    };
+    auto *overlap_left = reinterpret_cast<Vector *>(&overlap[1]);
+    auto *overlap_right = reinterpret_cast<Vector *>(&overlap[0]);
+    overlap_left->__apl(*overlap_right);
+    expect(overlap[0] == 0x3F800000U);
+    expect(overlap[1] == 0x40400000U);
+    expect(overlap[2] == 0x40C00000U);
+    expect(overlap[3] == 0x41200000U);
+    expect(overlap[4] == 0x40A00000U);
+    expect(overlap[5] == 0xA5A5A5A5U);
+
+    uint32_t scale_overlap[5] = {
+        0x3F800000U, 0x40000000U, 0x40400000U, 0xA5A5A5A5U, 0xA5A5A5A5U,
+    };
+    auto *scale_left = reinterpret_cast<Vector *>(&scale_overlap[0]);
+    auto *scale_output = reinterpret_cast<Vector *>(&scale_overlap[1]);
+    expect(vector_scale_redirect(
+               scale_left, nullptr, scale_output, 0x40000000U) == scale_output);
+    const uint32_t scale_expected[5] = {
+        0x40000000U, 0x40000000U, 0x40000000U, 0x40000000U, 0xA5A5A5A5U,
+    };
+    expect_storage_bytes(reinterpret_cast<uint8_t *>(scale_overlap),
+                         reinterpret_cast<const uint8_t *>(scale_expected),
+                         sizeof(scale_overlap));
 }
 
 struct ScrollInitProbeState {
@@ -4050,6 +4324,9 @@ int main() {
     test_alpha_net_pid_to_idx();
     test_alpha_net_identity_lookups();
     test_in_box_edges();
+    test_geometry_helpers();
+    test_vector_lifecycle();
+    test_vector_arithmetic();
     test_win_move();
     test_win_paging();
     test_scroll_init_wrappers();

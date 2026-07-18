@@ -4,6 +4,7 @@ address,recovery_state,priority,notes
 0x00402500,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00402530,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x0045C170,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x004BA830,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x004E25E0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x004E2610,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x004E2660,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
@@ -23,6 +24,7 @@ address,recovery_state,priority,notes
 0x005ED7D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005EE0F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005EE110,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005F86C0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005F8CB0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005F8D20,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005F8D90,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
@@ -30,6 +32,7 @@ address,recovery_state,priority,notes
 0x005F9040,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005F90A0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005F9F40,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005FA7A0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FA7E0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005FA820,source_complete,,Staged hybrid export redirect calls the source-owned method
 0x005FA860,source_complete,,Staged hybrid export redirect calls the source-owned constructor
@@ -130,3 +133,9 @@ address,recovery_state,priority,notes
 0x0062B7F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x0062B810,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x0062B850,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x006343C0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x006343D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00634430,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00634480,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x006344B0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00634670,source_complete,,Runtime redirect installed by DllMain after byte-signature validation

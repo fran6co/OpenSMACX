@@ -4,6 +4,7 @@
 #include "../src/pulldown.h"
 #include "../src/random.h"
 #include "../src/scroll.h"
+#include "../src/vector.h"
 #include "../src/win.h"
 
 #include <climits>
@@ -60,6 +61,27 @@ class LegacyPullDown {
     int check_item(int) asm("_opensmacx_legacy_005F9040");
     int uncheck_item(int) asm("_opensmacx_legacy_005F90A0");
     int get_selected() asm("_opensmacx_legacy_005F9F40");
+};
+
+RECT *__cdecl legacy_make_rect(RECT *, int, int, int, int)
+    asm("_opensmacx_legacy_005F86C0");
+int __cdecl legacy_in_box(int, int, int, int, int, int)
+    asm("_opensmacx_legacy_005FA7A0");
+
+class LegacyTutWin {
+ public:
+    int rect_center(RECT *, int *, int *) asm("_opensmacx_legacy_004BA830");
+};
+
+class LegacyVector {
+ public:
+    Vector *construct() asm("_opensmacx_legacy_006343C0");
+    uintptr_t close() asm("_opensmacx_legacy_006343D0");
+    Vector *subtract(LegacyVector &, LegacyVector &)
+        asm("_opensmacx_legacy_00634430");
+    Vector *add_assign(LegacyVector &) asm("_opensmacx_legacy_00634480");
+    Vector *subtract_assign(LegacyVector &) asm("_opensmacx_legacy_006344B0");
+    Vector *scale(LegacyVector &, uint32_t) asm("_opensmacx_legacy_00634670");
 };
 
 namespace {
@@ -351,6 +373,256 @@ bool unchanged(const Fixture &before, const Fixture &after) {
     return std::memcmp(before.storage, after.storage, sizeof(before.storage)) == 0;
 }
 
+uint16_t x87_control_word() {
+    uint16_t value;
+    __asm__ __volatile__("fnstcw %0" : "=m"(value));
+    return value;
+}
+
+uint16_t x87_status_word() {
+    uint16_t value;
+    __asm__ __volatile__("fnstsw %0" : "=am"(value));
+    return value;
+}
+
+void reset_x87(uint16_t control) {
+    __asm__ __volatile__("fninit\n\tfldcw %0" : : "m"(control) : "memory");
+}
+
+enum class VectorOracleOperation {
+    Subtract,
+    AddAssign,
+    SubtractAssign,
+    Scale,
+};
+
+Vector *call_source_vector(VectorOracleOperation operation, uint8_t *storage,
+                           size_t left, size_t output, size_t right,
+                           uint32_t scalar) {
+    auto *left_vector = reinterpret_cast<Vector *>(storage + left);
+    auto *output_vector = reinterpret_cast<Vector *>(storage + output);
+    auto *right_vector = reinterpret_cast<Vector *>(storage + right);
+    switch (operation) {
+      case VectorOracleOperation::Subtract:
+        return vector_subtract_redirect(
+            left_vector, nullptr, output_vector, right_vector);
+      case VectorOracleOperation::AddAssign:
+        return vector_add_assign_redirect(left_vector, nullptr, right_vector);
+      case VectorOracleOperation::SubtractAssign:
+        return vector_subtract_assign_redirect(left_vector, nullptr, right_vector);
+      case VectorOracleOperation::Scale:
+        return vector_scale_redirect(left_vector, nullptr, output_vector, scalar);
+    }
+    return nullptr;
+}
+
+Vector *call_legacy_vector(VectorOracleOperation operation, uint8_t *storage,
+                           size_t left, size_t output, size_t right,
+                           uint32_t scalar) {
+    auto *left_vector = reinterpret_cast<LegacyVector *>(storage + left);
+    auto *output_vector = reinterpret_cast<LegacyVector *>(storage + output);
+    auto *right_vector = reinterpret_cast<LegacyVector *>(storage + right);
+    switch (operation) {
+      case VectorOracleOperation::Subtract:
+        return left_vector->subtract(*output_vector, *right_vector);
+      case VectorOracleOperation::AddAssign:
+        return left_vector->add_assign(*right_vector);
+      case VectorOracleOperation::SubtractAssign:
+        return left_vector->subtract_assign(*right_vector);
+      case VectorOracleOperation::Scale:
+        return left_vector->scale(*output_vector, scalar);
+    }
+    return nullptr;
+}
+
+void run_geometry_oracles(int &failures) {
+    const uint32_t cases[][4] = {
+        {0, 0, 0, 0},
+        {10, 20, 30, 40},
+        {0x7FFFFFFFU, 0x80000000U, 1, 0xFFFFFFFFU},
+        {0x80000000U, 0x7FFFFFFFU, 0x80000000U, 0x7FFFFFFFU},
+    };
+    for (const auto &test : cases) {
+        uint8_t source[48];
+        uint8_t legacy[48];
+        initialize_bytes(source, sizeof(source), 16);
+        std::memcpy(legacy, source, sizeof(source));
+        auto *source_rect = reinterpret_cast<RECT *>(source + CanarySize);
+        auto *legacy_rect = reinterpret_cast<RECT *>(legacy + CanarySize);
+        RECT *source_result = make_rect(
+            source_rect, int_from_bits(test[0]), int_from_bits(test[1]),
+            int_from_bits(test[2]), int_from_bits(test[3]));
+        RECT *legacy_result = legacy_make_rect(
+            legacy_rect, int_from_bits(test[0]), int_from_bits(test[1]),
+            int_from_bits(test[2]), int_from_bits(test[3]));
+        if (source_result != source_rect || legacy_result != legacy_rect
+                || std::memcmp(source, legacy, sizeof(source)) != 0) {
+            std::fprintf(stderr, "RECT construction oracle mismatch\n");
+            ++failures;
+        }
+    }
+
+    const uint32_t box_cases[][6] = {
+        {10, 20, 10, 20, 30, 40},
+        {40, 20, 10, 20, 30, 40},
+        {10, 19, 10, 20, 30, 40},
+        {39, 60, 10, 20, 30, 40},
+        {0x80000000U, 0, 0x7FFFFFFFU, 0, 1, 1},
+        {0x7FFFFFFFU, 0, 0x80000000U, 0, 0xFFFFFFFFU, 1},
+    };
+    for (const auto &test : box_cases) {
+        const int source_result = in_box(
+            int_from_bits(test[0]), int_from_bits(test[1]),
+            int_from_bits(test[2]), int_from_bits(test[3]),
+            int_from_bits(test[4]), int_from_bits(test[5]));
+        const int legacy_result = legacy_in_box(
+            int_from_bits(test[0]), int_from_bits(test[1]),
+            int_from_bits(test[2]), int_from_bits(test[3]),
+            int_from_bits(test[4]), int_from_bits(test[5]));
+        if (source_result != legacy_result) {
+            std::fprintf(stderr, "six-argument in_box oracle mismatch\n");
+            ++failures;
+        }
+    }
+
+    struct CenterCase { size_t x; size_t y; };
+    const CenterCase center_cases[] = {{40, 44}, {40, 40}, {20, 44}, {28, 44}};
+    const uint32_t rectangles[][4] = {
+        {10, 20, 30, 40},
+        {10, 20, 5, 13},
+        {10, 20, 7, 17},
+        {0x80000000U, 0x7FFFFFFFU, 0x7FFFFFFFU, 0x80000000U},
+    };
+    for (size_t rectangle_index = 0;
+            rectangle_index < sizeof(rectangles) / sizeof(rectangles[0]);
+            ++rectangle_index) {
+      for (size_t case_index = 0;
+              case_index < sizeof(center_cases) / sizeof(center_cases[0]);
+              ++case_index) {
+        const CenterCase &test = center_cases[case_index];
+        alignas(RECT) uint8_t source[64];
+        alignas(RECT) uint8_t legacy[64];
+        initialize_bytes(source, sizeof(source), 32);
+        std::memcpy(source + 16, rectangles[rectangle_index],
+                    sizeof(rectangles[rectangle_index]));
+        std::memcpy(legacy, source, sizeof(source));
+        const int source_result = tutwin_rect_center_redirect(
+            nullptr, nullptr, reinterpret_cast<RECT *>(source + 16),
+            reinterpret_cast<int *>(source + test.x),
+            reinterpret_cast<int *>(source + test.y));
+        const int legacy_result = reinterpret_cast<LegacyTutWin *>(1)->rect_center(
+            reinterpret_cast<RECT *>(legacy + 16),
+            reinterpret_cast<int *>(legacy + test.x),
+            reinterpret_cast<int *>(legacy + test.y));
+        if (source_result != legacy_result
+                || std::memcmp(source, legacy, sizeof(source)) != 0) {
+            std::fprintf(stderr,
+                "rectangle-center oracle mismatch: rectangle=%zu case=%zu "
+                "result=%08x/%08x\n",
+                rectangle_index, case_index,
+                static_cast<uint32_t>(source_result),
+                static_cast<uint32_t>(legacy_result));
+            report_difference("rectangle-center", "storage",
+                              source, legacy, sizeof(source));
+            ++failures;
+        }
+      }
+    }
+}
+
+void run_vector_oracles(int &failures) {
+    alignas(Vector) uint8_t source_lifecycle[sizeof(Vector) + 32];
+    alignas(Vector) uint8_t legacy_lifecycle[sizeof(Vector) + 32];
+    initialize_bytes(source_lifecycle, sizeof(source_lifecycle), sizeof(Vector));
+    std::memcpy(legacy_lifecycle, source_lifecycle, sizeof(source_lifecycle));
+    auto *source_vector = reinterpret_cast<Vector *>(source_lifecycle + CanarySize);
+    auto *legacy_vector = reinterpret_cast<LegacyVector *>(legacy_lifecycle + CanarySize);
+    Vector *source_constructed = vector_construct_redirect(source_vector, nullptr);
+    Vector *legacy_constructed = legacy_vector->construct();
+    if (source_constructed != source_vector
+            || legacy_constructed != reinterpret_cast<Vector *>(legacy_vector)
+            || std::memcmp(source_lifecycle, legacy_lifecycle,
+                           sizeof(source_lifecycle)) != 0) {
+        std::fprintf(stderr, "Vector constructor oracle mismatch\n");
+        ++failures;
+    }
+    initialize_bytes(source_lifecycle, sizeof(source_lifecycle), sizeof(Vector));
+    std::memcpy(legacy_lifecycle, source_lifecycle, sizeof(source_lifecycle));
+    const uintptr_t source_close = vector_close_redirect(source_vector, nullptr);
+    const uintptr_t legacy_close = legacy_vector->close();
+    if (source_close != legacy_close
+            || std::memcmp(source_lifecycle, legacy_lifecycle,
+                           sizeof(source_lifecycle)) != 0) {
+        std::fprintf(stderr, "Vector close oracle mismatch\n");
+        ++failures;
+    }
+
+    const VectorOracleOperation operations[] = {
+        VectorOracleOperation::Subtract,
+        VectorOracleOperation::AddAssign,
+        VectorOracleOperation::SubtractAssign,
+        VectorOracleOperation::Scale,
+    };
+    struct Layout { size_t left; size_t output; size_t right; };
+    const Layout layouts[] = {
+        {16, 32, 48},
+        {20, 32, 16},
+        {16, 20, 48},
+        {16, 16, 16},
+    };
+    const uint32_t values[][7] = {
+        {0x3FC00000U, 0xC0000000U, 0x40800000U,
+         0x3F000000U, 0x40400000U, 0xC1000000U, 0x40000000U},
+        {0x3F800000U, 0x33800000U, 0x80000000U,
+         0x33800000U, 0x3F800001U, 0x00000001U, 0x3F800001U},
+        {0x7F800001U, 0x7FC12345U, 0x7F800000U,
+         0x3F800000U, 0xFF800001U, 0xFF800000U, 0x7FC54321U},
+    };
+    const uint16_t original_control = x87_control_word();
+    const uint16_t rounding_modes[] = {0x0000, 0x0400, 0x0800, 0x0C00};
+    for (VectorOracleOperation operation : operations) {
+        for (const Layout &layout : layouts) {
+            for (const auto &test : values) {
+                for (uint16_t rounding : rounding_modes) {
+                    alignas(Vector) uint8_t source[80];
+                    alignas(Vector) uint8_t legacy[80];
+                    initialize_bytes(source, sizeof(source), 48);
+                    std::memcpy(source + layout.left, test, 12);
+                    std::memcpy(source + layout.right, test + 3, 12);
+                    std::memcpy(legacy, source, sizeof(source));
+                    const uint16_t control = static_cast<uint16_t>(
+                        (original_control | 0x003F) & ~0x0C00U) | rounding;
+                    reset_x87(control);
+                    Vector *source_result = call_source_vector(
+                        operation, source, layout.left, layout.output,
+                        layout.right, test[6]);
+                    const uint16_t source_status = x87_status_word();
+                    reset_x87(control);
+                    Vector *legacy_result = call_legacy_vector(
+                        operation, legacy, layout.left, layout.output,
+                        layout.right, test[6]);
+                    const uint16_t legacy_status = x87_status_word();
+                    const ptrdiff_t source_offset = reinterpret_cast<uint8_t *>(
+                        source_result) - source;
+                    const ptrdiff_t legacy_offset = reinterpret_cast<uint8_t *>(
+                        legacy_result) - legacy;
+                    if (source_offset != legacy_offset
+                            || source_status != legacy_status
+                            || std::memcmp(source, legacy, sizeof(source)) != 0) {
+                        std::fprintf(stderr,
+                            "Vector arithmetic oracle mismatch: op=%d layout=%zu/%zu/%zu "
+                            "rounding=0x%04x\n",
+                            static_cast<int>(operation), layout.left, layout.output,
+                            layout.right, rounding);
+                        ++failures;
+                    }
+                }
+            }
+        }
+    }
+    reset_x87(original_control);
+}
+
 }  // namespace
 
 int main() {
@@ -359,6 +631,9 @@ int main() {
     };
     const int identities[] = {0, 1, 0x7F, -128, -1, 42, -42, 2, 3, 128, -129};
     int failures = 0;
+
+    run_geometry_oracles(failures);
+    run_vector_oracles(failures);
 
     for (uint32_t process_id : process_ids) {
         Fixture source{};
