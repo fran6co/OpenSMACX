@@ -282,7 +282,7 @@ Other completed corrections and checks:
 - `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
 - `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
 - `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.
-- `.opensmacx/game/terranx_hybrid.exe`: ignored staged hybrid executable.
+- `build/<preset>/staged-game/`: ignored per-preset mirror of the master game data holding the staged `terranx_hybrid.exe` and `OpenSMACX.dll`; `.opensmacx/game` stays read-only during batches so both presets can stage and smoke concurrently.
 
 ## Current Blocker
 
