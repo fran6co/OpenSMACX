@@ -1,0 +1,11 @@
+{
+  "venvPath": ".opensmacx",
+  "venv": "venv",
+  "include": [
+    "tools"
+  ],
+  "exclude": [
+    ".opensmacx",
+    "build"
+  ]
+}

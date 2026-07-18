@@ -798,6 +798,173 @@ if(MINGW)
             USES_TERMINAL
             VERBATIM
         )
+
+        set(OPENSMACX_STATIC_RECOMPILE_DIR
+            "${CMAKE_CURRENT_BINARY_DIR}/static-recompile-pilot")
+        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR
+            "${OPENSMACX_STATIC_RECOMPILE_DIR}/original")
+        set(OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR
+            "${OPENSMACX_STATIC_RECOMPILE_DIR}/generated")
+        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY
+            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}/legacy-leaves.S")
+        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST
+            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}/manifest.json")
+        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_SYMBOLS
+            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}/symbols.csv")
+        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT
+            "${OPENSMACX_STATIC_RECOMPILE_DIR}/original.obj")
+        set(OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE
+            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR}/static-recompiled-004C5460.cpp")
+        set(OPENSMACX_STATIC_RECOMPILE_MANIFEST
+            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR}/manifest.json")
+
+        add_custom_command(
+            OUTPUT
+                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY}"
+                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
+                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_SYMBOLS}"
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+                --output "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}"
+                --max-size 64
+                --address 0x004C5460
+            DEPENDS
+                "${OPENSMACX_LEGACY_LEAF_EXE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
+            USES_TERMINAL
+            VERBATIM
+        )
+        add_custom_command(
+            OUTPUT "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
+            COMMAND "${CMAKE_CXX_COMPILER}"
+                -x assembler-with-cpp
+                -c "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY}"
+                -o "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
+            DEPENDS "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY}"
+            USES_TERMINAL
+            VERBATIM
+        )
+        add_custom_command(
+            OUTPUT
+                "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
+                "${OPENSMACX_STATIC_RECOMPILE_MANIFEST}"
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_static_recompile_pilot.py"
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/static_recompile_pilot.py"
+                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+                --oracle-manifest "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
+                --output "${OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR}"
+            DEPENDS
+                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
+                "${OPENSMACX_LEGACY_LEAF_EXE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/static_recompile_pilot.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/static_recompile_runtime.h"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_static_recompile_pilot.py"
+            USES_TERMINAL
+            VERBATIM
+        )
+        add_custom_target(generate-static-recompile-pilot
+            DEPENDS
+                "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
+                "${OPENSMACX_STATIC_RECOMPILE_MANIFEST}"
+        )
+
+        set_source_files_properties(
+            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
+            PROPERTIES GENERATED TRUE)
+        add_library(static-recompile-pilot-generated OBJECT EXCLUDE_FROM_ALL
+            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}")
+        target_compile_features(static-recompile-pilot-generated PRIVATE cxx_std_11)
+        target_include_directories(static-recompile-pilot-generated PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools")
+        target_compile_options(static-recompile-pilot-generated PRIVATE
+            -pedantic
+            -Wall
+            -Wextra
+            -Wshadow
+            -Wcast-align
+            -Wfloat-conversion
+            -Wuseless-cast
+            -Wno-attributes
+            $<$<CONFIG:Debug>:-Og>
+            $<$<CONFIG:Release>:-O2>
+        )
+
+        set_source_files_properties("${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
+            PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
+        add_executable(static-recompile-pilot-standalone-tests EXCLUDE_FROM_ALL
+            tests/static_recompile_pilot_tests.cpp
+            $<TARGET_OBJECTS:static-recompile-pilot-generated>)
+        target_compile_features(
+            static-recompile-pilot-standalone-tests PRIVATE cxx_std_11)
+        target_compile_definitions(static-recompile-pilot-standalone-tests PRIVATE
+            OPENSMACX_STATIC_RECOMPILE_STANDALONE=1)
+        target_include_directories(static-recompile-pilot-standalone-tests PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools")
+        target_compile_options(static-recompile-pilot-standalone-tests PRIVATE
+            -pedantic -Wall -Wextra -Wshadow -Wcast-align -Wfloat-conversion
+            -Wuseless-cast -Wno-attributes
+            $<$<CONFIG:Debug>:-Og> $<$<CONFIG:Release>:-O2>)
+        target_link_options(static-recompile-pilot-standalone-tests PRIVATE -static)
+
+        add_executable(static-recompile-pilot-tests EXCLUDE_FROM_ALL
+            tests/static_recompile_pilot_tests.cpp
+            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
+            $<TARGET_OBJECTS:static-recompile-pilot-generated>)
+        target_compile_features(static-recompile-pilot-tests PRIVATE cxx_std_11)
+        target_include_directories(static-recompile-pilot-tests PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools")
+        target_compile_options(static-recompile-pilot-tests PRIVATE
+            -pedantic -Wall -Wextra -Wshadow -Wcast-align -Wfloat-conversion
+            -Wuseless-cast -Wno-attributes
+            $<$<CONFIG:Debug>:-Og> $<$<CONFIG:Release>:-O2>)
+        target_link_options(static-recompile-pilot-tests PRIVATE -static)
+
+        set(OPENSMACX_STATIC_RECOMPILE_STANDALONE_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:static-recompile-pilot-standalone-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}")
+        set(OPENSMACX_STATIC_RECOMPILE_DIFFERENTIAL_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:static-recompile-pilot-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}")
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_STATIC_RECOMPILE_STANDALONE_COMMAND
+                --wine "${OPENSMACX_WINE}")
+            list(APPEND OPENSMACX_STATIC_RECOMPILE_DIFFERENTIAL_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_custom_target(verify-static-recompile-pilot
+            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_static_recompile_pilot.py"
+                --nm "${CMAKE_NM}"
+                --objdump "${CMAKE_OBJDUMP}"
+                --compiler "${CMAKE_CXX_COMPILER}"
+                --object "$<TARGET_OBJECTS:static-recompile-pilot-generated>"
+                --original-object "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
+                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+                --oracle-manifest "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
+                --manifest "${OPENSMACX_STATIC_RECOMPILE_MANIFEST}"
+            COMMAND ${OPENSMACX_STATIC_RECOMPILE_STANDALONE_COMMAND}
+            COMMAND ${OPENSMACX_STATIC_RECOMPILE_DIFFERENTIAL_COMMAND}
+            DEPENDS
+                static-recompile-pilot-standalone-tests
+                static-recompile-pilot-tests
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_static_recompile_pilot.py"
+            USES_TERMINAL
+            VERBATIM
+        )
     endif()
 endif()
 
