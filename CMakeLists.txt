@@ -430,6 +430,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
     )
+
+    add_test(NAME batch-decompile-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_batch_decompile.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
