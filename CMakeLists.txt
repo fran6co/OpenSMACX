@@ -407,6 +407,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_external_analysis.py"
     )
+
+    add_test(NAME recovery-metadata-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_verify_recovery_metadata.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
@@ -418,37 +423,13 @@ install(TARGETS OpenSMACX
 set(OPENSMACX_METADATA_VERIFY_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/recovery-metadata-verify")
 add_custom_target(verify-recovery-metadata
-    COMMAND "${CMAKE_COMMAND}" -E rm -rf "${OPENSMACX_METADATA_VERIFY_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${OPENSMACX_METADATA_VERIFY_DIR}"
     COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
         --idb "${OPENSMACX_RECOVERY_IDB}"
-        --output-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
-        --canonical "${OPENSMACX_METADATA_VERIFY_DIR}/functions.csv"
-        --canonical-summary "${OPENSMACX_METADATA_VERIFY_DIR}/summary.json"
-        --output-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E compare_files
-        "${OPENSMACX_METADATA_VERIFY_DIR}/functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
-    COMMAND "${CMAKE_COMMAND}" -E compare_files
-        "${OPENSMACX_METADATA_VERIFY_DIR}/callgraph.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/callgraph.json"
-    COMMAND "${CMAKE_COMMAND}" -E compare_files
-        "${OPENSMACX_METADATA_VERIFY_DIR}/summary.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
-    COMMAND "${CMAKE_COMMAND}" -E compare_files
-        "${OPENSMACX_METADATA_VERIFY_DIR}/analysis-correlation.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
-    COMMAND "${CMAKE_COMMAND}" -E compare_files
-        "${OPENSMACX_METADATA_VERIFY_DIR}/priorities.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/priorities.csv"
-    COMMAND "${CMAKE_COMMAND}" -E compare_files
-        "${OPENSMACX_METADATA_VERIFY_DIR}/analysis-summary.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
+        --verify-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
     DEPENDS
         "${OPENSMACX_RECOVERY_IDB}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
