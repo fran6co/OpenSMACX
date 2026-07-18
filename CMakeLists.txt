@@ -146,6 +146,7 @@ set(OPENSMACX_SOURCES
     src/pulldown.cpp
     src/random.cpp
     src/scroll.cpp
+    src/scroll_oracle.cpp
     src/scenario.cpp
     src/spot.cpp
     src/spot_recovery.cpp
@@ -207,8 +208,8 @@ if(MINGW)
     )
     target_link_options(OpenSMACX PRIVATE
         $<$<CONFIG:Release>:-s>
-        $<$<CONFIG:Release>:-static>
-        $<$<CONFIG:Release>:-Wl,--allow-multiple-definition>
+        -static
+        -Wl,--allow-multiple-definition
     )
 
     set(OPENSMACX_ALPHANET_OBJECT
@@ -237,6 +238,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/random.cpp.obj")
     set(OPENSMACX_SCROLL_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll.cpp.obj")
+    set(OPENSMACX_SCROLL_ORACLE_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll_oracle.cpp.obj")
     set(OPENSMACX_STRING_STRUCT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
     set(OPENSMACX_SPOT_OBJECT
@@ -269,6 +272,7 @@ if(MINGW)
             --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
             --random-object "${OPENSMACX_RANDOM_OBJECT}"
             --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
+            --scroll-oracle-object "${OPENSMACX_SCROLL_ORACLE_OBJECT}"
             --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
             --spot-object "${OPENSMACX_SPOT_OBJECT}"
             --strings-object "${OPENSMACX_STRINGS_OBJECT}"
@@ -372,6 +376,7 @@ if(BUILD_TESTING)
                 --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
                 --random-object "${OPENSMACX_RANDOM_OBJECT}"
                 --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
+                --scroll-oracle-object "${OPENSMACX_SCROLL_ORACLE_OBJECT}"
                 --string-struct-object "${OPENSMACX_STRING_STRUCT_OBJECT}"
                 --spot-object "${OPENSMACX_SPOT_OBJECT}"
                 --strings-object "${OPENSMACX_STRINGS_OBJECT}"
@@ -517,6 +522,7 @@ set(OPENSMACX_HYBRID_SMOKE_COMMAND
     --duration "${OPENSMACX_HYBRID_SMOKE_SECONDS}"
     --log "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke.log"
     --result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke-result.json"
+    --oracle-result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-scroll-oracle-result.txt"
 )
 if(OPENSMACX_WINE)
     list(APPEND OPENSMACX_HYBRID_SMOKE_COMMAND --wine "${OPENSMACX_WINE}")

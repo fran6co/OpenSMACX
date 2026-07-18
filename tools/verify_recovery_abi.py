@@ -33,6 +33,7 @@ def main():
     parser.add_argument("--pulldown-object")
     parser.add_argument("--random-object")
     parser.add_argument("--scroll-object")
+    parser.add_argument("--scroll-oracle-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--strings-object")
@@ -136,21 +137,55 @@ def main():
         scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
         required_scroll_symbols = {
             "RECT expansion helper": "__Z11expand_rectP7tagRECTii",
+            "Scroll range setter": "__ZN6Scroll9set_rangeEii",
+            "Scroll button-color setter": "__ZN6Scroll16set_button_colorEi",
+            "Scroll bevel-thickness setter":
+                "__ZN6Scroll19set_bevel_thicknessEi",
+            "Scroll upper-bevel setter": "__ZN6Scroll15set_bevel_upperEi",
+            "Scroll lower-bevel setter": "__ZN6Scroll15set_bevel_lowerEi",
+            "Scroll bar-thickness setter":
+                "__ZN6Scroll17set_bar_thicknessEi",
             "Scroll border-color setter": "__ZN6Scroll16set_border_colorEi",
             "Scroll left-sprite setter":
                 "__ZN6Scroll15set_sprite_leftEP6SpriteS1_S1_",
             "Scroll right-sprite setter":
                 "__ZN6Scroll16set_sprite_rightEP6SpriteS1_S1_",
+            "Scroll upper-sprite setter":
+                "__ZN6Scroll13set_sprite_upEP6SpriteS1_S1_",
+            "Scroll lower-sprite setter":
+                "__ZN6Scroll15set_sprite_downEP6SpriteS1_S1_",
             "Scroll thumb computation":
                 "__ZN6Scroll18compute_thumb_rectEP7tagRECT",
+            "Scroll position setter": "__ZN6Scroll7set_posEi",
+            "Scroll thumb-rectangle reset": "__ZN6Scroll14set_thumb_rectEv",
+            "Scroll range adapter":
+                "@_Z25scroll_set_range_redirectP6ScrollPvii@16",
+            "Scroll button-color adapter":
+                "@_Z32scroll_set_button_color_redirectP6ScrollPvi@12",
+            "Scroll bevel-thickness adapter":
+                "@_Z35scroll_set_bevel_thickness_redirectP6ScrollPvi@12",
+            "Scroll upper-bevel adapter":
+                "@_Z31scroll_set_bevel_upper_redirectP6ScrollPvi@12",
+            "Scroll lower-bevel adapter":
+                "@_Z31scroll_set_bevel_lower_redirectP6ScrollPvi@12",
+            "Scroll bar-thickness adapter":
+                "@_Z33scroll_set_bar_thickness_redirectP6ScrollPvi@12",
             "Scroll border-color adapter":
                 "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12",
             "Scroll left-sprite adapter":
                 "@_Z31scroll_set_sprite_left_redirectP6ScrollPvP6SpriteS3_S3_@20",
             "Scroll right-sprite adapter":
                 "@_Z32scroll_set_sprite_right_redirectP6ScrollPvP6SpriteS3_S3_@20",
+            "Scroll upper-sprite adapter":
+                "@_Z29scroll_set_sprite_up_redirectP6ScrollPvP6SpriteS3_S3_@20",
+            "Scroll lower-sprite adapter":
+                "@_Z31scroll_set_sprite_down_redirectP6ScrollPvP6SpriteS3_S3_@20",
             "Scroll thumb-computation adapter":
                 "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12",
+            "Scroll position adapter":
+                "@_Z23scroll_set_pos_redirectP6ScrollPvi@12",
+            "Scroll thumb-rectangle adapter":
+                "@_Z30scroll_set_thumb_rect_redirectP6ScrollPv@8",
         }
         for description, symbol in required_scroll_symbols.items():
             if symbol not in scroll_symbols:
@@ -185,24 +220,60 @@ def main():
             fail("RECT expansion helper does not preserve field access order")
         scroll_bodies = {}
         for description, label, stack_bytes in (
+                ("Scroll range setter", "Scroll::set_range(int, int)", "8"),
+                ("Scroll button-color setter",
+                 "Scroll::set_button_color(int)", "4"),
+                ("Scroll bevel-thickness setter",
+                 "Scroll::set_bevel_thickness(int)", "4"),
+                ("Scroll upper-bevel setter",
+                 "Scroll::set_bevel_upper(int)", "4"),
+                ("Scroll lower-bevel setter",
+                 "Scroll::set_bevel_lower(int)", "4"),
+                ("Scroll bar-thickness setter",
+                 "Scroll::set_bar_thickness(int)", "4"),
                 ("Scroll border-color setter", "Scroll::set_border_color(int)", "4"),
                 ("Scroll left-sprite setter",
                  "Scroll::set_sprite_left(Sprite*, Sprite*, Sprite*)", "c"),
                 ("Scroll right-sprite setter",
                  "Scroll::set_sprite_right(Sprite*, Sprite*, Sprite*)", "c"),
+                ("Scroll upper-sprite setter",
+                 "Scroll::set_sprite_up(Sprite*, Sprite*, Sprite*)", "c"),
+                ("Scroll lower-sprite setter",
+                 "Scroll::set_sprite_down(Sprite*, Sprite*, Sprite*)", "c"),
                 ("Scroll border-color adapter",
                  "@_Z32scroll_set_border_color_redirectP6ScrollPvi@12", "4"),
+                ("Scroll range adapter",
+                 "@_Z25scroll_set_range_redirectP6ScrollPvii@16", "8"),
+                ("Scroll button-color adapter",
+                 "@_Z32scroll_set_button_color_redirectP6ScrollPvi@12", "4"),
+                ("Scroll bevel-thickness adapter",
+                 "@_Z35scroll_set_bevel_thickness_redirectP6ScrollPvi@12", "4"),
+                ("Scroll upper-bevel adapter",
+                 "@_Z31scroll_set_bevel_upper_redirectP6ScrollPvi@12", "4"),
+                ("Scroll lower-bevel adapter",
+                 "@_Z31scroll_set_bevel_lower_redirectP6ScrollPvi@12", "4"),
+                ("Scroll bar-thickness adapter",
+                 "@_Z33scroll_set_bar_thickness_redirectP6ScrollPvi@12", "4"),
                 ("Scroll left-sprite adapter",
                  "@_Z31scroll_set_sprite_left_redirectP6ScrollPvP6SpriteS3_S3_@20",
                  "c"),
                 ("Scroll right-sprite adapter",
                  "@_Z32scroll_set_sprite_right_redirectP6ScrollPvP6SpriteS3_S3_@20",
                  "c"),
+                ("Scroll upper-sprite adapter",
+                 "@_Z29scroll_set_sprite_up_redirectP6ScrollPvP6SpriteS3_S3_@20",
+                 "c"),
+                ("Scroll lower-sprite adapter",
+                 "@_Z31scroll_set_sprite_down_redirectP6ScrollPvP6SpriteS3_S3_@20",
+                 "c"),
                 ("Scroll thumb computation",
                  "Scroll::compute_thumb_rect(tagRECT*)", "4"),
                 ("Scroll thumb-computation adapter",
                  "@_Z34scroll_compute_thumb_rect_redirectP6ScrollPvP7tagRECT@12",
-                 "4")):
+                 "4"),
+                ("Scroll position setter", "Scroll::set_pos(int)", "4"),
+                ("Scroll position adapter",
+                 "@_Z23scroll_set_pos_redirectP6ScrollPvi@12", "4")):
             match = re.search(
                 rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
                 scroll_disassembly, re.DOTALL)
@@ -214,6 +285,67 @@ def main():
             if not returns or any(value != stack_bytes for value in returns):
                 fail(f"{description} does not pop {stack_bytes} stack bytes")
 
+        for description, label in (
+                ("Scroll thumb-rectangle reset", "Scroll::set_thumb_rect()"),
+                ("Scroll thumb-rectangle adapter",
+                 "@_Z30scroll_set_thumb_rect_redirectP6ScrollPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                scroll_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            if (not re.search(r"\bret\s*$", body, re.MULTILINE)
+                    or re.search(r"\bret\s+\$", body)):
+                fail(f"{description} unexpectedly pops stack arguments")
+
+        redraw_dispatch = re.search(
+            r"<\(anonymous namespace\)::redraw_from_vtable\(void\*, unsigned int\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        helper_has_dispatch = bool(redraw_dispatch and re.search(
+            r"\bcall\s+\*", redraw_dispatch.group("body")))
+        for description, label in (
+                ("Scroll range setter", "Scroll::set_range(int, int)"),
+                ("Scroll position setter", "Scroll::set_pos(int)")):
+            body = scroll_bodies[label]
+            has_inline_dispatch = bool(re.search(r"\bcall\s+\*", body))
+            calls_helper = bool(re.search(
+                r"\bcall\b.*<\(anonymous namespace\)::redraw_from_vtable", body))
+            if not has_inline_dispatch and not (calls_helper and helper_has_dispatch):
+                fail(f"{description} lacks raw thiscall indirect redraw dispatch")
+
+        style_functions = (
+            ("Scroll button-color setter", "Scroll::set_button_color(int)", None),
+            ("Scroll bevel-thickness setter",
+             "Scroll::set_bevel_thickness(int)", None),
+            ("Scroll upper-bevel setter", "Scroll::set_bevel_upper(int)", None),
+            ("Scroll lower-bevel setter", "Scroll::set_bevel_lower(int)", None),
+            ("Scroll button-color adapter",
+             "@_Z32scroll_set_button_color_redirectP6ScrollPvi@12",
+             "Scroll::set_button_color(int)"),
+            ("Scroll bevel-thickness adapter",
+             "@_Z35scroll_set_bevel_thickness_redirectP6ScrollPvi@12",
+             "Scroll::set_bevel_thickness(int)"),
+            ("Scroll upper-bevel adapter",
+             "@_Z31scroll_set_bevel_upper_redirectP6ScrollPvi@12",
+             "Scroll::set_bevel_upper(int)"),
+            ("Scroll lower-bevel adapter",
+             "@_Z31scroll_set_bevel_lower_redirectP6ScrollPvi@12",
+             "Scroll::set_bevel_lower(int)"),
+        )
+        for description, label, method_label in style_functions:
+            body = scroll_bodies[label]
+            inline_dispatches = len(re.findall(r"\bcall\s+\*", body))
+            helper_dispatches = len(re.findall(
+                r"\bcall\b.*<\(anonymous namespace\)::redraw_from_vtable", body))
+            calls_method = bool(method_label and re.search(
+                rf"\bcall\b.*<{re.escape(method_label)}>", body))
+            if inline_dispatches != 2 and not (
+                    helper_dispatches == 2 and helper_has_dispatch) \
+                    and not calls_method:
+                fail(f"{description} lacks two ordered indirect redraw calls")
+
         sprite_setters = (
             ("left", "Scroll::set_sprite_left(Sprite*, Sprite*, Sprite*)",
              "@_Z31scroll_set_sprite_left_redirectP6ScrollPvP6SpriteS3_S3_@20",
@@ -222,6 +354,14 @@ def main():
             ("right", "Scroll::set_sprite_right(Sprite*, Sprite*, Sprite*)",
              "@_Z32scroll_set_sprite_right_redirectP6ScrollPvP6SpriteS3_S3_@20",
              (0xA94, 0xA98, 0xA9C, 0x4C8, 0x4C4,
+               0x2108, 0x210C, 0x2110)),
+            ("upper", "Scroll::set_sprite_up(Sprite*, Sprite*, Sprite*)",
+             "@_Z29scroll_set_sprite_up_redirectP6ScrollPvP6SpriteS3_S3_@20",
+             (0xA88, 0xA8C, 0xA90, 0x4C8, 0x4C4,
+              0x15BC, 0x15C0, 0x15C4)),
+            ("lower", "Scroll::set_sprite_down(Sprite*, Sprite*, Sprite*)",
+             "@_Z31scroll_set_sprite_down_redirectP6ScrollPvP6SpriteS3_S3_@20",
+             (0xAA0, 0xAA4, 0xAA8, 0x4C8, 0x4C4,
               0x2108, 0x210C, 0x2110)),
         )
         for side, method_label, adapter_label, offsets in sprite_setters:
@@ -265,6 +405,43 @@ def main():
         if not signed_divide or not re.search(
                 r"\bidivl?\b", signed_divide.group("body")):
             fail("Scroll signed divider lacks an IDIV instruction")
+
+    if args.scroll_oracle_object:
+        oracle_headers = run([args.objdump, "-f", args.scroll_oracle_object])
+        if "file format pe-i386" not in oracle_headers:
+            fail("Scroll runtime oracle object is not a 32-bit PE COFF object")
+        oracle_symbols = run(
+            [args.nm, "--defined-only", args.scroll_oracle_object])
+        if "__Z26run_scroll_recovery_oraclev" not in oracle_symbols:
+            fail("missing Scroll runtime oracle entry point")
+        oracle_disassembly = run(
+            [args.objdump, "-d", "-C", args.scroll_oracle_object])
+        oracle_calls = {
+            "(anonymous namespace)::verify_range()": (0x006059B0,),
+            "(anonymous namespace)::verify_styles()": (
+                0x00605A10, 0x00605A50, 0x00605A90, 0x00605AD0),
+            "(anonymous namespace)::verify_thumb_resetters()": (
+                0x00605B80, 0x00606EA0),
+            "(anonymous namespace)::verify_vertical_sprites()": (
+                0x00605C80, 0x00605CD0),
+            "(anonymous namespace)::verify_position()": (0x00605D20,),
+        }
+        for label, addresses in oracle_calls.items():
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                oracle_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate Scroll runtime oracle helper {label}")
+            body = match.group("body")
+            for address in addresses:
+                if f"0x{address:x}" not in body:
+                    fail(
+                        f"Scroll runtime oracle helper {label} lacks original "
+                        f"address 0x{address:08X}")
+            if not re.search(r"\bcall\b\s+\*%", body):
+                fail(f"Scroll runtime oracle helper {label} lacks an original call")
+            if not re.search(r"\b(?:lea|mov)\b.*%ecx", body):
+                fail(f"Scroll runtime oracle helper {label} does not prepare ECX")
 
     if args.menu_object:
         menu_headers = run([args.objdump, "-f", args.menu_object])

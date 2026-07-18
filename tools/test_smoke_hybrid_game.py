@@ -10,7 +10,12 @@ from movie_skip import (
     configure_intro_movie_skip,
     restore_intro_movie_config,
 )
-from smoke_hybrid_game import analyze_diagnostics, validate_smoke
+from smoke_hybrid_game import (
+    analyze_diagnostics,
+    prepare_scroll_oracle_result_path,
+    validate_scroll_oracle,
+    validate_smoke,
+)
 from setup_game import stage_pracx
 
 
@@ -81,6 +86,35 @@ terranx_hybrid.exe could not load imports
         self.assertGreaterEqual(len(result["loader_failure_lines"]), 3)
         with self.assertRaisesRegex(RuntimeError, "load failure"):
             validate_smoke(result, [123])
+
+    def test_requires_passing_scroll_recovery_oracle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = Path(directory) / "scroll-oracle.txt"
+            with self.assertRaisesRegex(RuntimeError, "did not produce"):
+                validate_scroll_oracle(result)
+            result.write_text("failed\n", encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "failed"):
+                validate_scroll_oracle(result)
+            result.write_text("passed\n", encoding="ascii")
+            validate_scroll_oracle(result)
+
+    def test_scroll_oracle_result_rejects_symlink_without_removing_target(self):
+        build_root = Path(__file__).resolve().parent.parent / "build"
+        with tempfile.TemporaryDirectory(dir=build_root) as directory:
+            root = Path(directory)
+            target = root / "target.txt"
+            target.write_text("preserved\n", encoding="ascii")
+            link = root / "result.txt"
+            link.symlink_to(target)
+            with self.assertRaisesRegex(RuntimeError, "must not contain symlinks"):
+                prepare_scroll_oracle_result_path(link)
+            self.assertEqual(target.read_text(encoding="ascii"), "preserved\n")
+
+    def test_scroll_oracle_result_rejects_nonlocal_path(self):
+        result = (Path(__file__).resolve().parent.parent.parent
+                  / "outside-scroll-oracle-result.txt")
+        with self.assertRaisesRegex(RuntimeError, "inside the ignored"):
+            prepare_scroll_oracle_result_path(result)
 
     def test_rejects_wine_import_error_after_successful_load_records(self):
         result = analyze_diagnostics(

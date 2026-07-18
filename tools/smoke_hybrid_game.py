@@ -11,6 +11,7 @@ import sys
 import time
 
 from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
+from local_artifact import require_local_artifact_path
 from movie_skip import configure_intro_movie_skip, restore_intro_movie_config
 from runtime_process import (
     matching_scenario_process_ids,
@@ -41,6 +42,7 @@ LOADER_FAILURE_PATTERNS = (
     re.compile(r"\bmodule\b.*\bnot found\b", re.IGNORECASE),
     re.compile(r"\bimport\b.*\b(?:failed|unresolved)\b", re.IGNORECASE),
 )
+SCROLL_ORACLE_ENVIRONMENT = "OPENSMACX_SCROLL_ORACLE_RESULT"
 
 
 def diagnostic_context(line):
@@ -119,6 +121,22 @@ def validate_smoke(analysis, new_processes):
     return "surface_flip" if analysis["rendering_started"] else "process_survival"
 
 
+def validate_scroll_oracle(result_path):
+    if not result_path.is_file():
+        raise RuntimeError("Scroll recovery oracle did not produce a result")
+    if result_path.read_text(encoding="ascii") != "passed\n":
+        raise RuntimeError("Scroll recovery oracle failed")
+
+
+def prepare_scroll_oracle_result_path(value):
+    path = require_local_artifact_path(
+        Path(value).expanduser().absolute(), "Scroll oracle result")
+    if not path.parent.is_dir():
+        raise RuntimeError("Scroll oracle result parent directory must exist")
+    path.unlink(missing_ok=True)
+    return path
+
+
 def matching_process_ids(executable):
     if os.name == "nt":
         return set()
@@ -155,9 +173,13 @@ def validate_executable(game_dir, executable_name):
     return executable
 
 
-def launch(executable, wine, wine_prefix, log_path):
+def launch(executable, wine, wine_prefix, log_path, oracle_result):
     environment = os.environ.copy()
     environment["WINEDEBUG"] = "+loaddll"
+    environment.pop(SCROLL_ORACLE_ENVIRONMENT, None)
+    oracle_value = (str(oracle_result) if os.name == "nt"
+                    else "Z:" + str(oracle_result).replace("/", "\\"))
+    environment[SCROLL_ORACLE_ENVIRONMENT] = oracle_value
     if wine_prefix:
         environment["WINEPREFIX"] = str(wine_prefix)
 
@@ -165,6 +187,7 @@ def launch(executable, wine, wine_prefix, log_path):
         log_file = log_path.open("w", encoding="utf-8")
         process = subprocess.Popen(
             [str(executable)], cwd=str(executable.parent),
+            env=environment,
             stdout=log_file, stderr=subprocess.STDOUT)
         return process, log_file
 
@@ -177,6 +200,7 @@ def launch(executable, wine, wine_prefix, log_path):
                 command.extend(["--env", f"WINEPREFIX={wine_prefix}"])
             command.extend([
                 "--env", "WINEDEBUG=+loaddll",
+                "--env", f"{SCROLL_ORACLE_ENVIRONMENT}={oracle_value}",
                 "--stderr", str(log_path),
                 "--args", str(executable),
             ])
@@ -200,6 +224,7 @@ def main():
     parser.add_argument("--duration", type=float, default=20.0)
     parser.add_argument("--log", required=True)
     parser.add_argument("--result", required=True)
+    parser.add_argument("--oracle-result", required=True)
     parser.add_argument("--play-intro-movie", action="store_true",
                         help="Leave PRACX's configured movie player enabled")
     args = parser.parse_args()
@@ -207,6 +232,7 @@ def main():
     game_dir = Path(args.game_dir).expanduser().resolve()
     log_path = Path(args.log).expanduser().resolve()
     result_path = Path(args.result).expanduser().resolve()
+    oracle_result_path = Path(args.oracle_result).expanduser().absolute()
     wine_prefix = (Path(args.wine_prefix).expanduser().absolute()
                    if args.wine_prefix else None)
     report = {
@@ -225,6 +251,7 @@ def main():
             raise RuntimeError("a dedicated --wine-prefix is required")
         if not log_path.parent.is_dir() or not result_path.parent.is_dir():
             raise RuntimeError("log and result parent directories must exist")
+        oracle_result_path = prepare_scroll_oracle_result_path(oracle_result_path)
         if os.name != "nt":
             prepare_owned_wine_prefix(wine_prefix, args.wine)
             prefix_prepared = True
@@ -237,7 +264,8 @@ def main():
         before = matching_scenario_process_ids(scenario_executable)
         log_path.write_text("", encoding="utf-8")
         process, log_file = launch(
-            scenario_executable, args.wine, wine_prefix, log_path)
+            scenario_executable, args.wine, wine_prefix, log_path,
+            oracle_result_path)
         try:
             deadline = time.monotonic() + args.duration
             while time.monotonic() < deadline:
@@ -253,6 +281,7 @@ def main():
         analysis = analyze_diagnostics(diagnostics, scenario_executable.name)
         after = matching_scenario_process_ids(scenario_executable)
         new_processes = sorted(after - before)
+        validate_scroll_oracle(oracle_result_path)
         report.update({
             **analysis,
             "executable": str(executable),
@@ -260,6 +289,7 @@ def main():
             "log": str(log_path),
             "new_processes": new_processes,
             "preexisting_processes": sorted(before),
+            "scroll_recovery_oracle": "passed",
         })
         report["runtime_evidence"] = validate_smoke(analysis, new_processes)
         report["status"] = "passed"

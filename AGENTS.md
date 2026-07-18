@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,071 candidates.
+- Current recovery backlog: 5,061 candidates.
 - Current local legacy-island count: 124, reduced from 174.
-- `DllMain` entry redirects: 59, comprising 57 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 69, comprising 67 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -84,6 +84,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - `12fb52d Recover Menu and PullDown helpers`
 - `dda4970 Recover Scroll thumb rectangle`
 - `eef482b Recover Scroll sprite setters`
+- Recovered Scroll state, style, vertical-sprite, and thumb-reset helpers in the current batch.
 
 Recovered source includes:
 
@@ -110,7 +111,7 @@ Recovered source includes:
 - `CaviarData` and `Caviar` constructors, scaling, camera state, and scaling getter.
 - `MainInterface::clear_message`, `desktop_update`, Buffer lifecycle hooks, and `Dialogs::close`.
 - `AlphaNet::pid_2_idx`, `pid_2_who`, `who_2_pid`, and `who_2_idx` plus their fastcall-to-thiscall runtime adapters.
-- `Win::move`, `set_vert_paging`, and `set_horz_paging`, plus `Scroll::set_border_color`, both sprite-triplet setters, `compute_thumb_rect`, and their fastcall-to-thiscall runtime adapters.
+- `Win::move`, `set_vert_paging`, and `set_horz_paging`, plus `Scroll::set_border_color`, all four sprite-triplet setters, `set_range`, `set_pos`, four style setters, both thumb resetters, `compute_thumb_rect`, and their fastcall-to-thiscall runtime adapters.
 - The named-field RECT expansion helper used by Scroll initialization.
 - `Menu::set_menu_proc`, `Menu::id_to_index`, and all six `PullDown` item-state mutators plus `get_selected`, with fastcall-to-thiscall runtime adapters.
 
@@ -148,6 +149,9 @@ Other completed corrections and checks:
 - Win paging tests cover vertical/horizontal, direct/adapter, null, distinct and aliased scroll pointers, raw signed values, exact target offsets, and complete Win/Scroll canaries.
 - Scroll border-color tests cover the `-1` sentinel, signed color extremes, zero/one/negative and wrapping thicknesses, poisoned prior rectangles, exact write boundaries, and complete object canaries.
 - Scroll sprite-triplet tests cover left/right, direct/adapted calls, null/distinct/duplicate pointers, horizontal/vertical/equal geometry, signed-comparison divergence, negated `INT_MIN`, first-pointer return residue, exact primary/button offsets, and complete object canaries. Volatile stores and reads retain the legacy access order in optimized builds, which ABI checks verify in Debug and Release disassembly.
+- Scroll state tests cover signed range normalization, reversed and equal ranges, signed position clamping/reflection, null parents, current-window publication, redraw callbacks, exact object writes, complete canaries, and return residue.
+- Scroll style tests cover signed-extreme values, primary and embedded-button propagation, two ordered redraw callbacks, reset geometry, exact write boundaries, and complete object canaries.
+- Scroll vertical-sprite tests cover up/down, direct/adapted calls, null/distinct/duplicate pointers, signed geometry branches including `INT_MIN`, ordered stores, first-pointer return residue, exact primary/button offsets, and complete object canaries.
 - Scroll thumb-rectangle tests cover horizontal, vertical, and equal-dimension orientation; button and border geometry; reversed/equal ranges; signed truncation and wrapping; drag clamping; crossed bounds; nonsquare templates; exact and partial object aliases; output canaries; and the legacy internal-rectangle return residue. The signed division helper is forced to a source-owned x86 `IDIV` and verified in Debug and Release disassembly.
 - RECT expansion tests cover zero, positive/negative, signed-extreme, and wrapping amounts; exact named-field access order; cdecl cleanup; pointer return residue; and complete input/output canaries.
 - PullDown item-state tests cover first/middle/last entries, all six mutations, stable hide/show states, first-match duplicates, sentinel termination, ignored counts, visible-count wrapping, exact dirty-byte writes, direct/adapted calls, and complete object canaries.
@@ -159,7 +163,8 @@ Other completed corrections and checks:
 - Random floating generation now transfers the synthesized IEEE single without the previous out-of-bounds eight-byte type pun.
 - Caviar scaling uses raw integer transfer to preserve NaN payloads, floating-point exceptions, and `EAX`. Release disassembly contains no unwanted x87 transfer.
 - Hybrid staging and launch succeeded for the earlier Buffer and Dialog recovery batches.
-- All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, and independent review.
+- Debug and Release DLLs are self-contained MinGW builds so both presets can execute the complete staged-hybrid smoke gate.
+- All completed batches passed Debug and Release MinGW builds, metadata regeneration, island removal, staged-hybrid runtime smoke, and independent review.
 
 ### Recovery Verification
 
@@ -170,7 +175,7 @@ Other completed corrections and checks:
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
 - Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
 - The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
-- Regenerated state after the RECT expansion recovery is 5,071 priorities, 563 source-complete functions, 5,037 unrecovered functions, and 124 islands.
+- Regenerated state after the Scroll state/style recovery is 5,061 priorities, 573 source-complete functions, 5,027 unrecovered functions, and 124 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -183,6 +188,7 @@ Other completed corrections and checks:
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
 - `tools/smoke_hybrid_game.py` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
+- The opt-in Scroll recovery oracle runs ten untouched original methods inside the verified PRACX process before redirects are installed, compares complete object/canary state, callback traces, global publication, and return residue against source, and must write `passed` to an ignored nonsymlinked result path before smoke can pass. All direct redirect signatures are validated before the oracle executes; sprite redirects additionally validate their distinguishing field displacement.
 - ImportAdder runs only in the marker-protected build Wine prefix, receives an explicit `WINEPREFIX`, and stops only that prefix after every invocation.
 - `tools/run_gameplay_scenario.py` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
@@ -193,19 +199,17 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Recover the Scroll thumb-reset helpers at `0x00605B80` and `0x00606EA0`, then `Scroll::set_range` at `0x006059B0` and `Scroll::set_pos` at `0x00605D20` as a related batch.
-2. Recover the four Scroll style setters at `0x00605A10` through `0x00605AD0`.
-3. Recover the remaining Scroll sprite-triplet setters at `0x00605C80` and `0x00605CD0`.
-4. Recover the Scroll init wrappers at `0x00605840` through `0x00605960`, then its constructor, close, and primary init at `0x006051D0` through `0x006054D0`.
-5. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-6. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
-7. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
+1. Run a time-boxed local-only static-recompilation micro-pilot on `Wave_Device::is_group_disabled` at `0x004C5460`; generated bodies remain ignored proprietary-derived artifacts, do not change recovery state, and must provide value beyond the existing exact island before expansion.
+2. Recover the Scroll init wrappers at `0x00605840` through `0x00605960`, including required `GraphicWin` and `BaseButton` initializer dependencies, then its constructor, close, and primary init at `0x006051D0` through `0x006054D0`.
+3. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
+4. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
+5. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 57 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 67 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct signatures are preflighted before original-address runtime oracles execute.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -220,14 +224,15 @@ Other completed corrections and checks:
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
 - `src/buttongroup.h`, `src/buttongroup.cpp`: recovered button-group insertion.
 - `src/win.h`, `src/win.cpp`: verified Win layout, `move`, both paging setters, adapters, and `in_box`.
-- `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, border-color and sprite-triplet setters, thumb-rectangle computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
+- `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
+- `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: opt-in in-process differential fixtures for ten original Scroll methods that are ineligible for copied-byte oracle execution.
 - `src/menu.h`, `src/menu.cpp`: verified Menu layout, callback setter, bounded ID lookup, and adapters.
 - `src/pulldown.h`, `src/pulldown.cpp`: verified PullDown layout, six item-state mutators, unchecked selected-index accessor, and adapters.
 - `src/autosound.h`, `src/autosound.cpp`: recovered `do_sound` hook.
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,071 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,061 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
@@ -239,7 +244,7 @@ Other completed corrections and checks:
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
 - `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
 - `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
-- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, and rendering smoke gate.
+- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local Scroll-oracle result validation.
 - `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
 - `tools/test_smoke_hybrid_game.py`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
 - `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.

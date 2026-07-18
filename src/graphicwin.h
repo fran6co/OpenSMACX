@@ -23,6 +23,8 @@
   * GraphicWin class
   */
 class DLLEXPORT GraphicWin : Win {
+  friend class Scroll;
+
  public:
   GraphicWin() { ; }
   ~GraphicWin() { ; }
