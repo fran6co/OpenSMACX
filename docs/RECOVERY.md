@@ -137,7 +137,11 @@ cmake --build --preset mingw-i686-release --target verify-recovery-metadata
 ```
 
 The target regenerates all canonical and correlation outputs under the ignored build directory and
-fails on any difference. `prepare-hybrid-image` depends on this check. The local-only umbrella target
+fails on any difference. Verified runs are stamped in `build/recovery-metadata-cache/` keyed on the
+content hashes of the complete input closure and the committed catalogs, so an unchanged state skips
+regeneration in seconds without weakening the byte-comparison guarantee; any input or committed-output
+change invalidates the stamp, and `tools/verify_recovery_metadata.py --force` regenerates
+unconditionally. `prepare-hybrid-image` depends on this check. The local-only umbrella target
 also runs behavioral tests, ABI checks, differential oracles, island regeneration, staging, and the
 runtime smoke gate:
 
