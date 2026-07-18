@@ -30,7 +30,7 @@
 #include "pulldown.h"
 #include "scenario.h"
 #include "scroll.h"
-#include "scroll_oracle.h"
+#include "runtime_oracle.h"
 #include "stringstruct.h"
 #include "vector.h"
 #include "win.h"
@@ -714,7 +714,7 @@ bool install_redirects() {
             0x006054D0, scroll_primary_init_signature, SignatureSize)) {
         return false;
     }
-    if (!run_scroll_recovery_oracle()) {
+    if (!run_runtime_oracles()) {
         return false;
     }
     for (size_t index = 0; index < RedirectCount; index++) {

@@ -42,7 +42,7 @@ LOADER_FAILURE_PATTERNS = (
     re.compile(r"\bmodule\b.*\bnot found\b", re.IGNORECASE),
     re.compile(r"\bimport\b.*\b(?:failed|unresolved)\b", re.IGNORECASE),
 )
-SCROLL_ORACLE_ENVIRONMENT = "OPENSMACX_SCROLL_ORACLE_RESULT"
+RUNTIME_ORACLE_ENVIRONMENT = "OPENSMACX_RUNTIME_ORACLE_RESULT"
 
 
 def diagnostic_context(line):
@@ -121,18 +121,34 @@ def validate_smoke(analysis, new_processes):
     return "surface_flip" if analysis["rendering_started"] else "process_survival"
 
 
-def validate_scroll_oracle(result_path):
+def validate_runtime_oracles(result_path):
     if not result_path.is_file():
-        raise RuntimeError("Scroll recovery oracle did not produce a result")
-    if result_path.read_text(encoding="ascii") != "passed\n":
-        raise RuntimeError("Scroll recovery oracle failed")
+        raise RuntimeError("runtime recovery oracles did not produce a result")
+    lines = result_path.read_text(encoding="ascii").splitlines()
+    if not lines or lines[-1] != "all passed":
+        failed = [line.rsplit(" ", 1)[0] for line in lines
+                  if line.endswith(" failed")]
+        if failed:
+            raise RuntimeError(
+                "runtime recovery oracle suites failed: " + ", ".join(failed))
+        raise RuntimeError("runtime recovery oracles did not report all passed")
+    suites = {}
+    for line in lines[:-1]:
+        name, _, status = line.rpartition(" ")
+        if not name or status not in ("passed", "failed"):
+            raise RuntimeError(
+                f"malformed runtime oracle result line: {line!r}")
+        suites[name] = status
+    if not suites:
+        raise RuntimeError("runtime recovery oracles reported no suites")
+    return suites
 
 
-def prepare_scroll_oracle_result_path(value):
+def prepare_runtime_oracle_result_path(value):
     path = require_local_artifact_path(
-        Path(value).expanduser().absolute(), "Scroll oracle result")
+        Path(value).expanduser().absolute(), "runtime oracle result")
     if not path.parent.is_dir():
-        raise RuntimeError("Scroll oracle result parent directory must exist")
+        raise RuntimeError("runtime oracle result parent directory must exist")
     path.unlink(missing_ok=True)
     return path
 
@@ -176,10 +192,10 @@ def validate_executable(game_dir, executable_name):
 def launch(executable, wine, wine_prefix, log_path, oracle_result):
     environment = os.environ.copy()
     environment["WINEDEBUG"] = "+loaddll"
-    environment.pop(SCROLL_ORACLE_ENVIRONMENT, None)
+    environment.pop(RUNTIME_ORACLE_ENVIRONMENT, None)
     oracle_value = (str(oracle_result) if os.name == "nt"
                     else "Z:" + str(oracle_result).replace("/", "\\"))
-    environment[SCROLL_ORACLE_ENVIRONMENT] = oracle_value
+    environment[RUNTIME_ORACLE_ENVIRONMENT] = oracle_value
     if wine_prefix:
         environment["WINEPREFIX"] = str(wine_prefix)
 
@@ -200,7 +216,7 @@ def launch(executable, wine, wine_prefix, log_path, oracle_result):
                 command.extend(["--env", f"WINEPREFIX={wine_prefix}"])
             command.extend([
                 "--env", "WINEDEBUG=+loaddll",
-                "--env", f"{SCROLL_ORACLE_ENVIRONMENT}={oracle_value}",
+                "--env", f"{RUNTIME_ORACLE_ENVIRONMENT}={oracle_value}",
                 "--stderr", str(log_path),
                 "--args", str(executable),
             ])
@@ -251,7 +267,7 @@ def main():
             raise RuntimeError("a dedicated --wine-prefix is required")
         if not log_path.parent.is_dir() or not result_path.parent.is_dir():
             raise RuntimeError("log and result parent directories must exist")
-        oracle_result_path = prepare_scroll_oracle_result_path(oracle_result_path)
+        oracle_result_path = prepare_runtime_oracle_result_path(oracle_result_path)
         if os.name != "nt":
             prepare_owned_wine_prefix(wine_prefix, args.wine)
             prefix_prepared = True
@@ -281,7 +297,7 @@ def main():
         analysis = analyze_diagnostics(diagnostics, scenario_executable.name)
         after = matching_scenario_process_ids(scenario_executable)
         new_processes = sorted(after - before)
-        validate_scroll_oracle(oracle_result_path)
+        oracle_suites = validate_runtime_oracles(oracle_result_path)
         report.update({
             **analysis,
             "executable": str(executable),
@@ -289,7 +305,7 @@ def main():
             "log": str(log_path),
             "new_processes": new_processes,
             "preexisting_processes": sorted(before),
-            "scroll_recovery_oracle": "passed",
+            "runtime_oracles": oracle_suites,
         })
         report["runtime_evidence"] = validate_smoke(analysis, new_processes)
         report["status"] = "passed"

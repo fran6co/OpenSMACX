@@ -12,8 +12,8 @@ from movie_skip import (
 )
 from smoke_hybrid_game import (
     analyze_diagnostics,
-    prepare_scroll_oracle_result_path,
-    validate_scroll_oracle,
+    prepare_runtime_oracle_result_path,
+    validate_runtime_oracles,
     validate_smoke,
 )
 from setup_game import stage_pracx
@@ -87,18 +87,28 @@ terranx_hybrid.exe could not load imports
         with self.assertRaisesRegex(RuntimeError, "load failure"):
             validate_smoke(result, [123])
 
-    def test_requires_passing_scroll_recovery_oracle(self):
+    def test_requires_passing_runtime_oracles(self):
         with tempfile.TemporaryDirectory() as directory:
-            result = Path(directory) / "scroll-oracle.txt"
+            result = Path(directory) / "runtime-oracle.txt"
             with self.assertRaisesRegex(RuntimeError, "did not produce"):
-                validate_scroll_oracle(result)
-            result.write_text("failed\n", encoding="ascii")
-            with self.assertRaisesRegex(RuntimeError, "failed"):
-                validate_scroll_oracle(result)
-            result.write_text("passed\n", encoding="ascii")
-            validate_scroll_oracle(result)
+                validate_runtime_oracles(result)
+            result.write_text("scroll failed\n", encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "suites failed: scroll"):
+                validate_runtime_oracles(result)
+            result.write_text("scroll passed\n", encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "all passed"):
+                validate_runtime_oracles(result)
+            result.write_text("all passed\n", encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "no suites"):
+                validate_runtime_oracles(result)
+            result.write_text(
+                "scroll passed\ncheckbox passed\nall passed\n",
+                encoding="ascii")
+            self.assertEqual(
+                validate_runtime_oracles(result),
+                {"scroll": "passed", "checkbox": "passed"})
 
-    def test_scroll_oracle_result_rejects_symlink_without_removing_target(self):
+    def test_runtime_oracle_result_rejects_symlink_without_removing_target(self):
         build_root = Path(__file__).resolve().parent.parent / "build"
         with tempfile.TemporaryDirectory(dir=build_root) as directory:
             root = Path(directory)
@@ -107,14 +117,14 @@ terranx_hybrid.exe could not load imports
             link = root / "result.txt"
             link.symlink_to(target)
             with self.assertRaisesRegex(RuntimeError, "must not contain symlinks"):
-                prepare_scroll_oracle_result_path(link)
+                prepare_runtime_oracle_result_path(link)
             self.assertEqual(target.read_text(encoding="ascii"), "preserved\n")
 
-    def test_scroll_oracle_result_rejects_nonlocal_path(self):
+    def test_runtime_oracle_result_rejects_nonlocal_path(self):
         result = (Path(__file__).resolve().parent.parent.parent
-                  / "outside-scroll-oracle-result.txt")
+                  / "outside-runtime-oracle-result.txt")
         with self.assertRaisesRegex(RuntimeError, "inside the ignored"):
-            prepare_scroll_oracle_result_path(result)
+            prepare_runtime_oracle_result_path(result)
 
     def test_rejects_wine_import_error_after_successful_load_records(self):
         result = analyze_diagnostics(

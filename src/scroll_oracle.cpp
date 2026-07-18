@@ -1,41 +1,21 @@
 #include "stdafx.h"
 #include "scroll_oracle.h"
 
+#include "runtime_oracle.h"
 #include "scroll.h"
 
 namespace {
 
-constexpr char ResultEnvironment[] = "OPENSMACX_SCROLL_ORACLE_RESULT";
-constexpr size_t CanarySize = 16;
 constexpr size_t VtableEntries = 0xFC / sizeof(uintptr_t);
-constexpr size_t MaximumCalls = 2;
-constexpr size_t MaximumSnapshots = 8;
 
-struct ScrollFixture {
-    alignas(Scroll) uint8_t storage[sizeof(Scroll) + CanarySize * 2];
+using ScrollFixture = runtime_oracle::Fixture<Scroll>;
+using RedrawTrace = runtime_oracle::Trace;
 
-    Scroll *object() {
-        return reinterpret_cast<Scroll *>(storage + CanarySize);
-    }
+const size_t ScrollVtableRefOffsets[] = {0, 0xAAC, 0x15F8};
+const runtime_oracle::ClassSpec ScrollSpec = {
+    sizeof(Scroll), 0xFC, 0xF8,
+    ScrollVtableRefOffsets, ARRAYSIZE(ScrollVtableRefOffsets),
 };
-
-struct RedrawTrace {
-    uint32_t calls;
-    uint32_t self_offsets[MaximumCalls];
-    uint32_t snapshots[MaximumCalls][MaximumSnapshots];
-    uint32_t current_windows[MaximumCalls];
-};
-
-struct RedrawContext {
-    uint8_t *base;
-    size_t offsets[MaximumSnapshots];
-    size_t offset_count;
-    RedrawTrace trace;
-};
-
-RedrawContext Context = {};
-
-uint32_t __fastcall redraw_probe(void *self, void *);
 
 int int_from_bits(uint32_t bits) {
     int value;
@@ -47,58 +27,29 @@ int int_from_bits(uint32_t bits) {
 
 template <typename T>
 void write_object(ScrollFixture &fixture, size_t offset, const T &value) {
-    memcpy(fixture.storage + CanarySize + offset, &value, sizeof(value));
+    memcpy(fixture.storage + runtime_oracle::CanarySize + offset,
+           &value, sizeof(value));
 }
 
 void initialize_pair(ScrollFixture &legacy, ScrollFixture &source,
                      uintptr_t vtable[VtableEntries]) {
-    memset(legacy.storage, 0xA5, sizeof(legacy.storage));
-    for (size_t offset = 0; offset < sizeof(Scroll); ++offset) {
-        legacy.storage[CanarySize + offset] =
-            static_cast<uint8_t>(0x35U + offset * 17U);
-    }
-    memset(vtable, 0, sizeof(uintptr_t) * VtableEntries);
-    vtable[0xF8 / sizeof(uintptr_t)] =
-        reinterpret_cast<uintptr_t>(&redraw_probe);
-    uintptr_t *vtable_pointer = vtable;
-    write_object(legacy, 0, vtable_pointer);
-    write_object(legacy, 0xAAC, vtable_pointer);
-    write_object(legacy, 0x15F8, vtable_pointer);
-    memcpy(source.storage, legacy.storage, sizeof(source.storage));
+    runtime_oracle::set_watched_global(
+        reinterpret_cast<void **>(ScrollCurrentWin));
+    runtime_oracle::initialize_pair(
+        legacy.storage, source.storage, ScrollSpec, vtable);
 }
 
 void begin_trace(Scroll *scroll, const size_t *offsets, size_t offset_count) {
-    memset(&Context, 0, sizeof(Context));
-    Context.base = reinterpret_cast<uint8_t *>(scroll);
-    Context.offset_count = offset_count;
-    for (size_t index = 0; index < offset_count; ++index) {
-        Context.offsets[index] = offsets[index];
-    }
-}
-
-uint32_t __fastcall redraw_probe(void *self, void *) {
-    const uint32_t call = Context.trace.calls++;
-    if (call >= MaximumCalls) {
-        return 0xDEAD0000U | call;
-    }
-    Context.trace.self_offsets[call] = static_cast<uint32_t>(
-        reinterpret_cast<uint8_t *>(self) - Context.base);
-    for (size_t index = 0; index < Context.offset_count; ++index) {
-        memcpy(&Context.trace.snapshots[call][index],
-               Context.base + Context.offsets[index], sizeof(uint32_t));
-    }
-    Context.trace.current_windows[call] =
-        reinterpret_cast<uintptr_t>(*ScrollCurrentWin);
-    return 0x13579BDFU ^ (call * 0x3174A10DU);
+    runtime_oracle::begin_trace(scroll, offsets, offset_count);
 }
 
 bool equivalent(const ScrollFixture &legacy, const ScrollFixture &source,
                 uint32_t legacy_result, uint32_t source_result,
                 const RedrawTrace &legacy_trace,
                 const RedrawTrace &source_trace) {
-    return legacy_result == source_result
-        && memcmp(legacy.storage, source.storage, sizeof(legacy.storage)) == 0
-        && memcmp(&legacy_trace, &source_trace, sizeof(legacy_trace)) == 0;
+    return runtime_oracle::equivalent(
+        legacy.storage, source.storage, sizeof(legacy.storage),
+        legacy_result, source_result, legacy_trace, source_trace);
 }
 
 #if defined(__GNUC__)
@@ -240,12 +191,12 @@ bool verify_range() {
         begin_trace(legacy.object(), snapshots, ARRAYSIZE(snapshots));
         const uint32_t legacy_result = original(
             legacy.object(), int_from_bits(test[0]), int_from_bits(test[1]));
-        const RedrawTrace legacy_trace = Context.trace;
+        const RedrawTrace legacy_trace = runtime_oracle::current_trace();
         begin_trace(source.object(), snapshots, ARRAYSIZE(snapshots));
         const uint32_t source_result = source.object()->set_range(
             int_from_bits(test[0]), int_from_bits(test[1]));
         if (!equivalent(legacy, source, legacy_result, source_result,
-                        legacy_trace, Context.trace)) {
+                        legacy_trace, runtime_oracle::current_trace())) {
             return false;
         }
     }
@@ -273,7 +224,7 @@ bool verify_styles() {
             begin_trace(legacy.object(), snapshots[style], 3);
             const uint32_t legacy_result = original(
                 legacy.object(), int_from_bits(value));
-            const RedrawTrace legacy_trace = Context.trace;
+            const RedrawTrace legacy_trace = runtime_oracle::current_trace();
             begin_trace(source.object(), snapshots[style], 3);
             uint32_t source_result;
             switch (style) {
@@ -295,7 +246,7 @@ bool verify_styles() {
                 break;
             }
             if (!equivalent(legacy, source, legacy_result, source_result,
-                            legacy_trace, Context.trace)) {
+                            legacy_trace, runtime_oracle::current_trace())) {
                 return false;
             }
         }
@@ -322,13 +273,13 @@ bool verify_thumb_resetters() {
                 const uint32_t legacy_result = set_bar
                     ? original_bar(legacy.object(), int_from_bits(thickness))
                     : original_thumb(legacy.object());
-                const RedrawTrace legacy_trace = Context.trace;
+                const RedrawTrace legacy_trace = runtime_oracle::current_trace();
                 begin_trace(source.object(), nullptr, 0);
                 const uint32_t source_result = set_bar
                     ? source.object()->set_bar_thickness(int_from_bits(thickness))
                     : source.object()->set_thumb_rect();
                 if (!equivalent(legacy, source, legacy_result, source_result,
-                                legacy_trace, Context.trace)) {
+                                legacy_trace, runtime_oracle::current_trace())) {
                     return false;
                 }
             }
@@ -367,7 +318,7 @@ bool verify_vertical_sprites() {
             begin_trace(legacy.object(), nullptr, 0);
             const uint32_t legacy_result = original(
                 legacy.object(), sprites[0], sprites[1], sprites[2]);
-            const RedrawTrace legacy_trace = Context.trace;
+            const RedrawTrace legacy_trace = runtime_oracle::current_trace();
             begin_trace(source.object(), nullptr, 0);
             const uint32_t source_result = direction == 0
                 ? reinterpret_cast<uintptr_t>(
@@ -377,7 +328,7 @@ bool verify_vertical_sprites() {
                     scroll_set_sprite_down_redirect(
                         source.object(), nullptr, sprites[0], sprites[1], sprites[2]));
             if (!equivalent(legacy, source, legacy_result, source_result,
-                            legacy_trace, Context.trace)) {
+                            legacy_trace, runtime_oracle::current_trace())) {
                 return false;
             }
         }
@@ -419,7 +370,7 @@ bool verify_position() {
         begin_trace(legacy.object(), snapshots, ARRAYSIZE(snapshots));
         const uint32_t legacy_result = original(
             legacy.object(), int_from_bits(test.input));
-        const RedrawTrace legacy_trace = Context.trace;
+        const RedrawTrace legacy_trace = runtime_oracle::current_trace();
         ::Win *const legacy_current = *ScrollCurrentWin;
 
         *ScrollCurrentWin = reinterpret_cast<::Win *>(0x24682468U);
@@ -429,7 +380,7 @@ bool verify_position() {
         ::Win *const source_current = *ScrollCurrentWin;
         if (legacy_current != source_current
                 || !equivalent(legacy, source, legacy_result, source_result,
-                               legacy_trace, Context.trace)) {
+                               legacy_trace, runtime_oracle::current_trace())) {
             passed = false;
             break;
         }
@@ -438,39 +389,13 @@ bool verify_position() {
     return passed;
 }
 
-bool write_result(const char *path, const char *result) {
-    HANDLE file = CreateFileA(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (file == INVALID_HANDLE_VALUE) {
-        return false;
-    }
-    const DWORD size = static_cast<DWORD>(strlen(result));
-    DWORD written = 0;
-    const BOOL write_ok = WriteFile(file, result, size, &written, nullptr);
-    const BOOL flush_ok = FlushFileBuffers(file);
-    const BOOL close_ok = CloseHandle(file);
-    return write_ok && flush_ok && close_ok && written == size;
-}
-
 }  // namespace
 
-bool run_scroll_recovery_oracle() {
-    char result_path[MAX_PATH];
-    const DWORD length = GetEnvironmentVariableA(
-        ResultEnvironment, result_path, ARRAYSIZE(result_path));
-    if (length == 0) {
-        return true;
-    }
-    if (length >= ARRAYSIZE(result_path)) {
-        return false;
-    }
-    const bool passed = verify_init_wrappers()
+bool run_scroll_oracle_suite() {
+    return verify_init_wrappers()
         && verify_range()
         && verify_styles()
         && verify_thumb_resetters()
         && verify_vertical_sprites()
         && verify_position();
-    const bool result_written = write_result(
-        result_path, passed ? "passed\n" : "failed\n");
-    return passed && result_written;
 }

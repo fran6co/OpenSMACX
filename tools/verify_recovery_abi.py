@@ -34,6 +34,7 @@ def main():
     parser.add_argument("--random-object")
     parser.add_argument("--scroll-object")
     parser.add_argument("--scroll-oracle-object")
+    parser.add_argument("--runtime-oracle-object")
     parser.add_argument("--string-struct-object")
     parser.add_argument("--spot-object")
     parser.add_argument("--strings-object")
@@ -607,8 +608,8 @@ def main():
             fail("Scroll runtime oracle object is not a 32-bit PE COFF object")
         oracle_symbols = run(
             [args.nm, "--defined-only", args.scroll_oracle_object])
-        if "__Z26run_scroll_recovery_oraclev" not in oracle_symbols:
-            fail("missing Scroll runtime oracle entry point")
+        if "__Z23run_scroll_oracle_suitev" not in oracle_symbols:
+            fail("missing Scroll runtime oracle suite entry point")
         oracle_disassembly = run(
             [args.objdump, "-d", "-C", args.scroll_oracle_object])
         oracle_calls = {
@@ -639,6 +640,21 @@ def main():
                 fail(f"Scroll runtime oracle helper {label} lacks an original call")
             if not re.search(r"\b(?:lea|mov)\b.*%ecx", body):
                 fail(f"Scroll runtime oracle helper {label} does not prepare ECX")
+
+    if args.runtime_oracle_object:
+        runtime_headers = run([args.objdump, "-f", args.runtime_oracle_object])
+        if "file format pe-i386" not in runtime_headers:
+            fail("runtime oracle object is not a 32-bit PE COFF object")
+        runtime_symbols = run(
+            [args.nm, "--defined-only", args.runtime_oracle_object])
+        for description, symbol in (
+                ("runtime oracle dispatcher", "__Z19run_runtime_oraclesv"),
+                ("runtime oracle probe",
+                 "@_ZN14runtime_oracle5probeEPvS0_@8"),
+                ("runtime oracle fixture initializer",
+                 "__ZN14runtime_oracle15initialize_pairEPhS0_RKNS_9ClassSpecEPj")):
+            if symbol not in runtime_symbols:
+                fail(f"missing required {description} symbol")
 
     if args.menu_object:
         menu_headers = run([args.objdump, "-f", args.menu_object])
