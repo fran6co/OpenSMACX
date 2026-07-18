@@ -22,7 +22,15 @@ from build_export_recovery_queue import (
     queue_rows,
     symbol_stem,
 )
-from fetch_external_analysis import fetch_artifact, validated_relative_path
+from fetch_external_analysis import (
+    catalog_artifacts,
+    fetch_artifact,
+    validated_relative_path,
+)
+from correlate_thinker_layouts import (
+    parse_address_bindings,
+    parse_struct_layouts,
+)
 
 
 class ExternalAnalysisTests(unittest.TestCase):
@@ -136,6 +144,56 @@ class ExternalAnalysisTests(unittest.TestCase):
             summary.rename(root / "untrusted-summary.csv")
             counts, _ = load_external_counts(root, catalog, inventory)
             self.assertFalse(counts)
+
+    def test_catalog_artifacts_spans_additional_repositories(self):
+        catalog = {
+            "artifacts": [{"path": "Information/a.txt"}],
+            "additional_repositories": [{
+                "repository": {"url": "https://example.invalid/thinker"},
+                "prefix": "thinker",
+                "artifacts": [{"path": "src/engine.h"}],
+            }],
+        }
+        pairs = list(catalog_artifacts(catalog))
+        self.assertEqual(
+            pairs,
+            [({"path": "Information/a.txt"}, None),
+             ({"path": "src/engine.h"}, "thinker")])
+        catalog["additional_repositories"][0].pop("prefix")
+        with self.assertRaisesRegex(RuntimeError, "require a prefix"):
+            list(catalog_artifacts(catalog))
+
+    def test_parses_packed_struct_layout_offsets(self):
+        text = (
+            "struct MAP {\n"
+            "    uint8_t climate;\n"
+            "    uint8_t contour;\n"
+            "    uint16_t flags;\n"
+            "    int items[2];\n"
+            "    UnknownType tail;\n"
+            "    int after;\n"
+            "};\n")
+        rows = parse_struct_layouts(text, "engine_types.h")
+        by_field = {row["field"]: row for row in rows}
+        self.assertEqual(by_field["climate"]["offset"], "0x0")
+        self.assertEqual(by_field["contour"]["offset"], "0x1")
+        self.assertEqual(by_field["flags"]["offset"], "0x2")
+        self.assertEqual(by_field["items"]["offset"], "0x4")
+        self.assertEqual(by_field["items"]["size"], 8)
+        self.assertEqual(by_field["tail"]["offset"], "0xC")
+        self.assertEqual(by_field["tail"]["size"], "")
+        self.assertEqual(by_field["after"]["offset"], "")
+        self.assertEqual(by_field["(sizeof)"]["offset"], "")
+
+    def test_parses_global_address_bindings(self):
+        text = (
+            "VEH* Vehicles = (VEH*)0x952828;\n"
+            "char* const MapFilePath = (char*)0x94A2BC;\n"
+            "int unrelated = 5;\n")
+        rows = parse_address_bindings(text, "engine.cpp")
+        self.assertEqual(
+            [(row["name"], row["address"]) for row in rows],
+            [("Vehicles", "0x00952828"), ("MapFilePath", "0x0094A2BC")])
 
     def test_fetch_rejects_symlinked_destination_before_creating_children(self):
         with tempfile.TemporaryDirectory(
