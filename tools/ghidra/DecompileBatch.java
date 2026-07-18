@@ -63,6 +63,15 @@ public class DecompileBatch extends GhidraScript {
                     Address address = toAddr(trimmed);
                     Function function = getFunctionAt(address);
                     if (function == null) {
+                        // The canonical inventory is authoritative for entry
+                        // points; materialize entries Ghidra's auto-analysis
+                        // merged away so the canonical address decompiles.
+                        if (getInstructionAt(address) == null) {
+                            disassemble(address);
+                        }
+                        function = createFunction(address, null);
+                    }
+                    if (function == null) {
                         throw new IllegalArgumentException(
                             "function entry not found at " + trimmed);
                     }
