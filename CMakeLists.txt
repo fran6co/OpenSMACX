@@ -425,6 +425,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_stage_preset_game_dir.py"
     )
+
+    add_test(NAME redirect-signature-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
@@ -1023,12 +1028,33 @@ if(OPENSMACX_GAME_INSTALLER)
 endif()
 
 if(MINGW AND BUILD_TESTING)
+    add_custom_target(verify-redirect-signatures
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_redirect_signatures.py"
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+            --runtime-exe "${OPENSMACX_LEGACY_EXE}"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/redirect_signatures.h"
+        COMMAND "${CMAKE_COMMAND}" -E compare_files
+            "${CMAKE_CURRENT_BINARY_DIR}/redirect_signatures.h"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/redirect_signatures.h"
+        DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_redirect_signatures.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-redirects.csv"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/redirect_signatures.h"
+        USES_TERMINAL
+        VERBATIM
+    )
+
     add_custom_target(verify-recovery-batch
         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
         DEPENDS
             verify-recovery-metadata
             verify-recovery-abi
             verify-recovery-oracles
+            verify-redirect-signatures
             recovery-leaf-tests
             assemble-legacy-leaves
             smoke-hybrid-game
