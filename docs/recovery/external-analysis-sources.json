@@ -1,5 +1,5 @@
 {
-  "format_version": 1,
+  "format_version": 2,
   "repository": {
     "revision": "e892f24a7338cde9471f11d253ae2ca46dd8d00b",
     "url": "https://github.com/Dionysus1/OpenSMACX",
@@ -50,6 +50,96 @@
       "encoding": "ascii",
       "kind": "human_layout_notes",
       "handling": "local_hypotheses_require_independent_verification"
+    }
+  ],
+  "additional_repositories": [
+    {
+      "repository": {
+        "revision": "53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b",
+        "url": "https://github.com/induktio/thinker",
+        "license_status": "gpl2_declared_in_repository",
+        "usage_policy": "hypothesis_only_local_input"
+      },
+      "prefix": "thinker",
+      "artifacts": [
+        {
+          "path": "src/engine.h",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine.h",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine.h",
+          "git_blob_sha1": "d8140f71628e7eb15214fd4040b98c1b03c0db0a",
+          "sha256": "9b7fa882dd8e9695ce8816a6ec9e2aa10108ab29d4e3c2a147a524c1c2abb597",
+          "size": 226177,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_struct_layouts",
+          "handling": "local_hypotheses_require_independent_verification"
+        },
+        {
+          "path": "src/engine_base.h",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_base.h",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_base.h",
+          "git_blob_sha1": "ad99bd74d73d48c4678694a9075e1a5beaf712ac",
+          "sha256": "56ff352980ffba7932a0d8dca34a12f78306c3fd210d0033159fb0b5336c6703",
+          "size": 10390,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_struct_layouts",
+          "handling": "local_hypotheses_require_independent_verification"
+        },
+        {
+          "path": "src/engine_enums.h",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_enums.h",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_enums.h",
+          "git_blob_sha1": "49f396975ef5d3a5e12eb42635dc926ee1089827",
+          "sha256": "649fe7e18b92985ad9eeff9defd6272e540b5bfa68a151aef68069afa8cd27cd",
+          "size": 28458,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_struct_layouts",
+          "handling": "local_hypotheses_require_independent_verification"
+        },
+        {
+          "path": "src/engine_types.h",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_types.h",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_types.h",
+          "git_blob_sha1": "8dac0c76ec37ce6823bb4fb61f5a906f3ed4091c",
+          "sha256": "aca66158f2dd4cb4225675cc3693ec512cf80c720ec2e6983e6817adfeacc9ac",
+          "size": 27434,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_struct_layouts",
+          "handling": "local_hypotheses_require_independent_verification"
+        },
+        {
+          "path": "src/engine_veh.h",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_veh.h",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_veh.h",
+          "git_blob_sha1": "7c222305effbf9e11aedde75d3afb72da2f5d54d",
+          "sha256": "e050cf8aacd4d75d3411a4ccfbecbc4bfe2f28893422189a2f98510cacd12153",
+          "size": 21522,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_struct_layouts",
+          "handling": "local_hypotheses_require_independent_verification"
+        },
+        {
+          "path": "src/engine_win.h",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_win.h",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine_win.h",
+          "git_blob_sha1": "0cf30488d72d58566ca7bd0949952ea53250dd1b",
+          "sha256": "133075bc6df2b03649a000d18a2f65c0935c03736f871b126f0850febeeca1a3",
+          "size": 57975,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_struct_layouts",
+          "handling": "local_hypotheses_require_independent_verification"
+        },
+        {
+          "path": "src/engine.cpp",
+          "url": "https://github.com/induktio/thinker/blob/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine.cpp",
+          "download_url": "https://raw.githubusercontent.com/induktio/thinker/53f332d910095b3d8e8ed1a7ed46d1b79ca39c3b/src/engine.cpp",
+          "git_blob_sha1": "757650e7a0a968122651784453aa35cd1dd288e4",
+          "sha256": "3ec766b7d39bc5c651878cdc6017d15b3ec9d6f33b70a6b1b642f15602df7b64",
+          "size": 149421,
+          "encoding": "utf-8",
+          "kind": "gpl2_licensed_re_global_bindings",
+          "handling": "never_commit_or_redistribute"
+        }
+      ]
     }
   ]
 }

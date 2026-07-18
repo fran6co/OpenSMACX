@@ -39,6 +39,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
+- The catalog's `additional_repositories` entry pins the Thinker mod (GPLv2; incompatible with this project's GPLv3-or-later, so its text can never be copied or committed regardless of hypothesis policy). `tools/correlate_thinker_layouts.py` reduces the fetched headers to ignored struct-offset and global-address hypothesis CSVs; every lead still requires independent verification against the hash-bound canonical executable before source, tests, or metadata are committed.
 - The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements or mapped unrecovered functions, 415 exact source-complete mappings, and 47 name-ambiguous rows manually resolved as 45 source-complete mappings and two source-only compatibility exports.
 
 ## Completed Work

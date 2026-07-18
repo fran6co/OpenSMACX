@@ -43,11 +43,29 @@ def tls_context():
     return ssl.create_default_context()
 
 
-def fetch_artifact(artifact, output_dir):
+def catalog_artifacts(catalog):
+    """Yield (artifact, prefix) pairs across the primary and any additional
+    repositories; additional repositories fetch under their own prefix so
+    per-project paths cannot collide."""
+    for artifact in catalog["artifacts"]:
+        yield artifact, None
+    for repository in catalog.get("additional_repositories", []):
+        prefix = repository.get("prefix")
+        if not prefix:
+            raise RuntimeError("additional repositories require a prefix")
+        validated_relative_path(prefix)
+        for artifact in repository["artifacts"]:
+            yield artifact, prefix
+
+
+def fetch_artifact(artifact, output_dir, prefix=None):
     output_dir = require_local_artifact_path(
         output_dir, "external-analysis output")
+    relative = validated_relative_path(artifact["path"])
+    if prefix is not None:
+        relative = validated_relative_path(prefix) / relative
     destination = require_local_artifact_path(
-        output_dir / validated_relative_path(artifact["path"]),
+        output_dir / relative,
         "external-analysis artifact")
     if not destination.is_relative_to(output_dir):
         raise RuntimeError(
@@ -80,18 +98,22 @@ def main():
         parser.error(f"catalog not found: {args.catalog}")
     catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
     selected = set(args.source_path)
+    try:
+        available = list(catalog_artifacts(catalog))
+    except RuntimeError as error:
+        parser.error(str(error))
     artifacts = [
-        artifact for artifact in catalog["artifacts"]
+        (artifact, prefix) for artifact, prefix in available
         if not selected or artifact["path"] in selected
     ]
-    missing = selected - {artifact["path"] for artifact in artifacts}
+    missing = selected - {artifact["path"] for artifact, _prefix in artifacts}
     if missing:
         parser.error(f"source paths are absent from catalog: {', '.join(sorted(missing))}")
     try:
         output = require_local_artifact_path(
             args.output, "external-analysis output")
-        for artifact in artifacts:
-            destination = fetch_artifact(artifact, output)
+        for artifact, prefix in artifacts:
+            destination = fetch_artifact(artifact, output, prefix)
             print(f"Fetched {artifact['path']} to {destination}")
     except (OSError, RuntimeError) as error:
         parser.error(str(error))
