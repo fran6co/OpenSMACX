@@ -110,11 +110,116 @@ bool equivalent(const ScrollFixture &legacy, const ScrollFixture &source,
 typedef uint32_t (__thiscall *OriginalNoArg)(Scroll *);
 typedef uint32_t (__thiscall *OriginalOneArg)(Scroll *, int);
 typedef uint32_t (__thiscall *OriginalTwoArgs)(Scroll *, int, int);
+typedef uint32_t (__thiscall *OriginalRectInit)(
+    Scroll *, RECT *, Win *, int, int);
+typedef uint32_t (__thiscall *OriginalAxisInit)(
+    Scroll *, int, int, int, Win *, int);
 typedef uint32_t (__thiscall *OriginalSprites)(
     Scroll *, Sprite *, Sprite *, Sprite *);
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+bool verify_init_wrappers() {
+    auto original_rect = reinterpret_cast<OriginalRectInit>(0x00605840U);
+    const uint32_t sentinel = 0x2468ACE0U;
+    const int saved_nonclient = *ScrollNonClientInit;
+    bool passed = true;
+
+    for (int null_rect = 0; null_rect < 2 && passed; ++null_rect) {
+        ScrollFixture legacy;
+        ScrollFixture source;
+        uintptr_t vtable[VtableEntries];
+        initialize_pair(legacy, source, vtable);
+        RECT legacy_rect = {10, 20, 30, 40};
+        RECT source_rect = legacy_rect;
+        RECT *const legacy_rect_arg = null_rect ? nullptr : &legacy_rect;
+        RECT *const source_rect_arg = null_rect ? nullptr : &source_rect;
+        Win *const parent = null_rect
+            ? reinterpret_cast<Win *>(0x45454545U) : nullptr;
+
+        *ScrollNonClientInit = int_from_bits(sentinel);
+        const uint32_t legacy_result = original_rect(
+            legacy.object(), legacy_rect_arg, parent,
+            int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U));
+        const int legacy_nonclient = *ScrollNonClientInit;
+        *ScrollNonClientInit = int_from_bits(sentinel);
+        const uint32_t source_result = source.object()->init(
+            source_rect_arg, parent,
+            int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U));
+        const int source_nonclient = *ScrollNonClientInit;
+        passed = legacy_result == source_result
+            && legacy_nonclient == source_nonclient
+            && memcmp(legacy.storage, source.storage, sizeof(legacy.storage)) == 0
+            && memcmp(&legacy_rect, &source_rect, sizeof(legacy_rect)) == 0;
+    }
+
+    const uintptr_t addresses[] = {
+        0x00605890U, 0x006058D0U, 0x00605910U, 0x00605960U,
+    };
+    struct InvalidAxisCase {
+        uint32_t length;
+        Win *parent;
+    };
+    const InvalidAxisCase cases[] = {
+        {0U, reinterpret_cast<Win *>(0x45454545U)},
+        {0xFFFFFFFFU, nullptr},
+    };
+    for (size_t kind = 0; kind < ARRAYSIZE(addresses) && passed; ++kind) {
+        auto original = reinterpret_cast<OriginalAxisInit>(addresses[kind]);
+        for (const InvalidAxisCase &test : cases) {
+            ScrollFixture legacy;
+            ScrollFixture source;
+            uintptr_t vtable[VtableEntries];
+            initialize_pair(legacy, source, vtable);
+            *ScrollNonClientInit = int_from_bits(sentinel);
+            const uint32_t legacy_result = original(
+                legacy.object(), int_from_bits(0x80000000U),
+                int_from_bits(0x7FFFFFFFU), int_from_bits(test.length),
+                test.parent, int_from_bits(0x13579BDFU));
+            const int legacy_nonclient = *ScrollNonClientInit;
+
+            *ScrollNonClientInit = int_from_bits(sentinel);
+            uint32_t source_result;
+            switch (kind) {
+              case 0:
+                source_result = source.object()->init_vert(
+                    int_from_bits(0x80000000U), int_from_bits(0x7FFFFFFFU),
+                    int_from_bits(test.length),
+                    test.parent, int_from_bits(0x13579BDFU));
+                break;
+              case 1:
+                source_result = source.object()->init_horz(
+                    int_from_bits(0x80000000U), int_from_bits(0x7FFFFFFFU),
+                    int_from_bits(test.length),
+                    test.parent, int_from_bits(0x13579BDFU));
+                break;
+              case 2:
+                source_result = source.object()->init_vert_nc(
+                    int_from_bits(0x80000000U), int_from_bits(0x7FFFFFFFU),
+                    int_from_bits(test.length),
+                    test.parent, int_from_bits(0x13579BDFU));
+                break;
+              default:
+                source_result = source.object()->init_horz_nc(
+                    int_from_bits(0x80000000U), int_from_bits(0x7FFFFFFFU),
+                    int_from_bits(test.length),
+                    test.parent, int_from_bits(0x13579BDFU));
+                break;
+            }
+            const int source_nonclient = *ScrollNonClientInit;
+            if (legacy_result != source_result
+                    || legacy_nonclient != source_nonclient
+                    || memcmp(legacy.storage, source.storage,
+                              sizeof(legacy.storage)) != 0) {
+                passed = false;
+                break;
+            }
+        }
+    }
+    *ScrollNonClientInit = saved_nonclient;
+    return passed;
+}
 
 bool verify_range() {
     const uint32_t cases[][2] = {
@@ -359,7 +464,8 @@ bool run_scroll_recovery_oracle() {
     if (length >= ARRAYSIZE(result_path)) {
         return false;
     }
-    const bool passed = verify_range()
+    const bool passed = verify_init_wrappers()
+        && verify_range()
         && verify_styles()
         && verify_thumb_resetters()
         && verify_vertical_sprites()

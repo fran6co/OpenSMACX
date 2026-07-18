@@ -703,6 +703,227 @@ int int_from_bits(uint32_t bits) {
     return value;
 }
 
+struct ScrollInitProbeState {
+    int calls;
+    Scroll *self;
+    uint32_t x;
+    uint32_t y;
+    uint32_t width;
+    uint32_t height;
+    Win *parent;
+    uint32_t setting;
+    uint32_t options;
+    int nonclient;
+    uint32_t result;
+    bool clear_nonclient;
+};
+
+ScrollInitProbeState scroll_init_probe_state = {};
+
+int __cdecl scroll_init_probe(Scroll *self, int x, int y, int width, int height,
+                              Win *parent, int setting, int options) {
+    ++scroll_init_probe_state.calls;
+    scroll_init_probe_state.self = self;
+    scroll_init_probe_state.x = static_cast<uint32_t>(x);
+    scroll_init_probe_state.y = static_cast<uint32_t>(y);
+    scroll_init_probe_state.width = static_cast<uint32_t>(width);
+    scroll_init_probe_state.height = static_cast<uint32_t>(height);
+    scroll_init_probe_state.parent = parent;
+    scroll_init_probe_state.setting = static_cast<uint32_t>(setting);
+    scroll_init_probe_state.options = static_cast<uint32_t>(options);
+    scroll_init_probe_state.nonclient = ScrollNonClientInit
+        ? *ScrollNonClientInit : INT_MIN;
+    if (scroll_init_probe_state.clear_nonclient) {
+        *ScrollNonClientInit = 0;
+    }
+    return int_from_bits(scroll_init_probe_state.result);
+}
+
+void reset_scroll_init_probe(uint32_t result) {
+    std::memset(&scroll_init_probe_state, 0, sizeof(scroll_init_probe_state));
+    scroll_init_probe_state.result = result;
+}
+
+int call_scroll_axis(Scroll *scroll, int kind, bool use_adapter, int x, int y,
+                     int length, Win *parent, int setting) {
+    if (kind == 0) {
+        return use_adapter
+            ? scroll_init_vert_redirect(
+                scroll, nullptr, x, y, length, parent, setting)
+            : scroll->init_vert(x, y, length, parent, setting);
+    }
+    if (kind == 1) {
+        return use_adapter
+            ? scroll_init_horz_redirect(
+                scroll, nullptr, x, y, length, parent, setting)
+            : scroll->init_horz(x, y, length, parent, setting);
+    }
+    if (kind == 2) {
+        return use_adapter
+            ? scroll_init_vert_nc_redirect(
+                scroll, nullptr, x, y, length, parent, setting)
+            : scroll->init_vert_nc(x, y, length, parent, setting);
+    }
+    return use_adapter
+        ? scroll_init_horz_nc_redirect(
+            scroll, nullptr, x, y, length, parent, setting)
+        : scroll->init_horz_nc(x, y, length, parent, setting);
+}
+
+void test_scroll_init_wrappers() {
+    ScrollPrimaryInitProc const saved_primary_init = ScrollPrimaryInit;
+    int *const saved_default_thickness = ScrollDefaultThickness;
+    int *const saved_nonclient_init = ScrollNonClientInit;
+    int default_thickness = 0;
+    int nonclient_init = 0;
+    ScrollPrimaryInit = &scroll_init_probe;
+    ScrollDefaultThickness = &default_thickness;
+    ScrollNonClientInit = &nonclient_init;
+
+    alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+    uint8_t expected[sizeof(storage)];
+    alignas(Win) uint8_t parent_storage[sizeof(Win)];
+    auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+    auto *parent = reinterpret_cast<Win *>(parent_storage);
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        seed_storage(storage, expected, sizeof(storage));
+        reset_scroll_init_probe(0xA55AA55AU);
+        const int null_rect_result = use_adapter
+            ? scroll_init_rect_redirect(
+                scroll, nullptr, nullptr, parent, INT_MIN, INT_MAX)
+            : scroll->init(nullptr, parent, INT_MIN, INT_MAX);
+        expect(null_rect_result == 3);
+        expect(scroll_init_probe_state.calls == 0);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        reset_scroll_init_probe(0xA55AA55AU);
+        auto *poison_rect = reinterpret_cast<RECT *>(1U);
+        const int null_parent_result = use_adapter
+            ? scroll_init_rect_redirect(
+                scroll, nullptr, poison_rect, nullptr, INT_MAX, INT_MIN)
+            : scroll->init(poison_rect, nullptr, INT_MAX, INT_MIN);
+        expect(null_parent_result == 3);
+        expect(scroll_init_probe_state.calls == 0);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        alignas(RECT) uint8_t rect_storage[sizeof(RECT) + 32];
+        uint8_t rect_expected[sizeof(rect_storage)];
+        seed_storage(rect_storage, rect_expected, sizeof(rect_storage));
+        const uint32_t coordinates[] = {
+            0x7FFFFFFFU, 0x80000000U, 0x80000000U, 0x7FFFFFFFU,
+        };
+        std::memcpy(rect_storage + 16, coordinates, sizeof(coordinates));
+        std::memcpy(rect_expected, rect_storage, sizeof(rect_storage));
+        auto *rect = reinterpret_cast<RECT *>(rect_storage + 16);
+        nonclient_init = int_from_bits(0x2468ACE0U);
+        reset_scroll_init_probe(0x89ABCDEFU);
+        const int result = use_adapter
+            ? scroll_init_rect_redirect(
+                scroll, nullptr, rect, parent,
+                int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U))
+            : scroll->init(rect, parent,
+                           int_from_bits(0x13579BDFU),
+                           int_from_bits(0xFEDCBA98U));
+        expect(static_cast<uint32_t>(result) == 0x89ABCDEFU);
+        expect(scroll_init_probe_state.calls == 1);
+        expect(scroll_init_probe_state.self == scroll);
+        expect(scroll_init_probe_state.x == coordinates[0]);
+        expect(scroll_init_probe_state.y == coordinates[1]);
+        expect(scroll_init_probe_state.width
+               == coordinates[2] - coordinates[0]);
+        expect(scroll_init_probe_state.height
+               == coordinates[3] - coordinates[1]);
+        expect(scroll_init_probe_state.parent == parent);
+        expect(scroll_init_probe_state.setting == 0x13579BDFU);
+        expect(scroll_init_probe_state.options == 0xFEDCBA98U);
+        expect(scroll_init_probe_state.nonclient
+               == int_from_bits(0x2468ACE0U));
+        expect(nonclient_init == int_from_bits(0x2468ACE0U));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect_storage_bytes(rect_storage, rect_expected, sizeof(rect_storage));
+    }
+
+    for (int kind = 0; kind < 4; ++kind) {
+        const bool nonclient = kind >= 2;
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            ScrollDefaultThickness = nullptr;
+            nonclient_init = int_from_bits(0x2468ACE0U);
+            reset_scroll_init_probe(0xA55AA55AU);
+            expect(call_scroll_axis(
+                       scroll, kind, use_adapter, 10, 20, 0, parent, 30) == 3);
+            expect(scroll_init_probe_state.calls == 0);
+            expect(nonclient_init == (nonclient
+                ? 1 : int_from_bits(0x2468ACE0U)));
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            nonclient_init = int_from_bits(0x13579BDFU);
+            reset_scroll_init_probe(0x5AA55AA5U);
+            expect(call_scroll_axis(
+                       scroll, kind, use_adapter, INT_MIN, INT_MAX,
+                       -1, nullptr, 0) == 3);
+            expect(scroll_init_probe_state.calls == 0);
+            expect(nonclient_init == (nonclient
+                ? 1 : int_from_bits(0x13579BDFU)));
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            ScrollDefaultThickness = &default_thickness;
+        }
+    }
+
+    struct AxisCase {
+        int kind;
+        uint32_t x;
+        uint32_t y;
+        uint32_t length;
+        uint32_t thickness;
+        uint32_t setting;
+    };
+    const AxisCase axis_cases[] = {
+        {0, 0x80000000U, 0x7FFFFFFFU, 0x80000000U, 0U, 0xFFFFFFFFU},
+        {1, 0xFFFFFFFFU, 0U, 7U, 0xFFFFFFFFU, 0x80000000U},
+        {2, 10U, 20U, 0xFFFFFFFFU, 0x7FFFFFFFU, 0x13579BDFU},
+        {3, 30U, 40U, 0x7FFFFFFFU, 0x80000000U, 0xFEDCBA98U},
+    };
+    for (const AxisCase &test : axis_cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            default_thickness = int_from_bits(test.thickness);
+            nonclient_init = int_from_bits(0x2468ACE0U);
+            const uint32_t expected_result = 0x89ABCDEFU
+                ^ (static_cast<uint32_t>(test.kind) * 0x11111111U)
+                ^ static_cast<uint32_t>(use_adapter);
+            reset_scroll_init_probe(expected_result);
+            scroll_init_probe_state.clear_nonclient = test.kind >= 2;
+            const int result = call_scroll_axis(
+                scroll, test.kind, use_adapter,
+                int_from_bits(test.x), int_from_bits(test.y),
+                int_from_bits(test.length), parent, int_from_bits(test.setting));
+            expect(static_cast<uint32_t>(result) == expected_result);
+            expect(scroll_init_probe_state.calls == 1);
+            expect(scroll_init_probe_state.self == scroll);
+            expect(scroll_init_probe_state.x == test.x);
+            expect(scroll_init_probe_state.y == test.y);
+            expect(scroll_init_probe_state.width
+                   == ((test.kind & 1) ? test.length : test.thickness));
+            expect(scroll_init_probe_state.height
+                   == ((test.kind & 1) ? test.thickness : test.length));
+            expect(scroll_init_probe_state.parent == parent);
+            expect(scroll_init_probe_state.setting == test.setting);
+            expect(scroll_init_probe_state.options == 0U);
+            expect(scroll_init_probe_state.nonclient == (test.kind >= 2
+                ? 1 : int_from_bits(0x2468ACE0U)));
+            expect(nonclient_init == (test.kind >= 2
+                ? 0 : int_from_bits(0x2468ACE0U)));
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    ScrollPrimaryInit = saved_primary_init;
+    ScrollDefaultThickness = saved_default_thickness;
+    ScrollNonClientInit = saved_nonclient_init;
+}
+
 int scroll_redraw_calls = 0;
 Scroll *scroll_redraw_self = nullptr;
 uint32_t scroll_redraw_result = 0;
@@ -3831,6 +4052,7 @@ int main() {
     test_in_box_edges();
     test_win_move();
     test_win_paging();
+    test_scroll_init_wrappers();
     test_scroll_range();
     test_scroll_style_setters();
     test_scroll_thumb_resetters();

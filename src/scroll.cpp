@@ -19,8 +19,29 @@
 #include "scroll.h"
 
 Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
+int *ScrollDefaultThickness = (int *)0x009B8DD4;
+int *ScrollNonClientInit = (int *)0x009B8E24;
 
 namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef int (__thiscall func_scroll_init)(
+    Scroll *, int, int, int, int, Win *, int, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+func_scroll_init *ScrollOriginalInit = (func_scroll_init *)0x006054D0;
+
+int __cdecl call_original_scroll_init(
+        Scroll *self, int x, int y, int width, int height, Win *parent,
+        int setting, int options) {
+    return ScrollOriginalInit(
+        self, x, y, width, height, parent, setting, options);
+}
 
 LONG long_from_bits(uint32_t bits) {
     LONG value;
@@ -136,6 +157,87 @@ uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
 }
 
 }  // namespace
+
+ScrollPrimaryInitProc ScrollPrimaryInit = &call_original_scroll_init;
+
+/*
+Purpose: Initialize a scrollbar from a rectangle.
+Original Offset: 00605840
+Status: Complete
+*/
+int Scroll::init(RECT *rect, Win *parent, int setting, int options) {
+    if (!rect || !parent) {
+        return 3;
+    }
+
+    const volatile RECT *const ordered_rect = rect;
+    const uint32_t top = static_cast<uint32_t>(ordered_rect->top);
+    const uint32_t left = static_cast<uint32_t>(ordered_rect->left);
+    const uint32_t bottom = static_cast<uint32_t>(ordered_rect->bottom);
+    const uint32_t right = static_cast<uint32_t>(ordered_rect->right);
+    return ScrollPrimaryInit(
+        this, long_from_bits(left), long_from_bits(top),
+        long_from_bits(right - left), long_from_bits(bottom - top),
+        parent, setting, options);
+}
+
+/*
+Purpose: Initialize a vertical scrollbar using the process-default thickness.
+Original Offset: 00605890
+Status: Complete
+*/
+int Scroll::init_vert(
+        int x, int y, int length, Win *parent, int setting) {
+    if (!parent || length == 0) {
+        return 3;
+    }
+    return ScrollPrimaryInit(
+        this, x, y, *ScrollDefaultThickness, length, parent, setting, 0);
+}
+
+/*
+Purpose: Initialize a horizontal scrollbar using the process-default thickness.
+Original Offset: 006058D0
+Status: Complete
+*/
+int Scroll::init_horz(
+        int x, int y, int length, Win *parent, int setting) {
+    if (!parent || length == 0) {
+        return 3;
+    }
+    return ScrollPrimaryInit(
+        this, x, y, length, *ScrollDefaultThickness, parent, setting, 0);
+}
+
+/*
+Purpose: Initialize a vertical nonclient scrollbar.
+Original Offset: 00605910
+Status: Complete
+*/
+int Scroll::init_vert_nc(
+        int x, int y, int length, Win *parent, int setting) {
+    *reinterpret_cast<volatile int *>(ScrollNonClientInit) = 1;
+    if (!parent || length == 0) {
+        return 3;
+    }
+    return ScrollPrimaryInit(
+        this, x, y, *ScrollDefaultThickness, length, parent, setting, 0);
+}
+
+/*
+Purpose: Initialize a horizontal nonclient scrollbar.
+Original Offset: 00605960
+Status: Complete
+*/
+int Scroll::init_horz_nc(
+        int x, int y, int length, Win *parent, int setting) {
+    *reinterpret_cast<volatile int *>(ScrollNonClientInit) = 1;
+    if (!parent || length == 0) {
+        return 3;
+    }
+    return ScrollPrimaryInit(
+        this, x, y, length, *ScrollDefaultThickness, parent, setting, 0);
+}
 
 /*
 Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
@@ -488,6 +590,31 @@ uint32_t Scroll::set_thumb_rect() {
     thumb->top = long_from_bits(top);
     thumb->bottom = long_from_bits(bottom);
     return bottom;
+}
+
+int __fastcall scroll_init_rect_redirect(
+        Scroll *self, void *, RECT *rect, Win *parent, int setting, int options) {
+    return self->init(rect, parent, setting, options);
+}
+
+int __fastcall scroll_init_vert_redirect(
+        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
+    return self->init_vert(x, y, length, parent, setting);
+}
+
+int __fastcall scroll_init_horz_redirect(
+        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
+    return self->init_horz(x, y, length, parent, setting);
+}
+
+int __fastcall scroll_init_vert_nc_redirect(
+        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
+    return self->init_vert_nc(x, y, length, parent, setting);
+}
+
+int __fastcall scroll_init_horz_nc_redirect(
+        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
+    return self->init_horz_nc(x, y, length, parent, setting);
 }
 
 uint32_t __fastcall scroll_set_range_redirect(

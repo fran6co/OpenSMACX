@@ -29,6 +29,11 @@ class DLLEXPORT Scroll : GraphicWin {
   Scroll() { ; }
   ~Scroll() { ; }
 
+  int init(RECT *rect, Win *parent, int setting, int options);
+  int init_vert(int x, int y, int length, Win *parent, int setting);
+  int init_horz(int x, int y, int length, Win *parent, int setting);
+  int init_vert_nc(int x, int y, int length, Win *parent, int setting);
+  int init_horz_nc(int x, int y, int length, Win *parent, int setting);
   uint32_t set_range(int minimum, int maximum);
   uint32_t set_button_color(int color);
   uint32_t set_bevel_thickness(int thickness);
@@ -92,8 +97,23 @@ static_assert(sizeof(Scroll) == 0x214C,
               "Scroll layout must match the legacy ABI");
 
 extern Win **ScrollCurrentWin;
+typedef int (__cdecl *ScrollPrimaryInitProc)(
+    Scroll *, int, int, int, int, Win *, int, int);
+extern ScrollPrimaryInitProc ScrollPrimaryInit;
+extern int *ScrollDefaultThickness;
+extern int *ScrollNonClientInit;
 
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
+int __fastcall scroll_init_rect_redirect(
+    Scroll *self, void *, RECT *rect, Win *parent, int setting, int options);
+int __fastcall scroll_init_vert_redirect(
+    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
+int __fastcall scroll_init_horz_redirect(
+    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
+int __fastcall scroll_init_vert_nc_redirect(
+    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
+int __fastcall scroll_init_horz_nc_redirect(
+    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
 uint32_t __fastcall scroll_set_range_redirect(
     Scroll *self, void *, int minimum, int maximum);
 uint32_t __fastcall scroll_set_button_color_redirect(
