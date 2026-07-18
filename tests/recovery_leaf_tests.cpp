@@ -703,6 +703,102 @@ int int_from_bits(uint32_t bits) {
     return value;
 }
 
+int scroll_redraw_calls = 0;
+Scroll *scroll_redraw_self = nullptr;
+uint32_t scroll_redraw_result = 0;
+uint32_t scroll_redraw_minimum = 0;
+uint32_t scroll_redraw_maximum = 0;
+uint32_t scroll_redraw_reverse = 0;
+uint32_t scroll_redraw_position = 0;
+Win *scroll_redraw_parent = nullptr;
+bool scroll_redraw_check_range = false;
+bool scroll_redraw_check_current = false;
+
+uint32_t __fastcall scroll_redraw_probe(Scroll *self, void *) {
+    ++scroll_redraw_calls;
+    scroll_redraw_self = self;
+    const auto *bytes = reinterpret_cast<const uint8_t *>(self);
+    uint32_t minimum;
+    uint32_t maximum;
+    uint32_t reverse;
+    uint32_t position;
+    std::memcpy(&minimum, bytes + 0xA20, sizeof(minimum));
+    std::memcpy(&maximum, bytes + 0xA24, sizeof(maximum));
+    std::memcpy(&reverse, bytes + 0xA28, sizeof(reverse));
+    std::memcpy(&position, bytes + 0xA2C, sizeof(position));
+    if (scroll_redraw_check_range) {
+        expect(minimum == scroll_redraw_minimum);
+        expect(maximum == scroll_redraw_maximum);
+        expect(reverse == scroll_redraw_reverse);
+        expect(position == scroll_redraw_position);
+    }
+    if (scroll_redraw_check_current) {
+        expect(*ScrollCurrentWin == scroll_redraw_parent);
+        expect(position == scroll_redraw_position);
+    }
+    return scroll_redraw_result;
+}
+
+void reset_scroll_redraw_probe() {
+    scroll_redraw_calls = 0;
+    scroll_redraw_self = nullptr;
+    scroll_redraw_check_range = false;
+    scroll_redraw_check_current = false;
+}
+
+void install_scroll_redraw_probe(uint8_t *storage, uintptr_t vtable[63]) {
+    std::memset(vtable, 0, sizeof(uintptr_t) * 63);
+    vtable[0xF8 / sizeof(uintptr_t)] =
+        reinterpret_cast<uintptr_t>(&scroll_redraw_probe);
+    uintptr_t *vtable_pointer = vtable;
+    write_at(storage, 16, vtable_pointer);
+}
+
+int scroll_style_redraw_calls = 0;
+uint8_t *scroll_style_base = nullptr;
+size_t scroll_style_offsets[3] = {};
+uint32_t scroll_style_value = 0;
+uint32_t scroll_style_results[2] = {};
+
+void expect_scroll_style_fields() {
+    for (size_t offset : scroll_style_offsets) {
+        uint32_t actual;
+        std::memcpy(&actual, scroll_style_base + offset, sizeof(actual));
+        expect(actual == scroll_style_value);
+    }
+}
+
+uint32_t __fastcall scroll_style_left_redraw_probe(void *self, void *) {
+    expect(scroll_style_redraw_calls == 0);
+    expect(self == scroll_style_base + 0xAAC);
+    expect_scroll_style_fields();
+    ++scroll_style_redraw_calls;
+    return scroll_style_results[0];
+}
+
+uint32_t __fastcall scroll_style_right_redraw_probe(void *self, void *) {
+    expect(scroll_style_redraw_calls == 1);
+    expect(self == scroll_style_base + 0x15F8);
+    expect_scroll_style_fields();
+    ++scroll_style_redraw_calls;
+    return scroll_style_results[1];
+}
+
+void install_scroll_style_redraw_probes(
+        uint8_t *storage, uintptr_t left_vtable[63],
+        uintptr_t right_vtable[63]) {
+    std::memset(left_vtable, 0, sizeof(uintptr_t) * 63);
+    std::memset(right_vtable, 0, sizeof(uintptr_t) * 63);
+    left_vtable[0xF8 / sizeof(uintptr_t)] =
+        reinterpret_cast<uintptr_t>(&scroll_style_left_redraw_probe);
+    right_vtable[0xF8 / sizeof(uintptr_t)] =
+        reinterpret_cast<uintptr_t>(&scroll_style_right_redraw_probe);
+    uintptr_t *left_vtable_pointer = left_vtable;
+    uintptr_t *right_vtable_pointer = right_vtable;
+    write_at(storage, 16 + 0xAAC, left_vtable_pointer);
+    write_at(storage, 16 + 0x15F8, right_vtable_pointer);
+}
+
 void test_win_move() {
     struct MoveCase {
         uint32_t flags;
@@ -904,6 +1000,264 @@ void test_scroll_border_color() {
     }
 }
 
+void test_scroll_range() {
+    struct RangeCase {
+        uint32_t first;
+        uint32_t second;
+        uint32_t minimum;
+        uint32_t maximum;
+        uint32_t reverse;
+    };
+    const RangeCase cases[] = {
+        {10U, 20U, 10U, 20U, 0U},
+        {20U, 10U, 10U, 20U, 1U},
+        {5U, 5U, 5U, 5U, 1U},
+        {0xFFFFFFFFU, 0U, 0xFFFFFFFFU, 0U, 0U},
+        {0x80000000U, 0x7FFFFFFFU, 0x80000000U, 0x7FFFFFFFU, 0U},
+        {0x7FFFFFFFU, 0x80000000U, 0x80000000U, 0x7FFFFFFFU, 1U},
+    };
+    for (const RangeCase &fixture : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+            uint8_t expected[sizeof(storage)];
+            uintptr_t vtable[63];
+            seed_storage(storage, expected, sizeof(storage));
+            install_scroll_redraw_probe(storage, vtable);
+            std::memcpy(expected, storage, sizeof(storage));
+            write_at(expected, 16 + 0xA20, fixture.minimum);
+            write_at(expected, 16 + 0xA24, fixture.maximum);
+            write_at(expected, 16 + 0xA28, fixture.reverse);
+            write_at(expected, 16 + 0xA2C, fixture.minimum);
+
+            reset_scroll_redraw_probe();
+            scroll_redraw_result = fixture.first ^ fixture.second ^ 0xA55AA55AU;
+            scroll_redraw_minimum = fixture.minimum;
+            scroll_redraw_maximum = fixture.maximum;
+            scroll_redraw_reverse = fixture.reverse;
+            scroll_redraw_position = fixture.minimum;
+            scroll_redraw_check_range = true;
+            auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+            const uint32_t result = use_adapter
+                ? scroll_set_range_redirect(
+                    scroll, nullptr, int_from_bits(fixture.first),
+                    int_from_bits(fixture.second))
+                : scroll->set_range(int_from_bits(fixture.first),
+                                    int_from_bits(fixture.second));
+            expect(result == scroll_redraw_result);
+            expect(scroll_redraw_calls == 1);
+            expect(scroll_redraw_self == scroll);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
+void test_scroll_style_setters() {
+    struct StyleCase {
+        size_t primary_offset;
+        size_t left_offset;
+        size_t right_offset;
+    };
+    const StyleCase styles[] = {
+        {0xA5C, 0x1530, 0x207C},
+        {0xA68, 0x153C, 0x2088},
+        {0xA6C, 0x1534, 0x2080},
+        {0xA70, 0x1538, 0x2084},
+    };
+    const uint32_t values[] = {
+        0U, 1U, 0x7FFFFFFFU, 0x80000000U, 0xFFFFFFFFU,
+    };
+
+    for (size_t style = 0; style < ARRAYSIZE(styles); ++style) {
+        for (uint32_t value : values) {
+            for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+                uint8_t expected[sizeof(storage)];
+                uintptr_t left_vtable[63];
+                uintptr_t right_vtable[63];
+                seed_storage(storage, expected, sizeof(storage));
+                install_scroll_style_redraw_probes(
+                    storage, left_vtable, right_vtable);
+                std::memcpy(expected, storage, sizeof(storage));
+                write_at(expected, 16 + styles[style].primary_offset, value);
+                write_at(expected, 16 + styles[style].left_offset, value);
+                write_at(expected, 16 + styles[style].right_offset, value);
+
+                scroll_style_redraw_calls = 0;
+                scroll_style_base = storage + 16;
+                scroll_style_offsets[0] = styles[style].primary_offset;
+                scroll_style_offsets[1] = styles[style].left_offset;
+                scroll_style_offsets[2] = styles[style].right_offset;
+                scroll_style_value = value;
+                scroll_style_results[0] = value ^ 0x13579BDFU;
+                scroll_style_results[1] = value ^ 0x2468ACE0U;
+
+                auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+                const int argument = int_from_bits(value);
+                uint32_t result;
+                switch (style) {
+                  case 0:
+                    result = use_adapter
+                        ? scroll_set_button_color_redirect(
+                            scroll, nullptr, argument)
+                        : scroll->set_button_color(argument);
+                    break;
+                  case 1:
+                    result = use_adapter
+                        ? scroll_set_bevel_thickness_redirect(
+                            scroll, nullptr, argument)
+                        : scroll->set_bevel_thickness(argument);
+                    break;
+                  case 2:
+                    result = use_adapter
+                        ? scroll_set_bevel_upper_redirect(
+                            scroll, nullptr, argument)
+                        : scroll->set_bevel_upper(argument);
+                    break;
+                  default:
+                    result = use_adapter
+                        ? scroll_set_bevel_lower_redirect(
+                            scroll, nullptr, argument)
+                        : scroll->set_bevel_lower(argument);
+                    break;
+                }
+                expect(result == scroll_style_results[1]);
+                expect(scroll_style_redraw_calls == 2);
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+}
+
+void test_scroll_thumb_resetters() {
+    const uint32_t colors[] = {
+        0xFFFFFFFFU, 0U, 0x80000000U,
+    };
+    const uint32_t thicknesses[] = {
+        0U, 1U, 2U, 0x80000000U, 0xFFFFFFFFU,
+    };
+    for (uint32_t color : colors) {
+        for (uint32_t thickness : thicknesses) {
+            for (int set_bar = 0; set_bar < 2; ++set_bar) {
+                for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                    alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+                    uint8_t expected[sizeof(storage)];
+                    seed_storage(storage, expected, sizeof(storage));
+                    const uint32_t old_thickness = 0x13579BDFU;
+                    const uint32_t selected_thickness = set_bar
+                        ? thickness : old_thickness;
+                    write_at(storage, 16 + 0xA1C, color);
+                    write_at(storage, 16 + 0xA60, old_thickness);
+                    std::memcpy(expected, storage, sizeof(storage));
+                    if (set_bar) {
+                        write_at(expected, 16 + 0xA60, thickness);
+                    }
+                    const uint32_t inset = color == 0xFFFFFFFFU ? 0U : 1U;
+                    const uint32_t extent = color == 0xFFFFFFFFU
+                        ? selected_thickness : selected_thickness - 1U;
+                    write_at(expected, 16 + 0xA4C, inset);
+                    write_at(expected, 16 + 0xA50, inset);
+                    write_at(expected, 16 + 0xA54, extent);
+                    write_at(expected, 16 + 0xA58, extent);
+
+                    auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+                    uint32_t result;
+                    if (set_bar && use_adapter) {
+                        result = scroll_set_bar_thickness_redirect(
+                            scroll, nullptr, int_from_bits(thickness));
+                    } else if (set_bar) {
+                        result = scroll->set_bar_thickness(
+                            int_from_bits(thickness));
+                    } else if (use_adapter) {
+                        result = scroll_set_thumb_rect_redirect(scroll, nullptr);
+                    } else {
+                        result = scroll->set_thumb_rect();
+                    }
+                    expect(result == (color == 0xFFFFFFFFU
+                        ? (set_bar ? color : selected_thickness)
+                        : selected_thickness - 1U));
+                    expect_storage_bytes(storage, expected, sizeof(storage));
+                }
+            }
+        }
+    }
+}
+
+void test_scroll_position() {
+    Win **const saved_current_win = ScrollCurrentWin;
+    Win *published = reinterpret_cast<Win *>(0x45454545U);
+    ScrollCurrentWin = &published;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        Win *null_parent = nullptr;
+        write_at(storage, 16 + 0xC4, null_parent);
+        std::memcpy(expected, storage, sizeof(storage));
+        published = reinterpret_cast<Win *>(0x45454545U);
+        reset_scroll_redraw_probe();
+        auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+        const uint32_t result = use_adapter
+            ? scroll_set_pos_redirect(scroll, nullptr, INT_MIN)
+            : scroll->set_pos(INT_MIN);
+        expect(result == 0U);
+        expect(scroll_redraw_calls == 0);
+        expect(published == reinterpret_cast<Win *>(0x45454545U));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    struct PositionCase {
+        uint32_t minimum;
+        uint32_t maximum;
+        uint32_t reverse;
+        uint32_t input;
+        uint32_t expected;
+    };
+    const PositionCase cases[] = {
+        {0U, 100U, 0U, 0xFFFFFFFFU, 0U},
+        {0U, 100U, 0U, 101U, 100U},
+        {0xFFFFFFF6U, 10U, 0U, 0xFFFFFFFDU, 0xFFFFFFFDU},
+        {0U, 100U, 1U, 25U, 75U},
+        {0U, 100U, 0x80000000U, 1000U, 0U},
+        {0x80000000U, 0x7FFFFFFFU, 1U, 0U, 0xFFFFFFFFU},
+    };
+    alignas(Win) uint8_t parent_storage[sizeof(Win)];
+    auto *parent = reinterpret_cast<Win *>(parent_storage);
+    for (const PositionCase &fixture : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+            uint8_t expected[sizeof(storage)];
+            uintptr_t vtable[63];
+            seed_storage(storage, expected, sizeof(storage));
+            install_scroll_redraw_probe(storage, vtable);
+            write_at(storage, 16 + 0xC4, parent);
+            write_at(storage, 16 + 0xA20, fixture.minimum);
+            write_at(storage, 16 + 0xA24, fixture.maximum);
+            write_at(storage, 16 + 0xA28, fixture.reverse);
+            std::memcpy(expected, storage, sizeof(storage));
+            write_at(expected, 16 + 0xA2C, fixture.expected);
+
+            published = reinterpret_cast<Win *>(0x45454545U);
+            reset_scroll_redraw_probe();
+            scroll_redraw_result = fixture.input ^ 0x5AA55AA5U;
+            scroll_redraw_position = fixture.expected;
+            scroll_redraw_parent = parent;
+            scroll_redraw_check_current = true;
+            auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+            const uint32_t result = use_adapter
+                ? scroll_set_pos_redirect(
+                    scroll, nullptr, int_from_bits(fixture.input))
+                : scroll->set_pos(int_from_bits(fixture.input));
+            expect(result == scroll_redraw_result);
+            expect(scroll_redraw_calls == 1);
+            expect(scroll_redraw_self == scroll);
+            expect(published == parent);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+    ScrollCurrentWin = saved_current_win;
+}
+
 void test_expand_rect() {
     struct ExpandRectCase {
         uint32_t rect[4];
@@ -946,14 +1300,15 @@ void test_scroll_sprite_setters() {
         uint32_t width;
         uint32_t stored_height;
         bool horizontal;
+        bool vertical;
     };
     const Geometry geometries[] = {
-        {100U, 0xFFFFFFECU, true},
-        {20U, 0xFFFFFF9CU, false},
-        {20U, 0xFFFFFFECU, false},
-        {1U, 1U, true},
-        {0x80000001U, 0x80000000U, true},
-        {0x80000000U, 0x80000000U, false},
+        {100U, 0xFFFFFFECU, true, false},
+        {20U, 0xFFFFFF9CU, false, true},
+        {20U, 0xFFFFFFECU, false, false},
+        {1U, 1U, true, false},
+        {0x80000001U, 0x80000000U, true, false},
+        {0x80000000U, 0x80000000U, false, false},
     };
     Sprite *sprite_sets[][3] = {
         {nullptr, nullptr, nullptr},
@@ -967,7 +1322,7 @@ void test_scroll_sprite_setters() {
 
     for (const Geometry &geometry : geometries) {
         for (Sprite **sprites : sprite_sets) {
-            for (int right = 0; right < 2; ++right) {
+            for (int direction = 0; direction < 4; ++direction) {
                 for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
                     alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
                     uint8_t expected[sizeof(storage)];
@@ -976,13 +1331,19 @@ void test_scroll_sprite_setters() {
                     write_at(storage, 16 + 0x4C8, geometry.stored_height);
                     std::memcpy(expected, storage, sizeof(storage));
 
-                    const size_t primary_offset = right ? 0xA94 : 0xA7C;
+                    const size_t primary_offsets[] = {
+                        0xA7C, 0xA94, 0xA88, 0xAA0,
+                    };
+                    const size_t primary_offset = primary_offsets[direction];
                     for (size_t index = 0; index < 3; ++index) {
                         write_at(expected, 16 + primary_offset
                             + index * sizeof(Sprite *), sprites[index]);
                     }
-                    if (geometry.horizontal) {
-                        const size_t button_offset = right ? 0x2108 : 0x15BC;
+                    const bool update_button = direction < 2
+                        ? geometry.horizontal : geometry.vertical;
+                    if (update_button) {
+                        const size_t button_offset = (direction & 1)
+                            ? 0x2108 : 0x15BC;
                         for (size_t index = 0; index < 3; ++index) {
                             write_at(expected, 16 + button_offset
                                 + index * sizeof(Sprite *), sprites[index]);
@@ -990,20 +1351,47 @@ void test_scroll_sprite_setters() {
                     }
 
                     auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
-                    if (right && use_adapter) {
-                        expect(scroll_set_sprite_right_redirect(
-                            scroll, nullptr, sprites[0], sprites[1], sprites[2])
-                            == sprites[0]);
-                    } else if (right) {
-                        scroll->set_sprite_right(
-                            sprites[0], sprites[1], sprites[2]);
-                    } else if (use_adapter) {
-                        expect(scroll_set_sprite_left_redirect(
-                            scroll, nullptr, sprites[0], sprites[1], sprites[2])
-                            == sprites[0]);
-                    } else {
-                        scroll->set_sprite_left(
-                            sprites[0], sprites[1], sprites[2]);
+                    switch (direction) {
+                      case 0:
+                        if (use_adapter) {
+                            expect(scroll_set_sprite_left_redirect(
+                                scroll, nullptr, sprites[0], sprites[1], sprites[2])
+                                == sprites[0]);
+                        } else {
+                            scroll->set_sprite_left(
+                                sprites[0], sprites[1], sprites[2]);
+                        }
+                        break;
+                      case 1:
+                        if (use_adapter) {
+                            expect(scroll_set_sprite_right_redirect(
+                                scroll, nullptr, sprites[0], sprites[1], sprites[2])
+                                == sprites[0]);
+                        } else {
+                            scroll->set_sprite_right(
+                                sprites[0], sprites[1], sprites[2]);
+                        }
+                        break;
+                      case 2:
+                        if (use_adapter) {
+                            expect(scroll_set_sprite_up_redirect(
+                                scroll, nullptr, sprites[0], sprites[1], sprites[2])
+                                == sprites[0]);
+                        } else {
+                            scroll->set_sprite_up(
+                                sprites[0], sprites[1], sprites[2]);
+                        }
+                        break;
+                      default:
+                        if (use_adapter) {
+                            expect(scroll_set_sprite_down_redirect(
+                                scroll, nullptr, sprites[0], sprites[1], sprites[2])
+                                == sprites[0]);
+                        } else {
+                            scroll->set_sprite_down(
+                                sprites[0], sprites[1], sprites[2]);
+                        }
+                        break;
                     }
                     expect_storage_bytes(storage, expected, sizeof(storage));
                 }
@@ -3443,7 +3831,11 @@ int main() {
     test_in_box_edges();
     test_win_move();
     test_win_paging();
+    test_scroll_range();
+    test_scroll_style_setters();
+    test_scroll_thumb_resetters();
     test_scroll_border_color();
+    test_scroll_position();
     test_expand_rect();
     test_scroll_sprite_setters();
     test_scroll_compute_thumb_rect();

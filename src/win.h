@@ -29,6 +29,8 @@ class Scroll; // forward declaration
   * Win class: Most basic window class.
   */
 class DLLEXPORT Win {
+  friend class Scroll;
+
  public:
   Win() { ; }
   ~Win() { ; }

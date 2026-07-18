@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "scroll.h"
 
+Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
+
 namespace {
 
 LONG long_from_bits(uint32_t bits) {
@@ -50,16 +52,45 @@ uint32_t read_volatile_bits(const void *object, size_t offset) {
         static_cast<const uint8_t *>(object) + offset);
 }
 
-void set_sprite_triplet(void *object, size_t primary_offset,
-                        size_t button_offset, Sprite *sprite1,
+uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
+    const uint32_t redraw_bits = read_volatile_bits(
+        reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)), 0xF8);
+    uint32_t result;
+#if defined(_MSC_VER) && defined(_M_IX86)
+    __asm {
+        mov ecx, self
+        mov eax, redraw_bits
+        call eax
+        mov result, eax
+    }
+#elif defined(__GNUC__) && defined(__i386__)
+    uintptr_t self_bits = reinterpret_cast<uintptr_t>(self);
+    __asm__ volatile (
+        "call *%2"
+        : "=a" (result), "+c" (self_bits)
+        : "r" (redraw_bits)
+        : "edx", "memory", "cc");
+#else
+    typedef uint32_t (*RedrawProc)(void *);
+    result = reinterpret_cast<RedrawProc>(
+        static_cast<uintptr_t>(redraw_bits))(self);
+#endif
+    return result;
+}
+
+void set_sprite_triplet(void *object, Sprite *volatile *primary,
+                        size_t button_offset, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
-    write_sprite(object, primary_offset, sprite1);
-    write_sprite(object, primary_offset + 4, sprite2);
-    write_sprite(object, primary_offset + 8, sprite3);
+    primary[0] = sprite1;
+    primary[1] = sprite2;
+    primary[2] = sprite3;
 
     const uint32_t height = 0U - read_volatile_bits(object, 0x4C8);
     const uint32_t width = read_volatile_bits(object, 0x4C4);
-    if (long_from_bits(width) > long_from_bits(height)) {
+    const bool update_button = horizontal
+        ? long_from_bits(width) > long_from_bits(height)
+        : long_from_bits(width) < long_from_bits(height);
+    if (update_button) {
         write_sprite(object, button_offset, sprite1);
         write_sprite(object, button_offset + 4, sprite2);
         write_sprite(object, button_offset + 8, sprite3);
@@ -107,6 +138,121 @@ uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
 }  // namespace
 
 /*
+Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
+Original Offset: 006059B0
+Status: Complete
+*/
+uint32_t Scroll::set_range(int minimum, int maximum) {
+    volatile uint32_t *const reversed = &range_reversed_;
+    if (minimum < maximum) {
+        *reversed = 0U;
+    } else {
+        *reversed = 1U;
+        const int temporary = minimum;
+        minimum = maximum;
+        maximum = temporary;
+    }
+    *reinterpret_cast<volatile int *>(&range_minimum_) = minimum;
+    *reinterpret_cast<volatile int *>(&position_) = minimum;
+    const uint32_t vtable_bits = read_volatile_bits(this, 0);
+    *reinterpret_cast<volatile int *>(&range_maximum_) = maximum;
+    return redraw_from_vtable(this, vtable_bits);
+}
+
+/*
+Purpose: Set the color shared by the scrollbar and both end buttons.
+Original Offset: 00605A10
+Status: Complete
+*/
+uint32_t Scroll::set_button_color(int color) {
+    const uint32_t value = static_cast<uint32_t>(color);
+    color_ = value;
+    flat_button_left_.color_ = value;
+    flat_button_right_.color_ = value;
+    redraw_from_vtable(&flat_button_left_,
+                       read_volatile_bits(&flat_button_left_, 0));
+    return redraw_from_vtable(&flat_button_right_,
+                              read_volatile_bits(&flat_button_right_, 0));
+}
+
+/*
+Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
+Original Offset: 00605A50
+Status: Complete
+*/
+uint32_t Scroll::set_bevel_thickness(int thickness) {
+    const uint32_t value = static_cast<uint32_t>(thickness);
+    bevel_thickness_ = value;
+    flat_button_left_.bevel_thickness_ = value;
+    flat_button_right_.bevel_thickness_ = value;
+    redraw_from_vtable(&flat_button_left_,
+                       read_volatile_bits(&flat_button_left_, 0));
+    return redraw_from_vtable(&flat_button_right_,
+                              read_volatile_bits(&flat_button_right_, 0));
+}
+
+/*
+Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
+Original Offset: 00605A90
+Status: Complete
+*/
+uint32_t Scroll::set_bevel_upper(int color) {
+    const uint32_t value = static_cast<uint32_t>(color);
+    bevel_upper_ = value;
+    flat_button_left_.bevel_upper_ = value;
+    flat_button_right_.bevel_upper_ = value;
+    redraw_from_vtable(&flat_button_left_,
+                       read_volatile_bits(&flat_button_left_, 0));
+    return redraw_from_vtable(&flat_button_right_,
+                              read_volatile_bits(&flat_button_right_, 0));
+}
+
+/*
+Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
+Original Offset: 00605AD0
+Status: Complete
+*/
+uint32_t Scroll::set_bevel_lower(int color) {
+    const uint32_t value = static_cast<uint32_t>(color);
+    bevel_lower_ = value;
+    flat_button_left_.bevel_lower_ = value;
+    flat_button_right_.bevel_lower_ = value;
+    redraw_from_vtable(&flat_button_left_,
+                       read_volatile_bits(&flat_button_left_, 0));
+    return redraw_from_vtable(&flat_button_right_,
+                              read_volatile_bits(&flat_button_right_, 0));
+}
+
+/*
+Purpose: Set the scrollbar thickness and reset its thumb rectangle.
+Original Offset: 00605B80
+Status: Complete
+*/
+uint32_t Scroll::set_bar_thickness(int thickness) {
+    const uint32_t thickness_bits = static_cast<uint32_t>(thickness);
+    *reinterpret_cast<volatile int *>(&bar_thickness_) = thickness;
+    volatile RECT *const thumb = &thumb_rect_;
+    thumb->left = 0;
+    thumb->top = 0;
+    thumb->right = long_from_bits(thickness_bits);
+    thumb->bottom = long_from_bits(thickness_bits);
+    const uint32_t color = static_cast<uint32_t>(
+        *reinterpret_cast<volatile int *>(&border_color_));
+    if (color == 0xFFFFFFFFU) {
+        return color;
+    }
+
+    const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
+    thumb->left = 1;
+    const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
+    thumb->right = long_from_bits(right);
+    const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
+    thumb->top = long_from_bits(top);
+    thumb->bottom = long_from_bits(bottom);
+    return bottom;
+}
+
+/*
 Purpose: Set the border color and reset the scrollbar thumb rectangle.
 Original Offset: 00605B10
 Status: Complete
@@ -150,7 +296,8 @@ Status: Complete
 */
 void Scroll::set_sprite_left(
         Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    set_sprite_triplet(this, 0xA7C, 0x15BC, sprite1, sprite2, sprite3);
+    set_sprite_triplet(this, &sprite_left1_, 0x15BC, true,
+                       sprite1, sprite2, sprite3);
 }
 
 /*
@@ -160,7 +307,61 @@ Status: Complete
 */
 void Scroll::set_sprite_right(
         Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    set_sprite_triplet(this, 0xA94, 0x2108, sprite1, sprite2, sprite3);
+    set_sprite_triplet(this, &sprite_right1_, 0x2108, true,
+                       sprite1, sprite2, sprite3);
+}
+
+/*
+Purpose: Set the upper scrollbar sprites and vertical upper-button sprites.
+Original Offset: 00605C80
+Status: Complete
+*/
+void Scroll::set_sprite_up(
+        Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    set_sprite_triplet(this, &sprite_up1_, 0x15BC, false,
+                       sprite1, sprite2, sprite3);
+}
+
+/*
+Purpose: Set the lower scrollbar sprites and vertical lower-button sprites.
+Original Offset: 00605CD0
+Status: Complete
+*/
+void Scroll::set_sprite_down(
+        Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    set_sprite_triplet(this, &sprite_down1_, 0x2108, false,
+                       sprite1, sprite2, sprite3);
+}
+
+/*
+Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
+Original Offset: 00605D20
+Status: Complete
+*/
+uint32_t Scroll::set_pos(int position) {
+    ::Win *const parent = *reinterpret_cast<::Win *volatile *>(&win_parent_);
+    if (!parent) {
+        return 0U;
+    }
+    *ScrollCurrentWin = parent;
+
+    const int minimum = *reinterpret_cast<volatile int *>(&range_minimum_);
+    volatile int *const current = &position_;
+    if (position < minimum) {
+        *current = minimum;
+    } else {
+        const int maximum = *reinterpret_cast<volatile int *>(&range_maximum_);
+        *current = position > maximum ? maximum : position;
+    }
+    if (*reinterpret_cast<volatile uint32_t *>(&range_reversed_) != 0U) {
+        const uint32_t maximum = static_cast<uint32_t>(
+            *reinterpret_cast<volatile int *>(&range_maximum_));
+        const uint32_t clamped = static_cast<uint32_t>(*current);
+        *current = long_from_bits(
+            maximum - clamped + static_cast<uint32_t>(minimum));
+    }
+    const uint32_t vtable_bits = read_volatile_bits(this, 0);
+    return redraw_from_vtable(this, vtable_bits);
 }
 
 /*
@@ -262,6 +463,63 @@ void Scroll::compute_thumb_rect(RECT *rect) {
     }
 }
 
+/*
+Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
+Original Offset: 00606EA0
+Status: Complete
+*/
+uint32_t Scroll::set_thumb_rect() {
+    const uint32_t thickness = static_cast<uint32_t>(
+        *reinterpret_cast<volatile int *>(&bar_thickness_));
+    volatile RECT *const thumb = &thumb_rect_;
+    thumb->left = 0;
+    thumb->top = 0;
+    thumb->right = long_from_bits(thickness);
+    thumb->bottom = long_from_bits(thickness);
+    if (*reinterpret_cast<volatile int *>(&border_color_) == -1) {
+        return thickness;
+    }
+
+    const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
+    thumb->left = 1;
+    const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
+    thumb->right = long_from_bits(right);
+    const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
+    thumb->top = long_from_bits(top);
+    thumb->bottom = long_from_bits(bottom);
+    return bottom;
+}
+
+uint32_t __fastcall scroll_set_range_redirect(
+        Scroll *self, void *, int minimum, int maximum) {
+    return self->set_range(minimum, maximum);
+}
+
+uint32_t __fastcall scroll_set_button_color_redirect(
+        Scroll *self, void *, int color) {
+    return self->set_button_color(color);
+}
+
+uint32_t __fastcall scroll_set_bevel_thickness_redirect(
+        Scroll *self, void *, int thickness) {
+    return self->set_bevel_thickness(thickness);
+}
+
+uint32_t __fastcall scroll_set_bevel_upper_redirect(
+        Scroll *self, void *, int color) {
+    return self->set_bevel_upper(color);
+}
+
+uint32_t __fastcall scroll_set_bevel_lower_redirect(
+        Scroll *self, void *, int color) {
+    return self->set_bevel_lower(color);
+}
+
+uint32_t __fastcall scroll_set_bar_thickness_redirect(
+        Scroll *self, void *, int thickness) {
+    return self->set_bar_thickness(thickness);
+}
+
 void __fastcall scroll_set_border_color_redirect(
         Scroll *self, void *, int color) {
     self->set_border_color(color);
@@ -279,9 +537,30 @@ Sprite *__fastcall scroll_set_sprite_right_redirect(
     return sprite1;
 }
 
+Sprite *__fastcall scroll_set_sprite_up_redirect(
+        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    self->set_sprite_up(sprite1, sprite2, sprite3);
+    return sprite1;
+}
+
+Sprite *__fastcall scroll_set_sprite_down_redirect(
+        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
+    self->set_sprite_down(sprite1, sprite2, sprite3);
+    return sprite1;
+}
+
+uint32_t __fastcall scroll_set_pos_redirect(
+        Scroll *self, void *, int position) {
+    return self->set_pos(position);
+}
+
 RECT *__fastcall scroll_compute_thumb_rect_redirect(
         Scroll *self, void *, RECT *rect) {
     self->compute_thumb_rect(rect);
     return reinterpret_cast<RECT *>(
         reinterpret_cast<uint8_t *>(self) + 0xA4C);
+}
+
+uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *) {
+    return self->set_thumb_rect();
 }

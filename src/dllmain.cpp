@@ -30,6 +30,7 @@
 #include "pulldown.h"
 #include "scenario.h"
 #include "scroll.h"
+#include "scroll_oracle.h"
 #include "stringstruct.h"
 #include "win.h"
 
@@ -40,7 +41,8 @@ namespace {
 
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
-constexpr size_t RedirectCount = 59;
+constexpr size_t SignatureExtensionSize = 6;
+constexpr size_t RedirectCount = 69;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -56,8 +58,55 @@ struct RedirectSpec {
     uint8_t signature[SignatureSize];
 };
 
+struct SignatureExtension {
+    uintptr_t original_address;
+    size_t offset;
+    uint8_t signature[SignatureExtensionSize];
+};
+
 RedirectState Redirects[RedirectCount] = {};
 RedirectState CallRedirects[CallRedirectCount] = {};
+
+bool validate_signature(uintptr_t address, const uint8_t *expected, size_t size) {
+    auto *original = reinterpret_cast<uint8_t *>(address);
+    MEMORY_BASIC_INFORMATION memory_info;
+    if (VirtualQuery(original, &memory_info, sizeof(memory_info)) != sizeof(memory_info)
+        || memory_info.State != MEM_COMMIT
+        || (memory_info.Protect & PAGE_GUARD) != 0) {
+        return false;
+    }
+    const DWORD basic_protection = memory_info.Protect & 0xFF;
+    if (basic_protection != PAGE_READONLY && basic_protection != PAGE_READWRITE
+        && basic_protection != PAGE_WRITECOPY && basic_protection != PAGE_EXECUTE_READ
+        && basic_protection != PAGE_EXECUTE_READWRITE
+        && basic_protection != PAGE_EXECUTE_WRITECOPY) {
+        return false;
+    }
+    const uintptr_t region_end = reinterpret_cast<uintptr_t>(memory_info.BaseAddress)
+        + memory_info.RegionSize;
+    return address <= region_end && size <= region_end - address
+        && memcmp(original, expected, size) == 0;
+}
+
+bool validate_redirect_spec(const RedirectSpec &spec) {
+    if (!validate_signature(spec.original_address, spec.signature, SignatureSize)) {
+        return false;
+    }
+    const SignatureExtension extensions[] = {
+        {0x00605BE0, 15, {0x89, 0x81, 0x7C, 0x0A, 0x00, 0x00}},
+        {0x00605C30, 15, {0x89, 0x81, 0x94, 0x0A, 0x00, 0x00}},
+        {0x00605C80, 15, {0x89, 0x81, 0x88, 0x0A, 0x00, 0x00}},
+        {0x00605CD0, 15, {0x89, 0x81, 0xA0, 0x0A, 0x00, 0x00}},
+    };
+    for (const SignatureExtension &extension : extensions) {
+        if (extension.original_address == spec.original_address) {
+            return validate_signature(
+                spec.original_address + extension.offset,
+                extension.signature, SignatureExtensionSize);
+        }
+    }
+    return true;
+}
 
 bool restore_redirect(RedirectState &state) {
     if (!state.installed) {
@@ -80,34 +129,16 @@ bool restore_redirect(RedirectState &state) {
     return false;
 }
 
-bool redirect_function(RedirectState &state, uintptr_t original_address,
-                       uintptr_t replacement_address,
-                       const uint8_t expected_signature[SignatureSize]) {
+bool redirect_function(RedirectState &state, const RedirectSpec &spec) {
     static_assert(sizeof(uintptr_t) == sizeof(uint32_t), "runtime redirects require PE32");
-    auto *original = reinterpret_cast<uint8_t *>(original_address);
-    MEMORY_BASIC_INFORMATION memory_info;
-    DWORD basic_protection;
-    if (VirtualQuery(original, &memory_info, sizeof(memory_info)) != sizeof(memory_info)
-        || memory_info.State != MEM_COMMIT
-        || (memory_info.Protect & PAGE_GUARD) != 0) {
+    if (!validate_redirect_spec(spec)) {
         return false;
     }
-    basic_protection = memory_info.Protect & 0xFF;
-    if (basic_protection != PAGE_READONLY && basic_protection != PAGE_READWRITE
-        && basic_protection != PAGE_WRITECOPY && basic_protection != PAGE_EXECUTE_READ
-        && basic_protection != PAGE_EXECUTE_READWRITE
-        && basic_protection != PAGE_EXECUTE_WRITECOPY) {
-        return false;
-    }
-    uintptr_t region_end = reinterpret_cast<uintptr_t>(memory_info.BaseAddress)
-        + memory_info.RegionSize;
-    if (original_address > region_end || SignatureSize > region_end - original_address
-        || memcmp(original, expected_signature, SignatureSize) != 0) {
-        return false;
-    }
+    auto *original = reinterpret_cast<uint8_t *>(spec.original_address);
 
     uint8_t patch[PatchSize] = {0xE9, 0, 0, 0, 0};
-    uint32_t relative_jump = replacement_address - (original_address + PatchSize);
+    uint32_t relative_jump =
+        spec.replacement_address - (spec.original_address + PatchSize);
     memcpy(&patch[1], &relative_jump, sizeof(relative_jump));
 
     state.address = original;
@@ -131,25 +162,16 @@ bool redirect_function(RedirectState &state, uintptr_t original_address,
     return false;
 }
 
-bool redirect_call(RedirectState &state, uintptr_t call_address,
-                   uintptr_t replacement_address,
-                   const uint8_t expected_signature[SignatureSize]) {
+bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
     static_assert(sizeof(uintptr_t) == sizeof(uint32_t), "runtime redirects require PE32");
-    auto *original = reinterpret_cast<uint8_t *>(call_address);
-    MEMORY_BASIC_INFORMATION memory_info;
-    if (VirtualQuery(original, &memory_info, sizeof(memory_info)) != sizeof(memory_info)
-        || memory_info.State != MEM_COMMIT || (memory_info.Protect & PAGE_GUARD) != 0) {
+    if (!validate_redirect_spec(spec)) {
         return false;
     }
-    uintptr_t region_end = reinterpret_cast<uintptr_t>(memory_info.BaseAddress)
-        + memory_info.RegionSize;
-    if (call_address > region_end || SignatureSize > region_end - call_address
-        || memcmp(original, expected_signature, SignatureSize) != 0) {
-        return false;
-    }
+    auto *original = reinterpret_cast<uint8_t *>(spec.original_address);
 
     uint8_t patch[PatchSize] = {0xE8, 0, 0, 0, 0};
-    uint32_t relative_call = replacement_address - (call_address + PatchSize);
+    uint32_t relative_call =
+        spec.replacement_address - (spec.original_address + PatchSize);
     memcpy(&patch[1], &relative_call, sizeof(relative_call));
 
     state.address = original;
@@ -362,10 +384,46 @@ bool install_redirects() {
              0x91, 0x38, 0x0A, 0x00, 0x00, 0x8B, 0x0A, 0x83},
         },
         {
+            0x006059B0,
+            reinterpret_cast<uintptr_t>(&scroll_set_range_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x56, 0x8B, 0xF1, 0x3B,
+             0x44, 0x24, 0x0C, 0x7D, 0x0C, 0xC7, 0x86, 0x28},
+        },
+        {
+            0x00605A10,
+            reinterpret_cast<uintptr_t>(&scroll_set_button_color_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x56, 0x8B, 0xF1, 0x89,
+             0x86, 0x5C, 0x0A, 0x00, 0x00, 0x8D, 0x8E, 0xAC},
+        },
+        {
+            0x00605A50,
+            reinterpret_cast<uintptr_t>(&scroll_set_bevel_thickness_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x56, 0x8B, 0xF1, 0x89,
+             0x86, 0x68, 0x0A, 0x00, 0x00, 0x8D, 0x8E, 0xAC},
+        },
+        {
+            0x00605A90,
+            reinterpret_cast<uintptr_t>(&scroll_set_bevel_upper_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x56, 0x8B, 0xF1, 0x89,
+             0x86, 0x6C, 0x0A, 0x00, 0x00, 0x8D, 0x8E, 0xAC},
+        },
+        {
+            0x00605AD0,
+            reinterpret_cast<uintptr_t>(&scroll_set_bevel_lower_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x56, 0x8B, 0xF1, 0x89,
+             0x86, 0x70, 0x0A, 0x00, 0x00, 0x8D, 0x8E, 0xAC},
+        },
+        {
             0x00605B10,
             reinterpret_cast<uintptr_t>(&scroll_set_border_color_redirect),
             {0x8B, 0x44, 0x24, 0x04, 0x33, 0xD2, 0x89, 0x81,
              0x1C, 0x0A, 0x00, 0x00, 0x8B, 0x81, 0x60, 0x0A},
+        },
+        {
+            0x00605B80,
+            reinterpret_cast<uintptr_t>(&scroll_set_bar_thickness_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x33, 0xD2, 0x89, 0x81,
+             0x60, 0x0A, 0x00, 0x00, 0x89, 0x91, 0x4C, 0x0A},
         },
         {
             0x00605BE0,
@@ -380,10 +438,34 @@ bool install_redirects() {
              0x53, 0x56, 0x8B, 0x74, 0x24, 0x14, 0x57, 0x89},
         },
         {
+            0x00605C80,
+            reinterpret_cast<uintptr_t>(&scroll_set_sprite_up_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x53, 0x56, 0x8B, 0x74, 0x24, 0x14, 0x57, 0x89},
+        },
+        {
+            0x00605CD0,
+            reinterpret_cast<uintptr_t>(&scroll_set_sprite_down_redirect),
+            {0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08,
+             0x53, 0x56, 0x8B, 0x74, 0x24, 0x14, 0x57, 0x89},
+        },
+        {
+            0x00605D20,
+            reinterpret_cast<uintptr_t>(&scroll_set_pos_redirect),
+            {0x8B, 0x81, 0xC4, 0x00, 0x00, 0x00, 0x85, 0xC0,
+             0x74, 0x5D, 0x56, 0xA3, 0xB8, 0x7A, 0x9B, 0x00},
+        },
+        {
             0x00606C50,
             reinterpret_cast<uintptr_t>(&scroll_compute_thumb_rect_redirect),
             {0x83, 0xEC, 0x08, 0x53, 0x55, 0x56, 0x8B, 0x74,
              0x24, 0x18, 0x8D, 0x81, 0x4C, 0x0A, 0x00, 0x00},
+        },
+        {
+            0x00606EA0,
+            reinterpret_cast<uintptr_t>(&scroll_set_thumb_rect_redirect),
+            {0x8B, 0x81, 0x60, 0x0A, 0x00, 0x00, 0x33, 0xD2,
+             0x89, 0x91, 0x4C, 0x0A, 0x00, 0x00, 0x89, 0x91},
         },
         {
             0x00606F00,
@@ -532,10 +614,16 @@ bool install_redirects() {
     };
     static_assert(sizeof(specs) / sizeof(specs[0]) == RedirectCount,
                   "redirect state count must match the redirect catalog");
+    for (const RedirectSpec &spec : specs) {
+        if (!validate_redirect_spec(spec)) {
+            return false;
+        }
+    }
+    if (!run_scroll_recovery_oracle()) {
+        return false;
+    }
     for (size_t index = 0; index < RedirectCount; index++) {
-        if (redirect_function(
-                Redirects[index], specs[index].original_address,
-                specs[index].replacement_address, specs[index].signature)) {
+        if (redirect_function(Redirects[index], specs[index])) {
             continue;
         }
         while (index > 0) {
@@ -564,9 +652,7 @@ bool install_redirects() {
     static_assert(sizeof(call_specs) / sizeof(call_specs[0]) == CallRedirectCount,
                   "call redirect state count must match the redirect catalog");
     for (size_t index = 0; index < CallRedirectCount; index++) {
-        if (redirect_call(CallRedirects[index], call_specs[index].original_address,
-                          call_specs[index].replacement_address,
-                          call_specs[index].signature)) {
+        if (redirect_call(CallRedirects[index], call_specs[index])) {
             continue;
         }
         while (index > 0) {

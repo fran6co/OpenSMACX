@@ -20,12 +20,14 @@
 #include "time.h"
 
 class ButtonGroup; // forward declaration
+class Scroll; // forward declaration
 
  /*
   * BaseButton class
   */
 class DLLEXPORT BaseButton : GraphicWin {
   friend class ButtonGroup;
+  friend class Scroll;
 
  public:
   BaseButton() { ; }
