@@ -137,6 +137,23 @@ def main():
         scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
         required_scroll_symbols = {
             "RECT expansion helper": "__Z11expand_rectP7tagRECTii",
+            "Scroll RECT initializer": "__ZN6Scroll4initEP7tagRECTP3Winii",
+            "Scroll vertical initializer": "__ZN6Scroll9init_vertEiiiP3Wini",
+            "Scroll horizontal initializer": "__ZN6Scroll9init_horzEiiiP3Wini",
+            "Scroll vertical nonclient initializer":
+                "__ZN6Scroll12init_vert_ncEiiiP3Wini",
+            "Scroll horizontal nonclient initializer":
+                "__ZN6Scroll12init_horz_ncEiiiP3Wini",
+            "Scroll RECT initializer adapter":
+                "@_Z25scroll_init_rect_redirectP6ScrollPvP7tagRECTP3Winii@24",
+            "Scroll vertical initializer adapter":
+                "@_Z25scroll_init_vert_redirectP6ScrollPviiiP3Wini@28",
+            "Scroll horizontal initializer adapter":
+                "@_Z25scroll_init_horz_redirectP6ScrollPviiiP3Wini@28",
+            "Scroll vertical nonclient initializer adapter":
+                "@_Z28scroll_init_vert_nc_redirectP6ScrollPviiiP3Wini@28",
+            "Scroll horizontal nonclient initializer adapter":
+                "@_Z28scroll_init_horz_nc_redirectP6ScrollPviiiP3Wini@28",
             "Scroll range setter": "__ZN6Scroll9set_rangeEii",
             "Scroll button-color setter": "__ZN6Scroll16set_button_colorEi",
             "Scroll bevel-thickness setter":
@@ -218,6 +235,48 @@ def main():
                 [0, 8, 4, 12],
                 [0, 0, 8, 8, 4, 4, 12, 12]):
             fail("RECT expansion helper does not preserve field access order")
+        for description, label, stack_bytes in (
+                ("Scroll RECT initializer",
+                 "Scroll::init(tagRECT*, Win*, int, int)", "10"),
+                ("Scroll vertical initializer",
+                 "Scroll::init_vert(int, int, int, Win*, int)", "14"),
+                ("Scroll horizontal initializer",
+                 "Scroll::init_horz(int, int, int, Win*, int)", "14"),
+                ("Scroll vertical nonclient initializer",
+                 "Scroll::init_vert_nc(int, int, int, Win*, int)", "14"),
+                ("Scroll horizontal nonclient initializer",
+                 "Scroll::init_horz_nc(int, int, int, Win*, int)", "14"),
+                ("Scroll RECT initializer adapter",
+                 "@_Z25scroll_init_rect_redirectP6ScrollPvP7tagRECTP3Winii@24",
+                 "10"),
+                ("Scroll vertical initializer adapter",
+                 "@_Z25scroll_init_vert_redirectP6ScrollPviiiP3Wini@28", "14"),
+                ("Scroll horizontal initializer adapter",
+                 "@_Z25scroll_init_horz_redirectP6ScrollPviiiP3Wini@28", "14"),
+                ("Scroll vertical nonclient initializer adapter",
+                 "@_Z28scroll_init_vert_nc_redirectP6ScrollPviiiP3Wini@28", "14"),
+                ("Scroll horizontal nonclient initializer adapter",
+                 "@_Z28scroll_init_horz_nc_redirectP6ScrollPviiiP3Wini@28", "14")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                scroll_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            returns = re.findall(
+                r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
+            if not returns or any(value != stack_bytes for value in returns):
+                fail(f"{description} does not pop {stack_bytes} stack bytes")
+
+        original_init = re.search(
+            r"<\(anonymous namespace\)::call_original_scroll_init"
+            r"\(Scroll\*, int, int, int, int, Win\*, int, int\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        if (not original_init
+                or "0x6054d0" not in original_init.group("body")
+                or not re.search(r"\bcall\s+\*", original_init.group("body"))
+                or not re.search(r"\bmov\b.*%ecx", original_init.group("body"))):
+            fail("Scroll primary-init dependency lacks a raw thiscall dispatch")
         scroll_bodies = {}
         for description, label, stack_bytes in (
                 ("Scroll range setter", "Scroll::set_range(int, int)", "8"),
@@ -417,6 +476,8 @@ def main():
         oracle_disassembly = run(
             [args.objdump, "-d", "-C", args.scroll_oracle_object])
         oracle_calls = {
+            "(anonymous namespace)::verify_init_wrappers()": (
+                0x00605840, 0x00605890, 0x006058D0, 0x00605910, 0x00605960),
             "(anonymous namespace)::verify_range()": (0x006059B0,),
             "(anonymous namespace)::verify_styles()": (
                 0x00605A10, 0x00605A50, 0x00605A90, 0x00605AD0),

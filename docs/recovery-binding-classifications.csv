@@ -33,3 +33,4 @@ do_video,platform_service,recover_video_pump,Separate video processing from Win3
 check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
 do_net,platform_service,recover_network_pump,Define network dispatch service and no-network behavior
 do_non_input_,source_fallback,validate_source_implementation,Retain original fallback until Win32 message-loop behavior is tested
+ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
