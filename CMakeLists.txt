@@ -25,10 +25,12 @@ set(OPENSMACX_GAMEPLAY_SCENARIO_TIMEOUT 60 CACHE STRING
     "Seconds to wait for a deterministic gameplay scenario result")
 set(OPENSMACX_LEGACY_EXE "${OPENSMACX_GAME_DIR}/terranx.exe" CACHE FILEPATH
     "User-owned executable used to prepare the local hybrid image")
-set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid-image" CACHE PATH
+set(OPENSMACX_HYBRID_DIR "${CMAKE_CURRENT_BINARY_DIR}/hybrid-image" CACHE PATH
     "Output directory for the local-only hybrid image pack")
-set(OPENSMACX_HYBRID_EXE "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/hybrid/terranx_pracx_legacy.exe"
+set(OPENSMACX_HYBRID_EXE "${CMAKE_CURRENT_BINARY_DIR}/hybrid/terranx_pracx_legacy.exe"
     CACHE FILEPATH "Assembled executable path for the local hybrid image")
+set(OPENSMACX_STAGED_GAME_DIR "${CMAKE_CURRENT_BINARY_DIR}/staged-game" CACHE PATH
+    "Per-preset mirrored game directory used for staging and runtime tests")
 set(OPENSMACX_LEGACY_LEAF_DIR "${CMAKE_CURRENT_BINARY_DIR}/legacy-leaves"
     CACHE PATH "Output directory for generated local legacy leaf assembly")
 set(OPENSMACX_LEGACY_LEAF_EXE "${OPENSMACX_GAME_DIR}/terranx_original.exe"
@@ -76,6 +78,7 @@ endfunction()
 
 foreach(variable IN ITEMS
         OPENSMACX_GAME_DIR
+        OPENSMACX_STAGED_GAME_DIR
         OPENSMACX_WINE_PREFIX
         OPENSMACX_HYBRID_DIR
         OPENSMACX_HYBRID_EXE
@@ -412,6 +415,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_verify_recovery_metadata.py"
     )
+
+    add_test(NAME stage-preset-game-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_stage_preset_game_dir.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
@@ -474,12 +482,27 @@ add_custom_target(assemble-hybrid-executable
     VERBATIM
 )
 
+add_custom_target(stage-preset-game
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_stage_preset_game_dir.py"
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_preset_game_dir.py"
+        --source "${OPENSMACX_GAME_DIR}"
+        --destination "${OPENSMACX_STAGED_GAME_DIR}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_preset_game_dir.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_stage_preset_game_dir.py"
+    USES_TERMINAL
+    VERBATIM
+)
+
 set(OPENSMACX_HYBRID_STAGE_COMMAND
     "${OPENSMACX_PYTHON_EXECUTABLE}"
     "${CMAKE_CURRENT_SOURCE_DIR}/tools/opensmac_patcher.py"
     --exe "${OPENSMACX_HYBRID_EXE}"
     --dll "$<TARGET_FILE:OpenSMACX>"
-    --output "${OPENSMACX_GAME_DIR}"
+    --output "${OPENSMACX_STAGED_GAME_DIR}"
     --exe-name terranx_hybrid.exe
     --wine-prefix "${OPENSMACX_WINE_PREFIX}"
 )
@@ -492,6 +515,7 @@ add_custom_target(stage-hybrid-game
     DEPENDS
         OpenSMACX
         assemble-hybrid-executable
+        stage-preset-game
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/opensmac_patcher.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
@@ -503,7 +527,7 @@ add_custom_target(stage-hybrid-game
 set(OPENSMACX_HYBRID_SMOKE_COMMAND
     "${OPENSMACX_PYTHON_EXECUTABLE}"
     "${CMAKE_CURRENT_SOURCE_DIR}/tools/smoke_hybrid_game.py"
-    --game-dir "${OPENSMACX_GAME_DIR}"
+    --game-dir "${OPENSMACX_STAGED_GAME_DIR}"
     --executable terranx_hybrid.exe
     --wine-prefix "${OPENSMACX_WINE_PREFIX}"
     --duration "${OPENSMACX_HYBRID_SMOKE_SECONDS}"
@@ -535,7 +559,7 @@ add_custom_target(smoke-hybrid-game
 set(OPENSMACX_GAMEPLAY_SCENARIO_COMMAND
     "${OPENSMACX_PYTHON_EXECUTABLE}"
     "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_gameplay_scenario.py"
-    --game-dir "${OPENSMACX_GAME_DIR}"
+    --game-dir "${OPENSMACX_STAGED_GAME_DIR}"
     --executable terranx_hybrid.exe
     --save "${OPENSMACX_GAMEPLAY_SCENARIO_SAVE}"
     --result "${CMAKE_CURRENT_BINARY_DIR}/gameplay-scenario-result.json"

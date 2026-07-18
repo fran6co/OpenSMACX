@@ -22,8 +22,9 @@ cmake --preset mingw-i686-release \
 cmake --build --preset mingw-i686-release --target assemble-hybrid-executable
 ```
 
-`prepare-hybrid-image` creates the verified pack. `assemble-hybrid-executable` consumes that pack
-and reconstructs `.opensmacx/hybrid/terranx_pracx_legacy.exe`. The assembled file must have the source
+`prepare-hybrid-image` creates the verified pack under the preset build directory
+(`build/<preset>/hybrid-image`). `assemble-hybrid-executable` consumes that pack and reconstructs
+`build/<preset>/hybrid/terranx_pracx_legacy.exe`. The assembled file must have the source
 SHA-256 recorded by the pack, satisfy the PE32/i386 manifest fields, and remain outside the pack so
 pack ownership validation cannot be bypassed by generated extras.
 
@@ -34,13 +35,17 @@ functions in one command, run:
 cmake --build --preset mingw-i686-release --target stage-hybrid-game
 ```
 
-This writes `.opensmacx/game/terranx_hybrid.exe` alongside the existing local game data. Launch it
-with. The launcher temporarily skips PRACX intro movies by default; add `--play-intro-movie` to retain
+Staging first mirrors the read-only master game data from `.opensmacx/game` into the per-preset
+copy `build/<preset>/staged-game` (patcher-owned outputs excluded, game-written files preserved,
+APFS clones on Darwin), then writes `terranx_hybrid.exe` and `OpenSMACX.dll` there. Each preset
+owns its staged copy, so Debug and Release batches can stage and smoke-test concurrently while
+`.opensmacx/game` stays read-only during batches. Launch the staged executable with the launcher
+below. It temporarily skips PRACX intro movies by default; add `--play-intro-movie` to retain
 the configured movie player for a manual run:
 
 ```sh
 .opensmacx/venv/bin/python tools/run_game.py \
-  --game-dir .opensmacx/game \
+  --game-dir build/mingw-i686-release/staged-game \
   --executable terranx_hybrid.exe \
   --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
   --wine-prefix .opensmacx/wineprefix
