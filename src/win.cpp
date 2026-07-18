@@ -34,6 +34,20 @@ uint32_t long_bits(LONG value) {
     return bits;
 }
 
+int int_from_bits(uint32_t bits) {
+    int value;
+    static_assert(sizeof(value) == sizeof(bits), "Win geometry requires 32-bit int");
+    memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+uint32_t midpoint(uint32_t near_edge, uint32_t far_edge) {
+    const uint32_t delta = far_edge - near_edge;
+    const uint32_t adjusted = delta + (delta >> 31);
+    const uint32_t half = (adjusted >> 1) | (adjusted & 0x80000000U);
+    return near_edge + half;
+}
+
 void move_rect(RECT &rect, int x, int y) {
     const uint32_t x_bits = static_cast<uint32_t>(x);
     const uint32_t y_bits = static_cast<uint32_t>(y);
@@ -99,4 +113,63 @@ Status: Complete
 */
 BOOL __cdecl in_box(int x, int y, const RECT *rect) {
     return x >= rect->left && x < rect->right && y >= rect->top && y < rect->bottom;
+}
+
+/*
+Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
+Original Offset: 005F86C0
+Status: Complete
+*/
+RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
+    volatile RECT *ordered = rect;
+    const uint32_t x_bits = static_cast<uint32_t>(x);
+    const uint32_t y_bits = static_cast<uint32_t>(y);
+    ordered->left = long_from_bits(x_bits);
+    ordered->top = long_from_bits(y_bits);
+    ordered->right = long_from_bits(x_bits + static_cast<uint32_t>(width));
+    ordered->bottom = long_from_bits(y_bits + static_cast<uint32_t>(height));
+    return rect;
+}
+
+/*
+Purpose: Determine whether a point is inside an origin-and-dimensions rectangle.
+Original Offset: 005FA7A0
+Status: Complete
+*/
+int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
+    if (x < left) {
+        return 0;
+    }
+    const int right = int_from_bits(
+        static_cast<uint32_t>(left) + static_cast<uint32_t>(width));
+    if (x >= right || y < top) {
+        return 0;
+    }
+    const int bottom = int_from_bits(
+        static_cast<uint32_t>(top) + static_cast<uint32_t>(height));
+    return y < bottom;
+}
+
+/*
+Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
+Original Offset: 004BA830
+Status: Complete
+*/
+int __cdecl rect_center(RECT *rect, int *x, int *y) {
+    volatile RECT *ordered = rect;
+    const uint32_t left = static_cast<uint32_t>(ordered->left);
+    const uint32_t right = static_cast<uint32_t>(ordered->right);
+    const int center_x = int_from_bits(midpoint(left, right));
+    memcpy(x, &center_x, sizeof(center_x));
+
+    const uint32_t top = static_cast<uint32_t>(ordered->top);
+    const uint32_t bottom = static_cast<uint32_t>(ordered->bottom);
+    const int center_y = int_from_bits(midpoint(top, bottom));
+    memcpy(y, &center_y, sizeof(center_y));
+    return center_y;
+}
+
+int __fastcall tutwin_rect_center_redirect(
+        void *, void *, RECT *rect, int *x, int *y) {
+    return rect_center(rect, x, y);
 }

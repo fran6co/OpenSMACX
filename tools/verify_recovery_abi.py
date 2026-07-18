@@ -40,6 +40,7 @@ def main():
     parser.add_argument("--text-object")
     parser.add_argument("--text-index-object")
     parser.add_argument("--time-object")
+    parser.add_argument("--vector-object")
     parser.add_argument("--win-object")
     args = parser.parse_args()
 
@@ -106,6 +107,11 @@ def main():
                 "@_Z28win_set_vert_paging_redirectP3WinPvi@12",
             "Win horizontal paging adapter":
                 "@_Z28win_set_horz_paging_redirectP3WinPvi@12",
+            "RECT construction helper": "__Z9make_rectP7tagRECTiiii",
+            "six-argument in_box": "__Z6in_boxiiiiii",
+            "rectangle-center helper": "__Z11rect_centerP7tagRECTPiS1_",
+            "TutWin rectangle-center adapter":
+                "@_Z27tutwin_rect_center_redirectPvS_P7tagRECTPiS2_@20",
         }
         for description, symbol in required_win_symbols.items():
             if symbol not in win_symbols:
@@ -129,6 +135,136 @@ def main():
                 r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != stack_bytes for value in returns):
                 fail(f"{description} does not pop {stack_bytes} stack bytes")
+
+        for description, label in (
+                ("RECT construction helper",
+                 "make_rect(tagRECT*, int, int, int, int)"),
+                ("six-argument in_box",
+                 "in_box(int, int, int, int, int, int)"),
+                ("rectangle-center helper",
+                 "rect_center(tagRECT*, int*, int*)")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                win_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            if not re.search(r"\bret\s*$", body, re.MULTILINE) or re.search(
+                    r"\bret\s+\$", body):
+                fail(f"{description} is not cdecl")
+        center_adapter = re.search(
+            r"<@_Z27tutwin_rect_center_redirectPvS_P7tagRECTPiS2_@20>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            win_disassembly, re.DOTALL)
+        if not center_adapter or not re.search(
+                r"\bret\s+\$0xc\b", center_adapter.group("body")):
+            fail("TutWin rectangle-center adapter does not pop three stack arguments")
+
+    if args.vector_object:
+        vector_headers = run([args.objdump, "-f", args.vector_object])
+        if "file format pe-i386" not in vector_headers:
+            fail("Vector object is not a 32-bit PE COFF object")
+        vector_symbols = run([args.nm, "--defined-only", args.vector_object])
+        required_vector_symbols = {
+            "Vector constructor": "__ZN6VectorC1Ev",
+            "Vector close": "__ZN6Vector5closeEv",
+            "Vector subtraction": "__ZN6Vector4__miERS_S0_",
+            "Vector addition assignment": "__ZN6Vector5__aplERS_",
+            "Vector subtraction assignment": "__ZN6Vector5__amiERS_",
+            "Vector scaling": "__ZN6Vector5scaleERS_f",
+            "Vector constructor adapter":
+                "@_Z25vector_construct_redirectP6VectorPv@8",
+            "Vector close adapter": "@_Z21vector_close_redirectP6VectorPv@8",
+            "Vector subtraction adapter":
+                "@_Z24vector_subtract_redirectP6VectorPvS0_S0_@16",
+            "Vector addition-assignment adapter":
+                "@_Z26vector_add_assign_redirectP6VectorPvS0_@12",
+            "Vector subtraction-assignment adapter":
+                "@_Z31vector_subtract_assign_redirectP6VectorPvS0_@12",
+            "Vector scaling adapter":
+                "@_Z21vector_scale_redirectP6VectorPvS0_j@16",
+        }
+        for description, symbol in required_vector_symbols.items():
+            if symbol not in vector_symbols:
+                fail(f"missing required Vector symbol: {description}")
+        vector_disassembly = run(
+            [args.objdump, "-d", "-C", args.vector_object])
+
+        vector_bodies = {}
+        for description, label, stack_bytes in (
+                ("Vector subtraction", "Vector::__mi(Vector&, Vector&)", "8"),
+                ("Vector addition assignment", "Vector::__apl(Vector&)", "4"),
+                ("Vector subtraction assignment", "Vector::__ami(Vector&)", "4"),
+                ("Vector scaling", "Vector::scale(Vector&, float)", "8"),
+                ("Vector subtraction adapter",
+                 "@_Z24vector_subtract_redirectP6VectorPvS0_S0_@16", "8"),
+                ("Vector addition-assignment adapter",
+                 "@_Z26vector_add_assign_redirectP6VectorPvS0_@12", "4"),
+                ("Vector subtraction-assignment adapter",
+                 "@_Z31vector_subtract_assign_redirectP6VectorPvS0_@12", "4"),
+                ("Vector scaling adapter",
+                 "@_Z21vector_scale_redirectP6VectorPvS0_j@16", "8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                vector_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            vector_bodies[label] = body
+            returns = re.findall(r"\bret\s+\$0x([0-9a-f]+)\b", body)
+            if not returns or any(value != stack_bytes for value in returns):
+                fail(f"{description} does not pop {stack_bytes} stack bytes")
+
+        for description, label in (
+                ("Vector constructor", "Vector::Vector()"),
+                ("Vector close", "Vector::close()"),
+                ("Vector constructor adapter",
+                 "@_Z25vector_construct_redirectP6VectorPv@8"),
+                ("Vector close adapter",
+                 "@_Z21vector_close_redirectP6VectorPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                vector_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            body = match.group("body")
+            vector_bodies[label] = body
+            if not re.search(r"\bret\s*$", body, re.MULTILINE) or re.search(
+                    r"\bret\s+\$", body):
+                fail(f"{description} unexpectedly pops stack arguments")
+
+        constructor_body = vector_bodies["Vector::Vector()"]
+        constructor_stores = re.findall(
+            r"\bmovl\s+\$0x0,(?:(0x[0-9a-f]+)?)\(%ecx\)", constructor_body)
+        if [offset or "" for offset in constructor_stores] != ["", "0x4", "0x8"]:
+            fail("Vector constructor lacks three ordered binary32 zero stores")
+        if not re.search(r"\bmov\s+%ecx,%eax\b", constructor_body):
+            fail("Vector constructor does not leave the instance pointer in EAX")
+
+        constructor_adapter_body = vector_bodies[
+            "@_Z25vector_construct_redirectP6VectorPv@8"]
+        for description, body in (
+                ("Vector constructor", constructor_body),
+                ("Vector constructor adapter", constructor_adapter_body)):
+            if re.search(r"\bxmm[0-9]+\b", body):
+                fail(f"{description} unexpectedly uses SSE stores")
+            if re.search(r"\bj[a-z]+\s+[0-9a-f]+\b", body):
+                fail(f"{description} unexpectedly branches around its stores")
+
+        arithmetic_requirements = (
+            ("Vector subtraction", "Vector::__mi(Vector&, Vector&)", "fsubs"),
+            ("Vector addition assignment", "Vector::__apl(Vector&)", "fadds"),
+            ("Vector subtraction assignment", "Vector::__ami(Vector&)", "fsubs"),
+            ("Vector scaling", "Vector::scale(Vector&, float)", "fmuls"),
+        )
+        for description, label, operation in arithmetic_requirements:
+            body = vector_bodies[label]
+            if (len(re.findall(r"\bflds\b", body)) != 3
+                    or len(re.findall(rf"\b{operation}\b", body)) != 3
+                    or len(re.findall(r"\bfstps\b", body)) != 3):
+                fail(f"{description} lacks three ordered binary32 x87 operations")
+            if re.search(r"\bxmm[0-9]+\b", body):
+                fail(f"{description} unexpectedly uses SSE floating-point operations")
 
     if args.scroll_object:
         scroll_headers = run([args.objdump, "-f", args.scroll_object])
