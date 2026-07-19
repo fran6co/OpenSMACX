@@ -80,3 +80,13 @@ struct Suite {
 // result path, writing one "<suite> passed|failed" line per suite and a
 // terminal "all passed" line only when every suite succeeded.
 bool run_runtime_oracles();
+
+// Lift and reinstall a single installed redirect so a deferred suite can call
+// the original body. Defined in src/dllmain.cpp.
+bool suspend_redirect_at(uintptr_t address);
+bool resume_redirect_at(uintptr_t address);
+
+// Second oracle phase, triggered from a startup call-site hook once the
+// executable's CRT is running so release paths can be exercised against real
+// allocations. Rewrites the result file to include its own suite lines.
+void run_deferred_oracles();

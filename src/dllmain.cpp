@@ -70,6 +70,10 @@ struct SignatureExtension {
 };
 
 RedirectState Redirects[RedirectCount] = {};
+// Installed specs are retained so a single redirect can be lifted and
+// reinstalled later, which the deferred oracle phase needs to call an
+// original body after the executable's CRT has started.
+RedirectSpec InstalledSpecs[RedirectCount] = {};
 RedirectState CallRedirects[CallRedirectCount] = {};
 
 bool validate_signature(uintptr_t address, const uint8_t *expected, size_t size) {
@@ -688,6 +692,7 @@ bool install_redirects() {
         return false;
     }
     for (size_t index = 0; index < RedirectCount; index++) {
+        InstalledSpecs[index] = specs[index];
         if (redirect_function(Redirects[index], specs[index])) {
             continue;
         }
@@ -733,6 +738,29 @@ bool install_redirects() {
     }
     return true;
 }
+
+}  // namespace
+
+bool suspend_redirect_at(uintptr_t address) {
+    for (size_t index = 0; index < RedirectCount; index++) {
+        if (InstalledSpecs[index].original_address == address) {
+            return Redirects[index].installed
+                && restore_redirect(Redirects[index]);
+        }
+    }
+    return false;
+}
+
+bool resume_redirect_at(uintptr_t address) {
+    for (size_t index = 0; index < RedirectCount; index++) {
+        if (InstalledSpecs[index].original_address == address) {
+            return redirect_function(Redirects[index], InstalledSpecs[index]);
+        }
+    }
+    return false;
+}
+
+namespace {
 
 bool restore_redirects() {
     bool restored = true;

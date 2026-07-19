@@ -12,6 +12,7 @@
 
 #include "runtime_oracle.h"
 #include "sprite.h"
+#include "temp.h"
 
 #include <new>
 
@@ -169,4 +170,100 @@ bool verify_close() {
 
 bool run_sprite_oracle_suite() {
     return verify_construct() && verify_close();
+}
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void (__thiscall *OriginalClose)(Sprite *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+constexpr uintptr_t SpriteCloseAddress = 0x005E3820U;
+
+}  // namespace
+
+bool run_sprite_release_suite() {
+    // The redirect is already installed by now, so the original body has to be
+    // lifted for the differential and reinstalled afterwards.
+    if (!suspend_redirect_at(SpriteCloseAddress)) {
+        return false;
+    }
+    auto original = reinterpret_cast<OriginalClose>(SpriteCloseAddress);
+    const int saved_total = *SpriteMemoryUsed;
+    bool passed = true;
+
+    struct ReleaseCase { uint32_t width; uint32_t height; bool primary; bool pixels; };
+    const ReleaseCase cases[] = {
+        {4, 8, true, true},
+        {4, 8, false, true},
+        {4, 8, true, false},
+        {0, 0, true, true},
+        {0xFFFFFFFFU, 2, true, true},
+    };
+    for (const ReleaseCase &test : cases) {
+        SpriteFixture legacy;
+        SpriteFixture source;
+        uintptr_t vtable[1];
+        runtime_oracle::initialize_pair(
+            legacy.storage, source.storage, SpriteSpec, vtable);
+
+        // Each side owns its own blocks so both can genuinely free.
+        void *legacy_primary = test.primary ? _malloc(64) : nullptr;
+        void *source_primary = test.primary ? _malloc(64) : nullptr;
+        void *legacy_pixels = test.pixels ? _malloc(64) : nullptr;
+        void *source_pixels = test.pixels ? _malloc(64) : nullptr;
+        if ((test.primary && (!legacy_primary || !source_primary))
+                || (test.pixels && (!legacy_pixels || !source_pixels))) {
+            passed = false;
+            break;
+        }
+
+        const uint32_t legacy_fields[] = {
+            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(legacy_primary)),
+            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(legacy_pixels)),
+            test.width, test.height,
+        };
+        const uint32_t source_fields[] = {
+            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(source_primary)),
+            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(source_pixels)),
+            test.width, test.height,
+        };
+        const size_t offsets[] = {0x00, 0x04, 0x10, 0x14};
+        for (size_t index = 0; index < ARRAYSIZE(offsets); ++index) {
+            memcpy(legacy.storage + runtime_oracle::CanarySize + offsets[index],
+                   &legacy_fields[index], sizeof(uint32_t));
+            memcpy(source.storage + runtime_oracle::CanarySize + offsets[index],
+                   &source_fields[index], sizeof(uint32_t));
+        }
+        const uint32_t zero = 0;
+        memcpy(legacy.storage + runtime_oracle::CanarySize + 0x28, &zero, sizeof(zero));
+        memcpy(source.storage + runtime_oracle::CanarySize + 0x28, &zero, sizeof(zero));
+
+        *SpriteMemoryUsed = 0x1000;
+        original(legacy.object());
+        const int legacy_total = *SpriteMemoryUsed;
+
+        *SpriteMemoryUsed = 0x1000;
+        source.object()->close();
+        const int source_total = *SpriteMemoryUsed;
+
+        // Both pointer fields are cleared by a successful release, so the
+        // whole object is directly comparable afterwards.
+        if (legacy_total != source_total
+                || memcmp(legacy.storage, source.storage,
+                          sizeof(legacy.storage)) != 0) {
+            passed = false;
+            break;
+        }
+    }
+    *SpriteMemoryUsed = saved_total;
+    if (!resume_redirect_at(SpriteCloseAddress)) {
+        return false;
+    }
+    return passed;
 }

@@ -218,38 +218,38 @@ Other completed corrections and checks:
 - The post-increment trampoline verifies the single-player `turn_upkeep` caller, turn/year state, and resolved vehicle position, then exits before later popup/script upkeep through the normal epilogues. The local fixture advances turn 12 to 13 and mission year 2113.
 - `~/Desktop/backtrace.txt` is manually saved and cannot be used as an automatic crash signal.
 
-### The executable CRT heap is unusable during DllMain
+### Release paths are verified by a deferred second oracle phase
 
-Release paths allocate and free through the executable's own CRT, so verifying
-them differentially wants real allocations from that heap. That is not possible
-from the current oracle phase. Calling the bound `_malloc` at `0x006470A6`
-inside `DllMain` deadlocks:
+The executable's CRT heap cannot be used while `DllMain` runs. Calling the
+bound `_malloc` at `0x006470A6` there deadlocks, because the heap lock at
+`0x009C0538` is unowned until the executable's CRT startup executes:
 
 ```
 err:sync:RtlpWaitForCriticalSection section 009C0538 wait timed out, blocked by 0000
 ```
 
-The heap lock at `0x009C0538` is owned by nobody because the executable's CRT
-startup has not run when an imported DLL's `DllMain` executes. This is measured,
-not inferred: the probe hung the process and the smoke gate reported no oracle
-result at all.
+That made release paths unverifiable from the first oracle phase, because the
+two requirements conflict: a differential must call the original body, which
+means running before redirects install, while real allocations need the CRT up,
+which happens after.
 
-The constraint is therefore a phase-ordering problem, not a heap-ownership one,
-and it is what limits `Sprite::close` and will limit `Buffer::close`,
-`Win::close`, and every destructor to non-releasing oracle fixtures.
+A deferred second phase resolves it. `run_deferred_oracles()` is triggered from
+the `scenario_opening_movie` call-site hook, the first startup site reached once
+the CRT is running. Each deferred suite lifts the single redirect it needs with
+`suspend_redirect_at()`, runs its fixtures against real `_malloc` blocks with
+both sides owning separate allocations so each genuinely frees, then restores
+the patch with `resume_redirect_at()`. The phase is one-shot, and it rewrites
+the oracle result file so phase-one lines and deferred lines form one record;
+if it never runs, the earlier record still stands rather than regressing.
 
-Resolving it needs a second, deferred oracle phase, because the two
-requirements conflict: the differential must call the original bodies, which
-means running before redirects are installed, while the heap needs the CRT
-initialised, which happens after. The existing machinery already covers both
-halves - `restore_redirect` and `redirect_function` install and roll back
-individual patches, and the gameplay gate already proves call-site hooks can
-run source code during startup. A deferred phase would, at a post-CRT-init
-hook, restore the original bytes for one function under test, run its releasing
-fixtures against real allocations, and reinstall the redirect, single-threaded.
-Until that exists, keep release paths on split verification: oracle for the
-non-releasing branches, source-level tests with a recording allocator for the
-rest.
+`sprite-release` is the first suite on it and covers `Sprite::close`'s release
+branch. The split is demonstrable: perturbing the release accounting leaves the
+`sprite` phase-one suite passing while `sprite-release` fails, because
+phase-one fixtures cannot reach that branch at all.
+
+Add a deferred suite when a recovery's release path needs real allocations -
+`Buffer::close`, `Win::close`, and the destructor chain all qualify. Keep
+non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 ## Next Steps
 
