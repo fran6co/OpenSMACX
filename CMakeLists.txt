@@ -155,6 +155,7 @@ set(OPENSMACX_SOURCES
     src/scenario.cpp
     src/spot.cpp
     src/spot_recovery.cpp
+    src/spying_recovery.cpp
     src/sprite.cpp
     src/sprite_oracle.cpp
     src/stdafx.cpp
@@ -324,6 +325,7 @@ if(BUILD_TESTING)
         src/random.cpp
         src/scroll.cpp
         src/spot_recovery.cpp
+        src/spying_recovery.cpp
         src/sprite.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp

@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 32,
-      "source_complete": 599,
+      "source_complete": 600,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4999
+      "unrecovered": 4998
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,14 +1317,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 545,
-    "matched_function_starts": 545,
-    "unique_addresses": 545,
+    "annotations": 546,
+    "matched_function_starts": 546,
+    "unique_addresses": 546,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 168,
+      "data": 174,
       "function": 38
     },
     "items": [
@@ -2409,6 +2409,60 @@
         "type": "func_sprite_free *"
       },
       {
+        "address": "0x0096C9F8",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/spying_recovery.cpp:13",
+        "symbol": "SpyingStatusTable",
+        "type": "uint32_t *"
+      },
+      {
+        "address": "0x00939284",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/spying_recovery.cpp:14",
+        "symbol": "SpyingCurrentFaction",
+        "type": "int *"
+      },
+      {
+        "address": "0x009A6524",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/spying_recovery.cpp:15",
+        "symbol": "SpyingBaseIndex",
+        "type": "int *"
+      },
+      {
+        "address": "0x0097D044",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/spying_recovery.cpp:16",
+        "symbol": "SpyingBaseFactionBytes",
+        "type": "uint8_t *"
+      },
+      {
+        "address": "0x009A6614",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/spying_recovery.cpp:17",
+        "symbol": "SpyingObserverFaction",
+        "type": "int *"
+      },
+      {
+        "address": "0x00946F58",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/spying_recovery.cpp:18",
+        "symbol": "SpyingFactionFlagBytes",
+        "type": "uint8_t *"
+      },
+      {
         "address": "0x009B90D8",
         "function": "",
         "function_address": "",
@@ -3184,6 +3238,6 @@
       }
     ],
     "matched_function_starts": 38,
-    "total": 206
+    "total": 212
   }
 }

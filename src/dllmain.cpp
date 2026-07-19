@@ -32,6 +32,7 @@
 #include "font.h"
 #include "graphicwin.h"
 #include "scroll.h"
+#include "spying_recovery.h"
 #include "sprite.h"
 #include "redirect_signatures.h"
 #include "runtime_oracle.h"
@@ -47,7 +48,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 95;
+constexpr size_t RedirectCount = 96;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -311,6 +312,11 @@ bool install_redirects() {
             0x005E37E0,
             reinterpret_cast<uintptr_t>(&sprite_construct_redirect),
             OPENSMACX_SIGNATURE_005E37E0,
+        },
+        {
+            0x0055BC00,
+            reinterpret_cast<uintptr_t>(&spying),
+            OPENSMACX_SIGNATURE_0055BC00,
         },
         {
             0x005882F0,

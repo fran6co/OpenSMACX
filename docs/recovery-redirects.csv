@@ -13,6 +13,7 @@ address,kind
 0x004E3A50,jump
 0x00514189,jump
 0x00525AF4,jump
+0x0055BC00,jump
 0x005882F0,jump
 0x0058EE50,jump
 0x005D4DD0,jump

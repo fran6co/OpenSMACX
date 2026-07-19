@@ -14,6 +14,7 @@
 #include "scroll_oracle.h"
 #include "stringstruct_oracle.h"
 #include "sprite_oracle.h"
+#include "spying_recovery.h"
 #include "win_oracle.h"
 
 namespace {
@@ -42,6 +43,7 @@ const runtime_oracle::Suite Suites[] = {
     {"sprite", run_sprite_oracle_suite},
     {"buffer", run_buffer_oracle_suite},
     {"stringstruct", run_string_struct_oracle_suite},
+    {"spying", run_spying_oracle_suite},
 };
 
 bool write_result(const char *path, const char *result) {

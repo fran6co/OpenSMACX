@@ -3211,7 +3211,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0055BA80,0x0055BB29,169,.text,?agenda_on@@YAXHHH@Z,,0x0055BA80-0x0055BB29,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,8
 0x0055BB30,0x0055BB98,104,.text,?set_treaty@@YAXHHHH@Z,,0x0055BB30-0x0055BB98,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:386,Complete,,,source_complete,,,,0,24
 0x0055BBA0,0x0055BBF1,81,.text,?set_agenda@@YAXHHHH@Z,"void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)",0x0055BBA0-0x0055BBF1,game,frame;sp_ready;purged_ok,src/faction.cpp:403,Complete,,,source_complete,,,,0,10
-0x0055BC00,0x0055BC7C,124,.text,?spying@@YAHH@Z,,0x0055BC00-0x0055BC7C,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,19
+0x0055BC00,0x0055BC7C,124,.text,?spying@@YAHH@Z,,0x0055BC00-0x0055BC7C,game,frame;sp_ready;purged_ok,src/spying_recovery.cpp:23,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,19
 0x0055BC80,0x0055C42B,1963,.text,?wants_to_attack@@YAHHHH@Z,"int (__cdecl ?wants_to_attack@@YAHHHH@Z)(uint32_t factionID, uint32_t factionIDTarget, int factionIDUnk)",0x0055BC80-0x0055C42B,game,frame;sp_ready;purged_ok,src/faction.cpp:428,Complete - testing,,wants_to_attack_,source_complete,,,,3,9
 0x0055C430,0x0055C726,758,.text,?comm_check@@YAXHH@Z,,0x0055C430-0x0055C726,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,5,1
 0x0055C730,0x0055C833,259,.text,?pact_attacks@@YAXHH@Z,,0x0055C730-0x0055C833,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
