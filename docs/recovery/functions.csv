@@ -140,7 +140,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00406380,0x004064CC,332,.text,?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z,"void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)",0x00406380-0x004064CC,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,84
 0x004064D0,0x0040666F,583,.text,??1BasePop@@QAE@XZ,void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this),0x004064D0-0x0040666F;0x006508D0-0x00650978,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,11,75
 0x00406670,0x004066BB,75,.text,sub_406670,,0x00406670-0x004066BB,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
-0x004066C0,0x00406818,365,.text,sub_4066c0,,0x004066C0-0x00406818;0x00650980-0x00650995,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,61
+0x004066C0,0x00406818,365,.text,sub_4066c0,,0x004066C0-0x00406818;0x00650980-0x00650995,game,frame;hidden;sp_ready;purged_ok,src/stringstruct.cpp:238,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,61
 0x00406820,0x0040683B,27,.text,sub_406820,,0x00406820-0x0040683B,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,26
 0x00406840,0x00406846,6,.text,sub_406840,,0x00406840-0x00406846,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00406850,0x00406855,5,.text,??1Sprite@@QAE@XZ,,0x00406850-0x00406855,thunk,hidden;thunk;sp_ready;purged_ok,,,,,thunk,,,,0,1

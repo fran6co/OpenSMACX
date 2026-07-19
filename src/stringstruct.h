@@ -37,6 +37,9 @@ class DLLEXPORT StringStruct {
   int seek_id(int id);
   void remove_all();
   void close();
+  // Shared body of every virtual-base close: installs the pair of virtual
+  // tables, releases the entries, then clears the position.
+  void close_with_tables(uint32_t primary, uint32_t virtual_base);
 
  private:
   uint32_t primary_abi_word_;
@@ -60,6 +63,13 @@ constexpr size_t StringStructCloseAdjustment = 0x1C;
 extern const uint32_t StringStructVtable;
 extern const uint32_t StringStructVirtualBaseVtable;
 void __fastcall string_struct_close_redirect(void *adjusted, void *);
+
+// A derived list closes with its own tables before closing its StringStruct
+// base; its adjustor sits 0x28 bytes into the object.
+constexpr size_t StringStructDerivedCloseAdjustment = 0x28;
+extern const uint32_t StringStructDerivedVtable;
+extern const uint32_t StringStructDerivedVirtualBaseVtable;
+void __fastcall string_struct_derived_close_redirect(void *adjusted, void *);
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
 int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);
