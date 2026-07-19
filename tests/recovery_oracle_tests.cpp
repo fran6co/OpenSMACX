@@ -530,6 +530,66 @@ void run_geometry_oracles(int &failures) {
     }
 }
 
+extern "C" void __cdecl legacy_vector_add(Vector *, Vector *, Vector *)
+    asm("_opensmacx_legacy_00628150");
+
+void run_vector_add_oracles(int &failures) {
+    // Component zero and the remaining components load their operands in
+    // opposite order, so signalling payloads and rounding are compared under
+    // every layout and rounding mode rather than just the numeric result.
+    const uint32_t values[][3] = {
+        {0x3F800000U, 0x40000000U, 0x40400000U},
+        {0x7F800001U, 0x3F800000U, 0xFF800000U},   // signalling NaN
+        {0x7FC00000U, 0x00000001U, 0x80000001U},   // quiet NaN, denormals
+        {0x7F800000U, 0xFF800000U, 0x00000000U},   // infinities
+        {0x80000000U, 0x80000000U, 0x7F7FFFFFU},
+    };
+    const size_t layouts[][3] = {
+        {16, 32, 48}, {16, 32, 16}, {16, 16, 32}, {16, 16, 16},
+    };
+    const uint16_t rounding_modes[] = {0x037F, 0x077F, 0x0B7F, 0x0F7F};
+    for (const auto &triple : values) {
+        for (const auto &layout : layouts) {
+            for (uint16_t control : rounding_modes) {
+                uint8_t source[80];
+                uint8_t legacy[80];
+                initialize_bytes(source, sizeof(source), 16);
+                for (size_t index = 0; index < 3; ++index) {
+                    std::memcpy(source + layout[0] + index * 4,
+                                &triple[index], sizeof(uint32_t));
+                    std::memcpy(source + layout[1] + index * 4,
+                                &triple[(index + 1) % 3], sizeof(uint32_t));
+                }
+                std::memcpy(legacy, source, sizeof(source));
+
+                uint16_t source_status = 0;
+                uint16_t legacy_status = 0;
+                reset_x87(control);
+                legacy_vector_add(
+                    reinterpret_cast<Vector *>(legacy + layout[0]),
+                    reinterpret_cast<Vector *>(legacy + layout[1]),
+                    reinterpret_cast<Vector *>(legacy + layout[2]));
+                legacy_status = x87_status_word();
+
+                reset_x87(control);
+                vector_add(
+                    reinterpret_cast<Vector *>(source + layout[0]),
+                    reinterpret_cast<Vector *>(source + layout[1]),
+                    reinterpret_cast<Vector *>(source + layout[2]));
+                source_status = x87_status_word();
+
+                if (legacy_status != source_status
+                        || std::memcmp(source, legacy, sizeof(source)) != 0) {
+                    std::fprintf(stderr, "vector add oracle mismatch\n");
+                    report_difference("vector-add", "storage",
+                                      source, legacy, sizeof(source));
+                    ++failures;
+                }
+            }
+        }
+    }
+}
+
 void run_vector_oracles(int &failures) {
     alignas(Vector) uint8_t source_lifecycle[sizeof(Vector) + 32];
     alignas(Vector) uint8_t legacy_lifecycle[sizeof(Vector) + 32];
@@ -634,6 +694,7 @@ int main() {
 
     run_geometry_oracles(failures);
     run_vector_oracles(failures);
+    run_vector_add_oracles(failures);
 
     for (uint32_t process_id : process_ids) {
         Fixture source{};
