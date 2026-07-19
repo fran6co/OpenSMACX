@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,038 candidates.
+- Current recovery backlog: 5,037 candidates.
 - Current local legacy-island count: 115, reduced from 174.
-- `DllMain` entry redirects: 92, comprising 90 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 93, comprising 91 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -96,6 +96,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered the five Scroll init wrappers, with the primary initializer retained as an explicit classified original dependency.
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
 - Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Buffer and Win subobject destructors retained as classified temporary original dependencies.
+- Recovered `Buffer::close` at `0x005D7470` (44 callers), covering the twenty-entry release loop, both DirectDraw and device-context teardown paths, and the full field reset; `buffer-release` verifies the release loop against real allocations in the deferred phase.
 - Recovered `find_font` at `0x005882F0` (31 callers), whose 9999 seed doubles as a match threshold, and `Buffer::text_line_height` at `0x005DCAB0` (21 callers).
 - Recovered `StringStruct::remove_all` at `0x00402970` (79 callers), which walks the entry list through the owner callback and MSVC virtual-base scalar deleting destructors.
 - Recovered `Buffer::get_data` at `0x005E3373` (48 callers) and `Buffer::free_data` at `0x005E34A3` (43 callers), the reference-counted DirectDraw surface lock pair feeding `Buffer::close`.
@@ -242,7 +243,7 @@ the patch with `resume_redirect_at()`. The phase is one-shot, and it rewrites
 the oracle result file so phase-one lines and deferred lines form one record;
 if it never runs, the earlier record still stands rather than regressing.
 
-`sprite-release` is the first suite on it and covers `Sprite::close`'s release
+`sprite-release` and `buffer-release` are the suites on it; `sprite-release` and covers `Sprite::close`'s release
 branch. The split is demonstrable: perturbing the release accounting leaves the
 `sprite` phase-one suite passing while `sprite-release` fails, because
 phase-one fixtures cannot reach that branch at all.

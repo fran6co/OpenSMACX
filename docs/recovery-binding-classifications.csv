@@ -1,4 +1,5 @@
 symbol,category,strategy,notes
+BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 BufferOriginalDestructor,ui_dependency,recover_buffer_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
 ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
 SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves

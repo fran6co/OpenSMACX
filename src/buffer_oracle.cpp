@@ -13,6 +13,7 @@
 #include "buffer.h"
 #include "font.h"
 #include "runtime_oracle.h"
+#include "temp.h"
 
 namespace {
 
@@ -262,9 +263,114 @@ bool verify_find_font() {
     return true;
 }
 
+bool verify_close_reset() {
+    // Fixtures own no resources: null device context, null surfaces and GDI
+    // objects, and null owned allocations. That exercises the twenty-entry
+    // release loop's skip path, both mode branches' guards, and the whole
+    // field reset, which is where the transcription risk lives. Releases with
+    // real allocations belong to the deferred phase.
+    auto original = reinterpret_cast<OriginalNoArg>(0x005D7470U);
+    const int saved_mode = *BufferDirectDrawActive;
+    bool passed = true;
+    for (int direct_draw = 0; direct_draw < 2 && passed; ++direct_draw) {
+        for (int flag_bit = 0; flag_bit < 2 && passed; ++flag_bit) {
+            BufferFixture legacy;
+            BufferFixture source;
+            uintptr_t vtable[1];
+            runtime_oracle::initialize_pair(
+                legacy.storage, source.storage, BufferSpec, vtable);
+            for (BufferFixture *fixture : {&legacy, &source}) {
+                for (size_t index = 0; index < 20; ++index) {
+                    write_field(*fixture, 0x4BC + index * 4, 0);
+                }
+                write_field(*fixture, 0x1C, flag_bit ? 4U : 0U);
+                for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                      size_t(0x64), size_t(0x70), size_t(0x74),
+                                      size_t(0x78)}) {
+                    write_field(*fixture, offset, 0);
+                }
+            }
+            *BufferDirectDrawActive = direct_draw;
+            original(legacy.object());
+            source.object()->close();
+            if (memcmp(legacy.storage, source.storage,
+                       sizeof(legacy.storage)) != 0) {
+                passed = false;
+            }
+        }
+    }
+    *BufferDirectDrawActive = saved_mode;
+    return passed;
+}
+
 }  // namespace
 
 bool run_buffer_oracle_suite() {
     return verify_get_data() && verify_free_data()
-        && verify_text_line_height() && verify_find_font();
+        && verify_text_line_height() && verify_find_font()
+        && verify_close_reset();
+}
+
+namespace {
+
+constexpr uintptr_t BufferCloseAddress = 0x005D7470U;
+
+}  // namespace
+
+bool run_buffer_release_suite() {
+    if (!suspend_redirect_at(BufferCloseAddress)) {
+        return false;
+    }
+    auto original = reinterpret_cast<OriginalNoArg>(BufferCloseAddress);
+    const int saved_mode = *BufferDirectDrawActive;
+    bool passed = true;
+
+    // Each side owns distinct allocations so both genuinely release; the loop
+    // clears every slot, leaving the objects directly comparable afterwards.
+    for (int filled = 0; filled < 3 && passed; ++filled) {
+        BufferFixture legacy;
+        BufferFixture source;
+        uintptr_t vtable[1];
+        runtime_oracle::initialize_pair(
+            legacy.storage, source.storage, BufferSpec, vtable);
+        bool allocation_failed = false;
+        for (size_t index = 0; index < 20; ++index) {
+            // filled 0: none owned, 1: every other slot, 2: all owned.
+            const bool owned = (filled == 2) || (filled == 1 && (index % 2) == 0);
+            void *legacy_block = owned ? _malloc(48) : nullptr;
+            void *source_block = owned ? _malloc(48) : nullptr;
+            if (owned && (!legacy_block || !source_block)) {
+                allocation_failed = true;
+                break;
+            }
+            write_field(legacy, 0x4BC + index * 4, static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(legacy_block)));
+            write_field(source, 0x4BC + index * 4, static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(source_block)));
+        }
+        if (allocation_failed) {
+            passed = false;
+            break;
+        }
+        for (BufferFixture *fixture : {&legacy, &source}) {
+            write_field(*fixture, 0x1C, 0);
+            for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                  size_t(0x64), size_t(0x70), size_t(0x74),
+                                  size_t(0x78)}) {
+                write_field(*fixture, offset, 0);
+            }
+        }
+        *BufferDirectDrawActive = 0;
+        original(legacy.object());
+        source.object()->close();
+        if (memcmp(legacy.storage, source.storage,
+                   sizeof(legacy.storage)) != 0) {
+            passed = false;
+        }
+    }
+    *BufferDirectDrawActive = saved_mode;
+    if (!resume_redirect_at(BufferCloseAddress)) {
+        return false;
+    }
+    return passed;
 }

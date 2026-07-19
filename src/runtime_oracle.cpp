@@ -167,6 +167,7 @@ namespace {
 
 const runtime_oracle::Suite DeferredSuites[] = {
     {"sprite-release", run_sprite_release_suite},
+    {"buffer-release", run_buffer_release_suite},
 };
 
 bool DeferredCompleted = false;
