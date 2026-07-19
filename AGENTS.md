@@ -215,10 +215,11 @@ Other completed corrections and checks:
 
 ## Next Steps
 
-1. Replace the Scroll wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, close, `Win`, and `Buffer` dependency closure; its shared RECT-construction helper is now source-owned. Then recover the Scroll constructor, close, and primary initializer at `0x006051D0` through `0x0060583F`.
-2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
-4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
+1. Decide the SEH policy described under Current Blocker before scheduling any destructor or `close` recovery; that decision gates the largest remaining fan-in targets.
+2. Replace the Scroll wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, close, `Win`, and `Buffer` dependency closure; its shared RECT-construction helper is now source-owned. Then recover the Scroll constructor, close, and primary initializer at `0x006051D0` through `0x0060583F`.
+3. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
+4. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
+5. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
 
@@ -293,4 +294,20 @@ Other completed corrections and checks:
 
 ## Current Blocker
 
-There is no recovery or tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, end-turn request state, and the next turn/year increment before later upkeep. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.
+There is no tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, end-turn request state, and the next turn/year increment before later upkeep. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.
+
+### MSVC SEH frames block the destructor and close chains
+
+Every destructor and `close` method examined so far opens an MSVC structured-exception frame before doing any work, for example `GraphicWin::~GraphicWin` at `0x005D4DD0`:
+
+```
+push -1
+push 0x662B2A                 ; compiler-generated unwind handler in the original .text
+mov  eax, fs:[0]
+push eax
+mov  fs:[0], esp              ; register the frame
+```
+
+The pushed handler is a fixed address inside the original image, and the unwind state variable it consumes is written throughout the body. MinGW GCC cannot emit an equivalent frame, so a source replacement can only either hardcode a proprietary code address (which the objective forbids in a distributable build) or omit the frame and diverge whenever anything in the chain unwinds. The in-process oracle cannot close this gap either: it observes the non-throwing path only.
+
+This affects the highest-fan-in destructor/close targets as a class, including `GraphicWin::~GraphicWin` (185 callers), `BaseButton::~BaseButton` (134), `FlatButton::close` (134), `Dialog::~Dialog` (116), and `BasePop::close` (100). Recovering them needs a decided policy on SEH equivalence first; prefer non-SEH targets until that decision exists. `GraphicWin::~GraphicWin` additionally spans a five-function chain reaching CRT `free` at `0x00644EF2`.
