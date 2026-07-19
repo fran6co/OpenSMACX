@@ -26,6 +26,8 @@ class DLLEXPORT Sprite {
   Sprite();
   ~Sprite() { ; }
 
+  void close();
+
  private:
   int field_0_;
   int field_4_;
@@ -49,4 +51,11 @@ static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI")
 // release paths subtract the object plus its pixel buffer.
 extern int *SpriteMemoryUsed;
 
+// Sprite allocations come from the executable's CRT, so they must be released
+// through its free rather than this module's. Tests outside the hybrid process
+// rebind this.
+typedef void *func_sprite_free(void *);
+extern func_sprite_free *SpriteFree;
+
 Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *);
+void __fastcall sprite_close_redirect(Sprite *self, void *);
