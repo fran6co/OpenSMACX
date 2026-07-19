@@ -215,13 +215,16 @@ bool verify_remove_all() {
 
 bool verify_close() {
     struct CloseCase { int entries; int count; bool with_payloads; };
+    // These bodies install the real virtual table before walking, so the walk
+    // would dispatch through original game code rather than the fixture's
+    // stand-in and is unsafe to drive here. Only non-walking shapes are used:
+    // an empty list, and a populated list whose count stops the walk. The walk
+    // itself is covered by verify_remove_all, which leaves the table alone.
     const CloseCase cases[] = {
         {0, 0, false},
         {3, 0, true},
-        {1, 1, true},
-        {3, 3, true},
-        {3, 2, true},
-        {3, 3, false},
+        {3, -1, true},
+        {3, 0, false},
     };
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -231,7 +234,20 @@ bool verify_close() {
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
-    auto original = reinterpret_cast<OriginalClose>(0x00401060U);
+    // Both the base close and the derived two-stage close share the same
+    // fixture shape; only the entry address, adjustor and expected primary
+    // table differ.
+    struct Variant {
+        uintptr_t address;
+        size_t adjustment;
+        uint32_t expected_primary;
+    };
+    const Variant variants[] = {
+        {0x00401060U, StringStructCloseAdjustment, StringStructVtable},
+        {0x004066C0U, StringStructDerivedCloseAdjustment, StringStructVtable},
+    };
+    for (const Variant &variant : variants) {
+    auto original = reinterpret_cast<OriginalClose>(variant.address);
     for (const CloseCase &test : cases) {
         ListFixture legacy;
         ListFixture source;
@@ -272,13 +288,17 @@ bool verify_close() {
 
         Record = Probe();
         original(legacy.storage + runtime_oracle::CanarySize
-                 + StringStructCloseAdjustment);
+                 + variant.adjustment);
         const Probe legacy_record = Record;
 
         Record = Probe();
-        string_struct_close_redirect(
-            source.storage + runtime_oracle::CanarySize
-                + StringStructCloseAdjustment, nullptr);
+        void *const source_entry = source.storage + runtime_oracle::CanarySize
+            + variant.adjustment;
+        if (variant.address == 0x00401060U) {
+            string_struct_close_redirect(source_entry, nullptr);
+        } else {
+            string_struct_derived_close_redirect(source_entry, nullptr);
+        }
 
         if (memcmp(&legacy_record, &Record, sizeof(Record)) != 0) {
             return false;
@@ -292,7 +312,7 @@ bool verify_close() {
         memcpy(&source_primary,
                source.storage + runtime_oracle::CanarySize, sizeof(uint32_t));
         if (legacy_primary != source_primary
-                || legacy_primary != StringStructVtable) {
+                || legacy_primary != variant.expected_primary) {
             return false;
         }
         if (legacy_vbtable[1] != source_vbtable[1]) {
@@ -312,6 +332,7 @@ bool verify_close() {
                 return false;
             }
         }
+    }
     }
     return true;
 }

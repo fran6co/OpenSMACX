@@ -203,24 +203,51 @@ Purpose: Reset the list to its constructed state, installing both virtual
 Original Offset: 00401060
 Status: Complete
 */
-void StringStruct::close() {
+void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
     uint8_t *const base = reinterpret_cast<uint8_t *>(this);
-    *reinterpret_cast<volatile uint32_t *>(base) = StringStructVtable;
+    *reinterpret_cast<volatile uint32_t *>(base) = primary;
     // The virtual base's table is reached through the displacement held in the
     // second slot of the vbtable pointed at by offset 4.
     const uint32_t *const vbtable =
         *reinterpret_cast<uint32_t **>(base + 4);
     const uint32_t displacement = vbtable[1];
     *reinterpret_cast<volatile uint32_t *>(base + 4 + displacement) =
-        StringStructVirtualBaseVtable;
-    // The legacy body inlines the entry walk; it clears the same fields in the
-    // same order, and does nothing at all when the list is already empty.
+        virtual_base;
+    // The legacy bodies inline the entry walk; it clears the same fields in
+    // the same order, and does nothing at all when the list is already empty.
     remove_all();
     current_position_ = 0;
+}
+
+void StringStruct::close() {
+    close_with_tables(StringStructVtable, StringStructVirtualBaseVtable);
 }
 
 void __fastcall string_struct_close_redirect(void *adjusted, void *) {
     auto *self = reinterpret_cast<StringStruct *>(
         static_cast<uint8_t *>(adjusted) - StringStructCloseAdjustment);
+    self->close();
+}
+
+const uint32_t StringStructDerivedVtable = 0x006698C4;
+const uint32_t StringStructDerivedVirtualBaseVtable = 0x006698C0;
+
+/*
+Purpose: Close a derived string list, releasing its entries under its own
+         virtual tables before closing its StringStruct base the same way.
+Original Offset: 004066C0
+Status: Complete
+Verification note: the base stage overwrites the derived tables, so with the
+non-walking fixtures the oracle can safely drive, the derived stage leaves no
+observable trace and dropping it still compares equal. The derived table
+addresses and the 0x28 adjustor were instead confirmed by reading the
+instruction bytes directly (`mov [ebx-0x28], 0x6698C4` and
+`mov [ecx+ebx-0x24], 0x6698C0`).
+*/
+void __fastcall string_struct_derived_close_redirect(void *adjusted, void *) {
+    auto *self = reinterpret_cast<StringStruct *>(
+        static_cast<uint8_t *>(adjusted) - StringStructDerivedCloseAdjustment);
+    self->close_with_tables(
+        StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable);
     self->close();
 }
