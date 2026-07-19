@@ -83,6 +83,7 @@ address,kind
 0x006182A0,jump
 0x006183B0,jump
 0x006183C0,jump
+0x00628150,jump
 0x0062B7C0,jump
 0x0062B7F0,jump
 0x0062B810,jump

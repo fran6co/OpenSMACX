@@ -211,3 +211,52 @@ Vector *__fastcall vector_scale_redirect(
     self->scale(*output, scalar);
     return output;
 }
+
+/*
+Purpose: Add two vectors component-wise into an output vector.
+Original Offset: 00628150
+Status: Complete
+*/
+void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {
+    uint32_t *const left_values = reinterpret_cast<uint32_t *>(left);
+    uint32_t *const right_values = reinterpret_cast<uint32_t *>(right);
+    uint32_t *const output_values = reinterpret_cast<uint32_t *>(output);
+#if defined(__GNUC__) && defined(__i386__)
+    // Component zero loads the right operand first while the others load the
+    // left operand first. The differential oracle cannot distinguish the two
+    // orders - x87 NaN propagation returns the operand with the larger
+    // significand, which is commutative - so this mirrors the original for
+    // faithfulness rather than for any observed behavioural difference.
+    __asm__ __volatile__(
+        "flds %1\n\t"
+        "fadds %2\n\t"
+        "fstps %0"
+        : "=m"(output_values[0])
+        : "m"(right_values[0]), "m"(left_values[0])
+        : "st", "memory");
+    __asm__ __volatile__(
+        "flds %1\n\t"
+        "fadds %2\n\t"
+        "fstps %0"
+        : "=m"(output_values[1])
+        : "m"(left_values[1]), "m"(right_values[1])
+        : "st", "memory");
+    __asm__ __volatile__(
+        "flds %1\n\t"
+        "fadds %2\n\t"
+        "fstps %0"
+        : "=m"(output_values[2])
+        : "m"(left_values[2]), "m"(right_values[2])
+        : "st", "memory");
+#else
+    for (size_t index = 0; index < 3; ++index) {
+        float left_value;
+        float right_value;
+        float result;
+        std::memcpy(&left_value, &left_values[index], sizeof(left_value));
+        std::memcpy(&right_value, &right_values[index], sizeof(right_value));
+        result = left_value + right_value;
+        std::memcpy(&output_values[index], &result, sizeof(result));
+    }
+#endif
+}

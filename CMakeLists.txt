@@ -776,6 +776,7 @@ if(MINGW)
                 --address 0x00634480
                 --address 0x006344B0
                 --address 0x00634670
+                --address 0x00628150
             DEPENDS
                 "${OPENSMACX_LEGACY_LEAF_EXE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
