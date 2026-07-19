@@ -35,6 +35,7 @@ class DLLEXPORT StringStruct {
   int current_entry();
   int next_entry();
   int seek_id(int id);
+  void remove_all();
 
  private:
   uint32_t primary_abi_word_;
@@ -51,6 +52,7 @@ class DLLEXPORT StringStruct {
 static_assert(sizeof(StringStruct) == 0x24,
               "StringStruct layout must match the original executable");
 
+void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
 int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);

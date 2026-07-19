@@ -160,6 +160,7 @@ set(OPENSMACX_SOURCES
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringstruct.cpp
+    src/stringstruct_oracle.cpp
     src/text_recovery.cpp
     src/strings.cpp
     src/technology.cpp
