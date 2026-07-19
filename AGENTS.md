@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,035 candidates.
+- Current recovery backlog: 5,034 candidates.
 - Current local legacy-island count: 114, reduced from 174.
-- `DllMain` entry redirects: 95, comprising 93 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 96, comprising 94 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -96,6 +96,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered the five Scroll init wrappers, with the primary initializer retained as an explicit classified original dependency.
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
 - Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Win subobject destructor retained as a classified temporary original dependency; the Buffer side is source-owned.
+- Recovered `spying` at `0x0055BC00` (19 callers), a pure intelligence-visibility check over four original tables.
 - Recovered `vector_add` at `0x00628150` (17 callers), a self-contained x87 vector sum verified by a copied-byte oracle across special values, overlapping layouts, and all four rounding modes.
 - Recovered `Buffer::destroy` at `0x005D7410`, which **retires the `BufferOriginalDestructor` temporary dependency**: the GraphicWin destructor now reaches a source-owned Buffer teardown through a bindable seam instead of the original body. Only `Win::~Win` and `Scroll::init` remain as classified original dependencies.
 - Recovered `Buffer::close` at `0x005D7470` (44 callers), covering the twenty-entry release loop, both DirectDraw and device-context teardown paths, and the full field reset; `buffer-release` verifies the release loop against real allocations in the deferred phase.
@@ -249,6 +250,15 @@ if it never runs, the earlier record still stands rather than regressing.
 branch. The split is demonstrable: perturbing the release accounting leaves the
 `sprite` phase-one suite passing while `sprite-release` fails, because
 phase-one fixtures cannot reach that branch at all.
+
+Seed any original table a suite indexes before comparing. Game tables are
+empty during `DllMain`, so a suite that only reads them compares zero against
+zero and passes no matter what the index arithmetic does. The `spying` suite
+seeds both the status table and the base faction bytes, then restores them;
+without that, deliberately corrupting either stride still passed. Always
+confirm a new suite fails when the recovery is perturbed, and treat a poison
+that does not fail as evidence the fixtures are vacuous rather than as a
+formality.
 
 Add a deferred suite when a recovery's release path needs real allocations -
 `Buffer::close`, `Win::close`, and the destructor chain all qualify. Keep
