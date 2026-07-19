@@ -3,6 +3,7 @@ address,kind
 0x00401640,jump
 0x00402500,jump
 0x00402530,jump
+0x00402970,jump
 0x0045C170,jump
 0x004BA830,jump
 0x004E25E0,jump

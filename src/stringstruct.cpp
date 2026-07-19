@@ -121,3 +121,75 @@ __declspec(naked) int __fastcall string_struct_seek_id_redirect(
     }
 }
 #endif
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_entry_visitor)(void *, void *);
+typedef void(__thiscall func_scalar_deleting_destructor)(void *, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// MSVC reaches these destructors through the virtual-base displacement stored
+// in the object's second vtable slot: the displacement selects a subobject
+// whose own first vtable slot is the scalar deleting destructor, invoked with
+// the deleting flag set.
+void destroy_virtual_base(void *object) {
+    uint32_t *const vtable = *reinterpret_cast<uint32_t **>(object);
+    uint8_t *const subobject =
+        static_cast<uint8_t *>(object) + vtable[1];
+    uint32_t *const subobject_vtable = *reinterpret_cast<uint32_t **>(subobject);
+    reinterpret_cast<func_scalar_deleting_destructor *>(
+        subobject_vtable[0])(subobject, 1);
+}
+
+void *payload_pointer(int payload) {
+    return reinterpret_cast<void *>(
+        static_cast<uintptr_t>(static_cast<uint32_t>(payload)));
+}
+
+}  // namespace
+
+/*
+Purpose: Release every entry in the list, notifying the owner about each
+         payload before destroying the payload and its entry.
+Original Offset: 00402970
+Status: Complete
+*/
+void StringStruct::remove_all() {
+    if (!head_) {
+        return;
+    }
+    if (entry_count_ > 0) {
+        int index = 0;
+        do {
+            StringStructEntry *const entry = head_;
+            current_ = entry->next;
+            void *const payload = payload_pointer(entry->payload);
+            uint32_t *const vtable = *reinterpret_cast<uint32_t **>(this);
+            reinterpret_cast<func_entry_visitor *>(vtable[1])(this, payload);
+            if (payload) {
+                destroy_virtual_base(payload);
+            }
+            head_->payload = 0;
+            if (head_) {
+                destroy_virtual_base(head_);
+            }
+            ++index;
+            head_ = current_;
+            // The loop bound is re-read every iteration, so a visitor that
+            // changes the count changes how far the walk goes.
+        } while (index < entry_count_);
+    }
+    head_ = nullptr;
+    current_position_ = 0;
+    entry_count_ = 0;
+}
+
+void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *) {
+    self->remove_all();
+}

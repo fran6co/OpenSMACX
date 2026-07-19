@@ -1,0 +1,220 @@
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+#include "stdafx.h"
+#include "stringstruct_oracle.h"
+
+#include "runtime_oracle.h"
+#include "stringstruct.h"
+
+namespace {
+
+using ListFixture = runtime_oracle::Fixture<StringStruct>;
+
+// The list dispatches through its own vtable and through stand-in entry and
+// payload objects the fixture supplies, so the shared initializer installs no
+// vtable of its own.
+const runtime_oracle::ClassSpec ListSpec = {
+    sizeof(StringStruct), sizeof(uintptr_t), 0, nullptr, 0};
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void (__thiscall *OriginalNoArg)(StringStruct *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+struct Probe {
+    int visits;
+    int payload_destroys;
+    int entry_destroys;
+    int flags;
+};
+
+Probe Record = {};
+
+void __thiscall probe_visit(void *, void *) {
+    ++Record.visits;
+}
+
+void __thiscall probe_payload_destroy(void *, int flags) {
+    ++Record.payload_destroys;
+    Record.flags = flags;
+}
+
+void __thiscall probe_entry_destroy(void *, int flags) {
+    ++Record.entry_destroys;
+    Record.flags = flags;
+}
+
+// Slot 1 carries the virtual-base displacement, which is zero so the object is
+// its own destructible subobject; slot 0 is the scalar deleting destructor.
+struct Destructible {
+    uint32_t *vptr;
+    uint32_t vtable[2];
+};
+
+void arm(Destructible &object, void *destructor) {
+    object.vtable[0] = static_cast<uint32_t>(
+        reinterpret_cast<uintptr_t>(destructor));
+    object.vtable[1] = 0;
+    object.vptr = object.vtable;
+}
+
+struct ListScenario {
+    StringStructEntry entries[3];
+    Destructible entry_objects[3];
+    Destructible payloads[3];
+    uint32_t owner_vtable[2];
+};
+
+void build(ListScenario &scenario, int count, bool with_payloads) {
+    memset(&scenario, 0, sizeof(scenario));
+    scenario.owner_vtable[1] = static_cast<uint32_t>(
+        reinterpret_cast<uintptr_t>(&probe_visit));
+    for (int index = 0; index < count; ++index) {
+        arm(scenario.entry_objects[index],
+            reinterpret_cast<void *>(&probe_entry_destroy));
+        arm(scenario.payloads[index],
+            reinterpret_cast<void *>(&probe_payload_destroy));
+        scenario.entries[index].abi_word = static_cast<uint32_t>(
+            reinterpret_cast<uintptr_t>(scenario.entry_objects[index].vtable));
+        scenario.entries[index].payload = with_payloads
+            ? static_cast<int>(
+                  reinterpret_cast<uintptr_t>(&scenario.payloads[index]))
+            : 0;
+        scenario.entries[index].next = (index + 1 < count)
+            ? &scenario.entries[index + 1] : nullptr;
+    }
+}
+
+bool verify_remove_all() {
+    struct RemoveCase {
+        int entries;
+        int count;
+        bool with_payloads;
+    };
+    const RemoveCase cases[] = {
+        {0, 0, false},
+        {3, 0, true},
+        {3, -1, true},
+        {1, 1, true},
+        {3, 3, true},
+        {3, 3, false},
+        {3, 2, true},
+    };
+    auto original = reinterpret_cast<OriginalNoArg>(0x00402970U);
+    for (const RemoveCase &test : cases) {
+        ListFixture legacy;
+        ListFixture source;
+        uintptr_t vtable[1];
+        runtime_oracle::initialize_pair(
+            legacy.storage, source.storage, ListSpec, vtable);
+
+        // Each side walks its own entry graph, so only the list state, the
+        // callback record, and the cleared payload fields are compared.
+        ListScenario legacy_scenario;
+        ListScenario source_scenario;
+        build(legacy_scenario, test.entries, test.with_payloads);
+        build(source_scenario, test.entries, test.with_payloads);
+
+        for (int side = 0; side < 2; ++side) {
+            ListFixture &fixture = side ? source : legacy;
+            ListScenario &scenario = side ? source_scenario : legacy_scenario;
+            uint8_t *base = fixture.storage + runtime_oracle::CanarySize;
+            const uint32_t owner = static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(scenario.owner_vtable));
+            const uint32_t head = test.entries
+                ? static_cast<uint32_t>(
+                      reinterpret_cast<uintptr_t>(&scenario.entries[0])) : 0U;
+            const uint32_t count = static_cast<uint32_t>(test.count);
+            const uint32_t zero = 0;
+            memcpy(base + 0x00, &owner, sizeof(owner));
+            memcpy(base + 0x08, &head, sizeof(head));
+            memcpy(base + 0x0C, &zero, sizeof(zero));
+            memcpy(base + 0x10, &count, sizeof(count));
+            memcpy(base + 0x14, &zero, sizeof(zero));
+        }
+
+        Record = Probe();
+        original(legacy.object());
+        const Probe legacy_record = Record;
+
+        Record = Probe();
+        source.object()->remove_all();
+
+        if (memcmp(&legacy_record, &Record, sizeof(Record)) != 0) {
+            return false;
+        }
+        // Compare list state apart from the two fields that necessarily hold
+        // side-specific entry addresses.
+        for (size_t offset : {size_t(0x10), size_t(0x14),
+                              size_t(0x18), size_t(0x1C), size_t(0x20)}) {
+            if (memcmp(legacy.storage + runtime_oracle::CanarySize + offset,
+                       source.storage + runtime_oracle::CanarySize + offset,
+                       sizeof(uint32_t)) != 0) {
+                return false;
+            }
+        }
+        // Payload fields hold addresses inside each side's own scenario, so
+        // only whether the walk cleared them is comparable.
+        for (int index = 0; index < test.entries; ++index) {
+            const bool legacy_cleared =
+                legacy_scenario.entries[index].payload == 0;
+            const bool source_cleared =
+                source_scenario.entries[index].payload == 0;
+            if (legacy_cleared != source_cleared) {
+                return false;
+            }
+        }
+        // The surviving head must be the same position in each side's list.
+        int legacy_head_index = -1;
+        int source_head_index = -1;
+        uint32_t legacy_head = 0;
+        uint32_t source_head = 0;
+        memcpy(&legacy_head,
+               legacy.storage + runtime_oracle::CanarySize + 0x08,
+               sizeof(legacy_head));
+        memcpy(&source_head,
+               source.storage + runtime_oracle::CanarySize + 0x08,
+               sizeof(source_head));
+        for (int index = 0; index < test.entries; ++index) {
+            if (legacy_head == static_cast<uint32_t>(
+                    reinterpret_cast<uintptr_t>(&legacy_scenario.entries[index]))) {
+                legacy_head_index = index;
+            }
+            if (source_head == static_cast<uint32_t>(
+                    reinterpret_cast<uintptr_t>(&source_scenario.entries[index]))) {
+                source_head_index = index;
+            }
+        }
+        if (legacy_head_index != source_head_index) {
+            return false;
+        }
+        // Canaries must be untouched on both sides.
+        if (memcmp(legacy.storage, source.storage,
+                   runtime_oracle::CanarySize) != 0
+                || memcmp(legacy.storage + runtime_oracle::CanarySize
+                              + sizeof(StringStruct),
+                          source.storage + runtime_oracle::CanarySize
+                              + sizeof(StringStruct),
+                          runtime_oracle::CanarySize) != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+}  // namespace
+
+bool run_string_struct_oracle_suite() {
+    return verify_remove_all();
+}

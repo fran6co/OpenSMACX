@@ -4741,6 +4741,132 @@ void test_buffer_free_data() {
     }
 }
 
+struct RemoveAllProbe {
+    int visits;
+    int payload_destroys;
+    int entry_destroys;
+    void *last_payload;
+    int last_flags;
+};
+
+RemoveAllProbe remove_all_probe = {};
+
+void __thiscall remove_all_visitor(void *, void *payload) {
+    ++remove_all_probe.visits;
+    remove_all_probe.last_payload = payload;
+}
+
+void __thiscall remove_all_payload_destroy(void *, int flags) {
+    ++remove_all_probe.payload_destroys;
+    remove_all_probe.last_flags = flags;
+}
+
+void __thiscall remove_all_entry_destroy(void *, int flags) {
+    ++remove_all_probe.entry_destroys;
+    remove_all_probe.last_flags = flags;
+}
+
+// A destructible stand-in: the object's vtable slot 1 holds the virtual-base
+// displacement to itself, so slot 0 of the same vtable is the destructor.
+struct Destructible {
+    uint32_t *vptr;
+    uint32_t vtable[2];
+};
+
+void arm_destructible(Destructible &object, void *destructor) {
+    object.vtable[0] = reinterpret_cast<uint32_t>(destructor);
+    object.vtable[1] = 0;   // displacement selects the object itself
+    object.vptr = object.vtable;
+}
+
+void test_string_struct_remove_all() {
+    struct RemoveCase {
+        int entries;
+        int count;
+        bool with_payloads;
+    };
+    const RemoveCase cases[] = {
+        {0, 0, false},      // empty list returns immediately
+        {3, 0, true},       // non-positive count clears without walking
+        {3, -1, true},
+        {1, 1, true},
+        {3, 3, true},
+        {3, 3, false},      // null payloads skip the payload destructor
+        {3, 2, true},       // count shorter than the list stops early
+    };
+    for (const RemoveCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(StringStruct) uint8_t storage[sizeof(StringStruct) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+
+            StringStructEntry entries[3] = {};
+            Destructible entry_objects[3] = {};
+            Destructible payloads[3] = {};
+            uint32_t owner_vtable[2] = {};
+            owner_vtable[1] = reinterpret_cast<uint32_t>(&remove_all_visitor);
+
+            for (int index = 0; index < test.entries; ++index) {
+                arm_destructible(entry_objects[index],
+                                 reinterpret_cast<void *>(&remove_all_entry_destroy));
+                arm_destructible(payloads[index],
+                                 reinterpret_cast<void *>(&remove_all_payload_destroy));
+                // Each entry is prefixed by its own vptr so the destructor
+                // dispatch finds the stand-in vtable.
+                entries[index].abi_word =
+                    reinterpret_cast<uint32_t>(entry_objects[index].vtable);
+                entries[index].payload = test.with_payloads
+                    ? static_cast<int>(reinterpret_cast<uintptr_t>(&payloads[index]))
+                    : 0;
+                entries[index].next = (index + 1 < test.entries)
+                    ? &entries[index + 1] : nullptr;
+            }
+
+            write_at(storage, 16 + 0x00, reinterpret_cast<uint32_t>(owner_vtable));
+            write_at(storage, 16 + 0x08,
+                     test.entries ? reinterpret_cast<uint32_t>(&entries[0]) : 0U);
+            write_at(storage, 16 + 0x10, static_cast<uint32_t>(test.count));
+            std::memcpy(expected, storage, sizeof(storage));
+
+            remove_all_probe = RemoveAllProbe();
+            auto *list = reinterpret_cast<StringStruct *>(storage + 16);
+            if (use_adapter) {
+                string_struct_remove_all_redirect(list, nullptr);
+            } else {
+                list->remove_all();
+            }
+
+            const int walked = (test.entries == 0) ? 0
+                : (test.count > 0 ? (test.count < test.entries
+                                     ? test.count : test.entries) : 0);
+            if (test.entries != 0) {
+                write_at(expected, 16 + 0x08, 0U);
+                write_at(expected, 16 + 0x10, 0U);
+                write_at(expected, 16 + 0x14, 0U);
+                if (walked) {
+                    // current_ trails the last entry the walk advanced past.
+                    write_at(expected, 16 + 0x0C,
+                             walked < test.entries
+                                 ? reinterpret_cast<uint32_t>(&entries[walked])
+                                 : 0U);
+                }
+            }
+            expect(remove_all_probe.visits == walked);
+            expect(remove_all_probe.entry_destroys == walked);
+            expect(remove_all_probe.payload_destroys
+                   == (test.with_payloads ? walked : 0));
+            if (walked && test.with_payloads) {
+                expect(remove_all_probe.last_flags == 1);
+            }
+            // Every walked entry has its payload field cleared.
+            for (int index = 0; index < walked; ++index) {
+                expect(entries[index].payload == 0);
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -4762,6 +4888,7 @@ int main() {
     test_sprite_close();
     test_buffer_get_data();
     test_buffer_free_data();
+    test_string_struct_remove_all();
     test_win_paging();
     test_scroll_init_wrappers();
     test_scroll_range();

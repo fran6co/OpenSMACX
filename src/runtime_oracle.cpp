@@ -12,6 +12,7 @@
 
 #include "buffer_oracle.h"
 #include "scroll_oracle.h"
+#include "stringstruct_oracle.h"
 #include "sprite_oracle.h"
 #include "win_oracle.h"
 
@@ -35,6 +36,7 @@ const runtime_oracle::Suite Suites[] = {
     {"win", run_win_oracle_suite},
     {"sprite", run_sprite_oracle_suite},
     {"buffer", run_buffer_oracle_suite},
+    {"stringstruct", run_string_struct_oracle_suite},
 };
 
 bool write_result(const char *path, const char *result) {
