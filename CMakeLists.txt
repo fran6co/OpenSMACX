@@ -155,6 +155,7 @@ set(OPENSMACX_SOURCES
     src/spot.cpp
     src/spot_recovery.cpp
     src/sprite.cpp
+    src/sprite_oracle.cpp
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringstruct.cpp
@@ -171,6 +172,7 @@ set(OPENSMACX_SOURCES
     src/veh.cpp
     src/vector.cpp
     src/win.cpp
+    src/win_oracle.cpp
 )
 
 add_library(OpenSMACX SHARED ${OPENSMACX_SOURCES})
@@ -314,6 +316,7 @@ if(BUILD_TESTING)
         src/random.cpp
         src/scroll.cpp
         src/spot_recovery.cpp
+        src/sprite.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp
         src/textindex_recovery.cpp

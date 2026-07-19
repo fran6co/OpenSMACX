@@ -36,6 +36,7 @@ class DLLEXPORT Win {
   ~Win() { ; }
 
   int move(int x, int y);
+  int is_visible();
   void set_vert_paging(int paging);
   void set_horz_paging(int paging);
 
@@ -269,6 +270,7 @@ class DLLEXPORT Win {
 static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
 
 int __fastcall win_move_redirect(Win *self, void *, int x, int y);
+int __fastcall win_is_visible_redirect(Win *self, void *);
 void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging);
 void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging);
 

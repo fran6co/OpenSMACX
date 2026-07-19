@@ -72,6 +72,23 @@ int Win::move(int x, int y) {
 }
 
 /*
+Purpose: Determine whether this window and every ancestor are visible.
+Original Offset: 005F7E90
+Status: Complete
+*/
+int Win::is_visible() {
+    if (!(field_9C_ & 1U)) {
+        return 0;
+    }
+    // A detached window is visible on its own; otherwise the whole parent
+    // chain must be visible, which the legacy body walks recursively.
+    if (win_parent_ && !win_parent_->is_visible()) {
+        return 0;
+    }
+    return 1;
+}
+
+/*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
 Original Offset: 005EE0F0
 Status: Complete
@@ -95,6 +112,10 @@ void Win::set_horz_paging(int paging) {
 
 int __fastcall win_move_redirect(Win *self, void *, int x, int y) {
     return self->move(x, y);
+}
+
+int __fastcall win_is_visible_redirect(Win *self, void *) {
+    return self->is_visible();
 }
 
 void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging) {

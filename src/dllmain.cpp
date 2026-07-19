@@ -30,6 +30,7 @@
 #include "pulldown.h"
 #include "scenario.h"
 #include "scroll.h"
+#include "sprite.h"
 #include "redirect_signatures.h"
 #include "runtime_oracle.h"
 #include "stringstruct.h"
@@ -44,7 +45,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 83;
+constexpr size_t RedirectCount = 85;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -289,6 +290,16 @@ bool install_redirects() {
             0x00609CF0,
             reinterpret_cast<uintptr_t>(&dialog_set_text_color3_redirect),
             OPENSMACX_SIGNATURE_00609CF0,
+        },
+        {
+            0x005E37E0,
+            reinterpret_cast<uintptr_t>(&sprite_construct_redirect),
+            OPENSMACX_SIGNATURE_005E37E0,
+        },
+        {
+            0x005F7E90,
+            reinterpret_cast<uintptr_t>(&win_is_visible_redirect),
+            OPENSMACX_SIGNATURE_005F7E90,
         },
         {
             0x005F86C0,

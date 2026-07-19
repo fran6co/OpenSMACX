@@ -4320,7 +4320,112 @@ void test_string_struct_seek_id() {
 
 }  // namespace
 
+void test_win_is_visible() {
+    // Visibility is the conjunction of this window's flag bit 0 and the
+    // visibility of every ancestor, so chains exercise the recursion.
+    struct WinNode {
+        alignas(Win) uint8_t storage[sizeof(Win) + 32];
+        uint8_t expected[sizeof(Win) + 32];
+
+        Win *object() { return reinterpret_cast<Win *>(storage + 16); }
+    };
+    struct ChainCase {
+        int depth;
+        uint32_t flags[3];   // flag dword written at offset 0x9C per node
+        int expected;
+    };
+    const ChainCase cases[] = {
+        {1, {0x00000000U, 0, 0}, 0},
+        {1, {0x00000001U, 0, 0}, 1},
+        {1, {0xFFFFFFFEU, 0, 0}, 0},
+        {1, {0xFFFFFFFFU, 0, 0}, 1},
+        {1, {0xA55AA55BU, 0, 0}, 1},
+        {2, {0x00000001U, 0x00000001U, 0}, 1},
+        {2, {0x00000001U, 0x00000000U, 0}, 0},
+        {2, {0x00000000U, 0x00000001U, 0}, 0},
+        {3, {0x00000001U, 0x00000001U, 0x00000001U}, 1},
+        {3, {0x00000001U, 0x00000001U, 0x00000000U}, 0},
+        {3, {0x00000001U, 0x00000000U, 0x00000001U}, 0},
+        {3, {0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFEU}, 0},
+    };
+    for (const ChainCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            WinNode nodes[3];
+            for (int index = 0; index < test.depth; ++index) {
+                seed_storage(nodes[index].storage, nodes[index].expected,
+                             sizeof(nodes[index].storage));
+                write_at(nodes[index].storage, 16 + 0x9C, test.flags[index]);
+                // Innermost node terminates the chain with a null parent.
+                Win *parent = (index + 1 < test.depth)
+                    ? nodes[index + 1].object() : nullptr;
+                write_at(nodes[index].storage, 16 + 0xC4, parent);
+                std::memcpy(nodes[index].expected, nodes[index].storage,
+                            sizeof(nodes[index].storage));
+            }
+            const int result = use_adapter
+                ? win_is_visible_redirect(nodes[0].object(), nullptr)
+                : nodes[0].object()->is_visible();
+            expect(result == test.expected);
+            // Visibility is a pure query: no node may be modified.
+            for (int index = 0; index < test.depth; ++index) {
+                expect_storage_bytes(nodes[index].storage, nodes[index].expected,
+                                     sizeof(nodes[index].storage));
+            }
+        }
+    }
+}
+
+void test_sprite_construct() {
+    static_assert(sizeof(Sprite) == 0x2C, "Sprite tests require the legacy layout");
+    int *const saved_total = SpriteMemoryUsed;
+    const int32_t starting_totals[] = {
+        0, 1, -1, 0x7FFFFFFF, static_cast<int32_t>(0x80000000U),
+    };
+    for (int32_t starting_total : starting_totals) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Sprite) uint8_t storage[sizeof(Sprite) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            // Every field the constructor writes, in legacy layout order.
+            write_at(expected, 16 + 0x00, 0U);
+            write_at(expected, 16 + 0x04, 0U);
+            expected[16 + 0x08] = 9;
+            write_at(expected, 16 + 0x0C, 0U);
+            write_at(expected, 16 + 0x10, 0U);
+            write_at(expected, 16 + 0x14, 0U);
+            write_at(expected, 16 + 0x18, 0U);
+            write_at(expected, 16 + 0x1C, 0U);
+            write_at(expected, 16 + 0x20, 0U);
+            write_at(expected, 16 + 0x24, 0U);
+            write_at(expected, 16 + 0x28, 0U);
+
+            int32_t total = starting_total;
+            SpriteMemoryUsed = &total;
+            auto *sprite = reinterpret_cast<Sprite *>(storage + 16);
+            if (use_adapter) {
+                expect(sprite_construct_redirect(sprite, nullptr) == sprite);
+            } else {
+                new (sprite) Sprite();
+            }
+            // Offsets 0x09-0x0B stay untouched: only a byte is written at 0x08.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            // The accounting total advances by exactly one object, wrapping.
+            const int32_t advanced = static_cast<int32_t>(
+                static_cast<uint32_t>(starting_total) + 0x2CU);
+            expect(total == advanced);
+        }
+    }
+    SpriteMemoryUsed = saved_total;
+}
+
 int main() {
+    // Sprite's constructor charges a fixed-address accounting global that is
+    // only mapped inside the hybrid process. Objects embedding Sprite by value
+    // are constructed throughout these tests, so bind the counter to process
+    // storage for the whole run; individual tests rebind it as needed.
+    static int sprite_memory_sink = 0;
+    SpriteMemoryUsed = &sprite_memory_sink;
+
     test_alpha_net_pid_to_idx();
     test_alpha_net_identity_lookups();
     test_in_box_edges();
@@ -4328,6 +4433,8 @@ int main() {
     test_vector_lifecycle();
     test_vector_arithmetic();
     test_win_move();
+    test_win_is_visible();
+    test_sprite_construct();
     test_win_paging();
     test_scroll_init_wrappers();
     test_scroll_range();
