@@ -17,12 +17,18 @@
  */
 #include "stdafx.h"
 #include "graphicwin.h"
+#include "buffer.h"
 
 const uint32_t GraphicWinPrimaryVtable = 0x0066FC50;
 const uint32_t GraphicWinBufferVtable = 0x0066FC48;
 
-func_subobject_destructor *BufferOriginalDestructor =
-    (func_subobject_destructor *)0x005D7410;
+void __thiscall buffer_subobject_destructor(void *self) {
+    // Source-owned: dispatches to the recovered Buffer destructor rather than
+    // the original body at 0x005D7410.
+    buffer_destructor_redirect(reinterpret_cast<Buffer *>(self), nullptr);
+}
+
+func_subobject_destructor *BufferSubobjectDestructor = &buffer_subobject_destructor;
 func_subobject_destructor *WinOriginalDestructor =
     (func_subobject_destructor *)0x005EBC90;
 
@@ -74,8 +80,8 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
     Probe.buffer_target = buffer_subobject;
     Probe.buffer_calls++;
     Probe.order = (Probe.order << 4) | 2;
-    if (BufferOriginalDestructor) {
-        BufferOriginalDestructor(buffer_subobject);
+    if (BufferSubobjectDestructor) {
+        BufferSubobjectDestructor(buffer_subobject);
     }
 
     void *const win_subobject = reinterpret_cast<void *>(base);

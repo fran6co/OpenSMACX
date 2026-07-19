@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "buffer.h"
 #include "font.h"
+#include "spot.h"
 
 /*
 Purpose: Set the four fonts used by the buffer.
@@ -428,4 +429,26 @@ void Buffer::close() {
 
 void __fastcall buffer_close_redirect(Buffer *self, void *) {
     self->close();
+}
+
+const uint32_t BufferVtable = 0x0066FDBC;
+
+/*
+Purpose: Destroy a Buffer by installing its virtual table, releasing every
+         owned resource, and destroying the trailing Spot subobject.
+Original Offset: 005D7410
+Status: Complete
+*/
+void Buffer::destroy() {
+    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
+    ordered[0] = BufferVtable;
+    close();
+    // The Spot subobject sits immediately before the owned allocation table.
+    Spot *const spot = reinterpret_cast<Spot *>(
+        reinterpret_cast<uint8_t *>(this) + 0x4B0);
+    spot->~Spot();
+}
+
+void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
+    self->destroy();
 }

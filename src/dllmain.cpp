@@ -47,7 +47,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 93;
+constexpr size_t RedirectCount = 94;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -316,6 +316,11 @@ bool install_redirects() {
             0x005882F0,
             reinterpret_cast<uintptr_t>(&find_font),
             OPENSMACX_SIGNATURE_005882F0,
+        },
+        {
+            0x005D7410,
+            reinterpret_cast<uintptr_t>(&buffer_destructor_redirect),
+            OPENSMACX_SIGNATURE_005D7410,
         },
         {
             0x005D7470,
@@ -683,13 +688,11 @@ bool install_redirects() {
             0x006054D0, scroll_primary_init_signature, SignatureSize)) {
         return false;
     }
-    const uint8_t buffer_destructor_signature[SignatureSize] =
-        OPENSMACX_SIGNATURE_005D7410;
+    // Buffer's destructor is source-owned now, so only Win's remains a
+    // preflighted temporary dependency.
     const uint8_t win_destructor_signature[SignatureSize] =
         OPENSMACX_SIGNATURE_005EBC90;
     if (!validate_signature(
-            0x005D7410, buffer_destructor_signature, SignatureSize)
-        || !validate_signature(
             0x005EBC90, win_destructor_signature, SignatureSize)) {
         return false;
     }

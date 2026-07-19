@@ -4435,15 +4435,16 @@ void test_graphic_win_destructor() {
         auto *object = reinterpret_cast<GraphicWin *>(storage + 16);
 
         graphic_win_destructor_probe_reset();
-        // The subobject destructors live at original addresses that are not
-        // mapped outside the hybrid process; the probe records delegation.
-        func_subobject_destructor *const saved_buffer = BufferOriginalDestructor;
+        // Both subobject destructors are stubbed here so this test observes
+        // only delegation; the Buffer side is source-owned but needs globals
+        // that are unmapped outside the hybrid process.
+        func_subobject_destructor *const saved_buffer = BufferSubobjectDestructor;
         func_subobject_destructor *const saved_win = WinOriginalDestructor;
-        BufferOriginalDestructor = nullptr;
+        BufferSubobjectDestructor = nullptr;
         WinOriginalDestructor = nullptr;
         GraphicWin *const target = null_self ? nullptr : object;
         expect(graphic_win_destructor_redirect(target, nullptr) == target);
-        BufferOriginalDestructor = saved_buffer;
+        BufferSubobjectDestructor = saved_buffer;
         WinOriginalDestructor = saved_win;
 
         if (null_self) {

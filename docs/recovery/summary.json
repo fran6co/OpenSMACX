@@ -15,8 +15,8 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 33,
-      "source_complete": 597,
+      "original_dependency": 32,
+      "source_complete": 598,
       "source_in_progress": 5,
       "thunk": 33,
       "unrecovered": 5000
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 543,
-    "matched_function_starts": 543,
-    "unique_addresses": 543,
+    "annotations": 544,
+    "matched_function_starts": 544,
+    "unique_addresses": 544,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 168,
-      "function": 39
+      "function": 38
     },
     "items": [
       {
@@ -1585,7 +1585,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/buffer.cpp:272",
+        "location": "src/buffer.cpp:273",
         "symbol": "BufferDirectDrawActive",
         "type": "int *"
       },
@@ -1594,7 +1594,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/buffer.cpp:273",
+        "location": "src/buffer.cpp:274",
         "symbol": "BufferResetValue520",
         "type": "uint32_t *"
       },
@@ -1603,7 +1603,7 @@
         "function": "_free",
         "function_address": "0x00644EF2",
         "kind": "function",
-        "location": "src/buffer.cpp:274",
+        "location": "src/buffer.cpp:275",
         "symbol": "BufferFree",
         "type": "func_sprite_free *"
       },
@@ -2013,20 +2013,11 @@
         "type": "BOOL *"
       },
       {
-        "address": "0x005D7410",
-        "function": "??1Buffer@@QAE@XZ",
-        "function_address": "0x005D7410",
-        "kind": "function",
-        "location": "src/graphicwin.cpp:24",
-        "symbol": "BufferOriginalDestructor",
-        "type": "func_subobject_destructor *"
-      },
-      {
         "address": "0x005EBC90",
         "function": "??1Win@@QAE@XZ",
         "function_address": "0x005EBC90",
         "kind": "function",
-        "location": "src/graphicwin.cpp:26",
+        "location": "src/graphicwin.cpp:32",
         "symbol": "WinOriginalDestructor",
         "type": "func_subobject_destructor *"
       },
@@ -3192,7 +3183,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 39,
-    "total": 207
+    "matched_function_starts": 38,
+    "total": 206
   }
 }

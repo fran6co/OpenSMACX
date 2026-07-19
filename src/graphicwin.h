@@ -62,11 +62,13 @@ typedef void(__thiscall func_subobject_destructor)(void *);
 #pragma GCC diagnostic pop
 #endif
 
-// Temporary original dependencies: the Buffer and Win subobject destructors
+// The Buffer subobject destructor is source-owned; the seam stays bindable so
+// tests outside the hybrid process can substitute it. The Win subobject
+// destructor is still a temporary original dependency.
 // tear down GDI and DirectDraw resources through the executable's own CRT and
 // stay at their original addresses until that closure is source-owned. Tests
 // outside the hybrid process rebind them.
-extern func_subobject_destructor *BufferOriginalDestructor;
+extern func_subobject_destructor *BufferSubobjectDestructor;
 extern func_subobject_destructor *WinOriginalDestructor;
 
 // Original virtual table addresses the destructor installs before delegating.
