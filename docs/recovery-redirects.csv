@@ -1,4 +1,5 @@
 address,kind
+0x00401060,jump
 0x00401560,jump
 0x00401640,jump
 0x00402500,jump
