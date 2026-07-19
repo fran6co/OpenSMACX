@@ -217,6 +217,39 @@ Other completed corrections and checks:
 - The post-increment trampoline verifies the single-player `turn_upkeep` caller, turn/year state, and resolved vehicle position, then exits before later popup/script upkeep through the normal epilogues. The local fixture advances turn 12 to 13 and mission year 2113.
 - `~/Desktop/backtrace.txt` is manually saved and cannot be used as an automatic crash signal.
 
+### The executable CRT heap is unusable during DllMain
+
+Release paths allocate and free through the executable's own CRT, so verifying
+them differentially wants real allocations from that heap. That is not possible
+from the current oracle phase. Calling the bound `_malloc` at `0x006470A6`
+inside `DllMain` deadlocks:
+
+```
+err:sync:RtlpWaitForCriticalSection section 009C0538 wait timed out, blocked by 0000
+```
+
+The heap lock at `0x009C0538` is owned by nobody because the executable's CRT
+startup has not run when an imported DLL's `DllMain` executes. This is measured,
+not inferred: the probe hung the process and the smoke gate reported no oracle
+result at all.
+
+The constraint is therefore a phase-ordering problem, not a heap-ownership one,
+and it is what limits `Sprite::close` and will limit `Buffer::close`,
+`Win::close`, and every destructor to non-releasing oracle fixtures.
+
+Resolving it needs a second, deferred oracle phase, because the two
+requirements conflict: the differential must call the original bodies, which
+means running before redirects are installed, while the heap needs the CRT
+initialised, which happens after. The existing machinery already covers both
+halves - `restore_redirect` and `redirect_function` install and roll back
+individual patches, and the gameplay gate already proves call-site hooks can
+run source code during startup. A deferred phase would, at a post-CRT-init
+hook, restore the original bytes for one function under test, run its releasing
+fixtures against real allocations, and reinstall the redirect, single-threaded.
+Until that exists, keep release paths on split verification: oracle for the
+non-releasing branches, source-level tests with a recording allocator for the
+rest.
+
 ## Next Steps
 
 1. Replace the Scroll wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, close, `Win`, and `Buffer` dependency closure; its shared RECT-construction helper is now source-owned. Then recover the Scroll constructor, close, and primary initializer at `0x006051D0` through `0x0060583F`.
