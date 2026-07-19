@@ -15,6 +15,18 @@ def fail(message) -> NoReturn:
     raise RuntimeError(message)
 
 
+def returns_without_popping(body):
+    """Thiscall bodies with no stack arguments must never pop on return.
+
+    A tail jump satisfies the contract as well as a literal ret: the tail
+    callee performs the return, and -fno-exceptions lets GCC pick that form
+    for forwarding destructors. What must never appear is a popping return.
+    """
+    if re.search(r"\bret\s+\$", body):
+        return False
+    return bool(re.search(r"\bret\b", body) or re.search(r"\bjmp\b", body))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Verify the ABI of source-recovered redirect functions")
@@ -44,6 +56,25 @@ def main():
     parser.add_argument("--vector-object")
     parser.add_argument("--win-object")
     args = parser.parse_args()
+
+    # The canonical executable has no C++ throw entry point: it contains no
+    # _CxxThrowException, its operator new returns null instead of raising, and
+    # every occurrence of the C++ exception magic sits inside CRT handling code
+    # with no game callers. Recovered bodies therefore replace functions that
+    # cannot unwind, and must not introduce exception machinery of their own.
+    # Any object growing an .eh_frame or a personality/unwind import means a
+    # translation unit lost -fno-exceptions and could raise where the original
+    # could not.
+    for name, value in sorted(vars(args).items()):
+        if not name.endswith("object") or not value:
+            continue
+        described = name.replace("_", " ")
+        sections = run([args.objdump, "-h", value])
+        if re.search(r"\.eh_frame\b", sections):
+            fail(f"{described} carries exception unwind data")
+        undefined = run([args.nm, "-u", value])
+        if re.search(r"__gxx_personality|_Unwind_|CxxFrameHandler", undefined):
+            fail(f"{described} imports exception handling support")
 
     headers = run([args.objdump, "-f", args.object])
     if "file format pe-i386" not in headers:
@@ -862,7 +893,7 @@ def main():
             if not match:
                 fail(f"could not locate {description} in disassembly")
             body = match.group("body")
-            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+            if not returns_without_popping(body):
                 fail(f"{description} does not use a plain no-argument return")
             if description == "Dialog selected-ID getter" and re.search(r"\bcall\b", body):
                 fail("Dialog selected-ID getter retains an external call")
@@ -907,7 +938,7 @@ def main():
             if not match:
                 fail(f"could not locate {description} in disassembly")
             body = match.group("body")
-            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+            if not returns_without_popping(body):
                 fail(f"{description} does not use a plain no-argument return")
             if description in (
                     "StringStruct current ID", "StringStruct current entry",
@@ -978,13 +1009,11 @@ def main():
             fail("ButtonGroup::init does not use two-argument thiscall cleanup")
         constructor_adapter = button_body(
             "@_Z31button_group_construct_redirectP11ButtonGroupPv@8")
-        if not re.search(r"\bret\b", constructor_adapter) or re.search(
-                r"\bret\s+\$", constructor_adapter):
+        if not returns_without_popping(constructor_adapter):
             fail("ButtonGroup constructor adapter does not use plain fastcall return")
         close_adapter = button_body(
             "@_Z27button_group_close_redirectP11ButtonGroupPv@8")
-        if not re.search(r"\bret\b", close_adapter) or re.search(
-                r"\bret\s+\$", close_adapter):
+        if not returns_without_popping(close_adapter):
             fail("ButtonGroup close adapter does not use plain fastcall return")
         init_adapter = button_body(
             "@_Z26button_group_init_redirectP11ButtonGroupPvii@16")
@@ -1030,41 +1059,36 @@ def main():
             fail("TextIndex constructor does not terminate the filename")
         if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
             fail("TextIndex constructor does not return this in EAX")
-        if not re.search(r"\bret\b", constructor) or re.search(
-                r"\bret\s+\$", constructor):
+        if not returns_without_popping(constructor):
             fail("TextIndex constructor does not use a plain thiscall return")
 
         destructor = text_index_body("TextIndex::~TextIndex()")
-        if not re.search(r"\bmovl\s+\$0x0,0x100\(%e?bx\)", destructor):
+        if not re.search(r"\bmovl\s+\$0x0,0x100\(%e[a-z][a-z]\)", destructor):
             fail("TextIndex destructor does not clear the section count")
-        if not re.search(r"\bmovb\s+\$0x0,\(%e?bx\)", destructor):
+        if not re.search(r"\bmovb\s+\$0x0,\(%e[a-z][a-z]\)", destructor):
             fail("TextIndex destructor does not terminate the filename")
         if len(re.findall(r"DISP32\s+Heap::shutdown\(\)", destructor)) != 1:
             fail("TextIndex destructor does not invoke one Heap shutdown")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("TextIndex destructor does not use a plain thiscall return")
 
         clear_helper = text_index_body("text_clear_index_source(TextIndex*)")
         if len(re.findall(r"DISP32\s+Heap::shutdown\(\)", clear_helper)) != 1:
             fail("TextIndex clear helper does not contain one Heap shutdown call site")
-        if not re.search(r"\bret\b", clear_helper) or re.search(
-                r"\bret\s+\$", clear_helper):
+        if not returns_without_popping(clear_helper):
             fail("TextIndex clear helper does not use a plain cdecl return")
 
         make_wrapper = text_index_body("text_make_index(char const*)")
         if "TxtIndex" not in make_wrapper or "TextIndex::make_index(char const*)" not in make_wrapper:
             fail("TextIndex make wrapper does not use the global array and member method")
-        if not re.search(r"\bret\b", make_wrapper) or re.search(
-                r"\bret\s+\$", make_wrapper):
+        if not returns_without_popping(make_wrapper):
             fail("TextIndex make wrapper does not use a plain cdecl return")
 
         search_wrapper = text_index_body(
             "text_search_index(char const*, char const*)")
         if "TxtIndex" not in search_wrapper or "TextIndex::search_index(char const*, char const*)" not in search_wrapper:
             fail("TextIndex search wrapper does not use the global array and member method")
-        if not re.search(r"\bret\b", search_wrapper) or re.search(
-                r"\bret\s+\$", search_wrapper):
+        if not returns_without_popping(search_wrapper):
             fail("TextIndex search wrapper does not use a plain cdecl return")
 
     if args.spot_object:
@@ -1102,7 +1126,7 @@ def main():
             if description == "constructor" and not re.search(
                     r"\bmov\s+%e(?:cx|bx|si|di),%eax", body):
                 fail("Spot constructor does not return this in EAX")
-            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+            if not returns_without_popping(body):
                 fail(f"Spot {description} does not use a plain thiscall return")
 
         destructor = spot_body("Spot::~Spot()")
@@ -1114,8 +1138,7 @@ def main():
         calls_shutdown = "Spot::shutdown()" in destructor
         if not clears_fields and not calls_shutdown:
             fail("Spot destructor neither clears all fields nor calls Spot::shutdown")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("Spot destructor does not use a plain thiscall return")
 
     if args.font_object:
@@ -1153,8 +1176,7 @@ def main():
                 fail(f"Font default constructor overwrites preserved field 0x{preserved}")
         if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
             fail("Font default constructor does not return this in EAX")
-        if not re.search(r"\bret\b", constructor) or re.search(
-                r"\bret\s+\$", constructor):
+        if not returns_without_popping(constructor):
             fail("Font default constructor does not use a plain thiscall return")
 
         initializing_constructor = font_body("Font::Font(char*, int, int)")
@@ -1177,8 +1199,7 @@ def main():
         ))
         if not calls_close and not clears_fields:
             fail("Font destructor neither performs full cleanup nor calls Font::close")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("Font destructor does not use a plain thiscall return")
 
     if args.time_object:
@@ -1255,16 +1276,14 @@ def main():
             fail("Time class initializer does not increment the global count")
         if not re.search(r"\b(?:xor\s+%eax,%eax|mov\s+\$0x0,%eax)", initializer):
             fail("Time class initializer does not return zero")
-        if not re.search(r"\bret\b", initializer) or re.search(
-                r"\bret\s+\$", initializer):
+        if not returns_without_popping(initializer):
             fail("Time class initializer does not use a plain cdecl return")
 
         cleanup = time_body("Time::close_class()")
         if "Time::TimeInitCount" not in cleanup or not re.search(
                 r"\b(?:dec|sub)\w*\b", cleanup):
             fail("Time class cleanup does not decrement the global count")
-        if not re.search(r"\bret\b", cleanup) or re.search(
-                r"\bret\s+\$", cleanup):
+        if not returns_without_popping(cleanup):
             fail("Time class cleanup does not use a plain cdecl return")
 
     if args.filemap_object:
@@ -1366,8 +1385,7 @@ def main():
                     r"\bmov\w*\s+[^,\n]+,0x[123]\(%e(?:ax|bx|cx|dx|si|di)\)",
                     destructor)):
             fail("Heap destructor overwrites legacy padding")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("Heap destructor does not use a plain thiscall return")
 
     if args.strings_object:
@@ -1407,8 +1425,7 @@ def main():
                     r"\bmov\w*\s+[^,\n]+,0x[123]\(%e(?:ax|bx|cx|dx|si|di)\)",
                     constructor)):
             fail("Strings constructor overwrites Heap padding")
-        if not re.search(r"\bret\b", constructor) or re.search(
-                r"\bret\s+\$", constructor):
+        if not returns_without_popping(constructor):
             fail("Strings constructor does not use a plain thiscall return")
 
         destructor = strings_body("Strings::~Strings()")
@@ -1416,8 +1433,7 @@ def main():
             fail("Strings destructor does not invoke one Heap shutdown")
         if re.search(r"\bmov[^\n]*0x14\(%e?\w+\)", destructor):
             fail("Strings destructor overwrites preserved populated state")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("Strings destructor does not use a plain thiscall return")
 
     if args.log_object:
@@ -1477,8 +1493,7 @@ def main():
                 fail("Log default constructor does not clear both fields")
         if not re.search(r"\bmov\s+%e(?:cx|bx|si|di),%eax", constructor):
             fail("Log default constructor does not return this in EAX")
-        if not re.search(r"\bret\b", constructor) or re.search(
-                r"\bret\s+\$", constructor):
+        if not returns_without_popping(constructor):
             fail("Log default constructor does not use a plain thiscall return")
 
         filename_constructor = log_exact_body("__ZN3LogC1EPKc")
@@ -1499,8 +1514,7 @@ def main():
             fail("Log destructor does not free and clear the filename")
         if re.search(r"\bmov[^\n]*,0x4\(%e(?:cx|bx|si|di)\)", destructor):
             fail("Log destructor overwrites preserved disabled state")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("Log destructor does not use a plain thiscall return")
 
         init_method = log_exact_body("__ZN3Log4initEPKc")
@@ -1549,8 +1563,7 @@ def main():
                                        r"\bmov\s+0x4\(%e(?:ax|cx|dx|bx|si|di)\),"
                                        r"%e(?:ax|cx|dx|bx|si|di)", wrapper)):
                 fail(f"Log {description} inlined wrapper omits a disable guard")
-            if not re.search(r"\bret\b", wrapper) or re.search(
-                    r"\bret\s+\$", wrapper):
+            if not returns_without_popping(wrapper):
                 fail(f"Log {description} wrapper does not use a plain cdecl return")
 
         for description, label in (
@@ -1570,7 +1583,7 @@ def main():
                 ("Log exit cleanup", exit_cleanup),
                 ("Log reset wrapper", reset_wrapper),
                 ("Log state wrapper", state_wrapper)):
-            if not re.search(r"\bret\b", body) or re.search(r"\bret\s+\$", body):
+            if not returns_without_popping(body):
                 fail(f"{description} does not use a plain cdecl return")
 
     if args.random_object:
@@ -1613,8 +1626,7 @@ def main():
         destructor = random_body("Random::~Random()")
         if not re.search(r"\bmovl\s+\$0x0,\(%ecx\)", destructor):
             fail("Random destructor does not clear the seed")
-        if not re.search(r"\bret\b", destructor) or re.search(
-                r"\bret\s+\$", destructor):
+        if not returns_without_popping(destructor):
             fail("Random destructor does not use a plain thiscall return")
 
         integer_generator = random_body("Random::get(unsigned int, unsigned int)")
@@ -1657,8 +1669,7 @@ def main():
         calls_reseed = "Random::reseed(unsigned int)" in reseed_wrapper
         if not writes_seed and not calls_reseed:
             fail("random reseed wrapper does not update the global seed")
-        if not re.search(r"\bret\b", reseed_wrapper) or re.search(
-                r"\bret\s+\$", reseed_wrapper):
+        if not returns_without_popping(reseed_wrapper):
             fail("random reseed wrapper does not use a plain cdecl return")
 
         get_wrapper = random_body("random_get()")
@@ -1672,8 +1683,7 @@ def main():
         if not delegates_integer and not re.search(
                 r"\b(?:jg|jle|cmovg|cmovle)\b", integer_wrapper):
             fail("random integer wrapper neither delegates nor orders signed bounds")
-        if not re.search(r"\bret\b", integer_wrapper) or re.search(
-                r"\bret\s+\$", integer_wrapper):
+        if not returns_without_popping(integer_wrapper):
             fail("random integer wrapper does not use a plain cdecl return")
 
         floating_wrapper = random_body("random()")
@@ -1684,8 +1694,7 @@ def main():
                 fail("random floating wrapper neither delegates nor synthesizes a single")
             if re.search(r"\bfldl\b", floating_wrapper[:subtract.start()]):
                 fail("random floating wrapper reads beyond its four-byte temporary")
-        if not re.search(r"\bret\b", floating_wrapper) or re.search(
-                r"\bret\s+\$", floating_wrapper):
+        if not returns_without_popping(floating_wrapper):
             fail("random floating wrapper does not use a plain cdecl return")
 
     if args.text_object:
@@ -1736,8 +1745,7 @@ def main():
         if not re.search(r"\bmov\s+%e(?:ax|cx|bx|si|di),%eax",
                          default_constructor):
             fail("Text default constructor does not return this in EAX")
-        if not re.search(r"\bret\b", default_constructor) or re.search(
-                r"\bret\s+\$", default_constructor):
+        if not returns_without_popping(default_constructor):
             fail("Text default constructor does not use a plain thiscall return")
 
         sized_constructor = text_body("__ZN4TextC1Ej")
@@ -1773,8 +1781,7 @@ def main():
             fail("Text global initializer does not construct the process-owned object")
         if "atexit" not in initializer:
             fail("Text global initializer does not register exit cleanup")
-        if not re.search(r"\bret\b", initializer) or re.search(
-                r"\bret\s+\$", initializer):
+        if not returns_without_popping(initializer):
             fail("Text global initializer does not use a plain cdecl return")
 
         exit_cleanup = text_body("__Z13text_txt_exitv")
@@ -1806,8 +1813,7 @@ def main():
         text_open = match.group("body")
         if "_Txt" not in text_open or "__ZN4Text4openEPKcS1_" not in text_open:
             fail("text_open wrapper does not delegate through the global Text instance")
-        if not re.search(r"\bret\b", text_open) or re.search(
-                r"\bret\s+\$", text_open):
+        if not returns_without_popping(text_open):
             fail("text_open wrapper does not use a plain cdecl return")
 
     if not args.scenario_object:

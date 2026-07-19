@@ -215,6 +215,111 @@ Other completed corrections and checks:
 
 ## Next Steps
 
+1. Replace the Scroll wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, close, `Win`, and `Buffer` dependency closure; its shared RECT-construction helper is now source-owned. Then recover the Scroll constructor, close, and primary initializer at `0x006051D0` through `0x0060583F`.
+2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
+3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
+4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
+
+## Relevant Files
+
+- `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
+- `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 81 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
+- `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
+- `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
+- `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
+- `src/buffer.h`, `src/buffer.cpp`: recovered Buffer setters and lifecycle hooks.
+- `src/dialog.h`, `src/dialog.cpp`: recovered Dialog setters, bounded ID/position lookup, selection, and selected-ID retrieval.
+- `src/random.h`, `src/random.cpp`: verified Random layout, lifecycle, signed-range generation, and exact floating transfer.
+- `src/log.h`, `src/log.cpp`: verified Log layout, lifecycle, global initialization/cleanup, reset, decimal/hexadecimal output wrappers, and state control.
+- `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance/seek accessors.
+- `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text constructors, destructor, open wrapper, get, and numeric-item source helpers.
+- `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
+- `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
+- `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
+- `src/buttongroup.h`, `src/buttongroup.cpp`: recovered button-group insertion.
+- `src/win.h`, `src/win.cpp`: verified Win layout, `move`, recursive ancestor-chain `is_visible`, both paging setters, both `in_box` overloads, wrapping RECT construction, rectangle-center behavior, and adapters.
+- `src/vector.h`, `src/vector.cpp`: verified `0xC` Vector layout, lifecycle, ordered x87 arithmetic, alias-sensitive scaling copies, and adapters.
+- `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
+- `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see `docs/RUNTIME_ORACLE.md` for suite authoring.
+- `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: Scroll suite of the runtime oracle covering fifteen original Scroll methods that are ineligible for copied-byte oracle execution.
+- `src/sprite.h`, `src/sprite.cpp`: verified `0x2C` Sprite layout, ordered constructor stores, and the sprite memory accounting global binding.
+- `src/win_oracle.h`, `src/win_oracle.cpp`, `src/sprite_oracle.h`, `src/sprite_oracle.cpp`: Win and Sprite runtime-oracle suites covering the recursive visibility query and the constructor's accounting side effect.
+- `src/menu.h`, `src/menu.cpp`: verified Menu layout, callback setter, bounded ID lookup, and adapters.
+- `src/pulldown.h`, `src/pulldown.cpp`: verified PullDown layout, six item-state mutators, unchecked selected-index accessor, and adapters.
+- `src/autosound.h`, `src/autosound.cpp`: recovered `do_sound` hook.
+- `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
+- `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
+- `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
+- `docs/recovery/functions.csv`: canonical 6,000-function inventory.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,047 candidates.
+- `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
+- `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
+- `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
+- `docs/recovery/summary.json`: canonical recovery-state counts.
+- `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
+- `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
+- `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
+- `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
+- `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
+- `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
+- `tools/static_recompile_pilot.py`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
+- `tools/test_static_recompile_pilot.py`, `tools/verify_static_recompile_pilot.py`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
+- `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
+- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local Scroll-oracle result validation.
+- `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
+- `tools/test_smoke_hybrid_game.py`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
+- `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
+- `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
+- `tools/run_gameplay_scenario.py`: deterministic scenario launcher, result validator, and owned-process cleanup.
+- `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
+- `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
+- `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
+- `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
+- `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
+- `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
+- `docs/HYBRID.md`: local hybrid workflow.
+- `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet, Random, Win/geometry, Vector, Scroll, Menu, and PullDown fixtures.
+- `tests/static_recompile_pilot_tests.cpp`: generated-only and original-byte differential fixtures for the time-boxed static recompilation leaf.
+- `docs/STATIC_RECOMPILATION.md`: local-only provenance policy, commands, value gate, and stopped pilot outcome.
+- `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
+- `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
+- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 115-island manifest.
+- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit 31-function AlphaNet/Random/Win/geometry/Vector/Scroll/Menu/PullDown oracle manifest.
+- `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
+- `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
+- `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.
+- `build/<preset>/staged-game/`: ignored per-preset mirror of the master game data holding the staged `terranx_hybrid.exe` and `OpenSMACX.dll`; `.opensmacx/game` stays read-only during batches so both presets can stage and smoke concurrently.
+
+## Current Blocker
+
+There is no tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, end-turn request state, and the next turn/year increment before later upkeep. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.
+
+### MSVC SEH frames are present but unreachable
+
+Every destructor and `close` method opens an MSVC structured-exception frame before doing any work, for example `GraphicWin::~GraphicWin` at `0x005D4DD0`:
+
+```
+push -1
+push 0x662B2A                 ; per-function __ehhandler thunk in the original .text
+mov  eax, fs:[0]
+push eax
+mov  fs:[0], esp              ; register the frame
+```
+
+Each pushed thunk loads a FuncInfo pointer and jumps to `__CxxFrameHandler` at `0x00644FD6`; 387 such thunks exist and the unwind funclets follow each thunk inline.
+
+**These frames can never execute.** The canonical executable contains no C++ throw entry point: there is no `_CxxThrowException`, `operator new` at `0x0064558A` is a 14-byte `_nh_malloc(size, 1)` forwarder that returns null instead of raising, `operator delete` at `0x0064557F` forwards to `free`, and all six occurrences of the C++ exception magic `0xE06D7363` sit inside CRT handling code (`__InternalCxxFrameHandler`, `FindHandler`, `__FrameUnwindToState`, `ExFilterRethrow`, `__CxxUnhandledExceptionFilter`) with no game callers. VC6 emitted the frames because exception handling was enabled; nothing reaches them.
+
+Recovered replacements therefore omit the frame, which is behaviourally equivalent rather than a compromise: the only observer of its absence is a C++ throw that cannot occur. Two guardrails hold that invariant:
+
+- The DLL and both test executables compile with `-fno-exceptions`, so no recovered body can raise where the original could not.
+- `verify-recovery-abi` fails any recovered object that grows an `.eh_frame` section or imports `__gxx_personality`/`_Unwind_`/`CxxFrameHandler`, which is what a translation unit losing the flag would look like.
+
+Caveat: of 1,072 SEH prologues only 387 are C++ EH thunks. The remaining ~685 are `_except_handler3`-style `__try`/`__except`/`__finally`, which respond to *structured* exceptions such as access violations, and those genuinely can occur. The reasoning above does not transfer to them. Before recovering any function whose prologue targets a handler other than `0x00644FD6`, re-examine it.
+
+## Next Steps
+
 1. Decide the SEH policy described under Current Blocker before scheduling any destructor or `close` recovery; that decision gates the largest remaining fan-in targets.
 2. Replace the Scroll wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, close, `Win`, and `Buffer` dependency closure; its shared RECT-construction helper is now source-owned. Then recover the Scroll constructor, close, and primary initializer at `0x006051D0` through `0x0060583F`.
 3. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.

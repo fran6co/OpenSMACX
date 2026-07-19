@@ -208,6 +208,10 @@ if(MINGW)
         -Wno-parentheses
         -Wno-unknown-pragmas
         -fkeep-inline-functions
+        # The canonical executable contains no C++ throw entry point and its
+        # operator new returns null rather than raising, so no recovered body
+        # may introduce an exception the original could not have produced.
+        -fno-exceptions
         $<$<CONFIG:Debug>:-Og>
         $<$<CONFIG:Release>:-O2>
         $<$<CONFIG:Release>:-fno-delete-null-pointer-checks>
@@ -325,6 +329,7 @@ if(BUILD_TESTING)
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
+    target_compile_options(recovery-leaf-tests PRIVATE -fno-exceptions)
     target_compile_definitions(recovery-leaf-tests PRIVATE BUILD_DLL)
     set_target_properties(recovery-leaf-tests PROPERTIES
         CXX_EXTENSIONS OFF
@@ -804,6 +809,7 @@ if(MINGW)
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)
+        target_compile_options(recovery-oracle-tests PRIVATE -fno-exceptions)
         target_compile_definitions(recovery-oracle-tests PRIVATE BUILD_DLL)
         target_compile_options(recovery-oracle-tests PRIVATE
             -pedantic
