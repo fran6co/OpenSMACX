@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 33,
-      "source_complete": 596,
+      "source_complete": 597,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 5001
+      "unrecovered": 5000
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 542,
-    "matched_function_starts": 542,
-    "unique_addresses": 542,
+    "annotations": 543,
+    "matched_function_starts": 543,
+    "unique_addresses": 543,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 166,
-      "function": 38
+      "data": 168,
+      "function": 39
     },
     "items": [
       {
@@ -1579,6 +1579,33 @@
         "location": "src/base.cpp:46",
         "symbol": "BaseCurrentForcesMaintCost",
         "type": "uint32_t *"
+      },
+      {
+        "address": "0x009BC494",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/buffer.cpp:272",
+        "symbol": "BufferDirectDrawActive",
+        "type": "int *"
+      },
+      {
+        "address": "0x00696BF0",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/buffer.cpp:273",
+        "symbol": "BufferResetValue520",
+        "type": "uint32_t *"
+      },
+      {
+        "address": "0x00644EF2",
+        "function": "_free",
+        "function_address": "0x00644EF2",
+        "kind": "function",
+        "location": "src/buffer.cpp:274",
+        "symbol": "BufferFree",
+        "type": "func_sprite_free *"
       },
       {
         "address": "0x009A6828",
@@ -3165,7 +3192,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 38,
-    "total": 204
+    "matched_function_starts": 39,
+    "total": 207
   }
 }

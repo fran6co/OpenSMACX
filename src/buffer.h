@@ -18,6 +18,7 @@
 #pragma once
 #include "font.h"
 #include "spot.h"
+#include "sprite.h"
 
  /*
   * Buffer class
@@ -36,6 +37,7 @@ class DLLEXPORT Buffer {
   void close_class();
   int get_data();
   int text_line_height();
+  void close();
   void free_data(int count);
 
  private:
@@ -122,6 +124,14 @@ constexpr size_t BufferSurfaceUnlockSlot = 0x80;
 
 int __fastcall buffer_get_data_redirect(Buffer *self, void *);
 int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
+void __fastcall buffer_close_redirect(Buffer *self, void *);
+
+// Selects the DirectDraw teardown path over the GDI device-context path.
+extern int *BufferDirectDrawActive;
+// Value the close reset writes at offset 0x520; its meaning is unconfirmed.
+extern uint32_t *BufferResetValue520;
+// Releases a Sprite-style allocation through the executable's own CRT.
+extern func_sprite_free *BufferFree;
 void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count);
 
 int __fastcall buffer_set_font_redirect(

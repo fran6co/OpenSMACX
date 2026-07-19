@@ -268,3 +268,164 @@ int Buffer::text_line_height() {
 int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
     return self->text_line_height();
 }
+
+int *BufferDirectDrawActive = (int *)0x009BC494;
+uint32_t *BufferResetValue520 = (uint32_t *)0x00696BF0;
+func_sprite_free *BufferFree = (func_sprite_free *)0x00644EF2;
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef long(__stdcall *func_surface_unlock_slot)(void *, void *);
+typedef unsigned long(__stdcall *func_com_release)(void *);
+typedef void(__thiscall *func_buffer_virtual)(void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+constexpr size_t OwnedAllocationBase = 0x4BC;
+constexpr size_t OwnedAllocationCount = 20;
+constexpr size_t SurfaceReleaseSlot = 0x08;
+constexpr size_t BufferVirtualSlot = 0x04;
+
+void *slot(void *object, size_t offset) {
+    void **const vtable = *reinterpret_cast<void ***>(object);
+    return vtable[offset / sizeof(void *)];
+}
+
+}  // namespace
+
+/*
+Purpose: Release every resource the buffer owns and reset it to its
+         constructed state.
+Original Offset: 005D7470
+Status: Complete
+*/
+void Buffer::close() {
+    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
+
+    // Twenty owned allocations released through the executable's allocator.
+    for (size_t index = 0; index < OwnedAllocationCount; ++index) {
+        volatile uint32_t *const entry =
+            ordered + (OwnedAllocationBase / 4) + index;
+        if (*entry != 0) {
+            BufferFree(reinterpret_cast<void *>(*entry));
+            *entry = 0;
+        }
+    }
+
+    if (ordered[0x64 / 4] != 0) {
+        ordered[0x68 / 4] = 0;
+        ordered[0x6C / 4] = 0;
+        if (*BufferDirectDrawActive != 0) {
+            void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
+            // The reference count was just zeroed, so this decrement always
+            // lands at or below zero and the published data is dropped.
+            const int32_t remaining =
+                static_cast<int32_t>(ordered[0x68 / 4]) - 1;
+            ordered[0x68 / 4] = static_cast<uint32_t>(remaining);
+            if (!surface) {
+                if (remaining <= 0) {
+                    ordered[0x60 / 4] = 0;
+                    ordered[0x68 / 4] = 0;
+                }
+            } else {
+                const uint32_t data = ordered[0x60 / 4];
+                if (data != 0 && remaining <= 0) {
+                    const long result =
+                        reinterpret_cast<func_surface_unlock_slot>(
+                            slot(surface, 0x68))(
+                                surface, reinterpret_cast<void *>(data));
+                    if (result != 0) {
+                        reinterpret_cast<func_buffer_virtual>(
+                            slot(this, BufferVirtualSlot))(this);
+                    }
+                    ordered[0x68 / 4] = 0;
+                    ordered[0x60 / 4] = 0;
+                }
+            }
+        } else if ((ordered[0x1C / 4] & 4U) == 0) {
+            HDC device = reinterpret_cast<HDC>(ordered[0x64 / 4]);
+            if (ordered[0x74 / 4] != 0) {
+                SelectObject(device, reinterpret_cast<HGDIOBJ>(ordered[0x74 / 4]));
+                ordered[0x74 / 4] = 0;
+            }
+            DeleteDC(device);
+            ordered[0x60 / 4] = 0;
+            ordered[0x64 / 4] = 0;
+        }
+    }
+
+    for (size_t offset : {size_t(0x78), size_t(0x70)}) {
+        if (ordered[offset / 4] != 0) {
+            DeleteObject(reinterpret_cast<HGDIOBJ>(ordered[offset / 4]));
+            ordered[offset / 4] = 0;
+        }
+    }
+
+    if (*BufferDirectDrawActive != 0) {
+        for (size_t offset : {size_t(0x58), size_t(0x5C)}) {
+            void *const object = reinterpret_cast<void *>(ordered[offset / 4]);
+            if (object) {
+                reinterpret_cast<func_com_release>(
+                    slot(object, SurfaceReleaseSlot))(object);
+            }
+        }
+    }
+
+    ordered[0x58 / 4] = 0;
+    ordered[0x5C / 4] = 0;
+    ordered[0x0C / 4] = 0;
+    ordered[0x08 / 4] = 0;
+    ordered[0x18 / 4] = 0;
+    ordered[0x14 / 4] = 0;
+    ordered[0x10 / 4] = 0;
+    ordered[0x4A4 / 4] = 0;
+    ordered[0x4A8 / 4] = 0;
+    ordered[0x57C / 4] = 0;
+    *reinterpret_cast<volatile uint8_t *>(
+        reinterpret_cast<uint8_t *>(this) + 0x580) = 0;
+    ordered[0x80 / 4] = 0;
+    ordered[0x84 / 4] = 0;
+    ordered[0x50 / 4] = 0;
+    ordered[0x54 / 4] = 0;
+    ordered[0x50C / 4] = 0xFFFFFFFFU;
+    ordered[0x510 / 4] = 0;
+    ordered[0x514 / 4] = 0;
+    ordered[0x518 / 4] = 0;
+    ordered[0x51C / 4] = 0;
+    ordered[0x520 / 4] = *BufferResetValue520;
+    ordered[0x52C / 4] = reinterpret_cast<uint32_t>(*FontDefaultPtr);
+    // Four text slots at 0x530..0x53C with five rows 0x10 apart. The layout
+    // is deliberately not uniform: the fourth slot holds 2 where the others
+    // hold -1 at row two, and 0 where the others hold 2 at row four, so the
+    // stores are written out rather than generated.
+    ordered[0x53C / 4] = 0;
+    ordered[0x54C / 4] = 0xFFFFFFFFU;
+    ordered[0x55C / 4] = 2;
+    ordered[0x56C / 4] = 2;
+    ordered[0x530 / 4] = 0;
+    ordered[0x540 / 4] = 0xFFFFFFFFU;
+    ordered[0x550 / 4] = 0xFFFFFFFFU;
+    ordered[0x560 / 4] = 2;
+    ordered[0x570 / 4] = 2;
+    ordered[0x534 / 4] = 0;
+    ordered[0x544 / 4] = 0xFFFFFFFFU;
+    ordered[0x554 / 4] = 0xFFFFFFFFU;
+    ordered[0x564 / 4] = 2;
+    ordered[0x574 / 4] = 2;
+    ordered[0x538 / 4] = 0;
+    ordered[0x548 / 4] = 0xFFFFFFFFU;
+    ordered[0x558 / 4] = 0xFFFFFFFFU;
+    ordered[0x568 / 4] = 2;
+    ordered[0x578 / 4] = 2;
+    ordered[0x584 / 4] = 0;
+    ordered[0x1C / 4] = 0;
+}
+
+void __fastcall buffer_close_redirect(Buffer *self, void *) {
+    self->close();
+}
