@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,037 candidates.
+- Current recovery backlog: 5,036 candidates.
 - Current local legacy-island count: 115, reduced from 174.
-- `DllMain` entry redirects: 93, comprising 91 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 94, comprising 92 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -95,7 +95,8 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - `eef482b Recover Scroll sprite setters`
 - Recovered the five Scroll init wrappers, with the primary initializer retained as an explicit classified original dependency.
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
-- Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Buffer and Win subobject destructors retained as classified temporary original dependencies.
+- Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Win subobject destructor retained as a classified temporary original dependency; the Buffer side is source-owned.
+- Recovered `Buffer::destroy` at `0x005D7410`, which **retires the `BufferOriginalDestructor` temporary dependency**: the GraphicWin destructor now reaches a source-owned Buffer teardown through a bindable seam instead of the original body. Only `Win::~Win` and `Scroll::init` remain as classified original dependencies.
 - Recovered `Buffer::close` at `0x005D7470` (44 callers), covering the twenty-entry release loop, both DirectDraw and device-context teardown paths, and the full field reset; `buffer-release` verifies the release loop against real allocations in the deferred phase.
 - Recovered `find_font` at `0x005882F0` (31 callers), whose 9999 seed doubles as a match threshold, and `Buffer::text_line_height` at `0x005DCAB0` (21 callers).
 - Recovered `StringStruct::remove_all` at `0x00402970` (79 callers), which walks the entry list through the owner callback and MSVC virtual-base scalar deleting destructors.

@@ -38,6 +38,9 @@ class DLLEXPORT Buffer {
   int get_data();
   int text_line_height();
   void close();
+  // Destructor body kept as a named method so the trivial ~Buffer() stays
+  // trivial and embedding classes keep their existing implicit destruction.
+  void destroy();
   void free_data(int count);
 
  private:
@@ -125,6 +128,8 @@ constexpr size_t BufferSurfaceUnlockSlot = 0x80;
 int __fastcall buffer_get_data_redirect(Buffer *self, void *);
 int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
 void __fastcall buffer_close_redirect(Buffer *self, void *);
+void __fastcall buffer_destructor_redirect(Buffer *self, void *);
+extern const uint32_t BufferVtable;
 
 // Selects the DirectDraw teardown path over the GDI device-context path.
 extern int *BufferDirectDrawActive;

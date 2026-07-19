@@ -303,12 +303,52 @@ bool verify_close_reset() {
     return passed;
 }
 
+bool verify_destroy() {
+    // Same resource-free shape as the close reset, plus the vtable store and
+    // the Spot subobject teardown the destructor adds around it.
+    auto original = reinterpret_cast<OriginalNoArg>(0x005D7410U);
+    const int saved_mode = *BufferDirectDrawActive;
+    bool passed = true;
+    for (int direct_draw = 0; direct_draw < 2 && passed; ++direct_draw) {
+        BufferFixture legacy;
+        BufferFixture source;
+        uintptr_t vtable[1];
+        runtime_oracle::initialize_pair(
+            legacy.storage, source.storage, BufferSpec, vtable);
+        for (BufferFixture *fixture : {&legacy, &source}) {
+            for (size_t index = 0; index < 20; ++index) {
+                write_field(*fixture, 0x4BC + index * 4, 0);
+            }
+            write_field(*fixture, 0x1C, 0);
+            for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                  size_t(0x64), size_t(0x70), size_t(0x74),
+                                  size_t(0x78)}) {
+                write_field(*fixture, offset, 0);
+            }
+            // The Spot subobject owns resources of its own, so its fields
+            // are left empty rather than seeded with sentinel pointers.
+            for (size_t offset : {size_t(0x4B0), size_t(0x4B4), size_t(0x4B8)}) {
+                write_field(*fixture, offset, 0);
+            }
+        }
+        *BufferDirectDrawActive = direct_draw;
+        original(legacy.object());
+        source.object()->destroy();
+        if (memcmp(legacy.storage, source.storage,
+                   sizeof(legacy.storage)) != 0) {
+            passed = false;
+        }
+    }
+    *BufferDirectDrawActive = saved_mode;
+    return passed;
+}
+
 }  // namespace
 
 bool run_buffer_oracle_suite() {
     return verify_get_data() && verify_free_data()
         && verify_text_line_height() && verify_find_font()
-        && verify_close_reset();
+        && verify_close_reset() && verify_destroy();
 }
 
 namespace {
