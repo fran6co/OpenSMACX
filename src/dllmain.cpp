@@ -29,6 +29,7 @@
 #include "menu.h"
 #include "pulldown.h"
 #include "scenario.h"
+#include "graphicwin.h"
 #include "scroll.h"
 #include "sprite.h"
 #include "redirect_signatures.h"
@@ -45,7 +46,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 85;
+constexpr size_t RedirectCount = 86;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -290,6 +291,11 @@ bool install_redirects() {
             0x00609CF0,
             reinterpret_cast<uintptr_t>(&dialog_set_text_color3_redirect),
             OPENSMACX_SIGNATURE_00609CF0,
+        },
+        {
+            0x005D4DD0,
+            reinterpret_cast<uintptr_t>(&graphic_win_destructor_redirect),
+            OPENSMACX_SIGNATURE_005D4DD0,
         },
         {
             0x005E37E0,
@@ -635,6 +641,16 @@ bool install_redirects() {
         OPENSMACX_SIGNATURE_006054D0;
     if (!validate_signature(
             0x006054D0, scroll_primary_init_signature, SignatureSize)) {
+        return false;
+    }
+    const uint8_t buffer_destructor_signature[SignatureSize] =
+        OPENSMACX_SIGNATURE_005D7410;
+    const uint8_t win_destructor_signature[SignatureSize] =
+        OPENSMACX_SIGNATURE_005EBC90;
+    if (!validate_signature(
+            0x005D7410, buffer_destructor_signature, SignatureSize)
+        || !validate_signature(
+            0x005EBC90, win_destructor_signature, SignatureSize)) {
         return false;
     }
     if (!run_runtime_oracles()) {

@@ -4,6 +4,7 @@
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
 #include "../src/filemap.h"
+#include "../src/graphicwin.h"
 #include "../src/font.h"
 #include "../src/log.h"
 #include "../src/menu.h"
@@ -4418,6 +4419,53 @@ void test_sprite_construct() {
     SpriteMemoryUsed = saved_total;
 }
 
+void test_graphic_win_destructor() {
+    static_assert(sizeof(GraphicWin) == 0xA14,
+                  "GraphicWin tests require the legacy layout");
+    // The destructor stores both vtables, clears the trailing field, then
+    // delegates to the Buffer and Win subobject destructors. The delegation
+    // targets are original dependencies, so the source test substitutes
+    // recording stubs and asserts the observable stores and call order.
+    for (int null_self = 0; null_self < 2; ++null_self) {
+        alignas(GraphicWin) uint8_t storage[sizeof(GraphicWin) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        auto *object = reinterpret_cast<GraphicWin *>(storage + 16);
+
+        graphic_win_destructor_probe_reset();
+        // The subobject destructors live at original addresses that are not
+        // mapped outside the hybrid process; the probe records delegation.
+        func_subobject_destructor *const saved_buffer = BufferOriginalDestructor;
+        func_subobject_destructor *const saved_win = WinOriginalDestructor;
+        BufferOriginalDestructor = nullptr;
+        WinOriginalDestructor = nullptr;
+        GraphicWin *const target = null_self ? nullptr : object;
+        expect(graphic_win_destructor_redirect(target, nullptr) == target);
+        BufferOriginalDestructor = saved_buffer;
+        WinOriginalDestructor = saved_win;
+
+        if (null_self) {
+            // Nothing may be written when the instance pointer is null.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect(graphic_win_destructor_probe_buffer_calls() == 0);
+            expect(graphic_win_destructor_probe_win_calls() == 0);
+            continue;
+        }
+        write_at(expected, 16 + 0x000, GraphicWinPrimaryVtable);
+        write_at(expected, 16 + 0x444, GraphicWinBufferVtable);
+        write_at(expected, 16 + 0xA10, 0U);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        // Buffer subobject first, then the Win base, matching legacy order.
+        expect(graphic_win_destructor_probe_buffer_calls() == 1);
+        expect(graphic_win_destructor_probe_win_calls() == 1);
+        expect(graphic_win_destructor_probe_buffer_target()
+               == reinterpret_cast<void *>(storage + 16 + 0x444));
+        expect(graphic_win_destructor_probe_win_target()
+               == reinterpret_cast<void *>(storage + 16));
+        expect(graphic_win_destructor_probe_order() == 0x21);
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -4435,6 +4483,7 @@ int main() {
     test_win_move();
     test_win_is_visible();
     test_sprite_construct();
+    test_graphic_win_destructor();
     test_win_paging();
     test_scroll_init_wrappers();
     test_scroll_range();

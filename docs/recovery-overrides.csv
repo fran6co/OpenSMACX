@@ -14,6 +14,7 @@ address,recovery_state,priority,notes
 0x0058EE50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005D4560,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x005D4580,source_complete,,Staged hybrid export redirect calls the source-owned destructor
+0x005D4DD0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DAC70,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DACB0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DACE0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation

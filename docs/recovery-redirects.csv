@@ -13,6 +13,7 @@ address,kind
 0x00514189,jump
 0x00525AF4,jump
 0x0058EE50,jump
+0x005D4DD0,jump
 0x005DAC70,jump
 0x005DACB0,jump
 0x005DACE0,jump
@@ -86,4 +87,6 @@ address,kind
 0x00634670,jump
 0x0052AB6D,call
 0x0052AC4A,call
+0x005D7410,dependency
+0x005EBC90,dependency
 0x006054D0,dependency

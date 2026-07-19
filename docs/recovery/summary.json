@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 31,
-      "source_complete": 589,
+      "original_dependency": 33,
+      "source_complete": 590,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 5010
+      "unrecovered": 5007
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 535,
-    "matched_function_starts": 535,
-    "unique_addresses": 535,
+    "annotations": 536,
+    "matched_function_starts": 536,
+    "unique_addresses": 536,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 164,
-      "function": 35
+      "function": 37
     },
     "items": [
       {
@@ -1966,6 +1966,24 @@
         "location": "src/general.cpp:29",
         "symbol": "PluralityDefault",
         "type": "BOOL *"
+      },
+      {
+        "address": "0x005D7410",
+        "function": "??1Buffer@@QAE@XZ",
+        "function_address": "0x005D7410",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:24",
+        "symbol": "BufferOriginalDestructor",
+        "type": "func_subobject_destructor *"
+      },
+      {
+        "address": "0x005EBC90",
+        "function": "??1Win@@QAE@XZ",
+        "function_address": "0x005EBC90",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:26",
+        "symbol": "WinOriginalDestructor",
+        "type": "func_subobject_destructor *"
       },
       {
         "address": "0x009BBFF8",
@@ -3120,7 +3138,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 35,
-    "total": 199
+    "matched_function_starts": 37,
+    "total": 201
   }
 }
