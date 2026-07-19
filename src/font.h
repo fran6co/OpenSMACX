@@ -56,6 +56,14 @@ class DLLEXPORT Font {
 
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
+
+// Twelve candidate point sizes and the Font table they index, both owned by
+// the original image.
+extern int *FontSizeTable;
+extern Font *FontTable;
+constexpr size_t FontSizeTableCount = 12;
+
+DLLEXPORT Font *__cdecl find_font(int size, int style);
 #endif
 
 // global

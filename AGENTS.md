@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,040 candidates.
+- Current recovery backlog: 5,038 candidates.
 - Current local legacy-island count: 115, reduced from 174.
-- `DllMain` entry redirects: 90, comprising 88 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 92, comprising 90 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -96,6 +96,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered the five Scroll init wrappers, with the primary initializer retained as an explicit classified original dependency.
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
 - Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Buffer and Win subobject destructors retained as classified temporary original dependencies.
+- Recovered `find_font` at `0x005882F0` (31 callers), whose 9999 seed doubles as a match threshold, and `Buffer::text_line_height` at `0x005DCAB0` (21 callers).
 - Recovered `StringStruct::remove_all` at `0x00402970` (79 callers), which walks the entry list through the owner callback and MSVC virtual-base scalar deleting destructors.
 - Recovered `Buffer::get_data` at `0x005E3373` (48 callers) and `Buffer::free_data` at `0x005E34A3` (43 callers), the reference-counted DirectDraw surface lock pair feeding `Buffer::close`.
 - Recovered `Sprite::close` at `0x005E3820` (111 callers), completing the Sprite lifecycle pair.

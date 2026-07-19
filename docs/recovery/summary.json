@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 33,
-      "source_complete": 594,
+      "source_complete": 596,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 5003
+      "unrecovered": 5001
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,14 +1317,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 540,
-    "matched_function_starts": 540,
-    "unique_addresses": 540,
+    "annotations": 542,
+    "matched_function_starts": 542,
+    "unique_addresses": 542,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 164,
+      "data": 166,
       "function": 38
     },
     "items": [
@@ -1747,9 +1747,27 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/font.cpp:253",
+        "location": "src/font_recovery.cpp:29",
         "symbol": "FontDefaultPtr",
         "type": "Font **"
+      },
+      {
+        "address": "0x0068F220",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/font_recovery.cpp:30",
+        "symbol": "FontSizeTable",
+        "type": "int *"
+      },
+      {
+        "address": "0x0093FC58",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/font_recovery.cpp:31",
+        "symbol": "FontTable",
+        "type": "Font *"
       },
       {
         "address": "0x009A6488",
@@ -3148,6 +3166,6 @@
       }
     ],
     "matched_function_starts": 38,
-    "total": 202
+    "total": 204
   }
 }

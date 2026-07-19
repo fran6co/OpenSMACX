@@ -5,6 +5,7 @@
 #include "../src/dialog.h"
 #include "../src/filemap.h"
 #include "../src/buffer.h"
+#include "../src/font.h"
 #include "../src/graphicwin.h"
 #include "../src/font.h"
 #include "../src/log.h"
@@ -4867,6 +4868,90 @@ void test_string_struct_remove_all() {
     }
 }
 
+void test_find_font() {
+    int sizes[FontSizeTableCount] = {8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48};
+    Font table[FontSizeTableCount * 4];
+    int *const saved_sizes = FontSizeTable;
+    Font *const saved_table = FontTable;
+    FontSizeTable = sizes;
+    FontTable = table;
+
+    struct FontCase { int size; int style; int expected_index; };
+    const FontCase cases[] = {
+        {8, 0, 0}, {48, 3, 11},
+        {13, 0, 2},    // ties resolve to the earlier entry: |12-13| < |14-13| is false
+        {11, 1, 1},    // |10-11| == |12-11|, strict less-than keeps the first
+        {0, 2, 0}, {-5, 3, 0},
+        // The 9999 seed is a threshold: only when every candidate is at
+        // least that far away does the lookup fall back to the first entry
+        // instead of the nearest. The largest size is 48, so the boundary
+        // sits at 48 + 9999.
+        {100000, 0, 0}, {-100000, 1, 0},
+        {10047, 0, 0},    // farthest delta is exactly 9999, strict < fails
+        {10046, 1, 11},   // one closer, so the nearest entry wins
+        {22, 0, 6},    // |20-22| == |24-22|, first wins
+        {26, 1, 7},
+    };
+    for (const FontCase &test : cases) {
+        const Font *const result = find_font(test.size, test.style);
+        expect(result == table + (test.style + test.expected_index * 4));
+    }
+    // The table is never modified by a lookup.
+    FontSizeTable = saved_sizes;
+    FontTable = saved_table;
+}
+
+void test_buffer_text_line_height() {
+    struct HeightCase { int override_value; int line_height; int height; int expected; };
+    const HeightCase cases[] = {
+        {0, 111, 222, 222},          // zero is non-negative: height + 0
+        {5, 111, 222, 227},
+        {-1, 111, 222, 111},         // negative selects the natural line height
+        {INT_MIN, 111, 222, 111},
+        {INT_MAX, 111, 1, static_cast<int>(0x80000000U)},   // wraps
+    };
+    for (const HeightCase &test : cases) {
+        for (int preset_font = 0; preset_font < 2; ++preset_font) {
+            for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+                uint8_t expected[sizeof(storage)];
+                seed_storage(storage, expected, sizeof(storage));
+
+                alignas(Font) uint8_t font_storage[sizeof(Font)] = {};
+                int *const fields = reinterpret_cast<int *>(font_storage);
+                fields[0x00 / 4] = test.override_value;
+                fields[0x0C / 4] = test.line_height;
+                fields[0x10 / 4] = test.height;
+                auto *font = reinterpret_cast<Font *>(font_storage);
+
+                // The default-font global lives at a fixed address that is
+                // only mapped inside the hybrid process, so the binding is
+                // pointed at test storage.
+                Font **const saved_default_ptr = FontDefaultPtr;
+                Font *default_font = font;
+                FontDefaultPtr = &default_font;
+                if (preset_font) {
+                    write_at(storage, 16 + 0x52C, font);
+                } else {
+                    write_at(storage, 16 + 0x52C, 0U);
+                }
+                std::memcpy(expected, storage, sizeof(storage));
+                // A missing font is filled in from the global default.
+                write_at(expected, 16 + 0x52C, font);
+
+                auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+                const int result = use_adapter
+                    ? buffer_text_line_height_redirect(buffer, nullptr)
+                    : buffer->text_line_height();
+                FontDefaultPtr = saved_default_ptr;
+
+                expect(result == test.expected);
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -4889,6 +4974,8 @@ int main() {
     test_buffer_get_data();
     test_buffer_free_data();
     test_string_struct_remove_all();
+    test_find_font();
+    test_buffer_text_line_height();
     test_win_paging();
     test_scroll_init_wrappers();
     test_scroll_range();

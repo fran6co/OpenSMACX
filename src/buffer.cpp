@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "buffer.h"
+#include "font.h"
 
 /*
 Purpose: Set the four fonts used by the buffer.
@@ -240,4 +241,30 @@ int __fastcall buffer_get_data_redirect(Buffer *self, void *) {
 
 void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
     self->free_data(count);
+}
+
+/*
+Purpose: Report the line height of the buffer's primary font, falling back to
+         the global default font when none is set.
+Original Offset: 005DCAB0
+Status: Complete
+*/
+int Buffer::text_line_height() {
+    if (!font1_) {
+        font1_ = *FontDefaultPtr;
+    }
+    const Font *const font = font1_;
+    const int *const fields = reinterpret_cast<const int *>(font);
+    const int height_override = fields[0x00 / 4];
+    if (height_override < 0) {
+        // No override: the font's own line height already includes leading.
+        return fields[0x0C / 4];
+    }
+    return static_cast<int>(
+        static_cast<uint32_t>(fields[0x10 / 4])
+        + static_cast<uint32_t>(height_override));
+}
+
+int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
+    return self->text_line_height();
 }

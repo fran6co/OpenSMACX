@@ -29,6 +29,7 @@
 #include "menu.h"
 #include "pulldown.h"
 #include "scenario.h"
+#include "font.h"
 #include "graphicwin.h"
 #include "scroll.h"
 #include "sprite.h"
@@ -46,7 +47,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 90;
+constexpr size_t RedirectCount = 92;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -306,6 +307,16 @@ bool install_redirects() {
             0x005E37E0,
             reinterpret_cast<uintptr_t>(&sprite_construct_redirect),
             OPENSMACX_SIGNATURE_005E37E0,
+        },
+        {
+            0x005882F0,
+            reinterpret_cast<uintptr_t>(&find_font),
+            OPENSMACX_SIGNATURE_005882F0,
+        },
+        {
+            0x005DCAB0,
+            reinterpret_cast<uintptr_t>(&buffer_text_line_height_redirect),
+            OPENSMACX_SIGNATURE_005DCAB0,
         },
         {
             0x005E3373,
