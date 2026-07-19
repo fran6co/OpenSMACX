@@ -23,7 +23,7 @@
   */
 class DLLEXPORT Sprite {
  public:
-  Sprite() { ; }
+  Sprite();
   ~Sprite() { ; }
 
  private:
@@ -42,3 +42,11 @@ class DLLEXPORT Sprite {
   int field_24_;
   int field_28_;
 };
+
+static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
+
+// Running total of Sprite-owned bytes. The constructor adds one object; the
+// release paths subtract the object plus its pixel buffer.
+extern int *SpriteMemoryUsed;
+
+Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *);

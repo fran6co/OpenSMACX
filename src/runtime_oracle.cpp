@@ -11,6 +11,8 @@
 #include "runtime_oracle.h"
 
 #include "scroll_oracle.h"
+#include "sprite_oracle.h"
+#include "win_oracle.h"
 
 namespace {
 
@@ -29,6 +31,8 @@ void **WatchedGlobal = nullptr;
 
 const runtime_oracle::Suite Suites[] = {
     {"scroll", run_scroll_oracle_suite},
+    {"win", run_win_oracle_suite},
+    {"sprite", run_sprite_oracle_suite},
 };
 
 bool write_result(const char *path, const char *result) {
