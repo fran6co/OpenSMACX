@@ -36,6 +36,7 @@ class DLLEXPORT StringStruct {
   int next_entry();
   int seek_id(int id);
   void remove_all();
+  void close();
 
  private:
   uint32_t primary_abi_word_;
@@ -53,6 +54,12 @@ static_assert(sizeof(StringStruct) == 0x24,
               "StringStruct layout must match the original executable");
 
 void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *);
+// The legacy close is entered through a virtual-base adjustor, so the redirect
+// receives a pointer 0x1C bytes into the object rather than its base.
+constexpr size_t StringStructCloseAdjustment = 0x1C;
+extern const uint32_t StringStructVtable;
+extern const uint32_t StringStructVirtualBaseVtable;
+void __fastcall string_struct_close_redirect(void *adjusted, void *);
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
 int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);

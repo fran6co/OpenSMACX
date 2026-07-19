@@ -193,3 +193,34 @@ void StringStruct::remove_all() {
 void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *) {
     self->remove_all();
 }
+
+const uint32_t StringStructVtable = 0x006693A4;
+const uint32_t StringStructVirtualBaseVtable = 0x006693A0;
+
+/*
+Purpose: Reset the list to its constructed state, installing both virtual
+         tables and releasing every entry.
+Original Offset: 00401060
+Status: Complete
+*/
+void StringStruct::close() {
+    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
+    *reinterpret_cast<volatile uint32_t *>(base) = StringStructVtable;
+    // The virtual base's table is reached through the displacement held in the
+    // second slot of the vbtable pointed at by offset 4.
+    const uint32_t *const vbtable =
+        *reinterpret_cast<uint32_t **>(base + 4);
+    const uint32_t displacement = vbtable[1];
+    *reinterpret_cast<volatile uint32_t *>(base + 4 + displacement) =
+        StringStructVirtualBaseVtable;
+    // The legacy body inlines the entry walk; it clears the same fields in the
+    // same order, and does nothing at all when the list is already empty.
+    remove_all();
+    current_position_ = 0;
+}
+
+void __fastcall string_struct_close_redirect(void *adjusted, void *) {
+    auto *self = reinterpret_cast<StringStruct *>(
+        static_cast<uint8_t *>(adjusted) - StringStructCloseAdjustment);
+    self->close();
+}

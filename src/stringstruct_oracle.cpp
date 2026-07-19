@@ -213,8 +213,111 @@ bool verify_remove_all() {
     return true;
 }
 
+bool verify_close() {
+    struct CloseCase { int entries; int count; bool with_payloads; };
+    const CloseCase cases[] = {
+        {0, 0, false},
+        {3, 0, true},
+        {1, 1, true},
+        {3, 3, true},
+        {3, 2, true},
+        {3, 3, false},
+    };
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+    typedef void (__thiscall *OriginalClose)(void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+    auto original = reinterpret_cast<OriginalClose>(0x00401060U);
+    for (const CloseCase &test : cases) {
+        ListFixture legacy;
+        ListFixture source;
+        uintptr_t vtable[1];
+        runtime_oracle::initialize_pair(
+            legacy.storage, source.storage, ListSpec, vtable);
+        ListScenario legacy_scenario;
+        ListScenario source_scenario;
+        build(legacy_scenario, test.entries, test.with_payloads);
+        build(source_scenario, test.entries, test.with_payloads);
+
+        // The virtual-base table each side uses: slot one holds the
+        // displacement from offset 4 to the subobject whose table is written.
+        uint32_t legacy_vbtable[2] = {0, 0x10};
+        uint32_t source_vbtable[2] = {0, 0x10};
+
+        for (int side = 0; side < 2; ++side) {
+            ListFixture &fixture = side ? source : legacy;
+            ListScenario &scenario = side ? source_scenario : legacy_scenario;
+            uint32_t *vb = side ? source_vbtable : legacy_vbtable;
+            uint8_t *base = fixture.storage + runtime_oracle::CanarySize;
+            const uint32_t owner = static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(scenario.owner_vtable));
+            const uint32_t head = test.entries
+                ? static_cast<uint32_t>(
+                      reinterpret_cast<uintptr_t>(&scenario.entries[0])) : 0U;
+            const uint32_t count = static_cast<uint32_t>(test.count);
+            const uint32_t vb_pointer = static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(vb));
+            const uint32_t zero = 0;
+            memcpy(base + 0x00, &owner, sizeof(owner));
+            memcpy(base + 0x04, &vb_pointer, sizeof(vb_pointer));
+            memcpy(base + 0x08, &head, sizeof(head));
+            memcpy(base + 0x0C, &zero, sizeof(zero));
+            memcpy(base + 0x10, &count, sizeof(count));
+            memcpy(base + 0x14, &zero, sizeof(zero));
+        }
+
+        Record = Probe();
+        original(legacy.storage + runtime_oracle::CanarySize
+                 + StringStructCloseAdjustment);
+        const Probe legacy_record = Record;
+
+        Record = Probe();
+        string_struct_close_redirect(
+            source.storage + runtime_oracle::CanarySize
+                + StringStructCloseAdjustment, nullptr);
+
+        if (memcmp(&legacy_record, &Record, sizeof(Record)) != 0) {
+            return false;
+        }
+        // Offsets 0x00 and 0x04 hold side-specific table pointers; compare the
+        // installed primary table and the remaining state directly.
+        uint32_t legacy_primary = 0;
+        uint32_t source_primary = 0;
+        memcpy(&legacy_primary,
+               legacy.storage + runtime_oracle::CanarySize, sizeof(uint32_t));
+        memcpy(&source_primary,
+               source.storage + runtime_oracle::CanarySize, sizeof(uint32_t));
+        if (legacy_primary != source_primary
+                || legacy_primary != StringStructVtable) {
+            return false;
+        }
+        if (legacy_vbtable[1] != source_vbtable[1]) {
+            return false;
+        }
+        for (size_t offset : {size_t(0x10), size_t(0x14),
+                              size_t(0x18), size_t(0x1C), size_t(0x20)}) {
+            if (memcmp(legacy.storage + runtime_oracle::CanarySize + offset,
+                       source.storage + runtime_oracle::CanarySize + offset,
+                       sizeof(uint32_t)) != 0) {
+                return false;
+            }
+        }
+        for (int index = 0; index < test.entries; ++index) {
+            if ((legacy_scenario.entries[index].payload == 0)
+                    != (source_scenario.entries[index].payload == 0)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 }  // namespace
 
 bool run_string_struct_oracle_suite() {
-    return verify_remove_all();
+    return verify_remove_all() && verify_close();
 }
