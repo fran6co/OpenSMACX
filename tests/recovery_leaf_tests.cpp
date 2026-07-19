@@ -4466,6 +4466,100 @@ void test_graphic_win_destructor() {
     }
 }
 
+int sprite_close_free_calls = 0;
+void *sprite_close_free_targets[4];
+
+void *sprite_close_free_probe(void *block) {
+    if (sprite_close_free_calls < 4) {
+        sprite_close_free_targets[sprite_close_free_calls] = block;
+    }
+    ++sprite_close_free_calls;
+    return nullptr;
+}
+
+void test_sprite_close() {
+    struct CloseCase {
+        uint32_t field_00;   // primary allocation
+        uint32_t field_04;   // pixel buffer
+        uint32_t field_10;   // width
+        uint32_t field_14;   // height
+        uint32_t field_28;   // suppresses the pixel accounting when nonzero
+        int expected_frees;
+        bool accounts;
+    };
+    const CloseCase cases[] = {
+        // Nothing owned: no frees, no accounting.
+        {0, 0, 7, 11, 0, 0, false},
+        // Pixel buffer owned and accounted, then freed.
+        {0, 0x11110000U, 7, 11, 0, 1, true},
+        // field_28 set suppresses both the accounting and the pixel free.
+        {0, 0x11110000U, 7, 11, 1, 0, false},
+        // Primary allocation only.
+        {0x22220000U, 0, 7, 11, 0, 1, false},
+        // Both owned: pixel buffer freed before the primary allocation.
+        {0x22220000U, 0x11110000U, 3, 5, 0, 2, true},
+        // Wrapping accounting arithmetic.
+        {0, 0x11110000U, 0xFFFFFFFFU, 2, 0, 1, true},
+        {0, 0x11110000U, 0x80000000U, 0x80000000U, 0, 1, true},
+    };
+    for (const CloseCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Sprite) uint8_t storage[sizeof(Sprite) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x00, test.field_00);
+            write_at(storage, 16 + 0x04, test.field_04);
+            write_at(storage, 16 + 0x10, test.field_10);
+            write_at(storage, 16 + 0x14, test.field_14);
+            write_at(storage, 16 + 0x28, test.field_28);
+            std::memcpy(expected, storage, sizeof(storage));
+            // field_08 holds the type byte and is never cleared by close.
+            if (test.field_28 == 0 && test.field_04 != 0) {
+                write_at(expected, 16 + 0x04, 0U);
+            }
+            if (test.field_00 != 0) {
+                write_at(expected, 16 + 0x00, 0U);
+            }
+            for (size_t offset = 0x0C; offset <= 0x28; offset += 4) {
+                write_at(expected, 16 + offset, 0U);
+            }
+
+            const int32_t starting_total = 0x1000;
+            int32_t total = starting_total;
+            int *const saved_total = SpriteMemoryUsed;
+            func_sprite_free *const saved_free = SpriteFree;
+            SpriteMemoryUsed = &total;
+            SpriteFree = &sprite_close_free_probe;
+            sprite_close_free_calls = 0;
+
+            auto *sprite = reinterpret_cast<Sprite *>(storage + 16);
+            if (use_adapter) {
+                sprite_close_redirect(sprite, nullptr);
+            } else {
+                sprite->close();
+            }
+            SpriteFree = saved_free;
+            SpriteMemoryUsed = saved_total;
+
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect(sprite_close_free_calls == test.expected_frees);
+            const int32_t expected_total = test.accounts
+                ? static_cast<int32_t>(
+                      static_cast<uint32_t>(starting_total)
+                      - test.field_14 * test.field_10)
+                : starting_total;
+            expect(total == expected_total);
+            // The pixel buffer is released before the primary allocation.
+            if (test.expected_frees == 2) {
+                expect(sprite_close_free_targets[0]
+                       == reinterpret_cast<void *>(test.field_04));
+                expect(sprite_close_free_targets[1]
+                       == reinterpret_cast<void *>(test.field_00));
+            }
+        }
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -4484,6 +4578,7 @@ int main() {
     test_win_is_visible();
     test_sprite_construct();
     test_graphic_win_destructor();
+    test_sprite_close();
     test_win_paging();
     test_scroll_init_wrappers();
     test_scroll_range();

@@ -35,6 +35,19 @@ typedef uint32_t (__thiscall *OriginalNoArg)(Sprite *);
 #pragma GCC diagnostic pop
 #endif
 
+int FreeCalls = 0;
+void *FreeTargets[4] = {};
+
+void *recording_free(void *block) {
+    // Fixtures never own real allocations, so releases are recorded rather
+    // than forwarded to the executable's heap.
+    if (FreeCalls < 4) {
+        FreeTargets[FreeCalls] = block;
+    }
+    ++FreeCalls;
+    return nullptr;
+}
+
 bool verify_construct() {
     const int32_t starting_totals[] = {
         0, 1, -1, 0x7FFFFFFF, static_cast<int32_t>(0x80000000U),
@@ -76,8 +89,84 @@ bool verify_construct() {
     return passed;
 }
 
+bool verify_close() {
+    struct CloseCase {
+        uint32_t field_00;
+        uint32_t field_04;
+        uint32_t field_10;
+        uint32_t field_14;
+        uint32_t field_28;
+    };
+    // The legacy body calls the executable's free at its own fixed address,
+    // which this suite cannot redirect, and the executable CRT heap is not
+    // initialised while DllMain runs. Every fixture here therefore takes only
+    // branches that release nothing: a null primary allocation, plus either a
+    // null pixel buffer or the borrowed flag that suppresses the pixel branch.
+    // The accounting arithmetic and the release ordering are covered
+    // differentially at source level in tests/recovery_leaf_tests.cpp, where a
+    // recording free stands in for the executable's.
+    const CloseCase cases[] = {
+        {0, 0, 7, 11, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0xFFFFFFFFU, 2, 0},
+        {0, 0x11110000U, 7, 11, 1},
+        {0, 0x11110000U, 0xFFFFFFFFU, 0x80000000U, 1},
+        {0, 0x11110000U, 0, 0, 0x80000000U},
+        {0, 0, 0x80000000U, 0x80000000U, 1},
+    };
+    auto original = reinterpret_cast<OriginalNoArg>(0x005E3820U);
+    const int saved_total = *SpriteMemoryUsed;
+    func_sprite_free *const saved_free = SpriteFree;
+    bool passed = true;
+    for (const CloseCase &test : cases) {
+        SpriteFixture legacy;
+        SpriteFixture source;
+        uintptr_t vtable[1];
+        runtime_oracle::initialize_pair(
+            legacy.storage, source.storage, SpriteSpec, vtable);
+        const size_t fields[] = {0x00, 0x04, 0x10, 0x14, 0x28};
+        const uint32_t values[] = {
+            test.field_00, test.field_04, test.field_10,
+            test.field_14, test.field_28,
+        };
+        for (size_t index = 0; index < ARRAYSIZE(fields); ++index) {
+            memcpy(legacy.storage + runtime_oracle::CanarySize + fields[index],
+                   &values[index], sizeof(uint32_t));
+        }
+        memcpy(source.storage, legacy.storage, sizeof(source.storage));
+
+        // The legacy body calls the executable's own free directly, so the
+        // fixture pointers are sentinels the recording free never dereferences
+        // and the legacy side is compared on state and accounting alone.
+        SpriteFree = &recording_free;
+        FreeCalls = 0;
+
+        *SpriteMemoryUsed = 0x1000;
+        original(legacy.object());
+        const int legacy_total = *SpriteMemoryUsed;
+
+        FreeCalls = 0;
+        *SpriteMemoryUsed = 0x1000;
+        source.object()->close();
+        const int source_total = *SpriteMemoryUsed;
+
+        // A fixture that reached a release would have run the executable's
+        // free on a sentinel; fail loudly rather than corrupt the heap.
+        if (FreeCalls != 0
+                || legacy_total != source_total
+                || memcmp(legacy.storage, source.storage,
+                          sizeof(legacy.storage)) != 0) {
+            passed = false;
+            break;
+        }
+    }
+    SpriteFree = saved_free;
+    *SpriteMemoryUsed = saved_total;
+    return passed;
+}
+
 }  // namespace
 
 bool run_sprite_oracle_suite() {
-    return verify_construct();
+    return verify_construct() && verify_close();
 }

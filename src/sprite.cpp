@@ -21,6 +21,7 @@
 #include <new>
 
 int *SpriteMemoryUsed = reinterpret_cast<int *>(0x009B6618);
+func_sprite_free *SpriteFree = (func_sprite_free *)0x00644EF2;
 
 /*
 Purpose: Initialize an empty sprite and charge its own size to the sprite
@@ -56,4 +57,40 @@ Sprite::Sprite() {
 Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {
     new (self) Sprite();
     return self;
+}
+
+/*
+Purpose: Release a sprite's allocations, discount its pixel memory, and clear
+         every field except the type byte.
+Original Offset: 005E3820
+Status: Complete
+*/
+void Sprite::close() {
+    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
+    // The pixel buffer is only owned, accounted, and released while the
+    // borrowed flag at 0x28 is clear.
+    if (ordered[0x28 / 4] == 0 && ordered[0x04 / 4] != 0) {
+        *SpriteMemoryUsed = static_cast<int>(
+            static_cast<uint32_t>(*SpriteMemoryUsed)
+            - ordered[0x14 / 4] * ordered[0x10 / 4]);
+        SpriteFree(reinterpret_cast<void *>(ordered[0x04 / 4]));
+        ordered[0x04 / 4] = 0;
+    }
+    if (ordered[0x00 / 4] != 0) {
+        SpriteFree(reinterpret_cast<void *>(ordered[0x00 / 4]));
+        ordered[0x00 / 4] = 0;
+    }
+    // The type byte at 0x08 is deliberately preserved.
+    ordered[0x0C / 4] = 0;
+    ordered[0x10 / 4] = 0;
+    ordered[0x14 / 4] = 0;
+    ordered[0x18 / 4] = 0;
+    ordered[0x1C / 4] = 0;
+    ordered[0x20 / 4] = 0;
+    ordered[0x24 / 4] = 0;
+    ordered[0x28 / 4] = 0;
+}
+
+void __fastcall sprite_close_redirect(Sprite *self, void *) {
+    self->close();
 }
