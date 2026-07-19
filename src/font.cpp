@@ -250,4 +250,3 @@ void __cdecl Font::close_font_class() {
 }
 
 // global
-Font **FontDefaultPtr = (Font **)0x009BB484;

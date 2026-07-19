@@ -35,6 +35,7 @@ class DLLEXPORT Buffer {
   int init_class();
   void close_class();
   int get_data();
+  int text_line_height();
   void free_data(int count);
 
  private:
@@ -120,6 +121,7 @@ constexpr size_t BufferSurfaceLockSlot = 0x64;
 constexpr size_t BufferSurfaceUnlockSlot = 0x80;
 
 int __fastcall buffer_get_data_redirect(Buffer *self, void *);
+int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
 void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count);
 
 int __fastcall buffer_set_font_redirect(

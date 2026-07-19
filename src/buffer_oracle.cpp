@@ -11,6 +11,7 @@
 #include "buffer_oracle.h"
 
 #include "buffer.h"
+#include "font.h"
 #include "runtime_oracle.h"
 
 namespace {
@@ -196,8 +197,74 @@ bool verify_free_data() {
     return true;
 }
 
+bool verify_text_line_height() {
+    struct HeightCase { int override_value; int line_height; int height; };
+    const HeightCase cases[] = {
+        {0, 111, 222}, {5, 111, 222}, {-1, 111, 222},
+        {INT_MIN, 111, 222}, {INT_MAX, 111, 1}, {1, INT_MAX, INT_MAX},
+    };
+    auto original = reinterpret_cast<OriginalNoArg>(0x005DCAB0U);
+    Font *const saved_default = *FontDefaultPtr;
+    bool passed = true;
+    for (const HeightCase &test : cases) {
+        for (int preset_font = 0; preset_font < 2 && passed; ++preset_font) {
+            BufferFixture legacy;
+            BufferFixture source;
+            uintptr_t vtable[1];
+            runtime_oracle::initialize_pair(
+                legacy.storage, source.storage, BufferSpec, vtable);
+
+            alignas(Font) uint8_t font_storage[sizeof(Font)] = {};
+            int *const fields = reinterpret_cast<int *>(font_storage);
+            fields[0x00 / 4] = test.override_value;
+            fields[0x0C / 4] = test.line_height;
+            fields[0x10 / 4] = test.height;
+            const uint32_t font = static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(font_storage));
+
+            // Both sides share one font object and one default, so the
+            // published pointer is directly comparable.
+            *FontDefaultPtr = reinterpret_cast<Font *>(font_storage);
+            write_field(legacy, 0x52C, preset_font ? font : 0U);
+            write_field(source, 0x52C, preset_font ? font : 0U);
+
+            const uint32_t legacy_result = original(legacy.object());
+            const uint32_t source_result = static_cast<uint32_t>(
+                source.object()->text_line_height());
+            if (legacy_result != source_result
+                    || memcmp(legacy.storage, source.storage,
+                              sizeof(legacy.storage)) != 0) {
+                passed = false;
+            }
+        }
+    }
+    *FontDefaultPtr = saved_default;
+    return passed;
+}
+
+bool verify_find_font() {
+    const int sizes[] = {
+        INT_MIN, -100000, -5, 0, 8, 9, 10, 11, 12, 13, 22, 26, 31, 40, 48,
+        49, 10046, 10047, 100000, INT_MAX,
+    };
+    for (int size : sizes) {
+        for (int style = 0; style < 4; ++style) {
+            // find_font is cdecl and reads only original-image tables, so both
+            // sides observe identical inputs.
+            const Font *const legacy_result =
+                reinterpret_cast<Font *(__cdecl *)(int, int)>(0x005882F0U)(size, style);
+            const Font *const source_result = find_font(size, style);
+            if (legacy_result != source_result) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 }  // namespace
 
 bool run_buffer_oracle_suite() {
-    return verify_get_data() && verify_free_data();
+    return verify_get_data() && verify_free_data()
+        && verify_text_line_height() && verify_find_font();
 }

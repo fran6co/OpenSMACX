@@ -13,6 +13,7 @@ address,kind
 0x004E3A50,jump
 0x00514189,jump
 0x00525AF4,jump
+0x005882F0,jump
 0x0058EE50,jump
 0x005D4DD0,jump
 0x005DAC70,jump
@@ -20,6 +21,7 @@ address,kind
 0x005DACE0,jump
 0x005DAD10,jump
 0x005DAD40,jump
+0x005DCAB0,jump
 0x005DF570,jump
 0x005DF580,jump
 0x005E3373,jump
