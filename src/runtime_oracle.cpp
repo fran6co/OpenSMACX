@@ -20,6 +20,11 @@ namespace {
 
 constexpr char ResultEnvironment[] = "OPENSMACX_RUNTIME_ORACLE_RESULT";
 
+// Retained from the first phase so the deferred phase can rewrite the same
+// file with its own suite lines appended.
+char ResultPath[MAX_PATH] = "";
+char PhaseOneReport[1024] = "";
+
 struct ProbeContext {
     uint8_t *base;
     size_t offsets[runtime_oracle::MaximumSnapshots];
@@ -123,13 +128,13 @@ bool equivalent(const uint8_t *legacy_storage, const uint8_t *source_storage,
 }  // namespace runtime_oracle
 
 bool run_runtime_oracles() {
-    char result_path[MAX_PATH];
     const DWORD length = GetEnvironmentVariableA(
-        ResultEnvironment, result_path, ARRAYSIZE(result_path));
+        ResultEnvironment, ResultPath, ARRAYSIZE(ResultPath));
     if (length == 0) {
         return true;
     }
-    if (length >= ARRAYSIZE(result_path)) {
+    if (length >= ARRAYSIZE(ResultPath)) {
+        ResultPath[0] = '\0';
         return false;
     }
     char report[1024] = "";
@@ -153,6 +158,57 @@ bool run_runtime_oracles() {
             return false;
         }
     }
-    const bool result_written = write_result(result_path, report);
+    memcpy(PhaseOneReport, report, sizeof(report));
+    const bool result_written = write_result(ResultPath, report);
     return all_passed && result_written;
+}
+
+namespace {
+
+const runtime_oracle::Suite DeferredSuites[] = {
+    {"sprite-release", run_sprite_release_suite},
+};
+
+bool DeferredCompleted = false;
+
+}  // namespace
+
+void run_deferred_oracles() {
+    // One shot: the trigger sits on a startup call site that can fire more
+    // than once, and lifting a redirect twice would be unsafe.
+    if (DeferredCompleted || ResultPath[0] == '\0') {
+        return;
+    }
+    DeferredCompleted = true;
+
+    char report[1024] = "";
+    size_t used = 0;
+    bool all_passed = true;
+    // Carry phase one's lines forward minus the terminator so the file stays a
+    // single record; if this phase never runs the earlier record still stands.
+    for (const char *cursor = PhaseOneReport; *cursor; ++cursor) {
+        if (strncmp(cursor, "all passed\n", 11) == 0) {
+            break;
+        }
+        if (used + 2 >= sizeof(report)) {
+            return;
+        }
+        report[used++] = *cursor;
+    }
+    for (const runtime_oracle::Suite &suite : DeferredSuites) {
+        const bool suite_passed = suite.run();
+        all_passed = all_passed && suite_passed;
+        const int written = _snprintf_s(
+            report + used, sizeof(report) - used, _TRUNCATE, "%s %s\n",
+            suite.name, suite_passed ? "passed" : "failed");
+        if (written < 0) {
+            return;
+        }
+        used += static_cast<size_t>(written);
+    }
+    if (all_passed) {
+        _snprintf_s(report + used, sizeof(report) - used, _TRUNCATE,
+                    "all passed\n");
+    }
+    write_result(ResultPath, report);
 }
