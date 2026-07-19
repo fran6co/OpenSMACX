@@ -139,3 +139,105 @@ int __cdecl buffer_init_class_redirect() {
 
 void __cdecl buffer_close_class_redirect() {
 }
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef long(__stdcall *func_surface_lock)(void *, void *, void *, uint32_t, void *);
+typedef long(__stdcall *func_surface_unlock)(void *, void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// DDSURFACEDESC fields the lock path consumes.
+constexpr size_t SurfaceDescriptorSize = 0x6C;
+constexpr size_t SurfaceDescriptorPitch = 0x10;
+constexpr size_t SurfaceDescriptorData = 0x24;
+
+}  // namespace
+
+/*
+Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
+         first reference and counting every acquisition.
+Original Offset: 005E3373
+Status: Complete
+*/
+int Buffer::get_data() {
+    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
+    void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
+    if (!surface) {
+        // Without a surface the buffer publishes its own storage, and the
+        // store happens whether or not that storage exists.
+        const uint32_t storage = ordered[0x54 / 4];
+        ordered[0x50 / 4] = storage;
+        if (!storage) {
+            return 0;
+        }
+        ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+        return static_cast<int>(storage);
+    }
+    const uint32_t existing = ordered[0x50 / 4];
+    if (existing) {
+        ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+        return static_cast<int>(existing);
+    }
+    // The legacy body leaves the descriptor uninitialised apart from its size.
+    uint8_t descriptor[SurfaceDescriptorSize];
+    const uint32_t descriptor_size = SurfaceDescriptorSize;
+    memcpy(descriptor, &descriptor_size, sizeof(descriptor_size));
+    void **const vtable = *reinterpret_cast<void ***>(surface);
+    const func_surface_lock lock = reinterpret_cast<func_surface_lock>(
+        vtable[BufferSurfaceLockSlot / sizeof(void *)]);
+    if (lock(surface, nullptr, descriptor, 1, nullptr) != 0) {
+        return 0;
+    }
+    ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+    uint32_t pitch;
+    uint32_t data;
+    memcpy(&pitch, descriptor + SurfaceDescriptorPitch, sizeof(pitch));
+    memcpy(&data, descriptor + SurfaceDescriptorData, sizeof(data));
+    ordered[0x4A8 / 4] = pitch;
+    ordered[0x50 / 4] = data;
+    return static_cast<int>(data);
+}
+
+/*
+Purpose: Release acquired references to the buffer's pixel data, unlocking the
+         DirectDraw surface once the last reference is dropped.
+Original Offset: 005E34A3
+Status: Complete
+*/
+void Buffer::free_data(int count) {
+    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
+    void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
+    const int32_t remaining = static_cast<int32_t>(
+        ordered[0x6C / 4] - static_cast<uint32_t>(count));
+    ordered[0x6C / 4] = static_cast<uint32_t>(remaining);
+    if (!surface) {
+        if (remaining <= 0) {
+            ordered[0x50 / 4] = 0;
+            ordered[0x6C / 4] = 0;
+        }
+        return;
+    }
+    const uint32_t data = ordered[0x50 / 4];
+    if (data != 0 && remaining <= 0) {
+        void **const vtable = *reinterpret_cast<void ***>(surface);
+        const func_surface_unlock unlock = reinterpret_cast<func_surface_unlock>(
+            vtable[BufferSurfaceUnlockSlot / sizeof(void *)]);
+        unlock(surface, reinterpret_cast<void *>(data));
+        ordered[0x50 / 4] = 0;
+        ordered[0x6C / 4] = 0;
+    }
+}
+
+int __fastcall buffer_get_data_redirect(Buffer *self, void *) {
+    return self->get_data();
+}
+
+void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
+    self->free_data(count);
+}

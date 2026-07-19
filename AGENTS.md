@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,043 candidates.
+- Current recovery backlog: 5,041 candidates.
 - Current local legacy-island count: 115, reduced from 174.
-- `DllMain` entry redirects: 87, comprising 85 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 89, comprising 87 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -96,6 +96,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered the five Scroll init wrappers, with the primary initializer retained as an explicit classified original dependency.
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
 - Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Buffer and Win subobject destructors retained as classified temporary original dependencies.
+- Recovered `Buffer::get_data` at `0x005E3373` (48 callers) and `Buffer::free_data` at `0x005E34A3` (43 callers), the reference-counted DirectDraw surface lock pair feeding `Buffer::close`.
 - Recovered `Sprite::close` at `0x005E3820` (111 callers), completing the Sprite lifecycle pair.
 - Recovered the two highest-fan-in bottleneck primitives: `Win::is_visible` at `0x005F7E90` (120 callers) and `Sprite::Sprite` at `0x005E37E0` (154 callers), both verified by new in-process runtime-oracle suites because they carry a recursive call and an absolute accounting global respectively.
 
@@ -245,6 +246,7 @@ Other completed corrections and checks:
 - `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
 - `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see `docs/RUNTIME_ORACLE.md` for suite authoring.
 - `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: Scroll suite of the runtime oracle covering fifteen original Scroll methods that are ineligible for copied-byte oracle execution.
+- `src/buffer_oracle.h`, `src/buffer_oracle.cpp`: Buffer runtime-oracle suite driving the lock/release pair through a stand-in DirectDraw surface so no real video memory is touched.
 - `src/graphicwin.h`, `src/graphicwin.cpp`: verified `0xA14` GraphicWin layout, destructor vtable installation and subobject delegation, and the two classified subobject-destructor dependencies.
 - `src/sprite.h`, `src/sprite.cpp`: verified `0x2C` Sprite layout, ordered constructor stores, release accounting and field clearing, and the sprite memory and CRT free bindings. The release paths call the executable's free at a fixed address and the executable CRT heap is uninitialised during `DllMain`, so the runtime oracle covers only non-releasing fixtures; the accounting arithmetic and release ordering are verified at source level with a recording free.
 - `src/win_oracle.h`, `src/win_oracle.cpp`, `src/sprite_oracle.h`, `src/sprite_oracle.cpp`: Win and Sprite runtime-oracle suites covering the recursive visibility query and the constructor's accounting side effect.

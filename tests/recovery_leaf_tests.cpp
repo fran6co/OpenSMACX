@@ -4,6 +4,7 @@
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
 #include "../src/filemap.h"
+#include "../src/buffer.h"
 #include "../src/graphicwin.h"
 #include "../src/font.h"
 #include "../src/log.h"
@@ -4560,6 +4561,186 @@ void test_sprite_close() {
     }
 }
 
+struct FakeSurface {
+    void **vtable;
+};
+
+int surface_lock_calls = 0;
+int surface_unlock_calls = 0;
+void *surface_unlock_data = nullptr;
+uint32_t surface_lock_pitch = 0;
+uint32_t surface_lock_data = 0;
+long surface_lock_result = 0;
+uint32_t surface_lock_seen_size = 0;
+
+long __stdcall fake_surface_lock(
+        void *, void *rect, void *descriptor, uint32_t flags, void *event) {
+    ++surface_lock_calls;
+    auto *bytes = static_cast<uint8_t *>(descriptor);
+    std::memcpy(&surface_lock_seen_size, bytes, sizeof(surface_lock_seen_size));
+    expect(rect == nullptr && flags == 1U && event == nullptr);
+    if (surface_lock_result == 0) {
+        std::memcpy(bytes + 0x10, &surface_lock_pitch, sizeof(surface_lock_pitch));
+        std::memcpy(bytes + 0x24, &surface_lock_data, sizeof(surface_lock_data));
+    }
+    return surface_lock_result;
+}
+
+long __stdcall fake_surface_unlock(void *, void *data) {
+    ++surface_unlock_calls;
+    surface_unlock_data = data;
+    return 0;
+}
+
+void reset_surface_probes() {
+    surface_lock_calls = 0;
+    surface_unlock_calls = 0;
+    surface_unlock_data = nullptr;
+    surface_lock_seen_size = 0;
+}
+
+void test_buffer_get_data() {
+    void *vtable[(0x80 / sizeof(void *)) + 1] = {};
+    vtable[BufferSurfaceLockSlot / sizeof(void *)] =
+        reinterpret_cast<void *>(&fake_surface_lock);
+    vtable[BufferSurfaceUnlockSlot / sizeof(void *)] =
+        reinterpret_cast<void *>(&fake_surface_unlock);
+    FakeSurface surface = {vtable};
+
+    struct GetCase {
+        bool has_surface;
+        uint32_t field_50;      // published data pointer
+        uint32_t field_54;      // owned storage used without a surface
+        uint32_t references;
+        long lock_result;
+        uint32_t lock_pitch;
+        uint32_t lock_data;
+        int expected_result;
+        int expected_locks;
+        uint32_t expected_references;
+    };
+    const GetCase cases[] = {
+        // No surface, no storage: publishes zero and counts nothing.
+        {false, 0x9999U, 0, 4, 0, 0, 0, 0, 0, 4},
+        // No surface with storage: publishes it and counts one reference.
+        {false, 0x9999U, 0x4444U, 4, 0, 0, 0, 0x4444, 0, 5},
+        // Surface already published: counts without locking.
+        {true, 0x5555U, 0, 7, 0, 0, 0, 0x5555, 0, 8},
+        // Surface locks successfully and publishes pitch plus data.
+        {true, 0, 0, 0, 0, 0x1234U, 0x8888U, 0x8888, 1, 1},
+        // A failed lock publishes nothing and counts nothing.
+        {true, 0, 0, 3, 1, 0x1234U, 0x8888U, 0, 1, 3},
+    };
+    for (const GetCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x50, test.field_50);
+            write_at(storage, 16 + 0x54, test.field_54);
+            write_at(storage, 16 + 0x58,
+                     test.has_surface ? reinterpret_cast<uint32_t>(&surface) : 0U);
+            write_at(storage, 16 + 0x6C, test.references);
+            std::memcpy(expected, storage, sizeof(storage));
+
+            reset_surface_probes();
+            surface_lock_result = test.lock_result;
+            surface_lock_pitch = test.lock_pitch;
+            surface_lock_data = test.lock_data;
+
+            auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+            const int result = use_adapter
+                ? buffer_get_data_redirect(buffer, nullptr)
+                : buffer->get_data();
+
+            if (!test.has_surface) {
+                write_at(expected, 16 + 0x50, test.field_54);
+            } else if (test.lock_result == 0 && test.field_50 == 0) {
+                write_at(expected, 16 + 0x4A8, test.lock_pitch);
+                write_at(expected, 16 + 0x50, test.lock_data);
+            }
+            write_at(expected, 16 + 0x6C, test.expected_references);
+
+            expect(result == test.expected_result);
+            expect(surface_lock_calls == test.expected_locks);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            // The descriptor always announces its own size to the surface.
+            if (test.expected_locks) {
+                expect(surface_lock_seen_size == 0x6CU);
+            }
+        }
+    }
+}
+
+void test_buffer_free_data() {
+    void *vtable[(0x80 / sizeof(void *)) + 1] = {};
+    vtable[BufferSurfaceLockSlot / sizeof(void *)] =
+        reinterpret_cast<void *>(&fake_surface_lock);
+    vtable[BufferSurfaceUnlockSlot / sizeof(void *)] =
+        reinterpret_cast<void *>(&fake_surface_unlock);
+    FakeSurface surface = {vtable};
+
+    struct FreeCase {
+        bool has_surface;
+        uint32_t field_50;
+        uint32_t references;
+        int count;
+        int expected_unlocks;
+        bool clears;
+        uint32_t expected_references;
+    };
+    const FreeCase cases[] = {
+        // No surface: the release clears once the count reaches zero.
+        {false, 0x5555U, 3, 1, 0, false, 2},
+        {false, 0x5555U, 1, 1, 0, true, 0},
+        {false, 0x5555U, 1, 4, 0, true, 0},
+        {false, 0, 1, 1, 0, true, 0},
+        // Surface: unlocking additionally requires published data.
+        {true, 0x5555U, 3, 1, 0, false, 2},
+        {true, 0x5555U, 1, 1, 1, true, 0},
+        {true, 0, 1, 1, 0, false, 0},
+        // Release counts are compared as signed, so a wrapping subtraction
+        // that lands negative still releases.
+        {true, 0x5555U, 0, static_cast<int>(0x80000000U), 1, true, 0},
+        {false, 0x5555U, 0, static_cast<int>(0x80000000U), 0, true, 0},
+        // A large positive remainder keeps the data published.
+        {true, 0x5555U, 0x7FFFFFFFU, 1, 0, false, 0x7FFFFFFEU},
+    };
+    for (const FreeCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x50, test.field_50);
+            write_at(storage, 16 + 0x58,
+                     test.has_surface ? reinterpret_cast<uint32_t>(&surface) : 0U);
+            write_at(storage, 16 + 0x6C, test.references);
+            std::memcpy(expected, storage, sizeof(storage));
+
+            reset_surface_probes();
+            auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+            if (use_adapter) {
+                buffer_free_data_redirect(buffer, nullptr, test.count);
+            } else {
+                buffer->free_data(test.count);
+            }
+
+            if (test.clears) {
+                write_at(expected, 16 + 0x50, 0U);
+                write_at(expected, 16 + 0x6C, 0U);
+            } else {
+                write_at(expected, 16 + 0x6C, test.expected_references);
+            }
+            expect(surface_unlock_calls == test.expected_unlocks);
+            if (test.expected_unlocks) {
+                expect(surface_unlock_data
+                       == reinterpret_cast<void *>(test.field_50));
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -4579,6 +4760,8 @@ int main() {
     test_sprite_construct();
     test_graphic_win_destructor();
     test_sprite_close();
+    test_buffer_get_data();
+    test_buffer_free_data();
     test_win_paging();
     test_scroll_init_wrappers();
     test_scroll_range();
