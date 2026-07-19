@@ -314,6 +314,7 @@ if(BUILD_TESTING)
         src/dialog.cpp
         src/filemap_recovery.cpp
         src/font_recovery.cpp
+        src/graphicwin.cpp
         src/log.cpp
         src/menu.cpp
         src/pulldown.cpp

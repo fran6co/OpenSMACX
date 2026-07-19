@@ -52,3 +52,34 @@ class DLLEXPORT GraphicWin : Win {
 
 static_assert(sizeof(GraphicWin) == 0xA14,
               "GraphicWin layout must match the legacy ABI");
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_subobject_destructor)(void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// Temporary original dependencies: the Buffer and Win subobject destructors
+// tear down GDI and DirectDraw resources through the executable's own CRT and
+// stay at their original addresses until that closure is source-owned. Tests
+// outside the hybrid process rebind them.
+extern func_subobject_destructor *BufferOriginalDestructor;
+extern func_subobject_destructor *WinOriginalDestructor;
+
+// Original virtual table addresses the destructor installs before delegating.
+extern const uint32_t GraphicWinPrimaryVtable;
+extern const uint32_t GraphicWinBufferVtable;
+
+GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *);
+
+// Test seams: the subobject destructors are original dependencies, so tests
+// substitute recording stubs to observe delegation targets and ordering.
+void graphic_win_destructor_probe_reset();
+int graphic_win_destructor_probe_buffer_calls();
+int graphic_win_destructor_probe_win_calls();
+void *graphic_win_destructor_probe_buffer_target();
+void *graphic_win_destructor_probe_win_target();
+int graphic_win_destructor_probe_order();
