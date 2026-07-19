@@ -122,6 +122,7 @@ set(OPENSMACX_SOURCES
     src/basepop.cpp
     src/basepop_font.cpp
     src/buffer.cpp
+    src/buffer_oracle.cpp
     src/buttongroup.cpp
     src/caviar.cpp
     src/council.cpp
@@ -310,6 +311,7 @@ if(BUILD_TESTING)
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
         src/basepop_font.cpp
+        src/buffer.cpp
         src/buttongroup.cpp
         src/dialog.cpp
         src/filemap_recovery.cpp

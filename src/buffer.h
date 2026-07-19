@@ -34,6 +34,8 @@ class DLLEXPORT Buffer {
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
   int init_class();
   void close_class();
+  int get_data();
+  void free_data(int count);
 
  private:
   typedef int32_t Dib;
@@ -111,6 +113,14 @@ class DLLEXPORT Buffer {
 };
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
+
+// DirectDraw surface vtable slots the data lock/release pair dispatches
+// through; both are stdcall COM methods on the surface interface.
+constexpr size_t BufferSurfaceLockSlot = 0x64;
+constexpr size_t BufferSurfaceUnlockSlot = 0x80;
+
+int __fastcall buffer_get_data_redirect(Buffer *self, void *);
+void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count);
 
 int __fastcall buffer_set_font_redirect(
     Buffer *self, void *, Font *font1, Font *font2, Font *font3, Font *font4);

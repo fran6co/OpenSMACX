@@ -21,6 +21,8 @@ address,kind
 0x005DAD40,jump
 0x005DF570,jump
 0x005DF580,jump
+0x005E3373,jump
+0x005E34A3,jump
 0x005E37E0,jump
 0x005E3820,jump
 0x005ED7D0,jump
