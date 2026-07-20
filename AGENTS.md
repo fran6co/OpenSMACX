@@ -317,6 +317,22 @@ to distinct lvalues with constant right-hand sides are order-independent in
 final state, so swapping them is an equivalent mutant that would survive any
 possible suite; reporting those as holes trains you to ignore the output.
 
+As of `2dd742b`, every recovered file has been swept and triaged: all
+non-equivalent mutants are killed by the union of `recovery-leaf-tests`, the
+`recovery-oracle` ctest (the copied-byte differential executable, registered
+as a ctest precisely so the harness can measure it - pair
+`--target recovery-oracle-tests` with `--test '^recovery-oracle$'`), and the
+in-process runtime oracle under the hybrid smoke. Survivors that remain are
+either documented equivalences (`Verification note:` comments at the
+function), instrumentation scaffolding, or the known suite-scope gaps:
+`Buffer`'s and `spying`'s bodies are observable only in the hybrid process,
+so a leaf-suite sweep of src/buffer.cpp or src/spying_recovery.cpp reports
+mass survival by design. New recoveries should be swept when their tests
+land, not re-audited wholesale. Known harness noise classes not yet
+filtered: literals inside `[X / 4]` indices whose mutation folds to the same
+index or to a division by zero, and `Probe`-style dotted increment targets
+that the swap-dependence check treats as opaque.
+
 Add a deferred suite when a recovery's release path needs real allocations -
 `Buffer::close`, `Win::close`, and the destructor chain all qualify. Keep
 non-releasing coverage in phase one, which is cheaper and runs unconditionally.
