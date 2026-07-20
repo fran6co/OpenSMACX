@@ -2422,6 +2422,28 @@ void test_menu_accessors() {
         expect(result == expected_result);
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
+
+    // The loop bound is 15 real entries; index 15 sits just past entries_[14]
+    // in the trailing canary region, which sizeof(Menu) + 32 keeps safely
+    // addressable. Planting the requested ID only there distinguishes the
+    // correct `< 15` bound from an off-by-one `<= 15`: the former must return
+    // -1 having never read that slot, while the latter would wrongly report
+    // it found.
+    {
+        alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        for (int index = 0; index < 15; ++index) {
+            const int id = 1000 + index;
+            write_at(storage, 16 + 0xA38 + index * 0x14, id);
+        }
+        const int requested = 55;
+        write_at(storage, 16 + 0xA38 + 15 * 0x14, requested);
+        std::memcpy(expected, storage, sizeof(storage));
+        auto *menu = reinterpret_cast<Menu *>(storage + 16);
+        expect(menu->id_to_index(requested) == -1);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
 }
 
 void expect_text_constructor_state(uint8_t *expected) {
