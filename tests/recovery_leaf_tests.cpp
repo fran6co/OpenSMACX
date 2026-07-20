@@ -3803,6 +3803,23 @@ void test_dialog_id_to_pos() {
     expect_storage_bytes(storage, expected, sizeof(storage));
     expect_storage_bytes(
         reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    // A single-entry MISS is the only shape that observes the `count > 0`
+    // guard: the match-at-position-zero case above leaves entry_position_ and
+    // current_entry_ exactly as the pre-loop stores set them, so skipping the
+    // loop entirely (guard mutated to `count > 1`) produces identical state.
+    // A miss walks once - position 1, cursor advanced to the entry's next -
+    // which the skipped loop cannot reproduce.
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, one);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, invalid_entry);
+    write_at(expected, 16 + 0xD0, one);
+    expect(dialog->id_to_pos(77) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(
+        reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
 }
 
 void test_dialog_set_selected_id() {
@@ -3942,6 +3959,22 @@ void test_dialog_get_selected_id() {
     write_at(storage, 16 + 0xCC, three);
     write_at(storage, 16 + 0xD0, -7);
     write_at(storage, 16 + 0xEC, -3);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0xC8, head);
+    write_at(expected, 16 + 0xD0, zero);
+    expect(dialog->get_selected_id() == 10);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // position == 0 is the only value that distinguishes `position < 0` from
+    // `position <= 0` (or `< 1`): both branches leave the cursor at the head
+    // and return its ID, but the negative branch normalizes the position by
+    // adding the count, so entry_position_ ends at 3 instead of 0. Only the
+    // full-object byte compare sees the difference.
+    seed_dialog(storage, expected);
+    write_at(storage, 16 + 0xC4, head);
+    write_at(storage, 16 + 0xCC, three);
+    write_at(storage, 16 + 0xD0, -7);
+    write_at(storage, 16 + 0xEC, zero);
     std::memcpy(expected, storage, sizeof(storage));
     write_at(expected, 16 + 0xC8, head);
     write_at(expected, 16 + 0xD0, zero);
@@ -4142,6 +4175,92 @@ void test_dialog_pos_to_id() {
     expect_storage_bytes(storage, expected, sizeof(storage));
     expect_storage_bytes(
         reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+}
+
+void test_dialog_font_and_color_setters() {
+    alignas(Dialog) uint8_t storage[sizeof(Dialog) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *dialog = new (storage + 16) Dialog;
+
+    // The twelve color slots interleave by tier - primary at 0x7C/0x88/0x94/
+    // 0xA0, secondary at 0x80/0x8C/0x98/0xA4, tertiary at 0x84/0x90/0x9C/
+    // 0xA8 - so each setter must stride by 0xC, not fill a contiguous block.
+    // Distinct sentinels per argument catch both dropped and misrouted
+    // stores; the full-object compare catches writes to a sibling tier.
+    struct ColorCase {
+        void (Dialog::*member)(int, int, int, int);
+        void (__fastcall *redirect)(Dialog *, void *, int, int, int, int);
+        size_t offsets[4];
+    };
+    const ColorCase color_cases[] = {
+        {&Dialog::set_dialog_text_color, dialog_set_text_color_redirect,
+         {0x7C, 0x88, 0x94, 0xA0}},
+        {&Dialog::set_dialog_text_color2, dialog_set_text_color2_redirect,
+         {0x80, 0x8C, 0x98, 0xA4}},
+        {&Dialog::set_dialog_text_color3, dialog_set_text_color3_redirect,
+         {0x84, 0x90, 0x9C, 0xA8}},
+    };
+    const int colors[4] = {INT_MIN, -1, 0x5A5A5A5A, INT_MAX};
+    for (const ColorCase &test : color_cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_dialog(storage, expected);
+            std::memcpy(expected, storage, sizeof(storage));
+            for (int slot = 0; slot < 4; ++slot) {
+                write_at(expected, 16 + test.offsets[slot], colors[slot]);
+            }
+            if (adapter) {
+                test.redirect(dialog, nullptr,
+                              colors[0], colors[1], colors[2], colors[3]);
+            } else {
+                (dialog->*test.member)(
+                    colors[0], colors[1], colors[2], colors[3]);
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // set_dialog_font reads only Font::is_initialized(), an inline check of
+    // font_obj_ against null. Font's data is private with no offset pins, so
+    // the fixtures are raw storage with font_obj_ written at 0x08 per the
+    // declared layout (int unk_1_, BOOL is_fot_set_, HFONT font_obj_) - no
+    // constructed Font is required or wanted here.
+    alignas(Font) uint8_t initialized_font[sizeof(Font)];
+    alignas(Font) uint8_t uninitialized_font[sizeof(Font)];
+    std::memset(initialized_font, 0xA5, sizeof(initialized_font));
+    std::memset(uninitialized_font, 0xA5, sizeof(uninitialized_font));
+    const HFONT font_object = reinterpret_cast<HFONT>(0x1234U);
+    const HFONT null_font_object = nullptr;
+    write_at(initialized_font, 0x08, font_object);
+    write_at(uninitialized_font, 0x08, null_font_object);
+    auto *primary = reinterpret_cast<Font *>(initialized_font);
+    auto *unready = reinterpret_cast<Font *>(uninitialized_font);
+    auto *secondary = reinterpret_cast<Font *>(0x11111111U);
+    auto *tertiary = reinterpret_cast<Font *>(0x22222222U);
+
+    // Null primary: error 3, nothing written at all.
+    seed_dialog(storage, expected);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(dialog->set_dialog_font(nullptr, secondary, tertiary) == 3);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Initialized primary: all three stored, success.
+    seed_dialog(storage, expected);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x70, primary);
+    write_at(expected, 16 + 0x74, secondary);
+    write_at(expected, 16 + 0x78, tertiary);
+    expect(dialog->set_dialog_font(primary, secondary, tertiary) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Uninitialized primary: font1_ is left alone, but the secondary and
+    // tertiary slots are still stored and the call still succeeds.
+    seed_dialog(storage, expected);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x74, secondary);
+    write_at(expected, 16 + 0x78, tertiary);
+    expect(dialog_set_font_redirect(
+               dialog, nullptr, unready, secondary, tertiary) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
 void test_string_struct_current_accessors() {
@@ -4544,6 +4663,41 @@ void test_sprite_construct() {
     SpriteMemoryUsed = saved_total;
 }
 
+// Recording stand-ins installed into the subobject-destructor seams. The
+// destructor's own Probe bookkeeping records its *intent* inline before each
+// delegation, so a suite that asserts only on the probe cannot tell whether
+// the delegation call itself happened - dropping either call left every probe
+// value intact. These stubs are the record of the calls actually being made.
+struct GraphicWinStubRecord {
+    int buffer_calls;
+    void *buffer_target;
+    int win_calls;
+    void *win_target;
+    int sequence;
+};
+GraphicWinStubRecord graphic_win_stub_record = {};
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall graphic_win_stub_buffer_destructor(void *target) {
+    graphic_win_stub_record.buffer_calls++;
+    graphic_win_stub_record.buffer_target = target;
+    graphic_win_stub_record.sequence =
+        (graphic_win_stub_record.sequence << 4) | 2;
+}
+
+void __thiscall graphic_win_stub_win_destructor(void *target) {
+    graphic_win_stub_record.win_calls++;
+    graphic_win_stub_record.win_target = target;
+    graphic_win_stub_record.sequence =
+        (graphic_win_stub_record.sequence << 4) | 1;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 void test_graphic_win_destructor() {
     static_assert(sizeof(GraphicWin) == 0xA14,
                   "GraphicWin tests require the legacy layout");
@@ -4558,13 +4712,11 @@ void test_graphic_win_destructor() {
         auto *object = reinterpret_cast<GraphicWin *>(storage + 16);
 
         graphic_win_destructor_probe_reset();
-        // Both subobject destructors are stubbed here so this test observes
-        // only delegation; the Buffer side is source-owned but needs globals
-        // that are unmapped outside the hybrid process.
+        graphic_win_stub_record = GraphicWinStubRecord{};
         func_subobject_destructor *const saved_buffer = BufferSubobjectDestructor;
         func_subobject_destructor *const saved_win = WinOriginalDestructor;
-        BufferSubobjectDestructor = nullptr;
-        WinOriginalDestructor = nullptr;
+        BufferSubobjectDestructor = graphic_win_stub_buffer_destructor;
+        WinOriginalDestructor = graphic_win_stub_win_destructor;
         GraphicWin *const target = null_self ? nullptr : object;
         expect(graphic_win_destructor_redirect(target, nullptr) == target);
         BufferSubobjectDestructor = saved_buffer;
@@ -4575,6 +4727,8 @@ void test_graphic_win_destructor() {
             expect_storage_bytes(storage, expected, sizeof(storage));
             expect(graphic_win_destructor_probe_buffer_calls() == 0);
             expect(graphic_win_destructor_probe_win_calls() == 0);
+            expect(graphic_win_stub_record.buffer_calls == 0);
+            expect(graphic_win_stub_record.win_calls == 0);
             continue;
         }
         write_at(expected, 16 + 0x000, GraphicWinPrimaryVtable);
@@ -4589,6 +4743,15 @@ void test_graphic_win_destructor() {
         expect(graphic_win_destructor_probe_win_target()
                == reinterpret_cast<void *>(storage + 16));
         expect(graphic_win_destructor_probe_order() == 0x21);
+        // The stubs prove the delegation calls were made, not merely
+        // recorded as intended by the inline probe.
+        expect(graphic_win_stub_record.buffer_calls == 1);
+        expect(graphic_win_stub_record.win_calls == 1);
+        expect(graphic_win_stub_record.buffer_target
+               == reinterpret_cast<void *>(storage + 16 + 0x444));
+        expect(graphic_win_stub_record.win_target
+               == reinterpret_cast<void *>(storage + 16));
+        expect(graphic_win_stub_record.sequence == 0x21);
     }
 }
 
@@ -5158,5 +5321,6 @@ int main() {
     // around that call site, not a bug in add() or in this test; moving the
     // call site to the end of main() avoids it without masking it.
     test_button_group_add();
+    test_dialog_font_and_color_setters();
     return failures == 0 ? 0 : 1;
 }
