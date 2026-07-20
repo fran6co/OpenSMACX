@@ -270,9 +270,15 @@ class Harness:
                          self.timeout) == PASSED
 
     def check(self) -> str:
-        """PASSED, FAILED, or TIMEOUT -- a hung mutant is not a crashed run."""
-        return self._run(["ctest", "-R", self.test], self.build_dir,
-                         self.test_timeout)
+        """PASSED, FAILED, or TIMEOUT -- a hung mutant is not a crashed run.
+
+        --no-tests=error is load-bearing: `ctest -R` with a pattern that
+        matches nothing exits zero, which would make every mutant of a
+        misspelled --test "survive" and report the whole file as one giant
+        coverage hole.
+        """
+        return self._run(["ctest", "--no-tests=error", "-R", self.test],
+                         self.build_dir, self.test_timeout)
 
     def calibrate(self, elapsed: float) -> None:
         """Allow a generous multiple of the clean runtime before calling a hang."""

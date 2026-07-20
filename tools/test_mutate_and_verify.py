@@ -176,6 +176,25 @@ class BuildMutantsTest(unittest.TestCase):
         self.assertFalse([d for d in dropped if "return" in d])
 
 
+class HarnessCommandTest(unittest.TestCase):
+    def test_ctest_refuses_to_pass_on_zero_matched_tests(self):
+        # `ctest -R` with a no-match pattern exits zero; without
+        # --no-tests=error a misspelled --test silently turns every mutant
+        # into a survivor.
+        args = argparse.Namespace(build_dir=".", target="t", test="t",
+                                  timeout=60)
+        harness = mutate_and_verify.Harness(args)
+        captured = {}
+
+        def fake_run(command, cwd, timeout):
+            captured["command"] = command
+            return mutate_and_verify.PASSED
+
+        harness._run = fake_run
+        harness.check()
+        self.assertIn("--no-tests=error", captured["command"])
+
+
 class HarnessClassificationTest(unittest.TestCase):
     """The three outcomes must stay distinct: a mutant that never compiled is
     not evidence that the suite observes anything."""
