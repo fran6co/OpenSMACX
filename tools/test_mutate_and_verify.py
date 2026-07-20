@@ -29,6 +29,7 @@ Original Offset: 006343E0
 Status: Complete
 */
 int Vector::at_limit() {
+    // The bound below is 3, chosen to match the legacy disassembly at 0x28.
     if (count_ >= 3) {
         return 1;
     }
@@ -74,6 +75,30 @@ class ComparisonPatternTest(unittest.TestCase):
         self.assertEqual(("==", "!="), self._first_match("if (p == q) {"))
 
 
+class SplitAssignmentTest(unittest.TestCase):
+    """A subscript containing whitespace (`ordered[0x04 / 4]`) is not a
+    declaration and must never have its type-specifier stripping applied to
+    it. `.split()[-1]` on the raw target used to grab the last whitespace
+    token - `4]` - which collapsed every offset with the same divisor onto
+    one fake identifier and made distinct array stores look like a
+    write-after-write on a single lvalue."""
+
+    def test_distinct_offsets_with_internal_whitespace_stay_distinct(self):
+        first = mutate_and_verify.split_assignment("ordered[0x04 / 4] = 0;")[0]
+        second = mutate_and_verify.split_assignment("ordered[0x0C / 4] = 0;")[0]
+        self.assertNotEqual(first, second)
+        self.assertEqual("ordered[0x04/4]", first)
+
+    def test_member_access_target_is_kept_verbatim(self):
+        self.assertEqual(
+            "self->field", mutate_and_verify.split_assignment("self->field = 1;")[0])
+
+    def test_declaration_specifier_still_stripped_without_brackets(self):
+        self.assertEqual("b", mutate_and_verify.split_assignment("int b = a;")[0])
+        self.assertEqual(
+            "p", mutate_and_verify.split_assignment("uint32_t *p = q;")[0])
+
+
 class StatementDependenceTest(unittest.TestCase):
     def test_independent_stores_are_equivalent_mutants(self):
         # Distinct lvalues with constant right-hand sides cannot observe order.
@@ -81,6 +106,13 @@ class StatementDependenceTest(unittest.TestCase):
             mutate_and_verify.statements_interact("ordered[0] = 0;", "ordered[1] = 0;"))
         self.assertFalse(
             mutate_and_verify.statements_interact("self->a = 1;", "self->b = 2;"))
+
+    def test_distinct_offsets_with_internal_whitespace_are_equivalent(self):
+        # The regression case: before the split_assignment fix these collapsed
+        # onto the same fake target and were (accidentally, and for every such
+        # pair in the codebase) reported as a coverage-hole swap.
+        self.assertFalse(mutate_and_verify.statements_interact(
+            "ordered[0x04 / 4] = 0;", "ordered[0x0C / 4] = 0;"))
 
     def test_independent_declarations_are_equivalent_mutants(self):
         self.assertFalse(mutate_and_verify.statements_interact(
@@ -118,6 +150,16 @@ class BuildMutantsTest(unittest.TestCase):
     def test_skips_equivalent_swap_of_independent_stores(self):
         _, mutants = self._mutants("006343D0")
         self.assertEqual([], [m for m in mutants if m.operator == "swap-adjacent"])
+
+    def test_skips_comment_lines(self):
+        # A literal inside a `//` comment (`0x28` here) has no compiled
+        # effect, so mutating it would always survive - not a coverage hole,
+        # just a wasted build. Confirmed against real cases in font_recovery.cpp
+        # and sprite.cpp where such comments produced only noise.
+        _, mutants = self._mutants("006343E0")
+        self.assertFalse(
+            any("0x28" in m.description for m in mutants),
+            "a comment-only literal must not be mutated")
 
     def test_mutant_lines_differ_from_original_by_construction(self):
         lines, mutants = self._mutants("006343D0")

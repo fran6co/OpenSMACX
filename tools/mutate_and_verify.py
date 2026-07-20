@@ -87,6 +87,12 @@ def parse_functions(lines: list[str]) -> list[Function]:
     """Locate function bodies introduced by an `Original Offset:` comment.
 
     A body runs from the line after the signature to the first column-zero `}`.
+    A signature whose brace line is itself balanced (`{ stmt; }` on one line,
+    e.g. `void f() { x = y; }`) has no separable multi-line body: treating its
+    next line as the start and scanning for a column-zero `}` would run past
+    it into whatever follows - including the next function's doc comment and
+    signature - silently fabricating a bogus, oversized span. Such one-liners
+    are skipped rather than mis-parsed.
     """
     functions: list[Function] = []
     for index, line in enumerate(lines):
@@ -101,6 +107,11 @@ def parse_functions(lines: list[str]) -> list[Function]:
         # The signature may wrap across lines; the body opens at the first `{`.
         while cursor < len(lines) and "{" not in lines[cursor]:
             cursor += 1
+        if cursor >= len(lines):
+            continue
+        brace_line = lines[cursor]
+        if brace_line.count("{") == brace_line.count("}"):
+            continue  # one-liner: no multi-line body to mutate
         start = cursor + 1
         end = start
         while end < len(lines) and not lines[end].startswith("}"):
@@ -134,12 +145,23 @@ def split_assignment(line: str) -> tuple[str, str, str]:
     match = ASSIGNMENT.match(stripped)
     if not match:
         return "", "", ""
-    # Drop declaration specifiers so `uint32_t *p` and `p` compare equal, but
-    # keep any subscript so `ordered[0]` and `ordered[1]` stay distinct. The
-    # specifier must go before whitespace is collapsed, or `int b` fuses into
-    # a single bogus identifier.
-    target = match.group("target").strip().split()[-1].lstrip("*&")
-    target = re.sub(r"\s+", "", target)
+    # A subscript or member target (`ordered[0x04 / 4]`, `self->field`) is
+    # never a declaration, so it is never carrying a type specifier to strip -
+    # keep it verbatim (whitespace collapsed) so distinct offsets stay
+    # distinct. `.split()[-1]` on a raw target instead grabs the last
+    # whitespace-separated token, which for `ordered[0x04 / 4]` is the
+    # meaningless `4]` - every offset with the same divisor then collapses to
+    # the same fake identifier, and pairs of genuinely different array stores
+    # look like a write-after-write on one lvalue.
+    raw_target = match.group("target").strip()
+    if any(marker in raw_target for marker in ("[", "->", ".")):
+        target = re.sub(r"\s+", "", raw_target)
+    else:
+        # Only here can a declaration's type specifier precede the name, e.g.
+        # `uint32_t *p` or `int b`. Strip it before collapsing whitespace, or
+        # `int b` fuses into the single bogus identifier `intb`.
+        target = raw_target.split()[-1].lstrip("*&")
+        target = re.sub(r"\s+", "", target)
     identifiers = re.findall(r"[A-Za-z_]\w*", target)
     return target, (identifiers[0] if identifiers else ""), line[match.end():]
 
@@ -173,6 +195,12 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
     for index in range(function.start, function.end):
         line = lines[index]
         stripped = line.strip()
+        if stripped.startswith("//"):
+            # A pure comment line has no compiled effect, so any literal or
+            # operator inside it (`// borrowed flag at 0x28 is clear.`) is
+            # guaranteed to survive every mutation - not a coverage hole, just
+            # a build spent proving a comment doesn't execute.
+            continue
 
         # 1. Drop a store. Catches assertions that never read the field.
         if is_simple_statement(line):
