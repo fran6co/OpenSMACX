@@ -261,8 +261,15 @@ bool verify_close() {
 
         // The virtual-base table each side uses: slot one holds the
         // displacement from offset 4 to the subobject whose table is written.
-        uint32_t legacy_vbtable[2] = {0, 0x10};
-        uint32_t source_vbtable[2] = {0, 0x10};
+        // Displacement 0x10 would land the write at offset 0x14
+        // (current_position_'s slot), which close_with_tables unconditionally
+        // overwrites with zero two lines later - making the entire read of
+        // vbtable[1] and the write it drives unobservable regardless of
+        // whether the displacement is computed correctly. 0x14 lands the
+        // write at offset 0x18 (allocator_), which close_with_tables never
+        // touches and which the comparison loop below already checks.
+        uint32_t legacy_vbtable[2] = {0, 0x14};
+        uint32_t source_vbtable[2] = {0, 0x14};
 
         for (int side = 0; side < 2; ++side) {
             ListFixture &fixture = side ? source : legacy;
@@ -278,12 +285,16 @@ bool verify_close() {
             const uint32_t vb_pointer = static_cast<uint32_t>(
                 reinterpret_cast<uintptr_t>(vb));
             const uint32_t zero = 0;
+            // current_position_ is seeded to a nonzero sentinel rather than
+            // zero: close_with_tables resets it unconditionally, so a
+            // zero-seeded fixture can never observe whether that reset fired.
+            const uint32_t stale_position = 0x77777777U;
             memcpy(base + 0x00, &owner, sizeof(owner));
             memcpy(base + 0x04, &vb_pointer, sizeof(vb_pointer));
             memcpy(base + 0x08, &head, sizeof(head));
             memcpy(base + 0x0C, &zero, sizeof(zero));
             memcpy(base + 0x10, &count, sizeof(count));
-            memcpy(base + 0x14, &zero, sizeof(zero));
+            memcpy(base + 0x14, &stale_position, sizeof(stale_position));
         }
 
         Record = Probe();

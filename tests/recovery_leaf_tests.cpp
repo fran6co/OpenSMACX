@@ -4319,6 +4319,42 @@ void test_string_struct_seek_id() {
     expect_storage_bytes(storage, expected, sizeof(storage));
     expect_storage_bytes(
         reinterpret_cast<uint8_t *>(entries), entries_expected, sizeof(entries));
+
+    // A single-entry list distinguishes `entry_count_ > 0` from `> 1`: with
+    // three entries above, both guards evaluate true and the loop runs either
+    // way, so a mutated bound survived undetected. Only count == 1 makes the
+    // guard itself observable.
+    struct GuardedEntry single_entry_storage;
+    uint8_t single_entry_expected[sizeof(single_entry_storage)];
+    seed_storage(reinterpret_cast<uint8_t *>(&single_entry_storage),
+                 single_entry_expected, sizeof(single_entry_storage));
+    single_entry_storage.entry.id = 42;
+    single_entry_storage.entry.next = &single_entry_storage.entry;
+    std::memcpy(single_entry_expected, &single_entry_storage,
+                sizeof(single_entry_storage));
+    StringStructEntry *single_head = &single_entry_storage.entry;
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, single_head);
+    write_at(storage, 16 + 0x10, one);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, single_head);
+    write_at(expected, 16 + 0x14, zero);
+    expect(strings->seek_id(42) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(reinterpret_cast<uint8_t *>(&single_entry_storage),
+                         single_entry_expected, sizeof(single_entry_storage));
+
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x08, single_head);
+    write_at(storage, 16 + 0x10, one);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x0C, single_head);
+    write_at(expected, 16 + 0x14, one);
+    expect(strings->seek_id(17) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect_storage_bytes(reinterpret_cast<uint8_t *>(&single_entry_storage),
+                         single_entry_expected, sizeof(single_entry_storage));
 }
 
 }  // namespace
