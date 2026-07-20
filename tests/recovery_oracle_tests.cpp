@@ -1130,6 +1130,15 @@ int main() {
         {"vertical wrapped lower", 0U, 0xFFFFFFFFU,
          10U, 0xFFFFFF9CU, 0U, 10U, 5U, 0U,
          {0U, 0U, 0x80000000U, 10U}},
+        // The drag branch re-derives the horizontal/vertical split with its
+        // own width > height comparison; the existing "equal dimensions"
+        // case only reaches the non-drag copy. Equal axes here make the
+        // strictness observable: the correct strict compare goes vertical
+        // and shifts top/bottom, while an >= mutant goes horizontal and
+        // shifts left/right instead.
+        {"equal dimensions drag", 0U, 0xFFFFFFFFU,
+         20U, 0xFFFFFFECU, 0U, 10U, 5U, 4U,
+         {2U, 3U, 12U, 23U}},
     };
     for (const ThumbOracleCase &test : thumb_cases) {
         ScrollFixture source_scroll{};
