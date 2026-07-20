@@ -10,8 +10,34 @@
 #include <climits>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <float.h>
+
+#include "../src/spot.h"
+#include "../src/font.h"
+
+// Link-only stubs. This binary compiles src/pulldown.cpp for the PullDown
+// differentials; its destructor delegates to the GraphicWin destructor, which
+// pulls in the Buffer teardown and thus the Spot and Font members Buffer owns.
+// No oracle in this suite constructs or tears down any of those objects, so
+// these are unreachable here - they abort rather than returning a plausible
+// wrong answer, so that a future suite reaching them fails loudly instead of
+// silently differing from the leaf-test stubs.
+void Spot::shutdown() {
+    std::fprintf(stderr, "Spot::shutdown is a link-only stub in this binary\n");
+    std::abort();
+}
+
+int Font::init(LPCSTR, int, uint32_t) {
+    std::fprintf(stderr, "Font::init is a link-only stub in this binary\n");
+    std::abort();
+}
+
+void Font::close() {
+    std::fprintf(stderr, "Font::close is a link-only stub in this binary\n");
+    std::abort();
+}
 
 class LegacyAlphaNet {
  public:

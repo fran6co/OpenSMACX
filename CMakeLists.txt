@@ -818,6 +818,13 @@ if(MINGW)
             src/scroll.cpp
             src/vector.cpp
             src/win.cpp
+            # The PullDown destructor delegates to the GraphicWin destructor,
+            # which pulls in the Buffer teardown it forwards to, which in turn
+            # needs the Spot and Font objects Buffer owns.
+            src/graphicwin.cpp
+            src/buffer.cpp
+            src/spot_recovery.cpp
+            src/font_recovery.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)

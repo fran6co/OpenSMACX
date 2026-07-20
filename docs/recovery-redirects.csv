@@ -38,6 +38,7 @@ address,kind
 0x005EE110,jump
 0x005F7E90,jump
 0x005F86C0,jump
+0x005F88A0,jump
 0x005F8CB0,jump
 0x005F8D20,jump
 0x005F8D90,jump

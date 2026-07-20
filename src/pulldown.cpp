@@ -184,3 +184,49 @@ int __fastcall pull_down_uncheck_item_redirect(
 int __fastcall pull_down_get_selected_redirect(PullDown *self, void *) {
     return self->get_selected();
 }
+
+func_sprite_free *PullDownFree = (func_sprite_free *)0x00644EF2;
+const uint32_t PullDownPrimaryVtable = 0x0066FF40;
+const uint32_t PullDownBufferVtable = 0x0066FF38;
+uint32_t *PullDownFieldF38Default = (uint32_t *)0x009B7B58;
+uint32_t *PullDownFieldF3CDefault = (uint32_t *)0x009B7B5C;
+
+/*
+Purpose: Destroy a PullDown by releasing every item's text pair, resetting
+         the trailing fields from their global defaults, and delegating to
+         the GraphicWin destructor.
+Original Offset: 005F88A0
+Status: Complete
+Verification note: the two virtual-table stores are dead - the GraphicWin
+delegation unconditionally overwrites both slots with its own tables - so
+they mirror the original's transient writes and no suite can observe them.
+*/
+PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
+    volatile uint32_t *const ordered = reinterpret_cast<volatile uint32_t *>(self);
+    ordered[0x000 / 4] = PullDownPrimaryVtable;
+    ordered[0x444 / 4] = PullDownBufferVtable;
+
+    // Sixty-four items with two owned strings each: the text at 0xA18 and the
+    // right-hand text at 0xA1C, stride 0x14. The mnemonic pointer at 0xA28 is
+    // deliberately left alone, exactly as the legacy body leaves it.
+    for (size_t index = 0; index < 64; ++index) {
+        volatile uint32_t *const text = ordered + (0xA18 / 4) + index * 5;
+        volatile uint32_t *const right_text = text + 1;
+        if (*text != 0) {
+            PullDownFree(reinterpret_cast<void *>(*text));
+            *text = 0;
+        }
+        if (*right_text != 0) {
+            PullDownFree(reinterpret_cast<void *>(*right_text));
+            *right_text = 0;
+        }
+    }
+
+    *reinterpret_cast<volatile uint8_t *>(
+        reinterpret_cast<uint8_t *>(self) + 0xF34) = 1;
+    ordered[0xF38 / 4] = *PullDownFieldF38Default;
+    ordered[0xF3C / 4] = *PullDownFieldF3CDefault;
+    graphic_win_destructor_redirect(
+        reinterpret_cast<GraphicWin *>(self), nullptr);
+    return self;
+}
