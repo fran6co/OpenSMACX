@@ -5248,6 +5248,107 @@ void test_buffer_text_line_height() {
     }
 }
 
+int pull_down_free_calls = 0;
+void *pull_down_free_targets[128];
+
+void *pull_down_free_probe(void *block) {
+    if (pull_down_free_calls < 128) {
+        pull_down_free_targets[pull_down_free_calls] = block;
+    }
+    ++pull_down_free_calls;
+    return nullptr;
+}
+
+void test_pull_down_destructor() {
+    alignas(PullDown) uint8_t storage[sizeof(PullDown) + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+    auto *self = reinterpret_cast<PullDown *>(storage + 16);
+
+    // The seed pattern would make every text slot look allocated; zero all
+    // 128 owned-string slots first, then plant sentinels in a shape that
+    // distinguishes the two slots per item and proves the walk reaches the
+    // final item: text only, right only, both, and both at index 63.
+    const uint32_t zero = 0;
+    for (size_t index = 0; index < 64; ++index) {
+        write_at(storage, 16 + 0xA18 + index * 0x14, zero);
+        write_at(storage, 16 + 0xA1C + index * 0x14, zero);
+    }
+    const uint32_t text_0 = 0x11110001U;
+    const uint32_t right_1 = 0x22220002U;
+    const uint32_t text_2 = 0x33330003U;
+    const uint32_t right_2 = 0x44440004U;
+    const uint32_t text_63 = 0x55550005U;
+    const uint32_t right_63 = 0x66660006U;
+    write_at(storage, 16 + 0xA18 + 0 * 0x14, text_0);
+    write_at(storage, 16 + 0xA1C + 1 * 0x14, right_1);
+    write_at(storage, 16 + 0xA18 + 2 * 0x14, text_2);
+    write_at(storage, 16 + 0xA1C + 2 * 0x14, right_2);
+    write_at(storage, 16 + 0xA18 + 63 * 0x14, text_63);
+    write_at(storage, 16 + 0xA1C + 63 * 0x14, right_63);
+    std::memcpy(expected, storage, sizeof(storage));
+
+    // Final state: the GraphicWin delegation overwrites both vtable slots
+    // with its own tables and clears 0xA10; the planted strings are freed
+    // and nulled; dirty_ is set and the trailing pair reloads from the
+    // rebindable defaults. Mnemonic slots keep their seeds untouched.
+    write_at(expected, 16 + 0x000, GraphicWinPrimaryVtable);
+    write_at(expected, 16 + 0x444, GraphicWinBufferVtable);
+    write_at(expected, 16 + 0xA10, zero);
+    write_at(expected, 16 + 0xA18 + 0 * 0x14, zero);
+    write_at(expected, 16 + 0xA1C + 1 * 0x14, zero);
+    write_at(expected, 16 + 0xA18 + 2 * 0x14, zero);
+    write_at(expected, 16 + 0xA1C + 2 * 0x14, zero);
+    write_at(expected, 16 + 0xA18 + 63 * 0x14, zero);
+    write_at(expected, 16 + 0xA1C + 63 * 0x14, zero);
+    const uint8_t dirty = 1;
+    write_at(expected, 16 + 0xF34, dirty);
+    uint32_t default_f38 = 0xCAFE0001U;
+    uint32_t default_f3c = 0xCAFE0002U;
+    write_at(expected, 16 + 0xF38, default_f38);
+    write_at(expected, 16 + 0xF3C, default_f3c);
+
+    func_sprite_free *const saved_free = PullDownFree;
+    uint32_t *const saved_f38 = PullDownFieldF38Default;
+    uint32_t *const saved_f3c = PullDownFieldF3CDefault;
+    func_subobject_destructor *const saved_buffer = BufferSubobjectDestructor;
+    func_subobject_destructor *const saved_win = WinOriginalDestructor;
+    PullDownFree = pull_down_free_probe;
+    PullDownFieldF38Default = &default_f38;
+    PullDownFieldF3CDefault = &default_f3c;
+    BufferSubobjectDestructor = graphic_win_stub_buffer_destructor;
+    WinOriginalDestructor = graphic_win_stub_win_destructor;
+    pull_down_free_calls = 0;
+    graphic_win_destructor_probe_reset();
+    graphic_win_stub_record = GraphicWinStubRecord{};
+
+    expect(pull_down_destructor_redirect(self, nullptr) == self);
+
+    PullDownFree = saved_free;
+    PullDownFieldF38Default = saved_f38;
+    PullDownFieldF3CDefault = saved_f3c;
+    BufferSubobjectDestructor = saved_buffer;
+    WinOriginalDestructor = saved_win;
+
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    // Six frees in walk order, text before right-hand text within an item.
+    expect(pull_down_free_calls == 6);
+    expect(pull_down_free_targets[0] == reinterpret_cast<void *>(text_0));
+    expect(pull_down_free_targets[1] == reinterpret_cast<void *>(right_1));
+    expect(pull_down_free_targets[2] == reinterpret_cast<void *>(text_2));
+    expect(pull_down_free_targets[3] == reinterpret_cast<void *>(right_2));
+    expect(pull_down_free_targets[4] == reinterpret_cast<void *>(text_63));
+    expect(pull_down_free_targets[5] == reinterpret_cast<void *>(right_63));
+    // The GraphicWin delegation actually ran, against this object.
+    expect(graphic_win_stub_record.buffer_calls == 1);
+    expect(graphic_win_stub_record.win_calls == 1);
+    expect(graphic_win_stub_record.buffer_target
+           == reinterpret_cast<void *>(storage + 16 + 0x444));
+    expect(graphic_win_stub_record.win_target
+           == reinterpret_cast<void *>(storage + 16));
+    expect(graphic_win_stub_record.sequence == 0x21);
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -5322,5 +5423,6 @@ int main() {
     // call site to the end of main() avoids it without masking it.
     test_button_group_add();
     test_dialog_font_and_color_setters();
+    test_pull_down_destructor();
     return failures == 0 ? 0 : 1;
 }

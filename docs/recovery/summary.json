@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 32,
-      "source_complete": 602,
+      "source_complete": 603,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4996
+      "unrecovered": 4995
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 548,
-    "matched_function_starts": 548,
-    "unique_addresses": 548,
+    "annotations": 549,
+    "matched_function_starts": 549,
+    "unique_addresses": 549,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 174,
-      "function": 38
+      "data": 176,
+      "function": 39
     },
     "items": [
       {
@@ -2364,6 +2364,33 @@
         "type": "BOOL *"
       },
       {
+        "address": "0x00644EF2",
+        "function": "_free",
+        "function_address": "0x00644EF2",
+        "kind": "function",
+        "location": "src/pulldown.cpp:188",
+        "symbol": "PullDownFree",
+        "type": "func_sprite_free *"
+      },
+      {
+        "address": "0x009B7B58",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/pulldown.cpp:191",
+        "symbol": "PullDownFieldF38Default",
+        "type": "uint32_t *"
+      },
+      {
+        "address": "0x009B7B5C",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/pulldown.cpp:192",
+        "symbol": "PullDownFieldF3CDefault",
+        "type": "uint32_t *"
+      },
+      {
         "address": "0x009BB568",
         "function": "",
         "function_address": "",
@@ -3237,7 +3264,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 38,
-    "total": 212
+    "matched_function_starts": 39,
+    "total": 215
   }
 }

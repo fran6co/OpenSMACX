@@ -4350,7 +4350,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005F86C0,0x005F86E6,38,.text,sub_5f86c0,,0x005F86C0-0x005F86E6,game,sp_ready;purged_ok,src/win.cpp:141,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,2
 0x005F8770,0x005F87F6,134,.text,sub_5f8770,,0x005F8770-0x005F87F6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005F8800,0x005F8893,147,.text,??0PullDown@@QAE@XZ,void (__thiscall ??0PullDown@@QAE@XZ)(PullDown* this),0x005F8800-0x005F8893,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,26
-0x005F88A0,0x005F891B,123,.text,??1PullDown@@QAE@XZ,void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this),0x005F88A0-0x005F891B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,27
+0x005F88A0,0x005F891B,123,.text,??1PullDown@@QAE@XZ,void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this),0x005F88A0-0x005F891B,game,hidden;sp_ready;purged_ok,src/pulldown.cpp:198,Complete,,,source_complete,,,,2,27
 0x005F8920,0x005F8967,71,.text,?init@PullDown@@QAEXPAUMenu@@@Z,"void (__thiscall ?init@PullDown@@QAEXPAUMenu@@@Z)(PullDown* this, Menu*)",0x005F8920-0x005F8967,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,12
 0x005F8970,0x005F89C8,88,.text,?UNK1@PullDown@@QAEXXZ,void (__thiscall ?UNK1@PullDown@@QAEXXZ)(PullDown* this),0x005F8970-0x005F89C8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005F89D0,0x005F8BDF,527,.text,?add_item@PullDown@@QAEHHPAD@Z,"int (__thiscall ?add_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)",0x005F89D0-0x005F8BDF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,12
@@ -5610,7 +5610,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00644EC6,0x00644ECF,9,.text,__lockexit,,0x00644EC6-0x00644ECF,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,1,2
 0x00644ECF,0x00644ED8,9,.text,__unlockexit,,0x00644ECF-0x00644ED8,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,1,2
 0x00644ED8,0x00644EF2,26,.text,__initterm,,0x00644ED8-0x00644EF2,library,lib;staticdef;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,2
-0x00644EF2,0x00644F3A,72,.text,_free,,0x00644EF2-0x00644F3A,library,lib;hidden;sp_ready;purged_ok,,,,BufferFree | SpriteFree | _free,original_dependency,,,,4,170
+0x00644EF2,0x00644F3A,72,.text,_free,,0x00644EF2-0x00644F3A,library,lib;hidden;sp_ready;purged_ok,,,,BufferFree | PullDownFree | SpriteFree | _free,original_dependency,,,,4,170
 0x00644F3A,0x00644F45,11,.text,_abs,,0x00644F3A-0x00644F45,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,126
 0x00644F45,0x00644F79,52,.text,?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z,,0x00644F45-0x00644F79,library,lib;frame;hidden;sp_ready,,,,,external_library,,,,0,1
 0x00644F79,0x00644F80,7,.text,sub_644f79,,0x00644F79-0x00644F80,library,lib;hidden;sp_ready,,,,,external_library,,,0x00644F79: ?_CallMemberFunction0@@YGXPAX0@Z\ndoubtful name,0,2

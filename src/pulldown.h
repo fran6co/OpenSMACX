@@ -59,6 +59,23 @@ class DLLEXPORT PullDown : GraphicWin {
 static_assert(sizeof(PullDown) == 0xF40,
               "PullDown layout must match the legacy ABI");
 
+// Item text allocations come from the executable's CRT, so the destructor
+// must release them through its free rather than this module's. Tests
+// outside the hybrid process rebind this.
+extern func_sprite_free *PullDownFree;
+
+// Original virtual table addresses the destructor installs before delegating
+// to the GraphicWin destructor (which then overwrites both with its own).
+extern const uint32_t PullDownPrimaryVtable;
+extern const uint32_t PullDownBufferVtable;
+
+// Defaults the destructor copies into the two trailing fields; the game keeps
+// them at 0x009B7B58/0x009B7B5C. Tests outside the hybrid process rebind
+// them at locally mapped storage.
+extern uint32_t *PullDownFieldF38Default;
+extern uint32_t *PullDownFieldF3CDefault;
+
+PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *);
 int __fastcall pull_down_hide_item_redirect(
     PullDown *self, void *, int id);
 int __fastcall pull_down_show_item_redirect(
