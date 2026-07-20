@@ -470,6 +470,17 @@ uint32_t Scroll::set_pos(int position) {
 Purpose: Compute and publish the scrollbar thumb rectangle.
 Original Offset: 00606C50
 Status: Complete
+Verification note: several mutation-harness survivors in this body are
+equivalent by construction, not coverage gaps. The two interim stores to
+0xA3C in the drag branch are dead - the branch ends by unconditionally
+storing 0xFFFFFFFF over them, faithfully mirroring the original's transient
+writes, so no suite can observe them. The clamp idioms are strictness-
+insensitive: `x < 0 ? 0U : x` equals `x < 1 ? 0U : x` and `x <= 0 ? 0U : x`
+everywhere (the only inputs where the branches differ select equal values),
+and likewise `a > b ? a : b` equals `a >= b ? a : b`. The early read_bits
+offsets over the just-normalized rect scan bytes that were all zeroed two
+statements earlier, so off-by-small-constant offset mutants read the same
+zeros.
 */
 void Scroll::compute_thumb_rect(RECT *rect) {
     auto *thumb = reinterpret_cast<uint8_t *>(this) + 0xA4C;
