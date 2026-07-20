@@ -327,6 +327,15 @@ void test_alpha_net_pid_to_idx() {
                 sizeof(duplicate_id));
     expect(network.pid_2_idx(duplicate_id) == 2);
 
+    // The loop covers indices 1..7 (offsets 0..6 * pid_stride); planting a
+    // matching ID only at offset 7 * pid_stride distinguishes that bound from
+    // an off-by-one that would read one slot further.
+    const uint32_t upper_decoy_id = 3000U;
+    std::memcpy(bytes + first_pid_offset + 7 * pid_stride, &upper_decoy_id,
+                sizeof(upper_decoy_id));
+    expect(network.pid_2_idx(upper_decoy_id) == 0);
+    expect(alpha_net_pid_to_idx_redirect(&network, nullptr, upper_decoy_id) == 0);
+
     AlphaNet empty_network{};
     expect(empty_network.pid_2_idx(0) == 1);
 }
@@ -338,11 +347,16 @@ void test_alpha_net_identity_lookups() {
     constexpr size_t first_pid_offset = 0x928;
     constexpr size_t identity_offset = 0x92C;
     constexpr size_t slot_stride = 0x19C;
+    // Slot 0 must not use the "not found" sentinel (0) for either value: a
+    // mutant that starts the search loop at slot 1 instead of slot 0 would
+    // still report 0 for a slot-0 query - not because it found the entry, but
+    // because 0 is also what "not found" returns. Distinct nonzero values at
+    // slot 0 make the two cases observably different.
     const uint32_t process_ids[7] = {
-        0U, 1U, 0x7FFFFFFFU, 0x80000000U, 0xFFFFFFFFU, 123U, 456U,
+        111U, 1U, 0x7FFFFFFFU, 0x80000000U, 0xFFFFFFFFU, 123U, 456U,
     };
     const int8_t identities[7] = {
-        0, 1, 0x7F, static_cast<int8_t>(0x80),
+        111, 1, 0x7F, static_cast<int8_t>(0x80),
         static_cast<int8_t>(0xFF), 42, -42,
     };
     const uint32_t lower_decoy_pid = 789U;
@@ -649,6 +663,57 @@ void test_button_group_lifecycle() {
     expect(button_group_init_redirect(
         group, nullptr, negative_group_id, negative_flags) == negative_group_id);
     expect_storage_bytes(storage, expected, sizeof(storage));
+}
+
+void test_button_group_add() {
+    // add() never calls anything on `button` beyond writing its group_ field,
+    // so the target only needs to be a big-enough, uninitialized region
+    // reinterpreted as BaseButton*, not a real constructed object - BaseButton
+    // privately inherits the largely-unrecovered GraphicWin, and placement-new
+    // would run through that whole chain for no benefit here.
+    uint8_t *const button_storage[2] = {
+        new uint8_t[sizeof(BaseButton) + 32],
+        new uint8_t[sizeof(BaseButton) + 32],
+    };
+    BaseButton *const buttons[2] = {
+        reinterpret_cast<BaseButton *>(button_storage[0] + 16),
+        reinterpret_cast<BaseButton *>(button_storage[1] + 16),
+    };
+
+    alignas(ButtonGroup) uint8_t storage[sizeof(ButtonGroup) + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+    expect_lifecycle_clear(expected);
+    auto *group = new (storage + 16) ButtonGroup;
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    for (int adapter = 0; adapter < 2; ++adapter) {
+        for (int call = 0; call < 2; ++call) {
+            BaseButton *const button = buttons[call];
+            const int slot = adapter * 2 + call;
+            std::memcpy(expected + 16 + slot * 4, &button, sizeof(button));
+            const uint32_t new_count = static_cast<uint32_t>(slot + 1);
+            std::memcpy(expected + 16 + 0x80, &new_count, sizeof(new_count));
+            if (adapter) {
+                button_group_add_redirect(group, nullptr, button);
+            } else {
+                group->add(button);
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            // Verification note: add() also writes `button->group_ = this`,
+            // but group_ is private to BaseButton (friended only to
+            // ButtonGroup and Scroll) with no public accessor, and
+            // BaseButton's layout past its GraphicWin base is not yet pinned
+            // by a static_assert. Reading it here would mean either a
+            // production-header change purely for test access or a
+            // hardcoded, unverified offset - both worse than disclosing the
+            // gap. The buttons_[]/count_ effects above are this class's own
+            // fields and are fully verified.
+        }
+    }
+
+    delete[] button_storage[0];
+    delete[] button_storage[1];
 }
 
 void test_base_pop_string_font() {
@@ -4928,8 +4993,13 @@ void test_string_struct_remove_all() {
 }
 
 void test_find_font() {
-    int sizes[FontSizeTableCount] = {8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48};
-    Font table[FontSizeTableCount * 4];
+    // sizes and table each carry one entry past FontSizeTableCount: a decoy
+    // the function must never read, sized so its style-slot pointer
+    // arithmetic (index * 4) still lands inside table.
+    int sizes[FontSizeTableCount + 1] = {
+        8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 9000,
+    };
+    Font table[(FontSizeTableCount + 1) * 4];
     int *const saved_sizes = FontSizeTable;
     Font *const saved_table = FontTable;
     FontSizeTable = sizes;
@@ -4950,6 +5020,10 @@ void test_find_font() {
         {10046, 1, 11},   // one closer, so the nearest entry wins
         {22, 0, 6},    // |20-22| == |24-22|, first wins
         {26, 1, 7},
+        // Every real entry is 8952+ away from 9000, so the true bound must
+        // stop at index 11 (size 48). Reading one past it would find the
+        // decoy at index 12 with delta 0 and wrongly report that instead.
+        {9000, 1, 11},
     };
     for (const FontCase &test : cases) {
         const Font *const result = find_font(test.size, test.style);
@@ -5074,5 +5148,15 @@ int main() {
     test_string_struct_current_accessors();
     test_string_struct_next_entry();
     test_string_struct_seek_id();
+    // test_button_group_add() is deliberately called last, not adjacent to
+    // test_button_group_lifecycle() where it logically belongs. Placing any
+    // extra call - even an empty one, even a second call to an
+    // already-passing existing test - immediately before
+    // test_base_pop_string_font() reproducibly crashes the whole suite
+    // (confirmed by duplicating test_button_group_lifecycle() itself with no
+    // other change). This is a pre-existing stack/Wine-environment fragility
+    // around that call site, not a bug in add() or in this test; moving the
+    // call site to the end of main() avoids it without masking it.
+    test_button_group_add();
     return failures == 0 ? 0 : 1;
 }
