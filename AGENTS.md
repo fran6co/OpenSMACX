@@ -270,6 +270,22 @@ confirm a new suite fails when the recovery is perturbed, and treat a poison
 that does not fail as evidence the fixtures are vacuous rather than as a
 formality.
 
+The same vacuous-seed failure mode also hides inside a fixture that *writes*
+through a computed address rather than only reading a table. `verify_close`'s
+synthetic vbtable displacement (`src/stringstruct_oracle.cpp`) pointed the
+write at offset `0x14` - `current_position_`'s slot - which
+`close_with_tables` unconditionally overwrites two lines later; the read of
+`vbtable[1]` and the write it drives were unobservable regardless of whether
+the displacement was computed correctly. The same fixture separately seeded
+`current_position_` to zero before the call, so the explicit reset that clears
+it was equally unobservable - a zeroed field can't show that it was zeroed.
+Both were caught by `tools/mutate_and_verify.py` (against `recovery-leaf-tests`,
+which has no coverage of `close` at all) and confirmed at the oracle level by
+poisoning the real constants and watching `stringstruct` flip to `failed`
+under the hybrid smoke target. Fixed by retargeting the write at an offset
+`close_with_tables` never touches (`0x18`, `allocator_`) and seeding
+`current_position_` with a nonzero sentinel (`0x77777777`) instead of zero.
+
 Run `tools/mutate_and_verify.py <source>` to perform that check mechanically
 instead of by hand. It derives source-level mutants of each `Original Offset:`
 function - dropped stores, perturbed constants, inverted comparisons, swapped
