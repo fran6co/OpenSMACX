@@ -449,6 +449,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_batch_decompile.py"
     )
+
+    add_test(NAME mutation-harness-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_mutate_and_verify.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX

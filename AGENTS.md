@@ -270,6 +270,37 @@ confirm a new suite fails when the recovery is perturbed, and treat a poison
 that does not fail as evidence the fixtures are vacuous rather than as a
 formality.
 
+Run `tools/mutate_and_verify.py <source>` to perform that check mechanically
+instead of by hand. It derives source-level mutants of each `Original Offset:`
+function - dropped stores, perturbed constants, inverted comparisons, swapped
+dependent statements - rebuilds, and runs the owning test for each, requiring
+every mutant to be killed. Read the three outcomes precisely:
+
+- `killed` - the suite observed the perturbation. This is the only outcome
+  that constitutes evidence.
+- `SURVIVED` - a coverage hole. Some behaviour of the recovery is not observed
+  by any assertion; either extend the fixtures or record the gap in a
+  `Verification note:` comment as with the unobservable derived vtable stage.
+- `no compile` - the mutant never built and therefore proves nothing. These
+  are reported separately and never counted as kills.
+
+The sweep measures one suite at a time - whatever `--target`/`--test` name,
+defaulting to `recovery-leaf-tests`. A survivor is therefore unobserved *by
+that suite*, which is not the same as unobserved by every gate: the in-process
+runtime oracle runs under the hybrid smoke target and is not exercised by a
+default sweep. Before recording a gap, check whether the other gate covers it.
+
+A mutant that hangs the suite counts as killed; the harness times it out at
+ten times the clean run rather than waiting on the build timeout. The tool
+restores the source in a `finally` and on SIGINT/SIGTERM, so an interrupted
+sweep does not leave a mutant on disk - but confirm `git status` is clean
+before trusting a later build anyway.
+
+Swaps are only emitted where the two statements genuinely interact. Two stores
+to distinct lvalues with constant right-hand sides are order-independent in
+final state, so swapping them is an equivalent mutant that would survive any
+possible suite; reporting those as holes trains you to ignore the output.
+
 Add a deferred suite when a recovery's release path needs real allocations -
 `Buffer::close`, `Win::close`, and the destructor chain all qualify. Keep
 non-releasing coverage in phase one, which is cheaper and runs unconditionally.
@@ -339,6 +370,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
+- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
@@ -445,6 +477,7 @@ Caveat: of 1,072 SEH prologues only 387 are C++ EH thunks. The remaining ~685 ar
 - `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
+- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
