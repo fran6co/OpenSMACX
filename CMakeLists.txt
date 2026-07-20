@@ -855,6 +855,11 @@ if(MINGW)
             USES_TERMINAL
             VERBATIM
         )
+        # Also registered as a CTest so tools that drive suites through ctest
+        # - the mutation harness in particular - can measure this suite's
+        # coverage instead of arguing about it. ctest does not build, so
+        # harness runs pair it with `--target recovery-oracle-tests`.
+        add_test(NAME recovery-oracle COMMAND ${OPENSMACX_RECOVERY_ORACLE_COMMAND})
 
         set(OPENSMACX_STATIC_RECOMPILE_DIR
             "${CMAKE_CURRENT_BINARY_DIR}/static-recompile-pilot")

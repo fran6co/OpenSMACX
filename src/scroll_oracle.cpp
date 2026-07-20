@@ -350,6 +350,12 @@ bool verify_position() {
         {0x45454545U, 0U, 100U, 0U, 101U},
         {0x45454545U, 0U, 100U, 1U, 25U},
         {0x45454545U, 0x80000000U, 0x7FFFFFFFU, 1U, 0U},
+        // An inverted range at position == minimum is the only shape that
+        // observes the strictness of `position < minimum`: with min <= max
+        // both branches store the same value there, but with min > max the
+        // else-branch clamps to the maximum while the mutated if-branch
+        // stores the minimum.
+        {0x45454545U, 100U, 0U, 0U, 100U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
     auto original = reinterpret_cast<OriginalOneArg>(0x00605D20U);
