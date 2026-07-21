@@ -56,8 +56,8 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - `2ea0897 Harden recovery verification workflow`
 - The canonical IDB now lives only at the ignored, hash-pinned `.opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb`; IDA databases are prohibited repository artifacts.
 - `verify-recovery-metadata` deterministically regenerates and compares every canonical/correlation output, and hybrid staging depends on it.
-- Its stamp hashes the exact source-metadata projection consumed by the exporter, so ordinary implementation, test, and runtime-oracle edits reuse a verified result while annotation or fixed-address-binding changes still force the multi-minute IDB comparison.
-- Its ignored canonical-export checkpoint separately hashes the exporter's true input closure and three canonical outputs, so classification failures and committed-catalog promotion resume at correlation instead of repeating the multi-minute IDB parse; correlation and final byte comparisons still run, and `--force` rebuilds every stage.
+- Its stamp hashes the exact source-metadata projection consumed by the exporter, so ordinary implementation, test, and runtime-oracle edits reuse a verified result while annotation or fixed-address-binding changes still force catalog regeneration and byte comparison.
+- Its ignored canonical-export checkpoint separately hashes the binary-analysis input closure, binary-only projections of `functions.csv` and `summary.json`, and the complete call graph. Source annotations, bindings, redirects, and overrides are cheaply reapplied before correlation, so normal recovery promotions avoid the multi-minute IDB parse while correlation and final byte comparisons still run; binary drift invalidates the checkpoint and `--force` rebuilds every stage.
 - `verify-recovery-batch` builds and runs behavioral tests, ABI checks, differential oracles, ordinary island regeneration, metadata verification, staging, and runtime smoke.
 - All proprietary-producing paths are restricted to nonsymlinked descendants of `.opensmacx/` or `build/`.
 
