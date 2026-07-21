@@ -4913,6 +4913,170 @@ void test_graphic_win_destructor() {
     }
 }
 
+struct GraphicWinCloseStubRecord {
+    int win_calls;
+    void *win_target;
+    int buffer_calls;
+    void *buffer_target;
+    int release_calls;
+    void *release_target;
+    uint32_t release_flags;
+    uint32_t sequence;
+    uint32_t dependency_seen_a10[2];
+    uint32_t dependency_seen_134[2];
+    uint32_t dependency_seen_9cc[2];
+    uint32_t release_seen_a10;
+    uint32_t release_seen_134;
+    uint32_t release_seen_9cc;
+    uint32_t release_seen_a08;
+    uint32_t release_seen_a0c;
+    bool replace_a08;
+    void *replacement_a08;
+};
+GraphicWinCloseStubRecord graphic_win_close_stub_record = {};
+
+uint32_t graphic_win_field(void *self, size_t offset) {
+    uint32_t value;
+    std::memcpy(&value, static_cast<uint8_t *>(self) + offset, sizeof(value));
+    return value;
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall graphic_win_stub_win_close(void *target) {
+    GraphicWinCloseStubRecord &record = graphic_win_close_stub_record;
+    record.win_calls++;
+    record.win_target = target;
+    record.sequence = (record.sequence << 4) | 1U;
+    record.dependency_seen_a10[0] = graphic_win_field(target, 0xA10);
+    record.dependency_seen_134[0] = graphic_win_field(target, 0x134);
+    record.dependency_seen_9cc[0] = graphic_win_field(target, 0x9CC);
+}
+
+void __thiscall graphic_win_stub_buffer_close(void *target) {
+    GraphicWinCloseStubRecord &record = graphic_win_close_stub_record;
+    auto *const self = static_cast<uint8_t *>(target) - 0x444;
+    record.buffer_calls++;
+    record.buffer_target = target;
+    record.sequence = (record.sequence << 4) | 2U;
+    record.dependency_seen_a10[1] = graphic_win_field(self, 0xA10);
+    record.dependency_seen_134[1] = graphic_win_field(self, 0x134);
+    record.dependency_seen_9cc[1] = graphic_win_field(self, 0x9CC);
+    if (record.replace_a08) {
+        write_at(self, 0xA08, record.replacement_a08);
+    }
+}
+
+uint32_t __thiscall graphic_win_stub_release(void *target, uint32_t flags) {
+    GraphicWinCloseStubRecord &record = graphic_win_close_stub_record;
+    record.release_calls++;
+    record.release_target = target;
+    record.release_flags = flags;
+    record.sequence = (record.sequence << 4) | 3U;
+    record.release_seen_a10 = graphic_win_field(record.win_target, 0xA10);
+    record.release_seen_134 = graphic_win_field(record.win_target, 0x134);
+    record.release_seen_9cc = graphic_win_field(record.win_target, 0x9CC);
+    record.release_seen_a08 = graphic_win_field(record.win_target, 0xA08);
+    record.release_seen_a0c = graphic_win_field(record.win_target, 0xA0C);
+    return 0x7B3D19E5U;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void test_graphic_win_close() {
+    static_assert(sizeof(GraphicWin) == 0xA14,
+                  "GraphicWin close tests require the legacy layout");
+    struct FakeReleaseObject {
+        uintptr_t *vtable;
+    };
+    uintptr_t release_vtable[] = {
+        reinterpret_cast<uintptr_t>(&graphic_win_stub_release),
+    };
+    FakeReleaseObject release_object = {release_vtable};
+
+    // mode 0: null throughout; mode 1: present throughout; modes 2 and 3
+    // prove field_A08_ is loaded after both dependency calls by having the
+    // Buffer close stand-in install or remove the release target.
+    for (int mode = 0; mode < 4; ++mode) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(GraphicWin) uint8_t storage[sizeof(GraphicWin) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            auto *const self = reinterpret_cast<GraphicWin *>(storage + 16);
+            void *const initial_target = (mode == 1 || mode == 3)
+                ? &release_object : nullptr;
+            void *const final_target = (mode == 1 || mode == 2)
+                ? &release_object : nullptr;
+            write_at(storage, 16 + 0xA08, initial_target);
+            std::memcpy(expected, storage, sizeof(storage));
+            const uint32_t initial_a10 = graphic_win_field(storage + 16, 0xA10);
+            const uint32_t initial_134 = graphic_win_field(storage + 16, 0x134);
+            const uint32_t initial_9cc = graphic_win_field(storage + 16, 0x9CC);
+
+            const uint32_t zero = 0;
+            write_at(expected, 16 + 0xA10, zero);
+            write_at(expected, 16 + 0x134, zero);
+            write_at(expected, 16 + 0x138, zero);
+            for (size_t offset = 0x9CC; offset <= 0xA04; offset += 4) {
+                write_at(expected, 16 + offset, zero);
+            }
+            uint32_t default_a0c = 0xC6A51F73U;
+            write_at(expected, 16 + 0xA08, static_cast<void *>(nullptr));
+            write_at(expected, 16 + 0xA0C, default_a0c);
+
+            func_subobject_close *const saved_win = WinOriginalClose;
+            func_subobject_close *const saved_buffer = BufferSubobjectClose;
+            uint32_t *const saved_default = GraphicWinFieldA0CDefault;
+            WinOriginalClose = graphic_win_stub_win_close;
+            BufferSubobjectClose = graphic_win_stub_buffer_close;
+            GraphicWinFieldA0CDefault = &default_a0c;
+            graphic_win_close_stub_record = GraphicWinCloseStubRecord{};
+            graphic_win_close_stub_record.replace_a08 = mode >= 2;
+            graphic_win_close_stub_record.replacement_a08 = final_target;
+
+            const uint32_t result = use_adapter
+                ? graphic_win_close_redirect(self, nullptr)
+                : self->close();
+
+            WinOriginalClose = saved_win;
+            BufferSubobjectClose = saved_buffer;
+            GraphicWinFieldA0CDefault = saved_default;
+
+            const GraphicWinCloseStubRecord &record =
+                graphic_win_close_stub_record;
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect(record.win_calls == 1);
+            expect(record.win_target == self);
+            expect(record.buffer_calls == 1);
+            expect(record.buffer_target == storage + 16 + 0x444);
+            expect(record.sequence == (final_target ? 0x123U : 0x12U));
+            for (int dependency = 0; dependency < 2; ++dependency) {
+                expect(record.dependency_seen_a10[dependency] == initial_a10);
+                expect(record.dependency_seen_134[dependency] == initial_134);
+                expect(record.dependency_seen_9cc[dependency] == initial_9cc);
+            }
+            if (final_target) {
+                expect(result == 0x7B3D19E5U);
+                expect(record.release_calls == 1);
+                expect(record.release_target == &release_object);
+                expect(record.release_flags == 1U);
+                expect(record.release_seen_a10 == 0);
+                expect(record.release_seen_134 == 0);
+                expect(record.release_seen_9cc == 0);
+                expect(record.release_seen_a08
+                       == reinterpret_cast<uintptr_t>(&release_object));
+                expect(record.release_seen_a0c == default_a0c);
+            } else {
+                expect(result == default_a0c);
+                expect(record.release_calls == 0);
+            }
+        }
+    }
+}
+
 int sprite_close_free_calls = 0;
 void *sprite_close_free_targets[4];
 
@@ -5525,6 +5689,7 @@ int main() {
     test_win_is_visible();
     test_sprite_construct();
     test_graphic_win_destructor();
+    test_graphic_win_close();
     test_sprite_close();
     test_buffer_get_data();
     test_buffer_free_data();

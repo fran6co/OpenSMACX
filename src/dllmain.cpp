@@ -48,7 +48,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 100;
+constexpr size_t RedirectCount = 101;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -317,6 +317,11 @@ bool install_redirects() {
             0x005D4DD0,
             reinterpret_cast<uintptr_t>(&graphic_win_destructor_redirect),
             OPENSMACX_SIGNATURE_005D4DD0,
+        },
+        {
+            0x005D4E40,
+            reinterpret_cast<uintptr_t>(&graphic_win_close_redirect),
+            OPENSMACX_SIGNATURE_005D4E40,
         },
         {
             0x005E37E0,
@@ -719,8 +724,14 @@ bool install_redirects() {
             0x006054D0, scroll_primary_init_signature, SignatureSize)) {
         return false;
     }
-    // Buffer's destructor is source-owned now, so only Win's remains a
-    // preflighted temporary dependency.
+    const uint8_t win_close_signature[SignatureSize] =
+        OPENSMACX_SIGNATURE_005EB640;
+    if (!validate_signature(
+            0x005EB640, win_close_signature, SignatureSize)) {
+        return false;
+    }
+    // Buffer teardown is source-owned now. GraphicWin still retains the Win
+    // close and destructor bodies as preflighted temporary dependencies.
     const uint8_t win_destructor_signature[SignatureSize] =
         OPENSMACX_SIGNATURE_005EBC90;
     if (!validate_signature(

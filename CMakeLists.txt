@@ -139,6 +139,7 @@ set(OPENSMACX_SOURCES
     src/game.cpp
     src/general.cpp
     src/graphicwin.cpp
+    src/graphicwin_oracle.cpp
     src/heap.cpp
     src/log.cpp
     src/maininterface.cpp
@@ -242,6 +243,10 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
     set(OPENSMACX_HEAP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
+    set(OPENSMACX_GRAPHICWIN_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/graphicwin.cpp.obj")
+    set(OPENSMACX_GRAPHICWIN_ORACLE_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/graphicwin_oracle.cpp.obj")
     set(OPENSMACX_LOG_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
     set(OPENSMACX_MENU_OBJECT
@@ -287,6 +292,8 @@ if(MINGW)
             --font-object "${OPENSMACX_FONT_OBJECT}"
             --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
             --heap-object "${OPENSMACX_HEAP_OBJECT}"
+            --graphicwin-object "${OPENSMACX_GRAPHICWIN_OBJECT}"
+            --graphicwin-oracle-object "${OPENSMACX_GRAPHICWIN_ORACLE_OBJECT}"
             --log-object "${OPENSMACX_LOG_OBJECT}"
             --menu-object "${OPENSMACX_MENU_OBJECT}"
             --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
@@ -400,6 +407,8 @@ if(BUILD_TESTING)
                 --font-object "${OPENSMACX_FONT_OBJECT}"
                 --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
                 --heap-object "${OPENSMACX_HEAP_OBJECT}"
+                --graphicwin-object "${OPENSMACX_GRAPHICWIN_OBJECT}"
+                --graphicwin-oracle-object "${OPENSMACX_GRAPHICWIN_ORACLE_OBJECT}"
                 --log-object "${OPENSMACX_LOG_OBJECT}"
                 --menu-object "${OPENSMACX_MENU_OBJECT}"
                 --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"

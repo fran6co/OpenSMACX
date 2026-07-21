@@ -40,6 +40,8 @@ def main():
     parser.add_argument("--font-object")
     parser.add_argument("--filemap-object")
     parser.add_argument("--heap-object")
+    parser.add_argument("--graphicwin-object")
+    parser.add_argument("--graphicwin-oracle-object")
     parser.add_argument("--log-object")
     parser.add_argument("--menu-object")
     parser.add_argument("--pulldown-object")
@@ -235,6 +237,48 @@ def main():
                 fail(
                     f"Win runtime oracle lacks raw original {description} "
                     f"call at 0x{address:08X}")
+
+    if args.graphicwin_object:
+        graphic_headers = run([args.objdump, "-f", args.graphicwin_object])
+        if "file format pe-i386" not in graphic_headers:
+            fail("GraphicWin object is not a 32-bit PE COFF object")
+        graphic_symbols = run(
+            [args.nm, "--defined-only", args.graphicwin_object])
+        for description, symbol in (
+                ("GraphicWin close", "__ZN10GraphicWin5closeEv"),
+                ("GraphicWin close adapter",
+                 "@_Z26graphic_win_close_redirectP10GraphicWinPv@8")):
+            if symbol not in graphic_symbols:
+                fail(f"missing required {description} symbol")
+        graphic_disassembly = run(
+            [args.objdump, "-d", "-C", args.graphicwin_object])
+        close_adapter = re.search(
+            r"<@_Z26graphic_win_close_redirectP10GraphicWinPv@8>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            graphic_disassembly, re.DOTALL)
+        if not close_adapter or not returns_without_popping(
+                close_adapter.group("body")):
+            fail("GraphicWin close adapter violates no-argument thiscall cleanup")
+
+    if args.graphicwin_oracle_object:
+        oracle_headers = run(
+            [args.objdump, "-f", args.graphicwin_oracle_object])
+        if "file format pe-i386" not in oracle_headers:
+            fail("GraphicWin runtime oracle object is not a 32-bit PE COFF object")
+        oracle_symbols = run(
+            [args.nm, "--defined-only", args.graphicwin_oracle_object])
+        if "__Z28run_graphic_win_oracle_suitev" not in oracle_symbols:
+            fail("missing GraphicWin runtime oracle suite entry point")
+        oracle_disassembly = run(
+            [args.objdump, "-d", "-C", args.graphicwin_oracle_object])
+        call = re.search(
+            r"\bmov\s+\$0x5d4e40,%(?P<register>e[a-z]{2})"
+            r"(?:[^\n]*\n){0,8}?[^\n]*\bcall\s+\*%(?P=register)",
+            oracle_disassembly)
+        if not call:
+            fail(
+                "GraphicWin runtime oracle lacks raw original close call "
+                "at 0x005D4E40")
 
     if args.vector_object:
         vector_headers = run([args.objdump, "-f", args.vector_object])

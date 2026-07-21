@@ -28,6 +28,7 @@ class DLLEXPORT GraphicWin : Win {
  public:
   GraphicWin() { ; }
   ~GraphicWin() { ; }
+  uint32_t close();
  private:
   Buffer buffer_;
   uint32_t field_9CC_;
@@ -58,6 +59,7 @@ static_assert(sizeof(GraphicWin) == 0xA14,
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 typedef void(__thiscall func_subobject_destructor)(void *);
+typedef void(__thiscall func_subobject_close)(void *);
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
@@ -71,11 +73,21 @@ typedef void(__thiscall func_subobject_destructor)(void *);
 extern func_subobject_destructor *BufferSubobjectDestructor;
 extern func_subobject_destructor *WinOriginalDestructor;
 
+// GraphicWin::close keeps Win::close as a temporary original dependency;
+// Buffer::close is source-owned. Both remain bindable so source-level tests
+// can verify delegation order without entering process-owned teardown code.
+extern func_subobject_close *BufferSubobjectClose;
+extern func_subobject_close *WinOriginalClose;
+
+// Process default copied into field_A0C_ by close().
+extern uint32_t *GraphicWinFieldA0CDefault;
+
 // Original virtual table addresses the destructor installs before delegating.
 extern const uint32_t GraphicWinPrimaryVtable;
 extern const uint32_t GraphicWinBufferVtable;
 
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *);
+uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *);
 
 // Test seams: the subobject destructors are original dependencies, so tests
 // substitute recording stubs to observe delegation targets and ordering.

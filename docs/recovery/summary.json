@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 32,
-      "source_complete": 604,
+      "original_dependency": 33,
+      "source_complete": 605,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4994
+      "unrecovered": 4992
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 550,
-    "matched_function_starts": 550,
-    "unique_addresses": 550,
+    "annotations": 551,
+    "matched_function_starts": 551,
+    "unique_addresses": 551,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 176,
-      "function": 39
+      "data": 177,
+      "function": 40
     },
     "items": [
       {
@@ -2017,9 +2017,27 @@
         "function": "??1Win@@QAE@XZ",
         "function_address": "0x005EBC90",
         "kind": "function",
-        "location": "src/graphicwin.cpp:32",
+        "location": "src/graphicwin.cpp:43",
         "symbol": "WinOriginalDestructor",
         "type": "func_subobject_destructor *"
+      },
+      {
+        "address": "0x005EB640",
+        "function": "?close@Win@@QAEXXZ",
+        "function_address": "0x005EB640",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:46",
+        "symbol": "WinOriginalClose",
+        "type": "func_subobject_close *"
+      },
+      {
+        "address": "0x009B33C0",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/graphicwin.cpp:47",
+        "symbol": "GraphicWinFieldA0CDefault",
+        "type": "uint32_t *"
       },
       {
         "address": "0x009BBFF8",
@@ -3264,7 +3282,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 39,
-    "total": 215
+    "matched_function_starts": 40,
+    "total": 217
   }
 }
