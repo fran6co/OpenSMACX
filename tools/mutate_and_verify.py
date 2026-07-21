@@ -125,6 +125,13 @@ def is_simple_statement(line: str) -> bool:
     stripped = line.strip()
     if not stripped.endswith(";"):
         return False
+    if stripped.startswith("*"):
+        # `*` leads both block-comment continuations (`* like this`) and
+        # pointer-dereference assignments (`*x += 1;`). Only the former is a
+        # non-statement. Treating both as comments silently skipped every
+        # store through a pointer parameter - an out-parameter function could
+        # report full coverage having had none of its writes mutated.
+        return not stripped.startswith("* ")
     return not stripped.startswith(CONTROL_PREFIXES)
 
 
