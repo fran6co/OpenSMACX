@@ -21,6 +21,8 @@
 Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
 int *ScrollDefaultThickness = (int *)0x009B8DD4;
 int *ScrollNonClientInit = (int *)0x009B8E24;
+uint32_t *ScrollCloseStaticDefaults = (uint32_t *)0x00697020;
+uint32_t *ScrollCloseDynamicDefaults = (uint32_t *)0x009B8DE0;
 
 namespace {
 
@@ -30,6 +32,7 @@ namespace {
 #endif
 typedef int (__thiscall func_scroll_init)(
     Scroll *, int, int, int, int, Win *, int, int);
+typedef uint32_t (__thiscall *func_noarg_virtual)(void *);
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
@@ -99,6 +102,20 @@ uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
     return result;
 }
 
+#ifdef _MSC_VER
+__declspec(noinline)
+#else
+__attribute__((noinline))
+#endif
+uint32_t call_noarg_virtual(void *self, size_t slot) {
+    const uint32_t vtable_bits = read_volatile_bits(self, 0);
+    const uint32_t target_bits = read_volatile_bits(
+        reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)),
+        slot);
+    return reinterpret_cast<func_noarg_virtual>(
+        static_cast<uintptr_t>(target_bits))(self);
+}
+
 void set_sprite_triplet(void *object, Sprite *volatile *primary,
                         size_t button_offset, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
@@ -159,6 +176,61 @@ uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
 }  // namespace
 
 ScrollPrimaryInitProc ScrollPrimaryInit = &call_original_scroll_init;
+
+/*
+Purpose: Reset Scroll-owned state from the process defaults, close the two
+         embedded FlatButtons through their virtual close slots, then close
+         the source-owned GraphicWin base.
+Original Offset: 00605370
+Return Value: GraphicWin::close return residue
+Status: Complete; embedded FlatButton close bodies remain virtual dependencies
+*/
+uint32_t Scroll::close() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile uint32_t *const fixed =
+        reinterpret_cast<volatile uint32_t *>(ScrollCloseStaticDefaults);
+    volatile uint32_t *const dynamic =
+        reinterpret_cast<volatile uint32_t *>(ScrollCloseDynamicDefaults);
+
+    object[0xA14 / 4] = dynamic[0];
+    object[0xA1C / 4] = fixed[3];
+    object[0xA28 / 4] = 0;
+    object[0xA20 / 4] = dynamic[1];
+    object[0xA24 / 4] = fixed[4];
+    object[0xA2C / 4] = dynamic[1];
+    object[0xA3C / 4] = 0xFFFFFFFFU;
+    object[0xA38 / 4] = 0;
+    object[0xA30 / 4] = fixed[2];
+    object[0xA34 / 4] = fixed[1];
+    object[0xA40 / 4] = fixed[0];
+    object[0xA44 / 4] = 0;
+    object[0xA4C / 4] = 0;
+    object[0xA50 / 4] = 0;
+    object[0xA54 / 4] = 0;
+    object[0xA58 / 4] = 0;
+    object[0xA48 / 4] = fixed[5];
+    object[0xA5C / 4] = fixed[6];
+    object[0xA64 / 4] = fixed[7];
+    object[0xA68 / 4] = fixed[8];
+    object[0xA6C / 4] = fixed[9];
+    object[0xA70 / 4] = fixed[10];
+
+    for (size_t index = 0; index < 3; ++index) {
+        object[(0xA7C / 4) + index] = dynamic[2 + index];
+        object[(0xA88 / 4) + index] = dynamic[5 + index];
+        object[(0xA94 / 4) + index] = dynamic[8 + index];
+        object[(0xAA0 / 4) + index] = dynamic[11 + index];
+    }
+    object[0xA74 / 4] = dynamic[15];
+    object[0xA78 / 4] = dynamic[16];
+    object[0x2144 / 4] = 0;
+    object[0x2148 / 4] = 0;
+
+    call_noarg_virtual(reinterpret_cast<uint8_t *>(this) + 0xAAC, 0x168);
+    call_noarg_virtual(reinterpret_cast<uint8_t *>(this) + 0x15F8, 0x168);
+    return GraphicWin::close();
+}
 
 /*
 Purpose: Initialize a scrollbar from a rectangle.
@@ -701,4 +773,8 @@ RECT *__fastcall scroll_compute_thumb_rect_redirect(
 
 uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *) {
     return self->set_thumb_rect();
+}
+
+uint32_t __fastcall scroll_close_redirect(Scroll *self, void *) {
+    return self->close();
 }

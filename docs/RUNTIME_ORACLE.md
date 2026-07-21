@@ -17,7 +17,7 @@ every registered suite reports success.
   tracing, the equivalence comparator, the suite table, and the
   `run_runtime_oracles()` dispatcher.
 - `src/<class>_oracle.cpp`: one suite per class family (see
-  `src/scroll_oracle.cpp` for the reference implementation of fifteen Scroll
+  `src/scroll_oracle.cpp` for the reference implementation of sixteen Scroll
   methods).
 - `src/dllmain.cpp` calls `run_runtime_oracles()` after signature preflight
   and before installing any redirect, so every original body is still intact

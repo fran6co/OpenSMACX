@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,029 candidates.
+- Current recovery backlog: 5,028 candidates.
 - Current local legacy-island count: 114, reduced from 174.
-- `DllMain` entry redirects: 101, comprising 99 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 102, comprising 100 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -99,6 +99,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
 - Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Win subobject destructor retained as a classified temporary original dependency; the Buffer side is source-owned.
 - Recovered `GraphicWin::close` at `0x005D4E40` (66 callers), closing through the original `Win::close` dependency and source-owned `Buffer::close`, then preserving the ordered field reset, process default, optional scalar-deleting virtual call, and both `EAX` residues.
+- Recovered `Scroll::close` at `0x00605370` (136 callers), restoring every Scroll-owned default from the two process tables before closing its embedded FlatButtons in left/right order and delegating to source-owned `GraphicWin::close`; the two button bodies remain virtual dependencies.
 - Recovered the derived two-stage close at `0x004066C0` (61 callers, the highest remaining fan-in), which closes under its own tables before closing its StringStruct base.
 - Recovered `StringStruct::close` at `0x00401060` (25 callers), entered through a virtual-base adjustor that hands the redirect a pointer `0x1C` bytes into the object; it installs both virtual tables and reuses the recovered entry walk.
 - Recovered `spying` at `0x0055BC00` (19 callers), a pure intelligence-visibility check over four original tables.
@@ -203,12 +204,12 @@ Other completed corrections and checks:
 
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID and identity slots, signed identities, first-match duplicates with distinct payloads, zero IDs, exact scan boundaries, complete object canaries, all four redirect adapters, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
-- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup including GraphicWin close, the recursive Win queries, five Scroll wrappers, three geometry leaves, six Vector leaves, and optimized PullDown tail jumps; exact Vector x87 operation counts; GraphicWin and both Win runtime-oracle original-address calls; the Scroll primary dependency's raw thiscall dispatch; and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
+- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup including GraphicWin and Scroll close, the recursive Win queries, five Scroll wrappers, three geometry leaves, six Vector leaves, and optimized PullDown tail jumps; exact Vector x87 operation counts; GraphicWin, Scroll, and both Win runtime-oracle original-address calls; Scroll close's two ordered slot-`0x168` virtual dispatches and source-owned base-close relocation; the Scroll primary dependency's raw thiscall dispatch; and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
 - `verify-recovery-oracles` extracts 32 explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups, `Random::reseed`, integer `Random::get`, three Win movement/paging methods, three geometry leaves, six Vector leaves, three Scroll setters, `Scroll::compute_thumb_rect`, RECT expansion, seven PullDown accessors, and two Menu accessors against source with identical fixtures in Debug and Release.
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
 - Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
 - The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
-- Regenerated state is 5,029 priorities, 605 source-complete functions, 33 original dependencies, 4,992 unrecovered functions, and 114 islands.
+- Regenerated state is 5,028 priorities, 606 source-complete functions, 33 original dependencies, 4,991 unrecovered functions, and 114 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -221,7 +222,7 @@ Other completed corrections and checks:
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
 - `tools/smoke_hybrid_game.py` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
-- The opt-in Scroll recovery oracle runs fifteen untouched original methods inside the verified PRACX process before redirects are installed, including invalid non-delegating fixtures for all five init wrappers. It compares complete object/canary state, callback traces, global publication, and return residue against source, and must write `passed` to an ignored nonsymlinked result path before smoke can pass. All direct redirect signatures and the temporary primary-init dependency are validated before the oracle executes; sprite redirects additionally validate their distinguishing field displacement.
+- The opt-in Scroll recovery oracle runs sixteen untouched original methods inside the verified PRACX process before redirects are installed, including `Scroll::close` and invalid non-delegating fixtures for all five init wrappers. The close fixture seeds both process default tables, verifies the left/right slot-`0x168` calls before the GraphicWin close chain, compares complete object/canary state and return residue, and restores every seeded global. The suite must write `passed` to an ignored nonsymlinked result path before smoke can pass. All direct redirect signatures and the temporary primary-init dependency are validated before the oracle executes; sprite redirects additionally validate their distinguishing field displacement.
 - The Win runtime-oracle suite compares recursive visibility and client-to-screen translation against untouched original bodies before redirects install, including nested parent chains, controlling flags, wrapping arithmetic, aliased outputs, and complete object/canary preservation.
 - The GraphicWin runtime-oracle suite calls untouched `GraphicWin::close` at `0x005D4E40` before redirects install and compares both release branches, complete object/canary state, dependency callback traces, and return residue. Its resource-free Win/Buffer fixture validates each dependency's self-publication relative to its own object before normalizing that one pointer for byte comparison; the source-level suite separately observes the two resets that `Win::close` performs first.
 - ImportAdder runs only in the marker-protected build Wine prefix, receives an explicit `WINEPREFIX`, and stops only that prefix after every invocation.
@@ -347,7 +348,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 ## Next Steps
 
-1. Recover `Scroll::close` at `0x00605370`, now that its final direct `GraphicWin::close` call is source-owned, while retaining and classifying the two embedded FlatButton virtual-close dependencies. Then replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
+1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
 2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
 3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
 4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
@@ -356,7 +357,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 99 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 100 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.

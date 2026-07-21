@@ -17,6 +17,16 @@ const runtime_oracle::ClassSpec ScrollSpec = {
     ScrollVtableRefOffsets, ARRAYSIZE(ScrollVtableRefOffsets),
 };
 
+const size_t ScrollCloseVtableRefOffsets[] = {0};
+const runtime_oracle::ClassSpec ScrollCloseSpec = {
+    sizeof(Scroll), 0x0C, 0x08,
+    ScrollCloseVtableRefOffsets, ARRAYSIZE(ScrollCloseVtableRefOffsets),
+};
+
+const size_t ScrollCloseTraceOffsets[] = {
+    0xA10, 0xA14, 0xA20, 0xA28, 0xA74, 0xA7C, 0xAA8, 0x2144,
+};
+
 int int_from_bits(uint32_t bits) {
     int value;
     static_assert(sizeof(value) == sizeof(bits),
@@ -29,6 +39,14 @@ template <typename T>
 void write_object(ScrollFixture &fixture, size_t offset, const T &value) {
     memcpy(fixture.storage + runtime_oracle::CanarySize + offset,
            &value, sizeof(value));
+}
+
+uint32_t read_object(const ScrollFixture &fixture, size_t offset) {
+    uint32_t value;
+    memcpy(&value,
+           fixture.storage + runtime_oracle::CanarySize + offset,
+           sizeof(value));
+    return value;
 }
 
 void initialize_pair(ScrollFixture &legacy, ScrollFixture &source,
@@ -70,6 +88,157 @@ typedef uint32_t (__thiscall *OriginalSprites)(
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+struct ScrollCloseButtonTrace {
+    uint32_t calls;
+    uint32_t self_offsets[2];
+    uint32_t field_a10[2];
+    uint32_t field_a14[2];
+    uint32_t field_2144[2];
+};
+
+Scroll *ScrollCloseTraceBase = nullptr;
+ScrollCloseButtonTrace ScrollCloseButtons = {};
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+uint32_t __thiscall trace_scroll_button_close(void *self) {
+    const uint32_t call = ScrollCloseButtons.calls++;
+    if (call >= ARRAYSIZE(ScrollCloseButtons.self_offsets)) {
+        return 0xBAD0C105U;
+    }
+    const uintptr_t base = reinterpret_cast<uintptr_t>(ScrollCloseTraceBase);
+    const uintptr_t target = reinterpret_cast<uintptr_t>(self);
+    ScrollCloseButtons.self_offsets[call] = target - base;
+    const uint8_t *const bytes = reinterpret_cast<const uint8_t *>(
+        ScrollCloseTraceBase);
+    memcpy(&ScrollCloseButtons.field_a10[call], bytes + 0xA10,
+           sizeof(uint32_t));
+    memcpy(&ScrollCloseButtons.field_a14[call], bytes + 0xA14,
+           sizeof(uint32_t));
+    memcpy(&ScrollCloseButtons.field_2144[call], bytes + 0x2144,
+           sizeof(uint32_t));
+    return 0xC1050000U ^ ScrollCloseButtons.self_offsets[call];
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void prepare_close_fixture(ScrollFixture &fixture, uintptr_t *win_vtable,
+                           uintptr_t *left_vtable,
+                           uintptr_t *right_vtable) {
+    uint8_t *const object =
+        fixture.storage + runtime_oracle::CanarySize;
+    memset(object, 0, sizeof(Scroll));
+    memcpy(object, &win_vtable, sizeof(win_vtable));
+    memcpy(object + 0xAAC, &left_vtable, sizeof(left_vtable));
+    memcpy(object + 0x15F8, &right_vtable, sizeof(right_vtable));
+
+    // Keep Win and Buffer resource paths empty, while poisoning every field
+    // owned by this close and every GraphicWin reset field. The two untouched
+    // Scroll holes (A18 and A60) remain poisoned and are covered by the final
+    // complete-object comparison.
+    for (size_t offset = 0xA14; offset <= 0xAA8; offset += 4) {
+        const uint32_t value = 0xA5000000U ^ (offset * 0x1021U);
+        write_object(fixture, offset, value);
+    }
+    write_object(fixture, 0x2144, 0x13579BDFU);
+    write_object(fixture, 0x2148, 0x2468ACE0U);
+    write_object(fixture, 0x134, 0x31415926U);
+    write_object(fixture, 0x138, 0x27182818U);
+    for (size_t offset = 0x9CC; offset <= 0xA10; offset += 4) {
+        const uint32_t value = 0x5A000000U ^ (offset * 0x2101U);
+        write_object(fixture, offset, value);
+    }
+    write_object(fixture, 0xA08, 0U);
+}
+
+bool verify_close() {
+    if (ScrollCloseStaticDefaults != reinterpret_cast<uint32_t *>(0x00697020U)
+            || ScrollCloseDynamicDefaults
+                != reinterpret_cast<uint32_t *>(0x009B8DE0U)) {
+        return false;
+    }
+
+    uint32_t saved_fixed[11];
+    uint32_t saved_dynamic[17];
+    volatile uint32_t *const fixed = ScrollCloseStaticDefaults;
+    volatile uint32_t *const dynamic = ScrollCloseDynamicDefaults;
+    for (size_t index = 0; index < ARRAYSIZE(saved_fixed); ++index) {
+        saved_fixed[index] = fixed[index];
+        fixed[index] = 0x51000000U
+            + static_cast<uint32_t>(index) * 0x010203U;
+    }
+    for (size_t index = 0; index < ARRAYSIZE(saved_dynamic); ++index) {
+        saved_dynamic[index] = dynamic[index];
+        dynamic[index] = 0xA1000000U
+            + static_cast<uint32_t>(index) * 0x010101U;
+    }
+    dynamic[14] = 0xDEADC0DEU;
+
+    uintptr_t win_vtable[3] = {};
+    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {};
+    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {};
+    win_vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
+    left_vtable[0x168 / sizeof(uintptr_t)] =
+        reinterpret_cast<uintptr_t>(&trace_scroll_button_close);
+    right_vtable[0x168 / sizeof(uintptr_t)] =
+        reinterpret_cast<uintptr_t>(&trace_scroll_button_close);
+
+    ScrollFixture legacy;
+    ScrollFixture source;
+    runtime_oracle::initialize_pair(
+        legacy.storage, source.storage, ScrollCloseSpec, win_vtable);
+    prepare_close_fixture(legacy, win_vtable, left_vtable, right_vtable);
+    prepare_close_fixture(source, win_vtable, left_vtable, right_vtable);
+    auto original = reinterpret_cast<OriginalNoArg>(0x00605370U);
+
+    ScrollCloseTraceBase = legacy.object();
+    ScrollCloseButtons = ScrollCloseButtonTrace{};
+    runtime_oracle::begin_trace(
+        legacy.object(), ScrollCloseTraceOffsets,
+        ARRAYSIZE(ScrollCloseTraceOffsets));
+    const uint32_t legacy_result = original(legacy.object());
+    const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
+    const ScrollCloseButtonTrace legacy_buttons = ScrollCloseButtons;
+
+    ScrollCloseTraceBase = source.object();
+    ScrollCloseButtons = ScrollCloseButtonTrace{};
+    runtime_oracle::begin_trace(
+        source.object(), ScrollCloseTraceOffsets,
+        ARRAYSIZE(ScrollCloseTraceOffsets));
+    const uint32_t source_result = source.object()->close();
+    const runtime_oracle::Trace source_trace = runtime_oracle::current_trace();
+    const ScrollCloseButtonTrace source_buttons = ScrollCloseButtons;
+
+    const bool self_pointers_match =
+        read_object(legacy, 0xA8) == reinterpret_cast<uintptr_t>(legacy.object())
+        && read_object(source, 0xA8)
+            == reinterpret_cast<uintptr_t>(source.object());
+    write_object(legacy, 0xA8, 0U);
+    write_object(source, 0xA8, 0U);
+    const bool passed = self_pointers_match
+        && legacy_buttons.calls == 2U
+        && source_buttons.calls == 2U
+        && legacy_buttons.self_offsets[0] == 0xAACU
+        && legacy_buttons.self_offsets[1] == 0x15F8U
+        && memcmp(&legacy_buttons, &source_buttons,
+                  sizeof(legacy_buttons)) == 0
+        && runtime_oracle::equivalent(
+            legacy.storage, source.storage, sizeof(legacy.storage),
+            legacy_result, source_result, legacy_trace, source_trace);
+
+    for (size_t index = 0; index < ARRAYSIZE(saved_fixed); ++index) {
+        fixed[index] = saved_fixed[index];
+    }
+    for (size_t index = 0; index < ARRAYSIZE(saved_dynamic); ++index) {
+        dynamic[index] = saved_dynamic[index];
+    }
+    ScrollCloseTraceBase = nullptr;
+    return passed;
+}
 
 bool verify_init_wrappers() {
     auto original_rect = reinterpret_cast<OriginalRectInit>(0x00605840U);
@@ -398,7 +567,8 @@ bool verify_position() {
 }  // namespace
 
 bool run_scroll_oracle_suite() {
-    return verify_init_wrappers()
+    return verify_close()
+        && verify_init_wrappers()
         && verify_range()
         && verify_styles()
         && verify_thumb_resetters()

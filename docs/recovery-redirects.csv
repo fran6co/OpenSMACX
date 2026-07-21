@@ -55,6 +55,7 @@ address,kind
 0x005FD2B0,jump
 0x00601B80,jump
 0x006046F0,jump
+0x00605370,jump
 0x00605840,jump
 0x00605890,jump
 0x006058D0,jump
