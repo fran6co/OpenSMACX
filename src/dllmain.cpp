@@ -19,6 +19,7 @@
 #include "alphanet.h"
 #include "autosound.h"
 #include "base.h"
+#include "basebutton.h"
 #include "basepop.h"
 #include "buffer.h"
 #include "buttongroup.h"
@@ -30,6 +31,7 @@
 #include "pulldown.h"
 #include "scenario.h"
 #include "font.h"
+#include "flatbutton.h"
 #include "graphicwin.h"
 #include "scroll.h"
 #include "spying_recovery.h"
@@ -48,7 +50,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 102;
+constexpr size_t RedirectCount = 106;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -212,6 +214,11 @@ bool install_redirects() {
             0x004066C0,
             reinterpret_cast<uintptr_t>(&string_struct_derived_close_redirect),
             OPENSMACX_SIGNATURE_004066C0,
+        },
+        {
+            0x00406880,
+            reinterpret_cast<uintptr_t>(&flat_button_destructor_redirect),
+            OPENSMACX_SIGNATURE_00406880,
         },
         {
             0x00401060,
@@ -464,6 +471,21 @@ bool install_redirects() {
             0x00605370,
             reinterpret_cast<uintptr_t>(&scroll_close_redirect),
             OPENSMACX_SIGNATURE_00605370,
+        },
+        {
+            0x00607040,
+            reinterpret_cast<uintptr_t>(&base_button_destructor_redirect),
+            OPENSMACX_SIGNATURE_00607040,
+        },
+        {
+            0x006070C0,
+            reinterpret_cast<uintptr_t>(&base_button_close_redirect),
+            OPENSMACX_SIGNATURE_006070C0,
+        },
+        {
+            0x00607DA0,
+            reinterpret_cast<uintptr_t>(&flat_button_close_redirect),
+            OPENSMACX_SIGNATURE_00607DA0,
         },
         {
             0x00605840,

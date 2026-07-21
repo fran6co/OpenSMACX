@@ -1,9 +1,11 @@
 #include "../src/stdafx.h"
 #include "../src/alphanet.h"
 #include "../src/basepop.h"
+#include "../src/basebutton.h"
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
 #include "../src/filemap.h"
+#include "../src/flatbutton.h"
 #include "../src/buffer.h"
 #include "../src/font.h"
 #include "../src/graphicwin.h"
@@ -18,6 +20,7 @@
 #include "../src/strings.h"
 #include "../src/text_recovery.h"
 #include "../src/textindex.h"
+#include "../src/temp.h"
 #include "../src/time.h"
 #include "../src/vector.h"
 #include "../src/win.h"
@@ -94,6 +97,10 @@ LPVOID __cdecl mem_get(size_t size) {
     return std::malloc(size);
 }
 
+LPVOID __cdecl mem_get_old(size_t size) {
+    return mem_get(size);
+}
+
 int heap_shutdown_calls = 0;
 int font_close_calls = 0;
 int font_init_calls = 0;
@@ -102,6 +109,7 @@ LPCSTR font_init_name = nullptr;
 int font_init_height = 0;
 uint32_t font_init_style = 0;
 int time_close_calls = 0;
+Time *time_close_targets[8] = {};
 int text_shutdown_calls = 0;
 Text *text_shutdown_this = nullptr;
 int text_open_calls = 0;
@@ -128,6 +136,7 @@ bool capture_closed_file = false;
 char closed_file_output[256] = {};
 void *tracked_free_pointer = nullptr;
 int tracked_free_calls = 0;
+func2 *_free = nullptr;
 Time *Time::TimeModal = nullptr;
 int Time::TimeInitCount = 0;
 Text *Txt = nullptr;
@@ -195,7 +204,10 @@ void Spot::shutdown() {
 }
 
 void Time::close() {
-    ++time_close_calls;
+    const int call = time_close_calls++;
+    if (call < static_cast<int>(ARRAYSIZE(time_close_targets))) {
+        time_close_targets[call] = this;
+    }
     uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
     const int zero = 0;
     const uint32_t resolution = 5;
@@ -5033,11 +5045,55 @@ struct GraphicWinStubRecord {
 };
 GraphicWinStubRecord graphic_win_stub_record = {};
 
+bool button_lifecycle_capture = false;
+uint8_t *button_lifecycle_base = nullptr;
+int button_lifecycle_close_calls = 0;
+int button_lifecycle_close_time_counts[4] = {};
+uint32_t button_lifecycle_close_primary_vtables[4] = {};
+uint32_t button_lifecycle_close_buffer_vtables[4] = {};
+uint32_t button_lifecycle_close_a14[4] = {};
+uint32_t button_lifecycle_close_a18[4] = {};
+uint32_t button_lifecycle_close_ab8[4] = {};
+uint32_t button_lifecycle_close_abc[4] = {};
+int button_lifecycle_destructor_time_count = -1;
+
+uint32_t button_lifecycle_read(size_t offset) {
+    uint32_t value;
+    std::memcpy(&value, button_lifecycle_base + offset, sizeof(value));
+    return value;
+}
+
+void reset_button_lifecycle_capture(uint8_t *base) {
+    button_lifecycle_capture = true;
+    button_lifecycle_base = base;
+    button_lifecycle_close_calls = 0;
+    std::memset(button_lifecycle_close_time_counts, 0,
+                sizeof(button_lifecycle_close_time_counts));
+    std::memset(button_lifecycle_close_primary_vtables, 0,
+                sizeof(button_lifecycle_close_primary_vtables));
+    std::memset(button_lifecycle_close_buffer_vtables, 0,
+                sizeof(button_lifecycle_close_buffer_vtables));
+    std::memset(button_lifecycle_close_a14, 0,
+                sizeof(button_lifecycle_close_a14));
+    std::memset(button_lifecycle_close_a18, 0,
+                sizeof(button_lifecycle_close_a18));
+    std::memset(button_lifecycle_close_ab8, 0,
+                sizeof(button_lifecycle_close_ab8));
+    std::memset(button_lifecycle_close_abc, 0,
+                sizeof(button_lifecycle_close_abc));
+    button_lifecycle_destructor_time_count = -1;
+    time_close_calls = 0;
+    std::memset(time_close_targets, 0, sizeof(time_close_targets));
+}
+
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 void __thiscall graphic_win_stub_buffer_destructor(void *target) {
+    if (button_lifecycle_capture) {
+        button_lifecycle_destructor_time_count = time_close_calls;
+    }
     graphic_win_stub_record.buffer_calls++;
     graphic_win_stub_record.buffer_target = target;
     graphic_win_stub_record.sequence =
@@ -5145,6 +5201,25 @@ uint32_t graphic_win_field(void *self, size_t offset) {
 #endif
 void __thiscall graphic_win_stub_win_close(void *target) {
     GraphicWinCloseStubRecord &record = graphic_win_close_stub_record;
+    if (button_lifecycle_capture) {
+        const int call = button_lifecycle_close_calls++;
+        if (call < static_cast<int>(
+                ARRAYSIZE(button_lifecycle_close_time_counts))) {
+            button_lifecycle_close_time_counts[call] = time_close_calls;
+            button_lifecycle_close_primary_vtables[call] =
+                button_lifecycle_read(0x000);
+            button_lifecycle_close_buffer_vtables[call] =
+                button_lifecycle_read(0x444);
+            button_lifecycle_close_a14[call] =
+                button_lifecycle_read(0xA14);
+            button_lifecycle_close_a18[call] =
+                button_lifecycle_read(0xA18);
+            button_lifecycle_close_ab8[call] =
+                button_lifecycle_read(0xAB8);
+            button_lifecycle_close_abc[call] =
+                button_lifecycle_read(0xABC);
+        }
+    }
     record.win_calls++;
     record.win_target = target;
     record.sequence = (record.sequence << 4) | 1U;
@@ -5273,6 +5348,371 @@ void test_graphic_win_close() {
             }
         }
     }
+}
+
+int button_lifecycle_free_calls = 0;
+void *button_lifecycle_free_targets[2] = {};
+uint32_t button_lifecycle_free_a74[2] = {};
+uint32_t button_lifecycle_free_a84[2] = {};
+uint32_t button_lifecycle_free_a7c[2] = {};
+uint32_t button_lifecycle_free_a80[2] = {};
+uint32_t button_lifecycle_free_aa8[2] = {};
+
+void reset_button_lifecycle_frees() {
+    button_lifecycle_free_calls = 0;
+    std::memset(button_lifecycle_free_targets, 0,
+                sizeof(button_lifecycle_free_targets));
+    std::memset(button_lifecycle_free_a74, 0,
+                sizeof(button_lifecycle_free_a74));
+    std::memset(button_lifecycle_free_a84, 0,
+                sizeof(button_lifecycle_free_a84));
+    std::memset(button_lifecycle_free_a7c, 0,
+                sizeof(button_lifecycle_free_a7c));
+    std::memset(button_lifecycle_free_a80, 0,
+                sizeof(button_lifecycle_free_a80));
+    std::memset(button_lifecycle_free_aa8, 0,
+                sizeof(button_lifecycle_free_aa8));
+}
+
+void *button_lifecycle_free_probe(void *block) {
+    const int call = button_lifecycle_free_calls++;
+    if (call < static_cast<int>(ARRAYSIZE(button_lifecycle_free_targets))) {
+        button_lifecycle_free_targets[call] = block;
+        button_lifecycle_free_a74[call] = button_lifecycle_read(0xA74);
+        button_lifecycle_free_a84[call] = button_lifecycle_read(0xA84);
+        button_lifecycle_free_a7c[call] = button_lifecycle_read(0xA7C);
+        button_lifecycle_free_a80[call] = button_lifecycle_read(0xA80);
+        button_lifecycle_free_aa8[call] = button_lifecycle_read(0xAA8);
+    }
+    return reinterpret_cast<void *>(
+        0xC1050000U + static_cast<uint32_t>(call + 1));
+}
+
+void write_button_graphic_close_expected(
+        uint8_t *expected, uint32_t graphic_default) {
+    write_at(expected, 16 + 0x134, 0U);
+    write_at(expected, 16 + 0x138, 0U);
+    for (size_t offset = 0x9CC; offset <= 0xA04; offset += 4) {
+        write_at(expected, 16 + offset, 0U);
+    }
+    write_at(expected, 16 + 0xA08, 0U);
+    write_at(expected, 16 + 0xA0C, graphic_default);
+    write_at(expected, 16 + 0xA10, 0U);
+}
+
+void write_base_button_close_expected(
+        uint8_t *expected, const uint32_t fixed[5],
+        const uint32_t dynamic[2], uint32_t graphic_default) {
+    write_button_graphic_close_expected(expected, graphic_default);
+    write_at(expected, 16 + 0xA44, 0xFFFFFFFFU);
+    write_at(expected, 16 + 0xA48, 0xFFFFFFFFU);
+    write_at(expected, 16 + 0xA74, 0U);
+    write_at(expected, 16 + 0xA78, 0U);
+    write_at(expected, 16 + 0xA7C, 0U);
+    write_at(expected, 16 + 0xA80, 0U);
+    for (size_t index = 0; index < 4; ++index) {
+        write_at(expected, 16 + 0xA84 + index * 4, fixed[index]);
+    }
+    write_at(expected, 16 + 0xA94, dynamic[0]);
+    write_at(expected, 16 + 0xA98, dynamic[1]);
+    write_at(expected, 16 + 0xA9C, 0U);
+    write_at(expected, 16 + 0xAA0, fixed[4]);
+    write_at(expected, 16 + 0xAA4, 0U);
+    write_at(expected, 16 + 0xAA8, 0U);
+    write_at(expected, 16 + 0xAAC, 0U);
+    write_at(expected, 16 + 0xAB0, 0U);
+    write_at(expected, 16 + 0xAB4, 0U);
+}
+
+void write_time_close_expected(uint8_t *expected, size_t offset) {
+    std::memset(expected + 16 + offset, 0, sizeof(Time));
+    write_at(expected, 16 + offset + 0x20, 5U);
+}
+
+void write_flat_button_close_expected(
+        uint8_t *expected, const uint32_t base_fixed[5],
+        const uint32_t base_dynamic[2], const uint32_t flat_defaults[27],
+        uint32_t graphic_default) {
+    write_time_close_expected(expected, 0xA1C);
+    write_at(expected, 16 + 0xA14, 0U);
+    write_at(expected, 16 + 0xA18, 0U);
+    write_at(expected, 16 + 0xAB8, 0xFFFFFFFFU);
+    write_base_button_close_expected(
+        expected, base_fixed, base_dynamic, graphic_default);
+    for (size_t index = 0; index < 3; ++index) {
+        write_at(expected, 16 + 0xABC + index * 4, 0xFFFFFFFFU);
+        write_at(expected, 16 + 0xAC8 + index * 4, 0U);
+        write_at(expected, 16 + 0xAD4 + index * 4, 0U);
+        for (size_t group = 0; group < 9; ++group) {
+            write_at(expected,
+                     16 + 0xAE0 + group * 0xC + index * 4,
+                     flat_defaults[group * 3 + index]);
+        }
+    }
+}
+
+void prepare_button_lifecycle_storage(
+        uint8_t *storage, uint8_t *expected, size_t size) {
+    seed_storage(storage, expected, size);
+    write_at(storage, 16 + 0xA08, 0U);
+    write_at(storage, 16 + 0xA7C, 0U);
+    write_at(storage, 16 + 0xA80, 0U);
+    std::memcpy(expected, storage, size);
+}
+
+void test_base_button_and_flat_button_lifecycle() {
+    static_assert(sizeof(BaseButton) == 0xAB8,
+                  "BaseButton lifecycle tests require the legacy layout");
+    static_assert(sizeof(FlatButton) == 0xB4C,
+                  "FlatButton lifecycle tests require the legacy layout");
+
+    uint32_t base_fixed[5];
+    uint32_t base_dynamic[2];
+    uint32_t flat_defaults[27];
+    for (size_t index = 0; index < ARRAYSIZE(base_fixed); ++index) {
+        base_fixed[index] = 0x51000000U
+            + static_cast<uint32_t>(index) * 0x010203U;
+    }
+    for (size_t index = 0; index < ARRAYSIZE(base_dynamic); ++index) {
+        base_dynamic[index] = 0xA1000000U
+            + static_cast<uint32_t>(index) * 0x011011U;
+    }
+    for (size_t index = 0; index < ARRAYSIZE(flat_defaults); ++index) {
+        flat_defaults[index] = 0xD1000000U
+            + static_cast<uint32_t>(index) * 0x010101U;
+    }
+    uint32_t graphic_default = 0x7B3D19E5U;
+
+    func2 *const saved_free = _free;
+    uint32_t *const saved_base_fixed = BaseButtonStaticDefaults;
+    uint32_t *const saved_base_dynamic = BaseButtonDynamicDefaults;
+    uint32_t *const saved_flat_defaults = FlatButtonDefaults;
+    func_subobject_close *const saved_win_close = WinOriginalClose;
+    func_subobject_close *const saved_buffer_close = BufferSubobjectClose;
+    uint32_t *const saved_graphic_default = GraphicWinFieldA0CDefault;
+    func_subobject_destructor *const saved_buffer_destructor =
+        BufferSubobjectDestructor;
+    func_subobject_destructor *const saved_win_destructor =
+        WinOriginalDestructor;
+    _free = button_lifecycle_free_probe;
+    BaseButtonStaticDefaults = base_fixed;
+    BaseButtonDynamicDefaults = base_dynamic;
+    FlatButtonDefaults = flat_defaults;
+    WinOriginalClose = graphic_win_stub_win_close;
+    BufferSubobjectClose = graphic_win_stub_buffer_close;
+    GraphicWinFieldA0CDefault = &graphic_default;
+    BufferSubobjectDestructor = graphic_win_stub_buffer_destructor;
+    WinOriginalDestructor = graphic_win_stub_win_destructor;
+
+    // BaseButton::close: all four allocation shapes, through both entry
+    // points. The free probe observes the exact name-before-bubble order and
+    // the pre-clear pointer values; the second free's return residue survives.
+    for (int allocation_mask = 0; allocation_mask < 4; ++allocation_mask) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(BaseButton) uint8_t storage[sizeof(BaseButton) + 32];
+            uint8_t expected[sizeof(storage)];
+            prepare_button_lifecycle_storage(
+                storage, expected, sizeof(storage));
+            auto *const self = reinterpret_cast<BaseButton *>(storage + 16);
+            void *const name = allocation_mask & 1
+                ? reinterpret_cast<void *>(0x11110001U) : nullptr;
+            void *const bubble = allocation_mask & 2
+                ? reinterpret_cast<void *>(0x22220002U) : nullptr;
+            write_at(storage, 16 + 0xA7C, name);
+            write_at(storage, 16 + 0xA80, bubble);
+            std::memcpy(expected, storage, sizeof(storage));
+            const uint32_t initial_primary = graphic_win_field(self, 0x000);
+            const uint32_t initial_buffer = graphic_win_field(self, 0x444);
+            const uint32_t initial_a14 = graphic_win_field(self, 0xA14);
+            const uint32_t initial_a18 = graphic_win_field(self, 0xA18);
+            const uint32_t initial_ab8 = graphic_win_field(self, 0xAB8);
+            const uint32_t initial_abc = graphic_win_field(self, 0xABC);
+            const uint32_t initial_aa8 = graphic_win_field(self, 0xAA8);
+            write_base_button_close_expected(
+                expected, base_fixed, base_dynamic, graphic_default);
+
+            reset_button_lifecycle_capture(storage + 16);
+            reset_button_lifecycle_frees();
+            graphic_win_close_stub_record = GraphicWinCloseStubRecord{};
+            const uint32_t result = use_adapter
+                ? base_button_close_redirect(self, nullptr) : self->close();
+
+            const int expected_frees = (name ? 1 : 0) + (bubble ? 1 : 0);
+            const uint32_t expected_result = bubble
+                ? 0xC1050000U + static_cast<uint32_t>(expected_frees) : 0U;
+            expect(result == expected_result);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect(button_lifecycle_close_calls == 1);
+            expect(button_lifecycle_close_time_counts[0] == 0);
+            expect(button_lifecycle_close_primary_vtables[0]
+                   == initial_primary);
+            expect(button_lifecycle_close_buffer_vtables[0]
+                   == initial_buffer);
+            expect(button_lifecycle_close_a14[0] == initial_a14);
+            expect(button_lifecycle_close_a18[0] == initial_a18);
+            expect(button_lifecycle_close_ab8[0] == initial_ab8);
+            expect(button_lifecycle_close_abc[0] == initial_abc);
+            expect(button_lifecycle_free_calls == expected_frees);
+            int free_index = 0;
+            if (name) {
+                expect(button_lifecycle_free_targets[free_index] == name);
+                expect(button_lifecycle_free_a7c[free_index]
+                       == reinterpret_cast<uintptr_t>(name));
+                expect(button_lifecycle_free_a80[free_index]
+                       == reinterpret_cast<uintptr_t>(bubble));
+                ++free_index;
+            }
+            if (bubble) {
+                expect(button_lifecycle_free_targets[free_index] == bubble);
+                expect(button_lifecycle_free_a7c[free_index] == 0U);
+                expect(button_lifecycle_free_a80[free_index]
+                       == reinterpret_cast<uintptr_t>(bubble));
+            }
+            for (int call = 0; call < expected_frees; ++call) {
+                expect(button_lifecycle_free_a74[call] == 0U);
+                expect(button_lifecycle_free_a84[call] == base_fixed[0]);
+                expect(button_lifecycle_free_aa8[call] == initial_aa8);
+            }
+        }
+    }
+
+    // FlatButton::close: Time closes before the Flat fields, Base close sees
+    // the orientation fields but not the later table reset, and EAX retains
+    // the legacy interior pointer computed by the final loop.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(FlatButton) uint8_t storage[sizeof(FlatButton) + 32];
+        uint8_t expected[sizeof(storage)];
+        prepare_button_lifecycle_storage(storage, expected, sizeof(storage));
+        auto *const self = reinterpret_cast<FlatButton *>(storage + 16);
+        const uint32_t initial_primary = graphic_win_field(self, 0x000);
+        const uint32_t initial_buffer = graphic_win_field(self, 0x444);
+        const uint32_t initial_abc = graphic_win_field(self, 0xABC);
+        write_flat_button_close_expected(
+            expected, base_fixed, base_dynamic, flat_defaults,
+            graphic_default);
+
+        reset_button_lifecycle_capture(storage + 16);
+        reset_button_lifecycle_frees();
+        graphic_win_close_stub_record = GraphicWinCloseStubRecord{};
+        const uint32_t result = use_adapter
+            ? flat_button_close_redirect(self, nullptr) : self->close();
+
+        expect(result == reinterpret_cast<uintptr_t>(self) + 0xAECU);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(time_close_calls == 1);
+        expect(time_close_targets[0]
+               == reinterpret_cast<Time *>(storage + 16 + 0xA1C));
+        expect(button_lifecycle_close_calls == 1);
+        expect(button_lifecycle_close_time_counts[0] == 1);
+        expect(button_lifecycle_close_primary_vtables[0] == initial_primary);
+        expect(button_lifecycle_close_buffer_vtables[0] == initial_buffer);
+        expect(button_lifecycle_close_a14[0] == 0U);
+        expect(button_lifecycle_close_a18[0] == 0U);
+        expect(button_lifecycle_close_ab8[0] == 0xFFFFFFFFU);
+        expect(button_lifecycle_close_abc[0] == initial_abc);
+        expect(button_lifecycle_free_calls == 0);
+    }
+
+    // BaseButton destructor: install its two vtables, close, destroy Time2
+    // then Time1, and delegate to GraphicWin teardown. The final GraphicWin
+    // tables hide the initial stores, so the close seam snapshots them.
+    {
+        alignas(BaseButton) uint8_t storage[sizeof(BaseButton) + 32];
+        uint8_t expected[sizeof(storage)];
+        prepare_button_lifecycle_storage(storage, expected, sizeof(storage));
+        auto *const self = reinterpret_cast<BaseButton *>(storage + 16);
+        write_base_button_close_expected(
+            expected, base_fixed, base_dynamic, graphic_default);
+        write_time_close_expected(expected, 0xA4C);
+        write_time_close_expected(expected, 0xA1C);
+        write_at(expected, 16 + 0x000, GraphicWinPrimaryVtable);
+        write_at(expected, 16 + 0x444, GraphicWinBufferVtable);
+
+        reset_button_lifecycle_capture(storage + 16);
+        reset_button_lifecycle_frees();
+        graphic_win_close_stub_record = GraphicWinCloseStubRecord{};
+        graphic_win_stub_record = GraphicWinStubRecord{};
+        expect(base_button_destructor_redirect(self, nullptr) == self);
+
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(button_lifecycle_close_calls == 1);
+        expect(button_lifecycle_close_time_counts[0] == 0);
+        expect(button_lifecycle_close_primary_vtables[0]
+               == BaseButtonPrimaryVtable);
+        expect(button_lifecycle_close_buffer_vtables[0]
+               == BaseButtonBufferVtable);
+        expect(time_close_calls == 2);
+        expect(time_close_targets[0]
+               == reinterpret_cast<Time *>(storage + 16 + 0xA4C));
+        expect(time_close_targets[1]
+               == reinterpret_cast<Time *>(storage + 16 + 0xA1C));
+        expect(button_lifecycle_destructor_time_count == 2);
+        expect(graphic_win_stub_record.sequence == 0x21);
+        expect(button_lifecycle_free_calls == 0);
+    }
+
+    // FlatButton destructor composes Flat close with the complete BaseButton
+    // destructor. This intentionally closes Time1 twice, exactly as the
+    // original two-stage destructor does.
+    {
+        alignas(FlatButton) uint8_t storage[sizeof(FlatButton) + 32];
+        uint8_t expected[sizeof(storage)];
+        prepare_button_lifecycle_storage(storage, expected, sizeof(storage));
+        auto *const self = reinterpret_cast<FlatButton *>(storage + 16);
+        const uint32_t initial_abc = graphic_win_field(self, 0xABC);
+        write_flat_button_close_expected(
+            expected, base_fixed, base_dynamic, flat_defaults,
+            graphic_default);
+        write_time_close_expected(expected, 0xA4C);
+        write_time_close_expected(expected, 0xA1C);
+        write_at(expected, 16 + 0x000, GraphicWinPrimaryVtable);
+        write_at(expected, 16 + 0x444, GraphicWinBufferVtable);
+
+        reset_button_lifecycle_capture(storage + 16);
+        reset_button_lifecycle_frees();
+        graphic_win_close_stub_record = GraphicWinCloseStubRecord{};
+        graphic_win_stub_record = GraphicWinStubRecord{};
+        expect(flat_button_destructor_redirect(self, nullptr) == self);
+
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(button_lifecycle_close_calls == 2);
+        expect(button_lifecycle_close_time_counts[0] == 1);
+        expect(button_lifecycle_close_time_counts[1] == 1);
+        expect(button_lifecycle_close_primary_vtables[0]
+               == FlatButtonPrimaryVtable);
+        expect(button_lifecycle_close_buffer_vtables[0]
+               == FlatButtonBufferVtable);
+        expect(button_lifecycle_close_primary_vtables[1]
+               == BaseButtonPrimaryVtable);
+        expect(button_lifecycle_close_buffer_vtables[1]
+               == BaseButtonBufferVtable);
+        expect(button_lifecycle_close_abc[0] == initial_abc);
+        expect(button_lifecycle_close_abc[1] == 0xFFFFFFFFU);
+        expect(time_close_calls == 3);
+        expect(time_close_targets[0]
+               == reinterpret_cast<Time *>(storage + 16 + 0xA1C));
+        expect(time_close_targets[1]
+               == reinterpret_cast<Time *>(storage + 16 + 0xA4C));
+        expect(time_close_targets[2]
+               == reinterpret_cast<Time *>(storage + 16 + 0xA1C));
+        expect(button_lifecycle_destructor_time_count == 3);
+        expect(graphic_win_stub_record.sequence == 0x21);
+        expect(button_lifecycle_free_calls == 0);
+    }
+
+    button_lifecycle_capture = false;
+    button_lifecycle_base = nullptr;
+    _free = saved_free;
+    BaseButtonStaticDefaults = saved_base_fixed;
+    BaseButtonDynamicDefaults = saved_base_dynamic;
+    FlatButtonDefaults = saved_flat_defaults;
+    WinOriginalClose = saved_win_close;
+    BufferSubobjectClose = saved_buffer_close;
+    GraphicWinFieldA0CDefault = saved_graphic_default;
+    BufferSubobjectDestructor = saved_buffer_destructor;
+    WinOriginalDestructor = saved_win_destructor;
+    time_close_calls = 0;
+    std::memset(time_close_targets, 0, sizeof(time_close_targets));
 }
 
 int sprite_close_free_calls = 0;
@@ -5888,6 +6328,7 @@ int main() {
     test_sprite_construct();
     test_graphic_win_destructor();
     test_graphic_win_close();
+    test_base_button_and_flat_button_lifecycle();
     test_sprite_close();
     test_buffer_get_data();
     test_buffer_free_data();

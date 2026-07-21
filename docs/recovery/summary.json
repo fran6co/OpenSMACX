@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 33,
-      "source_complete": 606,
+      "source_complete": 610,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4991
+      "unrecovered": 4987
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,14 +1317,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 552,
-    "matched_function_starts": 552,
-    "unique_addresses": 552,
+    "annotations": 556,
+    "matched_function_starts": 556,
+    "unique_addresses": 556,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 179,
+      "data": 182,
       "function": 40
     },
     "items": [
@@ -1581,6 +1581,24 @@
         "type": "uint32_t *"
       },
       {
+        "address": "0x0069704C",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/basebutton.cpp:24",
+        "symbol": "BaseButtonStaticDefaults",
+        "type": "uint32_t *"
+      },
+      {
+        "address": "0x009B8E2C",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/basebutton.cpp:25",
+        "symbol": "BaseButtonDynamicDefaults",
+        "type": "uint32_t *"
+      },
+      {
         "address": "0x009BC494",
         "function": "",
         "function_address": "",
@@ -1767,6 +1785,15 @@
         "kind": "data",
         "location": "src/faction.cpp:46",
         "symbol": "DiploFrictionFactionID",
+        "type": "uint32_t *"
+      },
+      {
+        "address": "0x009B8E44",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/flatbutton.cpp:23",
+        "symbol": "FlatButtonDefaults",
         "type": "uint32_t *"
       },
       {
@@ -3301,6 +3328,6 @@
       }
     ],
     "matched_function_starts": 40,
-    "total": 219
+    "total": 222
   }
 }

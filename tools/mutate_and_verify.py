@@ -35,6 +35,9 @@ CONTROL_PREFIXES = (
 
 FUNCTION_HEADER = re.compile(r"Original Offset:\s*([0-9A-Fa-f]{6,8})")
 INT_LITERAL = re.compile(r"(?<![\w.])(0[xX][0-9A-Fa-f]+|\d+)(?![\w.])")
+INDEX_DIVISION = re.compile(
+    r"\s*(?P<numerator>0[xX][0-9A-Fa-f]+|\d+)\s*/\s*"
+    r"(?P<denominator>0[xX][0-9A-Fa-f]+|\d+)\s*")
 
 # Comparison rewrites. The patterns must not fire inside `->`, `<<`, `>>` or an
 # already-matched `<=`/`>=`, all of which produce uncompilable noise rather than
@@ -192,6 +195,39 @@ def statements_interact(first: str, second: str) -> bool:
     return bool(word(first_base, second_rhs) or word(second_base, first_rhs))
 
 
+def changes_subscript_value(line: str, start: int, end: int,
+                            replacement: str) -> bool:
+    """Reject constant mutants that leave a simple array index unchanged.
+
+    Recovered code commonly spells byte offsets as `object[0xA4 / 4]`. A
+    mechanical zero-to-one mutation of `object[0x000 / 4]` still indexes zero,
+    while mutating its divisor to zero creates an invalid expression. Neither
+    is a behavioral perturbation worth rebuilding. Constants outside a simple
+    positive-integer division remain eligible.
+    """
+    opening = line.rfind("[", 0, start + 1)
+    closing = line.find("]", end)
+    if opening < 0 or closing < 0:
+        return True
+    expression_start = opening + 1
+    original_expression = line[expression_start:closing]
+    mutated_expression = (
+        line[expression_start:start] + replacement + line[end:closing])
+    original = INDEX_DIVISION.fullmatch(original_expression)
+    mutated = INDEX_DIVISION.fullmatch(mutated_expression)
+    if not original or not mutated:
+        return True
+    original_denominator = int(original.group("denominator"), 0)
+    mutated_denominator = int(mutated.group("denominator"), 0)
+    if original_denominator == 0 or mutated_denominator == 0:
+        return False
+    original_index = (
+        int(original.group("numerator"), 0) // original_denominator)
+    mutated_index = (
+        int(mutated.group("numerator"), 0) // mutated_denominator)
+    return original_index != mutated_index
+
+
 def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
     """Derive mechanical perturbations of one function body."""
     mutants: list[Mutant] = []
@@ -215,14 +251,22 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
                  lines[:index] + lines[index + 1:])
 
         # 2. Perturb a constant. Catches fixtures driving unobservable state.
-        for literal in dict.fromkeys(INT_LITERAL.findall(line)):
+        emitted_constant_lines = set()
+        for match in INT_LITERAL.finditer(line):
+            literal = match.group(0)
             value = int(literal, 0)
             replacement = "1" if value == 0 else "0"
-            mutated_line = line.replace(literal, replacement, 1)
-            if mutated_line != line:
-                emit(index + 1, "constant",
-                     f"`{literal}` -> `{replacement}` in `{stripped}`",
-                     lines[:index] + [mutated_line] + lines[index + 1:])
+            if not changes_subscript_value(
+                    line, match.start(), match.end(), replacement):
+                continue
+            mutated_line = (
+                line[:match.start()] + replacement + line[match.end():])
+            if mutated_line == line or mutated_line in emitted_constant_lines:
+                continue
+            emitted_constant_lines.add(mutated_line)
+            emit(index + 1, "constant",
+                 f"`{literal}` -> `{replacement}` in `{stripped}`",
+                 lines[:index] + [mutated_line] + lines[index + 1:])
 
         # 3. Invert a comparison. Catches untested boundaries. Template angle
         #    brackets are not comparisons; rewriting them only burns a build.

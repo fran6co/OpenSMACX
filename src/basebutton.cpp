@@ -19,6 +19,90 @@
 #include "temp.h"
 #include "basebutton.h"
 
+const uint32_t BaseButtonPrimaryVtable = 0x00670290;
+const uint32_t BaseButtonBufferVtable = 0x00670288;
+uint32_t *BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
+uint32_t *BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
+
+/*
+Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
+         process defaults, then release the owned name and bubble strings.
+Original Offset: 006070C0
+Return Value: Zero when no bubble string is released; otherwise the executable
+              free routine's EAX residue
+Status: Complete; string storage remains owned by the executable CRT
+*/
+uint32_t BaseButton::close() {
+    GraphicWin::close();
+
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile uint32_t *const fixed =
+        reinterpret_cast<volatile uint32_t *>(BaseButtonStaticDefaults);
+    volatile uint32_t *const dynamic =
+        reinterpret_cast<volatile uint32_t *>(BaseButtonDynamicDefaults);
+    object[0xA74 / 4] = 0;
+    object[0xA9C / 4] = 0;
+    object[0xA78 / 4] = 0;
+    object[0xA44 / 4] = 0xFFFFFFFFU;
+    object[0xA48 / 4] = 0xFFFFFFFFU;
+    object[0xAAC / 4] = 0;
+    object[0xAB0 / 4] = 0;
+    object[0xAB4 / 4] = 0;
+    object[0xA94 / 4] = dynamic[0];
+    object[0xA84 / 4] = fixed[0];
+    object[0xA88 / 4] = fixed[1];
+    object[0xA8C / 4] = fixed[2];
+    object[0xA90 / 4] = fixed[3];
+    object[0xA98 / 4] = dynamic[1];
+    object[0xAA4 / 4] = 0;
+    object[0xAA0 / 4] = fixed[4];
+
+    const uint32_t name = object[0xA7C / 4];
+    if (name != 0) {
+        _free(reinterpret_cast<void *>(static_cast<uintptr_t>(name)));
+        object[0xA7C / 4] = 0;
+    }
+    uint32_t result = 0;
+    const uint32_t bubble = object[0xA80 / 4];
+    if (bubble != 0) {
+        result = reinterpret_cast<uintptr_t>(_free(
+            reinterpret_cast<void *>(static_cast<uintptr_t>(bubble))));
+        object[0xA80 / 4] = 0;
+    }
+    object[0xAA8 / 4] = 0;
+    return result;
+}
+
+uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
+    return self->close();
+}
+
+/*
+Purpose: Destroy a BaseButton by installing its two virtual tables, closing
+         it, destroying Time2 then Time1, and finally destroying GraphicWin.
+Original Offset: 00607040
+Return Value: Instance pointer in EAX
+Status: Complete
+*/
+BaseButton *BaseButton::destroy() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = BaseButtonPrimaryVtable;
+    object[0x444 / 4] = BaseButtonBufferVtable;
+    close();
+    time2_.~Time();
+    time1_.~Time();
+    graphic_win_destructor_redirect(
+        static_cast<GraphicWin *>(this), nullptr);
+    return this;
+}
+
+BaseButton *__fastcall base_button_destructor_redirect(
+        BaseButton *self, void *) {
+    return self->destroy();
+}
+
 /*
 Purpose: Set the button's bubble text.
 Original Offset: 00607550

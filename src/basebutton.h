@@ -27,12 +27,15 @@ class Scroll; // forward declaration
   */
 class DLLEXPORT BaseButton : GraphicWin {
   friend class ButtonGroup;
+  friend class FlatButton;
   friend class Scroll;
 
  public:
   BaseButton() { ; }
   ~BaseButton() { ; }
 
+  uint32_t close();
+  BaseButton *destroy();
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
 
@@ -61,3 +64,14 @@ class DLLEXPORT BaseButton : GraphicWin {
   uint32_t field_AB0_;
   uint32_t field_AB4_;
 };
+
+static_assert(sizeof(BaseButton) == 0xAB8,
+              "BaseButton layout must match the legacy ABI");
+
+extern const uint32_t BaseButtonPrimaryVtable;
+extern const uint32_t BaseButtonBufferVtable;
+extern uint32_t *BaseButtonStaticDefaults;
+extern uint32_t *BaseButtonDynamicDefaults;
+
+BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
+uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
