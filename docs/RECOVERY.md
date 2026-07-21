@@ -142,7 +142,12 @@ content hashes of the complete analysis/tool input closure, the committed catalo
 source-metadata projection consumed by the exporter (address/status annotations, fixed-address
 bindings, and their locations). Ordinary implementation, test, and runtime-oracle edits therefore
 reuse the verified catalog result, while any catalog-relevant source edit invalidates it. The
-`tools/verify_recovery_metadata.py --force` option regenerates unconditionally.
+ignored per-preset verification directory also checkpoints the expensive canonical IDB export
+against its narrower true input closure and the hashes of `functions.csv`, `callgraph.json`, and
+`summary.json`. A correlation/classification failure or promotion of regenerated catalogs can then
+resume by rerunning correlation and the final byte comparisons without parsing the IDB again; this
+checkpoint can never skip either downstream stage. `tools/verify_recovery_metadata.py --force`
+discards that checkpoint and regenerates unconditionally.
 `prepare-hybrid-image` depends on this check. The local-only umbrella target
 also runs behavioral tests, ABI checks, differential oracles, island regeneration, staging, and the
 runtime smoke gate:

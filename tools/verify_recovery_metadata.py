@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify recovery metadata determinism with a content-hash stamp cache.
+"""Verify recovery metadata determinism with staged content-hash caches.
 
 Regenerating the canonical inventory parses the multi-hundred-megabyte IDB and
 re-disassembles the image, which costs minutes per invocation. Every input of
@@ -8,6 +8,13 @@ committed output are byte-identical to a previous fully verified run, skipping
 regeneration cannot weaken the determinism guarantee. The stamp key covers the
 committed outputs too, so hand-editing a generated catalog always invalidates
 the cache and fails the byte comparison on the regeneration that follows.
+
+The expensive IDB export has its own narrower checkpoint under the ignored
+verification directory. A downstream correlation/classification failure, or
+promoting newly generated catalogs into docs/recovery, can therefore resume
+without parsing and disassembling the IDB again. The checkpoint hashes every
+true exporter input and each canonical output; it is never sufficient to skip
+correlation or the final committed-output comparison.
 """
 
 import argparse
@@ -27,6 +34,7 @@ DEFAULT_IDB = (
     REPO_ROOT / ".opensmacx" / "analysis" /
     "terranx_ORIG_200_v3_7.5.SP3.idb")
 CACHE_KEEP_COUNT = 5
+EXPORT_CHECKPOINT = ".canonical-export-checkpoint.json"
 
 EXPORT_TOOL = REPO_ROOT / "tools" / "export_recovery_inventory.py"
 CORRELATE_TOOL = REPO_ROOT / "tools" / "correlate_recovery_analyses.py"
@@ -39,6 +47,18 @@ COMPARED_OUTPUTS = (
     "analysis-correlation.csv",
     "priorities.csv",
     "analysis-summary.json",
+)
+
+EXPORT_OUTPUTS = (
+    "functions.csv",
+    "callgraph.json",
+    "summary.json",
+)
+
+EXPORT_STATIC_INPUTS = (
+    EXPORT_TOOL,
+    REPO_ROOT / "src" / "OpenSMACX.def",
+    REPO_ROOT / "docs" / "recovery-overrides.csv",
 )
 
 STATIC_INPUTS = (
@@ -92,6 +112,26 @@ def source_metadata_sha256(source_dir):
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
+def path_manifest_line(path):
+    if not path.is_file():
+        raise RuntimeError(f"required metadata input missing: {path}")
+    try:
+        label = path.resolve().relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        label = str(path.resolve())
+    return f"{label}:{sha256(path)}"
+
+
+def export_manifest_lines(idb_path):
+    """Return the exact input closure of the expensive canonical export."""
+    lines = [f"python:{sys.version_info[0]}.{sys.version_info[1]}"]
+    for path in (idb_path, *EXPORT_STATIC_INPUTS):
+        lines.append(path_manifest_line(path))
+    lines.append(
+        f"source_metadata:{source_metadata_sha256(REPO_ROOT / 'src')}")
+    return lines
+
+
 def manifest_lines(idb_path):
     input_paths = [idb_path, *STATIC_INPUTS]
     output_paths = [
@@ -99,13 +139,7 @@ def manifest_lines(idb_path):
     ]
     lines = [f"python:{sys.version_info[0]}.{sys.version_info[1]}"]
     for path in input_paths:
-        if not path.is_file():
-            raise RuntimeError(f"required metadata input missing: {path}")
-        try:
-            label = path.resolve().relative_to(REPO_ROOT).as_posix()
-        except ValueError:
-            label = str(path.resolve())
-        lines.append(f"{label}:{sha256(path)}")
+        lines.append(path_manifest_line(path))
     lines.append(
         f"source_metadata:{source_metadata_sha256(REPO_ROOT / 'src')}")
     for path in output_paths:
@@ -116,12 +150,63 @@ def manifest_lines(idb_path):
     return lines
 
 
-def run_regeneration(idb_path, verify_dir):
-    subprocess.run(
-        [sys.executable, str(EXPORT_TOOL),
-         "--idb", str(idb_path),
-         "--output-dir", str(verify_dir)],
-        check=True)
+def export_checkpoint_payload(idb_path, verify_dir):
+    manifest_text = "\n".join(export_manifest_lines(idb_path)) + "\n"
+    outputs = {}
+    for name in EXPORT_OUTPUTS:
+        path = verify_dir / name
+        if not path.is_file():
+            raise RuntimeError(f"canonical export did not produce {path}")
+        outputs[name] = sha256(path)
+    return {
+        "format_version": 1,
+        "key": hashlib.sha256(manifest_text.encode("utf-8")).hexdigest(),
+        "manifest": manifest_text,
+        "outputs": outputs,
+    }
+
+
+def write_export_checkpoint(idb_path, verify_dir):
+    payload = export_checkpoint_payload(idb_path, verify_dir)
+    with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", dir=verify_dir, delete=False) as handle:
+        json.dump(payload, handle, indent=1, sort_keys=True)
+        handle.write("\n")
+        temporary = Path(handle.name)
+    temporary.replace(verify_dir / EXPORT_CHECKPOINT)
+
+
+def export_checkpoint_matches(idb_path, verify_dir):
+    checkpoint = verify_dir / EXPORT_CHECKPOINT
+    if not checkpoint.is_file():
+        return False
+    try:
+        payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+        expected = export_checkpoint_payload(idb_path, verify_dir)
+    except (json.JSONDecodeError, OSError, RuntimeError):
+        return False
+    return payload == expected
+
+
+def clear_generated_outputs(verify_dir):
+    for name in (*COMPARED_OUTPUTS, EXPORT_CHECKPOINT):
+        path = verify_dir / name
+        if path.is_file() or path.is_symlink():
+            path.unlink()
+
+
+def run_regeneration(idb_path, verify_dir, force=False):
+    verify_dir.mkdir(parents=True, exist_ok=True)
+    if not force and export_checkpoint_matches(idb_path, verify_dir):
+        print("verify-recovery-metadata: reused canonical IDB export")
+    else:
+        clear_generated_outputs(verify_dir)
+        subprocess.run(
+            [sys.executable, str(EXPORT_TOOL),
+             "--idb", str(idb_path),
+             "--output-dir", str(verify_dir)],
+            check=True)
+        write_export_checkpoint(idb_path, verify_dir)
     subprocess.run(
         [sys.executable, str(CORRELATE_TOOL),
          "--canonical", str(verify_dir / "functions.csv"),
@@ -182,15 +267,9 @@ def main():
             return 0
         stamp.unlink()
 
-    if verify_dir.exists():
-        for entry in sorted(verify_dir.rglob("*"), reverse=True):
-            if entry.is_file() or entry.is_symlink():
-                entry.unlink()
-            else:
-                entry.rmdir()
     verify_dir.mkdir(parents=True, exist_ok=True)
 
-    run_regeneration(args.idb, verify_dir)
+    run_regeneration(args.idb, verify_dir, force=args.force)
     compare_outputs(verify_dir)
     write_stamp(cache_dir, key, manifest_text)
     print(f"verify-recovery-metadata: verified and stamped ({key[:16]})")

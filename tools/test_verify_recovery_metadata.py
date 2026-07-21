@@ -99,6 +99,84 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
             changed_address,
             verify_recovery_metadata.source_metadata_sha256(source))
 
+    def test_export_manifest_excludes_downstream_inputs_and_outputs(self):
+        idb = self.root / "test.idb"
+        idb.write_bytes(b"idb-bytes")
+        lines = verify_recovery_metadata.export_manifest_lines(idb)
+        labels = [line.split(":", 1)[0] for line in lines]
+        self.assertIn("tools/export_recovery_inventory.py", labels)
+        self.assertIn("src/OpenSMACX.def", labels)
+        self.assertIn("docs/recovery-overrides.csv", labels)
+        self.assertIn("source_metadata", labels)
+        self.assertNotIn("tools/correlate_recovery_analyses.py", labels)
+        self.assertNotIn("docs/recovery-binding-classifications.csv", labels)
+        self.assertNotIn("docs/recovery/functions.csv", labels)
+
+    def make_export_checkpoint(self):
+        idb = self.root / "test.idb"
+        idb.write_bytes(b"idb-bytes")
+        verify_dir = self.root / "verify"
+        verify_dir.mkdir()
+        for index, name in enumerate(
+                verify_recovery_metadata.EXPORT_OUTPUTS):
+            (verify_dir / name).write_text(
+                f"generated-{index}\n", encoding="utf-8")
+        verify_recovery_metadata.write_export_checkpoint(idb, verify_dir)
+        self.assertTrue(
+            verify_recovery_metadata.export_checkpoint_matches(
+                idb, verify_dir))
+        return idb, verify_dir
+
+    def test_regeneration_reuses_completed_canonical_export(self):
+        idb, verify_dir = self.make_export_checkpoint()
+        with mock.patch("subprocess.run") as run:
+            verify_recovery_metadata.run_regeneration(idb, verify_dir)
+        self.assertEqual(run.call_count, 1)
+        command = run.call_args.args[0]
+        self.assertEqual(Path(command[1]), verify_recovery_metadata.CORRELATE_TOOL)
+
+    def test_modified_export_output_forces_canonical_export(self):
+        idb, verify_dir = self.make_export_checkpoint()
+        (verify_dir / "functions.csv").write_text(
+            "drift\n", encoding="utf-8")
+
+        def simulate(command, check):
+            self.assertTrue(check)
+            if Path(command[1]) == verify_recovery_metadata.EXPORT_TOOL:
+                for index, name in enumerate(
+                        verify_recovery_metadata.EXPORT_OUTPUTS):
+                    (verify_dir / name).write_text(
+                        f"regenerated-{index}\n", encoding="utf-8")
+
+        with mock.patch("subprocess.run", side_effect=simulate) as run:
+            verify_recovery_metadata.run_regeneration(idb, verify_dir)
+        self.assertEqual(
+            [Path(call.args[0][1]) for call in run.call_args_list],
+            [verify_recovery_metadata.EXPORT_TOOL,
+             verify_recovery_metadata.CORRELATE_TOOL])
+        self.assertTrue(
+            verify_recovery_metadata.export_checkpoint_matches(
+                idb, verify_dir))
+
+    def test_force_reruns_completed_canonical_export(self):
+        idb, verify_dir = self.make_export_checkpoint()
+
+        def simulate(command, check):
+            self.assertTrue(check)
+            if Path(command[1]) == verify_recovery_metadata.EXPORT_TOOL:
+                for index, name in enumerate(
+                        verify_recovery_metadata.EXPORT_OUTPUTS):
+                    (verify_dir / name).write_text(
+                        f"forced-{index}\n", encoding="utf-8")
+
+        with mock.patch("subprocess.run", side_effect=simulate) as run:
+            verify_recovery_metadata.run_regeneration(
+                idb, verify_dir, force=True)
+        self.assertEqual(
+            [Path(call.args[0][1]) for call in run.call_args_list],
+            [verify_recovery_metadata.EXPORT_TOOL,
+             verify_recovery_metadata.CORRELATE_TOOL])
+
     def test_manifest_changes_when_committed_output_changes(self):
         idb = self.root / "test.idb"
         idb.write_bytes(b"idb-bytes")
