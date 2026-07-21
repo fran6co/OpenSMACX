@@ -12,12 +12,17 @@ the cache and fails the byte comparison on the regeneration that follows.
 The expensive IDB export has its own narrower checkpoint under the ignored
 verification directory. A downstream correlation/classification failure, or
 promoting newly generated catalogs into docs/recovery, can therefore resume
-without parsing and disassembling the IDB again. The checkpoint hashes every
-true exporter input and each canonical output; it is never sufficient to skip
-correlation or the final committed-output comparison.
+without parsing and disassembling the IDB again. The checkpoint hashes the
+binary-analysis input closure and binary-only projections of the canonical
+outputs. Source annotations, bindings, redirects, and overrides are cheaply
+reapplied before correlation, so ordinary recovery promotions do not reopen
+the IDB. The checkpoint is never sufficient to skip correlation or the final
+committed-output comparison.
 """
 
 import argparse
+from collections import Counter, defaultdict
+import csv
 import hashlib
 import json
 from pathlib import Path
@@ -57,9 +62,18 @@ EXPORT_OUTPUTS = (
 
 EXPORT_STATIC_INPUTS = (
     EXPORT_TOOL,
-    REPO_ROOT / "src" / "OpenSMACX.def",
-    REPO_ROOT / "docs" / "recovery-overrides.csv",
+    WRAPPER_TOOL,
 )
+
+EXPORT_METADATA_COLUMNS = {
+    "source_locations",
+    "source_statuses",
+    "redirect_exports",
+    "original_dependencies",
+    "recovery_state",
+    "priority",
+    "notes",
+}
 
 STATIC_INPUTS = (
     EXPORT_TOOL,
@@ -123,12 +137,15 @@ def path_manifest_line(path):
 
 
 def export_manifest_lines(idb_path):
-    """Return the exact input closure of the expensive canonical export."""
+    """Return the input closure of the expensive binary-only IDB export.
+
+    Source annotations, bindings, DEF exports, and recovery overrides are
+    deliberately excluded. They are reapplied from the checkpointed canonical
+    function rows without reopening the IDB.
+    """
     lines = [f"python:{sys.version_info[0]}.{sys.version_info[1]}"]
     for path in (idb_path, *EXPORT_STATIC_INPUTS):
         lines.append(path_manifest_line(path))
-    lines.append(
-        f"source_metadata:{source_metadata_sha256(REPO_ROOT / 'src')}")
     return lines
 
 
@@ -150,16 +167,63 @@ def manifest_lines(idb_path):
     return lines
 
 
+def json_sha256(value):
+    serialized = json.dumps(
+        value, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def binary_functions_payload(path):
+    with path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        if not reader.fieldnames or not EXPORT_METADATA_COLUMNS.issubset(
+                reader.fieldnames):
+            raise RuntimeError(f"invalid canonical function inventory: {path}")
+        binary_fields = [
+            field for field in reader.fieldnames
+            if field not in EXPORT_METADATA_COLUMNS
+        ]
+        rows = [
+            {field: row[field] for field in binary_fields}
+            for row in reader
+        ]
+    return {"fieldnames": binary_fields, "rows": rows}
+
+
+def binary_summary_payload(path):
+    summary = json.loads(path.read_text(encoding="utf-8"))
+    inputs = summary["inputs"]
+    functions = summary["functions"]
+    return {
+        "format_version": summary["format_version"],
+        "inputs": {
+            key: inputs[key] for key in (
+                "idb", "idb_sha256", "original_input_path",
+                "original_input_sha256")
+        },
+        "functions": {
+            key: functions[key] for key in (
+                "total", "by_binary_kind", "with_prototypes", "with_comments")
+        },
+        "call_graph": summary["call_graph"],
+    }
+
+
 def export_checkpoint_payload(idb_path, verify_dir):
     manifest_text = "\n".join(export_manifest_lines(idb_path)) + "\n"
-    outputs = {}
     for name in EXPORT_OUTPUTS:
         path = verify_dir / name
         if not path.is_file():
             raise RuntimeError(f"canonical export did not produce {path}")
-        outputs[name] = sha256(path)
+    outputs = {
+        "functions_binary": json_sha256(binary_functions_payload(
+            verify_dir / "functions.csv")),
+        "callgraph.json": sha256(verify_dir / "callgraph.json"),
+        "summary_binary": json_sha256(binary_summary_payload(
+            verify_dir / "summary.json")),
+    }
     return {
-        "format_version": 1,
+        "format_version": 2,
         "key": hashlib.sha256(manifest_text.encode("utf-8")).hexdigest(),
         "manifest": manifest_text,
         "outputs": outputs,
@@ -195,10 +259,160 @@ def clear_generated_outputs(verify_dir):
             path.unlink()
 
 
+def refresh_export_metadata(verify_dir):
+    """Reapply cheap source metadata to a checkpointed binary inventory."""
+    from export_recovery_inventory import (
+        DEFAULT_DEFINITION,
+        DEFAULT_OVERRIDES,
+        DEFAULT_SOURCE_DIR,
+        derive_recovery_state,
+        flatten,
+        load_overrides,
+        load_redirects,
+        load_source_annotations,
+        load_source_bindings,
+        repo_path,
+    )
+
+    functions_path = verify_dir / "functions.csv"
+    summary_path = verify_dir / "summary.json"
+    with functions_path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        if not reader.fieldnames or not EXPORT_METADATA_COLUMNS.issubset(
+                reader.fieldnames):
+            raise RuntimeError(
+                f"invalid canonical function inventory: {functions_path}")
+        fieldnames = reader.fieldnames
+        rows = list(reader)
+
+    source_annotations = load_source_annotations(DEFAULT_SOURCE_DIR)
+    source_bindings = load_source_bindings(DEFAULT_SOURCE_DIR)
+    redirects = load_redirects(DEFAULT_DEFINITION)
+    overrides = load_overrides(DEFAULT_OVERRIDES)
+    redirects_by_name = defaultdict(list)
+    for redirect in redirects:
+        redirects_by_name[redirect["name"]].append(redirect)
+    function_bindings = defaultdict(list)
+    for binding in source_bindings:
+        if binding["kind"] == "function":
+            function_bindings[binding["address"]].append(binding)
+
+    rows_by_address = {int(row["address"], 0): row for row in rows}
+    known_starts = set(rows_by_address)
+    unmatched_overrides = sorted(set(overrides) - known_starts)
+    if unmatched_overrides:
+        formatted = ", ".join(
+            f"0x{address:08X}" for address in unmatched_overrides)
+        raise RuntimeError(
+            f"overrides do not match IDB function starts: {formatted}")
+
+    for address, row in rows_by_address.items():
+        annotations = source_annotations.get(address, [])
+        function_redirects = redirects_by_name.get(row["name"], [])
+        dependencies = function_bindings.get(address, [])
+        function = {
+            "binary_kind": row["binary_kind"],
+            "source_annotations": annotations,
+            "redirects": function_redirects,
+            "dependencies": dependencies,
+        }
+        row["source_locations"] = flatten(
+            item["location"] for item in annotations)
+        row["source_statuses"] = flatten(
+            item["status"] for item in annotations)
+        row["redirect_exports"] = flatten(
+            item["name"] for item in function_redirects)
+        row["original_dependencies"] = flatten(
+            item["symbol"] for item in dependencies)
+        row["recovery_state"] = derive_recovery_state(function)
+        row["priority"] = ""
+        row["notes"] = ""
+        if address in overrides:
+            for key, value in overrides[address].items():
+                if value:
+                    row[key] = value
+
+    function_names = {row["name"] for row in rows}
+    unmatched_redirects = sorted(
+        (redirect for redirect in redirects
+         if redirect["name"] not in function_names),
+        key=lambda item: (item["name"], item["location"]),
+    )
+    for binding in source_bindings:
+        target = rows_by_address.get(binding["address"])
+        binding["function"] = target["name"] if target else ""
+        binding["function_address"] = (
+            int(target["address"], 0) if target else None)
+
+    with tempfile.NamedTemporaryFile(
+            "w", newline="", encoding="utf-8", dir=verify_dir,
+            delete=False) as handle:
+        writer = csv.DictWriter(
+            handle, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+        temporary_functions = Path(handle.name)
+    temporary_functions.replace(functions_path)
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["inputs"].update({
+        "definition": repo_path(DEFAULT_DEFINITION),
+        "source_directory": repo_path(DEFAULT_SOURCE_DIR),
+        "overrides": repo_path(DEFAULT_OVERRIDES),
+    })
+    summary["functions"]["by_recovery_state"] = dict(sorted(
+        Counter(row["recovery_state"] for row in rows).items()))
+    unresolved_annotations = sorted(set(source_annotations) - known_starts)
+    summary["source_annotations"] = {
+        "annotations": sum(len(items) for items in source_annotations.values()),
+        "unique_addresses": len(source_annotations),
+        "matched_function_starts": len(set(source_annotations) & known_starts),
+        "unmatched_addresses": [
+            f"0x{address:08X}" for address in unresolved_annotations
+        ],
+    }
+    matched_redirect_names = {
+        row["name"] for row in rows if row["redirect_exports"]
+    }
+    summary["redirects"] = {
+        "definitions": len(redirects),
+        "exact_name_matches": len(matched_redirect_names),
+        "unmatched": unmatched_redirects,
+    }
+    binding_counts = Counter(binding["kind"] for binding in source_bindings)
+    summary["source_bindings"] = {
+        "total": len(source_bindings),
+        "by_kind": dict(sorted(binding_counts.items())),
+        "matched_function_starts": sum(
+            binding["kind"] == "function"
+            and binding["function_address"] is not None
+            for binding in source_bindings),
+        "items": [
+            {
+                **{key: value for key, value in binding.items()
+                   if key not in {"address", "function_address"}},
+                "address": f"0x{binding['address']:08X}",
+                "function_address": (
+                    f"0x{binding['function_address']:08X}"
+                    if binding["function_address"] is not None else ""),
+            }
+            for binding in source_bindings
+        ],
+    }
+    with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", dir=verify_dir,
+            delete=False) as handle:
+        json.dump(summary, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        temporary_summary = Path(handle.name)
+    temporary_summary.replace(summary_path)
+
+
 def run_regeneration(idb_path, verify_dir, force=False):
     verify_dir.mkdir(parents=True, exist_ok=True)
     if not force and export_checkpoint_matches(idb_path, verify_dir):
         print("verify-recovery-metadata: reused canonical IDB export")
+        refresh_export_metadata(verify_dir)
     else:
         clear_generated_outputs(verify_dir)
         subprocess.run(

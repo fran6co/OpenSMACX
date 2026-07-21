@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import csv
 import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -105,22 +107,58 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
         lines = verify_recovery_metadata.export_manifest_lines(idb)
         labels = [line.split(":", 1)[0] for line in lines]
         self.assertIn("tools/export_recovery_inventory.py", labels)
-        self.assertIn("src/OpenSMACX.def", labels)
-        self.assertIn("docs/recovery-overrides.csv", labels)
-        self.assertIn("source_metadata", labels)
+        self.assertIn("tools/verify_recovery_metadata.py", labels)
+        self.assertNotIn("src/OpenSMACX.def", labels)
+        self.assertNotIn("docs/recovery-overrides.csv", labels)
+        self.assertNotIn("source_metadata", labels)
         self.assertNotIn("tools/correlate_recovery_analyses.py", labels)
         self.assertNotIn("docs/recovery-binding-classifications.csv", labels)
         self.assertNotIn("docs/recovery/functions.csv", labels)
+
+    def write_export_outputs(self, verify_dir, caller_count="3"):
+        (verify_dir / "functions.csv").write_text(
+            "address,name,binary_kind,source_locations,source_statuses,"
+            "redirect_exports,original_dependencies,recovery_state,priority,"
+            "notes,caller_count\n"
+            f"0x00401000,first,game,,,,,unrecovered,,,{caller_count}\n",
+            encoding="utf-8")
+        (verify_dir / "callgraph.json").write_text(
+            json.dumps({
+                "format_version": 1,
+                "edges": [],
+                "caller_count": caller_count,
+            }, sort_keys=True)
+            + "\n", encoding="utf-8")
+        (verify_dir / "summary.json").write_text(json.dumps({
+            "format_version": 1,
+            "inputs": {
+                "idb": "test.idb",
+                "idb_sha256": "abc",
+                "original_input_path": "terranx.exe",
+                "original_input_sha256": "def",
+                "definition": "src/OpenSMACX.def",
+                "source_directory": "src",
+                "overrides": "docs/recovery-overrides.csv",
+            },
+            "functions": {
+                "total": 1,
+                "by_binary_kind": {"game": 1},
+                "by_recovery_state": {"unrecovered": 1},
+                "with_prototypes": 0,
+                "with_comments": 0,
+            },
+            "source_annotations": {},
+            "redirects": {},
+            "source_bindings": {},
+            "call_graph": {"edges": 0, "caller_count": caller_count},
+        }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     def make_export_checkpoint(self):
         idb = self.root / "test.idb"
         idb.write_bytes(b"idb-bytes")
         verify_dir = self.root / "verify"
         verify_dir.mkdir()
-        for index, name in enumerate(
-                verify_recovery_metadata.EXPORT_OUTPUTS):
-            (verify_dir / name).write_text(
-                f"generated-{index}\n", encoding="utf-8")
+        self.write_export_outputs(verify_dir)
         verify_recovery_metadata.write_export_checkpoint(idb, verify_dir)
         self.assertTrue(
             verify_recovery_metadata.export_checkpoint_matches(
@@ -129,11 +167,102 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
 
     def test_regeneration_reuses_completed_canonical_export(self):
         idb, verify_dir = self.make_export_checkpoint()
-        with mock.patch("subprocess.run") as run:
+        with mock.patch.object(
+                verify_recovery_metadata, "refresh_export_metadata") as refresh, \
+                mock.patch("subprocess.run") as run:
             verify_recovery_metadata.run_regeneration(idb, verify_dir)
+        refresh.assert_called_once_with(verify_dir)
         self.assertEqual(run.call_count, 1)
         command = run.call_args.args[0]
         self.assertEqual(Path(command[1]), verify_recovery_metadata.CORRELATE_TOOL)
+
+    def test_metadata_only_export_drift_reuses_binary_checkpoint(self):
+        idb, verify_dir = self.make_export_checkpoint()
+        functions = verify_dir / "functions.csv"
+        functions.write_text(
+            functions.read_text(encoding="utf-8").replace(
+                "0x00401000,first,game,,,,,unrecovered,,,3",
+                "0x00401000,first,game,src/first.cpp:10,Complete,,,"
+                "source_complete,,,3"),
+            encoding="utf-8")
+        self.assertTrue(
+            verify_recovery_metadata.export_checkpoint_matches(
+                idb, verify_dir))
+        with mock.patch.object(
+                verify_recovery_metadata, "refresh_export_metadata") as refresh, \
+                mock.patch("subprocess.run") as run:
+            verify_recovery_metadata.run_regeneration(idb, verify_dir)
+        refresh.assert_called_once_with(verify_dir)
+        self.assertEqual(run.call_count, 1)
+
+    def test_refresh_reapplies_all_source_derived_metadata(self):
+        idb, verify_dir = self.make_export_checkpoint()
+        annotations = {
+            0x00401000: [{
+                "location": "src/first.cpp:7",
+                "status": "Complete",
+            }],
+        }
+        bindings = [{
+            "symbol": "FirstOriginal",
+            "address": 0x00401000,
+            "kind": "function",
+            "type": "func_first *",
+            "location": "src/bindings.cpp:9",
+        }]
+        redirects = [{
+            "name": "first",
+            "location": "src/OpenSMACX.def:11",
+        }]
+        overrides = {
+            0x00401000: {
+                "recovery_state": "",
+                "priority": "7",
+                "notes": "next batch",
+            },
+        }
+        with mock.patch(
+                "export_recovery_inventory.load_source_annotations",
+                return_value=annotations), mock.patch(
+                "export_recovery_inventory.load_source_bindings",
+                return_value=bindings), mock.patch(
+                "export_recovery_inventory.load_redirects",
+                return_value=redirects), mock.patch(
+                "export_recovery_inventory.load_overrides",
+                return_value=overrides):
+            verify_recovery_metadata.refresh_export_metadata(verify_dir)
+
+        with (verify_dir / "functions.csv").open(
+                newline="", encoding="utf-8") as file:
+            row = next(iter(csv.DictReader(file)))
+        self.assertEqual(row["source_locations"], "src/first.cpp:7")
+        self.assertEqual(row["source_statuses"], "Complete")
+        self.assertEqual(row["redirect_exports"], "first")
+        self.assertEqual(row["original_dependencies"], "FirstOriginal")
+        self.assertEqual(row["recovery_state"], "source_complete")
+        self.assertEqual(row["priority"], "7")
+        self.assertEqual(row["notes"], "next batch")
+        summary = json.loads(
+            (verify_dir / "summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            summary["functions"]["by_recovery_state"],
+            {"source_complete": 1})
+        self.assertEqual(summary["source_annotations"], {
+            "annotations": 1,
+            "matched_function_starts": 1,
+            "unique_addresses": 1,
+            "unmatched_addresses": [],
+        })
+        self.assertEqual(summary["redirects"], {
+            "definitions": 1,
+            "exact_name_matches": 1,
+            "unmatched": [],
+        })
+        self.assertEqual(
+            summary["source_bindings"]["items"][0]["function"], "first")
+        self.assertTrue(
+            verify_recovery_metadata.export_checkpoint_matches(
+                idb, verify_dir))
 
     def test_modified_export_output_forces_canonical_export(self):
         idb, verify_dir = self.make_export_checkpoint()
@@ -143,10 +272,7 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
         def simulate(command, check):
             self.assertTrue(check)
             if Path(command[1]) == verify_recovery_metadata.EXPORT_TOOL:
-                for index, name in enumerate(
-                        verify_recovery_metadata.EXPORT_OUTPUTS):
-                    (verify_dir / name).write_text(
-                        f"regenerated-{index}\n", encoding="utf-8")
+                self.write_export_outputs(verify_dir, caller_count="4")
 
         with mock.patch("subprocess.run", side_effect=simulate) as run:
             verify_recovery_metadata.run_regeneration(idb, verify_dir)
@@ -164,10 +290,7 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
         def simulate(command, check):
             self.assertTrue(check)
             if Path(command[1]) == verify_recovery_metadata.EXPORT_TOOL:
-                for index, name in enumerate(
-                        verify_recovery_metadata.EXPORT_OUTPUTS):
-                    (verify_dir / name).write_text(
-                        f"forced-{index}\n", encoding="utf-8")
+                self.write_export_outputs(verify_dir, caller_count="5")
 
         with mock.patch("subprocess.run", side_effect=simulate) as run:
             verify_recovery_metadata.run_regeneration(
