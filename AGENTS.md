@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,032 candidates.
+- Current recovery backlog: 5,030 candidates.
 - Current local legacy-island count: 114, reduced from 174.
-- `DllMain` entry redirects: 98, comprising 96 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 100, comprising 98 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -107,6 +107,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered `Buffer::get_data` at `0x005E3373` (48 callers) and `Buffer::free_data` at `0x005E34A3` (43 callers), the reference-counted DirectDraw surface lock pair feeding `Buffer::close`.
 - Recovered `Sprite::close` at `0x005E3820` (111 callers), completing the Sprite lifecycle pair.
 - Recovered the two highest-fan-in bottleneck primitives: `Win::is_visible` at `0x005F7E90` (120 callers) and `Sprite::Sprite` at `0x005E37E0` (154 callers), both verified by new in-process runtime-oracle suites because they carry a recursive call and an absolute accounting global respectively.
+- Recovered `Win::client_to_screen` at `0x005ED240` (71 callers), preserving recursive parent-chain translation, bit-15 parent-origin subtraction, output alias ordering, and defined 32-bit wrapping. Its original-address Win oracle exercises the call-bearing body before redirects install.
 
 Recovered source includes:
 
@@ -133,7 +134,7 @@ Recovered source includes:
 - `CaviarData` and `Caviar` constructors, scaling, camera state, and scaling getter.
 - `MainInterface::clear_message`, `desktop_update`, Buffer lifecycle hooks, and `Dialogs::close`.
 - `AlphaNet::pid_2_idx`, `pid_2_who`, `who_2_pid`, and `who_2_idx` plus their fastcall-to-thiscall runtime adapters.
-- `Win::move`, `set_vert_paging`, and `set_horz_paging`, plus the five Scroll init wrappers, `Scroll::set_border_color`, all four sprite-triplet setters, `set_range`, `set_pos`, four style setters, both thumb resetters, `compute_thumb_rect`, and their fastcall-to-thiscall runtime adapters.
+- `Win::move`, recursive `client_to_screen`, `set_vert_paging`, and `set_horz_paging`, plus the five Scroll init wrappers, `Scroll::set_border_color`, all four sprite-triplet setters, `set_range`, `set_pos`, four style setters, both thumb resetters, `compute_thumb_rect`, and their fastcall-to-thiscall runtime adapters.
 - The named-field RECT expansion helper used by Scroll initialization.
 - `Menu::set_menu_proc`, `Menu::id_to_index`, and all six `PullDown` item-state mutators plus `get_selected`, with fastcall-to-thiscall runtime adapters.
 - `Vector` construction, clearing, subtraction, in-place addition/subtraction, and scaling, with fastcall-to-thiscall runtime adapters.
@@ -170,6 +171,7 @@ Other completed corrections and checks:
 - Heap lifecycle tests verify the exact `0x14` layout, direct destructor cleanup without shutdown delegation, all five fields, and complete object canaries. ABI checks separately verify byte-only writes preserve the three padding bytes.
 - Heap byte fields use explicit volatile writes so optimized inline construction, destruction, and shutdown preserve the three legacy padding bytes in Release as well as Debug.
 - Win movement tests cover both rectangle selectors, unrelated flag bits, positive/negative and identity movement, complete object canaries, and 32-bit coordinate/dimension wrapping.
+- Win client-to-screen tests cover one- through three-node parent chains, both controlling flag bits, null parents, unrelated flags, distinct and aliased outputs, local/recursive/subtractive signed-boundary wrapping, direct/adapted calls, and complete object canaries.
 - Win paging tests cover vertical/horizontal, direct/adapter, null, distinct and aliased scroll pointers, raw signed values, exact target offsets, and complete Win/Scroll canaries.
 - Scroll init-wrapper tests cover null rectangles and parents, zero and signed-extreme lengths, zero and wrapping process-default thicknesses, wrapping RECT subtraction, exact primary-init argument forwarding, unnormalized return values, `_nc` write ordering and persistence, direct/adapted calls, unchanged inputs, and complete object canaries.
 - Scroll border-color tests cover the `-1` sentinel, signed color extremes, zero/one/negative and wrapping thicknesses, poisoned prior rectangles, exact write boundaries, and complete object canaries.
@@ -197,12 +199,12 @@ Other completed corrections and checks:
 
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID and identity slots, signed identities, first-match duplicates with distinct payloads, zero IDs, exact scan boundaries, complete object canaries, all four redirect adapters, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
-- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup including the five Scroll wrappers, three geometry leaves, six Vector leaves, and optimized PullDown tail jumps; exact Vector x87 operation counts; the Scroll primary dependency's raw thiscall dispatch; and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
-- `verify-recovery-oracles` extracts 31 explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups, `Random::reseed`, integer `Random::get`, three Win movement/paging methods, three geometry leaves, six Vector leaves, three Scroll setters, `Scroll::compute_thumb_rect`, RECT expansion, seven PullDown accessors, and two Menu accessors against source with identical fixtures in Debug and Release.
+- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup including the recursive Win queries, five Scroll wrappers, three geometry leaves, six Vector leaves, and optimized PullDown tail jumps; exact Vector x87 operation counts; both Win runtime-oracle original-address calls; the Scroll primary dependency's raw thiscall dispatch; and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
+- `verify-recovery-oracles` extracts 32 explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups, `Random::reseed`, integer `Random::get`, three Win movement/paging methods, three geometry leaves, six Vector leaves, three Scroll setters, `Scroll::compute_thumb_rect`, RECT expansion, seven PullDown accessors, and two Menu accessors against source with identical fixtures in Debug and Release.
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
 - Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
 - The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
-- Regenerated state after the geometry/Vector recovery is 5,047 priorities, 587 source-complete functions, 31 original dependencies, 5,012 unrecovered functions, and 115 islands.
+- Regenerated state is 5,030 priorities, 604 source-complete functions, 32 original dependencies, 4,994 unrecovered functions, and 114 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -211,11 +213,12 @@ Other completed corrections and checks:
 - Forcing the bundled native DDrawCompat proxy also fails fast on this Wine version.
 - Hybrid staging defaults to the hash-pinned PRACX executable at `.opensmacx/game/terranx.exe` and publishes all 460 expected import redirects.
 - The packer labels PRACX `hash_pinned_runtime_build`; all recovery body mappings are `not_analyzed` and unmapped rather than projected from canonical addresses.
-- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 115 islands.
+- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 114 islands.
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
 - `tools/smoke_hybrid_game.py` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
 - The opt-in Scroll recovery oracle runs fifteen untouched original methods inside the verified PRACX process before redirects are installed, including invalid non-delegating fixtures for all five init wrappers. It compares complete object/canary state, callback traces, global publication, and return residue against source, and must write `passed` to an ignored nonsymlinked result path before smoke can pass. All direct redirect signatures and the temporary primary-init dependency are validated before the oracle executes; sprite redirects additionally validate their distinguishing field displacement.
+- The Win runtime-oracle suite compares recursive visibility and client-to-screen translation against untouched original bodies before redirects install, including nested parent chains, controlling flags, wrapping arithmetic, aliased outputs, and complete object/canary preservation.
 - ImportAdder runs only in the marker-protected build Wine prefix, receives an explicit `WINEPREFIX`, and stops only that prefix after every invocation.
 - `tools/run_gameplay_scenario.py` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
@@ -348,7 +351,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 81 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 98 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -362,7 +365,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
 - `src/buttongroup.h`, `src/buttongroup.cpp`: recovered button-group insertion.
-- `src/win.h`, `src/win.cpp`: verified Win layout, `move`, recursive ancestor-chain `is_visible`, both paging setters, both `in_box` overloads, wrapping RECT construction, rectangle-center behavior, and adapters.
+- `src/win.h`, `src/win.cpp`: verified Win layout, `move`, recursive ancestor-chain `is_visible`, recursive wrapping `client_to_screen`, both paging setters, both `in_box` overloads, wrapping RECT construction, rectangle-center behavior, and adapters.
 - `src/vector.h`, `src/vector.cpp`: verified `0xC` Vector layout, lifecycle, ordered x87 arithmetic, alias-sensitive scaling copies, and adapters.
 - `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
 - `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see `docs/RUNTIME_ORACLE.md` for suite authoring.
@@ -371,7 +374,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `src/buffer_oracle.h`, `src/buffer_oracle.cpp`: Buffer runtime-oracle suite driving the lock/release pair through a stand-in DirectDraw surface so no real video memory is touched.
 - `src/graphicwin.h`, `src/graphicwin.cpp`: verified `0xA14` GraphicWin layout, destructor vtable installation and subobject delegation, and the two classified subobject-destructor dependencies.
 - `src/sprite.h`, `src/sprite.cpp`: verified `0x2C` Sprite layout, ordered constructor stores, release accounting and field clearing, and the sprite memory and CRT free bindings. The release paths call the executable's free at a fixed address and the executable CRT heap is uninitialised during `DllMain`, so the runtime oracle covers only non-releasing fixtures; the accounting arithmetic and release ordering are verified at source level with a recording free.
-- `src/win_oracle.h`, `src/win_oracle.cpp`, `src/sprite_oracle.h`, `src/sprite_oracle.cpp`: Win and Sprite runtime-oracle suites covering the recursive visibility query and the constructor's accounting side effect.
+- `src/win_oracle.h`, `src/win_oracle.cpp`, `src/sprite_oracle.h`, `src/sprite_oracle.cpp`: Win and Sprite runtime-oracle suites covering recursive visibility and coordinate translation plus the constructor's accounting side effect.
 - `src/menu.h`, `src/menu.cpp`: verified Menu layout, callback setter, bounded ID lookup, and adapters.
 - `src/pulldown.h`, `src/pulldown.cpp`: verified PullDown layout, six item-state mutators, unchecked selected-index accessor, and adapters.
 - `src/autosound.h`, `src/autosound.cpp`: recovered `do_sound` hook.
@@ -379,7 +382,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,047 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,030 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
@@ -393,7 +396,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `tools/static_recompile_pilot.py`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
 - `tools/test_static_recompile_pilot.py`, `tools/verify_static_recompile_pilot.py`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
 - `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
-- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local Scroll-oracle result validation.
+- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local runtime-oracle result validation.
 - `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
 - `tools/test_smoke_hybrid_game.py`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
 - `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
@@ -412,8 +415,8 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `docs/STATIC_RECOMPILATION.md`: local-only provenance policy, commands, value gate, and stopped pilot outcome.
 - `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
-- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 115-island manifest.
-- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit 31-function AlphaNet/Random/Win/geometry/Vector/Scroll/Menu/PullDown oracle manifest.
+- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 114-island manifest.
+- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit 32-function AlphaNet/Random/Win/geometry/Vector/Scroll/Menu/PullDown oracle manifest.
 - `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
 - `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
 - `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.
@@ -445,103 +448,3 @@ Recovered replacements therefore omit the frame, which is behaviourally equivale
 - `verify-recovery-abi` fails any recovered object that grows an `.eh_frame` section or imports `__gxx_personality`/`_Unwind_`/`CxxFrameHandler`, which is what a translation unit losing the flag would look like.
 
 Caveat: of 1,072 SEH prologues only 387 are C++ EH thunks. The remaining ~685 are `_except_handler3`-style `__try`/`__except`/`__finally`, which respond to *structured* exceptions such as access violations, and those genuinely can occur. The reasoning above does not transfer to them. Before recovering any function whose prologue targets a handler other than `0x00644FD6`, re-examine it.
-
-## Next Steps
-
-1. Decide the SEH policy described under Current Blocker before scheduling any destructor or `close` recovery; that decision gates the largest remaining fan-in targets.
-2. Replace the Scroll wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, close, `Win`, and `Buffer` dependency closure; its shared RECT-construction helper is now source-owned. Then recover the Scroll constructor, close, and primary initializer at `0x006051D0` through `0x0060583F`.
-3. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-4. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
-5. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
-
-## Relevant Files
-
-- `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
-- `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 81 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
-- `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
-- `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
-- `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
-- `src/buffer.h`, `src/buffer.cpp`: recovered Buffer setters and lifecycle hooks.
-- `src/dialog.h`, `src/dialog.cpp`: recovered Dialog setters, bounded ID/position lookup, selection, and selected-ID retrieval.
-- `src/random.h`, `src/random.cpp`: verified Random layout, lifecycle, signed-range generation, and exact floating transfer.
-- `src/log.h`, `src/log.cpp`: verified Log layout, lifecycle, global initialization/cleanup, reset, decimal/hexadecimal output wrappers, and state control.
-- `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance/seek accessors.
-- `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text constructors, destructor, open wrapper, get, and numeric-item source helpers.
-- `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
-- `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
-- `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
-- `src/buttongroup.h`, `src/buttongroup.cpp`: recovered button-group insertion.
-- `src/win.h`, `src/win.cpp`: verified Win layout, `move`, recursive ancestor-chain `is_visible`, both paging setters, both `in_box` overloads, wrapping RECT construction, rectangle-center behavior, and adapters.
-- `src/vector.h`, `src/vector.cpp`: verified `0xC` Vector layout, lifecycle, ordered x87 arithmetic, alias-sensitive scaling copies, and adapters.
-- `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
-- `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see `docs/RUNTIME_ORACLE.md` for suite authoring.
-- `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: Scroll suite of the runtime oracle covering fifteen original Scroll methods that are ineligible for copied-byte oracle execution.
-- `src/sprite.h`, `src/sprite.cpp`: verified `0x2C` Sprite layout, ordered constructor stores, and the sprite memory accounting global binding.
-- `src/win_oracle.h`, `src/win_oracle.cpp`, `src/sprite_oracle.h`, `src/sprite_oracle.cpp`: Win and Sprite runtime-oracle suites covering the recursive visibility query and the constructor's accounting side effect.
-- `src/menu.h`, `src/menu.cpp`: verified Menu layout, callback setter, bounded ID lookup, and adapters.
-- `src/pulldown.h`, `src/pulldown.cpp`: verified PullDown layout, six item-state mutators, unchecked selected-index accessor, and adapters.
-- `src/autosound.h`, `src/autosound.cpp`: recovered `do_sound` hook.
-- `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
-- `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
-- `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
-- `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,047 candidates.
-- `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
-- `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
-- `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
-- `docs/recovery/summary.json`: canonical recovery-state counts.
-- `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
-- `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
-- `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
-- `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
-- `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
-- `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
-- `tools/static_recompile_pilot.py`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
-- `tools/test_static_recompile_pilot.py`, `tools/verify_static_recompile_pilot.py`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
-- `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
-- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local Scroll-oracle result validation.
-- `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
-- `tools/test_smoke_hybrid_game.py`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
-- `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
-- `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
-- `tools/run_gameplay_scenario.py`: deterministic scenario launcher, result validator, and owned-process cleanup.
-- `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
-- `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
-- `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
-- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing.
-- `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
-- `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
-- `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
-- `docs/HYBRID.md`: local hybrid workflow.
-- `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet, Random, Win/geometry, Vector, Scroll, Menu, and PullDown fixtures.
-- `tests/static_recompile_pilot_tests.cpp`: generated-only and original-byte differential fixtures for the time-boxed static recompilation leaf.
-- `docs/STATIC_RECOMPILATION.md`: local-only provenance policy, commands, value gate, and stopped pilot outcome.
-- `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
-- `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
-- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 115-island manifest.
-- `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit 31-function AlphaNet/Random/Win/geometry/Vector/Scroll/Menu/PullDown oracle manifest.
-- `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
-- `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
-- `.opensmacx/game/terranx_original.exe`: ignored pre-PRACX executable retained as an analysis input.
-- `build/<preset>/staged-game/`: ignored per-preset mirror of the master game data holding the staged `terranx_hybrid.exe` and `OpenSMACX.dll`; `.opensmacx/game` stays read-only during batches so both presets can stage and smoke concurrently.
-
-## Current Blocker
-
-There is no tooling blocker. The gameplay gates verify movement-order issuance, resolved adjacent movement, end-turn request state, and the next turn/year increment before later upkeep. Do not force native DDrawCompat on Wine Staging 11.10, and do not terminate pre-existing Wine/game processes to make room for a test.
-
-### MSVC SEH frames block the destructor and close chains
-
-Every destructor and `close` method examined so far opens an MSVC structured-exception frame before doing any work, for example `GraphicWin::~GraphicWin` at `0x005D4DD0`:
-
-```
-push -1
-push 0x662B2A                 ; compiler-generated unwind handler in the original .text
-mov  eax, fs:[0]
-push eax
-mov  fs:[0], esp              ; register the frame
-```
-
-The pushed handler is a fixed address inside the original image, and the unwind state variable it consumes is written throughout the body. MinGW GCC cannot emit an equivalent frame, so a source replacement can only either hardcode a proprietary code address (which the objective forbids in a distributable build) or omit the frame and diverge whenever anything in the chain unwinds. The in-process oracle cannot close this gap either: it observes the non-throwing path only.
-
-This affects the highest-fan-in destructor/close targets as a class, including `GraphicWin::~GraphicWin` (185 callers), `BaseButton::~BaseButton` (134), `FlatButton::close` (134), `Dialog::~Dialog` (116), and `BasePop::close` (100). Recovering them needs a decided policy on SEH equivalence first; prefer non-SEH targets until that decision exists. `GraphicWin::~GraphicWin` additionally spans a five-function chain reaching CRT `free` at `0x00644EF2`.

@@ -55,6 +55,7 @@ def main():
     parser.add_argument("--time-object")
     parser.add_argument("--vector-object")
     parser.add_argument("--win-object")
+    parser.add_argument("--win-oracle-object")
     args = parser.parse_args()
 
     # The canonical executable has no C++ throw entry point: it contains no
@@ -132,9 +133,15 @@ def main():
         win_symbols = run([args.nm, "--defined-only", args.win_object])
         required_win_symbols = {
             "Win move": "__ZN3Win4moveEii",
+            "Win visibility": "__ZN3Win10is_visibleEv",
+            "Win client translation": "__ZN3Win16client_to_screenEPiS0_",
             "Win vertical paging": "__ZN3Win15set_vert_pagingEi",
             "Win horizontal paging": "__ZN3Win15set_horz_pagingEi",
             "Win move adapter": "@_Z17win_move_redirectP3WinPvii@16",
+            "Win visibility adapter":
+                "@_Z23win_is_visible_redirectP3WinPv@8",
+            "Win client-translation adapter":
+                "@_Z29win_client_to_screen_redirectP3WinPvPiS2_@16",
             "Win vertical paging adapter":
                 "@_Z28win_set_vert_paging_redirectP3WinPvi@12",
             "Win horizontal paging adapter":
@@ -151,9 +158,13 @@ def main():
         win_disassembly = run([args.objdump, "-d", "-C", args.win_object])
         for description, label, stack_bytes in (
                 ("Win move", "Win::move(int, int)", "8"),
+                ("Win client translation",
+                 "Win::client_to_screen(int*, int*)", "8"),
                 ("Win vertical paging", "Win::set_vert_paging(int)", "4"),
                 ("Win horizontal paging", "Win::set_horz_paging(int)", "4"),
                 ("Win move adapter", "@_Z17win_move_redirectP3WinPvii@16", "8"),
+                ("Win client-translation adapter",
+                 "@_Z29win_client_to_screen_redirectP3WinPvPiS2_@16", "8"),
                 ("Win vertical paging adapter",
                  "@_Z28win_set_vert_paging_redirectP3WinPvi@12", "4"),
                 ("Win horizontal paging adapter",
@@ -167,6 +178,18 @@ def main():
                 r"\bret\s+\$0x([0-9a-f]+)\b", match.group("body"))
             if not returns or any(value != stack_bytes for value in returns):
                 fail(f"{description} does not pop {stack_bytes} stack bytes")
+
+        for description, label in (
+                ("Win visibility", "Win::is_visible()"),
+                ("Win visibility adapter",
+                 "@_Z23win_is_visible_redirectP3WinPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                win_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            if not returns_without_popping(match.group("body")):
+                fail(f"{description} unexpectedly pops stack arguments")
 
         for description, label in (
                 ("RECT construction helper",
@@ -191,6 +214,27 @@ def main():
         if not center_adapter or not re.search(
                 r"\bret\s+\$0xc\b", center_adapter.group("body")):
             fail("TutWin rectangle-center adapter does not pop three stack arguments")
+
+    if args.win_oracle_object:
+        oracle_headers = run([args.objdump, "-f", args.win_oracle_object])
+        if "file format pe-i386" not in oracle_headers:
+            fail("Win runtime oracle object is not a 32-bit PE COFF object")
+        oracle_symbols = run([args.nm, "--defined-only", args.win_oracle_object])
+        if "__Z20run_win_oracle_suitev" not in oracle_symbols:
+            fail("missing Win runtime oracle suite entry point")
+        oracle_disassembly = run(
+            [args.objdump, "-d", "-C", args.win_oracle_object])
+        for description, address in (
+                ("visibility", 0x005F7E90),
+                ("client translation", 0x005ED240)):
+            call = re.search(
+                rf"\bmov\s+\$0x{address:x},%(?P<register>e[a-z]{{2}})"
+                rf"(?:[^\n]*\n){{0,8}}?[^\n]*\bcall\s+\*%(?P=register)",
+                oracle_disassembly)
+            if not call:
+                fail(
+                    f"Win runtime oracle lacks raw original {description} "
+                    f"call at 0x{address:08X}")
 
     if args.vector_object:
         vector_headers = run([args.objdump, "-f", args.vector_object])

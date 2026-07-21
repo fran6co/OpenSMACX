@@ -75,6 +75,25 @@ class ComparisonPatternTest(unittest.TestCase):
         self.assertEqual(("==", "!="), self._first_match("if (p == q) {"))
 
 
+class SimpleStatementTest(unittest.TestCase):
+    """`*` leads both block-comment continuations and dereference stores.
+    Treating both as comments silently skipped every write through a pointer
+    parameter, so an out-parameter function could report full coverage with
+    none of its stores ever mutated."""
+
+    def test_dereference_assignments_are_statements(self):
+        self.assertTrue(mutate_and_verify.is_simple_statement("    *x += 1;"))
+        self.assertTrue(mutate_and_verify.is_simple_statement("    *x -= 5;"))
+        self.assertTrue(mutate_and_verify.is_simple_statement(
+            "    *reinterpret_cast<int *>(p) = 0;"))
+
+    def test_block_comment_continuations_are_not_statements(self):
+        self.assertFalse(mutate_and_verify.is_simple_statement(" * a comment;"))
+
+    def test_control_flow_is_still_excluded(self):
+        self.assertFalse(mutate_and_verify.is_simple_statement("    return 3;"))
+
+
 class SplitAssignmentTest(unittest.TestCase):
     """A subscript containing whitespace (`ordered[0x04 / 4]`) is not a
     declaration and must never have its type-specifier stripping applied to

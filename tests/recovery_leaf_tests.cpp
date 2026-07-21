@@ -4618,6 +4618,164 @@ void test_win_is_visible() {
             }
         }
     }
+
+    struct WrappingCase {
+        uint32_t flags;
+        uint32_t start_x;
+        uint32_t start_y;
+        uint32_t child_client_x;
+        uint32_t child_client_y;
+        uint32_t child_outer_x;
+        uint32_t child_outer_y;
+        uint32_t parent_client_x;
+        uint32_t parent_client_y;
+        uint32_t parent_outer_x;
+        uint32_t parent_outer_y;
+        uint32_t expected_x;
+        uint32_t expected_y;
+    };
+    const WrappingCase wrapping_cases[] = {
+        // The local client and outer additions wrap independently for both axes.
+        {0x00000000U,
+         0x7FFFFFFFU, 0x80000000U,
+         0x00000001U, 0xFFFFFFFFU,
+         0x00000001U, 0xFFFFFFFFU,
+         0, 0, 0, 0,
+         0x80000001U, 0x7FFFFFFEU},
+        // The parent's additions receive already adjusted child coordinates.
+        {0x00000020U,
+         0x7FFFFFFFU, 0x80000000U,
+         0, 0, 0, 0,
+         0x00000001U, 0xFFFFFFFFU,
+         0x00000001U, 0xFFFFFFFFU,
+         0x80000001U, 0x7FFFFFFEU},
+        // Parent client/outer terms cancel during recursion, leaving the
+        // bit-15 subtraction itself to cross the signed boundary.
+        {0x00008020U,
+         0x80000000U, 0x7FFFFFFFU,
+         0, 0, 0, 0,
+         0xFFFFFFFFU, 0x00000001U,
+         0x00000001U, 0xFFFFFFFFU,
+         0x7FFFFFFFU, 0x80000000U},
+    };
+    for (const WrappingCase &test : wrapping_cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            WinNode nodes[2];
+            for (WinNode &node : nodes) {
+                seed_storage(node.storage, node.expected, sizeof(node.storage));
+            }
+            write_at(nodes[0].storage, 16 + 0x98, test.flags);
+            write_at(nodes[0].storage, 16 + 0x14C, test.child_client_x);
+            write_at(nodes[0].storage, 16 + 0x150, test.child_client_y);
+            write_at(nodes[0].storage, 16 + 0x13C, test.child_outer_x);
+            write_at(nodes[0].storage, 16 + 0x140, test.child_outer_y);
+            write_at(nodes[0].storage, 16 + 0xC4,
+                     (test.flags & 0x20U) ? nodes[1].object() : nullptr);
+            write_at(nodes[1].storage, 16 + 0x98, 0U);
+            write_at(nodes[1].storage, 16 + 0x14C, test.parent_client_x);
+            write_at(nodes[1].storage, 16 + 0x150, test.parent_client_y);
+            write_at(nodes[1].storage, 16 + 0x13C, test.parent_outer_x);
+            write_at(nodes[1].storage, 16 + 0x140, test.parent_outer_y);
+            write_at(nodes[1].storage, 16 + 0xC4, static_cast<Win *>(nullptr));
+            for (WinNode &node : nodes) {
+                std::memcpy(node.expected, node.storage, sizeof(node.storage));
+            }
+            int x = int_from_bits(test.start_x);
+            int y = int_from_bits(test.start_y);
+            if (use_adapter) {
+                win_client_to_screen_redirect(nodes[0].object(), nullptr, &x, &y);
+            } else {
+                nodes[0].object()->client_to_screen(&x, &y);
+            }
+            expect(static_cast<uint32_t>(x) == test.expected_x);
+            expect(static_cast<uint32_t>(y) == test.expected_y);
+            for (WinNode &node : nodes) {
+                expect_storage_bytes(node.storage, node.expected,
+                                     sizeof(node.storage));
+            }
+        }
+    }
+}
+
+void test_win_client_to_screen() {
+    // Each node contributes client_rect_.left/top (0x14C/0x150) plus
+    // outer_rect_.left/top (0x13C/0x140); bit 5 of the dword at 0x98 continues
+    // the walk to the parent at 0xC4, and bit 15 then backs the parent's outer
+    // origin out again. Nodes carry distinct values so a dropped or misrouted
+    // term changes the total.
+    struct WinNode {
+        alignas(Win) uint8_t storage[sizeof(Win) + 32];
+        uint8_t expected[sizeof(Win) + 32];
+
+        Win *object() { return reinterpret_cast<Win *>(storage + 16); }
+    };
+    struct ChainCase {
+        int depth;
+        uint32_t flags[3];
+        int start_x;
+        int start_y;
+        int expected_x;
+        int expected_y;
+    };
+    // Per-node geometry: client (100,200)*(n+1), outer (10,20)*(n+1).
+    const ChainCase cases[] = {
+        // No walk: bit 5 clear stops at this node regardless of a parent.
+        {1, {0x00000000U, 0, 0}, 0, 0, 110, 220},
+        {2, {0x00000000U, 0x00000020U, 0}, 0, 0, 110, 220},
+        // The start point is accumulated, not replaced.
+        {1, {0x00000000U, 0, 0}, 7, -9, 117, 211},
+        // Bit 5 with a null parent still stops.
+        {1, {0x00000020U, 0, 0}, 0, 0, 110, 220},
+        // Two-node walk: 110+220 = 330, 220+440 = 660.
+        {2, {0x00000020U, 0x00000000U, 0}, 0, 0, 330, 660},
+        // Bit 15 without bit 5 is inert - no walk, so nothing to back out.
+        {1, {0x00008000U, 0, 0}, 0, 0, 110, 220},
+        // Bit 15 with the walk subtracts the parent's outer origin (20,40).
+        {2, {0x00008020U, 0x00000000U, 0}, 0, 0, 310, 620},
+        // Three-node walk: 110+220+330 = 660, 220+440+660 = 1320.
+        {3, {0x00000020U, 0x00000020U, 0x00000000U}, 0, 0, 660, 1320},
+        // Innermost node also backs out its own parent's outer origin (30,60).
+        {3, {0x00000020U, 0x00008020U, 0x00000000U}, 0, 0, 630, 1260},
+        // Both levels back out: -(20,40) at the root, -(30,60) one level in.
+        {3, {0x00008020U, 0x00008020U, 0x00000000U}, 0, 0, 610, 1220},
+        // Unrelated flag bits must not gate either behaviour.
+        {2, {0xFFFF7FDFU, 0U, 0}, 0, 0, 110, 220},
+        {2, {0xFFFFFFFFU, 0U, 0}, 0, 0, 310, 620},
+    };
+    for (const ChainCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            WinNode nodes[3];
+            for (int index = 0; index < test.depth; ++index) {
+                seed_storage(nodes[index].storage, nodes[index].expected,
+                             sizeof(nodes[index].storage));
+                write_at(nodes[index].storage, 16 + 0x98, test.flags[index]);
+                const int scale = index + 1;
+                write_at(nodes[index].storage, 16 + 0x14C, 100 * scale);
+                write_at(nodes[index].storage, 16 + 0x150, 200 * scale);
+                write_at(nodes[index].storage, 16 + 0x13C, 10 * scale);
+                write_at(nodes[index].storage, 16 + 0x140, 20 * scale);
+                Win *parent = (index + 1 < test.depth)
+                    ? nodes[index + 1].object() : nullptr;
+                write_at(nodes[index].storage, 16 + 0xC4, parent);
+                std::memcpy(nodes[index].expected, nodes[index].storage,
+                            sizeof(nodes[index].storage));
+            }
+            int x = test.start_x;
+            int y = test.start_y;
+            if (use_adapter) {
+                win_client_to_screen_redirect(nodes[0].object(), nullptr, &x, &y);
+            } else {
+                nodes[0].object()->client_to_screen(&x, &y);
+            }
+            expect(x == test.expected_x);
+            expect(y == test.expected_y);
+            // The translation is a pure query: no node may be modified.
+            for (int index = 0; index < test.depth; ++index) {
+                expect_storage_bytes(nodes[index].storage, nodes[index].expected,
+                                     sizeof(nodes[index].storage));
+            }
+        }
+    }
 }
 
 void test_sprite_construct() {
@@ -5424,5 +5582,6 @@ int main() {
     test_button_group_add();
     test_dialog_font_and_color_setters();
     test_pull_down_destructor();
+    test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

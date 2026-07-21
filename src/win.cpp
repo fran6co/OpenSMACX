@@ -89,6 +89,30 @@ int Win::is_visible() {
 }
 
 /*
+Purpose: Translate a client-relative point into screen coordinates by walking
+         the parent chain.
+Original Offset: 005ED240
+Status: Complete
+*/
+void Win::client_to_screen(int *x, int *y) {
+    *x = int_from_bits(static_cast<uint32_t>(*x) + long_bits(client_rect_.left) + long_bits(outer_rect_.left));
+    *y = int_from_bits(static_cast<uint32_t>(*y) + long_bits(client_rect_.top) + long_bits(outer_rect_.top));
+    // Bit 5 marks a window whose coordinates are relative to its parent, so
+    // the walk continues only while both that flag and a parent are present.
+    if ((field_98_ & 0x20U) == 0 || !win_parent_) {
+        return;
+    }
+    win_parent_->client_to_screen(x, y);
+    // Bit 15 additionally backs out the parent's own outer origin. The legacy
+    // body re-reads win_parent_ for each subtraction rather than caching it.
+    if ((field_98_ & 0x8000U) == 0) {
+        return;
+    }
+    *x = int_from_bits(static_cast<uint32_t>(*x) - long_bits(win_parent_->outer_rect_.left));
+    *y = int_from_bits(static_cast<uint32_t>(*y) - long_bits(win_parent_->outer_rect_.top));
+}
+
+/*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
 Original Offset: 005EE0F0
 Status: Complete
@@ -116,6 +140,11 @@ int __fastcall win_move_redirect(Win *self, void *, int x, int y) {
 
 int __fastcall win_is_visible_redirect(Win *self, void *) {
     return self->is_visible();
+}
+
+void __fastcall win_client_to_screen_redirect(
+        Win *self, void *, int *x, int *y) {
+    self->client_to_screen(x, y);
 }
 
 void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging) {

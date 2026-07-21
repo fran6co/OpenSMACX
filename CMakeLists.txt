@@ -270,6 +270,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/time_recovery.cpp.obj")
     set(OPENSMACX_WIN_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win.cpp.obj")
+    set(OPENSMACX_WIN_ORACLE_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win_oracle.cpp.obj")
     set(OPENSMACX_VECTOR_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/vector.cpp.obj")
     add_custom_target(verify-recovery-abi
@@ -300,6 +302,7 @@ if(MINGW)
             --time-object "${OPENSMACX_TIME_OBJECT}"
             --vector-object "${OPENSMACX_VECTOR_OBJECT}"
             --win-object "${OPENSMACX_WIN_OBJECT}"
+            --win-oracle-object "${OPENSMACX_WIN_ORACLE_OBJECT}"
         DEPENDS OpenSMACX
         USES_TERMINAL
         VERBATIM
@@ -412,6 +415,7 @@ if(BUILD_TESTING)
                 --time-object "${OPENSMACX_TIME_OBJECT}"
                 --vector-object "${OPENSMACX_VECTOR_OBJECT}"
                 --win-object "${OPENSMACX_WIN_OBJECT}"
+                --win-oracle-object "${OPENSMACX_WIN_ORACLE_OBJECT}"
         )
     endif()
 
