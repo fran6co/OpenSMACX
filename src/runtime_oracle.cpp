@@ -11,6 +11,7 @@
 #include "runtime_oracle.h"
 
 #include "buffer_oracle.h"
+#include "graphicwin_oracle.h"
 #include "scroll_oracle.h"
 #include "stringstruct_oracle.h"
 #include "sprite_oracle.h"
@@ -42,6 +43,7 @@ const runtime_oracle::Suite Suites[] = {
     {"win", run_win_oracle_suite},
     {"sprite", run_sprite_oracle_suite},
     {"buffer", run_buffer_oracle_suite},
+    {"graphicwin", run_graphic_win_oracle_suite},
     {"stringstruct", run_string_struct_oracle_suite},
     {"spying", run_spying_oracle_suite},
 };

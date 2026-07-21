@@ -3,6 +3,7 @@ BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations com
 PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
 SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
 WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
 X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
 _fgetc,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary

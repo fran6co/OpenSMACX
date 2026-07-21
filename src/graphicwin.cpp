@@ -22,15 +22,29 @@
 const uint32_t GraphicWinPrimaryVtable = 0x0066FC50;
 const uint32_t GraphicWinBufferVtable = 0x0066FC48;
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
 void __thiscall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
     // the original body at 0x005D7410.
     buffer_destructor_redirect(reinterpret_cast<Buffer *>(self), nullptr);
 }
 
+void __thiscall buffer_subobject_close(void *self) {
+    reinterpret_cast<Buffer *>(self)->close();
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 func_subobject_destructor *BufferSubobjectDestructor = &buffer_subobject_destructor;
 func_subobject_destructor *WinOriginalDestructor =
     (func_subobject_destructor *)0x005EBC90;
+func_subobject_close *BufferSubobjectClose = &buffer_subobject_close;
+func_subobject_close *WinOriginalClose = (func_subobject_close *)0x005EB640;
+uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 
 namespace {
 
@@ -55,6 +69,76 @@ int graphic_win_destructor_probe_win_calls() { return Probe.win_calls; }
 void *graphic_win_destructor_probe_buffer_target() { return Probe.buffer_target; }
 void *graphic_win_destructor_probe_win_target() { return Probe.win_target; }
 int graphic_win_destructor_probe_order() { return Probe.order; }
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef uint32_t(__thiscall *func_scalar_deleting_destructor)(
+    void *, uint32_t);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+}  // namespace
+
+/*
+Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
+         resetting its window-specific state, and deleting the trailing
+         owned interface when present.
+Original Offset: 005D4E40
+Return Value: field_A0C_ default when no interface is present; otherwise the
+              scalar-deleting virtual call's return residue
+Status: Complete with temporary Win close dependency
+*/
+uint32_t GraphicWin::close() {
+    if (WinOriginalClose) {
+        WinOriginalClose(this);
+    }
+    if (BufferSubobjectClose) {
+        BufferSubobjectClose(reinterpret_cast<uint8_t *>(this) + 0x444);
+    }
+
+    volatile uint32_t *const ordered =
+        reinterpret_cast<volatile uint32_t *>(this);
+    void *const release_target = reinterpret_cast<void *>(
+        static_cast<uintptr_t>(ordered[0xA08 / 4]));
+    ordered[0xA10 / 4] = 0;
+    ordered[0x134 / 4] = 0;
+    ordered[0x138 / 4] = 0;
+    ordered[0x9CC / 4] = 0;
+    ordered[0x9D0 / 4] = 0;
+    ordered[0x9D4 / 4] = 0;
+    ordered[0x9D8 / 4] = 0;
+    ordered[0x9DC / 4] = 0;
+    ordered[0x9E0 / 4] = 0;
+    ordered[0x9E4 / 4] = 0;
+    ordered[0x9E8 / 4] = 0;
+    ordered[0x9EC / 4] = 0;
+    ordered[0x9F0 / 4] = 0;
+    ordered[0x9F4 / 4] = 0;
+    ordered[0x9F8 / 4] = 0;
+    ordered[0x9FC / 4] = 0;
+    ordered[0xA00 / 4] = 0;
+    ordered[0xA04 / 4] = 0;
+    const uint32_t default_value = *GraphicWinFieldA0CDefault;
+    ordered[0xA0C / 4] = default_value;
+    if (!release_target) {
+        return default_value;
+    }
+
+    void **const vtable = *reinterpret_cast<void ***>(release_target);
+    const uint32_t result = reinterpret_cast<func_scalar_deleting_destructor>(
+        vtable[0])(release_target, 1);
+    ordered[0xA08 / 4] = 0;
+    return result;
+}
+
+uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *) {
+    return self->close();
+}
 
 /*
 Purpose: Destroy a GraphicWin by installing the original virtual tables,
