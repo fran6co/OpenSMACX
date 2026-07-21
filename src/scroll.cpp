@@ -183,7 +183,7 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
          the source-owned GraphicWin base.
 Original Offset: 00605370
 Return Value: GraphicWin::close return residue
-Status: Complete; embedded FlatButton close bodies remain virtual dependencies
+Status: Complete; embedded FlatButton close redirects are source-owned
 */
 uint32_t Scroll::close() {
     volatile uint32_t *const object =

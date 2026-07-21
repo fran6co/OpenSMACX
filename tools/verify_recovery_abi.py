@@ -36,9 +36,12 @@ def main():
     parser.add_argument("--scenario-object")
     parser.add_argument("--button-group-object")
     parser.add_argument("--basepop-font-object")
+    parser.add_argument("--base-button-object")
+    parser.add_argument("--base-button-oracle-object")
     parser.add_argument("--dialog-object")
     parser.add_argument("--font-object")
     parser.add_argument("--filemap-object")
+    parser.add_argument("--flat-button-object")
     parser.add_argument("--heap-object")
     parser.add_argument("--graphicwin-object")
     parser.add_argument("--graphicwin-oracle-object")
@@ -279,6 +282,154 @@ def main():
             fail(
                 "GraphicWin runtime oracle lacks raw original close call "
                 "at 0x005D4E40")
+
+    if args.base_button_object:
+        base_headers = run([args.objdump, "-f", args.base_button_object])
+        if "file format pe-i386" not in base_headers:
+            fail("BaseButton object is not a 32-bit PE COFF object")
+        base_symbols = run(
+            [args.nm, "--defined-only", args.base_button_object])
+        required_base_symbols = {
+            "BaseButton close": "__ZN10BaseButton5closeEv",
+            "BaseButton destructor body": "__ZN10BaseButton7destroyEv",
+            "BaseButton close adapter":
+                "@_Z26base_button_close_redirectP10BaseButtonPv@8",
+            "BaseButton destructor adapter":
+                "@_Z31base_button_destructor_redirectP10BaseButtonPv@8",
+        }
+        for description, symbol in required_base_symbols.items():
+            if symbol not in base_symbols:
+                fail(f"missing required {description} symbol")
+        base_disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.base_button_object])
+        base_bodies = {}
+        for description, label in (
+                ("BaseButton close", "BaseButton::close()"),
+                ("BaseButton destructor body", "BaseButton::destroy()"),
+                ("BaseButton close adapter",
+                 "@_Z26base_button_close_redirectP10BaseButtonPv@8"),
+                ("BaseButton destructor adapter",
+                 "@_Z31base_button_destructor_redirectP10BaseButtonPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                base_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            base_bodies[label] = match.group("body")
+            if not returns_without_popping(match.group("body")):
+                fail(f"{description} violates no-argument thiscall cleanup")
+
+        base_close = base_bodies["BaseButton::close()"]
+        if not re.search(
+                r"GraphicWin::close\(\).*?0xa74.*?0xa9c.*?0xa78.*?"
+                r"0xa44.*?0xa48.*?0xaac.*?0xab0.*?0xab4.*?"
+                r"0xa94.*?0xa84.*?0xa88.*?0xa8c.*?0xa90.*?"
+                r"0xa98.*?0xaa4.*?0xaa0.*?0xa7c.*?_free.*?"
+                r"0xa80.*?_free.*?0xaa8",
+                base_close, re.DOTALL):
+            fail("BaseButton close does not preserve its legacy access order")
+        if len(re.findall(r"\bdir32\s+_free\s*$", base_close,
+                          re.MULTILINE)) != 2:
+            fail("BaseButton close lacks exactly two executable free calls")
+
+        base_destroy = base_bodies["BaseButton::destroy()"]
+        if not re.search(
+                r"\$0x670290.*?\$0x670288.*?BaseButton::close\(\).*?"
+                r"0xa4c.*?Time::~Time\(\).*?0xa1c.*?Time::~Time\(\).*?"
+                r"graphic_win_destructor_redirect",
+                base_destroy, re.DOTALL):
+            fail("BaseButton destructor does not preserve its teardown order")
+        if not re.search(r"\bmov\s+%e(?:bx|cx|si|di),%eax\b", base_destroy):
+            fail("BaseButton destructor does not return its instance pointer")
+
+    if args.base_button_oracle_object:
+        oracle_headers = run(
+            [args.objdump, "-f", args.base_button_oracle_object])
+        if "file format pe-i386" not in oracle_headers:
+            fail("BaseButton runtime oracle object is not a 32-bit PE COFF object")
+        oracle_symbols = run(
+            [args.nm, "--defined-only", args.base_button_oracle_object])
+        for description, symbol in (
+                ("BaseButton phase-one runtime oracle",
+                 "__Z28run_base_button_oracle_suitev"),
+                ("BaseButton deferred release oracle",
+                 "__Z29run_base_button_release_suitev")):
+            if symbol not in oracle_symbols:
+                fail(f"missing {description} entry point")
+        oracle_disassembly = run(
+            [args.objdump, "-d", "-C", args.base_button_oracle_object])
+        for description, address in (
+                ("FlatButton destructor", 0x00406880),
+                ("BaseButton destructor", 0x00607040),
+                ("BaseButton close", 0x006070C0),
+                ("FlatButton close", 0x00607DA0)):
+            call = re.search(
+                rf"\bmov\s+\$0x{address:x},%(?P<register>e[a-z]{{2}})"
+                rf"(?:[^\n]*\n){{0,8}}?[^\n]*\bcall\s+\*%(?P=register)",
+                oracle_disassembly)
+            if not call:
+                fail(
+                    f"BaseButton runtime oracle lacks raw original "
+                    f"{description} call at 0x{address:08X}")
+
+    if args.flat_button_object:
+        flat_headers = run([args.objdump, "-f", args.flat_button_object])
+        if "file format pe-i386" not in flat_headers:
+            fail("FlatButton object is not a 32-bit PE COFF object")
+        flat_symbols = run(
+            [args.nm, "--defined-only", args.flat_button_object])
+        required_flat_symbols = {
+            "FlatButton close": "__ZN10FlatButton5closeEv",
+            "FlatButton destructor body": "__ZN10FlatButton7destroyEv",
+            "FlatButton close adapter":
+                "@_Z26flat_button_close_redirectP10FlatButtonPv@8",
+            "FlatButton destructor adapter":
+                "@_Z31flat_button_destructor_redirectP10FlatButtonPv@8",
+        }
+        for description, symbol in required_flat_symbols.items():
+            if symbol not in flat_symbols:
+                fail(f"missing required {description} symbol")
+        flat_disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.flat_button_object])
+        flat_bodies = {}
+        for description, label in (
+                ("FlatButton close", "FlatButton::close()"),
+                ("FlatButton destructor body", "FlatButton::destroy()"),
+                ("FlatButton close adapter",
+                 "@_Z26flat_button_close_redirectP10FlatButtonPv@8"),
+                ("FlatButton destructor adapter",
+                 "@_Z31flat_button_destructor_redirectP10FlatButtonPv@8")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                flat_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            flat_bodies[label] = match.group("body")
+            if not returns_without_popping(match.group("body")):
+                fail(f"{description} violates no-argument thiscall cleanup")
+
+        flat_close = flat_bodies["FlatButton::close()"]
+        close_prefix = re.search(
+            r"Time::close\(\).*?0xa18.*?0xa14.*?0xab8.*?"
+            r"BaseButton::close\(\)",
+            flat_close, re.DOTALL)
+        direct_table_loop = all(
+            f"0x{offset:x}" in flat_close
+            for offset in (0xABC, 0xAC8, 0xAD4, 0xAE0, 0xAEC))
+        optimized_table_loop = re.search(
+            r"0xabc.*?0x24.*?-0xc.*?0x18.*?"
+            r"\$0x4,%edi.*?0x8.*?0xaec",
+            flat_close, re.DOTALL)
+        if not close_prefix or not (direct_table_loop or optimized_table_loop):
+            fail("FlatButton close does not preserve its legacy access order")
+        flat_destroy = flat_bodies["FlatButton::destroy()"]
+        if not re.search(
+                r"\$0x669754.*?\$0x66974c.*?FlatButton::close\(\).*?"
+                r"BaseButton::destroy\(\)",
+                flat_destroy, re.DOTALL):
+            fail("FlatButton destructor does not preserve its teardown order")
+        if not re.search(r"\bmov\s+%e(?:bx|cx|si|di),%eax\b", flat_destroy):
+            fail("FlatButton destructor does not return its instance pointer")
 
     if args.vector_object:
         vector_headers = run([args.objdump, "-f", args.vector_object])

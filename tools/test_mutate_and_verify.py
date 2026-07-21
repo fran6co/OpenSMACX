@@ -194,6 +194,32 @@ class BuildMutantsTest(unittest.TestCase):
         dropped = [m.description for m in mutants if m.operator == "drop-statement"]
         self.assertFalse([d for d in dropped if "return" in d])
 
+    def test_skips_equivalent_and_invalid_divided_index_mutants(self):
+        source = SOURCE.replace(
+            "ordered[0] = 0;",
+            "ordered[0x000 / 4] = 0;")
+        lines = source.splitlines(keepends=True)
+        function = mutate_and_verify.parse_functions(lines)[0]
+        constants = [
+            mutant for mutant in mutate_and_verify.build_mutants(lines, function)
+            if mutant.operator == "constant"
+            and "ordered[0x000 / 4] = 0;" in mutant.description]
+        self.assertEqual(1, len(constants))
+        self.assertIn("ordered[0x000 / 4] = 1;", "".join(constants[0].lines))
+
+    def test_mutates_repeated_literals_by_occurrence(self):
+        lines, mutants = self._mutants("006343D0")
+        constants = [
+            mutant for mutant in mutants
+            if mutant.operator == "constant"
+            and "ordered[0] = 0;" in mutant.description]
+        mutated_sources = ["".join(mutant.lines) for mutant in constants]
+        self.assertTrue(any("ordered[1] = 0;" in source
+                            for source in mutated_sources))
+        self.assertTrue(any("ordered[0] = 1;" in source
+                            for source in mutated_sources))
+        self.assertTrue(all(source != "".join(lines) for source in mutated_sources))
+
 
 class HarnessCommandTest(unittest.TestCase):
     def test_ctest_refuses_to_pass_on_zero_matched_tests(self):

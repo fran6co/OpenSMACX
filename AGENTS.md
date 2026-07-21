@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,028 candidates.
+- Current recovery backlog: 5,024 candidates.
 - Current local legacy-island count: 114, reduced from 174.
-- `DllMain` entry redirects: 102, comprising 100 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 106, comprising 104 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -99,7 +99,8 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered three wrapping geometry leaves and six `Vector` lifecycle/arithmetic leaves.
 - Recovered `GraphicWin::~GraphicWin` at `0x005D4DD0` (185 callers), the highest-fan-in function in the binary, with its Win subobject destructor retained as a classified temporary original dependency; the Buffer side is source-owned.
 - Recovered `GraphicWin::close` at `0x005D4E40` (66 callers), closing through the original `Win::close` dependency and source-owned `Buffer::close`, then preserving the ordered field reset, process default, optional scalar-deleting virtual call, and both `EAX` residues.
-- Recovered `Scroll::close` at `0x00605370` (136 callers), restoring every Scroll-owned default from the two process tables before closing its embedded FlatButtons in left/right order and delegating to source-owned `GraphicWin::close`; the two button bodies remain virtual dependencies.
+- Recovered `Scroll::close` at `0x00605370` (136 callers), restoring every Scroll-owned default from the two process tables before closing its embedded FlatButtons in left/right order and delegating to source-owned `GraphicWin::close`.
+- Recovered the BaseButton/FlatButton teardown cluster: `BaseButton::~BaseButton` at `0x00607040` (134 callers), `BaseButton::close` at `0x006070C0`, `FlatButton::close` at `0x00607DA0` (134 callers), and `FlatButton::~FlatButton` at `0x00406880` (93 callers). The source preserves both vtable stages, Time teardown order, process-default reloads, two executable-CRT frees and their return residue, and the derived-to-base close chain reached by every recovered `Scroll::close`.
 - Recovered the derived two-stage close at `0x004066C0` (61 callers, the highest remaining fan-in), which closes under its own tables before closing its StringStruct base.
 - Recovered `StringStruct::close` at `0x00401060` (25 callers), entered through a virtual-base adjustor that hands the redirect a pointer `0x1C` bytes into the object; it installs both virtual tables and reuses the recovered entry walk.
 - Recovered `spying` at `0x0055BC00` (19 callers), a pure intelligence-visibility check over four original tables.
@@ -149,9 +150,10 @@ Other completed corrections and checks:
 - Corrected the `AlphaNet` layout to `0x14A0`; the constructor initializes its trailing `Heap` at offset `0x148C`.
 - Added verified `Win`, `GraphicWin`, and `Scroll` layouts of `0x444`, `0xA14`, and `0x214C` respectively; the two Win rectangles and Scroll thumb rectangle now have explicit `RECT` storage.
 - Added verified `MenuEntry`, `Menu`, `PullDownItem`, and `PullDown` layouts of `0x14`, `0xB64`, `0x14`, and `0xF40` respectively.
-- Added verified layouts for `CaviarData`, `Caviar`, `ButtonGroup`, `Buffer`, and `Dialog`.
+- Added verified layouts for `CaviarData`, `Caviar`, `ButtonGroup`, `Buffer`, `Dialog`, `BaseButton`, and `FlatButton`; the button sizes are `0xAB8` and `0xB4C`.
 - Added a verified `Vector` layout of `0xC`.
 - ButtonGroup lifecycle tests verify the exact preserved `0x84..0x8B` constructor/close hole, complete initialization, object canaries, destructor behavior, and adapter return values.
+- BaseButton/FlatButton teardown tests cover direct and adapted closes, all four allocation shapes, exact process-default tables, ordered field writes and frees, complete object canaries, Time member order, transient derived/base vtables, two-stage destruction, and all legacy return residues.
 - BasePop string-font tests cover null and uninitialized primary fonts, all four verified field offsets, return codes, and full-object canaries.
 - Dialog ID lookup tests cover stale null-head state, non-dereferenced invalid heads for non-positive counts, matches, duplicates, bounded misses, cyclic lists, and complete object/entry canaries.
 - Dialog selection tests cover stale null-head positions, invalid non-positive heads, duplicate matches, bounded invalid successors, and complete object/entry canaries.
@@ -204,12 +206,12 @@ Other completed corrections and checks:
 
 - The direct-source `recovery-leaf-tests` harness passes under Wine in Debug and Release. It covers all seven AlphaNet process-ID and identity slots, signed identities, first-match duplicates with distinct payloads, zero IDs, exact scan boundaries, complete object canaries, all four redirect adapters, and `in_box` edge semantics.
 - CTest always registers the Windows behavioral test through `tools/run_windows_test.py`, which auto-detects Wine and uses the build's dedicated owned test prefix.
-- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup including GraphicWin and Scroll close, the recursive Win queries, five Scroll wrappers, three geometry leaves, six Vector leaves, and optimized PullDown tail jumps; exact Vector x87 operation counts; GraphicWin, Scroll, and both Win runtime-oracle original-address calls; Scroll close's two ordered slot-`0x168` virtual dispatches and source-owned base-close relocation; the Scroll primary dependency's raw thiscall dispatch; and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
+- The `verify-recovery-abi` target and CTest check pass in Debug and Release. They verify i386 COFF, required symbols, thiscall cleanup, fastcall adapter cleanup including BaseButton, FlatButton, GraphicWin, and Scroll close, the recursive Win queries, five Scroll wrappers, three geometry leaves, six Vector leaves, and optimized PullDown tail jumps; exact Vector x87 operation counts; BaseButton, GraphicWin, Scroll, and both Win runtime-oracle original-address calls; button vtables, teardown order, executable free dispatches and return residues; Scroll close's two ordered slot-`0x168` virtual dispatches and source-owned base-close relocation; the Scroll primary dependency's raw thiscall dispatch; and both gameplay trampolines' overwritten instruction/call, preserved state, callback stack cleanup, and continuations.
 - `verify-recovery-oracles` extracts 32 explicitly selected recovered leaves into the ignored build tree and compares the three AlphaNet identity lookups, `Random::reseed`, integer `Random::get`, three Win movement/paging methods, three geometry leaves, six Vector leaves, three Scroll setters, `Scroll::compute_thumb_rect`, RECT expansion, seven PullDown accessors, and two Menu accessors against source with identical fixtures in Debug and Release.
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
 - Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
 - The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
-- Regenerated state is 5,028 priorities, 606 source-complete functions, 33 original dependencies, 4,991 unrecovered functions, and 114 islands.
+- Regenerated state is 5,024 priorities, 610 source-complete functions, 33 original dependencies, 4,987 unrecovered functions, and 114 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -225,6 +227,7 @@ Other completed corrections and checks:
 - The opt-in Scroll recovery oracle runs sixteen untouched original methods inside the verified PRACX process before redirects are installed, including `Scroll::close` and invalid non-delegating fixtures for all five init wrappers. The close fixture seeds both process default tables, verifies the left/right slot-`0x168` calls before the GraphicWin close chain, compares complete object/canary state and return residue, and restores every seeded global. The suite must write `passed` to an ignored nonsymlinked result path before smoke can pass. All direct redirect signatures and the temporary primary-init dependency are validated before the oracle executes; sprite redirects additionally validate their distinguishing field displacement.
 - The Win runtime-oracle suite compares recursive visibility and client-to-screen translation against untouched original bodies before redirects install, including nested parent chains, controlling flags, wrapping arithmetic, aliased outputs, and complete object/canary preservation.
 - The GraphicWin runtime-oracle suite calls untouched `GraphicWin::close` at `0x005D4E40` before redirects install and compares both release branches, complete object/canary state, dependency callback traces, and return residue. Its resource-free Win/Buffer fixture validates each dependency's self-publication relative to its own object before normalizing that one pointer for byte comparison; the source-level suite separately observes the two resets that `Win::close` performs first.
+- The BaseButton runtime-oracle suite calls all four untouched button teardown bodies before redirects install, seeds and restores all three process-default tables, and compares complete object/canary state, callback traces, and return residues. Its deferred `basebutton-release` phase lifts only the BaseButton close redirect and exercises separate real executable-CRT allocations for the original and source sides.
 - ImportAdder runs only in the marker-protected build Wine prefix, receives an explicit `WINEPREFIX`, and stops only that prefix after every invocation.
 - `tools/run_gameplay_scenario.py` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
@@ -257,10 +260,13 @@ the patch with `resume_redirect_at()`. The phase is one-shot, and it rewrites
 the oracle result file so phase-one lines and deferred lines form one record;
 if it never runs, the earlier record still stands rather than regressing.
 
-`sprite-release` and `buffer-release` are the suites on it; `sprite-release` and covers `Sprite::close`'s release
-branch. The split is demonstrable: perturbing the release accounting leaves the
-`sprite` phase-one suite passing while `sprite-release` fails, because
-phase-one fixtures cannot reach that branch at all.
+`sprite-release`, `buffer-release`, and `basebutton-release` are the suites on
+it. The first covers `Sprite::close`'s release branch, the second covers
+`Buffer::close`'s real release loop, and the third covers both executable-CRT
+free branches in `BaseButton::close`. The split is demonstrable: perturbing the
+Sprite release accounting leaves the `sprite` phase-one suite passing while
+`sprite-release` fails, because phase-one fixtures cannot reach that branch at
+all.
 
 A close that installs a real virtual table before walking cannot be driven
 with a populated list: the walk dispatches through original game code rather
@@ -337,10 +343,10 @@ function), instrumentation scaffolding, or the known suite-scope gaps:
 `Buffer`'s and `spying`'s bodies are observable only in the hybrid process,
 so a leaf-suite sweep of src/buffer.cpp or src/spying_recovery.cpp reports
 mass survival by design. New recoveries should be swept when their tests
-land, not re-audited wholesale. Known harness noise classes not yet
-filtered: literals inside `[X / 4]` indices whose mutation folds to the same
-index or to a division by zero, and `Probe`-style dotted increment targets
-that the swap-dependence check treats as opaque.
+land, not re-audited wholesale. The harness filters literals inside
+`[X / 4]` indices whose mutation folds to the same index or to a division by
+zero. The remaining known noise class is `Probe`-style dotted increment
+targets that the swap-dependence check treats as opaque.
 
 Add a deferred suite when a recovery's release path needs real allocations -
 `Buffer::close`, `Win::close`, and the destructor chain all qualify. Keep
@@ -350,14 +356,14 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
 2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`, then lifecycle at `0x00606F30` through `0x006070C0`.
+3. Recover the BaseButton constructor at `0x00606F30` and color/default setters at `0x00607360` through `0x006074B0`.
 4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 100 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 104 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -371,6 +377,8 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
 - `src/buttongroup.h`, `src/buttongroup.cpp`: recovered button-group insertion.
+- `src/basebutton.h`, `src/basebutton.cpp`, `src/flatbutton.h`, `src/flatbutton.cpp`: verified button layouts and source-owned close/destructor chain, including process defaults and executable-CRT ownership.
+- `src/basebutton_oracle.h`, `src/basebutton_oracle.cpp`: phase-one original-address teardown differentials and the deferred real-allocation release suite.
 - `src/win.h`, `src/win.cpp`: verified Win layout, `move`, recursive ancestor-chain `is_visible`, recursive wrapping `client_to_screen`, both paging setters, both `in_box` overloads, wrapping RECT construction, rectangle-center behavior, and adapters.
 - `src/vector.h`, `src/vector.cpp`: verified `0xC` Vector layout, lifecycle, ordered x87 arithmetic, alias-sensitive scaling copies, and adapters.
 - `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
@@ -389,7 +397,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,029 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,024 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
@@ -412,7 +420,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
-- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing.
+- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.

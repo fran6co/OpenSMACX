@@ -119,6 +119,7 @@ set(OPENSMACX_SOURCES
     src/autosound.cpp
     src/base.cpp
     src/basebutton.cpp
+    src/basebutton_oracle.cpp
     src/basepop.cpp
     src/basepop_font.cpp
     src/buffer.cpp
@@ -235,12 +236,18 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buttongroup.cpp.obj")
     set(OPENSMACX_BASEPOP_FONT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
+    set(OPENSMACX_BASE_BUTTON_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton.cpp.obj")
+    set(OPENSMACX_BASE_BUTTON_ORACLE_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton_oracle.cpp.obj")
     set(OPENSMACX_DIALOG_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
     set(OPENSMACX_FONT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
     set(OPENSMACX_FILEMAP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
+    set(OPENSMACX_FLAT_BUTTON_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/flatbutton.cpp.obj")
     set(OPENSMACX_HEAP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
     set(OPENSMACX_GRAPHICWIN_OBJECT
@@ -288,9 +295,12 @@ if(MINGW)
             --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
             --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
+            --base-button-object "${OPENSMACX_BASE_BUTTON_OBJECT}"
+            --base-button-oracle-object "${OPENSMACX_BASE_BUTTON_ORACLE_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
             --font-object "${OPENSMACX_FONT_OBJECT}"
             --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
+            --flat-button-object "${OPENSMACX_FLAT_BUTTON_OBJECT}"
             --heap-object "${OPENSMACX_HEAP_OBJECT}"
             --graphicwin-object "${OPENSMACX_GRAPHICWIN_OBJECT}"
             --graphicwin-oracle-object "${OPENSMACX_GRAPHICWIN_ORACLE_OBJECT}"
@@ -322,11 +332,13 @@ if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
+        src/basebutton.cpp
         src/basepop_font.cpp
         src/buffer.cpp
         src/buttongroup.cpp
         src/dialog.cpp
         src/filemap_recovery.cpp
+        src/flatbutton.cpp
         src/font_recovery.cpp
         src/graphicwin.cpp
         src/log.cpp
@@ -403,9 +415,12 @@ if(BUILD_TESTING)
                 --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
                 --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
+                --base-button-object "${OPENSMACX_BASE_BUTTON_OBJECT}"
+                --base-button-oracle-object "${OPENSMACX_BASE_BUTTON_ORACLE_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
                 --font-object "${OPENSMACX_FONT_OBJECT}"
                 --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
+                --flat-button-object "${OPENSMACX_FLAT_BUTTON_OBJECT}"
                 --heap-object "${OPENSMACX_HEAP_OBJECT}"
                 --graphicwin-object "${OPENSMACX_GRAPHICWIN_OBJECT}"
                 --graphicwin-oracle-object "${OPENSMACX_GRAPHICWIN_ORACLE_OBJECT}"

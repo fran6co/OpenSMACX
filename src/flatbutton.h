@@ -27,6 +27,9 @@ class DLLEXPORT FlatButton : public BaseButton {
   FlatButton() { ; }
   ~FlatButton() { ; }
 
+  uint32_t close();
+  FlatButton *destroy();
+
  private:
   uint32_t field_AB8_;
   uint32_t field_ABC_;
@@ -66,3 +69,13 @@ class DLLEXPORT FlatButton : public BaseButton {
   uint32_t field_B44_;
   uint32_t field_B48_;
 };
+
+static_assert(sizeof(FlatButton) == 0xB4C,
+              "FlatButton layout must match the legacy ABI");
+
+extern const uint32_t FlatButtonPrimaryVtable;
+extern const uint32_t FlatButtonBufferVtable;
+extern uint32_t *FlatButtonDefaults;
+
+FlatButton *__fastcall flat_button_destructor_redirect(FlatButton *self, void *);
+uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *);

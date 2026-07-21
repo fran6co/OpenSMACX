@@ -10,6 +10,7 @@
 #include "stdafx.h"
 #include "runtime_oracle.h"
 
+#include "basebutton_oracle.h"
 #include "buffer_oracle.h"
 #include "graphicwin_oracle.h"
 #include "scroll_oracle.h"
@@ -39,6 +40,7 @@ ProbeContext Context = {};
 void **WatchedGlobal = nullptr;
 
 const runtime_oracle::Suite Suites[] = {
+    {"basebutton", run_base_button_oracle_suite},
     {"scroll", run_scroll_oracle_suite},
     {"win", run_win_oracle_suite},
     {"sprite", run_sprite_oracle_suite},
@@ -170,6 +172,7 @@ bool run_runtime_oracles() {
 namespace {
 
 const runtime_oracle::Suite DeferredSuites[] = {
+    {"basebutton-release", run_base_button_release_suite},
     {"sprite-release", run_sprite_release_suite},
     {"buffer-release", run_buffer_release_suite},
 };

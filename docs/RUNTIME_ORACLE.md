@@ -22,6 +22,10 @@ every registered suite reports success.
 - `src/dllmain.cpp` calls `run_runtime_oracles()` after signature preflight
   and before installing any redirect, so every original body is still intact
   when it executes.
+- Release paths that need the executable CRT run later through
+  `run_deferred_oracles()`. Each suite temporarily suspends only its required
+  redirect after CRT startup, compares separate real allocations on the
+  original and source sides, and restores the redirect before returning.
 - `tools/smoke_hybrid_game.py` exports `OPENSMACX_RUNTIME_ORACLE_RESULT` and
   refuses to pass unless the result file lists every suite as `passed` and
   ends with `all passed`.
@@ -60,6 +64,12 @@ every registered suite reports success.
    `--scroll-oracle-object` block in `tools/verify_recovery_abi.py`).
 7. Run the full `verify-recovery-batch` in both presets; the smoke gate now
    requires the new suite line in the oracle result.
+
+Use a deferred suite for any release branch that needs a real executable-CRT
+allocation. Keep resource-free shapes in phase one, register the deferred
+entry separately, and suspend/resume only the original function being called.
+`src/basebutton_oracle.cpp` is the reference for a close with two independently
+optional allocations and a meaningful free-function return residue.
 
 ## Result format
 
