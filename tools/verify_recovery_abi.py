@@ -392,6 +392,9 @@ def main():
             fail("Scroll object is not a 32-bit PE COFF object")
         scroll_symbols = run([args.nm, "--defined-only", args.scroll_object])
         required_scroll_symbols = {
+            "Scroll close": "__ZN6Scroll5closeEv",
+            "Scroll close adapter":
+                "@_Z21scroll_close_redirectP6ScrollPv@8",
             "RECT expansion helper": "__Z11expand_rectP7tagRECTii",
             "Scroll RECT initializer": "__ZN6Scroll4initEP7tagRECTP3Winii",
             "Scroll vertical initializer": "__ZN6Scroll9init_vertEiiiP3Wini",
@@ -465,6 +468,8 @@ def main():
                 fail(f"missing required Scroll symbol: {description}")
         scroll_disassembly = run(
             [args.objdump, "-d", "-C", args.scroll_object])
+        scroll_relocations = run(
+            [args.objdump, "-r", "-C", args.scroll_object])
         expand_rect_match = re.search(
             r"<expand_rect\(tagRECT\*, int, int\)>:"
             r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
@@ -601,6 +606,9 @@ def main():
                 fail(f"{description} does not pop {stack_bytes} stack bytes")
 
         for description, label in (
+                ("Scroll close", "Scroll::close()"),
+                ("Scroll close adapter",
+                 "@_Z21scroll_close_redirectP6ScrollPv@8"),
                 ("Scroll thumb-rectangle reset", "Scroll::set_thumb_rect()"),
                 ("Scroll thumb-rectangle adapter",
                  "@_Z30scroll_set_thumb_rect_redirectP6ScrollPv@8")):
@@ -610,8 +618,7 @@ def main():
             if not match:
                 fail(f"could not locate {description} in disassembly")
             body = match.group("body")
-            if (not re.search(r"\bret\s*$", body, re.MULTILINE)
-                    or re.search(r"\bret\s+\$", body)):
+            if not returns_without_popping(body):
                 fail(f"{description} unexpectedly pops stack arguments")
 
         redraw_dispatch = re.search(
@@ -721,6 +728,37 @@ def main():
                 r"\bidivl?\b", signed_divide.group("body")):
             fail("Scroll signed divider lacks an IDIV instruction")
 
+        close_method = re.search(
+            r"<Scroll::close\(\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        close_dispatches = re.findall(
+            r"<\(anonymous namespace\)::call_noarg_virtual"
+            r"\(void\*, unsigned int\)[^>]*>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            scroll_disassembly, re.DOTALL)
+        if not close_method:
+            fail("could not locate Scroll close in disassembly")
+        close_body = close_method.group("body")
+        ordered_calls = re.search(
+            r"0xaac.*?\bcall\b.*?"
+            r"<\(anonymous namespace\)::call_noarg_virtual.*?"
+            r"0x15f8.*?\bcall\b.*?"
+            r"<\(anonymous namespace\)::call_noarg_virtual",
+            close_body, re.DOTALL)
+        slot_is_explicit = len(re.findall(r"\$0x168\b", close_body)) >= 2
+        slot_is_specialized = any(
+            re.search(r"\b0x168\b", body) for body in close_dispatches)
+        if not ordered_calls or not (slot_is_explicit or slot_is_specialized):
+            fail("Scroll close lacks two ordered virtual slot-0x168 calls")
+        if not any(re.search(
+                r"\b(?:call|jmp)\s+\*", body) for body in close_dispatches):
+            fail("Scroll close helper lacks a raw thiscall indirect dispatch")
+        if not re.search(
+                r"\bDISP32\s+GraphicWin::close\(\)\s*$",
+                scroll_relocations, re.MULTILINE):
+            fail("Scroll close does not delegate to source-owned GraphicWin close")
+
     if args.scroll_oracle_object:
         oracle_headers = run([args.objdump, "-f", args.scroll_oracle_object])
         if "file format pe-i386" not in oracle_headers:
@@ -732,6 +770,7 @@ def main():
         oracle_disassembly = run(
             [args.objdump, "-d", "-C", args.scroll_oracle_object])
         oracle_calls = {
+            "(anonymous namespace)::verify_close()": (0x00605370,),
             "(anonymous namespace)::verify_init_wrappers()": (
                 0x00605840, 0x00605890, 0x006058D0, 0x00605910, 0x00605960),
             "(anonymous namespace)::verify_range()": (0x006059B0,),

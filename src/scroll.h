@@ -29,6 +29,7 @@ class DLLEXPORT Scroll : GraphicWin {
   Scroll() { ; }
   ~Scroll() { ; }
 
+  uint32_t close();
   int init(RECT *rect, Win *parent, int setting, int options);
   int init_vert(int x, int y, int length, Win *parent, int setting);
   int init_horz(int x, int y, int length, Win *parent, int setting);
@@ -102,8 +103,14 @@ typedef int (__cdecl *ScrollPrimaryInitProc)(
 extern ScrollPrimaryInitProc ScrollPrimaryInit;
 extern int *ScrollDefaultThickness;
 extern int *ScrollNonClientInit;
+// Defaults copied by close(). The static table contains eleven process
+// constants; the dynamic table spans seventeen process-owned slots, including
+// the sprite defaults and one intentionally unused hole.
+extern uint32_t *ScrollCloseStaticDefaults;
+extern uint32_t *ScrollCloseDynamicDefaults;
 
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
+uint32_t __fastcall scroll_close_redirect(Scroll *self, void *);
 int __fastcall scroll_init_rect_redirect(
     Scroll *self, void *, RECT *rect, Win *parent, int setting, int options);
 int __fastcall scroll_init_vert_redirect(

@@ -77,6 +77,7 @@ address,recovery_state,priority,notes
 0x005FE270,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x00601B80,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x006046F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00605370,source_complete,,Runtime redirect installed by DllMain after byte-signature validation; retains two embedded FlatButton virtual-close dependencies and delegates to source-owned GraphicWin close
 0x00605840,source_complete,,Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 0x00605890,source_complete,,Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 0x006058D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer

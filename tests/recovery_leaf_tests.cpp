@@ -1062,6 +1062,204 @@ struct ScrollInitProbeState {
 
 ScrollInitProbeState scroll_init_probe_state = {};
 
+struct ScrollCloseProbeState {
+    uint8_t *base;
+    const uint32_t *static_defaults;
+    const uint32_t *dynamic_defaults;
+    int order;
+};
+
+ScrollCloseProbeState scroll_close_probe_state = {};
+
+uint32_t scroll_close_read(size_t offset) {
+    uint32_t value;
+    std::memcpy(&value, scroll_close_probe_state.base + offset, sizeof(value));
+    return value;
+}
+
+void expect_scroll_close_defaults() {
+    const uint32_t *const fixed = scroll_close_probe_state.static_defaults;
+    const uint32_t *const dynamic = scroll_close_probe_state.dynamic_defaults;
+    expect(scroll_close_read(0xA14) == dynamic[0]);
+    expect(scroll_close_read(0xA1C) == fixed[3]);
+    expect(scroll_close_read(0xA20) == dynamic[1]);
+    expect(scroll_close_read(0xA24) == fixed[4]);
+    expect(scroll_close_read(0xA28) == 0U);
+    expect(scroll_close_read(0xA2C) == dynamic[1]);
+    expect(scroll_close_read(0xA30) == fixed[2]);
+    expect(scroll_close_read(0xA34) == fixed[1]);
+    expect(scroll_close_read(0xA38) == 0U);
+    expect(scroll_close_read(0xA3C) == 0xFFFFFFFFU);
+    expect(scroll_close_read(0xA40) == fixed[0]);
+    expect(scroll_close_read(0xA44) == 0U);
+    expect(scroll_close_read(0xA48) == fixed[5]);
+    for (size_t offset = 0xA4C; offset <= 0xA58; offset += 4) {
+        expect(scroll_close_read(offset) == 0U);
+    }
+    expect(scroll_close_read(0xA5C) == fixed[6]);
+    expect(scroll_close_read(0xA64) == fixed[7]);
+    expect(scroll_close_read(0xA68) == fixed[8]);
+    expect(scroll_close_read(0xA6C) == fixed[9]);
+    expect(scroll_close_read(0xA70) == fixed[10]);
+    for (size_t index = 0; index < 3; ++index) {
+        expect(scroll_close_read(0xA7C + index * 4) == dynamic[2 + index]);
+        expect(scroll_close_read(0xA88 + index * 4) == dynamic[5 + index]);
+        expect(scroll_close_read(0xA94 + index * 4) == dynamic[8 + index]);
+        expect(scroll_close_read(0xAA0 + index * 4) == dynamic[11 + index]);
+    }
+    expect(scroll_close_read(0xA74) == dynamic[15]);
+    expect(scroll_close_read(0xA78) == dynamic[16]);
+    expect(scroll_close_read(0x2144) == 0U);
+    expect(scroll_close_read(0x2148) == 0U);
+}
+
+uint32_t __fastcall scroll_close_left_probe(void *self, void *) {
+    expect(scroll_close_probe_state.order == 0);
+    expect(self == scroll_close_probe_state.base + 0xAAC);
+    expect_scroll_close_defaults();
+    expect(scroll_close_read(0xA10) == 0x13579BDFU);
+    scroll_close_probe_state.order = 1;
+    return 0x11112222U;
+}
+
+uint32_t __fastcall scroll_close_right_probe(void *self, void *) {
+    expect(scroll_close_probe_state.order == 1);
+    expect(self == scroll_close_probe_state.base + 0x15F8);
+    expect_scroll_close_defaults();
+    expect(scroll_close_read(0xA10) == 0x13579BDFU);
+    scroll_close_probe_state.order = 2;
+    return 0x33334444U;
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall scroll_close_win_probe(void *self) {
+    expect(scroll_close_probe_state.order == 2);
+    expect(self == scroll_close_probe_state.base);
+    expect_scroll_close_defaults();
+    expect(scroll_close_read(0xA10) == 0x13579BDFU);
+    scroll_close_probe_state.order = 3;
+}
+
+void __thiscall scroll_close_buffer_probe(void *self) {
+    expect(scroll_close_probe_state.order == 3);
+    expect(self == scroll_close_probe_state.base + 0x444);
+    expect_scroll_close_defaults();
+    expect(scroll_close_read(0xA10) == 0x13579BDFU);
+    scroll_close_probe_state.order = 4;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void write_scroll_close_expected(uint8_t *expected,
+                                 const uint32_t fixed[11],
+                                 const uint32_t dynamic[17],
+                                 uint32_t base_result) {
+    write_at(expected, 16 + 0xA14, dynamic[0]);
+    write_at(expected, 16 + 0xA1C, fixed[3]);
+    write_at(expected, 16 + 0xA20, dynamic[1]);
+    write_at(expected, 16 + 0xA24, fixed[4]);
+    write_at(expected, 16 + 0xA28, 0U);
+    write_at(expected, 16 + 0xA2C, dynamic[1]);
+    write_at(expected, 16 + 0xA30, fixed[2]);
+    write_at(expected, 16 + 0xA34, fixed[1]);
+    write_at(expected, 16 + 0xA38, 0U);
+    write_at(expected, 16 + 0xA3C, 0xFFFFFFFFU);
+    write_at(expected, 16 + 0xA40, fixed[0]);
+    write_at(expected, 16 + 0xA44, 0U);
+    write_at(expected, 16 + 0xA48, fixed[5]);
+    for (size_t offset = 0xA4C; offset <= 0xA58; offset += 4) {
+        write_at(expected, 16 + offset, 0U);
+    }
+    write_at(expected, 16 + 0xA5C, fixed[6]);
+    write_at(expected, 16 + 0xA64, fixed[7]);
+    write_at(expected, 16 + 0xA68, fixed[8]);
+    write_at(expected, 16 + 0xA6C, fixed[9]);
+    write_at(expected, 16 + 0xA70, fixed[10]);
+    for (size_t index = 0; index < 3; ++index) {
+        write_at(expected, 16 + 0xA7C + index * 4, dynamic[2 + index]);
+        write_at(expected, 16 + 0xA88 + index * 4, dynamic[5 + index]);
+        write_at(expected, 16 + 0xA94 + index * 4, dynamic[8 + index]);
+        write_at(expected, 16 + 0xAA0 + index * 4, dynamic[11 + index]);
+    }
+    write_at(expected, 16 + 0xA74, dynamic[15]);
+    write_at(expected, 16 + 0xA78, dynamic[16]);
+    write_at(expected, 16 + 0x2144, 0U);
+    write_at(expected, 16 + 0x2148, 0U);
+
+    write_at(expected, 16 + 0x134, 0U);
+    write_at(expected, 16 + 0x138, 0U);
+    for (size_t offset = 0x9CC; offset <= 0xA04; offset += 4) {
+        write_at(expected, 16 + offset, 0U);
+    }
+    write_at(expected, 16 + 0xA0C, base_result);
+    write_at(expected, 16 + 0xA10, 0U);
+}
+
+void test_scroll_close() {
+    uint32_t fixed[11];
+    uint32_t dynamic[17];
+    for (size_t index = 0; index < ARRAYSIZE(fixed); ++index) {
+        fixed[index] = 0x51000000U + static_cast<uint32_t>(index) * 0x010203U;
+    }
+    for (size_t index = 0; index < ARRAYSIZE(dynamic); ++index) {
+        dynamic[index] = 0xA1000000U + static_cast<uint32_t>(index) * 0x010101U;
+    }
+    dynamic[14] = 0xDEADC0DEU;
+    uint32_t base_result = 0x7B3D19E5U;
+
+    uint32_t *const saved_fixed = ScrollCloseStaticDefaults;
+    uint32_t *const saved_dynamic = ScrollCloseDynamicDefaults;
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_base_default = GraphicWinFieldA0CDefault;
+    ScrollCloseStaticDefaults = fixed;
+    ScrollCloseDynamicDefaults = dynamic;
+    WinOriginalClose = scroll_close_win_probe;
+    BufferSubobjectClose = scroll_close_buffer_probe;
+    GraphicWinFieldA0CDefault = &base_result;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+        uint8_t expected[sizeof(storage)];
+        uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {};
+        uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {};
+        left_vtable[0x168 / sizeof(uintptr_t)] =
+            reinterpret_cast<uintptr_t>(&scroll_close_left_probe);
+        right_vtable[0x168 / sizeof(uintptr_t)] =
+            reinterpret_cast<uintptr_t>(&scroll_close_right_probe);
+        seed_storage(storage, expected, sizeof(storage));
+        uintptr_t *left_vtable_pointer = left_vtable;
+        uintptr_t *right_vtable_pointer = right_vtable;
+        write_at(storage, 16 + 0xAAC, left_vtable_pointer);
+        write_at(storage, 16 + 0x15F8, right_vtable_pointer);
+        write_at(storage, 16 + 0xA08, 0U);
+        write_at(storage, 16 + 0xA10, 0x13579BDFU);
+        std::memcpy(expected, storage, sizeof(storage));
+        write_scroll_close_expected(expected, fixed, dynamic, base_result);
+
+        auto *scroll = reinterpret_cast<Scroll *>(storage + 16);
+        scroll_close_probe_state = {
+            storage + 16, fixed, dynamic, 0,
+        };
+        const uint32_t result = use_adapter
+            ? scroll_close_redirect(scroll, nullptr)
+            : scroll->close();
+        expect(result == base_result);
+        expect(scroll_close_probe_state.order == 4);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    ScrollCloseStaticDefaults = saved_fixed;
+    ScrollCloseDynamicDefaults = saved_dynamic;
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_base_default;
+}
+
 int __cdecl scroll_init_probe(Scroll *self, int x, int y, int width, int height,
                               Win *parent, int setting, int options) {
     ++scroll_init_probe_state.calls;
@@ -5697,6 +5895,7 @@ int main() {
     test_find_font();
     test_buffer_text_line_height();
     test_win_paging();
+    test_scroll_close();
     test_scroll_init_wrappers();
     test_scroll_range();
     test_scroll_style_setters();
