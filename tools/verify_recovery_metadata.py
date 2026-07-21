@@ -12,6 +12,7 @@ the cache and fails the byte comparison on the regeneration that follows.
 
 import argparse
 import hashlib
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -61,19 +62,56 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def source_metadata_sha256(source_dir):
+    """Hash exactly the source-derived inputs consumed by the exporter.
+
+    Recovery catalogs depend on Original Offset/Status annotations and
+    fixed-address bindings, including their reported source locations. They do
+    not depend on ordinary implementation bytes. Hashing this deterministic
+    projection keeps the cache complete while allowing tests, runtime oracles,
+    and behavior-only source edits to reuse a verified IDB regeneration.
+
+    The exporter itself remains a raw-hashed STATIC_INPUT, so any change to
+    the projection rules invalidates this digest and forces regeneration.
+    """
+    from export_recovery_inventory import (  # Imported lazily for fast test import.
+        load_source_annotations,
+        load_source_bindings,
+    )
+
+    annotations = [
+        {"address": address, "items": items}
+        for address, items in sorted(load_source_annotations(source_dir).items())
+    ]
+    payload = {
+        "annotations": annotations,
+        "bindings": load_source_bindings(source_dir),
+    }
+    serialized = json.dumps(
+        payload, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
 def manifest_lines(idb_path):
-    paths = [idb_path, *STATIC_INPUTS]
-    paths.extend(sorted((REPO_ROOT / "src").glob("*.cpp")))
-    paths.extend(
-        REPO_ROOT / "docs" / "recovery" / name for name in COMPARED_OUTPUTS)
+    input_paths = [idb_path, *STATIC_INPUTS]
+    output_paths = [
+        REPO_ROOT / "docs" / "recovery" / name for name in COMPARED_OUTPUTS
+    ]
     lines = [f"python:{sys.version_info[0]}.{sys.version_info[1]}"]
-    for path in paths:
+    for path in input_paths:
         if not path.is_file():
             raise RuntimeError(f"required metadata input missing: {path}")
         try:
             label = path.resolve().relative_to(REPO_ROOT).as_posix()
         except ValueError:
             label = str(path.resolve())
+        lines.append(f"{label}:{sha256(path)}")
+    lines.append(
+        f"source_metadata:{source_metadata_sha256(REPO_ROOT / 'src')}")
+    for path in output_paths:
+        if not path.is_file():
+            raise RuntimeError(f"required metadata output missing: {path}")
+        label = path.resolve().relative_to(REPO_ROOT).as_posix()
         lines.append(f"{label}:{sha256(path)}")
     return lines
 

@@ -28,10 +28,76 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
         self.assertIn("docs/recovery-overrides.csv", labels)
         self.assertIn("docs/recovery/functions.csv", labels)
         self.assertIn("docs/recovery/priorities.csv", labels)
-        self.assertIn("src/dllmain.cpp", labels)
+        self.assertIn("source_metadata", labels)
+        self.assertFalse(any(
+            label.startswith("src/") and label.endswith(".cpp")
+            for label in labels))
         expected = hashlib.sha256(b"idb-bytes").hexdigest()
         idb_line = [line for line in lines if line.endswith(expected)]
         self.assertEqual(len(idb_line), 1)
+
+    def test_source_fingerprint_ignores_behavior_only_edits(self):
+        source = self.root / "source"
+        source.mkdir()
+        implementation = source / "win.cpp"
+        implementation.write_text(
+            "/* Original Offset: 005ED240\nStatus: Complete\n*/\n"
+            "int recovered() { return 1; }\n",
+            encoding="utf-8")
+        oracle = source / "win_oracle.cpp"
+        oracle.write_text("int fixture_count = 1;\n", encoding="utf-8")
+        baseline = verify_recovery_metadata.source_metadata_sha256(source)
+
+        implementation.write_text(
+            "/* Original Offset: 005ED240\nStatus: Complete\n*/\n"
+            "int recovered() { return 2; }\n",
+            encoding="utf-8")
+        oracle.write_text(
+            "int fixture_count = 2;\nint extra_fixture = 3;\n",
+            encoding="utf-8")
+        self.assertEqual(
+            baseline,
+            verify_recovery_metadata.source_metadata_sha256(source))
+
+    def test_source_fingerprint_tracks_annotation_edits(self):
+        source = self.root / "source"
+        source.mkdir()
+        implementation = source / "win.cpp"
+        implementation.write_text(
+            "/* Original Offset: 005ED240\nStatus: Complete\n*/\n"
+            "int recovered() { return 1; }\n",
+            encoding="utf-8")
+        baseline = verify_recovery_metadata.source_metadata_sha256(source)
+
+        implementation.write_text(
+            "\n/* Original Offset: 005ED240\nStatus: In progress\n*/\n"
+            "int recovered() { return 1; }\n",
+            encoding="utf-8")
+        self.assertNotEqual(
+            baseline,
+            verify_recovery_metadata.source_metadata_sha256(source))
+
+    def test_source_fingerprint_tracks_binding_address_and_location(self):
+        source = self.root / "source"
+        source.mkdir()
+        implementation = source / "binding.cpp"
+        implementation.write_text(
+            "func_target *Target = (func_target *)0x005ED240;\n",
+            encoding="utf-8")
+        baseline = verify_recovery_metadata.source_metadata_sha256(source)
+
+        implementation.write_text(
+            "func_target *Target = (func_target *)0x005ED2D0;\n",
+            encoding="utf-8")
+        changed_address = verify_recovery_metadata.source_metadata_sha256(source)
+        self.assertNotEqual(baseline, changed_address)
+
+        implementation.write_text(
+            "\nfunc_target *Target = (func_target *)0x005ED2D0;\n",
+            encoding="utf-8")
+        self.assertNotEqual(
+            changed_address,
+            verify_recovery_metadata.source_metadata_sha256(source))
 
     def test_manifest_changes_when_committed_output_changes(self):
         idb = self.root / "test.idb"
