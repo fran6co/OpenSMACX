@@ -1,0 +1,116 @@
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OpenSMACX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
+ */
+#pragma once
+
+ /*
+  * Ambience classes
+  *
+  * A family of game-event hooks - a turn beginning, a technology discovered, a
+  * base founded - that the original dispatches through a vtable so each
+  * faction flavour can respond. The variants recovered here respond to none of
+  * them: every one of these methods is a bare return in the original.
+  *
+  * None of these layouts is established. Both derived constructors write their
+  * own fields starting at 0x58, which places the shared base's extent there and
+  * is what base_storage_ models, including the vtable pointer the original
+  * keeps at offset zero - held as opaque bytes so no vtable is generated here
+  * that could disagree with it. Where the objects end is unknown, so nothing
+  * pins their sizeof and no field may be appended without deriving it first.
+  */
+class DLLEXPORT Ambience {
+ protected:
+  uint8_t base_storage_[0x58];
+};
+
+class DLLEXPORT FactionAmbience : Ambience {
+ public:
+  FactionAmbience() { ; }
+  ~FactionAmbience() { ; }
+  void begin();
+  void tech();
+  void terraform();
+  void production();
+  void general();
+  void new_base();
+  void popup1();
+  void eot();
+  void hostility();
+  void energy_resources();
+  void base_liberated();
+
+ private:
+  uint32_t field_58_;
+  uint32_t field_5C_;
+  uint32_t field_60_;
+  uint32_t field_64_;
+  uint32_t field_68_;
+  uint8_t field_6C_;
+  uint8_t field_6D_;
+};
+
+class DLLEXPORT UAmbience : Ambience {
+ public:
+  UAmbience() { ; }
+  ~UAmbience() { ; }
+  void tech();
+  void popup1();
+  void eot();
+
+  // No constructor for this variant survives in the catalog, so unlike its
+  // siblings nothing evidences fields of its own.
+};
+
+class DLLEXPORT GAmbience : Ambience {
+ public:
+  GAmbience() { ; }
+  ~GAmbience() { ; }
+  void tech();
+  void production();
+  void popup1();
+  void eot();
+
+ private:
+  uint32_t field_58_;
+  uint32_t field_5C_;
+  uint32_t field_60_;
+  uint32_t field_64_;
+  uint32_t field_68_;
+  uint8_t field_6C_;
+  uint8_t field_6D_;
+  uint8_t pad_6E_[2];
+  uint32_t field_70_;
+};
+
+void __fastcall faction_ambience_begin_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_tech_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_terraform_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_production_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_general_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_new_base_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_popup1_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_eot_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_hostility_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_energy_resources_redirect(FactionAmbience *self, void *);
+void __fastcall faction_ambience_base_liberated_redirect(FactionAmbience *self, void *);
+void __fastcall u_ambience_tech_redirect(UAmbience *self, void *);
+void __fastcall u_ambience_popup1_redirect(UAmbience *self, void *);
+void __fastcall u_ambience_eot_redirect(UAmbience *self, void *);
+void __fastcall g_ambience_tech_redirect(GAmbience *self, void *);
+void __fastcall g_ambience_production_redirect(GAmbience *self, void *);
+void __fastcall g_ambience_popup1_redirect(GAmbience *self, void *);
+void __fastcall g_ambience_eot_redirect(GAmbience *self, void *);
