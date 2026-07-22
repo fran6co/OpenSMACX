@@ -147,6 +147,7 @@ set(OPENSMACX_SOURCES
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/mapwin.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -362,6 +363,7 @@ if(BUILD_TESTING)
         src/graphicwin.cpp
         src/log.cpp
         src/maininterface.cpp
+        src/mapwin.cpp
         src/menu.cpp
         src/palette.cpp
         src/pulldown.cpp

@@ -15,6 +15,7 @@
 #include "../src/font.h"
 #include "../src/log.h"
 #include "../src/maininterface.h"
+#include "../src/mapwin.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -8478,6 +8479,21 @@ void test_constant_return_stubs() {
     clip_win->reset_window_clip();
     win_reset_window_clip_redirect(clip_win, nullptr);
     expect_storage_bytes(clip_storage, clip_expected, sizeof(clip_storage));
+
+    // MapWin is the first class here whose size is pinned rather than
+    // bounded, so unlike the ambience and sound-device canaries this one
+    // spans the whole object the original allocates - 0x22480 bytes, far too
+    // large for the stack.
+    std::vector<uint8_t> mw_storage(sizeof(MapWin) + 32);
+    std::vector<uint8_t> mw_expected(mw_storage.size());
+    auto *map_win = reinterpret_cast<MapWin *>(mw_storage.data() + 16);
+    seed_storage(mw_storage.data(), mw_expected.data(), mw_storage.size());
+    std::memcpy(mw_expected.data(), mw_storage.data(), mw_storage.size());
+    map_win->UNK3();
+    map_win->do_image_buttons();
+    map_win_unk3_redirect(map_win, nullptr);
+    map_win_do_image_buttons_redirect(map_win, nullptr);
+    expect_storage_bytes(mw_storage.data(), mw_expected.data(), mw_storage.size());
 }
 
 void test_base_pop_default_colors() {

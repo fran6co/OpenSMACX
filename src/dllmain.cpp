@@ -28,6 +28,7 @@
 #include "dialog.h"
 #include "dialogs.h"
 #include "maininterface.h"
+#include "mapwin.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -53,7 +54,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 204;
+constexpr size_t RedirectCount = 206;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -312,6 +313,16 @@ bool install_redirects() {
             0x0045EB70,
             reinterpret_cast<uintptr_t>(&main_interface_unk4_redirect),
             OPENSMACX_SIGNATURE_0045EB70,
+        },
+        {
+            0x00467960,
+            reinterpret_cast<uintptr_t>(&map_win_unk3_redirect),
+            OPENSMACX_SIGNATURE_00467960,
+        },
+        {
+            0x0046FB80,
+            reinterpret_cast<uintptr_t>(&map_win_do_image_buttons_redirect),
+            OPENSMACX_SIGNATURE_0046FB80,
         },
         {
             0x004C58B0,
