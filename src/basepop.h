@@ -24,6 +24,13 @@
   */
 class DLLEXPORT BasePop : GraphicWin {
  public:
+  void set_string_color(int c1, int c2, int c3, int c4);
+  void set_string_color2(int c1, int c2, int c3, int c4);
+  void set_string_color3(int c1, int c2, int c3, int c4);
+  void set_string_color_hyper(int c1, int c2, int c3, int c4);
+  void set_button_color(int c1, int c2, int c3, int c4);
+  void set_button_color2(int c1, int c2, int c3, int c4);
+  void set_button_color3(int c1, int c2, int c3, int c4);
   static void set_def_string_color(int c1, int c2, int c3, int c4);
   static void set_def_string_color2(int c1, int c2, int c3, int c4);
   static void set_def_string_color3(int c1, int c2, int c3, int c4);
@@ -384,3 +391,18 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 // both.
 extern uint32_t *BasePopDefaultStringColors;
 extern uint32_t *BasePopDefaultButtonColors;
+
+void __fastcall base_pop_set_string_color_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);
+void __fastcall base_pop_set_string_color2_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);
+void __fastcall base_pop_set_string_color3_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);
+void __fastcall base_pop_set_string_color_hyper_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);
+void __fastcall base_pop_set_button_color_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);
+void __fastcall base_pop_set_button_color2_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);
+void __fastcall base_pop_set_button_color3_redirect(
+    BasePop *self, void *, int c1, int c2, int c3, int c4);

@@ -207,3 +207,131 @@ void BasePop::set_def_button_color3(int c1, int c2, int c3, int c4) {
 void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int c4) {
     BasePop::set_def_button_color3(c1, c2, c3, c4);
 }
+
+/*
+Purpose: Set this popup's string color slots.
+Original Offset: 00604730
+Status: Complete
+*/
+void BasePop::set_string_color(int c1, int c2, int c3, int c4) {
+    string_color_a_ = c1;
+    string_color_b_ = c2;
+    string_color_c_ = c3;
+    string_color_d_ = c4;
+}
+
+void __fastcall base_pop_set_string_color_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_string_color(c1, c2, c3, c4);
+}
+
+/*
+Purpose: Set this popup's string color2 slots.
+Original Offset: 00604760
+Status: Complete
+*/
+void BasePop::set_string_color2(int c1, int c2, int c3, int c4) {
+    string_color_2a_ = c1;
+    string_color_2b_ = c2;
+    string_color_2c_ = c3;
+    string_color_2d_ = c4;
+}
+
+void __fastcall base_pop_set_string_color2_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_string_color2(c1, c2, c3, c4);
+}
+
+/*
+Purpose: Set this popup's string color3 slots.
+Original Offset: 00604790
+Status: Complete
+*/
+void BasePop::set_string_color3(int c1, int c2, int c3, int c4) {
+    string_color_3a_ = c1;
+    string_color_3b_ = c2;
+    string_color_3c_ = c3;
+    string_color_3d_ = c4;
+}
+
+void __fastcall base_pop_set_string_color3_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_string_color3(c1, c2, c3, c4);
+}
+
+/*
+Purpose: Set this popup's string color hyper slots.
+Original Offset: 006047C0
+Status: Complete
+*/
+void BasePop::set_string_color_hyper(int c1, int c2, int c3, int c4) {
+    string_color_hyper_a_ = c1;
+    string_color_hyper_b_ = c2;
+    string_color_hyperc_ = c3;
+    string_color_hyper_d_ = c4;
+}
+
+void __fastcall base_pop_set_string_color_hyper_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_string_color_hyper(c1, c2, c3, c4);
+}
+
+/*
+Purpose: Set this popup's button color slots.
+Original Offset: 00604830
+Status: Complete
+Verification note: the first slot is a byte while the other three are dwords,
+which the decompiler renders as four indistinguishable stores. Writing a dword
+there would overwrite the neighbouring tiers' bytes at 0x3179 and 0x317A.
+*/
+void BasePop::set_button_color(int c1, int c2, int c3, int c4) {
+    button_color_a_ = static_cast<uint8_t>(c1);
+    button_color_b_ = static_cast<uint32_t>(c2);
+    button_color_c_ = static_cast<uint32_t>(c3);
+    button_color_d_ = static_cast<uint32_t>(c4);
+}
+
+void __fastcall base_pop_set_button_color_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_button_color(c1, c2, c3, c4);
+}
+
+/*
+Purpose: Set this popup's button color2 slots.
+Original Offset: 00604860
+Status: Complete
+Verification note: the first slot is a byte while the other three are dwords,
+which the decompiler renders as four indistinguishable stores. Writing a dword
+there would overwrite the neighbouring tiers' bytes at 0x3179 and 0x317A.
+*/
+void BasePop::set_button_color2(int c1, int c2, int c3, int c4) {
+    button_color_2a_ = static_cast<uint8_t>(c1);
+    button_color_2b_ = static_cast<uint32_t>(c2);
+    button_color_2c_ = static_cast<uint32_t>(c3);
+    button_color_2d_ = static_cast<uint32_t>(c4);
+}
+
+void __fastcall base_pop_set_button_color2_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_button_color2(c1, c2, c3, c4);
+}
+
+/*
+Purpose: Set this popup's button color3 slots.
+Original Offset: 00604890
+Status: Complete
+Verification note: the first slot is a byte while the other three are dwords,
+which the decompiler renders as four indistinguishable stores. Writing a dword
+there would overwrite the neighbouring tiers' bytes at 0x3179 and 0x317A.
+*/
+void BasePop::set_button_color3(int c1, int c2, int c3, int c4) {
+    button_color_3a_ = static_cast<uint8_t>(c1);
+    button_color_3b_ = static_cast<uint32_t>(c2);
+    button_color_3c_ = static_cast<uint32_t>(c3);
+    button_color_3d_ = static_cast<uint32_t>(c4);
+}
+
+void __fastcall base_pop_set_button_color3_redirect(
+        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+    self->set_button_color3(c1, c2, c3, c4);
+}

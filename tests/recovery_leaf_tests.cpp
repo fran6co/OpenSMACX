@@ -8409,6 +8409,81 @@ void test_win_set_def_focus() {
     WinDefaultFocus = saved;
 }
 
+void test_base_pop_instance_colors() {
+    // The two families have different storage: string slots are four dwords
+    // at 0x3120 with a 0x10 stride, while button slot one is a *byte* at
+    // 0x3178 + tier and the remaining three are dwords at 0x317C stride 0xC.
+    // A dword written to that byte would overwrite the neighbouring tiers, so
+    // the whole object is compared after every call.
+    std::vector<uint8_t> bytes(sizeof(BasePop) + 32);
+    std::vector<uint8_t> expected_bytes(sizeof(BasePop) + 32);
+    uint8_t *const storage = bytes.data();
+    uint8_t *const expected = expected_bytes.data();
+    auto *popup = reinterpret_cast<BasePop *>(storage + 16);
+
+    const int colors[4] = {INT_MIN, -1, 0x5A5A5A5A, INT_MAX};
+
+    struct StringCase {
+        size_t tier;
+        void (BasePop::*member)(int, int, int, int);
+        void (__fastcall *redirect)(BasePop *, void *, int, int, int, int);
+    };
+    const StringCase strings[] = {
+        {0, &BasePop::set_string_color, base_pop_set_string_color_redirect},
+        {1, &BasePop::set_string_color2, base_pop_set_string_color2_redirect},
+        {2, &BasePop::set_string_color3, base_pop_set_string_color3_redirect},
+        {3, &BasePop::set_string_color_hyper,
+         base_pop_set_string_color_hyper_redirect},
+    };
+    for (const StringCase &test : strings) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, bytes.size());
+            std::memcpy(expected, storage, bytes.size());
+            for (size_t slot = 0; slot < 4; ++slot) {
+                write_at(expected, 16 + 0x3120 + slot * 0x10 + test.tier * 4,
+                         colors[slot]);
+            }
+            if (adapter) {
+                test.redirect(popup, nullptr,
+                              colors[0], colors[1], colors[2], colors[3]);
+            } else {
+                (popup->*test.member)(
+                    colors[0], colors[1], colors[2], colors[3]);
+            }
+            expect_storage_bytes(storage, expected, bytes.size());
+        }
+    }
+
+    const StringCase buttons[] = {
+        {0, &BasePop::set_button_color, base_pop_set_button_color_redirect},
+        {1, &BasePop::set_button_color2, base_pop_set_button_color2_redirect},
+        {2, &BasePop::set_button_color3, base_pop_set_button_color3_redirect},
+    };
+    for (const StringCase &test : buttons) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, bytes.size());
+            std::memcpy(expected, storage, bytes.size());
+            // Slot one is a single byte; the truncation is part of the
+            // contract, not an accident of the fixture's values.
+            expected[16 + 0x3178 + test.tier] =
+                static_cast<uint8_t>(colors[0]);
+            for (size_t slot = 1; slot < 4; ++slot) {
+                write_at(expected,
+                         16 + 0x317C + (slot - 1) * 0xC + test.tier * 4,
+                         colors[slot]);
+            }
+            if (adapter) {
+                test.redirect(popup, nullptr,
+                              colors[0], colors[1], colors[2], colors[3]);
+            } else {
+                (popup->*test.member)(
+                    colors[0], colors[1], colors[2], colors[3]);
+            }
+            expect_storage_bytes(storage, expected, bytes.size());
+        }
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -8510,6 +8585,7 @@ int main() {
     test_constant_return_stubs();
     test_base_pop_default_colors();
     test_win_set_def_focus();
+    test_base_pop_instance_colors();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
