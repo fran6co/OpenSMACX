@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 47,
-      "source_complete": 891,
+      "original_dependency": 49,
+      "source_complete": 893,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4692
+      "unrecovered": 4688
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 837,
-    "matched_function_starts": 837,
-    "unique_addresses": 837,
+    "annotations": 839,
+    "matched_function_starts": 839,
+    "unique_addresses": 839,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 188,
-      "function": 55
+      "function": 57
     },
     "items": [
       {
@@ -1687,6 +1687,24 @@
         "location": "src/council.cpp:24",
         "symbol": "Proposal",
         "type": "RulesProposal *"
+      },
+      {
+        "address": "0x00609990",
+        "function": "?item@Dialog@@QAEHPADH@Z",
+        "function_address": "0x00609990",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:22",
+        "symbol": "DialogOriginalItem",
+        "type": "func_dialog_item *"
+      },
+      {
+        "address": "0x0060C920",
+        "function": "?item@ListBox@@QAEHPADH@Z",
+        "function_address": "0x0060C920",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:23",
+        "symbol": "ListBoxOriginalItem",
+        "type": "func_list_box_item *"
       },
       {
         "address": "0x006151E0",
@@ -3516,7 +3534,7 @@
         "type": "func_win_flip *"
       }
     ],
-    "matched_function_starts": 55,
-    "total": 243
+    "matched_function_starts": 57,
+    "total": 245
   }
 }

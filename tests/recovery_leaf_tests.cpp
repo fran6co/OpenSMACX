@@ -51,6 +51,7 @@
 #include "../src/radiobutton.h"
 #include "../src/checkbox.h"
 #include "../src/editgroup.h"
+#include "../src/dialogs.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9993,6 +9994,110 @@ void test_edit_group_text() {
     EditBoxOriginalSetText = saved;
 }
 
+namespace {
+Dialog *g_item_dialog = nullptr;
+void *g_item_listbox = nullptr;
+char *g_item_text = nullptr;
+int g_item_index = 0;
+int g_dialog_item_calls = 0;
+int g_listbox_item_calls = 0;
+int __thiscall observe_dialog_item(Dialog *self, char *text, int index) {
+    g_item_dialog = self; g_item_text = text; g_item_index = index;
+    ++g_dialog_item_calls;
+    return 0x1234;
+}
+int __thiscall observe_list_box_item(void *self, char *text, int index) {
+    g_item_listbox = self; g_item_text = text; g_item_index = index;
+    ++g_listbox_item_calls;
+    return 0x5678;
+}
+}  // namespace
+
+void test_dialogs_dispatch() {
+    // Both methods switch on the dialog kind through a sixteen entry jump
+    // table, so every kind is exercised rather than a representative few -
+    // the table is not regular, and a case transcribed into the wrong arm
+    // would pass any test that only sampled it.
+    auto *const saved_dialog = DialogOriginalItem;
+    auto *const saved_listbox = ListBoxOriginalItem;
+    DialogOriginalItem = &observe_dialog_item;
+    ListBoxOriginalItem = &observe_list_box_item;
+
+    std::vector<uint8_t> storage(sizeof(Dialogs) + 0x100 + 32);
+    auto *dialogs = reinterpret_cast<Dialogs *>(storage.data() + 16);
+    for (size_t i = 0; i < storage.size(); ++i) {
+        storage[i] = static_cast<uint8_t>(0x30 + (i * 3));
+    }
+    // A vbtable placing the Dialog somewhere other than a most-derived
+    // Dialogs would put it, so a hardcoded offset cannot pass.
+    const int32_t vbtable[3] = {0, 0x188, 0xC40};
+    const int32_t *pointer = vbtable;
+    std::memcpy(storage.data() + 16, &pointer, sizeof(pointer));
+    uint8_t *const dialog_at = storage.data() + 16 + 0xC40;
+    const int32_t count = 0x0BADBEEF;
+    std::memcpy(dialog_at + 0xCC, &count, sizeof(count));
+    const int32_t fallback = 0x00C0FFEE;
+    std::memcpy(storage.data() + 16 + 0xA4, &fallback, sizeof(fallback));
+
+    auto set_kind = [&](int32_t kind) {
+        std::memcpy(storage.data() + 16 + 0x180, &kind, sizeof(kind));
+    };
+    char text[] = "item";
+
+    // item: kinds 1, 4, 8 and 16 go to the Dialog; kind 2 to the ListBox;
+    // everything else, in range or not, yields zero.
+    const int dialog_kinds[] = {1, 4, 8, 16};
+    for (int kind : dialog_kinds) {
+        set_kind(kind);
+        g_dialog_item_calls = 0;
+        expect(dialogs->item(text, 7) == 0x1234);
+        expect(g_dialog_item_calls == 1);
+        expect(reinterpret_cast<uint8_t *>(g_item_dialog) == dialog_at);
+        expect(g_item_text == text);
+        expect(g_item_index == 7);
+    }
+    set_kind(2);
+    g_listbox_item_calls = 0;
+    expect(dialogs->item(text, 3) == 0x5678);
+    expect(g_listbox_item_calls == 1);
+    // The ListBox arm passes the object itself, unadjusted.
+    expect(g_item_listbox == reinterpret_cast<void *>(dialogs));
+    for (int kind : {3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15}) {
+        set_kind(kind);
+        g_dialog_item_calls = 0;
+        g_listbox_item_calls = 0;
+        expect(dialogs->item(text, 0) == 0);
+        expect(g_dialog_item_calls == 0);
+        expect(g_listbox_item_calls == 0);
+    }
+    for (int kind : {0, -1, 17, INT_MIN, INT_MAX}) {
+        set_kind(kind);
+        expect(dialogs->item(text, 0) == 0);
+    }
+    set_kind(1);
+    expect(dialogs_item_redirect(dialogs, nullptr, text, 2) == 0x1234);
+
+    // get_num_items: kinds 1, 2, 4 and 16 read the Dialog's count, kind 8
+    // reads the object's own field, the rest are zero. Note kind 2 differs
+    // between the two methods, which is the kind of asymmetry a shared
+    // switch would paper over.
+    for (int kind : {1, 2, 4, 16}) {
+        set_kind(kind);
+        expect(dialogs->get_num_items() == 0x0BADBEEF);
+    }
+    set_kind(8);
+    expect(dialogs->get_num_items() == 0x00C0FFEE);
+    for (int kind : {3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 0, 17}) {
+        set_kind(kind);
+        expect(dialogs->get_num_items() == 0);
+    }
+    set_kind(4);
+    expect(dialogs_get_num_items_redirect(dialogs, nullptr) == 0x0BADBEEF);
+
+    DialogOriginalItem = saved_dialog;
+    ListBoxOriginalItem = saved_listbox;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10357,6 +10462,7 @@ int main() {
     test_guarded_delegates();
     test_virtual_base_closes();
     test_edit_group_text();
+    test_dialogs_dispatch();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
