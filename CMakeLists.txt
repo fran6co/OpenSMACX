@@ -162,6 +162,17 @@ set(OPENSMACX_SOURCES
     src/statuswin.cpp
     src/filewin.cpp
     src/wave.cpp
+    src/battlewin.cpp
+    src/councwin.cpp
+    src/credits.cpp
+    src/diplopop.cpp
+    src/gamma.cpp
+    src/messagewin.cpp
+    src/newtechwin.cpp
+    src/pickwin.cpp
+    src/prodpicker.cpp
+    src/reportwin.cpp
+    src/setupwin.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -392,6 +403,17 @@ if(BUILD_TESTING)
         src/statuswin.cpp
         src/filewin.cpp
         src/wave.cpp
+        src/battlewin.cpp
+        src/councwin.cpp
+        src/credits.cpp
+        src/diplopop.cpp
+        src/gamma.cpp
+        src/messagewin.cpp
+        src/newtechwin.cpp
+        src/pickwin.cpp
+        src/prodpicker.cpp
+        src/reportwin.cpp
+        src/setupwin.cpp
         src/menu.cpp
         src/palette.cpp
         src/pulldown.cpp
