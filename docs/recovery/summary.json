@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 34,
-      "source_complete": 636,
+      "original_dependency": 36,
+      "source_complete": 638,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4960
+      "unrecovered": 4956
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 582,
-    "matched_function_starts": 582,
-    "unique_addresses": 582,
+    "annotations": 584,
+    "matched_function_starts": 584,
+    "unique_addresses": 584,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 182,
-      "function": 41
+      "function": 43
     },
     "items": [
       {
@@ -1624,6 +1624,15 @@
         "location": "src/buffer.cpp:393",
         "symbol": "BufferFree",
         "type": "func_sprite_free *"
+      },
+      {
+        "address": "0x005DC7C0",
+        "function": "?text_width@Buffer@@QAEHPADH@Z",
+        "function_address": "0x005DC7C0",
+        "kind": "function",
+        "location": "src/buffer.cpp:808",
+        "symbol": "BufferTextWidthMeasured",
+        "type": "func_buffer_text_width_measured *"
       },
       {
         "address": "0x009A6828",
@@ -3334,9 +3343,18 @@
         "location": "src/veh.cpp:58",
         "symbol": "VehBattleDisplay",
         "type": "LPSTR *"
+      },
+      {
+        "address": "0x005F1820",
+        "function": "?update_cursor@Win@@QAAHPAUWin@@H@Z",
+        "function_address": "0x005F1820",
+        "kind": "function",
+        "location": "src/win.cpp:450",
+        "symbol": "WinUpdateCursorOriginal",
+        "type": "func_win_update_cursor *"
       }
     ],
-    "matched_function_starts": 41,
-    "total": 223
+    "matched_function_starts": 43,
+    "total": 225
   }
 }

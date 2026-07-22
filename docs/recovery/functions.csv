@@ -4035,8 +4035,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005DC310,0x005DC351,65,.text,?get_special_link@@YAHPADPAH@Z,,0x005DC310-0x005DC351,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005DC360,0x005DC40A,170,.text,?wrap_height@Buffer@@QAEHPADH@Z,"int (__thiscall ?wrap_height@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)",0x005DC360-0x005DC40A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,18
 0x005DC410,0x005DC70A,762,.text,?find_line_break_l@Buffer@@QAEHPADPAHH@Z,"int (__thiscall ?find_line_break_l@Buffer@@QAEHPADPAHH@Z)(Buffer* this, int8*, int*, int)",0x005DC410-0x005DC70A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,15
-0x005DC790,0x005DC7BA,42,.text,?text_width@Buffer@@QAEHPAD@Z,"int (__thiscall ?text_width@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)",0x005DC790-0x005DC7BA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,17
-0x005DC7C0,0x005DCA02,578,.text,?text_width@Buffer@@QAEHPADH@Z,"int (__thiscall ?text_width@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)",0x005DC7C0-0x005DCA02,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,16
+0x005DC790,0x005DC7BA,42,.text,?text_width@Buffer@@QAEHPAD@Z,"int (__thiscall ?text_width@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)",0x005DC790-0x005DC7BA,game,hidden;sp_ready;purged_ok,src/buffer.cpp:813,Complete with a temporary dependency on the measured overload,,,source_complete,,,,2,17
+0x005DC7C0,0x005DCA02,578,.text,?text_width@Buffer@@QAEHPADH@Z,"int (__thiscall ?text_width@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)",0x005DC7C0-0x005DCA02,game,frame;hidden;sp_ready;purged_ok,,,,BufferTextWidthMeasured,original_dependency,,,,3,16
 0x005DCA80,0x005DCAA5,37,.text,?text_height@Buffer@@QAEHXZ,int (__thiscall ?text_height@Buffer@@QAEHXZ)(Buffer* this),0x005DCA80-0x005DCAA5,game,hidden;sp_ready;purged_ok,src/buffer.cpp:701,Complete,,,source_complete,,,,0,5
 0x005DCAB0,0x005DCADB,43,.text,?text_line_height@Buffer@@QAEHXZ,int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this),0x005DCAB0-0x005DCADB,game,hidden;sp_ready;purged_ok,src/buffer.cpp:368,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,21
 0x005DCAE0,0x005DCE23,835,.text,?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z,"int (__thiscall ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)",0x005DCAE0-0x005DCE23,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,14
@@ -4168,7 +4168,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005EC6F0,0x005EC73C,76,.text,?release_hdc@Win@@QAGXXZ,,0x005EC6F0-0x005EC73C,game,hidden;sp_ready;purged_ok,src/win.cpp:413,Complete,,,source_complete,,,,0,9
 0x005EC740,0x005EC773,51,.text,?set_cursor@Win@@QAEHPAVSprite@@HH@Z,"int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)",0x005EC740-0x005EC773,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,6
 0x005EC780,0x005EC7BC,60,.text,?set_cursor@Win@@QAEHPAUHCURSOR@@@Z,"int (__thiscall ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z)(Win* this, HCURSOR* phCursor)",0x005EC780-0x005EC7BC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x005EC7C0,0x005EC7FE,62,.text,?set_cursor@Win@@QAEHH@Z,"int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)",0x005EC7C0-0x005EC7FE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,13
+0x005EC7C0,0x005EC7FE,62,.text,?set_cursor@Win@@QAEHH@Z,"int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)",0x005EC7C0-0x005EC7FE,game,hidden;sp_ready;purged_ok,src/win.cpp:455,Complete with a temporary dependency on the cursor refresh,,,source_complete,,,,1,13
 0x005EC800,0x005EC89B,155,.text,?set_mouse_pos@Win@@QAEXHH@Z,"void (__thiscall ?set_mouse_pos@Win@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)",0x005EC800-0x005EC89B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005EC8A0,0x005EC952,178,.text,?get_mouse_pos@Win@@QAEXPAHPAH@Z,"void (__thiscall ?get_mouse_pos@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)",0x005EC8A0-0x005EC952,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,26
 0x005EC960,0x005EC97B,27,.text,?get_lbutton_state@Win@@QAEHXZ,int (__thiscall ?get_lbutton_state@Win@@QAEHXZ)(Win* this),0x005EC960-0x005EC97B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
@@ -4268,7 +4268,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005F1660,0x005F16CB,107,.text,?OnChar@Win@@QAAXPAXDH@Z,,0x005F1660-0x005F16CB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005F16D0,0x005F1745,117,.text,?OnSysKey@Win@@QAAXPAXIJHI@Z,,0x005F16D0-0x005F1745,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005F1750,0x005F1812,194,.text,sub_5f1750,,0x005F1750-0x005F1812,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
-0x005F1820,0x005F2200,2528,.text,?update_cursor@Win@@QAAHPAUWin@@H@Z,,0x005F1820-0x005F2200,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,8
+0x005F1820,0x005F2200,2528,.text,?update_cursor@Win@@QAAHPAUWin@@H@Z,,0x005F1820-0x005F2200,game,hidden;sp_ready;purged_ok,,,,WinUpdateCursorOriginal,original_dependency,,,,6,8
 0x005F2250,0x005F228C,60,.text,sub_5f2250,,0x005F2250-0x005F228C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005F2290,0x005F232D,157,.text,?OnMouseMove@Win@@QAAXPAXHHI@Z,,0x005F2290-0x005F232D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x005F2330,0x005F256B,571,.text,?OnLButtonDown@Win@@QAAXPAXJHHI@Z,,0x005F2330-0x005F256B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1

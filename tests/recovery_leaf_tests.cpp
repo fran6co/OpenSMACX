@@ -7979,6 +7979,138 @@ void test_sprite_draw_origin() {
     SpriteDrawOriginX = saved_x_ptr;
 }
 
+struct WrapperProbe {
+    int cursor_calls;
+    Win *cursor_window;
+    int cursor_flag;
+    int width_calls;
+    Buffer *width_self;
+    LPSTR width_text;
+    size_t width_length;
+    int width_result;
+};
+WrapperProbe wrapper_probe = {};
+
+int __cdecl wrapper_probe_update_cursor(Win *window, int flag) {
+    ++wrapper_probe.cursor_calls;
+    wrapper_probe.cursor_window = window;
+    wrapper_probe.cursor_flag = flag;
+    return 0;
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+int __thiscall wrapper_probe_text_width(Buffer *self, LPSTR text, size_t length) {
+    ++wrapper_probe.width_calls;
+    wrapper_probe.width_self = self;
+    wrapper_probe.width_text = text;
+    wrapper_probe.width_length = length;
+    return wrapper_probe.width_result;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void test_win_set_cursor() {
+    alignas(Win) uint8_t storage[sizeof(Win) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *win = reinterpret_cast<Win *>(storage + 16);
+
+    func_win_update_cursor *const saved = WinUpdateCursorOriginal;
+    WinUpdateCursorOriginal = &wrapper_probe_update_cursor;
+
+    auto *const sentinel_sprite = reinterpret_cast<Sprite *>(0x11110000U);
+    auto *const sentinel_handle = reinterpret_cast<HCURSOR *>(0x22220000U);
+
+    // The accepted range is 0x7F00 through 0x7F8A inclusive; the boundaries
+    // on both sides are the only values that distinguish the comparisons.
+    struct CursorCase { int name; int expected; };
+    const CursorCase cases[] = {
+        {0x7EFF, 3},   // one below the range
+        {0x7F00, 0},   // first accepted
+        {0x7F45, 0},
+        {0x7F8A, 0},   // last accepted
+        {0x7F8B, 3},   // one above the range
+        {0, 3}, {-1, 3}, {INT_MAX, 3}, {INT_MIN, 3},
+    };
+    for (const CursorCase &test : cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x188, sentinel_sprite);
+            write_at(storage, 16 + 0x194, sentinel_handle);
+            std::memcpy(expected, storage, sizeof(storage));
+            if (test.expected == 0) {
+                write_at(expected, 16 + 0x188, static_cast<Sprite *>(nullptr));
+                write_at(expected, 16 + 0x198, test.name);
+                write_at(expected, 16 + 0x194, static_cast<HCURSOR *>(nullptr));
+            }
+            wrapper_probe = WrapperProbe{};
+            const int result = adapter
+                ? win_set_cursor_redirect(win, nullptr, test.name)
+                : win->set_cursor(test.name);
+            expect(result == test.expected);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            // A rejected name must not trigger the refresh either.
+            expect(wrapper_probe.cursor_calls == (test.expected == 0 ? 1 : 0));
+            if (test.expected == 0) {
+                expect(wrapper_probe.cursor_window == nullptr);
+                expect(wrapper_probe.cursor_flag == 1);
+            }
+        }
+    }
+
+    WinUpdateCursorOriginal = saved;
+}
+
+void test_buffer_text_width() {
+    alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+
+    func_buffer_text_width_measured *const saved = BufferTextWidthMeasured;
+    BufferTextWidthMeasured = &wrapper_probe_text_width;
+
+    // A null string is rejected without measuring anything.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(expected, storage, sizeof(storage));
+    wrapper_probe = WrapperProbe{};
+    expect(buffer->text_width(nullptr) == 0);
+    expect(wrapper_probe.width_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Otherwise the string and its measured length are forwarded and the
+    // result passes through. An empty string still measures.
+    char empty[] = "";
+    char text[] = "hello world";
+    struct WidthCase { LPSTR text; size_t length; int result; };
+    const WidthCase cases[] = {
+        {empty, 0, 0},
+        {text, 11, 4242},
+        {text, 11, -1},
+    };
+    for (const WidthCase &test : cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            std::memcpy(expected, storage, sizeof(storage));
+            wrapper_probe = WrapperProbe{};
+            wrapper_probe.width_result = test.result;
+            const int result = adapter
+                ? buffer_text_width_redirect(buffer, nullptr, test.text)
+                : buffer->text_width(test.text);
+            expect(result == test.result);
+            expect(wrapper_probe.width_calls == 1);
+            expect(wrapper_probe.width_self == buffer);
+            expect(wrapper_probe.width_text == test.text);
+            expect(wrapper_probe.width_length == test.length);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    BufferTextWidthMeasured = saved;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -8073,6 +8205,8 @@ int main() {
     test_default_font_setters();
     test_win_shared_hdc();
     test_sprite_draw_origin();
+    test_win_set_cursor();
+    test_buffer_text_width();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

@@ -446,3 +446,33 @@ HDC __cdecl win_get_hdc_redirect() {
 void __cdecl win_release_hdc_redirect() {
     Win::release_hdc();
 }
+
+func_win_update_cursor *WinUpdateCursorOriginal =
+    (func_win_update_cursor *)0x005F1820;
+
+/*
+Purpose: Select a system cursor by name and refresh the displayed cursor.
+Original Offset: 005EC7C0
+Return Value: No errors (0); name outside the accepted range (3)
+Status: Complete with a temporary dependency on the cursor refresh
+Verification note: ordering the cursor_handle_ clear against the refresh is
+not observable here - the refresh is passed a null window, so it cannot read
+this object's state through the seam a fixture can see. The store order is
+kept as the legacy body has it rather than because a test distinguishes it.
+*/
+int Win::set_cursor(int name) {
+    // Only the system cursor range is accepted; anything else is rejected
+    // before any field is touched.
+    if (name <= 0x7EFF || name >= 0x7F8B) {
+        return 3;
+    }
+    cursor_sprite_ = nullptr;
+    cursor_name_ = name;
+    cursor_handle_ = nullptr;
+    WinUpdateCursorOriginal(nullptr, 1);
+    return 0;
+}
+
+int __fastcall win_set_cursor_redirect(Win *self, void *, int name) {
+    return self->set_cursor(name);
+}

@@ -33,6 +33,7 @@ address,kind
 0x005DACE0,jump
 0x005DAD10,jump
 0x005DAD40,jump
+0x005DC790,jump
 0x005DCA80,jump
 0x005DCAB0,jump
 0x005DE8F0,jump
@@ -50,6 +51,7 @@ address,kind
 0x005EBC90,dependency
 0x005EC690,jump
 0x005EC6F0,jump
+0x005EC7C0,jump
 0x005ED240,jump
 0x005ED7D0,jump
 0x005EE0F0,jump

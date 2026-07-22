@@ -43,6 +43,7 @@ class DLLEXPORT Buffer {
   void release_hdc(int count);
   int get_data();
   int set_clip(RECT *rect);
+  int text_width(LPSTR text);
   int text_height();
   int text_line_height();
   void close();
@@ -171,3 +172,17 @@ int __fastcall buffer_sync_to_palette_redirect(
 int __fastcall buffer_text_height_redirect(Buffer *self, void *);
 
 int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect);
+
+int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// The measured overload this one wraps is a 578-byte body with three call
+// targets, still an original dependency. Tests rebind this seam.
+typedef int(__thiscall func_buffer_text_width_measured)(Buffer *, LPSTR, size_t);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_buffer_text_width_measured *BufferTextWidthMeasured;
