@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+
+import unittest
+from unittest import mock
+
+import disasm
+
+
+FUNCTIONS = {
+    0x00618F30: {"name": "?UNK1@Font@@QAEHHHHH@Z", "size": "8"},
+    0x005D4510: {"name": "??0Buffer@@QAE@XZ", "size": "530"},
+    0x00400000: {"name": "", "size": ""},
+}
+
+
+class ResolveTest(unittest.TestCase):
+    def test_accepts_a_hex_address_and_reports_the_catalogued_size(self):
+        address, size = disasm.resolve("0x00618F30", FUNCTIONS)
+        self.assertEqual((0x00618F30, 8), (address, size))
+
+    def test_accepts_a_mangled_name(self):
+        # Typing the name is how this gets used in practice; requiring the
+        # address first would mean a lookup before every disassembly.
+        address, _ = disasm.resolve("??0Buffer@@QAE@XZ", FUNCTIONS)
+        self.assertEqual(0x005D4510, address)
+
+    def test_rejects_something_that_is_neither(self):
+        with self.assertRaises(ValueError):
+            disasm.resolve("Buffer::Buffer", FUNCTIONS)
+
+    def test_reports_no_size_for_an_uncatalogued_address(self):
+        address, size = disasm.resolve("0x00777777", FUNCTIONS)
+        self.assertEqual((0x00777777, None), (address, size))
+
+    def test_reports_no_size_when_the_row_has_none(self):
+        _, size = disasm.resolve("0x00400000", FUNCTIONS)
+        self.assertIsNone(size)
+
+
+class AnnotateTest(unittest.TestCase):
+    def test_names_a_call_target(self):
+        self.assertIn("??0Buffer@@QAE@XZ",
+                      disasm.annotate("call", "0x5d4510", FUNCTIONS))
+
+    def test_names_a_jump_target(self):
+        self.assertIn("??0Buffer@@QAE@XZ",
+                      disasm.annotate("jmp", "0x5d4510", FUNCTIONS))
+
+    def test_says_nothing_about_a_register_call(self):
+        self.assertEqual("", disasm.annotate("call", "eax", FUNCTIONS))
+
+    def test_says_nothing_about_a_non_branch(self):
+        self.assertEqual("", disasm.annotate("mov", "0x5d4510", FUNCTIONS))
+
+    def test_says_nothing_about_an_unknown_target(self):
+        self.assertEqual("", disasm.annotate("call", "0x999999", FUNCTIONS))
+
+
+class ReadRangeTest(unittest.TestCase):
+    def make_image(self, virtual, raw, size):
+        section = mock.Mock()
+        section.VirtualAddress = virtual
+        section.PointerToRawData = raw
+        section.Misc_VirtualSize = size
+        section.SizeOfRawData = size
+        image = mock.Mock()
+        image.OPTIONAL_HEADER.ImageBase = 0x00400000
+        image.sections = [section]
+        image.__data__ = bytes(range(256)) * 8
+        return image
+
+    def test_maps_a_virtual_address_to_file_bytes(self):
+        image = self.make_image(virtual=0x1000, raw=0x400, size=0x200)
+        data = disasm.read_range(image, 0x00401000, 4)
+        self.assertEqual(image.__data__[0x400:0x404], data)
+
+    def test_refuses_an_address_outside_every_section(self):
+        # Silently returning empty bytes would look like a zero-length
+        # function rather than a bad address.
+        image = self.make_image(virtual=0x1000, raw=0x400, size=0x200)
+        with self.assertRaises(ValueError):
+            disasm.read_range(image, 0x00500000, 4)
+
+
+if __name__ == "__main__":
+    unittest.main()
