@@ -117,7 +117,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00404850,0x0040485A,10,.text,??__Fg_UNUSED_SPRITE_VAR07@@YAXXZ,,0x00404850-0x0040485A,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00404860,0x00404896,54,.text,?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z,,0x00404860-0x00404896,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x004048A0,0x004048F7,105,.text,??0Popup@@QAE@XZ,void (__thiscall ??0Popup@@QAE@XZ)(Popup* this),0x004048A0-0x004048F7;0x00650760-0x00650772,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,104
-0x00404900,0x00404917,23,.text,?close@Popup@@QAEXXZ,void (__thiscall ?close@Popup@@QAEXXZ)(Popup* this),0x00404900-0x00404917,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,104
+0x00404900,0x00404917,23,.text,?close@Popup@@QAEXXZ,void (__thiscall ?close@Popup@@QAEXXZ)(Popup* this),0x00404900-0x00404917,game,hidden;sp_ready;purged_ok,src/popup.cpp:25,Complete,,,source_complete,,,,2,104
 0x00404920,0x00404A7C,348,.text,?show@Popup@@QAEXH@Z,"void (__thiscall ?show@Popup@@QAEXH@Z)(Popup* this, int)",0x00404920-0x00404A7C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
 0x00404A80,0x00404AFF,127,.text,?hide@Popup@@QAEXXZ,void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this),0x00404A80-0x00404AFF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,4
 0x00404B00,0x00404B05,5,.text,?on_redraw@Popup@@QAEXXZ,void (__thiscall ?on_redraw@Popup@@QAEXXZ)(Popup* this),0x00404B00-0x00404B05,thunk,hidden;thunk;sp_ready;purged_ok,,,,,thunk,,,,0,0
@@ -4557,7 +4557,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00600820,0x00600837,23,.text,?kill_lf@@YAXPAD@Z,void (__cdecl ?kill_lf@@YAXPAD@Z)(int8* input),0x00600820-0x00600837,game,hidden;sp_ready;purged_ok,src/general.cpp:72,Complete,?kill_lf@@YAXPAD@Z,,source_complete,,,,1,6
 0x00600840,0x00600859,25,.text,?add_lf@@YAXPAD@Z,,0x00600840-0x00600859,game,hidden;sp_ready;purged_ok,src/general.cpp:100,Complete,?add_lf@@YAXPAD@Z,,source_complete,,,,1,1
 0x00600860,0x00600EF5,1815,.text,??0BasePop@@QAE@XZ,void (__thiscall ??0BasePop@@QAE@XZ)(BasePop* this),0x00600860-0x00600EF5;0x00662D80-0x00662E02,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,8
-0x00600F00,0x006015A9,1705,.text,?close@BasePop@@QAEXXZ,void (__thiscall ?close@BasePop@@QAEXXZ)(BasePop* this),0x00600F00-0x006015A9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,100
+0x00600F00,0x006015A9,1705,.text,?close@BasePop@@QAEXXZ,void (__thiscall ?close@BasePop@@QAEXXZ)(BasePop* this),0x00600F00-0x006015A9,game,hidden;sp_ready;purged_ok,,,,BasePopOriginalClose,original_dependency,,,,9,100
 0x006015B0,0x0060179A,490,.text,?init@BasePop@@QAEHHJ@Z,"int (__thiscall ?init@BasePop@@QAEHHJ@Z)(BasePop* this, int, int)",0x006015B0-0x0060179A,game,hidden;sp_ready;purged_ok,,,,BasePopOriginalInit,original_dependency,,,,6,9
 0x006017A0,0x00601811,113,.text,?set_ok_text@BasePop@@QAEHPAD@Z,"int (__thiscall ?set_ok_text@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)",0x006017A0-0x00601811,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,3
 0x00601820,0x00601891,113,.text,?set_cancel_text@BasePop@@QAEHPAD@Z,"int (__thiscall ?set_cancel_text@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)",0x00601820-0x00601891,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,3

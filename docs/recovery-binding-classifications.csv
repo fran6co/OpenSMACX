@@ -1,4 +1,5 @@
 symbol,category,strategy,notes
+BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
 BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned

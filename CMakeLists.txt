@@ -176,6 +176,7 @@ set(OPENSMACX_SOURCES
     src/multidebug.cpp
     src/tutwin.cpp
     src/popmenu.cpp
+    src/popup.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -435,6 +436,7 @@ if(BUILD_TESTING)
         src/multidebug.cpp
         src/tutwin.cpp
             src/popmenu.cpp
+        src/popup.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

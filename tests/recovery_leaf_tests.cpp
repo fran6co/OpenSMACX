@@ -46,6 +46,7 @@
 #include "../src/multidebug.h"
 #include "../src/tutwin.h"
 #include "../src/popmenu.h"
+#include "../src/popup.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -1765,6 +1766,71 @@ void write_scroll_close_expected(uint8_t *expected,
     write_at(expected, 16 + 0xA0C, base_result);
     write_at(expected, 16 + 0xA10, 0U);
 }
+
+// Everything Scroll::close needs in order to run: its two default tables, the
+// three seams it reaches through, and the two vtables it dispatches on. The
+// Scroll suite below builds this inline for a standalone Scroll; wrappers that
+// contain a Scroll need the same thing at their member's offset, so it lives
+// here rather than being rebuilt per test.
+struct ScrollCloseFixture {
+    uint32_t fixed[11] = {};
+    uint32_t dynamic[17] = {};
+    uint32_t base_result = 0x7B3D19E5U;
+    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {};
+    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {};
+
+    uint32_t *saved_fixed = nullptr;
+    uint32_t *saved_dynamic = nullptr;
+    func_subobject_close *saved_win = nullptr;
+    func_subobject_close *saved_buffer = nullptr;
+    uint32_t *saved_base_default = nullptr;
+
+    void install() {
+        for (size_t index = 0; index < ARRAYSIZE(fixed); ++index) {
+            fixed[index] = 0x51000000U + static_cast<uint32_t>(index) * 0x010203U;
+        }
+        for (size_t index = 0; index < ARRAYSIZE(dynamic); ++index) {
+            dynamic[index] = 0xA1000000U + static_cast<uint32_t>(index) * 0x010101U;
+        }
+        left_vtable[0x168 / sizeof(uintptr_t)] =
+            reinterpret_cast<uintptr_t>(&scroll_close_left_probe);
+        right_vtable[0x168 / sizeof(uintptr_t)] =
+            reinterpret_cast<uintptr_t>(&scroll_close_right_probe);
+        saved_fixed = ScrollCloseStaticDefaults;
+        saved_dynamic = ScrollCloseDynamicDefaults;
+        saved_win = WinOriginalClose;
+        saved_buffer = BufferSubobjectClose;
+        saved_base_default = GraphicWinFieldA0CDefault;
+        ScrollCloseStaticDefaults = fixed;
+        ScrollCloseDynamicDefaults = dynamic;
+        WinOriginalClose = scroll_close_win_probe;
+        BufferSubobjectClose = scroll_close_buffer_probe;
+        GraphicWinFieldA0CDefault = &base_result;
+    }
+
+    // Point the object at this fixture's vtables and set the two fields the
+    // close path reads: 0xA08 is followed as a pointer when non-null, so it
+    // has to be cleared, and 0xA10 is what the probes check they can see.
+    void prepare(uint8_t *scroll) {
+        uintptr_t *left = left_vtable;
+        uintptr_t *right = right_vtable;
+        std::memcpy(scroll + 0xAAC, &left, sizeof(left));
+        std::memcpy(scroll + 0x15F8, &right, sizeof(right));
+        const uint32_t zero = 0;
+        const uint32_t marker = 0x13579BDFU;
+        std::memcpy(scroll + 0xA08, &zero, sizeof(zero));
+        std::memcpy(scroll + 0xA10, &marker, sizeof(marker));
+        scroll_close_probe_state = {scroll, fixed, dynamic, 0};
+    }
+
+    void restore() {
+        ScrollCloseStaticDefaults = saved_fixed;
+        ScrollCloseDynamicDefaults = saved_dynamic;
+        WinOriginalClose = saved_win;
+        BufferSubobjectClose = saved_buffer;
+        GraphicWinFieldA0CDefault = saved_base_default;
+    }
+};
 
 void test_scroll_close() {
     uint32_t fixed[11];
@@ -9529,6 +9595,67 @@ void test_delegating_closers() {
     InfoWinOriginalTimerProc = saved_timer;
 }
 
+namespace {
+BasePop *g_closed_base_pop = nullptr;
+int g_base_pop_close_calls = 0;
+int g_scroll_order_at_base_close = -1;
+void __thiscall observe_base_pop_close(BasePop *self) {
+    g_closed_base_pop = self;
+    // The scroll must already be closed by the time the base close runs.
+    g_scroll_order_at_base_close = scroll_close_probe_state.order;
+    ++g_base_pop_close_calls;
+}
+}  // namespace
+
+void test_popup_close() {
+    // 104 callers, the highest fan-in function left. It closes the Scroll at
+    // 0x3230 - exactly sizeof(BasePop) - then the popup base. Scroll::close is
+    // real recovered code, so it runs for real here against the shared
+    // fixture, positioned at the member rather than at the popup: if close()
+    // aimed at `this` instead of the member, none of the fixture would be
+    // where Scroll::close looks and the probes would not fire.
+    ScrollCloseFixture scroll_fixture;
+    scroll_fixture.install();
+    auto *const saved_close = BasePopOriginalClose;
+    BasePopOriginalClose = &observe_base_pop_close;
+
+    std::vector<uint8_t> storage(sizeof(Popup) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *popup_object = reinterpret_cast<Popup *>(storage.data() + 16);
+    uint8_t *const member = storage.data() + 16 + 0x3230;
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    scroll_fixture.prepare(member);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_base_pop_close_calls = 0;
+    popup_object->close();
+
+    expect(scroll_close_probe_state.order == 4);
+    expect(g_base_pop_close_calls == 1);
+    expect(reinterpret_cast<void *>(g_closed_base_pop) ==
+           reinterpret_cast<void *>(popup_object));
+    // Ordering: the scroll is fully closed before the base close runs.
+    expect(g_scroll_order_at_base_close == 4);
+    // Only the Scroll member changed; the BasePop region ahead of it is
+    // untouched, which is what shows close() did not aim at the wrong object.
+    std::memcpy(expected.data() + 16 + 0x3230, storage.data() + 16 + 0x3230,
+                sizeof(Scroll));
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    scroll_fixture.prepare(member);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    popup_close_redirect(popup_object, nullptr);
+    expect(scroll_close_probe_state.order == 4);
+    expect(g_base_pop_close_calls == 2);
+    std::memcpy(expected.data() + 16 + 0x3230, storage.data() + 16 + 0x3230,
+                sizeof(Scroll));
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    BasePopOriginalClose = saved_close;
+    scroll_fixture.restore();
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -9889,6 +10016,7 @@ int main() {
     test_base_pop_instance_colors();
     test_guarded_store_recoveries();
     test_win_client_to_screen();
+    test_popup_close();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
