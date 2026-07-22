@@ -46,6 +46,7 @@ class DLLEXPORT MapWin {
   ~MapWin() { ; }
   void UNK3();
   void do_image_buttons();
+  void main_caption();
 
  private:
   uint8_t derived_storage_[0x21A6C];
@@ -56,3 +57,12 @@ static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe")
 
 void __fastcall map_win_unk3_redirect(MapWin *self, void *);
 void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *);
+
+// MapWin::main_caption sets the date on the one MainInterface the original
+// keeps at a fixed address, using a caption that also lives at one.
+typedef void (__thiscall func_set_date)(void *, char *);
+extern func_set_date *MainInterfaceOriginalSetDate;
+extern void *MainInterfaceGlobal;
+extern char *MapWinMainCaption;
+
+void __fastcall map_win_main_caption_redirect(MapWin *self, void *);

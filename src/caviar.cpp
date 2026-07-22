@@ -239,3 +239,24 @@ void __fastcall caviar_unk8_redirect(Caviar *self, void *, int a1) {
 void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int a3) {
     self->UNK10(a1, a2, a3);
 }
+
+func_apply_rotation *CaviarOriginalApplyRotation =
+    (func_apply_rotation *)0x00627D00;
+
+/*
+Purpose: Set the scene's rotation, handing the three angles and the matrix at
+         0x38 to the helper that applies them.
+Original Offset: 00618370
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::set_scene_rotation(float x, float y, float z) {
+    float angles[3] = {x, y, z};
+    CaviarOriginalApplyRotation(angles,
+                                reinterpret_cast<uint8_t *>(this) + 0x38);
+}
+
+void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,
+                                                   float x, float y, float z) {
+    self->set_scene_rotation(x, y, z);
+}

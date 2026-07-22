@@ -44,3 +44,23 @@ void __fastcall map_win_unk3_redirect(MapWin *self, void *) {
 void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *) {
     self->do_image_buttons();
 }
+
+func_set_date *MainInterfaceOriginalSetDate = (func_set_date *)0x0045BE80;
+void *MainInterfaceGlobal = (void *)0x007AE820;
+char *MapWinMainCaption = (char *)0x009B86A0;
+
+/*
+Purpose: Push the map's caption into the main interface's date field. The
+         original acts on the interface and caption it keeps at fixed
+         addresses rather than on anything reached through the map window.
+Original Offset: 0046FB10
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::main_caption() {
+    MainInterfaceOriginalSetDate(MainInterfaceGlobal, MapWinMainCaption);
+}
+
+void __fastcall map_win_main_caption_redirect(MapWin *self, void *) {
+    self->main_caption();
+}
