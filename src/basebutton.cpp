@@ -291,3 +291,80 @@ int __cdecl base_button_set_def_font_redirect(
         Font *font1, Font *font2, Font *font3) {
     return BaseButton::set_def_font(font1, font2, font3);
 }
+
+// The active palette these setters publish before recolouring. This is a
+// different global from Buffer's own BufferPalette at 0x009B8174.
+Palette **BaseButtonActivePalette = reinterpret_cast<Palette **>(0x009B8180);
+
+namespace {
+
+// The three tiers differ only in which Buffer setter they end with, and each
+// republishes the active palette first so the new colours resolve against it.
+typedef void (Buffer::*BufferColourSetter)(int, int, int, int);
+
+void recolour(Buffer &buffer, BufferColourSetter setter,
+              int c1, int c2, int c3, int c4) {
+    buffer.sync_to_palette(*BaseButtonActivePalette);
+    (buffer.*setter)(c1, c2, c3, c4);
+}
+
+}  // namespace
+
+/*
+Purpose: Set the button's primary text colours.
+Original Offset: 00607360
+Status: Complete
+Verification note: the parentless guard on all three setters carries no
+literal or comparison operator, so the mutation harness cannot perturb it;
+the no-parent case is covered behaviourally instead, asserting the whole
+object is untouched. The dispatch is deliberately one statement per setter so
+dropping it is a valid mutant - split across lines it produced only
+uncompilable fragments and the sweep reported no signal at all.
+*/
+void BaseButton::set_text_color(int color1, int color2, int color3, int color4) {
+    // A parentless button has nothing to draw into, so the legacy body skips
+    // the palette sync and the recolour entirely.
+    if (!win_parent_) {
+        return;
+    }
+    recolour(buffer_, &Buffer::set_text_color, color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the button's secondary text colours.
+Original Offset: 006073A0
+Status: Complete
+*/
+void BaseButton::set_text_color2(int color1, int color2, int color3, int color4) {
+    if (!win_parent_) {
+        return;
+    }
+    recolour(buffer_, &Buffer::set_text_color2, color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the button's tertiary text colours.
+Original Offset: 006073E0
+Status: Complete
+*/
+void BaseButton::set_text_color3(int color1, int color2, int color3, int color4) {
+    if (!win_parent_) {
+        return;
+    }
+    recolour(buffer_, &Buffer::set_text_color3, color1, color2, color3, color4);
+}
+
+void __fastcall base_button_set_text_color_redirect(
+        BaseButton *self, void *, int color1, int color2, int color3, int color4) {
+    self->set_text_color(color1, color2, color3, color4);
+}
+
+void __fastcall base_button_set_text_color2_redirect(
+        BaseButton *self, void *, int color1, int color2, int color3, int color4) {
+    self->set_text_color2(color1, color2, color3, color4);
+}
+
+void __fastcall base_button_set_text_color3_redirect(
+        BaseButton *self, void *, int color1, int color2, int color3, int color4) {
+    self->set_text_color3(color1, color2, color3, color4);
+}

@@ -32,6 +32,7 @@
 #include <float.h>
 #include <new>
 #include <type_traits>
+#include <vector>
 
 void __cdecl purge_spaces(LPSTR input) {
     char *first = input;
@@ -7600,6 +7601,87 @@ void test_buffer_set_clip() {
     expect(clip_probe.set_clipper_arg == clipper);
 }
 
+void test_base_button_text_colors() {
+    // The buffer member sits at +0x444 inside the GraphicWin base. Buffer
+    // carries four interleaved colour tiers - the three these setters reach
+    // plus the hyper tier - so slot s of tier t is at 0x53C + s * 0x10 + t * 4,
+    // a 0x10 stride rather than the 0xC of a three-tier table.
+    std::vector<uint8_t> button_bytes(sizeof(BaseButton) + 32);
+    std::vector<uint8_t> expected_bytes(sizeof(BaseButton) + 32);
+    uint8_t *const storage = button_bytes.data();
+    uint8_t *const expected = expected_bytes.data();
+    auto *button = reinterpret_cast<BaseButton *>(storage + 16);
+
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette)];
+    std::memset(palette_storage, 0, sizeof(palette_storage));
+    auto *palette = reinterpret_cast<Palette *>(palette_storage);
+    Palette *palette_slot = palette;
+    Palette **const saved_palette = BaseButtonActivePalette;
+    BaseButtonActivePalette = &palette_slot;
+    int *const saved_initialized = PaletteInitialized;
+    int initialized = 0;   // get_rgbquad becomes a no-op
+    PaletteInitialized = &initialized;
+
+    constexpr size_t kBuffer = 0x444;
+    const int colors[4] = {INT_MIN, -1, 0x5A5A5A5A, INT_MAX};
+    const uint32_t zero = 0;
+    LPVOID pixels[1] = {};
+    LPVOID *const pixel_storage = pixels;
+
+    struct TierCase {
+        size_t tier;
+        void (BaseButton::*member)(int, int, int, int);
+        void (__fastcall *redirect)(BaseButton *, void *, int, int, int, int);
+    };
+    const TierCase tiers[] = {
+        {0, &BaseButton::set_text_color, base_button_set_text_color_redirect},
+        {1, &BaseButton::set_text_color2, base_button_set_text_color2_redirect},
+        {2, &BaseButton::set_text_color3, base_button_set_text_color3_redirect},
+    };
+
+    for (const TierCase &test : tiers) {
+        // No parent: the whole body is skipped, so not even the palette is
+        // published and the object is untouched.
+        seed_storage(storage, expected, button_bytes.size());
+        write_at(storage, 16 + 0xC4, static_cast<Win *>(nullptr));
+        std::memcpy(expected, storage, button_bytes.size());
+        (button->*test.member)(colors[0], colors[1], colors[2], colors[3]);
+        expect_storage_bytes(storage, expected, button_bytes.size());
+
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, button_bytes.size());
+            // A parent enables the body; the buffer needs pixel storage so
+            // sync_to_palette gets past its own guard.
+            write_at(storage, 16 + 0xC4, button);
+            write_at(storage, 16 + kBuffer + 0x54, pixel_storage);
+            write_at(storage, 16 + kBuffer + 0x58, zero);
+            write_at(storage, 16 + kBuffer + 0x4A4, zero);
+            std::memcpy(expected, storage, button_bytes.size());
+            // sync_to_palette publishes the palette and its generation tag,
+            // then the tier's four colours land at stride 0xC.
+            write_at(expected, 16 + kBuffer + 0x4A4, zero);
+            write_at(expected, 16 + kBuffer + 0x57C, 1U);
+            write_at(expected, 16 + kBuffer + 0x584, palette);
+            for (size_t slot = 0; slot < 4; ++slot) {
+                write_at(expected,
+                         16 + kBuffer + 0x53C + slot * 0x10 + test.tier * 4,
+                         colors[slot]);
+            }
+            if (adapter) {
+                test.redirect(button, nullptr,
+                              colors[0], colors[1], colors[2], colors[3]);
+            } else {
+                (button->*test.member)(
+                    colors[0], colors[1], colors[2], colors[3]);
+            }
+            expect_storage_bytes(storage, expected, button_bytes.size());
+        }
+    }
+
+    PaletteInitialized = saved_initialized;
+    BaseButtonActivePalette = saved_palette;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7690,6 +7772,7 @@ int main() {
     test_buffer_text_height();
     test_win_is_dialog_focus();
     test_buffer_set_clip();
+    test_base_button_text_colors();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

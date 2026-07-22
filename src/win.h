@@ -30,6 +30,8 @@ class Scroll; // forward declaration
   */
 class DLLEXPORT Win {
   friend class Scroll;
+  // BaseButton's colour setters test the parent link before drawing.
+  friend class BaseButton;
 
  public:
   Win() { ; }

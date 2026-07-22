@@ -37,6 +37,9 @@ class DLLEXPORT BaseButton : GraphicWin {
   void construct();
   uint32_t close();
   BaseButton *destroy();
+  void set_text_color(int color1, int color2, int color3, int color4);
+  void set_text_color2(int color1, int color2, int color3, int color4);
+  void set_text_color3(int color1, int color2, int color3, int color4);
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
 
@@ -100,3 +103,14 @@ int __cdecl base_button_set_def_font_redirect(
 // setters publish; tests outside the hybrid process rebind them.
 extern uint32_t *BaseButtonDefaultTextColors;
 extern Font **BaseButtonDefaultFonts;
+
+void __fastcall base_button_set_text_color_redirect(
+    BaseButton *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall base_button_set_text_color2_redirect(
+    BaseButton *self, void *, int color1, int color2, int color3, int color4);
+void __fastcall base_button_set_text_color3_redirect(
+    BaseButton *self, void *, int color1, int color2, int color3, int color4);
+
+// The palette these setters publish before recolouring. Distinct from
+// BufferPalette at 0x009B8174; tests outside the hybrid process rebind it.
+extern Palette **BaseButtonActivePalette;

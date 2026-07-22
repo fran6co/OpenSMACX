@@ -24,6 +24,8 @@
   */
 class DLLEXPORT GraphicWin : Win {
   friend class Scroll;
+  // BaseButton's colour setters drive this buffer directly.
+  friend class BaseButton;
 
  public:
   GraphicWin() { ; }
