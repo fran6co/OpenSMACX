@@ -135,6 +135,65 @@ class AllocationEvidenceTest(unittest.TestCase):
             self.assertIsNone(layout.allocation_size(image, self.CTOR, table))
 
 
+class VirtualBaseTest(unittest.TestCase):
+    """Offset plus base size is the object's size only when the virtual base
+    is genuinely last."""
+
+    VBTABLE = 0x00670584
+
+    def instruction(self, mnemonic, op_str, operands=()):
+        item = mock.Mock()
+        item.mnemonic, item.op_str, item.address = mnemonic, op_str, 0
+        item.operands = list(operands)
+        return item
+
+    def memory_write_of(self, immediate):
+        destination = mock.Mock()
+        destination.type = layout.X86_OP_MEM
+        destination.mem.disp = 0
+        source = mock.Mock()
+        source.type = layout.X86_OP_IMM
+        source.imm = immediate
+        return self.instruction("mov", f"dword ptr [esi], 0x{immediate:x}",
+                                (destination, source))
+
+    def derive(self, trailing):
+        image = mock.Mock()
+        instructions = [self.memory_write_of(self.VBTABLE),
+                        self.instruction("call", "0x5d4cf0", ())]
+        instructions += trailing
+        image.disasm.side_effect = lambda address, length: list(instructions)
+        # vbtable {0, 0x48}: a virtual base at 0x48.
+        image.dword.side_effect = lambda address: {
+            self.VBTABLE: 0, self.VBTABLE + 4: 0x48}.get(address, 0x99999999)
+        table = {0x005D4CF0: {"name": "??0GraphicWin@@QAE@XZ", "size": "230"}}
+        call = mock.Mock()
+        call.type = layout.X86_OP_IMM
+        call.imm = 0x005D4CF0
+        instructions[1].operands = [call]
+        return layout.virtual_base(image, 0x00609DB0, 299,
+                                   {"GraphicWin": 0xA14}, table)
+
+    def test_reports_a_size_when_nothing_follows_the_base(self):
+        offset, evidence, base = self.derive([])
+        self.assertEqual(0x48, offset)
+        self.assertEqual(0xA5C, evidence.size)
+        self.assertEqual("GraphicWin", base)
+
+    def test_withholds_a_size_when_a_member_sits_past_the_base(self):
+        # ListBox constructs a Dialog at 0xA60, past the 0xA5C the sum gives,
+        # so for that class the sum is not a size at all.
+        trailing = [self.instruction("lea", "ecx, [esi + 0xa60]")]
+        offset, evidence, _ = self.derive(trailing)
+        self.assertEqual(0x48, offset)
+        self.assertIsNone(evidence)
+
+    def test_ignores_references_inside_the_base(self):
+        trailing = [self.instruction("mov", "dword ptr [esi + 0x444], eax")]
+        _, evidence, _ = self.derive(trailing)
+        self.assertIsNotNone(evidence)
+
+
 class PinnedParsingTest(unittest.TestCase):
     def test_reads_hexadecimal_and_decimal_pins(self):
         source = ('static_assert(sizeof(Win) == 0x444, "x");\n'

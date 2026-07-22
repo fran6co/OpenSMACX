@@ -319,10 +319,24 @@ def virtual_base(image: Image, ctor: int, length: int,
     if not base_name:
         return offset, None, ""
     size = pinned[base_name]
+    total = offset + size
+
+    # Adding the base size to its offset is only the whole object when the
+    # virtual base is genuinely last. ListBox constructs a Dialog member at
+    # 0xA60, past the 0xA5C that sum gives, so for that class the sum is not a
+    # size at all. Anything the constructor touches at or beyond the computed
+    # end proves the object continues, and no size is reported.
+    for instruction in image.disasm(ctor, length):
+        match = re.search(r"\[e(?:si|bx|di|cx|ax) \+ (0x[0-9a-f]+)\]",
+                          instruction.op_str)
+        if match and int(match.group(1), 16) >= total:
+            return offset, None, ""
+
     return offset, Evidence(
-        "virtual", offset + size,
+        "virtual", total,
         f"vbtable 0x{vbtable:08X} puts the virtual base at +0x{offset:X}, "
-        f"plus pinned sizeof({base_name}) == 0x{size:X}"), base_name
+        f"plus pinned sizeof({base_name}) == 0x{size:X}, and the constructor "
+        f"touches nothing at or past 0x{total:X}"), base_name
 
 
 def derive(image: Image, name: str, by_address: dict[int, dict],
