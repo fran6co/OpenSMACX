@@ -26,6 +26,11 @@ class DLLEXPORT Flic {
  public:
   Flic() { ; }
   ~Flic() { ; }
+  void UNK4();
+  void UNK5();
+  void UNK6();
+  void UNK7();
+  void UNK8();
 
  private:
   uint32_t field_0_;
@@ -45,3 +50,9 @@ class DLLEXPORT Flic {
   Palette *palette_;
   uint32_t field_5C0_[329];
 };
+
+void __fastcall flic_unk4_redirect(Flic *self, void *);
+void __fastcall flic_unk5_redirect(Flic *self, void *);
+void __fastcall flic_unk6_redirect(Flic *self, void *);
+void __fastcall flic_unk7_redirect(Flic *self, void *);
+void __fastcall flic_unk8_redirect(Flic *self, void *);
