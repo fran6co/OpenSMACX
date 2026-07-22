@@ -180,6 +180,7 @@ set(OPENSMACX_SOURCES
     src/netmsg.cpp
     src/radiobutton.cpp
     src/checkbox.cpp
+    src/editgroup.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -443,6 +444,7 @@ if(BUILD_TESTING)
         src/netmsg.cpp
         src/radiobutton.cpp
         src/checkbox.cpp
+        src/editgroup.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

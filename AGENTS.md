@@ -18,6 +18,27 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Never commit or distribute generated assembly or object files.
 - Keep each eligible legacy island as a separate symbol and section so it can be replaced independently.
 - Do not revert unrelated worktree changes.
+- A method on a virtually-derived class must take its virtual-base and
+  subobject offsets from the object's own vbtable at run time, exactly as the
+  original does (`mov edx, [ecx]` then `[edx+4]`, `[edx+8]`). Never hardcode
+  the offsets the class uses when it is the most-derived object: the same class
+  embedded in a larger one has a different vbtable, and the hardcoded version
+  aims both calls at the wrong subobject. `RadioButton::close` written that way
+  passed all sixteen suites and crashed the game on a null vtable pointer,
+  because `Dialogs` holds a `RadioButton` at 0x44. Tests for these must install
+  at least two different vbtables; one built on a most-derived object cannot
+  see the defect.
+- MSVC virtual inheritance cannot be written as `: virtual Base` here. MSVC
+  places a virtual base at the offset its vbtable names while the Itanium ABI
+  this toolchain follows places it after the derived object, so the
+  faithful-looking declaration is the one that silently produces the wrong
+  layout. Hold the base as a member at the offset MSVC put it, as `mapwin.h`,
+  `console.h`, and `planwin.h` do.
+- Establish whether a constructor's first call builds a base or a member before
+  declaring inheritance: a base is constructed on an unadjusted `this`, a member
+  on `this` plus its offset. `tools/derive_class_layout.py` exposes this as
+  `first_constructed()`. Four headers here declared a member as a base before
+  that check existed.
 
 ## Recovery State
 
