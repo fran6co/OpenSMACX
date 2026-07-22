@@ -32,6 +32,7 @@ address,kind
 0x005DACE0,jump
 0x005DAD10,jump
 0x005DAD40,jump
+0x005DCA80,jump
 0x005DCAB0,jump
 0x005DE8F0,jump
 0x005DF570,jump
@@ -49,6 +50,7 @@ address,kind
 0x005ED7D0,jump
 0x005EE0F0,jump
 0x005EE110,jump
+0x005F2CA0,jump
 0x005F7E90,jump
 0x005F86C0,jump
 0x005F88A0,jump
@@ -64,6 +66,7 @@ address,kind
 0x005FB820,jump
 0x005FB990,jump
 0x005FD2B0,jump
+0x005FE4F0,jump
 0x005FE560,jump
 0x00601B80,jump
 0x006046F0,jump

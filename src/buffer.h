@@ -42,6 +42,7 @@ class DLLEXPORT Buffer {
   HDC get_hdc();
   void release_hdc(int count);
   int get_data();
+  int text_height();
   int text_line_height();
   void close();
   // Destructor body kept as a named method so the trivial ~Buffer() stays
@@ -165,3 +166,5 @@ void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count);
 
 int __fastcall buffer_sync_to_palette_redirect(
     Buffer *self, void *, Palette *palette);
+
+int __fastcall buffer_text_height_redirect(Buffer *self, void *);

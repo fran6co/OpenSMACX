@@ -7287,6 +7287,119 @@ void test_buffer_sync_to_palette() {
     PaletteInitialized = saved_initialized;
 }
 
+void test_buffer_text_height() {
+    alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+
+    alignas(Font) uint8_t default_font[sizeof(Font)];
+    alignas(Font) uint8_t cached_font[sizeof(Font)];
+    std::memset(default_font, 0xA5, sizeof(default_font));
+    std::memset(cached_font, 0xA5, sizeof(cached_font));
+    const int default_height = 0x1234;
+    const int cached_height = -99;
+    write_at(default_font, 0x10, default_height);
+    write_at(cached_font, 0x10, cached_height);
+    auto *fallback = reinterpret_cast<Font *>(default_font);
+    auto *cached = reinterpret_cast<Font *>(cached_font);
+
+    Font **const saved_default = FontDefaultPtr;
+    Font *default_slot = fallback;
+    FontDefaultPtr = &default_slot;
+
+    // No cached font: the process default is adopted and its height returned.
+    for (int adapter = 0; adapter < 2; ++adapter) {
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16 + 0x52C, static_cast<Font *>(nullptr));
+        std::memcpy(expected, storage, sizeof(storage));
+        write_at(expected, 16 + 0x52C, fallback);
+        const int result = adapter
+            ? buffer_text_height_redirect(buffer, nullptr)
+            : buffer->text_height();
+        expect(result == default_height);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    // A cached font is used as-is and must not be replaced, even though the
+    // default is loaded first.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x52C, cached);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(buffer->text_height() == cached_height);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    FontDefaultPtr = saved_default;
+}
+
+void test_win_is_dialog_focus() {
+    alignas(Win) uint8_t storage[sizeof(Win) + 32];
+    alignas(Win) uint8_t parent_storage[sizeof(Win) + 32];
+    uint8_t expected[sizeof(storage)];
+    uint8_t parent_expected[sizeof(parent_storage)];
+    auto *self = reinterpret_cast<Win *>(storage + 16);
+    auto *parent = reinterpret_cast<Win *>(parent_storage + 16);
+
+    // The focus list's entry at +4 names the focused window.
+    uintptr_t focus_list[2] = {};
+    // Bind an explicit pointer: passing the array to write_at deduces
+    // uintptr_t[2] under `const T&` and copies both elements.
+    uintptr_t *const focus_list_ptr = focus_list;
+    const uint32_t zero = 0;
+    const uint32_t nonzero = 1;
+
+    struct FocusCase {
+        uint32_t flags;
+        bool has_parent;
+        uint32_t list_count;
+        int focus_target;   // 0 none, 1 self, 2 parent
+        int expected;
+    };
+    const FocusCase cases[] = {
+        // Bit 12 short-circuits before the parent is even consulted.
+        {0x00001000U, false, 0, 0, 1},
+        {0xFFFFFFFFU, false, 0, 0, 1},
+        // Without the bit and without a parent there is no focus.
+        {0x00000000U, false, 0, 0, 0},
+        {0xFFFFEFFFU, false, 0, 0, 0},
+        // An empty focus list reads as no focus and never dereferences it.
+        {0x00000000U, true, 0, 1, 0},
+        // A populated list naming this window grants focus.
+        {0x00000000U, true, 1, 1, 1},
+        // Naming a different window does not.
+        {0x00000000U, true, 1, 2, 0},
+        {0x00000000U, true, 1, 0, 0},
+    };
+    for (const FocusCase &test : cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            seed_storage(parent_storage, parent_expected,
+                         sizeof(parent_storage));
+            write_at(storage, 16 + 0x98, test.flags);
+            write_at(storage, 16 + 0xC4,
+                     test.has_parent ? parent : static_cast<Win *>(nullptr));
+            focus_list[0] = 0;
+            focus_list[1] = test.focus_target == 1
+                ? reinterpret_cast<uintptr_t>(self)
+                : (test.focus_target == 2
+                       ? reinterpret_cast<uintptr_t>(parent) : 0U);
+            write_at(parent_storage, 16 + 0xCC,
+                     test.list_count ? nonzero : zero);
+            write_at(parent_storage, 16 + 0xD0, focus_list_ptr);
+            std::memcpy(expected, storage, sizeof(storage));
+            std::memcpy(parent_expected, parent_storage,
+                        sizeof(parent_storage));
+            const int result = adapter
+                ? win_is_dialog_focus_redirect(self, nullptr)
+                : self->is_dialog_focus();
+            expect(result == test.expected);
+            // The query must not modify either window.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect_storage_bytes(parent_storage, parent_expected,
+                                 sizeof(parent_storage));
+        }
+    }
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7374,6 +7487,8 @@ int main() {
     test_base_button_default_setters();
     test_buffer_hdc_protocol();
     test_buffer_sync_to_palette();
+    test_buffer_text_height();
+    test_win_is_dialog_focus();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

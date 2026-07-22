@@ -61,3 +61,19 @@ int __fastcall palette_get_rgbquad_redirect(
         Palette *self, void *, RGBQUAD *output, int start, int count) {
     return self->get_rgbquad(output, start, count);
 }
+
+/*
+Purpose: Record the window the palette applies to.
+Original Offset: 005FE4F0
+Status: Complete
+Verification note: the original body is a single ret - it accepts the window
+and does nothing with it. There is no state to observe and no statement to
+perturb, so the mutation harness reports no mutants for this function; the
+ABI gate covers its calling convention and the smoke gate covers its callers.
+*/
+void Palette::set_active_window(Win *) {
+}
+
+void __cdecl palette_set_active_window_redirect(Win *window) {
+    Palette::set_active_window(window);
+}
