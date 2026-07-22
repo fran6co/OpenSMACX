@@ -4,11 +4,13 @@ BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
 ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
+CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
 DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
 EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
+MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
 NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
 PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
 PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
@@ -22,6 +24,7 @@ WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recove
 WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
 WinUpdateCursorOriginal,ui_dependency,recover_winupdatecursororiginal_body,Temporary dependency for the recovered cursor setter until the cursor refresh and its six call targets are source-owned
 WinUpdateScreenOriginal,ui_dependency,recover_winupdatescreenoriginal_body,Temporary dependency for the recovered bubble dismissal until the screen refresh and its four call targets are source-owned
+XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
 X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
 _fgetc,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
 _fopen,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary

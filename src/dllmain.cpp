@@ -62,6 +62,7 @@
 #include "radiobutton.h"
 #include "checkbox.h"
 #include "editgroup.h"
+#include "xpops.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -87,7 +88,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 389;
+constexpr size_t RedirectCount = 392;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -858,6 +859,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00467960,
         },
         {
+            0x0046FB10,
+            reinterpret_cast<uintptr_t>(&map_win_main_caption_redirect),
+            OPENSMACX_SIGNATURE_0046FB10,
+        },
+        {
             0x0046FB80,
             reinterpret_cast<uintptr_t>(&map_win_do_image_buttons_redirect),
             OPENSMACX_SIGNATURE_0046FB80,
@@ -1141,6 +1147,11 @@ bool install_redirects() {
             0x0059D3A0,
             reinterpret_cast<uintptr_t>(&pop_menu_init_redirect),
             OPENSMACX_SIGNATURE_0059D3A0,
+        },
+        {
+            0x005BF7D0,
+            reinterpret_cast<uintptr_t>(&x_pops_short),
+            OPENSMACX_SIGNATURE_005BF7D0,
         },
         {
             0x005C9410,
@@ -1456,6 +1467,11 @@ bool install_redirects() {
             0x00618320,
             reinterpret_cast<uintptr_t>(&caviar_unk10_redirect),
             OPENSMACX_SIGNATURE_00618320,
+        },
+        {
+            0x00618370,
+            reinterpret_cast<uintptr_t>(&caviar_set_scene_rotation_redirect),
+            OPENSMACX_SIGNATURE_00618370,
         },
         {
             0x006183A0,

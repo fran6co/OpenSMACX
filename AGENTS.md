@@ -18,6 +18,10 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Never commit or distribute generated assembly or object files.
 - Keep each eligible legacy island as a separate symbol and section so it can be replaced independently.
 - Do not revert unrelated worktree changes.
+- Check whether a header or source file already exists before generating one.
+  Scripted recovery batches write files unconditionally, and `src/dialogs.h`
+  was overwritten that way - the build caught it, but the failure mode is
+  silent destruction of committed work rather than an error.
 - A method on a virtually-derived class must take its virtual-base and
   subobject offsets from the object's own vbtable at run time, exactly as the
   original does (`mov edx, [ecx]` then `[edx+4]`, `[edx+8]`). Never hardcode

@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 49,
-      "source_complete": 893,
+      "original_dependency": 52,
+      "source_complete": 896,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4688
+      "unrecovered": 4682
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 839,
-    "matched_function_starts": 839,
-    "unique_addresses": 839,
+    "annotations": 842,
+    "matched_function_starts": 842,
+    "unique_addresses": 842,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 188,
-      "function": 57
+      "data": 191,
+      "function": 60
     },
     "items": [
       {
@@ -1651,6 +1651,15 @@
         "location": "src/buttongroup.cpp:104",
         "symbol": "ButtonGroupOriginalButtonClick",
         "type": "func_button_group_click *"
+      },
+      {
+        "address": "0x00627D00",
+        "function": "sub_627d00",
+        "function_address": "0x00627D00",
+        "kind": "function",
+        "location": "src/caviar.cpp:243",
+        "symbol": "CaviarOriginalApplyRotation",
+        "type": "func_apply_rotation *"
       },
       {
         "address": "0x00608F50",
@@ -2461,6 +2470,33 @@
         "location": "src/map.cpp:62",
         "symbol": "AltNatural",
         "type": "uint32_t *"
+      },
+      {
+        "address": "0x0045BE80",
+        "function": "?set_date@MainInterface@@QAEXPAD@Z",
+        "function_address": "0x0045BE80",
+        "kind": "function",
+        "location": "src/mapwin.cpp:48",
+        "symbol": "MainInterfaceOriginalSetDate",
+        "type": "func_set_date *"
+      },
+      {
+        "address": "0x007AE820",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/mapwin.cpp:49",
+        "symbol": "MainInterfaceGlobal",
+        "type": "void *"
+      },
+      {
+        "address": "0x009B86A0",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/mapwin.cpp:50",
+        "symbol": "MapWinMainCaption",
+        "type": "char *"
       },
       {
         "address": "0x00404A80",
@@ -3532,9 +3568,27 @@
         "location": "src/win.cpp:485",
         "symbol": "WinFlipOriginal",
         "type": "func_win_flip *"
+      },
+      {
+        "address": "0x005BF930",
+        "function": "?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z",
+        "function_address": "0x005BF930",
+        "kind": "function",
+        "location": "src/xpops.cpp:21",
+        "symbol": "XPopsOriginalFull",
+        "type": "func_x_pops_full *"
+      },
+      {
+        "address": "0x009B8AA8",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/xpops.cpp:22",
+        "symbol": "XPopsCaptionBuffer",
+        "type": "char *"
       }
     ],
-    "matched_function_starts": 57,
-    "total": 245
+    "matched_function_starts": 60,
+    "total": 251
   }
 }

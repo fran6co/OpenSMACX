@@ -52,6 +52,7 @@
 #include "../src/checkbox.h"
 #include "../src/editgroup.h"
 #include "../src/dialogs.h"
+#include "../src/xpops.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -10098,6 +10099,115 @@ void test_dialogs_dispatch() {
     ListBoxOriginalItem = saved_listbox;
 }
 
+namespace {
+struct XPopsCall {
+    char *buffer; const char *label; int title; char *override_text;
+    int value; Sprite *sprite; int flag1; int flag2; int (__cdecl *callback)();
+    int calls;
+} g_xpops = {};
+int __cdecl observe_x_pops(char *buffer, const char *label, int title,
+                           char *override_text, int value, Sprite *sprite,
+                           int flag1, int flag2, int (__cdecl *callback)()) {
+    g_xpops = {buffer, label, title, override_text, value, sprite,
+               flag1, flag2, callback, g_xpops.calls + 1};
+    return 0x4321;
+}
+int __cdecl xpops_callback() { return 0; }
+
+void *g_date_target = nullptr;
+char *g_date_text = nullptr;
+int g_set_date_calls = 0;
+void __thiscall observe_set_date(void *self, char *text) {
+    g_date_target = self; g_date_text = text; ++g_set_date_calls;
+}
+
+float g_rotation[3] = {};
+void *g_rotation_target = nullptr;
+int g_rotation_calls = 0;
+void __cdecl observe_apply_rotation(float *angles, void *matrix) {
+    std::memcpy(g_rotation, angles, sizeof(g_rotation));
+    g_rotation_target = matrix;
+    ++g_rotation_calls;
+}
+}  // namespace
+
+void test_fixed_argument_delegates() {
+    // x_pops_short supplies five of the nine arguments itself. Their values
+    // and their order are the entire content of the function, so each is
+    // checked rather than just that the call happened.
+    auto *const saved_full = XPopsOriginalFull;
+    char *const saved_buffer = XPopsCaptionBuffer;
+    char buffer[8] = {};
+    XPopsOriginalFull = &observe_x_pops;
+    XPopsCaptionBuffer = buffer;
+    Sprite sprite_value;
+    const char label[] = "label";
+    g_xpops.calls = 0;
+    expect(x_pops_short(label, 42, &sprite_value, &xpops_callback) == 0x4321);
+    expect(g_xpops.calls == 1);
+    expect(g_xpops.buffer == buffer);
+    expect(g_xpops.label == label);
+    expect(g_xpops.title == -1);
+    expect(g_xpops.override_text == nullptr);
+    expect(g_xpops.value == 42);
+    expect(g_xpops.sprite == &sprite_value);
+    expect(g_xpops.flag1 == 1);
+    expect(g_xpops.flag2 == 1);
+    expect(g_xpops.callback == &xpops_callback);
+    XPopsOriginalFull = saved_full;
+    XPopsCaptionBuffer = saved_buffer;
+
+    // main_caption acts on a fixed interface and caption, never on the map
+    // window it is called through - passing `this` would compile and be wrong.
+    auto *const saved_date = MainInterfaceOriginalSetDate;
+    void *const saved_interface = MainInterfaceGlobal;
+    char *const saved_caption = MapWinMainCaption;
+    int fake_interface = 0;
+    char caption[] = "2101.01";
+    MainInterfaceOriginalSetDate = &observe_set_date;
+    MainInterfaceGlobal = &fake_interface;
+    MapWinMainCaption = caption;
+    std::vector<uint8_t> mw(sizeof(MapWin) + 32);
+    std::vector<uint8_t> mw_want(mw.size());
+    auto *map_window = reinterpret_cast<MapWin *>(mw.data() + 16);
+    seed_storage(mw.data(), mw_want.data(), mw.size());
+    std::memcpy(mw_want.data(), mw.data(), mw.size());
+    g_set_date_calls = 0;
+    map_window->main_caption();
+    expect(g_set_date_calls == 1);
+    expect(g_date_target == &fake_interface);
+    expect(g_date_target != reinterpret_cast<void *>(map_window));
+    expect(g_date_text == caption);
+    expect_storage_bytes(mw.data(), mw_want.data(), mw.size());
+    map_win_main_caption_redirect(map_window, nullptr);
+    expect(g_set_date_calls == 2);
+    MainInterfaceOriginalSetDate = saved_date;
+    MainInterfaceGlobal = saved_interface;
+    MapWinMainCaption = saved_caption;
+
+    // set_scene_rotation passes the three angles in order and the matrix at
+    // 0x38, not the object.
+    auto *const saved_rotation = CaviarOriginalApplyRotation;
+    CaviarOriginalApplyRotation = &observe_apply_rotation;
+    std::vector<uint8_t> cv(sizeof(Caviar) + 32);
+    std::vector<uint8_t> cv_want(cv.size());
+    auto *caviar = reinterpret_cast<Caviar *>(cv.data() + 16);
+    seed_storage(cv.data(), cv_want.data(), cv.size());
+    std::memcpy(cv_want.data(), cv.data(), cv.size());
+    g_rotation_calls = 0;
+    caviar->set_scene_rotation(1.5f, -2.25f, 0.125f);
+    expect(g_rotation_calls == 1);
+    expect(g_rotation[0] == 1.5f);
+    expect(g_rotation[1] == -2.25f);
+    expect(g_rotation[2] == 0.125f);
+    expect(g_rotation_target == cv.data() + 16 + 0x38);
+    expect_storage_bytes(cv.data(), cv_want.data(), cv.size());
+    caviar_set_scene_rotation_redirect(caviar, nullptr, 3.0f, 4.0f, 5.0f);
+    expect(g_rotation[0] == 3.0f);
+    expect(g_rotation[2] == 5.0f);
+    CaviarOriginalApplyRotation = saved_rotation;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10463,6 +10573,7 @@ int main() {
     test_virtual_base_closes();
     test_edit_group_text();
     test_dialogs_dispatch();
+    test_fixed_argument_delegates();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

@@ -182,6 +182,7 @@ set(OPENSMACX_SOURCES
     src/checkbox.cpp
     src/editgroup.cpp
     src/dialogs_recovery.cpp
+    src/xpops.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -447,6 +448,7 @@ if(BUILD_TESTING)
         src/checkbox.cpp
         src/editgroup.cpp
         src/dialogs_recovery.cpp
+        src/xpops.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

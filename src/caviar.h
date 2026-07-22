@@ -42,6 +42,7 @@ class DLLEXPORT Caviar {
   void UNK12(int a1, int a2, int a3);
   void UNK8(int a1);
   void UNK10(int a1, int a2, int a3);
+  void set_scene_rotation(float x, float y, float z);
  private:
   float scene_scale_;
   // Fields are carved out of the opaque span rather than appended, keeping
@@ -77,3 +78,10 @@ void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a
 void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int a3);
 void __fastcall caviar_unk8_redirect(Caviar *self, void *, int a1);
 void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int a3);
+
+// The rotation is applied by a helper that is not recovered yet.
+typedef void (__cdecl func_apply_rotation)(float *, void *);
+extern func_apply_rotation *CaviarOriginalApplyRotation;
+
+void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,
+                                                   float x, float y, float z);
