@@ -364,11 +364,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
 2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover `Buffer::set_clip` at `0x005D8000` (114 callers) and the three BaseButton instance colour setters at `0x00607360` through `0x006073E0`. `Buffer::sync_to_palette` is recovered, so both are now unblocked.
-
-   `set_clip` inlines the same acquire/release protocol that `get_hdc`/`release_hdc` now own, wrapped around `IntersectRect`, `EqualRect`, `CreateRectRgnIndirect`, `DeleteObject` and `SelectClipRgn`, and ends by publishing a bounds structure through two virtual dispatches. Rewriting it against the recovered pair is the same move that reduced `sync_to_palette` to roughly twenty lines.
-
-   Each instance setter is `if (win_parent_) { buffer_.sync_to_palette(*palette_global); buffer_.set_text_color*(c1, c2, c3, c4); }`, where `buffer_` is the GraphicWin member at `+0x444`. Note the palette global they read is at `0x009B8180`, which is *not* the already-bound `BufferPalette` at `0x009B8174`; it needs its own binding and classification row.
+3. Recover the three BaseButton instance colour setters at `0x00607360` through `0x006073E0`. Each is `if (win_parent_) { buffer_.sync_to_palette(*palette_global); buffer_.set_text_color*(c1, c2, c3, c4); }`, where `buffer_` is the GraphicWin member at `+0x444`; both callees are now source-owned. The palette global they read is at `0x009B8180`, which is *not* the already-bound `BufferPalette` at `0x009B8174` - it needs its own binding and classification row.
 4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files

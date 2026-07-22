@@ -42,6 +42,7 @@ class DLLEXPORT Buffer {
   HDC get_hdc();
   void release_hdc(int count);
   int get_data();
+  int set_clip(RECT *rect);
   int text_height();
   int text_line_height();
   void close();
@@ -168,3 +169,5 @@ int __fastcall buffer_sync_to_palette_redirect(
     Buffer *self, void *, Palette *palette);
 
 int __fastcall buffer_text_height_redirect(Buffer *self, void *);
+
+int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect);
