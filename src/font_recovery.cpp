@@ -56,3 +56,18 @@ Font *__cdecl find_font(int size, int style) {
     // Each size occupies four consecutive style slots in the table.
     return FontTable + (style + best_index * 4);
 }
+
+/*
+Purpose: Legacy stub; the original body returns 1 without reading its
+         arguments.
+Original Offset: 00618F30
+Status: Complete
+*/
+int Font::UNK1(int, int, int, int) {
+    return 1;
+}
+
+int __fastcall font_unk1_redirect(
+        Font *self, void *, int a, int b, int c, int d) {
+    return self->UNK1(a, b, c, d);
+}

@@ -8314,6 +8314,15 @@ void test_constant_return_stubs() {
     expect(menu->UNK4(0, 0, 0) == 0);
     expect(menu_unk2_redirect(menu, nullptr, INT_MAX) == 0);
     expect(menu_unk4_redirect(menu, nullptr, 1, 2, 3) == 0);
+
+    alignas(Font) uint8_t font_storage[sizeof(Font) + 32];
+    uint8_t font_expected[sizeof(font_storage)];
+    auto *font = reinterpret_cast<Font *>(font_storage + 16);
+    seed_storage(font_storage, font_expected, sizeof(font_storage));
+    std::memcpy(font_expected, font_storage, sizeof(font_storage));
+    expect(font->UNK1(1, 2, 3, 4) == 1);
+    expect(font_unk1_redirect(font, nullptr, -1, -2, -3, -4) == 1);
+    expect_storage_bytes(font_storage, font_expected, sizeof(font_storage));
     expect_storage_bytes(menu_storage, menu_expected, sizeof(menu_storage));
 
     alignas(BaseButton) uint8_t bb_storage[sizeof(BaseButton) + 32];
