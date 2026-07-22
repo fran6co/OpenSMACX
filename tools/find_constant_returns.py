@@ -111,7 +111,12 @@ def declared_arity(mangled: str) -> tuple[str, int] | None:
     if item is None:
         return None
     total = 0
-    while index < len(rest) and rest[index] != "Z":
+    # A parameter list ends with "@Z" when there are parameters and "XZ" when
+    # there are none. Stopping only at "Z" leaves the terminating "@" to be
+    # read as a type, which fails - so before this stopped at "@" the check
+    # silently declined every function that takes an argument, and only ever
+    # validated the zero-parameter ones.
+    while index < len(rest) and rest[index] not in "@Z":
         item, following = token(rest, index)
         if item is None:
             return None

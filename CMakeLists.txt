@@ -549,6 +549,11 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_add_redirect.py"
     )
 
+    add_test(NAME constant-return-scan-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_find_constant_returns.py"
+    )
+
     add_test(NAME class-layout-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_derive_class_layout.py"

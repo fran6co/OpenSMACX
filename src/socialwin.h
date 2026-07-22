@@ -38,7 +38,21 @@ class DLLEXPORT SocialWin : GraphicWin {
   ~SocialWin() { ; }
   void UNK2();
   void UNK3();
+  void on_iface_left_down(int a1, int a2);
+  void on_iface_right_down(int a1, int a2);
+  void on_iface_selected(int a1, int a2);
+  void on_iface_left_double_click(int a1, int a2);
+  void on_iface_right_double_click(int a1, int a2);
+  void on_iface_button_toggled(int a1, int a2);
+  void on_iface_group_clicked(int a1, int a2, int a3);
 };
 
 void __fastcall social_win_unk2_redirect(SocialWin *self, void *);
 void __fastcall social_win_unk3_redirect(SocialWin *self, void *);
+void __fastcall social_win_on_iface_left_down_redirect(SocialWin *self, void *, int a1, int a2);
+void __fastcall social_win_on_iface_right_down_redirect(SocialWin *self, void *, int a1, int a2);
+void __fastcall social_win_on_iface_selected_redirect(SocialWin *self, void *, int a1, int a2);
+void __fastcall social_win_on_iface_left_double_click_redirect(SocialWin *self, void *, int a1, int a2);
+void __fastcall social_win_on_iface_right_double_click_redirect(SocialWin *self, void *, int a1, int a2);
+void __fastcall social_win_on_iface_button_toggled_redirect(SocialWin *self, void *, int a1, int a2);
+void __fastcall social_win_on_iface_group_clicked_redirect(SocialWin *self, void *, int a1, int a2, int a3);

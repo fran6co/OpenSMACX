@@ -40,9 +40,17 @@ class DLLEXPORT BaseWin : GraphicWin {
   void UNK4();
   void UNK6();
   void UNK7();
+  void UNK5(int a1);
+  void on_button_toggled(int a1, int a2);
+  void on_iface_right_down(int a1, int a2);
+  void on_iface_selected(int a1, int a2);
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);
 void __fastcall base_win_unk4_redirect(BaseWin *self, void *);
 void __fastcall base_win_unk6_redirect(BaseWin *self, void *);
 void __fastcall base_win_unk7_redirect(BaseWin *self, void *);
+void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1);
+void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a1, int a2);
+void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int a1, int a2);
+void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a1, int a2);

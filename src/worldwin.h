@@ -37,6 +37,8 @@ class DLLEXPORT WorldWin : GraphicWin {
   WorldWin() { ; }
   ~WorldWin() { ; }
   void clear_terrain();
+  void on_left_double_click(int a1, int a2);
 };
 
 void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *);
+void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, int a1, int a2);
