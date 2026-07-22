@@ -116,3 +116,96 @@ uint32_t __fastcall caviar_set_scaling_redirect(
 float __fastcall caviar_get_scaling_redirect(Caviar *self, void *) {
     return self->get_scaling();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 006176C0
+Return Value: 0, always
+Status: Complete
+*/
+int Caviar::UNK3(int, int, int) {
+    return 0;
+}
+
+int __fastcall caviar_unk3_redirect(Caviar *self, void *, int a1, int a2, int a3) {
+    return self->UNK3(a1, a2, a3);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 006176D0
+Return Value: 0, always
+Status: Complete
+*/
+int Caviar::UNK4(int, int, int, int) {
+    return 0;
+}
+
+int __fastcall caviar_unk4_redirect(Caviar *self, void *, int a1, int a2, int a3, int a4) {
+    return self->UNK4(a1, a2, a3, a4);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 00618250
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK5(int, int) {
+}
+
+void __fastcall caviar_unk5_redirect(Caviar *self, void *, int a1, int a2) {
+    self->UNK5(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 00618260
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK6(int, int) {
+}
+
+void __fastcall caviar_unk6_redirect(Caviar *self, void *, int a1, int a2) {
+    self->UNK6(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 00618270
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK7(int, int) {
+}
+
+void __fastcall caviar_unk7_redirect(Caviar *self, void *, int a1, int a2) {
+    self->UNK7(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 00618290
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK9(int, int, int) {
+}
+
+void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a3) {
+    self->UNK9(a1, a2, a3);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 006183A0
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK12(int, int, int) {
+}
+
+void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int a3) {
+    self->UNK12(a1, a2, a3);
+}

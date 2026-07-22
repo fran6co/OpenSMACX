@@ -9015,6 +9015,166 @@ void test_constant_return_stubs() {
     expect(setup_win_unk4_redirect(setup_win_k, nullptr, -1) == 0);
     expect_storage_bytes(setup_win_k_storage.data(), setup_win_k_expected.data(),
                          setup_win_k_storage.size());
+
+    // Thirty-seven more, into classes that already had headers, so these went
+    // into existing public sections rather than generated files. The calls are
+    // generated from the emitted definitions themselves. Deriving them instead
+    // by matching redirect names back to methods, as a first attempt did,
+    // matches case-insensitively onto pre-existing methods of the same name -
+    // which crashed under Wine calling a real one with a seeded `this`.
+    // Several take unsigned parameters, occupying the same four-byte stack
+    // slot as an int and fed 0xFFFFFFFF for the same reason.
+    std::vector<uint8_t> caviar_z_storage(sizeof(Caviar) + 32);
+    std::vector<uint8_t> caviar_z_expected(caviar_z_storage.size());
+    auto *caviar_z = reinterpret_cast<Caviar *>(caviar_z_storage.data() + 16);
+    seed_storage(caviar_z_storage.data(), caviar_z_expected.data(), caviar_z_storage.size());
+    std::memcpy(caviar_z_expected.data(), caviar_z_storage.data(), caviar_z_storage.size());
+    caviar_z->UNK12(-1, 2147483647, -2147483648);
+    caviar_unk12_redirect(caviar_z, nullptr, -1, 2147483647, -2147483648);
+    expect(caviar_z->UNK3(-1, 2147483647, -2147483648) == 0);
+    expect(caviar_unk3_redirect(caviar_z, nullptr, -1, 2147483647, -2147483648) == 0);
+    expect(caviar_z->UNK4(-1, 2147483647, -2147483648, 3) == 0);
+    expect(caviar_unk4_redirect(caviar_z, nullptr, -1, 2147483647, -2147483648, 3) == 0);
+    caviar_z->UNK5(-1, 2147483647);
+    caviar_unk5_redirect(caviar_z, nullptr, -1, 2147483647);
+    caviar_z->UNK6(-1, 2147483647);
+    caviar_unk6_redirect(caviar_z, nullptr, -1, 2147483647);
+    caviar_z->UNK7(-1, 2147483647);
+    caviar_unk7_redirect(caviar_z, nullptr, -1, 2147483647);
+    caviar_z->UNK9(-1, 2147483647, -2147483648);
+    caviar_unk9_redirect(caviar_z, nullptr, -1, 2147483647, -2147483648);
+    expect_storage_bytes(caviar_z_storage.data(), caviar_z_expected.data(),
+                         caviar_z_storage.size());
+    std::vector<uint8_t> file_win_z_storage(sizeof(FileWin) + 32);
+    std::vector<uint8_t> file_win_z_expected(file_win_z_storage.size());
+    auto *file_win_z = reinterpret_cast<FileWin *>(file_win_z_storage.data() + 16);
+    seed_storage(file_win_z_storage.data(), file_win_z_expected.data(), file_win_z_storage.size());
+    std::memcpy(file_win_z_expected.data(), file_win_z_storage.data(), file_win_z_storage.size());
+    file_win_z->UNK2(-1);
+    file_win_unk2_redirect(file_win_z, nullptr, -1);
+    expect_storage_bytes(file_win_z_storage.data(), file_win_z_expected.data(),
+                         file_win_z_storage.size());
+    std::vector<uint8_t> info_win_z_storage(sizeof(InfoWin) + 32);
+    std::vector<uint8_t> info_win_z_expected(info_win_z_storage.size());
+    auto *info_win_z = reinterpret_cast<InfoWin *>(info_win_z_storage.data() + 16);
+    seed_storage(info_win_z_storage.data(), info_win_z_expected.data(), info_win_z_storage.size());
+    std::memcpy(info_win_z_expected.data(), info_win_z_storage.data(), info_win_z_storage.size());
+    info_win_z->UNK3(-1, 2147483647);
+    info_win_unk3_redirect(info_win_z, nullptr, -1, 2147483647);
+    info_win_z->change(-1);
+    info_win_change_redirect(info_win_z, nullptr, -1);
+    expect_storage_bytes(info_win_z_storage.data(), info_win_z_expected.data(),
+                         info_win_z_storage.size());
+    std::vector<uint8_t> main_interface_z_storage(sizeof(MainInterface) + 32);
+    std::vector<uint8_t> main_interface_z_expected(main_interface_z_storage.size());
+    auto *main_interface_z = reinterpret_cast<MainInterface *>(main_interface_z_storage.data() + 16);
+    seed_storage(main_interface_z_storage.data(), main_interface_z_expected.data(), main_interface_z_storage.size());
+    std::memcpy(main_interface_z_expected.data(), main_interface_z_storage.data(), main_interface_z_storage.size());
+    main_interface_z->UNK1(-1);
+    main_interface_unk1_redirect(main_interface_z, nullptr, -1);
+    expect(main_interface_z->on_iface_button_pressed(-1) == 0);
+    expect(main_interface_on_iface_button_pressed_redirect(main_interface_z, nullptr, -1) == 0);
+    main_interface_z->on_iface_button_toggled(-1, 2147483647);
+    main_interface_on_iface_button_toggled_redirect(main_interface_z, nullptr, -1, 2147483647);
+    main_interface_z->on_iface_right_double_click(-1, 2147483647);
+    main_interface_on_iface_right_double_click_redirect(main_interface_z, nullptr, -1, 2147483647);
+    main_interface_z->on_iface_scrolled(-1, 2147483647);
+    main_interface_on_iface_scrolled_redirect(main_interface_z, nullptr, -1, 2147483647);
+    main_interface_z->on_iface_scrolling(-1, 2147483647);
+    main_interface_on_iface_scrolling_redirect(main_interface_z, nullptr, -1, 2147483647);
+    expect_storage_bytes(main_interface_z_storage.data(), main_interface_z_expected.data(),
+                         main_interface_z_storage.size());
+    std::vector<uint8_t> midi_device_z_storage(sizeof(Midi_Device) + 32);
+    std::vector<uint8_t> midi_device_z_expected(midi_device_z_storage.size());
+    auto *midi_device_z = reinterpret_cast<Midi_Device *>(midi_device_z_storage.data() + 16);
+    seed_storage(midi_device_z_storage.data(), midi_device_z_expected.data(), midi_device_z_storage.size());
+    std::memcpy(midi_device_z_expected.data(), midi_device_z_storage.data(), midi_device_z_storage.size());
+    expect(midi_device_z->fade(4294967295u) == 0);
+    expect(midi_device_fade_redirect(midi_device_z, nullptr, 4294967295u) == 0);
+    expect(midi_device_z->select(4294967295u) == 0);
+    expect(midi_device_select_redirect(midi_device_z, nullptr, 4294967295u) == 0);
+    midi_device_z->set_pan(-1);
+    midi_device_set_pan_redirect(midi_device_z, nullptr, -1);
+    midi_device_z->set_rate(4294967295u);
+    midi_device_set_rate_redirect(midi_device_z, nullptr, 4294967295u);
+    midi_device_z->set_volume(4294967295u);
+    midi_device_set_volume_redirect(midi_device_z, nullptr, 4294967295u);
+    expect_storage_bytes(midi_device_z_storage.data(), midi_device_z_expected.data(),
+                         midi_device_z_storage.size());
+    std::vector<uint8_t> pull_down_z_storage(sizeof(PullDown) + 32);
+    std::vector<uint8_t> pull_down_z_expected(pull_down_z_storage.size());
+    auto *pull_down_z = reinterpret_cast<PullDown *>(pull_down_z_storage.data() + 16);
+    seed_storage(pull_down_z_storage.data(), pull_down_z_expected.data(), pull_down_z_storage.size());
+    std::memcpy(pull_down_z_expected.data(), pull_down_z_storage.data(), pull_down_z_storage.size());
+    pull_down_z->on_mouse_leave(-1, 2147483647);
+    pull_down_on_mouse_leave_redirect(pull_down_z, nullptr, -1, 2147483647);
+    expect_storage_bytes(pull_down_z_storage.data(), pull_down_z_expected.data(),
+                         pull_down_z_storage.size());
+    std::vector<uint8_t> scroll_z_storage(sizeof(Scroll) + 32);
+    std::vector<uint8_t> scroll_z_expected(scroll_z_storage.size());
+    auto *scroll_z = reinterpret_cast<Scroll *>(scroll_z_storage.data() + 16);
+    seed_storage(scroll_z_storage.data(), scroll_z_expected.data(), scroll_z_storage.size());
+    std::memcpy(scroll_z_expected.data(), scroll_z_storage.data(), scroll_z_storage.size());
+    scroll_z->on_left_click(-1, 2147483647);
+    scroll_on_left_click_redirect(scroll_z, nullptr, -1, 2147483647);
+    expect_storage_bytes(scroll_z_storage.data(), scroll_z_expected.data(),
+                         scroll_z_storage.size());
+    std::vector<uint8_t> sprite_z_storage(sizeof(Sprite) + 32);
+    std::vector<uint8_t> sprite_z_expected(sprite_z_storage.size());
+    auto *sprite_z = reinterpret_cast<Sprite *>(sprite_z_storage.data() + 16);
+    seed_storage(sprite_z_storage.data(), sprite_z_expected.data(), sprite_z_storage.size());
+    std::memcpy(sprite_z_expected.data(), sprite_z_storage.data(), sprite_z_storage.size());
+    sprite_z->UNK3(-1, 2147483647);
+    sprite_unk3_redirect(sprite_z, nullptr, -1, 2147483647);
+    sprite_z->UNK4(-1, 2147483647);
+    sprite_unk4_redirect(sprite_z, nullptr, -1, 2147483647);
+    expect_storage_bytes(sprite_z_storage.data(), sprite_z_expected.data(),
+                         sprite_z_storage.size());
+    std::vector<uint8_t> wave_z_storage(sizeof(Wave) + 32);
+    std::vector<uint8_t> wave_z_expected(wave_z_storage.size());
+    auto *wave_z = reinterpret_cast<Wave *>(wave_z_storage.data() + 16);
+    seed_storage(wave_z_storage.data(), wave_z_expected.data(), wave_z_storage.size());
+    std::memcpy(wave_z_expected.data(), wave_z_storage.data(), wave_z_storage.size());
+    expect(wave_z->set_attack(4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_set_attack_redirect(wave_z, nullptr, 4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_z->set_bufflimit(4294967295u) == 11);
+    expect(wave_set_bufflimit_redirect(wave_z, nullptr, 4294967295u) == 11);
+    expect(wave_z->set_decay(4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_set_decay_redirect(wave_z, nullptr, 4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_z->set_release(4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_set_release_redirect(wave_z, nullptr, 4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_z->set_sustain(4294967295u, 4294967295u, 4294967295u) == 11);
+    expect(wave_set_sustain_redirect(wave_z, nullptr, 4294967295u, 4294967295u, 4294967295u) == 11);
+    expect_storage_bytes(wave_z_storage.data(), wave_z_expected.data(),
+                         wave_z_storage.size());
+    std::vector<uint8_t> wave_in_device_z_storage(sizeof(Wave_In_Device) + 32);
+    std::vector<uint8_t> wave_in_device_z_expected(wave_in_device_z_storage.size());
+    auto *wave_in_device_z = reinterpret_cast<Wave_In_Device *>(wave_in_device_z_storage.data() + 16);
+    seed_storage(wave_in_device_z_storage.data(), wave_in_device_z_expected.data(), wave_in_device_z_storage.size());
+    std::memcpy(wave_in_device_z_expected.data(), wave_in_device_z_storage.data(), wave_in_device_z_storage.size());
+    expect(wave_in_device_z->get_caps(4294967295u) == 0);
+    expect(wave_in_device_get_caps_redirect(wave_in_device_z, nullptr, 4294967295u) == 0);
+    expect(wave_in_device_z->select(4294967295u) == 0);
+    expect(wave_in_device_select_redirect(wave_in_device_z, nullptr, 4294967295u) == 0);
+    wave_in_device_z->set_rate(4294967295u);
+    wave_in_device_set_rate_redirect(wave_in_device_z, nullptr, 4294967295u);
+    expect_storage_bytes(wave_in_device_z_storage.data(), wave_in_device_z_expected.data(),
+                         wave_in_device_z_storage.size());
+    std::vector<uint8_t> win_z_storage(sizeof(Win) + 32);
+    std::vector<uint8_t> win_z_expected(win_z_storage.size());
+    auto *win_z = reinterpret_cast<Win *>(win_z_storage.data() + 16);
+    seed_storage(win_z_storage.data(), win_z_expected.data(), win_z_storage.size());
+    std::memcpy(win_z_expected.data(), win_z_storage.data(), win_z_storage.size());
+    win_z->on_move(-1, 2147483647);
+    win_on_move_redirect(win_z, nullptr, -1, 2147483647);
+    win_z->on_size(4294967295u, 2147483647, -2147483648);
+    win_on_size_redirect(win_z, nullptr, 4294967295u, 2147483647, -2147483648);
+    win_z->on_size_nc(4294967295u, 2147483647, -2147483648);
+    win_on_size_nc_redirect(win_z, nullptr, 4294967295u, 2147483647, -2147483648);
+    win_z->on_sys_command(4294967295u, 2147483647, -2147483648);
+    win_on_sys_command_redirect(win_z, nullptr, 4294967295u, 2147483647, -2147483648);
+    expect_storage_bytes(win_z_storage.data(), win_z_expected.data(),
+                         win_z_storage.size());
 }
 
 void test_base_pop_default_colors() {

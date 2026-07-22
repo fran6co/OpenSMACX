@@ -33,7 +33,11 @@ class DLLEXPORT InfoWin : Time {
   ~InfoWin() { ; }
   void UNK1();
   void on_redraw();
+  void change(int a1);
+  void UNK3(int a1, int a2);
 };
 
 void __fastcall info_win_unk1_redirect(InfoWin *self, void *);
 void __fastcall info_win_on_redraw_redirect(InfoWin *self, void *);
+void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1);
+void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);

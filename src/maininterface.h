@@ -37,6 +37,12 @@ class DLLEXPORT MainInterface : GraphicWin {
   void UNK3();
   void UNK4();
 
+  void UNK1(int a1);
+  void on_iface_scrolled(int a1, int a2);
+  void on_iface_scrolling(int a1, int a2);
+  void on_iface_button_toggled(int a1, int a2);
+  void on_iface_right_double_click(int a1, int a2);
+  int on_iface_button_pressed(int a1);
  private:
   uint32_t field_A14_;
   uint32_t field_A18_;
@@ -316,3 +322,9 @@ void __fastcall main_interface_unk2_redirect(MainInterface *self, void *);
 void __fastcall main_interface_unk3_redirect(MainInterface *self, void *);
 void __fastcall main_interface_unk4_redirect(MainInterface *self, void *);
 DLLEXPORT void __cdecl desktop_update();
+void __fastcall main_interface_unk1_redirect(MainInterface *self, void *, int a1);
+void __fastcall main_interface_on_iface_scrolled_redirect(MainInterface *self, void *, int a1, int a2);
+void __fastcall main_interface_on_iface_scrolling_redirect(MainInterface *self, void *, int a1, int a2);
+void __fastcall main_interface_on_iface_button_toggled_redirect(MainInterface *self, void *, int a1, int a2);
+void __fastcall main_interface_on_iface_right_double_click_redirect(MainInterface *self, void *, int a1, int a2);
+int __fastcall main_interface_on_iface_button_pressed_redirect(MainInterface *self, void *, int a1);

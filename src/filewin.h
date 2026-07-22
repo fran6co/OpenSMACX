@@ -33,6 +33,8 @@ class DLLEXPORT FileWin : FlatButton {
   FileWin() { ; }
   ~FileWin() { ; }
   void UNK6();
+  void UNK2(int a1);
 };
 
 void __fastcall file_win_unk6_redirect(FileWin *self, void *);
+void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1);

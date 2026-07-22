@@ -88,3 +88,82 @@ void __fastcall main_interface_unk3_redirect(MainInterface *self, void *) {
 void __fastcall main_interface_unk4_redirect(MainInterface *self, void *) {
     self->UNK4();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0045C280
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::UNK1(int) {
+}
+
+void __fastcall main_interface_unk1_redirect(MainInterface *self, void *, int a1) {
+    self->UNK1(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0045CC80
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::on_iface_scrolled(int, int) {
+}
+
+void __fastcall main_interface_on_iface_scrolled_redirect(MainInterface *self, void *, int a1, int a2) {
+    self->on_iface_scrolled(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0045CC90
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::on_iface_scrolling(int, int) {
+}
+
+void __fastcall main_interface_on_iface_scrolling_redirect(MainInterface *self, void *, int a1, int a2) {
+    self->on_iface_scrolling(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0045CCA0
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::on_iface_button_toggled(int, int) {
+}
+
+void __fastcall main_interface_on_iface_button_toggled_redirect(MainInterface *self, void *, int a1, int a2) {
+    self->on_iface_button_toggled(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0045CDB0
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::on_iface_right_double_click(int, int) {
+}
+
+void __fastcall main_interface_on_iface_right_double_click_redirect(MainInterface *self, void *, int a1, int a2) {
+    self->on_iface_right_double_click(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 0045D160
+Return Value: 0, always
+Status: Complete
+*/
+int MainInterface::on_iface_button_pressed(int) {
+    return 0;
+}
+
+int __fastcall main_interface_on_iface_button_pressed_redirect(MainInterface *self, void *, int a1) {
+    return self->on_iface_button_pressed(a1);
+}

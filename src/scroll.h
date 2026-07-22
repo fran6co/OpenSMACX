@@ -50,6 +50,7 @@ class DLLEXPORT Scroll : GraphicWin {
   void compute_thumb_rect(RECT *rect);
   uint32_t set_thumb_rect();
 
+  void on_left_click(int a1, int a2);
  private:
   friend class Win;
 
@@ -148,3 +149,4 @@ uint32_t __fastcall scroll_set_pos_redirect(
 RECT *__fastcall scroll_compute_thumb_rect_redirect(
     Scroll *self, void *, RECT *rect);
 uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *);
+void __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2);

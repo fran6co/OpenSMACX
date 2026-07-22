@@ -629,3 +629,55 @@ void Win::reset_window_clip() {
 void __fastcall win_reset_window_clip_redirect(Win *self, void *) {
     self->reset_window_clip();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005F54B0
+Return Value: n/a
+Status: Complete
+*/
+void Win::on_move(int, int) {
+}
+
+void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2) {
+    self->on_move(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005F54C0
+Return Value: n/a
+Status: Complete
+*/
+void Win::on_size(unsigned int, int, int) {
+}
+
+void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
+    self->on_size(a1, a2, a3);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005F54D0
+Return Value: n/a
+Status: Complete
+*/
+void Win::on_size_nc(unsigned int, int, int) {
+}
+
+void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
+    self->on_size_nc(a1, a2, a3);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005F6A40
+Return Value: n/a
+Status: Complete
+*/
+void Win::on_sys_command(unsigned int, int, int) {
+}
+
+void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
+    self->on_sys_command(a1, a2, a3);
+}

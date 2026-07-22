@@ -778,3 +778,16 @@ uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *) {
 uint32_t __fastcall scroll_close_redirect(Scroll *self, void *) {
     return self->close();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 00606310
+Return Value: n/a
+Status: Complete
+*/
+void Scroll::on_left_click(int, int) {
+}
+
+void __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2) {
+    self->on_left_click(a1, a2);
+}

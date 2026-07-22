@@ -33,6 +33,8 @@ class DLLEXPORT Sprite {
 
   void close();
 
+  void UNK3(int a1, int a2);
+  void UNK4(int a1, int a2);
  private:
   int field_0_;
   int field_4_;
@@ -89,3 +91,5 @@ int __fastcall sprite_unk1_redirect(
     Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g);
 int __fastcall sprite_unk2_redirect(
     Sprite *self, void *, int a, int b, int c, int d, int e);
+void __fastcall sprite_unk3_redirect(Sprite *self, void *, int a1, int a2);
+void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2);
