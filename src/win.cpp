@@ -476,3 +476,30 @@ int Win::set_cursor(int name) {
 int __fastcall win_set_cursor_redirect(Win *self, void *, int name) {
     return self->set_cursor(name);
 }
+
+int *WinBubbleActive = reinterpret_cast<int *>(0x009B7A50);
+int *WinBubbleCompanion = reinterpret_cast<int *>(0x009B7A4C);
+RECT *WinBubbleRect = reinterpret_cast<RECT *>(0x009B6E38);
+func_win_update_screen *WinUpdateScreenOriginal =
+    (func_win_update_screen *)0x005F7320;
+func_win_flip *WinFlipOriginal = (func_win_flip *)0x005EFD20;
+
+/*
+Purpose: Dismiss any pending bubble text and repaint the area it covered.
+Original Offset: 005F8500
+Status: Complete with temporary dependencies on the screen refresh and flip
+*/
+void Win::clear_bubble_text() {
+    // Nothing to dismiss when no bubble is pending.
+    if (*WinBubbleActive == 0) {
+        return;
+    }
+    *WinBubbleCompanion = 0;
+    *WinBubbleActive = 0;
+    WinUpdateScreenOriginal(WinBubbleRect, nullptr);
+    WinFlipOriginal(WinBubbleRect);
+}
+
+void __cdecl win_clear_bubble_text_redirect() {
+    Win::clear_bubble_text();
+}

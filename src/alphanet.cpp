@@ -105,3 +105,28 @@ int __fastcall alpha_net_who_to_idx_redirect(
     AlphaNet *self, void *, int identity) {
     return self->who_2_idx(identity);
 }
+
+func_net_close *NetCloseOriginal = (func_net_close *)0x0062E010;
+
+/*
+Purpose: Clear every player's process slot and hand off to the network close.
+Original Offset: 004E25B0
+Status: Complete with a temporary dependency on the network close
+*/
+void AlphaNet::close() {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
+    for (size_t slot = 0; slot < 8; ++slot) {
+        const uint32_t zero = 0;
+        memcpy(bytes + 0x78C + slot * 0x19C, &zero, sizeof(zero));
+    }
+    const uint32_t zero = 0;
+    memcpy(bytes + 0x768, &zero, sizeof(zero));
+    // The legacy body tail-jumps here with this unchanged, so the network
+    // close runs against the same object.
+    NetCloseOriginal(this);
+}
+
+void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {
+    self->close();
+}

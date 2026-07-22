@@ -42,6 +42,7 @@ class DLLEXPORT Win {
   int is_visible();
   int is_dialog_focus();
   int set_cursor(int name);
+  static void clear_bubble_text();
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -325,3 +326,25 @@ typedef int(__cdecl func_win_update_cursor)(Win *, int);
 #pragma GCC diagnostic pop
 #endif
 extern func_win_update_cursor *WinUpdateCursorOriginal;
+
+void __cdecl win_clear_bubble_text_redirect();
+
+// Bubble state: the pending flag, its companion slot, and the rectangle the
+// refresh republishes. Tests rebind all three.
+extern int *WinBubbleActive;
+extern int *WinBubbleCompanion;
+extern RECT *WinBubbleRect;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// Both refresh bodies remain original dependencies: update_screen is 383
+// bytes with four call targets, flip 1223 bytes with fourteen.
+typedef int(__cdecl func_win_update_screen)(RECT *, Win *);
+typedef void(__cdecl func_win_flip)(RECT *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_win_update_screen *WinUpdateScreenOriginal;
+extern func_win_flip *WinFlipOriginal;
