@@ -238,3 +238,19 @@ void Datalink::on_iface_button_toggled(int, int) {
 void __fastcall datalink_on_iface_button_toggled_redirect(Datalink *self, void *, int a1, int a2) {
     self->on_iface_button_toggled(a1, a2);
 }
+
+/*
+Purpose: Close the datalink display, clearing the three values it caches.
+Original Offset: 0042BD20
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::close() {
+    field_29E0_ = 0;
+    field_2A34_ = 0;
+    field_2A38_ = 0;
+}
+
+void __fastcall datalink_close_redirect(Datalink *self, void *) {
+    self->close();
+}
