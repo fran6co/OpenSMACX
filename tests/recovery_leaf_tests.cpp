@@ -20,6 +20,7 @@
 #include "../src/pulldown.h"
 #include "../src/random.h"
 #include "../src/scroll.h"
+#include "../src/sounddevice.h"
 #include "../src/spot.h"
 #include "../src/stringstruct.h"
 #include "../src/strings.h"
@@ -8437,6 +8438,46 @@ void test_constant_return_stubs() {
     g_ambience_popup1_redirect(g_ambience, nullptr);
     g_ambience_eot_redirect(g_ambience, nullptr);
     expect_storage_bytes(ga_storage, ga_expected, sizeof(ga_storage));
+
+    // Two sound devices that decline to be polled, suspended, or restarted,
+    // and one Win clip reset that resets nothing. Their layouts are bounded
+    // rather than established, so as with the ambience hooks the canary is
+    // sized to what is modelled here; a method that should do nothing writes
+    // nothing regardless of where the object really ends.
+    alignas(Midi_Device) uint8_t midi_storage[sizeof(Midi_Device) + 32];
+    uint8_t midi_expected[sizeof(midi_storage)];
+    auto *midi = reinterpret_cast<Midi_Device *>(midi_storage + 16);
+    seed_storage(midi_storage, midi_expected, sizeof(midi_storage));
+    std::memcpy(midi_expected, midi_storage, sizeof(midi_storage));
+    midi->update_sound();
+    midi->suspend();
+    midi->restart();
+    midi_device_update_sound_redirect(midi, nullptr);
+    midi_device_suspend_redirect(midi, nullptr);
+    midi_device_restart_redirect(midi, nullptr);
+    expect_storage_bytes(midi_storage, midi_expected, sizeof(midi_storage));
+
+    alignas(Wave_In_Device) uint8_t wave_storage[sizeof(Wave_In_Device) + 32];
+    uint8_t wave_expected[sizeof(wave_storage)];
+    auto *wave_in = reinterpret_cast<Wave_In_Device *>(wave_storage + 16);
+    seed_storage(wave_storage, wave_expected, sizeof(wave_storage));
+    std::memcpy(wave_expected, wave_storage, sizeof(wave_storage));
+    wave_in->update_sound();
+    wave_in->suspend();
+    wave_in->restart();
+    wave_in_device_update_sound_redirect(wave_in, nullptr);
+    wave_in_device_suspend_redirect(wave_in, nullptr);
+    wave_in_device_restart_redirect(wave_in, nullptr);
+    expect_storage_bytes(wave_storage, wave_expected, sizeof(wave_storage));
+
+    alignas(Win) uint8_t clip_storage[sizeof(Win) + 32];
+    uint8_t clip_expected[sizeof(clip_storage)];
+    auto *clip_win = reinterpret_cast<Win *>(clip_storage + 16);
+    seed_storage(clip_storage, clip_expected, sizeof(clip_storage));
+    std::memcpy(clip_expected, clip_storage, sizeof(clip_storage));
+    clip_win->reset_window_clip();
+    win_reset_window_clip_redirect(clip_win, nullptr);
+    expect_storage_bytes(clip_storage, clip_expected, sizeof(clip_storage));
 }
 
 void test_base_pop_default_colors() {

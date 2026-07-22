@@ -50,6 +50,7 @@ class DLLEXPORT Win {
   static void set_def_focus(int focus);
   void UNK8(int value);
   void UNK9(int value);
+  void reset_window_clip();
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -370,3 +371,4 @@ extern int *WinDefaultFocus;
 
 void __fastcall win_unk8_redirect(Win *self, void *, int value);
 void __fastcall win_unk9_redirect(Win *self, void *, int value);
+void __fastcall win_reset_window_clip_redirect(Win *self, void *);

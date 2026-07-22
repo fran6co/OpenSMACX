@@ -36,6 +36,7 @@
 #include "flatbutton.h"
 #include "graphicwin.h"
 #include "scroll.h"
+#include "sounddevice.h"
 #include "spying_recovery.h"
 #include "sprite.h"
 #include "redirect_signatures.h"
@@ -52,7 +53,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 197;
+constexpr size_t RedirectCount = 204;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -313,6 +314,36 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0045EB70,
         },
         {
+            0x004C58B0,
+            reinterpret_cast<uintptr_t>(&midi_device_update_sound_redirect),
+            OPENSMACX_SIGNATURE_004C58B0,
+        },
+        {
+            0x004C58E0,
+            reinterpret_cast<uintptr_t>(&midi_device_suspend_redirect),
+            OPENSMACX_SIGNATURE_004C58E0,
+        },
+        {
+            0x004C58F0,
+            reinterpret_cast<uintptr_t>(&midi_device_restart_redirect),
+            OPENSMACX_SIGNATURE_004C58F0,
+        },
+        {
+            0x004C5B10,
+            reinterpret_cast<uintptr_t>(&wave_in_device_update_sound_redirect),
+            OPENSMACX_SIGNATURE_004C5B10,
+        },
+        {
+            0x004C5B40,
+            reinterpret_cast<uintptr_t>(&wave_in_device_suspend_redirect),
+            OPENSMACX_SIGNATURE_004C5B40,
+        },
+        {
+            0x004C5B50,
+            reinterpret_cast<uintptr_t>(&wave_in_device_restart_redirect),
+            OPENSMACX_SIGNATURE_004C5B50,
+        },
+        {
             0x005E4ADA,
             reinterpret_cast<uintptr_t>(&sprite_unk1_redirect),
             OPENSMACX_SIGNATURE_005E4ADA,
@@ -336,6 +367,11 @@ bool install_redirects() {
             0x005EDFE0,
             reinterpret_cast<uintptr_t>(&win_unk6_redirect),
             OPENSMACX_SIGNATURE_005EDFE0,
+        },
+        {
+            0x005EE020,
+            reinterpret_cast<uintptr_t>(&win_reset_window_clip_redirect),
+            OPENSMACX_SIGNATURE_005EE020,
         },
         {
             0x005EE130,
