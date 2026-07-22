@@ -35,6 +35,8 @@ address,kind
 0x005DF580,jump
 0x005E3373,jump
 0x005E34A3,jump
+0x005E3503,jump
+0x005E3563,jump
 0x005E37E0,jump
 0x005E3820,jump
 0x005EB3D0,jump

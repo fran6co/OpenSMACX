@@ -6919,6 +6919,218 @@ void test_base_button_default_setters() {
     BaseButtonDefaultFonts = saved_fonts;
 }
 
+// Stand-in DirectDraw surface and Buffer vtables for the device-context
+// protocol. The surface's GetDC/ReleaseDC slots record their arguments and
+// return a configurable status; the Buffer's slot 4 records that the error
+// path fired.
+struct HdcProbe {
+    int get_calls;
+    int release_calls;
+    int error_calls;
+    void *get_surface;
+    void *release_surface;
+    HDC released_handle;
+    long get_status;
+    long release_status;
+    HDC produced_handle;
+};
+HdcProbe hdc_probe = {};
+
+long __stdcall hdc_probe_get_dc(void *surface, void *out) {
+    ++hdc_probe.get_calls;
+    hdc_probe.get_surface = surface;
+    std::memcpy(out, &hdc_probe.produced_handle, sizeof(HDC));
+    return hdc_probe.get_status;
+}
+
+long __stdcall hdc_probe_release_dc(void *surface, void *handle) {
+    ++hdc_probe.release_calls;
+    hdc_probe.release_surface = surface;
+    hdc_probe.released_handle = reinterpret_cast<HDC>(handle);
+    return hdc_probe.release_status;
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall hdc_probe_buffer_virtual(void *) {
+    ++hdc_probe.error_calls;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void test_buffer_hdc_protocol() {
+    alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+
+    void *buffer_vtable[4] = {};
+    buffer_vtable[1] = reinterpret_cast<void *>(&hdc_probe_buffer_virtual);
+    void *surface_vtable[0x6C / sizeof(void *)] = {};
+    surface_vtable[0x44 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_get_dc);
+    surface_vtable[0x68 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_release_dc);
+    void **const buffer_vtable_ptr = buffer_vtable;
+    void *surface_object = surface_vtable;
+    void **surface = &surface_object;
+
+    const HDC direct_handle = reinterpret_cast<HDC>(0x11110000U);
+    const HDC surface_handle = reinterpret_cast<HDC>(0x22220000U);
+    const uint32_t zero = 0;
+
+    // Acquire with no surface: the stored handle is published, counted, and
+    // returned without any surface traffic.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x58, zero);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x64, direct_handle);
+    write_at(storage, 16 + 0x68, zero);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x60, direct_handle);
+    write_at(expected, 16 + 0x68, 1U);
+    hdc_probe = HdcProbe{};
+    expect(buffer->get_hdc() == direct_handle);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.get_calls == 0);
+    expect(hdc_probe.error_calls == 0);
+
+    // field_50_ set routes through the buffer's own slot 4 first.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, 1U);
+    write_at(storage, 16 + 0x58, zero);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x64, direct_handle);
+    write_at(storage, 16 + 0x68, zero);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x60, direct_handle);
+    write_at(expected, 16 + 0x68, 1U);
+    hdc_probe = HdcProbe{};
+    expect(buffer->get_hdc() == direct_handle);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.error_calls == 1);
+
+    // Surface present and no cached handle: GetDC runs once, its out-parameter
+    // becomes the cached handle, and a nonzero status trips the error path.
+    for (int failing = 0; failing < 2; ++failing) {
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+        write_at(storage, 16 + 0x50, zero);
+        write_at(storage, 16 + 0x58, surface);
+        write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+        write_at(storage, 16 + 0x64, direct_handle);
+        write_at(storage, 16 + 0x68, zero);
+        std::memcpy(expected, storage, sizeof(storage));
+        write_at(expected, 16 + 0x60, surface_handle);
+        write_at(expected, 16 + 0x68, 1U);
+        hdc_probe = HdcProbe{};
+        hdc_probe.produced_handle = surface_handle;
+        hdc_probe.get_status = failing ? 1 : 0;
+        expect(buffer->get_hdc() == surface_handle);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(hdc_probe.get_calls == 1);
+        expect(hdc_probe.get_surface == surface);
+        expect(hdc_probe.error_calls == (failing ? 1 : 0));
+    }
+
+    // A cached handle short-circuits: no GetDC, just another reference.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x58, surface);
+    write_at(storage, 16 + 0x60, surface_handle);
+    write_at(storage, 16 + 0x68, 4U);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x68, 5U);
+    hdc_probe = HdcProbe{};
+    expect(buffer->get_hdc() == surface_handle);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.get_calls == 0);
+
+    // Release without a surface clears the handle only at or below zero.
+    struct DirectCase { uint32_t start; int count; bool cleared; };
+    const DirectCase direct_cases[] = {
+        {5, 1, false}, {1, 1, true}, {3, 3, true}, {2, 5, true}, {9, 4, false},
+        // remaining == 1 is the boundary: one reference is still out, so
+        // the handle must survive. Without it, `< 1` and `<= 1` agree.
+        {2, 1, false},
+    };
+    for (const DirectCase &test : direct_cases) {
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+        write_at(storage, 16 + 0x58, zero);
+        write_at(storage, 16 + 0x60, direct_handle);
+        write_at(storage, 16 + 0x68, test.start);
+        std::memcpy(expected, storage, sizeof(storage));
+        if (test.cleared) {
+            write_at(expected, 16 + 0x60, static_cast<HDC>(nullptr));
+            write_at(expected, 16 + 0x68, 0U);
+        } else {
+            write_at(expected, 16 + 0x68,
+                     static_cast<uint32_t>(static_cast<int>(test.start)
+                                           - test.count));
+        }
+        hdc_probe = HdcProbe{};
+        buffer->release_hdc(test.count);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(hdc_probe.release_calls == 0);
+    }
+
+    // With a surface, the last reference calls ReleaseDC with the cached
+    // handle; a surviving reference must not.
+    struct SurfaceCase { uint32_t start; int count; bool released; };
+    const SurfaceCase surface_cases[] = {
+        {1, 1, true}, {6, 2, false}, {2, 7, true},
+        {2, 1, false},   // same boundary on the surface path
+    };
+    for (const SurfaceCase &test : surface_cases) {
+        for (int failing = 0; failing < 2; ++failing) {
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+            write_at(storage, 16 + 0x58, surface);
+            write_at(storage, 16 + 0x60, surface_handle);
+            write_at(storage, 16 + 0x68, test.start);
+            std::memcpy(expected, storage, sizeof(storage));
+            if (test.released) {
+                write_at(expected, 16 + 0x60, static_cast<HDC>(nullptr));
+                write_at(expected, 16 + 0x68, 0U);
+            } else {
+                write_at(expected, 16 + 0x68,
+                         static_cast<uint32_t>(static_cast<int>(test.start)
+                                               - test.count));
+            }
+            hdc_probe = HdcProbe{};
+            hdc_probe.release_status = failing ? 1 : 0;
+            buffer_release_hdc_redirect(buffer, nullptr, test.count);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect(hdc_probe.release_calls == (test.released ? 1 : 0));
+            if (test.released) {
+                expect(hdc_probe.release_surface == surface);
+                expect(hdc_probe.released_handle == surface_handle);
+                expect(hdc_probe.error_calls == (failing ? 1 : 0));
+            }
+        }
+    }
+
+    // A null cached handle with a surface releases nothing but still counts.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x58, surface);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x68, 1U);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x68, 0U);
+    hdc_probe = HdcProbe{};
+    buffer->release_hdc(1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.release_calls == 0);
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7004,6 +7216,7 @@ int main() {
     test_dialog_font_and_color_setters();
     test_pull_down_destructor();
     test_base_button_default_setters();
+    test_buffer_hdc_protocol();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

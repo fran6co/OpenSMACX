@@ -399,6 +399,8 @@ namespace {
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 typedef long(__stdcall *func_surface_unlock_slot)(void *, void *);
+typedef long(__stdcall *func_surface_get_dc_slot)(void *, void *);
+typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
 typedef unsigned long(__stdcall *func_com_release)(void *);
 typedef void(__thiscall *func_buffer_virtual)(void *);
 #if defined(__GNUC__)
@@ -409,6 +411,8 @@ constexpr size_t OwnedAllocationBase = 0x4BC;
 constexpr size_t OwnedAllocationCount = 20;
 constexpr size_t SurfaceReleaseSlot = 0x08;
 constexpr size_t BufferVirtualSlot = 0x04;
+constexpr size_t SurfaceGetDCSlot = 0x44;
+constexpr size_t SurfaceReleaseDCSlot = 0x68;
 
 void *slot(void *object, size_t offset) {
     void **const vtable = *reinterpret_cast<void ***>(object);
@@ -569,4 +573,77 @@ void Buffer::destroy() {
 
 void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
     self->destroy();
+}
+
+/*
+Purpose: Acquire the device context, taking one reference on the shared handle.
+Original Offset: 005E3503
+Return Value: The device context, or zero when the surface refuses one
+Status: Complete
+*/
+HDC Buffer::get_hdc() {
+    if (field_50_ != 0) {
+        reinterpret_cast<func_buffer_virtual>(
+            slot(this, BufferVirtualSlot))(this);
+    }
+    void *const surface = reinterpret_cast<void *>(field_58_);
+    // Without a surface the buffer owns its context directly, so acquiring is
+    // just publishing the stored handle and counting the reference.
+    if (!surface) {
+        hdc2_ = hdc_;
+        ++field_68_;
+        return hdc_;
+    }
+    if (hdc2_ != nullptr) {
+        ++field_68_;
+        return hdc2_;
+    }
+    const long result = reinterpret_cast<func_surface_get_dc_slot>(
+        slot(surface, SurfaceGetDCSlot))(surface, &hdc2_);
+    if (result != 0) {
+        reinterpret_cast<func_buffer_virtual>(
+            slot(this, BufferVirtualSlot))(this);
+    }
+    ++field_68_;
+    return hdc2_;
+}
+
+/*
+Purpose: Drop the given number of device-context references, releasing the
+         handle once the last one is gone.
+Original Offset: 005E3563
+Status: Complete
+*/
+void Buffer::release_hdc(int count) {
+    void *const surface = reinterpret_cast<void *>(field_58_);
+    // The count is subtracted rather than decremented, so a caller may return
+    // several references at once; the handle drops only at or below zero.
+    const int remaining = static_cast<int>(field_68_) - count;
+    field_68_ = static_cast<uint32_t>(remaining);
+    if (!surface) {
+        if (remaining < 1) {
+            hdc2_ = nullptr;
+            field_68_ = 0;
+        }
+        return;
+    }
+    if (hdc2_ == nullptr || remaining >= 1) {
+        return;
+    }
+    const long result = reinterpret_cast<func_surface_release_dc_slot>(
+        slot(surface, SurfaceReleaseDCSlot))(surface, hdc2_);
+    if (result != 0) {
+        reinterpret_cast<func_buffer_virtual>(
+            slot(this, BufferVirtualSlot))(this);
+    }
+    field_68_ = 0;
+    hdc2_ = nullptr;
+}
+
+HDC __fastcall buffer_get_hdc_redirect(Buffer *self, void *) {
+    return self->get_hdc();
+}
+
+void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
+    self->release_hdc(count);
 }
