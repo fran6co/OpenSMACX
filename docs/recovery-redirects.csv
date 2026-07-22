@@ -347,6 +347,8 @@ address,kind
 0x00609CC0,jump
 0x00609CF0,jump
 0x00609D20,jump
+0x0060D1B0,jump
+0x0060E7C0,jump
 0x00612960,jump
 0x00614320,jump
 0x00614350,jump
