@@ -53,3 +53,33 @@ MenuProc __fastcall menu_set_menu_proc_redirect(
 int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id) {
     return self->id_to_index(id);
 }
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005FB1C0
+Status: Complete
+*/
+int Menu::UNK2(int) {
+    return 0;
+}
+
+int __fastcall menu_unk2_redirect(
+        Menu *self, void *, int a) {
+    return self->UNK2(a);
+}
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005FB230
+Status: Complete
+*/
+int Menu::UNK4(int, int, int) {
+    return 0;
+}
+
+int __fastcall menu_unk4_redirect(
+        Menu *self, void *, int a, int b, int c) {
+    return self->UNK4(a, b, c);
+}

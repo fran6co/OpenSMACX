@@ -31,6 +31,9 @@ class DLLEXPORT BaseButton : GraphicWin {
   friend class Scroll;
 
  public:
+  void on_key_click(int a, int b);
+  void on_key_down(int a);
+  void on_key_up(int a);
   BaseButton() { ; }
   ~BaseButton() { ; }
 
@@ -114,3 +117,10 @@ void __fastcall base_button_set_text_color3_redirect(
 // The palette these setters publish before recolouring. Distinct from
 // BufferPalette at 0x009B8174; tests outside the hybrid process rebind it.
 extern Palette **BaseButtonActivePalette;
+
+void __fastcall base_button_on_key_click_redirect(
+    BaseButton *self, void *, int a, int b);
+void __fastcall base_button_on_key_down_redirect(
+    BaseButton *self, void *, int a);
+void __fastcall base_button_on_key_up_redirect(
+    BaseButton *self, void *, int a);

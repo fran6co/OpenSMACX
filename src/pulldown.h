@@ -29,6 +29,10 @@ static_assert(offsetof(PullDownItem, flags) == 0xC,
 
 class DLLEXPORT PullDown : GraphicWin {
  public:
+  int UNK2(int a);
+  int UNK3(int a, int b, int c);
+  int UNK5();
+  int UNK6();
   PullDown() { ; }
   ~PullDown() { ; }
 
@@ -89,3 +93,12 @@ int __fastcall pull_down_check_item_redirect(
 int __fastcall pull_down_uncheck_item_redirect(
     PullDown *self, void *, int id);
 int __fastcall pull_down_get_selected_redirect(PullDown *self, void *);
+
+int __fastcall pull_down_unk2_redirect(
+    PullDown *self, void *, int a);
+int __fastcall pull_down_unk3_redirect(
+    PullDown *self, void *, int a, int b, int c);
+int __fastcall pull_down_unk5_redirect(
+    PullDown *self, void *);
+int __fastcall pull_down_unk6_redirect(
+    PullDown *self, void *);

@@ -51,7 +51,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 136;
+constexpr size_t RedirectCount = 151;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -206,6 +206,81 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
 
 bool install_redirects() {
     const RedirectSpec specs[] = {
+        {
+            0x005E4ADA,
+            reinterpret_cast<uintptr_t>(&sprite_unk1_redirect),
+            OPENSMACX_SIGNATURE_005E4ADA,
+        },
+        {
+            0x005E4AEA,
+            reinterpret_cast<uintptr_t>(&sprite_unk2_redirect),
+            OPENSMACX_SIGNATURE_005E4AEA,
+        },
+        {
+            0x005EC680,
+            reinterpret_cast<uintptr_t>(&win_unk1_redirect),
+            OPENSMACX_SIGNATURE_005EC680,
+        },
+        {
+            0x005ED7C0,
+            reinterpret_cast<uintptr_t>(&win_unk5_redirect),
+            OPENSMACX_SIGNATURE_005ED7C0,
+        },
+        {
+            0x005EDFE0,
+            reinterpret_cast<uintptr_t>(&win_unk6_redirect),
+            OPENSMACX_SIGNATURE_005EDFE0,
+        },
+        {
+            0x005F6A30,
+            reinterpret_cast<uintptr_t>(&win_on_set_cursor_redirect),
+            OPENSMACX_SIGNATURE_005F6A30,
+        },
+        {
+            0x005F8C90,
+            reinterpret_cast<uintptr_t>(&pull_down_unk2_redirect),
+            OPENSMACX_SIGNATURE_005F8C90,
+        },
+        {
+            0x005F8CA0,
+            reinterpret_cast<uintptr_t>(&pull_down_unk3_redirect),
+            OPENSMACX_SIGNATURE_005F8CA0,
+        },
+        {
+            0x005FA750,
+            reinterpret_cast<uintptr_t>(&pull_down_unk5_redirect),
+            OPENSMACX_SIGNATURE_005FA750,
+        },
+        {
+            0x005FA760,
+            reinterpret_cast<uintptr_t>(&pull_down_unk6_redirect),
+            OPENSMACX_SIGNATURE_005FA760,
+        },
+        {
+            0x005FB1C0,
+            reinterpret_cast<uintptr_t>(&menu_unk2_redirect),
+            OPENSMACX_SIGNATURE_005FB1C0,
+        },
+        {
+            0x005FB230,
+            reinterpret_cast<uintptr_t>(&menu_unk4_redirect),
+            OPENSMACX_SIGNATURE_005FB230,
+        },
+        {
+            0x006077F0,
+            reinterpret_cast<uintptr_t>(&base_button_on_key_click_redirect),
+            OPENSMACX_SIGNATURE_006077F0,
+        },
+        {
+            0x00607800,
+            reinterpret_cast<uintptr_t>(&base_button_on_key_down_redirect),
+            OPENSMACX_SIGNATURE_00607800,
+        },
+        {
+            0x00607810,
+            reinterpret_cast<uintptr_t>(&base_button_on_key_up_redirect),
+            OPENSMACX_SIGNATURE_00607810,
+        },
         {
             0x0062BA80,
             reinterpret_cast<uintptr_t>(&auto_sound_construct_redirect),

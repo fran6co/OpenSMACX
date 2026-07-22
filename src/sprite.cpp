@@ -122,3 +122,33 @@ int __fastcall sprite_draw_redirect(
         Sprite *self, void *, Buffer *buffer, int a, int b, int c, int x, int y) {
     return self->draw(buffer, a, b, c, x, y);
 }
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005E4ADA
+Status: Complete
+*/
+int Sprite::UNK1(int, int, int, int, int, int, int) {
+    return 0;
+}
+
+int __fastcall sprite_unk1_redirect(
+        Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g) {
+    return self->UNK1(a, b, c, d, e, f, g);
+}
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005E4AEA
+Status: Complete
+*/
+int Sprite::UNK2(int, int, int, int, int) {
+    return 0;
+}
+
+int __fastcall sprite_unk2_redirect(
+        Sprite *self, void *, int a, int b, int c, int d, int e) {
+    return self->UNK2(a, b, c, d, e);
+}

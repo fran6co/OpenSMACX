@@ -42,6 +42,8 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
   */
 class DLLEXPORT Menu : GraphicWin {
  public:
+  int UNK2(int a);
+  int UNK4(int a, int b, int c);
   Menu() { ; }
   ~Menu() { ; }
 
@@ -64,3 +66,8 @@ static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
 MenuProc __fastcall menu_set_menu_proc_redirect(
     Menu *self, void *, MenuProc proc);
 int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id);
+
+int __fastcall menu_unk2_redirect(
+    Menu *self, void *, int a);
+int __fastcall menu_unk4_redirect(
+    Menu *self, void *, int a, int b, int c);

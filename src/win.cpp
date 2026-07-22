@@ -503,3 +503,63 @@ void Win::clear_bubble_text() {
 void __cdecl win_clear_bubble_text_redirect() {
     Win::clear_bubble_text();
 }
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005EC680
+Status: Complete
+*/
+int Win::UNK1(int, int, int, int, int, int, int, int, int) {
+    return 0;
+}
+
+int __fastcall win_unk1_redirect(
+        Win *self, void *, int a, int b, int c, int d, int e, int f, int g, int h, int i) {
+    return self->UNK1(a, b, c, d, e, f, g, h, i);
+}
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005ED7C0
+Status: Complete
+*/
+int Win::UNK5() {
+    return 0;
+}
+
+int __fastcall win_unk5_redirect(
+        Win *self, void *) {
+    return self->UNK5();
+}
+
+/*
+Purpose: Legacy stub; the original body returns 0 without reading its
+         arguments.
+Original Offset: 005EDFE0
+Status: Complete
+*/
+int Win::UNK6(int) {
+    return 0;
+}
+
+int __fastcall win_unk6_redirect(
+        Win *self, void *, int a) {
+    return self->UNK6(a);
+}
+
+/*
+Purpose: Legacy stub; the original body returns 1 without reading its
+         arguments.
+Original Offset: 005F6A30
+Status: Complete
+*/
+int Win::on_set_cursor(void *, unsigned int, unsigned int) {
+    return 1;
+}
+
+int __fastcall win_on_set_cursor_redirect(
+        Win *self, void *, void *a, unsigned int b, unsigned int c) {
+    return self->on_set_cursor(a, b, c);
+}

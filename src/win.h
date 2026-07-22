@@ -34,6 +34,10 @@ class DLLEXPORT Win {
   friend class BaseButton;
 
  public:
+  int UNK1(int a, int b, int c, int d, int e, int f, int g, int h, int i);
+  int UNK5();
+  int UNK6(int a);
+  int on_set_cursor(void *a, unsigned int b, unsigned int c);
   Win() { ; }
   ~Win() { ; }
 
@@ -348,3 +352,12 @@ typedef void(__cdecl func_win_flip)(RECT *);
 #endif
 extern func_win_update_screen *WinUpdateScreenOriginal;
 extern func_win_flip *WinFlipOriginal;
+
+int __fastcall win_unk1_redirect(
+    Win *self, void *, int a, int b, int c, int d, int e, int f, int g, int h, int i);
+int __fastcall win_unk5_redirect(
+    Win *self, void *);
+int __fastcall win_unk6_redirect(
+    Win *self, void *, int a);
+int __fastcall win_on_set_cursor_redirect(
+    Win *self, void *, void *a, unsigned int b, unsigned int c);

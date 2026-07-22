@@ -8251,6 +8251,85 @@ void test_win_clear_bubble_text() {
     WinBubbleActive = saved_active;
 }
 
+void test_constant_return_stubs() {
+    // Fifteen legacy stubs whose entire body sets a constant and returns. The
+    // shape classifier proposed them; each was confirmed against its own
+    // instruction bytes, including that the `ret N` cleanup matches the
+    // arity its mangled name implies. Win::on_redraw was rejected from this
+    // batch on exactly that check - its name declares no parameters while its
+    // body cleans eight bytes.
+    //
+    // The object must come back untouched: these read nothing and write
+    // nothing, so a full byte comparison is the whole specification.
+    alignas(Win) uint8_t win_storage[sizeof(Win) + 32];
+    uint8_t win_expected[sizeof(win_storage)];
+    auto *win = reinterpret_cast<Win *>(win_storage + 16);
+    seed_storage(win_storage, win_expected, sizeof(win_storage));
+    std::memcpy(win_expected, win_storage, sizeof(win_storage));
+    expect(win->UNK1(1, 2, 3, 4, 5, 6, 7, 8, 9) == 0);
+    expect(win->UNK5() == 0);
+    expect(win->UNK6(INT_MIN) == 0);
+    expect(win->on_set_cursor(nullptr, 0U, 0U) == 1);
+    expect(win_unk1_redirect(win, nullptr, -1, -2, -3, -4, -5, -6, -7, -8, -9) == 0);
+    expect(win_unk5_redirect(win, nullptr) == 0);
+    expect(win_unk6_redirect(win, nullptr, INT_MAX) == 0);
+    expect(win_on_set_cursor_redirect(
+               win, nullptr, win_storage, 0xFFFFFFFFU, 0xFFFFFFFFU) == 1);
+    expect_storage_bytes(win_storage, win_expected, sizeof(win_storage));
+
+    alignas(Sprite) uint8_t sprite_storage[sizeof(Sprite) + 32];
+    uint8_t sprite_expected[sizeof(sprite_storage)];
+    auto *sprite = reinterpret_cast<Sprite *>(sprite_storage + 16);
+    seed_storage(sprite_storage, sprite_expected, sizeof(sprite_storage));
+    std::memcpy(sprite_expected, sprite_storage, sizeof(sprite_storage));
+    expect(sprite->UNK1(1, 2, 3, 4, 5, 6, 7) == 0);
+    expect(sprite->UNK2(1, 2, 3, 4, 5) == 0);
+    expect(sprite_unk1_redirect(sprite, nullptr, -1, -2, -3, -4, -5, -6, -7) == 0);
+    expect(sprite_unk2_redirect(sprite, nullptr, -1, -2, -3, -4, -5) == 0);
+    expect_storage_bytes(sprite_storage, sprite_expected, sizeof(sprite_storage));
+
+    alignas(PullDown) uint8_t pd_storage[sizeof(PullDown) + 32];
+    uint8_t pd_expected[sizeof(pd_storage)];
+    auto *pull_down = reinterpret_cast<PullDown *>(pd_storage + 16);
+    seed_storage(pd_storage, pd_expected, sizeof(pd_storage));
+    std::memcpy(pd_expected, pd_storage, sizeof(pd_storage));
+    // These two return 8 rather than zero, which is the distinction a
+    // constant-return stub most easily gets wrong.
+    expect(pull_down->UNK2(0) == 8);
+    expect(pull_down->UNK3(0, 0, 0) == 8);
+    expect(pull_down->UNK5() == 1);
+    expect(pull_down->UNK6() == 1);
+    expect(pull_down_unk2_redirect(pull_down, nullptr, INT_MIN) == 8);
+    expect(pull_down_unk3_redirect(pull_down, nullptr, 1, 2, 3) == 8);
+    expect(pull_down_unk5_redirect(pull_down, nullptr) == 1);
+    expect(pull_down_unk6_redirect(pull_down, nullptr) == 1);
+    expect_storage_bytes(pd_storage, pd_expected, sizeof(pd_storage));
+
+    alignas(Menu) uint8_t menu_storage[sizeof(Menu) + 32];
+    uint8_t menu_expected[sizeof(menu_storage)];
+    auto *menu = reinterpret_cast<Menu *>(menu_storage + 16);
+    seed_storage(menu_storage, menu_expected, sizeof(menu_storage));
+    std::memcpy(menu_expected, menu_storage, sizeof(menu_storage));
+    expect(menu->UNK2(0) == 0);
+    expect(menu->UNK4(0, 0, 0) == 0);
+    expect(menu_unk2_redirect(menu, nullptr, INT_MAX) == 0);
+    expect(menu_unk4_redirect(menu, nullptr, 1, 2, 3) == 0);
+    expect_storage_bytes(menu_storage, menu_expected, sizeof(menu_storage));
+
+    alignas(BaseButton) uint8_t bb_storage[sizeof(BaseButton) + 32];
+    uint8_t bb_expected[sizeof(bb_storage)];
+    auto *button = reinterpret_cast<BaseButton *>(bb_storage + 16);
+    seed_storage(bb_storage, bb_expected, sizeof(bb_storage));
+    std::memcpy(bb_expected, bb_storage, sizeof(bb_storage));
+    button->on_key_click(1, 2);
+    button->on_key_down(3);
+    button->on_key_up(4);
+    base_button_on_key_click_redirect(button, nullptr, -1, -2);
+    base_button_on_key_down_redirect(button, nullptr, -3);
+    base_button_on_key_up_redirect(button, nullptr, -4);
+    expect_storage_bytes(bb_storage, bb_expected, sizeof(bb_storage));
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -8349,6 +8428,7 @@ int main() {
     test_buffer_text_width();
     test_alpha_net_close();
     test_win_clear_bubble_text();
+    test_constant_return_stubs();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
