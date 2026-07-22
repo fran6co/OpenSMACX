@@ -364,7 +364,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
 2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`.
+3. Recover the BaseButton instance colour setters at `0x00607360` through `0x006073E0`; each dispatches into a Buffer helper, so resolving those call targets is the remaining work. The four static default setters at `0x00607420` through `0x006074B0` are recovered.
 4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
