@@ -345,6 +345,7 @@ if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
+        src/basepop.cpp
         src/autosound.cpp
         src/basebutton.cpp
         src/basepop_font.cpp

@@ -217,3 +217,32 @@ int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *) {
 int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position) {
     return self->pos_to_id(position);
 }
+
+Font **DialogDefaultFonts = reinterpret_cast<Font **>(0x009B8EC0);
+
+/*
+Purpose: Set the default fonts shared by every dialog.
+Original Offset: 00609D20
+Return Value: No errors (0); invalid primary font (3)
+Status: Complete
+*/
+int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
+    if (!font1) {
+        return 3;
+    }
+    volatile Font **const slots =
+        const_cast<volatile Font **>(DialogDefaultFonts);
+    // Only an initialized primary is published; the other two are stored
+    // either way and the call still succeeds.
+    if (font1->is_initialized()) {
+        slots[0] = font1;
+    }
+    slots[1] = font2;
+    slots[2] = font3;
+    return 0;
+}
+
+int __cdecl dialog_set_def_dialog_font_redirect(
+        Font *font1, Font *font2, Font *font3) {
+    return Dialog::set_def_dialog_font(font1, font2, font3);
+}

@@ -24,6 +24,11 @@
   */
 class DLLEXPORT BasePop : GraphicWin {
  public:
+  // Static defaults shared by every popup; __cdecl in the original because
+  // they take no instance.
+  static int set_def_string_font(Font *font1, Font *font2, Font *font3,
+                                 Font *font4);
+  static int set_def_button_font(Font *font1, Font *font2, Font *font3);
   BasePop() { ; }
   ~BasePop() { ; }
   void set_loc(int x, int y);
@@ -347,3 +352,13 @@ static_assert(sizeof(BasePop) == 0x3230,
 void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y);
 int __fastcall base_pop_set_string_font_redirect(
     BasePop *self, void *, Font *font1, Font *font2, Font *font3, Font *font4);
+
+int __cdecl base_pop_set_def_string_font_redirect(
+    Font *font1, Font *font2, Font *font3, Font *font4);
+int __cdecl base_pop_set_def_button_font_redirect(
+    Font *font1, Font *font2, Font *font3);
+
+// Default string and button font slots at 0x009B8D98 and 0x009B8DA8; tests
+// outside the hybrid process rebind them.
+extern Font **BasePopDefaultStringFonts;
+extern Font **BasePopDefaultButtonFonts;
