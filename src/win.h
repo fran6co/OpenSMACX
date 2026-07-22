@@ -41,6 +41,11 @@ class DLLEXPORT Win {
   int move(int x, int y);
   int is_visible();
   int is_dialog_focus();
+
+  // The process-wide device context every window shares. The legacy bodies
+  // take no instance and clean no stack, so they are statics here.
+  static HDC get_hdc();
+  static void release_hdc();
   void client_to_screen(int *x, int *y);
   void set_vert_paging(int paging);
   void set_horz_paging(int paging);
@@ -295,3 +300,13 @@ int __fastcall tutwin_rect_center_redirect(
     void *self, void *, RECT *rect, int *x, int *y);
 
 int __fastcall win_is_dialog_focus_redirect(Win *self, void *);
+
+HDC __cdecl win_get_hdc_redirect();
+void __cdecl win_release_hdc_redirect();
+
+// Shared device-context state: the reference count, the cached handle, and
+// the optional DirectDraw surface that supplies it. Tests rebind these.
+extern int *WinHdcRefCount;
+extern HDC *WinSharedHdc;
+extern void **WinHdcSurface;
+extern HWND *WinHdcWindow;
