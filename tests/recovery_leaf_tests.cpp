@@ -8111,6 +8111,146 @@ void test_buffer_text_width() {
     BufferTextWidthMeasured = saved;
 }
 
+struct TeardownProbe {
+    int net_close_calls;
+    void *net_close_self;
+    int update_calls;
+    RECT *update_rect;
+    Win *update_window;
+    int flip_calls;
+    RECT *flip_rect;
+    int active_during_update;
+    int companion_during_update;
+    int sequence;
+};
+TeardownProbe teardown_probe = {};
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall teardown_probe_net_close(void *self) {
+    ++teardown_probe.net_close_calls;
+    teardown_probe.net_close_self = self;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+int __cdecl teardown_probe_update_screen(RECT *rect, Win *window) {
+    ++teardown_probe.update_calls;
+    teardown_probe.update_rect = rect;
+    teardown_probe.update_window = window;
+    // Both flags must already be cleared by the time the refresh runs.
+    teardown_probe.active_during_update = *WinBubbleActive;
+    teardown_probe.companion_during_update = *WinBubbleCompanion;
+    teardown_probe.sequence = (teardown_probe.sequence << 4) | 1;
+    return 0;
+}
+
+void __cdecl teardown_probe_flip(RECT *rect) {
+    ++teardown_probe.flip_calls;
+    teardown_probe.flip_rect = rect;
+    teardown_probe.sequence = (teardown_probe.sequence << 4) | 2;
+}
+
+void test_alpha_net_close() {
+    alignas(AlphaNet) uint8_t storage[sizeof(AlphaNet) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *network = reinterpret_cast<AlphaNet *>(storage + 16);
+
+    func_net_close *const saved = NetCloseOriginal;
+    NetCloseOriginal = &teardown_probe_net_close;
+
+    for (int adapter = 0; adapter < 2; ++adapter) {
+        seed_storage(storage, expected, sizeof(storage));
+        std::memcpy(expected, storage, sizeof(storage));
+        const uint32_t zero = 0;
+        // Eight process slots at 0x78C, stride 0x19C, plus the slot at 0x768.
+        for (size_t slot = 0; slot < 8; ++slot) {
+            write_at(expected, 16 + 0x78C + slot * 0x19C, zero);
+        }
+        write_at(expected, 16 + 0x768, zero);
+        teardown_probe = TeardownProbe{};
+        if (adapter) {
+            alpha_net_close_redirect(network, nullptr);
+        } else {
+            network->close();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        // The tail jump hands the same object to the network close.
+        expect(teardown_probe.net_close_calls == 1);
+        expect(teardown_probe.net_close_self == network);
+    }
+
+    NetCloseOriginal = saved;
+}
+
+void test_win_clear_bubble_text() {
+    int active = 0;
+    int companion = 0;
+    RECT rect = {1, 2, 3, 4};
+    int *const saved_active = WinBubbleActive;
+    int *const saved_companion = WinBubbleCompanion;
+    RECT *const saved_rect = WinBubbleRect;
+    func_win_update_screen *const saved_update = WinUpdateScreenOriginal;
+    func_win_flip *const saved_flip = WinFlipOriginal;
+    WinBubbleActive = &active;
+    WinBubbleCompanion = &companion;
+    WinBubbleRect = &rect;
+    WinUpdateScreenOriginal = &teardown_probe_update_screen;
+    WinFlipOriginal = &teardown_probe_flip;
+
+    // No bubble pending: nothing is cleared and neither refresh runs, even
+    // with a stale companion value sitting there.
+    active = 0;
+    companion = 0x5A5A5A5A;
+    teardown_probe = TeardownProbe{};
+    Win::clear_bubble_text();
+    expect(active == 0);
+    expect(companion == 0x5A5A5A5A);
+    expect(teardown_probe.update_calls == 0);
+    expect(teardown_probe.flip_calls == 0);
+
+    // A pending bubble clears both slots, then refreshes and flips the same
+    // rectangle. The flags must already be clear when the refresh observes
+    // them, which is why the probe samples them.
+    for (int adapter = 0; adapter < 2; ++adapter) {
+        active = 1;
+        companion = 0x5A5A5A5A;
+        teardown_probe = TeardownProbe{};
+        if (adapter) {
+            win_clear_bubble_text_redirect();
+        } else {
+            Win::clear_bubble_text();
+        }
+        expect(active == 0);
+        expect(companion == 0);
+        expect(teardown_probe.update_calls == 1);
+        expect(teardown_probe.update_rect == &rect);
+        expect(teardown_probe.update_window == nullptr);
+        expect(teardown_probe.active_during_update == 0);
+        expect(teardown_probe.companion_during_update == 0);
+        expect(teardown_probe.flip_calls == 1);
+        expect(teardown_probe.flip_rect == &rect);
+        // The refresh must precede the flip, not merely both happen.
+        expect(teardown_probe.sequence == 0x12);
+    }
+
+    // Any nonzero pending value counts, not just one.
+    active = -1;
+    teardown_probe = TeardownProbe{};
+    Win::clear_bubble_text();
+    expect(active == 0);
+    expect(teardown_probe.update_calls == 1);
+
+    WinFlipOriginal = saved_flip;
+    WinUpdateScreenOriginal = saved_update;
+    WinBubbleRect = saved_rect;
+    WinBubbleCompanion = saved_companion;
+    WinBubbleActive = saved_active;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -8207,6 +8347,8 @@ int main() {
     test_sprite_draw_origin();
     test_win_set_cursor();
     test_buffer_text_width();
+    test_alpha_net_close();
+    test_win_clear_bubble_text();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
