@@ -35,6 +35,7 @@ class DLLEXPORT StatusWin {
   ~StatusWin() { ; }
   void close();
   void set_loc(int x, int y);
+  void reset();
 
 
  private:
@@ -48,7 +49,18 @@ class DLLEXPORT StatusWin {
   int32_t field_15B8_;
   int32_t field_15BC_;
   int32_t field_15C0_;
+  uint8_t unmapped_15C4_[0x15D4 - 0x15C4];
+  int32_t field_15D4_;
 };
 
 void __fastcall status_win_close_redirect(StatusWin *self, void *);
 void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y);
+
+// SubInterface::release_iface_mode is not recovered, and the interface it
+// acts on is a global the original reaches at a fixed address. Both are
+// rebindable so the reset can be observed without either being present.
+typedef void (__thiscall func_release_iface_mode)(void *);
+extern func_release_iface_mode *SubInterfaceOriginalReleaseIfaceMode;
+extern void *SubInterfaceGlobal;
+
+void __fastcall status_win_reset_redirect(StatusWin *self, void *);
