@@ -39,8 +39,14 @@ class DLLEXPORT NetWin : GraphicWin {
   void UNK1();
   void UNK2();
   void alloc_slots();
+  int on_key_click(int a1, int a2);
+  void on_mouse_move(int a1, int a2);
+  void on_mouse_leave(int a1, int a2);
 };
 
 void __fastcall net_win_unk1_redirect(NetWin *self, void *);
 void __fastcall net_win_unk2_redirect(NetWin *self, void *);
 void __fastcall net_win_alloc_slots_redirect(NetWin *self, void *);
+int __fastcall net_win_on_key_click_redirect(NetWin *self, void *, int a1, int a2);
+void __fastcall net_win_on_mouse_move_redirect(NetWin *self, void *, int a1, int a2);
+void __fastcall net_win_on_mouse_leave_redirect(NetWin *self, void *, int a1, int a2);

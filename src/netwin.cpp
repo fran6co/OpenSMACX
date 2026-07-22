@@ -56,3 +56,43 @@ void __fastcall net_win_unk2_redirect(NetWin *self, void *) {
 void __fastcall net_win_alloc_slots_redirect(NetWin *self, void *) {
     self->alloc_slots();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
+Original Offset: 0047B750
+Return Value: 1, always
+Status: Complete
+*/
+int NetWin::on_key_click(int, int) {
+    return 1;
+}
+
+int __fastcall net_win_on_key_click_redirect(NetWin *self, void *, int a1, int a2) {
+    return self->on_key_click(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0047F940
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::on_mouse_move(int, int) {
+}
+
+void __fastcall net_win_on_mouse_move_redirect(NetWin *self, void *, int a1, int a2) {
+    self->on_mouse_move(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0047F950
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::on_mouse_leave(int, int) {
+}
+
+void __fastcall net_win_on_mouse_leave_redirect(NetWin *self, void *, int a1, int a2) {
+    self->on_mouse_leave(a1, a2);
+}

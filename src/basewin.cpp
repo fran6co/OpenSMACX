@@ -69,3 +69,55 @@ void __fastcall base_win_unk6_redirect(BaseWin *self, void *) {
 void __fastcall base_win_unk7_redirect(BaseWin *self, void *) {
     self->UNK7();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0041A610
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::UNK5(int) {
+}
+
+void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1) {
+    self->UNK5(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0041B4E0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_button_toggled(int, int) {
+}
+
+void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_button_toggled(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0041DF40
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_right_down(int, int) {
+}
+
+void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_right_down(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 0041E4C0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_selected(int, int) {
+}
+
+void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_selected(a1, a2);
+}

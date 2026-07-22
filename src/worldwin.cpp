@@ -30,3 +30,16 @@ void WorldWin::clear_terrain() {
 void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *) {
     self->clear_terrain();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 004C3E90
+Return Value: n/a
+Status: Complete
+*/
+void WorldWin::on_left_double_click(int, int) {
+}
+
+void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, int a1, int a2) {
+    self->on_left_double_click(a1, a2);
+}

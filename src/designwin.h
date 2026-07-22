@@ -37,6 +37,20 @@ class DLLEXPORT DesignWin : GraphicWin {
   DesignWin() { ; }
   ~DesignWin() { ; }
   void UNK1();
+  void on_iface_left_down(int a1, int a2);
+  void on_iface_right_down(int a1, int a2);
+  void on_iface_selected(int a1, int a2);
+  void on_iface_left_double_click(int a1, int a2);
+  void on_iface_right_double_click(int a1, int a2);
+  void on_iface_button_toggled(int a1, int a2);
+  void on_iface_group_clicked(int a1, int a2, int a3);
 };
 
 void __fastcall design_win_unk1_redirect(DesignWin *self, void *);
+void __fastcall design_win_on_iface_left_down_redirect(DesignWin *self, void *, int a1, int a2);
+void __fastcall design_win_on_iface_right_down_redirect(DesignWin *self, void *, int a1, int a2);
+void __fastcall design_win_on_iface_selected_redirect(DesignWin *self, void *, int a1, int a2);
+void __fastcall design_win_on_iface_left_double_click_redirect(DesignWin *self, void *, int a1, int a2);
+void __fastcall design_win_on_iface_right_double_click_redirect(DesignWin *self, void *, int a1, int a2);
+void __fastcall design_win_on_iface_button_toggled_redirect(DesignWin *self, void *, int a1, int a2);
+void __fastcall design_win_on_iface_group_clicked_redirect(DesignWin *self, void *, int a1, int a2, int a3);
