@@ -30,3 +30,16 @@ void FileWin::UNK6() {
 void __fastcall file_win_unk6_redirect(FileWin *self, void *) {
     self->UNK6();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 00614350
+Return Value: n/a
+Status: Complete
+*/
+void FileWin::UNK2(int) {
+}
+
+void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1) {
+    self->UNK2(a1);
+}

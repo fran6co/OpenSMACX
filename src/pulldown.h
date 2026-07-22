@@ -44,6 +44,7 @@ class DLLEXPORT PullDown : GraphicWin {
   int uncheck_item(int id);
   int get_selected();
 
+  void on_mouse_leave(int a1, int a2);
  private:
   uint32_t field_A14_;
   PullDownItem items_[64];
@@ -102,3 +103,4 @@ int __fastcall pull_down_unk5_redirect(
     PullDown *self, void *);
 int __fastcall pull_down_unk6_redirect(
     PullDown *self, void *);
+void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2);

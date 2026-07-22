@@ -95,3 +95,111 @@ void __fastcall wave_in_device_suspend_redirect(Wave_In_Device *self, void *) {
 void __fastcall wave_in_device_restart_redirect(Wave_In_Device *self, void *) {
     self->restart();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 004C5840
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::select(unsigned int) {
+    return 0;
+}
+
+int __fastcall midi_device_select_redirect(Midi_Device *self, void *, unsigned int a1) {
+    return self->select(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 004C5860
+Return Value: n/a
+Status: Complete
+*/
+void Midi_Device::set_volume(unsigned int) {
+}
+
+void __fastcall midi_device_set_volume_redirect(Midi_Device *self, void *, unsigned int a1) {
+    self->set_volume(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 004C5880
+Return Value: n/a
+Status: Complete
+*/
+void Midi_Device::set_pan(int) {
+}
+
+void __fastcall midi_device_set_pan_redirect(Midi_Device *self, void *, int a1) {
+    self->set_pan(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 004C5890
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::fade(unsigned int) {
+    return 0;
+}
+
+int __fastcall midi_device_fade_redirect(Midi_Device *self, void *, unsigned int a1) {
+    return self->fade(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 004C58C0
+Return Value: n/a
+Status: Complete
+*/
+void Midi_Device::set_rate(unsigned int) {
+}
+
+void __fastcall midi_device_set_rate_redirect(Midi_Device *self, void *, unsigned int a1) {
+    self->set_rate(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 004C5AD0
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::select(unsigned int) {
+    return 0;
+}
+
+int __fastcall wave_in_device_select_redirect(Wave_In_Device *self, void *, unsigned int a1) {
+    return self->select(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
+Original Offset: 004C5AF0
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::get_caps(unsigned int) {
+    return 0;
+}
+
+int __fastcall wave_in_device_get_caps_redirect(Wave_In_Device *self, void *, unsigned int a1) {
+    return self->get_caps(a1);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 004C5B20
+Return Value: n/a
+Status: Complete
+*/
+void Wave_In_Device::set_rate(unsigned int) {
+}
+
+void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, unsigned int a1) {
+    self->set_rate(a1);
+}

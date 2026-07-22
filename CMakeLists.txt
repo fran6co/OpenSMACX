@@ -428,6 +428,7 @@ if(BUILD_TESTING)
         src/textindex_recovery.cpp
         src/time_recovery.cpp
         src/vector.cpp
+        src/caviar.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

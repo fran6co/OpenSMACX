@@ -152,3 +152,29 @@ int __fastcall sprite_unk2_redirect(
         Sprite *self, void *, int a, int b, int c, int d, int e) {
     return self->UNK2(a, b, c, d, e);
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005EAAFF
+Return Value: n/a
+Status: Complete
+*/
+void Sprite::UNK3(int, int) {
+}
+
+void __fastcall sprite_unk3_redirect(Sprite *self, void *, int a1, int a2) {
+    self->UNK3(a1, a2);
+}
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005EAD8F
+Return Value: n/a
+Status: Complete
+*/
+void Sprite::UNK4(int, int) {
+}
+
+void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2) {
+    self->UNK4(a1, a2);
+}

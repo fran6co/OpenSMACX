@@ -290,3 +290,16 @@ int __fastcall pull_down_unk6_redirect(
         PullDown *self, void *) {
     return self->UNK6();
 }
+
+/*
+Purpose: Unknown; the legacy implementation ignores its arguments and returns.
+Original Offset: 005FA740
+Return Value: n/a
+Status: Complete
+*/
+void PullDown::on_mouse_leave(int, int) {
+}
+
+void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2) {
+    self->on_mouse_leave(a1, a2);
+}

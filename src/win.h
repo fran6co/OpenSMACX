@@ -60,6 +60,10 @@ class DLLEXPORT Win {
   void set_vert_paging(int paging);
   void set_horz_paging(int paging);
 
+  void on_move(int a1, int a2);
+  void on_size(unsigned int a1, int a2, int a3);
+  void on_size_nc(unsigned int a1, int a2, int a3);
+  void on_sys_command(unsigned int a1, int a2, int a3);
  private:
   AutoSound auto_sound_;
   uint32_t field_98_;
@@ -372,3 +376,7 @@ extern int *WinDefaultFocus;
 void __fastcall win_unk8_redirect(Win *self, void *, int value);
 void __fastcall win_unk9_redirect(Win *self, void *, int value);
 void __fastcall win_reset_window_clip_redirect(Win *self, void *);
+void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2);
+void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
+void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
+void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3);

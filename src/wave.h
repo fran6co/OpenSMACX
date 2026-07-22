@@ -35,6 +35,11 @@ class DLLEXPORT Wave {
   ~Wave() { ; }
   int set_asdr();
 
+  int set_bufflimit(unsigned int a1);
+  int set_attack(unsigned int a1, unsigned int a2, unsigned int a3);
+  int set_sustain(unsigned int a1, unsigned int a2, unsigned int a3);
+  int set_decay(unsigned int a1, unsigned int a2, unsigned int a3);
+  int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
  private:
   uint32_t field_0_;
   uint32_t field_4_;
@@ -43,3 +48,8 @@ class DLLEXPORT Wave {
 };
 
 int __fastcall wave_set_asdr_redirect(Wave *self, void *);
+int __fastcall wave_set_bufflimit_redirect(Wave *self, void *, unsigned int a1);
+int __fastcall wave_set_attack_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
+int __fastcall wave_set_sustain_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
+int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
+int __fastcall wave_set_release_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
