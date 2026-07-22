@@ -157,6 +157,7 @@ set(OPENSMACX_SOURCES
     src/scroll.cpp
     src/scroll_oracle.cpp
     src/scenario.cpp
+    src/sounddevice.cpp
     src/spot.cpp
     src/spot_recovery.cpp
     src/spying_recovery.cpp
@@ -366,6 +367,7 @@ if(BUILD_TESTING)
         src/pulldown.cpp
         src/random.cpp
         src/scroll.cpp
+        src/sounddevice.cpp
         src/spot_recovery.cpp
         src/spying_recovery.cpp
         src/sprite.cpp

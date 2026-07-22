@@ -616,3 +616,16 @@ void __fastcall win_unk8_redirect(Win *self, void *, int value) {
 void __fastcall win_unk9_redirect(Win *self, void *, int value) {
     self->UNK9(value);
 }
+
+/*
+Purpose: Reset the window clip; the legacy implementation is a bare return.
+Original Offset: 005EE020
+Return Value: n/a
+Status: Complete
+*/
+void Win::reset_window_clip() {
+}
+
+void __fastcall win_reset_window_clip_redirect(Win *self, void *) {
+    self->reset_window_clip();
+}

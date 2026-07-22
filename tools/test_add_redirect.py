@@ -86,40 +86,87 @@ const RedirectSpec call_specs[] = {
             self._insert(0x00700000, "omega_redirect")
 
 
+class VisibilityTest(unittest.TestCase):
+    """The four files agreeing is not enough - the spec table must be able to
+    name the symbol. Wiring eighteen redirects to a new header once produced
+    eighteen 'not declared in this scope' errors after the tool had reported
+    success on every one."""
+
+    def run_against(self, headers, dllmain_text):
+        def make(name, text):
+            path = mock.Mock()
+            path.name = name
+            path.read_text.return_value = text
+            return path
+        paths = [make(name, text) for name, text in headers.items()]
+        with mock.patch.object(add_redirect, "SRC_DIR") as directory, \
+             mock.patch.object(add_redirect, "DLLMAIN") as dllmain:
+            directory.glob.return_value = paths
+            dllmain.read_text.return_value = dllmain_text
+            dllmain.name = "dllmain.cpp"
+            return add_redirect.visible_to_dllmain("beta_redirect")
+
+    def test_accepts_a_symbol_whose_header_is_included(self):
+        visible, _ = self.run_against(
+            {"ambience.h": "void __fastcall beta_redirect(A *self, void *);"},
+            '#include "ambience.h"\n')
+        self.assertTrue(visible)
+
+    def test_rejects_a_header_dllmain_does_not_include(self):
+        visible, detail = self.run_against(
+            {"ambience.h": "void __fastcall beta_redirect(A *self, void *);"},
+            '#include "buffer.h"\n')
+        self.assertFalse(visible)
+        self.assertIn("does not include", detail)
+
+    def test_rejects_a_symbol_no_header_declares(self):
+        visible, detail = self.run_against(
+            {"buffer.h": "void other_redirect(void);"}, '#include "buffer.h"\n')
+        self.assertFalse(visible)
+        self.assertIn("no header", detail)
+
+
 class VerifyTest(unittest.TestCase):
+    HEADERS = {"buffer.h": "void __fastcall beta_redirect(A *self, void *);"}
+
+    def verify(self, text, signature="OPENSMACX_SIGNATURE_00500000"):
+        def make(name, body):
+            path = mock.Mock()
+            path.name = name
+            path.read_text.return_value = body
+            return path
+        paths = [make(name, body) for name, body in self.HEADERS.items()]
+        with mock.patch.object(add_redirect, "SIGNATURES") as signatures, \
+             mock.patch.object(add_redirect, "SRC_DIR") as directory, \
+             mock.patch.object(add_redirect, "DLLMAIN") as dllmain:
+            signatures.read_text.return_value = signature
+            directory.glob.return_value = paths
+            dllmain.read_text.return_value = '#include "buffer.h"\n' + text
+            dllmain.name = "dllmain.cpp"
+            add_redirect.verify(0x00500000, "beta_redirect")
+
     def test_detects_a_count_that_disagrees_with_the_table(self):
         text = SpecInsertionTest.TABLE.replace(
             "RedirectCount = 3", "RedirectCount = 9")
-        with mock.patch.object(add_redirect, "SIGNATURES") as signatures, \
-             mock.patch.object(add_redirect, "DLLMAIN") as dllmain:
-            signatures.read_text.return_value = "OPENSMACX_SIGNATURE_00500000"
-            dllmain.read_text.return_value = text
-            with self.assertRaises(ValueError) as caught:
-                add_redirect.verify(0x00500000)
+        with self.assertRaises(ValueError) as caught:
+            self.verify(text)
         self.assertIn("RedirectCount", str(caught.exception))
 
     def test_detects_a_missing_signature_macro(self):
-        with mock.patch.object(add_redirect, "SIGNATURES") as signatures:
-            signatures.read_text.return_value = "no macros here"
-            with self.assertRaises(ValueError) as caught:
-                add_redirect.verify(0x00500000)
+        with self.assertRaises(ValueError) as caught:
+            self.verify(SpecInsertionTest.TABLE, signature="no macros here")
         self.assertIn("missing after regeneration", str(caught.exception))
 
     def test_counts_only_the_jump_table(self):
         # Entries after the call-table marker belong to a different array and
         # must not be counted against RedirectCount.
-        text = SpecInsertionTest.TABLE + """\
+        self.verify(SpecInsertionTest.TABLE + """\
         {
             0x00650000,
             reinterpret_cast<uintptr_t>(&call_redirect),
             OPENSMACX_SIGNATURE_00650000,
         },
-"""
-        with mock.patch.object(add_redirect, "SIGNATURES") as signatures, \
-             mock.patch.object(add_redirect, "DLLMAIN") as dllmain:
-            signatures.read_text.return_value = "OPENSMACX_SIGNATURE_00500000"
-            dllmain.read_text.return_value = text
-            add_redirect.verify(0x00500000)   # must not raise
+""")                                          # must not raise
 
 
 if __name__ == "__main__":

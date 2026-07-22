@@ -76,6 +76,33 @@ def symbol_defined(symbol: str) -> bool:
     return False
 
 
+def declaring_header(symbol: str) -> str | None:
+    """The header that declares this replacement, if any."""
+    pattern = re.compile(rf"\b{re.escape(symbol)}\s*\(")
+    for path in sorted(SRC_DIR.glob("*.h")):
+        if pattern.search(path.read_text()):
+            return path.name
+    return None
+
+
+def visible_to_dllmain(symbol: str) -> tuple[bool, str]:
+    """Whether the spec table can actually name this replacement.
+
+    The four files agreeing is not enough: a symbol declared in a header
+    dllmain.cpp does not include compiles into a spec table that cannot see
+    it. Wiring eighteen redirects to a new header once produced eighteen
+    identical 'not declared in this scope' errors well after the tool had
+    reported success on every one.
+    """
+    header = declaring_header(symbol)
+    if header is None:
+        return False, f"no header in src/ declares {symbol}"
+    if f'#include "{header}"' not in DLLMAIN.read_text():
+        return False, (f"{symbol} is declared in {header}, which "
+                       f"{DLLMAIN.name} does not include")
+    return True, header
+
+
 def add_csv_row(address: int, kind: str) -> Edit:
     original = REDIRECT_CSV.read_text()
     token = f"0x{address:08X}"
@@ -133,13 +160,16 @@ def regenerate_signatures() -> None:
             "signature regeneration failed:\n" + (result.stderr or result.stdout))
 
 
-def verify(address: int) -> None:
+def verify(address: int, symbol: str) -> None:
     """Confirm the four files now agree, before anything is built."""
     macro = f"OPENSMACX_SIGNATURE_{address:08X}"
     if macro not in SIGNATURES.read_text():
         raise ValueError(
             f"{macro} is missing after regeneration; the address may not be a "
             "recognised function start in the pinned executable")
+    visible, detail = visible_to_dllmain(symbol)
+    if not visible:
+        raise ValueError(detail)
     text = DLLMAIN.read_text()
     match = COUNT_RE.search(text)
     declared = int(match.group(1))
@@ -182,7 +212,7 @@ def main() -> int:
         signatures_before = SIGNATURES.read_text()
         edits.append(Edit(SIGNATURES, signatures_before))
         regenerate_signatures()
-        verify(address)
+        verify(address, args.symbol)
     except Exception as error:                      # noqa: BLE001
         for edit in reversed(edits):
             edit.path.write_text(edit.original)
