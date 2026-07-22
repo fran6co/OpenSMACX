@@ -39,6 +39,7 @@ class DLLEXPORT Datalink : GraphicWin {
   void UNK6();
   void UNK8();
   void UNK9();
+  void close();
   void on_left_click(int a1, int a2);
   void on_group_clicked(int a1, int a2);
   void on_mouse_move(int a1, int a2);
@@ -53,6 +54,16 @@ class DLLEXPORT Datalink : GraphicWin {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_clicked(int a1);
   void on_iface_button_toggled(int a1, int a2);
+
+ private:
+  // GraphicWin is pinned at 0xA14, which fixes the origin. Everything between
+  // there and the three fields close() clears is unmapped; the span holds
+  // their offsets in place and the test checks them directly.
+  uint8_t unmapped_A14_[0x29E0 - 0xA14];
+  int32_t field_29E0_;
+  uint8_t unmapped_29E4_[0x2A34 - 0x29E4];
+  int32_t field_2A34_;
+  int32_t field_2A38_;
 };
 
 void __fastcall datalink_unk6_redirect(Datalink *self, void *);
@@ -72,3 +83,4 @@ void __fastcall datalink_on_iface_left_double_click_redirect(Datalink *self, voi
 void __fastcall datalink_on_iface_right_double_click_redirect(Datalink *self, void *, int a1, int a2);
 void __fastcall datalink_on_iface_button_clicked_redirect(Datalink *self, void *, int a1);
 void __fastcall datalink_on_iface_button_toggled_redirect(Datalink *self, void *, int a1, int a2);
+void __fastcall datalink_close_redirect(Datalink *self, void *);

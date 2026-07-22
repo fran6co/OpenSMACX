@@ -54,6 +54,7 @@
 #include "prodpicker.h"
 #include "reportwin.h"
 #include "setupwin.h"
+#include "multidebug.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -79,7 +80,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 369;
+constexpr size_t RedirectCount = 372;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -423,6 +424,11 @@ bool install_redirects() {
             0x00428DB0,
             reinterpret_cast<uintptr_t>(&credits_on_button_clicked_redirect),
             OPENSMACX_SIGNATURE_00428DB0,
+        },
+        {
+            0x0042BD20,
+            reinterpret_cast<uintptr_t>(&datalink_close_redirect),
+            OPENSMACX_SIGNATURE_0042BD20,
         },
         {
             0x0042BEA0,
@@ -1100,6 +1106,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_005C9410,
         },
         {
+            0x005C98E0,
+            reinterpret_cast<uintptr_t>(&multi_debug_close_redirect),
+            OPENSMACX_SIGNATURE_005C98E0,
+        },
+        {
             0x005E4ADA,
             reinterpret_cast<uintptr_t>(&sprite_unk1_redirect),
             OPENSMACX_SIGNATURE_005E4ADA,
@@ -1313,6 +1324,11 @@ bool install_redirects() {
             0x00607810,
             reinterpret_cast<uintptr_t>(&base_button_on_key_up_redirect),
             OPENSMACX_SIGNATURE_00607810,
+        },
+        {
+            0x00614320,
+            reinterpret_cast<uintptr_t>(&file_win_unk1_redirect),
+            OPENSMACX_SIGNATURE_00614320,
         },
         {
             0x00614350,

@@ -43,6 +43,7 @@
 #include "../src/prodpicker.h"
 #include "../src/reportwin.h"
 #include "../src/setupwin.h"
+#include "../src/multidebug.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9219,6 +9220,63 @@ void test_status_win_set_loc() {
     expect_storage_bytes(storage.data(), expected.data(), storage.size());
 }
 
+void test_field_store_clears() {
+    // Three recoveries that zero specific fields. As with set_loc, the point
+    // is which bytes move: each is checked at the absolute offset the original
+    // writes, with every other byte compared against its seed, so a field
+    // placed even one byte off fails both ways.
+    auto read32 = [](const std::vector<uint8_t> &s, size_t off) {
+        int32_t v = 0;
+        std::memcpy(&v, s.data() + 16 + off, sizeof(v));
+        return v;
+    };
+    auto read8 = [](const std::vector<uint8_t> &s, size_t off) {
+        return s[16 + off];
+    };
+
+    std::vector<uint8_t> md(sizeof(MultiDebug) + 32), md_want(md.size());
+    auto *debug = reinterpret_cast<MultiDebug *>(md.data() + 16);
+    seed_storage(md.data(), md_want.data(), md.size());
+    std::memcpy(md_want.data(), md.data(), md.size());
+    debug->close();
+    expect(read32(md, 0xA3C) == 0);
+    std::memcpy(md_want.data() + 16 + 0xA3C, md.data() + 16 + 0xA3C, 4);
+    expect_storage_bytes(md.data(), md_want.data(), md.size());
+    multi_debug_close_redirect(debug, nullptr);
+
+    std::vector<uint8_t> dl(sizeof(Datalink) + 32), dl_want(dl.size());
+    auto *link = reinterpret_cast<Datalink *>(dl.data() + 16);
+    seed_storage(dl.data(), dl_want.data(), dl.size());
+    std::memcpy(dl_want.data(), dl.data(), dl.size());
+    link->close();
+    expect(read32(dl, 0x29E0) == 0);
+    expect(read32(dl, 0x2A34) == 0);
+    expect(read32(dl, 0x2A38) == 0);
+    std::memcpy(dl_want.data() + 16 + 0x29E0, dl.data() + 16 + 0x29E0, 4);
+    std::memcpy(dl_want.data() + 16 + 0x2A34, dl.data() + 16 + 0x2A34, 8);
+    expect_storage_bytes(dl.data(), dl_want.data(), dl.size());
+    datalink_close_redirect(link, nullptr);
+
+    // Four of these five are single bytes, so a field widened to a dword by
+    // mistake would clear three neighbours the original leaves alone.
+    std::vector<uint8_t> fw(sizeof(FileWin) + 32), fw_want(fw.size());
+    auto *files = reinterpret_cast<FileWin *>(fw.data() + 16);
+    seed_storage(fw.data(), fw_want.data(), fw.size());
+    std::memcpy(fw_want.data(), fw.data(), fw.size());
+    files->UNK1();
+    expect(read8(fw, 0x208) == 0);
+    expect(read8(fw, 0x30C) == 0);
+    expect(read8(fw, 0x410) == 0);
+    expect(read8(fw, 0x531) == 0);
+    expect(read32(fw, 0x514) == 0);
+    for (size_t offset : {0x208u, 0x30Cu, 0x410u, 0x531u}) {
+        fw_want[16 + offset] = fw[16 + offset];
+    }
+    std::memcpy(fw_want.data() + 16 + 0x514, fw.data() + 16 + 0x514, 4);
+    expect_storage_bytes(fw.data(), fw_want.data(), fw.size());
+    file_win_unk1_redirect(files, nullptr);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -9580,5 +9638,6 @@ int main() {
     test_guarded_store_recoveries();
     test_win_client_to_screen();
     test_status_win_set_loc();
+    test_field_store_clears();
     return failures == 0 ? 0 : 1;
 }

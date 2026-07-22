@@ -474,7 +474,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0042B940,0x0042BAA3,355,.text,?set_cat_faction@Datalink@@QAEXXZ,void (__thiscall ?set_cat_faction@Datalink@@QAEXXZ)(Datalink* this),0x0042B940-0x0042BAA3,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,2
 0x0042BAB0,0x0042BCB1,513,.text,?set_cat_terraform@Datalink@@QAEXXZ,void (__thiscall ?set_cat_terraform@Datalink@@QAEXXZ)(Datalink* this),0x0042BAB0-0x0042BCB1,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,2
 0x0042BCC0,0x0042BD14,84,.text,?set_index@Datalink@@QAEXHH@Z,"void (__thiscall ?set_index@Datalink@@QAEXHH@Z)(Datalink* this, int, int)",0x0042BCC0-0x0042BD14,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
-0x0042BD20,0x0042BD35,21,.text,?close@Datalink@@QAEXXZ,void (__thiscall ?close@Datalink@@QAEXXZ)(Datalink* this),0x0042BD20-0x0042BD35,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0042BD20,0x0042BD35,21,.text,?close@Datalink@@QAEXXZ,void (__thiscall ?close@Datalink@@QAEXXZ)(Datalink* this),0x0042BD20-0x0042BD35,game,hidden;sp_ready;purged_ok,src/datalink.cpp:244,Complete,,,source_complete,,,,0,0
 0x0042BD40,0x0042BD5B,27,.text,?show@Datalink@@QAEXH@Z,"void (__thiscall ?show@Datalink@@QAEXH@Z)(Datalink* this, int)",0x0042BD40-0x0042BD5B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x0042BD60,0x0042BD79,25,.text,?hide@Datalink@@QAEXXZ,void (__thiscall ?hide@Datalink@@QAEXXZ)(Datalink* this),0x0042BD60-0x0042BD79,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0042BD80,0x0042BDFA,122,.text,?UNK4@Datalink@@QAEXHH@Z,"void (__thiscall ?UNK4@Datalink@@QAEXHH@Z)(Datalink* this, int, int)",0x0042BD80-0x0042BDFA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -3798,7 +3798,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005C97E0,0x005C97EA,10,.text,??__Fg_MULTIDEBUG@@YAXXZ,,0x005C97E0-0x005C97EA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005C97F0,0x005C9860,144,.text,??0MultiDebug@@QAE@XZ,void (__thiscall ??0MultiDebug@@QAE@XZ)(MultiDebug* this),0x005C97F0-0x005C9860;0x00662AF0-0x00662B10,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x005C9860,0x005C98DB,123,.text,?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z,"int (__thiscall ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z)(MultiDebug* this, Net*, Win*, LPBYTE)",0x005C9860-0x005C98DB,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
-0x005C98E0,0x005C98EB,11,.text,?close@MultiDebug@@QAEXXZ,void (__thiscall ?close@MultiDebug@@QAEXXZ)(MultiDebug* this),0x005C98E0-0x005C98EB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
+0x005C98E0,0x005C98EB,11,.text,?close@MultiDebug@@QAEXXZ,void (__thiscall ?close@MultiDebug@@QAEXXZ)(MultiDebug* this),0x005C98E0-0x005C98EB,game,hidden;sp_ready;purged_ok,src/multidebug.cpp:23,Complete,,,source_complete,,,,0,1
 0x005C98F0,0x005C98F8,8,.text,?timer_callback@MultiDebug@@QAEXXZ,void (__thiscall ?timer_callback@MultiDebug@@QAEXXZ)(MultiDebug* this),0x005C98F0-0x005C98F8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005C9900,0x005C9914,20,.text,?timer_callback_daemon@MultiDebug@@QAAXH@Z,,0x005C9900-0x005C9914,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005C9920,0x005C9DF9,1241,.text,?on_redraw@MultiDebug@@QAEXXZ,void (__thiscall ?on_redraw@MultiDebug@@QAEXXZ)(MultiDebug* this),0x005C9920-0x005C9DF9,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,0
@@ -4928,7 +4928,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00614140,0x006141BC,124,.text,?add_def_ext@FileWin@@QAEHPAD@Z,"int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)",0x00614140-0x006141BC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,3
 0x006141C0,0x006142C9,265,.text,?set_def_name@FileWin@@QAEHPAD@Z,"int (__thiscall ?set_def_name@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)",0x006141C0-0x006142C9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,5
 0x006142D0,0x0061431E,78,.text,?set_directory@FileWin@@QAEHPAD@Z,"int (__thiscall ?set_directory@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)",0x006142D0-0x0061431E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
-0x00614320,0x00614341,33,.text,?UNK1@FileWin@@QAEXXZ,void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this),0x00614320-0x00614341,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00614320,0x00614341,33,.text,?UNK1@FileWin@@QAEXXZ,void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this),0x00614320-0x00614341,game,hidden;sp_ready;purged_ok,src/filewin.cpp:50,Complete,,,source_complete,,,,0,0
 0x00614350,0x00614353,3,.text,?UNK2@FileWin@@QAEXH@Z,"void (__thiscall ?UNK2@FileWin@@QAEXH@Z)(FileWin* this, int)",0x00614350-0x00614353,game,hidden;sp_ready;purged_ok,src/filewin.cpp:36,Complete,,,source_complete,,,,0,0
 0x00614360,0x00614694,820,.text,?UNK3@FileWin@@QAEHPAD@Z,"int (__thiscall ?UNK3@FileWin@@QAEHPAD@Z)(FileWin* this, int8* lpPathName)",0x00614360-0x00614694,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,4
 0x006146A0,0x00614B59,1209,.text,?UNK4@FileWin@@QAEXXZ,void (__thiscall ?UNK4@FileWin@@QAEXXZ)(FileWin* this),0x006146A0-0x00614B59,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,2

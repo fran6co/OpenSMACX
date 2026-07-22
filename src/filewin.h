@@ -33,14 +33,29 @@ class DLLEXPORT FileWin {
   FileWin() { ; }
   ~FileWin() { ; }
   void UNK6();
+  void UNK1();
   void UNK2(int a1);
 
  private:
   // Not a base class: the constructor builds a FlatButton at +0x660 on an
   // offset `this`. The constructor reaches 0x33C0, so the object is at least
   // that large; nothing else about it is established.
-  uint8_t unmapped_0_[0x33C4];
+  // The FlatButton member sits at 0x660, so these five all precede it and
+  // belong to FileWin itself. The spans hold their offsets in place; the test
+  // reads each back where the original writes it.
+  uint8_t unmapped_0_[0x208];
+  uint8_t field_208_;
+  uint8_t unmapped_209_[0x30C - 0x209];
+  uint8_t field_30C_;
+  uint8_t unmapped_30D_[0x410 - 0x30D];
+  uint8_t field_410_;
+  uint8_t unmapped_411_[0x514 - 0x411];
+  int32_t field_514_;
+  uint8_t unmapped_518_[0x531 - 0x518];
+  uint8_t field_531_;
+  uint8_t unmapped_532_[0x33C4 - 0x532];
 };
 
 void __fastcall file_win_unk6_redirect(FileWin *self, void *);
 void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1);
+void __fastcall file_win_unk1_redirect(FileWin *self, void *);
