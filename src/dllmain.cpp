@@ -55,6 +55,7 @@
 #include "reportwin.h"
 #include "setupwin.h"
 #include "multidebug.h"
+#include "tutwin.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -80,7 +81,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 372;
+constexpr size_t RedirectCount = 376;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -991,6 +992,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004B9F90,
         },
         {
+            0x004BA720,
+            reinterpret_cast<uintptr_t>(&tut_win_unk1_redirect),
+            OPENSMACX_SIGNATURE_004BA720,
+        },
+        {
+            0x004BDDD0,
+            reinterpret_cast<uintptr_t>(&tut_win_unk3_redirect),
+            OPENSMACX_SIGNATURE_004BDDD0,
+        },
+        {
             0x004C3E90,
             reinterpret_cast<uintptr_t>(&world_win_on_left_double_click_redirect),
             OPENSMACX_SIGNATURE_004C3E90,
@@ -1366,9 +1377,19 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00618270,
         },
         {
+            0x00618280,
+            reinterpret_cast<uintptr_t>(&caviar_unk8_redirect),
+            OPENSMACX_SIGNATURE_00618280,
+        },
+        {
             0x00618290,
             reinterpret_cast<uintptr_t>(&caviar_unk9_redirect),
             OPENSMACX_SIGNATURE_00618290,
+        },
+        {
+            0x00618320,
+            reinterpret_cast<uintptr_t>(&caviar_unk10_redirect),
+            OPENSMACX_SIGNATURE_00618320,
         },
         {
             0x006183A0,

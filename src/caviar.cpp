@@ -209,3 +209,33 @@ void Caviar::UNK12(int, int, int) {
 void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int a3) {
     self->UNK12(a1, a2, a3);
 }
+
+/*
+Purpose: Store a single value at 0x108.
+Original Offset: 00618280
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK8(int a1) {
+    field_108_ = a1;
+}
+
+/*
+Purpose: Store three values into the triplet at 0x2C.
+Original Offset: 00618320
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK10(int a1, int a2, int a3) {
+    field_2C_ = a1;
+    field_30_ = a2;
+    field_34_ = a3;
+}
+
+void __fastcall caviar_unk8_redirect(Caviar *self, void *, int a1) {
+    self->UNK8(a1);
+}
+
+void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int a3) {
+    self->UNK10(a1, a2, a3);
+}

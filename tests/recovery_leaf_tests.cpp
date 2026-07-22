@@ -44,6 +44,7 @@
 #include "../src/reportwin.h"
 #include "../src/setupwin.h"
 #include "../src/multidebug.h"
+#include "../src/tutwin.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9277,6 +9278,81 @@ void test_field_store_clears() {
     file_win_unk1_redirect(files, nullptr);
 }
 
+void test_field_store_writes() {
+    auto read32 = [](const std::vector<uint8_t> &s, size_t off) {
+        int32_t v = 0;
+        std::memcpy(&v, s.data() + 16 + off, sizeof(v));
+        return v;
+    };
+    auto keep = [](std::vector<uint8_t> &want, const std::vector<uint8_t> &got,
+                   std::initializer_list<size_t> offsets) {
+        for (size_t off : offsets) {
+            std::memcpy(want.data() + 16 + off, got.data() + 16 + off, 4);
+        }
+    };
+
+    // Caviar's fields were carved out of an opaque span that the class's
+    // pinned 0x13D0 protects: if the carving shifted anything the build fails
+    // before this runs. What is left to check is that each value lands where
+    // the original puts it.
+    std::vector<uint8_t> cv(sizeof(Caviar) + 32), cv_want(cv.size());
+    auto *caviar = reinterpret_cast<Caviar *>(cv.data() + 16);
+    seed_storage(cv.data(), cv_want.data(), cv.size());
+    std::memcpy(cv_want.data(), cv.data(), cv.size());
+    caviar->UNK10(INT_MIN, -1, INT_MAX);
+    caviar->UNK8(0x5A5A5A5A);
+    expect(read32(cv, 0x2C) == INT_MIN);
+    expect(read32(cv, 0x30) == -1);
+    expect(read32(cv, 0x34) == INT_MAX);
+    expect(read32(cv, 0x108) == 0x5A5A5A5A);
+    keep(cv_want, cv, {0x2C, 0x30, 0x34, 0x108});
+    expect_storage_bytes(cv.data(), cv_want.data(), cv.size());
+    caviar_unk10_redirect(caviar, nullptr, 1, 2, 3);
+    caviar_unk8_redirect(caviar, nullptr, 4);
+    expect(read32(cv, 0x2C) == 1);
+    expect(read32(cv, 0x30) == 2);
+    expect(read32(cv, 0x34) == 3);
+    expect(read32(cv, 0x108) == 4);
+
+    // TutWin::UNK1 splits nine fields between zero and -1, which is the part
+    // a transcription most easily gets backwards, and clears a shared marker
+    // that lives outside the object entirely.
+    std::vector<uint8_t> tw(sizeof(TutWin) + 32), tw_want(tw.size());
+    auto *tutorial = reinterpret_cast<TutWin *>(tw.data() + 16);
+    seed_storage(tw.data(), tw_want.data(), tw.size());
+    std::memcpy(tw_want.data(), tw.data(), tw.size());
+    uint32_t marker = 0xDEADBEEF;
+    uint32_t *const saved_marker = TutWinShownFlag;
+    TutWinShownFlag = &marker;
+    tutorial->UNK1();
+    expect(marker == 0);
+    expect(read32(tw, 0x537C) == -1);
+    expect(read32(tw, 0x5380) == -1);
+    expect(read32(tw, 0x539C) == -1);
+    expect(read32(tw, 0x53AC) == -1);
+    expect(read32(tw, 0x53A4) == 0);
+    expect(read32(tw, 0x53A8) == 0);
+    expect(read32(tw, 0x53B8) == 0);
+    expect(read32(tw, 0x53C4) == 0);
+    expect(read32(tw, 0x53D4) == 0);
+    keep(tw_want, tw, {0x537Cu, 0x5380u, 0x539Cu, 0x53A4u, 0x53A8u,
+                       0x53ACu, 0x53B8u, 0x53C4u, 0x53D4u});
+    expect_storage_bytes(tw.data(), tw_want.data(), tw.size());
+
+    seed_storage(tw.data(), tw_want.data(), tw.size());
+    std::memcpy(tw_want.data(), tw.data(), tw.size());
+    tutorial->UNK3(0x11223344);
+    expect(read32(tw, 0x53D4) == 0x11223344);
+    keep(tw_want, tw, {0x53D4u});
+    expect_storage_bytes(tw.data(), tw_want.data(), tw.size());
+    tut_win_unk3_redirect(tutorial, nullptr, -9);
+    expect(read32(tw, 0x53D4) == -9);
+    marker = 1;
+    tut_win_unk1_redirect(tutorial, nullptr);
+    expect(marker == 0);
+    TutWinShownFlag = saved_marker;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -9639,5 +9715,6 @@ int main() {
     test_win_client_to_screen();
     test_status_win_set_loc();
     test_field_store_clears();
+    test_field_store_writes();
     return failures == 0 ? 0 : 1;
 }

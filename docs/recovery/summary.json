@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 39,
-      "source_complete": 876,
+      "source_complete": 880,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4715
+      "unrecovered": 4711
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,14 +1317,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 822,
-    "matched_function_starts": 822,
-    "unique_addresses": 822,
+    "annotations": 826,
+    "matched_function_starts": 826,
+    "unique_addresses": 826,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 182,
+      "data": 183,
       "function": 46
     },
     "items": [
@@ -3138,6 +3138,15 @@
         "type": "Time *"
       },
       {
+        "address": "0x008CC244",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/tutwin.cpp:23",
+        "symbol": "TutWinShownFlag",
+        "type": "uint32_t *"
+      },
+      {
         "address": "0x009AB868",
         "function": "",
         "function_address": "",
@@ -3382,6 +3391,6 @@
       }
     ],
     "matched_function_starts": 46,
-    "total": 228
+    "total": 229
   }
 }
