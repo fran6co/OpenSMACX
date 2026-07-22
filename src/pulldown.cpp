@@ -230,3 +230,63 @@ PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
         reinterpret_cast<GraphicWin *>(self), nullptr);
     return self;
 }
+
+/*
+Purpose: Legacy stub; the original body returns 8 without reading its
+         arguments.
+Original Offset: 005F8C90
+Status: Complete
+*/
+int PullDown::UNK2(int) {
+    return 8;
+}
+
+int __fastcall pull_down_unk2_redirect(
+        PullDown *self, void *, int a) {
+    return self->UNK2(a);
+}
+
+/*
+Purpose: Legacy stub; the original body returns 8 without reading its
+         arguments.
+Original Offset: 005F8CA0
+Status: Complete
+*/
+int PullDown::UNK3(int, int, int) {
+    return 8;
+}
+
+int __fastcall pull_down_unk3_redirect(
+        PullDown *self, void *, int a, int b, int c) {
+    return self->UNK3(a, b, c);
+}
+
+/*
+Purpose: Legacy stub; the original body returns 1 without reading its
+         arguments.
+Original Offset: 005FA750
+Status: Complete
+*/
+int PullDown::UNK5() {
+    return 1;
+}
+
+int __fastcall pull_down_unk5_redirect(
+        PullDown *self, void *) {
+    return self->UNK5();
+}
+
+/*
+Purpose: Legacy stub; the original body returns 1 without reading its
+         arguments.
+Original Offset: 005FA760
+Status: Complete
+*/
+int PullDown::UNK6() {
+    return 1;
+}
+
+int __fastcall pull_down_unk6_redirect(
+        PullDown *self, void *) {
+    return self->UNK6();
+}

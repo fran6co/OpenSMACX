@@ -25,6 +25,8 @@ class Buffer;  // forward declaration
   */
 class DLLEXPORT Sprite {
  public:
+  int UNK1(int a, int b, int c, int d, int e, int f, int g);
+  int UNK2(int a, int b, int c, int d, int e);
   int draw(Buffer *buffer, int a, int b, int c, int x, int y);
   Sprite();
   ~Sprite() { ; }
@@ -82,3 +84,8 @@ typedef int(__thiscall func_sprite_draw_original)(
 #pragma GCC diagnostic pop
 #endif
 extern func_sprite_draw_original *SpriteDrawOriginal;
+
+int __fastcall sprite_unk1_redirect(
+    Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g);
+int __fastcall sprite_unk2_redirect(
+    Sprite *self, void *, int a, int b, int c, int d, int e);

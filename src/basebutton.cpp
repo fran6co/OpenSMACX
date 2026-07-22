@@ -368,3 +368,45 @@ void __fastcall base_button_set_text_color3_redirect(
         BaseButton *self, void *, int color1, int color2, int color3, int color4) {
     self->set_text_color3(color1, color2, color3, color4);
 }
+
+/*
+Purpose: Legacy stub; the original body returns nothing without reading its
+         arguments.
+Original Offset: 006077F0
+Status: Complete
+*/
+void BaseButton::on_key_click(int, int) {
+}
+
+void __fastcall base_button_on_key_click_redirect(
+        BaseButton *self, void *, int a, int b) {
+    self->on_key_click(a, b);
+}
+
+/*
+Purpose: Legacy stub; the original body returns nothing without reading its
+         arguments.
+Original Offset: 00607800
+Status: Complete
+*/
+void BaseButton::on_key_down(int) {
+}
+
+void __fastcall base_button_on_key_down_redirect(
+        BaseButton *self, void *, int a) {
+    self->on_key_down(a);
+}
+
+/*
+Purpose: Legacy stub; the original body returns nothing without reading its
+         arguments.
+Original Offset: 00607810
+Status: Complete
+*/
+void BaseButton::on_key_up(int) {
+}
+
+void __fastcall base_button_on_key_up_redirect(
+        BaseButton *self, void *, int a) {
+    self->on_key_up(a);
+}
