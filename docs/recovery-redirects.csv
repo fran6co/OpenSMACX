@@ -96,6 +96,9 @@ address,kind
 0x00606F30,jump
 0x00607040,jump
 0x006070C0,jump
+0x00607360,jump
+0x006073A0,jump
+0x006073E0,jump
 0x00607420,jump
 0x00607450,jump
 0x00607480,jump
