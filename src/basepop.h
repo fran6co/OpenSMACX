@@ -24,6 +24,13 @@
   */
 class DLLEXPORT BasePop : GraphicWin {
  public:
+  static void set_def_string_color(int c1, int c2, int c3, int c4);
+  static void set_def_string_color2(int c1, int c2, int c3, int c4);
+  static void set_def_string_color3(int c1, int c2, int c3, int c4);
+  static void set_def_string_color_hyper(int c1, int c2, int c3, int c4);
+  static void set_def_button_color(int c1, int c2, int c3, int c4);
+  static void set_def_button_color2(int c1, int c2, int c3, int c4);
+  static void set_def_button_color3(int c1, int c2, int c3, int c4);
   // Static defaults shared by every popup; __cdecl in the original because
   // they take no instance.
   static int set_def_string_font(Font *font1, Font *font2, Font *font3,
@@ -362,3 +369,18 @@ int __cdecl base_pop_set_def_button_font_redirect(
 // outside the hybrid process rebind them.
 extern Font **BasePopDefaultStringFonts;
 extern Font **BasePopDefaultButtonFonts;
+
+void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int c4);
+void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int c4);
+void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int c4);
+void __cdecl base_pop_set_def_string_color_hyper_redirect(
+    int c1, int c2, int c3, int c4);
+void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int c4);
+void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int c4);
+void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int c4);
+
+// Two interleaved default-colour tables. The string table carries four tiers
+// at a 0x10 slot stride; the button table carries three at 0xC. Tests rebind
+// both.
+extern uint32_t *BasePopDefaultStringColors;
+extern uint32_t *BasePopDefaultButtonColors;

@@ -51,7 +51,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 151;
+constexpr size_t RedirectCount = 159;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -232,6 +232,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_005EDFE0,
         },
         {
+            0x005F2CE0,
+            reinterpret_cast<uintptr_t>(&win_set_def_focus_redirect),
+            OPENSMACX_SIGNATURE_005F2CE0,
+        },
+        {
             0x005F6A30,
             reinterpret_cast<uintptr_t>(&win_on_set_cursor_redirect),
             OPENSMACX_SIGNATURE_005F6A30,
@@ -265,6 +270,41 @@ bool install_redirects() {
             0x005FB230,
             reinterpret_cast<uintptr_t>(&menu_unk4_redirect),
             OPENSMACX_SIGNATURE_005FB230,
+        },
+        {
+            0x00604900,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_string_color_redirect),
+            OPENSMACX_SIGNATURE_00604900,
+        },
+        {
+            0x00604930,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_string_color2_redirect),
+            OPENSMACX_SIGNATURE_00604930,
+        },
+        {
+            0x00604960,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_string_color3_redirect),
+            OPENSMACX_SIGNATURE_00604960,
+        },
+        {
+            0x00604990,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_string_color_hyper_redirect),
+            OPENSMACX_SIGNATURE_00604990,
+        },
+        {
+            0x006049F0,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_button_color_redirect),
+            OPENSMACX_SIGNATURE_006049F0,
+        },
+        {
+            0x00604A20,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_button_color2_redirect),
+            OPENSMACX_SIGNATURE_00604A20,
+        },
+        {
+            0x00604A50,
+            reinterpret_cast<uintptr_t>(&base_pop_set_def_button_color3_redirect),
+            OPENSMACX_SIGNATURE_00604A50,
         },
         {
             0x006077F0,

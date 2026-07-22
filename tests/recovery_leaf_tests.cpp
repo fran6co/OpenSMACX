@@ -8330,6 +8330,85 @@ void test_constant_return_stubs() {
     expect_storage_bytes(bb_storage, bb_expected, sizeof(bb_storage));
 }
 
+void test_base_pop_default_colors() {
+    // Two interleaved tables with different geometry: the string table has
+    // four tiers so its slots are 0x10 apart, the button table three at 0xC.
+    // Both are compared whole after every call, because the failure mode a
+    // wrong stride produces is writing a sibling slot rather than a sibling
+    // tier - which a check of only the four intended cells would miss.
+    uint32_t string_table[16];
+    uint32_t button_table[12];
+    uint32_t *const saved_string = BasePopDefaultStringColors;
+    uint32_t *const saved_button = BasePopDefaultButtonColors;
+    BasePopDefaultStringColors = string_table;
+    BasePopDefaultButtonColors = button_table;
+
+    const int colors[4] = {INT_MIN, -1, 0x5A5A5A5A, INT_MAX};
+
+    struct TableCase {
+        uint32_t *table;
+        size_t cells;
+        size_t stride;
+        size_t tier;
+        void (*member)(int, int, int, int);
+        void (__cdecl *redirect)(int, int, int, int);
+    };
+    const TableCase cases[] = {
+        {string_table, 16, 0x10, 0, &BasePop::set_def_string_color,
+         base_pop_set_def_string_color_redirect},
+        {string_table, 16, 0x10, 1, &BasePop::set_def_string_color2,
+         base_pop_set_def_string_color2_redirect},
+        {string_table, 16, 0x10, 2, &BasePop::set_def_string_color3,
+         base_pop_set_def_string_color3_redirect},
+        {string_table, 16, 0x10, 3, &BasePop::set_def_string_color_hyper,
+         base_pop_set_def_string_color_hyper_redirect},
+        {button_table, 12, 0x0C, 0, &BasePop::set_def_button_color,
+         base_pop_set_def_button_color_redirect},
+        {button_table, 12, 0x0C, 1, &BasePop::set_def_button_color2,
+         base_pop_set_def_button_color2_redirect},
+        {button_table, 12, 0x0C, 2, &BasePop::set_def_button_color3,
+         base_pop_set_def_button_color3_redirect},
+    };
+    for (const TableCase &test : cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            uint32_t expected[16];
+            for (size_t index = 0; index < test.cells; ++index) {
+                test.table[index] = 0xA5000000U ^ static_cast<uint32_t>(index);
+                expected[index] = test.table[index];
+            }
+            for (size_t slot = 0; slot < 4; ++slot) {
+                expected[(slot * test.stride + test.tier * 4) / 4] =
+                    static_cast<uint32_t>(colors[slot]);
+            }
+            if (adapter) {
+                test.redirect(colors[0], colors[1], colors[2], colors[3]);
+            } else {
+                test.member(colors[0], colors[1], colors[2], colors[3]);
+            }
+            for (size_t index = 0; index < test.cells; ++index) {
+                expect(test.table[index] == expected[index]);
+            }
+        }
+    }
+
+    BasePopDefaultButtonColors = saved_button;
+    BasePopDefaultStringColors = saved_string;
+}
+
+void test_win_set_def_focus() {
+    int focus = 0x5A5A5A5A;
+    int *const saved = WinDefaultFocus;
+    WinDefaultFocus = &focus;
+    const int values[] = {0, 1, -1, INT_MIN, INT_MAX};
+    for (int value : values) {
+        Win::set_def_focus(value);
+        expect(focus == value);
+        win_set_def_focus_redirect(~value);
+        expect(focus == ~value);
+    }
+    WinDefaultFocus = saved;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -8429,6 +8508,8 @@ int main() {
     test_alpha_net_close();
     test_win_clear_bubble_text();
     test_constant_return_stubs();
+    test_base_pop_default_colors();
+    test_win_set_def_focus();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

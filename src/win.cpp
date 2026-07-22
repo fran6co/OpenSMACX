@@ -563,3 +563,18 @@ int __fastcall win_on_set_cursor_redirect(
         Win *self, void *, void *a, unsigned int b, unsigned int c) {
     return self->on_set_cursor(a, b, c);
 }
+
+int *WinDefaultFocus = reinterpret_cast<int *>(0x009B7AEC);
+
+/*
+Purpose: Record the window that receives focus by default.
+Original Offset: 005F2CE0
+Status: Complete
+*/
+void Win::set_def_focus(int focus) {
+    *WinDefaultFocus = focus;
+}
+
+void __cdecl win_set_def_focus_redirect(int focus) {
+    Win::set_def_focus(focus);
+}
