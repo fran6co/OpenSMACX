@@ -63,6 +63,7 @@ address,kind
 0x005EE0F0,jump
 0x005EE110,jump
 0x005F2CA0,jump
+0x005F2CE0,jump
 0x005F6A30,jump
 0x005F7E90,jump
 0x005F8500,jump
@@ -91,7 +92,14 @@ address,kind
 0x00601B80,jump
 0x006046F0,jump
 0x006048C0,jump
+0x00604900,jump
+0x00604930,jump
+0x00604960,jump
+0x00604990,jump
 0x006049C0,jump
+0x006049F0,jump
+0x00604A20,jump
+0x00604A50,jump
 0x00605370,jump
 0x006054D0,dependency
 0x00605840,jump

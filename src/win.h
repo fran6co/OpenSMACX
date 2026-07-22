@@ -47,6 +47,7 @@ class DLLEXPORT Win {
   int is_dialog_focus();
   int set_cursor(int name);
   static void clear_bubble_text();
+  static void set_def_focus(int focus);
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -361,3 +362,6 @@ int __fastcall win_unk6_redirect(
     Win *self, void *, int a);
 int __fastcall win_on_set_cursor_redirect(
     Win *self, void *, void *a, unsigned int b, unsigned int c);
+
+void __cdecl win_set_def_focus_redirect(int focus);
+extern int *WinDefaultFocus;
