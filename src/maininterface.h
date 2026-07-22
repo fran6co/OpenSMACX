@@ -33,6 +33,9 @@ class DLLEXPORT MainInterface : GraphicWin {
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
   void clear_message();
+  void UNK2();
+  void UNK3();
+  void UNK4();
 
  private:
   uint32_t field_A14_;
@@ -309,4 +312,7 @@ class DLLEXPORT MainInterface : GraphicWin {
 };
 
 void __fastcall main_interface_clear_message_redirect(MainInterface *self, void *);
+void __fastcall main_interface_unk2_redirect(MainInterface *self, void *);
+void __fastcall main_interface_unk3_redirect(MainInterface *self, void *);
+void __fastcall main_interface_unk4_redirect(MainInterface *self, void *);
 DLLEXPORT void __cdecl desktop_update();
