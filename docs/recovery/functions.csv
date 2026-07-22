@@ -4067,7 +4067,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005DE4D0,0x005DE580,176,.text,sub_5de4d0,,0x005DE4D0-0x005DE580,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005DE580,0x005DE721,417,.text,?change_color@Buffer@@QAEHHH@Z,"int (__thiscall ?change_color@Buffer@@QAEHHH@Z)(Buffer* this, int, int)",0x005DE580-0x005DE721,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,12
 0x005DE730,0x005DE8EB,443,.text,?change_color@Buffer@@QAEHPAURECT@@HH@Z,"int (__thiscall ?change_color@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)",0x005DE730-0x005DE8EB,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x005DE8F0,0x005DEA12,290,.text,?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z,"int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)",0x005DE8F0-0x005DEA12,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,24
+0x005DE8F0,0x005DEA12,290,.text,?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z,"int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)",0x005DE8F0-0x005DEA12,game,hidden;sp_ready;purged_ok,src/buffer.cpp:654,Complete,,,source_complete,,,,1,24
 0x005DEA20,0x005DEB1C,252,.text,sub_5dea20,,0x005DEA20-0x005DEB1C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005DEB20,0x005DEF8F,1135,.text,sub_5deb20,,0x005DEB20-0x005DEF8F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005DEF90,0x005DEFD4,68,.text,?clear_links@Buffer@@QAEXXZ,void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this),0x005DEF90-0x005DEFD4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,5

@@ -364,13 +364,11 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
 2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover `Buffer::sync_to_palette` at `0x005DE8F0` (24 callers), then the three BaseButton instance colour setters at `0x00607360` through `0x006073E0` that depend on it. The analysis is done and every dependency is source-owned; only implementation and fixtures remain.
+3. Recover `Buffer::set_clip` at `0x005D8000` (114 callers) and the three BaseButton instance colour setters at `0x00607360` through `0x006073E0`. `Buffer::sync_to_palette` is recovered, so both are now unblocked.
 
-   `sync_to_palette(Palette *palette)` returns 7 when `ppv_bits_` is null and 3 when `palette` is null, both before touching any field. Otherwise, when `field_4A4_` differs from the palette's `field_400_`, it caches that value, republishes the palette through `palette->get_rgbquad(reinterpret_cast<RGBQUAD *>(dib_), 0, 0x100)`, and - only if the device context is non-null - calls `SetDIBColorTable(device, 0, 0x100, table)` and releases one reference. Both halves of that acquire/release are now the recovered `get_hdc()`/`release_hdc(1)` rather than the inlined copy the original emits; the legacy body re-reads the cached handle after a failed GetDC, which `get_hdc` already reproduces. It then always sets `field_57C_` to 1, stores the palette in `field_584_`, and returns 0. `Dib dib_[256]` at `0xA4` spans exactly `0x400` bytes and ends at `field_4A4_`, so the colour table and its cache tag are adjacent by construction.
+   `set_clip` inlines the same acquire/release protocol that `get_hdc`/`release_hdc` now own, wrapped around `IntersectRect`, `EqualRect`, `CreateRectRgnIndirect`, `DeleteObject` and `SelectClipRgn`, and ends by publishing a bounds structure through two virtual dispatches. Rewriting it against the recovered pair is the same move that reduced `sync_to_palette` to roughly twenty lines.
 
-   Each instance setter is `if (win_parent_) { buffer_.sync_to_palette(*BufferActivePalette); buffer_.set_text_color*(c1, c2, c3, c4); }`, where `buffer_` is the GraphicWin member at `+0x444` and the palette global is at `0x009B8180`. `Buffer::set_text_color` and its two siblings are already recovered.
-
-   Testing note: `SetDIBColorTable` is a real GDI import with no seam, so a fixture can reach every path except that one call by driving the device context to null; cover the rest and record the gap in a `Verification note:` rather than inventing a seam the original does not have.
+   Each instance setter is `if (win_parent_) { buffer_.sync_to_palette(*palette_global); buffer_.set_text_color*(c1, c2, c3, c4); }`, where `buffer_` is the GraphicWin member at `+0x444`. Note the palette global they read is at `0x009B8180`, which is *not* the already-bound `BufferPalette` at `0x009B8174`; it needs its own binding and classification row.
 4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files

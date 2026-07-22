@@ -7131,6 +7131,162 @@ void test_buffer_hdc_protocol() {
     expect(hdc_probe.release_calls == 0);
 }
 
+void test_buffer_sync_to_palette() {
+    alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette)];
+    auto *palette = reinterpret_cast<Palette *>(palette_storage);
+
+    void *buffer_vtable[4] = {};
+    buffer_vtable[1] = reinterpret_cast<void *>(&hdc_probe_buffer_virtual);
+    void **const buffer_vtable_ptr = buffer_vtable;
+    void *surface_vtable[0x6C / sizeof(void *)] = {};
+    surface_vtable[0x44 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_get_dc);
+    surface_vtable[0x68 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_release_dc);
+    void *surface_object = surface_vtable;
+    void **surface = &surface_object;
+
+    LPVOID pixels[1] = {};
+    LPVOID *const pixel_storage = pixels;
+    const LPVOID *const no_pixel_storage = nullptr;
+    const uint32_t zero = 0;
+    const uint32_t tag = 0x1234ABCDU;
+
+    int *const saved_initialized = PaletteInitialized;
+    int initialized = 1;
+    PaletteInitialized = &initialized;
+
+    // No pixel storage: error 7 before anything at all is written.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x54, no_pixel_storage);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(buffer->sync_to_palette(palette) == 7);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Null palette: error 3, still before any write, even with storage.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x54, pixel_storage);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(buffer->sync_to_palette(nullptr) == 3);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Matching generation tag: the republish is skipped entirely - the colour
+    // table is untouched - but the trailing pair is still published.
+    std::memset(palette_storage, 0x5A, sizeof(palette_storage));
+    write_at(palette_storage, 0x400, tag);
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x4A4, tag);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x57C, 1U);
+    write_at(expected, 16 + 0x584, palette);
+    hdc_probe = HdcProbe{};
+    expect(buffer_sync_to_palette_redirect(buffer, nullptr, palette) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.get_calls == 0);
+
+    // Differing tag with a surface that yields a null context: the tag is
+    // cached, the table is republished from the palette, the context is
+    // acquired and found null, so neither SetDIBColorTable nor the release
+    // runs - but get_hdc still counted its reference.
+    std::memset(palette_storage, 0, sizeof(palette_storage));
+    for (uint32_t index = 0; index < 0x100; ++index) {
+        // Palette entries are three bytes; get_rgbquad swaps red and blue
+        // into the RGBQUAD it publishes.
+        palette_storage[index * 4 + 0] = static_cast<uint8_t>(index);
+        palette_storage[index * 4 + 1] = static_cast<uint8_t>(0xFF - index);
+        palette_storage[index * 4 + 2] = static_cast<uint8_t>(index ^ 0x5AU);
+    }
+    write_at(palette_storage, 0x400, tag);
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, surface);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x68, zero);
+    write_at(storage, 16 + 0x4A4, ~tag);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x4A4, tag);
+    write_at(expected, 16 + 0x68, 1U);
+    write_at(expected, 16 + 0x57C, 1U);
+    write_at(expected, 16 + 0x584, palette);
+    for (uint32_t index = 0; index < 0x100; ++index) {
+        const size_t cell = 16 + 0xA4 + index * 4;
+        expected[cell + 2] = static_cast<uint8_t>(index);
+        expected[cell + 1] = static_cast<uint8_t>(0xFF - index);
+        expected[cell + 0] = static_cast<uint8_t>(index ^ 0x5AU);
+        expected[cell + 3] = 0;
+    }
+    hdc_probe = HdcProbe{};
+    hdc_probe.produced_handle = nullptr;
+    expect(buffer->sync_to_palette(palette) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.get_calls == 1);
+    expect(hdc_probe.release_calls == 0);
+
+    // A non-null context reaches the publish branch. SetDIBColorTable is a
+    // real GDI import given a synthetic handle, so it fails harmlessly and its
+    // effect is unobservable - but the release that follows is not: the
+    // reference get_hdc took is handed back through the surface's ReleaseDC
+    // and the count returns to zero.
+    write_at(palette_storage, 0x400, tag);
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, surface);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x68, zero);
+    write_at(storage, 16 + 0x4A4, ~tag);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x4A4, tag);
+    write_at(expected, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(expected, 16 + 0x68, 0U);
+    write_at(expected, 16 + 0x57C, 1U);
+    write_at(expected, 16 + 0x584, palette);
+    for (uint32_t index = 0; index < 0x100; ++index) {
+        const size_t cell = 16 + 0xA4 + index * 4;
+        expected[cell + 2] = static_cast<uint8_t>(index);
+        expected[cell + 1] = static_cast<uint8_t>(0xFF - index);
+        expected[cell + 0] = static_cast<uint8_t>(index ^ 0x5AU);
+        expected[cell + 3] = 0;
+    }
+    hdc_probe = HdcProbe{};
+    hdc_probe.produced_handle = reinterpret_cast<HDC>(0x22220000U);
+    expect(buffer->sync_to_palette(palette) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(hdc_probe.get_calls == 1);
+    expect(hdc_probe.release_calls == 1);
+    expect(hdc_probe.released_handle == reinterpret_cast<HDC>(0x22220000U));
+
+    // An uninitialized palette makes get_rgbquad a no-op, so the table keeps
+    // its seed while the tag and trailing pair are still published.
+    initialized = 0;
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, surface);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x68, zero);
+    write_at(storage, 16 + 0x4A4, ~tag);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x4A4, tag);
+    write_at(expected, 16 + 0x68, 1U);
+    write_at(expected, 16 + 0x57C, 1U);
+    write_at(expected, 16 + 0x584, palette);
+    hdc_probe = HdcProbe{};
+    expect(buffer->sync_to_palette(palette) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    PaletteInitialized = saved_initialized;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7217,6 +7373,7 @@ int main() {
     test_pull_down_destructor();
     test_base_button_default_setters();
     test_buffer_hdc_protocol();
+    test_buffer_sync_to_palette();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
