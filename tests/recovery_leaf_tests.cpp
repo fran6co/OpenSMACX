@@ -9177,6 +9177,48 @@ void test_constant_return_stubs() {
                          win_z_storage.size());
 }
 
+void test_status_win_set_loc() {
+    // The first recovery here that writes fields rather than nothing, so the
+    // question is no longer whether memory moved but whether the right bytes
+    // moved. Caviar is pinned at 0x13D0 and these four dwords sit at 0x15B4
+    // through 0x15C0; the check reads them back at those absolute offsets and
+    // compares every other byte of the object against its seed, so a field
+    // declared at the wrong offset fails twice over - the value is missing
+    // where it belongs and present where it does not.
+    std::vector<uint8_t> storage(sizeof(StatusWin) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *status = reinterpret_cast<StatusWin *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    status->set_loc(0x11223344, -2);
+
+    auto read_at = [&](size_t offset) {
+        int32_t value = 0;
+        std::memcpy(&value, storage.data() + 16 + offset, sizeof(value));
+        return value;
+    };
+    expect(read_at(0x15B4) == 0x11223344);
+    expect(read_at(0x15B8) == -2);
+    expect(read_at(0x15BC) == -1);
+    expect(read_at(0x15C0) == -1);
+
+    // Everything outside those sixteen bytes must be untouched.
+    std::memcpy(expected.data() + 16 + 0x15B4, storage.data() + 16 + 0x15B4, 16);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // The redirect must land identically, including the two constants.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    status_win_set_loc_redirect(status, nullptr, INT_MIN, INT_MAX);
+    expect(read_at(0x15B4) == INT_MIN);
+    expect(read_at(0x15B8) == INT_MAX);
+    expect(read_at(0x15BC) == -1);
+    expect(read_at(0x15C0) == -1);
+    std::memcpy(expected.data() + 16 + 0x15B4, storage.data() + 16 + 0x15B4, 16);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -9537,5 +9579,6 @@ int main() {
     test_base_pop_instance_colors();
     test_guarded_store_recoveries();
     test_win_client_to_screen();
+    test_status_win_set_loc();
     return failures == 0 ? 0 : 1;
 }

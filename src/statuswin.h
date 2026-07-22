@@ -33,6 +33,19 @@ class DLLEXPORT StatusWin : Caviar {
   StatusWin() { ; }
   ~StatusWin() { ; }
   void close();
+  void set_loc(int x, int y);
+
+ private:
+  // Caviar occupies 0x0 to 0x13D0. Everything between there and the fields
+  // set_loc writes is still unmapped; the array holds the offsets in place so
+  // the four below land where the original puts them, and the test confirms
+  // that by checking which bytes of a seeded object actually move.
+  uint8_t unmapped_13D0_[0x15B4 - 0x13D0];
+  int32_t field_15B4_;
+  int32_t field_15B8_;
+  int32_t field_15BC_;
+  int32_t field_15C0_;
 };
 
 void __fastcall status_win_close_redirect(StatusWin *self, void *);
+void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y);
