@@ -804,3 +804,23 @@ int Buffer::set_clip(RECT *rect) {
 int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
     return self->set_clip(rect);
 }
+
+func_buffer_text_width_measured *BufferTextWidthMeasured =
+    (func_buffer_text_width_measured *)0x005DC7C0;
+
+/*
+Purpose: Measure a null-terminated string with the buffer's text font.
+Original Offset: 005DC790
+Return Value: The measured width, or zero for a null string
+Status: Complete with a temporary dependency on the measured overload
+*/
+int Buffer::text_width(LPSTR text) {
+    if (!text) {
+        return 0;
+    }
+    return BufferTextWidthMeasured(this, text, strlen(text));
+}
+
+int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text) {
+    return self->text_width(text);
+}

@@ -41,6 +41,7 @@ class DLLEXPORT Win {
   int move(int x, int y);
   int is_visible();
   int is_dialog_focus();
+  int set_cursor(int name);
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -310,3 +311,17 @@ extern int *WinHdcRefCount;
 extern HDC *WinSharedHdc;
 extern void **WinHdcSurface;
 extern HWND *WinHdcWindow;
+
+int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// The cursor refresh this setter triggers is a 2528-byte body with six call
+// targets, still an original dependency. Tests rebind this seam.
+typedef int(__cdecl func_win_update_cursor)(Win *, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_win_update_cursor *WinUpdateCursorOriginal;
