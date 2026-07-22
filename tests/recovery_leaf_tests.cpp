@@ -9353,6 +9353,80 @@ void test_field_store_writes() {
     TutWinShownFlag = saved_marker;
 }
 
+namespace {
+ButtonGroup *g_observed_group = nullptr;
+int g_observed_button = 0;
+int g_observed_flag_during_call = -1;
+int g_click_calls = 0;
+int g_click_result = 0;
+
+int __thiscall observe_button_click(ButtonGroup *self, int button_id) {
+    g_observed_group = self;
+    g_observed_button = button_id;
+    // The suppression flag must still be set while the click runs - clearing
+    // it before the call rather than after would be invisible to a test that
+    // only looked at the object afterwards.
+    std::memcpy(&g_observed_flag_during_call,
+                reinterpret_cast<const uint8_t *>(self) + 0x90, sizeof(int));
+    ++g_click_calls;
+    return g_click_result;
+}
+}  // namespace
+
+void test_button_group_set() {
+    // The highest fan-in unrecovered function in the image at 35 callers.
+    // button_click itself is 471 bytes of virtual dispatch and stays original
+    // for now, reached through a rebindable seam that this test replaces.
+    auto *const saved = ButtonGroupOriginalButtonClick;
+    ButtonGroupOriginalButtonClick = &observe_button_click;
+
+    std::vector<uint8_t> storage(sizeof(ButtonGroup) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *group = reinterpret_cast<ButtonGroup *>(storage.data() + 16);
+    auto flag = [&] {
+        int value = 0;
+        std::memcpy(&value, storage.data() + 16 + 0x90, sizeof(value));
+        return value;
+    };
+
+    // notify == 0 suppresses: the flag is raised for the duration and cleared.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_click_calls = 0;
+    g_click_result = 0x1234;
+    expect(group->set(7, 0) == 0x1234);
+    expect(g_click_calls == 1);
+    expect(g_observed_group == group);
+    expect(g_observed_button == 7);
+    expect(g_observed_flag_during_call == 1);
+    expect(flag() == 0);
+    std::memcpy(expected.data() + 16 + 0x90, storage.data() + 16 + 0x90, 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // notify != 0 does not raise it, but still clears it afterwards.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_click_calls = 0;
+    g_click_result = -1;
+    expect(group->set(INT_MIN, 1) == -1);
+    expect(g_click_calls == 1);
+    expect(g_observed_button == INT_MIN);
+    expect(g_observed_flag_during_call != 1);
+    expect(flag() == 0);
+    std::memcpy(expected.data() + 16 + 0x90, storage.data() + 16 + 0x90, 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // The redirect must behave identically, including passing the result back.
+    g_click_calls = 0;
+    g_click_result = 99;
+    expect(button_group_set_redirect(group, nullptr, 3, 0) == 99);
+    expect(g_click_calls == 1);
+    expect(g_observed_flag_during_call == 1);
+    expect(flag() == 0);
+
+    ButtonGroupOriginalButtonClick = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -9716,5 +9790,6 @@ int main() {
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
+    test_button_group_set();
     return failures == 0 ? 0 : 1;
 }

@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 39,
-      "source_complete": 880,
+      "original_dependency": 40,
+      "source_complete": 881,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4711
+      "unrecovered": 4709
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 826,
-    "matched_function_starts": 826,
-    "unique_addresses": 826,
+    "annotations": 827,
+    "matched_function_starts": 827,
+    "unique_addresses": 827,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 183,
-      "function": 46
+      "function": 47
     },
     "items": [
       {
@@ -1642,6 +1642,15 @@
         "location": "src/buffer.cpp:808",
         "symbol": "BufferTextWidthMeasured",
         "type": "func_buffer_text_width_measured *"
+      },
+      {
+        "address": "0x0062B8A0",
+        "function": "?button_click@ButtonGroup@@QAEHH@Z",
+        "function_address": "0x0062B8A0",
+        "kind": "function",
+        "location": "src/buttongroup.cpp:104",
+        "symbol": "ButtonGroupOriginalButtonClick",
+        "type": "func_button_group_click *"
       },
       {
         "address": "0x009A6828",
@@ -3390,7 +3399,7 @@
         "type": "func_win_flip *"
       }
     ],
-    "matched_function_starts": 46,
-    "total": 229
+    "matched_function_starts": 47,
+    "total": 230
   }
 }

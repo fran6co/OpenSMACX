@@ -100,3 +100,27 @@ int __fastcall button_group_init_redirect(
     self->init(group_id, flags);
     return group_id;
 }
+
+func_button_group_click *ButtonGroupOriginalButtonClick =
+    (func_button_group_click *)0x0062B8A0;
+
+/*
+Purpose: Activate a button in the group, suppressing the group's own
+         notification while the click is dispatched when notify is zero.
+Original Offset: 0062B870
+Return Value: whatever button_click returns
+Status: Complete
+*/
+int ButtonGroup::set(int button_id, int notify) {
+    if (!notify) {
+        field_90_ = 1;
+    }
+    const int result = ButtonGroupOriginalButtonClick(this, button_id);
+    field_90_ = 0;
+    return result;
+}
+
+int __fastcall button_group_set_redirect(ButtonGroup *self, void *,
+                                         int button_id, int notify) {
+    return self->set(button_id, notify);
+}

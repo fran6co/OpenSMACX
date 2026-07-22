@@ -28,6 +28,7 @@ class DLLEXPORT ButtonGroup {
   void close();
   void init(int group_id, int flags);
   void add(BaseButton *button);
+  int set(int button_id, int notify);
 
  private:
   BaseButton *buttons_[32];
@@ -46,3 +47,13 @@ ButtonGroup *__fastcall button_group_construct_redirect(ButtonGroup *self, void 
 uint32_t __fastcall button_group_close_redirect(ButtonGroup *self, void *);
 int __fastcall button_group_init_redirect(
     ButtonGroup *self, void *, int group_id, int flags);
+
+// ButtonGroup::button_click is 471 bytes of virtual dispatch through the
+// button vtables and is not recovered yet, so set() reaches it at its
+// canonical address. Rebindable so tests can observe the call without the
+// original being present.
+typedef int (__thiscall func_button_group_click)(ButtonGroup *, int);
+extern func_button_group_click *ButtonGroupOriginalButtonClick;
+
+int __fastcall button_group_set_redirect(ButtonGroup *self, void *,
+                                         int button_id, int notify);
