@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "font.h"
 #include "graphicwin.h"
 #include "spot.h"
 
@@ -42,6 +43,7 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
   */
 class DLLEXPORT Menu : GraphicWin {
  public:
+  int requested_height();
   int UNK2(int a);
   int UNK4(int a, int b, int c);
   Menu() { ; }
@@ -71,3 +73,8 @@ int __fastcall menu_unk2_redirect(
     Menu *self, void *, int a);
 int __fastcall menu_unk4_redirect(
     Menu *self, void *, int a, int b, int c);
+
+int __fastcall menu_requested_height_redirect(Menu *self, void *);
+
+// The menu's own font, falling back to the process default when unset.
+extern Font **MenuFont;

@@ -44,6 +44,8 @@ class DLLEXPORT Font {
  private:
   // Buffer::text_height reads the resolved font's height directly.
   friend class Buffer;
+  // Menu::requested_height reads the resolved font's height directly.
+  friend class Menu;
 
   int unk_1_; // height offset? set outside of class functions
   BOOL is_fot_set_; // used only by both init() functions

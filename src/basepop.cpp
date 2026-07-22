@@ -335,3 +335,21 @@ void __fastcall base_pop_set_button_color3_redirect(
         BasePop *self, void *, int c1, int c2, int c3, int c4) {
     self->set_button_color3(c1, c2, c3, c4);
 }
+
+int *BasePopFalloutGate = reinterpret_cast<int *>(0x009B8D00);
+int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
+
+/*
+Purpose: Raise the fallout flag, but only while the gate is set.
+Original Offset: 00604A90
+Status: Complete
+*/
+void BasePop::fallout() {
+    if (*BasePopFalloutGate != 0) {
+        *BasePopFalloutFlag = 1;
+    }
+}
+
+void __cdecl base_pop_fallout_redirect() {
+    BasePop::fallout();
+}

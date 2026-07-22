@@ -24,6 +24,7 @@
   */
 class DLLEXPORT BasePop : GraphicWin {
  public:
+  static void fallout();
   void set_string_color(int c1, int c2, int c3, int c4);
   void set_string_color2(int c1, int c2, int c3, int c4);
   void set_string_color3(int c1, int c2, int c3, int c4);
@@ -406,3 +407,9 @@ void __fastcall base_pop_set_button_color2_redirect(
     BasePop *self, void *, int c1, int c2, int c3, int c4);
 void __fastcall base_pop_set_button_color3_redirect(
     BasePop *self, void *, int c1, int c2, int c3, int c4);
+
+void __cdecl base_pop_fallout_redirect();
+
+// Set when the fallout flag is raised, but only while the gate global is set.
+extern int *BasePopFalloutGate;
+extern int *BasePopFalloutFlag;
