@@ -690,3 +690,25 @@ int __fastcall buffer_sync_to_palette_redirect(
         Buffer *self, void *, Palette *palette) {
     return self->sync_to_palette(palette);
 }
+
+/*
+Purpose: Report the height of the buffer's text font, resolving the process
+         default the first time it is needed.
+Original Offset: 005DCA80
+Return Value: The font's height
+Status: Complete
+*/
+int Buffer::text_height() {
+    // The legacy body loads the default before testing the cached font, so the
+    // fallback it returns is the value it just stored.
+    Font *const fallback = *FontDefaultPtr;
+    if (!font1_) {
+        font1_ = fallback;
+        return fallback->height_;
+    }
+    return font1_->height_;
+}
+
+int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
+    return self->text_height();
+}

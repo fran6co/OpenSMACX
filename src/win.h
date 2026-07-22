@@ -38,6 +38,7 @@ class DLLEXPORT Win {
   void construct();
   int move(int x, int y);
   int is_visible();
+  int is_dialog_focus();
   void client_to_screen(int *x, int *y);
   void set_vert_paging(int paging);
   void set_horz_paging(int paging);
@@ -290,3 +291,5 @@ RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
 int __cdecl rect_center(RECT *rect, int *x, int *y);
 int __fastcall tutwin_rect_center_redirect(
     void *self, void *, RECT *rect, int *x, int *y);
+
+int __fastcall win_is_dialog_focus_redirect(Win *self, void *);

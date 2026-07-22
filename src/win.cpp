@@ -320,3 +320,33 @@ int __fastcall tutwin_rect_center_redirect(
         void *, void *, RECT *rect, int *x, int *y) {
     return rect_center(rect, x, y);
 }
+
+/*
+Purpose: Report whether this window holds the dialog focus, either directly or
+         as its parent's current focus target.
+Original Offset: 005F2CA0
+Return Value: Holds focus (1); does not (0)
+Status: Complete
+*/
+int Win::is_dialog_focus() {
+    if ((field_98_ & 0x1000U) != 0) {
+        return 1;
+    }
+    Win *const parent = win_parent_;
+    if (parent) {
+        // An empty focus list reads as no focus rather than dereferencing the
+        // list pointer, which the legacy body leaves untouched in that case.
+        const uintptr_t focused = (parent->field_CC_ == 0)
+            ? 0U
+            : *reinterpret_cast<const uintptr_t *>(
+                  static_cast<uintptr_t>(parent->field_D0_) + 4);
+        if (focused == reinterpret_cast<uintptr_t>(this)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int __fastcall win_is_dialog_focus_redirect(Win *self, void *) {
+    return self->is_dialog_focus();
+}

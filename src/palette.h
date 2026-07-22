@@ -18,6 +18,8 @@
 #pragma once
 #include "time.h"
 
+class Win;  // forward declaration
+
  /*
   * Palette class
   */
@@ -27,6 +29,7 @@ class DLLEXPORT Palette {
   ~Palette() { ; }
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
+  static void set_active_window(Win *window);
 
  private:
   // Buffer caches this generation tag to skip republishing an unchanged
@@ -306,3 +309,5 @@ static_assert(sizeof(Palette) == 0x454,
 extern int *PaletteInitialized;
 int __fastcall palette_get_rgbquad_redirect(
     Palette *self, void *, RGBQUAD *output, int start, int count);
+
+void __cdecl palette_set_active_window_redirect(Win *window);
