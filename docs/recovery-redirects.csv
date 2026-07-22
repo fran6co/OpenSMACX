@@ -27,6 +27,7 @@ address,kind
 0x005D7210,jump
 0x005D7410,jump
 0x005D7470,jump
+0x005D8000,jump
 0x005DAC70,jump
 0x005DACB0,jump
 0x005DACE0,jump

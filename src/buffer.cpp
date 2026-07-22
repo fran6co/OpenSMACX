@@ -400,6 +400,8 @@ namespace {
 #endif
 typedef long(__stdcall *func_surface_unlock_slot)(void *, void *);
 typedef long(__stdcall *func_surface_get_dc_slot)(void *, void *);
+typedef long(__stdcall *func_clipper_set_list_slot)(void *, void *, unsigned long);
+typedef long(__stdcall *func_surface_set_clipper_slot)(void *, void *);
 typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
 typedef unsigned long(__stdcall *func_com_release)(void *);
 typedef void(__thiscall *func_buffer_virtual)(void *);
@@ -412,6 +414,8 @@ constexpr size_t OwnedAllocationCount = 20;
 constexpr size_t SurfaceReleaseSlot = 0x08;
 constexpr size_t BufferVirtualSlot = 0x04;
 constexpr size_t SurfaceGetDCSlot = 0x44;
+constexpr size_t ClipperSetClipListSlot = 0x1C;
+constexpr size_t SurfaceSetClipperSlot = 0x70;
 constexpr size_t SurfaceReleaseDCSlot = 0x68;
 
 void *slot(void *object, size_t offset) {
@@ -711,4 +715,92 @@ int Buffer::text_height() {
 
 int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
     return self->text_height();
+}
+
+/*
+Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
+         DirectDraw clipper to match.
+Original Offset: 005D8000
+Return Value: No errors (0); empty intersection or region failure (1);
+              null rectangle (3); no pixel storage and no surface (7)
+Status: Complete
+Verification note: six mutants survive, none of them an untested path.
+IntersectRect and EqualRect are pure computations and are fully observed, as
+is the region slot's lifecycle - the cleanup branch is driven by a case that
+enters holding a region. What cannot be observed is the effect of DeleteObject
+and SelectClipRgn on GDI objects a fixture cannot inspect, and the
+CreateRectRgnIndirect failure path, which a real GDI call will not enter. The
+`acquired` flag's assignment is order-independent against the acquire beside
+it, and the trailing rectangle array's extent is a declaration size the
+dispatch reads back by fixed width. The clipper and surface dispatches, the
+RGNDATA contents, and the reference count are all observed.
+*/
+int Buffer::set_clip(RECT *rect) {
+    if (!ppv_bits_ && field_58_ == 0) {
+        return 7;
+    }
+    if (!rect) {
+        return 3;
+    }
+    RECT requested = *rect;
+    if (!IntersectRect(&rect1_, &rect2_, &requested)) {
+        return 1;
+    }
+
+    // The context is acquired only when none is already held, and released
+    // again only in that case.
+    bool acquired = false;
+    if (hdc2_ == nullptr) {
+        acquired = true;
+        get_hdc();
+    }
+    if (hdc2_ != nullptr) {
+        if (field_70_ != nullptr) {
+            DeleteObject(field_70_);
+            field_70_ = nullptr;
+        }
+        HRGN region = nullptr;
+        // A clip equal to the full extent needs no region at all; passing null
+        // to SelectClipRgn restores the unclipped state.
+        if (!EqualRect(&rect1_, &rect2_)) {
+            region = CreateRectRgnIndirect(&rect1_);
+            field_70_ = region;
+            if (region == nullptr) {
+                // The legacy body returns here without releasing the context
+                // it may have just acquired; preserved deliberately.
+                return 1;
+            }
+        }
+        SelectClipRgn(hdc2_, region);
+    }
+    if (acquired) {
+        release_hdc(1);
+    }
+
+    if (field_58_ != 0) {
+        // A single-rectangle RGNDATA: the header's bound and the one entry in
+        // the rectangle array are both the clipped rectangle.
+        struct ClipRegionData {
+            RGNDATAHEADER header;
+            RECT rects[1];
+        } region_data;
+        region_data.header.dwSize = sizeof(RGNDATAHEADER);
+        region_data.header.iType = RDH_RECTANGLES;
+        region_data.header.nCount = 1;
+        region_data.header.nRgnSize = sizeof(RECT);
+        region_data.header.rcBound = rect1_;
+        region_data.rects[0] = rect1_;
+
+        void *const clipper = reinterpret_cast<void *>(field_5C_);
+        reinterpret_cast<func_clipper_set_list_slot>(
+            slot(clipper, ClipperSetClipListSlot))(clipper, &region_data, 0);
+        void *const surface = reinterpret_cast<void *>(field_58_);
+        reinterpret_cast<func_surface_set_clipper_slot>(
+            slot(surface, SurfaceSetClipperSlot))(surface, clipper);
+    }
+    return 0;
+}
+
+int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
+    return self->set_clip(rect);
 }

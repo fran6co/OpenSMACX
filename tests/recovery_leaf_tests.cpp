@@ -31,6 +31,7 @@
 #include <cstring>
 #include <float.h>
 #include <new>
+#include <type_traits>
 
 void __cdecl purge_spaces(LPSTR input) {
     char *first = input;
@@ -767,6 +768,12 @@ void test_base_pop_string_font() {
 
 template <typename T>
 void write_at(uint8_t *storage, size_t offset, const T &value) {
+    // An array argument deduces T as the array type, so this would copy every
+    // element and leave the first one at the offset where the caller meant to
+    // put a pointer. That produced two Wine crashes before it was rejected
+    // here; bind an explicit pointer variable instead.
+    static_assert(!std::is_array<T>::value,
+                  "write_at takes a pointer, not an array");
     std::memcpy(storage + offset, &value, sizeof(value));
 }
 
@@ -7400,6 +7407,199 @@ void test_win_is_dialog_focus() {
     }
 }
 
+struct ClipProbe {
+    int set_list_calls;
+    int set_clipper_calls;
+    void *set_list_this;
+    void *set_clipper_this;
+    void *set_clipper_arg;
+    unsigned long set_list_flags;
+    RGNDATAHEADER header;
+    RECT rects[1];
+};
+ClipProbe clip_probe = {};
+
+long __stdcall clip_probe_set_list(void *self, void *data, unsigned long flags) {
+    ++clip_probe.set_list_calls;
+    clip_probe.set_list_this = self;
+    clip_probe.set_list_flags = flags;
+    std::memcpy(&clip_probe.header, data, sizeof(RGNDATAHEADER));
+    std::memcpy(clip_probe.rects,
+                static_cast<const uint8_t *>(data) + sizeof(RGNDATAHEADER),
+                sizeof(RECT));
+    return 0;
+}
+
+long __stdcall clip_probe_set_clipper(void *self, void *clipper) {
+    ++clip_probe.set_clipper_calls;
+    clip_probe.set_clipper_this = self;
+    clip_probe.set_clipper_arg = clipper;
+    return 0;
+}
+
+void test_buffer_set_clip() {
+    alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *buffer = reinterpret_cast<Buffer *>(storage + 16);
+
+    void *buffer_vtable[4] = {};
+    buffer_vtable[1] = reinterpret_cast<void *>(&hdc_probe_buffer_virtual);
+    void **const buffer_vtable_ptr = buffer_vtable;
+    void *surface_vtable[0x74 / sizeof(void *)] = {};
+    surface_vtable[0x44 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_get_dc);
+    surface_vtable[0x68 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_release_dc);
+    surface_vtable[0x70 / sizeof(void *)] =
+        reinterpret_cast<void *>(&clip_probe_set_clipper);
+    void *surface_object = surface_vtable;
+    void **surface = &surface_object;
+    void *clipper_vtable[0x20 / sizeof(void *)] = {};
+    clipper_vtable[0x1C / sizeof(void *)] =
+        reinterpret_cast<void *>(&clip_probe_set_list);
+    void *clipper_object = clipper_vtable;
+    void **clipper = &clipper_object;
+
+    LPVOID pixels[1] = {};
+    LPVOID *const pixel_storage = pixels;
+    const LPVOID *const no_pixels = nullptr;
+    const uint32_t zero = 0;
+    const RECT extent = {0, 0, 100, 50};
+
+    // Neither pixel storage nor a surface: error 7, nothing written.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x54, no_pixels);
+    write_at(storage, 16 + 0x58, zero);
+    std::memcpy(expected, storage, sizeof(storage));
+    RECT request = {10, 10, 20, 20};
+    expect(buffer->set_clip(&request) == 7);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Null rectangle: error 3, still nothing written.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x54, pixel_storage);
+    std::memcpy(expected, storage, sizeof(storage));
+    expect(buffer->set_clip(nullptr) == 3);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // A request disjoint from the extent yields an empty intersection: error 1
+    // and, per IntersectRect, a zeroed destination rectangle.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, zero);
+    write_at(storage, 16 + 0x30, extent);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    std::memcpy(expected, storage, sizeof(storage));
+    const RECT empty_rect = {0, 0, 0, 0};
+    write_at(expected, 16 + 0x20, empty_rect);
+    RECT disjoint = {500, 500, 600, 600};
+    expect(buffer->set_clip(&disjoint) == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // A partial overlap clips to the intersection. With no surface the buffer
+    // owns its context directly, so get_hdc adopts it and release_hdc gives it
+    // back, leaving the count at zero.
+    const HDC direct_handle = reinterpret_cast<HDC>(0x33330000U);
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, zero);
+    write_at(storage, 16 + 0x30, extent);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x64, direct_handle);
+    write_at(storage, 16 + 0x68, zero);
+    write_at(storage, 16 + 0x70, static_cast<HRGN>(nullptr));
+    std::memcpy(expected, storage, sizeof(storage));
+    const RECT clipped = {10, 10, 20, 20};
+    write_at(expected, 16 + 0x20, clipped);
+    write_at(expected, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(expected, 16 + 0x68, 0U);
+    clip_probe = ClipProbe{};
+    hdc_probe = HdcProbe{};
+    RECT overlap = {10, 10, 20, 20};
+    expect(buffer->set_clip(&overlap) == 0);
+    // field_70_ now holds a real region handle, so compare around it.
+    HRGN produced_region;
+    std::memcpy(&produced_region, storage + 16 + 0x70, sizeof(produced_region));
+    expect(produced_region != nullptr);
+    write_at(expected, 16 + 0x70, produced_region);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    // No surface means no clipper traffic at all.
+    expect(clip_probe.set_list_calls == 0);
+    expect(clip_probe.set_clipper_calls == 0);
+    DeleteObject(produced_region);
+
+    // A clip equal to the full extent needs no region: the previously held
+    // region is deleted and the slot cleared, and no replacement is created.
+    // Every earlier case starts with an empty slot, so this is the only one
+    // that exercises the cleanup branch.
+    const RECT prior = {1, 2, 3, 4};
+    HRGN existing = CreateRectRgnIndirect(&prior);
+    expect(existing != nullptr);
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, zero);
+    write_at(storage, 16 + 0x30, extent);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x64, direct_handle);
+    write_at(storage, 16 + 0x68, zero);
+    write_at(storage, 16 + 0x70, existing);
+    std::memcpy(expected, storage, sizeof(storage));
+    write_at(expected, 16 + 0x20, extent);
+    write_at(expected, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(expected, 16 + 0x68, 0U);
+    write_at(expected, 16 + 0x70, static_cast<HRGN>(nullptr));
+    clip_probe = ClipProbe{};
+    hdc_probe = HdcProbe{};
+    RECT full = {0, 0, 100, 50};
+    expect(buffer->set_clip(&full) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // With a surface, the clipper receives a single-rectangle RGNDATA whose
+    // bound and only entry are both the clipped rectangle, and the surface is
+    // then handed that clipper.
+    seed_storage(storage, expected, sizeof(storage));
+    write_at(storage, 16 + 0x00, buffer_vtable_ptr);
+    write_at(storage, 16 + 0x50, zero);
+    write_at(storage, 16 + 0x54, pixel_storage);
+    write_at(storage, 16 + 0x58, surface);
+    write_at(storage, 16 + 0x5C, clipper);
+    write_at(storage, 16 + 0x30, extent);
+    write_at(storage, 16 + 0x60, static_cast<HDC>(nullptr));
+    write_at(storage, 16 + 0x68, zero);
+    write_at(storage, 16 + 0x70, static_cast<HRGN>(nullptr));
+    clip_probe = ClipProbe{};
+    hdc_probe = HdcProbe{};
+    hdc_probe.produced_handle = nullptr;   // GetDC yields nothing: skip the GDI work
+    RECT overlap2 = {5, 5, 40, 30};
+    expect(buffer->set_clip(&overlap2) == 0);
+    RECT stored;
+    std::memcpy(&stored, storage + 16 + 0x20, sizeof(stored));
+    expect(stored.left == 5 && stored.top == 5);
+    expect(stored.right == 40 && stored.bottom == 30);
+    expect(clip_probe.set_list_calls == 1);
+    expect(clip_probe.set_list_this == clipper);
+    expect(clip_probe.set_list_flags == 0);
+    expect(clip_probe.header.dwSize == sizeof(RGNDATAHEADER));
+    expect(clip_probe.header.iType == RDH_RECTANGLES);
+    expect(clip_probe.header.nCount == 1);
+    expect(clip_probe.header.nRgnSize == sizeof(RECT));
+    expect(clip_probe.header.rcBound.left == 5);
+    expect(clip_probe.header.rcBound.top == 5);
+    expect(clip_probe.header.rcBound.right == 40);
+    expect(clip_probe.header.rcBound.bottom == 30);
+    expect(clip_probe.rects[0].left == 5);
+    expect(clip_probe.rects[0].top == 5);
+    expect(clip_probe.rects[0].right == 40);
+    expect(clip_probe.rects[0].bottom == 30);
+    expect(clip_probe.set_clipper_calls == 1);
+    expect(clip_probe.set_clipper_this == surface);
+    expect(clip_probe.set_clipper_arg == clipper);
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7489,6 +7689,7 @@ int main() {
     test_buffer_sync_to_palette();
     test_buffer_text_height();
     test_win_is_dialog_focus();
+    test_buffer_set_clip();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
