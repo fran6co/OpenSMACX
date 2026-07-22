@@ -6821,6 +6821,104 @@ void test_pull_down_destructor() {
     expect(graphic_win_stub_record.sequence == 0x21);
 }
 
+void test_base_button_default_setters() {
+    // The three colour tiers interleave inside one table: slot s, tier t lives
+    // at base + s * 0xC + t * 4. A local table stands in for the game's so the
+    // test observes exact placement, and every one of the twelve cells is
+    // compared after each call - a setter that strides wrongly, or writes a
+    // sibling tier, moves a cell the caller never named.
+    uint32_t table[12];
+    uint32_t *const saved_table = BaseButtonDefaultTextColors;
+    BaseButtonDefaultTextColors = table;
+
+    struct TierCase {
+        size_t tier;
+        void (*member)(int, int, int, int);
+        void (__cdecl *redirect)(int, int, int, int);
+    };
+    const TierCase tiers[] = {
+        {0, &BaseButton::set_def_text_color,
+         base_button_set_def_text_color_redirect},
+        {1, &BaseButton::set_def_text_color2,
+         base_button_set_def_text_color2_redirect},
+        {2, &BaseButton::set_def_text_color3,
+         base_button_set_def_text_color3_redirect},
+    };
+    const int colors[4] = {INT_MIN, -1, 0x5A5A5A5A, INT_MAX};
+    for (const TierCase &test : tiers) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            uint32_t expected[12];
+            for (size_t index = 0; index < 12; ++index) {
+                table[index] = 0xA5000000U ^ static_cast<uint32_t>(index);
+                expected[index] = table[index];
+            }
+            for (size_t slot = 0; slot < 4; ++slot) {
+                expected[(slot * 0xC + test.tier * 4) / 4] =
+                    static_cast<uint32_t>(colors[slot]);
+            }
+            if (adapter) {
+                test.redirect(colors[0], colors[1], colors[2], colors[3]);
+            } else {
+                test.member(colors[0], colors[1], colors[2], colors[3]);
+            }
+            for (size_t index = 0; index < 12; ++index) {
+                expect(table[index] == expected[index]);
+            }
+        }
+    }
+    BaseButtonDefaultTextColors = saved_table;
+
+    // set_def_font reads only Font::is_initialized(), an inline null check of
+    // font_obj_ at offset 8, so raw storage stands in for constructed Fonts.
+    alignas(Font) uint8_t ready_font[sizeof(Font)];
+    alignas(Font) uint8_t unready_font[sizeof(Font)];
+    std::memset(ready_font, 0xA5, sizeof(ready_font));
+    std::memset(unready_font, 0xA5, sizeof(unready_font));
+    const HFONT font_object = reinterpret_cast<HFONT>(0x1234U);
+    const HFONT null_font_object = nullptr;
+    write_at(ready_font, 0x08, font_object);
+    write_at(unready_font, 0x08, null_font_object);
+    auto *ready = reinterpret_cast<Font *>(ready_font);
+    auto *unready = reinterpret_cast<Font *>(unready_font);
+    auto *second = reinterpret_cast<Font *>(0x11111111U);
+    auto *third = reinterpret_cast<Font *>(0x22222222U);
+
+    Font *fonts[3];
+    Font **const saved_fonts = BaseButtonDefaultFonts;
+    BaseButtonDefaultFonts = fonts;
+
+    // A null primary is rejected before anything is written.
+    Font *const untouched = reinterpret_cast<Font *>(0x33333333U);
+    for (int index = 0; index < 3; ++index) {
+        fonts[index] = untouched;
+    }
+    expect(BaseButton::set_def_font(nullptr, second, third) == 3);
+    for (int index = 0; index < 3; ++index) {
+        expect(fonts[index] == untouched);
+    }
+
+    // An initialized primary publishes all three slots.
+    for (int index = 0; index < 3; ++index) {
+        fonts[index] = untouched;
+    }
+    expect(BaseButton::set_def_font(ready, second, third) == 0);
+    expect(fonts[0] == ready);
+    expect(fonts[1] == second);
+    expect(fonts[2] == third);
+
+    // An uninitialized primary leaves slot zero alone, still stores the other
+    // two, and still reports success.
+    for (int index = 0; index < 3; ++index) {
+        fonts[index] = untouched;
+    }
+    expect(base_button_set_def_font_redirect(unready, second, third) == 0);
+    expect(fonts[0] == untouched);
+    expect(fonts[1] == second);
+    expect(fonts[2] == third);
+
+    BaseButtonDefaultFonts = saved_fonts;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -6905,6 +7003,7 @@ int main() {
     test_button_group_add();
     test_dialog_font_and_color_setters();
     test_pull_down_destructor();
+    test_base_button_default_setters();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

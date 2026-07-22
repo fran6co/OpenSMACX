@@ -40,6 +40,13 @@ class DLLEXPORT BaseButton : GraphicWin {
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
 
+  // Static defaults shared by every button; the legacy bodies are __cdecl
+  // rather than __thiscall because they take no instance.
+  static void set_def_text_color(int color1, int color2, int color3, int color4);
+  static void set_def_text_color2(int color1, int color2, int color3, int color4);
+  static void set_def_text_color3(int color1, int color2, int color3, int color4);
+  static int set_def_font(Font *font1, Font *font2, Font *font3);
+
  private:
   uint32_t field_A14_;
   uint32_t field_A18_;
@@ -77,3 +84,19 @@ extern uint32_t *BaseButtonDynamicDefaults;
 BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
 BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
+
+// The default setters are static, so their redirects take no instance and
+// carry the legacy __cdecl convention.
+void __cdecl base_button_set_def_text_color_redirect(
+    int color1, int color2, int color3, int color4);
+void __cdecl base_button_set_def_text_color2_redirect(
+    int color1, int color2, int color3, int color4);
+void __cdecl base_button_set_def_text_color3_redirect(
+    int color1, int color2, int color3, int color4);
+int __cdecl base_button_set_def_font_redirect(
+    Font *font1, Font *font2, Font *font3);
+
+// Interleaved 3x4 default colour table and the three default font slots the
+// setters publish; tests outside the hybrid process rebind them.
+extern uint32_t *BaseButtonDefaultTextColors;
+extern Font **BaseButtonDefaultFonts;

@@ -203,3 +203,91 @@ int BaseButton::set_name(LPCSTR input) {
     }
     return 0;
 }
+
+// The three default colour tiers interleave within one table: slot s and
+// tier t live at 0x00697060 + s * 0xC + t * 4, so each setter strides 0xC.
+uint32_t *BaseButtonDefaultTextColors = reinterpret_cast<uint32_t *>(0x00697060);
+// Default font1/font2/font3 at 0x009B8E34, 0x009B8E38 and 0x009B8E3C.
+Font **BaseButtonDefaultFonts = reinterpret_cast<Font **>(0x009B8E34);
+
+namespace {
+
+void store_default_text_colors(size_t tier, int color1, int color2,
+                               int color3, int color4) {
+    volatile uint32_t *const table = BaseButtonDefaultTextColors;
+    const int colors[4] = {color1, color2, color3, color4};
+    for (size_t slot = 0; slot < 4; ++slot) {
+        table[(slot * 0xC + tier * 4) / 4] = static_cast<uint32_t>(colors[slot]);
+    }
+}
+
+}  // namespace
+
+/*
+Purpose: Set the primary default text colours shared by every button.
+Original Offset: 00607420
+Status: Complete
+*/
+void BaseButton::set_def_text_color(int color1, int color2, int color3, int color4) {
+    store_default_text_colors(0, color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the secondary default text colours shared by every button.
+Original Offset: 00607450
+Status: Complete
+*/
+void BaseButton::set_def_text_color2(int color1, int color2, int color3, int color4) {
+    store_default_text_colors(1, color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the tertiary default text colours shared by every button.
+Original Offset: 00607480
+Status: Complete
+*/
+void BaseButton::set_def_text_color3(int color1, int color2, int color3, int color4) {
+    store_default_text_colors(2, color1, color2, color3, color4);
+}
+
+/*
+Purpose: Set the default fonts shared by every button.
+Original Offset: 006074B0
+Return Value: No errors (0); invalid primary font (3)
+Status: Complete
+*/
+int BaseButton::set_def_font(Font *font1, Font *font2, Font *font3) {
+    if (!font1) {
+        return 3;
+    }
+    volatile Font **const fonts =
+        const_cast<volatile Font **>(BaseButtonDefaultFonts);
+    // Only an initialized primary font is published, but the secondary and
+    // tertiary slots are stored either way and the call still succeeds.
+    if (font1->is_initialized()) {
+        fonts[0] = font1;
+    }
+    fonts[1] = font2;
+    fonts[2] = font3;
+    return 0;
+}
+
+void __cdecl base_button_set_def_text_color_redirect(
+        int color1, int color2, int color3, int color4) {
+    BaseButton::set_def_text_color(color1, color2, color3, color4);
+}
+
+void __cdecl base_button_set_def_text_color2_redirect(
+        int color1, int color2, int color3, int color4) {
+    BaseButton::set_def_text_color2(color1, color2, color3, color4);
+}
+
+void __cdecl base_button_set_def_text_color3_redirect(
+        int color1, int color2, int color3, int color4) {
+    BaseButton::set_def_text_color3(color1, color2, color3, color4);
+}
+
+int __cdecl base_button_set_def_font_redirect(
+        Font *font1, Font *font2, Font *font3) {
+    return BaseButton::set_def_font(font1, font2, font3);
+}

@@ -84,6 +84,10 @@ address,kind
 0x00606F30,jump
 0x00607040,jump
 0x006070C0,jump
+0x00607420,jump
+0x00607450,jump
+0x00607480,jump
+0x006074B0,jump
 0x00607DA0,jump
 0x006099D0,jump
 0x00609A50,jump
