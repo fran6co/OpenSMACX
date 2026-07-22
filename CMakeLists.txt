@@ -512,6 +512,16 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_add_redirect.py"
     )
+
+    add_test(NAME class-layout-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_derive_class_layout.py"
+    )
+
+    add_test(NAME disassembly-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_disasm.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
