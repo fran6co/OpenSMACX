@@ -21,26 +21,29 @@
  /*
   * StatusWin class
   *
-  * Derives from Caviar by ordinary single inheritance. Caviar is pinned at
-  * 0x13D0, so the base region is exact; StatusWin's own extent is not
-  * established.
+  * The original does not derive this from Caviar: the constructor builds
+  * one at +0x30 on an offset `this`, making it a member. That distinction
+  * was missed when this header was first written, because the check looked
+  * only at which constructor ran first and not at whether `this` had been
+  * adjusted before it.
   *
-  * The methods recovered here are bare returns or a bare constant, touching
-  * no field, which is why they can be replaced ahead of that mapping.
-  */
-class DLLEXPORT StatusWin : Caviar {
+  * The layout is not established and nothing pins its sizeof.
+*/
+class DLLEXPORT StatusWin {
  public:
   StatusWin() { ; }
   ~StatusWin() { ; }
   void close();
   void set_loc(int x, int y);
 
+
  private:
-  // Caviar occupies 0x0 to 0x13D0. Everything between there and the fields
-  // set_loc writes is still unmapped; the array holds the offsets in place so
-  // the four below land where the original puts them, and the test confirms
-  // that by checking which bytes of a seeded object actually move.
-  uint8_t unmapped_13D0_[0x15B4 - 0x13D0];
+  // Not a base class: the constructor builds a Caviar at +0x30, on an
+  // offset `this`, so Caviar is a member and the bytes before it are
+  // something else. What matters for set_loc is only that the four fields
+  // below sit where the original puts them, which the unmapped span holds in
+  // place and the test checks directly.
+  uint8_t unmapped_0_[0x15B4];
   int32_t field_15B4_;
   int32_t field_15B8_;
   int32_t field_15BC_;

@@ -182,6 +182,39 @@ def scan_callers(image: Image, target: int) -> list[int]:
     return sites
 
 
+def first_constructed(image: Image, ctor: int, length: int,
+                      by_address: dict[int, dict]) -> tuple[str, int, bool] | None:
+    """(class, offset, is_member) for the first object this constructor builds.
+
+    A base class is constructed on an unadjusted `this`; a member is
+    constructed on `this` plus its offset. The instruction that distinguishes
+    them is the `lea ecx, [reg + N]` in between, and reading only which
+    constructor runs first cannot tell them apart.
+
+    That mattered: FileWin, StatusWin, InfoWin, and BattleWin were all
+    declared here as deriving from the class their constructor calls into,
+    when in every case it is a member sitting at a nonzero offset -
+    FlatButton at 0x660, Caviar at 0x30, Time at 0x30. Declaring a member as a
+    base puts it at offset zero and moves every field after it.
+    """
+    offset = 0
+    for instruction in image.disasm(ctor, length):
+        if instruction.mnemonic == "lea" and instruction.op_str.startswith("ecx,"):
+            match = re.match(r"ecx, \[e\w\w \+ (0x[0-9a-f]+)\]", instruction.op_str)
+            offset = int(match.group(1), 16) if match else offset
+        elif instruction.mnemonic == "call":
+            for operand in instruction.operands:
+                if operand.type != X86_OP_IMM:
+                    continue
+                row = by_address.get(operand.imm & 0xFFFFFFFF)
+                if not row:
+                    continue
+                match = CTOR_RE.match(row["name"])
+                if match:
+                    return match.group(1), offset, offset != 0
+    return None
+
+
 def owning_function(by_address: dict[int, dict], site: int) -> dict | None:
     starts = sorted(by_address)
     index = bisect.bisect_right(starts, site) - 1

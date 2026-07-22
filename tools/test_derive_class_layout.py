@@ -194,6 +194,59 @@ class VirtualBaseTest(unittest.TestCase):
         self.assertIsNotNone(evidence)
 
 
+class FirstConstructedTest(unittest.TestCase):
+    """Telling a base class from a member.
+
+    Four headers in this repository declared a base that is really a member,
+    because the check read only which constructor ran first. A member built at
+    a nonzero offset, declared as a base, lands at offset zero and moves every
+    field after it.
+    """
+
+    TABLE = {0x005D4CF0: {"name": "??0GraphicWin@@QAE@XZ", "size": "230"},
+             0x00617F00: {"name": "??0Caviar@@QAE@XZ", "size": "100"}}
+
+    def instruction(self, mnemonic, op_str, immediate=None):
+        item = mock.Mock()
+        item.mnemonic, item.op_str = mnemonic, op_str
+        if immediate is None:
+            item.operands = []
+        else:
+            operand = mock.Mock()
+            operand.type = layout.X86_OP_IMM
+            operand.imm = immediate
+            item.operands = [operand]
+        return item
+
+    def run_against(self, instructions):
+        image = mock.Mock()
+        image.disasm.side_effect = lambda address, length: instructions
+        return layout.first_constructed(image, 0x00400000, 200, self.TABLE)
+
+    def test_an_unadjusted_this_is_a_base(self):
+        found = self.run_against([
+            self.instruction("mov", "esi, ecx"),
+            self.instruction("call", "0x5d4cf0", 0x005D4CF0)])
+        self.assertEqual(("GraphicWin", 0, False), found)
+
+    def test_an_offset_this_is_a_member(self):
+        # StatusWin builds a Caviar at +0x30; it is not a Caviar.
+        found = self.run_against([
+            self.instruction("lea", "ecx, [esi + 0x30]"),
+            self.instruction("call", "0x617f00", 0x00617F00)])
+        self.assertEqual(("Caviar", 0x30, True), found)
+
+    def test_reports_nothing_when_no_constructor_runs(self):
+        self.assertIsNone(self.run_against([self.instruction("ret", "")]))
+
+    def test_an_adjustment_after_the_call_does_not_apply(self):
+        # The lea that matters is the one before the call, not after it.
+        found = self.run_against([
+            self.instruction("call", "0x5d4cf0", 0x005D4CF0),
+            self.instruction("lea", "ecx, [esi + 0x660]")])
+        self.assertEqual(("GraphicWin", 0, False), found)
+
+
 class PinnedParsingTest(unittest.TestCase):
     def test_reads_hexadecimal_and_decimal_pins(self):
         source = ('static_assert(sizeof(Win) == 0x444, "x");\n'
