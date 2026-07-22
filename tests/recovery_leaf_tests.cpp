@@ -18,6 +18,14 @@
 #include "../src/log.h"
 #include "../src/maininterface.h"
 #include "../src/mapwin.h"
+#include "../src/alphamovie.h"
+#include "../src/basewin.h"
+#include "../src/datalink.h"
+#include "../src/designwin.h"
+#include "../src/diplowin.h"
+#include "../src/netwin.h"
+#include "../src/socialwin.h"
+#include "../src/worldwin.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -8496,6 +8504,99 @@ void test_constant_return_stubs() {
     map_win_unk3_redirect(map_win, nullptr);
     map_win_do_image_buttons_redirect(map_win, nullptr);
     expect_storage_bytes(mw_storage.data(), mw_expected.data(), mw_storage.size());
+
+    // Sixteen bare returns across eight window classes. None of these layouts
+    // is established, so each canary spans only the GraphicWin base the class
+    // is declared with rather than the object's true extent - which is all
+    // these methods could reach anyway, since they touch nothing.
+    std::vector<uint8_t> base_win_storage(sizeof(BaseWin) + 32);
+    std::vector<uint8_t> base_win_expected(base_win_storage.size());
+    auto *base_win = reinterpret_cast<BaseWin *>(base_win_storage.data() + 16);
+    seed_storage(base_win_storage.data(), base_win_expected.data(), base_win_storage.size());
+    std::memcpy(base_win_expected.data(), base_win_storage.data(), base_win_storage.size());
+    base_win->close();
+    base_win->UNK4();
+    base_win->UNK6();
+    base_win->UNK7();
+    base_win_close_redirect(base_win, nullptr);
+    base_win_unk4_redirect(base_win, nullptr);
+    base_win_unk6_redirect(base_win, nullptr);
+    base_win_unk7_redirect(base_win, nullptr);
+    expect_storage_bytes(base_win_storage.data(), base_win_expected.data(),
+                         base_win_storage.size());
+    std::vector<uint8_t> datalink_storage(sizeof(Datalink) + 32);
+    std::vector<uint8_t> datalink_expected(datalink_storage.size());
+    auto *datalink = reinterpret_cast<Datalink *>(datalink_storage.data() + 16);
+    seed_storage(datalink_storage.data(), datalink_expected.data(), datalink_storage.size());
+    std::memcpy(datalink_expected.data(), datalink_storage.data(), datalink_storage.size());
+    datalink->UNK6();
+    datalink->UNK8();
+    datalink->UNK9();
+    datalink_unk6_redirect(datalink, nullptr);
+    datalink_unk8_redirect(datalink, nullptr);
+    datalink_unk9_redirect(datalink, nullptr);
+    expect_storage_bytes(datalink_storage.data(), datalink_expected.data(),
+                         datalink_storage.size());
+    std::vector<uint8_t> net_win_storage(sizeof(NetWin) + 32);
+    std::vector<uint8_t> net_win_expected(net_win_storage.size());
+    auto *net_win = reinterpret_cast<NetWin *>(net_win_storage.data() + 16);
+    seed_storage(net_win_storage.data(), net_win_expected.data(), net_win_storage.size());
+    std::memcpy(net_win_expected.data(), net_win_storage.data(), net_win_storage.size());
+    net_win->UNK1();
+    net_win->UNK2();
+    net_win->alloc_slots();
+    net_win_unk1_redirect(net_win, nullptr);
+    net_win_unk2_redirect(net_win, nullptr);
+    net_win_alloc_slots_redirect(net_win, nullptr);
+    expect_storage_bytes(net_win_storage.data(), net_win_expected.data(),
+                         net_win_storage.size());
+    std::vector<uint8_t> social_win_storage(sizeof(SocialWin) + 32);
+    std::vector<uint8_t> social_win_expected(social_win_storage.size());
+    auto *social_win = reinterpret_cast<SocialWin *>(social_win_storage.data() + 16);
+    seed_storage(social_win_storage.data(), social_win_expected.data(), social_win_storage.size());
+    std::memcpy(social_win_expected.data(), social_win_storage.data(), social_win_storage.size());
+    social_win->UNK2();
+    social_win->UNK3();
+    social_win_unk2_redirect(social_win, nullptr);
+    social_win_unk3_redirect(social_win, nullptr);
+    expect_storage_bytes(social_win_storage.data(), social_win_expected.data(),
+                         social_win_storage.size());
+    std::vector<uint8_t> design_win_storage(sizeof(DesignWin) + 32);
+    std::vector<uint8_t> design_win_expected(design_win_storage.size());
+    auto *design_win = reinterpret_cast<DesignWin *>(design_win_storage.data() + 16);
+    seed_storage(design_win_storage.data(), design_win_expected.data(), design_win_storage.size());
+    std::memcpy(design_win_expected.data(), design_win_storage.data(), design_win_storage.size());
+    design_win->UNK1();
+    design_win_unk1_redirect(design_win, nullptr);
+    expect_storage_bytes(design_win_storage.data(), design_win_expected.data(),
+                         design_win_storage.size());
+    std::vector<uint8_t> world_win_storage(sizeof(WorldWin) + 32);
+    std::vector<uint8_t> world_win_expected(world_win_storage.size());
+    auto *world_win = reinterpret_cast<WorldWin *>(world_win_storage.data() + 16);
+    seed_storage(world_win_storage.data(), world_win_expected.data(), world_win_storage.size());
+    std::memcpy(world_win_expected.data(), world_win_storage.data(), world_win_storage.size());
+    world_win->clear_terrain();
+    world_win_clear_terrain_redirect(world_win, nullptr);
+    expect_storage_bytes(world_win_storage.data(), world_win_expected.data(),
+                         world_win_storage.size());
+    std::vector<uint8_t> diplo_win_storage(sizeof(DiploWin) + 32);
+    std::vector<uint8_t> diplo_win_expected(diplo_win_storage.size());
+    auto *diplo_win = reinterpret_cast<DiploWin *>(diplo_win_storage.data() + 16);
+    seed_storage(diplo_win_storage.data(), diplo_win_expected.data(), diplo_win_storage.size());
+    std::memcpy(diplo_win_expected.data(), diplo_win_storage.data(), diplo_win_storage.size());
+    diplo_win->UNK5();
+    diplo_win_unk5_redirect(diplo_win, nullptr);
+    expect_storage_bytes(diplo_win_storage.data(), diplo_win_expected.data(),
+                         diplo_win_storage.size());
+    std::vector<uint8_t> alpha_movie_storage(sizeof(AlphaMovie) + 32);
+    std::vector<uint8_t> alpha_movie_expected(alpha_movie_storage.size());
+    auto *alpha_movie = reinterpret_cast<AlphaMovie *>(alpha_movie_storage.data() + 16);
+    seed_storage(alpha_movie_storage.data(), alpha_movie_expected.data(), alpha_movie_storage.size());
+    std::memcpy(alpha_movie_expected.data(), alpha_movie_storage.data(), alpha_movie_storage.size());
+    alpha_movie->UNK7();
+    alpha_movie_unk7_redirect(alpha_movie, nullptr);
+    expect_storage_bytes(alpha_movie_storage.data(), alpha_movie_expected.data(),
+                         alpha_movie_storage.size());
 }
 
 void test_base_pop_default_colors() {

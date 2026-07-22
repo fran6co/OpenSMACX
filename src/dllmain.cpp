@@ -29,6 +29,14 @@
 #include "dialogs.h"
 #include "maininterface.h"
 #include "mapwin.h"
+#include "basewin.h"
+#include "datalink.h"
+#include "netwin.h"
+#include "socialwin.h"
+#include "designwin.h"
+#include "worldwin.h"
+#include "diplowin.h"
+#include "alphamovie.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -54,7 +62,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 206;
+constexpr size_t RedirectCount = 222;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -210,6 +218,56 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
 bool install_redirects() {
     const RedirectSpec specs[] = {
         {
+            0x00404280,
+            reinterpret_cast<uintptr_t>(&alpha_movie_unk7_redirect),
+            OPENSMACX_SIGNATURE_00404280,
+        },
+        {
+            0x00408710,
+            reinterpret_cast<uintptr_t>(&base_win_close_redirect),
+            OPENSMACX_SIGNATURE_00408710,
+        },
+        {
+            0x00416DD0,
+            reinterpret_cast<uintptr_t>(&base_win_unk4_redirect),
+            OPENSMACX_SIGNATURE_00416DD0,
+        },
+        {
+            0x0041AF20,
+            reinterpret_cast<uintptr_t>(&base_win_unk6_redirect),
+            OPENSMACX_SIGNATURE_0041AF20,
+        },
+        {
+            0x0041AF30,
+            reinterpret_cast<uintptr_t>(&base_win_unk7_redirect),
+            OPENSMACX_SIGNATURE_0041AF30,
+        },
+        {
+            0x0042BEA0,
+            reinterpret_cast<uintptr_t>(&datalink_unk6_redirect),
+            OPENSMACX_SIGNATURE_0042BEA0,
+        },
+        {
+            0x0042BF00,
+            reinterpret_cast<uintptr_t>(&datalink_unk8_redirect),
+            OPENSMACX_SIGNATURE_0042BF00,
+        },
+        {
+            0x00431DB0,
+            reinterpret_cast<uintptr_t>(&datalink_unk9_redirect),
+            OPENSMACX_SIGNATURE_00431DB0,
+        },
+        {
+            0x004345C0,
+            reinterpret_cast<uintptr_t>(&design_win_unk1_redirect),
+            OPENSMACX_SIGNATURE_004345C0,
+        },
+        {
+            0x00442A00,
+            reinterpret_cast<uintptr_t>(&diplo_win_unk5_redirect),
+            OPENSMACX_SIGNATURE_00442A00,
+        },
+        {
             0x00447220,
             reinterpret_cast<uintptr_t>(&faction_ambience_begin_redirect),
             OPENSMACX_SIGNATURE_00447220,
@@ -323,6 +381,36 @@ bool install_redirects() {
             0x0046FB80,
             reinterpret_cast<uintptr_t>(&map_win_do_image_buttons_redirect),
             OPENSMACX_SIGNATURE_0046FB80,
+        },
+        {
+            0x0047F920,
+            reinterpret_cast<uintptr_t>(&net_win_unk1_redirect),
+            OPENSMACX_SIGNATURE_0047F920,
+        },
+        {
+            0x0047F930,
+            reinterpret_cast<uintptr_t>(&net_win_unk2_redirect),
+            OPENSMACX_SIGNATURE_0047F930,
+        },
+        {
+            0x004834D0,
+            reinterpret_cast<uintptr_t>(&net_win_alloc_slots_redirect),
+            OPENSMACX_SIGNATURE_004834D0,
+        },
+        {
+            0x004AEF00,
+            reinterpret_cast<uintptr_t>(&social_win_unk2_redirect),
+            OPENSMACX_SIGNATURE_004AEF00,
+        },
+        {
+            0x004B1790,
+            reinterpret_cast<uintptr_t>(&social_win_unk3_redirect),
+            OPENSMACX_SIGNATURE_004B1790,
+        },
+        {
+            0x004C45E0,
+            reinterpret_cast<uintptr_t>(&world_win_clear_terrain_redirect),
+            OPENSMACX_SIGNATURE_004C45E0,
         },
         {
             0x004C58B0,
