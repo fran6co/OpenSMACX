@@ -32,6 +32,17 @@
 #include "../src/statuswin.h"
 #include "../src/filewin.h"
 #include "../src/wave.h"
+#include "../src/battlewin.h"
+#include "../src/councwin.h"
+#include "../src/credits.h"
+#include "../src/diplopop.h"
+#include "../src/gamma.h"
+#include "../src/messagewin.h"
+#include "../src/newtechwin.h"
+#include "../src/pickwin.h"
+#include "../src/prodpicker.h"
+#include "../src/reportwin.h"
+#include "../src/setupwin.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -8831,6 +8842,179 @@ void test_constant_return_stubs() {
     world_win_on_left_double_click_redirect(world_win_c, nullptr, -1, 2147483647);
     expect_storage_bytes(world_win_c_storage.data(), world_win_c_expected.data(),
                          world_win_c_storage.size());
+
+    // Eleven more classes, each over a base already pinned here, so every
+    // canary below covers an exact base region. Same hostile arguments as
+    // above.
+    std::vector<uint8_t> battle_win_k_storage(sizeof(BattleWin) + 32);
+    std::vector<uint8_t> battle_win_k_expected(battle_win_k_storage.size());
+    auto *battle_win_k = reinterpret_cast<BattleWin *>(battle_win_k_storage.data() + 16);
+    seed_storage(battle_win_k_storage.data(), battle_win_k_expected.data(), battle_win_k_storage.size());
+    std::memcpy(battle_win_k_expected.data(), battle_win_k_storage.data(), battle_win_k_storage.size());
+    battle_win_k->on_iface_left_click(-1, 2147483647);
+    battle_win_on_iface_left_click_redirect(battle_win_k, nullptr, -1, 2147483647);
+    battle_win_k->on_iface_right_click(-1, 2147483647);
+    battle_win_on_iface_right_click_redirect(battle_win_k, nullptr, -1, 2147483647);
+    battle_win_k->on_iface_right_down(-1, 2147483647);
+    battle_win_on_iface_right_down_redirect(battle_win_k, nullptr, -1, 2147483647);
+    battle_win_k->on_iface_mouse_move(-1, 2147483647);
+    battle_win_on_iface_mouse_move_redirect(battle_win_k, nullptr, -1, 2147483647);
+    battle_win_k->on_iface_mouse_leave(-1, 2147483647);
+    battle_win_on_iface_mouse_leave_redirect(battle_win_k, nullptr, -1, 2147483647);
+    battle_win_k->on_iface_selected(-1, 2147483647);
+    battle_win_on_iface_selected_redirect(battle_win_k, nullptr, -1, 2147483647);
+    expect_storage_bytes(battle_win_k_storage.data(), battle_win_k_expected.data(),
+                         battle_win_k_storage.size());
+    std::vector<uint8_t> counc_win_k_storage(sizeof(CouncWin) + 32);
+    std::vector<uint8_t> counc_win_k_expected(counc_win_k_storage.size());
+    auto *counc_win_k = reinterpret_cast<CouncWin *>(counc_win_k_storage.data() + 16);
+    seed_storage(counc_win_k_storage.data(), counc_win_k_expected.data(), counc_win_k_storage.size());
+    std::memcpy(counc_win_k_expected.data(), counc_win_k_storage.data(), counc_win_k_storage.size());
+    counc_win_k->on_group_clicked(-1, 2147483647);
+    counc_win_on_group_clicked_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_button_passover(-1, 2147483647);
+    counc_win_on_button_passover_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_left_click(-1, 2147483647);
+    counc_win_on_iface_left_click_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_right_click(-1, 2147483647);
+    counc_win_on_iface_right_click_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_left_down(-1, 2147483647);
+    counc_win_on_iface_left_down_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_right_down(-1, 2147483647);
+    counc_win_on_iface_right_down_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_mouse_move(-1, 2147483647);
+    counc_win_on_iface_mouse_move_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_mouse_leave(-1, 2147483647);
+    counc_win_on_iface_mouse_leave_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_selected(-1, 2147483647);
+    counc_win_on_iface_selected_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_left_double_click(-1, 2147483647);
+    counc_win_on_iface_left_double_click_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_right_double_click(-1, 2147483647);
+    counc_win_on_iface_right_double_click_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_button_toggled(-1, 2147483647);
+    counc_win_on_iface_button_toggled_redirect(counc_win_k, nullptr, -1, 2147483647);
+    counc_win_k->on_iface_group_clicked(-1, 2147483647, -2147483648);
+    counc_win_on_iface_group_clicked_redirect(counc_win_k, nullptr, -1, 2147483647, -2147483648);
+    expect_storage_bytes(counc_win_k_storage.data(), counc_win_k_expected.data(),
+                         counc_win_k_storage.size());
+    std::vector<uint8_t> credits_k_storage(sizeof(Credits) + 32);
+    std::vector<uint8_t> credits_k_expected(credits_k_storage.size());
+    auto *credits_k = reinterpret_cast<Credits *>(credits_k_storage.data() + 16);
+    seed_storage(credits_k_storage.data(), credits_k_expected.data(), credits_k_storage.size());
+    std::memcpy(credits_k_expected.data(), credits_k_storage.data(), credits_k_storage.size());
+    credits_k->on_left_down(-1, 2147483647);
+    credits_on_left_down_redirect(credits_k, nullptr, -1, 2147483647);
+    credits_k->on_right_down(-1, 2147483647);
+    credits_on_right_down_redirect(credits_k, nullptr, -1, 2147483647);
+    credits_k->on_mouse_move(-1, 2147483647);
+    credits_on_mouse_move_redirect(credits_k, nullptr, -1, 2147483647);
+    credits_k->on_button_clicked(-1);
+    credits_on_button_clicked_redirect(credits_k, nullptr, -1);
+    expect_storage_bytes(credits_k_storage.data(), credits_k_expected.data(),
+                         credits_k_storage.size());
+    std::vector<uint8_t> diplo_pop_k_storage(sizeof(DiploPop) + 32);
+    std::vector<uint8_t> diplo_pop_k_expected(diplo_pop_k_storage.size());
+    auto *diplo_pop_k = reinterpret_cast<DiploPop *>(diplo_pop_k_storage.data() + 16);
+    seed_storage(diplo_pop_k_storage.data(), diplo_pop_k_expected.data(), diplo_pop_k_storage.size());
+    std::memcpy(diplo_pop_k_expected.data(), diplo_pop_k_storage.data(), diplo_pop_k_storage.size());
+    diplo_pop_k->on_iface_left_click(-1, 2147483647);
+    diplo_pop_on_iface_left_click_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_right_click(-1, 2147483647);
+    diplo_pop_on_iface_right_click_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_left_down(-1, 2147483647);
+    diplo_pop_on_iface_left_down_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_right_down(-1, 2147483647);
+    diplo_pop_on_iface_right_down_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_mouse_move(-1, 2147483647);
+    diplo_pop_on_iface_mouse_move_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_mouse_leave(-1, 2147483647);
+    diplo_pop_on_iface_mouse_leave_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_selected(-1, 2147483647);
+    diplo_pop_on_iface_selected_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_left_double_click(-1, 2147483647);
+    diplo_pop_on_iface_left_double_click_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_right_double_click(-1, 2147483647);
+    diplo_pop_on_iface_right_double_click_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    diplo_pop_k->on_iface_button_toggled(-1, 2147483647);
+    diplo_pop_on_iface_button_toggled_redirect(diplo_pop_k, nullptr, -1, 2147483647);
+    expect_storage_bytes(diplo_pop_k_storage.data(), diplo_pop_k_expected.data(),
+                         diplo_pop_k_storage.size());
+    std::vector<uint8_t> gamma_k_storage(sizeof(Gamma) + 32);
+    std::vector<uint8_t> gamma_k_expected(gamma_k_storage.size());
+    auto *gamma_k = reinterpret_cast<Gamma *>(gamma_k_storage.data() + 16);
+    seed_storage(gamma_k_storage.data(), gamma_k_expected.data(), gamma_k_storage.size());
+    std::memcpy(gamma_k_expected.data(), gamma_k_storage.data(), gamma_k_storage.size());
+    expect(gamma_k->on_key_click(-1, 2147483647) == 1);
+    expect(gamma_on_key_click_redirect(gamma_k, nullptr, -1, 2147483647) == 1);
+    expect_storage_bytes(gamma_k_storage.data(), gamma_k_expected.data(),
+                         gamma_k_storage.size());
+    std::vector<uint8_t> message_win_k_storage(sizeof(MessageWin) + 32);
+    std::vector<uint8_t> message_win_k_expected(message_win_k_storage.size());
+    auto *message_win_k = reinterpret_cast<MessageWin *>(message_win_k_storage.data() + 16);
+    seed_storage(message_win_k_storage.data(), message_win_k_expected.data(), message_win_k_storage.size());
+    std::memcpy(message_win_k_expected.data(), message_win_k_storage.data(), message_win_k_storage.size());
+    message_win_k->UNK1(-1, 2147483647, -2147483648, 3, -4);
+    message_win_unk1_redirect(message_win_k, nullptr, -1, 2147483647, -2147483648, 3, -4);
+    message_win_k->UNK4(-1);
+    message_win_unk4_redirect(message_win_k, nullptr, -1);
+    expect_storage_bytes(message_win_k_storage.data(), message_win_k_expected.data(),
+                         message_win_k_storage.size());
+    std::vector<uint8_t> new_tech_win_k_storage(sizeof(NewTechWin) + 32);
+    std::vector<uint8_t> new_tech_win_k_expected(new_tech_win_k_storage.size());
+    auto *new_tech_win_k = reinterpret_cast<NewTechWin *>(new_tech_win_k_storage.data() + 16);
+    seed_storage(new_tech_win_k_storage.data(), new_tech_win_k_expected.data(), new_tech_win_k_storage.size());
+    std::memcpy(new_tech_win_k_expected.data(), new_tech_win_k_storage.data(), new_tech_win_k_storage.size());
+    new_tech_win_k->on_left_click(-1, 2147483647);
+    new_tech_win_on_left_click_redirect(new_tech_win_k, nullptr, -1, 2147483647);
+    expect(new_tech_win_k->on_key_click(-1, 2147483647) == 1);
+    expect(new_tech_win_on_key_click_redirect(new_tech_win_k, nullptr, -1, 2147483647) == 1);
+    expect_storage_bytes(new_tech_win_k_storage.data(), new_tech_win_k_expected.data(),
+                         new_tech_win_k_storage.size());
+    std::vector<uint8_t> pick_win_k_storage(sizeof(PickWin) + 32);
+    std::vector<uint8_t> pick_win_k_expected(pick_win_k_storage.size());
+    auto *pick_win_k = reinterpret_cast<PickWin *>(pick_win_k_storage.data() + 16);
+    seed_storage(pick_win_k_storage.data(), pick_win_k_expected.data(), pick_win_k_storage.size());
+    std::memcpy(pick_win_k_expected.data(), pick_win_k_storage.data(), pick_win_k_storage.size());
+    pick_win_k->on_button_passover(-1, 2147483647);
+    pick_win_on_button_passover_redirect(pick_win_k, nullptr, -1, 2147483647);
+    expect_storage_bytes(pick_win_k_storage.data(), pick_win_k_expected.data(),
+                         pick_win_k_storage.size());
+    std::vector<uint8_t> prod_picker_k_storage(sizeof(ProdPicker) + 32);
+    std::vector<uint8_t> prod_picker_k_expected(prod_picker_k_storage.size());
+    auto *prod_picker_k = reinterpret_cast<ProdPicker *>(prod_picker_k_storage.data() + 16);
+    seed_storage(prod_picker_k_storage.data(), prod_picker_k_expected.data(), prod_picker_k_storage.size());
+    std::memcpy(prod_picker_k_expected.data(), prod_picker_k_storage.data(), prod_picker_k_storage.size());
+    expect(prod_picker_k->UNK1(-1) == 1);
+    expect(prod_picker_unk1_redirect(prod_picker_k, nullptr, -1) == 1);
+    prod_picker_k->on_mouse_move(-1, 2147483647);
+    prod_picker_on_mouse_move_redirect(prod_picker_k, nullptr, -1, 2147483647);
+    prod_picker_k->UNK3(-1);
+    prod_picker_unk3_redirect(prod_picker_k, nullptr, -1);
+    expect_storage_bytes(prod_picker_k_storage.data(), prod_picker_k_expected.data(),
+                         prod_picker_k_storage.size());
+    std::vector<uint8_t> report_win_k_storage(sizeof(ReportWin) + 32);
+    std::vector<uint8_t> report_win_k_expected(report_win_k_storage.size());
+    auto *report_win_k = reinterpret_cast<ReportWin *>(report_win_k_storage.data() + 16);
+    seed_storage(report_win_k_storage.data(), report_win_k_expected.data(), report_win_k_storage.size());
+    std::memcpy(report_win_k_expected.data(), report_win_k_storage.data(), report_win_k_storage.size());
+    report_win_k->on_mouse_move(-1, 2147483647);
+    report_win_on_mouse_move_redirect(report_win_k, nullptr, -1, 2147483647);
+    report_win_k->on_mouse_leave(-1, 2147483647);
+    report_win_on_mouse_leave_redirect(report_win_k, nullptr, -1, 2147483647);
+    expect_storage_bytes(report_win_k_storage.data(), report_win_k_expected.data(),
+                         report_win_k_storage.size());
+    std::vector<uint8_t> setup_win_k_storage(sizeof(SetupWin) + 32);
+    std::vector<uint8_t> setup_win_k_expected(setup_win_k_storage.size());
+    auto *setup_win_k = reinterpret_cast<SetupWin *>(setup_win_k_storage.data() + 16);
+    seed_storage(setup_win_k_storage.data(), setup_win_k_expected.data(), setup_win_k_storage.size());
+    std::memcpy(setup_win_k_expected.data(), setup_win_k_storage.data(), setup_win_k_storage.size());
+    expect(setup_win_k->UNK3(-1) == 0);
+    expect(setup_win_unk3_redirect(setup_win_k, nullptr, -1) == 0);
+    expect(setup_win_k->UNK4(-1) == 0);
+    expect(setup_win_unk4_redirect(setup_win_k, nullptr, -1) == 0);
+    expect_storage_bytes(setup_win_k_storage.data(), setup_win_k_expected.data(),
+                         setup_win_k_storage.size());
 }
 
 void test_base_pop_default_colors() {
