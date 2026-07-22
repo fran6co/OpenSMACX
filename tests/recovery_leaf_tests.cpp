@@ -45,6 +45,7 @@
 #include "../src/setupwin.h"
 #include "../src/multidebug.h"
 #include "../src/tutwin.h"
+#include "../src/popmenu.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9427,6 +9428,107 @@ void test_button_group_set() {
     ButtonGroupOriginalButtonClick = saved;
 }
 
+namespace {
+BasePop *g_inited_base_pop = nullptr;
+int g_init_a = -1;
+long g_init_b = -1;
+int g_base_pop_init_result = 0;
+int __thiscall observe_base_pop_init(BasePop *self, int a, long b) {
+    g_inited_base_pop = self;
+    g_init_a = a;
+    g_init_b = b;
+    return g_base_pop_init_result;
+}
+
+InfoWin *g_timer_self = nullptr;
+int g_timer_arg = 0;
+int g_timer_calls = 0;
+int g_timer_flag_during_call = -1;
+void __thiscall observe_timer_proc(InfoWin *self, int arg) {
+    g_timer_self = self;
+    g_timer_arg = arg;
+    std::memcpy(&g_timer_flag_during_call,
+                reinterpret_cast<const uint8_t *>(self) + 0xA8, sizeof(int));
+    ++g_timer_calls;
+}
+}  // namespace
+
+void test_delegating_closers() {
+    // Popup::close has 104 callers, the most of anything left. Its Scroll sits
+    // at 0x3230 - exactly sizeof(BasePop) - and Scroll::close is already
+    // recovered, so only the base close is reached through a seam.
+    // Popup::close is held back from this batch. It runs the real
+    // Scroll::close on its member, which needs the whole Scroll fixture -
+    // two default tables, three seams and two vtables - and rebuilding that
+    // inside this test duplicates the Scroll suite rather than reusing it.
+    // The recovery is written and correct by disassembly; it waits on that
+    // fixture becoming a shared helper.
+
+    // PopMenu::init passes `this` straight through with two zero arguments,
+    // and hands back whatever the base returns.
+    auto *const saved_init = BasePopOriginalInit;
+    BasePopOriginalInit = &observe_base_pop_init;
+    std::vector<uint8_t> pm(sizeof(PopMenu) + 32);
+    std::vector<uint8_t> pm_want(pm.size());
+    auto *menu = reinterpret_cast<PopMenu *>(pm.data() + 16);
+    seed_storage(pm.data(), pm_want.data(), pm.size());
+    std::memcpy(pm_want.data(), pm.data(), pm.size());
+    g_base_pop_init_result = 0x7FFFFFFF;
+    expect(menu->init() == 0x7FFFFFFF);
+    expect(reinterpret_cast<void *>(g_inited_base_pop) ==
+           reinterpret_cast<void *>(menu));
+    expect(g_init_a == 0);
+    expect(g_init_b == 0);
+    g_base_pop_init_result = -1;
+    expect(pop_menu_init_redirect(menu, nullptr) == -1);
+    expect_storage_bytes(pm.data(), pm_want.data(), pm.size());
+    BasePopOriginalInit = saved_init;
+
+    // InfoWin::reset is guarded: it must clear the flag *before* dispatching,
+    // and must not dispatch at all when the flag is already clear.
+    auto *const saved_timer = InfoWinOriginalTimerProc;
+    InfoWinOriginalTimerProc = &observe_timer_proc;
+    std::vector<uint8_t> iw(sizeof(InfoWin) + 32);
+    std::vector<uint8_t> iw_want(iw.size());
+    auto *info = reinterpret_cast<InfoWin *>(iw.data() + 16);
+    auto set_flag = [&](int32_t value) {
+        std::memcpy(iw.data() + 16 + 0xA8, &value, sizeof(value));
+    };
+    auto flag = [&] {
+        int32_t value = 0;
+        std::memcpy(&value, iw.data() + 16 + 0xA8, sizeof(value));
+        return value;
+    };
+
+    seed_storage(iw.data(), iw_want.data(), iw.size());
+    set_flag(0);
+    std::memcpy(iw_want.data(), iw.data(), iw.size());
+    g_timer_calls = 0;
+    info->reset();
+    expect(g_timer_calls == 0);
+    expect_storage_bytes(iw.data(), iw_want.data(), iw.size());
+
+    seed_storage(iw.data(), iw_want.data(), iw.size());
+    set_flag(0x1234);
+    std::memcpy(iw_want.data(), iw.data(), iw.size());
+    g_timer_calls = 0;
+    info->reset();
+    expect(g_timer_calls == 1);
+    expect(g_timer_self == info);
+    expect(g_timer_arg == 1);
+    expect(g_timer_flag_during_call == 0);
+    expect(flag() == 0);
+    std::memcpy(iw_want.data() + 16 + 0xA8, iw.data() + 16 + 0xA8, 4);
+    expect_storage_bytes(iw.data(), iw_want.data(), iw.size());
+
+    set_flag(-1);
+    g_timer_calls = 0;
+    info_win_reset_redirect(info, nullptr);
+    expect(g_timer_calls == 1);
+    expect(flag() == 0);
+    InfoWinOriginalTimerProc = saved_timer;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -9791,5 +9893,6 @@ int main() {
     test_field_store_clears();
     test_field_store_writes();
     test_button_group_set();
+    test_delegating_closers();
     return failures == 0 ? 0 : 1;
 }

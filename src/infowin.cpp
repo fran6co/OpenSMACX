@@ -69,3 +69,23 @@ void InfoWin::UNK3(int, int) {
 void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2) {
     self->UNK3(a1, a2);
 }
+
+func_info_win_timer_proc *InfoWinOriginalTimerProc =
+    (func_info_win_timer_proc *)0x00459150;
+
+/*
+Purpose: Cancel the pending info-window timer, if one is outstanding.
+Original Offset: 00459280
+Return Value: n/a
+Status: Complete
+*/
+void InfoWin::reset() {
+    if (field_A8_) {
+        field_A8_ = 0;
+        InfoWinOriginalTimerProc(this, 1);
+    }
+}
+
+void __fastcall info_win_reset_redirect(InfoWin *self, void *) {
+    self->reset();
+}

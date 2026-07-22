@@ -56,6 +56,7 @@
 #include "setupwin.h"
 #include "multidebug.h"
 #include "tutwin.h"
+#include "popmenu.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -81,7 +82,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 377;
+constexpr size_t RedirectCount = 379;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -792,6 +793,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00458920,
         },
         {
+            0x00459280,
+            reinterpret_cast<uintptr_t>(&info_win_reset_redirect),
+            OPENSMACX_SIGNATURE_00459280,
+        },
+        {
             0x0045C280,
             reinterpret_cast<uintptr_t>(&main_interface_unk1_redirect),
             OPENSMACX_SIGNATURE_0045C280,
@@ -1110,6 +1116,11 @@ bool install_redirects() {
             0x004C7120,
             reinterpret_cast<uintptr_t>(&wave_set_release_redirect),
             OPENSMACX_SIGNATURE_004C7120,
+        },
+        {
+            0x0059D3A0,
+            reinterpret_cast<uintptr_t>(&pop_menu_init_redirect),
+            OPENSMACX_SIGNATURE_0059D3A0,
         },
         {
             0x005C9410,

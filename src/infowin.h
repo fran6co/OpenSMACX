@@ -34,6 +34,7 @@ class DLLEXPORT InfoWin {
   ~InfoWin() { ; }
   void UNK1();
   void on_redraw();
+  void reset();
   void change(int a1);
   void UNK3(int a1, int a2);
 
@@ -41,10 +42,18 @@ class DLLEXPORT InfoWin {
   // Not a base class: the constructor builds a Time at +0x30 on an offset
   // `this`. The constructor reaches 0x9D0, so the object is at least that
   // large; nothing else about it is established.
-  uint8_t unmapped_0_[0x9D4];
+  uint8_t unmapped_0_[0xA8];
+  int32_t field_A8_;
+  uint8_t unmapped_AC_[0x9D4 - 0xAC];
 };
 
 void __fastcall info_win_unk1_redirect(InfoWin *self, void *);
 void __fastcall info_win_on_redraw_redirect(InfoWin *self, void *);
 void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1);
 void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);
+
+// InfoWin::timer_proc is not recovered yet.
+typedef void (__thiscall func_info_win_timer_proc)(InfoWin *, int);
+extern func_info_win_timer_proc *InfoWinOriginalTimerProc;
+
+void __fastcall info_win_reset_redirect(InfoWin *self, void *);

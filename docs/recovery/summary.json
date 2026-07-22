@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 40,
-      "source_complete": 881,
+      "original_dependency": 42,
+      "source_complete": 883,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4709
+      "unrecovered": 4705
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 827,
-    "matched_function_starts": 827,
-    "unique_addresses": 827,
+    "annotations": 829,
+    "matched_function_starts": 829,
+    "unique_addresses": 829,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 183,
-      "function": 47
+      "function": 49
     },
     "items": [
       {
@@ -2094,6 +2094,15 @@
         "type": "uint32_t *"
       },
       {
+        "address": "0x00459150",
+        "function": "?timer_proc@InfoWin@@QAEXH@Z",
+        "function_address": "0x00459150",
+        "kind": "function",
+        "location": "src/infowin.cpp:73",
+        "symbol": "InfoWinOriginalTimerProc",
+        "type": "func_info_win_timer_proc *"
+      },
+      {
         "address": "0x009BBFF8",
         "function": "",
         "function_address": "",
@@ -2407,6 +2416,15 @@
         "location": "src/path.cpp:497",
         "symbol": "Paths",
         "type": "Path *"
+      },
+      {
+        "address": "0x006015B0",
+        "function": "?init@BasePop@@QAEHHJ@Z",
+        "function_address": "0x006015B0",
+        "kind": "function",
+        "location": "src/popmenu.cpp:21",
+        "symbol": "BasePopOriginalInit",
+        "type": "func_base_pop_init *"
       },
       {
         "address": "0x00945B30",
@@ -3399,7 +3417,7 @@
         "type": "func_win_flip *"
       }
     ],
-    "matched_function_starts": 47,
-    "total": 230
+    "matched_function_starts": 49,
+    "total": 232
   }
 }
