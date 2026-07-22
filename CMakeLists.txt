@@ -502,6 +502,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_mutate_and_verify.py"
     )
+
+    add_test(NAME shape-classifier-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_classify_recovery_shapes.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX
