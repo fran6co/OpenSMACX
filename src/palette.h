@@ -29,6 +29,9 @@ class DLLEXPORT Palette {
   int get_rgbquad(RGBQUAD *output, int start, int count);
 
  private:
+  // Buffer caches this generation tag to skip republishing an unchanged
+  // palette; see Buffer::sync_to_palette.
+  friend class Buffer;
   uint32_t field_0_;
   uint32_t field_4_;
   uint32_t field_8_;

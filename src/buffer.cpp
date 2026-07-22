@@ -647,3 +647,46 @@ HDC __fastcall buffer_get_hdc_redirect(Buffer *self, void *) {
 void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
     self->release_hdc(count);
 }
+
+/*
+Purpose: Republish a palette into the buffer's colour table and device context,
+         skipping the work when the palette has not changed.
+Original Offset: 005DE8F0
+Return Value: No errors (0); no pixel storage (7); null palette (3)
+Status: Complete
+Verification note: the publish branch is reachable - the fixture's surface
+stub hands back a synthetic device context - and the release that follows it
+is verified through the reference count and the surface's ReleaseDC. Only the
+SetDIBColorTable call itself is unobservable: it is a real GDI import, and on
+a synthetic handle it fails harmlessly with no effect any assertion can see,
+so its four mutants survive. Reordering get_rgbquad against the acquire is
+likewise equivalent, since the two touch disjoint state.
+*/
+int Buffer::sync_to_palette(Palette *palette) {
+    if (!ppv_bits_) {
+        return 7;
+    }
+    if (!palette) {
+        return 3;
+    }
+    // field_4A4_ caches the palette generation tag and sits immediately after
+    // the 256-entry table it guards, so an unchanged palette costs nothing.
+    if (field_4A4_ != palette->field_400_) {
+        field_4A4_ = palette->field_400_;
+        auto *const table = reinterpret_cast<RGBQUAD *>(dib_);
+        palette->get_rgbquad(table, 0, 0x100);
+        const HDC device = get_hdc();
+        if (device != nullptr) {
+            SetDIBColorTable(device, 0, 0x100, table);
+            release_hdc(1);
+        }
+    }
+    field_57C_ = 1;
+    field_584_ = reinterpret_cast<uint32_t>(palette);
+    return 0;
+}
+
+int __fastcall buffer_sync_to_palette_redirect(
+        Buffer *self, void *, Palette *palette) {
+    return self->sync_to_palette(palette);
+}

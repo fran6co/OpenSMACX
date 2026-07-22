@@ -38,6 +38,7 @@ class DLLEXPORT Buffer {
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
   int init_class();
   void close_class();
+  int sync_to_palette(Palette *palette);
   HDC get_hdc();
   void release_hdc(int count);
   int get_data();
@@ -161,3 +162,6 @@ void __cdecl buffer_close_class_redirect();
 
 HDC __fastcall buffer_get_hdc_redirect(Buffer *self, void *);
 void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count);
+
+int __fastcall buffer_sync_to_palette_redirect(
+    Buffer *self, void *, Palette *palette);
