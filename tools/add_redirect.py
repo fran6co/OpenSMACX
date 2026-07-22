@@ -34,6 +34,8 @@ SRC_DIR = REPO_ROOT / "src"
 
 COUNT_RE = re.compile(r"constexpr size_t RedirectCount = (\d+);")
 SPEC_RE = re.compile(r"^        \{\n            0x([0-9A-Fa-f]{8}),\n", re.M)
+CALL_TABLE = "const RedirectSpec call_specs[]"
+JUMP_TABLE_END = "    };\n    static_assert(sizeof(specs)"
 
 
 @dataclass
@@ -131,18 +133,22 @@ def add_spec(address: int, symbol: str) -> Edit:
              f"            reinterpret_cast<uintptr_t>(&{symbol}),\n"
              f"            OPENSMACX_SIGNATURE_{address:08X},\n"
              "        },\n")
-    # Insert before the first existing entry with a higher address so the
-    # table stays sorted; a misplaced entry is not a compile error and would
-    # otherwise only be noticed by eye.
+    # Keep the table's mostly-ascending order by inserting before the first
+    # higher address. This is a tidiness convention rather than a correctness
+    # one - the array is only ever iterated, so order does not affect
+    # behaviour, and the committed table is in fact already out of order in
+    # two dozen places. What does matter is landing in the jump table rather
+    # than in the call table below it, which holds interior call sites and not
+    # function starts.
     position = None
-    for spec in SPEC_RE.finditer(original):
+    for spec in SPEC_RE.finditer(original[:original.index(CALL_TABLE)]):
         if int(spec.group(1), 16) > address:
             position = spec.start()
             break
     if position is None:
-        raise ValueError(
-            f"{token} sorts after every existing spec; append it by hand and "
-            "confirm it belongs in the jump table rather than the call table")
+        # Higher than everything present: append at the end of the jump table,
+        # which is unambiguous because the array's terminator is.
+        position = original.index(JUMP_TABLE_END)
     updated = original[:position] + entry + original[position:]
     updated = COUNT_RE.sub(
         f"constexpr size_t RedirectCount = {count + 1};", updated, count=1)
@@ -174,7 +180,7 @@ def verify(address: int, symbol: str) -> None:
     match = COUNT_RE.search(text)
     declared = int(match.group(1))
     # Count only the jump table, which ends where the call table begins.
-    cutoff = text.index("const RedirectSpec call_specs[]")
+    cutoff = text.index(CALL_TABLE)
     actual = len(SPEC_RE.findall(text[:cutoff]))
     if actual != declared:
         raise ValueError(
