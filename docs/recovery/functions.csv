@@ -5252,17 +5252,17 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0062A280,0x0062A2B9,57,.text,?rewind@Flic@@QAEHXZ,int (__thiscall ?rewind@Flic@@QAEHXZ)(Flic* this),0x0062A280-0x0062A2B9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,3
 0x0062A2C0,0x0062A4FA,570,.text,?UNK3@Flic@@QAEHH@Z,"int (__thiscall ?UNK3@Flic@@QAEHH@Z)(Flic* this, int)",0x0062A2C0-0x0062A4FA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,0
 0x0062A500,0x0062A70F,527,.text,?decode_byte_run@Flic@@QAEXXZ,void (__thiscall ?decode_byte_run@Flic@@QAEXXZ)(Flic* this),0x0062A500-0x0062A70F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
-0x0062A710,0x0062A711,1,.text,?UNK4@Flic@@QAEXXZ,void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this),0x0062A710-0x0062A711,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0062A710,0x0062A711,1,.text,?UNK4@Flic@@QAEXXZ,void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this),0x0062A710-0x0062A711,game,hidden;sp_ready;purged_ok,src/flic.cpp:23,Complete,,,source_complete,,,,0,0
 0x0062A720,0x0062AAE7,967,.text,?decode_delta_flc@Flic@@QAEXXZ,void (__thiscall ?decode_delta_flc@Flic@@QAEXXZ)(Flic* this),0x0062A720-0x0062AAE7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,1
-0x0062AAF0,0x0062AAF1,1,.text,?UNK5@Flic@@QAEXXZ,void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this),0x0062AAF0-0x0062AAF1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0062AB00,0x0062AB01,1,.text,?UNK6@Flic@@QAEXXZ,void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this),0x0062AB00-0x0062AB01,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0062AAF0,0x0062AAF1,1,.text,?UNK5@Flic@@QAEXXZ,void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this),0x0062AAF0-0x0062AAF1,game,hidden;sp_ready;purged_ok,src/flic.cpp:32,Complete,,,source_complete,,,,0,0
+0x0062AB00,0x0062AB01,1,.text,?UNK6@Flic@@QAEXXZ,void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this),0x0062AB00-0x0062AB01,game,hidden;sp_ready;purged_ok,src/flic.cpp:41,Complete,,,source_complete,,,,0,0
 0x0062AB10,0x0062AB72,98,.text,?fill@Flic@@QAEXXZ,void (__thiscall ?fill@Flic@@QAEXXZ)(Flic* this),0x0062AB10-0x0062AB72,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0062AB80,0x0062ACB6,310,.text,?decode_fli_copy@Flic@@QAEXXZ,void (__thiscall ?decode_fli_copy@Flic@@QAEXXZ)(Flic* this),0x0062AB80-0x0062ACB6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
-0x0062ACC0,0x0062ACC1,1,.text,?UNK7@Flic@@QAEXXZ,void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this),0x0062ACC0-0x0062ACC1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0062ACC0,0x0062ACC1,1,.text,?UNK7@Flic@@QAEXXZ,void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this),0x0062ACC0-0x0062ACC1,game,hidden;sp_ready;purged_ok,src/flic.cpp:50,Complete,,,source_complete,,,,0,0
 0x0062ACD0,0x0062AEED,541,.text,?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z,"int (__thiscall ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z)(Flic* this, DataChunk*)",0x0062ACD0-0x0062AEED,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,13,4
 0x0062AF40,0x0062B186,582,.text,?decode_byte_run_trans@Flic@@QAEXXZ,void (__thiscall ?decode_byte_run_trans@Flic@@QAEXXZ)(Flic* this),0x0062AF40-0x0062B186,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,1
 0x0062B190,0x0062B5ED,1117,.text,?decode_delta_flc_trans@Flic@@QAEXXZ,void (__thiscall ?decode_delta_flc_trans@Flic@@QAEXXZ)(Flic* this),0x0062B190-0x0062B5ED,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
-0x0062B5F0,0x0062B5F1,1,.text,?UNK8@Flic@@QAEXXZ,void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this),0x0062B5F0-0x0062B5F1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0062B5F0,0x0062B5F1,1,.text,?UNK8@Flic@@QAEXXZ,void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this),0x0062B5F0-0x0062B5F1,game,hidden;sp_ready;purged_ok,src/flic.cpp:59,Complete,,,source_complete,,,,0,0
 0x0062B600,0x0062B66E,110,.text,?decode_black_trans@Flic@@QAEXXZ,void (__thiscall ?decode_black_trans@Flic@@QAEXXZ)(Flic* this),0x0062B600-0x0062B66E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0062B670,0x0062B776,262,.text,?decode_fli_copy_trans@Flic@@QAEXXZ,void (__thiscall ?decode_fli_copy_trans@Flic@@QAEXXZ)(Flic* this),0x0062B670-0x0062B776,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x0062B780,0x0062B7BF,63,.text,?UNK9@Flic@@QAEXXZ,void (__thiscall ?UNK9@Flic@@QAEXXZ)(Flic* this),0x0062B780-0x0062B7BF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0

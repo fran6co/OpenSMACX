@@ -8,6 +8,7 @@
 #include "../src/filemap.h"
 #include "../src/flatbutton.h"
 #include "../src/buffer.h"
+#include "../src/flic.h"
 #include "../src/font.h"
 #include "../src/graphicwin.h"
 #include "../src/font.h"
@@ -8355,6 +8356,23 @@ void test_constant_return_stubs() {
     main_interface_unk3_redirect(interface, nullptr);
     main_interface_unk4_redirect(interface, nullptr);
     expect_storage_bytes(mi_storage.data(), mi_expected.data(), mi_storage.size());
+
+    alignas(Flic) uint8_t flic_storage[sizeof(Flic) + 32];
+    uint8_t flic_expected[sizeof(flic_storage)];
+    auto *flic = reinterpret_cast<Flic *>(flic_storage + 16);
+    seed_storage(flic_storage, flic_expected, sizeof(flic_storage));
+    std::memcpy(flic_expected, flic_storage, sizeof(flic_storage));
+    flic->UNK4();
+    flic->UNK5();
+    flic->UNK6();
+    flic->UNK7();
+    flic->UNK8();
+    flic_unk4_redirect(flic, nullptr);
+    flic_unk5_redirect(flic, nullptr);
+    flic_unk6_redirect(flic, nullptr);
+    flic_unk7_redirect(flic, nullptr);
+    flic_unk8_redirect(flic, nullptr);
+    expect_storage_bytes(flic_storage, flic_expected, sizeof(flic_storage));
 }
 
 void test_base_pop_default_colors() {

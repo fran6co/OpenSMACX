@@ -354,6 +354,7 @@ if(BUILD_TESTING)
         src/dialog.cpp
         src/filemap_recovery.cpp
         src/flatbutton.cpp
+        src/flic.cpp
         src/font_recovery.cpp
         src/graphicwin.cpp
         src/log.cpp

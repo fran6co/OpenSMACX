@@ -17,3 +17,68 @@
  */
 #include "stdafx.h"
 #include "flic.h"
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0062A710
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK4() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0062AAF0
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK5() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0062AB00
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK6() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0062ACC0
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK7() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0062B5F0
+Return Value: n/a
+Status: Complete
+*/
+void Flic::UNK8() {
+}
+
+void __fastcall flic_unk4_redirect(Flic *self, void *) {
+    self->UNK4();
+}
+
+void __fastcall flic_unk5_redirect(Flic *self, void *) {
+    self->UNK5();
+}
+
+void __fastcall flic_unk6_redirect(Flic *self, void *) {
+    self->UNK6();
+}
+
+void __fastcall flic_unk7_redirect(Flic *self, void *) {
+    self->UNK7();
+}
+
+void __fastcall flic_unk8_redirect(Flic *self, void *) {
+    self->UNK8();
+}
