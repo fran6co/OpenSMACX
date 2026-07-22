@@ -18,11 +18,14 @@
 #pragma once
 #include "stdafx.h"
 
+class Buffer;  // forward declaration
+
  /*
   * Sprite class
   */
 class DLLEXPORT Sprite {
  public:
+  int draw(Buffer *buffer, int a, int b, int c, int x, int y);
   Sprite();
   ~Sprite() { ; }
 
@@ -59,3 +62,23 @@ extern func_sprite_free *SpriteFree;
 
 Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *);
 void __fastcall sprite_close_redirect(Sprite *self, void *);
+
+int __fastcall sprite_draw_redirect(
+    Sprite *self, void *, Buffer *buffer, int a, int b, int c, int x, int y);
+
+// The draw origin this overload substitutes for the duration of the call.
+extern int *SpriteDrawOriginX;
+extern int *SpriteDrawOriginY;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// The four-argument overload this one wraps is a 3225-byte body with eleven
+// call targets, still an original dependency. Tests rebind this seam.
+typedef int(__thiscall func_sprite_draw_original)(
+    Sprite *, Buffer *, int, int, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_sprite_draw_original *SpriteDrawOriginal;

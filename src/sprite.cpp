@@ -94,3 +94,31 @@ void Sprite::close() {
 void __fastcall sprite_close_redirect(Sprite *self, void *) {
     self->close();
 }
+
+int *SpriteDrawOriginX = reinterpret_cast<int *>(0x00696D18);
+int *SpriteDrawOriginY = reinterpret_cast<int *>(0x00696D1C);
+func_sprite_draw_original *SpriteDrawOriginal = (func_sprite_draw_original *)0x005E4B9A;
+
+/*
+Purpose: Draw the sprite with a temporarily substituted draw origin.
+Original Offset: 005E4B4A
+Return Value: Whatever the four-argument overload returns
+Status: Complete with a temporary dependency on the four-argument overload
+*/
+int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
+    // The origin is swapped for the duration of the call and restored in the
+    // reverse order the legacy body uses.
+    const int saved_x = *SpriteDrawOriginX;
+    const int saved_y = *SpriteDrawOriginY;
+    *SpriteDrawOriginX = x;
+    *SpriteDrawOriginY = y;
+    const int result = SpriteDrawOriginal(this, buffer, a, b, c);
+    *SpriteDrawOriginY = saved_y;
+    *SpriteDrawOriginX = saved_x;
+    return result;
+}
+
+int __fastcall sprite_draw_redirect(
+        Sprite *self, void *, Buffer *buffer, int a, int b, int c, int x, int y) {
+    return self->draw(buffer, a, b, c, x, y);
+}
