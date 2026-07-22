@@ -30,3 +30,21 @@ void StatusWin::close() {
 void __fastcall status_win_close_redirect(StatusWin *self, void *) {
     self->close();
 }
+
+/*
+Purpose: Place the status window, invalidating the two cached values that
+         follow its position.
+Original Offset: 004B9F90
+Return Value: n/a
+Status: Complete
+*/
+void StatusWin::set_loc(int x, int y) {
+    field_15B4_ = x;
+    field_15B8_ = y;
+    field_15C0_ = -1;
+    field_15BC_ = -1;
+}
+
+void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y) {
+    self->set_loc(x, y);
+}
