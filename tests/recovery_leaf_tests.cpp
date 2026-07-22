@@ -12,6 +12,7 @@
 #include "../src/graphicwin.h"
 #include "../src/font.h"
 #include "../src/log.h"
+#include "../src/maininterface.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -8337,6 +8338,23 @@ void test_constant_return_stubs() {
     base_button_on_key_down_redirect(button, nullptr, -3);
     base_button_on_key_up_redirect(button, nullptr, -4);
     expect_storage_bytes(bb_storage, bb_expected, sizeof(bb_storage));
+
+    // MainInterface is far too large to seed on the stack, so its canary
+    // lives on the heap. These three are bare returns rather than constant
+    // returns - the original bodies are a single `ret` - so leaving every
+    // byte alone is the entire behaviour there is to check.
+    std::vector<uint8_t> mi_storage(sizeof(MainInterface) + 32);
+    std::vector<uint8_t> mi_expected(mi_storage.size());
+    auto *interface = reinterpret_cast<MainInterface *>(mi_storage.data() + 16);
+    seed_storage(mi_storage.data(), mi_expected.data(), mi_storage.size());
+    std::memcpy(mi_expected.data(), mi_storage.data(), mi_storage.size());
+    interface->UNK2();
+    interface->UNK3();
+    interface->UNK4();
+    main_interface_unk2_redirect(interface, nullptr);
+    main_interface_unk3_redirect(interface, nullptr);
+    main_interface_unk4_redirect(interface, nullptr);
+    expect_storage_bytes(mi_storage.data(), mi_expected.data(), mi_storage.size());
 }
 
 void test_base_pop_default_colors() {

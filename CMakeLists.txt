@@ -357,6 +357,7 @@ if(BUILD_TESTING)
         src/font_recovery.cpp
         src/graphicwin.cpp
         src/log.cpp
+        src/maininterface.cpp
         src/menu.cpp
         src/palette.cpp
         src/pulldown.cpp

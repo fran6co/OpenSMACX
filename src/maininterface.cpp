@@ -46,6 +46,45 @@ Status: Complete
 void __cdecl desktop_update() {
 }
 
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0045C5B0
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::UNK2() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0045EB60
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::UNK3() {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a bare return with no body.
+Original Offset: 0045EB70
+Return Value: n/a
+Status: Complete
+*/
+void MainInterface::UNK4() {
+}
+
 void __fastcall main_interface_clear_message_redirect(MainInterface *self, void *) {
     self->clear_message();
+}
+
+void __fastcall main_interface_unk2_redirect(MainInterface *self, void *) {
+    self->UNK2();
+}
+
+void __fastcall main_interface_unk3_redirect(MainInterface *self, void *) {
+    self->UNK3();
+}
+
+void __fastcall main_interface_unk4_redirect(MainInterface *self, void *) {
+    self->UNK4();
 }
