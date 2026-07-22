@@ -44,6 +44,7 @@ address,kind
 0x005E3563,jump
 0x005E37E0,jump
 0x005E3820,jump
+0x005E4B4A,jump
 0x005EB3D0,jump
 0x005EB640,dependency
 0x005EBC90,dependency

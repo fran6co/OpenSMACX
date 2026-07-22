@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 33,
-      "source_complete": 635,
+      "original_dependency": 34,
+      "source_complete": 636,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4962
+      "unrecovered": 4960
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 581,
-    "matched_function_starts": 581,
-    "unique_addresses": 581,
+    "annotations": 582,
+    "matched_function_starts": 582,
+    "unique_addresses": 582,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 182,
-      "function": 40
+      "function": 41
     },
     "items": [
       {
@@ -2499,6 +2499,15 @@
         "type": "func_sprite_free *"
       },
       {
+        "address": "0x005E4B9A",
+        "function": "?draw@Sprite@@QAEHPAUBuffer@@HHH@Z",
+        "function_address": "0x005E4B9A",
+        "kind": "function",
+        "location": "src/sprite.cpp:100",
+        "symbol": "SpriteDrawOriginal",
+        "type": "func_sprite_draw_original *"
+      },
+      {
         "address": "0x0096C9F8",
         "function": "",
         "function_address": "",
@@ -3327,7 +3336,7 @@
         "type": "LPSTR *"
       }
     ],
-    "matched_function_starts": 40,
-    "total": 222
+    "matched_function_starts": 41,
+    "total": 223
   }
 }

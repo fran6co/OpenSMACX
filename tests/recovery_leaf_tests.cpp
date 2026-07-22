@@ -7890,6 +7890,95 @@ void test_win_shared_hdc() {
     WinHdcRefCount = saved_count;
 }
 
+struct SpriteDrawProbe {
+    int calls;
+    Sprite *self;
+    Buffer *buffer;
+    int a, b, c;
+    int origin_x_during;
+    int origin_y_during;
+    int result;
+};
+SpriteDrawProbe sprite_draw_probe = {};
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+int __thiscall sprite_draw_probe_body(
+        Sprite *self, Buffer *buffer, int a, int b, int c) {
+    ++sprite_draw_probe.calls;
+    sprite_draw_probe.self = self;
+    sprite_draw_probe.buffer = buffer;
+    sprite_draw_probe.a = a;
+    sprite_draw_probe.b = b;
+    sprite_draw_probe.c = c;
+    // The substituted origin must be visible from inside the call.
+    sprite_draw_probe.origin_x_during = *SpriteDrawOriginX;
+    sprite_draw_probe.origin_y_during = *SpriteDrawOriginY;
+    return sprite_draw_probe.result;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void test_sprite_draw_origin() {
+    alignas(Sprite) uint8_t storage[sizeof(Sprite) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *sprite = reinterpret_cast<Sprite *>(storage + 16);
+    auto *buffer = reinterpret_cast<Buffer *>(0x12340000U);
+
+    int origin_x = 0;
+    int origin_y = 0;
+    int *const saved_x_ptr = SpriteDrawOriginX;
+    int *const saved_y_ptr = SpriteDrawOriginY;
+    func_sprite_draw_original *const saved_body = SpriteDrawOriginal;
+    SpriteDrawOriginX = &origin_x;
+    SpriteDrawOriginY = &origin_y;
+    SpriteDrawOriginal = &sprite_draw_probe_body;
+
+    struct DrawCase { int prior_x, prior_y, x, y, result; };
+    const DrawCase cases[] = {
+        {0, 0, 5, 7, 0},
+        {111, 222, -1, -2, 42},
+        {INT_MIN, INT_MAX, INT_MAX, INT_MIN, -7},
+        {9, 9, 9, 9, 1},
+    };
+    for (const DrawCase &test : cases) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            std::memcpy(expected, storage, sizeof(storage));
+            origin_x = test.prior_x;
+            origin_y = test.prior_y;
+            sprite_draw_probe = SpriteDrawProbe{};
+            sprite_draw_probe.result = test.result;
+            const int returned = adapter
+                ? sprite_draw_redirect(sprite, nullptr, buffer,
+                                       1, 2, 3, test.x, test.y)
+                : sprite->draw(buffer, 1, 2, 3, test.x, test.y);
+            // The overload sees the substituted origin and this sprite.
+            expect(sprite_draw_probe.calls == 1);
+            expect(sprite_draw_probe.self == sprite);
+            expect(sprite_draw_probe.buffer == buffer);
+            expect(sprite_draw_probe.a == 1);
+            expect(sprite_draw_probe.b == 2);
+            expect(sprite_draw_probe.c == 3);
+            expect(sprite_draw_probe.origin_x_during == test.x);
+            expect(sprite_draw_probe.origin_y_during == test.y);
+            // The origin is restored exactly, and the result passes through.
+            expect(origin_x == test.prior_x);
+            expect(origin_y == test.prior_y);
+            expect(returned == test.result);
+            // The sprite itself is never touched.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    SpriteDrawOriginal = saved_body;
+    SpriteDrawOriginY = saved_y_ptr;
+    SpriteDrawOriginX = saved_x_ptr;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7983,6 +8072,7 @@ int main() {
     test_base_button_text_colors();
     test_default_font_setters();
     test_win_shared_hdc();
+    test_sprite_draw_origin();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
