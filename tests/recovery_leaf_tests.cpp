@@ -7682,6 +7682,100 @@ void test_base_button_text_colors() {
     BaseButtonActivePalette = saved_palette;
 }
 
+void test_default_font_setters() {
+    // Every default-font setter in the codebase shares one shape: reject a
+    // null primary with 3, publish the primary only when it is initialized,
+    // store the remaining slots unconditionally, and return 0 either way.
+    alignas(Font) uint8_t ready_font[sizeof(Font)];
+    alignas(Font) uint8_t unready_font[sizeof(Font)];
+    std::memset(ready_font, 0xA5, sizeof(ready_font));
+    std::memset(unready_font, 0xA5, sizeof(unready_font));
+    const HFONT font_object = reinterpret_cast<HFONT>(0x1234U);
+    const HFONT null_font_object = nullptr;
+    write_at(ready_font, 0x08, font_object);
+    write_at(unready_font, 0x08, null_font_object);
+    auto *ready = reinterpret_cast<Font *>(ready_font);
+    auto *unready = reinterpret_cast<Font *>(unready_font);
+    auto *second = reinterpret_cast<Font *>(0x11111111U);
+    auto *third = reinterpret_cast<Font *>(0x22222222U);
+    auto *fourth = reinterpret_cast<Font *>(0x44444444U);
+    Font *const untouched = reinterpret_cast<Font *>(0x33333333U);
+
+    Font *slots[4];
+    auto reset = [&slots]() {
+        for (int index = 0; index < 4; ++index) {
+            slots[index] = reinterpret_cast<Font *>(0x33333333U);
+        }
+    };
+
+    // The four-slot string setter.
+    Font **const saved_string = BasePopDefaultStringFonts;
+    BasePopDefaultStringFonts = slots;
+    reset();
+    expect(BasePop::set_def_string_font(nullptr, second, third, fourth) == 3);
+    for (int index = 0; index < 4; ++index) {
+        expect(slots[index] == untouched);
+    }
+    reset();
+    expect(BasePop::set_def_string_font(ready, second, third, fourth) == 0);
+    expect(slots[0] == ready);
+    expect(slots[1] == second);
+    expect(slots[2] == third);
+    expect(slots[3] == fourth);
+    reset();
+    expect(base_pop_set_def_string_font_redirect(
+               unready, second, third, fourth) == 0);
+    expect(slots[0] == untouched);
+    expect(slots[1] == second);
+    expect(slots[2] == third);
+    expect(slots[3] == fourth);
+    BasePopDefaultStringFonts = saved_string;
+
+    // The three-slot button setter must not touch a fourth slot.
+    Font **const saved_button = BasePopDefaultButtonFonts;
+    BasePopDefaultButtonFonts = slots;
+    reset();
+    expect(BasePop::set_def_button_font(nullptr, second, third) == 3);
+    for (int index = 0; index < 4; ++index) {
+        expect(slots[index] == untouched);
+    }
+    reset();
+    expect(BasePop::set_def_button_font(ready, second, third) == 0);
+    expect(slots[0] == ready);
+    expect(slots[1] == second);
+    expect(slots[2] == third);
+    expect(slots[3] == untouched);
+    reset();
+    expect(base_pop_set_def_button_font_redirect(unready, second, third) == 0);
+    expect(slots[0] == untouched);
+    expect(slots[1] == second);
+    expect(slots[2] == third);
+    expect(slots[3] == untouched);
+    BasePopDefaultButtonFonts = saved_button;
+
+    // The dialog setter, which writes its own separate table.
+    Font **const saved_dialog = DialogDefaultFonts;
+    DialogDefaultFonts = slots;
+    reset();
+    expect(Dialog::set_def_dialog_font(nullptr, second, third) == 3);
+    for (int index = 0; index < 4; ++index) {
+        expect(slots[index] == untouched);
+    }
+    reset();
+    expect(Dialog::set_def_dialog_font(ready, second, third) == 0);
+    expect(slots[0] == ready);
+    expect(slots[1] == second);
+    expect(slots[2] == third);
+    expect(slots[3] == untouched);
+    reset();
+    expect(dialog_set_def_dialog_font_redirect(unready, second, third) == 0);
+    expect(slots[0] == untouched);
+    expect(slots[1] == second);
+    expect(slots[2] == third);
+    expect(slots[3] == untouched);
+    DialogDefaultFonts = saved_dialog;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7773,6 +7867,7 @@ int main() {
     test_win_is_dialog_focus();
     test_buffer_set_clip();
     test_base_button_text_colors();
+    test_default_font_setters();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

@@ -4591,12 +4591,12 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00604830,0x0060485B,43,.text,?set_button_color@BasePop@@QAEXDHHH@Z,"void (__thiscall ?set_button_color@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)",0x00604830-0x0060485B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00604860,0x0060488B,43,.text,?set_button_color2@BasePop@@QAEXDHHH@Z,"void (__thiscall ?set_button_color2@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)",0x00604860-0x0060488B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00604890,0x006048BB,43,.text,?set_button_color3@BasePop@@QAEXDHHH@Z,"void (__thiscall ?set_button_color3@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)",0x00604890-0x006048BB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x006048C0,0x006048FA,58,.text,?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,,0x006048C0-0x006048FA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
+0x006048C0,0x006048FA,58,.text,?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,,0x006048C0-0x006048FA,game,hidden;sp_ready;purged_ok,src/basepop.cpp:66,Complete,,,source_complete,,,,0,5
 0x00604900,0x00604927,39,.text,?set_def_string_color@BasePop@@QAAXHHHH@Z,,0x00604900-0x00604927,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x00604930,0x00604957,39,.text,?set_def_string_color2@BasePop@@QAAXHHHH@Z,,0x00604930-0x00604957,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x00604960,0x00604987,39,.text,?set_def_string_color3@BasePop@@QAAXHHHH@Z,,0x00604960-0x00604987,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x00604990,0x006049B7,39,.text,?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z,,0x00604990-0x006049B7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x006049C0,0x006049F0,48,.text,?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,,0x006049C0-0x006049F0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
+0x006049C0,0x006049F0,48,.text,?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,,0x006049C0-0x006049F0,game,hidden;sp_ready;purged_ok,src/basepop.cpp:78,Complete,,,source_complete,,,,0,5
 0x006049F0,0x00604A17,39,.text,?set_def_button_color@BasePop@@QAAXHHHH@Z,,0x006049F0-0x00604A17,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00604A20,0x00604A47,39,.text,?set_def_button_color2@BasePop@@QAAXHHHH@Z,,0x00604A20-0x00604A47,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00604A50,0x00604A77,39,.text,?set_def_button_color3@BasePop@@QAAXHHHH@Z,,0x00604A50-0x00604A77,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -4707,7 +4707,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00609C90,0x00609CB8,40,.text,?set_dialog_text_color@Dialog@@QAEXHHHH@Z,"void (__thiscall ?set_dialog_text_color@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)",0x00609C90-0x00609CB8,game,hidden;sp_ready;purged_ok,src/dialog.cpp:41,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,9
 0x00609CC0,0x00609CEB,43,.text,?set_dialog_text_color2@Dialog@@QAEXHHHH@Z,"void (__thiscall ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)",0x00609CC0-0x00609CEB,game,hidden;sp_ready;purged_ok,src/dialog.cpp:54,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,7
 0x00609CF0,0x00609D1B,43,.text,?set_dialog_text_color3@Dialog@@QAEXHHHH@Z,"void (__thiscall ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)",0x00609CF0-0x00609D1B,game,hidden;sp_ready;purged_ok,src/dialog.cpp:67,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,6
-0x00609D20,0x00609D50,48,.text,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,,0x00609D20-0x00609D50,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
+0x00609D20,0x00609D50,48,.text,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,,0x00609D20-0x00609D50,game,hidden;sp_ready;purged_ok,src/dialog.cpp:225,Complete,,,source_complete,,,,0,5
 0x00609D50,0x00609D8C,60,.text,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,,0x00609D50-0x00609D8C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00609D90,0x00609DAE,30,.text,??_GDialog@@UAEPAXI@Z,"void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)",0x00609D90-0x00609DAE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00609DB0,0x00609EB7,299,.text,??0ListBox@@QAE@H@Z,"void (__thiscall ??0ListBox@@QAE@H@Z)(ListBox* this, int)",0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,11

@@ -45,6 +45,8 @@ static_assert(offsetof(DialogEntry, previous) == 0x10,
   */
 class DLLEXPORT Dialog {
  public:
+  // Static default shared by every dialog; __cdecl in the original.
+  static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
   Dialog() { ; }
   ~Dialog() { ; }
 
@@ -131,3 +133,9 @@ int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id);
 void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id);
 int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *);
 int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position);
+
+int __cdecl dialog_set_def_dialog_font_redirect(
+    Font *font1, Font *font2, Font *font3);
+
+// Default dialog font slots at 0x009B8EC0; tests rebind this.
+extern Font **DialogDefaultFonts;

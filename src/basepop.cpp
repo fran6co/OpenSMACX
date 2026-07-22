@@ -36,3 +36,60 @@ void BasePop::set_loc(int x, int y) {
 void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y) {
     self->set_loc(x, y);
 }
+
+Font **BasePopDefaultStringFonts = reinterpret_cast<Font **>(0x009B8D98);
+Font **BasePopDefaultButtonFonts = reinterpret_cast<Font **>(0x009B8DA8);
+
+namespace {
+
+// Shared by every default-font setter in the codebase: the primary is
+// published only when it is initialized, the remaining slots are stored
+// unconditionally, and only a null primary is an error.
+int publish_default_fonts(Font **slots, Font *const *fonts, size_t count) {
+    if (!fonts[0]) {
+        return 3;
+    }
+    volatile Font **const target = const_cast<volatile Font **>(slots);
+    if (fonts[0]->is_initialized()) {
+        target[0] = fonts[0];
+    }
+    for (size_t index = 1; index < count; ++index) {
+        target[index] = fonts[index];
+    }
+    return 0;
+}
+
+}  // namespace
+
+/*
+Purpose: Set the default string fonts shared by every popup.
+Original Offset: 006048C0
+Return Value: No errors (0); invalid primary font (3)
+Status: Complete
+*/
+int BasePop::set_def_string_font(Font *font1, Font *font2, Font *font3,
+                                 Font *font4) {
+    Font *const fonts[4] = {font1, font2, font3, font4};
+    return publish_default_fonts(BasePopDefaultStringFonts, fonts, 4);
+}
+
+/*
+Purpose: Set the default button fonts shared by every popup.
+Original Offset: 006049C0
+Return Value: No errors (0); invalid primary font (3)
+Status: Complete
+*/
+int BasePop::set_def_button_font(Font *font1, Font *font2, Font *font3) {
+    Font *const fonts[3] = {font1, font2, font3};
+    return publish_default_fonts(BasePopDefaultButtonFonts, fonts, 3);
+}
+
+int __cdecl base_pop_set_def_string_font_redirect(
+        Font *font1, Font *font2, Font *font3, Font *font4) {
+    return BasePop::set_def_string_font(font1, font2, font3, font4);
+}
+
+int __cdecl base_pop_set_def_button_font_redirect(
+        Font *font1, Font *font2, Font *font3) {
+    return BasePop::set_def_button_font(font1, font2, font3);
+}
