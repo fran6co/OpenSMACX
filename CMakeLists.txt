@@ -148,6 +148,14 @@ set(OPENSMACX_SOURCES
     src/maininterface.cpp
     src/map.cpp
     src/mapwin.cpp
+    src/basewin.cpp
+    src/datalink.cpp
+    src/netwin.cpp
+    src/socialwin.cpp
+    src/designwin.cpp
+    src/worldwin.cpp
+    src/diplowin.cpp
+    src/alphamovie.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -364,6 +372,14 @@ if(BUILD_TESTING)
         src/log.cpp
         src/maininterface.cpp
         src/mapwin.cpp
+        src/basewin.cpp
+        src/datalink.cpp
+        src/netwin.cpp
+        src/socialwin.cpp
+        src/designwin.cpp
+        src/worldwin.cpp
+        src/diplowin.cpp
+        src/alphamovie.cpp
         src/menu.cpp
         src/palette.cpp
         src/pulldown.cpp
