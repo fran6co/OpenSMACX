@@ -37,6 +37,12 @@
 #include "worldwin.h"
 #include "diplowin.h"
 #include "alphamovie.h"
+#include "checkbutton.h"
+#include "cursor.h"
+#include "infowin.h"
+#include "statuswin.h"
+#include "filewin.h"
+#include "wave.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -62,7 +68,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 222;
+constexpr size_t RedirectCount = 229;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -358,6 +364,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00447CC0,
         },
         {
+            0x004562F0,
+            reinterpret_cast<uintptr_t>(&info_win_unk1_redirect),
+            OPENSMACX_SIGNATURE_004562F0,
+        },
+        {
+            0x00458910,
+            reinterpret_cast<uintptr_t>(&info_win_on_redraw_redirect),
+            OPENSMACX_SIGNATURE_00458910,
+        },
+        {
             0x0045C5B0,
             reinterpret_cast<uintptr_t>(&main_interface_unk2_redirect),
             OPENSMACX_SIGNATURE_0045C5B0,
@@ -408,6 +424,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004B1790,
         },
         {
+            0x004B9F80,
+            reinterpret_cast<uintptr_t>(&status_win_close_redirect),
+            OPENSMACX_SIGNATURE_004B9F80,
+        },
+        {
             0x004C45E0,
             reinterpret_cast<uintptr_t>(&world_win_clear_terrain_redirect),
             OPENSMACX_SIGNATURE_004C45E0,
@@ -441,6 +462,11 @@ bool install_redirects() {
             0x004C5B50,
             reinterpret_cast<uintptr_t>(&wave_in_device_restart_redirect),
             OPENSMACX_SIGNATURE_004C5B50,
+        },
+        {
+            0x004C70E0,
+            reinterpret_cast<uintptr_t>(&wave_set_asdr_redirect),
+            OPENSMACX_SIGNATURE_004C70E0,
         },
         {
             0x005E4ADA,
@@ -616,6 +642,11 @@ bool install_redirects() {
             0x00607810,
             reinterpret_cast<uintptr_t>(&base_button_on_key_up_redirect),
             OPENSMACX_SIGNATURE_00607810,
+        },
+        {
+            0x00614B80,
+            reinterpret_cast<uintptr_t>(&file_win_unk6_redirect),
+            OPENSMACX_SIGNATURE_00614B80,
         },
         {
             0x00618F30,
@@ -1285,6 +1316,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004E26B0,
         },
         {
+            0x006339B0,
+            reinterpret_cast<uintptr_t>(&check_button_close_class_redirect),
+            OPENSMACX_SIGNATURE_006339B0,
+        },
+        {
             0x006343C0,
             reinterpret_cast<uintptr_t>(&vector_construct_redirect),
             OPENSMACX_SIGNATURE_006343C0,
@@ -1328,6 +1364,11 @@ bool install_redirects() {
             0x00525AF4,
             reinterpret_cast<uintptr_t>(&scenario_turn_advance_trampoline),
             OPENSMACX_SIGNATURE_00525AF4,
+        },
+        {
+            0x0063B930,
+            reinterpret_cast<uintptr_t>(&cursor_close_cursor_class_redirect),
+            OPENSMACX_SIGNATURE_0063B930,
         },
     };
     static_assert(sizeof(specs) / sizeof(specs[0]) == RedirectCount,

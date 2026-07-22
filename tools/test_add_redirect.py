@@ -21,9 +21,14 @@ class ParseAddressTest(unittest.TestCase):
 
 
 class SpecInsertionTest(unittest.TestCase):
-    """The table is kept sorted by address. A misplaced entry compiles and
-    runs, so nothing downstream catches it - which is why insertion position
-    is computed rather than appended."""
+    """Entries go in ascending position where one exists, and at the end of
+    the jump table otherwise.
+
+    Order is a tidiness convention here, not a correctness one: the array is
+    only iterated, and the committed table is already out of order in two
+    dozen places. What must hold is that an entry lands in the jump table and
+    never in the call table below it, which holds interior call sites rather
+    than function starts."""
 
     TABLE = """\
 constexpr size_t RedirectCount = 3;
@@ -44,6 +49,7 @@ constexpr size_t RedirectCount = 3;
             OPENSMACX_SIGNATURE_00600000,
         },
     };
+    static_assert(sizeof(specs) / sizeof(specs[0]) == RedirectCount, "x");
 const RedirectSpec call_specs[] = {
 """
 
@@ -78,12 +84,20 @@ const RedirectSpec call_specs[] = {
         with self.assertRaises(ValueError):
             self._insert(0x00500000, "beta_redirect")
 
-    def test_refuses_to_append_past_the_end(self):
-        # Sorting after every entry means the address belongs after the jump
-        # table, which is where the call table starts - appending blindly
-        # would put it in the wrong table.
-        with self.assertRaises(ValueError):
-            self._insert(0x00700000, "omega_redirect")
+    def test_appends_at_the_end_of_the_jump_table(self):
+        # An address higher than everything present is ordinary - Cursor's is.
+        # It must land at the end of the jump table, never in the call table
+        # below, which holds interior call sites rather than function starts.
+        text = self._insert(0x00700000, "omega_redirect")
+        self.assertEqual([0x00401000, 0x00500000, 0x00600000, 0x00700000],
+                         self._addresses(text))
+        self.assertIn("0x00700000",
+                      text[:text.index("const RedirectSpec call_specs[]")])
+
+    def test_appending_leaves_the_call_table_alone(self):
+        text = self._insert(0x00700000, "omega_redirect")
+        below = text[text.index("const RedirectSpec call_specs[]"):]
+        self.assertNotIn("omega_redirect", below)
 
 
 class VisibilityTest(unittest.TestCase):

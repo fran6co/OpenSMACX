@@ -26,6 +26,12 @@
 #include "../src/netwin.h"
 #include "../src/socialwin.h"
 #include "../src/worldwin.h"
+#include "../src/checkbutton.h"
+#include "../src/cursor.h"
+#include "../src/infowin.h"
+#include "../src/statuswin.h"
+#include "../src/filewin.h"
+#include "../src/wave.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -8597,6 +8603,59 @@ void test_constant_return_stubs() {
     alpha_movie_unk7_redirect(alpha_movie, nullptr);
     expect_storage_bytes(alpha_movie_storage.data(), alpha_movie_expected.data(),
                          alpha_movie_storage.size());
+
+    // Three more window classes, each over a base this repository has already
+    // pinned - Time, Caviar, FlatButton - so the canary covers an exact base
+    // region even though the derived extent is still unknown.
+    std::vector<uint8_t> info_win_storage(sizeof(InfoWin) + 32);
+    std::vector<uint8_t> info_win_expected(info_win_storage.size());
+    auto *info_win = reinterpret_cast<InfoWin *>(info_win_storage.data() + 16);
+    seed_storage(info_win_storage.data(), info_win_expected.data(), info_win_storage.size());
+    std::memcpy(info_win_expected.data(), info_win_storage.data(), info_win_storage.size());
+    info_win->UNK1();
+    info_win->on_redraw();
+    info_win_unk1_redirect(info_win, nullptr);
+    info_win_on_redraw_redirect(info_win, nullptr);
+    expect_storage_bytes(info_win_storage.data(), info_win_expected.data(),
+                         info_win_storage.size());
+    std::vector<uint8_t> status_win_storage(sizeof(StatusWin) + 32);
+    std::vector<uint8_t> status_win_expected(status_win_storage.size());
+    auto *status_win = reinterpret_cast<StatusWin *>(status_win_storage.data() + 16);
+    seed_storage(status_win_storage.data(), status_win_expected.data(), status_win_storage.size());
+    std::memcpy(status_win_expected.data(), status_win_storage.data(), status_win_storage.size());
+    status_win->close();
+    status_win_close_redirect(status_win, nullptr);
+    expect_storage_bytes(status_win_storage.data(), status_win_expected.data(),
+                         status_win_storage.size());
+    std::vector<uint8_t> file_win_storage(sizeof(FileWin) + 32);
+    std::vector<uint8_t> file_win_expected(file_win_storage.size());
+    auto *file_win = reinterpret_cast<FileWin *>(file_win_storage.data() + 16);
+    seed_storage(file_win_storage.data(), file_win_expected.data(), file_win_storage.size());
+    std::memcpy(file_win_expected.data(), file_win_storage.data(), file_win_storage.size());
+    file_win->UNK6();
+    file_win_unk6_redirect(file_win, nullptr);
+    expect_storage_bytes(file_win_storage.data(), file_win_expected.data(),
+                         file_win_storage.size());
+
+    // Wave::set_asdr is the only member of this sweep that returns a value
+    // rather than nothing: a single constant load of 11, which is the part a
+    // constant-return stub most easily gets wrong.
+    std::vector<uint8_t> asdr_storage(sizeof(Wave) + 32);
+    std::vector<uint8_t> asdr_expected(asdr_storage.size());
+    auto *wave = reinterpret_cast<Wave *>(asdr_storage.data() + 16);
+    seed_storage(asdr_storage.data(), asdr_expected.data(), asdr_storage.size());
+    std::memcpy(asdr_expected.data(), asdr_storage.data(), asdr_storage.size());
+    expect(wave->set_asdr() == 11);
+    expect(wave_set_asdr_redirect(wave, nullptr) == 11);
+    expect_storage_bytes(asdr_storage.data(), asdr_expected.data(),
+                         asdr_storage.size());
+
+    // Both class-level closers are static and __cdecl in the original, so
+    // they take no instance at all and there is nothing to canary.
+    CheckButton::close_class();
+    Cursor::close_cursor_class();
+    check_button_close_class_redirect();
+    cursor_close_cursor_class_redirect();
 }
 
 void test_base_pop_default_colors() {

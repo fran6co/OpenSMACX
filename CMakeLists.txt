@@ -156,6 +156,12 @@ set(OPENSMACX_SOURCES
     src/worldwin.cpp
     src/diplowin.cpp
     src/alphamovie.cpp
+    src/checkbutton.cpp
+    src/cursor.cpp
+    src/infowin.cpp
+    src/statuswin.cpp
+    src/filewin.cpp
+    src/wave.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -380,6 +386,12 @@ if(BUILD_TESTING)
         src/worldwin.cpp
         src/diplowin.cpp
         src/alphamovie.cpp
+        src/checkbutton.cpp
+        src/cursor.cpp
+        src/infowin.cpp
+        src/statuswin.cpp
+        src/filewin.cpp
+        src/wave.cpp
         src/menu.cpp
         src/palette.cpp
         src/pulldown.cpp
