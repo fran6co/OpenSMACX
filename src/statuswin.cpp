@@ -48,3 +48,25 @@ void StatusWin::set_loc(int x, int y) {
 void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y) {
     self->set_loc(x, y);
 }
+
+func_release_iface_mode *SubInterfaceOriginalReleaseIfaceMode =
+    (func_release_iface_mode *)0x0045D380;
+void *SubInterfaceGlobal = (void *)0x006EEED8;
+
+/*
+Purpose: Release the status window's hold on the interface mode, if it holds
+         one. The original tail-jumps into the release, so nothing follows it.
+Original Offset: 004B8970
+Return Value: n/a
+Status: Complete
+*/
+void StatusWin::reset() {
+    if (field_15D4_) {
+        field_15D4_ = 0;
+        SubInterfaceOriginalReleaseIfaceMode(SubInterfaceGlobal);
+    }
+}
+
+void __fastcall status_win_reset_redirect(StatusWin *self, void *) {
+    self->reset();
+}

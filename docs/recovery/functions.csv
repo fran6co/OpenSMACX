@@ -119,7 +119,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004048A0,0x004048F7,105,.text,??0Popup@@QAE@XZ,void (__thiscall ??0Popup@@QAE@XZ)(Popup* this),0x004048A0-0x004048F7;0x00650760-0x00650772,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,104
 0x00404900,0x00404917,23,.text,?close@Popup@@QAEXXZ,void (__thiscall ?close@Popup@@QAEXXZ)(Popup* this),0x00404900-0x00404917,game,hidden;sp_ready;purged_ok,src/popup.cpp:25,Complete,,,source_complete,,,,2,104
 0x00404920,0x00404A7C,348,.text,?show@Popup@@QAEXH@Z,"void (__thiscall ?show@Popup@@QAEXH@Z)(Popup* this, int)",0x00404920-0x00404A7C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
-0x00404A80,0x00404AFF,127,.text,?hide@Popup@@QAEXXZ,void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this),0x00404A80-0x00404AFF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,4
+0x00404A80,0x00404AFF,127,.text,?hide@Popup@@QAEXXZ,void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this),0x00404A80-0x00404AFF,game,hidden;sp_ready;purged_ok,,,,PopupOriginalHide,original_dependency,,,,4,4
 0x00404B00,0x00404B05,5,.text,?on_redraw@Popup@@QAEXXZ,void (__thiscall ?on_redraw@Popup@@QAEXXZ)(Popup* this),0x00404B00-0x00404B05,thunk,hidden;thunk;sp_ready;purged_ok,,,,,thunk,,,,0,0
 0x00404B10,0x00404EEF,991,.text,?calculate_dimensions@Popup@@QAEHXZ,int (__thiscall ?calculate_dimensions@Popup@@QAEHXZ)(Popup* this),0x00404B10-0x00404EEF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x00404EF0,0x00404F7A,138,.text,?on_post_window_init@Popup@@QAEXXZ,void (__thiscall ?on_post_window_init@Popup@@QAEXXZ)(Popup* this),0x00404EF0-0x00404F7A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
@@ -1568,7 +1568,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0045D2A0,0x0045D2D1,49,.text,?set_alert@MainInterface@@QAEXH@Z,"void (__thiscall ?set_alert@MainInterface@@QAEXH@Z)(MainInterface* this, int)",0x0045D2A0-0x0045D2D1,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x0045D2E0,0x0045D303,35,.text,?delete_iface_mode@SubInterface@@QAEXXZ,void (__thiscall ?delete_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this),0x0045D2E0-0x0045D303,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x0045D310,0x0045D37D,109,.text,?set_iface_mode@SubInterface@@QAEXXZ,void (__thiscall ?set_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this),0x0045D310-0x0045D37D,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,9
-0x0045D380,0x0045D43F,191,.text,?release_iface_mode@SubInterface@@QAEXXZ,void (__thiscall ?release_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this),0x0045D380-0x0045D43F,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,24
+0x0045D380,0x0045D43F,191,.text,?release_iface_mode@SubInterface@@QAEXXZ,void (__thiscall ?release_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this),0x0045D380-0x0045D43F,game,frame;sp_ready;purged_ok,,,,SubInterfaceOriginalReleaseIfaceMode,original_dependency,,,,1,24
 0x0045D440,0x0045D966,1350,.text,?slide_show@@YAXPAUGraphicWin@@H@Z,,0x0045D440-0x0045D966;0x00655757-0x00655777,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,17,13
 0x0045D970,0x0045DEA0,1371,.text,?slide_hide@@YAXPAUGraphicWin@@H@Z,,0x0045D970-0x0045DEA0;0x00655777-0x006557A2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,20,13
 0x0045DEA0,0x0045E535,1728,.text,?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z,,0x0045DEA0-0x0045E535;0x006557A2-0x006557CD,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,17,8
@@ -1760,7 +1760,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0047A790,0x0047A79A,10,.text,??__Fg_NETMSG1@@YAXXZ,,0x0047A790-0x0047A79A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0047A7A0,0x0047A7BC,28,.text,??__Eg_NETMSG2@@YAXXZ,,0x0047A7A0-0x0047A7BC,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0047A7C0,0x0047A7CA,10,.text,??__Fg_NETMSG2@@YAXXZ,,0x0047A7C0-0x0047A7CA,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0047A7D0,0x0047A7FB,43,.text,?close@NetMsg@@QAEXXZ,void (__thiscall ?close@NetMsg@@QAEXXZ)(NetMsg* this),0x0047A7D0-0x0047A7FB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,20
+0x0047A7D0,0x0047A7FB,43,.text,?close@NetMsg@@QAEXXZ,void (__thiscall ?close@NetMsg@@QAEXXZ)(NetMsg* this),0x0047A7D0-0x0047A7FB,game,hidden;sp_ready;purged_ok,src/netmsg.cpp:26,Complete,,,source_complete,,,,2,20
 0x0047A800,0x0047A85F,95,.text,?timer_daemon@NetMsg@@QAAXH@Z,,0x0047A800-0x0047A85F,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0047A860,0x0047A88D,45,.text,?on_button_clicked@NetMsg@@QAEXH@Z,"void (__thiscall ?on_button_clicked@NetMsg@@QAEXH@Z)(NetMsg* this, int)",0x0047A860-0x0047A88D,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0047A890,0x0047ACE3,1359,.text,?pop@NetMsg@@QAEXPBDHHPBD@Z,"void (__thiscall ?pop@NetMsg@@QAEXPBDHHPBD@Z)(NetMsg* this, int8*, int, int, int8*)",0x0047A890-0x0047ACE3;0x00656550-0x0065664C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,29,108
@@ -2178,7 +2178,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004B6570,0x004B8825,8885,.text,?draw_status@StatusWin@@QAEXHHHHH@Z,"void (__thiscall ?draw_status@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)",0x004B6570-0x004B8825,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,36,7
 0x004B8830,0x004B888A,90,.text,?draw@StatusWin@@QAEXHHHHH@Z,"void (__thiscall ?draw@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)",0x004B8830-0x004B888A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x004B8890,0x004B896B,219,.text,?on_redraw@StatusWin@@QAEXXZ,void (__thiscall ?on_redraw@StatusWin@@QAEXXZ)(StatusWin* this),0x004B8890-0x004B896B,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,3
-0x004B8970,0x004B898F,31,.text,?reset@StatusWin@@QAEXXZ,void (__thiscall ?reset@StatusWin@@QAEXXZ)(StatusWin* this),0x004B8970-0x004B898F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,8
+0x004B8970,0x004B898F,31,.text,?reset@StatusWin@@QAEXXZ,void (__thiscall ?reset@StatusWin@@QAEXXZ)(StatusWin* this),0x004B8970-0x004B898F,game,hidden;sp_ready;purged_ok,src/statuswin.cpp:59,Complete,,,source_complete,,,,0,8
 0x004B8990,0x004B89BE,46,.text,?on_left_double_click@StatusWin@@QAEXHH@Z,"void (__thiscall ?on_left_double_click@StatusWin@@QAEXHH@Z)(StatusWin* this, int xCoord, int yCoord)",0x004B8990-0x004B89BE,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x004B89C0,0x004B8BC5,517,.text,?arrow_left@StatusWin@@QAEXXZ,void (__thiscall ?arrow_left@StatusWin@@QAEXXZ)(StatusWin* this),0x004B89C0-0x004B8BC5,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x004B8BD0,0x004B8DF0,544,.text,?arrow_right@StatusWin@@QAEXXZ,void (__thiscall ?arrow_right@StatusWin@@QAEXXZ)(StatusWin* this),0x004B8BD0-0x004B8DF0,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1

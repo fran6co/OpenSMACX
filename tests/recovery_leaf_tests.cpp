@@ -47,6 +47,7 @@
 #include "../src/tutwin.h"
 #include "../src/popmenu.h"
 #include "../src/popup.h"
+#include "../src/netmsg.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9656,6 +9657,114 @@ void test_popup_close() {
     scroll_fixture.restore();
 }
 
+namespace {
+Popup *g_hidden_popup = nullptr;
+int g_popup_hide_calls = 0;
+int g_flag_at_hide = -1;
+void __thiscall observe_popup_hide(Popup *self) {
+    g_hidden_popup = self;
+    std::memcpy(&g_flag_at_hide,
+                reinterpret_cast<const uint8_t *>(self) + 0x5384, sizeof(int));
+    ++g_popup_hide_calls;
+}
+
+void *g_released_interface = nullptr;
+int g_release_calls = 0;
+int g_status_flag_at_release = -1;
+const uint8_t *g_status_object = nullptr;
+void __thiscall observe_release_iface_mode(void *self) {
+    g_released_interface = self;
+    std::memcpy(&g_status_flag_at_release, g_status_object + 0x15D4, sizeof(int));
+    ++g_release_calls;
+}
+}  // namespace
+
+void test_guarded_delegates() {
+    // NetMsg::close stops its Time then hides the popup, but only when a
+    // message is actually showing.
+    auto *const saved_hide = PopupOriginalHide;
+    PopupOriginalHide = &observe_popup_hide;
+    std::vector<uint8_t> nm(sizeof(NetMsg) + 32), nm_want(nm.size());
+    auto *message = reinterpret_cast<NetMsg *>(nm.data() + 16);
+    auto set_showing = [&](int32_t value) {
+        std::memcpy(nm.data() + 16 + 0x5384, &value, sizeof(value));
+    };
+
+    seed_storage(nm.data(), nm_want.data(), nm.size());
+    set_showing(0);
+    std::memcpy(nm_want.data(), nm.data(), nm.size());
+    g_popup_hide_calls = 0;
+    message->close();
+    expect(g_popup_hide_calls == 0);
+    expect_storage_bytes(nm.data(), nm_want.data(), nm.size());
+
+    seed_storage(nm.data(), nm_want.data(), nm.size());
+    set_showing(0x1234);
+    std::memcpy(nm_want.data(), nm.data(), nm.size());
+    g_popup_hide_calls = 0;
+    message->close();
+    expect(g_popup_hide_calls == 1);
+    expect(reinterpret_cast<void *>(g_hidden_popup) ==
+           reinterpret_cast<void *>(message));
+    // The flag is cleared before the hide, not after.
+    expect(g_flag_at_hide == 0);
+    // Time::close cleared its own member and nothing else moved besides the
+    // flag - in particular the Popup region ahead of 0x537C is untouched.
+    std::memcpy(nm_want.data() + 16 + 0x5384, nm.data() + 16 + 0x5384, 4);
+    std::memcpy(nm_want.data() + 16 + 0x538C, nm.data() + 16 + 0x538C,
+                sizeof(Time));
+    expect_storage_bytes(nm.data(), nm_want.data(), nm.size());
+
+    set_showing(-1);
+    g_popup_hide_calls = 0;
+    net_msg_close_redirect(message, nullptr);
+    expect(g_popup_hide_calls == 1);
+    PopupOriginalHide = saved_hide;
+
+    // StatusWin::reset releases the interface mode on a global object, and
+    // the original tail-jumps into it, so nothing may follow the call.
+    auto *const saved_release = SubInterfaceOriginalReleaseIfaceMode;
+    void *const saved_global = SubInterfaceGlobal;
+    int fake_interface = 0;
+    SubInterfaceOriginalReleaseIfaceMode = &observe_release_iface_mode;
+    SubInterfaceGlobal = &fake_interface;
+
+    std::vector<uint8_t> sw(sizeof(StatusWin) + 32), sw_want(sw.size());
+    auto *status = reinterpret_cast<StatusWin *>(sw.data() + 16);
+    g_status_object = sw.data() + 16;
+    auto set_held = [&](int32_t value) {
+        std::memcpy(sw.data() + 16 + 0x15D4, &value, sizeof(value));
+    };
+
+    seed_storage(sw.data(), sw_want.data(), sw.size());
+    set_held(0);
+    std::memcpy(sw_want.data(), sw.data(), sw.size());
+    g_release_calls = 0;
+    status->reset();
+    expect(g_release_calls == 0);
+    expect_storage_bytes(sw.data(), sw_want.data(), sw.size());
+
+    seed_storage(sw.data(), sw_want.data(), sw.size());
+    set_held(0x5A5A);
+    std::memcpy(sw_want.data(), sw.data(), sw.size());
+    g_release_calls = 0;
+    status->reset();
+    expect(g_release_calls == 1);
+    // The global is passed, not the status window - the original loads a
+    // fixed address into ecx rather than forwarding `this`.
+    expect(g_released_interface == &fake_interface);
+    expect(g_status_flag_at_release == 0);
+    std::memcpy(sw_want.data() + 16 + 0x15D4, sw.data() + 16 + 0x15D4, 4);
+    expect_storage_bytes(sw.data(), sw_want.data(), sw.size());
+
+    set_held(INT_MIN);
+    g_release_calls = 0;
+    status_win_reset_redirect(status, nullptr);
+    expect(g_release_calls == 1);
+    SubInterfaceOriginalReleaseIfaceMode = saved_release;
+    SubInterfaceGlobal = saved_global;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10017,6 +10126,7 @@ int main() {
     test_guarded_store_recoveries();
     test_win_client_to_screen();
     test_popup_close();
+    test_guarded_delegates();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

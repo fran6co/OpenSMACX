@@ -177,6 +177,7 @@ set(OPENSMACX_SOURCES
     src/tutwin.cpp
     src/popmenu.cpp
     src/popup.cpp
+    src/netmsg.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -437,6 +438,7 @@ if(BUILD_TESTING)
         src/tutwin.cpp
             src/popmenu.cpp
         src/popup.cpp
+        src/netmsg.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

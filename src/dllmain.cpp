@@ -58,6 +58,7 @@
 #include "tutwin.h"
 #include "popmenu.h"
 #include "popup.h"
+#include "netmsg.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -83,7 +84,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 380;
+constexpr size_t RedirectCount = 382;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -869,6 +870,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00471D40,
         },
         {
+            0x0047A7D0,
+            reinterpret_cast<uintptr_t>(&net_msg_close_redirect),
+            OPENSMACX_SIGNATURE_0047A7D0,
+        },
+        {
             0x0047B750,
             reinterpret_cast<uintptr_t>(&net_win_on_key_click_redirect),
             OPENSMACX_SIGNATURE_0047B750,
@@ -992,6 +998,11 @@ bool install_redirects() {
             0x004B2680,
             reinterpret_cast<uintptr_t>(&social_win_on_iface_group_clicked_redirect),
             OPENSMACX_SIGNATURE_004B2680,
+        },
+        {
+            0x004B8970,
+            reinterpret_cast<uintptr_t>(&status_win_reset_redirect),
+            OPENSMACX_SIGNATURE_004B8970,
         },
         {
             0x004B9F80,

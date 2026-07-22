@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 43,
-      "source_complete": 884,
+      "original_dependency": 45,
+      "source_complete": 886,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4703
+      "unrecovered": 4699
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 830,
-    "matched_function_starts": 830,
-    "unique_addresses": 830,
+    "annotations": 832,
+    "matched_function_starts": 832,
+    "unique_addresses": 832,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 183,
-      "function": 50
+      "data": 184,
+      "function": 52
     },
     "items": [
       {
@@ -2409,6 +2409,15 @@
         "type": "uint32_t *"
       },
       {
+        "address": "0x00404A80",
+        "function": "?hide@Popup@@QAEXXZ",
+        "function_address": "0x00404A80",
+        "kind": "function",
+        "location": "src/netmsg.cpp:21",
+        "symbol": "PopupOriginalHide",
+        "type": "func_popup_hide *"
+      },
+      {
         "address": "0x00945B00",
         "function": "",
         "function_address": "",
@@ -2614,6 +2623,24 @@
         "location": "src/spying_recovery.cpp:18",
         "symbol": "SpyingFactionFlagBytes",
         "type": "uint8_t *"
+      },
+      {
+        "address": "0x0045D380",
+        "function": "?release_iface_mode@SubInterface@@QAEXXZ",
+        "function_address": "0x0045D380",
+        "kind": "function",
+        "location": "src/statuswin.cpp:52",
+        "symbol": "SubInterfaceOriginalReleaseIfaceMode",
+        "type": "func_release_iface_mode *"
+      },
+      {
+        "address": "0x006EEED8",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/statuswin.cpp:54",
+        "symbol": "SubInterfaceGlobal",
+        "type": "void *"
       },
       {
         "address": "0x009B90D8",
@@ -3426,7 +3453,7 @@
         "type": "func_win_flip *"
       }
     ],
-    "matched_function_starts": 50,
-    "total": 233
+    "matched_function_starts": 52,
+    "total": 236
   }
 }
