@@ -4,6 +4,8 @@
 #include "../src/basepop.h"
 #include "../src/basebutton.h"
 #include "../src/buttongroup.h"
+#include "../src/console.h"
+#include "../src/planwin.h"
 #include "../src/dialog.h"
 #include "../src/ambience.h"
 #include "../src/filemap.h"
