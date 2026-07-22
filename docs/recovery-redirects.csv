@@ -118,6 +118,7 @@ address,kind
 0x00458900,jump
 0x00458910,jump
 0x00458920,jump
+0x00459280,jump
 0x0045C170,jump
 0x0045C280,jump
 0x0045C5B0,jump
@@ -197,6 +198,7 @@ address,kind
 0x0055BC00,jump
 0x005882F0,jump
 0x0058EE50,jump
+0x0059D3A0,jump
 0x005C9410,jump
 0x005C98E0,jump
 0x005D4CF0,jump
