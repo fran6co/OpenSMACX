@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 46,
-      "source_complete": 888,
+      "original_dependency": 47,
+      "source_complete": 891,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4696
+      "unrecovered": 4692
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 834,
-    "matched_function_starts": 834,
-    "unique_addresses": 834,
+    "annotations": 837,
+    "matched_function_starts": 837,
+    "unique_addresses": 837,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 188,
-      "function": 54
+      "function": 55
     },
     "items": [
       {
@@ -1687,6 +1687,15 @@
         "location": "src/council.cpp:24",
         "symbol": "Proposal",
         "type": "RulesProposal *"
+      },
+      {
+        "address": "0x006151E0",
+        "function": "?set_text@EditBox@@QAEXPAD@Z",
+        "function_address": "0x006151E0",
+        "kind": "function",
+        "location": "src/editgroup.cpp:21",
+        "symbol": "EditBoxOriginalSetText",
+        "type": "func_edit_box_set_text *"
       },
       {
         "address": "0x00946A50",
@@ -3507,7 +3516,7 @@
         "type": "func_win_flip *"
       }
     ],
-    "matched_function_starts": 54,
-    "total": 242
+    "matched_function_starts": 55,
+    "total": 243
   }
 }

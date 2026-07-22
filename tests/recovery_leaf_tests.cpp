@@ -50,6 +50,7 @@
 #include "../src/netmsg.h"
 #include "../src/radiobutton.h"
 #include "../src/checkbox.h"
+#include "../src/editgroup.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9918,6 +9919,80 @@ void test_virtual_base_closes() {
     GraphicWinFieldA0CDefault = saved_default;
 }
 
+namespace {
+void *g_edit_box = nullptr;
+char *g_edit_text = nullptr;
+int g_set_text_calls = 0;
+void __thiscall observe_edit_box_set_text(void *self, char *text) {
+    g_edit_box = self;
+    g_edit_text = text;
+    ++g_set_text_calls;
+}
+}  // namespace
+
+void test_edit_group_text() {
+    auto *const saved = EditBoxOriginalSetText;
+    EditBoxOriginalSetText = &observe_edit_box_set_text;
+
+    std::vector<uint8_t> storage(sizeof(EditGroup) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *group = reinterpret_cast<EditGroup *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+
+    // Two boxes present, one absent - the absent slot is what both accessors
+    // guard on, and the original returns nothing rather than an offset from
+    // null, which is the difference a missing check would produce.
+    uint8_t first_box[0xA20] = {};
+    uint8_t second_box[0xA20] = {};
+    void *slots[3] = {first_box, nullptr, second_box};
+    for (size_t index = 0; index < 3; ++index) {
+        std::memcpy(storage.data() + 16 + 4 + index * 4, &slots[index],
+                    sizeof(void *));
+    }
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    // The text buffer sits 0xA14 into the box, not at its start.
+    expect(group->get_text(0) == reinterpret_cast<char *>(first_box) + 0xA14);
+    expect(group->get_text(1) == nullptr);
+    expect(group->get_text(2) == reinterpret_cast<char *>(second_box) + 0xA14);
+    expect(edit_group_get_text_redirect(group, nullptr, 2) ==
+           reinterpret_cast<char *>(second_box) + 0xA14);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    char message[] = "hello";
+    g_set_text_calls = 0;
+    group->set_text(message, 0);
+    expect(g_set_text_calls == 1);
+    expect(g_edit_box == first_box);
+    expect(g_edit_text == message);
+    group->set_text(message, 1);          // absent: must not dispatch
+    expect(g_set_text_calls == 1);
+    edit_group_set_text_redirect(group, nullptr, message, 2);
+    expect(g_set_text_calls == 2);
+    expect(g_edit_box == second_box);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // set_text_limits fills exactly ten dwords from 0x54 and nothing beyond.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    group->set_text_limits(0x5A5A5A5A);
+    for (size_t index = 0; index < 10; ++index) {
+        uint32_t value = 0;
+        std::memcpy(&value, storage.data() + 16 + 0x54 + index * 4, sizeof(value));
+        expect(value == 0x5A5A5A5AU);
+    }
+    std::memcpy(expected.data() + 16 + 0x54, storage.data() + 16 + 0x54, 10 * 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    edit_group_set_text_limits_redirect(group, nullptr, -1);
+    std::memcpy(expected.data() + 16 + 0x54, storage.data() + 16 + 0x54, 10 * 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    EditBoxOriginalSetText = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10281,6 +10356,7 @@ int main() {
     test_popup_close();
     test_guarded_delegates();
     test_virtual_base_closes();
+    test_edit_group_text();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

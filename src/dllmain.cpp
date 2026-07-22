@@ -61,6 +61,7 @@
 #include "netmsg.h"
 #include "radiobutton.h"
 #include "checkbox.h"
+#include "editgroup.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -86,7 +87,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 384;
+constexpr size_t RedirectCount = 387;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1375,6 +1376,21 @@ bool install_redirects() {
             0x0060E7C0,
             reinterpret_cast<uintptr_t>(&check_box_close_redirect),
             OPENSMACX_SIGNATURE_0060E7C0,
+        },
+        {
+            0x00612040,
+            reinterpret_cast<uintptr_t>(&edit_group_set_text_redirect),
+            OPENSMACX_SIGNATURE_00612040,
+        },
+        {
+            0x00612060,
+            reinterpret_cast<uintptr_t>(&edit_group_get_text_redirect),
+            OPENSMACX_SIGNATURE_00612060,
+        },
+        {
+            0x006120B0,
+            reinterpret_cast<uintptr_t>(&edit_group_set_text_limits_redirect),
+            OPENSMACX_SIGNATURE_006120B0,
         },
         {
             0x00614320,
