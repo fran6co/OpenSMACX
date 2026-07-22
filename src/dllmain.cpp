@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "alphanet.h"
+#include "ambience.h"
 #include "autosound.h"
 #include "base.h"
 #include "basebutton.h"
@@ -51,7 +52,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 179;
+constexpr size_t RedirectCount = 197;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -206,6 +207,96 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
 
 bool install_redirects() {
     const RedirectSpec specs[] = {
+        {
+            0x00447220,
+            reinterpret_cast<uintptr_t>(&faction_ambience_begin_redirect),
+            OPENSMACX_SIGNATURE_00447220,
+        },
+        {
+            0x00447230,
+            reinterpret_cast<uintptr_t>(&faction_ambience_tech_redirect),
+            OPENSMACX_SIGNATURE_00447230,
+        },
+        {
+            0x00447240,
+            reinterpret_cast<uintptr_t>(&faction_ambience_terraform_redirect),
+            OPENSMACX_SIGNATURE_00447240,
+        },
+        {
+            0x00447250,
+            reinterpret_cast<uintptr_t>(&faction_ambience_production_redirect),
+            OPENSMACX_SIGNATURE_00447250,
+        },
+        {
+            0x00447260,
+            reinterpret_cast<uintptr_t>(&faction_ambience_general_redirect),
+            OPENSMACX_SIGNATURE_00447260,
+        },
+        {
+            0x004472B0,
+            reinterpret_cast<uintptr_t>(&faction_ambience_new_base_redirect),
+            OPENSMACX_SIGNATURE_004472B0,
+        },
+        {
+            0x004472C0,
+            reinterpret_cast<uintptr_t>(&faction_ambience_popup1_redirect),
+            OPENSMACX_SIGNATURE_004472C0,
+        },
+        {
+            0x004472D0,
+            reinterpret_cast<uintptr_t>(&faction_ambience_eot_redirect),
+            OPENSMACX_SIGNATURE_004472D0,
+        },
+        {
+            0x004472E0,
+            reinterpret_cast<uintptr_t>(&faction_ambience_hostility_redirect),
+            OPENSMACX_SIGNATURE_004472E0,
+        },
+        {
+            0x004472F0,
+            reinterpret_cast<uintptr_t>(&faction_ambience_energy_resources_redirect),
+            OPENSMACX_SIGNATURE_004472F0,
+        },
+        {
+            0x00447300,
+            reinterpret_cast<uintptr_t>(&faction_ambience_base_liberated_redirect),
+            OPENSMACX_SIGNATURE_00447300,
+        },
+        {
+            0x00447690,
+            reinterpret_cast<uintptr_t>(&u_ambience_tech_redirect),
+            OPENSMACX_SIGNATURE_00447690,
+        },
+        {
+            0x004476A0,
+            reinterpret_cast<uintptr_t>(&u_ambience_popup1_redirect),
+            OPENSMACX_SIGNATURE_004476A0,
+        },
+        {
+            0x004476B0,
+            reinterpret_cast<uintptr_t>(&u_ambience_eot_redirect),
+            OPENSMACX_SIGNATURE_004476B0,
+        },
+        {
+            0x00447C60,
+            reinterpret_cast<uintptr_t>(&g_ambience_tech_redirect),
+            OPENSMACX_SIGNATURE_00447C60,
+        },
+        {
+            0x00447CA0,
+            reinterpret_cast<uintptr_t>(&g_ambience_production_redirect),
+            OPENSMACX_SIGNATURE_00447CA0,
+        },
+        {
+            0x00447CB0,
+            reinterpret_cast<uintptr_t>(&g_ambience_popup1_redirect),
+            OPENSMACX_SIGNATURE_00447CB0,
+        },
+        {
+            0x00447CC0,
+            reinterpret_cast<uintptr_t>(&g_ambience_eot_redirect),
+            OPENSMACX_SIGNATURE_00447CC0,
+        },
         {
             0x0045C5B0,
             reinterpret_cast<uintptr_t>(&main_interface_unk2_redirect),

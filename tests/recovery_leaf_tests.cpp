@@ -5,6 +5,7 @@
 #include "../src/basebutton.h"
 #include "../src/buttongroup.h"
 #include "../src/dialog.h"
+#include "../src/ambience.h"
 #include "../src/filemap.h"
 #include "../src/flatbutton.h"
 #include "../src/buffer.h"
@@ -8373,6 +8374,69 @@ void test_constant_return_stubs() {
     flic_unk7_redirect(flic, nullptr);
     flic_unk8_redirect(flic, nullptr);
     expect_storage_bytes(flic_storage, flic_expected, sizeof(flic_storage));
+
+    // Eighteen ambience event hooks across three faction flavours, none of
+    // which responds to anything. Where these objects end is not established,
+    // so the canary is sized to the layout modelled here rather than to a
+    // proven extent; what it checks is that a hook which should do nothing
+    // writes nothing, which holds whatever the true trailing size turns out
+    // to be.
+    alignas(FactionAmbience) uint8_t fa_storage[sizeof(FactionAmbience) + 32];
+    uint8_t fa_expected[sizeof(fa_storage)];
+    auto *faction_ambience = reinterpret_cast<FactionAmbience *>(fa_storage + 16);
+    seed_storage(fa_storage, fa_expected, sizeof(fa_storage));
+    std::memcpy(fa_expected, fa_storage, sizeof(fa_storage));
+    faction_ambience->begin();
+    faction_ambience->tech();
+    faction_ambience->terraform();
+    faction_ambience->production();
+    faction_ambience->general();
+    faction_ambience->new_base();
+    faction_ambience->popup1();
+    faction_ambience->eot();
+    faction_ambience->hostility();
+    faction_ambience->energy_resources();
+    faction_ambience->base_liberated();
+    faction_ambience_begin_redirect(faction_ambience, nullptr);
+    faction_ambience_tech_redirect(faction_ambience, nullptr);
+    faction_ambience_terraform_redirect(faction_ambience, nullptr);
+    faction_ambience_production_redirect(faction_ambience, nullptr);
+    faction_ambience_general_redirect(faction_ambience, nullptr);
+    faction_ambience_new_base_redirect(faction_ambience, nullptr);
+    faction_ambience_popup1_redirect(faction_ambience, nullptr);
+    faction_ambience_eot_redirect(faction_ambience, nullptr);
+    faction_ambience_hostility_redirect(faction_ambience, nullptr);
+    faction_ambience_energy_resources_redirect(faction_ambience, nullptr);
+    faction_ambience_base_liberated_redirect(faction_ambience, nullptr);
+    expect_storage_bytes(fa_storage, fa_expected, sizeof(fa_storage));
+
+    alignas(UAmbience) uint8_t ua_storage[sizeof(UAmbience) + 32];
+    uint8_t ua_expected[sizeof(ua_storage)];
+    auto *u_ambience = reinterpret_cast<UAmbience *>(ua_storage + 16);
+    seed_storage(ua_storage, ua_expected, sizeof(ua_storage));
+    std::memcpy(ua_expected, ua_storage, sizeof(ua_storage));
+    u_ambience->tech();
+    u_ambience->popup1();
+    u_ambience->eot();
+    u_ambience_tech_redirect(u_ambience, nullptr);
+    u_ambience_popup1_redirect(u_ambience, nullptr);
+    u_ambience_eot_redirect(u_ambience, nullptr);
+    expect_storage_bytes(ua_storage, ua_expected, sizeof(ua_storage));
+
+    alignas(GAmbience) uint8_t ga_storage[sizeof(GAmbience) + 32];
+    uint8_t ga_expected[sizeof(ga_storage)];
+    auto *g_ambience = reinterpret_cast<GAmbience *>(ga_storage + 16);
+    seed_storage(ga_storage, ga_expected, sizeof(ga_storage));
+    std::memcpy(ga_expected, ga_storage, sizeof(ga_storage));
+    g_ambience->tech();
+    g_ambience->production();
+    g_ambience->popup1();
+    g_ambience->eot();
+    g_ambience_tech_redirect(g_ambience, nullptr);
+    g_ambience_production_redirect(g_ambience, nullptr);
+    g_ambience_popup1_redirect(g_ambience, nullptr);
+    g_ambience_eot_redirect(g_ambience, nullptr);
+    expect_storage_bytes(ga_storage, ga_expected, sizeof(ga_storage));
 }
 
 void test_base_pop_default_colors() {

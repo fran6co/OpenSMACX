@@ -116,6 +116,7 @@ endif()
 set(OPENSMACX_SOURCES
     src/alpha.cpp
     src/alphanet.cpp
+    src/ambience.cpp
     src/autosound.cpp
     src/base.cpp
     src/basebutton.cpp
@@ -346,6 +347,7 @@ if(BUILD_TESTING)
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
         src/basepop.cpp
+        src/ambience.cpp
         src/autosound.cpp
         src/basebutton.cpp
         src/basepop_font.cpp
