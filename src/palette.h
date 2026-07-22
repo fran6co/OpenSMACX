@@ -26,6 +26,8 @@ class DLLEXPORT Palette {
   Palette() { ; }
   ~Palette() { ; }
 
+  int get_rgbquad(RGBQUAD *output, int start, int count);
+
  private:
   uint32_t field_0_;
   uint32_t field_4_;
@@ -294,3 +296,10 @@ class DLLEXPORT Palette {
       void *field_C;
   } internal_[5];
 };
+
+static_assert(sizeof(Palette) == 0x454,
+              "Palette layout must match the legacy ABI");
+
+extern int *PaletteInitialized;
+int __fastcall palette_get_rgbquad_redirect(
+    Palette *self, void *, RGBQUAD *output, int start, int count);

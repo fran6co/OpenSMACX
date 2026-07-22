@@ -19,8 +19,10 @@ address,recovery_state,priority,notes
 0x0058EE50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005D4560,source_complete,,Staged hybrid export redirect calls the source-owned constructor
 0x005D4580,source_complete,,Staged hybrid export redirect calls the source-owned destructor
+0x005D4CF0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005D4DD0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005D4E40,source_complete,,Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original Win close dependency
+0x005D7210,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005D7410,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005D7470,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005DAC70,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
@@ -35,6 +37,7 @@ address,recovery_state,priority,notes
 0x005E34A3,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005E37E0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005E3820,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x005EB3D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005ED7D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005EE0F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x005EE110,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
@@ -75,6 +78,7 @@ address,recovery_state,priority,notes
 0x005FE1F0,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FE230,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
 0x005FE270,source_complete,,Staged hybrid export redirect calls the source-owned wrapper
+0x005FE560,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00601B80,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x006046F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00605370,source_complete,,Runtime redirect installed by DllMain after byte-signature validation; retains two embedded FlatButton virtual-close dependencies and delegates to source-owned GraphicWin close
@@ -98,6 +102,7 @@ address,recovery_state,priority,notes
 0x00606C50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00606EA0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00606F00,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x00606F30,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00608C00,source_complete,,Staged hybrid export redirect calls the source-owned destructor
 0x006099D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00609A50,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
@@ -150,6 +155,7 @@ address,recovery_state,priority,notes
 0x0062B7F0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x0062B810,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x0062B850,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
+0x0062BA80,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x006343C0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x006343D0,source_complete,,Runtime redirect installed by DllMain after byte-signature validation
 0x00634430,source_complete,,Runtime redirect installed by DllMain after byte-signature validation

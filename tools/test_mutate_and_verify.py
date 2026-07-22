@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -89,6 +90,10 @@ class SimpleStatementTest(unittest.TestCase):
 
     def test_block_comment_continuations_are_not_statements(self):
         self.assertFalse(mutate_and_verify.is_simple_statement(" * a comment;"))
+
+    def test_empty_abi_barrier_is_not_a_behavioral_statement(self):
+        self.assertFalse(mutate_and_verify.is_simple_statement(
+            '    __asm__ __volatile__("" : : "a"(this) : "memory");'))
 
     def test_control_flow_is_still_excluded(self):
         self.assertFalse(mutate_and_verify.is_simple_statement("    return 3;"))
@@ -238,6 +243,25 @@ class HarnessCommandTest(unittest.TestCase):
         harness._run = fake_run
         harness.check()
         self.assertIn("--no-tests=error", captured["command"])
+
+    def test_owned_wine_prefix_reuse_is_opt_in_and_cleaned(self):
+        args = argparse.Namespace(
+            build_dir=".", target="t", test="t", timeout=60,
+            reuse_owned_wine_prefix=True)
+        harness = mutate_and_verify.Harness(args)
+        environments = []
+
+        def fake_run(command, cwd, timeout):
+            environments.append(os.environ.get(
+                mutate_and_verify.KEEP_OWNED_PREFIX_ENV))
+            return mutate_and_verify.PASSED
+
+        harness._run = fake_run
+        harness.check()
+        harness.cleanup()
+        self.assertEqual(["1", None], environments)
+        self.assertNotIn(
+            mutate_and_verify.KEEP_OWNED_PREFIX_ENV, os.environ)
 
 
 class HarnessClassificationTest(unittest.TestCase):

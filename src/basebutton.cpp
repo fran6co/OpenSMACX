@@ -19,10 +19,61 @@
 #include "temp.h"
 #include "basebutton.h"
 
+#include <new>
+
 const uint32_t BaseButtonPrimaryVtable = 0x00670290;
 const uint32_t BaseButtonBufferVtable = 0x00670288;
 uint32_t *BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
 uint32_t *BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
+
+/*
+Purpose: Construct the GraphicWin base and two Time members, then install the
+         BaseButton tables and process defaults.
+Original Offset: 00606F30
+Status: Complete
+Verification note: the surviving swap mutants reorder construction of the
+GraphicWin base against the Time members, which occupy disjoint storage, so
+their order is not observable.
+*/
+void BaseButton::construct() {
+    static_cast<GraphicWin *>(this)->construct();
+    new (&time1_) Time();
+    new (&time2_) Time();
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile const uint32_t *const fixed = BaseButtonStaticDefaults;
+    volatile const uint32_t *const dynamic = BaseButtonDynamicDefaults;
+    object[0x000 / 4] = BaseButtonPrimaryVtable;
+    object[0x444 / 4] = BaseButtonBufferVtable;
+    object[0xA74 / 4] = 0;
+    object[0xA44 / 4] = 0xFFFFFFFFU;
+    object[0xA48 / 4] = 0xFFFFFFFFU;
+    object[0xA78 / 4] = 0;
+    object[0xA9C / 4] = 0;
+    object[0xA7C / 4] = 0;
+    object[0xA80 / 4] = 0;
+    object[0xAA8 / 4] = 0;
+    object[0xAAC / 4] = 0;
+    object[0xAB0 / 4] = 0;
+    object[0xAB4 / 4] = 0;
+    object[0xA94 / 4] = dynamic[0];
+    object[0xA84 / 4] = fixed[0];
+    object[0xA88 / 4] = fixed[1];
+    object[0xA8C / 4] = fixed[2];
+    object[0xA90 / 4] = fixed[3];
+    object[0xA98 / 4] = dynamic[1];
+    object[0xAA4 / 4] = 0;
+    object[0xAA0 / 4] = fixed[4];
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+BaseButton *__fastcall base_button_construct_redirect(
+        BaseButton *self, void *) {
+    self->construct();
+    return self;
+}
 
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the

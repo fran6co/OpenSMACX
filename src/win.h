@@ -35,6 +35,7 @@ class DLLEXPORT Win {
   Win() { ; }
   ~Win() { ; }
 
+  void construct();
   int move(int x, int y);
   int is_visible();
   void client_to_screen(int *x, int *y);
@@ -270,6 +271,11 @@ class DLLEXPORT Win {
 
 static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
 
+extern const uint32_t WinPrimaryVtable;
+extern const uint32_t WinSecondaryVtable;
+extern uint32_t *WinStaticDefaults;
+extern uint32_t *WinDynamicDefaults;
+Win *__fastcall win_construct_redirect(Win *self, void *);
 int __fastcall win_move_redirect(Win *self, void *, int x, int y);
 int __fastcall win_is_visible_redirect(Win *self, void *);
 void __fastcall win_client_to_screen_redirect(
