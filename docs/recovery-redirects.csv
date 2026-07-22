@@ -12,6 +12,7 @@ address,kind
 0x00404270,jump
 0x00404280,jump
 0x004042A0,jump
+0x00404900,jump
 0x004066C0,jump
 0x00406880,jump
 0x00408710,jump
