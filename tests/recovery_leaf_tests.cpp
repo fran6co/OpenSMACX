@@ -48,6 +48,8 @@
 #include "../src/popmenu.h"
 #include "../src/popup.h"
 #include "../src/netmsg.h"
+#include "../src/radiobutton.h"
+#include "../src/checkbox.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -9765,6 +9767,157 @@ void test_guarded_delegates() {
     SubInterfaceGlobal = saved_global;
 }
 
+namespace {
+Dialog *g_closed_dialog = nullptr;
+int g_dialog_close_calls = 0;
+void __thiscall observe_dialog_close(Dialog *self) {
+    g_closed_dialog = self;
+    ++g_dialog_close_calls;
+}
+
+const void *g_win_closed = nullptr;
+const void *g_buffer_closed = nullptr;
+void __thiscall observe_win_close(void *self) { g_win_closed = self; }
+void __thiscall observe_buffer_close(void *self) { g_buffer_closed = self; }
+}  // namespace
+
+void test_virtual_base_closes() {
+    // RadioButton and CheckBox resolve both of their calls through the
+    // vbtable - [edx+4] for the virtual GraphicWin, [edx+8] for the Dialog -
+    // so the whole point of these tests is which subobject each call reaches.
+    // GraphicWin::close is real recovered code needing its two subobject
+    // seams and its default. The Scroll fixture cannot serve here - its
+    // probes assert Scroll's own call ordering against a Scroll base - so
+    // these get plain observers instead.
+    uint32_t base_default = 0x0BADF00DU;
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_default = GraphicWinFieldA0CDefault;
+    WinOriginalClose = observe_win_close;
+    BufferSubobjectClose = observe_buffer_close;
+    GraphicWinFieldA0CDefault = &base_default;
+    auto *const saved_dialog = RadioButtonOriginalDialogClose;
+    RadioButtonOriginalDialogClose = &observe_dialog_close;
+    auto *const saved_check_dialog = CheckBoxOriginalDialogClose;
+    CheckBoxOriginalDialogClose = &observe_dialog_close;
+
+    uint32_t radio_one = 0x11112222U;
+    uint32_t radio_two = 0x33334444U;
+    uint32_t *const saved_r1 = RadioButtonDefault1;
+    uint32_t *const saved_r2 = RadioButtonDefault2;
+    RadioButtonDefault1 = &radio_one;
+    RadioButtonDefault2 = &radio_two;
+
+    auto read32 = [](const std::vector<uint8_t> &s, size_t off) {
+        uint32_t v = 0;
+        std::memcpy(&v, s.data() + 16 + off, sizeof(v));
+        return v;
+    };
+
+    // Two vbtables: the one a most-derived RadioButton uses, and a second
+    // placing the same subobjects elsewhere, which is what happens when the
+    // class is embedded in a larger one - Dialogs holds a RadioButton at 0x44.
+    // Hardcoding this class's own offsets passes the first case and fails the
+    // second, which is exactly what reached the game and crashed it.
+    const int32_t own_vbtable[3] = {0, 0x18, 0xA30};
+    const int32_t embedded_vbtable[3] = {0, 0x30, 0xA60};
+
+    std::vector<uint8_t> rb(sizeof(RadioButton) + 0xA0 + 32);
+    auto *radio = reinterpret_cast<RadioButton *>(rb.data() + 16);
+    for (size_t i = 0; i < rb.size(); ++i) {
+        rb[i] = static_cast<uint8_t>(0x40 + (i * 7));
+    }
+    const uint32_t zero = 0;
+    auto point_at = [&](const int32_t *table) {
+        const int32_t *pointer = table;
+        std::memcpy(rb.data() + 16, &pointer, sizeof(pointer));
+        // GraphicWin::close follows 0xA08 off whichever base the table names.
+        std::memcpy(rb.data() + 16 + table[1] + 0xA08, &zero, sizeof(zero));
+    };
+    point_at(own_vbtable);
+    g_dialog_close_calls = 0;
+    radio->close();
+    expect(g_dialog_close_calls == 1);
+    // The Dialog it closed must be the one at 0xA30, not the object.
+    expect(reinterpret_cast<uint8_t *>(g_closed_dialog) == rb.data() + 16 + 0xA30);
+    expect(read32(rb, 0x0C) == 0);
+    expect(read32(rb, 0x10) == 0);
+    expect(read32(rb, 0x08) == 0x33334444U);
+    expect(read32(rb, 0x04) == 0x11112222U);
+    // GraphicWin::close ran against the base at 0x18, not against the object:
+    // it clears 0xA10 there and its two subobject closes see that address.
+    expect(read32(rb, 0x18 + 0xA10) == 0);
+    expect(g_win_closed == rb.data() + 16 + 0x18);
+    expect(g_buffer_closed == rb.data() + 16 + 0x18 + 0x444);
+
+    radio_button_close_redirect(radio, nullptr);
+    expect(g_dialog_close_calls == 2);
+
+    // Now the same object described by a vbtable that puts the base at 0x30
+    // and the Dialog at 0xA60. Everything must follow the table.
+    point_at(embedded_vbtable);
+    g_dialog_close_calls = 0;
+    radio->close();
+    expect(g_dialog_close_calls == 1);
+    expect(reinterpret_cast<uint8_t *>(g_closed_dialog) == rb.data() + 16 + 0xA60);
+    expect(g_win_closed == rb.data() + 16 + 0x30);
+    expect(g_buffer_closed == rb.data() + 16 + 0x30 + 0x444);
+    expect(read32(rb, 0x30 + 0xA10) == 0);
+
+    uint32_t check_one = 0x55556666U;
+    uint32_t check_two = 0x77778888U;
+    uint32_t *const saved_c1 = CheckBoxDefault1;
+    uint32_t *const saved_c2 = CheckBoxDefault2;
+    CheckBoxDefault1 = &check_one;
+    CheckBoxDefault2 = &check_two;
+
+    const int32_t check_own[3] = {0, 0x1C, 0xA34};
+    const int32_t check_embedded[3] = {0, 0x40, 0xA70};
+    std::vector<uint8_t> cb(sizeof(CheckBox) + 0xA0 + 32);
+    auto *check = reinterpret_cast<CheckBox *>(cb.data() + 16);
+    for (size_t i = 0; i < cb.size(); ++i) {
+        cb[i] = static_cast<uint8_t>(0x90 + (i * 5));
+    }
+    auto point_check_at = [&](const int32_t *table) {
+        const int32_t *pointer = table;
+        std::memcpy(cb.data() + 16, &pointer, sizeof(pointer));
+        std::memcpy(cb.data() + 16 + table[1] + 0xA08, &zero, sizeof(zero));
+    };
+    point_check_at(check_own);
+    g_dialog_close_calls = 0;
+    check->close();
+    expect(g_dialog_close_calls == 1);
+    expect(reinterpret_cast<uint8_t *>(g_closed_dialog) == cb.data() + 16 + 0xA34);
+    expect(read32(cb, 0x04) == 0);
+    expect(read32(cb, 0x08) == 0);
+    expect(read32(cb, 0x0C) == 0);
+    expect(read32(cb, 0x14) == 0x77778888U);
+    expect(read32(cb, 0x10) == 0x55556666U);
+    expect(read32(cb, 0x1C + 0xA10) == 0);
+    expect(g_win_closed == cb.data() + 16 + 0x1C);
+    expect(g_buffer_closed == cb.data() + 16 + 0x1C + 0x444);
+    check_box_close_redirect(check, nullptr);
+    expect(g_dialog_close_calls == 2);
+
+    point_check_at(check_embedded);
+    g_dialog_close_calls = 0;
+    check->close();
+    expect(g_dialog_close_calls == 1);
+    expect(reinterpret_cast<uint8_t *>(g_closed_dialog) == cb.data() + 16 + 0xA70);
+    expect(g_win_closed == cb.data() + 16 + 0x40);
+    expect(read32(cb, 0x40 + 0xA10) == 0);
+
+    RadioButtonDefault1 = saved_r1;
+    RadioButtonDefault2 = saved_r2;
+    CheckBoxDefault1 = saved_c1;
+    CheckBoxDefault2 = saved_c2;
+    RadioButtonOriginalDialogClose = saved_dialog;
+    CheckBoxOriginalDialogClose = saved_check_dialog;
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_default;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10127,6 +10280,7 @@ int main() {
     test_win_client_to_screen();
     test_popup_close();
     test_guarded_delegates();
+    test_virtual_base_closes();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

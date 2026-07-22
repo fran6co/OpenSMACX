@@ -59,6 +59,8 @@
 #include "popmenu.h"
 #include "popup.h"
 #include "netmsg.h"
+#include "radiobutton.h"
+#include "checkbox.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -84,7 +86,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 382;
+constexpr size_t RedirectCount = 384;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1363,6 +1365,16 @@ bool install_redirects() {
             0x00607810,
             reinterpret_cast<uintptr_t>(&base_button_on_key_up_redirect),
             OPENSMACX_SIGNATURE_00607810,
+        },
+        {
+            0x0060D1B0,
+            reinterpret_cast<uintptr_t>(&radio_button_close_redirect),
+            OPENSMACX_SIGNATURE_0060D1B0,
+        },
+        {
+            0x0060E7C0,
+            reinterpret_cast<uintptr_t>(&check_box_close_redirect),
+            OPENSMACX_SIGNATURE_0060E7C0,
         },
         {
             0x00614320,

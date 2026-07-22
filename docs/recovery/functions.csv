@@ -4688,7 +4688,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00608C00,0x00608C05,5,.text,??1Text@@QAE@XZ,void (__thiscall ??1Text@@QAE@XZ)(_Text* this),0x00608C00-0x00608C05,thunk,hidden;thunk;sp_ready;purged_ok,,,??1Text@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,0,0
 0x00608C10,0x00608E09,505,.text,??0Dialog@@QAE@XZ,void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this),0x00608C10-0x00608E09,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,6
 0x00608E10,0x00608F41,351,.text,??1Dialog@@QAE@XZ,void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this),0x00608E10-0x00608F41;0x00662EC0-0x00662EEE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,116
-0x00608F50,0x00609143,499,.text,?close@Dialog@@QAEXXZ,void (__thiscall ?close@Dialog@@QAEXXZ)(Dialog* this),0x00608F50-0x00609143,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,16
+0x00608F50,0x00609143,499,.text,?close@Dialog@@QAEXXZ,void (__thiscall ?close@Dialog@@QAEXXZ)(Dialog* this),0x00608F50-0x00609143,game,hidden;sp_ready;purged_ok,,,,CheckBoxOriginalDialogClose | RadioButtonOriginalDialogClose,original_dependency,,,,1,16
 0x00609150,0x006092FB,427,.text,?init@Dialog@@QAEHXZ,int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this),0x00609150-0x006092FB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00609300,0x00609465,357,.text,?init@Dialog@@QAEHHHHHH@Z,"int (__thiscall ?init@Dialog@@QAEHHHHHH@Z)(Dialog* this, int, int, int, int, int)",0x00609300-0x00609465,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,3
 0x00609470,0x006095EE,382,.text,?init@Dialog@@QAEHPAURECT@@H@Z,"int (__thiscall ?init@Dialog@@QAEHPAURECT@@H@Z)(Dialog* this, RECT*, int size)",0x00609470-0x006095EE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,13
@@ -4758,7 +4758,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0060D0A0,0x0060D0B6,22,.text,??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ,,0x0060D0A0-0x0060D0B6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0060D0C0,0x0060D0DF,31,.text,??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ,,0x0060D0C0-0x0060D0DF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0060D0E0,0x0060D1A2,230,.text,??0RadioButton@@QAE@H@Z,"void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)",0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,1
-0x0060D1B0,0x0060D1E6,54,.text,?close@RadioButton@@QAEXXZ,void (__thiscall ?close@RadioButton@@QAEXXZ)(RadioButton* this),0x0060D1B0-0x0060D1E6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,21
+0x0060D1B0,0x0060D1E6,54,.text,?close@RadioButton@@QAEXXZ,void (__thiscall ?close@RadioButton@@QAEXXZ)(RadioButton* this),0x0060D1B0-0x0060D1E6,game,hidden;sp_ready;purged_ok,src/radiobutton.cpp:29,Complete,,,source_complete,,,,2,21
 0x0060D1F0,0x0060D377,391,.text,?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z,"int (__thiscall ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)",0x0060D1F0-0x0060D377,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,2
 0x0060D380,0x0060D745,965,.text,?calculate_dimensions@RadioButton@@QAEHXZ,int (__thiscall ?calculate_dimensions@RadioButton@@QAEHXZ)(RadioButton* this),0x0060D380-0x0060D745,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
 0x0060D750,0x0060DE08,1720,.text,?draw_item@RadioButton@@QAEXHH@Z,"void (__thiscall ?draw_item@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)",0x0060D750-0x0060DE08,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,13,3
@@ -4777,7 +4777,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0060E650,0x0060E66F,31,.text,??__Fg_CHECKBOX_SPRITE_2@@YAXXZ,,0x0060E650-0x0060E66F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0060E670,0x0060E735,233,.text,??0CheckBox@@QAE@H@Z,"void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)",0x0060E670-0x0060E735;0x00662F60-0x00662F84,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,4
 0x0060E740,0x0060E7C0,128,.text,??1CheckBox@@QAE@XZ,void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this),0x0060E740-0x0060E7C0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,24
-0x0060E7C0,0x0060E7F9,57,.text,?close@CheckBox@@QAEXXZ,void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this),0x0060E7C0-0x0060E7F9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,13
+0x0060E7C0,0x0060E7F9,57,.text,?close@CheckBox@@QAEXXZ,void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this),0x0060E7C0-0x0060E7F9,game,hidden;sp_ready;purged_ok,src/checkbox.cpp:29,Complete,,,source_complete,,,,2,13
 0x0060E800,0x0060E97F,383,.text,?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z,"int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)",0x0060E800-0x0060E97F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,2
 0x0060E980,0x0060EA0D,141,.text,?item@CheckBox@@QAEHPADHH@Z,"int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)",0x0060E980-0x0060EA0D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x0060EA10,0x0060EB48,312,.text,?flip_state_id@CheckBox@@QAEXH@Z,"void (__thiscall ?flip_state_id@CheckBox@@QAEXH@Z)(CheckBox* this, int)",0x0060EA10-0x0060EB48,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
