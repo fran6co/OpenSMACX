@@ -33,12 +33,15 @@ def main():
     parser.add_argument("--nm", required=True)
     parser.add_argument("--objdump", required=True)
     parser.add_argument("--object", required=True)
+    parser.add_argument("--autosound-object")
     parser.add_argument("--scenario-object")
     parser.add_argument("--button-group-object")
     parser.add_argument("--basepop-font-object")
+    parser.add_argument("--buffer-object")
     parser.add_argument("--base-button-object")
     parser.add_argument("--base-button-oracle-object")
     parser.add_argument("--dialog-object")
+    parser.add_argument("--constructor-oracle-object")
     parser.add_argument("--font-object")
     parser.add_argument("--filemap-object")
     parser.add_argument("--flat-button-object")
@@ -47,6 +50,7 @@ def main():
     parser.add_argument("--graphicwin-oracle-object")
     parser.add_argument("--log-object")
     parser.add_argument("--menu-object")
+    parser.add_argument("--palette-object")
     parser.add_argument("--pulldown-object")
     parser.add_argument("--random-object")
     parser.add_argument("--scroll-object")
@@ -131,12 +135,146 @@ def main():
         if not re.search(r"\bret\s+\$0x4\b", adapter.group("body")):
             fail(f"AlphaNet {description} adapter does not pop its stack argument")
 
+    if args.autosound_object:
+        auto_headers = run([args.objdump, "-f", args.autosound_object])
+        if "file format pe-i386" not in auto_headers:
+            fail("AutoSound object is not a 32-bit PE COFF object")
+        auto_symbols = run(
+            [args.nm, "--defined-only", args.autosound_object])
+        for description, symbol in (
+                ("AutoSound constructor body", "__ZN9AutoSound9constructEv"),
+                ("AutoSound constructor adapter",
+                 "@_Z29auto_sound_construct_redirectP9AutoSoundPv@8")):
+            if symbol not in auto_symbols:
+                fail(f"missing required {description} symbol")
+        auto_disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.autosound_object])
+        construct = re.search(
+            r"<AutoSound::construct\(\)>:(?P<body>.*?)"
+            r"(?=\n[0-9a-f]+ <|\Z)", auto_disassembly, re.DOTALL)
+        if not construct or not returns_without_popping(construct.group("body")):
+            fail("AutoSound constructor violates no-argument thiscall cleanup")
+        # Debug addresses the first four fields directly from `this`; Release
+        # may rebase the destination register to `this + 0x14`.  Both forms
+        # retain the legacy +4,+C,+10,+8 write order.
+        initial_stores = (
+            r"\$0x66ff34.*?(?:"
+            r"0x4.*?0xc.*?0x10.*?0x8|"
+            r"-0x10.*?-0x8.*?-0x4.*?-0xc)"
+        )
+        if not re.search(
+                initial_stores, construct.group("body"), re.DOTALL):
+            fail("AutoSound constructor does not preserve its initial store order")
+        adapter = re.search(
+            r"<@_Z29auto_sound_construct_redirectP9AutoSoundPv@8>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            auto_disassembly, re.DOTALL)
+        if not adapter or not returns_without_popping(adapter.group("body")):
+            fail("AutoSound constructor adapter violates thiscall cleanup")
+
+    if args.palette_object:
+        palette_headers = run([args.objdump, "-f", args.palette_object])
+        if "file format pe-i386" not in palette_headers:
+            fail("Palette object is not a 32-bit PE COFF object")
+        palette_symbols = run(
+            [args.nm, "--defined-only", args.palette_object])
+        for description, symbol in (
+                ("Palette RGBQUAD body",
+                 "__ZN7Palette11get_rgbquadEP10tagRGBQUADii"),
+                ("Palette RGBQUAD adapter",
+                 "@_Z28palette_get_rgbquad_redirectP7PalettePvP10tagRGBQUADii@20")):
+            if symbol not in palette_symbols:
+                fail(f"missing required {description} symbol")
+        palette_disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.palette_object])
+        palette_bodies = {}
+        for description, label in (
+                ("Palette RGBQUAD body",
+                 "Palette::get_rgbquad(tagRGBQUAD*, int, int)"),
+                ("Palette RGBQUAD adapter",
+                 "@_Z28palette_get_rgbquad_redirectP7PalettePvP10tagRGBQUADii@20")):
+            match = re.search(
+                rf"<{re.escape(label)}>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+                palette_disassembly, re.DOTALL)
+            if not match:
+                fail(f"could not locate {description} in disassembly")
+            palette_bodies[description] = match.group("body")
+        if not re.search(
+                r"\bret\s+\$0xc\b",
+                palette_bodies["Palette RGBQUAD body"]):
+            fail("Palette RGBQUAD body does not pop three stack arguments")
+        adapter_body = palette_bodies["Palette RGBQUAD adapter"]
+        if not (re.search(r"\bret\s+\$0xc\b", adapter_body)
+                or re.search(
+                    r"\bjmp\b[^\n]*<Palette::get_rgbquad\(", adapter_body)):
+            fail("Palette RGBQUAD adapter does not pop three stack arguments")
+        body = palette_bodies["Palette RGBQUAD body"]
+        direct_access_order = (
+            r"\(%e[a-z]{2}\).*?0x2\(%e[a-z]{2}\).*?"
+            r"0x1\(%e[a-z]{2}\).*?0x1\(%e[a-z]{2}\).*?"
+            r"0x2\(%e[a-z]{2}\).*?\(%e[a-z]{2}\).*?"
+            r"0x3\(%e[a-z]{2}\)"
+        )
+        # Release advances the source by four bytes before each destination
+        # write and folds the destination/source delta into an indexed
+        # address.  Its -2,-3,-3,-2,-4,-1 displacements are the same
+        # read-red/write-blue, read-green/write-green,
+        # read-blue/write-red, write-reserved sequence.
+        rebased_access_order = (
+            r"\(%e[a-z]{2}\).*?-0x2\([^\n]+\).*?"
+            r"-0x3\(%e[a-z]{2}\).*?-0x3\([^\n]+\).*?"
+            r"-0x2\(%e[a-z]{2}\).*?-0x4\([^\n]+\).*?"
+            r"-0x1\([^\n]+\)"
+        )
+        if not (re.search(direct_access_order, body, re.DOTALL)
+                or re.search(rebased_access_order, body, re.DOTALL)):
+            fail("Palette RGBQUAD conversion lost its alias-sensitive access order")
+
+    if args.buffer_object:
+        buffer_headers = run([args.objdump, "-f", args.buffer_object])
+        if "file format pe-i386" not in buffer_headers:
+            fail("Buffer object is not a 32-bit PE COFF object")
+        buffer_symbols = run(
+            [args.nm, "--defined-only", args.buffer_object])
+        for description, symbol in (
+                ("Buffer constructor body", "__ZN6Buffer9constructEv"),
+                ("Buffer constructor adapter",
+                 "@_Z25buffer_construct_redirectP6BufferPv@8")):
+            if symbol not in buffer_symbols:
+                fail(f"missing required {description} symbol")
+        buffer_disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.buffer_object])
+        construct = re.search(
+            r"<Buffer::construct\(\)>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            buffer_disassembly, re.DOTALL)
+        if not construct or not returns_without_popping(construct.group("body")):
+            fail("Buffer constructor violates no-argument thiscall cleanup")
+        body = construct.group("body")
+        if ("Spot::Spot()" not in body
+                or "Palette::get_rgbquad(tagRGBQUAD*, int, int)" not in body):
+            fail("Buffer constructor does not retain both source-owned calls")
+        if not re.search(
+                r"\$0x66fdbc.*?0x50c.*?0x520.*?0x52c.*?"
+                r"0x53c.*?0x54c.*?0x55c.*?0x56c.*?"
+                r"0x540.*?0x550.*?0x560.*?0x570",
+                body, re.DOTALL):
+            fail("Buffer constructor does not preserve its text-default order")
+        adapter = re.search(
+            r"<@_Z25buffer_construct_redirectP6BufferPv@8>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            buffer_disassembly, re.DOTALL)
+        if not adapter or not returns_without_popping(adapter.group("body")):
+            fail("Buffer constructor adapter violates thiscall cleanup")
+
     if args.win_object:
         win_headers = run([args.objdump, "-f", args.win_object])
         if "file format pe-i386" not in win_headers:
             fail("Win object is not a 32-bit PE COFF object")
         win_symbols = run([args.nm, "--defined-only", args.win_object])
         required_win_symbols = {
+            "Win constructor body": "__ZN3Win9constructEv",
+            "Win constructor adapter":
+                "@_Z22win_construct_redirectP3WinPv@8",
             "Win move": "__ZN3Win4moveEii",
             "Win visibility": "__ZN3Win10is_visibleEv",
             "Win client translation": "__ZN3Win16client_to_screenEPiS0_",
@@ -160,7 +298,27 @@ def main():
         for description, symbol in required_win_symbols.items():
             if symbol not in win_symbols:
                 fail(f"missing required Win symbol: {description}")
-        win_disassembly = run([args.objdump, "-d", "-C", args.win_object])
+        win_disassembly = run(
+            [args.objdump, "-d", "-r", "-C", args.win_object])
+        win_construct = re.search(
+            r"<Win::construct\(\)>:(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            win_disassembly, re.DOTALL)
+        if not win_construct or not returns_without_popping(
+                win_construct.group("body")):
+            fail("Win constructor violates no-argument thiscall cleanup")
+        if ("AutoSound::construct()" not in win_construct.group("body")
+                or not re.search(
+                    r"\$0x66ff30.*?\$0x66fdd0.*?0xa8.*?0x3fc.*?"
+                    r"0x130.*?0xfc.*?0x100.*?0x114.*?0x104",
+                    win_construct.group("body"), re.DOTALL)):
+            fail("Win constructor does not preserve its call/default order")
+        win_construct_adapter = re.search(
+            r"<@_Z22win_construct_redirectP3WinPv@8>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            win_disassembly, re.DOTALL)
+        if not win_construct_adapter or not returns_without_popping(
+                win_construct_adapter.group("body")):
+            fail("Win constructor adapter violates thiscall cleanup")
         for description, label, stack_bytes in (
                 ("Win move", "Win::move(int, int)", "8"),
                 ("Win client translation",
@@ -248,13 +406,44 @@ def main():
         graphic_symbols = run(
             [args.nm, "--defined-only", args.graphicwin_object])
         for description, symbol in (
+                ("GraphicWin constructor body",
+                 "__ZN10GraphicWin9constructEv"),
+                ("GraphicWin constructor adapter",
+                 "@_Z30graphic_win_construct_redirectP10GraphicWinPv@8"),
                 ("GraphicWin close", "__ZN10GraphicWin5closeEv"),
                 ("GraphicWin close adapter",
                  "@_Z26graphic_win_close_redirectP10GraphicWinPv@8")):
             if symbol not in graphic_symbols:
                 fail(f"missing required {description} symbol")
         graphic_disassembly = run(
-            [args.objdump, "-d", "-C", args.graphicwin_object])
+            [args.objdump, "-d", "-r", "-C", args.graphicwin_object])
+        construct = re.search(
+            r"<GraphicWin::construct\(\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            graphic_disassembly, re.DOTALL)
+        if not construct or not returns_without_popping(construct.group("body")):
+            fail("GraphicWin constructor violates thiscall cleanup")
+        direct_constructor_order = (
+            r"Win::construct\(\).*?0x444.*?Buffer::construct\(\).*?"
+            r"\$0x66fc50.*?\$0x66fc48.*?0xa10.*?0x134.*?0x138.*?"
+            r"0x9cc.*?0xa08.*?0xa0c"
+        )
+        # Release prepares the [0x9CC,0xA0C) loop bounds before the second
+        # vtable store, then emits two ordered volatile stores per iteration.
+        optimized_constructor_order = (
+            r"Win::construct\(\).*?0x444.*?Buffer::construct\(\).*?"
+            r"\$0x66fc50.*?0x9cc.*?0xa0c.*?\$0x66fc48.*?"
+            r"0xa10.*?0x134.*?0x138.*?"
+            r"movl\s+\$0x0,\(%e[a-z]{2}\).*?"
+            r"movl\s+\$0x0,-0x4\(%e[a-z]{2}\).*?0xa0c"
+        )
+        if not (re.search(
+                    direct_constructor_order,
+                    construct.group("body"), re.DOTALL)
+                or re.search(
+                    optimized_constructor_order,
+                    construct.group("body"), re.DOTALL)):
+            fail("GraphicWin constructor does not preserve its closure/order")
         close_adapter = re.search(
             r"<@_Z26graphic_win_close_redirectP10GraphicWinPv@8>:"
             r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
@@ -290,6 +479,9 @@ def main():
         base_symbols = run(
             [args.nm, "--defined-only", args.base_button_object])
         required_base_symbols = {
+            "BaseButton constructor body": "__ZN10BaseButton9constructEv",
+            "BaseButton constructor adapter":
+                "@_Z30base_button_construct_redirectP10BaseButtonPv@8",
             "BaseButton close": "__ZN10BaseButton5closeEv",
             "BaseButton destructor body": "__ZN10BaseButton7destroyEv",
             "BaseButton close adapter":
@@ -302,6 +494,20 @@ def main():
                 fail(f"missing required {description} symbol")
         base_disassembly = run(
             [args.objdump, "-d", "-r", "-C", args.base_button_object])
+        base_construct = re.search(
+            r"<BaseButton::construct\(\)>:"
+            r"(?P<body>.*?)(?=\n[0-9a-f]+ <|\Z)",
+            base_disassembly, re.DOTALL)
+        if not base_construct or not returns_without_popping(
+                base_construct.group("body")):
+            fail("BaseButton constructor violates thiscall cleanup")
+        if not re.search(
+                r"GraphicWin::construct\(\).*?0xa1c.*?Time::Time\(\).*?"
+                r"0xa4c.*?Time::Time\(\).*?\$0x670290.*?\$0x670288.*?"
+                r"0xa74.*?0xa44.*?0xa48.*?0xa78.*?0xa9c.*?"
+                r"0xa7c.*?0xa80.*?0xaa8.*?0xaac.*?0xab0.*?0xab4",
+                base_construct.group("body"), re.DOTALL):
+            fail("BaseButton constructor does not preserve its closure/order")
         base_bodies = {}
         for description, label in (
                 ("BaseButton close", "BaseButton::close()"),
@@ -371,6 +577,29 @@ def main():
                 fail(
                     f"BaseButton runtime oracle lacks raw original "
                     f"{description} call at 0x{address:08X}")
+
+    if args.constructor_oracle_object:
+        constructor_headers = run(
+            [args.objdump, "-f", args.constructor_oracle_object])
+        if "file format pe-i386" not in constructor_headers:
+            fail("Constructor runtime oracle object is not 32-bit PE COFF")
+        constructor_symbols = run(
+            [args.nm, "--defined-only", args.constructor_oracle_object])
+        if "__Z28run_constructor_oracle_suitev" not in constructor_symbols:
+            fail("missing constructor runtime oracle suite entry point")
+        constructor_disassembly = run(
+            [args.objdump, "-d", "-C", args.constructor_oracle_object])
+        for description, address in (
+                ("AutoSound constructor", 0x0062BA80),
+                ("Win constructor", 0x005EB3D0),
+                ("Palette RGBQUAD conversion", 0x005FE560),
+                ("Buffer constructor", 0x005D7210),
+                ("GraphicWin constructor", 0x005D4CF0),
+                ("BaseButton constructor", 0x00606F30)):
+            if not re.search(rf"\$0x{address:x}\b", constructor_disassembly):
+                fail(
+                    f"constructor runtime oracle lacks original {description} "
+                    f"address 0x{address:08X}")
 
     if args.flat_button_object:
         flat_headers = run([args.objdump, "-f", args.flat_button_object])

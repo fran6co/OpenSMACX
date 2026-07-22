@@ -9,6 +9,9 @@ from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
 from wine_runtime import find_wine
 
 
+KEEP_OWNED_PREFIX_ENV = "OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run a Windows test executable locally")
@@ -31,10 +34,12 @@ def main():
     prepare_owned_wine_prefix(wine_prefix, wine)
     environment = os.environ.copy()
     environment["WINEPREFIX"] = str(wine_prefix)
+    keep_prefix_running = os.environ.get(KEEP_OWNED_PREFIX_ENV) == "1"
     try:
         result = subprocess.run([wine, str(executable)], env=environment).returncode
     finally:
-        stop_owned_wine_prefix(wine_prefix, wine)
+        if not keep_prefix_running:
+            stop_owned_wine_prefix(wine_prefix, wine)
     raise SystemExit(result)
 
 

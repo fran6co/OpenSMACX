@@ -46,6 +46,42 @@ func_subobject_close *BufferSubobjectClose = &buffer_subobject_close;
 func_subobject_close *WinOriginalClose = (func_subobject_close *)0x005EB640;
 uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 
+/*
+Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
+         tables and initialize its trailing window state.
+Original Offset: 005D4CF0
+Status: Complete
+Verification note: the 0x134 and 0x138 stores are redundant - Win::construct
+runs first and already zeroes both - so dropping either is unobservable. They
+mirror the original's instruction sequence rather than deduplicating it. The
+Win/Buffer construction order is likewise unobservable because the two write
+disjoint regions.
+*/
+void GraphicWin::construct() {
+    static_cast<Win *>(this)->construct();
+    buffer_.construct();
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = GraphicWinPrimaryVtable;
+    object[0x444 / 4] = GraphicWinBufferVtable;
+    object[0xA10 / 4] = 0;
+    object[0x134 / 4] = 0;
+    object[0x138 / 4] = 0;
+    for (size_t offset = 0x9CC; offset <= 0xA08; offset += 4) {
+        object[offset / 4] = 0;
+    }
+    object[0xA0C / 4] = *GraphicWinFieldA0CDefault;
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+GraphicWin *__fastcall graphic_win_construct_redirect(
+        GraphicWin *self, void *) {
+    self->construct();
+    return self;
+}
+
 namespace {
 
 struct DestructorProbe {

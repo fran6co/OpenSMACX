@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 33,
-      "source_complete": 610,
+      "source_complete": 616,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4987
+      "unrecovered": 4981
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 556,
-    "matched_function_starts": 556,
-    "unique_addresses": 556,
+    "annotations": 562,
+    "matched_function_starts": 562,
+    "unique_addresses": 562,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -1585,7 +1585,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/basebutton.cpp:24",
+        "location": "src/basebutton.cpp:26",
         "symbol": "BaseButtonStaticDefaults",
         "type": "uint32_t *"
       },
@@ -1594,7 +1594,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/basebutton.cpp:25",
+        "location": "src/basebutton.cpp:27",
         "symbol": "BaseButtonDynamicDefaults",
         "type": "uint32_t *"
       },
@@ -1603,7 +1603,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/buffer.cpp:273",
+        "location": "src/buffer.cpp:391",
         "symbol": "BufferDirectDrawActive",
         "type": "int *"
       },
@@ -1612,7 +1612,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/buffer.cpp:274",
+        "location": "src/buffer.cpp:392",
         "symbol": "BufferResetValue520",
         "type": "uint32_t *"
       },
@@ -1621,7 +1621,7 @@
         "function": "_free",
         "function_address": "0x00644EF2",
         "kind": "function",
-        "location": "src/buffer.cpp:275",
+        "location": "src/buffer.cpp:393",
         "symbol": "BufferFree",
         "type": "func_sprite_free *"
       },

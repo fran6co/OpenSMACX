@@ -126,6 +126,7 @@ set(OPENSMACX_SOURCES
     src/buffer_oracle.cpp
     src/buttongroup.cpp
     src/caviar.cpp
+    src/constructor_oracle.cpp
     src/council.cpp
     src/dialog.cpp
     src/dialogs.cpp
@@ -230,18 +231,24 @@ if(MINGW)
 
     set(OPENSMACX_ALPHANET_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/alphanet.cpp.obj")
+    set(OPENSMACX_AUTOSOUND_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/autosound.cpp.obj")
     set(OPENSMACX_SCENARIO_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scenario.cpp.obj")
     set(OPENSMACX_BUTTON_GROUP_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buttongroup.cpp.obj")
     set(OPENSMACX_BASEPOP_FONT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
+    set(OPENSMACX_BUFFER_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buffer.cpp.obj")
     set(OPENSMACX_BASE_BUTTON_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton.cpp.obj")
     set(OPENSMACX_BASE_BUTTON_ORACLE_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton_oracle.cpp.obj")
     set(OPENSMACX_DIALOG_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
+    set(OPENSMACX_CONSTRUCTOR_ORACLE_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/constructor_oracle.cpp.obj")
     set(OPENSMACX_FONT_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
     set(OPENSMACX_FILEMAP_OBJECT
@@ -258,6 +265,8 @@ if(MINGW)
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
     set(OPENSMACX_MENU_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/menu.cpp.obj")
+    set(OPENSMACX_PALETTE_OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/palette.cpp.obj")
     set(OPENSMACX_PULLDOWN_OBJECT
         "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/pulldown.cpp.obj")
     set(OPENSMACX_RANDOM_OBJECT
@@ -292,12 +301,15 @@ if(MINGW)
             --nm "${CMAKE_NM}"
             --objdump "${CMAKE_OBJDUMP}"
             --object "${OPENSMACX_ALPHANET_OBJECT}"
+            --autosound-object "${OPENSMACX_AUTOSOUND_OBJECT}"
             --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
             --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
             --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
+            --buffer-object "${OPENSMACX_BUFFER_OBJECT}"
             --base-button-object "${OPENSMACX_BASE_BUTTON_OBJECT}"
             --base-button-oracle-object "${OPENSMACX_BASE_BUTTON_ORACLE_OBJECT}"
             --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
+            --constructor-oracle-object "${OPENSMACX_CONSTRUCTOR_ORACLE_OBJECT}"
             --font-object "${OPENSMACX_FONT_OBJECT}"
             --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
             --flat-button-object "${OPENSMACX_FLAT_BUTTON_OBJECT}"
@@ -306,6 +318,7 @@ if(MINGW)
             --graphicwin-oracle-object "${OPENSMACX_GRAPHICWIN_ORACLE_OBJECT}"
             --log-object "${OPENSMACX_LOG_OBJECT}"
             --menu-object "${OPENSMACX_MENU_OBJECT}"
+            --palette-object "${OPENSMACX_PALETTE_OBJECT}"
             --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
             --random-object "${OPENSMACX_RANDOM_OBJECT}"
             --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
@@ -332,6 +345,7 @@ if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
         src/alphanet.cpp
+        src/autosound.cpp
         src/basebutton.cpp
         src/basepop_font.cpp
         src/buffer.cpp
@@ -343,6 +357,7 @@ if(BUILD_TESTING)
         src/graphicwin.cpp
         src/log.cpp
         src/menu.cpp
+        src/palette.cpp
         src/pulldown.cpp
         src/random.cpp
         src/scroll.cpp
@@ -412,12 +427,15 @@ if(BUILD_TESTING)
                 --nm "${CMAKE_NM}"
                 --objdump "${CMAKE_OBJDUMP}"
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
+                --autosound-object "${OPENSMACX_AUTOSOUND_OBJECT}"
                 --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
                 --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"
+                --buffer-object "${OPENSMACX_BUFFER_OBJECT}"
                 --base-button-object "${OPENSMACX_BASE_BUTTON_OBJECT}"
                 --base-button-oracle-object "${OPENSMACX_BASE_BUTTON_ORACLE_OBJECT}"
                 --dialog-object "${OPENSMACX_DIALOG_OBJECT}"
+                --constructor-oracle-object "${OPENSMACX_CONSTRUCTOR_ORACLE_OBJECT}"
                 --font-object "${OPENSMACX_FONT_OBJECT}"
                 --filemap-object "${OPENSMACX_FILEMAP_OBJECT}"
                 --flat-button-object "${OPENSMACX_FLAT_BUTTON_OBJECT}"
@@ -426,6 +444,7 @@ if(BUILD_TESTING)
                 --graphicwin-oracle-object "${OPENSMACX_GRAPHICWIN_ORACLE_OBJECT}"
                 --log-object "${OPENSMACX_LOG_OBJECT}"
                 --menu-object "${OPENSMACX_MENU_OBJECT}"
+                --palette-object "${OPENSMACX_PALETTE_OBJECT}"
                 --pulldown-object "${OPENSMACX_PULLDOWN_OBJECT}"
                 --random-object "${OPENSMACX_RANDOM_OBJECT}"
                 --scroll-object "${OPENSMACX_SCROLL_OBJECT}"
@@ -853,6 +872,11 @@ if(MINGW)
             src/buffer.cpp
             src/spot_recovery.cpp
             src/font_recovery.cpp
+            # The recovered constructors extend that closure: Win::construct
+            # builds its AutoSound member and Buffer::construct resolves its
+            # default colours through Palette::get_rgbquad.
+            src/autosound.cpp
+            src/palette.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)

@@ -25,9 +25,9 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,024 candidates.
+- Current recovery backlog: 5,018 candidates.
 - Current local legacy-island count: 114, reduced from 174.
-- `DllMain` entry redirects: 106, comprising 104 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` entry redirects: 112, comprising 110 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -113,6 +113,7 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Recovered `Sprite::close` at `0x005E3820` (111 callers), completing the Sprite lifecycle pair.
 - Recovered the two highest-fan-in bottleneck primitives: `Win::is_visible` at `0x005F7E90` (120 callers) and `Sprite::Sprite` at `0x005E37E0` (154 callers), both verified by new in-process runtime-oracle suites because they carry a recursive call and an absolute accounting global respectively.
 - Recovered `Win::client_to_screen` at `0x005ED240` (71 callers), preserving recursive parent-chain translation, bit-15 parent-origin subtraction, output alias ordering, and defined 32-bit wrapping. Its original-address Win oracle exercises the call-bearing body before redirects install.
+- Recovered the constructor closure: `AutoSound::AutoSound` (`0x0062BA80`), `Win::Win` (`0x005EB3D0`), `Palette::get_rgbquad` (`0x005FE560`), `Buffer::Buffer` (`0x005D7210`, 80 callers), `GraphicWin::GraphicWin` (`0x005D4CF0`, 52 callers), and `BaseButton::BaseButton` (`0x00606F30`), verified by a new in-process `constructor` oracle suite. Both `verify-recovery-batch` gates pass 11/11 with both hybrid smokes, and all six mutation sweeps are triaged: Buffer kills 198/203, BaseButton 61/63, GraphicWin 21/24, and every survivor is equivalent by construction and recorded in a `Verification note:` on its function. Linking the oracle suite required adding `src/autosound.cpp` and `src/palette.cpp` to `recovery-oracle-tests`, because `Win::construct` builds its AutoSound member and `Buffer::construct` resolves default colours through `Palette::get_rgbquad`.
 
 Recovered source includes:
 
@@ -211,7 +212,7 @@ Other completed corrections and checks:
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
 - Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
 - The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
-- Regenerated state is 5,024 priorities, 610 source-complete functions, 33 original dependencies, 4,987 unrecovered functions, and 114 islands.
+- Regenerated state is 5,018 priorities, 616 source-complete functions, 33 original dependencies, 4,981 unrecovered functions, and 114 islands.
 
 ### Hybrid Runtime Compatibility
 
@@ -327,6 +328,13 @@ restores the source in a `finally` and on SIGINT/SIGTERM, so an interrupted
 sweep does not leave a mutant on disk - but confirm `git status` is clean
 before trusting a later build anyway.
 
+For large Wine-backed sweeps, pass `--reuse-owned-wine-prefix`. The option
+keeps only `run_windows_test.py`'s dedicated marker-protected build prefix
+running between mutants, then performs one ordinary restored-source test to
+stop that prefix. It does not change the prefix path, relax ownership checks,
+or issue a global Wine shutdown. This removes repeated Wine teardown while
+preserving the same executable and CTest selection for every mutant.
+
 Swaps are only emitted where the two statements genuinely interact. Two stores
 to distinct lvalues with constant right-hand sides are order-independent in
 final state, so swapping them is an equivalent mutant that would survive any
@@ -356,14 +364,14 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
 2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover the BaseButton constructor at `0x00606F30` and color/default setters at `0x00607360` through `0x006074B0`.
+3. Recover the BaseButton color/default setters at `0x00607360` through `0x006074B0`.
 4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 104 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
+- `src/dllmain.cpp`: transactional signature-checked redirects; 110 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -397,7 +405,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,024 candidates.
+- `docs/recovery/priorities.csv`: currently regenerated to 5,018 candidates.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
@@ -420,7 +428,7 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 - `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
-- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing.
+- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Its opt-in owned-prefix reuse avoids repeated Wine teardown and always finishes with the normal marker-protected cleanup path.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.

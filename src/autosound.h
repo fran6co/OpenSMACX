@@ -24,6 +24,7 @@ class DLLEXPORT AutoSound {
  public:
   AutoSound() { ; }
   ~AutoSound() { ; }
+  void construct();
 
  private:
   PVOID vtable_;
@@ -65,6 +66,13 @@ class DLLEXPORT AutoSound {
   int val_36_;
   int val_37_;
 };
+
+static_assert(sizeof(AutoSound) == 0x98,
+              "AutoSound layout must match the legacy ABI");
+
+extern const uint32_t AutoSoundVtable;
+extern uint32_t *AutoSoundDefaults;
+AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *);
 
 DLLEXPORT void __cdecl do_sound();
 int __cdecl do_sound_redirect();

@@ -17,3 +17,47 @@
  */
 #include "stdafx.h"
 #include "palette.h"
+
+int *PaletteInitialized = reinterpret_cast<int *>(0x009B8178);
+
+/*
+Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
+Original Offset: 005FE560
+Return Value: 3 for a null output, 7 while the palette is unavailable, or 0
+Status: Complete
+*/
+int Palette::get_rgbquad(RGBQUAD *output, int start, int count) {
+    if (!output) {
+        return 3;
+    }
+    if (*PaletteInitialized == 0) {
+        return 7;
+    }
+    if (count <= 0) {
+        return 0;
+    }
+    const uint32_t source_bits = reinterpret_cast<uintptr_t>(this)
+        + static_cast<uint32_t>(start) * 4U;
+    volatile uint8_t *source = reinterpret_cast<volatile uint8_t *>(
+        static_cast<uintptr_t>(source_bits));
+    volatile uint8_t *destination =
+        reinterpret_cast<volatile uint8_t *>(output);
+    do {
+        const uint8_t red = source[0];
+        destination[2] = red;
+        const uint8_t green = source[1];
+        destination[1] = green;
+        const uint8_t blue = source[2];
+        destination[0] = blue;
+        destination[3] = 0;
+        source += 4;
+        destination += 4;
+        --count;
+    } while (count != 0);
+    return 0;
+}
+
+int __fastcall palette_get_rgbquad_redirect(
+        Palette *self, void *, RGBQUAD *output, int start, int count) {
+    return self->get_rgbquad(output, start, count);
+}

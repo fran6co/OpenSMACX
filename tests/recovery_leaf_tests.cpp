@@ -1,5 +1,6 @@
 #include "../src/stdafx.h"
 #include "../src/alphanet.h"
+#include "../src/autosound.h"
 #include "../src/basepop.h"
 #include "../src/basebutton.h"
 #include "../src/buttongroup.h"
@@ -12,6 +13,7 @@
 #include "../src/font.h"
 #include "../src/log.h"
 #include "../src/menu.h"
+#include "../src/palette.h"
 #include "../src/pulldown.h"
 #include "../src/random.h"
 #include "../src/scroll.h"
@@ -775,6 +777,516 @@ void write_at_volatile(uint8_t *storage, size_t offset, const T &value) {
     for (size_t index = 0; index < sizeof(value); ++index) {
         target[index] = source[index];
     }
+}
+
+void write_auto_sound_construct_expected(
+        uint8_t *expected, size_t base, const uint32_t *defaults) {
+    write_at(expected, base + 0x00, AutoSoundVtable);
+    write_at(expected, base + 0x04, defaults[0]);
+    write_at(expected, base + 0x0C, defaults[1]);
+    write_at(expected, base + 0x10, defaults[2]);
+    write_at(expected, base + 0x08, defaults[3]);
+    for (size_t index = 4; index < 37; ++index) {
+        write_at(expected, base + (index + 1) * 4, defaults[index]);
+    }
+}
+
+void test_auto_sound_construct() {
+    uint32_t defaults[37];
+    for (size_t index = 0; index < ARRAYSIZE(defaults); ++index) {
+        defaults[index] = 0x51000000U + index * 0x10203U;
+    }
+    uint32_t *const saved_defaults = AutoSoundDefaults;
+    AutoSoundDefaults = defaults;
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(AutoSound) uint8_t storage[sizeof(AutoSound) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        write_auto_sound_construct_expected(expected, 16, defaults);
+        auto *const self = reinterpret_cast<AutoSound *>(storage + 16);
+        if (use_adapter) {
+            expect(auto_sound_construct_redirect(self, nullptr) == self);
+        } else {
+            self->construct();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+    AutoSoundDefaults = saved_defaults;
+}
+
+void write_win_construct_expected(
+        uint8_t *expected, size_t base, uint32_t self,
+        const uint32_t *sound, const uint32_t *fixed,
+        const uint32_t *dynamic) {
+    write_auto_sound_construct_expected(expected, base, sound);
+    write_at(expected, base + 0x0C8, WinSecondaryVtable);
+    for (size_t offset = 0x0CC; offset <= 0x0DC; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x000, WinPrimaryVtable);
+    write_at(expected, base + 0x0A8, self);
+    const size_t first_zero_offsets[] = {
+        0x3FC, 0x09C, 0x0A0, 0x0A4, 0x0AC, 0x0B0,
+        0x134, 0x138, 0x188, 0x18C, 0x190, 0x194,
+        0x198, 0x184, 0x0C4, 0x0F0, 0x19C, 0x12C,
+    };
+    for (size_t offset : first_zero_offsets) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x130, 1U);
+    write_at(expected, base + 0x0FC, dynamic[0]);
+    write_at(expected, base + 0x100, fixed[0]);
+    write_at(expected, base + 0x114, fixed[1]);
+    write_at(expected, base + 0x104, dynamic[2]);
+    write_at(expected, base + 0x108, fixed[2]);
+    write_at(expected, base + 0x10C, fixed[3]);
+    write_at(expected, base + 0x110, fixed[4]);
+    write_at(expected, base + 0x118, fixed[5]);
+    write_at(expected, base + 0x11C, fixed[6]);
+    write_at(expected, base + 0x120, fixed[7]);
+    write_at(expected, base + 0x124, dynamic[3]);
+    write_at(expected, base + 0x128, fixed[8]);
+    write_at(expected, base + 0x0F8, dynamic[1]);
+    for (size_t offset = 0x0E0; offset <= 0x0EC; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x43C, 0U);
+    write_at(expected, base + 0x440, 0U);
+    write_at(expected, base + 0x0F4, 0U);
+    for (size_t offset = 0x15C; offset <= 0x168; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    for (size_t offset = 0x13C; offset <= 0x158; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    const size_t late_zero_offsets[] = {
+        0x0B4, 0x0C0, 0x0BC, 0x0B8, 0x16C, 0x170, 0x098,
+    };
+    for (size_t offset : late_zero_offsets) {
+        write_at(expected, base + offset, 0U);
+    }
+    for (size_t offset = 0x400; offset <= 0x438; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    for (size_t offset = 0x174; offset <= 0x180; offset += 4) {
+        write_at(expected, base + offset, 1U);
+    }
+    write_at(expected, base + 0x1A0, 2U);
+}
+
+void fill_constructor_defaults(
+        uint32_t *sound, uint32_t *win_fixed, uint32_t *win_dynamic) {
+    for (size_t index = 0; index < 37; ++index) {
+        sound[index] = 0x61000000U + index * 0x10011U;
+    }
+    for (size_t index = 0; index < 9; ++index) {
+        win_fixed[index] = 0x62000000U + index * 0x10101U;
+    }
+    for (size_t index = 0; index < 4; ++index) {
+        win_dynamic[index] = 0x63000000U + index * 0x11011U;
+    }
+}
+
+void test_win_construct() {
+    uint32_t sound[37];
+    uint32_t fixed[9];
+    uint32_t dynamic[4];
+    fill_constructor_defaults(sound, fixed, dynamic);
+    uint32_t *const saved_sound = AutoSoundDefaults;
+    uint32_t *const saved_fixed = WinStaticDefaults;
+    uint32_t *const saved_dynamic = WinDynamicDefaults;
+    AutoSoundDefaults = sound;
+    WinStaticDefaults = fixed;
+    WinDynamicDefaults = dynamic;
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(Win) uint8_t storage[sizeof(Win) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        auto *const self = reinterpret_cast<Win *>(storage + 16);
+        write_win_construct_expected(
+            expected, 16, reinterpret_cast<uintptr_t>(self),
+            sound, fixed, dynamic);
+        if (use_adapter) {
+            expect(win_construct_redirect(self, nullptr) == self);
+        } else {
+            self->construct();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+    AutoSoundDefaults = saved_sound;
+    WinStaticDefaults = saved_fixed;
+    WinDynamicDefaults = saved_dynamic;
+}
+
+void simulate_palette_get(
+        uint8_t *bytes, size_t output, size_t source, int count) {
+    for (int index = 0; index < count; ++index) {
+        const size_t in = source + static_cast<size_t>(index) * 4;
+        const size_t out = output + static_cast<size_t>(index) * 4;
+        const uint8_t red = bytes[in + 0];
+        bytes[out + 2] = red;
+        const uint8_t green = bytes[in + 1];
+        bytes[out + 1] = green;
+        const uint8_t blue = bytes[in + 2];
+        bytes[out + 0] = blue;
+        bytes[out + 3] = 0;
+    }
+}
+
+void test_palette_get_rgbquad() {
+    int initialized = 0;
+    int *const saved_initialized = PaletteInitialized;
+    PaletteInitialized = &initialized;
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette) + 32];
+    uint8_t palette_expected[sizeof(palette_storage)];
+    seed_storage(palette_storage, palette_expected, sizeof(palette_storage));
+    auto *const palette = reinterpret_cast<Palette *>(palette_storage + 16);
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        expect((use_adapter
+            ? palette_get_rgbquad_redirect(palette, nullptr, nullptr, 0, 1)
+            : palette->get_rgbquad(nullptr, 0, 1)) == 3);
+        expect_storage_bytes(
+            palette_storage, palette_expected, sizeof(palette_storage));
+
+        alignas(RGBQUAD) uint8_t output[sizeof(RGBQUAD) * 6 + 32];
+        uint8_t expected[sizeof(output)];
+        seed_storage(output, expected, sizeof(output));
+        auto *const quads = reinterpret_cast<RGBQUAD *>(output + 16);
+        initialized = 0;
+        expect((use_adapter
+            ? palette_get_rgbquad_redirect(palette, nullptr, quads, 3, 4)
+            : palette->get_rgbquad(quads, 3, 4)) == 7);
+        expect_storage_bytes(output, expected, sizeof(output));
+
+        initialized = 1;
+        for (int count : {0, -1, INT_MIN}) {
+            expect((use_adapter
+                ? palette_get_rgbquad_redirect(
+                    palette, nullptr, quads, 3, count)
+                : palette->get_rgbquad(quads, 3, count)) == 0);
+            expect_storage_bytes(output, expected, sizeof(output));
+        }
+        const size_t one_source = 16 + 3 * 4;
+        expected[16 + 0] = palette_storage[one_source + 2];
+        expected[16 + 1] = palette_storage[one_source + 1];
+        expected[16 + 2] = palette_storage[one_source + 0];
+        expected[16 + 3] = 0;
+        expect((use_adapter
+            ? palette_get_rgbquad_redirect(palette, nullptr, quads, 3, 1)
+            : palette->get_rgbquad(quads, 3, 1)) == 0);
+        expect_storage_bytes(output, expected, sizeof(output));
+
+        seed_storage(output, expected, sizeof(output));
+        for (size_t index = 0; index < 4; ++index) {
+            const size_t source = 16 + (3 + index) * 4;
+            const size_t target = 16 + index * 4;
+            expected[target + 0] = palette_storage[source + 2];
+            expected[target + 1] = palette_storage[source + 1];
+            expected[target + 2] = palette_storage[source + 0];
+            expected[target + 3] = 0;
+        }
+        expect((use_adapter
+            ? palette_get_rgbquad_redirect(palette, nullptr, quads, 3, 4)
+            : palette->get_rgbquad(quads, 3, 4)) == 0);
+        expect_storage_bytes(output, expected, sizeof(output));
+
+        // Exact overlap exposes the legacy read/write order: the red-byte
+        // store changes the later blue-byte read from the same source entry.
+        seed_storage(palette_storage, palette_expected, sizeof(palette_storage));
+        simulate_palette_get(palette_expected, 16, 16, 4);
+        auto *const alias = reinterpret_cast<RGBQUAD *>(palette_storage + 16);
+        expect((use_adapter
+            ? palette_get_rgbquad_redirect(palette, nullptr, alias, 0, 4)
+            : palette->get_rgbquad(alias, 0, 4)) == 0);
+        expect_storage_bytes(
+            palette_storage, palette_expected, sizeof(palette_storage));
+    }
+    PaletteInitialized = saved_initialized;
+}
+
+void write_buffer_construct_expected(
+        uint8_t *expected, size_t base, uint32_t reset_520,
+        uint32_t default_font, const uint8_t *palette, int palette_state) {
+    for (size_t offset = 0x4B0; offset <= 0x4B8; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x000, BufferVtable);
+    for (size_t offset = 0x4BC; offset < 0x50C; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    const size_t first_zero_offsets[] = {
+        0x584, 0x00C, 0x008, 0x014, 0x010, 0x018, 0x01C,
+        0x050, 0x054, 0x058, 0x05C, 0x060, 0x064, 0x068,
+        0x06C, 0x074, 0x078, 0x4A4, 0x4A8,
+    };
+    for (size_t offset : first_zero_offsets) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x50C, 0xFFFFFFFFU);
+    for (size_t offset = 0x510; offset <= 0x51C; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x520, reset_520);
+    write_at(expected, base + 0x524, 0U);
+    write_at(expected, base + 0x52C, default_font);
+    write_at(expected, base + 0x530, 0U);
+    write_at(expected, base + 0x53C, 0U);
+    write_at(expected, base + 0x54C, 0xFFFFFFFFU);
+    write_at(expected, base + 0x55C, 2U);
+    write_at(expected, base + 0x56C, 2U);
+    write_at(expected, base + 0x540, 0xFFFFFFFFU);
+    write_at(expected, base + 0x550, 0xFFFFFFFFU);
+    write_at(expected, base + 0x560, 2U);
+    write_at(expected, base + 0x570, 2U);
+    write_at(expected, base + 0x534, 0U);
+    write_at(expected, base + 0x544, 0xFFFFFFFFU);
+    write_at(expected, base + 0x554, 0xFFFFFFFFU);
+    write_at(expected, base + 0x564, 2U);
+    write_at(expected, base + 0x574, 2U);
+    write_at(expected, base + 0x538, 0U);
+    write_at(expected, base + 0x548, 0xFFFFFFFFU);
+    write_at(expected, base + 0x558, 0xFFFFFFFFU);
+    write_at(expected, base + 0x568, 2U);
+    write_at(expected, base + 0x578, 2U);
+    write_at(expected, base + 0x57C, 0U);
+    expected[base + 0x580] = 0;
+    write_at(expected, base + 0x070, 0U);
+    write_at(expected, base + 0x004, 0U);
+    write_at(expected, base + 0x07C, 0x28U);
+    write_at(expected, base + 0x080, 0U);
+    write_at(expected, base + 0x084, 0U);
+    write_at(expected, base + 0x088, static_cast<uint16_t>(1));
+    write_at(expected, base + 0x08A, static_cast<uint16_t>(8));
+    for (size_t offset = 0x08C; offset <= 0x098; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0x09C, 0x100U);
+    write_at(expected, base + 0x0A0, 0U);
+    if (!palette) {
+        for (size_t index = 0; index < 256; ++index) {
+            expected[base + 0x0A4 + index * 4] =
+                static_cast<uint8_t>(index);
+            expected[base + 0x0A5 + index * 4] = 0;
+            expected[base + 0x0A6 + index * 4] = 0;
+            expected[base + 0x0A7 + index * 4] = 0;
+        }
+    } else if (palette_state) {
+        for (size_t index = 0; index < 256; ++index) {
+            expected[base + 0x0A4 + index * 4] = palette[index * 4 + 2];
+            expected[base + 0x0A5 + index * 4] = palette[index * 4 + 1];
+            expected[base + 0x0A6 + index * 4] = palette[index * 4 + 0];
+            expected[base + 0x0A7 + index * 4] = 0;
+        }
+    }
+}
+
+void test_buffer_construct() {
+    uint32_t reset_520 = 0x71234567U;
+    Font *default_font = reinterpret_cast<Font *>(0x76543210U);
+    Palette *palette_value = nullptr;
+    int palette_state = 0;
+    uint32_t *const saved_reset = BufferResetValue520;
+    Font **const saved_font = FontDefaultPtr;
+    Palette **const saved_palette = BufferPalette;
+    int *const saved_initialized = PaletteInitialized;
+    BufferResetValue520 = &reset_520;
+    FontDefaultPtr = &default_font;
+    BufferPalette = &palette_value;
+    PaletteInitialized = &palette_state;
+
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette)];
+    for (size_t index = 0; index < sizeof(palette_storage); ++index) {
+        palette_storage[index] = static_cast<uint8_t>(0x41U + index * 13U);
+    }
+    auto *const palette = reinterpret_cast<Palette *>(palette_storage);
+    struct Case { bool has_palette; int initialized; };
+    const Case cases[] = {{false, 0}, {true, 0}, {true, 1}};
+    for (const Case &test : cases) {
+        palette_value = test.has_palette ? palette : nullptr;
+        palette_state = test.initialized;
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_buffer_construct_expected(
+                expected, 16, reset_520,
+                reinterpret_cast<uintptr_t>(default_font),
+                test.has_palette ? palette_storage : nullptr,
+                test.initialized);
+            auto *const self = reinterpret_cast<Buffer *>(storage + 16);
+            if (use_adapter) {
+                expect(buffer_construct_redirect(self, nullptr) == self);
+            } else {
+                self->construct();
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+    BufferResetValue520 = saved_reset;
+    FontDefaultPtr = saved_font;
+    BufferPalette = saved_palette;
+    PaletteInitialized = saved_initialized;
+}
+
+void write_graphic_win_construct_expected(
+        uint8_t *expected, size_t base, uint32_t self,
+        const uint32_t *sound, const uint32_t *win_fixed,
+        const uint32_t *win_dynamic, uint32_t reset_520,
+        uint32_t default_font, const uint8_t *palette, int palette_state,
+        uint32_t graphic_default) {
+    write_win_construct_expected(
+        expected, base, self, sound, win_fixed, win_dynamic);
+    write_buffer_construct_expected(
+        expected, base + 0x444, reset_520, default_font,
+        palette, palette_state);
+    write_at(expected, base + 0x000, GraphicWinPrimaryVtable);
+    write_at(expected, base + 0x444, GraphicWinBufferVtable);
+    write_at(expected, base + 0xA10, 0U);
+    write_at(expected, base + 0x134, 0U);
+    write_at(expected, base + 0x138, 0U);
+    for (size_t offset = 0x9CC; offset <= 0xA08; offset += 4) {
+        write_at(expected, base + offset, 0U);
+    }
+    write_at(expected, base + 0xA0C, graphic_default);
+}
+
+void bind_composite_constructor_defaults(
+        uint32_t *sound, uint32_t *win_fixed, uint32_t *win_dynamic,
+        uint32_t *reset_520, Font **font, Palette **palette,
+        int *palette_state, uint32_t *graphic_default) {
+    AutoSoundDefaults = sound;
+    WinStaticDefaults = win_fixed;
+    WinDynamicDefaults = win_dynamic;
+    BufferResetValue520 = reset_520;
+    FontDefaultPtr = font;
+    BufferPalette = palette;
+    PaletteInitialized = palette_state;
+    GraphicWinFieldA0CDefault = graphic_default;
+}
+
+void test_graphic_win_construct() {
+    uint32_t sound[37], win_fixed[9], win_dynamic[4];
+    fill_constructor_defaults(sound, win_fixed, win_dynamic);
+    uint32_t reset_520 = 0x72112233U;
+    Font *font = reinterpret_cast<Font *>(0x73334455U);
+    Palette *palette = nullptr;
+    int palette_state = 1;
+    uint32_t graphic_default = 0x74445566U;
+    uint32_t *const saved_sound = AutoSoundDefaults;
+    uint32_t *const saved_win_fixed = WinStaticDefaults;
+    uint32_t *const saved_win_dynamic = WinDynamicDefaults;
+    uint32_t *const saved_reset = BufferResetValue520;
+    Font **const saved_font = FontDefaultPtr;
+    Palette **const saved_palette = BufferPalette;
+    int *const saved_palette_state = PaletteInitialized;
+    uint32_t *const saved_graphic = GraphicWinFieldA0CDefault;
+    bind_composite_constructor_defaults(
+        sound, win_fixed, win_dynamic, &reset_520, &font, &palette,
+        &palette_state, &graphic_default);
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(GraphicWin) uint8_t storage[sizeof(GraphicWin) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        auto *const self = reinterpret_cast<GraphicWin *>(storage + 16);
+        write_graphic_win_construct_expected(
+            expected, 16,
+            reinterpret_cast<uintptr_t>(self),
+            sound, win_fixed, win_dynamic, reset_520,
+            reinterpret_cast<uintptr_t>(font),
+            nullptr, palette_state, graphic_default);
+        if (use_adapter) {
+            expect(graphic_win_construct_redirect(self, nullptr) == self);
+        } else {
+            self->construct();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+    bind_composite_constructor_defaults(
+        saved_sound, saved_win_fixed, saved_win_dynamic, saved_reset,
+        saved_font, saved_palette, saved_palette_state, saved_graphic);
+}
+
+void write_time_construct_expected(uint8_t *expected, size_t base) {
+    for (size_t offset = 0; offset < sizeof(Time); offset += 4) {
+        write_at(expected, base + offset, offset == 0x20 ? 5U : 0U);
+    }
+}
+
+void test_base_button_construct() {
+    uint32_t sound[37], win_fixed[9], win_dynamic[4];
+    fill_constructor_defaults(sound, win_fixed, win_dynamic);
+    uint32_t reset_520 = 0x75123456U;
+    Font *font = reinterpret_cast<Font *>(0x76234567U);
+    Palette *palette = nullptr;
+    int palette_state = 1;
+    uint32_t graphic_default = 0x77345678U;
+    uint32_t base_fixed[5] = {
+        0x78111111U, 0x78222222U, 0x78333333U, 0x78444444U,
+        0x78555555U,
+    };
+    uint32_t base_dynamic[2] = {0x79666666U, 0x79777777U};
+    uint32_t *const saved_sound = AutoSoundDefaults;
+    uint32_t *const saved_win_fixed = WinStaticDefaults;
+    uint32_t *const saved_win_dynamic = WinDynamicDefaults;
+    uint32_t *const saved_reset = BufferResetValue520;
+    Font **const saved_font = FontDefaultPtr;
+    Palette **const saved_palette = BufferPalette;
+    int *const saved_palette_state = PaletteInitialized;
+    uint32_t *const saved_graphic = GraphicWinFieldA0CDefault;
+    uint32_t *const saved_base_fixed = BaseButtonStaticDefaults;
+    uint32_t *const saved_base_dynamic = BaseButtonDynamicDefaults;
+    bind_composite_constructor_defaults(
+        sound, win_fixed, win_dynamic, &reset_520, &font, &palette,
+        &palette_state, &graphic_default);
+    BaseButtonStaticDefaults = base_fixed;
+    BaseButtonDynamicDefaults = base_dynamic;
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(BaseButton) uint8_t storage[sizeof(BaseButton) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        auto *const self = reinterpret_cast<BaseButton *>(storage + 16);
+        write_graphic_win_construct_expected(
+            expected, 16,
+            reinterpret_cast<uintptr_t>(self),
+            sound, win_fixed, win_dynamic, reset_520,
+            reinterpret_cast<uintptr_t>(font),
+            nullptr, palette_state, graphic_default);
+        write_time_construct_expected(expected, 16 + 0xA1C);
+        write_time_construct_expected(expected, 16 + 0xA4C);
+        write_at(expected, 16 + 0x000, BaseButtonPrimaryVtable);
+        write_at(expected, 16 + 0x444, BaseButtonBufferVtable);
+        write_at(expected, 16 + 0xA74, 0U);
+        write_at(expected, 16 + 0xA44, 0xFFFFFFFFU);
+        write_at(expected, 16 + 0xA48, 0xFFFFFFFFU);
+        write_at(expected, 16 + 0xA78, 0U);
+        write_at(expected, 16 + 0xA9C, 0U);
+        write_at(expected, 16 + 0xA7C, 0U);
+        write_at(expected, 16 + 0xA80, 0U);
+        write_at(expected, 16 + 0xAA8, 0U);
+        write_at(expected, 16 + 0xAAC, 0U);
+        write_at(expected, 16 + 0xAB0, 0U);
+        write_at(expected, 16 + 0xAB4, 0U);
+        write_at(expected, 16 + 0xA94, base_dynamic[0]);
+        write_at(expected, 16 + 0xA84, base_fixed[0]);
+        write_at(expected, 16 + 0xA88, base_fixed[1]);
+        write_at(expected, 16 + 0xA8C, base_fixed[2]);
+        write_at(expected, 16 + 0xA90, base_fixed[3]);
+        write_at(expected, 16 + 0xA98, base_dynamic[1]);
+        write_at(expected, 16 + 0xAA4, 0U);
+        write_at(expected, 16 + 0xAA0, base_fixed[4]);
+        if (use_adapter) {
+            expect(base_button_construct_redirect(self, nullptr) == self);
+        } else {
+            self->construct();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+    BaseButtonStaticDefaults = saved_base_fixed;
+    BaseButtonDynamicDefaults = saved_base_dynamic;
+    bind_composite_constructor_defaults(
+        saved_sound, saved_win_fixed, saved_win_dynamic, saved_reset,
+        saved_font, saved_palette, saved_palette_state, saved_graphic);
 }
 
 int int_from_bits(uint32_t bits) {
@@ -6317,6 +6829,12 @@ int main() {
     static int sprite_memory_sink = 0;
     SpriteMemoryUsed = &sprite_memory_sink;
 
+    test_auto_sound_construct();
+    test_win_construct();
+    test_palette_get_rgbquad();
+    test_buffer_construct();
+    test_graphic_win_construct();
+    test_base_button_construct();
     test_alpha_net_pid_to_idx();
     test_alpha_net_identity_lookups();
     test_in_box_edges();

@@ -19,6 +19,7 @@ Exit status is 0 only when every valid mutant was killed.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import signal
 import subprocess
@@ -127,6 +128,11 @@ def parse_functions(lines: list[str]) -> list[Function]:
 def is_simple_statement(line: str) -> bool:
     stripped = line.strip()
     if not stripped.endswith(";"):
+        return False
+    if stripped.startswith('__asm__ __volatile__(""'):
+        # This zero-instruction compiler barrier carries no source-observable
+        # behavior. It constrains register residue and belongs to the ABI
+        # disassembly gate; dropping it can never be killed by a C++ fixture.
         return False
     if stripped.startswith("*"):
         # `*` leads both block-comment continuations (`* like this`) and
@@ -294,6 +300,7 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
 
 
 PASSED, FAILED, TIMEOUT = "passed", "failed", "timeout"
+KEEP_OWNED_PREFIX_ENV = "OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING"
 
 
 class Harness:
@@ -302,6 +309,9 @@ class Harness:
         self.target = args.target
         self.test = args.test
         self.timeout = args.timeout
+        self.reuse_owned_wine_prefix = getattr(
+            args, "reuse_owned_wine_prefix", False)
+        self.owned_wine_prefix_is_running = False
         # Tightened once the baseline run has been timed. A mutant that hangs
         # is a detection, and waiting the full build timeout for it wastes
         # minutes per occurrence.
@@ -320,7 +330,7 @@ class Harness:
                           "--target", self.target], Path.cwd(),
                          self.timeout) == PASSED
 
-    def check(self) -> str:
+    def check(self, cleanup=False) -> str:
         """PASSED, FAILED, or TIMEOUT -- a hung mutant is not a crashed run.
 
         --no-tests=error is load-bearing: `ctest -R` with a pattern that
@@ -328,8 +338,34 @@ class Harness:
         misspelled --test "survive" and report the whole file as one giant
         coverage hole.
         """
-        return self._run(["ctest", "--no-tests=error", "-R", self.test],
-                         self.build_dir, self.test_timeout)
+        keep_prefix = self.reuse_owned_wine_prefix and not cleanup
+        previous = os.environ.get(KEEP_OWNED_PREFIX_ENV)
+        if keep_prefix:
+            os.environ[KEEP_OWNED_PREFIX_ENV] = "1"
+            self.owned_wine_prefix_is_running = True
+        else:
+            os.environ.pop(KEEP_OWNED_PREFIX_ENV, None)
+        try:
+            return self._run(
+                ["ctest", "--no-tests=error", "-R", self.test],
+                self.build_dir, self.test_timeout)
+        finally:
+            if previous is None:
+                os.environ.pop(KEEP_OWNED_PREFIX_ENV, None)
+            else:
+                os.environ[KEEP_OWNED_PREFIX_ENV] = previous
+
+    def cleanup(self) -> None:
+        """Stop a prefix retained by the opt-in fast mutation path.
+
+        A final ordinary CTest invocation uses the same marker-protected
+        runner as every other test, so it both checks the restored binary and
+        stops only the build's owned prefix.
+        """
+        if not self.owned_wine_prefix_is_running:
+            return
+        self.check(cleanup=True)
+        self.owned_wine_prefix_is_running = False
 
     def calibrate(self, elapsed: float) -> None:
         """Allow a generous multiple of the clean runtime before calling a hang."""
@@ -349,6 +385,10 @@ def main() -> int:
                         help="restrict to these mutation operators (repeatable)")
     parser.add_argument("--limit", type=int, default=0, help="cap mutants (0 = all)")
     parser.add_argument("--timeout", type=int, default=600)
+    parser.add_argument(
+        "--reuse-owned-wine-prefix", action="store_true",
+        help=("keep run_windows_test.py's marker-protected Wine prefix alive "
+              "between mutants, then stop it after restoring the source"))
     args = parser.parse_args()
 
     source = Path(args.source).resolve()
@@ -424,6 +464,7 @@ def main() -> int:
     finally:
         restore()
         harness.build()
+        harness.cleanup()
 
     valid = len(result.killed) + len(result.survived)
     print("\n" + "=" * 72)

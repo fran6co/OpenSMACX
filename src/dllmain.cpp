@@ -28,6 +28,7 @@
 #include "dialogs.h"
 #include "maininterface.h"
 #include "menu.h"
+#include "palette.h"
 #include "pulldown.h"
 #include "scenario.h"
 #include "font.h"
@@ -50,7 +51,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 106;
+constexpr size_t RedirectCount = 112;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -205,6 +206,36 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
 
 bool install_redirects() {
     const RedirectSpec specs[] = {
+        {
+            0x0062BA80,
+            reinterpret_cast<uintptr_t>(&auto_sound_construct_redirect),
+            OPENSMACX_SIGNATURE_0062BA80,
+        },
+        {
+            0x005EB3D0,
+            reinterpret_cast<uintptr_t>(&win_construct_redirect),
+            OPENSMACX_SIGNATURE_005EB3D0,
+        },
+        {
+            0x005FE560,
+            reinterpret_cast<uintptr_t>(&palette_get_rgbquad_redirect),
+            OPENSMACX_SIGNATURE_005FE560,
+        },
+        {
+            0x005D7210,
+            reinterpret_cast<uintptr_t>(&buffer_construct_redirect),
+            OPENSMACX_SIGNATURE_005D7210,
+        },
+        {
+            0x005D4CF0,
+            reinterpret_cast<uintptr_t>(&graphic_win_construct_redirect),
+            OPENSMACX_SIGNATURE_005D4CF0,
+        },
+        {
+            0x00606F30,
+            reinterpret_cast<uintptr_t>(&base_button_construct_redirect),
+            OPENSMACX_SIGNATURE_00606F30,
+        },
         {
             0x004BA830,
             reinterpret_cast<uintptr_t>(&tutwin_rect_center_redirect),

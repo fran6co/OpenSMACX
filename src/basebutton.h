@@ -34,6 +34,7 @@ class DLLEXPORT BaseButton : GraphicWin {
   BaseButton() { ; }
   ~BaseButton() { ; }
 
+  void construct();
   uint32_t close();
   BaseButton *destroy();
   int set_bubble_text(LPCSTR input);
@@ -74,4 +75,5 @@ extern uint32_t *BaseButtonStaticDefaults;
 extern uint32_t *BaseButtonDynamicDefaults;
 
 BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
+BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);

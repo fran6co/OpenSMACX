@@ -28,6 +28,7 @@ class DLLEXPORT GraphicWin : Win {
  public:
   GraphicWin() { ; }
   ~GraphicWin() { ; }
+  void construct();
   uint32_t close();
  private:
   Buffer buffer_;
@@ -87,6 +88,7 @@ extern const uint32_t GraphicWinPrimaryVtable;
 extern const uint32_t GraphicWinBufferVtable;
 
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *);
+GraphicWin *__fastcall graphic_win_construct_redirect(GraphicWin *self, void *);
 uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *);
 
 // Test seams: the subobject destructors are original dependencies, so tests

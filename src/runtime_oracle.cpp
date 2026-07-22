@@ -12,6 +12,7 @@
 
 #include "basebutton_oracle.h"
 #include "buffer_oracle.h"
+#include "constructor_oracle.h"
 #include "graphicwin_oracle.h"
 #include "scroll_oracle.h"
 #include "stringstruct_oracle.h"
@@ -40,6 +41,7 @@ ProbeContext Context = {};
 void **WatchedGlobal = nullptr;
 
 const runtime_oracle::Suite Suites[] = {
+    {"constructor", run_constructor_oracle_suite},
     {"basebutton", run_base_button_oracle_suite},
     {"scroll", run_scroll_oracle_suite},
     {"win", run_win_oracle_suite},

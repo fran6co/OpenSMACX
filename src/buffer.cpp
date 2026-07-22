@@ -18,7 +18,125 @@
 #include "stdafx.h"
 #include "buffer.h"
 #include "font.h"
+#include "palette.h"
 #include "spot.h"
+
+#include <new>
+
+Palette **BufferPalette = reinterpret_cast<Palette **>(0x009B8174);
+
+/*
+Purpose: Construct an empty Buffer, including its Spot subobject, text state,
+         and either the process palette or the legacy grayscale fallback.
+Original Offset: 005D7210
+Status: Complete
+Verification note: five mutation-harness survivors here are equivalent by
+construction. Widening the 0x4BC loop bound writes an extra zero at 0x50C,
+which the 0xFFFFFFFF store below overwrites. Widening the fallback ramp bound
+writes a 257th entry at 0x4A4, where the index truncates to zero and all four
+bytes land on the zero already stored there. The three adjacent stores inside
+that ramp target distinct bytes with independent values, so their order is not
+observable.
+*/
+void Buffer::construct() {
+    new (&spot_) Spot();
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = BufferVtable;
+    for (size_t offset = 0x4BC; offset < 0x50C; offset += 4) {
+        object[offset / 4] = 0;
+    }
+    object[0x584 / 4] = 0;
+    object[0x00C / 4] = 0;
+    object[0x008 / 4] = 0;
+    object[0x014 / 4] = 0;
+    object[0x010 / 4] = 0;
+    object[0x018 / 4] = 0;
+    object[0x01C / 4] = 0;
+    object[0x050 / 4] = 0;
+    object[0x054 / 4] = 0;
+    object[0x058 / 4] = 0;
+    object[0x05C / 4] = 0;
+    object[0x060 / 4] = 0;
+    object[0x064 / 4] = 0;
+    object[0x068 / 4] = 0;
+    object[0x06C / 4] = 0;
+    object[0x074 / 4] = 0;
+    object[0x078 / 4] = 0;
+    object[0x4A4 / 4] = 0;
+    object[0x4A8 / 4] = 0;
+    object[0x50C / 4] = 0xFFFFFFFFU;
+    object[0x510 / 4] = 0;
+    object[0x514 / 4] = 0;
+    object[0x518 / 4] = 0;
+    object[0x51C / 4] = 0;
+    object[0x520 / 4] = *BufferResetValue520;
+    object[0x524 / 4] = 0;
+    object[0x530 / 4] = 0;
+    object[0x52C / 4] = reinterpret_cast<uintptr_t>(*FontDefaultPtr);
+    object[0x53C / 4] = 0;
+    object[0x54C / 4] = 0xFFFFFFFFU;
+    object[0x55C / 4] = 2;
+    object[0x56C / 4] = 2;
+    object[0x540 / 4] = 0xFFFFFFFFU;
+    object[0x550 / 4] = 0xFFFFFFFFU;
+    object[0x560 / 4] = 2;
+    object[0x570 / 4] = 2;
+    object[0x534 / 4] = 0;
+    object[0x544 / 4] = 0xFFFFFFFFU;
+    object[0x554 / 4] = 0xFFFFFFFFU;
+    object[0x564 / 4] = 2;
+    object[0x574 / 4] = 2;
+    object[0x538 / 4] = 0;
+    object[0x548 / 4] = 0xFFFFFFFFU;
+    object[0x558 / 4] = 0xFFFFFFFFU;
+    object[0x568 / 4] = 2;
+    object[0x578 / 4] = 2;
+    object[0x57C / 4] = 0;
+    *reinterpret_cast<volatile uint8_t *>(
+        reinterpret_cast<uint8_t *>(this) + 0x580) = 0;
+    object[0x070 / 4] = 0;
+    object[0x004 / 4] = 0;
+    object[0x07C / 4] = 0x28;
+    object[0x080 / 4] = 0;
+    object[0x084 / 4] = 0;
+    *reinterpret_cast<volatile uint16_t *>(
+        reinterpret_cast<uint8_t *>(this) + 0x088) = 1;
+    *reinterpret_cast<volatile uint16_t *>(
+        reinterpret_cast<uint8_t *>(this) + 0x08A) = 8;
+    object[0x08C / 4] = 0;
+    object[0x090 / 4] = 0;
+    object[0x094 / 4] = 0;
+    object[0x098 / 4] = 0;
+    object[0x09C / 4] = 0x100;
+    object[0x0A0 / 4] = 0;
+
+    Palette *const palette = *BufferPalette;
+    if (palette) {
+        palette->get_rgbquad(
+            reinterpret_cast<RGBQUAD *>(
+                reinterpret_cast<uint8_t *>(this) + 0x0A4),
+            0, 0x100);
+    } else {
+        volatile uint8_t *entry =
+            reinterpret_cast<volatile uint8_t *>(this) + 0x0A4;
+        for (uint32_t index = 0; index < 0x100; ++index) {
+            entry[2] = 0;
+            entry[1] = 0;
+            entry[0] = static_cast<uint8_t>(index);
+            entry[3] = 0;
+            entry += 4;
+        }
+    }
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
+    self->construct();
+    return self;
+}
 
 /*
 Purpose: Set the four fonts used by the buffer.

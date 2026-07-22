@@ -19,6 +19,103 @@
 #include "scroll.h"
 #include "win.h"
 
+const uint32_t WinPrimaryVtable = 0x0066FDD0;
+const uint32_t WinSecondaryVtable = 0x0066FF30;
+uint32_t *WinStaticDefaults = reinterpret_cast<uint32_t *>(0x00696D34);
+uint32_t *WinDynamicDefaults = reinterpret_cast<uint32_t *>(0x009B7AF0);
+
+/*
+Purpose: Construct a Win from its AutoSound subobject and the process window
+         defaults, preserving every sparse write and legacy return residue.
+Original Offset: 005EB3D0
+Status: Complete
+*/
+void Win::construct() {
+    auto_sound_.construct();
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile const uint32_t *const fixed = WinStaticDefaults;
+    volatile const uint32_t *const dynamic = WinDynamicDefaults;
+
+    object[0x0C8 / 4] = WinSecondaryVtable;
+    object[0x0CC / 4] = 0;
+    object[0x0D0 / 4] = 0;
+    object[0x0D4 / 4] = 0;
+    object[0x0D8 / 4] = 0;
+    object[0x0DC / 4] = 0;
+    object[0x000 / 4] = WinPrimaryVtable;
+    object[0x0A8 / 4] = reinterpret_cast<uintptr_t>(this);
+    object[0x3FC / 4] = 0;
+    object[0x09C / 4] = 0;
+    object[0x0A0 / 4] = 0;
+    object[0x0A4 / 4] = 0;
+    object[0x0AC / 4] = 0;
+    object[0x0B0 / 4] = 0;
+    object[0x134 / 4] = 0;
+    object[0x138 / 4] = 0;
+    object[0x188 / 4] = 0;
+    object[0x18C / 4] = 0;
+    object[0x190 / 4] = 0;
+    object[0x194 / 4] = 0;
+    object[0x198 / 4] = 0;
+    object[0x184 / 4] = 0;
+    object[0x0C4 / 4] = 0;
+    object[0x0F0 / 4] = 0;
+    object[0x19C / 4] = 0;
+    object[0x12C / 4] = 0;
+    object[0x130 / 4] = 1;
+    object[0x0FC / 4] = dynamic[0];
+    object[0x100 / 4] = fixed[0];
+    object[0x114 / 4] = fixed[1];
+    object[0x104 / 4] = dynamic[2];
+    object[0x108 / 4] = fixed[2];
+    object[0x10C / 4] = fixed[3];
+    object[0x110 / 4] = fixed[4];
+    object[0x118 / 4] = fixed[5];
+    object[0x11C / 4] = fixed[6];
+    object[0x120 / 4] = fixed[7];
+    object[0x124 / 4] = dynamic[3];
+    object[0x128 / 4] = fixed[8];
+    object[0x0F8 / 4] = dynamic[1];
+    object[0x0E0 / 4] = 0;
+    object[0x0E4 / 4] = 0;
+    object[0x0E8 / 4] = 0;
+    object[0x0EC / 4] = 0;
+    object[0x43C / 4] = 0;
+    object[0x440 / 4] = 0;
+    object[0x0F4 / 4] = 0;
+    object[0x15C / 4] = 0;
+    object[0x160 / 4] = 0;
+    object[0x164 / 4] = 0;
+    object[0x168 / 4] = 0;
+    for (size_t offset = 0x13C; offset <= 0x158; offset += 4) {
+        object[offset / 4] = 0;
+    }
+    object[0x0B4 / 4] = 0;
+    object[0x0C0 / 4] = 0;
+    object[0x0BC / 4] = 0;
+    object[0x0B8 / 4] = 0;
+    object[0x16C / 4] = 0;
+    object[0x170 / 4] = 0;
+    object[0x098 / 4] = 0;
+    for (size_t offset = 0x400; offset <= 0x438; offset += 4) {
+        object[offset / 4] = 0;
+    }
+    object[0x174 / 4] = 1;
+    object[0x178 / 4] = 1;
+    object[0x17C / 4] = 1;
+    object[0x180 / 4] = 1;
+    object[0x1A0 / 4] = 2;
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+Win *__fastcall win_construct_redirect(Win *self, void *) {
+    self->construct();
+    return self;
+}
+
 namespace {
 
 LONG long_from_bits(uint32_t bits) {

@@ -18,6 +18,37 @@
 #include "stdafx.h"
 #include "autosound.h"
 
+const uint32_t AutoSoundVtable = 0x0066FF34;
+uint32_t *AutoSoundDefaults = reinterpret_cast<uint32_t *>(0x009BC080);
+
+/*
+Purpose: Construct an AutoSound by installing its virtual table and copying
+         the complete process-default block in legacy store order.
+Original Offset: 0062BA80
+Status: Complete
+*/
+void AutoSound::construct() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile const uint32_t *const defaults = AutoSoundDefaults;
+    object[0x00 / 4] = AutoSoundVtable;
+    object[0x04 / 4] = defaults[0];
+    object[0x0C / 4] = defaults[1];
+    object[0x10 / 4] = defaults[2];
+    object[0x08 / 4] = defaults[3];
+    for (size_t index = 4; index < 37; ++index) {
+        object[index + 1] = defaults[index];
+    }
+#if defined(__GNUC__) && defined(__i386__)
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {
+    self->construct();
+    return self;
+}
+
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
 Original Offset: 005FD2B0

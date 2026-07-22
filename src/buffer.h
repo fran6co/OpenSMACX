@@ -20,6 +20,8 @@
 #include "spot.h"
 #include "sprite.h"
 
+class Palette;
+
  /*
   * Buffer class
   */
@@ -28,6 +30,7 @@ class DLLEXPORT Buffer {
   Buffer() { ; }
   ~Buffer() { ; }
 
+  void construct();
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);
@@ -130,6 +133,8 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
 void __fastcall buffer_close_redirect(Buffer *self, void *);
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);
 extern const uint32_t BufferVtable;
+extern Palette **BufferPalette;
+Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 
 // Selects the DirectDraw teardown path over the GDI device-context path.
 extern int *BufferDirectDrawActive;
