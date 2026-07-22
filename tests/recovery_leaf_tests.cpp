@@ -8484,6 +8484,108 @@ void test_base_pop_instance_colors() {
     }
 }
 
+void test_guarded_store_recoveries() {
+    // Win::UNK8/UNK9 publish into two optional scrollbars, each tested
+    // separately, so an attached bar is still updated when the other is null.
+    std::vector<uint8_t> win_bytes(sizeof(Win) + 32);
+    std::vector<uint8_t> win_expected(sizeof(Win) + 32);
+    uint8_t *const ws = win_bytes.data();
+    uint8_t *const we = win_expected.data();
+    auto *win = reinterpret_cast<Win *>(ws + 16);
+    std::vector<uint8_t> vert(sizeof(Scroll));
+    std::vector<uint8_t> horz(sizeof(Scroll));
+    auto *scroll_v = reinterpret_cast<Scroll *>(vert.data());
+    auto *scroll_h = reinterpret_cast<Scroll *>(horz.data());
+
+    struct SlotCase { size_t slot; void (Win::*member)(int);
+                      void (__fastcall *redirect)(Win *, void *, int); };
+    const SlotCase slots[] = {
+        {0x2144, &Win::UNK8, win_unk8_redirect},
+        {0x2148, &Win::UNK9, win_unk9_redirect},
+    };
+    // Both attached, only vertical, only horizontal, neither.
+    const int attach[][2] = {{1, 1}, {1, 0}, {0, 1}, {0, 0}};
+    for (const SlotCase &test : slots) {
+        for (const auto &which : attach) {
+            for (int adapter = 0; adapter < 2; ++adapter) {
+                seed_storage(ws, we, win_bytes.size());
+                std::memset(vert.data(), 0xA5, vert.size());
+                std::memset(horz.data(), 0xA5, horz.size());
+                write_at(ws, 16 + 0x43C,
+                         which[0] ? scroll_v : static_cast<Scroll *>(nullptr));
+                write_at(ws, 16 + 0x440,
+                         which[1] ? scroll_h : static_cast<Scroll *>(nullptr));
+                std::memcpy(we, ws, win_bytes.size());
+                const int value = 0x1234ABCD;
+                if (adapter) {
+                    test.redirect(win, nullptr, value);
+                } else {
+                    (win->*test.member)(value);
+                }
+                // The window itself is never modified.
+                expect_storage_bytes(ws, we, win_bytes.size());
+                uint32_t stored;
+                if (which[0]) {
+                    std::memcpy(&stored, vert.data() + test.slot, sizeof(stored));
+                    expect(stored == 0x1234ABCDU);
+                }
+                if (which[1]) {
+                    std::memcpy(&stored, horz.data() + test.slot, sizeof(stored));
+                    expect(stored == 0x1234ABCDU);
+                }
+            }
+        }
+    }
+
+    // Menu::requested_height doubles the resolved font's height, preferring
+    // the menu's own font and falling back to the process default.
+    alignas(Font) uint8_t menu_font[sizeof(Font)];
+    alignas(Font) uint8_t default_font[sizeof(Font)];
+    std::memset(menu_font, 0xA5, sizeof(menu_font));
+    std::memset(default_font, 0xA5, sizeof(default_font));
+    write_at(menu_font, 0x10, 21);
+    write_at(default_font, 0x10, -3);
+    Font *menu_slot = reinterpret_cast<Font *>(menu_font);
+    Font *default_slot = reinterpret_cast<Font *>(default_font);
+    Font **const saved_menu = MenuFont;
+    Font **const saved_default = FontDefaultPtr;
+    MenuFont = &menu_slot;
+    FontDefaultPtr = &default_slot;
+    alignas(Menu) uint8_t menu_storage[sizeof(Menu) + 32];
+    uint8_t menu_expected[sizeof(menu_storage)];
+    auto *menu = reinterpret_cast<Menu *>(menu_storage + 16);
+    seed_storage(menu_storage, menu_expected, sizeof(menu_storage));
+    std::memcpy(menu_expected, menu_storage, sizeof(menu_storage));
+    expect(menu->requested_height() == 42);
+    expect(menu_requested_height_redirect(menu, nullptr) == 42);
+    // With no menu font the default is resolved instead; the doubling is
+    // signed, so a negative height doubles rather than saturating.
+    menu_slot = nullptr;
+    expect(menu->requested_height() == -6);
+    expect_storage_bytes(menu_storage, menu_expected, sizeof(menu_storage));
+    FontDefaultPtr = saved_default;
+    MenuFont = saved_menu;
+
+    // BasePop::fallout raises its flag only while the gate is set.
+    int gate = 0;
+    int flag = 0;
+    int *const saved_gate = BasePopFalloutGate;
+    int *const saved_flag = BasePopFalloutFlag;
+    BasePopFalloutGate = &gate;
+    BasePopFalloutFlag = &flag;
+    BasePop::fallout();
+    expect(flag == 0);
+    gate = 1;
+    BasePop::fallout();
+    expect(flag == 1);
+    flag = 0;
+    gate = -1;   // any nonzero gate, not just one
+    base_pop_fallout_redirect();
+    expect(flag == 1);
+    BasePopFalloutFlag = saved_flag;
+    BasePopFalloutGate = saved_gate;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -8586,6 +8688,7 @@ int main() {
     test_base_pop_default_colors();
     test_win_set_def_focus();
     test_base_pop_instance_colors();
+    test_guarded_store_recoveries();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }

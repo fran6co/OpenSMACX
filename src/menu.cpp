@@ -83,3 +83,25 @@ int __fastcall menu_unk4_redirect(
         Menu *self, void *, int a, int b, int c) {
     return self->UNK4(a, b, c);
 }
+
+Font **MenuFont = reinterpret_cast<Font **>(0x009B7B94);
+
+/*
+Purpose: Report the height a menu requests, two lines of its font.
+Original Offset: 005FC6A0
+Return Value: Twice the resolved font's height
+Status: Complete
+*/
+int Menu::requested_height() {
+    // The menu's own font wins when set; otherwise the process default is
+    // resolved at the point of use rather than cached.
+    Font *font = *MenuFont;
+    if (!font) {
+        font = *FontDefaultPtr;
+    }
+    return font->height_ * 2;
+}
+
+int __fastcall menu_requested_height_redirect(Menu *self, void *) {
+    return self->requested_height();
+}

@@ -578,3 +578,41 @@ void Win::set_def_focus(int focus) {
 void __cdecl win_set_def_focus_redirect(int focus) {
     Win::set_def_focus(focus);
 }
+
+/*
+Purpose: Publish a value into both attached scrollbars' first shared slot.
+Original Offset: 005EE130
+Status: Complete
+*/
+void Win::UNK8(int value) {
+    // Each scrollbar is optional and tested separately, so one attached bar
+    // is still updated when the other is absent.
+    if (scroll_vert_) {
+        scroll_vert_->field_2144_ = static_cast<uint32_t>(value);
+    }
+    if (scroll_horz_) {
+        scroll_horz_->field_2144_ = static_cast<uint32_t>(value);
+    }
+}
+
+/*
+Purpose: Publish a value into both attached scrollbars' second shared slot.
+Original Offset: 005EE160
+Status: Complete
+*/
+void Win::UNK9(int value) {
+    if (scroll_vert_) {
+        scroll_vert_->field_2148_ = static_cast<uint32_t>(value);
+    }
+    if (scroll_horz_) {
+        scroll_horz_->field_2148_ = static_cast<uint32_t>(value);
+    }
+}
+
+void __fastcall win_unk8_redirect(Win *self, void *, int value) {
+    self->UNK8(value);
+}
+
+void __fastcall win_unk9_redirect(Win *self, void *, int value) {
+    self->UNK9(value);
+}

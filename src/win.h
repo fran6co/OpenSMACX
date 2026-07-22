@@ -48,6 +48,8 @@ class DLLEXPORT Win {
   int set_cursor(int name);
   static void clear_bubble_text();
   static void set_def_focus(int focus);
+  void UNK8(int value);
+  void UNK9(int value);
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -365,3 +367,6 @@ int __fastcall win_on_set_cursor_redirect(
 
 void __cdecl win_set_def_focus_redirect(int focus);
 extern int *WinDefaultFocus;
+
+void __fastcall win_unk8_redirect(Win *self, void *, int value);
+void __fastcall win_unk9_redirect(Win *self, void *, int value);
