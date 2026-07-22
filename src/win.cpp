@@ -350,3 +350,99 @@ int Win::is_dialog_focus() {
 int __fastcall win_is_dialog_focus_redirect(Win *self, void *) {
     return self->is_dialog_focus();
 }
+
+int *WinHdcRefCount = reinterpret_cast<int *>(0x009B3AB0);
+HDC *WinSharedHdc = reinterpret_cast<HDC *>(0x009B7B2C);
+void **WinHdcSurface = reinterpret_cast<void **>(0x009BC498);
+// The same window handle temp.cpp binds as HandleMain; bound here too so
+// the device-context protocol carries its own rebindable dependency.
+HWND *WinHdcWindow = reinterpret_cast<HWND *>(0x009B7B28);
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef long(__stdcall *func_win_surface_slot)(void *, void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+constexpr size_t WinSurfaceGetDCSlot = 0x44;
+constexpr size_t WinSurfaceReleaseDCSlot = 0x68;
+
+void *win_surface_slot(void *object, size_t offset) {
+    void **const vtable = *reinterpret_cast<void ***>(object);
+    return vtable[offset / sizeof(void *)];
+}
+
+}  // namespace
+
+/*
+Purpose: Acquire the process-wide device context, taking one reference.
+Original Offset: 005EC690
+Return Value: The shared device context, or zero when none could be obtained
+Status: Complete
+*/
+HDC Win::get_hdc() {
+    // A context already held is simply counted again; only the first
+    // reference actually acquires one.
+    if (*WinHdcRefCount != 0) {
+        ++*WinHdcRefCount;
+        return *WinSharedHdc;
+    }
+    void *const surface = *WinHdcSurface;
+    if (!surface) {
+        *WinSharedHdc = GetDC(*WinHdcWindow);
+    } else {
+        reinterpret_cast<func_win_surface_slot>(
+            win_surface_slot(surface, WinSurfaceGetDCSlot))(
+                surface, WinSharedHdc);
+    }
+    // A failed acquire leaves the count at zero so the next call retries.
+    if (*WinSharedHdc != nullptr) {
+        *WinHdcRefCount = 1;
+    }
+    return *WinSharedHdc;
+}
+
+/*
+Purpose: Drop one reference to the process-wide device context, releasing it
+         once the last reference is gone.
+Original Offset: 005EC6F0
+Status: Complete
+Verification note: the two surviving mutants both concern the ReleaseDC call
+on the no-surface path. It is a real GDI import whose effect no fixture can
+inspect, so neither dropping it nor clearing the handle before it is
+observable. Everything around it is covered: the reference count, the
+surface release and its arguments, the handle being cleared, and the
+exactly-zero test that makes an over-release drive the count negative and
+skip the release entirely.
+*/
+void Win::release_hdc() {
+    --*WinHdcRefCount;
+    // The legacy body tests for exactly zero rather than at-or-below, so an
+    // over-release drives the count negative and skips the release entirely.
+    if (*WinHdcRefCount != 0) {
+        return;
+    }
+    void *const surface = *WinHdcSurface;
+    if (surface) {
+        reinterpret_cast<func_win_surface_slot>(
+            win_surface_slot(surface, WinSurfaceReleaseDCSlot))(
+                surface, *WinSharedHdc);
+        *WinSharedHdc = nullptr;
+        return;
+    }
+    ReleaseDC(*WinHdcWindow, *WinSharedHdc);
+    *WinSharedHdc = nullptr;
+}
+
+HDC __cdecl win_get_hdc_redirect() {
+    return Win::get_hdc();
+}
+
+void __cdecl win_release_hdc_redirect() {
+    Win::release_hdc();
+}

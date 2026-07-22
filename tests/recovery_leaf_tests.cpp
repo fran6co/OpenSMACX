@@ -7776,6 +7776,120 @@ void test_default_font_setters() {
     DialogDefaultFonts = saved_dialog;
 }
 
+void test_win_shared_hdc() {
+    // The shared context lives in three process globals rather than on an
+    // instance, so the fixture rebinds all of them plus the window handle.
+    int refcount = 0;
+    HDC shared = nullptr;
+    void *surface_object = nullptr;
+    HWND window = nullptr;
+
+    int *const saved_count = WinHdcRefCount;
+    HDC *const saved_shared = WinSharedHdc;
+    void **const saved_surface = WinHdcSurface;
+    HWND *const saved_window = WinHdcWindow;
+    WinHdcRefCount = &refcount;
+    WinSharedHdc = &shared;
+    WinHdcSurface = &surface_object;
+    WinHdcWindow = &window;
+
+    void *surface_vtable[0x6C / sizeof(void *)] = {};
+    surface_vtable[0x44 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_get_dc);
+    surface_vtable[0x68 / sizeof(void *)] =
+        reinterpret_cast<void *>(&hdc_probe_release_dc);
+    void *surface_vtable_object = surface_vtable;
+    void **surface = &surface_vtable_object;
+    const HDC surface_handle = reinterpret_cast<HDC>(0x77770000U);
+
+    // First acquire through a surface: GetDC runs, the handle is published,
+    // and the count starts at one.
+    surface_object = surface;
+    refcount = 0;
+    shared = nullptr;
+    hdc_probe = HdcProbe{};
+    hdc_probe.produced_handle = surface_handle;
+    expect(Win::get_hdc() == surface_handle);
+    expect(refcount == 1);
+    expect(shared == surface_handle);
+    expect(hdc_probe.get_calls == 1);
+    expect(hdc_probe.get_surface == surface);
+
+    // A held context is counted again without touching the surface.
+    hdc_probe = HdcProbe{};
+    expect(win_get_hdc_redirect() == surface_handle);
+    expect(refcount == 2);
+    expect(hdc_probe.get_calls == 0);
+
+    // Releasing back to one reference must not release the handle.
+    hdc_probe = HdcProbe{};
+    Win::release_hdc();
+    expect(refcount == 1);
+    expect(shared == surface_handle);
+    expect(hdc_probe.release_calls == 0);
+
+    // The last reference releases through the surface and clears the handle.
+    hdc_probe = HdcProbe{};
+    win_release_hdc_redirect();
+    expect(refcount == 0);
+    expect(shared == nullptr);
+    expect(hdc_probe.release_calls == 1);
+    expect(hdc_probe.release_surface == surface);
+    expect(hdc_probe.released_handle == surface_handle);
+
+    // A surface that yields nothing leaves the count at zero, so the next
+    // call retries the acquire rather than handing back a null handle as
+    // though it were held.
+    refcount = 0;
+    shared = nullptr;
+    hdc_probe = HdcProbe{};
+    hdc_probe.produced_handle = nullptr;
+    expect(Win::get_hdc() == nullptr);
+    expect(refcount == 0);
+    hdc_probe = HdcProbe{};
+    hdc_probe.produced_handle = surface_handle;
+    expect(Win::get_hdc() == surface_handle);
+    expect(refcount == 1);
+    expect(hdc_probe.get_calls == 1);
+    // Leave the count balanced.
+    hdc_probe = HdcProbe{};
+    Win::release_hdc();
+    expect(refcount == 0);
+
+    // Over-releasing drives the count negative and, because the legacy body
+    // tests for exactly zero, performs no release at all.
+    refcount = 0;
+    shared = surface_handle;
+    hdc_probe = HdcProbe{};
+    Win::release_hdc();
+    expect(refcount == -1);
+    expect(shared == surface_handle);
+    expect(hdc_probe.release_calls == 0);
+
+    // Without a surface the context comes from the window. GetDC(nullptr)
+    // yields a real screen context under Wine, which the release returns.
+    surface_object = nullptr;
+    refcount = 0;
+    shared = nullptr;
+    hdc_probe = HdcProbe{};
+    const HDC window_context = Win::get_hdc();
+    expect(hdc_probe.get_calls == 0);
+    // Asserted unconditionally: GetDC(nullptr) yields the screen context, so
+    // a conditional check here would simply follow a mutant that dropped the
+    // acquire into its own else branch and pass.
+    expect(window_context != nullptr);
+    expect(refcount == 1);
+    expect(shared == window_context);
+    Win::release_hdc();
+    expect(refcount == 0);
+    expect(shared == nullptr);
+
+    WinHdcWindow = saved_window;
+    WinHdcSurface = saved_surface;
+    WinSharedHdc = saved_shared;
+    WinHdcRefCount = saved_count;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -7868,6 +7982,7 @@ int main() {
     test_buffer_set_clip();
     test_base_button_text_colors();
     test_default_font_setters();
+    test_win_shared_hdc();
     test_win_client_to_screen();
     return failures == 0 ? 0 : 1;
 }
