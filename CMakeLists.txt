@@ -507,6 +507,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_classify_recovery_shapes.py"
     )
+
+    add_test(NAME add-redirect-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_add_redirect.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX

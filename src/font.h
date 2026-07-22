@@ -22,6 +22,7 @@
   */
 class DLLEXPORT Font {
  public:
+  int UNK1(int, int, int, int);
   Font(); // 00618EA0
   Font(LPSTR font_name, int height, int style); // 00618EC0
   ~Font(); // 00618EE0
@@ -73,3 +74,6 @@ DLLEXPORT Font *__cdecl find_font(int size, int style);
 
 // global
 extern Font **FontDefaultPtr;
+
+int __fastcall font_unk1_redirect(
+    Font *self, void *, int a, int b, int c, int d);
