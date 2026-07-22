@@ -371,6 +371,8 @@ address,kind
 0x0062B7F0,jump
 0x0062B810,jump
 0x0062B850,jump
+0x0062B870,jump
+0x0062B8A0,dependency
 0x0062BA80,jump
 0x006339B0,jump
 0x006343C0,jump

@@ -1,6 +1,7 @@
 symbol,category,strategy,notes
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
+ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
 NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
 PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
