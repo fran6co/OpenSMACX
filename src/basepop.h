@@ -47,6 +47,7 @@ class DLLEXPORT BasePop : GraphicWin {
   BasePop() { ; }
   ~BasePop() { ; }
   void set_loc(int x, int y);
+  void set_width(int width);
   void write_check(long value);
   int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
 
@@ -368,6 +369,12 @@ typedef void (__thiscall func_set_state_flag)(void *, long);
 extern func_set_state_flag *CheckBoxOriginalSetStateFlag;
 
 void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value);
+
+// The screen width the high-resolution scaling switches on, read at a
+// fixed address. Rebindable so tests can drive both sides of the branch.
+extern int32_t *BasePopScreenWidth;
+
+void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width);
 
 static_assert(sizeof(BasePop) == 0x3230,
               "BasePop layout must match the original executable");

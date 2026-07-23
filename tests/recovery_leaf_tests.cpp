@@ -10399,6 +10399,86 @@ void test_self_contained_stores() {
     player_lock_clear_redirect(lock, nullptr);
 }
 
+void test_base_pop_set_width() {
+    // set_width writes into the Dialog subobject of the embedded Dialogs at
+    // 0x21D0, located through that Dialogs' own vbtable, and scales the width
+    // by three-halves in the high-resolution layout unless the popup opts out.
+    // Both the scaling condition (three independent ways to disable it) and
+    // the vbtable-relative store location are what the test pins.
+    int32_t screen_width = 0x400;
+    int32_t *const saved_screen = BasePopScreenWidth;
+    BasePopScreenWidth = &screen_width;
+
+    std::vector<uint8_t> storage(sizeof(BasePop) + 0x40);
+    std::vector<uint8_t> expected(storage.size());
+    auto *popup = reinterpret_cast<BasePop *>(storage.data() + 16);
+    uint8_t *const object = storage.data() + 16;
+
+    // A vbtable whose Dialog offset is not where a most-derived layout would
+    // put it, so a hardcoded store offset could not pass.
+    const int32_t vbtable[3] = {0, 0x188, 0x400};
+    const int32_t *vbtable_pointer = vbtable;
+    std::memcpy(object + 0x21D0, &vbtable_pointer, sizeof(vbtable_pointer));
+    const size_t store_at = 0x21D0 + 0x2C + 0x400;
+
+    auto set_u32 = [&](size_t off, uint32_t v) {
+        std::memcpy(object + off, &v, sizeof(v));
+    };
+    auto stored = [&] {
+        int32_t v = 0;
+        std::memcpy(&v, object + store_at, sizeof(v));
+        return v;
+    };
+
+    // All three conditions permit scaling: field_A14 zero, style bit clear,
+    // screen wide enough. 100 -> 150.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set_u32(0xA14, 0);
+    set_u32(0x30A8, 0);
+    screen_width = 0x400;
+    std::memcpy(object + 0x21D0, &vbtable_pointer, sizeof(vbtable_pointer));
+    popup->set_width(100);
+    expect(stored() == 150);
+    // Negative widths truncate toward zero, as the asm's cdq/sub/sar does.
+    popup->set_width(-100);
+    expect(stored() == -150);
+    popup->set_width(3);
+    expect(stored() == 4);            // (3*3)/2 = 4 truncated
+    popup->set_width(-3);
+    expect(stored() == -4);           // (-9)/2 = -4 toward zero
+
+    // Each condition alone forces the raw width.
+    set_u32(0xA14, 1);
+    popup->set_width(100);
+    expect(stored() == 100);
+    set_u32(0xA14, 0);
+    set_u32(0x30A8, 0x400);
+    popup->set_width(100);
+    expect(stored() == 100);
+    set_u32(0x30A8, 0);
+    screen_width = 0x3FF;
+    popup->set_width(100);
+    expect(stored() == 100);
+    screen_width = 0x400;
+
+    // The store lands only at the vbtable-derived location - the rest of the
+    // object, including the Dialogs vbtable pointer, is left alone.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set_u32(0xA14, 0);
+    set_u32(0x30A8, 0);
+    std::memcpy(object + 0x21D0, &vbtable_pointer, sizeof(vbtable_pointer));
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    popup->set_width(42);
+    expect(stored() == 63);
+    std::memcpy(expected.data() + 16 + store_at, object + store_at, 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    base_pop_set_width_redirect(popup, nullptr, 200);
+    expect(stored() == 300);
+
+    BasePopScreenWidth = saved_screen;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10768,6 +10848,7 @@ int main() {
     test_offset_delegates();
     test_win_sync_palette();
     test_self_contained_stores();
+    test_base_pop_set_width();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
