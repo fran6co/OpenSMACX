@@ -183,6 +183,8 @@ set(OPENSMACX_SOURCES
     src/editgroup.cpp
     src/dialogs_recovery.cpp
     src/xpops.cpp
+    src/planwin.cpp
+    src/playerlock.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -449,6 +451,8 @@ if(BUILD_TESTING)
         src/editgroup.cpp
         src/dialogs_recovery.cpp
         src/xpops.cpp
+        src/planwin.cpp
+        src/playerlock.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

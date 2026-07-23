@@ -35,10 +35,18 @@ class DLLEXPORT PlanWin {
  public:
   PlanWin() { ; }
   ~PlanWin() { ; }
+  void clear_lines();
 
  private:
-  uint8_t derived_storage_[0x22050];
+  // field_21FF8_ is carved out of the derived storage rather than appended;
+  // the static_assert below is what proves the carving kept the total at the
+  // pinned 0x22A64.
+  uint8_t derived_head_[0x21FF8];
+  int32_t field_21FF8_;
+  uint8_t derived_tail_[0x22050 - 0x21FFC];
   GraphicWin virtual_base_;
 };
 
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");
+
+void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *);
