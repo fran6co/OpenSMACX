@@ -55,6 +55,7 @@
 #include "../src/xpops.h"
 #include "../src/playerlock.h"
 #include "../src/netdaemon.h"
+#include "../src/replaywin.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -11405,6 +11406,34 @@ void test_popup_exec_and_start_overloads() {
     PopupStartCaption = saved_caption;
 }
 
+void test_replay_win_stubs() {
+    // Six constant-return stubs generated in bulk by tools/bulk_recover_stubs.
+    // Each is a bare return that touches nothing, so the whole specification is
+    // that a seeded object comes back unchanged - checked once for all six,
+    // through both the method and its redirect. ReplayWin is large, so the
+    // canary lives on the heap.
+    std::vector<uint8_t> storage(sizeof(ReplayWin) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *replay = reinterpret_cast<ReplayWin *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    replay->on_left_double_click(1, 2);
+    replay->on_right_double_click(3, 4);
+    replay->on_mouse_move(5, 6);
+    replay->on_right_down(7, 8);
+    replay->on_left_down(9, 10);
+    replay->on_left_up(11, 12);
+    replay_win_on_left_double_click_redirect(replay, nullptr, -1, -2);
+    replay_win_on_right_double_click_redirect(replay, nullptr, -3, -4);
+    replay_win_on_mouse_move_redirect(replay, nullptr, -5, -6);
+    replay_win_on_right_down_redirect(replay, nullptr, -7, -8);
+    replay_win_on_left_down_redirect(replay, nullptr, -9, -10);
+    replay_win_on_left_up_redirect(replay, nullptr, -11, -12);
+
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11787,6 +11816,7 @@ int main() {
     test_base_win_clicks();
     test_window_click_forwarders();
     test_popup_exec_and_start_overloads();
+    test_replay_win_stubs();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

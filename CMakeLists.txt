@@ -187,6 +187,7 @@ set(OPENSMACX_SOURCES
     src/playerlock.cpp
     src/netdaemon.cpp
     src/console.cpp
+    src/replaywin.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -458,6 +459,7 @@ if(BUILD_TESTING)
         src/playerlock.cpp
         src/netdaemon.cpp
         src/console.cpp
+        src/replaywin.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
@@ -599,6 +601,11 @@ if(BUILD_TESTING)
     add_test(NAME add-redirect-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_add_redirect.py"
+    )
+
+    add_test(NAME bulk-recover-stubs-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_bulk_recover_stubs.py"
     )
 
     add_test(NAME constant-return-scan-tool-tests

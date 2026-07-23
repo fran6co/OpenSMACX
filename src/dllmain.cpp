@@ -67,6 +67,7 @@
 #include "playerlock.h"
 #include "netdaemon.h"
 #include "console.h"
+#include "replaywin.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -93,7 +94,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 437;
+constexpr size_t RedirectCount = 443;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1282,6 +1283,36 @@ bool install_redirects() {
             0x005A5990,
             reinterpret_cast<uintptr_t>(&popup_start_label_redirect),
             OPENSMACX_SIGNATURE_005A5990,
+        },
+        {
+            0x005AD3D0,
+            reinterpret_cast<uintptr_t>(&replay_win_on_left_double_click_redirect),
+            OPENSMACX_SIGNATURE_005AD3D0,
+        },
+        {
+            0x005AD3E0,
+            reinterpret_cast<uintptr_t>(&replay_win_on_right_double_click_redirect),
+            OPENSMACX_SIGNATURE_005AD3E0,
+        },
+        {
+            0x005AD3F0,
+            reinterpret_cast<uintptr_t>(&replay_win_on_mouse_move_redirect),
+            OPENSMACX_SIGNATURE_005AD3F0,
+        },
+        {
+            0x005AD400,
+            reinterpret_cast<uintptr_t>(&replay_win_on_right_down_redirect),
+            OPENSMACX_SIGNATURE_005AD400,
+        },
+        {
+            0x005AD410,
+            reinterpret_cast<uintptr_t>(&replay_win_on_left_down_redirect),
+            OPENSMACX_SIGNATURE_005AD410,
+        },
+        {
+            0x005AD420,
+            reinterpret_cast<uintptr_t>(&replay_win_on_left_up_redirect),
+            OPENSMACX_SIGNATURE_005AD420,
         },
         {
             0x005BF5D0,

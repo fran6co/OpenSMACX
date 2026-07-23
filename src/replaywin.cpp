@@ -1,0 +1,97 @@
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OpenSMACX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "stdafx.h"
+#include "replaywin.h"
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 005AD3D0
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_left_double_click(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 005AD3E0
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_right_double_click(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 005AD3F0
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_mouse_move(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 005AD400
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_right_down(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 005AD410
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_left_down(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 005AD420
+Return Value: n/a
+Status: Complete
+*/
+void ReplayWin::on_left_up(int, int) {
+}
+
+void __fastcall replay_win_on_left_double_click_redirect(ReplayWin *self, void *, int a1, int a2) {
+    self->on_left_double_click(a1, a2);
+}
+
+void __fastcall replay_win_on_right_double_click_redirect(ReplayWin *self, void *, int a1, int a2) {
+    self->on_right_double_click(a1, a2);
+}
+
+void __fastcall replay_win_on_mouse_move_redirect(ReplayWin *self, void *, int a1, int a2) {
+    self->on_mouse_move(a1, a2);
+}
+
+void __fastcall replay_win_on_right_down_redirect(ReplayWin *self, void *, int a1, int a2) {
+    self->on_right_down(a1, a2);
+}
+
+void __fastcall replay_win_on_left_down_redirect(ReplayWin *self, void *, int a1, int a2) {
+    self->on_left_down(a1, a2);
+}
+
+void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, int a2) {
+    self->on_left_up(a1, a2);
+}
