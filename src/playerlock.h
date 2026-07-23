@@ -30,6 +30,7 @@ class DLLEXPORT PlayerLock {
   PlayerLock() { ; }
   ~PlayerLock() { ; }
   void clear();
+  int active();
 
  private:
   struct Entry {
@@ -43,3 +44,4 @@ class DLLEXPORT PlayerLock {
 };
 
 void __fastcall player_lock_clear_redirect(PlayerLock *self, void *);
+int __fastcall player_lock_active_redirect(PlayerLock *self, void *);
