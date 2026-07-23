@@ -49,6 +49,9 @@ class DLLEXPORT BaseWin : GraphicWin {
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_scrolled(int a1, int a2);
+  void on_left_click(int a1, int a2);
+  void on_right_click(int a1, int a2);
+  void on_left_double_click(int a1, int a2);
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);
@@ -72,8 +75,17 @@ extern func_base_win_iface_click *BaseWinIfaceClick;
 typedef void (__thiscall func_base_win_draw_supported)(BaseWin *self, int a1);
 extern func_base_win_draw_supported *BaseWinDrawSupported;
 
+// The shared click handler these three forward to is not recovered. Unlike
+// the iface_click family, these carry no this-adjustment.
+typedef void (__thiscall func_base_win_click)(BaseWin *self, int a1, int a2,
+                                             int button, int is_double);
+extern func_base_win_click *BaseWinClick;
+
 void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2);
+void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2);
+void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, int a2);
+void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);

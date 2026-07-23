@@ -220,3 +220,50 @@ void BaseWin::on_iface_scrolled(int a1, int a2) {
 void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_iface_scrolled(a1, a2);
 }
+
+func_base_win_click *BaseWinClick = (func_base_win_click *)0x004165D0;
+
+/*
+Purpose: Report a left click to the shared click handler. Unlike the
+         iface_click family, `this` is the BaseWin itself with no adjustment.
+Original Offset: 0041AF70
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_left_click(int a1, int a2) {
+    BaseWinClick(this, a1, a2, 0, 0);
+}
+
+/*
+Purpose: Report a right click to the shared click handler. Unlike the
+         iface_click family, `this` is the BaseWin itself with no adjustment.
+Original Offset: 0041AF90
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_right_click(int a1, int a2) {
+    BaseWinClick(this, a1, a2, 1, 0);
+}
+
+/*
+Purpose: Report a left double-click to the shared click handler. Unlike the
+         iface_click family, `this` is the BaseWin itself with no adjustment.
+Original Offset: 0041AFB0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_left_double_click(int a1, int a2) {
+    BaseWinClick(this, a1, a2, 0, 1);
+}
+
+void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_left_click(a1, a2);
+}
+
+void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_right_click(a1, a2);
+}
+
+void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_left_double_click(a1, a2);
+}

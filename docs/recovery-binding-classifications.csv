@@ -1,6 +1,7 @@
 symbol,category,strategy,notes
 BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
 BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
+BaseWinClick,ui_dependency,recover_base_win_click,Temporary dependency for the recovered BaseWin click handlers until the shared click is source-owned
 BaseWinDrawSupported,ui_dependency,recover_base_win_draw_supported,Temporary dependency for the recovered BaseWin scroll handler until draw_supported is source-owned
 BaseWinIfaceClick,ui_dependency,recover_base_win_iface_click,Temporary dependency for the recovered BaseWin interface-click handlers until iface_click is source-owned
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves

@@ -20,6 +20,9 @@ address,kind
 0x0041A610,jump
 0x0041AF20,jump
 0x0041AF30,jump
+0x0041AF70,jump
+0x0041AF90,jump
+0x0041AFB0,jump
 0x0041B4E0,jump
 0x0041DC80,jump
 0x0041DCD0,jump
