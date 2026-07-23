@@ -30,6 +30,7 @@ class DLLEXPORT Palette {
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
   static void set_active_window(Win *window);
+  int get_pos(int value);
 
  private:
   // Buffer caches this generation tag to skip republishing an unchanged
@@ -311,3 +312,4 @@ int __fastcall palette_get_rgbquad_redirect(
     Palette *self, void *, RGBQUAD *output, int start, int count);
 
 void __cdecl palette_set_active_window_redirect(Win *window);
+int __fastcall palette_get_pos_redirect(Palette *self, void *, int value);

@@ -37,3 +37,25 @@ void PlayerLock::clear() {
 void __fastcall player_lock_clear_redirect(PlayerLock *self, void *) {
     self->clear();
 }
+
+/*
+Purpose: Report whether either lock entry is engaged - the low bit of its flag
+         set. The original is typed as returning void but computes this boolean
+         in EAX, so the value is returned here to match its behaviour rather
+         than its declared type.
+Original Offset: 0058FFA0
+Return Value: 1 when an entry is engaged, 0 when neither is
+Status: Complete
+*/
+int PlayerLock::active() {
+    for (int index = 0; index < 2; ++index) {
+        if (entries_[index].flag & 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int __fastcall player_lock_active_redirect(PlayerLock *self, void *) {
+    return self->active();
+}

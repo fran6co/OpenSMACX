@@ -77,3 +77,25 @@ void Palette::set_active_window(Win *) {
 void __cdecl palette_set_active_window_redirect(Win *window) {
     Palette::set_active_window(window);
 }
+
+/*
+Purpose: Find the slot for a value in the five-entry internal table, returning
+         the index of the matching entry or the first empty one, and 5 when the
+         table is full without a match.
+Original Offset: 005FED10
+Return Value: the slot index, 0 to 5
+Status: Complete
+*/
+int Palette::get_pos(int value) {
+    for (int index = 0; index < 5; ++index) {
+        const int slot = static_cast<int>(internal_[index].field_0);
+        if (slot == value || slot == -1) {
+            return index;
+        }
+    }
+    return 5;
+}
+
+int __fastcall palette_get_pos_redirect(Palette *self, void *, int value) {
+    return self->get_pos(value);
+}

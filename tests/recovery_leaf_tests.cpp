@@ -11669,6 +11669,60 @@ void test_pull_down_id_to_index() {
     expect(pull->id_to_index(200) == 1);
 }
 
+void test_loop_store_searches() {
+    // Palette::get_pos: find-or-first-free over five slots. A matching value
+    // returns its index, an empty (-1) slot returns its index, and a full
+    // table with no match returns 5. The find and the free-slot exits both
+    // return the current index, so both are checked, as is the full case.
+    std::vector<uint8_t> pl(sizeof(Palette) + 32), pl_e(pl.size());
+    auto *palette = reinterpret_cast<Palette *>(pl.data() + 16);
+    seed_storage(pl.data(), pl_e.data(), pl.size());
+    auto set_slot = [&](int i, int32_t v) {
+        std::memcpy(pl.data() + 16 + 0x404 + i * 0x10, &v, sizeof(v));
+    };
+    set_slot(0, 0x100);
+    set_slot(1, 0x200);
+    set_slot(2, 0x300);
+    set_slot(3, 0x400);
+    set_slot(4, 0x500);
+    std::memcpy(pl_e.data(), pl.data(), pl.size());
+    expect(palette->get_pos(0x100) == 0);
+    expect(palette->get_pos(0x300) == 2);
+    expect(palette->get_pos(0x500) == 4);
+    expect(palette->get_pos(0x999) == 5);
+    expect(palette_get_pos_redirect(palette, nullptr, 0x400) == 3);
+    expect_storage_bytes(pl.data(), pl_e.data(), pl.size());
+
+    set_slot(2, -1);
+    expect(palette->get_pos(0x999) == 2);
+    expect(palette->get_pos(0x100) == 0);
+    expect(palette->get_pos(0x400) == 2);
+
+    // PlayerLock::active: 1 when either entry's flag has the low bit set.
+    std::vector<uint8_t> lk(sizeof(PlayerLock) + 32), lk_e(lk.size());
+    auto *lock = reinterpret_cast<PlayerLock *>(lk.data() + 16);
+    auto set_flag = [&](int entry, int32_t v) {
+        std::memcpy(lk.data() + 16 + 0xC + entry * 0xC, &v, sizeof(v));
+    };
+    seed_storage(lk.data(), lk_e.data(), lk.size());
+    set_flag(0, 0);
+    set_flag(1, 0);
+    std::memcpy(lk_e.data(), lk.data(), lk.size());
+    expect(lock->active() == 0);
+    set_flag(1, 1);
+    expect(lock->active() == 1);                 // second entry engaged
+    set_flag(1, 0);
+    set_flag(0, 3);                              // low bit set among others
+    expect(lock->active() == 1);
+    set_flag(0, 2);                              // low bit clear
+    expect(lock->active() == 0);
+    set_flag(0, 1);
+    expect(player_lock_active_redirect(lock, nullptr) == 1);
+    std::memcpy(lk_e.data(), lk.data(), lk.size());
+    (void)lock->active();
+    expect_storage_bytes(lk.data(), lk_e.data(), lk.size());
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12056,6 +12110,7 @@ int main() {
     test_remaining_constant_stubs();
     test_field_store_batch2();
     test_pull_down_id_to_index();
+    test_loop_store_searches();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
