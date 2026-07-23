@@ -185,6 +185,7 @@ set(OPENSMACX_SOURCES
     src/xpops.cpp
     src/planwin.cpp
     src/playerlock.cpp
+    src/netdaemon.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -454,6 +455,7 @@ if(BUILD_TESTING)
         src/xpops.cpp
         src/planwin.cpp
         src/playerlock.cpp
+        src/netdaemon.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

@@ -202,6 +202,7 @@ address,kind
 0x00525AF4,jump
 0x0052AB6D,call
 0x0052AC4A,call
+0x00530320,jump
 0x0055BC00,jump
 0x005882F0,jump
 0x0058EE50,jump

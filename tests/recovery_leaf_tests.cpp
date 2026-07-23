@@ -54,6 +54,7 @@
 #include "../src/dialogs.h"
 #include "../src/xpops.h"
 #include "../src/playerlock.h"
+#include "../src/netdaemon.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -10720,6 +10721,83 @@ void test_buffer_clear_links() {
     BufferFree = saved_free;
 }
 
+namespace {
+void *g_net_get_net = nullptr;
+unsigned long g_net_get_first_out = 0;
+unsigned long g_net_get_second_out = 0;
+int g_net_get_result = 0;
+int g_net_get_calls = 0;
+int __thiscall observe_net_get(void *net, unsigned long *a, unsigned long *b) {
+    g_net_get_net = net;
+    *a = g_net_get_first_out;
+    *b = g_net_get_second_out;
+    ++g_net_get_calls;
+    return g_net_get_result;
+}
+NetDaemon *g_pm_self = nullptr;
+char *g_pm_message = nullptr;
+unsigned long g_pm_a = 0;
+int g_pm_b = 0;
+int g_pm_calls = 0;
+void __thiscall observe_process_message(NetDaemon *self, char *message,
+                                        unsigned long a, int b) {
+    g_pm_self = self; g_pm_message = message; g_pm_a = a; g_pm_b = b;
+    ++g_pm_calls;
+}
+}  // namespace
+
+void test_net_daemon_receive() {
+    auto *const saved_get = NetDaemonNetGet;
+    auto *const saved_pm = NetDaemonProcessMessage;
+    void *const saved_net = NetDaemonNet;
+    int fake_net = 0;
+    NetDaemonNetGet = &observe_net_get;
+    NetDaemonProcessMessage = &observe_process_message;
+    NetDaemonNet = &fake_net;
+
+    std::vector<uint8_t> storage(sizeof(NetDaemon) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *daemon = reinterpret_cast<NetDaemon *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    // No message: get returns zero, process_message is not called, receive
+    // reports 0, and nothing on the object moves.
+    g_net_get_result = 0;
+    g_net_get_calls = 0;
+    g_pm_calls = 0;
+    expect(daemon->receive() == 0);
+    expect(g_net_get_calls == 1);
+    expect(g_net_get_net == &fake_net);   // reads the global Net, not `this`
+    expect(g_pm_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // A message: get returns nonzero and fills the two out-parameters, which
+    // flow to process_message as (result, second, first) - the order the asm
+    // pushes them in, which a naive reading would swap.
+    g_net_get_result = 0x00ABCDEF;
+    g_net_get_first_out = 0x11111111;
+    g_net_get_second_out = 0x22222222;
+    g_net_get_calls = 0;
+    g_pm_calls = 0;
+    expect(daemon->receive() == 1);
+    expect(g_net_get_calls == 1);
+    expect(g_pm_calls == 1);
+    expect(g_pm_self == daemon);
+    expect(g_pm_message == reinterpret_cast<char *>(0x00ABCDEF));
+    expect(g_pm_a == 0x22222222);     // second out-parameter
+    expect(g_pm_b == 0x11111111);     // first out-parameter
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    g_pm_calls = 0;
+    expect(net_daemon_receive_redirect(daemon, nullptr) == 1);
+    expect(g_pm_calls == 1);
+
+    NetDaemonNetGet = saved_get;
+    NetDaemonProcessMessage = saved_pm;
+    NetDaemonNet = saved_net;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11093,6 +11171,7 @@ int main() {
     test_map_win_close();
     test_string_box_add();
     test_buffer_clear_links();
+    test_net_daemon_receive();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

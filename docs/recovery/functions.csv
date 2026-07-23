@@ -3063,7 +3063,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0052ED40,0x0052F517,2025,.text,?send_files@NetDaemon@@QAEHXZ,int (__thiscall ?send_files@NetDaemon@@QAEHXZ)(NetDaemon* this),0x0052ED40-0x0052F517;0x0065E0B0-0x0065E0C2,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,30,1
 0x0052F520,0x0052F8D6,950,.text,?send_rules@NetDaemon@@QAEXXZ,void (__thiscall ?send_rules@NetDaemon@@QAEXXZ)(NetDaemon* this),0x0052F520-0x0052F8D6,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x0052F8E0,0x0053031E,2622,.text,?game_checksum@NetDaemon@@QAEXPAH@Z,"void (__thiscall ?game_checksum@NetDaemon@@QAEXPAH@Z)(NetDaemon* this, int*)",0x0052F8E0-0x0053031E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
-0x00530320,0x0053035E,62,.text,?receive@NetDaemon@@QAEHXZ,int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this),0x00530320-0x0053035E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,9
+0x00530320,0x0053035E,62,.text,?receive@NetDaemon@@QAEHXZ,int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this),0x00530320-0x0053035E,game,frame;hidden;sp_ready;purged_ok,src/netdaemon.cpp:30,Complete,,,source_complete,,,,2,9
 0x00530360,0x005303A9,73,.text,?net_tasks@NetDaemon@@QAEXXZ,void (__thiscall ?net_tasks@NetDaemon@@QAEXXZ)(NetDaemon* this),0x00530360-0x005303A9,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,6
 0x005303B0,0x00530493,227,.text,?wait@NetDaemon@@QAEHPADPAHHH@Z,"int (__thiscall ?wait@NetDaemon@@QAEHPADPAHHH@Z)(NetDaemon* this, int8*, int*, int, int)",0x005303B0-0x00530493,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,2
 0x005304A0,0x005305FF,351,.text,?open_channel@NetDaemon@@QAEHHH@Z,"int (__thiscall ?open_channel@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)",0x005304A0-0x005305FF,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,3
@@ -3092,7 +3092,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00532C30,0x00532DA2,370,.text,?synch_display@@YAXHHHH@Z,,0x00532C30-0x00532DA2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x00532E00,0x00534129,4905,.text,?synch@NetDaemon@@QAEXFHHHPADHF@Z,"void (__thiscall ?synch@NetDaemon@@QAEXFHHHPADHF@Z)(NetDaemon* this, int16, int id, int, int, int8*, int uDelay, int16)",0x00532E00-0x00534129,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,23,24
 0x00534330,0x005343FC,204,.text,?fixup_message@NetDaemon@@QAEHPAD@Z,"int (__thiscall ?fixup_message@NetDaemon@@QAEHPAD@Z)(NetDaemon* this, int8*)",0x00534330-0x005343FC,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
-0x00534400,0x005388B9,18489,.text,?process_message@NetDaemon@@QAEXPADKH@Z,"void (__thiscall ?process_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, MessageFactionData*, unsigned int, int)",0x00534400-0x005388B9;0x0065E0C2-0x0065E442,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,133,18
+0x00534400,0x005388B9,18489,.text,?process_message@NetDaemon@@QAEXPADKH@Z,"void (__thiscall ?process_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, MessageFactionData*, unsigned int, int)",0x00534400-0x005388B9;0x0065E0C2-0x0065E442,game,frame;sp_ready;purged_ok,,,,NetDaemonProcessMessage,original_dependency,,,,133,18
 0x005389F0,0x00538B58,378,.text,??0NetDaemon@@QAE@XZ,void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this),0x005389F0-0x00538B58;0x0065DF50-0x0065DF62,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x00538B60,0x00538D0E,606,.text,??1AlphaNet@@QAE@XZ,void (__thiscall ??1AlphaNet@@QAE@XZ)(AlphaNet* this),0x00538B60-0x00538D0E;0x004E3710-0x004E372B;0x0065DF70-0x0065E005,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,0
 0x00538D10,0x00538EBE,606,.text,??1NetDaemon@@QAE@XZ,void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this),0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,0
@@ -5327,7 +5327,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00630080,0x00630978,2296,.text,?send@Net@@QAEHPAXHKH@Z,"int (__thiscall ?send@Net@@QAEHPAXHKH@Z)(Net* this, void*, int, unsigned int, int)",0x00630080-0x00630978,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,25
 0x00630980,0x006309BA,58,.text,sub_630980,,0x00630980-0x006309BA,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x006309C0,0x006309FD,61,.text,sub_6309c0,,0x006309C0-0x006309FD,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x00630A00,0x00630A3A,58,.text,?get@Net@@QAEHPAKPAK@Z,"int (__thiscall ?get@Net@@QAEHPAKPAK@Z)(Net* this, unsigned int*, unsigned int*)",0x00630A00-0x00630A3A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,18
+0x00630A00,0x00630A3A,58,.text,?get@Net@@QAEHPAKPAK@Z,"int (__thiscall ?get@Net@@QAEHPAKPAK@Z)(Net* this, unsigned int*, unsigned int*)",0x00630A00-0x00630A3A,game,hidden;sp_ready;purged_ok,,,,NetDaemonNetGet,original_dependency,,,,1,18
 0x00630A40,0x00630A7D,61,.text,sub_630a40,,0x00630A40-0x00630A7D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00630A80,0x00630AFC,124,.text,sub_630a80,,0x00630A80-0x00630AFC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00630B00,0x00630B7C,124,.text,sub_630b00,,0x00630B00-0x00630B7C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0

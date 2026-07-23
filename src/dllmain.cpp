@@ -65,6 +65,7 @@
 #include "xpops.h"
 #include "planwin.h"
 #include "playerlock.h"
+#include "netdaemon.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -91,7 +92,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 403;
+constexpr size_t RedirectCount = 404;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1160,6 +1161,11 @@ bool install_redirects() {
             0x004C7120,
             reinterpret_cast<uintptr_t>(&wave_set_release_redirect),
             OPENSMACX_SIGNATURE_004C7120,
+        },
+        {
+            0x00530320,
+            reinterpret_cast<uintptr_t>(&net_daemon_receive_redirect),
+            OPENSMACX_SIGNATURE_00530320,
         },
         {
             0x0058FF70,
