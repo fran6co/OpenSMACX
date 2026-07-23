@@ -78,6 +78,7 @@
 #include "sprite.h"
 #include "redirect_signatures.h"
 #include "runtime_oracle.h"
+#include "stringbox.h"
 #include "stringstruct.h"
 #include "vector.h"
 #include "win.h"
@@ -90,7 +91,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 401;
+constexpr size_t RedirectCount = 402;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1529,6 +1530,11 @@ bool install_redirects() {
             0x00618F30,
             reinterpret_cast<uintptr_t>(&font_unk1_redirect),
             OPENSMACX_SIGNATURE_00618F30,
+        },
+        {
+            0x00629710,
+            reinterpret_cast<uintptr_t>(&string_box_add_redirect),
+            OPENSMACX_SIGNATURE_00629710,
         },
         {
             0x0062A710,

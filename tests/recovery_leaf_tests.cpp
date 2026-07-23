@@ -10561,6 +10561,86 @@ void test_map_win_close() {
     GraphicWinFieldA0CDefault = saved_default;
 }
 
+namespace {
+void *g_struct_add_self = nullptr;
+int g_struct_add_index = 0;
+int g_struct_add_result = 0;
+int g_struct_add_calls = 0;
+int __thiscall observe_struct_add(void *self, int index) {
+    g_struct_add_self = self; g_struct_add_index = index; ++g_struct_add_calls;
+    return g_struct_add_result;
+}
+StringBox *g_fixup_self = nullptr;
+int g_fixup_calls = 0;
+void __thiscall observe_add_fixup(StringBox *self) {
+    g_fixup_self = self; ++g_fixup_calls;
+}
+}  // namespace
+
+void test_string_box_add() {
+    auto *const saved_add = StringBoxStructAdd;
+    auto *const saved_fixup = StringBoxAddFixup;
+    StringBoxStructAdd = &observe_struct_add;
+    StringBoxAddFixup = &observe_add_fixup;
+
+    std::vector<uint8_t> storage(sizeof(StringBox) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *box = reinterpret_cast<StringBox *>(storage.data() + 16);
+    uint8_t *const object = storage.data() + 16;
+    auto read_ptr = [&](size_t off) {
+        void *v = nullptr;
+        std::memcpy(&v, object + off, sizeof(v));
+        return v;
+    };
+    auto read32 = [&](size_t off) {
+        uint32_t v = 0;
+        std::memcpy(&v, object + off, sizeof(v));
+        return v;
+    };
+
+    char text[] = "entry";
+
+    // Struct add reports success (nonzero): the three fields are staged, add
+    // is called on the struct member at 0x2B70, and the fixup is skipped.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_struct_add_result = 1;
+    g_struct_add_calls = 0;
+    g_fixup_calls = 0;
+    box->add(text, 7, 0x55);
+    expect(g_struct_add_calls == 1);
+    expect(g_struct_add_self == object + 0x2B70);
+    expect(g_struct_add_index == 7);
+    expect(g_fixup_calls == 0);
+    expect(read_ptr(0x2B8C) == text);
+    expect(read32(0x2B90) == 0x55);
+    expect(read32(0x2B94) == 0);
+    // Only the three staged fields moved.
+    std::memcpy(expected.data() + 16 + 0x2B8C, object + 0x2B8C, 4);
+    std::memcpy(expected.data() + 16 + 0x2B90, object + 0x2B90, 8);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Struct add reports failure (zero): the fixup runs, on the box itself.
+    g_struct_add_result = 0;
+    g_struct_add_calls = 0;
+    g_fixup_calls = 0;
+    box->add(text, -3, 0);
+    expect(g_struct_add_calls == 1);
+    expect(g_struct_add_index == -3);
+    expect(g_fixup_calls == 1);
+    expect(g_fixup_self == box);
+
+    // Redirect: same, and the index passes through.
+    g_struct_add_result = 1;
+    g_fixup_calls = 0;
+    string_box_add_redirect(box, nullptr, text, INT_MIN, 0);
+    expect(g_struct_add_index == INT_MIN);
+    expect(g_fixup_calls == 0);
+
+    StringBoxStructAdd = saved_add;
+    StringBoxAddFixup = saved_fixup;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10932,6 +11012,7 @@ int main() {
     test_self_contained_stores();
     test_base_pop_set_width();
     test_map_win_close();
+    test_string_box_add();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

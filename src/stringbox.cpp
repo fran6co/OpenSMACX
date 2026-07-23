@@ -17,3 +17,29 @@
  */
 #include "stdafx.h"
 #include "stringbox.h"
+#include <cstring>
+
+func_string_struct_add *StringBoxStructAdd = (func_string_struct_add *)0x00401100;
+func_string_box_add_fixup *StringBoxAddFixup = (func_string_box_add_fixup *)0x00629490;
+
+/*
+Purpose: Add a string to the box - stage the text, index and a cleared flag
+         into the string struct at 0x2B70, add it, and run the fixup pass when
+         the struct reports it did not take.
+Original Offset: 00629710
+Return Value: n/a
+Status: Complete
+*/
+void StringBox::add(char *text, int index, int flag) {
+    std::memcpy(&field_2B8C_, &text, sizeof(text));
+    field_2B90_ = static_cast<uint32_t>(flag);
+    field_2B94_ = 0;
+    if (StringBoxStructAdd(&field_2B70_, index) == 0) {
+        StringBoxAddFixup(this);
+    }
+}
+
+void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
+                                        int index, int flag) {
+    self->add(text, index, flag);
+}

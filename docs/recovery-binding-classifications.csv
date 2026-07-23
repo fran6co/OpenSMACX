@@ -22,6 +22,8 @@ RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary depe
 ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
 SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
 SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+StringBoxAddFixup,ui_dependency,recover_string_box_add_fixup,Temporary dependency for the recovered StringBox add until its fixup pass is source-owned
+StringBoxStructAdd,ui_dependency,recover_string_struct_add,Temporary dependency for the recovered StringBox add until StringStruct add is source-owned
 SubInterfaceOriginalReleaseIfaceMode,ui_dependency,recover_sub_interface_release_iface_mode,Temporary dependency for the recovered StatusWin reset until the interface-mode release is source-owned
 WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
 WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned

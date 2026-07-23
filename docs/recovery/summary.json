@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 55,
-      "source_complete": 905,
+      "original_dependency": 57,
+      "source_complete": 906,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4670
+      "unrecovered": 4667
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 851,
-    "matched_function_starts": 851,
-    "unique_addresses": 851,
+    "annotations": 852,
+    "matched_function_starts": 852,
+    "unique_addresses": 852,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 64
+      "function": 66
     },
     "items": [
       {
@@ -2796,6 +2796,24 @@
         "type": "void *"
       },
       {
+        "address": "0x00401100",
+        "function": "?add@StringStruct@@QAEHH@Z",
+        "function_address": "0x00401100",
+        "kind": "function",
+        "location": "src/stringbox.cpp:22",
+        "symbol": "StringBoxStructAdd",
+        "type": "func_string_struct_add *"
+      },
+      {
+        "address": "0x00629490",
+        "function": "?add_fixup@StringBox@@QAEXXZ",
+        "function_address": "0x00629490",
+        "kind": "function",
+        "location": "src/stringbox.cpp:23",
+        "symbol": "StringBoxAddFixup",
+        "type": "func_string_box_add_fixup *"
+      },
+      {
         "address": "0x009B90D8",
         "function": "",
         "function_address": "",
@@ -3624,7 +3642,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 64,
-    "total": 255
+    "matched_function_starts": 66,
+    "total": 257
   }
 }
