@@ -186,6 +186,7 @@ set(OPENSMACX_SOURCES
     src/planwin.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
+    src/console.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -456,6 +457,7 @@ if(BUILD_TESTING)
         src/planwin.cpp
         src/playerlock.cpp
         src/netdaemon.cpp
+        src/console.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

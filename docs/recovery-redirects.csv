@@ -199,6 +199,11 @@ address,kind
 0x004E26B0,jump
 0x004E3A50,jump
 0x00514189,jump
+0x00514EF0,jump
+0x00514F10,jump
+0x00514F20,jump
+0x00514F30,jump
+0x00514F40,jump
 0x00525AF4,jump
 0x0052AB6D,call
 0x0052AC4A,call
