@@ -37,6 +37,7 @@ class DLLEXPORT DiploWin : GraphicWin {
   DiploWin() { ; }
   ~DiploWin() { ; }
   void UNK5();
+  void UNK2();
   void UNK4(int a1);
   void on_iface_left_click(int a1, int a2);
   void on_iface_left_up(int a1, int a2);
@@ -51,6 +52,13 @@ class DLLEXPORT DiploWin : GraphicWin {
   void on_iface_button_clicked(int a1);
   void on_iface_button_toggled(int a1, int a2);
   int on_iface_dialog_back_draw(int a1);
+
+ private:
+  // UNK2 zeroes the two dwords at 0xA24 and 0xA28, just past the
+  // GraphicWin base; everything between is unmapped.
+  uint8_t unmapped_A14_[0xA24 - 0xA14];
+  int32_t field_A24_;
+  int32_t field_A28_;
 };
 
 void __fastcall diplo_win_unk5_redirect(DiploWin *self, void *);
@@ -68,3 +76,4 @@ void __fastcall diplo_win_on_iface_right_double_click_redirect(DiploWin *self, v
 void __fastcall diplo_win_on_iface_button_clicked_redirect(DiploWin *self, void *, int a1);
 void __fastcall diplo_win_on_iface_button_toggled_redirect(DiploWin *self, void *, int a1, int a2);
 int __fastcall diplo_win_on_iface_dialog_back_draw_redirect(DiploWin *self, void *, int a1);
+void __fastcall diplo_win_unk2_redirect(DiploWin *self, void *);

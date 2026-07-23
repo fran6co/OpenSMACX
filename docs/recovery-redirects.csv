@@ -93,6 +93,7 @@ address,kind
 0x00440530,jump
 0x00440540,jump
 0x00440610,jump
+0x004413B0,jump
 0x004429F0,jump
 0x00442A00,jump
 0x00443D80,jump
@@ -239,12 +240,14 @@ address,kind
 0x00525AF4,jump
 0x0052AB6D,call
 0x0052AC4A,call
+0x0052DCD0,jump
 0x00530320,jump
 0x00558FC0,jump
 0x00559040,jump
 0x0055BC00,jump
 0x005882F0,jump
 0x0058EE50,jump
+0x0058FD70,jump
 0x0058FF70,jump
 0x0059D3A0,jump
 0x005A5900,jump

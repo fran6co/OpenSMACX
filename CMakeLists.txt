@@ -195,6 +195,8 @@ set(OPENSMACX_SOURCES
     src/spritebox.cpp
     src/listbox.cpp
     src/net_class.cpp
+    src/squarelock.cpp
+    src/deletionlist.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -474,6 +476,8 @@ if(BUILD_TESTING)
         src/spritebox.cpp
         src/listbox.cpp
         src/net_class.cpp
+        src/squarelock.cpp
+        src/deletionlist.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
