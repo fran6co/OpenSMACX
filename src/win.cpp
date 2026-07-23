@@ -714,3 +714,71 @@ void Win::sync_palette() {
 void __fastcall win_sync_palette_redirect(Win *self, void *) {
     self->sync_palette();
 }
+
+/*
+Purpose: Forward a scrollbar position to the vertical Scroll the window owns,
+         doing nothing when that scrollbar is absent.
+Original Offset: 005EE030
+Return Value: n/a
+Status: Complete
+*/
+void Win::set_vert_pos(int position) {
+    if (scroll_vert_) {
+        scroll_vert_->set_pos(position);
+    }
+}
+
+/*
+Purpose: Forward a scrollbar position to the horizontal Scroll the window owns,
+         doing nothing when that scrollbar is absent.
+Original Offset: 005EE070
+Return Value: n/a
+Status: Complete
+*/
+void Win::set_horz_pos(int position) {
+    if (scroll_horz_) {
+        scroll_horz_->set_pos(position);
+    }
+}
+
+/*
+Purpose: Forward a scrollbar range to the vertical Scroll the window owns,
+         doing nothing when that scrollbar is absent.
+Original Offset: 005EE0B0
+Return Value: n/a
+Status: Complete
+*/
+void Win::set_vert_range(int minimum, int maximum) {
+    if (scroll_vert_) {
+        scroll_vert_->set_range(minimum, maximum);
+    }
+}
+
+/*
+Purpose: Forward a scrollbar range to the horizontal Scroll the window owns,
+         doing nothing when that scrollbar is absent.
+Original Offset: 005EE0D0
+Return Value: n/a
+Status: Complete
+*/
+void Win::set_horz_range(int minimum, int maximum) {
+    if (scroll_horz_) {
+        scroll_horz_->set_range(minimum, maximum);
+    }
+}
+
+void __fastcall win_set_vert_pos_redirect(Win *self, void *, int position) {
+    self->set_vert_pos(position);
+}
+
+void __fastcall win_set_horz_pos_redirect(Win *self, void *, int position) {
+    self->set_horz_pos(position);
+}
+
+void __fastcall win_set_vert_range_redirect(Win *self, void *, int minimum, int maximum) {
+    self->set_vert_range(minimum, maximum);
+}
+
+void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int maximum) {
+    self->set_horz_range(minimum, maximum);
+}
