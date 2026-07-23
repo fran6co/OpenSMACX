@@ -12,6 +12,13 @@ CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary depende
 CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
 ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
 DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
+DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnLeftUp,ui_dependency,recover_dialogsspriteboxonleftup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightClick,ui_dependency,recover_dialogsspriteboxonrightclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightDoubleClick,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightDown,ui_dependency,recover_dialogsspriteboxonrightdown,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightUp,ui_dependency,recover_dialogsspriteboxonrightup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned

@@ -11083,6 +11083,112 @@ void test_base_win_iface_scrolled() {
     BaseWinDrawSupported = saved;
 }
 
+namespace {
+void *g_dfwd_self = nullptr;
+int g_dfwd_a1 = 0, g_dfwd_a2 = 0, g_dfwd_calls = 0;
+const char *g_dfwd_which = nullptr;
+void __thiscall observe_fwd2(void *self, int a1, int a2) {
+    g_dfwd_self = self; g_dfwd_a1 = a1; g_dfwd_a2 = a2; ++g_dfwd_calls;
+}
+void __thiscall observe_fwd1(void *self, int a1) {
+    g_dfwd_self = self; g_dfwd_a1 = a1; ++g_dfwd_calls;
+}
+}  // namespace
+
+void test_dialogs_forwarders() {
+    // Eight event forwarders. Each reads a discriminator 8 bytes before the
+    // interface `this`, and only when it matches (8 for the sprite-box family,
+    // 2 for the list-box one) adjusts `this` back - 0x8C or 0x140 - and calls
+    // the embedded widget's handler. Every seam, both discriminator values,
+    // and both adjustments are checked; a wrong adjustment sends the call to
+    // the wrong subobject, and a wrong discriminator makes a live event a
+    // no-op or vice versa.
+    auto *const s_rd = DialogsSpriteBoxOnRightDown;
+    auto *const s_rdc = DialogsSpriteBoxOnRightDoubleClick;
+    auto *const s_lu = DialogsSpriteBoxOnLeftUp;
+    auto *const s_ru = DialogsSpriteBoxOnRightUp;
+    auto *const s_rc = DialogsSpriteBoxOnRightClick;
+    auto *const l_sc = DialogsListBoxOnScrolling;
+    auto *const l_mw = DialogsListBoxOnMousewheel;
+    DialogsSpriteBoxOnRightDown = &observe_fwd2;
+    DialogsSpriteBoxOnRightDoubleClick = &observe_fwd2;
+    DialogsSpriteBoxOnLeftUp = &observe_fwd2;
+    DialogsSpriteBoxOnRightUp = &observe_fwd2;
+    DialogsSpriteBoxOnRightClick = &observe_fwd2;
+    DialogsListBoxOnScrolling = &observe_fwd2;
+    DialogsListBoxOnMousewheel = &observe_fwd1;
+
+    std::vector<uint8_t> storage(sizeof(Dialogs) + 0x400);
+    // Put the interface `this` 0x200 into the buffer so both the -8
+    // discriminator and the negative adjustments stay in bounds.
+    uint8_t *const iface = storage.data() + 16 + 0x200;
+    auto *dialogs = reinterpret_cast<Dialogs *>(iface);
+    auto set_disc = [&](int value) {
+        std::memcpy(iface - 8, &value, sizeof(value));
+    };
+
+    struct Case2 {
+        void (Dialogs::*method)(int, int);
+        int disc;
+        size_t adjust;
+    };
+    const Case2 sprite[] = {
+        {&Dialogs::on_right_down, 8, 0x8C},
+        {&Dialogs::on_right_double_click, 8, 0x8C},
+        {&Dialogs::on_left_up, 8, 0x8C},
+        {&Dialogs::on_right_up, 8, 0x8C},
+        {&Dialogs::on_right_click, 8, 0x8C},
+        {&Dialogs::on_scrolled, 2, 0x140},
+        {&Dialogs::on_scrolling, 2, 0x140},
+    };
+    for (const Case2 &c : sprite) {
+        // Matching discriminator: forwards to (this - adjust) with both args.
+        set_disc(c.disc);
+        g_dfwd_calls = 0;
+        (dialogs->*(c.method))(0x111, 0x222);
+        expect(g_dfwd_calls == 1);
+        expect(g_dfwd_self == iface - c.adjust);
+        expect(g_dfwd_a1 == 0x111 && g_dfwd_a2 == 0x222);
+        // Wrong discriminator: no forward.
+        set_disc(c.disc + 1);
+        g_dfwd_calls = 0;
+        (dialogs->*(c.method))(0x111, 0x222);
+        expect(g_dfwd_calls == 0);
+    }
+
+    // on_mousewheel takes one argument and uses the list-box discriminator.
+    set_disc(2);
+    g_dfwd_calls = 0;
+    dialogs->on_mousewheel(0x333);
+    expect(g_dfwd_calls == 1);
+    expect(g_dfwd_self == iface - 0x140);
+    expect(g_dfwd_a1 == 0x333);
+    set_disc(0);
+    g_dfwd_calls = 0;
+    dialogs->on_mousewheel(0x333);
+    expect(g_dfwd_calls == 0);
+
+    // A redirect from each family, confirming the seam wiring.
+    set_disc(8);
+    g_dfwd_calls = 0;
+    dialogs_on_right_down_redirect(dialogs, nullptr, 1, 2);
+    expect(g_dfwd_calls == 1);
+    expect(g_dfwd_self == iface - 0x8C);
+    set_disc(2);
+    g_dfwd_calls = 0;
+    dialogs_on_mousewheel_redirect(dialogs, nullptr, 7);
+    expect(g_dfwd_calls == 1);
+    expect(g_dfwd_self == iface - 0x140);
+
+    DialogsSpriteBoxOnRightDown = s_rd;
+    DialogsSpriteBoxOnRightDoubleClick = s_rdc;
+    DialogsSpriteBoxOnLeftUp = s_lu;
+    DialogsSpriteBoxOnRightUp = s_ru;
+    DialogsSpriteBoxOnRightClick = s_rc;
+    DialogsListBoxOnScrolling = l_sc;
+    DialogsListBoxOnMousewheel = l_mw;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11461,6 +11567,7 @@ int main() {
     test_console_preference_openers();
     test_base_win_iface_clicks();
     test_base_win_iface_scrolled();
+    test_dialogs_forwarders();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

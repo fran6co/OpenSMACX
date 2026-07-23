@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 62,
-      "source_complete": 922,
+      "original_dependency": 69,
+      "source_complete": 930,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4646
+      "unrecovered": 4631
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 868,
-    "matched_function_starts": 868,
-    "unique_addresses": 868,
+    "annotations": 876,
+    "matched_function_starts": 876,
+    "unique_addresses": 876,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 71
+      "function": 78
     },
     "items": [
       {
@@ -1750,6 +1750,69 @@
         "location": "src/dialogs_recovery.cpp:23",
         "symbol": "ListBoxOriginalItem",
         "type": "func_list_box_item *"
+      },
+      {
+        "address": "0x00611240",
+        "function": "?on_right_down@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611240",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:102",
+        "symbol": "DialogsSpriteBoxOnRightDown",
+        "type": "func_dialogs_fwd2 *"
+      },
+      {
+        "address": "0x00611330",
+        "function": "?on_right_double_click@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611330",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:103",
+        "symbol": "DialogsSpriteBoxOnRightDoubleClick",
+        "type": "func_dialogs_fwd2 *"
+      },
+      {
+        "address": "0x006111A0",
+        "function": "?on_left_up@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x006111A0",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:104",
+        "symbol": "DialogsSpriteBoxOnLeftUp",
+        "type": "func_dialogs_fwd2 *"
+      },
+      {
+        "address": "0x00611290",
+        "function": "?on_right_up@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611290",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:105",
+        "symbol": "DialogsSpriteBoxOnRightUp",
+        "type": "func_dialogs_fwd2 *"
+      },
+      {
+        "address": "0x006111F0",
+        "function": "?on_right_click@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x006111F0",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:106",
+        "symbol": "DialogsSpriteBoxOnRightClick",
+        "type": "func_dialogs_fwd2 *"
+      },
+      {
+        "address": "0x0060C5D0",
+        "function": "?on_scrolling@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060C5D0",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:107",
+        "symbol": "DialogsListBoxOnScrolling",
+        "type": "func_dialogs_fwd2 *"
+      },
+      {
+        "address": "0x0060CB70",
+        "function": "?on_mousewheel@ListBox@@QAEXH@Z",
+        "function_address": "0x0060CB70",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:108",
+        "symbol": "DialogsListBoxOnMousewheel",
+        "type": "func_dialogs_fwd1 *"
       },
       {
         "address": "0x006151E0",
@@ -3687,7 +3750,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 71,
-    "total": 262
+    "matched_function_starts": 78,
+    "total": 269
   }
 }

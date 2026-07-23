@@ -98,3 +98,187 @@ int __fastcall dialogs_item_redirect(Dialogs *self, void *, char *text, int inde
 int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *) {
     return self->get_num_items();
 }
+
+func_dialogs_fwd2 *DialogsSpriteBoxOnRightDown = (func_dialogs_fwd2 *)0x00611240;
+func_dialogs_fwd2 *DialogsSpriteBoxOnRightDoubleClick = (func_dialogs_fwd2 *)0x00611330;
+func_dialogs_fwd2 *DialogsSpriteBoxOnLeftUp = (func_dialogs_fwd2 *)0x006111A0;
+func_dialogs_fwd2 *DialogsSpriteBoxOnRightUp = (func_dialogs_fwd2 *)0x00611290;
+func_dialogs_fwd2 *DialogsSpriteBoxOnRightClick = (func_dialogs_fwd2 *)0x006111F0;
+func_dialogs_fwd2 *DialogsListBoxOnScrolling = (func_dialogs_fwd2 *)0x0060C5D0;
+func_dialogs_fwd1 *DialogsListBoxOnMousewheel = (func_dialogs_fwd1 *)0x0060CB70;
+
+/*
+Purpose: Forward on right down to the embedded widget, but only when the
+         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x8C.
+Original Offset: 00612ED0
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_right_down(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 8) {
+        DialogsSpriteBoxOnRightDown(bytes - 0x8C, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on right double click to the embedded widget, but only when the
+         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x8C.
+Original Offset: 00612EF0
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_right_double_click(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 8) {
+        DialogsSpriteBoxOnRightDoubleClick(bytes - 0x8C, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on left up to the embedded widget, but only when the
+         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x8C.
+Original Offset: 00612F10
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_left_up(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 8) {
+        DialogsSpriteBoxOnLeftUp(bytes - 0x8C, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on right up to the embedded widget, but only when the
+         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x8C.
+Original Offset: 00612F40
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_right_up(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 8) {
+        DialogsSpriteBoxOnRightUp(bytes - 0x8C, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on right click to the embedded widget, but only when the
+         active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x8C.
+Original Offset: 00612F60
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_right_click(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 8) {
+        DialogsSpriteBoxOnRightClick(bytes - 0x8C, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on scrolled to the embedded widget, but only when the
+         active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x140.
+Original Offset: 00612F80
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_scrolled(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 2) {
+        DialogsListBoxOnScrolling(bytes - 0x140, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on scrolling to the embedded widget, but only when the
+         active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x140.
+Original Offset: 00612FA0
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_scrolling(int a1, int a2) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 2) {
+        DialogsListBoxOnScrolling(bytes - 0x140, a1, a2);
+    }
+}
+
+/*
+Purpose: Forward on mousewheel to the embedded widget, but only when the
+         active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
+         the discriminator sits 8 bytes before it and the target is reached by
+         adjusting back 0x140.
+Original Offset: 00612FC0
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_mousewheel(int a1) {
+    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    int discriminator = 0;
+    std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    if (discriminator == 2) {
+        DialogsListBoxOnMousewheel(bytes - 0x140, a1);
+    }
+}
+
+void __fastcall dialogs_on_right_down_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_right_down(a1, a2);
+}
+
+void __fastcall dialogs_on_right_double_click_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_right_double_click(a1, a2);
+}
+
+void __fastcall dialogs_on_left_up_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_left_up(a1, a2);
+}
+
+void __fastcall dialogs_on_right_up_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_right_up(a1, a2);
+}
+
+void __fastcall dialogs_on_right_click_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_right_click(a1, a2);
+}
+
+void __fastcall dialogs_on_scrolled_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_scrolled(a1, a2);
+}
+
+void __fastcall dialogs_on_scrolling_redirect(Dialogs *self, void *, int a1, int a2) {
+    self->on_scrolling(a1, a2);
+}
+
+void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1) {
+    self->on_mousewheel(a1);
+}
