@@ -10641,6 +10641,85 @@ void test_string_box_add() {
     StringBoxAddFixup = saved_fixup;
 }
 
+namespace {
+void *g_link_freed[24] = {};
+int g_link_free_calls = 0;
+void *observe_buffer_free(void *pointer) {
+    if (g_link_free_calls < 24) g_link_freed[g_link_free_calls] = pointer;
+    ++g_link_free_calls;
+    return nullptr;
+}
+}  // namespace
+
+void test_buffer_clear_links() {
+    // clear_links reinitialises the spot list, zeroes the count at 0x4AC, and
+    // frees the twenty owned link pointers at 0x4BC through the CRT boundary,
+    // skipping the null ones. Spot::init is real recovered code, so its
+    // allocation and its shutdown-free run for real here.
+    auto *const saved_free = BufferFree;
+    BufferFree = &observe_buffer_free;
+
+    std::vector<uint8_t> storage(sizeof(Buffer) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *buffer = reinterpret_cast<Buffer *>(storage.data() + 16);
+    uint8_t *const object = storage.data() + 16;
+
+    for (size_t i = 0; i < storage.size(); ++i) {
+        storage[i] = static_cast<uint8_t>(0x30 + (i * 7));
+    }
+    // The embedded Spot at 0x4B0 must have a null spots_ pointer so its
+    // shutdown does not free seeded garbage; Spot::init allocates a fresh one.
+    const void *const null_ptr = nullptr;
+    std::memcpy(object + 0x4B0, &null_ptr, sizeof(null_ptr));
+
+    // Ten of the twenty links point at real allocations, ten are null.
+    void *links[20] = {};
+    for (int i = 0; i < 20; ++i) {
+        links[i] = (i % 2 == 0) ? std::malloc(8) : nullptr;
+        std::memcpy(object + 0x4BC + i * 4, &links[i], sizeof(void *));
+    }
+
+    mem_get_calls = 0;
+    g_link_free_calls = 0;
+    buffer->clear_links();
+
+    // Spot::init ran: it allocated once (the shutdown free of a null pointer
+    // is a no-op).
+    expect(mem_get_calls == 1);
+    // The count at 0x4AC is cleared.
+    uint32_t count = 0xFFFFFFFF;
+    std::memcpy(&count, object + 0x4AC, sizeof(count));
+    expect(count == 0);
+    // Exactly the ten non-null links were freed, in order, and each slot is
+    // now null; the ten null slots were never freed and stay null.
+    expect(g_link_free_calls == 10);
+    for (int i = 0; i < 20; ++i) {
+        void *slot = reinterpret_cast<void *>(0x1);
+        std::memcpy(&slot, object + 0x4BC + i * 4, sizeof(slot));
+        expect(slot == nullptr);
+    }
+    for (int i = 0; i < 10; ++i) {
+        expect(g_link_freed[i] == links[i * 2]);
+    }
+
+    // Redirect: a fresh object frees its non-null links the same way.
+    for (size_t i = 0; i < storage.size(); ++i) {
+        storage[i] = static_cast<uint8_t>(0x11 + (i * 3));
+    }
+    std::memcpy(object + 0x4B0, &null_ptr, sizeof(null_ptr));
+    void *one = std::malloc(8);
+    for (int i = 0; i < 20; ++i) {
+        const void *v = (i == 5) ? one : nullptr;
+        std::memcpy(object + 0x4BC + i * 4, &v, sizeof(v));
+    }
+    g_link_free_calls = 0;
+    buffer_clear_links_redirect(buffer, nullptr);
+    expect(g_link_free_calls == 1);
+    expect(g_link_freed[0] == one);
+
+    BufferFree = saved_free;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11013,6 +11092,7 @@ int main() {
     test_base_pop_set_width();
     test_map_win_close();
     test_string_box_add();
+    test_buffer_clear_links();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

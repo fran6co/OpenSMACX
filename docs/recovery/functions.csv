@@ -4070,7 +4070,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005DE8F0,0x005DEA12,290,.text,?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z,"int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)",0x005DE8F0-0x005DEA12,game,hidden;sp_ready;purged_ok,src/buffer.cpp:658,Complete,,,source_complete,,,,1,24
 0x005DEA20,0x005DEB1C,252,.text,sub_5dea20,,0x005DEA20-0x005DEB1C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005DEB20,0x005DEF8F,1135,.text,sub_5deb20,,0x005DEB20-0x005DEF8F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x005DEF90,0x005DEFD4,68,.text,?clear_links@Buffer@@QAEXXZ,void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this),0x005DEF90-0x005DEFD4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,5
+0x005DEF90,0x005DEFD4,68,.text,?clear_links@Buffer@@QAEXXZ,void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this),0x005DEF90-0x005DEFD4,game,hidden;sp_ready;purged_ok,src/buffer.cpp:832,Complete,,,source_complete,,,,2,5
 0x005DEFE0,0x005DF56B,1419,.text,sub_5defe0,,0x005DEFE0-0x005DF56B,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,0
 0x005DF570,0x005DF573,3,.text,?init_class@Buffer@@QAAHXZ,,0x005DF570-0x005DF573,game,hidden;sp_ready;purged_ok,src/buffer.cpp:214,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,1
 0x005DF580,0x005DF581,1,.text,?close_class@Buffer@@QAAXXZ,,0x005DF580-0x005DF581,game,hidden;sp_ready;purged_ok,src/buffer.cpp:224,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,1

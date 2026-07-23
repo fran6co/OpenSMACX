@@ -110,6 +110,13 @@ class LegacyVector {
     Vector *scale(LegacyVector &, uint32_t) asm("_opensmacx_legacy_00634670");
 };
 
+// Buffer::clear_links, linked in through buffer.cpp, calls Spot::init, which
+// calls mem_get. This suite never exercises clear_links, so the allocator only
+// has to resolve, not behave; general.cpp is deliberately not in this target.
+// At file scope, not in the anonymous namespace below, so it has the external
+// linkage the reference from spot_recovery.cpp needs.
+LPVOID __cdecl mem_get(size_t size) { return std::malloc(size); }
+
 namespace {
 
 constexpr size_t CanarySize = 16;
