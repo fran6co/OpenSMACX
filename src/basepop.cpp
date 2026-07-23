@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "basepop.h"
+#include <cstring>
 
 /*
 Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
@@ -370,4 +371,34 @@ void BasePop::write_check(long value) {
 
 void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value) {
     self->write_check(value);
+}
+
+int32_t *BasePopScreenWidth = reinterpret_cast<int32_t *>(0x009B7B1C);
+
+/*
+Purpose: Set the dialog width, scaled to three-halves in the high-resolution
+         layout. The scaling is skipped when the popup opts out through the
+         flag at 0xA14, when bit 0x400 of the style at 0x30A8 is set, or when
+         the screen is narrower than 1024. The width is written into the Dialog
+         subobject of the embedded Dialogs, located through that Dialogs'
+         own vbtable exactly as the original does rather than at a hardcoded
+         offset.
+Original Offset: 00601B20
+Return Value: n/a
+Status: Complete
+*/
+void BasePop::set_width(int width) {
+    int value = width;
+    if (field_A14_ == 0 && (field_30A8_ & 0x400) == 0 &&
+        *BasePopScreenWidth >= 0x400) {
+        value = (width * 3) / 2;
+    }
+    uint8_t *const dialogs = reinterpret_cast<uint8_t *>(this) + 0x21D0;
+    const int32_t *const vbtable =
+        *reinterpret_cast<const int32_t *const *>(dialogs);
+    std::memcpy(dialogs + 0x2C + vbtable[2], &value, sizeof(value));
+}
+
+void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width) {
+    self->set_width(width);
 }
