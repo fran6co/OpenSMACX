@@ -13,6 +13,7 @@ EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary depende
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
 MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
+MapWinFree,crt_ownership,replace_after_ownership_boundary,MapWin frees its owned buffer through the executable CRT until that ownership boundary moves
 NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
 PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
 PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned

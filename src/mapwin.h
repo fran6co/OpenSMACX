@@ -47,9 +47,15 @@ class DLLEXPORT MapWin {
   void UNK3();
   void do_image_buttons();
   void main_caption();
+  void close();
 
  private:
-  uint8_t derived_storage_[0x21A6C];
+  // The vbtable pointer opens the object; a heap pointer close() frees sits at
+  // 0x4. Both are carved out of the derived storage, keeping the total the
+  // static_assert pins.
+  uint32_t vbtable_pointer_;
+  void *owned_;
+  uint8_t derived_tail_[0x21A6C - 0x8];
   GraphicWin virtual_base_;
 };
 
@@ -66,3 +72,10 @@ extern void *MainInterfaceGlobal;
 extern char *MapWinMainCaption;
 
 void __fastcall map_win_main_caption_redirect(MapWin *self, void *);
+
+// The heap pointer at 0x4 is freed through the game's CRT boundary, the same
+// address buffer.cpp frees through. Rebindable so tests observe it.
+typedef void *func_map_win_free(void *);
+extern func_map_win_free *MapWinFree;
+
+void __fastcall map_win_close_redirect(MapWin *self, void *);
