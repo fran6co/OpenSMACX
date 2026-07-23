@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 61,
-      "source_complete": 921,
+      "original_dependency": 62,
+      "source_complete": 922,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4648
+      "unrecovered": 4646
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 867,
-    "matched_function_starts": 867,
-    "unique_addresses": 867,
+    "annotations": 868,
+    "matched_function_starts": 868,
+    "unique_addresses": 868,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 70
+      "function": 71
     },
     "items": [
       {
@@ -1621,9 +1621,18 @@
         "function": "?iface_click@BaseWin@@QAEXHHHH@Z",
         "function_address": "0x004160F0",
         "kind": "function",
-        "location": "src/basewin.cpp:126",
+        "location": "src/basewin.cpp:127",
         "symbol": "BaseWinIfaceClick",
         "type": "func_base_win_iface_click *"
+      },
+      {
+        "address": "0x0040C850",
+        "function": "?draw_supported@BaseWin@@QAEXH@Z",
+        "function_address": "0x0040C850",
+        "kind": "function",
+        "location": "src/basewin.cpp:198",
+        "symbol": "BaseWinDrawSupported",
+        "type": "func_base_win_draw_supported *"
       },
       {
         "address": "0x009BC494",
@@ -3678,7 +3687,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 70,
-    "total": 261
+    "matched_function_starts": 71,
+    "total": 262
   }
 }

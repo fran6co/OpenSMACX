@@ -11024,6 +11024,65 @@ void test_base_win_iface_clicks() {
     BaseWinIfaceClick = saved;
 }
 
+namespace {
+BaseWin *g_draw_supported_base = nullptr;
+int g_draw_supported_arg = -1;
+int g_draw_supported_calls = 0;
+void __thiscall observe_draw_supported(BaseWin *self, int a1) {
+    g_draw_supported_base = self; g_draw_supported_arg = a1;
+    ++g_draw_supported_calls;
+}
+}  // namespace
+
+void test_base_win_iface_scrolled() {
+    // Only scroll kind 2 does anything: it stores the position at 0x40100
+    // relative to the interface subobject, then redraws on the BaseWin reached
+    // by the same 0xA14 adjustment. Any other kind is a no-op.
+    auto *const saved = BaseWinDrawSupported;
+    BaseWinDrawSupported = &observe_draw_supported;
+
+    // Room for the interface subobject at 0xA14 and the store at +0x40100.
+    std::vector<uint8_t> storage(sizeof(BaseWin) + 0xA14 + 0x40108);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const real_base = storage.data() + 16;
+    auto *iface = reinterpret_cast<BaseWin *>(real_base + 0xA14);
+    auto stored = [&] {
+        int v = 0;
+        std::memcpy(&v, real_base + 0xA14 + 0x40100, sizeof(v));
+        return v;
+    };
+
+    // Kind 2: stores the position and redraws on the adjusted base.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_draw_supported_calls = 0;
+    iface->on_iface_scrolled(2, 0x1234ABCD);
+    expect(g_draw_supported_calls == 1);
+    expect(reinterpret_cast<uint8_t *>(g_draw_supported_base) == real_base);
+    expect(g_draw_supported_arg == 1);
+    expect(stored() == 0x1234ABCD);
+    std::memcpy(expected.data() + 16 + 0xA14 + 0x40100,
+                storage.data() + 16 + 0xA14 + 0x40100, 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Any other kind: nothing happens, nothing is stored, no redraw.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    for (int kind : {0, 1, 3, -2, INT_MAX}) {
+        g_draw_supported_calls = 0;
+        iface->on_iface_scrolled(kind, 0x55555555);
+        expect(g_draw_supported_calls == 0);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    g_draw_supported_calls = 0;
+    base_win_on_iface_scrolled_redirect(iface, nullptr, 2, -1);
+    expect(g_draw_supported_calls == 1);
+    expect(stored() == -1);
+
+    BaseWinDrawSupported = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11401,6 +11460,7 @@ int main() {
     test_win_scroll_forwarders();
     test_console_preference_openers();
     test_base_win_iface_clicks();
+    test_base_win_iface_scrolled();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
