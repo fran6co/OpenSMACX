@@ -11189,6 +11189,68 @@ void test_dialogs_forwarders() {
     DialogsListBoxOnMousewheel = l_mw;
 }
 
+namespace {
+BaseWin *g_bwclick_self = nullptr;
+int g_bwclick_a1 = 0, g_bwclick_a2 = 0, g_bwclick_button = -1, g_bwclick_double = -1;
+int g_bwclick_calls = 0;
+void __thiscall observe_bw_click(BaseWin *self, int a1, int a2,
+                                       int button, int is_double) {
+    g_bwclick_self = self; g_bwclick_a1 = a1; g_bwclick_a2 = a2;
+    g_bwclick_button = button; g_bwclick_double = is_double;
+    ++g_bwclick_calls;
+}
+}  // namespace
+
+void test_base_win_clicks() {
+    // Three primary click handlers, forwarding to the shared click() with no
+    // this-adjustment - `this` is the BaseWin itself. Each carries a distinct
+    // (button, double) pair, and unlike the iface family the callee gets the
+    // object unchanged, which is what the test confirms alongside the flags.
+    auto *const saved = BaseWinClick;
+    BaseWinClick = &observe_bw_click;
+
+    std::vector<uint8_t> storage(sizeof(BaseWin) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *window = reinterpret_cast<BaseWin *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    struct Handler {
+        void (BaseWin::*method)(int, int);
+        void (__fastcall *redirect)(BaseWin *, void *, int, int);
+        int button;
+        int is_double;
+    };
+    const Handler handlers[] = {
+        {&BaseWin::on_left_click, &base_win_on_left_click_redirect, 0, 0},
+        {&BaseWin::on_right_click, &base_win_on_right_click_redirect, 1, 0},
+        {&BaseWin::on_left_double_click,
+         &base_win_on_left_double_click_redirect, 0, 1},
+    };
+
+    for (const Handler &handler : handlers) {
+        g_bwclick_calls = 0;
+        (window->*(handler.method))(0x1111, 0x2222);
+        expect(g_bwclick_calls == 1);
+        expect(g_bwclick_self == window);        // the object itself, no adjust
+        expect(g_bwclick_a1 == 0x1111 && g_bwclick_a2 == 0x2222);
+        expect(g_bwclick_button == handler.button);
+        expect(g_bwclick_double == handler.is_double);
+
+        g_bwclick_calls = 0;
+        handler.redirect(window, nullptr, -1, -2);
+        expect(g_bwclick_calls == 1);
+        expect(g_bwclick_self == window);
+        expect(g_bwclick_a1 == -1 && g_bwclick_a2 == -2);
+        expect(g_bwclick_button == handler.button);
+        expect(g_bwclick_double == handler.is_double);
+    }
+    // The forwarders only dispatch; the object is untouched.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    BaseWinClick = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11568,6 +11630,7 @@ int main() {
     test_base_win_iface_clicks();
     test_base_win_iface_scrolled();
     test_dialogs_forwarders();
+    test_base_win_clicks();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
