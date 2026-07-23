@@ -53,6 +53,10 @@ class DLLEXPORT Win {
   void UNK9(int value);
   void reset_window_clip();
   void sync_palette();
+  void set_vert_pos(int position);
+  void set_horz_pos(int position);
+  void set_vert_range(int minimum, int maximum);
+  void set_horz_range(int minimum, int maximum);
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -388,3 +392,8 @@ void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, 
 extern Palette **WinActivePalette;
 
 void __fastcall win_sync_palette_redirect(Win *self, void *);
+
+void __fastcall win_set_vert_pos_redirect(Win *self, void *, int position);
+void __fastcall win_set_horz_pos_redirect(Win *self, void *, int position);
+void __fastcall win_set_vert_range_redirect(Win *self, void *, int minimum, int maximum);
+void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int maximum);

@@ -10798,6 +10798,99 @@ void test_net_daemon_receive() {
     NetDaemonNet = saved_net;
 }
 
+void test_win_scroll_forwarders() {
+    // The four forwarders send a position or range to the vertical Scroll at
+    // 0x43C or the horizontal one at 0x440, guarding on null. Both Scroll
+    // methods are real recovered code that dispatches through the redraw
+    // vtable, so each member gets a full Scroll with that probe installed, and
+    // the test checks the call landed on the right one - swapping vert and
+    // horz would send it to the other scroll.
+    Win **const saved_current_win = ScrollCurrentWin;
+    Win *published = nullptr;
+    ScrollCurrentWin = &published;
+
+    alignas(Scroll) uint8_t vert[sizeof(Scroll) + 32] = {};
+    alignas(Scroll) uint8_t horz[sizeof(Scroll) + 32] = {};
+    uintptr_t vert_vtable[63];
+    uintptr_t horz_vtable[63];
+    install_scroll_redraw_probe(vert, vert_vtable);
+    install_scroll_redraw_probe(horz, horz_vtable);
+    auto *vert_scroll = reinterpret_cast<Scroll *>(vert + 16);
+    auto *horz_scroll = reinterpret_cast<Scroll *>(horz + 16);
+    // A parent so set_pos does not return early.
+    Win *parent = reinterpret_cast<Win *>(0x33334444U);
+    write_at(vert, 16 + 0xC4, parent);
+    write_at(horz, 16 + 0xC4, parent);
+
+    alignas(Win) uint8_t win_storage[sizeof(Win) + 32];
+    uint8_t win_expected[sizeof(win_storage)];
+    auto *window = reinterpret_cast<Win *>(win_storage + 16);
+    auto point_scrolls = [&](Scroll *v, Scroll *h) {
+        write_at(win_storage, 16 + 0x43C, v);
+        write_at(win_storage, 16 + 0x440, h);
+    };
+    auto vert_range_min = [&] {
+        uint32_t m = 0; std::memcpy(&m, vert + 16 + 0xA20, 4); return m;
+    };
+    auto horz_range_min = [&] {
+        uint32_t m = 0; std::memcpy(&m, horz + 16 + 0xA20, 4); return m;
+    };
+
+    // set_vert_range hits the vertical scroll only.
+    seed_storage(win_storage, win_expected, sizeof(win_storage));
+    point_scrolls(vert_scroll, horz_scroll);
+    reset_scroll_redraw_probe();
+    { uint32_t z = 0; std::memcpy(horz + 16 + 0xA20, &z, 4); }
+    window->set_vert_range(0x1234, 0x5678);
+    expect(scroll_redraw_calls == 1);
+    expect(scroll_redraw_self == vert_scroll);
+    expect(vert_range_min() == 0x1234);
+    expect(horz_range_min() == 0);
+
+    // set_horz_range hits the horizontal scroll only.
+    reset_scroll_redraw_probe();
+    { uint32_t z = 0; std::memcpy(vert + 16 + 0xA20, &z, 4); }
+    window->set_horz_range(0x4321, 0x8765);
+    expect(scroll_redraw_calls == 1);
+    expect(scroll_redraw_self == horz_scroll);
+    expect(horz_range_min() == 0x4321);
+    expect(vert_range_min() == 0);
+
+    // set_vert_pos and set_horz_pos each dispatch to their own scroll.
+    reset_scroll_redraw_probe();
+    published = nullptr;
+    window->set_vert_pos(5);
+    expect(scroll_redraw_calls == 1);
+    expect(scroll_redraw_self == vert_scroll);
+    reset_scroll_redraw_probe();
+    window->set_horz_pos(9);
+    expect(scroll_redraw_calls == 1);
+    expect(scroll_redraw_self == horz_scroll);
+
+    // Null scrollbars: every forwarder is a no-op, no dispatch, no crash.
+    seed_storage(win_storage, win_expected, sizeof(win_storage));
+    point_scrolls(nullptr, nullptr);
+    std::memcpy(win_expected, win_storage, sizeof(win_storage));
+    reset_scroll_redraw_probe();
+    window->set_vert_pos(1);
+    window->set_horz_pos(1);
+    window->set_vert_range(1, 2);
+    window->set_horz_range(1, 2);
+    expect(scroll_redraw_calls == 0);
+    expect_storage_bytes(win_storage, win_expected, sizeof(win_storage));
+
+    // Redirects reach the same scrolls.
+    point_scrolls(vert_scroll, horz_scroll);
+    reset_scroll_redraw_probe();
+    win_set_vert_range_redirect(window, nullptr, 3, 4);
+    expect(scroll_redraw_self == vert_scroll);
+    reset_scroll_redraw_probe();
+    win_set_horz_pos_redirect(window, nullptr, 2);
+    expect(scroll_redraw_self == horz_scroll);
+
+    ScrollCurrentWin = saved_current_win;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11172,6 +11265,7 @@ int main() {
     test_string_box_add();
     test_buffer_clear_links();
     test_net_daemon_receive();
+    test_win_scroll_forwarders();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
