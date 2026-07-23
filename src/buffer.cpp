@@ -824,3 +824,27 @@ int Buffer::text_width(LPSTR text) {
 int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text) {
     return self->text_width(text);
 }
+
+/*
+Purpose: Reset the buffer's link table - reinitialise the spot list to 40
+         entries, clear the count, and free the twenty owned link pointers,
+         each through the executable's CRT boundary.
+Original Offset: 005DEF90
+Return Value: n/a
+Status: Complete
+*/
+void Buffer::clear_links() {
+    spot_.init(0x28);
+    field_4AC_ = 0;
+    auto *const links = reinterpret_cast<void **>(field_4BC_);
+    for (size_t index = 0; index < 20; ++index) {
+        if (links[index]) {
+            BufferFree(links[index]);
+            links[index] = nullptr;
+        }
+    }
+}
+
+void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
+    self->clear_links();
+}

@@ -31,6 +31,7 @@ class DLLEXPORT Buffer {
   ~Buffer() { ; }
 
   void construct();
+  void clear_links();
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);
@@ -148,6 +149,8 @@ extern int *BufferDirectDrawActive;
 extern uint32_t *BufferResetValue520;
 // Releases a Sprite-style allocation through the executable's own CRT.
 extern func_sprite_free *BufferFree;
+
+void __fastcall buffer_clear_links_redirect(Buffer *self, void *);
 void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count);
 
 int __fastcall buffer_set_font_redirect(
