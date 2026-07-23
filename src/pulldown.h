@@ -43,6 +43,7 @@ class DLLEXPORT PullDown : GraphicWin {
   int check_item(int id);
   int uncheck_item(int id);
   int get_selected();
+  int id_to_index(int id);
 
   void on_mouse_leave(int a1, int a2);
  private:
@@ -104,3 +105,5 @@ int __fastcall pull_down_unk5_redirect(
 int __fastcall pull_down_unk6_redirect(
     PullDown *self, void *);
 void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2);
+
+int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id);

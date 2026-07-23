@@ -334,6 +334,7 @@ address,kind
 0x005F8DF0,jump
 0x005F9040,jump
 0x005F90A0,jump
+0x005F9D00,jump
 0x005F9F40,jump
 0x005FA740,jump
 0x005FA750,jump

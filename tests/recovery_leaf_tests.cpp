@@ -11633,6 +11633,42 @@ void test_field_store_batch2() {
     diplo_win_unk2_redirect(diplo, nullptr);
 }
 
+void test_pull_down_id_to_index() {
+    // A linear search over the 64 item slots comparing each item's id, at
+    // 0xA18 + index*0x14 + 8. The search's three exits are all checked: a
+    // match returns the index, a -1 sentinel id stops the scan and returns -1,
+    // and an id absent before the sentinel also returns -1.
+    std::vector<uint8_t> storage(sizeof(PullDown) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *pull = reinterpret_cast<PullDown *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    auto set_id = [&](int index, int id) {
+        std::memcpy(storage.data() + 16 + 0xA18 + index * 0x14 + 8, &id,
+                    sizeof(id));
+    };
+    // Ids 100, 200, 300 in the first three slots, then the -1 sentinel.
+    set_id(0, 100);
+    set_id(1, 200);
+    set_id(2, 300);
+    set_id(3, -1);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    expect(pull->id_to_index(100) == 0);
+    expect(pull->id_to_index(200) == 1);
+    expect(pull->id_to_index(300) == 2);
+    // Absent id, scan stops at the sentinel in slot 3.
+    expect(pull->id_to_index(999) == -1);
+    // The id -1 is the sentinel, so it is never matched as a value.
+    expect(pull->id_to_index(-1) == -1);
+    expect(pull_down_id_to_index_redirect(pull, nullptr, 200) == 1);
+    // A pure search writes nothing.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // First match wins when an id repeats.
+    set_id(5, 200);
+    expect(pull->id_to_index(200) == 1);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12019,6 +12055,7 @@ int main() {
     test_bulk_generated_stubs();
     test_remaining_constant_stubs();
     test_field_store_batch2();
+    test_pull_down_id_to_index();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

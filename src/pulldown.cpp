@@ -303,3 +303,28 @@ void PullDown::on_mouse_leave(int, int) {
 void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2) {
     self->on_mouse_leave(a1, a2);
 }
+
+/*
+Purpose: Find a menu item by its id and return its index, scanning up to the
+         64 item slots. Stops at the first slot whose id is the -1 sentinel,
+         and returns -1 when the id is not found or that sentinel is reached.
+Original Offset: 005F9D00
+Return Value: the item's index, or -1 when absent
+Status: Complete
+*/
+int PullDown::id_to_index(int id) {
+    for (int index = 0; index < 64; ++index) {
+        const int slot_id = items_[index].id;
+        if (slot_id == -1) {
+            return -1;
+        }
+        if (slot_id == id) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
+    return self->id_to_index(id);
+}
