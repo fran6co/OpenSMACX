@@ -75,6 +75,8 @@
 #include "spritebox.h"
 #include "listbox.h"
 #include "net_class.h"
+#include "squarelock.h"
+#include "deletionlist.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -101,7 +103,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 468;
+constexpr size_t RedirectCount = 471;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -685,6 +687,11 @@ bool install_redirects() {
             0x00440610,
             reinterpret_cast<uintptr_t>(&diplo_pop_on_iface_button_toggled_redirect),
             OPENSMACX_SIGNATURE_00440610,
+        },
+        {
+            0x004413B0,
+            reinterpret_cast<uintptr_t>(&diplo_win_unk2_redirect),
+            OPENSMACX_SIGNATURE_004413B0,
         },
         {
             0x004429F0,
@@ -1357,6 +1364,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00514F40,
         },
         {
+            0x0052DCD0,
+            reinterpret_cast<uintptr_t>(&deletion_list_clear_redirect),
+            OPENSMACX_SIGNATURE_0052DCD0,
+        },
+        {
             0x00530320,
             reinterpret_cast<uintptr_t>(&net_daemon_receive_redirect),
             OPENSMACX_SIGNATURE_00530320,
@@ -1370,6 +1382,11 @@ bool install_redirects() {
             0x00559040,
             reinterpret_cast<uintptr_t>(&popup_start_label_value_redirect),
             OPENSMACX_SIGNATURE_00559040,
+        },
+        {
+            0x0058FD70,
+            reinterpret_cast<uintptr_t>(&square_lock_clear_redirect),
+            OPENSMACX_SIGNATURE_0058FD70,
         },
         {
             0x0058FF70,

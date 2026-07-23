@@ -213,3 +213,18 @@ int DiploWin::on_iface_dialog_back_draw(int) {
 int __fastcall diplo_win_on_iface_dialog_back_draw_redirect(DiploWin *self, void *, int a1) {
     return self->on_iface_dialog_back_draw(a1);
 }
+
+/*
+Purpose: Clear the two cached values at 0xA24 and 0xA28.
+Original Offset: 004413B0
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::UNK2() {
+    field_A24_ = 0;
+    field_A28_ = 0;
+}
+
+void __fastcall diplo_win_unk2_redirect(DiploWin *self, void *) {
+    self->UNK2();
+}

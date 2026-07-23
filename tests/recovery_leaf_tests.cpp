@@ -63,6 +63,8 @@
 #include "../src/spritebox.h"
 #include "../src/listbox.h"
 #include "../src/net_class.h"
+#include "../src/squarelock.h"
+#include "../src/deletionlist.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -11580,6 +11582,57 @@ void test_remaining_constant_stubs() {
     base_win_timer_callback_redirect(-1, -2);
 }
 
+void test_field_store_batch2() {
+    auto read32 = [](const std::vector<uint8_t> &s, size_t off) {
+        int32_t v = 0; std::memcpy(&v, s.data() + 16 + off, sizeof(v)); return v;
+    };
+
+    // SquareLock::clear: two -1 sentinels and a zero at 0, 4, 8.
+    std::vector<uint8_t> sl(sizeof(SquareLock) + 32), sl_e(sl.size());
+    auto *lock = reinterpret_cast<SquareLock *>(sl.data() + 16);
+    seed_storage(sl.data(), sl_e.data(), sl.size());
+    std::memcpy(sl_e.data(), sl.data(), sl.size());
+    lock->clear();
+    expect(read32(sl, 0) == -1);
+    expect(read32(sl, 4) == -1);
+    expect(read32(sl, 8) == 0);
+    std::memcpy(sl_e.data() + 16, sl.data() + 16, 12);
+    expect_storage_bytes(sl.data(), sl_e.data(), sl.size());
+    square_lock_clear_redirect(lock, nullptr);
+
+    // DeletionList::clear(index): the marker byte and word land at index*0x3C,
+    // which the test checks at two different indices - a wrong stride would put
+    // the second one somewhere the check does not look.
+    std::vector<uint8_t> dl(0x3C * 4 + 32), dl_e(dl.size());
+    auto *list = reinterpret_cast<DeletionList *>(dl.data() + 16);
+    for (int index : {0, 2}) {
+        seed_storage(dl.data(), dl_e.data(), dl.size());
+        std::memcpy(dl_e.data(), dl.data(), dl.size());
+        list->clear(index);
+        const size_t base = 16 + static_cast<size_t>(index) * 0x3C;
+        expect(dl[base] == 0xFF);
+        uint16_t word = 0xFFFF;
+        std::memcpy(&word, dl.data() + base + 8, sizeof(word));
+        expect(word == 0);
+        dl_e[base] = dl[base];
+        std::memcpy(dl_e.data() + base + 8, dl.data() + base + 8, 2);
+        expect_storage_bytes(dl.data(), dl_e.data(), dl.size());
+    }
+    deletion_list_clear_redirect(list, nullptr, 1);
+
+    // DiploWin::UNK2: zeroes 0xA24 and 0xA28.
+    std::vector<uint8_t> dw(sizeof(DiploWin) + 32), dw_e(dw.size());
+    auto *diplo = reinterpret_cast<DiploWin *>(dw.data() + 16);
+    seed_storage(dw.data(), dw_e.data(), dw.size());
+    std::memcpy(dw_e.data(), dw.data(), dw.size());
+    diplo->UNK2();
+    expect(read32(dw, 0xA24) == 0);
+    expect(read32(dw, 0xA28) == 0);
+    std::memcpy(dw_e.data() + 16 + 0xA24, dw.data() + 16 + 0xA24, 8);
+    expect_storage_bytes(dw.data(), dw_e.data(), dw.size());
+    diplo_win_unk2_redirect(diplo, nullptr);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11965,6 +12018,7 @@ int main() {
     test_replay_win_stubs();
     test_bulk_generated_stubs();
     test_remaining_constant_stubs();
+    test_field_store_batch2();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
