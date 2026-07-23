@@ -48,6 +48,7 @@ class DLLEXPORT BaseWin : GraphicWin {
   void on_iface_right_click(int a1, int a2);
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
+  void on_iface_scrolled(int a1, int a2);
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);
@@ -67,7 +68,12 @@ typedef void (__thiscall func_base_win_iface_click)(BaseWin *self, int a1,
                                                     int is_double);
 extern func_base_win_iface_click *BaseWinIfaceClick;
 
+// draw_supported is not recovered.
+typedef void (__thiscall func_base_win_draw_supported)(BaseWin *self, int a1);
+extern func_base_win_draw_supported *BaseWinDrawSupported;
+
 void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, void *, int a1, int a2);
+void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2);

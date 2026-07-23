@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "basewin.h"
 #include <cstdint>
+#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -192,4 +193,30 @@ void __fastcall base_win_on_iface_left_double_click_redirect(BaseWin *self, void
 
 void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_iface_right_double_click(a1, a2);
+}
+
+func_base_win_draw_supported *BaseWinDrawSupported =
+    (func_base_win_draw_supported *)0x0040C850;
+
+/*
+Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
+         new position at 0x40100 (interface-relative) and redraw the supported
+         markers. Like the click handlers, `this` arrives at the interface
+         subobject and is adjusted back to the BaseWin for that redraw.
+Original Offset: 0041DC80
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_scrolled(int a1, int a2) {
+    if (a1 != 2) {
+        return;
+    }
+    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &a2, sizeof(a2));
+    auto *const base = reinterpret_cast<BaseWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0xA14);
+    BaseWinDrawSupported(base, 1);
+}
+
+void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_scrolled(a1, a2);
 }
