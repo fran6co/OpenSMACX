@@ -10953,6 +10953,77 @@ void test_console_preference_openers() {
     ConsolePrefWin = saved_pref;
 }
 
+namespace {
+BaseWin *g_iface_base = nullptr;
+int g_iface_a1 = 0, g_iface_a2 = 0, g_iface_button = -1, g_iface_double = -1;
+int g_iface_calls = 0;
+void __thiscall observe_iface_click(BaseWin *self, int a1, int a2, int button,
+                                    int is_double) {
+    g_iface_base = self; g_iface_a1 = a1; g_iface_a2 = a2;
+    g_iface_button = button; g_iface_double = is_double;
+    ++g_iface_calls;
+}
+}  // namespace
+
+void test_base_win_iface_clicks() {
+    // Four interface-click handlers, reached through the subobject BaseWin
+    // embeds at 0xA14, so their `this` points there and must be adjusted back
+    // by 0xA14 before dispatching. Each carries a distinct (button, double)
+    // pair, and getting the adjustment or a flag wrong is the whole risk here.
+    auto *const saved = BaseWinIfaceClick;
+    BaseWinIfaceClick = &observe_iface_click;
+
+    // A BaseWin, plus room past 0xA14 so the interface pointer is in-bounds.
+    std::vector<uint8_t> storage(sizeof(BaseWin) + 0xA20);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const real_base = storage.data() + 16;
+    // What the interface vtable would pass as `this`: BaseWin + 0xA14.
+    auto *iface = reinterpret_cast<BaseWin *>(real_base + 0xA14);
+
+    struct Handler {
+        void (BaseWin::*method)(int, int);
+        void (__fastcall *redirect)(BaseWin *, void *, int, int);
+        int button;
+        int is_double;
+    };
+    const Handler handlers[] = {
+        {&BaseWin::on_iface_left_click,
+         &base_win_on_iface_left_click_redirect, 0, 0},
+        {&BaseWin::on_iface_right_click,
+         &base_win_on_iface_right_click_redirect, 1, 0},
+        {&BaseWin::on_iface_left_double_click,
+         &base_win_on_iface_left_double_click_redirect, 0, 1},
+        {&BaseWin::on_iface_right_double_click,
+         &base_win_on_iface_right_double_click_redirect, 1, 1},
+    };
+
+    for (const Handler &handler : handlers) {
+        seed_storage(storage.data(), expected.data(), storage.size());
+        std::memcpy(expected.data(), storage.data(), storage.size());
+        g_iface_calls = 0;
+        (iface->*(handler.method))(0x1111, 0x2222);
+        expect(g_iface_calls == 1);
+        // Adjusted back to the BaseWin, not left at the interface subobject.
+        expect(reinterpret_cast<uint8_t *>(g_iface_base) == real_base);
+        expect(g_iface_a1 == 0x1111);
+        expect(g_iface_a2 == 0x2222);
+        expect(g_iface_button == handler.button);
+        expect(g_iface_double == handler.is_double);
+        // Nothing on the object moves; the handler only dispatches.
+        expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+        g_iface_calls = 0;
+        handler.redirect(iface, nullptr, -1, -2);
+        expect(g_iface_calls == 1);
+        expect(reinterpret_cast<uint8_t *>(g_iface_base) == real_base);
+        expect(g_iface_a1 == -1 && g_iface_a2 == -2);
+        expect(g_iface_button == handler.button);
+        expect(g_iface_double == handler.is_double);
+    }
+
+    BaseWinIfaceClick = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11329,6 +11400,7 @@ int main() {
     test_net_daemon_receive();
     test_win_scroll_forwarders();
     test_console_preference_openers();
+    test_base_win_iface_clicks();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "basewin.h"
+#include <cstdint>
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -120,4 +121,75 @@ void BaseWin::on_iface_selected(int, int) {
 
 void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_iface_selected(a1, a2);
+}
+
+func_base_win_iface_click *BaseWinIfaceClick =
+    (func_base_win_iface_click *)0x004160F0;
+
+/*
+Purpose: Report a left click on the interface. Reached through the interface
+         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Original Offset: 0041DCD0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_left_click(int a1, int a2) {
+    auto *const base = reinterpret_cast<BaseWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0xA14);
+    BaseWinIfaceClick(base, a1, a2, 0, 0);
+}
+
+/*
+Purpose: Report a right click on the interface. Reached through the interface
+         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Original Offset: 0041DCF0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_right_click(int a1, int a2) {
+    auto *const base = reinterpret_cast<BaseWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0xA14);
+    BaseWinIfaceClick(base, a1, a2, 1, 0);
+}
+
+/*
+Purpose: Report a left double-click on the interface. Reached through the interface
+         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Original Offset: 0041E4D0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_left_double_click(int a1, int a2) {
+    auto *const base = reinterpret_cast<BaseWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0xA14);
+    BaseWinIfaceClick(base, a1, a2, 0, 1);
+}
+
+/*
+Purpose: Report a right double-click on the interface. Reached through the interface
+         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Original Offset: 0041E4F0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_right_double_click(int a1, int a2) {
+    auto *const base = reinterpret_cast<BaseWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0xA14);
+    BaseWinIfaceClick(base, a1, a2, 1, 1);
+}
+
+void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_left_click(a1, a2);
+}
+
+void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_right_click(a1, a2);
+}
+
+void __fastcall base_win_on_iface_left_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_left_double_click(a1, a2);
+}
+
+void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_iface_right_double_click(a1, a2);
 }
