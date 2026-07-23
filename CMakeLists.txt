@@ -188,6 +188,13 @@ set(OPENSMACX_SOURCES
     src/netdaemon.cpp
     src/console.cpp
     src/replaywin.cpp
+    src/reportif.cpp
+    src/dipedit.cpp
+    src/sound.cpp
+    src/wave_device.cpp
+    src/spritebox.cpp
+    src/listbox.cpp
+    src/net_class.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -460,6 +467,13 @@ if(BUILD_TESTING)
         src/netdaemon.cpp
         src/console.cpp
         src/replaywin.cpp
+        src/reportif.cpp
+        src/dipedit.cpp
+        src/sound.cpp
+        src/wave_device.cpp
+        src/spritebox.cpp
+        src/listbox.cpp
+        src/net_class.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
