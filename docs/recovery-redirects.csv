@@ -254,6 +254,7 @@ address,kind
 0x005EE110,jump
 0x005EE130,jump
 0x005EE160,jump
+0x005F2C60,jump
 0x005F2CA0,jump
 0x005F2CE0,jump
 0x005F54B0,jump

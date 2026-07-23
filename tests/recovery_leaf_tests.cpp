@@ -10295,6 +10295,63 @@ void test_offset_delegates() {
     PopupOriginalStartFull = saved_start;
 }
 
+void test_win_sync_palette() {
+    // sync_palette caches the active palette's generation counter at 0x184 and
+    // skips the update when it already matches. set_active_window happens to
+    // be an empty stub, but the guard is what this checks: the counter is read
+    // again after the call, so a version that cached the stale value would be
+    // caught if the counter ever changed across it, and the early return must
+    // touch nothing when the generations already agree.
+    // Rebind the seam to a local slot rather than writing through the fixed
+    // address, which is unmapped here - the recovery only reads *WinActivePalette.
+    Palette **const saved = WinActivePalette;
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette)] = {};
+    auto *palette = reinterpret_cast<Palette *>(palette_storage);
+    Palette *palette_slot = palette;
+    WinActivePalette = &palette_slot;
+    auto set_generation = [&](uint32_t value) {
+        std::memcpy(palette_storage + 0x400, &value, sizeof(value));
+    };
+
+    std::vector<uint8_t> wn(sizeof(Win) + 32);
+    std::vector<uint8_t> wn_want(wn.size());
+    auto *window = reinterpret_cast<Win *>(wn.data() + 16);
+    auto cached = [&] {
+        uint32_t value = 0;
+        std::memcpy(&value, wn.data() + 16 + 0x184, sizeof(value));
+        return value;
+    };
+    auto set_cached = [&](uint32_t value) {
+        std::memcpy(wn.data() + 16 + 0x184, &value, sizeof(value));
+    };
+
+    // Already in step: nothing happens, not even a write of the same value.
+    seed_storage(wn.data(), wn_want.data(), wn.size());
+    set_generation(0x1111);
+    set_cached(0x1111);
+    std::memcpy(wn_want.data(), wn.data(), wn.size());
+    window->sync_palette();
+    expect(cached() == 0x1111);
+    expect_storage_bytes(wn.data(), wn_want.data(), wn.size());
+
+    // Behind: the cache is brought up to the palette's generation.
+    seed_storage(wn.data(), wn_want.data(), wn.size());
+    set_generation(0xABCD);
+    set_cached(0x2222);
+    std::memcpy(wn_want.data(), wn.data(), wn.size());
+    window->sync_palette();
+    expect(cached() == 0xABCD);
+    std::memcpy(wn_want.data() + 16 + 0x184, wn.data() + 16 + 0x184, 4);
+    expect_storage_bytes(wn.data(), wn_want.data(), wn.size());
+
+    set_generation(0x7F7F);
+    set_cached(0);
+    win_sync_palette_redirect(window, nullptr);
+    expect(cached() == 0x7F7F);
+
+    WinActivePalette = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10662,6 +10719,7 @@ int main() {
     test_dialogs_dispatch();
     test_fixed_argument_delegates();
     test_offset_delegates();
+    test_win_sync_palette();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

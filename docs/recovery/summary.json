@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 55,
-      "source_complete": 900,
+      "source_complete": 901,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4675
+      "unrecovered": 4674
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 846,
-    "matched_function_starts": 846,
-    "unique_addresses": 846,
+    "annotations": 847,
+    "matched_function_starts": 847,
+    "unique_addresses": 847,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -3574,7 +3574,7 @@
         "function": "?update_cursor@Win@@QAAHPAUWin@@H@Z",
         "function_address": "0x005F1820",
         "kind": "function",
-        "location": "src/win.cpp:450",
+        "location": "src/win.cpp:452",
         "symbol": "WinUpdateCursorOriginal",
         "type": "func_win_update_cursor *"
       },
@@ -3583,7 +3583,7 @@
         "function": "?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z",
         "function_address": "0x005F7320",
         "kind": "function",
-        "location": "src/win.cpp:483",
+        "location": "src/win.cpp:485",
         "symbol": "WinUpdateScreenOriginal",
         "type": "func_win_update_screen *"
       },
@@ -3592,7 +3592,7 @@
         "function": "?flip@Win@@QAAXPAURECT@@@Z",
         "function_address": "0x005EFD20",
         "kind": "function",
-        "location": "src/win.cpp:485",
+        "location": "src/win.cpp:487",
         "symbol": "WinFlipOriginal",
         "type": "func_win_flip *"
       },

@@ -18,6 +18,7 @@
 #pragma once
 #include "autosound.h"
 #include "buffer.h"
+#include "palette.h"
 #include "heap.h"
 #include "spot.h"
 #include "sprite.h"
@@ -51,6 +52,7 @@ class DLLEXPORT Win {
   void UNK8(int value);
   void UNK9(int value);
   void reset_window_clip();
+  void sync_palette();
 
   // The process-wide device context every window shares. The legacy bodies
   // take no instance and clean no stack, so they are statics here.
@@ -380,3 +382,9 @@ void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2);
 void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
 void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
 void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
+
+// The active palette lives at a fixed address; rebindable so tests can
+// point it at a local rather than requiring the mapped global.
+extern Palette **WinActivePalette;
+
+void __fastcall win_sync_palette_redirect(Win *self, void *);
