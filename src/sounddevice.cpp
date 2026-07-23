@@ -203,3 +203,31 @@ void Wave_In_Device::set_rate(unsigned int) {
 void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, unsigned int a1) {
     self->set_rate(a1);
 }
+
+/*
+Purpose: Report no device description; the legacy implementation returns 0.
+Original Offset: 004C5850
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::get_description(unsigned int, char *, unsigned int) {
+    return 0;
+}
+
+int __fastcall midi_device_get_description_redirect(Midi_Device *self, void *, unsigned int a1, char *a2, unsigned int a3) {
+    return self->get_description(a1, a2, a3);
+}
+
+/*
+Purpose: Report no device description; the legacy implementation returns 0.
+Original Offset: 004C5AE0
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::get_description(unsigned int, char *, unsigned int) {
+    return 0;
+}
+
+int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, void *, unsigned int a1, char *a2, unsigned int a3) {
+    return self->get_description(a1, a2, a3);
+}

@@ -782,3 +782,18 @@ void __fastcall win_set_vert_range_redirect(Win *self, void *, int minimum, int 
 void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int maximum) {
     self->set_horz_range(minimum, maximum);
 }
+
+/*
+Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
+         it handled the message and does nothing else.
+Original Offset: 005F2670
+Return Value: 1, always
+Status: Complete
+*/
+int Win::OnSetCursor(void *, void *, unsigned int, unsigned int) {
+    return 1;
+}
+
+int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsigned int a4) {
+    return Win::OnSetCursor(a1, a2, a3, a4);
+}

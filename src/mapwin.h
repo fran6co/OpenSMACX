@@ -49,6 +49,8 @@ class DLLEXPORT MapWin {
   void main_caption();
   void on_left_click(int a1, int a2);
   void on_right_click(int a1, int a2);
+  void on_left_double_click(int, int);
+  void on_left_up(int, int);
   void close();
 
  private:
@@ -90,3 +92,5 @@ extern int32_t *MapWinInputEnabled;
 
 void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2);
 void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2);
+void __fastcall map_win_on_left_double_click_redirect(MapWin *self, void *, int a1, int a2);
+void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2);

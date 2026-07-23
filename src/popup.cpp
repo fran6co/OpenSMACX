@@ -86,3 +86,18 @@ void __fastcall popup_start_label_value_redirect(Popup *self, void *,
                                                  const char *label, int value) {
     self->start(label, value);
 }
+
+/*
+Purpose: Draw a popup's dialog background; the legacy implementation does
+         nothing and returns 0.
+Original Offset: 00405B10
+Return Value: 0, always
+Status: Complete
+*/
+int Popup::on_dialog_back_draw(::GraphicWin *) {
+    return 0;
+}
+
+int __fastcall popup_on_dialog_back_draw_redirect(Popup *self, void *, ::GraphicWin *window) {
+    return self->on_dialog_back_draw(window);
+}

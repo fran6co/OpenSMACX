@@ -134,3 +134,29 @@ void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int
 void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2) {
     self->on_right_click(a1, a2);
 }
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 0046EBD0
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::on_left_double_click(int, int) {
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 0046EFF0
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::on_left_up(int, int) {
+}
+
+void __fastcall map_win_on_left_double_click_redirect(MapWin *self, void *, int a1, int a2) {
+    self->on_left_double_click(a1, a2);
+}
+
+void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2) {
+    self->on_left_up(a1, a2);
+}
