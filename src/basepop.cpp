@@ -402,3 +402,34 @@ void BasePop::set_width(int width) {
 void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width) {
     self->set_width(width);
 }
+
+func_base_pop_exec *BasePopExec = (func_base_pop_exec *)0x00602600;
+
+/*
+Purpose: Run the popup modally with no completion callback.
+Original Offset: 005A5900
+Return Value: the exec result
+Status: Complete
+*/
+int BasePop::exec() {
+    return BasePopExec(this, 0, nullptr);
+}
+
+/*
+Purpose: Run the popup modally with a completion callback.
+Original Offset: 00558FC0
+Return Value: the exec result
+Status: Complete
+*/
+int BasePop::exec(int (__cdecl *callback)()) {
+    return BasePopExec(this, 0, callback);
+}
+
+int __fastcall base_pop_exec_void_redirect(BasePop *self, void *) {
+    return self->exec();
+}
+
+int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,
+                                               int (__cdecl *callback)()) {
+    return self->exec(callback);
+}

@@ -53,3 +53,36 @@ void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
                                      const char *a2, int a3, char *a4, int a5) {
     self->start(a1, a2, a3, a4, a5);
 }
+
+char *PopupStartCaption = reinterpret_cast<char *>(0x009B8AA8);
+
+/*
+Purpose: Start a popup from just a label, defaulting the rest.
+Original Offset: 005A5990
+Return Value: n/a
+Status: Complete
+*/
+void Popup::start(const char *label) {
+    PopupOriginalStartFull(this, PopupStartCaption, label, -1, nullptr, 0,
+                           nullptr);
+}
+
+/*
+Purpose: Start a popup from a label and a value, defaulting the rest.
+Original Offset: 00559040
+Return Value: n/a
+Status: Complete
+*/
+void Popup::start(const char *label, int value) {
+    PopupOriginalStartFull(this, PopupStartCaption, label, -1, nullptr, value,
+                           nullptr);
+}
+
+void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label) {
+    self->start(label);
+}
+
+void __fastcall popup_start_label_value_redirect(Popup *self, void *,
+                                                 const char *label, int value) {
+    self->start(label, value);
+}
