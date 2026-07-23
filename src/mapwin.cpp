@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "mapwin.h"
+#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -88,4 +89,48 @@ void MapWin::close() {
 
 void __fastcall map_win_close_redirect(MapWin *self, void *) {
     self->close();
+}
+
+func_map_win_click *MapWinClick = (func_map_win_click *)0x0046D5D0;
+int32_t *MapWinInputEnabled = reinterpret_cast<int32_t *>(0x0090D938);
+
+/*
+Purpose: Report a left click on the map, but only when map input is enabled.
+         Reached through the GraphicWin virtual base, so `this` points there
+         and is adjusted back 0x21A6C to the MapWin before dispatching.
+Original Offset: 0046EBA0
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::on_left_click(int a1, int a2) {
+    if (*MapWinInputEnabled == 0) {
+        return;
+    }
+    auto *const base = reinterpret_cast<MapWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0x21A6C);
+    MapWinClick(base, a1, a2, 0);
+}
+
+/*
+Purpose: Report a right click on the map, but only when map input is enabled.
+         Same virtual-base adjustment as the left click.
+Original Offset: 0046EBE0
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::on_right_click(int a1, int a2) {
+    if (*MapWinInputEnabled == 0) {
+        return;
+    }
+    auto *const base = reinterpret_cast<MapWin *>(
+        reinterpret_cast<uint8_t *>(this) - 0x21A6C);
+    MapWinClick(base, a1, a2, 1);
+}
+
+void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2) {
+    self->on_left_click(a1, a2);
+}
+
+void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2) {
+    self->on_right_click(a1, a2);
 }

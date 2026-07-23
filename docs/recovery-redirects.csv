@@ -140,6 +140,8 @@ address,kind
 0x0045EB60,jump
 0x0045EB70,jump
 0x00467960,jump
+0x0046EBA0,jump
+0x0046EBE0,jump
 0x0046FB10,jump
 0x0046FB80,jump
 0x00470F70,jump
@@ -178,6 +180,8 @@ address,kind
 0x004BA720,jump
 0x004BA830,jump
 0x004BDDD0,jump
+0x004C3E50,jump
+0x004C3E70,jump
 0x004C3E90,jump
 0x004C45E0,jump
 0x004C5840,jump

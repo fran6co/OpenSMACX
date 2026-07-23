@@ -47,6 +47,8 @@ class DLLEXPORT MapWin {
   void UNK3();
   void do_image_buttons();
   void main_caption();
+  void on_left_click(int a1, int a2);
+  void on_right_click(int a1, int a2);
   void close();
 
  private:
@@ -79,3 +81,12 @@ typedef void *func_map_win_free(void *);
 extern func_map_win_free *MapWinFree;
 
 void __fastcall map_win_close_redirect(MapWin *self, void *);
+
+// MapWin's click handler and the input-enable flag it gates on are not
+// recovered; the flag lives at a fixed address and is rebindable for tests.
+typedef void (__thiscall func_map_win_click)(MapWin *self, int a1, int a2, int button);
+extern func_map_win_click *MapWinClick;
+extern int32_t *MapWinInputEnabled;
+
+void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2);
+void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2);
