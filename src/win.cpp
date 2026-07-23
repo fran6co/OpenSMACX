@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "scroll.h"
 #include "win.h"
+#include <cstring>
+#include "palette.h"
 
 const uint32_t WinPrimaryVtable = 0x0066FDD0;
 const uint32_t WinSecondaryVtable = 0x0066FF30;
@@ -680,4 +682,35 @@ void Win::on_sys_command(unsigned int, int, int) {
 
 void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
     self->on_sys_command(a1, a2, a3);
+}
+
+// The active palette lives at a fixed address; the same seam basebutton.cpp
+// uses. Its most-recently-set window generation counter is at 0x400.
+Palette **WinActivePalette = reinterpret_cast<Palette **>(0x009B8180);
+
+/*
+Purpose: Bring this window's palette into step with the active one, but only
+         when it has fallen behind - set_active_window is skipped when the
+         cached generation at 0x184 already matches the palette's at 0x400.
+Original Offset: 005F2C60
+Return Value: n/a
+Status: Complete
+*/
+void Win::sync_palette() {
+    Palette *const active = *WinActivePalette;
+    uint32_t generation;
+    std::memcpy(&generation,
+                reinterpret_cast<uint8_t *>(active) + 0x400, sizeof(generation));
+    if (field_184_ == generation) {
+        return;
+    }
+    Palette::set_active_window(this);
+    std::memcpy(&generation,
+                reinterpret_cast<uint8_t *>(*WinActivePalette) + 0x400,
+                sizeof(generation));
+    field_184_ = generation;
+}
+
+void __fastcall win_sync_palette_redirect(Win *self, void *) {
+    self->sync_palette();
 }
