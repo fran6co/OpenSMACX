@@ -53,6 +53,7 @@
 #include "../src/editgroup.h"
 #include "../src/dialogs.h"
 #include "../src/xpops.h"
+#include "../src/playerlock.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -10352,6 +10353,52 @@ void test_win_sync_palette() {
     WinActivePalette = saved;
 }
 
+void test_self_contained_stores() {
+    auto read32 = [](const std::vector<uint8_t> &s, size_t off) {
+        int32_t v = 0;
+        std::memcpy(&v, s.data() + 16 + off, sizeof(v));
+        return v;
+    };
+
+    // PlanWin::clear_lines zeroes one dword at 0x21FF8, carved out of the
+    // pinned derived storage. If the carve moved it, the build's static_assert
+    // would have failed; here the check is only that the right dword clears
+    // and nothing else does.
+    std::vector<uint8_t> pw(sizeof(PlanWin) + 32);
+    std::vector<uint8_t> pw_want(pw.size());
+    auto *plan = reinterpret_cast<PlanWin *>(pw.data() + 16);
+    seed_storage(pw.data(), pw_want.data(), pw.size());
+    std::memcpy(pw_want.data(), pw.data(), pw.size());
+    plan->clear_lines();
+    expect(read32(pw, 0x21FF8) == 0);
+    std::memcpy(pw_want.data() + 16 + 0x21FF8, pw.data() + 16 + 0x21FF8, 4);
+    expect_storage_bytes(pw.data(), pw_want.data(), pw.size());
+    plan_win_clear_lines_redirect(plan, nullptr);
+
+    // PlayerLock::clear resets two three-dword entries and the flag byte at 0.
+    // The two -1 sentinels and the zero within each entry are asserted per
+    // field: a loop that wrote them in the wrong order, or cleared where it
+    // should sentinel, would pass a check that only looked at the whole entry.
+    std::vector<uint8_t> pl(sizeof(PlayerLock) + 32);
+    std::vector<uint8_t> pl_want(pl.size());
+    auto *lock = reinterpret_cast<PlayerLock *>(pl.data() + 16);
+    seed_storage(pl.data(), pl_want.data(), pl.size());
+    std::memcpy(pl_want.data(), pl.data(), pl.size());
+    lock->clear();
+    expect((pl[16] & 0xFF) == 0);          // active flag byte at 0
+    expect(read32(pl, 0x04) == -1);
+    expect(read32(pl, 0x08) == -1);
+    expect(read32(pl, 0x0C) == 0);
+    expect(read32(pl, 0x10) == -1);
+    expect(read32(pl, 0x14) == -1);
+    expect(read32(pl, 0x18) == 0);
+    // Everything written sits in 0..0x1C; the byte at 0 plus the two entries.
+    pl_want[16] = pl[16];
+    std::memcpy(pl_want.data() + 16 + 4, pl.data() + 16 + 4, 0x18);
+    expect_storage_bytes(pl.data(), pl_want.data(), pl.size());
+    player_lock_clear_redirect(lock, nullptr);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10720,6 +10767,7 @@ int main() {
     test_fixed_argument_delegates();
     test_offset_delegates();
     test_win_sync_palette();
+    test_self_contained_stores();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

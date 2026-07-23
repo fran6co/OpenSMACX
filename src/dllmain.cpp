@@ -63,6 +63,8 @@
 #include "checkbox.h"
 #include "editgroup.h"
 #include "xpops.h"
+#include "planwin.h"
+#include "playerlock.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -88,7 +90,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 397;
+constexpr size_t RedirectCount = 399;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -934,6 +936,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00489B10,
         },
         {
+            0x0048AF20,
+            reinterpret_cast<uintptr_t>(&plan_win_clear_lines_redirect),
+            OPENSMACX_SIGNATURE_0048AF20,
+        },
+        {
             0x00493C10,
             reinterpret_cast<uintptr_t>(&prod_picker_unk1_redirect),
             OPENSMACX_SIGNATURE_00493C10,
@@ -1147,6 +1154,11 @@ bool install_redirects() {
             0x004C7120,
             reinterpret_cast<uintptr_t>(&wave_set_release_redirect),
             OPENSMACX_SIGNATURE_004C7120,
+        },
+        {
+            0x0058FF70,
+            reinterpret_cast<uintptr_t>(&player_lock_clear_redirect),
+            OPENSMACX_SIGNATURE_0058FF70,
         },
         {
             0x0059D3A0,
