@@ -435,6 +435,7 @@ if(BUILD_TESTING)
         src/spot_recovery.cpp
         src/spying_recovery.cpp
         src/sprite.cpp
+        src/stringbox.cpp
         src/stringstruct.cpp
         src/text_recovery.cpp
         src/textindex_recovery.cpp
