@@ -797,3 +797,32 @@ int Win::OnSetCursor(void *, void *, unsigned int, unsigned int) {
 int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsigned int a4) {
     return Win::OnSetCursor(a1, a2, a3, a4);
 }
+
+/*
+Purpose: Report whether a value is present in the window's id table - the
+         array at 0x1A4 with its count at 0x3FC. A zero value and an empty
+         table both report absent.
+Original Offset: 005ECE80
+Return Value: 1 when the value is in the table, 0 otherwise
+Status: Complete
+*/
+int Win::UNK3(int value) {
+    if (value == 0) {
+        return 0;
+    }
+    int32_t count;
+    std::memcpy(&count, reinterpret_cast<uint8_t *>(this) + 0x3FC, sizeof(count));
+    uint8_t *const table = reinterpret_cast<uint8_t *>(this) + 0x1A4;
+    for (int index = 0; index < count; ++index) {
+        int32_t entry;
+        std::memcpy(&entry, table + index * 4, sizeof(entry));
+        if (entry == value) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int __fastcall win_unk3_redirect(Win *self, void *, int value) {
+    return self->UNK3(value);
+}

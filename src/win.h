@@ -53,6 +53,7 @@ class DLLEXPORT Win {
   void UNK9(int value);
   void reset_window_clip();
   void sync_palette();
+  int UNK3(int value);
   static int OnSetCursor(void *a1, void *a2, unsigned int a3, unsigned int a4);
   void set_vert_pos(int position);
   void set_horz_pos(int position);
@@ -399,3 +400,4 @@ void __fastcall win_set_horz_pos_redirect(Win *self, void *, int position);
 void __fastcall win_set_vert_range_redirect(Win *self, void *, int minimum, int maximum);
 void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int maximum);
 int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsigned int a4);
+int __fastcall win_unk3_redirect(Win *self, void *, int value);

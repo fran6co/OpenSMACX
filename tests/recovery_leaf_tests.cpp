@@ -11723,6 +11723,43 @@ void test_loop_store_searches() {
     expect_storage_bytes(lk.data(), lk_e.data(), lk.size());
 }
 
+void test_win_unk3_contains() {
+    // A linear "contains" over the id table at 0x1A4 with its count at 0x3FC.
+    // All four exits are checked: a present value returns 1, an absent one 0,
+    // a zero query 0 without scanning, and an empty table 0.
+    std::vector<uint8_t> storage(sizeof(Win) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *window = reinterpret_cast<Win *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    auto set_count = [&](int32_t c) {
+        std::memcpy(storage.data() + 16 + 0x3FC, &c, sizeof(c));
+    };
+    auto set_entry = [&](int i, int32_t v) {
+        std::memcpy(storage.data() + 16 + 0x1A4 + i * 4, &v, sizeof(v));
+    };
+    set_count(3);
+    set_entry(0, 0x111);
+    set_entry(1, 0x222);
+    set_entry(2, 0x333);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    expect(window->UNK3(0x111) == 1);
+    expect(window->UNK3(0x333) == 1);
+    expect(window->UNK3(0x444) == 0);          // absent
+    expect(window->UNK3(0) == 0);              // zero query, no scan
+    expect(win_unk3_redirect(window, nullptr, 0x222) == 1);
+    // A pure search writes nothing.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Empty table: everything is absent, and a value that sits in the array
+    // past the count must not be found.
+    set_count(0);
+    expect(window->UNK3(0x111) == 0);
+    set_count(1);
+    expect(window->UNK3(0x222) == 0);          // 0x222 is at index 1, past count 1
+    expect(window->UNK3(0x111) == 1);          // 0x111 at index 0, within count
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12111,6 +12148,7 @@ int main() {
     test_field_store_batch2();
     test_pull_down_id_to_index();
     test_loop_store_searches();
+    test_win_unk3_contains();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
