@@ -267,3 +267,17 @@ void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, 
 void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_left_double_click(a1, a2);
 }
+
+/*
+Purpose: Interface timer tick; the legacy implementation ignores it and
+         returns.
+Original Offset: 0041AF40
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::timer_callback(int, int) {
+}
+
+void __cdecl base_win_timer_callback_redirect(int a1, int a2) {
+    BaseWin::timer_callback(a1, a2);
+}

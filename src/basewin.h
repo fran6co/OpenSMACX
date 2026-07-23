@@ -49,6 +49,7 @@ class DLLEXPORT BaseWin : GraphicWin {
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_scrolled(int a1, int a2);
+  static void timer_callback(int a1, int a2);
   void on_left_click(int a1, int a2);
   void on_right_click(int a1, int a2);
   void on_left_double_click(int a1, int a2);
@@ -89,3 +90,4 @@ void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a
 void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);
+void __cdecl base_win_timer_callback_redirect(int a1, int a2);

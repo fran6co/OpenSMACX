@@ -11534,6 +11534,52 @@ void test_bulk_generated_stubs() {
                          net_b_storage.size());
 }
 
+void test_remaining_constant_stubs() {
+    // The last of the constant-return bucket - the ones the bulk tool skipped
+    // for pointer or unsigned parameters, done by hand with faithful types.
+    // Each touches nothing and returns its constant.
+    std::vector<uint8_t> mw(sizeof(MapWin) + 32), mw_e(mw.size());
+    auto *map = reinterpret_cast<MapWin *>(mw.data() + 16);
+    seed_storage(mw.data(), mw_e.data(), mw.size());
+    std::memcpy(mw_e.data(), mw.data(), mw.size());
+    map->on_left_double_click(1, 2);
+    map->on_left_up(3, 4);
+    map_win_on_left_double_click_redirect(map, nullptr, -1, -2);
+    map_win_on_left_up_redirect(map, nullptr, -3, -4);
+    expect_storage_bytes(mw.data(), mw_e.data(), mw.size());
+
+    std::vector<uint8_t> md(sizeof(Midi_Device) + 32), md_e(md.size());
+    auto *midi = reinterpret_cast<Midi_Device *>(md.data() + 16);
+    seed_storage(md.data(), md_e.data(), md.size());
+    std::memcpy(md_e.data(), md.data(), md.size());
+    char buf[8] = {};
+    expect(midi->get_description(1u, buf, 2u) == 0);
+    expect(midi_device_get_description_redirect(midi, nullptr, 1u, buf, 2u) == 0);
+    expect_storage_bytes(md.data(), md_e.data(), md.size());
+
+    std::vector<uint8_t> wd(sizeof(Wave_In_Device) + 32), wd_e(wd.size());
+    auto *wave = reinterpret_cast<Wave_In_Device *>(wd.data() + 16);
+    seed_storage(wd.data(), wd_e.data(), wd.size());
+    std::memcpy(wd_e.data(), wd.data(), wd.size());
+    expect(wave->get_description(1u, buf, 2u) == 0);
+    expect(wave_in_device_get_description_redirect(wave, nullptr, 1u, buf, 2u) == 0);
+    expect_storage_bytes(wd.data(), wd_e.data(), wd.size());
+
+    std::vector<uint8_t> pu(sizeof(Popup) + 32), pu_e(pu.size());
+    auto *popup = reinterpret_cast<Popup *>(pu.data() + 16);
+    seed_storage(pu.data(), pu_e.data(), pu.size());
+    std::memcpy(pu_e.data(), pu.data(), pu.size());
+    expect(popup->on_dialog_back_draw(nullptr) == 0);
+    expect(popup_on_dialog_back_draw_redirect(popup, nullptr, nullptr) == 0);
+    expect_storage_bytes(pu.data(), pu_e.data(), pu.size());
+
+    // Win::OnSetCursor and BaseWin::timer_callback are static; no instance.
+    expect(Win::OnSetCursor(nullptr, nullptr, 0u, 0u) == 1);
+    expect(win_onsetcursor_redirect(nullptr, nullptr, 1u, 2u) == 1);
+    BaseWin::timer_callback(1, 2);
+    base_win_timer_callback_redirect(-1, -2);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11918,6 +11964,7 @@ int main() {
     test_popup_exec_and_start_overloads();
     test_replay_win_stubs();
     test_bulk_generated_stubs();
+    test_remaining_constant_stubs();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

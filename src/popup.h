@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "basepop.h"
+#include "graphicwin.h"
 #include "scroll.h"
 
  /*
@@ -35,6 +36,7 @@ class DLLEXPORT Popup : BasePop {
   void start(char *a1, const char *a2, int a3, char *a4, int a5);
   void start(const char *label);
   void start(const char *label, int value);
+  int on_dialog_back_draw(::GraphicWin *window);
 
  private:
   Scroll scroll_;
@@ -61,3 +63,4 @@ extern char *PopupStartCaption;
 void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label);
 void __fastcall popup_start_label_value_redirect(Popup *self, void *,
                                                  const char *label, int value);
+int __fastcall popup_on_dialog_back_draw_redirect(Popup *self, void *, ::GraphicWin *window);
