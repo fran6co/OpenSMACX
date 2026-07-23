@@ -66,6 +66,7 @@
 #include "planwin.h"
 #include "playerlock.h"
 #include "netdaemon.h"
+#include "console.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -92,7 +93,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 408;
+constexpr size_t RedirectCount = 413;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1161,6 +1162,31 @@ bool install_redirects() {
             0x004C7120,
             reinterpret_cast<uintptr_t>(&wave_set_release_redirect),
             OPENSMACX_SIGNATURE_004C7120,
+        },
+        {
+            0x00514EF0,
+            reinterpret_cast<uintptr_t>(&console_set_preferences_redirect),
+            OPENSMACX_SIGNATURE_00514EF0,
+        },
+        {
+            0x00514F10,
+            reinterpret_cast<uintptr_t>(&console_set_auto_preferences_redirect),
+            OPENSMACX_SIGNATURE_00514F10,
+        },
+        {
+            0x00514F20,
+            reinterpret_cast<uintptr_t>(&console_set_base_preferences_redirect),
+            OPENSMACX_SIGNATURE_00514F20,
+        },
+        {
+            0x00514F30,
+            reinterpret_cast<uintptr_t>(&console_set_audiovisual_redirect),
+            OPENSMACX_SIGNATURE_00514F30,
+        },
+        {
+            0x00514F40,
+            reinterpret_cast<uintptr_t>(&console_set_map_display_redirect),
+            OPENSMACX_SIGNATURE_00514F40,
         },
         {
             0x00530320,

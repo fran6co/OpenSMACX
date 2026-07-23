@@ -50,6 +50,11 @@ class DLLEXPORT Console {
  public:
   Console() { ; }
   ~Console() { ; }
+  void set_preferences();
+  void set_auto_preferences();
+  void set_base_preferences();
+  void set_audiovisual();
+  void set_map_display();
 
  private:
   uint8_t derived_storage_[0x23D94];
@@ -57,3 +62,15 @@ class DLLEXPORT Console {
 };
 
 static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe");
+
+// All five preference openers drive the one PrefWin the game keeps at a fixed
+// address, opening it to a different page. PrefWin::display is not recovered.
+typedef void (__thiscall func_pref_win_display)(void *pref_win, int page);
+extern func_pref_win_display *ConsolePrefWinDisplay;
+extern void *ConsolePrefWin;
+
+void __fastcall console_set_preferences_redirect(Console *self, void *);
+void __fastcall console_set_auto_preferences_redirect(Console *self, void *);
+void __fastcall console_set_base_preferences_redirect(Console *self, void *);
+void __fastcall console_set_audiovisual_redirect(Console *self, void *);
+void __fastcall console_set_map_display_redirect(Console *self, void *);

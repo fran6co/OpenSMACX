@@ -8,6 +8,7 @@ ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,T
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
 CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
+ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
 DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
 EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned

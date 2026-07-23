@@ -10891,6 +10891,68 @@ void test_win_scroll_forwarders() {
     ScrollCurrentWin = saved_current_win;
 }
 
+namespace {
+void *g_pref_win_target = nullptr;
+int g_pref_win_page = -1;
+int g_pref_win_calls = 0;
+void __thiscall observe_pref_win_display(void *pref_win, int page) {
+    g_pref_win_target = pref_win; g_pref_win_page = page; ++g_pref_win_calls;
+}
+}  // namespace
+
+void test_console_preference_openers() {
+    // Five openers, each opening the one PrefWin to a different page. The page
+    // number is the only thing that distinguishes them, so every one is
+    // checked - a copy-paste that left two openers on the same page would pass
+    // a test that only confirmed a call happened.
+    auto *const saved_display = ConsolePrefWinDisplay;
+    void *const saved_pref = ConsolePrefWin;
+    int fake_pref_win = 0;
+    ConsolePrefWinDisplay = &observe_pref_win_display;
+    ConsolePrefWin = &fake_pref_win;
+
+    std::vector<uint8_t> storage(sizeof(Console) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *console = reinterpret_cast<Console *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    struct Opener {
+        void (Console::*method)();
+        void (__fastcall *redirect)(Console *, void *);
+        int page;
+    };
+    const Opener openers[] = {
+        {&Console::set_preferences, &console_set_preferences_redirect, 0},
+        {&Console::set_auto_preferences, &console_set_auto_preferences_redirect, 3},
+        {&Console::set_base_preferences, &console_set_base_preferences_redirect, 2},
+        {&Console::set_audiovisual, &console_set_audiovisual_redirect, 4},
+        {&Console::set_map_display, &console_set_map_display_redirect, 5},
+    };
+
+    for (const Opener &opener : openers) {
+        g_pref_win_calls = 0;
+        g_pref_win_page = -1;
+        g_pref_win_target = nullptr;
+        (console->*(opener.method))();
+        expect(g_pref_win_calls == 1);
+        // The shared PrefWin, not the Console it is called through.
+        expect(g_pref_win_target == &fake_pref_win);
+        expect(g_pref_win_target != reinterpret_cast<void *>(console));
+        expect(g_pref_win_page == opener.page);
+
+        g_pref_win_calls = 0;
+        opener.redirect(console, nullptr);
+        expect(g_pref_win_calls == 1);
+        expect(g_pref_win_page == opener.page);
+    }
+    // None of them touched the Console object.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    ConsolePrefWinDisplay = saved_display;
+    ConsolePrefWin = saved_pref;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11266,6 +11328,7 @@ int main() {
     test_buffer_clear_links();
     test_net_daemon_receive();
     test_win_scroll_forwarders();
+    test_console_preference_openers();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
