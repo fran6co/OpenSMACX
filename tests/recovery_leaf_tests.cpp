@@ -11251,6 +11251,82 @@ void test_base_win_clicks() {
     BaseWinClick = saved;
 }
 
+namespace {
+WorldWin *g_ww_self = nullptr;
+int g_ww_button = -1, g_ww_double = -1, g_ww_calls = 0;
+void __thiscall observe_world_win_click(WorldWin *self, int a1, int a2,
+                                        int button, int is_double) {
+    g_ww_self = self; g_ww_button = button; g_ww_double = is_double;
+    ++g_ww_calls; (void)a1; (void)a2;
+}
+MapWin *g_mw_self = nullptr;
+int g_mw_a1 = 0, g_mw_a2 = 0, g_mw_button = -1, g_mw_calls = 0;
+void __thiscall observe_map_win_click(MapWin *self, int a1, int a2, int button) {
+    g_mw_self = self; g_mw_a1 = a1; g_mw_a2 = a2; g_mw_button = button;
+    ++g_mw_calls;
+}
+}  // namespace
+
+void test_window_click_forwarders() {
+    // WorldWin: a plain 4-arg click, no adjustment, no guard.
+    auto *const saved_ww = WorldWinClick;
+    WorldWinClick = &observe_world_win_click;
+    std::vector<uint8_t> ww(sizeof(WorldWin) + 32);
+    std::vector<uint8_t> ww_want(ww.size());
+    auto *world = reinterpret_cast<WorldWin *>(ww.data() + 16);
+    seed_storage(ww.data(), ww_want.data(), ww.size());
+    std::memcpy(ww_want.data(), ww.data(), ww.size());
+    g_ww_calls = 0;
+    world->on_left_click(1, 2);
+    expect(g_ww_calls == 1 && g_ww_self == world && g_ww_button == 0 && g_ww_double == 0);
+    world->on_right_click(1, 2);
+    expect(g_ww_button == 1 && g_ww_double == 0 && g_ww_self == world);
+    world_win_on_left_click_redirect(world, nullptr, 3, 4);
+    expect(g_ww_button == 0);
+    expect_storage_bytes(ww.data(), ww_want.data(), ww.size());
+    WorldWinClick = saved_ww;
+
+    // MapWin: reached through the GraphicWin virtual base, so `this` points at
+    // 0x21A6C into the object and is adjusted back; gated on an input-enable
+    // flag. Both the adjustment and the guard are pinned.
+    auto *const saved_mw = MapWinClick;
+    int32_t *const saved_flag = MapWinInputEnabled;
+    int32_t enabled = 1;
+    MapWinClick = &observe_map_win_click;
+    MapWinInputEnabled = &enabled;
+
+    std::vector<uint8_t> mw(sizeof(MapWin) + 32);
+    auto *real_map = reinterpret_cast<uint8_t *>(mw.data() + 16);
+    // What the virtual-base vtable passes as `this`: MapWin + 0x21A6C.
+    auto *vbase_this = reinterpret_cast<MapWin *>(real_map + 0x21A6C);
+
+    enabled = 1;
+    g_mw_calls = 0;
+    vbase_this->on_left_click(0x55, 0x66);
+    expect(g_mw_calls == 1);
+    expect(reinterpret_cast<uint8_t *>(g_mw_self) == real_map);  // adjusted back
+    expect(g_mw_a1 == 0x55 && g_mw_a2 == 0x66 && g_mw_button == 0);
+    vbase_this->on_right_click(-1, -2);
+    expect(g_mw_button == 1 && g_mw_a1 == -1);
+    expect(reinterpret_cast<uint8_t *>(g_mw_self) == real_map);
+
+    // Disabled: the guard blocks both, no dispatch.
+    enabled = 0;
+    g_mw_calls = 0;
+    vbase_this->on_left_click(1, 1);
+    vbase_this->on_right_click(1, 1);
+    expect(g_mw_calls == 0);
+
+    enabled = 1;
+    g_mw_calls = 0;
+    map_win_on_right_click_redirect(vbase_this, nullptr, 9, 8);
+    expect(g_mw_calls == 1 && g_mw_button == 1);
+    expect(reinterpret_cast<uint8_t *>(g_mw_self) == real_map);
+
+    MapWinClick = saved_mw;
+    MapWinInputEnabled = saved_flag;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11631,6 +11707,7 @@ int main() {
     test_base_win_iface_scrolled();
     test_dialogs_forwarders();
     test_base_win_clicks();
+    test_window_click_forwarders();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

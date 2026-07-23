@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 70,
-      "source_complete": 933,
+      "original_dependency": 72,
+      "source_complete": 937,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4627
+      "unrecovered": 4621
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 879,
-    "matched_function_starts": 879,
-    "unique_addresses": 879,
+    "annotations": 883,
+    "matched_function_starts": 883,
+    "unique_addresses": 883,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 79
+      "function": 81
     },
     "items": [
       {
@@ -2593,7 +2593,7 @@
         "function": "?set_date@MainInterface@@QAEXPAD@Z",
         "function_address": "0x0045BE80",
         "kind": "function",
-        "location": "src/mapwin.cpp:48",
+        "location": "src/mapwin.cpp:49",
         "symbol": "MainInterfaceOriginalSetDate",
         "type": "func_set_date *"
       },
@@ -2602,7 +2602,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/mapwin.cpp:49",
+        "location": "src/mapwin.cpp:50",
         "symbol": "MainInterfaceGlobal",
         "type": "void *"
       },
@@ -2611,7 +2611,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/mapwin.cpp:50",
+        "location": "src/mapwin.cpp:51",
         "symbol": "MapWinMainCaption",
         "type": "char *"
       },
@@ -2620,9 +2620,18 @@
         "function": "_free",
         "function_address": "0x00644EF2",
         "kind": "function",
-        "location": "src/mapwin.cpp:68",
+        "location": "src/mapwin.cpp:69",
         "symbol": "MapWinFree",
         "type": "func_map_win_free *"
+      },
+      {
+        "address": "0x0046D5D0",
+        "function": "?click@MapWin@@QAEXHHH@Z",
+        "function_address": "0x0046D5D0",
+        "kind": "function",
+        "location": "src/mapwin.cpp:94",
+        "symbol": "MapWinClick",
+        "type": "func_map_win_click *"
       },
       {
         "address": "0x00630A00",
@@ -3741,6 +3750,15 @@
         "type": "func_win_flip *"
       },
       {
+        "address": "0x004C3D40",
+        "function": "?click@WorldWin@@QAEXHHHH@Z",
+        "function_address": "0x004C3D40",
+        "kind": "function",
+        "location": "src/worldwin.cpp:47",
+        "symbol": "WorldWinClick",
+        "type": "func_world_win_click *"
+      },
+      {
         "address": "0x005BF930",
         "function": "?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z",
         "function_address": "0x005BF930",
@@ -3759,7 +3777,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 79,
-    "total": 270
+    "matched_function_starts": 81,
+    "total": 272
   }
 }
