@@ -213,3 +213,22 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
     }
     return self;
 }
+
+/*
+Purpose: Fill a rectangle in the window's own buffer.
+Original Offset: 005D5440
+Return Value: whatever Buffer::fill returns
+Status: Complete
+*/
+func_buffer_fill *BufferOriginalFill = (func_buffer_fill *)0x005D8240;
+
+int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
+    return BufferOriginalFill(reinterpret_cast<uint8_t *>(this) + 0x444,
+                              x1, y1, x2, y2, color);
+}
+
+int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
+                                         int x1, int y1, int x2, int y2,
+                                         int color) {
+    return self->fill(x1, y1, x2, y2, color);
+}

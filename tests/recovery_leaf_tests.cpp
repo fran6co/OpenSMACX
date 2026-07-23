@@ -10208,6 +10208,93 @@ void test_fixed_argument_delegates() {
     CaviarOriginalApplyRotation = saved_rotation;
 }
 
+namespace {
+void *g_fill_target = nullptr;
+int g_fill_args[5] = {};
+int g_fill_calls = 0;
+int __thiscall observe_buffer_fill(void *self, int a, int b, int c, int d, int e) {
+    g_fill_target = self;
+    g_fill_args[0]=a; g_fill_args[1]=b; g_fill_args[2]=c; g_fill_args[3]=d; g_fill_args[4]=e;
+    ++g_fill_calls;
+    return 0x9ABC;
+}
+
+void *g_check_target = nullptr;
+long g_check_value = 0;
+int g_check_calls = 0;
+void __thiscall observe_set_state_flag(void *self, long value) {
+    g_check_target = self; g_check_value = value; ++g_check_calls;
+}
+
+struct StartCall {
+    Popup *self; char *a1; const char *a2; int a3; char *a4; int a5; void *parent;
+    int calls;
+} g_start = {};
+void __thiscall observe_popup_start_full(Popup *self, char *a1, const char *a2,
+                                         int a3, char *a4, int a5, void *parent) {
+    g_start = {self, a1, a2, a3, a4, a5, parent, g_start.calls + 1};
+}
+}  // namespace
+
+void test_offset_delegates() {
+    // GraphicWin::fill forwards to Buffer::fill on the buffer at 0x444, with
+    // the five arguments in order. The point is the target is the member, not
+    // the window, and the order survives.
+    auto *const saved_fill = BufferOriginalFill;
+    BufferOriginalFill = &observe_buffer_fill;
+    std::vector<uint8_t> gw(sizeof(GraphicWin) + 32);
+    std::vector<uint8_t> gw_want(gw.size());
+    auto *window = reinterpret_cast<GraphicWin *>(gw.data() + 16);
+    seed_storage(gw.data(), gw_want.data(), gw.size());
+    std::memcpy(gw_want.data(), gw.data(), gw.size());
+    g_fill_calls = 0;
+    expect(window->fill(11, 22, 33, 44, 55) == 0x9ABC);
+    expect(g_fill_calls == 1);
+    expect(g_fill_target == gw.data() + 16 + 0x444);
+    expect(g_fill_args[0] == 11 && g_fill_args[4] == 55);
+    expect(g_fill_args[1] == 22 && g_fill_args[2] == 33 && g_fill_args[3] == 44);
+    expect_storage_bytes(gw.data(), gw_want.data(), gw.size());
+    graphic_win_fill_redirect(window, nullptr, -1, -2, -3, -4, -5);
+    expect(g_fill_args[0] == -1 && g_fill_args[4] == -5);
+    BufferOriginalFill = saved_fill;
+
+    // BasePop::write_check forwards to CheckBox::set_state_flag on the member
+    // at 0x2228, passing the value through.
+    auto *const saved_check = CheckBoxOriginalSetStateFlag;
+    CheckBoxOriginalSetStateFlag = &observe_set_state_flag;
+    std::vector<uint8_t> bp(sizeof(BasePop) + 32);
+    std::vector<uint8_t> bp_want(bp.size());
+    auto *popup = reinterpret_cast<BasePop *>(bp.data() + 16);
+    seed_storage(bp.data(), bp_want.data(), bp.size());
+    std::memcpy(bp_want.data(), bp.data(), bp.size());
+    g_check_calls = 0;
+    popup->write_check(0x12345678L);
+    expect(g_check_calls == 1);
+    expect(g_check_target == bp.data() + 16 + 0x2228);
+    expect(g_check_value == 0x12345678L);
+    expect_storage_bytes(bp.data(), bp_want.data(), bp.size());
+    base_pop_write_check_redirect(popup, nullptr, -1L);
+    expect(g_check_value == -1L);
+    CheckBoxOriginalSetStateFlag = saved_check;
+
+    // Popup::start forwards its five arguments and appends a null parent.
+    auto *const saved_start = PopupOriginalStartFull;
+    PopupOriginalStartFull = &observe_popup_start_full;
+    std::vector<uint8_t> pu(sizeof(Popup) + 32);
+    auto *pstart = reinterpret_cast<Popup *>(pu.data() + 16);
+    char a1[] = "a"; const char a2[] = "b"; char a4[] = "d";
+    g_start.calls = 0;
+    pstart->start(a1, a2, 7, a4, 9);
+    expect(g_start.calls == 1);
+    expect(g_start.self == pstart);
+    expect(g_start.a1 == a1 && g_start.a2 == a2 && g_start.a4 == a4);
+    expect(g_start.a3 == 7 && g_start.a5 == 9);
+    expect(g_start.parent == nullptr);
+    popup_start_redirect(pstart, nullptr, a1, a2, -3, a4, -5);
+    expect(g_start.a3 == -3 && g_start.a5 == -5 && g_start.parent == nullptr);
+    PopupOriginalStartFull = saved_start;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10574,6 +10661,7 @@ int main() {
     test_edit_group_text();
     test_dialogs_dispatch();
     test_fixed_argument_delegates();
+    test_offset_delegates();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

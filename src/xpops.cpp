@@ -33,3 +33,16 @@ int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
     return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, value,
                              sprite, 1, 1, callback);
 }
+
+/*
+Purpose: The three-argument popup form: like the short form but with the value
+         defaulted to zero and no override text.
+Original Offset: 005BF5D0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
+                           int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, 0,
+                             sprite, 1, 1, callback);
+}

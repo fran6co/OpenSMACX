@@ -32,6 +32,7 @@ class DLLEXPORT GraphicWin : Win {
   ~GraphicWin() { ; }
   void construct();
   uint32_t close();
+  int fill(int x1, int y1, int x2, int y2, int color);
  private:
   Buffer buffer_;
   uint32_t field_9CC_;
@@ -53,6 +54,15 @@ class DLLEXPORT GraphicWin : Win {
   uint32_t field_A0C_;
   uint32_t field_A10_;
 };
+
+// Buffer::fill is not recovered yet, so it is reached through a seam on the
+// window's own buffer at 0x444.
+typedef int (__thiscall func_buffer_fill)(void *, int, int, int, int, int);
+extern func_buffer_fill *BufferOriginalFill;
+
+int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
+                                         int x1, int y1, int x2, int y2,
+                                         int color);
 
 static_assert(sizeof(GraphicWin) == 0xA14,
               "GraphicWin layout must match the legacy ABI");

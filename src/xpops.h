@@ -32,3 +32,5 @@ extern char *XPopsCaptionBuffer;
 
 DLLEXPORT int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
                                    int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
+                                     int (__cdecl *callback)());

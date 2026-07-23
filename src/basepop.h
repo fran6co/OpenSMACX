@@ -47,6 +47,7 @@ class DLLEXPORT BasePop : GraphicWin {
   BasePop() { ; }
   ~BasePop() { ; }
   void set_loc(int x, int y);
+  void write_check(long value);
   int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
 
  private:
@@ -360,6 +361,13 @@ class DLLEXPORT BasePop : GraphicWin {
   LPSTR cancel_text_;
   uint32_t field_322C_;
 };
+
+// CheckBox::set_state_flag is not recovered; write_check reaches it on the
+// CheckBox member at 0x2228.
+typedef void (__thiscall func_set_state_flag)(void *, long);
+extern func_set_state_flag *CheckBoxOriginalSetStateFlag;
+
+void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value);
 
 static_assert(sizeof(BasePop) == 0x3230,
               "BasePop layout must match the original executable");

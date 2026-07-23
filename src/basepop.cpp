@@ -353,3 +353,21 @@ void BasePop::fallout() {
 void __cdecl base_pop_fallout_redirect() {
     BasePop::fallout();
 }
+
+func_set_state_flag *CheckBoxOriginalSetStateFlag =
+    (func_set_state_flag *)0x0060ECE0;
+
+/*
+Purpose: Set the popup's embedded check box, at 0x2228, to the given state.
+Original Offset: 00601BB0
+Return Value: n/a
+Status: Complete
+*/
+void BasePop::write_check(long value) {
+    CheckBoxOriginalSetStateFlag(reinterpret_cast<uint8_t *>(this) + 0x2228,
+                                 value);
+}
+
+void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value) {
+    self->write_check(value);
+}

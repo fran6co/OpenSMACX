@@ -2,10 +2,12 @@ symbol,category,strategy,notes
 BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
 BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
 ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
+CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
 DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
 EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
@@ -13,6 +15,7 @@ ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for
 MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
 NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
 PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
+PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
 PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered RadioButton close until Dialog close is source-owned
 ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
