@@ -10479,6 +10479,88 @@ void test_base_pop_set_width() {
     BasePopScreenWidth = saved_screen;
 }
 
+namespace {
+void *g_mapwin_freed = nullptr;
+int g_mapwin_free_calls = 0;
+void *observe_map_win_free(void *pointer) {
+    g_mapwin_freed = pointer;
+    ++g_mapwin_free_calls;
+    return nullptr;
+}
+}  // namespace
+
+void test_map_win_close() {
+    // close() frees the buffer at 0x4 and then closes the GraphicWin base,
+    // located through the object's own vbtable. GraphicWin::close is real
+    // recovered code needing its two subobject seams and its default; it does
+    // not do Scroll's left/right dispatch, so it gets plain observers rather
+    // than the Scroll fixture. The vbase offset installed here is not where a
+    // most-derived MapWin would put it, so a hardcoded base offset cannot pass.
+    uint32_t base_default = 0x0BADF00DU;
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_default = GraphicWinFieldA0CDefault;
+    WinOriginalClose = observe_win_close;
+    BufferSubobjectClose = observe_buffer_close;
+    GraphicWinFieldA0CDefault = &base_default;
+    auto *const saved_free = MapWinFree;
+    MapWinFree = &observe_map_win_free;
+
+    const int32_t vbase = 0x1000;
+    const int32_t vbtable[2] = {0, vbase};
+    const int32_t *vbtable_pointer = vbtable;
+
+    std::vector<uint8_t> storage(sizeof(MapWin) + 32);
+    auto *window = reinterpret_cast<MapWin *>(storage.data() + 16);
+    uint8_t *const object = storage.data() + 16;
+    auto prepare_base = [&] {
+        std::memcpy(object, &vbtable_pointer, sizeof(vbtable_pointer));
+        const uint32_t zero = 0;
+        std::memcpy(object + vbase + 0xA08, &zero, sizeof(zero));  // release ptr
+    };
+
+    // Owned pointer present: it is freed and the slot cleared, then the base
+    // close runs at the vbtable offset.
+    for (size_t i = 0; i < storage.size(); ++i) {
+        storage[i] = static_cast<uint8_t>(0x20 + (i * 7));
+    }
+    prepare_base();
+    void *owned = reinterpret_cast<void *>(0xDEADBEEF);
+    std::memcpy(object + 4, &owned, sizeof(owned));
+    g_win_closed = nullptr;
+    g_buffer_closed = nullptr;
+    g_mapwin_free_calls = 0;
+    window->close();
+    expect(g_mapwin_free_calls == 1);
+    expect(g_mapwin_freed == owned);
+    void *after = reinterpret_cast<void *>(0x1);
+    std::memcpy(&after, object + 4, sizeof(after));
+    expect(after == nullptr);
+    expect(g_win_closed == object + vbase);
+    expect(g_buffer_closed == object + vbase + 0x444);
+
+    // No owned pointer: free is skipped, base close still runs.
+    prepare_base();
+    void *const null_owned = nullptr;
+    std::memcpy(object + 4, &null_owned, sizeof(null_owned));
+    g_win_closed = nullptr;
+    g_mapwin_free_calls = 0;
+    window->close();
+    expect(g_mapwin_free_calls == 0);
+    expect(g_win_closed == object + vbase);
+
+    std::memcpy(object + 4, &owned, sizeof(owned));
+    prepare_base();
+    g_mapwin_free_calls = 0;
+    map_win_close_redirect(window, nullptr);
+    expect(g_mapwin_free_calls == 1);
+
+    MapWinFree = saved_free;
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_default;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -10849,6 +10931,7 @@ int main() {
     test_win_sync_palette();
     test_self_contained_stores();
     test_base_pop_set_width();
+    test_map_win_close();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

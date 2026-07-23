@@ -64,3 +64,28 @@ void MapWin::main_caption() {
 void __fastcall map_win_main_caption_redirect(MapWin *self, void *) {
     self->main_caption();
 }
+
+func_map_win_free *MapWinFree = (func_map_win_free *)0x00644EF2;
+
+/*
+Purpose: Close the map window - free the buffer it owns at 0x4, then close its
+         graphic base. The base is located through the object's own vbtable,
+         not a fixed offset, so an embedded MapWin closes its own base.
+Original Offset: 00470F70
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::close() {
+    if (owned_) {
+        MapWinFree(owned_);
+        owned_ = nullptr;
+    }
+    const int32_t *const vbtable =
+        *reinterpret_cast<const int32_t *const *>(this);
+    reinterpret_cast<GraphicWin *>(
+        reinterpret_cast<uint8_t *>(this) + vbtable[1])->close();
+}
+
+void __fastcall map_win_close_redirect(MapWin *self, void *) {
+    self->close();
+}
