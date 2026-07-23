@@ -11327,6 +11327,84 @@ void test_window_click_forwarders() {
     MapWinInputEnabled = saved_flag;
 }
 
+namespace {
+BasePop *g_exec_self = nullptr;
+int g_exec_flag = -1;
+int (__cdecl *g_exec_cb)() = nullptr;
+int g_exec_result = 0, g_exec_calls = 0;
+int __thiscall observe_base_pop_exec(BasePop *self, int flag, int (__cdecl *cb)()) {
+    g_exec_self = self; g_exec_flag = flag; g_exec_cb = cb; ++g_exec_calls;
+    return g_exec_result;
+}
+int __cdecl exec_probe_cb() { return 0; }
+
+struct StartArgs {
+    Popup *self; char *a; const char *b; int c; char *d; int e; void *f;
+    int calls;
+} g_start2 = {};
+void __thiscall observe_start_full(Popup *self, char *a, const char *b, int c,
+                                   char *d, int e, void *f) {
+    g_start2 = {self, a, b, c, d, e, f, g_start2.calls + 1};
+}
+}  // namespace
+
+void test_popup_exec_and_start_overloads() {
+    // BasePop::exec: two overloads forwarding to the two-argument exec with
+    // flag 0 and either no callback or the given one. The callback must pass
+    // through, and the result must come back.
+    auto *const saved_exec = BasePopExec;
+    BasePopExec = &observe_base_pop_exec;
+    std::vector<uint8_t> bp(sizeof(BasePop) + 32);
+    auto *popup = reinterpret_cast<BasePop *>(bp.data() + 16);
+
+    g_exec_result = 0x1234;
+    g_exec_calls = 0;
+    expect(popup->exec() == 0x1234);
+    expect(g_exec_calls == 1 && g_exec_self == popup);
+    expect(g_exec_flag == 0 && g_exec_cb == nullptr);
+
+    g_exec_result = 0x5678;
+    expect(popup->exec(&exec_probe_cb) == 0x5678);
+    expect(g_exec_flag == 0 && g_exec_cb == &exec_probe_cb);
+    expect(base_pop_exec_void_redirect(popup, nullptr) == 0x5678);
+    expect(g_exec_cb == nullptr);
+    expect(base_pop_exec_callback_redirect(popup, nullptr, &exec_probe_cb) == 0x5678);
+    expect(g_exec_cb == &exec_probe_cb);
+    BasePopExec = saved_exec;
+
+    // Popup::start: two short forms filling the full start's defaults. The
+    // caption comes from the shared buffer, c is -1, and the value lands in
+    // slot e - the label-and-value form differs from the label-only form only
+    // in that one argument, which the test pins.
+    auto *const saved_start = PopupOriginalStartFull;
+    char *const saved_caption = PopupStartCaption;
+    char caption[4] = {};
+    PopupOriginalStartFull = &observe_start_full;
+    PopupStartCaption = caption;
+    std::vector<uint8_t> pu(sizeof(Popup) + 32);
+    auto *pstart = reinterpret_cast<Popup *>(pu.data() + 16);
+    const char label[] = "hi";
+
+    g_start2.calls = 0;
+    pstart->start(label);
+    expect(g_start2.calls == 1 && g_start2.self == pstart);
+    expect(g_start2.a == caption && g_start2.b == label);
+    expect(g_start2.c == -1 && g_start2.d == nullptr && g_start2.e == 0 &&
+           g_start2.f == nullptr);
+
+    pstart->start(label, 0x77);
+    expect(g_start2.b == label && g_start2.e == 0x77);   // value in slot e
+    expect(g_start2.c == -1 && g_start2.d == nullptr && g_start2.f == nullptr);
+
+    popup_start_label_redirect(pstart, nullptr, label);
+    expect(g_start2.e == 0);
+    popup_start_label_value_redirect(pstart, nullptr, label, -9);
+    expect(g_start2.e == -9);
+
+    PopupOriginalStartFull = saved_start;
+    PopupStartCaption = saved_caption;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -11708,6 +11786,7 @@ int main() {
     test_dialogs_forwarders();
     test_base_win_clicks();
     test_window_click_forwarders();
+    test_popup_exec_and_start_overloads();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 72,
-      "source_complete": 937,
+      "original_dependency": 73,
+      "source_complete": 941,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4621
+      "unrecovered": 4616
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 883,
-    "matched_function_starts": 883,
-    "unique_addresses": 883,
+    "annotations": 887,
+    "matched_function_starts": 887,
+    "unique_addresses": 887,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 81
+      "function": 82
     },
     "items": [
       {
@@ -1615,6 +1615,15 @@
         "location": "src/basepop.cpp:358",
         "symbol": "CheckBoxOriginalSetStateFlag",
         "type": "func_set_state_flag *"
+      },
+      {
+        "address": "0x00602600",
+        "function": "?exec@BasePop@@QAEHHP6AHXZ@Z",
+        "function_address": "0x00602600",
+        "kind": "function",
+        "location": "src/basepop.cpp:406",
+        "symbol": "BasePopExec",
+        "type": "func_base_pop_exec *"
       },
       {
         "address": "0x004160F0",
@@ -3777,7 +3786,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 81,
-    "total": 272
+    "matched_function_starts": 82,
+    "total": 273
   }
 }

@@ -33,6 +33,8 @@ class DLLEXPORT Popup : BasePop {
   ~Popup() { ; }
   void close();
   void start(char *a1, const char *a2, int a3, char *a4, int a5);
+  void start(const char *label);
+  void start(const char *label, int value);
 
  private:
   Scroll scroll_;
@@ -52,3 +54,10 @@ extern func_popup_start_full *PopupOriginalStartFull;
 
 void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
                                      const char *a2, int a3, char *a4, int a5);
+
+// The two short start forms share the caption buffer at a fixed address.
+extern char *PopupStartCaption;
+
+void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label);
+void __fastcall popup_start_label_value_redirect(Popup *self, void *,
+                                                 const char *label, int value);
