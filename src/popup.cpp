@@ -34,3 +34,22 @@ void Popup::close() {
 void __fastcall popup_close_redirect(Popup *self, void *) {
     self->close();
 }
+
+func_popup_start_full *PopupOriginalStartFull =
+    (func_popup_start_full *)0x00406380;
+
+/*
+Purpose: The five-argument start form, forwarding to the six-argument one with
+         no parent graphic window.
+Original Offset: 0043EF70
+Return Value: n/a
+Status: Complete
+*/
+void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5) {
+    PopupOriginalStartFull(this, a1, a2, a3, a4, a5, nullptr);
+}
+
+void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
+                                     const char *a2, int a3, char *a4, int a5) {
+    self->start(a1, a2, a3, a4, a5);
+}

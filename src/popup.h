@@ -32,6 +32,7 @@ class DLLEXPORT Popup : BasePop {
   Popup() { ; }
   ~Popup() { ; }
   void close();
+  void start(char *a1, const char *a2, int a3, char *a4, int a5);
 
  private:
   Scroll scroll_;
@@ -42,3 +43,12 @@ typedef void (__thiscall func_base_pop_close)(BasePop *);
 extern func_base_pop_close *BasePopOriginalClose;
 
 void __fastcall popup_close_redirect(Popup *self, void *);
+
+// The six-argument Popup::start is not recovered; the five-argument form
+// forwards to it with a null final GraphicWin argument.
+typedef void (__thiscall func_popup_start_full)(Popup *, char *, const char *,
+                                                int, char *, int, void *);
+extern func_popup_start_full *PopupOriginalStartFull;
+
+void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
+                                     const char *a2, int a3, char *a4, int a5);
