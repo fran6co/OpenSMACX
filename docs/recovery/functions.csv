@@ -3383,15 +3383,15 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0058FFC0,0x0058FFF2,50,.text,?unlock@PlayerLock@@QAEXH@Z,"void (__thiscall ?unlock@PlayerLock@@QAEXH@Z)(PlayerLock* this, int)",0x0058FFC0-0x0058FFF2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00590000,0x00590093,147,.text,?lock@PlayerLock@@QAEHHHHHHHH@Z,"int (__thiscall ?lock@PlayerLock@@QAEHHHHHHHH@Z)(PlayerLock* this, int, int, int, int, int, int, int)",0x00590000-0x00590093,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005900A0,0x005900C1,33,.text,?add_lock@PlayerLock@@QAEHHHHH@Z,"int (__thiscall ?add_lock@PlayerLock@@QAEHHHHH@Z)(PlayerLock* this, int, int, int, int)",0x005900A0-0x005900C1,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x005900D0,0x0059013D,109,.text,?clear@Lock@@QAEXXZ,void (__thiscall ?clear@Lock@@QAEXXZ)(Lock* this),0x005900D0-0x0059013D,game,hidden;sp_ready;purged_ok,src/lock.cpp:51,Complete,,,source_complete,,,,0,12
-0x00590140,0x0059016B,43,.text,?reset_map@Lock@@QAEXXZ,void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this),0x00590140-0x0059016B,game,hidden;sp_ready;purged_ok,src/lock.cpp:32,Complete,,,source_complete,,,,0,0
-0x00590170,0x005901C3,83,.text,?unlock@Lock@@QAEXH@Z,"void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)",0x00590170-0x005901C3,game,frame;hidden;sp_ready;purged_ok,src/lock.cpp:113,Complete,,,source_complete,,,,1,1
-0x005901D0,0x00590239,105,.text,?check_global@Lock@@QAEXXZ,void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this),0x005901D0-0x00590239,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,15
-0x00590240,0x005902BE,126,.text,?check_global_2@Lock@@QAEHH@Z,"int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)",0x00590240-0x005902BE,game,frame;hidden;sp_ready;purged_ok,src/lock.cpp:159,Complete,,,source_complete,,,,1,1
-0x005902C0,0x005902F3,51,.text,?global_lock@Lock@@QAEHH@Z,"int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)",0x005902C0-0x005902F3,game,frame;sp_ready;purged_ok,src/lock.cpp:137,Complete,,,source_complete,,,,0,1
+0x005900D0,0x0059013D,109,.text,?clear@Lock@@QAEXXZ,void (__thiscall ?clear@Lock@@QAEXXZ)(Lock* this),0x005900D0-0x0059013D,game,hidden;sp_ready;purged_ok,src/lock.cpp:52,Complete,,,source_complete,,,,0,12
+0x00590140,0x0059016B,43,.text,?reset_map@Lock@@QAEXXZ,void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this),0x00590140-0x0059016B,game,hidden;sp_ready;purged_ok,src/lock.cpp:33,Complete,,,source_complete,,,,0,0
+0x00590170,0x005901C3,83,.text,?unlock@Lock@@QAEXH@Z,"void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)",0x00590170-0x005901C3,game,frame;hidden;sp_ready;purged_ok,src/lock.cpp:114,Complete,,,source_complete,,,,1,1
+0x005901D0,0x00590239,105,.text,?check_global@Lock@@QAEXXZ,void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this),0x005901D0-0x00590239,game,hidden;sp_ready;purged_ok,src/lock.cpp:193,Complete,,,source_complete,,,,2,15
+0x00590240,0x005902BE,126,.text,?check_global_2@Lock@@QAEHH@Z,"int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)",0x00590240-0x005902BE,game,frame;hidden;sp_ready;purged_ok,src/lock.cpp:160,Complete,,,source_complete,,,,1,1
+0x005902C0,0x005902F3,51,.text,?global_lock@Lock@@QAEHH@Z,"int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)",0x005902C0-0x005902F3,game,frame;sp_ready;purged_ok,src/lock.cpp:138,Complete,,,source_complete,,,,0,1
 0x00590300,0x00590469,361,.text,?lock@Lock@@QAEHHHHHHHH@Z,"int (__thiscall ?lock@Lock@@QAEHHHHHHHH@Z)(Lock* this, int, int, int, int, int, int, int)",0x00590300-0x00590469,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x00590470,0x0059049B,43,.text,?add_lock@Lock@@QAEHHHHH@Z,"int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)",0x00590470-0x0059049B,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
-0x005904A0,0x005904FE,94,.text,?any_locks@Lock@@QAEHXZ,int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this),0x005904A0-0x005904FE,game,hidden;sp_ready;purged_ok,src/lock.cpp:80,Complete,,,source_complete,,,,0,3
+0x005904A0,0x005904FE,94,.text,?any_locks@Lock@@QAEHXZ,int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this),0x005904A0-0x005904FE,game,hidden;sp_ready;purged_ok,src/lock.cpp:81,Complete,,,source_complete,,,,0,3
 0x00590500,0x0059050A,153,.text,sub_590500,,0x00590500-0x0059050A;0x00590C20-0x00590CAF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00590510,0x005905B5,165,.text,?say_reactor@@YAXPAXHH@Z,,0x00590510-0x005905B5,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x005905C0,0x005906EC,300,.text,?say_weapon@@YAXPAXHH@Z,,0x005905C0-0x005906EC,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
@@ -3460,7 +3460,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00592DE0,0x00592E0E,46,.text,sub_592de0,,0x00592DE0-0x00592E0E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00592E10,0x00592E70,96,.text,?message_veh@@YAXHHHH@Z,"void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int vehID, int xCoord, int yCoord)",0x00592E10-0x00592E70,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,12
 0x00592E70,0x00592EDA,106,.text,?message_base@@YAXHHPADH@Z,,0x00592E70-0x00592EDA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
-0x00592EE0,0x00592F4C,108,.text,?message_data@@YAXHHHHHH@Z,,0x00592EE0-0x00592F4C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,92
+0x00592EE0,0x00592F4C,108,.text,?message_data@@YAXHHHHHH@Z,,0x00592EE0-0x00592F4C,game,frame;hidden;sp_ready;purged_ok,,,,LockMessageData,original_dependency,,,,1,92
 0x00592F50,0x00592FE9,153,.text,sub_592f50,,0x00592F50-0x00592FE9,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00592FF0,0x00593089,153,.text,?message_big_data@@YAXHHPAHH@Z,,0x00592FF0-0x00593089,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x00593090,0x00593108,120,.text,?message_lock@@YAXHHHHHHHH@Z,,0x00593090-0x00593108,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2

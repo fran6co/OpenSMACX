@@ -12135,6 +12135,80 @@ void test_lock_check_global_2() {
     LockCurrentServer = saved;
 }
 
+namespace {
+int g_msg_args[6];
+int g_msg_calls;
+void __cdecl observe_message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
+    g_msg_args[0]=a1; g_msg_args[1]=a2; g_msg_args[2]=a3;
+    g_msg_args[3]=a4; g_msg_args[4]=a5; g_msg_args[5]=a6;
+    ++g_msg_calls;
+}
+}  // namespace
+
+void test_lock_check_global() {
+    // The void sibling of check_global_2: on a clean release it broadcasts
+    // message_data(0x1205, owner, 0, 0, 0, 0) and clears the held flag rather
+    // than returning a value. The same four no-op gates apply, and the message
+    // arguments are pinned.
+    auto *const saved_server = LockCurrentServer;
+    auto *const saved_msg = LockMessageData;
+    LockCurrentServer = &observe_current_server;   // reused from check_global_2
+    LockMessageData = &observe_message_data;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    auto set32 = [&](size_t off, int32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto read32 = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, obj + off, sizeof(v)); return v;
+    };
+    auto set_flag = [&](int record, int entry, int32_t v) {
+        std::memcpy(obj + record * 0x1C + 0xC + entry * 0xC, &v, sizeof(v));
+    };
+
+    // Not the server: nothing.
+    std::memset(obj, 0, sizeof(Lock));
+    set32(0xE4, 1); set32(0xE0, 7);
+    g_current_server_result = 0;
+    g_msg_calls = 0;
+    lock->check_global();
+    expect(g_msg_calls == 0);
+    expect(read32(0xE4) == 1);
+    g_current_server_result = 1;
+
+    // Not held: nothing.
+    set32(0xE4, 0);
+    g_msg_calls = 0;
+    lock->check_global();
+    expect(g_msg_calls == 0);
+
+    // Held, but a record still active: nothing, flag kept.
+    set32(0xE4, 1);
+    set_flag(3, 0, 1);
+    g_msg_calls = 0;
+    lock->check_global();
+    expect(g_msg_calls == 0);
+    expect(read32(0xE4) == 1);
+
+    // Held, nothing active: broadcasts and clears the flag.
+    set_flag(3, 0, 0);
+    g_msg_calls = 0;
+    lock->check_global();
+    expect(g_msg_calls == 1);
+    expect(g_msg_args[0] == 0x1205);
+    expect(g_msg_args[1] == 7);          // the owner from 0xE0
+    expect(g_msg_args[2] == 0 && g_msg_args[5] == 0);
+    expect(read32(0xE4) == 0);
+
+    set32(0xE4, 1);
+    g_msg_calls = 0;
+    lock_check_global_redirect(lock, nullptr);
+    expect(g_msg_calls == 1);
+
+    LockCurrentServer = saved_server;
+    LockMessageData = saved_msg;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12531,6 +12605,7 @@ int main() {
     test_lock_unlock();
     test_lock_global_lock();
     test_lock_check_global_2();
+    test_lock_check_global();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
