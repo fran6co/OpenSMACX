@@ -50,6 +50,7 @@ class DLLEXPORT Console {
  public:
   Console() { ; }
   ~Console() { ; }
+  void clear_group();
   void set_preferences();
   void set_auto_preferences();
   void set_base_preferences();
@@ -74,3 +75,11 @@ void __fastcall console_set_auto_preferences_redirect(Console *self, void *);
 void __fastcall console_set_base_preferences_redirect(Console *self, void *);
 void __fastcall console_set_audiovisual_redirect(Console *self, void *);
 void __fastcall console_set_map_display_redirect(Console *self, void *);
+
+// clear_group masks a bit in each entry of a group table the game keeps at a
+// fixed address, counted by another fixed-address field; both are rebindable
+// so tests drive them against a local table.
+extern int32_t *ConsoleGroupCount;
+extern uint8_t *ConsoleGroupTable;
+
+void __fastcall console_clear_group_redirect(Console *self, void *);

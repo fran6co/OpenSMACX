@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "console.h"
+#include <cstring>
 
 func_pref_win_display *ConsolePrefWinDisplay = (func_pref_win_display *)0x0048FA00;
 void *ConsolePrefWin = reinterpret_cast<void *>(0x008578D8);
@@ -89,4 +90,31 @@ void __fastcall console_set_audiovisual_redirect(Console *self, void *) {
 
 void __fastcall console_set_map_display_redirect(Console *self, void *) {
     self->set_map_display();
+}
+
+int32_t *ConsoleGroupCount = reinterpret_cast<int32_t *>(0x009A64C8);
+uint8_t *ConsoleGroupTable = reinterpret_cast<uint8_t *>(0x0095282C);
+
+/*
+Purpose: Clear the console's active-group field and drop the highlight bit
+         (0x08000000) from every entry of the group table, at its 0x34 stride.
+Original Offset: 0050F650
+Return Value: n/a
+Status: Complete
+*/
+void Console::clear_group() {
+    const int32_t zero = 0;
+    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x23D1C, &zero, sizeof(zero));
+    const int32_t count = *ConsoleGroupCount;
+    for (int32_t index = 0; index < count; ++index) {
+        uint8_t *const entry = ConsoleGroupTable + index * 0x34;
+        uint32_t value;
+        std::memcpy(&value, entry, sizeof(value));
+        value &= 0xF7FFFFFFu;
+        std::memcpy(entry, &value, sizeof(value));
+    }
+}
+
+void __fastcall console_clear_group_redirect(Console *self, void *) {
+    self->clear_group();
 }

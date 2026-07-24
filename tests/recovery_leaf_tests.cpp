@@ -11760,6 +11760,67 @@ void test_win_unk3_contains() {
     expect(window->UNK3(0x111) == 1);          // 0x111 at index 0, within count
 }
 
+void test_console_clear_group() {
+    // Clears the field at 0x23D1C and drops bit 27 from every entry of a group
+    // table at 0x34 stride, over a count both read from fixed addresses. The
+    // seams point at a local table so the masking is observable: each entry's
+    // other bits survive, only 0x08000000 is cleared, and entries past the
+    // count are untouched.
+    int32_t count = 4;
+    std::vector<uint8_t> table(0x34 * 6, 0);
+    std::vector<uint8_t> table_before;
+    int32_t *const saved_count = ConsoleGroupCount;
+    uint8_t *const saved_table = ConsoleGroupTable;
+    ConsoleGroupCount = &count;
+    ConsoleGroupTable = table.data();
+
+    auto entry = [&](int i) {
+        uint32_t v = 0; std::memcpy(&v, table.data() + i * 0x34, 4); return v;
+    };
+    auto set_entry = [&](int i, uint32_t v) {
+        std::memcpy(table.data() + i * 0x34, &v, 4);
+    };
+    // All bits set in the first four entries, plus one past the count.
+    for (int i = 0; i < 6; ++i) set_entry(i, 0xFFFFFFFFu);
+    table_before = table;
+
+    std::vector<uint8_t> storage(sizeof(Console) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *console = reinterpret_cast<Console *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    int32_t marker = 0x1234;
+    std::memcpy(storage.data() + 16 + 0x23D1C, &marker, sizeof(marker));
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    console->clear_group();
+
+    // Field cleared.
+    int32_t field = -1;
+    std::memcpy(&field, storage.data() + 16 + 0x23D1C, sizeof(field));
+    expect(field == 0);
+    std::memcpy(expected.data() + 16 + 0x23D1C, storage.data() + 16 + 0x23D1C, 4);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Entries 0..3 had only bit 27 cleared; entries 4 and 5 (past count 4)
+    // are untouched.
+    for (int i = 0; i < 4; ++i) expect(entry(i) == 0xF7FFFFFFu);
+    expect(entry(4) == 0xFFFFFFFFu);
+    expect(entry(5) == 0xFFFFFFFFu);
+
+    // Count <= 0 leaves the table alone.
+    table = table_before;
+    count = 0;
+    console->clear_group();
+    expect(table == table_before);
+    count = 2;
+    console_clear_group_redirect(console, nullptr);
+    expect(entry(0) == 0xF7FFFFFFu);
+    expect(entry(2) == 0xFFFFFFFFu);   // index 2 past count 2
+
+    ConsoleGroupCount = saved_count;
+    ConsoleGroupTable = saved_table;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12149,6 +12210,7 @@ int main() {
     test_pull_down_id_to_index();
     test_loop_store_searches();
     test_win_unk3_contains();
+    test_console_clear_group();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
