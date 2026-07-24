@@ -3384,7 +3384,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00590000,0x00590093,147,.text,?lock@PlayerLock@@QAEHHHHHHHH@Z,"int (__thiscall ?lock@PlayerLock@@QAEHHHHHHHH@Z)(PlayerLock* this, int, int, int, int, int, int, int)",0x00590000-0x00590093,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005900A0,0x005900C1,33,.text,?add_lock@PlayerLock@@QAEHHHHH@Z,"int (__thiscall ?add_lock@PlayerLock@@QAEHHHHH@Z)(PlayerLock* this, int, int, int, int)",0x005900A0-0x005900C1,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005900D0,0x0059013D,109,.text,?clear@Lock@@QAEXXZ,void (__thiscall ?clear@Lock@@QAEXXZ)(Lock* this),0x005900D0-0x0059013D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,12
-0x00590140,0x0059016B,43,.text,?reset_map@Lock@@QAEXXZ,void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this),0x00590140-0x0059016B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00590140,0x0059016B,43,.text,?reset_map@Lock@@QAEXXZ,void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this),0x00590140-0x0059016B,game,hidden;sp_ready;purged_ok,src/lock.cpp:28,Complete,,,source_complete,,,,0,0
 0x00590170,0x005901C3,83,.text,?unlock@Lock@@QAEXH@Z,"void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)",0x00590170-0x005901C3,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005901D0,0x00590239,105,.text,?check_global@Lock@@QAEXXZ,void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this),0x005901D0-0x00590239,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,15
 0x00590240,0x005902BE,126,.text,?check_global_2@Lock@@QAEHH@Z,"int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)",0x00590240-0x005902BE,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1

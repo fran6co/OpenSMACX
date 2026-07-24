@@ -77,6 +77,7 @@
 #include "net_class.h"
 #include "squarelock.h"
 #include "deletionlist.h"
+#include "lock.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -103,7 +104,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 476;
+constexpr size_t RedirectCount = 477;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1402,6 +1403,11 @@ bool install_redirects() {
             0x0058FFA0,
             reinterpret_cast<uintptr_t>(&player_lock_active_redirect),
             OPENSMACX_SIGNATURE_0058FFA0,
+        },
+        {
+            0x00590140,
+            reinterpret_cast<uintptr_t>(&lock_reset_map_redirect),
+            OPENSMACX_SIGNATURE_00590140,
         },
         {
             0x0059D3A0,

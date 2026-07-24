@@ -65,6 +65,7 @@
 #include "../src/net_class.h"
 #include "../src/squarelock.h"
 #include "../src/deletionlist.h"
+#include "../src/lock.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -11821,6 +11822,52 @@ void test_console_clear_group() {
     ConsoleGroupTable = saved_table;
 }
 
+void test_lock_reset_map() {
+    // Clears bits 0x38 of the flag byte at offset 5 of each 0x2C-byte record,
+    // over a count both from fixed addresses; the seams point at a local table.
+    // The mask keeps bits outside 0x38, the offset-5 placement, the stride, and
+    // the count bound are all checked.
+    int32_t count = 4;
+    std::vector<uint8_t> tbl(0x2C * 6, 0);
+    int32_t *const saved_count = LockMapCount;
+    uint8_t *const saved_table = LockMapTable;
+    LockMapCount = &count;
+    LockMapTable = tbl.data();
+
+    // Every bit set in each record's flag byte, plus other bytes set too so a
+    // wrong offset would clear the wrong byte.
+    for (size_t i = 0; i < tbl.size(); ++i) tbl[i] = 0xFF;
+    std::vector<uint8_t> before = tbl;
+
+    std::vector<uint8_t> lk(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(lk.data() + 16);
+    lock->reset_map();
+
+    // Records 0..3: only the flag byte at +5 changed, to 0xFF & 0xC7 = 0xC7.
+    for (int i = 0; i < 4; ++i) {
+        expect(tbl[i * 0x2C + 5] == 0xC7);
+        // Neighbouring bytes in the record untouched.
+        expect(tbl[i * 0x2C + 4] == 0xFF);
+        expect(tbl[i * 0x2C + 6] == 0xFF);
+    }
+    // Records 4, 5 past count 4 are whole.
+    expect(tbl[4 * 0x2C + 5] == 0xFF);
+    expect(tbl[5 * 0x2C + 5] == 0xFF);
+
+    // Count <= 0 leaves the table alone.
+    tbl = before;
+    count = 0;
+    lock->reset_map();
+    expect(tbl == before);
+    count = 2;
+    lock_reset_map_redirect(lock, nullptr);
+    expect(tbl[0 * 0x2C + 5] == 0xC7);
+    expect(tbl[2 * 0x2C + 5] == 0xFF);   // index 2 past count 2
+
+    LockMapCount = saved_count;
+    LockMapTable = saved_table;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12211,6 +12258,7 @@ int main() {
     test_loop_store_searches();
     test_win_unk3_contains();
     test_console_clear_group();
+    test_lock_reset_map();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
