@@ -20,19 +20,34 @@
  /*
   * Lock class
   *
-  * reset_map ignores its instance entirely - it works on two tables the game
-  * keeps at fixed addresses - so this needs no layout for it. The storage is a
-  * placeholder for an object the method never reads; the class's other methods
-  * are not recovered here.
+  * Opens with eight records of 0x1C bytes each - a flag byte and two entries
+  * of the same {first, second, flag} shape PlayerLock uses - followed by three
+  * dwords at 0xE0. clear() is the evidence for that layout: it zeroes the three
+  * dwords and resets every record to two -1 sentinels and a zero. reset_map
+  * ignores the instance and works only on the global map table.
   */
 class DLLEXPORT Lock {
  public:
   Lock() { ; }
   ~Lock() { ; }
   void reset_map();
+  void clear();
 
  private:
-  uint8_t unmapped_[4];
+  struct Entry {
+    int32_t first;
+    int32_t second;
+    int32_t flag;
+  };
+  struct Record {
+    uint8_t flag;
+    uint8_t pad[3];
+    Entry entries[2];
+  };
+  Record records_[8];
+  uint32_t field_E0_;
+  uint32_t field_E4_;
+  uint32_t field_E8_;
 };
 
 // The map table and its count live at fixed addresses; rebindable for tests.
@@ -40,3 +55,4 @@ extern int32_t *LockMapCount;
 extern uint8_t *LockMapTable;
 
 void __fastcall lock_reset_map_redirect(Lock *self, void *);
+void __fastcall lock_clear_redirect(Lock *self, void *);

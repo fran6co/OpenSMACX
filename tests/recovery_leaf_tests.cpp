@@ -11868,6 +11868,45 @@ void test_lock_reset_map() {
     LockMapTable = saved_table;
 }
 
+void test_lock_clear() {
+    // Initialises eight 0x1C records to two -1 sentinels and a zero each, plus
+    // three trailing dwords, then runs reset_map. The map count is set to zero
+    // so the global tail is a no-op and this checks only the record init.
+    int32_t map_count = 0;
+    int32_t *const saved_count = LockMapCount;
+    LockMapCount = &map_count;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    seed_storage(storage.data(), expected.data(), storage.size());
+    lock->clear();
+
+    auto read32 = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, storage.data() + 16 + off, sizeof(v)); return v;
+    };
+    // Each record: flag byte 0 at record*0x1C, then entries {-1,-1,0} at +4 and
+    // +0x10. Every one of the eight is checked, not a sample - a loop bound
+    // that stopped early would leave a later record seeded.
+    for (int r = 0; r < 8; ++r) {
+        const size_t base = r * 0x1C;
+        expect((storage[16 + base] & 0xFF) == 0);
+        expect(read32(base + 0x04) == -1);
+        expect(read32(base + 0x08) == -1);
+        expect(read32(base + 0x0C) == 0);
+        expect(read32(base + 0x10) == -1);
+        expect(read32(base + 0x14) == -1);
+        expect(read32(base + 0x18) == 0);
+    }
+    // The three trailing dwords at 0xE0.
+    expect(read32(0xE0) == 0);
+    expect(read32(0xE4) == 0);
+    expect(read32(0xE8) == 0);
+
+    lock_clear_redirect(lock, nullptr);
+    LockMapCount = saved_count;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12259,6 +12298,7 @@ int main() {
     test_win_unk3_contains();
     test_console_clear_group();
     test_lock_reset_map();
+    test_lock_clear();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

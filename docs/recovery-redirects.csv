@@ -251,6 +251,7 @@ address,kind
 0x0058FD70,jump
 0x0058FF70,jump
 0x0058FFA0,jump
+0x005900D0,jump
 0x00590140,jump
 0x0059D3A0,jump
 0x005A5900,jump
