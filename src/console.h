@@ -56,6 +56,7 @@ class DLLEXPORT Console {
   void set_base_preferences();
   void set_audiovisual();
   void set_map_display();
+  int edit_lock();
 
  private:
   uint8_t derived_storage_[0x23D94];
@@ -83,3 +84,12 @@ extern int32_t *ConsoleGroupCount;
 extern uint8_t *ConsoleGroupTable;
 
 void __fastcall console_clear_group_redirect(Console *self, void *);
+
+// edit_lock consults the Scroll Lock key through the game's imported
+// GetKeyState. The seam is the address of that import slot (the IAT entry the
+// original calls indirectly), so it reads the live pointer at run time and
+// stays rebindable for tests.
+typedef SHORT(__stdcall func_get_key_state)(int virtual_key);
+extern func_get_key_state **ConsoleEditKeyStateSlot;
+
+int __fastcall console_edit_lock_redirect(Console *self, void *);
