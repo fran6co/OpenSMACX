@@ -12264,6 +12264,151 @@ void test_lock_add_lock() {
     LockSquareLock = saved;
 }
 
+namespace {
+// A two-call recorder for the double-lock in Lock::lock: captures each call's
+// entry pointer and four args, and returns a per-call configured result.
+void *g_sq_lock2_entries[2];
+int g_sq_lock2_args[2][4];
+int g_sq_lock2_results[2];
+int g_sq_lock2_calls;
+int __thiscall observe_square_lock2(void *entry, int a1, int a2, int a3, int a4) {
+    int idx = g_sq_lock2_calls;
+    if (idx < 2) {
+        g_sq_lock2_entries[idx] = entry;
+        g_sq_lock2_args[idx][0] = a1;
+        g_sq_lock2_args[idx][1] = a2;
+        g_sq_lock2_args[idx][2] = a3;
+        g_sq_lock2_args[idx][3] = a4;
+    }
+    ++g_sq_lock2_calls;
+    return idx < 2 ? g_sq_lock2_results[idx] : 0;
+}
+}  // namespace
+
+void test_lock_lock() {
+    // Lock::lock(slot, flags, a3, a4, a5, a6, a7) locks both of a slot's square
+    // entries: entries[0] with (slot, flags, a3, a4), entries[1] with (slot, a5,
+    // a6, a7). It refuses when another owner holds the global lock, takes the
+    // global lock when flags&2 is set, unwinds (unlocking both) when either
+    // square fails, and on a global success over the server runs the release
+    // broadcast (skipping its own slot) that check_global does.
+    auto *const saved_lock = LockSquareLock;
+    auto *const saved_unlock = LockSquareUnlock;
+    auto *const saved_server = LockCurrentServer;
+    auto *const saved_msg = LockMessageData;
+    LockSquareLock = &observe_square_lock2;
+    LockSquareUnlock = &observe_square_unlock;
+    LockCurrentServer = &observe_current_server;
+    LockMessageData = &observe_message_data;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    auto set32 = [&](size_t off, int32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto read32 = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, obj + off, sizeof(v)); return v;
+    };
+    auto set_flag = [&](int record, int entry, int32_t v) {
+        std::memcpy(obj + record * 0x1C + 0xC + entry * 0xC, &v, sizeof(v));
+    };
+
+    // Refusal: another owner (5) holds the global lock, a lock for slot 3 is
+    // rejected outright - no square touched, owner unchanged.
+    std::memset(obj, 0, sizeof(Lock));
+    set32(0xE0, 5);
+    g_sq_lock2_calls = 0;
+    expect(lock->lock(3, 2, 0, 0, 0, 0, 0) == 1);
+    expect(g_sq_lock2_calls == 0);
+    expect(read32(0xE0) == 5);
+
+    // Plain double-lock (flags&2 clear, no global): both squares locked with
+    // the right entry pointers and arg groups, entries reset to sentinels
+    // first, no broadcast.
+    std::memset(obj, 0, sizeof(Lock));
+    g_sq_lock2_calls = 0;
+    g_sq_lock2_results[0] = 0; g_sq_lock2_results[1] = 0;
+    g_msg_calls = 0;
+    int rv = lock->lock(3, 0, 11, 12, 13, 14, 15);
+    expect(rv == 0);
+    expect(g_sq_lock2_calls == 2);
+    expect(g_sq_lock2_entries[0] == obj + 3 * 0x1C + 4);    // entries[0]
+    expect(g_sq_lock2_args[0][0] == 3 && g_sq_lock2_args[0][1] == 0 &&
+           g_sq_lock2_args[0][2] == 11 && g_sq_lock2_args[0][3] == 12);
+    expect(g_sq_lock2_entries[1] == obj + 3 * 0x1C + 0x10);  // entries[1]
+    expect(g_sq_lock2_args[1][0] == 3 && g_sq_lock2_args[1][1] == 13 &&
+           g_sq_lock2_args[1][2] == 14 && g_sq_lock2_args[1][3] == 15);
+    // Both entries were reset to {-1, -1, 0} before the locks ran.
+    expect(read32(3 * 0x1C + 4) == -1 && read32(3 * 0x1C + 8) == -1);
+    expect(read32(3 * 0x1C + 0x10) == -1 && read32(3 * 0x1C + 0x14) == -1);
+    expect(read32(0xE0) == 0 && g_msg_calls == 0);          // no global taken
+
+    // Global success off the server: owner and held flag are set, no broadcast.
+    std::memset(obj, 0, sizeof(Lock));
+    g_current_server_result = 0;
+    g_sq_lock2_calls = 0;
+    g_sq_lock2_results[0] = 0; g_sq_lock2_results[1] = 0;
+    g_msg_calls = 0;
+    rv = lock->lock(4, 2, 0, 0, 0, 0, 0);
+    expect(rv == 0);
+    expect(read32(0xE0) == 4 && read32(0xE4) == 1);
+    expect(g_msg_calls == 0);
+
+    // Global success on the server, nothing else active: broadcasts the
+    // release and drops the held flag.
+    std::memset(obj, 0, sizeof(Lock));
+    g_current_server_result = 1;
+    g_sq_lock2_calls = 0;
+    g_sq_lock2_results[0] = 0; g_sq_lock2_results[1] = 0;
+    g_msg_calls = 0;
+    rv = lock->lock(4, 2, 0, 0, 0, 0, 0);
+    expect(rv == 0);
+    expect(g_msg_calls == 1);
+    expect(g_msg_args[0] == 0x1205 && g_msg_args[1] == 4);
+    expect(read32(0xE4) == 0);
+
+    // Global success on the server but another slot still has an active square:
+    // no broadcast.
+    std::memset(obj, 0, sizeof(Lock));
+    set_flag(2, 0, 1);                     // slot 2, first entry active
+    g_current_server_result = 1;
+    g_sq_lock2_calls = 0;
+    g_sq_lock2_results[0] = 0; g_sq_lock2_results[1] = 0;
+    g_msg_calls = 0;
+    rv = lock->lock(4, 2, 0, 0, 0, 0, 0);
+    expect(rv == 0 && g_msg_calls == 0);
+
+    // First square fails: only the first lock is attempted, both entries are
+    // unlocked, and the global lock this slot held is dropped.
+    std::memset(obj, 0, sizeof(Lock));
+    g_sq_lock2_calls = 0;
+    g_sq_lock2_results[0] = 99; g_sq_lock2_results[1] = 0;
+    g_sq_unlock_calls = 0;
+    rv = lock->lock(6, 2, 0, 0, 0, 0, 0);
+    expect(rv == 1);
+    expect(g_sq_lock2_calls == 1);         // second lock skipped
+    expect(g_sq_unlock_calls == 2);
+    expect(g_sq_unlock_entries[0] == obj + 6 * 0x1C + 4);
+    expect(g_sq_unlock_entries[1] == obj + 6 * 0x1C + 0x10);
+    expect(read32(0xE0) == 0 && read32(0xE4) == 0);   // owner dropped
+
+    // Second square fails: both locks attempted, both entries unlocked.
+    std::memset(obj, 0, sizeof(Lock));
+    g_sq_lock2_calls = 0;
+    g_sq_lock2_results[0] = 0; g_sq_lock2_results[1] = 7;
+    g_sq_unlock_calls = 0;
+    rv = lock_lock_redirect(lock, nullptr, 2, 0, 0, 0, 0, 0, 0);
+    expect(rv == 1);
+    expect(g_sq_lock2_calls == 2);
+    expect(g_sq_unlock_calls == 2);
+    expect(g_sq_unlock_entries[0] == obj + 2 * 0x1C + 4);
+    expect(g_sq_unlock_entries[1] == obj + 2 * 0x1C + 0x10);
+
+    LockSquareLock = saved_lock;
+    LockSquareUnlock = saved_unlock;
+    LockCurrentServer = saved_server;
+    LockMessageData = saved_msg;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12662,6 +12807,7 @@ int main() {
     test_lock_check_global_2();
     test_lock_check_global();
     test_lock_add_lock();
+    test_lock_lock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
