@@ -12422,6 +12422,19 @@ void __cdecl unlock_map(uint32_t x, uint32_t y, uint32_t faction_id) {
         {static_cast<int>(x), static_cast<int>(y), static_cast<int>(faction_id)});
 }
 
+// lock_map's observer records its calls and can be told to report one tile as
+// already held (a nonzero BOOL) so the abort path can be exercised.
+struct SqLockMapCall { int x, y, faction; };
+std::vector<SqLockMapCall> g_sq_lock_map_calls;
+int g_sq_lock_map_fail_at = -1;
+
+BOOL __cdecl lock_map(uint32_t x, uint32_t y, uint32_t faction_id) {
+    int i = static_cast<int>(g_sq_lock_map_calls.size());
+    g_sq_lock_map_calls.push_back(
+        {static_cast<int>(x), static_cast<int>(y), static_cast<int>(faction_id)});
+    return (g_sq_lock_map_fail_at >= 0 && i == g_sq_lock_map_fail_at) ? TRUE : FALSE;
+}
+
 int __cdecl xrange(int x) {
     if (!*MapIsFlat) {
         if (x >= 0) {
@@ -12530,6 +12543,87 @@ void test_square_lock_unlock() {
     expect(g_sq_unlock_map_calls.size() == 1);
     expect(g_sq_unlock_map_calls[0].x == 20 && g_sq_unlock_map_calls[0].y == 20 &&
            g_sq_unlock_map_calls[0].faction == 6);
+}
+
+void test_square_lock_lock() {
+    // SquareLock::lock stores the coordinate and flags|1 in the record
+    // unconditionally, then - for an on-map coordinate - calls lock_map over the
+    // same flag-sized footprint SquareLock::unlock walks, abandoning the attempt
+    // (return 1) at the first tile another faction already holds. lock_map is
+    // observed here; the expected call sequence is recomputed the same way.
+    int width = 40, height = 40;
+    BOOL flat = TRUE;
+    MapLongitudeBounds = &width;
+    MapLatitudeBounds = &height;
+    MapIsFlat = &flat;
+
+    std::vector<uint8_t> storage(sizeof(SquareLock) + 32);
+    auto *sq = reinterpret_cast<SquareLock *>(storage.data() + 16);
+    uint8_t *const rec = storage.data() + 16;
+    auto read_rec = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, rec + off, 4); return v;
+    };
+
+    // Off-map: the record is still stamped with the coordinate and flags|1, but
+    // no footprint work happens and the result is 0.
+    g_sq_lock_map_calls.clear();
+    g_sq_lock_map_fail_at = -1;
+    std::memset(rec, 0xEE, sizeof(SquareLock));
+    expect(sq->lock(3, 4, 100, 20) == 0);   // x=100 off-map
+    expect(read_rec(0) == 100 && read_rec(4) == 20 && read_rec(8) == (4 | 1));
+    expect(g_sq_lock_map_calls.empty());
+
+    // On-map: the observed lock_map sequence matches the footprint the flags
+    // select, the record is stamped, and the result is 0 when nothing is held.
+    auto run_case = [&](int rec_x, int rec_y, int flags, int count) {
+        g_sq_lock_map_calls.clear();
+        g_sq_lock_map_fail_at = -1;
+        expect(sq->lock(3, flags, rec_x, rec_y) == 0);
+        expect(read_rec(0) == rec_x && read_rec(4) == rec_y &&
+               read_rec(8) == (flags | 1));
+        std::vector<SqLockMapCall> want;
+        for (int i = 0; i < count; ++i) {
+            int nx = xrange(rec_x + RadiusOffsetX[i]);
+            int ny = rec_y + RadiusOffsetY[i];
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                want.push_back({nx, ny, 3});
+            }
+        }
+        expect(g_sq_lock_map_calls.size() == want.size());
+        for (size_t i = 0; i < want.size() &&
+                           i < g_sq_lock_map_calls.size(); ++i) {
+            expect(g_sq_lock_map_calls[i].x == want[i].x &&
+                   g_sq_lock_map_calls[i].y == want[i].y &&
+                   g_sq_lock_map_calls[i].faction == want[i].faction);
+        }
+    };
+
+    flat = TRUE;
+    run_case(20, 20, 1, 1);            // plain lock: a single tile
+    run_case(20, 20, 1 | 4, 25);       // 0x4 -> radius of 25
+    run_case(20, 20, 1 | 4 | 8, 81);   // 0x4 and 0x8 -> radius of 81
+    run_case(20, 20, 1 | 4 | 0x10, 1); // 0x10 overrides the radius back to 1
+    run_case(20, 20, 8, 1);            // 0x8 without 0x4 stays a single tile
+
+    // Round map: a lock at the x-edge whose footprint wraps around.
+    flat = FALSE;
+    run_case(1, 20, 1 | 4, 25);
+    flat = TRUE;
+
+    // A contested tile: lock_map reports the 4th tile (call index 3) already
+    // held, so the attempt aborts there with only four calls and a result of 1.
+    g_sq_lock_map_calls.clear();
+    g_sq_lock_map_fail_at = 3;
+    expect(sq->lock(3, 1 | 4, 20, 20) == 1);
+    expect(g_sq_lock_map_calls.size() == 4);
+
+    // The redirect entry forwards all four args, including the faction.
+    g_sq_lock_map_calls.clear();
+    g_sq_lock_map_fail_at = -1;
+    expect(square_lock_lock_redirect(sq, nullptr, 6, 1, 20, 20) == 0);
+    expect(g_sq_lock_map_calls.size() == 1);
+    expect(g_sq_lock_map_calls[0].faction == 6 &&
+           g_sq_lock_map_calls[0].x == 20 && g_sq_lock_map_calls[0].y == 20);
 }
 
 void test_base_pop_default_colors() {
@@ -12932,6 +13026,7 @@ int main() {
     test_lock_add_lock();
     test_lock_lock();
     test_square_lock_unlock();
+    test_square_lock_lock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

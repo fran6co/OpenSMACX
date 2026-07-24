@@ -55,7 +55,7 @@ rank,priority,score,address,name,size,caller_count,call_target_count,recovery_st
 54,P0,1004421,0x00404A80,?hide@Popup@@QAEXXZ,127,4,4,original_dependency,ui_dependency,recover_popup_hide,2,exact,exact,void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this)
 55,P0,1004421,0x004165D0,?click@BaseWin@@QAEXHHHH@Z,1971,3,14,original_dependency,ui_dependency,recover_base_win_click,2,exact,exact,"void (__thiscall ?click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int xCoord, int yCoord, int, int)"
 56,P0,1004121,0x0058FD90,?unlock@SquareLock@@QAEXH@Z,231,4,1,source_complete,ui_dependency,recover_square_lock_unlock,2,exact,exact,"void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)"
-57,P0,1004121,0x0058FE80,?lock@SquareLock@@QAEHHHHH@Z,232,4,1,original_dependency,ui_dependency,recover_square_lock_lock,2,exact,exact,"BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)"
+57,P0,1004121,0x0058FE80,?lock@SquareLock@@QAEHHHHH@Z,232,4,1,source_complete,ui_dependency,recover_square_lock_lock,2,exact,exact,"BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)"
 58,P0,1004121,0x005D8240,?fill@Buffer@@QAEHHHHHH@Z,66,4,1,original_dependency,ui_dependency,recover_buffer_fill,2,exact,exact,"int (__thiscall ?fill@Buffer@@QAEHHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width, int)"
 59,P0,1003420,0x005C4470,?world_rainfall@@YAXXZ,2897,3,4,original_dependency,game_service,recover_world_generation,2,exact,exact,
 60,P0,1003020,0x0052DBA0,?current_server@@YAHXZ,70,3,0,original_dependency,ui_dependency,recover_current_server,2,exact,exact,

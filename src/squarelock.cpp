@@ -79,3 +79,48 @@ void __fastcall square_lock_unlock_redirect(SquareLock *self, void *,
                                             int factionID) {
     self->unlock(factionID);
 }
+
+/*
+Purpose: Take a square and every tile in its footprint for a faction. The
+         coordinate and the flags (with the lock bit 0x1 forced on) are stored
+         in the record first, unconditionally. An off-map coordinate then stops
+         there. Otherwise lock_map is called on each footprint tile - a single
+         tile, or a radius of 25 (0x4 set, 0x10 clear) or 81 (also 0x8 set)
+         tiles walked through the shared RadiusOffset tables and wrapped in x by
+         xrange; if any tile is already held by another faction the attempt is
+         abandoned at that tile.
+Original Offset: 0058FE80
+Return Value: 1 when a footprint tile is already locked by another faction,
+              0 otherwise (including an off-map coordinate)
+Status: Complete
+*/
+int SquareLock::lock(int factionID, int flags, int x, int y) {
+    first_ = x;
+    second_ = y;
+    flag_ = flags | 1;
+    if (y < 0 || y >= *MapLatitudeBounds || x < 0 || x >= *MapLongitudeBounds) {
+        return 0;
+    }
+    int count;
+    if ((flag_ & 4) && !(flag_ & 0x10)) {
+        count = (flag_ & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
+    } else {
+        count = 1;
+    }
+    for (int i = 0; i < count; ++i) {
+        const int nx = xrange(RadiusOffsetX[i] + first_);
+        const int ny = RadiusOffsetY[i] + second_;
+        if (ny >= 0 && ny < *MapLatitudeBounds &&
+            nx >= 0 && nx < *MapLongitudeBounds) {
+            if (lock_map(nx, ny, factionID)) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int __fastcall square_lock_lock_redirect(SquareLock *self, void *, int factionID,
+                                         int flags, int x, int y) {
+    return self->lock(factionID, flags, x, y);
+}
