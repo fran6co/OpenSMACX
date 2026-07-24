@@ -29,6 +29,7 @@ class DLLEXPORT SquareLock {
   ~SquareLock() { ; }
   void clear();
   void unlock(int factionID);
+  int lock(int factionID, int flags, int x, int y);
 
  private:
   int32_t first_;
@@ -38,3 +39,5 @@ class DLLEXPORT SquareLock {
 
 void __fastcall square_lock_clear_redirect(SquareLock *self, void *);
 void __fastcall square_lock_unlock_redirect(SquareLock *self, void *, int factionID);
+int __fastcall square_lock_lock_redirect(SquareLock *self, void *, int factionID,
+                                         int flags, int x, int y);
