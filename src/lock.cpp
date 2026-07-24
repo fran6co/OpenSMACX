@@ -21,6 +21,8 @@
 int32_t *LockMapCount = reinterpret_cast<int32_t *>(0x00949884);
 uint8_t *LockMapTable = reinterpret_cast<uint8_t *>(0x0094A30C);
 uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
+func_square_lock_unlock *LockSquareUnlock =
+    (func_square_lock_unlock *)0x0058FD90;
 
 /*
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
@@ -101,4 +103,28 @@ int Lock::any_locks() {
 
 int __fastcall lock_any_locks_redirect(Lock *self, void *) {
     return self->any_locks();
+}
+
+/*
+Purpose: Release the lock on one slot - forget it as the active lock if it was,
+         unlock both of the slot record's square entries, and clear the
+         record's flag byte.
+Original Offset: 00590170
+Return Value: n/a
+Status: Complete
+*/
+void Lock::unlock(int slot) {
+    if (field_E0_ == static_cast<uint32_t>(slot)) {
+        field_E0_ = 0;
+        field_E4_ = 0;
+    }
+    Record &record = records_[slot];
+    for (int entry = 0; entry < 2; ++entry) {
+        LockSquareUnlock(&record.entries[entry], slot);
+    }
+    record.flag = 0;
+}
+
+void __fastcall lock_unlock_redirect(Lock *self, void *, int slot) {
+    self->unlock(slot);
 }

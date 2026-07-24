@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 73,
-      "source_complete": 983,
+      "original_dependency": 74,
+      "source_complete": 984,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4574
+      "unrecovered": 4572
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 929,
-    "matched_function_starts": 929,
-    "unique_addresses": 929,
+    "annotations": 930,
+    "matched_function_starts": 930,
+    "unique_addresses": 930,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 82
+      "function": 83
     },
     "items": [
       {
@@ -2290,6 +2290,15 @@
         "location": "src/infowin.cpp:73",
         "symbol": "InfoWinOriginalTimerProc",
         "type": "func_info_win_timer_proc *"
+      },
+      {
+        "address": "0x0058FD90",
+        "function": "?unlock@SquareLock@@QAEXH@Z",
+        "function_address": "0x0058FD90",
+        "kind": "function",
+        "location": "src/lock.cpp:24",
+        "symbol": "LockSquareUnlock",
+        "type": "func_square_lock_unlock *"
       },
       {
         "address": "0x009BBFF8",
@@ -3786,7 +3795,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 82,
-    "total": 273
+    "matched_function_starts": 83,
+    "total": 274
   }
 }

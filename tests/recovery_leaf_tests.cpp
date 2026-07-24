@@ -11964,6 +11964,69 @@ void test_lock_any_locks() {
     LockEnableMask = saved_mask;
 }
 
+namespace {
+void *g_sq_unlock_entries[4];
+int g_sq_unlock_slots[4];
+int g_sq_unlock_calls;
+void __thiscall observe_square_unlock(void *entry, int slot) {
+    if (g_sq_unlock_calls < 4) {
+        g_sq_unlock_entries[g_sq_unlock_calls] = entry;
+        g_sq_unlock_slots[g_sq_unlock_calls] = slot;
+    }
+    ++g_sq_unlock_calls;
+}
+}  // namespace
+
+void test_lock_unlock() {
+    // unlock(slot) forwards both of record[slot]'s square entries to
+    // SquareLock::unlock, clears the record's flag byte, and forgets the slot
+    // as the active lock only when it was. The two entries are at record+4 and
+    // record+0x10, which the test confirms the seam receives.
+    auto *const saved = LockSquareUnlock;
+    LockSquareUnlock = &observe_square_unlock;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    auto read32 = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, obj + off, sizeof(v)); return v;
+    };
+
+    // Active lock is slot 3: unlocking it clears the 0xE0/0xE4 fields.
+    std::memset(obj, 0xAB, sizeof(Lock));
+    int32_t three = 3;
+    std::memcpy(obj + 0xE0, &three, 4);
+    g_sq_unlock_calls = 0;
+    lock->unlock(3);
+    expect(read32(0xE0) == 0);
+    expect(read32(0xE4) == 0);
+    // Both entries of record 3 forwarded, at record+4 and record+0x10.
+    expect(g_sq_unlock_calls == 2);
+    expect(g_sq_unlock_entries[0] == obj + 3 * 0x1C + 4);
+    expect(g_sq_unlock_entries[1] == obj + 3 * 0x1C + 0x10);
+    expect(g_sq_unlock_slots[0] == 3 && g_sq_unlock_slots[1] == 3);
+    // The record's flag byte is cleared.
+    expect((obj[3 * 0x1C] & 0xFF) == 0);
+
+    // Unlocking a different slot than the active one leaves 0xE0 alone but
+    // still unlocks that slot's entries.
+    std::memset(obj, 0, sizeof(Lock));
+    int32_t five = 5;
+    std::memcpy(obj + 0xE0, &five, 4);
+    g_sq_unlock_calls = 0;
+    lock->unlock(2);
+    expect(read32(0xE0) == 5);          // still the active lock
+    expect(g_sq_unlock_calls == 2);
+    expect(g_sq_unlock_entries[0] == obj + 2 * 0x1C + 4);
+
+    g_sq_unlock_calls = 0;
+    lock_unlock_redirect(lock, nullptr, 1);
+    expect(g_sq_unlock_calls == 2);
+    expect(g_sq_unlock_entries[0] == obj + 1 * 0x1C + 4);
+
+    LockSquareUnlock = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12357,6 +12420,7 @@ int main() {
     test_lock_reset_map();
     test_lock_clear();
     test_lock_any_locks();
+    test_lock_unlock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

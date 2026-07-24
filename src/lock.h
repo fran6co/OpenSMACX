@@ -33,6 +33,7 @@ class DLLEXPORT Lock {
   void reset_map();
   void clear();
   int any_locks();
+  void unlock(int slot);
 
  private:
   struct Entry {
@@ -59,6 +60,12 @@ extern uint8_t *LockMapTable;
 // address; rebindable for tests.
 extern uint32_t *LockEnableMask;
 
+// SquareLock::unlock is 231 bytes of coordinate wrapping over several
+// globals and is not recovered; unlock forwards each record entry to it.
+typedef void (__thiscall func_square_lock_unlock)(void *entry, int slot);
+extern func_square_lock_unlock *LockSquareUnlock;
+
 void __fastcall lock_reset_map_redirect(Lock *self, void *);
 void __fastcall lock_clear_redirect(Lock *self, void *);
 int __fastcall lock_any_locks_redirect(Lock *self, void *);
+void __fastcall lock_unlock_redirect(Lock *self, void *, int slot);
