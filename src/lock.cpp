@@ -23,6 +23,7 @@ uint8_t *LockMapTable = reinterpret_cast<uint8_t *>(0x0094A30C);
 uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
 func_square_lock_unlock *LockSquareUnlock =
     (func_square_lock_unlock *)0x0058FD90;
+func_square_lock_lock *LockSquareLock = (func_square_lock_lock *)0x0058FE80;
 func_current_server *LockCurrentServer = (func_current_server *)0x0052DBA0;
 func_message_data *LockMessageData = (func_message_data *)0x00592EE0;
 
@@ -214,4 +215,21 @@ void Lock::check_global() {
 
 void __fastcall lock_check_global_redirect(Lock *self, void *) {
     self->check_global();
+}
+
+/*
+Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
+         record's second square entry, with the mask bit 0x10 forced into the
+         flags argument.
+Original Offset: 00590470
+Return Value: whatever SquareLock::lock returns
+Status: Complete
+*/
+int Lock::add_lock(int slot, int flags, int a3, int a4) {
+    return LockSquareLock(&records_[slot].entries[1], slot, flags | 0x10, a3, a4);
+}
+
+int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags,
+                                      int a3, int a4) {
+    return self->add_lock(slot, flags, a3, a4);
 }

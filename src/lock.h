@@ -37,6 +37,7 @@ class DLLEXPORT Lock {
   int global_lock(int owner);
   int check_global_2(int owner);
   void check_global();
+  int add_lock(int slot, int flags, int a3, int a4);
 
  private:
   struct Entry {
@@ -68,6 +69,12 @@ extern uint32_t *LockEnableMask;
 typedef void (__thiscall func_square_lock_unlock)(void *entry, int slot);
 extern func_square_lock_unlock *LockSquareUnlock;
 
+// SquareLock::lock owns the same map-coordinate logic as unlock and is not
+// recovered; add_lock forwards one record entry to it.
+typedef int (__thiscall func_square_lock_lock)(void *entry, int a1, int a2,
+                                               int a3, int a4);
+extern func_square_lock_lock *LockSquareLock;
+
 // current_server reports whether this machine is the game server; not
 // recovered, so check_global_2 reaches it through a rebindable seam.
 typedef int (__cdecl func_current_server)();
@@ -86,3 +93,4 @@ void __fastcall lock_unlock_redirect(Lock *self, void *, int slot);
 int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner);
 int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner);
 void __fastcall lock_check_global_redirect(Lock *self, void *);
+int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags, int a3, int a4);
