@@ -12027,6 +12027,48 @@ void test_lock_unlock() {
     LockSquareUnlock = saved;
 }
 
+void test_lock_global_lock() {
+    // A try-lock on the 0xE0/0xE4 owner fields: free or already-mine succeeds
+    // and records the owner, another owner fails without change. All three
+    // cases are checked, including that a failed attempt leaves the fields
+    // untouched.
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    auto read32 = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, obj + off, sizeof(v)); return v;
+    };
+    auto set_owner = [&](int32_t v) { std::memcpy(obj + 0xE0, &v, 4); };
+
+    // Free (0): succeeds, records owner 3 and marks held.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set_owner(0);
+    expect(lock->global_lock(3) == 0);
+    expect(read32(0xE0) == 3);
+    expect(read32(0xE4) == 1);
+
+    // Already held by 3: taking it again as 3 still succeeds.
+    expect(lock->global_lock(3) == 0);
+    expect(read32(0xE0) == 3);
+    expect(read32(0xE4) == 1);
+
+    // Held by 5, another owner 3 fails and changes nothing.
+    set_owner(5);
+    int32_t held_e4 = 0x77;
+    std::memcpy(obj + 0xE4, &held_e4, 4);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(lock->global_lock(3) == 1);
+    expect(read32(0xE0) == 5);          // unchanged
+    expect(read32(0xE4) == 0x77);       // unchanged
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Redirect takes the free lock.
+    set_owner(0);
+    expect(lock_global_lock_redirect(lock, nullptr, 9) == 0);
+    expect(read32(0xE0) == 9);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12421,6 +12463,7 @@ int main() {
     test_lock_clear();
     test_lock_any_locks();
     test_lock_unlock();
+    test_lock_global_lock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

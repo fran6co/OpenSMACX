@@ -128,3 +128,24 @@ void Lock::unlock(int slot) {
 void __fastcall lock_unlock_redirect(Lock *self, void *, int slot) {
     self->unlock(slot);
 }
+
+/*
+Purpose: Take the global lock for an owner. Succeeds when the lock is free or
+         already held by that owner, recording the owner and marking it held;
+         fails without change when another owner holds it.
+Original Offset: 005902C0
+Return Value: 0 on success, 1 when another owner holds the lock
+Status: Complete
+*/
+int Lock::global_lock(int owner) {
+    if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(owner)) {
+        return 1;
+    }
+    field_E0_ = static_cast<uint32_t>(owner);
+    field_E4_ = 1;
+    return 0;
+}
+
+int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner) {
+    return self->global_lock(owner);
+}
