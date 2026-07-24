@@ -66,6 +66,7 @@
 #include "../src/squarelock.h"
 #include "../src/deletionlist.h"
 #include "../src/lock.h"
+#include "../src/map.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -12409,6 +12410,128 @@ void test_lock_lock() {
     LockMessageData = saved_msg;
 }
 
+// map.cpp is not linked into the leaf-test target, so SquareLock::unlock's
+// direct dependencies are provided here: the two map-bound globals it reads,
+// a faithful copy of the tiny xrange it wraps x through, and an observer in
+// place of unlock_map that records the footprint calls the test then checks.
+struct SqUnlockMapCall { int x, y, faction; };
+std::vector<SqUnlockMapCall> g_sq_unlock_map_calls;
+
+void __cdecl unlock_map(uint32_t x, uint32_t y, uint32_t faction_id) {
+    g_sq_unlock_map_calls.push_back(
+        {static_cast<int>(x), static_cast<int>(y), static_cast<int>(faction_id)});
+}
+
+int __cdecl xrange(int x) {
+    if (!*MapIsFlat) {
+        if (x >= 0) {
+            if (x >= *MapLongitudeBounds) {
+                x -= *MapLongitudeBounds;
+            }
+        } else {
+            x += *MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+int *MapLongitudeBounds;
+int *MapLatitudeBounds;
+BOOL *MapIsFlat;
+
+void test_square_lock_unlock() {
+    // SquareLock::unlock releases the square and its footprint. When the lock
+    // bit (0x1) is clear it does nothing; when set it clears the record to its
+    // unset sentinels and, for an on-map coordinate, calls unlock_map over a
+    // footprint whose size the flags choose - one tile, or a radius of 25 (0x4
+    // set, 0x10 clear) or 81 (also 0x8 set) tiles - walked through the shared
+    // RadiusOffset tables and wrapped in x by xrange. unlock_map is observed
+    // (map.cpp is not linked here); the expected call sequence is recomputed the
+    // same way, in order, pinning the count, the offset tables, the x-wrap, the
+    // bounds skip, and the factionID passthrough at once.
+    int width = 40, height = 40;
+    BOOL flat = TRUE;
+    MapLongitudeBounds = &width;
+    MapLatitudeBounds = &height;
+    MapIsFlat = &flat;
+
+    std::vector<uint8_t> storage(sizeof(SquareLock) + 32);
+    auto *sq = reinterpret_cast<SquareLock *>(storage.data() + 16);
+    uint8_t *const rec = storage.data() + 16;
+    auto set_rec = [&](int32_t first, int32_t second, int32_t flag) {
+        std::memcpy(rec + 0, &first, 4);
+        std::memcpy(rec + 4, &second, 4);
+        std::memcpy(rec + 8, &flag, 4);
+    };
+    auto read_rec = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, rec + off, 4); return v;
+    };
+
+    // Lock bit clear: nothing happens, the record is left untouched.
+    g_sq_unlock_map_calls.clear();
+    set_rec(5, 7, 0);
+    sq->unlock(3);
+    expect(read_rec(0) == 5 && read_rec(4) == 7 && read_rec(8) == 0);
+    expect(g_sq_unlock_map_calls.empty());
+
+    // Lock set but the coordinate is off the map: the record is cleared to its
+    // sentinels with no footprint work. All four out-of-bounds directions.
+    for (auto coord : {std::pair<int, int>{width + 5, 20}, {-1, 20},
+                       {20, height}, {20, -1}}) {
+        g_sq_unlock_map_calls.clear();
+        set_rec(coord.first, coord.second, 1);
+        sq->unlock(3);
+        expect(read_rec(0) == -1 && read_rec(4) == -1 && read_rec(8) == 0);
+        expect(g_sq_unlock_map_calls.empty());
+    }
+
+    // On-map: the observed unlock_map call sequence must match, in order, the
+    // footprint the flags select (recomputed via xrange + RadiusOffset), and the
+    // record ends cleared to sentinels.
+    auto run_case = [&](int rec_x, int rec_y, int flag, int count) {
+        g_sq_unlock_map_calls.clear();
+        set_rec(rec_x, rec_y, flag);
+        sq->unlock(3);
+        expect(read_rec(0) == -1 && read_rec(4) == -1 && read_rec(8) == 0);
+        std::vector<SqUnlockMapCall> want;
+        for (int i = 0; i < count; ++i) {
+            int nx = xrange(rec_x + RadiusOffsetX[i]);
+            int ny = rec_y + RadiusOffsetY[i];
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                want.push_back({nx, ny, 3});
+            }
+        }
+        expect(g_sq_unlock_map_calls.size() == want.size());
+        for (size_t i = 0; i < want.size() &&
+                           i < g_sq_unlock_map_calls.size(); ++i) {
+            expect(g_sq_unlock_map_calls[i].x == want[i].x &&
+                   g_sq_unlock_map_calls[i].y == want[i].y &&
+                   g_sq_unlock_map_calls[i].faction == want[i].faction);
+        }
+    };
+
+    flat = TRUE;
+    run_case(20, 20, 1, 1);            // plain lock: a single tile
+    run_case(20, 20, 1 | 4, 25);       // 0x4 -> radius of 25
+    run_case(20, 20, 1 | 4 | 8, 81);   // 0x4 and 0x8 -> radius of 81
+    run_case(20, 20, 1 | 4 | 0x10, 1); // 0x10 overrides the radius back to 1
+    run_case(20, 20, 1 | 8, 1);        // 0x8 without 0x4 stays a single tile
+
+    // Round map: a lock at the x-edge whose footprint wraps around, so xrange
+    // (not a raw add) is what the recovery must use.
+    flat = FALSE;
+    run_case(1, 20, 1 | 4, 25);
+    flat = TRUE;
+
+    // The redirect entry drives the same footprint, and passes its faction.
+    g_sq_unlock_map_calls.clear();
+    set_rec(20, 20, 1);
+    square_lock_unlock_redirect(sq, nullptr, 6);
+    expect(g_sq_unlock_map_calls.size() == 1);
+    expect(g_sq_unlock_map_calls[0].x == 20 && g_sq_unlock_map_calls[0].y == 20 &&
+           g_sq_unlock_map_calls[0].faction == 6);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12808,6 +12931,7 @@ int main() {
     test_lock_check_global();
     test_lock_add_lock();
     test_lock_lock();
+    test_square_lock_unlock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
