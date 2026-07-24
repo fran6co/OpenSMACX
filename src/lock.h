@@ -35,6 +35,7 @@ class DLLEXPORT Lock {
   int any_locks();
   void unlock(int slot);
   int global_lock(int owner);
+  int check_global_2(int owner);
 
  private:
   struct Entry {
@@ -66,8 +67,14 @@ extern uint32_t *LockEnableMask;
 typedef void (__thiscall func_square_lock_unlock)(void *entry, int slot);
 extern func_square_lock_unlock *LockSquareUnlock;
 
+// current_server reports whether this machine is the game server; not
+// recovered, so check_global_2 reaches it through a rebindable seam.
+typedef int (__cdecl func_current_server)();
+extern func_current_server *LockCurrentServer;
+
 void __fastcall lock_reset_map_redirect(Lock *self, void *);
 void __fastcall lock_clear_redirect(Lock *self, void *);
 int __fastcall lock_any_locks_redirect(Lock *self, void *);
 void __fastcall lock_unlock_redirect(Lock *self, void *, int slot);
 int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner);
+int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner);

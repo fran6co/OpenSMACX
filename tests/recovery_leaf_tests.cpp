@@ -12069,6 +12069,72 @@ void test_lock_global_lock() {
     expect(read32(0xE0) == 9);
 }
 
+namespace {
+int g_current_server_result = 1;
+int g_current_server_calls = 0;
+int __cdecl observe_current_server() {
+    ++g_current_server_calls;
+    return g_current_server_result;
+}
+}  // namespace
+
+void test_lock_check_global_2() {
+    // Reports whether the owner's global lock can be released: only on the
+    // server, only when held by that owner, and only when no slot record still
+    // has an active square. Every gate is exercised, and success is confirmed
+    // to clear the held flag while the failing paths leave it set.
+    auto *const saved = LockCurrentServer;
+    LockCurrentServer = &observe_current_server;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    auto set32 = [&](size_t off, int32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto read32 = [&](size_t off) {
+        int32_t v = 0; std::memcpy(&v, obj + off, sizeof(v)); return v;
+    };
+    auto set_flag = [&](int record, int entry, int32_t v) {
+        std::memcpy(obj + record * 0x1C + 0xC + entry * 0xC, &v, sizeof(v));
+    };
+
+    // Not the server: no regardless of the rest.
+    std::memset(obj, 0, sizeof(Lock));
+    set32(0xE4, 1); set32(0xE0, 3);
+    g_current_server_result = 0;
+    expect(lock->check_global_2(3) == 0);
+    expect(read32(0xE4) == 1);          // held flag untouched
+    g_current_server_result = 1;
+
+    // Not marked held: no.
+    set32(0xE4, 0);
+    expect(lock->check_global_2(3) == 0);
+
+    // Held, but by a different owner: no.
+    set32(0xE4, 1); set32(0xE0, 5);
+    expect(lock->check_global_2(3) == 0);
+    expect(read32(0xE4) == 1);
+
+    // Held by us, but a slot record still active: no, held flag kept.
+    set32(0xE0, 3);
+    set_flag(4, 1, 1);
+    expect(lock->check_global_2(3) == 0);
+    expect(read32(0xE4) == 1);
+
+    // Held by us, nothing active: yes, and the held flag is cleared.
+    set_flag(4, 1, 0);
+    expect(lock->check_global_2(3) == 1);
+    expect(read32(0xE4) == 0);
+
+    // Record 0 active is ignored (scan starts at 1), so still releasable.
+    set32(0xE4, 1);
+    set_flag(0, 0, 1);
+    expect(lock->check_global_2(3) == 1);
+    set32(0xE4, 1);
+    expect(lock_check_global_2_redirect(lock, nullptr, 3) == 1);
+
+    LockCurrentServer = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12464,6 +12530,7 @@ int main() {
     test_lock_any_locks();
     test_lock_unlock();
     test_lock_global_lock();
+    test_lock_check_global_2();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

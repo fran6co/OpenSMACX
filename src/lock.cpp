@@ -23,6 +23,7 @@ uint8_t *LockMapTable = reinterpret_cast<uint8_t *>(0x0094A30C);
 uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
 func_square_lock_unlock *LockSquareUnlock =
     (func_square_lock_unlock *)0x0058FD90;
+func_current_server *LockCurrentServer = (func_current_server *)0x0052DBA0;
 
 /*
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
@@ -148,4 +149,38 @@ int Lock::global_lock(int owner) {
 
 int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner) {
     return self->global_lock(owner);
+}
+
+/*
+Purpose: Report whether the global lock this owner holds can now be released -
+         true only on the server, when the lock is marked held by this owner
+         and none of its slot records still has an active square. On success it
+         also drops the held flag. Any other case reports no.
+Original Offset: 00590240
+Return Value: 1 when the lock may be released, 0 otherwise
+Status: Complete
+*/
+int Lock::check_global_2(int owner) {
+    if (LockCurrentServer() == 0) {
+        return 0;
+    }
+    if (field_E4_ == 0) {
+        return 0;
+    }
+    if (field_E0_ != static_cast<uint32_t>(owner)) {
+        return 0;
+    }
+    for (int index = 1; index < 8; ++index) {
+        for (int entry = 0; entry < 2; ++entry) {
+            if (records_[index].entries[entry].flag & 1) {
+                return 0;
+            }
+        }
+    }
+    field_E4_ = 0;
+    return 1;
+}
+
+int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner) {
+    return self->check_global_2(owner);
 }
