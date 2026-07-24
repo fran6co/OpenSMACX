@@ -11907,6 +11907,63 @@ void test_lock_clear() {
     LockMapCount = saved_count;
 }
 
+void test_lock_any_locks() {
+    // any_locks: the 0xE0 dword forces a yes; otherwise records 1..7 are
+    // scanned, but only those whose slot bit is set in both the low and second
+    // bytes of the enable mask, and only entry flags with the low bit set
+    // count. Record 0 is never scanned. Each of those conditions is exercised.
+    uint32_t mask = 0;
+    uint32_t *const saved_mask = LockEnableMask;
+    LockEnableMask = &mask;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    auto set_field_e0 = [&](uint32_t v) { std::memcpy(obj + 0xE0, &v, 4); };
+    auto set_flag = [&](int record, int entry, int32_t v) {
+        std::memcpy(obj + record * 0x1C + 0xC + entry * 0xC, &v, sizeof(v));
+    };
+
+    // Shortcut: field at 0xE0 non-zero returns 1 regardless of the rest.
+    seed_storage(storage.data(), nullptr, 0);
+    std::memset(obj, 0, sizeof(Lock));
+    set_field_e0(0x99);
+    expect(lock->any_locks() == 1);
+
+    // 0xE0 clear, mask 0: nothing scanned.
+    std::memset(obj, 0, sizeof(Lock));
+    mask = 0;
+    // Even with an engaged entry, no bit set means no scan.
+    set_flag(2, 0, 1);
+    expect(lock->any_locks() == 0);
+
+    // Bit 2 set in both mask bytes, record 2 entry engaged: yes.
+    mask = 0x0404;
+    expect(lock->any_locks() == 1);
+    // The other entry of the same record also counts.
+    set_flag(2, 0, 0);
+    set_flag(2, 1, 1);
+    expect(lock->any_locks() == 1);
+    // Entry flag with the low bit clear does not count.
+    set_flag(2, 1, 2);
+    expect(lock->any_locks() == 0);
+
+    // Bit set only in the low byte, not the second: record not scanned.
+    std::memset(obj, 0, sizeof(Lock));
+    mask = 0x0004;
+    set_flag(2, 0, 1);
+    expect(lock->any_locks() == 0);
+
+    // Record 0 is never scanned, even with its bit set in both bytes.
+    std::memset(obj, 0, sizeof(Lock));
+    mask = 0x0101;
+    set_flag(0, 0, 1);
+    expect(lock->any_locks() == 0);
+    expect(lock_any_locks_redirect(lock, nullptr) == 0);
+
+    LockEnableMask = saved_mask;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12299,6 +12356,7 @@ int main() {
     test_console_clear_group();
     test_lock_reset_map();
     test_lock_clear();
+    test_lock_any_locks();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

@@ -20,6 +20,7 @@
 
 int32_t *LockMapCount = reinterpret_cast<int32_t *>(0x00949884);
 uint8_t *LockMapTable = reinterpret_cast<uint8_t *>(0x0094A30C);
+uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
 
 /*
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
@@ -65,4 +66,39 @@ void Lock::clear() {
 
 void __fastcall lock_clear_redirect(Lock *self, void *) {
     self->clear();
+}
+
+/*
+Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
+         a yes on its own; otherwise records 1 through 7 are scanned, but only
+         those whose slot bit is set in both the low and second bytes of the
+         enable mask, and a record counts when either of its two entries has
+         its flag's low bit set. Record 0 is never scanned.
+Original Offset: 005904A0
+Return Value: 1 when a lock is engaged, 0 otherwise
+Status: Complete
+*/
+int Lock::any_locks() {
+    if (field_E0_ != 0) {
+        return 1;
+    }
+    const uint32_t mask = *LockEnableMask;
+    const uint32_t low_byte = mask & 0xFF;
+    const uint32_t second_byte = (mask >> 8) & 0xFF;
+    for (int index = 1; index < 8; ++index) {
+        const uint32_t bit = 1u << index;
+        if (!(bit & low_byte) || !(bit & second_byte)) {
+            continue;
+        }
+        for (int entry = 0; entry < 2; ++entry) {
+            if (records_[index].entries[entry].flag & 1) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int __fastcall lock_any_locks_redirect(Lock *self, void *) {
+    return self->any_locks();
 }
