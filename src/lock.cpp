@@ -24,6 +24,7 @@ uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
 func_square_lock_unlock *LockSquareUnlock =
     (func_square_lock_unlock *)0x0058FD90;
 func_current_server *LockCurrentServer = (func_current_server *)0x0052DBA0;
+func_message_data *LockMessageData = (func_message_data *)0x00592EE0;
 
 /*
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
@@ -183,4 +184,34 @@ int Lock::check_global_2(int owner) {
 
 int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner) {
     return self->check_global_2(owner);
+}
+
+/*
+Purpose: On the server, when a held lock has no square still active, broadcast
+         its release and drop the held flag. Does nothing off the server, when
+         no lock is held, or while any slot record still has an active square.
+Original Offset: 005901D0
+Return Value: n/a
+Status: Complete
+*/
+void Lock::check_global() {
+    if (LockCurrentServer() == 0) {
+        return;
+    }
+    if (field_E4_ == 0) {
+        return;
+    }
+    for (int index = 1; index < 8; ++index) {
+        for (int entry = 0; entry < 2; ++entry) {
+            if (records_[index].entries[entry].flag & 1) {
+                return;
+            }
+        }
+    }
+    LockMessageData(0x1205, static_cast<int>(field_E0_), 0, 0, 0, 0);
+    field_E4_ = 0;
+}
+
+void __fastcall lock_check_global_redirect(Lock *self, void *) {
+    self->check_global();
 }

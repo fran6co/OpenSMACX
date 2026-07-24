@@ -25,6 +25,7 @@ EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary depende
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
 LockCurrentServer,ui_dependency,recover_current_server,Temporary dependency for the recovered Lock check_global_2 until current_server is source-owned
+LockMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered Lock check_global until message_data is source-owned
 LockSquareUnlock,ui_dependency,recover_square_lock_unlock,Temporary dependency for the recovered Lock unlock until SquareLock unlock is source-owned
 MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
 MapWinClick,ui_dependency,recover_map_win_click,Temporary dependency for the recovered MapWin click handlers until the shared click is source-owned
