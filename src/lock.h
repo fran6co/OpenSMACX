@@ -38,6 +38,7 @@ class DLLEXPORT Lock {
   int check_global_2(int owner);
   void check_global();
   int add_lock(int slot, int flags, int a3, int a4);
+  int lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7);
 
  private:
   struct Entry {
@@ -94,3 +95,5 @@ int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner);
 int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner);
 void __fastcall lock_check_global_redirect(Lock *self, void *);
 int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags, int a3, int a4);
+int __fastcall lock_lock_redirect(Lock *self, void *, int slot, int flags, int a3,
+                                  int a4, int a5, int a6, int a7);

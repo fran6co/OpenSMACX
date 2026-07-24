@@ -233,3 +233,79 @@ int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags,
                                       int a3, int a4) {
     return self->add_lock(slot, flags, a3, a4);
 }
+
+/*
+Purpose: Lock both of a slot's square entries in one call. Refuses when another
+         owner holds the global lock. The 0x2 flag bit takes the global lock
+         for this slot as owner. Each entry's square is reset to its unset
+         sentinels then locked - the first with (flags, a3, a4), the second with
+         (a5, a6, a7); if either fails, both are unlocked, the record cleared,
+         and the global lock this slot held is dropped. On full success, when
+         the 0x2 bit was set and this is the server, the same release check
+         check_global runs (but skipping this slot's own record) fires the
+         release broadcast if no other slot still holds an active square.
+Original Offset: 00590300
+Return Value: 1 on refusal or lock failure, 0 on success
+Status: Complete
+*/
+int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
+    // Refuse when another owner already holds the global lock.
+    if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(slot)) {
+        return 1;
+    }
+    const bool take_global = (flags & 2) != 0;
+    if (take_global) {
+        // The entry guard above already narrowed field_E0_ to 0 or slot, so
+        // this mirrors the binary's second, redundant owner check.
+        if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(slot)) {
+            return 1;
+        }
+        field_E0_ = static_cast<uint32_t>(slot);
+        field_E4_ = 1;
+    }
+
+    Record &record = records_[slot];
+    for (int entry = 0; entry < 2; ++entry) {
+        record.entries[entry].first = -1;
+        record.entries[entry].second = -1;
+        record.entries[entry].flag = 0;
+    }
+    record.flag = 0;
+
+    if (LockSquareLock(&record.entries[0], slot, flags, a3, a4) == 0 &&
+        LockSquareLock(&record.entries[1], slot, a5, a6, a7) == 0) {
+        if (take_global && LockCurrentServer() != 0 && field_E4_ != 0) {
+            const uint32_t owner = field_E0_;
+            for (int index = 1; index < 8; ++index) {
+                if (static_cast<uint32_t>(index) == owner) {
+                    continue;
+                }
+                for (int entry = 0; entry < 2; ++entry) {
+                    if (records_[index].entries[entry].flag & 1) {
+                        return 0;
+                    }
+                }
+            }
+            LockMessageData(0x1205, static_cast<int>(owner), 0, 0, 0, 0);
+            field_E4_ = 0;
+        }
+        return 0;
+    }
+
+    // A square failed: unlock both entries, clear the record, and drop the
+    // global lock if this slot holds it.
+    for (int entry = 0; entry < 2; ++entry) {
+        LockSquareUnlock(&record.entries[entry], slot);
+    }
+    record.flag = 0;
+    if (field_E0_ == static_cast<uint32_t>(slot)) {
+        field_E4_ = 0;
+        field_E0_ = 0;
+    }
+    return 1;
+}
+
+int __fastcall lock_lock_redirect(Lock *self, void *, int slot, int flags,
+                                  int a3, int a4, int a5, int a6, int a7) {
+    return self->lock(slot, flags, a3, a4, a5, a6, a7);
+}
