@@ -12209,6 +12209,61 @@ void test_lock_check_global() {
     LockMessageData = saved_msg;
 }
 
+namespace {
+void *g_sq_lock_entry;
+int g_sq_lock_args[4];
+int g_sq_lock_calls;
+int g_sq_lock_result;
+int __thiscall observe_square_lock(void *entry, int a1, int a2, int a3, int a4) {
+    g_sq_lock_entry = entry;
+    g_sq_lock_args[0] = a1;
+    g_sq_lock_args[1] = a2;
+    g_sq_lock_args[2] = a3;
+    g_sq_lock_args[3] = a4;
+    ++g_sq_lock_calls;
+    return g_sq_lock_result;
+}
+}  // namespace
+
+void test_lock_add_lock() {
+    // add_lock(slot, flags, a3, a4) forwards to SquareLock::lock on the slot
+    // record's second square entry - at record+0x10, i.e. records_[slot]+0x1C*slot
+    // +0x10 - with mask bit 0x10 forced into the flags argument, and returns
+    // whatever the seam returns. The seam receives (entry, slot, flags|0x10,
+    // a3, a4); the two things a wrong recovery would get wrong are the entry
+    // index (record+0x10, not record+4) and the 0x10 bit.
+    auto *const saved = LockSquareLock;
+    LockSquareLock = &observe_square_lock;
+
+    std::vector<uint8_t> storage(sizeof(Lock) + 32);
+    auto *lock = reinterpret_cast<Lock *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+    std::memset(obj, 0xCD, sizeof(Lock));
+
+    g_sq_lock_calls = 0;
+    g_sq_lock_result = 0x1234;
+    int rv = lock->add_lock(3, 0x21, 7, 9);
+    expect(g_sq_lock_calls == 1);
+    expect(g_sq_lock_entry == obj + 3 * 0x1C + 0x10);   // entries[1]
+    expect(g_sq_lock_args[0] == 3);                     // slot
+    expect(g_sq_lock_args[1] == (0x21 | 0x10));         // flags with 0x10 set
+    expect(g_sq_lock_args[2] == 7);
+    expect(g_sq_lock_args[3] == 9);
+    expect(rv == 0x1234);                               // result passthrough
+
+    // A slot-0 lock still targets record 0's second entry, and the 0x10 bit is
+    // set even when the caller's flags already lack it.
+    g_sq_lock_calls = 0;
+    g_sq_lock_result = -1;
+    rv = lock_add_lock_redirect(lock, nullptr, 0, 0, 1, 2);
+    expect(g_sq_lock_calls == 1);
+    expect(g_sq_lock_entry == obj + 0x10);
+    expect(g_sq_lock_args[1] == 0x10);
+    expect(rv == -1);
+
+    LockSquareLock = saved;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -12606,6 +12661,7 @@ int main() {
     test_lock_global_lock();
     test_lock_check_global_2();
     test_lock_check_global();
+    test_lock_add_lock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
