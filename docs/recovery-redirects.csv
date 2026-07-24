@@ -225,6 +225,7 @@ address,kind
 0x004C7120,jump
 0x004D9DC0,jump
 0x004D9DD0,jump
+0x004E1F40,jump
 0x004E25B0,jump
 0x004E25E0,jump
 0x004E2610,jump

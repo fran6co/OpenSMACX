@@ -17,10 +17,13 @@
  */
 #include "stdafx.h"
 #include "console.h"
+#include "game.h"
 #include <cstring>
 
 func_pref_win_display *ConsolePrefWinDisplay = (func_pref_win_display *)0x0048FA00;
 void *ConsolePrefWin = reinterpret_cast<void *>(0x008578D8);
+func_get_key_state **ConsoleEditKeyStateSlot =
+    reinterpret_cast<func_get_key_state **>(0x0066932C);
 
 /*
 Purpose: Open the shared preferences window to the preferences page.
@@ -117,4 +120,27 @@ void Console::clear_group() {
 
 void __fastcall console_clear_group_redirect(Console *self, void *) {
     self->clear_group();
+}
+
+/*
+Purpose: Report whether editing is locked out. Only meaningful in the scenario
+         editor; there editing is locked whenever Scroll Lock is toggled on or
+         the game is in editor-only mode.
+Original Offset: 004E1F40
+Return Value: 1 when editing is locked, 0 otherwise
+Status: Complete
+*/
+int Console::edit_lock() {
+    if (!(*GameState & STATE_SCENARIO_EDITOR)) {
+        return 0;
+    }
+    if (((*ConsoleEditKeyStateSlot)(VK_SCROLL) & 1) ||
+        (*GameState & STATE_EDITOR_ONLY_MODE)) {
+        return 1;
+    }
+    return 0;
+}
+
+int __fastcall console_edit_lock_redirect(Console *self, void *) {
+    return self->edit_lock();
 }

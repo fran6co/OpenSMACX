@@ -67,6 +67,7 @@
 #include "../src/deletionlist.h"
 #include "../src/lock.h"
 #include "../src/map.h"
+#include "../src/game.h"
 #include "../src/menu.h"
 #include "../src/palette.h"
 #include "../src/pulldown.h"
@@ -12452,6 +12453,20 @@ int *MapLongitudeBounds;
 int *MapLatitudeBounds;
 BOOL *MapIsFlat;
 
+// game.cpp is not linked either, so Console::edit_lock's GameState global is
+// provided here, alongside a stand-in for the GetKeyState import it consults.
+uint32_t *GameState;
+
+namespace {
+int g_console_key_ret;
+int g_console_key_vk;
+}  // namespace
+SHORT __stdcall fake_console_get_key_state(int virtual_key) {
+    g_console_key_vk = virtual_key;
+    return static_cast<SHORT>(g_console_key_ret);
+}
+func_get_key_state *g_console_key_fn = &fake_console_get_key_state;
+
 void test_square_lock_unlock() {
     // SquareLock::unlock releases the square and its footprint. When the lock
     // bit (0x1) is clear it does nothing; when set it clears the record to its
@@ -12624,6 +12639,58 @@ void test_square_lock_lock() {
     expect(g_sq_lock_map_calls.size() == 1);
     expect(g_sq_lock_map_calls[0].faction == 6 &&
            g_sq_lock_map_calls[0].x == 20 && g_sq_lock_map_calls[0].y == 20);
+}
+
+void test_console_edit_lock() {
+    // edit_lock is meaningful only in the scenario editor: outside it, always
+    // unlocked. Inside it, editing locks when Scroll Lock is toggled (bit 0 of
+    // GetKeyState) or the game is in editor-only mode. GetKeyState is stood in
+    // for through the rebound import slot so the key state is controllable.
+    uint32_t state = 0;
+    auto *const saved_gs = GameState;
+    auto *const saved_slot = ConsoleEditKeyStateSlot;
+    GameState = &state;
+    g_console_key_fn = &fake_console_get_key_state;
+    ConsoleEditKeyStateSlot = &g_console_key_fn;
+
+    std::vector<uint8_t> buf(64);   // this is never dereferenced by edit_lock
+    auto *con = reinterpret_cast<Console *>(buf.data());
+
+    // Not in the scenario editor: unlocked regardless of key or editor-only bit.
+    state = 0;
+    g_console_key_ret = 1;
+    expect(con->edit_lock() == 0);
+    state = STATE_EDITOR_ONLY_MODE;
+    expect(con->edit_lock() == 0);
+
+    // Scenario editor + Scroll Lock toggled (bit 0) locks editing, and the key
+    // queried is Scroll Lock.
+    state = STATE_SCENARIO_EDITOR;
+    g_console_key_ret = 1;
+    g_console_key_vk = 0;
+    expect(con->edit_lock() == 1);
+    expect(g_console_key_vk == VK_SCROLL);
+
+    // Only bit 0 counts: the down bit (0x80) alone does not lock.
+    g_console_key_ret = 0x80;
+    expect(con->edit_lock() == 0);
+
+    // Editor-only mode locks editing even with the key clear.
+    g_console_key_ret = 0;
+    state = STATE_SCENARIO_EDITOR | STATE_EDITOR_ONLY_MODE;
+    expect(con->edit_lock() == 1);
+
+    // Scenario editor, key clear, not editor-only: unlocked.
+    state = STATE_SCENARIO_EDITOR;
+    g_console_key_ret = 0;
+    expect(con->edit_lock() == 0);
+
+    // Redirect entry.
+    g_console_key_ret = 1;
+    expect(console_edit_lock_redirect(con, nullptr) == 1);
+
+    GameState = saved_gs;
+    ConsoleEditKeyStateSlot = saved_slot;
 }
 
 void test_base_pop_default_colors() {
@@ -13027,6 +13094,7 @@ int main() {
     test_lock_lock();
     test_square_lock_unlock();
     test_square_lock_lock();
+    test_console_edit_lock();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
