@@ -34,6 +34,7 @@ class DLLEXPORT Lock {
   void clear();
   int any_locks();
   void unlock(int slot);
+  int global_lock(int owner);
 
  private:
   struct Entry {
@@ -69,3 +70,4 @@ void __fastcall lock_reset_map_redirect(Lock *self, void *);
 void __fastcall lock_clear_redirect(Lock *self, void *);
 int __fastcall lock_any_locks_redirect(Lock *self, void *);
 void __fastcall lock_unlock_redirect(Lock *self, void *, int slot);
+int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner);
