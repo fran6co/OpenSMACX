@@ -32,6 +32,7 @@ class DLLEXPORT Lock {
   ~Lock() { ; }
   void reset_map();
   void clear();
+  int any_locks();
 
  private:
   struct Entry {
@@ -54,5 +55,10 @@ class DLLEXPORT Lock {
 extern int32_t *LockMapCount;
 extern uint8_t *LockMapTable;
 
+// A per-slot enable mask any_locks gates its record scan on, at a fixed
+// address; rebindable for tests.
+extern uint32_t *LockEnableMask;
+
 void __fastcall lock_reset_map_redirect(Lock *self, void *);
 void __fastcall lock_clear_redirect(Lock *self, void *);
+int __fastcall lock_any_locks_redirect(Lock *self, void *);
