@@ -37,10 +37,55 @@ int Wave_Device::fade(int) {
     return 0;
 }
 
+namespace {
+// The wrapped device is driven through its own vtable; enable and disable call
+// two adjacent slots on it. A raw dispatch is used because the device is an
+// opaque object with no source-owned type.
+typedef void(__thiscall *device_vfn)(void *device);
+
+void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(self) + 0x14);
+    if (device) {
+        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+        device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + vtable_offset);
+        fn(device);
+    }
+}
+}  // namespace
+
+/*
+Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
+Original Offset: 004C51C0
+Return Value: n/a
+Status: Complete
+*/
+void Wave_Device::enable() {
+    dispatch_wrapped_device(this, 0x60);
+}
+
+/*
+Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
+Original Offset: 004C51D0
+Return Value: n/a
+Status: Complete
+*/
+void Wave_Device::disable() {
+    dispatch_wrapped_device(this, 0x64);
+}
+
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1) {
     self->set_pan(a1);
 }
 
 int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1) {
     return self->fade(a1);
+}
+
+void __fastcall wave_device_enable_redirect(Wave_Device *self, void *) {
+    self->enable();
+}
+
+void __fastcall wave_device_disable_redirect(Wave_Device *self, void *) {
+    self->disable();
 }

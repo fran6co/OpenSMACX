@@ -21,9 +21,9 @@
   * Wave_Device class
   *
   * Layout not established; its methods reach as far as 0xB0, so the
-  * object is at least that large. The stubs recovered here are constant
-  * returns touching no field, so the opaque storage below is only an object
-  * for the canary to seed, not a modelled layout.
+  * object is at least that large. The one field these methods establish is a
+  * pointer to the wrapped device at offset 0x14; the rest is opaque storage,
+  * only an object for the canary to seed, not a modelled layout.
   */
 class DLLEXPORT Wave_Device {
  public:
@@ -31,6 +31,8 @@ class DLLEXPORT Wave_Device {
   ~Wave_Device() { ; }
   void set_pan(int);
   int fade(int);
+  void enable();
+  void disable();
 
  private:
   uint8_t unmapped_[0xC0];
@@ -38,3 +40,5 @@ class DLLEXPORT Wave_Device {
 
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1);
 int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1);
+void __fastcall wave_device_enable_redirect(Wave_Device *self, void *);
+void __fastcall wave_device_disable_redirect(Wave_Device *self, void *);
