@@ -65,6 +65,12 @@ class ConstantBodyTest(unittest.TestCase):
     def test_reads_a_zeroed_return(self):
         self.assertEqual((0, 4), finder.constant_body(b"\x33\xc0\xc2\x04\x00"))
 
+    def test_reads_a_zeroed_return_with_no_cleanup(self):
+        # xor eax, eax; ret - three bytes. The shape a caller-cleanup stub that
+        # returns zero takes; missing it hid a whole family of audio-device
+        # getters from the drained-bucket count.
+        self.assertEqual((0, 0), finder.constant_body(b"\x33\xc0\xc3"))
+
     def test_reads_a_bare_return(self):
         self.assertEqual((None, 0), finder.constant_body(b"\xc3"))
 

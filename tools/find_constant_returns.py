@@ -62,7 +62,7 @@ def constant_body(code: bytes) -> tuple[int | None, int] | None:
         return struct.unpack("<I", code[1:5])[0], 0
     if len(code) == 5 and code[:2] == b"\x33\xc0" and code[2] == 0xC2:
         return 0, struct.unpack("<H", code[3:5])[0]
-    if len(code) == 4 and code[:2] == b"\x33\xc0" and code[3] == 0xC3:
+    if len(code) == 3 and code[:2] == b"\x33\xc0" and code[2] == 0xC3:
         return 0, 0
     if len(code) == 3 and code[0] == 0xC2:
         return None, struct.unpack("<H", code[1:3])[0]
