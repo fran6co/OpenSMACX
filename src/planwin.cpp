@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "planwin.h"
+#include "mapwin.h"
 
 /*
 Purpose: Clear the plan window's line count.
@@ -30,4 +31,27 @@ void PlanWin::clear_lines() {
 
 void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *) {
     self->clear_lines();
+}
+
+/*
+Purpose: Close the plan window by dropping its blink state and running the
+         close it inherits from MapWin.
+Original Offset: 0048BC50
+Return Value: n/a
+Status: Complete
+
+The original clears the field and tail-jumps into MapWin::close with `this`
+untouched, which is a plain base-class call: the MapWin subobject opens a
+PlanWin at offset 0. It cannot be spelled as inheritance here because MapWin
+holds its virtual base as a member at MapWin's own 0x21A6C, while a PlanWin
+puts that base at 0x22050 - but MapWin::close never uses the member, reaching
+the base through the vbtable instead, so it reads the right one either way.
+*/
+void PlanWin::close() {
+    field_21A68_ = 0;
+    reinterpret_cast<MapWin *>(this)->close();
+}
+
+void __fastcall plan_win_close_redirect(PlanWin *self, void *) {
+    self->close();
 }

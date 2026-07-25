@@ -13570,6 +13570,91 @@ void test_console_editor_undo_and_prod_picker_close() {
 }
 
 namespace {
+void *g_pw_freed;
+int g_pw_free_calls;
+void *observe_pw_map_win_free(void *p) { g_pw_freed = p; ++g_pw_free_calls; return nullptr; }
+void *g_pw_win_close_self;
+int g_pw_win_close_calls;
+void __thiscall observe_pw_win_close(void *self) {
+    g_pw_win_close_self = self; ++g_pw_win_close_calls;
+}
+}  // namespace
+
+void test_plan_win_close() {
+    // PlanWin::close clears one field and then runs MapWin::close on the very
+    // same pointer - a real base-class call, since PlanWin's constructor
+    // builds a MapWin at offset 0. Both halves are source-owned, so they are
+    // driven for real and watched at the two seams underneath.
+    auto *const saved_free = MapWinFree;
+    auto *const saved_win = WinOriginalClose;
+    auto *const saved_bufclose = BufferSubobjectClose;
+    MapWinFree = &observe_pw_map_win_free;
+    WinOriginalClose = &observe_pw_win_close;
+    BufferSubobjectClose = nullptr;   // GraphicWin::close skips it when unset
+
+    std::vector<uint8_t> pw(sizeof(PlanWin) + 64, 0);
+    uint8_t *const obj = pw.data();
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v = 0; std::memcpy(&v, obj + off, 4); return v;
+    };
+
+    // MapWin::close reaches the virtual base through the vbtable, never
+    // through its own member, so the object must carry *PlanWin's* table -
+    // {0, 0x22050} - and the base it closes must land at 0x22050, not at the
+    // 0x21A6C a standalone MapWin would use. That difference is the whole
+    // reason this call is safe to make across the two layouts.
+    const int32_t vbtable[2] = {0, 0x22050};
+    set32(0, reinterpret_cast<uintptr_t>(&vbtable[0]));
+
+    int owned_block = 0;
+    const uint32_t owned = reinterpret_cast<uintptr_t>(&owned_block);
+    set32(4, owned);                  // MapWin's owned pointer
+    set32(0x21A68, 0x1234);           // the field close clears
+    set32(0x21A64, 0x11111111);       // last dword of the inherited MapWin data
+    set32(0x21A6C, 0x22222222);       // PlanWin's next field - blink's toggle
+    set32(sizeof(PlanWin), 0x33333333);   // past the object entirely
+
+    g_pw_free_calls = 0; g_pw_win_close_calls = 0;
+    auto *plan = reinterpret_cast<PlanWin *>(obj);
+    plan->close();
+
+    expect(get32(0x21A68) == 0);            // the field is cleared
+    expect(get32(0x21A64) == 0x11111111);   // neither neighbour moves
+    expect(get32(0x21A6C) == 0x22222222);
+    expect(get32(sizeof(PlanWin)) == 0x33333333);
+    // The inherited MapWin close ran: it released the owned block and dropped
+    // the pointer.
+    expect(g_pw_free_calls == 1);
+    expect(g_pw_freed == reinterpret_cast<void *>(&owned_block));
+    expect(get32(4) == 0);
+    // ...and reached the GraphicWin base through the vbtable offset, not
+    // through MapWin's own.
+    expect(g_pw_win_close_calls == 1);
+    expect(g_pw_win_close_self == reinterpret_cast<void *>(obj + 0x22050));
+    expect(get32(0x22050 + 0xA0C) == *GraphicWinFieldA0CDefault);
+
+    // The redirect drives the identical path.
+    set32(4, owned);
+    set32(0x21A68, 0x1234);
+    g_pw_free_calls = 0; g_pw_win_close_calls = 0;
+    plan_win_close_redirect(plan, nullptr);
+    expect(get32(0x21A68) == 0);
+    expect(get32(4) == 0);
+    expect(g_pw_free_calls == 1 && g_pw_win_close_calls == 1);
+    expect(g_pw_win_close_self == reinterpret_cast<void *>(obj + 0x22050));
+
+    // A closed-out window frees nothing the second time round.
+    g_pw_free_calls = 0;
+    plan->close();
+    expect(g_pw_free_calls == 0);
+
+    MapWinFree = saved_free;
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_bufclose;
+}
+
+namespace {
 void *g_tex_freed;
 int g_tex_free_calls;
 void *observe_texture_free(void *p) { g_tex_freed = p; ++g_tex_free_calls; return nullptr; }
@@ -14080,6 +14165,7 @@ int main() {
     test_wrapped_device_forwarders_with_defaults();
     test_sound_guarded_forwarders();
     test_console_editor_undo_and_prod_picker_close();
+    test_plan_win_close();
     test_texture_lifecycle();
     test_status_win_set_loc();
     test_field_store_clears();

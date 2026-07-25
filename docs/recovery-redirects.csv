@@ -164,6 +164,7 @@ address,kind
 0x00483EA0,jump
 0x00489B10,jump
 0x0048AF20,jump
+0x0048BC50,jump
 0x004926B0,jump
 0x00493C10,jump
 0x00493E90,jump
