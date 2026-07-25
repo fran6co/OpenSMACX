@@ -50,6 +50,10 @@ class DLLEXPORT Midi_Device {
   int fade(unsigned int a1);
   void set_rate(unsigned int a1);
   int get_description(unsigned int a1, char *a2, unsigned int a3);
+  int get_ndevices();
+  int get_volume();
+  int stop();
+  int get_rate();
  private:
   uint32_t vtable_storage_;
   uint32_t field_4_;
@@ -73,6 +77,9 @@ class DLLEXPORT Wave_In_Device {
   int get_caps(unsigned int a1);
   void set_rate(unsigned int a1);
   int get_description(unsigned int a1, char *a2, unsigned int a3);
+  int get_ndevices();
+  int stop();
+  int get_rate();
  private:
   uint32_t vtable_storage_;
   uint32_t field_4_;
@@ -100,3 +107,10 @@ int __fastcall wave_in_device_get_caps_redirect(Wave_In_Device *self, void *, un
 void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, unsigned int a1);
 int __fastcall midi_device_get_description_redirect(Midi_Device *self, void *, unsigned int a1, char *a2, unsigned int a3);
 int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, void *, unsigned int a1, char *a2, unsigned int a3);
+int __fastcall midi_device_get_ndevices_redirect(Midi_Device *self, void *);
+int __fastcall midi_device_get_volume_redirect(Midi_Device *self, void *);
+int __fastcall midi_device_stop_redirect(Midi_Device *self, void *);
+int __fastcall midi_device_get_rate_redirect(Midi_Device *self, void *);
+int __fastcall wave_in_device_get_ndevices_redirect(Wave_In_Device *self, void *);
+int __fastcall wave_in_device_stop_redirect(Wave_In_Device *self, void *);
+int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *);

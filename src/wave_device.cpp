@@ -89,3 +89,31 @@ void __fastcall wave_device_enable_redirect(Wave_Device *self, void *) {
 void __fastcall wave_device_disable_redirect(Wave_Device *self, void *) {
     self->disable();
 }
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C5170
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_Device::get_volume() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C51B0
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_Device::stop() {
+    return 0;
+}
+
+int __fastcall wave_device_get_volume_redirect(Wave_Device *self, void *) {
+    return self->get_volume();
+}
+
+int __fastcall wave_device_stop_redirect(Wave_Device *self, void *) {
+    return self->stop();
+}

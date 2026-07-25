@@ -52,6 +52,7 @@ class DLLEXPORT MapWin {
   void on_left_double_click(int, int);
   void on_left_up(int, int);
   void close();
+  int UNK2();
 
  private:
   // The vbtable pointer opens the object; a heap pointer close() frees sits at
@@ -83,6 +84,7 @@ typedef void *func_map_win_free(void *);
 extern func_map_win_free *MapWinFree;
 
 void __fastcall map_win_close_redirect(MapWin *self, void *);
+int __fastcall map_win_unk2_redirect(MapWin *self, void *);
 
 // MapWin's click handler and the input-enable flag it gates on are not
 // recovered; the flag lives at a fixed address and is rebindable for tests.
