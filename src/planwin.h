@@ -30,18 +30,30 @@
   * The virtual base is a member rather than a virtual base for the ABI reason
   * described in mapwin.h, and fields must be carved out of derived_storage_
   * rather than appended.
+  *
+  * PlanWin derives from MapWin: its constructor at 0x0048BCD0 calls
+  * ??0MapWin@@QAE@H@Z with `this` unchanged, so the MapWin base subobject
+  * opens the object at offset 0. That base ends at 0x21A68 - the offset the
+  * constructor's own writes start at - and 0x21A68 is exactly where a
+  * standalone MapWin puts the 4-byte vtordisp MSVC reserves ahead of a
+  * virtual base, which is why MapWin's pinned 0x21A6C is 4 more than the data
+  * PlanWin inherits. PlanWin's own vtordisp sits at 0x2204C, written by the
+  * same constructor as `[vbase_offset + this - 4] = 0`.
   */
 class DLLEXPORT PlanWin {
  public:
   PlanWin() { ; }
   ~PlanWin() { ; }
   void clear_lines();
+  void close();
 
  private:
-  // field_21FF8_ is carved out of the derived storage rather than appended;
-  // the static_assert below is what proves the carving kept the total at the
-  // pinned 0x22A64.
-  uint8_t derived_head_[0x21FF8];
+  // The inherited MapWin data, then PlanWin's own fields carved out of the
+  // derived storage rather than appended; the static_assert below is what
+  // proves the carving kept the total at the pinned 0x22A64.
+  uint8_t map_win_base_[0x21A68];
+  int32_t field_21A68_;
+  uint8_t derived_head_[0x21FF8 - 0x21A6C];
   int32_t field_21FF8_;
   uint8_t derived_tail_[0x22050 - 0x21FFC];
   GraphicWin virtual_base_;
@@ -50,3 +62,4 @@ class DLLEXPORT PlanWin {
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");
 
 void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *);
+void __fastcall plan_win_close_redirect(PlanWin *self, void *);
