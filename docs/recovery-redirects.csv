@@ -220,6 +220,7 @@ address,kind
 0x004C5B50,jump
 0x004C6430,jump
 0x004C6600,jump
+0x004C6EA0,jump
 0x004C70D0,jump
 0x004C70E0,jump
 0x004C70F0,jump

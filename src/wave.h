@@ -26,8 +26,14 @@
   * size, so nothing pins this and the storage below is the evidenced
   * minimum rather than the object.
   *
-  * The methods recovered here are bare returns or a bare constant, touching
-  * no field, which is why they can be replaced ahead of that mapping.
+  * Most methods recovered here are bare returns or a bare constant, touching
+  * no field, which is why they could be replaced ahead of that mapping.
+  * unload reaches further, and the fields it uses are named below on the
+  * constructor's evidence: it writes a vtable at 0 (held as opaque storage so
+  * no C++ vtable is generated), the wrapped device pointer at 0x3C, a flag
+  * dword at 0x40 whose bit 0 it clears, and a flag byte region at 0x54. The
+  * gaps between named fields stay unnamed padding, and the object's end is
+  * still not established.
   */
 class DLLEXPORT Wave {
  public:
@@ -40,11 +46,22 @@ class DLLEXPORT Wave {
   int set_sustain(unsigned int a1, unsigned int a2, unsigned int a3);
   int set_decay(unsigned int a1, unsigned int a2, unsigned int a3);
   int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
+  int unload();
  private:
-  uint32_t field_0_;
+  uint32_t vtable_storage_;      // 0x00
   uint32_t field_4_;
   uint32_t field_8_;
-  uint8_t memset_region_[0x24];
+  uint8_t memset_region_[0x24];  // 0x0C..0x2F
+  uint32_t field_30_;
+  uint32_t field_34_;
+  uint32_t field_38_;
+  void *device_;                 // 0x3C, the wrapped device or null
+  uint32_t field_40_;            // 0x40, bit 0 cleared on unload
+  uint32_t field_44_;
+  uint32_t field_48_;
+  uint32_t field_4C_;
+  uint32_t field_50_;
+  uint8_t flags_54_;             // 0x54, bit 1 suppresses the vtable callback
 };
 
 int __fastcall wave_set_asdr_redirect(Wave *self, void *);
@@ -53,3 +70,4 @@ int __fastcall wave_set_attack_redirect(Wave *self, void *, unsigned int a1, uns
 int __fastcall wave_set_sustain_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
 int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
 int __fastcall wave_set_release_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
+int __fastcall wave_unload_redirect(Wave *self, void *);

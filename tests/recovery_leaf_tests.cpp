@@ -12835,6 +12835,96 @@ void test_sound_fade() {
     expect(g_sound_fallback_calls == 1);
 }
 
+namespace {
+void *g_wave_dev_self;
+int g_wave_dev_calls;
+int g_wave_dev_ret;
+void *g_wave_self_self;
+int g_wave_self_calls;
+int __thiscall observe_wave_device_unload(void *self) {
+    g_wave_dev_self = self; ++g_wave_dev_calls; return g_wave_dev_ret;
+}
+void __thiscall observe_wave_self_slot(Wave *self) {
+    g_wave_self_self = self; ++g_wave_self_calls;
+}
+}  // namespace
+
+void test_wave_unload() {
+    // unload asks the wrapped device at 0x3C to unload through the device's own
+    // vtable slot 0x14, returns that result, forgets the device, runs the
+    // object's own vtable slot 0x80 unless bit 1 of the flag byte at 0x54
+    // suppresses it, and clears bit 0 of the flag dword at 0x40.
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    auto *wave = reinterpret_cast<Wave *>(storage.data());
+    uint8_t *const obj = storage.data();
+
+    void *wave_vtable[64] = {};
+    wave_vtable[0x80 / 4] = reinterpret_cast<void *>(&observe_wave_self_slot);
+    void *wave_vtable_ptr = wave_vtable;
+    std::memcpy(obj, &wave_vtable_ptr, sizeof(wave_vtable_ptr));
+
+    void *dev_vtable[16] = {};
+    dev_vtable[0x14 / 4] = reinterpret_cast<void *>(&observe_wave_device_unload);
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+
+    auto set_device = [&](void *d) { std::memcpy(obj + 0x3C, &d, sizeof(d)); };
+    auto read32 = [&](size_t off) {
+        uint32_t v = 0; std::memcpy(&v, obj + off, 4); return v;
+    };
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+
+    // A wrapped device: its slot 0x14 runs with the device as this, its result
+    // is returned, the device pointer is cleared, the self slot runs, and only
+    // bit 0 of the 0x40 dword is cleared.
+    set_device(&fake_dev);
+    set32(0x40, 0xFFFFFFFFu);
+    obj[0x54] = 0;
+    g_wave_dev_calls = g_wave_self_calls = 0;
+    g_wave_dev_ret = 0x5A;
+    expect(wave->unload() == 0x5A);
+    expect(g_wave_dev_calls == 1 && g_wave_dev_self == &fake_dev);
+    expect(read32(0x3C) == 0);                 // device forgotten
+    expect(g_wave_self_calls == 1 && g_wave_self_self == wave);
+    expect(read32(0x40) == 0xFFFFFFFEu);       // only bit 0 cleared
+
+    // No device: nothing is dispatched to a device and the result is 0, but the
+    // self slot still runs and the bit is still cleared.
+    set_device(nullptr);
+    set32(0x40, 1);
+    g_wave_dev_calls = g_wave_self_calls = 0;
+    expect(wave->unload() == 0);
+    expect(g_wave_dev_calls == 0);
+    expect(g_wave_self_calls == 1);
+    expect(read32(0x40) == 0);
+
+    // Bit 1 of the 0x54 flag byte suppresses the self slot; everything else
+    // still happens.
+    set_device(&fake_dev);
+    set32(0x40, 0xF);
+    obj[0x54] = 2;
+    g_wave_dev_calls = g_wave_self_calls = 0;
+    g_wave_dev_ret = 7;
+    expect(wave->unload() == 7);
+    expect(g_wave_dev_calls == 1);
+    expect(g_wave_self_calls == 0);            // suppressed
+    expect(read32(0x40) == 0xE);
+    expect(read32(0x3C) == 0);
+
+    // Other bits of the 0x54 byte do not suppress it.
+    set_device(nullptr);
+    obj[0x54] = 0xFD;                          // everything but bit 1
+    g_wave_self_calls = 0;
+    wave->unload();
+    expect(g_wave_self_calls == 1);
+
+    // Redirect entry returns the device result.
+    set_device(&fake_dev);
+    obj[0x54] = 0;
+    g_wave_dev_ret = 0x33;
+    expect(wave_unload_redirect(wave, nullptr) == 0x33);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13239,6 +13329,7 @@ int main() {
     test_console_edit_lock();
     test_wave_device_enable_disable();
     test_sound_fade();
+    test_wave_unload();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
