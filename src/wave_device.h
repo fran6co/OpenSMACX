@@ -35,6 +35,14 @@ class DLLEXPORT Wave_Device {
   void disable();
   int get_volume();
   int stop();
+  void suspend();
+  void restart();
+  void update_sound();
+  int get_ndevices();
+  int get_hw_mem_size();
+  int get_rate();
+  int get_ds();
+  int is_eax();
 
  private:
   uint8_t unmapped_[0xC0];
@@ -46,3 +54,11 @@ void __fastcall wave_device_enable_redirect(Wave_Device *self, void *);
 void __fastcall wave_device_disable_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_get_volume_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_stop_redirect(Wave_Device *self, void *);
+void __fastcall wave_device_suspend_redirect(Wave_Device *self, void *);
+void __fastcall wave_device_restart_redirect(Wave_Device *self, void *);
+void __fastcall wave_device_update_sound_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_get_ndevices_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_get_hw_mem_size_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_get_rate_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_get_ds_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *);

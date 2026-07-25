@@ -54,6 +54,8 @@ class DLLEXPORT Midi_Device {
   int get_volume();
   int stop();
   int get_rate();
+  void enable();
+  void disable();
  private:
   uint32_t vtable_storage_;
   uint32_t field_4_;
@@ -114,3 +116,5 @@ int __fastcall midi_device_get_rate_redirect(Midi_Device *self, void *);
 int __fastcall wave_in_device_get_ndevices_redirect(Wave_In_Device *self, void *);
 int __fastcall wave_in_device_stop_redirect(Wave_In_Device *self, void *);
 int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *);
+void __fastcall midi_device_enable_redirect(Midi_Device *self, void *);
+void __fastcall midi_device_disable_redirect(Midi_Device *self, void *);

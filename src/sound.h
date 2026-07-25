@@ -33,6 +33,9 @@ class DLLEXPORT Sound {
   ~Sound() { ; }
   int UNK1(int);
   void fade(int a1);
+  int is_playing();
+  int is_looping();
+  int get_time();
 
  private:
   uint8_t unmapped_[0xA0];
@@ -40,3 +43,6 @@ class DLLEXPORT Sound {
 
 int __fastcall sound_unk1_redirect(Sound *self, void *, int a1);
 void __fastcall sound_fade_redirect(Sound *self, void *, int a1);
+int __fastcall sound_is_playing_redirect(Sound *self, void *);
+int __fastcall sound_is_looping_redirect(Sound *self, void *);
+int __fastcall sound_get_time_redirect(Sound *self, void *);

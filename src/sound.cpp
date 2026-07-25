@@ -55,3 +55,63 @@ int __fastcall sound_unk1_redirect(Sound *self, void *, int a1) {
 void __fastcall sound_fade_redirect(Sound *self, void *, int a1) {
     self->fade(a1);
 }
+
+namespace {
+// Sound wraps its device at 0x3C and asks it these questions through the
+// device's own vtable; the original tail-jumps, so the device's answer is the
+// caller's, and with no device wrapped the answer is zero.
+typedef int(__thiscall *sound_device_query)(void *device);
+
+int query_sound_device(Sound *self, int vtable_offset) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(self) + 0x3C);
+    if (!device) {
+        return 0;
+    }
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    return (*reinterpret_cast<sound_device_query *>(vtable + vtable_offset))(
+        device);
+}
+}  // namespace
+
+/*
+Purpose: Ask the wrapped device whether it is playing, through vtable slot 0x5C.
+Original Offset: 004C64C0
+Return Value: the device's answer, or 0 when none is wrapped
+Status: Complete
+*/
+int Sound::is_playing() {
+    return query_sound_device(this, 0x5C);
+}
+
+/*
+Purpose: Ask the wrapped device whether it is looping, through vtable slot 0x58.
+Original Offset: 004C6690
+Return Value: the device's answer, or 0 when none is wrapped
+Status: Complete
+*/
+int Sound::is_looping() {
+    return query_sound_device(this, 0x58);
+}
+
+/*
+Purpose: Ask the wrapped device for its play position, through vtable slot 0x74.
+Original Offset: 004C66A0
+Return Value: the device's answer, or 0 when none is wrapped
+Status: Complete
+*/
+int Sound::get_time() {
+    return query_sound_device(this, 0x74);
+}
+
+int __fastcall sound_is_playing_redirect(Sound *self, void *) {
+    return self->is_playing();
+}
+
+int __fastcall sound_is_looping_redirect(Sound *self, void *) {
+    return self->is_looping();
+}
+
+int __fastcall sound_get_time_redirect(Sound *self, void *) {
+    return self->get_time();
+}

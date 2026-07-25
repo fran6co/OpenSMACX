@@ -329,3 +329,46 @@ int __fastcall wave_in_device_stop_redirect(Wave_In_Device *self, void *) {
 int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *) {
     return self->get_rate();
 }
+
+namespace {
+// Midi_Device wraps its device at 0x14, the same offset Wave_Device uses, and
+// drives it through the device's own vtable.
+typedef void(__thiscall *midi_device_vfn)(void *device);
+
+void dispatch_midi_device(Midi_Device *self, int vtable_offset) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(self) + 0x14);
+    if (device) {
+        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+        (*reinterpret_cast<midi_device_vfn *>(vtable + vtable_offset))(device);
+    }
+}
+}  // namespace
+
+/*
+Purpose: Enable the wrapped device, if there is one, through vtable slot 0x54.
+Original Offset: 004C5900
+Return Value: n/a
+Status: Complete
+*/
+void Midi_Device::enable() {
+    dispatch_midi_device(this, 0x54);
+}
+
+/*
+Purpose: Disable the wrapped device, if there is one, through vtable slot 0x58.
+Original Offset: 004C5910
+Return Value: n/a
+Status: Complete
+*/
+void Midi_Device::disable() {
+    dispatch_midi_device(this, 0x58);
+}
+
+void __fastcall midi_device_enable_redirect(Midi_Device *self, void *) {
+    self->enable();
+}
+
+void __fastcall midi_device_disable_redirect(Midi_Device *self, void *) {
+    self->disable();
+}

@@ -13097,6 +13097,157 @@ void test_zeroed_constant_return_stubs() {
     expect_storage_bytes(mw_storage, mw_expected, sizeof(mw_storage));
 }
 
+namespace {
+// One recorder for the whole wrapped-device forwarder family: every method
+// under test reaches exactly one vtable slot, so recording which slot ran and
+// what it was passed is enough to tell them apart.
+int g_fwd_slot_ran;
+void *g_fwd_self;
+int g_fwd_calls;
+int g_fwd_ret;
+template <int Slot>
+int __thiscall observe_fwd_slot(void *self) {
+    g_fwd_slot_ran = Slot; g_fwd_self = self; ++g_fwd_calls; return g_fwd_ret;
+}
+}  // namespace
+
+void test_wrapped_device_forwarders() {
+    // Fourteen methods of one shape: forward to the device the object wraps -
+    // at 0x14 for the two device classes, 0x3C for Sound - through one slot of
+    // that device's vtable, answering zero (or doing nothing, when void) if no
+    // device is wrapped. Each is checked for the slot it reaches, that the
+    // device is passed as this, and that the device's answer comes back.
+    void *vt[64] = {};
+    vt[0x14 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x14>);
+    vt[0x34 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x34>);
+    vt[0x3C / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x3C>);
+    vt[0x48 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x48>);
+    vt[0x4C / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x4C>);
+    vt[0x54 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x54>);
+    vt[0x58 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x58>);
+    vt[0x5C / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x5C>);
+    vt[0x70 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x70>);
+    vt[0x74 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x74>);
+    struct FwdDev { void *vtbl; } fwd_dev;
+    fwd_dev.vtbl = vt;
+
+    std::vector<uint8_t> wd(sizeof(Wave_Device) + 32, 0);
+    auto *wave_dev = reinterpret_cast<Wave_Device *>(wd.data());
+    std::vector<uint8_t> md(sizeof(Midi_Device) + 32, 0);
+    auto *midi = reinterpret_cast<Midi_Device *>(md.data());
+    std::vector<uint8_t> sd(sizeof(Sound) + 32, 0);
+    auto *sound = reinterpret_cast<Sound *>(sd.data());
+
+    void *dev = &fwd_dev;
+    auto attach = [&](std::vector<uint8_t> &obj, size_t off, void *d) {
+        std::memcpy(obj.data() + off, &d, sizeof(d));
+    };
+
+    // With a device wrapped: each method reaches its own slot, passing the
+    // device as this, and each querying one returns the device's answer.
+    attach(wd, 0x14, dev);
+    attach(md, 0x14, dev);
+    attach(sd, 0x3C, dev);
+    g_fwd_ret = 0x4321;
+
+    struct VoidCase { void (Wave_Device::*fn)(); int slot; };
+    const VoidCase wd_void[] = {{&Wave_Device::suspend, 0x48},
+                                {&Wave_Device::restart, 0x4C},
+                                {&Wave_Device::update_sound, 0x34}};
+    for (const auto &c : wd_void) {
+        g_fwd_calls = 0; g_fwd_slot_ran = -1; g_fwd_self = nullptr;
+        (wave_dev->*c.fn)();
+        expect(g_fwd_calls == 1 && g_fwd_slot_ran == c.slot);
+        expect(g_fwd_self == dev);
+    }
+
+    struct QueryCase { int (Wave_Device::*fn)(); int slot; };
+    const QueryCase wd_query[] = {{&Wave_Device::get_ndevices, 0x14},
+                                  {&Wave_Device::get_hw_mem_size, 0x58},
+                                  {&Wave_Device::get_rate, 0x3C},
+                                  {&Wave_Device::get_ds, 0x70},
+                                  {&Wave_Device::is_eax, 0x74}};
+    for (const auto &c : wd_query) {
+        g_fwd_calls = 0; g_fwd_slot_ran = -1;
+        expect((wave_dev->*c.fn)() == 0x4321);
+        expect(g_fwd_calls == 1 && g_fwd_slot_ran == c.slot);
+        expect(g_fwd_self == dev);
+    }
+
+    g_fwd_calls = 0; g_fwd_slot_ran = -1;
+    midi->enable();
+    expect(g_fwd_calls == 1 && g_fwd_slot_ran == 0x54 && g_fwd_self == dev);
+    g_fwd_calls = 0; g_fwd_slot_ran = -1;
+    midi->disable();
+    expect(g_fwd_calls == 1 && g_fwd_slot_ran == 0x58 && g_fwd_self == dev);
+
+    const struct { int (Sound::*fn)(); int slot; } sound_query[] = {
+        {&Sound::is_playing, 0x5C}, {&Sound::is_looping, 0x58},
+        {&Sound::get_time, 0x74}};
+    for (const auto &c : sound_query) {
+        g_fwd_calls = 0; g_fwd_slot_ran = -1;
+        expect((sound->*c.fn)() == 0x4321);
+        expect(g_fwd_calls == 1 && g_fwd_slot_ran == c.slot);
+        expect(g_fwd_self == dev);
+    }
+
+    // With no device wrapped: nothing is dispatched and every query answers 0.
+    attach(wd, 0x14, nullptr);
+    attach(md, 0x14, nullptr);
+    attach(sd, 0x3C, nullptr);
+    g_fwd_calls = 0;
+    for (const auto &c : wd_void) { (wave_dev->*c.fn)(); }
+    for (const auto &c : wd_query) { expect((wave_dev->*c.fn)() == 0); }
+    midi->enable();
+    midi->disable();
+    for (const auto &c : sound_query) { expect((sound->*c.fn)() == 0); }
+    expect(g_fwd_calls == 0);
+
+    // The redirects reach the same slots.
+    attach(wd, 0x14, dev);
+    attach(md, 0x14, dev);
+    attach(sd, 0x3C, dev);
+    g_fwd_ret = 9;
+    g_fwd_slot_ran = -1;
+    wave_device_suspend_redirect(wave_dev, nullptr);
+    expect(g_fwd_slot_ran == 0x48);
+    wave_device_restart_redirect(wave_dev, nullptr);
+    expect(g_fwd_slot_ran == 0x4C);
+    wave_device_update_sound_redirect(wave_dev, nullptr);
+    expect(g_fwd_slot_ran == 0x34);
+    expect(wave_device_get_ndevices_redirect(wave_dev, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x14);
+    expect(wave_device_get_hw_mem_size_redirect(wave_dev, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x58);
+    expect(wave_device_get_rate_redirect(wave_dev, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x3C);
+    expect(wave_device_get_ds_redirect(wave_dev, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x70);
+    expect(wave_device_is_eax_redirect(wave_dev, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x74);
+    midi_device_enable_redirect(midi, nullptr);
+    expect(g_fwd_slot_ran == 0x54);
+    midi_device_disable_redirect(midi, nullptr);
+    expect(g_fwd_slot_ran == 0x58);
+    expect(sound_is_playing_redirect(sound, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x5C);
+    expect(sound_is_looping_redirect(sound, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x58);
+    expect(sound_get_time_redirect(sound, nullptr) == 9);
+    expect(g_fwd_slot_ran == 0x74);
+
+    // Wave::get_ms_length is a plain read of the field at 0x60, not a forward.
+    std::vector<uint8_t> wv(sizeof(Wave) + 32, 0);
+    auto *wave_obj = reinterpret_cast<Wave *>(wv.data());
+    int32_t length = 12345;
+    std::memcpy(wv.data() + 0x60, &length, sizeof(length));
+    int32_t decoy = -1;
+    std::memcpy(wv.data() + 0x5C, &decoy, sizeof(decoy));   // neighbour differs
+    std::memcpy(wv.data() + 0x64, &decoy, sizeof(decoy));
+    expect(wave_obj->get_ms_length() == 12345);
+    expect(wave_get_ms_length_redirect(wave_obj, nullptr) == 12345);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13504,6 +13655,7 @@ int main() {
     test_wave_unload();
     test_wave_set_pitch_and_load();
     test_zeroed_constant_return_stubs();
+    test_wrapped_device_forwarders();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
