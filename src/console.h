@@ -57,6 +57,8 @@ class DLLEXPORT Console {
   void set_audiovisual();
   void set_map_display();
   int edit_lock();
+  void set_adv_preferences();
+  void editor_undo();
 
  private:
   uint8_t derived_storage_[0x23D94];
@@ -93,3 +95,5 @@ typedef SHORT(__stdcall func_get_key_state)(int virtual_key);
 extern func_get_key_state **ConsoleEditKeyStateSlot;
 
 int __fastcall console_edit_lock_redirect(Console *self, void *);
+void __fastcall console_set_adv_preferences_redirect(Console *self, void *);
+void __fastcall console_editor_undo_redirect(Console *self, void *);

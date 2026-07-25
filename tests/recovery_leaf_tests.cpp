@@ -10941,6 +10941,7 @@ void test_console_preference_openers() {
         {&Console::set_base_preferences, &console_set_base_preferences_redirect, 2},
         {&Console::set_audiovisual, &console_set_audiovisual_redirect, 4},
         {&Console::set_map_display, &console_set_map_display_redirect, 5},
+        {&Console::set_adv_preferences, &console_set_adv_preferences_redirect, 1},
     };
 
     for (const Opener &opener : openers) {
@@ -12457,6 +12458,12 @@ BOOL *MapIsFlat;
 // provided here, alongside a stand-in for the GetKeyState import it consults.
 uint32_t *GameState;
 
+// general.cpp is not linked here either; Console::editor_undo's only call is
+// observed rather than run.
+int g_load_undo_arg;
+int g_load_undo_calls;
+void __cdecl load_undo(int type) { g_load_undo_arg = type; ++g_load_undo_calls; }
+
 namespace {
 int g_console_key_ret;
 int g_console_key_vk;
@@ -13502,6 +13509,65 @@ void test_sound_guarded_forwarders() {
     expect(g_ramp_calls == 1 && g_ramp_a[0] == 7 && g_ramp_a[2] == 9);
 }
 
+namespace {
+void *g_pp_close_self;
+int g_pp_close_calls;
+void __thiscall observe_pp_win_close(void *self) {
+    g_pp_close_self = self; ++g_pp_close_calls;
+}
+}  // namespace
+
+void test_console_editor_undo_and_prod_picker_close() {
+    // editor_undo's whole body is load_undo(1) - the argument is the only thing
+    // it can get wrong, and it must not touch the Console.
+    alignas(Console) std::vector<uint8_t> cs(sizeof(Console) + 32);
+    std::vector<uint8_t> cexp(cs.size());
+    auto *console = reinterpret_cast<Console *>(cs.data() + 16);
+    seed_storage(cs.data(), cexp.data(), cs.size());
+    std::memcpy(cexp.data(), cs.data(), cs.size());
+    g_load_undo_calls = 0; g_load_undo_arg = -1;
+    console->editor_undo();
+    expect(g_load_undo_calls == 1 && g_load_undo_arg == 1);
+    console_editor_undo_redirect(console, nullptr);
+    expect(g_load_undo_calls == 2 && g_load_undo_arg == 1);
+    expect_storage_bytes(cs.data(), cexp.data(), cs.size());
+
+    // ProdPicker::close clears the dword at 0xA14 and then runs the GraphicWin
+    // close it inherits - which is source-owned, so it is driven for real and
+    // observed at its one seam.
+    auto *const saved_win = WinOriginalClose;
+    WinOriginalClose = &observe_pp_win_close;
+    auto *const saved_bufclose = BufferSubobjectClose;
+    BufferSubobjectClose = nullptr;   // GraphicWin::close skips it when unset
+    std::vector<uint8_t> pp(sizeof(ProdPicker) + 64, 0);
+    auto *picker = reinterpret_cast<ProdPicker *>(pp.data());
+    int32_t live = 0x1234;
+    std::memcpy(pp.data() + 0xA14, &live, sizeof(live));
+    // 0xA10 is not a valid witness - GraphicWin::close clears it by design.
+    // 0xA18 sits past ProdPicker's own field and nothing should touch it.
+    int32_t neighbour = 0x7777;
+    std::memcpy(pp.data() + 0xA18, &neighbour, sizeof(neighbour));
+    g_pp_close_calls = 0;
+    picker->close();
+    int32_t after = -1;
+    std::memcpy(&after, pp.data() + 0xA14, sizeof(after));
+    expect(after == 0);                       // the field is cleared
+    int32_t after_n = 0;
+    std::memcpy(&after_n, pp.data() + 0xA18, sizeof(after_n));
+    expect(after_n == 0x7777);                // the next dword is untouched
+    expect(g_pp_close_calls == 1);            // the inherited close ran
+    expect(g_pp_close_self == reinterpret_cast<void *>(picker));
+
+    std::memcpy(pp.data() + 0xA14, &live, sizeof(live));
+    g_pp_close_calls = 0;
+    prod_picker_close_redirect(picker, nullptr);
+    std::memcpy(&after, pp.data() + 0xA14, sizeof(after));
+    expect(after == 0 && g_pp_close_calls == 1);
+
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_bufclose;
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13912,6 +13978,7 @@ int main() {
     test_wrapped_device_forwarders();
     test_wrapped_device_forwarders_with_defaults();
     test_sound_guarded_forwarders();
+    test_console_editor_undo_and_prod_picker_close();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

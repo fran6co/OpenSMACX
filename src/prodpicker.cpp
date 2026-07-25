@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "prodpicker.h"
+#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
@@ -56,4 +57,20 @@ void ProdPicker::UNK3(int) {
 
 void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1) {
     self->UNK3(a1);
+}
+
+/*
+Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
+         run the GraphicWin close it inherits.
+Original Offset: 004926B0
+Return Value: n/a
+Status: Complete
+*/
+void ProdPicker::close() {
+    field_A14_ = 0;
+    GraphicWin::close();
+}
+
+void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
+    self->close();
 }

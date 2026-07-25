@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 75,
-      "source_complete": 1042,
+      "source_complete": 1045,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4513
+      "unrecovered": 4510
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 988,
-    "matched_function_starts": 988,
-    "unique_addresses": 988,
+    "annotations": 991,
+    "matched_function_starts": 991,
+    "unique_addresses": 991,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -1738,7 +1738,7 @@
         "function": "?display@PrefWin@@QAEXH@Z",
         "function_address": "0x0048FA00",
         "kind": "function",
-        "location": "src/console.cpp:23",
+        "location": "src/console.cpp:24",
         "symbol": "ConsolePrefWinDisplay",
         "type": "func_pref_win_display *"
       },

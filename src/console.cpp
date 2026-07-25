@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "console.h"
 #include "game.h"
+#include "general.h"
 #include <cstring>
 
 func_pref_win_display *ConsolePrefWinDisplay = (func_pref_win_display *)0x0048FA00;
@@ -143,4 +144,33 @@ int Console::edit_lock() {
 
 int __fastcall console_edit_lock_redirect(Console *self, void *) {
     return self->edit_lock();
+}
+
+/*
+Purpose: Open the shared preferences window to the advanced page.
+Original Offset: 00514F00
+Return Value: n/a
+Status: Complete
+*/
+void Console::set_adv_preferences() {
+    ConsolePrefWinDisplay(ConsolePrefWin, 1);
+}
+
+/*
+Purpose: Undo the last scenario-editor change, by asking load_undo for the
+         editor's undo slot.
+Original Offset: 004E1F20
+Return Value: n/a
+Status: Complete
+*/
+void Console::editor_undo() {
+    load_undo(1);
+}
+
+void __fastcall console_set_adv_preferences_redirect(Console *self, void *) {
+    self->set_adv_preferences();
+}
+
+void __fastcall console_editor_undo_redirect(Console *self, void *) {
+    self->editor_undo();
 }
