@@ -237,3 +237,77 @@ void __fastcall sound_set_loop_state_redirect(Sound *self, void *, long a1) {
 void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1) {
     self->set_delay(a1);
 }
+
+namespace {
+// fade and fade_in are guarded twice: the field at 0x38 must be set as well as
+// a device wrapped, and either being absent gives the same 0x13.
+int guarded_query_sound_device(Sound *self, int vtable_offset) {
+    uint8_t *const obj = reinterpret_cast<uint8_t *>(self);
+    int gate;
+    std::memcpy(&gate, obj + 0x38, sizeof(gate));
+    if (gate == 0) {
+        return 0x13;
+    }
+    void *device = *reinterpret_cast<void **>(obj + 0x3C);
+    if (!device) {
+        return 0x13;
+    }
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    return (*reinterpret_cast<sound_device_query *>(vtable + vtable_offset))(
+        device);
+}
+}  // namespace
+
+/*
+Purpose: Ask the wrapped device to fade, through vtable slot 0x28. Refuses
+         unless the gate field at 0x38 is set and a device is wrapped.
+Original Offset: 004C65E0
+Return Value: the device's answer, or 0x13 when either guard fails
+Status: Complete
+*/
+int Sound::fade() {
+    return guarded_query_sound_device(this, 0x28);
+}
+
+/*
+Purpose: Ask the wrapped device to fade in, through vtable slot 0x30. Carries
+         the same pair of guards fade does.
+Original Offset: 004C6620
+Return Value: the device's answer, or 0x13 when either guard fails
+Status: Complete
+*/
+int Sound::fade_in() {
+    return guarded_query_sound_device(this, 0x30);
+}
+
+/*
+Purpose: Hand a three-argument ramp to the wrapped device, through vtable slot
+         0x34. Does nothing when no device is wrapped.
+Original Offset: 004C6640
+Return Value: n/a
+Status: Complete
+*/
+void Sound::ramp(int a1, int a2, unsigned int a3) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(this) + 0x3C);
+    if (!device) {
+        return;
+    }
+    typedef void(__thiscall * ramp_fn)(void *device, int a1, int a2, int a3);
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    (*reinterpret_cast<ramp_fn *>(vtable + 0x34))(device, a1, a2,
+                                                  static_cast<int>(a3));
+}
+
+int __fastcall sound_fade_query_redirect(Sound *self, void *) {
+    return self->fade();
+}
+
+int __fastcall sound_fade_in_redirect(Sound *self, void *) {
+    return self->fade_in();
+}
+
+void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2,
+                                    unsigned int a3) {
+    self->ramp(a1, a2, a3);
+}

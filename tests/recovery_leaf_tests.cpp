@@ -13424,6 +13424,84 @@ void test_wrapped_device_forwarders_with_defaults() {
     expect(read32(sd, 0x34) == 72 && g_fwd_arg == 72);
 }
 
+namespace {
+int g_ramp_a[3], g_ramp_calls;
+void __thiscall observe_ramp(void *self, int a1, int a2, int a3) {
+    g_fwd_self = self; g_ramp_a[0]=a1; g_ramp_a[1]=a2; g_ramp_a[2]=a3;
+    ++g_ramp_calls;
+}
+}  // namespace
+
+void test_sound_guarded_forwarders() {
+    // fade and fade_in carry two guards, not one: the field at 0x38 must be set
+    // AND a device wrapped, and either being absent answers 0x13. ramp is a
+    // plain three-argument forward. Each is checked for its own slot, both
+    // guards independently, and ramp's argument order.
+    void *svt[64] = {};
+    svt[0x28 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x28>);
+    svt[0x30 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x30>);
+    svt[0x34 / 4] = reinterpret_cast<void *>(&observe_ramp);
+    struct GDev { void *vtbl; } gdev;
+    gdev.vtbl = svt;
+
+    std::vector<uint8_t> sd(sizeof(Sound) + 32, 0);
+    auto *sound = reinterpret_cast<Sound *>(sd.data());
+    auto set32 = [&](size_t off, int32_t v) { std::memcpy(sd.data()+off,&v,4); };
+    void *dev = &gdev;
+    std::memcpy(sd.data() + 0x3C, &dev, sizeof(dev));
+
+    // Both guards satisfied: each reaches its own slot and returns the answer.
+    set32(0x38, 1);
+    g_fwd_ret = 0x2468;
+    g_fwd_slot_ran = -1; expect(sound->fade() == 0x2468);
+    expect(g_fwd_slot_ran == 0x28 && g_fwd_self == dev);
+    g_fwd_slot_ran = -1; expect(sound->fade_in() == 0x2468);
+    expect(g_fwd_slot_ran == 0x30 && g_fwd_self == dev);
+
+    // Gate field clear, device present: refused, nothing dispatched.
+    set32(0x38, 0);
+    g_fwd_calls = 0; g_fwd_slot_ran = -1;
+    expect(sound->fade() == 0x13);
+    expect(sound->fade_in() == 0x13);
+    expect(g_fwd_calls == 0);
+
+    // Gate field set, device absent: also refused. Each guard alone suffices.
+    set32(0x38, 1);
+    void *none = nullptr;
+    std::memcpy(sd.data() + 0x3C, &none, sizeof(none));
+    g_fwd_calls = 0;
+    expect(sound->fade() == 0x13);
+    expect(sound->fade_in() == 0x13);
+    expect(g_fwd_calls == 0);
+
+    // ramp forwards all three arguments in order; no gate field involved.
+    std::memcpy(sd.data() + 0x3C, &dev, sizeof(dev));
+    set32(0x38, 0);                      // deliberately clear - ramp ignores it
+    g_ramp_calls = 0;
+    sound->ramp(11, 22, 33u);
+    expect(g_ramp_calls == 1 && g_fwd_self == dev);
+    expect(g_ramp_a[0] == 11 && g_ramp_a[1] == 22 && g_ramp_a[2] == 33);
+
+    // No device: ramp does nothing.
+    std::memcpy(sd.data() + 0x3C, &none, sizeof(none));
+    g_ramp_calls = 0;
+    sound->ramp(1, 2, 3u);
+    expect(g_ramp_calls == 0);
+
+    // Redirects.
+    std::memcpy(sd.data() + 0x3C, &dev, sizeof(dev));
+    set32(0x38, 1);
+    g_fwd_ret = 6;
+    g_fwd_slot_ran = -1;
+    expect(sound_fade_query_redirect(sound, nullptr) == 6);
+    expect(g_fwd_slot_ran == 0x28);
+    expect(sound_fade_in_redirect(sound, nullptr) == 6);
+    expect(g_fwd_slot_ran == 0x30);
+    g_ramp_calls = 0;
+    sound_ramp_redirect(sound, nullptr, 7, 8, 9u);
+    expect(g_ramp_calls == 1 && g_ramp_a[0] == 7 && g_ramp_a[2] == 9);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13833,6 +13911,7 @@ int main() {
     test_zeroed_constant_return_stubs();
     test_wrapped_device_forwarders();
     test_wrapped_device_forwarders_with_defaults();
+    test_sound_guarded_forwarders();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

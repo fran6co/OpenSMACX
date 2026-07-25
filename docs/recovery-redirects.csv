@@ -256,7 +256,10 @@ address,kind
 0x004C64F0,jump
 0x004C6540,jump
 0x004C6560,jump
+0x004C65E0,jump
 0x004C6600,jump
+0x004C6620,jump
+0x004C6640,jump
 0x004C6690,jump
 0x004C66A0,jump
 0x004C6B00,jump
