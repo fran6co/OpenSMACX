@@ -42,6 +42,9 @@ class DLLEXPORT Sound {
   int release();
   void set_loop_state(long a1);
   void set_delay(unsigned int a1);
+  int fade();
+  int fade_in();
+  void ramp(int a1, int a2, unsigned int a3);
 
  private:
   uint8_t unmapped_[0xA0];
@@ -58,3 +61,6 @@ int __fastcall sound_stop_redirect(Sound *self, void *);
 int __fastcall sound_release_redirect(Sound *self, void *);
 void __fastcall sound_set_loop_state_redirect(Sound *self, void *, long a1);
 void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1);
+int __fastcall sound_fade_query_redirect(Sound *self, void *);
+int __fastcall sound_fade_in_redirect(Sound *self, void *);
+void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2, unsigned int a3);
