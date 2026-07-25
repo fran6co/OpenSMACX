@@ -12748,6 +12748,93 @@ void test_wave_device_enable_disable() {
     expect(g_dev_enable_calls == 1 && g_dev_disable_calls == 1);
 }
 
+namespace {
+void *g_sound_slot0_self;
+int g_sound_slot0_arg;
+int g_sound_slot0_calls;
+int g_sound_slot0_ret;
+void *g_sound_fallback_self;
+int g_sound_fallback_calls;
+// The fallback dispatch re-reads the object's vtable pointer, so slot 0 is
+// given a chance to swap it; when it does, the fallback must come from the
+// replacement table.
+void **g_sound_swap_to;
+void *g_sound_slot0_obj;
+
+int __thiscall observe_sound_slot0(Sound *self, int a1) {
+    g_sound_slot0_self = self;
+    g_sound_slot0_arg = a1;
+    ++g_sound_slot0_calls;
+    if (g_sound_swap_to) {
+        std::memcpy(g_sound_slot0_obj, &g_sound_swap_to, sizeof(g_sound_swap_to));
+    }
+    return g_sound_slot0_ret;
+}
+void __thiscall observe_sound_fallback(Sound *self) {
+    g_sound_fallback_self = self;
+    ++g_sound_fallback_calls;
+}
+int g_sound_fallback2_calls;
+void __thiscall observe_sound_fallback2(Sound *) { ++g_sound_fallback2_calls; }
+}  // namespace
+
+void test_sound_fade() {
+    // fade asks the object's own vtable slot 0 to fade with the argument, and
+    // runs slot 0x28 as a fallback only when slot 0 declines by returning zero.
+    // Both dispatches pass the Sound as this, and both read the object's live
+    // vtable pointer - the original loads it twice, so a slot-0 that swaps the
+    // table must redirect the fallback.
+    std::vector<uint8_t> storage(sizeof(Sound) + 32, 0);
+    auto *sound = reinterpret_cast<Sound *>(storage.data());
+
+    void *vtable[16] = {};
+    vtable[0] = reinterpret_cast<void *>(&observe_sound_slot0);
+    vtable[0x28 / 4] = reinterpret_cast<void *>(&observe_sound_fallback);
+    void *vtable_ptr = vtable;
+    std::memcpy(storage.data(), &vtable_ptr, sizeof(vtable_ptr));
+    g_sound_slot0_obj = storage.data();
+
+    // Slot 0 accepts (nonzero): no fallback, and it got the argument and this.
+    g_sound_swap_to = nullptr;
+    g_sound_slot0_calls = g_sound_fallback_calls = 0;
+    g_sound_slot0_ret = 1;
+    sound->fade(77);
+    expect(g_sound_slot0_calls == 1 && g_sound_fallback_calls == 0);
+    expect(g_sound_slot0_self == sound && g_sound_slot0_arg == 77);
+
+    // Slot 0 declines (zero): the fallback at 0x28 runs, with the same this.
+    g_sound_slot0_calls = g_sound_fallback_calls = 0;
+    g_sound_slot0_ret = 0;
+    sound->fade(5);
+    expect(g_sound_slot0_calls == 1 && g_sound_fallback_calls == 1);
+    expect(g_sound_fallback_self == sound && g_sound_slot0_arg == 5);
+
+    // A negative return is still nonzero, so no fallback.
+    g_sound_slot0_calls = g_sound_fallback_calls = 0;
+    g_sound_slot0_ret = -1;
+    sound->fade(0);
+    expect(g_sound_fallback_calls == 0);
+
+    // The fallback comes from the vtable as it stands after slot 0 ran: slot 0
+    // swaps the object's table, and the second table's 0x28 is what runs.
+    void *vtable2[16] = {};
+    vtable2[0x28 / 4] = reinterpret_cast<void *>(&observe_sound_fallback2);
+    g_sound_swap_to = vtable2;
+    g_sound_slot0_ret = 0;
+    g_sound_fallback_calls = g_sound_fallback2_calls = 0;
+    sound->fade(1);
+    expect(g_sound_fallback2_calls == 1 && g_sound_fallback_calls == 0);
+    g_sound_swap_to = nullptr;
+    std::memcpy(storage.data(), &vtable_ptr, sizeof(vtable_ptr));
+
+    // Redirect entry forwards the argument and drives the same path.
+    g_sound_slot0_calls = g_sound_fallback_calls = 0;
+    g_sound_slot0_ret = 0;
+    sound_fade_redirect(sound, nullptr, 42);
+    expect(g_sound_slot0_calls == 1 && g_sound_slot0_arg == 42);
+    expect(g_sound_fallback_calls == 1);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13151,6 +13238,7 @@ int main() {
     test_square_lock_lock();
     test_console_edit_lock();
     test_wave_device_enable_disable();
+    test_sound_fade();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

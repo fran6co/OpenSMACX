@@ -21,18 +21,22 @@
   * Sound class
   *
   * Layout not established; its methods reach as far as 0x90, so the
-  * object is at least that large. The stubs recovered here are constant
-  * returns touching no field, so the opaque storage below is only an object
-  * for the canary to seed, not a modelled layout.
+  * object is at least that large. The only thing pinned here is the vtable
+  * pointer at offset zero, which fade dispatches through; it is held as
+  * opaque storage so no C++ vtable is generated that could disagree with the
+  * original's. The rest is an object for the canary to seed, not a modelled
+  * layout.
   */
 class DLLEXPORT Sound {
  public:
   Sound() { ; }
   ~Sound() { ; }
   int UNK1(int);
+  void fade(int a1);
 
  private:
   uint8_t unmapped_[0xA0];
 };
 
 int __fastcall sound_unk1_redirect(Sound *self, void *, int a1);
+void __fastcall sound_fade_redirect(Sound *self, void *, int a1);
