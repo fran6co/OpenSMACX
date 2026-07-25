@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "graphicwin.h"
+#include "buffer.h"
 
  /*
   * PlanWin class
@@ -46,6 +47,8 @@ class DLLEXPORT PlanWin {
   ~PlanWin() { ; }
   void clear_lines();
   void close();
+  void blink();
+  void UNK1();
 
  private:
   // The inherited MapWin data, then PlanWin's own fields carved out of the
@@ -53,7 +56,12 @@ class DLLEXPORT PlanWin {
   // proves the carving kept the total at the pinned 0x22A64.
   uint8_t map_win_base_[0x21A68];
   int32_t field_21A68_;
-  uint8_t derived_head_[0x21FF8 - 0x21A6C];
+  int32_t field_21A6C_;
+  // PlanWin's own Buffer, constructed at 0x21A70 by the constructor. It is
+  // held as raw storage rather than a Buffer member because nothing recovered
+  // so far needs to reach into it - UNK1 only ever passes its address.
+  uint8_t buffer_[sizeof(Buffer)];
+  uint8_t derived_head_[0x21FF8 - 0x21A70 - sizeof(Buffer)];
   int32_t field_21FF8_;
   uint8_t derived_tail_[0x22050 - 0x21FFC];
   GraphicWin virtual_base_;
@@ -63,3 +71,5 @@ static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe
 
 void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *);
 void __fastcall plan_win_close_redirect(PlanWin *self, void *);
+void __fastcall plan_win_blink_redirect(PlanWin *self, void *);
+void __fastcall plan_win_unk1_redirect(PlanWin *self, void *);

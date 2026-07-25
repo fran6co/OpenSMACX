@@ -13655,6 +13655,128 @@ void test_plan_win_close() {
 }
 
 namespace {
+void *g_pw_slot_self;
+int g_pw_slot_calls;
+void __thiscall observe_pw_blink_slot(void *self) {
+    g_pw_slot_self = self; ++g_pw_slot_calls;
+}
+
+struct CopyCall {
+    void *self; Buffer *src;
+    int x, y, sx, sy, w, h;
+};
+CopyCall g_copy;
+int g_copy_calls;
+int g_copy_result;
+int __thiscall observe_buffer_copy_full(void *self, Buffer *src, int x, int y,
+                                        int sx, int sy, int w, int h) {
+    g_copy = {self, src, x, y, sx, sy, w, h};
+    ++g_copy_calls;
+    return g_copy_result;
+}
+}  // namespace
+
+void test_buffer_copy_overload() {
+    // The five-argument copy exists only to hand the destination coordinates
+    // over a second time as the source coordinates. Distinct values in every
+    // position are what makes a shuffled argument visible.
+    auto *const saved = BufferCopyFull;
+    BufferCopyFull = &observe_buffer_copy_full;
+
+    std::vector<uint8_t> bs(sizeof(Buffer), 0);
+    std::vector<uint8_t> bexp(bs.size());
+    auto *buf = reinterpret_cast<Buffer *>(bs.data());
+    seed_storage(bs.data(), bexp.data(), bs.size());
+    std::memcpy(bexp.data(), bs.data(), bs.size());
+
+    auto other = reinterpret_cast<Buffer *>(0x11223344);
+    g_copy_calls = 0; g_copy_result = 0x5A5A;
+    expect(buf->copy(other, 11, 22, 33, 44) == 0x5A5A);
+    expect(g_copy_calls == 1);
+    expect(g_copy.self == reinterpret_cast<void *>(buf));
+    expect(g_copy.src == other);
+    expect(g_copy.x == 11 && g_copy.y == 22);
+    expect(g_copy.sx == 11 && g_copy.sy == 22);   // the coordinates repeat
+    expect(g_copy.w == 33 && g_copy.h == 44);
+    // Negative extents must survive; PlanWin::UNK1 relies on passing one.
+    g_copy_calls = 0;
+    expect(buffer_copy_redirect(buf, nullptr, other, -1, -2, -3, -4) == 0x5A5A);
+    expect(g_copy_calls == 1);
+    expect(g_copy.x == -1 && g_copy.sx == -1);
+    expect(g_copy.y == -2 && g_copy.sy == -2);
+    expect(g_copy.w == -3 && g_copy.h == -4);
+    // The overload is a pure shuffle - it must not touch the buffer.
+    expect_storage_bytes(bs.data(), bexp.data(), bs.size());
+
+    BufferCopyFull = saved;
+}
+
+void test_plan_win_blink_and_unk1() {
+    std::vector<uint8_t> pw(sizeof(PlanWin) + 64, 0);
+    uint8_t *const obj = pw.data();
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v = 0; std::memcpy(&v, obj + off, 4); return v;
+    };
+    const int32_t vbtable[2] = {0, 0x22050};
+    set32(0, reinterpret_cast<uintptr_t>(&vbtable[0]));
+    auto *plan = reinterpret_cast<PlanWin *>(obj);
+
+    // blink dispatches slot 0x30 of the virtual base's own vtable, so the
+    // table is planted on the base and the neighbouring slots are poisoned:
+    // an off-by-one slot would jump to a null and fault rather than pass.
+    void *vt[16] = {};
+    vt[0x30 / sizeof(void *)] = reinterpret_cast<void *>(&observe_pw_blink_slot);
+    set32(0x22050, reinterpret_cast<uintptr_t>(&vt[0]));
+
+    // Blinking off: no toggle, no redraw.
+    set32(0x21A68, 0);
+    set32(0x21A6C, 7);
+    g_pw_slot_calls = 0;
+    plan->blink();
+    expect(g_pw_slot_calls == 0);
+    expect(get32(0x21A6C) == 7);
+
+    // On, phase 0 -> 1, and the redraw runs against the virtual base.
+    set32(0x21A68, 1);
+    set32(0x21A6C, 0);
+    plan->blink();
+    expect(get32(0x21A6C) == 1);
+    expect(g_pw_slot_calls == 1);
+    expect(g_pw_slot_self == reinterpret_cast<void *>(obj + 0x22050));
+
+    // 1 -> 0, and any other non-zero phase also lands on 0 rather than
+    // flipping a bit or decrementing.
+    plan->blink();
+    expect(get32(0x21A6C) == 0);
+    set32(0x21A6C, 5);
+    plan_win_blink_redirect(plan, nullptr);
+    expect(get32(0x21A6C) == 0);
+    expect(g_pw_slot_calls == 3);
+    expect(get32(0x21A68) == 1);   // the enable flag is never written
+
+    // UNK1 blits the window's own buffer from PlanWin's, at the size the
+    // window buffer records - with the height negated.
+    auto *const saved_copy = BufferCopyFull;
+    BufferCopyFull = &observe_buffer_copy_full;
+    set32(0x22050 + 0x4C4, 640);
+    set32(0x22050 + 0x4C8, 480);
+    g_copy_calls = 0; g_copy_result = 0;
+    plan->UNK1();
+    expect(g_copy_calls == 1);
+    // Destination is the *window's* buffer subobject, source is PlanWin's own.
+    expect(g_copy.self == reinterpret_cast<void *>(obj + 0x22050 + 0x444));
+    expect(g_copy.src == reinterpret_cast<Buffer *>(obj + 0x21A70));
+    expect(g_copy.x == 0 && g_copy.y == 0);
+    expect(g_copy.w == 640);
+    expect(g_copy.h == -480);      // negated, as the original's `neg` does
+    g_copy_calls = 0;
+    plan_win_unk1_redirect(plan, nullptr);
+    expect(g_copy_calls == 1 && g_copy.w == 640 && g_copy.h == -480);
+    BufferCopyFull = saved_copy;
+}
+
+namespace {
 void *g_tex_freed;
 int g_tex_free_calls;
 void *observe_texture_free(void *p) { g_tex_freed = p; ++g_tex_free_calls; return nullptr; }
@@ -14166,6 +14288,8 @@ int main() {
     test_sound_guarded_forwarders();
     test_console_editor_undo_and_prod_picker_close();
     test_plan_win_close();
+    test_buffer_copy_overload();
+    test_plan_win_blink_and_unk1();
     test_texture_lifecycle();
     test_status_win_set_loc();
     test_field_store_clears();

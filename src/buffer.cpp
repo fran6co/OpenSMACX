@@ -425,6 +425,31 @@ void *slot(void *object, size_t offset) {
 
 }  // namespace
 
+func_buffer_copy_full *BufferCopyFull = (func_buffer_copy_full *)0x005DFF00;
+
+/*
+Purpose: Copy a region of another buffer into the same position in this one.
+Original Offset: 005D95B0
+Return Value: whatever the full copy returns
+Status: Complete with temporary full-copy dependency
+
+The original is nothing but an argument shuffle onto the seven-argument copy:
+it pushes arg5, arg4, arg3, arg2, arg3, arg2, arg1, so the destination
+coordinates are handed over a second time as the source coordinates. That
+repetition is the whole content of this overload.
+*/
+int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
+                 int height) {
+    return BufferCopyFull(this, buffer, xCoord, yCoord, xCoord, yCoord, width,
+                          height);
+}
+
+int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
+                                    int xCoord, int yCoord, int width,
+                                    int height) {
+    return self->copy(buffer, xCoord, yCoord, width, height);
+}
+
 /*
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.
