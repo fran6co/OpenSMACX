@@ -12925,6 +12925,117 @@ void test_wave_unload() {
     expect(wave_unload_redirect(wave, nullptr) == 0x33);
 }
 
+namespace {
+int g_wave_pitch_arg;
+int g_wave_pitch_calls;
+void *g_wave_pitch_self;
+void __thiscall observe_wave_set_pitch(void *self, int pitch) {
+    g_wave_pitch_self = self; g_wave_pitch_arg = pitch; ++g_wave_pitch_calls;
+}
+int g_wave_load_a1, g_wave_load_a2, g_wave_load_calls;
+void *g_wave_load_self;
+void __thiscall observe_wave_load_slot(Wave *self, int a1, int a2) {
+    g_wave_load_self = self; g_wave_load_a1 = a1; g_wave_load_a2 = a2;
+    ++g_wave_load_calls;
+}
+int g_wave_follow_calls, g_wave_follow_ret;
+void *g_wave_follow_self;
+int __thiscall observe_wave_follow_slot(Wave *self) {
+    g_wave_follow_self = self; ++g_wave_follow_calls; return g_wave_follow_ret;
+}
+}  // namespace
+
+void test_wave_set_pitch_and_load() {
+    // set_pitch clamps to [-1200, 1200], stores the clamped value at 0x58, and
+    // forwards it to the wrapped device's vtable slot 0x98 when one is wrapped.
+    // load runs the object's own slot 0x88 with both arguments, then - unless
+    // bit 2 of the second argument skips it - its own slot 0x8C, whose result
+    // it returns.
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    auto *wave = reinterpret_cast<Wave *>(storage.data());
+    uint8_t *const obj = storage.data();
+
+    void *wave_vtable[64] = {};
+    wave_vtable[0x88 / 4] = reinterpret_cast<void *>(&observe_wave_load_slot);
+    wave_vtable[0x8C / 4] = reinterpret_cast<void *>(&observe_wave_follow_slot);
+    void *wave_vtable_ptr = wave_vtable;
+    std::memcpy(obj, &wave_vtable_ptr, sizeof(wave_vtable_ptr));
+
+    void *dev_vtable[64] = {};
+    dev_vtable[0x98 / 4] = reinterpret_cast<void *>(&observe_wave_set_pitch);
+    struct FakeDev2 { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+
+    auto set_device = [&](void *d) { std::memcpy(obj + 0x3C, &d, sizeof(d)); };
+    auto pitch_field = [&]() {
+        int32_t v = 0; std::memcpy(&v, obj + 0x58, 4); return v;
+    };
+
+    // In range: stored and forwarded verbatim.
+    set_device(&fake_dev);
+    g_wave_pitch_calls = 0;
+    wave->set_pitch(500);
+    expect(pitch_field() == 500);
+    expect(g_wave_pitch_calls == 1 && g_wave_pitch_arg == 500);
+    expect(g_wave_pitch_self == &fake_dev);
+
+    // Above the ceiling clamps to 1200; the clamped value is what is forwarded.
+    wave->set_pitch(99999);
+    expect(pitch_field() == 1200 && g_wave_pitch_arg == 1200);
+    wave->set_pitch(1200);          // the boundary itself is kept
+    expect(pitch_field() == 1200);
+    wave->set_pitch(1201);
+    expect(pitch_field() == 1200);
+
+    // Below the floor clamps to -1200.
+    wave->set_pitch(-99999);
+    expect(pitch_field() == -1200 && g_wave_pitch_arg == -1200);
+    wave->set_pitch(-1200);         // the boundary itself is kept
+    expect(pitch_field() == -1200);
+    wave->set_pitch(-1201);
+    expect(pitch_field() == -1200);
+
+    // No device: still stored, nothing dispatched.
+    set_device(nullptr);
+    g_wave_pitch_calls = 0;
+    wave->set_pitch(7);
+    expect(pitch_field() == 7 && g_wave_pitch_calls == 0);
+
+    // Redirect entry.
+    set_device(&fake_dev);
+    g_wave_pitch_calls = 0;
+    wave_set_pitch_redirect(wave, nullptr, -30);
+    expect(pitch_field() == -30 && g_wave_pitch_arg == -30);
+
+    // load: slot 0x88 gets both arguments and this; the follow-up runs and its
+    // result is returned.
+    g_wave_load_calls = g_wave_follow_calls = 0;
+    g_wave_follow_ret = 0x2B;
+    expect(wave->load(11, 0) == 0x2B);
+    expect(g_wave_load_calls == 1 && g_wave_load_a1 == 11 && g_wave_load_a2 == 0);
+    expect(g_wave_load_self == wave);
+    expect(g_wave_follow_calls == 1 && g_wave_follow_self == wave);
+
+    // Bit 2 of the second argument skips the follow-up and returns 0, but the
+    // first slot still runs with the argument intact.
+    g_wave_load_calls = g_wave_follow_calls = 0;
+    expect(wave->load(12, 4) == 0);
+    expect(g_wave_load_calls == 1 && g_wave_load_a2 == 4);
+    expect(g_wave_follow_calls == 0);
+
+    // Other bits do not skip it.
+    g_wave_follow_calls = 0;
+    g_wave_follow_ret = 9;
+    expect(wave->load(13, 0xFB) == 9);
+    expect(g_wave_follow_calls == 1);
+
+    // Redirect entry forwards both arguments.
+    g_wave_load_calls = g_wave_follow_calls = 0;
+    g_wave_follow_ret = 3;
+    expect(wave_load_redirect(wave, nullptr, 21, 0) == 3);
+    expect(g_wave_load_a1 == 21 && g_wave_follow_calls == 1);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13330,6 +13441,7 @@ int main() {
     test_wave_device_enable_disable();
     test_sound_fade();
     test_wave_unload();
+    test_wave_set_pitch_and_load();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

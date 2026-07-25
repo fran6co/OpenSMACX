@@ -137,3 +137,55 @@ int Wave::unload() {
 int __fastcall wave_unload_redirect(Wave *self, void *) {
     return self->unload();
 }
+
+/*
+Purpose: Set the playback pitch, clamped to the range the engine accepts
+         (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
+         wrapped device, if there is one, through its vtable slot 0x98.
+Original Offset: 004C6EE0
+Return Value: n/a
+Status: Complete
+*/
+void Wave::set_pitch(int a1) {
+    int pitch = a1;
+    if (pitch < -1200) {
+        pitch = -1200;
+    } else if (pitch > 1200) {
+        pitch = 1200;
+    }
+    pitch_ = pitch;
+    if (device_) {
+        typedef void(__thiscall * set_pitch_fn)(void *device, int pitch);
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        (*reinterpret_cast<set_pitch_fn *>(device_vtable + 0x98))(device_, pitch);
+    }
+}
+
+/*
+Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
+         bit 2 of the second argument says otherwise, its own slot 0x8C then
+         runs as the follow-up and supplies the result.
+Original Offset: 004C6DB0
+Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
+Status: Complete
+*/
+int Wave::load(int a1, int a2) {
+    typedef void(__thiscall * load_fn)(Wave *self, int a1, int a2);
+    typedef int(__thiscall * follow_fn)(Wave *self);
+
+    uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
+    (*reinterpret_cast<load_fn *>(vtable + 0x88))(this, a1, a2);
+    if (a2 & 4) {
+        return 0;
+    }
+    uint8_t *const reread = *reinterpret_cast<uint8_t **>(this);
+    return (*reinterpret_cast<follow_fn *>(reread + 0x8C))(this);
+}
+
+void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1) {
+    self->set_pitch(a1);
+}
+
+int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2) {
+    return self->load(a1, a2);
+}
