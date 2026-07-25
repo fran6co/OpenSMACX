@@ -12693,6 +12693,61 @@ void test_console_edit_lock() {
     ConsoleEditKeyStateSlot = saved_slot;
 }
 
+namespace {
+void *g_dev_call_self;
+int g_dev_enable_calls;
+int g_dev_disable_calls;
+void __thiscall observe_dev_enable(void *self) {
+    g_dev_call_self = self; ++g_dev_enable_calls;
+}
+void __thiscall observe_dev_disable(void *self) {
+    g_dev_call_self = self; ++g_dev_disable_calls;
+}
+}  // namespace
+
+void test_wave_device_enable_disable() {
+    // enable and disable drive the device wrapped at offset 0x14 through two
+    // adjacent vtable slots - 0x60 for enable, 0x64 for disable, called with the
+    // device as this - and do nothing when there is no wrapped device.
+    std::vector<uint8_t> wd(sizeof(Wave_Device) + 16, 0);
+    auto *dev = reinterpret_cast<Wave_Device *>(wd.data());
+
+    void *vtable[32] = {};
+    vtable[0x60 / 4] = reinterpret_cast<void *>(&observe_dev_enable);
+    vtable[0x64 / 4] = reinterpret_cast<void *>(&observe_dev_disable);
+    struct FakeDevice { void *vtbl; } fake_device;
+    fake_device.vtbl = vtable;
+
+    auto set_device = [&](void *d) { std::memcpy(wd.data() + 0x14, &d, sizeof(d)); };
+
+    // No device: both are no-ops.
+    set_device(nullptr);
+    g_dev_enable_calls = g_dev_disable_calls = 0;
+    dev->enable();
+    dev->disable();
+    expect(g_dev_enable_calls == 0 && g_dev_disable_calls == 0);
+
+    // With a device: enable hits slot 0x60 with the device as this.
+    set_device(&fake_device);
+    g_dev_enable_calls = g_dev_disable_calls = 0;
+    g_dev_call_self = nullptr;
+    dev->enable();
+    expect(g_dev_enable_calls == 1 && g_dev_disable_calls == 0);
+    expect(g_dev_call_self == &fake_device);
+
+    // disable hits the adjacent slot 0x64.
+    g_dev_call_self = nullptr;
+    dev->disable();
+    expect(g_dev_disable_calls == 1 && g_dev_enable_calls == 1);
+    expect(g_dev_call_self == &fake_device);
+
+    // Redirect entries drive the same two slots.
+    g_dev_enable_calls = g_dev_disable_calls = 0;
+    wave_device_enable_redirect(dev, nullptr);
+    wave_device_disable_redirect(dev, nullptr);
+    expect(g_dev_enable_calls == 1 && g_dev_disable_calls == 1);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13095,6 +13150,7 @@ int main() {
     test_square_lock_unlock();
     test_square_lock_lock();
     test_console_edit_lock();
+    test_wave_device_enable_disable();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

@@ -200,6 +200,8 @@ address,kind
 0x004C45E0,jump
 0x004C5180,jump
 0x004C51A0,jump
+0x004C51C0,jump
+0x004C51D0,jump
 0x004C5840,jump
 0x004C5850,jump
 0x004C5860,jump
