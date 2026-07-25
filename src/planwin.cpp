@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "planwin.h"
 #include "mapwin.h"
+#include <cstring>
 
 /*
 Purpose: Clear the plan window's line count.
@@ -54,4 +55,76 @@ void PlanWin::close() {
 
 void __fastcall plan_win_close_redirect(PlanWin *self, void *) {
     self->close();
+}
+
+namespace {
+
+// blink dispatches through the virtual base's own vtable rather than a C++
+// virtual call, so no vtable this toolchain lays out can disagree with the
+// original's. Slot 0x30 is read from whatever object is actually there.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_base_vtable_slot)(void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+constexpr size_t PlanWinBlinkSlot = 0x30;
+
+// Both methods reach the virtual base the way the original does - through the
+// vbtable rather than through the member - so they stay correct for any class
+// that inherits this one and moves the base.
+uint8_t *virtual_base_of(void *self) {
+    const int32_t *const vbtable =
+        *reinterpret_cast<const int32_t *const *>(self);
+    return reinterpret_cast<uint8_t *>(self) + vbtable[1];
+}
+
+}  // namespace
+
+/*
+Purpose: Toggle the plan window's blink phase and redraw, when blinking is on.
+Original Offset: 0048BC20
+Return Value: n/a
+Status: Complete
+*/
+void PlanWin::blink() {
+    if (!field_21A68_) {
+        return;
+    }
+    field_21A6C_ = (field_21A6C_ == 0) ? 1 : 0;
+    uint8_t *const base = virtual_base_of(this);
+    void **const vtable = *reinterpret_cast<void ***>(base);
+    reinterpret_cast<func_base_vtable_slot *>(
+        vtable[PlanWinBlinkSlot / sizeof(void *)])(base);
+}
+
+void __fastcall plan_win_blink_redirect(PlanWin *self, void *) {
+    self->blink();
+}
+
+/*
+Purpose: Restore the window's backing image from the plan window's own buffer.
+Original Offset: 0048B3C0
+Return Value: n/a
+Status: Complete
+
+The height is passed negated. That is the original's, not a transcription
+slip: it loads the buffer's field at 0x84 and runs `neg edx` before pushing.
+*/
+void PlanWin::UNK1() {
+    uint8_t *const base = virtual_base_of(this);
+    auto *const window_buffer = reinterpret_cast<Buffer *>(base + 0x444);
+    int32_t width;
+    int32_t height;
+    std::memcpy(&width, base + 0x4C4, sizeof(width));
+    std::memcpy(&height, base + 0x4C8, sizeof(height));
+    window_buffer->copy(reinterpret_cast<Buffer *>(buffer_), 0, 0, width,
+                        -height);
+}
+
+void __fastcall plan_win_unk1_redirect(PlanWin *self, void *) {
+    self->UNK1();
 }

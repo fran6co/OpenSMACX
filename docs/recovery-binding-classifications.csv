@@ -5,6 +5,7 @@ BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for
 BaseWinClick,ui_dependency,recover_base_win_click,Temporary dependency for the recovered BaseWin click handlers until the shared click is source-owned
 BaseWinDrawSupported,ui_dependency,recover_base_win_draw_supported,Temporary dependency for the recovered BaseWin scroll handler until draw_supported is source-owned
 BaseWinIfaceClick,ui_dependency,recover_base_win_iface_click,Temporary dependency for the recovered BaseWin interface-click handlers until iface_click is source-owned
+BufferCopyFull,ui_dependency,recover_buffer_copy_full,Temporary dependency for the recovered five-argument Buffer copy until the seven-argument blitter is source-owned
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned

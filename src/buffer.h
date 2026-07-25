@@ -47,6 +47,7 @@ class DLLEXPORT Buffer {
   int text_width(LPSTR text);
   int text_height();
   int text_line_height();
+  int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
   void close();
   // Destructor body kept as a named method so the trivial ~Buffer() stays
   // trivial and embedding classes keep their existing implicit destruction.
@@ -134,6 +135,16 @@ static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original ex
 // through; both are stdcall COM methods on the surface interface.
 constexpr size_t BufferSurfaceLockSlot = 0x64;
 constexpr size_t BufferSurfaceUnlockSlot = 0x80;
+
+// The seven-argument copy is the real blitter and is not recovered yet, so the
+// convenience overload reaches it through a seam.
+typedef int (__thiscall func_buffer_copy_full)(void *, Buffer *, int, int,
+                                               int, int, int, int);
+extern func_buffer_copy_full *BufferCopyFull;
+
+int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
+                                    int xCoord, int yCoord,
+                                    int width, int height);
 
 int __fastcall buffer_get_data_redirect(Buffer *self, void *);
 int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
