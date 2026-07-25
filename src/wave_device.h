@@ -33,6 +33,8 @@ class DLLEXPORT Wave_Device {
   int fade(int);
   void enable();
   void disable();
+  int get_volume();
+  int stop();
 
  private:
   uint8_t unmapped_[0xC0];
@@ -42,3 +44,5 @@ void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1);
 int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1);
 void __fastcall wave_device_enable_redirect(Wave_Device *self, void *);
 void __fastcall wave_device_disable_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_get_volume_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_stop_redirect(Wave_Device *self, void *);

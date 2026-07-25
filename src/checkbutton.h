@@ -34,6 +34,8 @@ class DLLEXPORT CheckButton : GraphicWin {
   CheckButton() { ; }
   ~CheckButton() { ; }
   static void close_class();
+  static int init_class();
 };
 
 void __cdecl check_button_close_class_redirect();
+int __cdecl check_button_init_class_redirect();

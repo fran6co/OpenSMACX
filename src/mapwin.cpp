@@ -160,3 +160,17 @@ void __fastcall map_win_on_left_double_click_redirect(MapWin *self, void *, int 
 void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2) {
     self->on_left_up(a1, a2);
 }
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 00462970
+Return Value: 0, always
+Status: Complete
+*/
+int MapWin::UNK2() {
+    return 0;
+}
+
+int __fastcall map_win_unk2_redirect(MapWin *self, void *) {
+    return self->UNK2();
+}

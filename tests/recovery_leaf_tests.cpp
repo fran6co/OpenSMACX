@@ -13036,6 +13036,67 @@ void test_wave_set_pitch_and_load() {
     expect(g_wave_load_a1 == 21 && g_wave_follow_calls == 1);
 }
 
+void test_zeroed_constant_return_stubs() {
+    // Eleven stubs whose bodies are nothing but `xor eax, eax; ret` - three
+    // bytes each. They were hidden from the constant-return scan by a
+    // length check that could never match that shape, so they are all
+    // recovered together here: each returns zero and writes nothing.
+    // The device layouts are bounded rather than established, so as elsewhere
+    // the canary is sized to what is modelled; a method that should touch no
+    // field writes nothing regardless of where the object really ends.
+    alignas(Midi_Device) uint8_t midi_storage[sizeof(Midi_Device) + 32];
+    uint8_t midi_expected[sizeof(midi_storage)];
+    auto *midi = reinterpret_cast<Midi_Device *>(midi_storage + 16);
+    seed_storage(midi_storage, midi_expected, sizeof(midi_storage));
+    std::memcpy(midi_expected, midi_storage, sizeof(midi_storage));
+    expect(midi->get_ndevices() == 0);
+    expect(midi->get_volume() == 0);
+    expect(midi->stop() == 0);
+    expect(midi->get_rate() == 0);
+    expect(midi_device_get_ndevices_redirect(midi, nullptr) == 0);
+    expect(midi_device_get_volume_redirect(midi, nullptr) == 0);
+    expect(midi_device_stop_redirect(midi, nullptr) == 0);
+    expect(midi_device_get_rate_redirect(midi, nullptr) == 0);
+    expect_storage_bytes(midi_storage, midi_expected, sizeof(midi_storage));
+
+    alignas(Wave_In_Device) uint8_t win_storage[sizeof(Wave_In_Device) + 32];
+    uint8_t win_expected[sizeof(win_storage)];
+    auto *wave_in = reinterpret_cast<Wave_In_Device *>(win_storage + 16);
+    seed_storage(win_storage, win_expected, sizeof(win_storage));
+    std::memcpy(win_expected, win_storage, sizeof(win_storage));
+    expect(wave_in->get_ndevices() == 0);
+    expect(wave_in->stop() == 0);
+    expect(wave_in->get_rate() == 0);
+    expect(wave_in_device_get_ndevices_redirect(wave_in, nullptr) == 0);
+    expect(wave_in_device_stop_redirect(wave_in, nullptr) == 0);
+    expect(wave_in_device_get_rate_redirect(wave_in, nullptr) == 0);
+    expect_storage_bytes(win_storage, win_expected, sizeof(win_storage));
+
+    alignas(Wave_Device) uint8_t wd_storage[sizeof(Wave_Device) + 32];
+    uint8_t wd_expected[sizeof(wd_storage)];
+    auto *wave_dev = reinterpret_cast<Wave_Device *>(wd_storage + 16);
+    seed_storage(wd_storage, wd_expected, sizeof(wd_storage));
+    std::memcpy(wd_expected, wd_storage, sizeof(wd_storage));
+    expect(wave_dev->get_volume() == 0);
+    expect(wave_dev->stop() == 0);
+    expect(wave_device_get_volume_redirect(wave_dev, nullptr) == 0);
+    expect(wave_device_stop_redirect(wave_dev, nullptr) == 0);
+    expect_storage_bytes(wd_storage, wd_expected, sizeof(wd_storage));
+
+    // A static with no object at all, and a MapWin method that ignores its own.
+    expect(CheckButton::init_class() == 0);
+    expect(check_button_init_class_redirect() == 0);
+
+    alignas(MapWin) uint8_t mw_storage[sizeof(MapWin) + 32];
+    uint8_t mw_expected[sizeof(mw_storage)];
+    auto *map_win = reinterpret_cast<MapWin *>(mw_storage + 16);
+    seed_storage(mw_storage, mw_expected, sizeof(mw_storage));
+    std::memcpy(mw_expected, mw_storage, sizeof(mw_storage));
+    expect(map_win->UNK2() == 0);
+    expect(map_win_unk2_redirect(map_win, nullptr) == 0);
+    expect_storage_bytes(mw_storage, mw_expected, sizeof(mw_storage));
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13442,6 +13503,7 @@ int main() {
     test_sound_fade();
     test_wave_unload();
     test_wave_set_pitch_and_load();
+    test_zeroed_constant_return_stubs();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

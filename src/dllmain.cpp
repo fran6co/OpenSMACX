@@ -104,7 +104,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 494;
+constexpr size_t RedirectCount = 505;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -930,6 +930,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0045EB70,
         },
         {
+            0x00462970,
+            reinterpret_cast<uintptr_t>(&map_win_unk2_redirect),
+            OPENSMACX_SIGNATURE_00462970,
+        },
+        {
             0x00467960,
             reinterpret_cast<uintptr_t>(&map_win_unk3_redirect),
             OPENSMACX_SIGNATURE_00467960,
@@ -1205,6 +1210,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C45E0,
         },
         {
+            0x004C5170,
+            reinterpret_cast<uintptr_t>(&wave_device_get_volume_redirect),
+            OPENSMACX_SIGNATURE_004C5170,
+        },
+        {
             0x004C5180,
             reinterpret_cast<uintptr_t>(&wave_device_set_pan_redirect),
             OPENSMACX_SIGNATURE_004C5180,
@@ -1215,6 +1225,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C51A0,
         },
         {
+            0x004C51B0,
+            reinterpret_cast<uintptr_t>(&wave_device_stop_redirect),
+            OPENSMACX_SIGNATURE_004C51B0,
+        },
+        {
             0x004C51C0,
             reinterpret_cast<uintptr_t>(&wave_device_enable_redirect),
             OPENSMACX_SIGNATURE_004C51C0,
@@ -1223,6 +1238,11 @@ bool install_redirects() {
             0x004C51D0,
             reinterpret_cast<uintptr_t>(&wave_device_disable_redirect),
             OPENSMACX_SIGNATURE_004C51D0,
+        },
+        {
+            0x004C5830,
+            reinterpret_cast<uintptr_t>(&midi_device_get_ndevices_redirect),
+            OPENSMACX_SIGNATURE_004C5830,
         },
         {
             0x004C5840,
@@ -1240,6 +1260,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C5860,
         },
         {
+            0x004C5870,
+            reinterpret_cast<uintptr_t>(&midi_device_get_volume_redirect),
+            OPENSMACX_SIGNATURE_004C5870,
+        },
+        {
             0x004C5880,
             reinterpret_cast<uintptr_t>(&midi_device_set_pan_redirect),
             OPENSMACX_SIGNATURE_004C5880,
@@ -1248,6 +1273,11 @@ bool install_redirects() {
             0x004C5890,
             reinterpret_cast<uintptr_t>(&midi_device_fade_redirect),
             OPENSMACX_SIGNATURE_004C5890,
+        },
+        {
+            0x004C58A0,
+            reinterpret_cast<uintptr_t>(&midi_device_stop_redirect),
+            OPENSMACX_SIGNATURE_004C58A0,
         },
         {
             0x004C58B0,
@@ -1260,6 +1290,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C58C0,
         },
         {
+            0x004C58D0,
+            reinterpret_cast<uintptr_t>(&midi_device_get_rate_redirect),
+            OPENSMACX_SIGNATURE_004C58D0,
+        },
+        {
             0x004C58E0,
             reinterpret_cast<uintptr_t>(&midi_device_suspend_redirect),
             OPENSMACX_SIGNATURE_004C58E0,
@@ -1268,6 +1303,11 @@ bool install_redirects() {
             0x004C58F0,
             reinterpret_cast<uintptr_t>(&midi_device_restart_redirect),
             OPENSMACX_SIGNATURE_004C58F0,
+        },
+        {
+            0x004C5AC0,
+            reinterpret_cast<uintptr_t>(&wave_in_device_get_ndevices_redirect),
+            OPENSMACX_SIGNATURE_004C5AC0,
         },
         {
             0x004C5AD0,
@@ -1285,6 +1325,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C5AF0,
         },
         {
+            0x004C5B00,
+            reinterpret_cast<uintptr_t>(&wave_in_device_stop_redirect),
+            OPENSMACX_SIGNATURE_004C5B00,
+        },
+        {
             0x004C5B10,
             reinterpret_cast<uintptr_t>(&wave_in_device_update_sound_redirect),
             OPENSMACX_SIGNATURE_004C5B10,
@@ -1293,6 +1338,11 @@ bool install_redirects() {
             0x004C5B20,
             reinterpret_cast<uintptr_t>(&wave_in_device_set_rate_redirect),
             OPENSMACX_SIGNATURE_004C5B20,
+        },
+        {
+            0x004C5B30,
+            reinterpret_cast<uintptr_t>(&wave_in_device_get_rate_redirect),
+            OPENSMACX_SIGNATURE_004C5B30,
         },
         {
             0x004C5B40,
@@ -2675,6 +2725,11 @@ bool install_redirects() {
             0x0062ED30,
             reinterpret_cast<uintptr_t>(&net_poll_players_redirect),
             OPENSMACX_SIGNATURE_0062ED30,
+        },
+        {
+            0x006339A0,
+            reinterpret_cast<uintptr_t>(&check_button_init_class_redirect),
+            OPENSMACX_SIGNATURE_006339A0,
         },
         {
             0x006339B0,

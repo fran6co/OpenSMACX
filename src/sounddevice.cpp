@@ -231,3 +231,101 @@ int Wave_In_Device::get_description(unsigned int, char *, unsigned int) {
 int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, void *, unsigned int a1, char *a2, unsigned int a3) {
     return self->get_description(a1, a2, a3);
 }
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C5830
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::get_ndevices() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C5870
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::get_volume() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C58A0
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::stop() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C58D0
+Return Value: 0, always
+Status: Complete
+*/
+int Midi_Device::get_rate() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C5AC0
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::get_ndevices() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C5B00
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::stop() {
+    return 0;
+}
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 004C5B30
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::get_rate() {
+    return 0;
+}
+
+int __fastcall midi_device_get_ndevices_redirect(Midi_Device *self, void *) {
+    return self->get_ndevices();
+}
+
+int __fastcall midi_device_get_volume_redirect(Midi_Device *self, void *) {
+    return self->get_volume();
+}
+
+int __fastcall midi_device_stop_redirect(Midi_Device *self, void *) {
+    return self->stop();
+}
+
+int __fastcall midi_device_get_rate_redirect(Midi_Device *self, void *) {
+    return self->get_rate();
+}
+
+int __fastcall wave_in_device_get_ndevices_redirect(Wave_In_Device *self, void *) {
+    return self->get_ndevices();
+}
+
+int __fastcall wave_in_device_stop_redirect(Wave_In_Device *self, void *) {
+    return self->stop();
+}
+
+int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *) {
+    return self->get_rate();
+}
