@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "wave_device.h"
+#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -59,16 +60,34 @@ void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
 
 // The querying half of the same family: the original tail-jumps into the
 // device's method, so that method's result is the caller's; with no device
-// wrapped the answer is zero.
-int query_wrapped_device(Wave_Device *self, int vtable_offset) {
+// wrapped the answer is whatever the original loads into eax on that path,
+// which is usually but not always zero.
+int query_wrapped_device(Wave_Device *self, int vtable_offset,
+                         int no_device_result = 0) {
     void *device = wrapped_device(self);
     if (!device) {
-        return 0;
+        return no_device_result;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
     device_query_vfn fn =
         *reinterpret_cast<device_query_vfn *>(vtable + vtable_offset);
     return fn(device);
+}
+
+// The one-argument members of the family. The original passes the argument
+// straight through and, where it returns at all, answers a fixed value when no
+// device is wrapped.
+typedef int(__thiscall *device_arg_vfn)(void *device, int a1);
+
+int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
+                              int no_device_result = 0) {
+    void *device = wrapped_device(self);
+    if (!device) {
+        return no_device_result;
+    }
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    return (*reinterpret_cast<device_arg_vfn *>(vtable + vtable_offset))(device,
+                                                                        a1);
 }
 }  // namespace
 
@@ -252,4 +271,122 @@ int __fastcall wave_device_get_ds_redirect(Wave_Device *self, void *) {
 
 int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *) {
     return self->is_eax();
+}
+
+/*
+Purpose: Ask the wrapped device whether it is disabled, through vtable slot
+         0x68. With no device wrapped the answer is yes.
+Original Offset: 004C51E0
+Return Value: the device's answer, or 1 when none is wrapped
+Status: Complete
+*/
+int Wave_Device::is_disabled() {
+    return query_wrapped_device(this, 0x68, 1);
+}
+
+/*
+Purpose: Ask the wrapped device to stop dumping raw audio, through vtable slot
+         0x54.
+Original Offset: 004C5220
+Return Value: the device's answer, or 3 when none is wrapped
+Status: Complete
+*/
+int Wave_Device::stop_raw_dump() {
+    return query_wrapped_device(this, 0x54, 3);
+}
+
+/*
+Purpose: Ask the wrapped device whether it does 3D audio, through vtable slot
+         0x84. With no device wrapped the original clears only al, the codegen
+         for a false of byte width; zero is that value.
+Original Offset: 004C5530
+Return Value: the device's answer, or 0 when none is wrapped
+Status: Complete
+*/
+int Wave_Device::is_3d() {
+    return query_wrapped_device(this, 0x84);
+}
+
+/*
+Purpose: Hand the sample rate to the wrapped device, through vtable slot 0x38.
+Original Offset: 004C5120
+Return Value: n/a
+Status: Complete
+*/
+void Wave_Device::set_rate(unsigned long a1) {
+    forward_to_wrapped_device(this, 0x38, static_cast<int>(a1));
+}
+
+/*
+Purpose: Hand the volume to the wrapped device, through vtable slot 0x20.
+Original Offset: 004C5150
+Return Value: n/a
+Status: Complete
+*/
+void Wave_Device::set_volume(unsigned long a1) {
+    forward_to_wrapped_device(this, 0x20, static_cast<int>(a1));
+}
+
+/*
+Purpose: Hand the game window to the wrapped device, through vtable slot 0x6C.
+Original Offset: 004C5000
+Return Value: the device's answer, or 0x13 when none is wrapped
+Status: Complete
+*/
+int Wave_Device::set_hwnd(void *a1) {
+    return forward_to_wrapped_device(this, 0x6C,
+                                     static_cast<int>(
+                                         reinterpret_cast<intptr_t>(a1)),
+                                     0x13);
+}
+
+/*
+Purpose: Read one group's volume from the sixteen-entry table of 24-byte
+         records the object keeps at 0x28. Nothing is dispatched; an index past
+         the table answers zero.
+Original Offset: 004C5380
+Return Value: the group's volume, or 0 when the index is out of range
+Status: Complete
+*/
+int Wave_Device::get_group_volume(unsigned int a1) {
+    if (a1 > 0xF) {
+        return 0;
+    }
+    int value;
+    std::memcpy(&value,
+                reinterpret_cast<uint8_t *>(this) + 0x28 + a1 * 24,
+                sizeof(value));
+    return value;
+}
+
+int __fastcall wave_device_is_disabled_redirect(Wave_Device *self, void *) {
+    return self->is_disabled();
+}
+
+int __fastcall wave_device_stop_raw_dump_redirect(Wave_Device *self, void *) {
+    return self->stop_raw_dump();
+}
+
+int __fastcall wave_device_is_3d_redirect(Wave_Device *self, void *) {
+    return self->is_3d();
+}
+
+void __fastcall wave_device_set_rate_redirect(Wave_Device *self, void *,
+                                              unsigned long a1) {
+    self->set_rate(a1);
+}
+
+void __fastcall wave_device_set_volume_redirect(Wave_Device *self, void *,
+                                                unsigned long a1) {
+    self->set_volume(a1);
+}
+
+int __fastcall wave_device_set_hwnd_redirect(Wave_Device *self, void *,
+                                             void *a1) {
+    return self->set_hwnd(a1);
+}
+
+int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *,
+                                                     unsigned int a1) {
+    return self->get_group_volume(a1);
 }

@@ -36,6 +36,12 @@ class DLLEXPORT Sound {
   int is_playing();
   int is_looping();
   int get_time();
+  int play();
+  int play(unsigned int a1);
+  int stop();
+  int release();
+  void set_loop_state(long a1);
+  void set_delay(unsigned int a1);
 
  private:
   uint8_t unmapped_[0xA0];
@@ -46,3 +52,9 @@ void __fastcall sound_fade_redirect(Sound *self, void *, int a1);
 int __fastcall sound_is_playing_redirect(Sound *self, void *);
 int __fastcall sound_is_looping_redirect(Sound *self, void *);
 int __fastcall sound_get_time_redirect(Sound *self, void *);
+int __fastcall sound_play_redirect(Sound *self, void *);
+int __fastcall sound_play_arg_redirect(Sound *self, void *, unsigned int a1);
+int __fastcall sound_stop_redirect(Sound *self, void *);
+int __fastcall sound_release_redirect(Sound *self, void *);
+void __fastcall sound_set_loop_state_redirect(Sound *self, void *, long a1);
+void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1);

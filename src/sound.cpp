@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "sound.h"
+#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 11.
@@ -114,4 +115,125 @@ int __fastcall sound_is_looping_redirect(Sound *self, void *) {
 
 int __fastcall sound_get_time_redirect(Sound *self, void *) {
     return self->get_time();
+}
+
+namespace {
+typedef int(__thiscall *sound_device_arg)(void *device, int a1);
+
+int forward_sound_device(Sound *self, int vtable_offset, int a1,
+                         int no_device_result) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(self) + 0x3C);
+    if (!device) {
+        return no_device_result;
+    }
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    return (*reinterpret_cast<sound_device_arg *>(vtable + vtable_offset))(
+        device, a1);
+}
+
+int query_sound_device_default(Sound *self, int vtable_offset,
+                               int no_device_result) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(self) + 0x3C);
+    if (!device) {
+        return no_device_result;
+    }
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    return (*reinterpret_cast<sound_device_query *>(vtable + vtable_offset))(
+        device);
+}
+}  // namespace
+
+/*
+Purpose: Ask the wrapped device to play, through vtable slot 0x1C.
+Original Offset: 004C6480
+Return Value: the device's answer, or 0x14 when none is wrapped
+Status: Complete
+*/
+int Sound::play() {
+    return query_sound_device_default(this, 0x1C, 0x14);
+}
+
+/*
+Purpose: Ask the wrapped device to play the given sound, through vtable slot
+         0x18.
+Original Offset: 004C64A0
+Return Value: the device's answer, or 0x14 when none is wrapped
+Status: Complete
+*/
+int Sound::play(unsigned int a1) {
+    return forward_sound_device(this, 0x18, static_cast<int>(a1), 0x14);
+}
+
+/*
+Purpose: Ask the wrapped device to stop, through vtable slot 0x20.
+Original Offset: 004C64D0
+Return Value: the device's answer, or 0x14 when none is wrapped
+Status: Complete
+*/
+int Sound::stop() {
+    return query_sound_device_default(this, 0x20, 0x14);
+}
+
+/*
+Purpose: Ask the wrapped device to release, through vtable slot 0x38.
+Original Offset: 004C64F0
+Return Value: the device's answer, or 0x14 when none is wrapped
+Status: Complete
+*/
+int Sound::release() {
+    return query_sound_device_default(this, 0x38, 0x14);
+}
+
+/*
+Purpose: Record the loop state at 0x30 and hand it to the wrapped device,
+         through vtable slot 0x48. The field is written whether or not a device
+         is wrapped.
+Original Offset: 004C6540
+Return Value: n/a
+Status: Complete
+*/
+void Sound::set_loop_state(long a1) {
+    const int value = static_cast<int>(a1);
+    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x30, &value, sizeof(value));
+    forward_sound_device(this, 0x48, value, 0);
+}
+
+/*
+Purpose: Record the delay at 0x34 and hand it to the wrapped device, through
+         vtable slot 0x4C. The field is written whether or not a device is
+         wrapped.
+Original Offset: 004C6560
+Return Value: n/a
+Status: Complete
+*/
+void Sound::set_delay(unsigned int a1) {
+    const int value = static_cast<int>(a1);
+    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x34, &value, sizeof(value));
+    forward_sound_device(this, 0x4C, value, 0);
+}
+
+int __fastcall sound_play_redirect(Sound *self, void *) {
+    return self->play();
+}
+
+int __fastcall sound_play_arg_redirect(Sound *self, void *, unsigned int a1) {
+    return self->play(a1);
+}
+
+int __fastcall sound_stop_redirect(Sound *self, void *) {
+    return self->stop();
+}
+
+int __fastcall sound_release_redirect(Sound *self, void *) {
+    return self->release();
+}
+
+void __fastcall sound_set_loop_state_redirect(Sound *self, void *, long a1) {
+    self->set_loop_state(a1);
+}
+
+void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1) {
+    self->set_delay(a1);
 }

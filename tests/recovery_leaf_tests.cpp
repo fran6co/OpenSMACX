@@ -13248,6 +13248,182 @@ void test_wrapped_device_forwarders() {
     expect(wave_get_ms_length_redirect(wave_obj, nullptr) == 12345);
 }
 
+namespace {
+// The one-argument members of the family need the argument recorded too.
+int g_fwd_arg;
+template <int Slot>
+int __thiscall observe_fwd_arg_slot(void *self, int a1) {
+    g_fwd_slot_ran = Slot; g_fwd_self = self; g_fwd_arg = a1;
+    ++g_fwd_calls; return g_fwd_ret;
+}
+}  // namespace
+
+void test_wrapped_device_forwarders_with_defaults() {
+    // The rest of the family: the same wrapped-device dispatch, but with a
+    // no-device answer that is not zero, an argument passed through, or a field
+    // written on the way. Each method's slot, its argument, and its no-device
+    // answer are all checked, because those are the three things that separate
+    // these from one another.
+    // Two vtables, because the wave-device side and the Sound side disagree
+    // about the arity of the methods at slots 0x20 and 0x38 - one takes an
+    // argument, the other does not. In the game these are different device
+    // types, and calling a one-argument __thiscall with none would unbalance
+    // the stack, so the test keeps them apart the same way.
+    void *vt[64] = {};
+    vt[0x20 / 4] = reinterpret_cast<void *>(&observe_fwd_arg_slot<0x20>);
+    vt[0x38 / 4] = reinterpret_cast<void *>(&observe_fwd_arg_slot<0x38>);
+    vt[0x54 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x54>);
+    vt[0x58 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x58>);
+    vt[0x5C / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x5C>);
+    vt[0x68 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x68>);
+    vt[0x6C / 4] = reinterpret_cast<void *>(&observe_fwd_arg_slot<0x6C>);
+    vt[0x84 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x84>);
+    struct FwdDev2 { void *vtbl; } dev_obj;
+    dev_obj.vtbl = vt;
+    void *dev = &dev_obj;
+
+    void *svt[64] = {};
+    svt[0x18 / 4] = reinterpret_cast<void *>(&observe_fwd_arg_slot<0x18>);
+    svt[0x1C / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x1C>);
+    svt[0x20 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x20>);
+    svt[0x38 / 4] = reinterpret_cast<void *>(&observe_fwd_slot<0x38>);
+    svt[0x48 / 4] = reinterpret_cast<void *>(&observe_fwd_arg_slot<0x48>);
+    svt[0x4C / 4] = reinterpret_cast<void *>(&observe_fwd_arg_slot<0x4C>);
+    struct SoundDev { void *vtbl; } sound_dev_obj;
+    sound_dev_obj.vtbl = svt;
+    void *sound_dev = &sound_dev_obj;
+
+    std::vector<uint8_t> wd(sizeof(Wave_Device) + 32, 0);
+    auto *wave_dev = reinterpret_cast<Wave_Device *>(wd.data());
+    std::vector<uint8_t> md(sizeof(Midi_Device) + 32, 0);
+    auto *midi = reinterpret_cast<Midi_Device *>(md.data());
+    std::vector<uint8_t> wid(sizeof(Wave_In_Device) + 32, 0);
+    auto *wave_in = reinterpret_cast<Wave_In_Device *>(wid.data());
+    std::vector<uint8_t> sd(sizeof(Sound) + 32, 0);
+    auto *sound = reinterpret_cast<Sound *>(sd.data());
+    auto attach = [&](std::vector<uint8_t> &o, size_t off, void *d) {
+        std::memcpy(o.data() + off, &d, sizeof(d));
+    };
+    auto read32 = [&](std::vector<uint8_t> &o, size_t off) {
+        int32_t v = 0; std::memcpy(&v, o.data() + off, 4); return v;
+    };
+
+    // With a device: every method reaches its own slot and returns the answer.
+    attach(wd, 0x14, dev); attach(md, 0x14, dev);
+    attach(wid, 0x14, dev); attach(sd, 0x3C, sound_dev);
+    g_fwd_ret = 0x777;
+
+    g_fwd_slot_ran = -1; expect(wave_dev->is_disabled() == 0x777);
+    expect(g_fwd_slot_ran == 0x68);
+    g_fwd_slot_ran = -1; expect(wave_dev->stop_raw_dump() == 0x777);
+    expect(g_fwd_slot_ran == 0x54);
+    g_fwd_slot_ran = -1; expect(wave_dev->is_3d() == 0x777);
+    expect(g_fwd_slot_ran == 0x84);
+    g_fwd_slot_ran = -1; expect(midi->is_disabled() == 0x777);
+    expect(g_fwd_slot_ran == 0x5C);
+
+    // The two recorders dispatch but always answer 0 - the original throws the
+    // device's answer away.
+    g_fwd_slot_ran = -1; expect(wave_in->start_record() == 0);
+    expect(g_fwd_slot_ran == 0x58);
+    g_fwd_slot_ran = -1; expect(wave_in->end_record() == 0);
+    expect(g_fwd_slot_ran == 0x5C);
+
+    // One-argument forwards pass the argument through.
+    g_fwd_slot_ran = -1; g_fwd_arg = 0;
+    wave_dev->set_rate(4410u);
+    expect(g_fwd_slot_ran == 0x38 && g_fwd_arg == 4410);
+    g_fwd_slot_ran = -1; wave_dev->set_volume(77u);
+    expect(g_fwd_slot_ran == 0x20 && g_fwd_arg == 77);
+    int hwnd_marker = 0;
+    g_fwd_slot_ran = -1; expect(wave_dev->set_hwnd(&hwnd_marker) == 0x777);
+    expect(g_fwd_slot_ran == 0x6C);
+    expect(g_fwd_arg == static_cast<int>(reinterpret_cast<intptr_t>(&hwnd_marker)));
+
+    g_fwd_slot_ran = -1; expect(sound->play() == 0x777);
+    expect(g_fwd_slot_ran == 0x1C);
+    g_fwd_slot_ran = -1; expect(sound->play(9u) == 0x777);
+    expect(g_fwd_slot_ran == 0x18 && g_fwd_arg == 9);
+    g_fwd_slot_ran = -1; expect(sound->stop() == 0x777);
+    expect(g_fwd_slot_ran == 0x20);
+    g_fwd_slot_ran = -1; expect(sound->release() == 0x777);
+    expect(g_fwd_slot_ran == 0x38);
+
+    // The two setters write their field and forward the same value.
+    g_fwd_slot_ran = -1; sound->set_loop_state(0x31337);
+    expect(g_fwd_slot_ran == 0x48 && g_fwd_arg == 0x31337);
+    expect(read32(sd, 0x30) == 0x31337);
+    g_fwd_slot_ran = -1; sound->set_delay(0x4242u);
+    expect(g_fwd_slot_ran == 0x4C && g_fwd_arg == 0x4242);
+    expect(read32(sd, 0x34) == 0x4242);
+
+    // With no device: nothing dispatches, and each answers its own default -
+    // 1 for the disabled queries, 3 for the raw-dump stop, 0x13 for set_hwnd,
+    // 0x14 for the four Sound calls, 0 for the rest. The setters still write.
+    attach(wd, 0x14, nullptr); attach(md, 0x14, nullptr);
+    attach(wid, 0x14, nullptr); attach(sd, 0x3C, nullptr);
+    g_fwd_calls = 0;
+    expect(wave_dev->is_disabled() == 1);
+    expect(midi->is_disabled() == 1);
+    expect(wave_dev->stop_raw_dump() == 3);
+    expect(wave_dev->is_3d() == 0);
+    expect(wave_dev->set_hwnd(&hwnd_marker) == 0x13);
+    expect(wave_in->start_record() == 0 && wave_in->end_record() == 0);
+    expect(sound->play() == 0x14 && sound->play(1u) == 0x14);
+    expect(sound->stop() == 0x14 && sound->release() == 0x14);
+    wave_dev->set_rate(1u);
+    wave_dev->set_volume(1u);
+    sound->set_loop_state(55);
+    sound->set_delay(66u);
+    expect(read32(sd, 0x30) == 55 && read32(sd, 0x34) == 66);
+    expect(g_fwd_calls == 0);
+
+    // get_group_volume reads the object's own table - sixteen 24-byte records
+    // from 0x28 - and answers zero past the end. No device is involved.
+    for (unsigned i = 0; i < 16; ++i) {
+        int32_t v = static_cast<int32_t>(0x100 + i);
+        std::memcpy(wd.data() + 0x28 + i * 24, &v, sizeof(v));
+    }
+    for (unsigned i = 0; i < 16; ++i) {
+        expect(wave_dev->get_group_volume(i) == static_cast<int>(0x100 + i));
+    }
+    // A sentinel sits exactly where a bound that was one too generous would
+    // read, so an off-by-one cannot pass by finding zeroes there.
+    int32_t past_end = 0x5EEDBEEF;
+    std::memcpy(wd.data() + 0x28 + 16 * 24, &past_end, sizeof(past_end));
+    expect(wave_dev->get_group_volume(16) == 0);
+    expect(wave_dev->get_group_volume(0xFFFFFFFFu) == 0);
+
+    // Redirects reach the same slots and carry the same answers.
+    attach(wd, 0x14, dev); attach(md, 0x14, dev);
+    attach(wid, 0x14, dev); attach(sd, 0x3C, sound_dev);
+    g_fwd_ret = 5;
+    g_fwd_slot_ran = -1;
+    expect(wave_device_is_disabled_redirect(wave_dev, nullptr) == 5);
+    expect(g_fwd_slot_ran == 0x68);
+    expect(wave_device_stop_raw_dump_redirect(wave_dev, nullptr) == 5);
+    expect(wave_device_is_3d_redirect(wave_dev, nullptr) == 5);
+    expect(midi_device_is_disabled_redirect(midi, nullptr) == 5);
+    expect(wave_in_device_start_record_redirect(wave_in, nullptr) == 0);
+    expect(wave_in_device_end_record_redirect(wave_in, nullptr) == 0);
+    g_fwd_arg = 0;
+    wave_device_set_rate_redirect(wave_dev, nullptr, 22050u);
+    expect(g_fwd_arg == 22050);
+    wave_device_set_volume_redirect(wave_dev, nullptr, 12u);
+    expect(g_fwd_arg == 12);
+    expect(wave_device_set_hwnd_redirect(wave_dev, nullptr, &hwnd_marker) == 5);
+    expect(wave_device_get_group_volume_redirect(wave_dev, nullptr, 3) == 0x103);
+    expect(sound_play_redirect(sound, nullptr) == 5);
+    expect(sound_play_arg_redirect(sound, nullptr, 4u) == 5);
+    expect(g_fwd_arg == 4);
+    expect(sound_stop_redirect(sound, nullptr) == 5);
+    expect(sound_release_redirect(sound, nullptr) == 5);
+    sound_set_loop_state_redirect(sound, nullptr, 71);
+    expect(read32(sd, 0x30) == 71 && g_fwd_arg == 71);
+    sound_set_delay_redirect(sound, nullptr, 72u);
+    expect(read32(sd, 0x34) == 72 && g_fwd_arg == 72);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13656,6 +13832,7 @@ int main() {
     test_wave_set_pitch_and_load();
     test_zeroed_constant_return_stubs();
     test_wrapped_device_forwarders();
+    test_wrapped_device_forwarders_with_defaults();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();
