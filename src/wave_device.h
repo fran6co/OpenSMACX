@@ -20,10 +20,12 @@
  /*
   * Wave_Device class
   *
-  * Layout not established; its methods reach as far as 0xB0, so the
-  * object is at least that large. The one field these methods establish is a
-  * pointer to the wrapped device at offset 0x14; the rest is opaque storage,
-  * only an object for the canary to seed, not a modelled layout.
+  * Layout not established. The one field these methods name is the pointer to
+  * the wrapped device at 0x14. get_group_volume is what sizes the storage
+  * below: it indexes a sixteen-entry table of 24-byte records based at 0x28,
+  * so the object reaches at least 0x194, well past the 0xB0 the other methods
+  * suggested. That is a floor, not a size - the rest is opaque storage, an
+  * object for the canary to seed rather than a modelled layout.
   */
 class DLLEXPORT Wave_Device {
  public:
@@ -43,9 +45,16 @@ class DLLEXPORT Wave_Device {
   int get_rate();
   int get_ds();
   int is_eax();
+  int is_disabled();
+  int stop_raw_dump();
+  int is_3d();
+  void set_rate(unsigned long a1);
+  void set_volume(unsigned long a1);
+  int set_hwnd(void *a1);
+  int get_group_volume(unsigned int a1);
 
  private:
-  uint8_t unmapped_[0xC0];
+  uint8_t unmapped_[0x194];
 };
 
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1);
@@ -62,3 +71,10 @@ int __fastcall wave_device_get_hw_mem_size_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_get_rate_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_get_ds_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_is_disabled_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_stop_raw_dump_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_is_3d_redirect(Wave_Device *self, void *);
+void __fastcall wave_device_set_rate_redirect(Wave_Device *self, void *, unsigned long a1);
+void __fastcall wave_device_set_volume_redirect(Wave_Device *self, void *, unsigned long a1);
+int __fastcall wave_device_set_hwnd_redirect(Wave_Device *self, void *, void *a1);
+int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, unsigned int a1);

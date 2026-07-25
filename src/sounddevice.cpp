@@ -372,3 +372,68 @@ void __fastcall midi_device_enable_redirect(Midi_Device *self, void *) {
 void __fastcall midi_device_disable_redirect(Midi_Device *self, void *) {
     self->disable();
 }
+
+namespace {
+typedef int(__thiscall *device_query_vfn)(void *device);
+
+// The querying form of the same dispatch, shared by both device classes: the
+// original tail-jumps or calls into the device's method, and answers a fixed
+// value when no device is wrapped.
+int query_device_at_14(void *self, int vtable_offset, int no_device_result) {
+    void *device = *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(self) + 0x14);
+    if (!device) {
+        return no_device_result;
+    }
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+    return (*reinterpret_cast<device_query_vfn *>(vtable + vtable_offset))(
+        device);
+}
+}  // namespace
+
+/*
+Purpose: Ask the wrapped device whether it is disabled, through vtable slot
+         0x5C. With no device wrapped the answer is yes.
+Original Offset: 004C5920
+Return Value: the device's answer, or 1 when none is wrapped
+Status: Complete
+*/
+int Midi_Device::is_disabled() {
+    return query_device_at_14(this, 0x5C, 1);
+}
+
+/*
+Purpose: Ask the wrapped device to start recording, through vtable slot 0x58.
+         The original discards its answer.
+Original Offset: 004C5B60
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::start_record() {
+    query_device_at_14(this, 0x58, 0);
+    return 0;
+}
+
+/*
+Purpose: Ask the wrapped device to stop recording, through vtable slot 0x5C.
+         The original discards its answer.
+Original Offset: 004C5B70
+Return Value: 0, always
+Status: Complete
+*/
+int Wave_In_Device::end_record() {
+    query_device_at_14(this, 0x5C, 0);
+    return 0;
+}
+
+int __fastcall midi_device_is_disabled_redirect(Midi_Device *self, void *) {
+    return self->is_disabled();
+}
+
+int __fastcall wave_in_device_start_record_redirect(Wave_In_Device *self, void *) {
+    return self->start_record();
+}
+
+int __fastcall wave_in_device_end_record_redirect(Wave_In_Device *self, void *) {
+    return self->end_record();
+}
