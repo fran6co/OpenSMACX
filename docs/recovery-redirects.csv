@@ -479,6 +479,7 @@ address,kind
 0x006077F0,jump
 0x00607800,jump
 0x00607810,jump
+0x00607C80,jump
 0x00607DA0,jump
 0x006099D0,jump
 0x00609A50,jump

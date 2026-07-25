@@ -13798,6 +13798,112 @@ void test_plan_win_blink_and_unk1() {
 }
 
 namespace {
+// The redraw handler can retarget the button, which is how the test pins that
+// set() re-reads the id and the parent link rather than caching them.
+uint8_t *g_bb_obj;
+int g_bb_refresh_calls;
+uint32_t g_bb_retarget_id;
+void *g_bb_retarget_parent;
+bool g_bb_retarget;
+void __thiscall observe_bb_refresh(void *self) {
+    ++g_bb_refresh_calls;
+    g_bb_obj = reinterpret_cast<uint8_t *>(self);
+    if (g_bb_retarget) {
+        std::memcpy(g_bb_obj + 0xA78, &g_bb_retarget_id, 4);
+        std::memcpy(g_bb_obj + 0xC4, &g_bb_retarget_parent, 4);
+    }
+}
+void *g_bb_notify_self;
+int g_bb_notify_calls;
+int g_bb_notify_id;
+int g_bb_notify_value;
+void __thiscall observe_bb_notify(void *self, int id, int value) {
+    g_bb_notify_self = self; g_bb_notify_id = id; g_bb_notify_value = value;
+    ++g_bb_notify_calls;
+}
+}  // namespace
+
+void test_base_button_set() {
+    // set() stores the new value, dispatches slot 0xF8 of its own live vtable,
+    // then tells its parent through slot 0xB4 of the *parent's* vtable. Both
+    // tables are planted with their neighbours left null so an off-by-one slot
+    // faults rather than quietly passing.
+    std::vector<uint8_t> bb(sizeof(BaseButton) + 64, 0);
+    uint8_t *const obj = bb.data();
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v = 0; std::memcpy(&v, obj + off, 4); return v;
+    };
+    auto *button = reinterpret_cast<BaseButton *>(obj);
+
+    void *own_vt[64] = {};
+    own_vt[0xF8 / sizeof(void *)] = reinterpret_cast<void *>(&observe_bb_refresh);
+    set32(0, reinterpret_cast<uintptr_t>(&own_vt[0]));
+
+    void *parent_vt[64] = {};
+    parent_vt[0xB4 / sizeof(void *)] = reinterpret_cast<void *>(&observe_bb_notify);
+    std::vector<uint8_t> parent(64, 0);
+    const uintptr_t pvt = reinterpret_cast<uintptr_t>(&parent_vt[0]);
+    std::memcpy(parent.data(), &pvt, 4);
+
+    g_bb_retarget = false;
+
+    // An unchanged value is inert: no store, no redraw, no notification.
+    set32(0xA18, 42);
+    set32(0xA78, 7);
+    set32(0xC4, reinterpret_cast<uintptr_t>(parent.data()));
+    g_bb_refresh_calls = 0; g_bb_notify_calls = 0;
+    button->set(42);
+    expect(g_bb_refresh_calls == 0 && g_bb_notify_calls == 0);
+    expect(get32(0xA18) == 42);
+
+    // A changed value stores, redraws, and notifies with (id, value).
+    button->set(99);
+    expect(get32(0xA18) == 99);
+    expect(g_bb_refresh_calls == 1);
+    expect(g_bb_obj == obj);                       // dispatched on the button
+    expect(g_bb_notify_calls == 1);
+    expect(g_bb_notify_self == reinterpret_cast<void *>(parent.data()));
+    expect(g_bb_notify_id == 7);                   // the id, not the value
+    expect(g_bb_notify_value == 99);
+
+    // A parentless button still stores and redraws, but tells nobody.
+    set32(0xC4, 0);
+    g_bb_refresh_calls = 0; g_bb_notify_calls = 0;
+    button->set(123);
+    expect(get32(0xA18) == 123);
+    expect(g_bb_refresh_calls == 1 && g_bb_notify_calls == 0);
+
+    // Ordering: the redraw handler retargets the button, and the notification
+    // must use the *new* id and the *new* parent - proving neither was read
+    // before the dispatch.
+    std::vector<uint8_t> parent2(64, 0);
+    std::memcpy(parent2.data(), &pvt, 4);
+    g_bb_retarget = true;
+    g_bb_retarget_id = 555;
+    g_bb_retarget_parent = parent2.data();
+    set32(0xA78, 7);
+    set32(0xC4, reinterpret_cast<uintptr_t>(parent.data()));
+    g_bb_notify_calls = 0;
+    button->set(1000);
+    expect(g_bb_notify_calls == 1);
+    expect(g_bb_notify_id == 555);                 // re-read after the redraw
+    expect(g_bb_notify_self == reinterpret_cast<void *>(parent2.data()));
+    g_bb_retarget = false;
+
+    // The redirect drives the identical path.
+    set32(0xA78, 7);
+    set32(0xC4, reinterpret_cast<uintptr_t>(parent.data()));
+    g_bb_refresh_calls = 0; g_bb_notify_calls = 0;
+    base_button_set_redirect(button, nullptr, 2000);
+    expect(get32(0xA18) == 2000);
+    expect(g_bb_refresh_calls == 1 && g_bb_notify_calls == 1);
+    expect(g_bb_notify_id == 7 && g_bb_notify_value == 2000);
+    // Nothing past the object was disturbed.
+    expect(get32(sizeof(BaseButton)) == 0);
+}
+
+namespace {
 void *g_tex_freed;
 int g_tex_free_calls;
 void *observe_texture_free(void *p) { g_tex_freed = p; ++g_tex_free_calls; return nullptr; }
@@ -14311,6 +14417,7 @@ int main() {
     test_plan_win_close();
     test_buffer_copy_overload();
     test_plan_win_blink_and_unk1();
+    test_base_button_set();
     test_texture_lifecycle();
     test_status_win_set_loc();
     test_field_store_clears();
