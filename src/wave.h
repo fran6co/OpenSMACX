@@ -49,6 +49,7 @@ class DLLEXPORT Wave {
   int unload();
   void set_pitch(int a1);
   int load(int a1, int a2);
+  int get_ms_length();
  private:
   uint32_t vtable_storage_;      // 0x00
   uint32_t field_4_;
@@ -66,6 +67,8 @@ class DLLEXPORT Wave {
   uint8_t flags_54_;             // 0x54, bit 1 suppresses the vtable callback
   uint8_t pad_55_[3];
   int32_t pitch_;                // 0x58, clamped semitone offset
+  uint32_t field_5C_;
+  int32_t ms_length_;            // 0x60, playing length in milliseconds
 };
 
 int __fastcall wave_set_asdr_redirect(Wave *self, void *);
@@ -77,3 +80,4 @@ int __fastcall wave_set_release_redirect(Wave *self, void *, unsigned int a1, un
 int __fastcall wave_unload_redirect(Wave *self, void *);
 void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1);
 int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2);
+int __fastcall wave_get_ms_length_redirect(Wave *self, void *);

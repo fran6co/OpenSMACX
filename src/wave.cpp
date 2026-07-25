@@ -189,3 +189,18 @@ void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1) {
 int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2) {
     return self->load(a1, a2);
 }
+
+/*
+Purpose: Report the wave's length in milliseconds, a plain read of the field
+         at 0x60.
+Original Offset: 004C6B00
+Return Value: the stored length
+Status: Complete
+*/
+int Wave::get_ms_length() {
+    return ms_length_;
+}
+
+int __fastcall wave_get_ms_length_redirect(Wave *self, void *) {
+    return self->get_ms_length();
+}
