@@ -78,6 +78,7 @@
 #include "squarelock.h"
 #include "deletionlist.h"
 #include "lock.h"
+#include "texture.h"
 #include "menu.h"
 #include "palette.h"
 #include "pulldown.h"
@@ -104,7 +105,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 541;
+constexpr size_t RedirectCount = 544;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -2228,6 +2229,21 @@ bool install_redirects() {
             0x00618F30,
             reinterpret_cast<uintptr_t>(&font_unk1_redirect),
             OPENSMACX_SIGNATURE_00618F30,
+        },
+        {
+            0x00619650,
+            reinterpret_cast<uintptr_t>(&texture_ctor_redirect),
+            OPENSMACX_SIGNATURE_00619650,
+        },
+        {
+            0x00619690,
+            reinterpret_cast<uintptr_t>(&texture_close_redirect),
+            OPENSMACX_SIGNATURE_00619690,
+        },
+        {
+            0x006252B0,
+            reinterpret_cast<uintptr_t>(&texture_store_dtor_redirect),
+            OPENSMACX_SIGNATURE_006252B0,
         },
         {
             0x00629710,

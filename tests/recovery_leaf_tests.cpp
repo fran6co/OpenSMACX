@@ -41,6 +41,7 @@
 #include "../src/newtechwin.h"
 #include "../src/pickwin.h"
 #include "../src/prodpicker.h"
+#include "../src/texture.h"
 #include "../src/reportwin.h"
 #include "../src/setupwin.h"
 #include "../src/multidebug.h"
@@ -13568,6 +13569,106 @@ void test_console_editor_undo_and_prod_picker_close() {
     BufferSubobjectClose = saved_bufclose;
 }
 
+namespace {
+void *g_tex_freed;
+int g_tex_free_calls;
+void *observe_texture_free(void *p) { g_tex_freed = p; ++g_tex_free_calls; return nullptr; }
+}  // namespace
+
+void test_texture_lifecycle() {
+    // The constructor and close agree on four fields - pixels at 0, two
+    // descriptors at 4 and 8, a borrowed flag at 0x6C - and touch nothing
+    // else. close frees the pixels only when there are pixels AND the flag is
+    // clear; a borrowed texture keeps its block and even keeps its pointer,
+    // which is the asymmetry worth pinning.
+    auto *const saved = TextureFree;
+    TextureFree = &observe_texture_free;
+
+    std::vector<uint8_t> ts(sizeof(Texture) + 32);
+    std::vector<uint8_t> texp(ts.size());
+    uint8_t *const obj = ts.data();
+    auto read32 = [&](size_t off) {
+        uint32_t v = 0; std::memcpy(&v, obj + off, 4); return v;
+    };
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+
+    // Construction zeroes exactly those four and leaves the rest alone.
+    seed_storage(ts.data(), texp.data(), ts.size());
+    std::memcpy(texp.data(), ts.data(), ts.size());
+    // Construction is driven through the redirect rather than a placement new
+    // here: the constructor lives in another translation unit, so the compiler
+    // cannot fold its stores against the memcpy writes this test makes into
+    // the same storage afterwards.
+    auto *tex = reinterpret_cast<Texture *>(obj);
+    expect(texture_ctor_redirect(tex, nullptr) == tex);
+    expect(read32(0) == 0 && read32(4) == 0 && read32(8) == 0);
+    expect(read32(0x6C) == 0);
+    // Everything between 0xC and 0x6B is untouched by construction.
+    for (size_t off = 0xC; off < 0x6C; ++off) {
+        expect(obj[off] == texp[off]);
+    }
+
+    // Owned pixels: freed, and the pointer cleared.
+    int block = 0;
+    void *pixels = &block;
+    std::memcpy(obj, &pixels, sizeof(pixels));
+    set32(4, 0x1111); set32(8, 0x2222); set32(0x6C, 0);
+    g_tex_free_calls = 0;
+    tex->close();
+    expect(g_tex_free_calls == 1 && g_tex_freed == pixels);
+    expect(read32(0) == 0 && read32(4) == 0 && read32(8) == 0 && read32(0x6C) == 0);
+
+    // Borrowed pixels: not freed, and the pointer is deliberately left set.
+    std::memcpy(obj, &pixels, sizeof(pixels));
+    set32(4, 0x1111); set32(8, 0x2222); set32(0x6C, 1);
+    g_tex_free_calls = 0;
+    tex->close();
+    expect(g_tex_free_calls == 0);
+    void *still = nullptr;
+    std::memcpy(&still, obj, sizeof(still));
+    expect(still == pixels);                 // kept, not cleared
+    expect(read32(4) == 0 && read32(8) == 0 && read32(0x6C) == 0);
+
+    // No pixels at all: nothing freed, and the descriptors still clear.
+    void *none = nullptr;
+    std::memcpy(obj, &none, sizeof(none));
+    set32(4, 0x3333); set32(0x6C, 0);
+    g_tex_free_calls = 0;
+    tex->close();
+    expect(g_tex_free_calls == 0 && read32(4) == 0);
+
+    // The constructor answers `this`, as MSVC constructors do.
+    std::memcpy(obj, &pixels, sizeof(pixels));
+    expect(texture_ctor_redirect(tex, nullptr) == tex);
+    expect(read32(0) == 0);
+    std::memcpy(obj, &pixels, sizeof(pixels));
+    set32(0x6C, 0);
+    g_tex_free_calls = 0;
+    texture_close_redirect(tex, nullptr);
+    expect(g_tex_free_calls == 1);
+
+    TextureFree = saved;
+
+    // TextureStore's destructor leaves 3 at 0 and clears 4, calling nothing.
+    std::vector<uint8_t> st(sizeof(TextureStore) + 32);
+    std::vector<uint8_t> sexp(st.size());
+    seed_storage(st.data(), sexp.data(), st.size());
+    std::memcpy(sexp.data(), st.data(), st.size());
+    auto *store = reinterpret_cast<TextureStore *>(st.data());
+    store->~TextureStore();
+    uint32_t f0 = 0, f4 = 0;
+    std::memcpy(&f0, st.data(), 4);
+    std::memcpy(&f4, st.data() + 4, 4);
+    expect(f0 == 3 && f4 == 0);
+    // Nothing past the two fields moved.
+    for (size_t off = 8; off < st.size(); ++off) {
+        expect(st[off] == sexp[off]);
+    }
+    texture_store_dtor_redirect(store, nullptr);
+    std::memcpy(&f0, st.data(), 4);
+    expect(f0 == 3);
+}
+
 void test_base_pop_default_colors() {
     // Two interleaved tables with different geometry: the string table has
     // four tiers so its slots are 0x10 apart, the button table three at 0xC.
@@ -13979,6 +14080,7 @@ int main() {
     test_wrapped_device_forwarders_with_defaults();
     test_sound_guarded_forwarders();
     test_console_editor_undo_and_prod_picker_close();
+    test_texture_lifecycle();
     test_status_win_set_loc();
     test_field_store_clears();
     test_field_store_writes();

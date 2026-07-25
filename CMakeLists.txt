@@ -198,6 +198,7 @@ set(OPENSMACX_SOURCES
     src/squarelock.cpp
     src/deletionlist.cpp
     src/lock.cpp
+    src/texture.cpp
     src/menu.cpp
     src/palette.cpp
     src/path.cpp
@@ -480,6 +481,7 @@ if(BUILD_TESTING)
         src/squarelock.cpp
         src/deletionlist.cpp
         src/lock.cpp
+        src/texture.cpp
         src/win.cpp
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)

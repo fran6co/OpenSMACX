@@ -5056,9 +5056,9 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00619370,0x006195A7,567,.text,?find_line_break_l@Font@@QAEHPADPAHH@Z,"int (__thiscall ?find_line_break_l@Font@@QAEHPADPAHH@Z)(Font* this, int8* input, int* breakLen, int len)",0x00619370-0x006195A7,game,sp_ready;purged_ok,src/font.cpp:173,Complete,,,source_complete,,,,2,1
 0x006195B0,0x0061960D,93,.text,?init_font_class@Font@@QAAHPAUFont@@@Z,,0x006195B0-0x0061960D,game,sp_ready;purged_ok,src/font.cpp:214,Complete,,,source_complete,,,,1,1
 0x00619610,0x00619644,52,.text,?close_font_class@Font@@QAAXXZ,,0x00619610-0x00619644,game,hidden;sp_ready;purged_ok,src/font.cpp:238,Complete,,,source_complete,,,,0,1
-0x00619650,0x00619660,16,.text,??0Texture@@QAE@XZ,void (__thiscall ??0Texture@@QAE@XZ)(Texture* this),0x00619650-0x00619660,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
+0x00619650,0x00619660,16,.text,??0Texture@@QAE@XZ,void (__thiscall ??0Texture@@QAE@XZ)(Texture* this),0x00619650-0x00619660,game,hidden;sp_ready;purged_ok,src/texture.cpp:26,Complete,,,source_complete,,,,0,5
 0x00619660,0x00619685,37,.text,??1Texture@@QAE@XZ,void (__thiscall ??1Texture@@QAE@XZ)(Texture* this),0x00619660-0x00619685,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x00619690,0x006196CA,58,.text,?close@Texture@@QAEXXZ,void (__thiscall ?close@Texture@@QAEXXZ)(Texture* this),0x00619690-0x006196CA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
+0x00619690,0x006196CA,58,.text,?close@Texture@@QAEXXZ,void (__thiscall ?close@Texture@@QAEXXZ)(Texture* this),0x00619690-0x006196CA,game,hidden;sp_ready;purged_ok,src/texture.cpp:43,Complete,,,source_complete,,,,1,0
 0x006196D0,0x00619706,54,.text,?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z,"int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z)(Texture* this, Buffer*, RECT*)",0x006196D0-0x00619706,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00619710,0x006198DE,462,.text,?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z,"int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z)(Texture* this, Buffer*, int xCoord, int yCoord, int height, int width, #120*)",0x00619710-0x006198DE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,3
 0x006198E0,0x00619D7F,1183,.text,?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z,"void (__thiscall ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z)(Texture* this, Buffer*, Vert*, int, Vert*)",0x006198E0-0x00619D7F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
@@ -5109,7 +5109,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00624EB0,0x00625075,453,.text,sub_624eb0,,0x00624EB0-0x00625075,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x00625080,0x00625294,532,.text,sub_625080,,0x00625080-0x00625294,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4
 0x006252A0,0x006252B0,16,.text,??0TextureStore@@QAE@XZ,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this),0x006252A0-0x006252B0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x006252B0,0x006252BE,14,.text,??1TextureStore@@QAE@XZ,void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this),0x006252B0-0x006252BE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,6
+0x006252B0,0x006252BE,14,.text,??1TextureStore@@QAE@XZ,void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this),0x006252B0-0x006252BE,game,hidden;sp_ready;purged_ok,src/texture.cpp:60,Complete,,,source_complete,,,,0,6
 0x006252C0,0x006252DE,30,.text,sub_6252c0,,0x006252C0-0x006252DE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x006252E0,0x00625306,38,.text,??0ImageButton@@QAE@XZ,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this),0x006252E0-0x00625306,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00625310,0x00625325,21,.text,??1ImageButton@@QAE@XZ,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this),0x00625310-0x00625325,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -5610,7 +5610,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00644EC6,0x00644ECF,9,.text,__lockexit,,0x00644EC6-0x00644ECF,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,1,2
 0x00644ECF,0x00644ED8,9,.text,__unlockexit,,0x00644ECF-0x00644ED8,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,1,2
 0x00644ED8,0x00644EF2,26,.text,__initterm,,0x00644ED8-0x00644EF2,library,lib;staticdef;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,2
-0x00644EF2,0x00644F3A,72,.text,_free,,0x00644EF2-0x00644F3A,library,lib;hidden;sp_ready;purged_ok,,,,BufferFree | MapWinFree | PullDownFree | SpriteFree | _free,original_dependency,,,,4,170
+0x00644EF2,0x00644F3A,72,.text,_free,,0x00644EF2-0x00644F3A,library,lib;hidden;sp_ready;purged_ok,,,,BufferFree | MapWinFree | PullDownFree | SpriteFree | _free | TextureFree,original_dependency,,,,4,170
 0x00644F3A,0x00644F45,11,.text,_abs,,0x00644F3A-0x00644F45,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,126
 0x00644F45,0x00644F79,52,.text,?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z,,0x00644F45-0x00644F79,library,lib;frame;hidden;sp_ready,,,,,external_library,,,,0,1
 0x00644F79,0x00644F80,7,.text,sub_644f79,,0x00644F79-0x00644F80,library,lib;hidden;sp_ready,,,,,external_library,,,0x00644F79: ?_CallMemberFunction0@@YGXPAX0@Z\ndoubtful name,0,2

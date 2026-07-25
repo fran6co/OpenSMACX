@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 75,
-      "source_complete": 1045,
+      "source_complete": 1048,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4510
+      "unrecovered": 4507
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 991,
-    "matched_function_starts": 991,
-    "unique_addresses": 991,
+    "annotations": 994,
+    "matched_function_starts": 994,
+    "unique_addresses": 994,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 191,
-      "function": 86
+      "function": 87
     },
     "items": [
       {
@@ -3489,6 +3489,15 @@
         "type": "TextIndex *"
       },
       {
+        "address": "0x00644EF2",
+        "function": "_free",
+        "function_address": "0x00644EF2",
+        "kind": "function",
+        "location": "src/texture.cpp:22",
+        "symbol": "TextureFree",
+        "type": "func_texture_free *"
+      },
+      {
         "address": "0x00915628",
         "function": "",
         "function_address": "",
@@ -3822,7 +3831,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 86,
-    "total": 277
+    "matched_function_starts": 87,
+    "total": 278
   }
 }
