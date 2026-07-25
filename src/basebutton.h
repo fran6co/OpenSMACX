@@ -45,6 +45,7 @@ class DLLEXPORT BaseButton : GraphicWin {
   void set_text_color3(int color1, int color2, int color3, int color4);
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
+  void set(int value);
 
   // Static defaults shared by every button; the legacy bodies are __cdecl
   // rather than __thiscall because they take no instance.
@@ -90,6 +91,7 @@ extern uint32_t *BaseButtonDynamicDefaults;
 BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
 BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
+void __fastcall base_button_set_redirect(BaseButton *self, void *, int value);
 
 // The default setters are static, so their redirects take no instance and
 // carry the legacy __cdecl convention.

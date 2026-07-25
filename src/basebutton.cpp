@@ -369,6 +369,62 @@ void __fastcall base_button_set_text_color3_redirect(
     self->set_text_color3(color1, color2, color3, color4);
 }
 
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_button_refresh_slot)(void *);
+typedef void(__thiscall func_parent_notify_slot)(void *, int, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// Both dispatches read the live vtable of whatever object is actually there
+// rather than going through a C++ virtual call, so no table this toolchain
+// lays out can disagree with the original's.
+constexpr size_t BaseButtonRefreshSlot = 0xF8;
+constexpr size_t WinValueChangedSlot = 0xB4;
+
+}  // namespace
+
+/*
+Purpose: Give the button a new value, redrawing and notifying its parent only
+         when the value actually changes.
+Original Offset: 00607C80
+Return Value: n/a
+Status: Complete
+
+Ordering is load-bearing and matches the original instruction for instruction:
+the field is stored before the redraw dispatch, and both the button's id and
+the parent link are read *after* it. A redraw handler that retargets the
+button therefore has its new id and new parent used for the notification,
+which is why neither is cached up front.
+*/
+void BaseButton::set(int value) {
+    if (value == field_A18_) {
+        return;
+    }
+    field_A18_ = value;
+
+    void **const own_vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_button_refresh_slot *>(
+        own_vtable[BaseButtonRefreshSlot / sizeof(void *)])(this);
+
+    if (!win_parent_) {
+        return;
+    }
+    void **const parent_vtable = *reinterpret_cast<void ***>(win_parent_);
+    reinterpret_cast<func_parent_notify_slot *>(
+        parent_vtable[WinValueChangedSlot / sizeof(void *)])(
+            win_parent_, static_cast<int>(field_A78_), value);
+}
+
+void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
+    self->set(value);
+}
+
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
          arguments.
