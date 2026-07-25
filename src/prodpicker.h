@@ -27,8 +27,11 @@
   * is exact; ProdPicker's own extent is not established and nothing pins its
   * sizeof.
   *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * Most methods below ignore their arguments and return a constant, which is
+  * why they could be replaced ahead of that mapping. close reaches one real
+  * field: because GraphicWin is pinned at exactly 0xA14, the dword it clears
+  * at 0xA14 is ProdPicker's own first field, which is exact rather than a
+  * guess. Nothing past it is established.
   */
 class DLLEXPORT ProdPicker : GraphicWin {
  public:
@@ -37,8 +40,13 @@ class DLLEXPORT ProdPicker : GraphicWin {
   int UNK1(int a1);
   void on_mouse_move(int a1, int a2);
   void UNK3(int a1);
+  void close();
+
+ private:
+  int32_t field_A14_;   // first field past the pinned GraphicWin base
 };
 
 int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1);
 void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int a1, int a2);
 void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1);
+void __fastcall prod_picker_close_redirect(ProdPicker *self, void *);
