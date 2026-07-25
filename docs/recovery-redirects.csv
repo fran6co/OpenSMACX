@@ -340,6 +340,7 @@ address,kind
 0x005D7470,jump
 0x005D8000,jump
 0x005D95B0,jump
+0x005D95E0,jump
 0x005DAC70,jump
 0x005DACB0,jump
 0x005DACE0,jump

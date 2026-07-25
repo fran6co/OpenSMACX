@@ -48,6 +48,7 @@ class DLLEXPORT Buffer {
   int text_height();
   int text_line_height();
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
+  int copy(Buffer *buffer, RECT *rect);
   void close();
   // Destructor body kept as a named method so the trivial ~Buffer() stays
   // trivial and embedding classes keep their existing implicit destruction.
@@ -145,6 +146,8 @@ extern func_buffer_copy_full *BufferCopyFull;
 int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
                                     int xCoord, int yCoord,
                                     int width, int height);
+int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
+                                         RECT *rect);
 
 int __fastcall buffer_get_data_redirect(Buffer *self, void *);
 int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);

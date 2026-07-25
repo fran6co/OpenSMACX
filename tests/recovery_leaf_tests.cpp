@@ -13708,6 +13708,27 @@ void test_buffer_copy_overload() {
     // The overload is a pure shuffle - it must not touch the buffer.
     expect_storage_bytes(bs.data(), bexp.data(), bs.size());
 
+    // The rectangle overload derives the extents instead of taking them, and
+    // the rectangle is half-open: right-left, not right-left+1. Sides are
+    // chosen so a swapped corner or an inclusive span shows up as a distinct
+    // number rather than coinciding.
+    RECT rect = {100, 200, 130, 250};   // left, top, right, bottom
+    g_copy_calls = 0;
+    expect(buf->copy(other, &rect) == 0x5A5A);
+    expect(g_copy_calls == 1);
+    expect(g_copy.self == reinterpret_cast<void *>(buf));
+    expect(g_copy.src == other);
+    expect(g_copy.x == 100 && g_copy.y == 200);
+    expect(g_copy.sx == 100 && g_copy.sy == 200);   // the corner repeats
+    expect(g_copy.w == 30 && g_copy.h == 50);       // half-open extents
+    // The rectangle is read, never written.
+    expect(rect.left == 100 && rect.top == 200);
+    expect(rect.right == 130 && rect.bottom == 250);
+    g_copy_calls = 0;
+    expect(buffer_copy_rect_redirect(buf, nullptr, other, &rect) == 0x5A5A);
+    expect(g_copy_calls == 1 && g_copy.w == 30 && g_copy.h == 50);
+    expect_storage_bytes(bs.data(), bexp.data(), bs.size());
+
     BufferCopyFull = saved;
 }
 

@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 76,
-      "source_complete": 1052,
+      "source_complete": 1053,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4502
+      "unrecovered": 4501
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 998,
-    "matched_function_starts": 998,
-    "unique_addresses": 998,
+    "annotations": 999,
+    "matched_function_starts": 999,
+    "unique_addresses": 999,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -1693,7 +1693,7 @@
         "function": "?text_width@Buffer@@QAEHPADH@Z",
         "function_address": "0x005DC7C0",
         "kind": "function",
-        "location": "src/buffer.cpp:833",
+        "location": "src/buffer.cpp:857",
         "symbol": "BufferTextWidthMeasured",
         "type": "func_buffer_text_width_measured *"
       },

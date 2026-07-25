@@ -451,6 +451,30 @@ int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
 }
 
 /*
+Purpose: Copy the region a rectangle describes out of another buffer into the
+         same position in this one.
+Original Offset: 005D95E0
+Return Value: whatever the full copy returns
+Status: Complete with temporary full-copy dependency
+
+The rectangle is half-open: the original subtracts before pushing, so the
+extents are right-left and bottom-top rather than the inclusive spans. Like
+the five-argument overload it hands the corner over twice, once as the
+destination and once as the source.
+*/
+int Buffer::copy(Buffer *buffer, RECT *rect) {
+    const int left = rect->left;
+    const int top = rect->top;
+    return BufferCopyFull(this, buffer, left, top, left, top,
+                          rect->right - left, rect->bottom - top);
+}
+
+int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
+                                         RECT *rect) {
+    return self->copy(buffer, rect);
+}
+
+/*
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.
 Original Offset: 005D7470
