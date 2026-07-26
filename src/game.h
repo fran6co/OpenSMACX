@@ -122,6 +122,15 @@ extern int *DustCloudDuration;
 extern BOOL *IsMultiplayerNet;
 extern BOOL *IsMultiplayerPBEM;
 
+// Net turn control. Bit 4 of the flag byte is set while the net game hands the
+// turn around; the faction dword then names whose turn it currently is, and is
+// compared against the local faction at 0x00939284. `net_control_turn` and
+// `Console::use_time_bonus` read the same pair the same way.
+extern uint8_t *NetTurnFlags;
+extern int *NetTurnFaction;
+extern int *LocalFaction;
+
+DLLEXPORT BOOL __cdecl not_my_turn();
 DLLEXPORT void __cdecl planetfall(uint32_t faction_id);
 DLLEXPORT void __cdecl clear_scenario();
 DLLEXPORT uint32_t __cdecl game_year(int turn);
