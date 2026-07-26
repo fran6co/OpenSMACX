@@ -18,6 +18,7 @@
 
 #include "stdafx.h"
 #include "atexit_thunks.h"
+#include "ambience.h"
 #include "battlewin.h"
 #include "buffer.h"
 #include "buttongroup.h"
@@ -86,6 +87,7 @@ Wave *g_SCOOT_WAVE = (Wave *)0x00749C18;
 Wave *g_OK_WAVE = (Wave *)0x0074D8F0;
 Wave *g_PASSOVER_WAVE = (Wave *)0x0074D9D0;
 FX *g_FX = (FX *)0x00749CF8;
+Ambience *g_AMBIENCE = (Ambience *)0x0074DA40;
 Buffer *g_PCX_PARSE_TEMP_BUFFER1 = (Buffer *)0x00798668;
 FactionArt *FactionArtGlobal = (FactionArt *)0x0078E978;
 Sprite *g_IFACE_CLOSE_X_SPRITES = (Sprite *)0x007794D8;
@@ -728,6 +730,16 @@ Status: Complete
 */
 void __cdecl destroy_fx() {
     g_FX->~FX();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_AMBIENCE.
+Original Offset: 004455E0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ambience() {
+    g_AMBIENCE->~Ambience();
 }
 
 /*

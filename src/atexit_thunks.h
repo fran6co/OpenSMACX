@@ -18,6 +18,7 @@
 
 #pragma once
 
+class Ambience;
 class BattleWin;
 class Buffer;
 class ButtonGroup;
@@ -97,6 +98,7 @@ extern Wave *g_SCOOT_WAVE;
 extern Wave *g_OK_WAVE;
 extern Wave *g_PASSOVER_WAVE;
 extern FX *g_FX;
+extern Ambience *g_AMBIENCE;
 extern Buffer *g_PCX_PARSE_TEMP_BUFFER1;
 extern FactionArt *FactionArtGlobal;
 extern Sprite *g_IFACE_CLOSE_X_SPRITES;
@@ -435,6 +437,7 @@ DLLEXPORT void __cdecl destroy_scoot_wave();
 DLLEXPORT void __cdecl destroy_ok_wave();
 DLLEXPORT void __cdecl destroy_passover_wave();
 DLLEXPORT void __cdecl destroy_fx();
+DLLEXPORT void __cdecl destroy_ambience();
 DLLEXPORT void __cdecl destroy_pcx_parse_temp_buffer1();
 DLLEXPORT void __cdecl destroy_factionart();
 DLLEXPORT void __cdecl destroy_iface_close_x_sprites();

@@ -20052,6 +20052,9 @@ const AtexitThunkCase g_atexit_battlewin_cases[] = {
 const AtexitThunkCase g_atexit_fx_cases[] = {
     {&destroy_fx, &g_FX},
 };
+const AtexitThunkCase g_atexit_ambience_cases[] = {
+    {&destroy_ambience, &g_AMBIENCE},
+};
 const AtexitThunkCase g_atexit_fontqueue_cases[] = {
     {&destroy_fontqueue_val2, &g_FONTQUEUE_VAL2},
     {&destroy_fontqueue_val1, &g_FONTQUEUE_VAL1},
@@ -20350,6 +20353,53 @@ void test_atexit_teardown_thunks() {
         *slot = saved;
     }
     VectorDtorIterator = saved_iterator;
+
+    // The Ambience teardown is its recovered destructor: the fixture's name
+    // and device flow out through the wave seams, and the vtable ends
+    // staged to the ultimate base.
+    for (const AtexitThunkCase &entry : g_atexit_ambience_cases) {
+        auto *const saved_delete = WaveOperatorDelete;
+        auto *const saved_release_slot = WaveDeviceReleaseSlot;
+        auto *const saved_guard_ptr = WaveDeviceReleaseGuard;
+        func_wave_device_release *release_fn = &observe_amb_release;
+        int guard = 1;
+        WaveOperatorDelete = &observe_amb_delete;
+        WaveDeviceReleaseSlot = &release_fn;
+        WaveDeviceReleaseGuard = &guard;
+        alignas(4) uint8_t fake[0x80];
+        std::memset(fake, 0x33, sizeof(fake));
+        char namebuf, devbuf;
+        g_amb_obj = fake;
+        g_amb_events.clear();
+        g_amb_rearm_fname = nullptr;
+        g_amb_rearm_device = nullptr;
+        g_amb_delete_rearm_device = nullptr;
+        g_amb_release_clears_guard = false;
+        {
+            void *p = &namebuf;
+            std::memcpy(fake + 0x4C, &p, 4);
+            p = &devbuf;
+            std::memcpy(fake + 0x3C, &p, 4);
+        }
+        const uint32_t flags = 0x11;
+        std::memcpy(fake + 0x40, &flags, 4);
+        auto **slot = static_cast<Ambience **>(entry.slot);
+        Ambience *const saved = *slot;
+        *slot = reinterpret_cast<Ambience *>(fake);
+        entry.thunk();
+        expect(g_amb_events.size() == 2);
+        expect(g_amb_events[0].tag == 1);
+        expect(g_amb_events[0].ptr == &namebuf);
+        expect(g_amb_events[1].tag == 2);
+        expect(g_amb_events[1].ptr == &devbuf);
+        uint32_t vt = 0;
+        std::memcpy(&vt, fake, 4);
+        expect(vt == 0x0066E444u);
+        *slot = saved;
+        WaveOperatorDelete = saved_delete;
+        WaveDeviceReleaseSlot = saved_release_slot;
+        WaveDeviceReleaseGuard = saved_guard_ptr;
+    }
 
     // The Font teardown runs the suite's Font::close double, whose writes to
     // the rebound object are themselves the observation.
