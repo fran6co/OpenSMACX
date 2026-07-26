@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 328,
-      "original_dependency": 90,
-      "source_complete": 1546,
+      "original_dependency": 93,
+      "source_complete": 1548,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4001
+      "unrecovered": 3996
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1492,
-    "matched_function_starts": 1492,
-    "unique_addresses": 1492,
+    "annotations": 1494,
+    "matched_function_starts": 1494,
+    "unique_addresses": 1494,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 535,
-      "function": 125
+      "function": 129
     },
     "items": [
       {
@@ -4933,7 +4933,7 @@
         "function": "?item@Dialog@@QAEHPADH@Z",
         "function_address": "0x00609990",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:22",
+        "location": "src/dialogs_recovery.cpp:24",
         "symbol": "DialogOriginalItem",
         "type": "func_dialog_item *"
       },
@@ -4942,7 +4942,7 @@
         "function": "?item@ListBox@@QAEHPADH@Z",
         "function_address": "0x0060C920",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:23",
+        "location": "src/dialogs_recovery.cpp:25",
         "symbol": "ListBoxOriginalItem",
         "type": "func_list_box_item *"
       },
@@ -4951,7 +4951,7 @@
         "function": "?on_right_down@SpriteBox@@QAEXHH@Z",
         "function_address": "0x00611240",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:102",
+        "location": "src/dialogs_recovery.cpp:104",
         "symbol": "DialogsSpriteBoxOnRightDown",
         "type": "func_dialogs_fwd2 *"
       },
@@ -4960,7 +4960,7 @@
         "function": "?on_right_double_click@SpriteBox@@QAEXHH@Z",
         "function_address": "0x00611330",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:103",
+        "location": "src/dialogs_recovery.cpp:105",
         "symbol": "DialogsSpriteBoxOnRightDoubleClick",
         "type": "func_dialogs_fwd2 *"
       },
@@ -4969,7 +4969,7 @@
         "function": "?on_left_up@SpriteBox@@QAEXHH@Z",
         "function_address": "0x006111A0",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:104",
+        "location": "src/dialogs_recovery.cpp:106",
         "symbol": "DialogsSpriteBoxOnLeftUp",
         "type": "func_dialogs_fwd2 *"
       },
@@ -4978,7 +4978,7 @@
         "function": "?on_right_up@SpriteBox@@QAEXHH@Z",
         "function_address": "0x00611290",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:105",
+        "location": "src/dialogs_recovery.cpp:107",
         "symbol": "DialogsSpriteBoxOnRightUp",
         "type": "func_dialogs_fwd2 *"
       },
@@ -4987,7 +4987,7 @@
         "function": "?on_right_click@SpriteBox@@QAEXHH@Z",
         "function_address": "0x006111F0",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:106",
+        "location": "src/dialogs_recovery.cpp:108",
         "symbol": "DialogsSpriteBoxOnRightClick",
         "type": "func_dialogs_fwd2 *"
       },
@@ -4996,7 +4996,7 @@
         "function": "?on_scrolling@ListBox@@QAEXHH@Z",
         "function_address": "0x0060C5D0",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:107",
+        "location": "src/dialogs_recovery.cpp:109",
         "symbol": "DialogsListBoxOnScrolling",
         "type": "func_dialogs_fwd2 *"
       },
@@ -5005,9 +5005,45 @@
         "function": "?on_mousewheel@ListBox@@QAEXH@Z",
         "function_address": "0x0060CB70",
         "kind": "function",
-        "location": "src/dialogs_recovery.cpp:108",
+        "location": "src/dialogs_recovery.cpp:110",
         "symbol": "DialogsListBoxOnMousewheel",
         "type": "func_dialogs_fwd1 *"
+      },
+      {
+        "address": "0x00611A20",
+        "function": "??1EditGroup@@QAE@XZ",
+        "function_address": "0x00611A20",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:288",
+        "symbol": "DialogsEditGroupDestructor",
+        "type": "func_dialogs_teardown *"
+      },
+      {
+        "address": "0x00610120",
+        "function": "??1SpriteBox@@QAE@XZ",
+        "function_address": "0x00610120",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:290",
+        "symbol": "DialogsSpriteBoxDestructor",
+        "type": "func_dialogs_teardown *"
+      },
+      {
+        "address": "0x0060E740",
+        "function": "??1CheckBox@@QAE@XZ",
+        "function_address": "0x0060E740",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:292",
+        "symbol": "DialogsCheckBoxDestructor",
+        "type": "func_dialogs_teardown *"
+      },
+      {
+        "address": "0x0064557F",
+        "function": "??3@YAXPAX@Z",
+        "function_address": "0x0064557F",
+        "kind": "function",
+        "location": "src/dialogs_recovery.cpp:294",
+        "symbol": "DialogsOperatorDelete",
+        "type": "func_operator_delete *"
       },
       {
         "address": "0x006151E0",
@@ -7269,7 +7305,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 125,
-    "total": 660
+    "matched_function_starts": 129,
+    "total": 664
   }
 }

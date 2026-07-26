@@ -106,7 +106,6 @@ P3,10,0x00406840,sub_406840,6,0,0,unrecovered,,,1,exact,missing,
 P0,1001020,0x00406850,??1Sprite@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_sprite_element_teardown,2,exact,exact,
 P3,11,0x00406860,?hide@BaseButton@@QAEXXZ,25,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)
 P3,221,0x004068E0,??_GFlatButton@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)"
-P1,72621,0x00406910,??1Dialogs@@QAE@XZ,590,72,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this)
 P3,10,0x00406A80,sub_406a80,5,0,0,unrecovered,,,1,exact,missing,
 P2,9120,0x00406A90,sub_406a90,83,9,1,unrecovered,,,2,exact,exact,
 P2,9320,0x00406AF0,sub_406af0,38,9,3,unrecovered,,,2,exact,exact,
@@ -135,7 +134,6 @@ P3,0,0x004070C0,??3Scroll@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004070D0,??3Popup@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004070E0,??3FlatButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,1,0x004070F0,??_Gthunk1_Dialogs@@UAEPAXI@Z,8,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk1_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
-P3,411,0x00407100,??_GDialogs@@UAEPAXI@Z,65,0,4,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
 P3,11,0x00407150,?on_scroll_create@thunk1_Dialogs@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_scroll_create@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
 P3,11,0x00407160,?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z,8,0,0,unrecovered,,,1,entry_range,missing,"int (__thiscall ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)"
 P3,11,0x00407170,?on_redraw@thunk1_Dialogs@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_redraw@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
@@ -3402,7 +3400,7 @@ P3,10,0x0060E610,??__Fg_CHECKBOX_SPRITE_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,mi
 P3,210,0x0060E630,??__Eg_CHECKBOX_SPRITE_2@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x0060E650,??__Fg_CHECKBOX_SPRITE_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,4221,0x0060E670,??0CheckBox@@QAE@H@Z,233,4,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)"
-P1,24221,0x0060E740,??1CheckBox@@QAE@XZ,128,24,2,unrecovered,,,2,exact,exact,void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
+P0,1024221,0x0060E740,??1CheckBox@@QAE@XZ,128,24,2,original_dependency,ui_dependency,recover_check_box_destructor,2,exact,exact,void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
 P3,2621,0x0060E800,?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z,383,2,6,unrecovered,,,2,exact,exact,"int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
 P3,2121,0x0060E980,?item@CheckBox@@QAEHPADHH@Z,141,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)"
 P3,1021,0x0060EA10,?flip_state_id@CheckBox@@QAEXH@Z,312,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?flip_state_id@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
@@ -3436,7 +3434,7 @@ P3,500,0x0060FED0,sub_60fed0,190,0,5,unrecovered,,,0,missing,missing,
 P3,11,0x0060FEE0,?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
 P3,11,0x0060FEF0,?on_redraw@thunk3_CheckBox@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_CheckBox@@QAEXXZ)(CheckBox* this)
 P3,1821,0x0060FF00,??0SpriteBox@@QAE@H@Z,656,1,8,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)"
-P1,23321,0x00610120,??1SpriteBox@@QAE@XZ,399,23,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
+P0,1023321,0x00610120,??1SpriteBox@@QAE@XZ,399,23,3,original_dependency,ui_dependency,recover_sprite_box_destructor,2,exact,entry_range,void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
 P2,8721,0x00610280,?close@SpriteBox@@QAEXXZ,406,8,7,unrecovered,,,2,exact,exact,void (__thiscall ?close@SpriteBox@@QAEXXZ)(SpriteBox* this)
 P3,1221,0x00610420,?init@SpriteBox@@QAEHH@Z,29,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)"
 P3,1221,0x00610440,?init@SpriteBox@@QAEHHHHHH@Z,49,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHHHHHH@Z)(SpriteBox* this, int, int, int, int, int)"
@@ -3482,7 +3480,7 @@ P3,400,0x00611910,sub_611910,76,0,4,unrecovered,,,0,missing,missing,
 P3,11,0x00611920,?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)"
 P3,11,0x00611930,?on_redraw@thunk3_SpriteBox@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_SpriteBox@@QAEXXZ)(SpriteBox* this)
 P3,1221,0x00611940,??0EditGroup@@QAE@H@Z,252,1,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0EditGroup@@QAE@H@Z)(EditGroup* this, int)"
-P1,20121,0x00611A20,??1EditGroup@@QAE@XZ,104,20,1,unrecovered,,,2,exact,exact,void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)
+P0,1020121,0x00611A20,??1EditGroup@@QAE@XZ,104,20,1,original_dependency,ui_dependency,recover_edit_group_destructor,2,exact,exact,void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)
 P2,9221,0x00611A90,?close@EditGroup@@QAEXXZ,96,9,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@EditGroup@@QAEXXZ)(EditGroup* this)
 P3,3221,0x00611AF0,?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z,1182,2,12,unrecovered,,,2,exact,entry_range,"int (__thiscall ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z)(EditGroup* this, GraphicWin*, int, int, int)"
 P2,7521,0x00611F80,?edit@EditGroup@@QAEHPADPADH@Z,192,7,5,unrecovered,,,2,exact,exact,"int (__thiscall ?edit@EditGroup@@QAEHPADPADH@Z)(EditGroup* this, int8*, int8*, int)"

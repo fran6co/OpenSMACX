@@ -14,6 +14,11 @@
 class DLLEXPORT Dialogs {
  public:
   void close();
+  // The recovered complete-object destructor body (0x00406910), modelled on
+  // the primary this (the allocation base); the original enters at
+  // this + 0x188 and the redirect recovers the base, as ListBox's does. The
+  // uint32_t return preserves the EAX residue (ListBox::destroy's constant 0).
+  uint32_t destroy();
   int item(char *text, int index);
   int get_num_items();
   void on_right_down(int a1, int a2);
@@ -77,3 +82,35 @@ void __fastcall dialogs_on_right_click_redirect(Dialogs *self, void *, int a1, i
 void __fastcall dialogs_on_scrolled_redirect(Dialogs *self, void *, int a1, int a2);
 void __fastcall dialogs_on_scrolling_redirect(Dialogs *self, void *, int a1, int a2);
 void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1);
+
+// ~Dialogs tears down the EditGroup, SpriteBox and CheckBox members through
+// still-original destructors; each is bound rebindably. The embedded
+// RadioButton, ListBox, trailing Dialog and the GraphicWin virtual base are
+// torn down through their recovered bodies directly. operator delete is used
+// only by the scalar deleting destructor; func_operator_delete comes from
+// dialog.h.
+typedef void (__thiscall func_dialogs_teardown)(void *self);
+extern func_dialogs_teardown *DialogsEditGroupDestructor;  // 0x00611A20
+extern func_dialogs_teardown *DialogsSpriteBoxDestructor;  // 0x00610120
+extern func_dialogs_teardown *DialogsCheckBoxDestructor;   // 0x0060E740
+extern func_operator_delete *DialogsOperatorDelete;        // 0x0064557F
+
+// Virtual tables ~Dialogs stages: three into the GraphicWin/Win virtual base,
+// three into the embedded RadioButton, every slot located through the
+// subobject's OWN vbtable at run time. All six are written but never
+// dispatched - the dispatches happen inside the recovered close/destroy
+// bodies - so they are fixed constants like Scroll's.
+extern const uint32_t DialogsVbaseGraphicWinVtable;  // 0x00669BE8
+extern const uint32_t DialogsVbaseBufferVtable;      // 0x00669BE0
+extern const uint32_t DialogsVbaseWinVtable;         // 0x00669BD4
+extern const uint32_t DialogsRadioPrimaryVtable;     // 0x00669A6C
+extern const uint32_t DialogsRadioBufferVtable;      // 0x00669A64
+extern const uint32_t DialogsRadioWinVtable;         // 0x00669A58
+
+// ~Dialogs and ??_GDialogs are entered at B + 0x188 (the GraphicWin
+// co-located subobject); both redirects recover the allocation base B first.
+constexpr size_t DialogsDestructorAdjustment = 0x188;
+
+uint32_t __fastcall dialogs_destructor_redirect(void *adjusted, void *);
+void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
+                                              unsigned int mode);

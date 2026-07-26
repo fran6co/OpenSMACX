@@ -35,8 +35,12 @@ DatalinkExec,ui_dependency,recover_datalink_exec,Temporary dependency for the re
 DialogOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialog scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
 DialogOriginalClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered Dialog destructor until Dialog close is source-owned
 DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
+DialogsCheckBoxDestructor,ui_dependency,recover_check_box_destructor,Temporary dependency for the recovered Dialogs destructor until the CheckBox destructor is source-owned
+DialogsEditGroupDestructor,ui_dependency,recover_edit_group_destructor,Temporary dependency for the recovered Dialogs destructor until the EditGroup destructor is source-owned
 DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialogs scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
+DialogsSpriteBoxDestructor,ui_dependency,recover_sprite_box_destructor,Temporary dependency for the recovered Dialogs destructor until the SpriteBox destructor is source-owned
 DialogsSpriteBoxOnLeftUp,ui_dependency,recover_dialogsspriteboxonleftup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 DialogsSpriteBoxOnRightClick,ui_dependency,recover_dialogsspriteboxonrightclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 DialogsSpriteBoxOnRightDoubleClick,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned

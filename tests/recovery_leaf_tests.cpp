@@ -7532,6 +7532,357 @@ void test_dialog_destructor() {
     DialogListVirtualBaseVtable = saved_list_vb;
 }
 
+// Event log for the Dialogs destructor chain. kind: 1 EditGroup dtor,
+// 2 SpriteBox dtor, 3 CheckBox dtor, 4 RadioButton's Dialog close, 5 Win
+// close, 6 Buffer close, 7 ListBox's Dialog close, 8 Dialog close (scalar
+// path), 9 Win dtor, 10 Buffer dtor, 11 operator delete.
+struct DialogsDtorEvent {
+    int kind;
+    const void *target;
+    // Snapshots of the SHARED base slots at call time: the staging blocks
+    // overwrite one another, so the intermediate tables are observable only
+    // from inside the calls that run between them.
+    uint32_t primary;        // [obj + g]
+    uint32_t buffer;         // [obj + g + 0x444]
+    uint32_t win;            // [obj + d]
+    int32_t primary_adjust;  // [obj + g - 4]
+    int32_t win_adjust;      // [obj + d - 4]
+};
+DialogsDtorEvent dialogs_dtor_events[24];
+int dialogs_dtor_event_count = 0;
+uint8_t *dialogs_dtor_base = nullptr;
+int32_t dialogs_dtor_g = 0;
+int32_t dialogs_dtor_d = 0;
+
+void dialogs_dtor_record(int kind, const void *target) {
+    const int index = dialogs_dtor_event_count++;
+    if (index >= static_cast<int>(ARRAYSIZE(dialogs_dtor_events))) {
+        return;
+    }
+    DialogsDtorEvent &event = dialogs_dtor_events[index];
+    event.kind = kind;
+    event.target = target;
+    std::memcpy(&event.primary, dialogs_dtor_base + dialogs_dtor_g, 4);
+    std::memcpy(&event.buffer, dialogs_dtor_base + dialogs_dtor_g + 0x444, 4);
+    std::memcpy(&event.win, dialogs_dtor_base + dialogs_dtor_d, 4);
+    std::memcpy(&event.primary_adjust,
+                dialogs_dtor_base + dialogs_dtor_g - 4, 4);
+    std::memcpy(&event.win_adjust, dialogs_dtor_base + dialogs_dtor_d - 4, 4);
+}
+
+void __thiscall dialogs_editgroup_probe(void *s) { dialogs_dtor_record(1, s); }
+void __thiscall dialogs_spritebox_probe(void *s) { dialogs_dtor_record(2, s); }
+void __thiscall dialogs_checkbox_probe(void *s) { dialogs_dtor_record(3, s); }
+void __thiscall dialogs_rb_dialog_close_probe(Dialog *s) {
+    dialogs_dtor_record(4, s);
+}
+void __thiscall dialogs_win_close_probe(void *s) { dialogs_dtor_record(5, s); }
+void __thiscall dialogs_buffer_close_probe(void *s) {
+    dialogs_dtor_record(6, s);
+}
+void __thiscall dialogs_lb_dialog_close_probe(Dialog *s) {
+    dialogs_dtor_record(7, s);
+}
+void __thiscall dialogs_dialog_close_probe(Dialog *s) {
+    dialogs_dtor_record(8, s);
+}
+void __thiscall dialogs_win_dtor_probe(void *s) { dialogs_dtor_record(9, s); }
+void __thiscall dialogs_buffer_dtor_probe(void *s) {
+    dialogs_dtor_record(10, s);
+}
+void __cdecl dialogs_delete_probe(void *s) { dialogs_dtor_record(11, s); }
+
+void test_dialogs_destructor() {
+    // Save every seam and default this recovery's chain reaches: the three
+    // widget destructor seams and operator delete (this recovery's own), plus
+    // the deep seams inside the recovered RadioButton::close, GraphicWin
+    // close/destructor, ListBox teardown and Dialog::destroy bodies.
+    func_dialogs_teardown *const saved_eg = DialogsEditGroupDestructor;
+    func_dialogs_teardown *const saved_sb = DialogsSpriteBoxDestructor;
+    func_dialogs_teardown *const saved_cb = DialogsCheckBoxDestructor;
+    func_operator_delete *const saved_delete = DialogsOperatorDelete;
+    func_dialog_close *const saved_rb_close = RadioButtonOriginalDialogClose;
+    uint32_t *const saved_rb_d1 = RadioButtonDefault1;
+    uint32_t *const saved_rb_d2 = RadioButtonDefault2;
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_a0c = GraphicWinFieldA0CDefault;
+    func_dialog_close *const saved_lb_close = ListBoxOriginalDialogClose;
+    uint32_t *const saved_lb_static = ListBoxCloseStaticDefaults;
+    uint32_t *const saved_lb_dynamic = ListBoxCloseDynamicDefault;
+    func_dialog_close *const saved_dlg_close = DialogOriginalClose;
+    uint32_t *const saved_dlg_published = DialogPublishedGlobal;
+    func_subobject_destructor *const saved_win_dtor = WinOriginalDestructor;
+    func_subobject_destructor *const saved_buffer_dtor =
+        BufferSubobjectDestructor;
+
+    uint32_t rb_default_1 = 0x51D10001U;
+    uint32_t rb_default_2 = 0x51D10002U;
+    uint32_t a0c_default = 0x7B3D19E5U;
+    uint32_t lb_statics[4] = {0x51A70000U, 0x51A70001U, 0x51A70002U,
+                              0x51A70003U};
+    uint32_t lb_dynamic = 0xB16B00B5U;
+    uint32_t dialog_published_slot = 0;
+
+    DialogsEditGroupDestructor = &dialogs_editgroup_probe;
+    DialogsSpriteBoxDestructor = &dialogs_spritebox_probe;
+    DialogsCheckBoxDestructor = &dialogs_checkbox_probe;
+    DialogsOperatorDelete = &dialogs_delete_probe;
+    RadioButtonOriginalDialogClose = &dialogs_rb_dialog_close_probe;
+    RadioButtonDefault1 = &rb_default_1;
+    RadioButtonDefault2 = &rb_default_2;
+    WinOriginalClose = &dialogs_win_close_probe;
+    BufferSubobjectClose = &dialogs_buffer_close_probe;
+    GraphicWinFieldA0CDefault = &a0c_default;
+    ListBoxOriginalDialogClose = &dialogs_lb_dialog_close_probe;
+    ListBoxCloseStaticDefaults = lb_statics;
+    ListBoxCloseDynamicDefault = &lb_dynamic;
+    DialogOriginalClose = &dialogs_dialog_close_probe;
+    DialogPublishedGlobal = &dialog_published_slot;
+    WinOriginalDestructor = &dialogs_win_dtor_probe;
+    BufferSubobjectDestructor = &dialogs_buffer_dtor_probe;
+
+    // ---- destructor across two vbtable shapes, direct and adapter ---------
+    struct Shape { int32_t g; int32_t d; };
+    const Shape shapes[2] = { {0x188, 0xBA0},     // most-derived
+                              {0x1A8, 0xBC0} };   // embedded / shifted
+    for (int s = 0; s < 2; ++s) {
+        const int32_t g = shapes[s].g;
+        const int32_t d = shapes[s].d;
+        int32_t dlg_vbtable[3] = {0, g, d};
+        // The embedded RadioButton's vbtable names the SHARED bases, so its
+        // entries are the displacements from base+0x44.
+        int32_t rb_vbtable[3] = {0, g - 0x44, d - 0x44};
+
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(uint32_t) uint8_t storage[0xD40];
+            alignas(uint32_t) uint8_t reference[0xD40];
+            seed_storage(storage, reference, sizeof(storage));
+
+            uint8_t *const obj = storage + 16;
+            int32_t *const dlg_vbptr = dlg_vbtable;
+            int32_t *const rb_vbptr = rb_vbtable;
+            std::memcpy(obj + 0x00, &dlg_vbptr, sizeof(dlg_vbptr));
+            std::memcpy(obj + 0x44, &rb_vbptr, sizeof(rb_vbptr));
+            const uint32_t zero = 0;
+            // GraphicWin::close's release target: keep the no-release path.
+            std::memcpy(obj + g + 0xA08, &zero, sizeof(zero));
+            std::memcpy(reference, storage, sizeof(storage));
+            uint8_t *const ref_obj = reference + 16;
+
+            // Compositional reference: hand-apply the two staging blocks this
+            // recovery introduces, and run the already-recovered component
+            // chain on the twin. Probe events from this build are discarded.
+            dialogs_dtor_base = ref_obj;
+            dialogs_dtor_g = g;
+            dialogs_dtor_d = d;
+            auto stage = [](uint8_t *b, int32_t g_disp, int32_t d_disp,
+                            uint32_t t1, uint32_t t2, uint32_t t3,
+                            int32_t own_g, int32_t own_d) {
+                std::memcpy(b + g_disp, &t1, 4);
+                std::memcpy(b + g_disp + 0x444, &t2, 4);
+                std::memcpy(b + d_disp, &t3, 4);
+                const int32_t ag = g_disp - own_g;
+                const int32_t ad = d_disp - own_d;
+                std::memcpy(b + g_disp - 4, &ag, 4);
+                std::memcpy(b + d_disp - 4, &ad, 4);
+            };
+            stage(ref_obj, g, d, 0x00669BE8U, 0x00669BE0U, 0x00669BD4U,
+                  0x188, 0xBA0);
+            stage(ref_obj + 0x44, g - 0x44, d - 0x44, 0x00669A6CU,
+                  0x00669A64U, 0x00669A58U, 0x18, 0xA30);
+            reinterpret_cast<RadioButton *>(ref_obj + 0x44)->close();
+            reinterpret_cast<ListBox *>(ref_obj)->destroy();
+
+            dialogs_dtor_base = obj;
+            dialogs_dtor_event_count = 0;
+            uint32_t result;
+            if (use_adapter) {
+                result = dialogs_destructor_redirect(
+                    obj + DialogsDestructorAdjustment, nullptr);
+            } else {
+                result = reinterpret_cast<Dialogs *>(obj)->destroy();
+            }
+
+            expect_storage_bytes(storage, reference, sizeof(storage));
+            expect(result == 0U);
+
+            // Order: the three widget seams at their fixed displacements,
+            // then RadioButton::close (its Dialog close, then GraphicWin's
+            // Win and Buffer closes through the RB vbtable), then ListBox's
+            // teardown (GraphicWin again, then its Dialog close).
+            expect(dialogs_dtor_event_count == 9);
+            expect(dialogs_dtor_events[0].kind == 1);
+            expect(dialogs_dtor_events[0].target == obj + 0xF8 + 0x8C);
+            expect(dialogs_dtor_events[1].kind == 2);
+            expect(dialogs_dtor_events[1].target == obj + 0x70 + 0x8C);
+            expect(dialogs_dtor_events[2].kind == 3);
+            expect(dialogs_dtor_events[2].target == obj + 0x58 + 0x1C);
+            expect(dialogs_dtor_events[3].kind == 4);
+            expect(dialogs_dtor_events[3].target == obj + d);
+            expect(dialogs_dtor_events[4].kind == 5);
+            expect(dialogs_dtor_events[4].target == obj + g);
+            expect(dialogs_dtor_events[5].kind == 6);
+            expect(dialogs_dtor_events[5].target == obj + g + 0x444);
+            expect(dialogs_dtor_events[6].kind == 5);
+            expect(dialogs_dtor_events[6].target == obj + g);
+            expect(dialogs_dtor_events[7].kind == 6);
+            expect(dialogs_dtor_events[7].target == obj + g + 0x444);
+            expect(dialogs_dtor_events[8].kind == 7);
+            expect(dialogs_dtor_events[8].target == obj + d);
+
+            // Per-phase snapshots of the shared slots: the widget seams
+            // observe the stage-one Dialogs tables, everything inside
+            // RadioButton::close observes the RadioButton stage, and
+            // everything inside the ListBox teardown observes its own.
+            for (int e = 0; e < 3; ++e) {
+                expect(dialogs_dtor_events[e].primary == 0x00669BE8U);
+                expect(dialogs_dtor_events[e].buffer == 0x00669BE0U);
+                expect(dialogs_dtor_events[e].win == 0x00669BD4U);
+                expect(dialogs_dtor_events[e].primary_adjust == g - 0x188);
+                expect(dialogs_dtor_events[e].win_adjust == d - 0xBA0);
+            }
+            for (int e = 3; e < 6; ++e) {
+                expect(dialogs_dtor_events[e].primary == 0x00669A6CU);
+                expect(dialogs_dtor_events[e].buffer == 0x00669A64U);
+                expect(dialogs_dtor_events[e].win == 0x00669A58U);
+                expect(dialogs_dtor_events[e].primary_adjust ==
+                       (g - 0x44) - 0x18);
+                expect(dialogs_dtor_events[e].win_adjust ==
+                       (d - 0x44) - 0xA30);
+            }
+            for (int e = 6; e < 9; ++e) {
+                expect(dialogs_dtor_events[e].primary == 0x0067041CU);
+                expect(dialogs_dtor_events[e].buffer == 0x00670414U);
+                expect(dialogs_dtor_events[e].win == 0x00670408U);
+                expect(dialogs_dtor_events[e].primary_adjust == g - 0x48);
+                expect(dialogs_dtor_events[e].win_adjust == d - 0xA60);
+            }
+
+            // The overwrite chain ends with ListBox's tables in the shared
+            // slots and its adjust words in both fixup slots.
+            uint32_t staged = 0;
+            std::memcpy(&staged, obj + g, 4);
+            expect(staged == 0x0067041CU);
+            std::memcpy(&staged, obj + g + 0x444, 4);
+            expect(staged == 0x00670414U);
+            std::memcpy(&staged, obj + d, 4);
+            expect(staged == 0x00670408U);
+            int32_t adjust = 0;
+            std::memcpy(&adjust, obj + g - 4, 4);
+            expect(adjust == g - 0x48);
+            std::memcpy(&adjust, obj + d - 4, 4);
+            expect(adjust == d - 0xA60);
+        }
+    }
+
+    // ---- scalar deleting destructor, most-derived shape, modes 0/1/2 ------
+    // ??_GDialogs addresses the trailing Dialog and the GraphicWin virtual
+    // base at fixed +0xBA0/+0x188: complete-object facts, so only the
+    // most-derived shape applies.
+    const unsigned int modes[] = {0U, 1U, 2U};
+    for (unsigned int mode : modes) {
+        alignas(uint32_t) uint8_t storage[0xD40];
+        alignas(uint32_t) uint8_t reference[0xD40];
+        seed_storage(storage, reference, sizeof(storage));
+
+        int32_t dlg_vbtable[3] = {0, 0x188, 0xBA0};
+        int32_t rb_vbtable[3] = {0, 0x144, 0xB5C};
+        uint32_t dialog_list_vbtable[2] = {0xAAAAAAAAU, 0x24U};
+
+        uint8_t *const obj = storage + 16;
+        int32_t *const dlg_vbptr = dlg_vbtable;
+        int32_t *const rb_vbptr = rb_vbtable;
+        uint32_t *const list_vbptr = dialog_list_vbtable;
+        std::memcpy(obj + 0x00, &dlg_vbptr, sizeof(dlg_vbptr));
+        std::memcpy(obj + 0x44, &rb_vbptr, sizeof(rb_vbptr));
+        const uint32_t zero = 0;
+        std::memcpy(obj + 0x188 + 0xA08, &zero, sizeof(zero));
+        // The trailing Dialog's own state: heap base_ null, its list empty
+        // with its own vbtable, and a known virtual-base context word.
+        std::memcpy(obj + 0xBA0 + 0x08, &zero, sizeof(zero));
+        std::memcpy(obj + 0xBA0 + 0xC0, &list_vbptr, sizeof(list_vbptr));
+        std::memcpy(obj + 0xBA0 + 0xC4, &zero, sizeof(zero));
+        std::memcpy(obj + 0xBA0 + 0xCC, &zero, sizeof(zero));
+        const uint32_t context = 0x1234ABCDU;
+        std::memcpy(obj + 0xBA0 + 0xE8, &context, sizeof(context));
+        std::memcpy(reference, storage, sizeof(storage));
+        uint8_t *const ref_obj = reference + 16;
+
+        // Reference: the ~Dialogs chain, then the recovered Dialog::destroy
+        // and GraphicWin destructor on the twin.
+        auto stage = [](uint8_t *b, int32_t g_disp, int32_t d_disp,
+                        uint32_t t1, uint32_t t2, uint32_t t3, int32_t own_g,
+                        int32_t own_d) {
+            std::memcpy(b + g_disp, &t1, 4);
+            std::memcpy(b + g_disp + 0x444, &t2, 4);
+            std::memcpy(b + d_disp, &t3, 4);
+            const int32_t ag = g_disp - own_g;
+            const int32_t ad = d_disp - own_d;
+            std::memcpy(b + g_disp - 4, &ag, 4);
+            std::memcpy(b + d_disp - 4, &ad, 4);
+        };
+        dialogs_dtor_base = ref_obj;
+        dialogs_dtor_g = 0x188;
+        dialogs_dtor_d = 0xBA0;
+        stage(ref_obj, 0x188, 0xBA0, 0x00669BE8U, 0x00669BE0U, 0x00669BD4U,
+              0x188, 0xBA0);
+        stage(ref_obj + 0x44, 0x144, 0xB5C, 0x00669A6CU, 0x00669A64U,
+              0x00669A58U, 0x18, 0xA30);
+        reinterpret_cast<RadioButton *>(ref_obj + 0x44)->close();
+        reinterpret_cast<ListBox *>(ref_obj)->destroy();
+        reinterpret_cast<Dialog *>(ref_obj + 0xBA0)->destroy();
+        graphic_win_destructor_probe_reset();
+        graphic_win_destructor_redirect(
+            reinterpret_cast<GraphicWin *>(ref_obj + 0x188), nullptr);
+
+        dialogs_dtor_base = obj;
+        dialogs_dtor_event_count = 0;
+        dialog_published_slot = 0;
+        graphic_win_destructor_probe_reset();
+        void *const result = dialogs_scalar_dtor_redirect(
+            obj + DialogsDestructorAdjustment, nullptr, mode);
+
+        expect(result == obj);
+        expect_storage_bytes(storage, reference, sizeof(storage));
+        expect(dialog_published_slot == 0x1234ABCDU);
+
+        // ~Dialogs' nine events, then the Dialog close from Dialog::destroy,
+        // the GraphicWin destructor's Buffer-then-Win subobject seams, and
+        // operator delete on the allocation base only when bit 0 asks.
+        const bool deletes = (mode & 1U) != 0U;
+        expect(dialogs_dtor_event_count == 12 + (deletes ? 1 : 0));
+        expect(dialogs_dtor_events[9].kind == 8);
+        expect(dialogs_dtor_events[9].target == obj + 0xBA0);
+        expect(dialogs_dtor_events[10].kind == 10);
+        expect(dialogs_dtor_events[10].target == obj + 0x188 + 0x444);
+        expect(dialogs_dtor_events[11].kind == 9);
+        expect(dialogs_dtor_events[11].target == obj + 0x188);
+        if (deletes) {
+            expect(dialogs_dtor_events[12].kind == 11);
+            expect(dialogs_dtor_events[12].target == obj);
+        }
+    }
+
+    DialogsEditGroupDestructor = saved_eg;
+    DialogsSpriteBoxDestructor = saved_sb;
+    DialogsCheckBoxDestructor = saved_cb;
+    DialogsOperatorDelete = saved_delete;
+    RadioButtonOriginalDialogClose = saved_rb_close;
+    RadioButtonDefault1 = saved_rb_d1;
+    RadioButtonDefault2 = saved_rb_d2;
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_a0c;
+    ListBoxOriginalDialogClose = saved_lb_close;
+    ListBoxCloseStaticDefaults = saved_lb_static;
+    ListBoxCloseDynamicDefault = saved_lb_dynamic;
+    DialogOriginalClose = saved_dlg_close;
+    DialogPublishedGlobal = saved_dlg_published;
+    WinOriginalDestructor = saved_win_dtor;
+    BufferSubobjectDestructor = saved_buffer_dtor;
+}
+
 void test_find_font() {
     // sizes and table each carry one entry past FontSizeTableCount: a decoy
     // the function must never read, sized so its style-slot pointer
@@ -21296,6 +21647,7 @@ int main() {
     test_buffer_free_data();
     test_string_struct_remove_all();
     test_dialog_destructor();
+    test_dialogs_destructor();
     test_find_font();
     test_buffer_text_line_height();
     test_win_paging();

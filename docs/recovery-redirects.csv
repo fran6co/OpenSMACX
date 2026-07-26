@@ -39,8 +39,10 @@ address,kind
 0x00405B10,jump
 0x004066C0,jump
 0x00406880,jump
+0x00406910,jump
 0x00406E60,jump
 0x00406F20,jump
+0x00407100,jump
 0x00408400,jump
 0x00408710,jump
 0x00416DD0,jump

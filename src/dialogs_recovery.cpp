@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include <cstring>
 #include "dialogs.h"
+#include "listbox.h"      // ListBox::destroy (source-owned)
+#include "radiobutton.h"  // RadioButton::close (source-owned)
 
 func_dialog_item *DialogOriginalItem = (func_dialog_item *)0x00609990;
 func_list_box_item *ListBoxOriginalItem = (func_list_box_item *)0x0060C920;
@@ -78,7 +80,7 @@ int Dialogs::get_num_items() {
         case 2:
         case 4:
         case 16: {
-            int32_t count = 0;
+            int32_t count;
             std::memcpy(&count,
                         reinterpret_cast<uint8_t *>(dialog_of(this)) + 0xCC,
                         sizeof(count));
@@ -118,7 +120,7 @@ Status: Complete
 */
 void Dialogs::on_right_down(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
         DialogsSpriteBoxOnRightDown(bytes - 0x8C, a1, a2);
@@ -136,7 +138,7 @@ Status: Complete
 */
 void Dialogs::on_right_double_click(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
         DialogsSpriteBoxOnRightDoubleClick(bytes - 0x8C, a1, a2);
@@ -154,7 +156,7 @@ Status: Complete
 */
 void Dialogs::on_left_up(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
         DialogsSpriteBoxOnLeftUp(bytes - 0x8C, a1, a2);
@@ -172,7 +174,7 @@ Status: Complete
 */
 void Dialogs::on_right_up(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
         DialogsSpriteBoxOnRightUp(bytes - 0x8C, a1, a2);
@@ -190,7 +192,7 @@ Status: Complete
 */
 void Dialogs::on_right_click(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
         DialogsSpriteBoxOnRightClick(bytes - 0x8C, a1, a2);
@@ -208,7 +210,7 @@ Status: Complete
 */
 void Dialogs::on_scrolled(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
         DialogsListBoxOnScrolling(bytes - 0x140, a1, a2);
@@ -226,7 +228,7 @@ Status: Complete
 */
 void Dialogs::on_scrolling(int a1, int a2) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
         DialogsListBoxOnScrolling(bytes - 0x140, a1, a2);
@@ -244,7 +246,7 @@ Status: Complete
 */
 void Dialogs::on_mousewheel(int a1) {
     auto *const bytes = reinterpret_cast<uint8_t *>(this);
-    int discriminator = 0;
+    int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
         DialogsListBoxOnMousewheel(bytes - 0x140, a1);
@@ -281,4 +283,140 @@ void __fastcall dialogs_on_scrolling_redirect(Dialogs *self, void *, int a1, int
 
 void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1) {
     self->on_mousewheel(a1);
+}
+
+func_dialogs_teardown *DialogsEditGroupDestructor =
+    (func_dialogs_teardown *)0x00611A20;
+func_dialogs_teardown *DialogsSpriteBoxDestructor =
+    (func_dialogs_teardown *)0x00610120;
+func_dialogs_teardown *DialogsCheckBoxDestructor =
+    (func_dialogs_teardown *)0x0060E740;
+func_operator_delete *DialogsOperatorDelete =
+    (func_operator_delete *)0x0064557F;
+
+const uint32_t DialogsVbaseGraphicWinVtable = 0x00669BE8;
+const uint32_t DialogsVbaseBufferVtable = 0x00669BE0;
+const uint32_t DialogsVbaseWinVtable = 0x00669BD4;
+const uint32_t DialogsRadioPrimaryVtable = 0x00669A6C;
+const uint32_t DialogsRadioBufferVtable = 0x00669A64;
+const uint32_t DialogsRadioWinVtable = 0x00669A58;
+
+namespace {
+
+// Stage a virtually-derived subobject's three tables plus its two vbase-adjust
+// words, every slot located through THAT subobject's own vbtable at run time
+// (the RadioButton-at-0x44 hazard: an embedded vbtable names different offsets
+// than a most-derived one, and hardcoding aims every store at the wrong
+// address). The buffer table always sits 0x444 past the primary; each adjust
+// word, four bytes below its slot, records the live entry minus the class's
+// own most-derived entry.
+void stage_virtual_tables(uint8_t *subobject, uint32_t primary_vtable,
+                          uint32_t buffer_vtable, uint32_t win_vtable,
+                          int32_t primary_own_offset, int32_t win_own_offset) {
+    const int32_t *const vbtable =
+        *reinterpret_cast<const int32_t *const *>(subobject);
+    const int32_t primary = vbtable[1];
+    const int32_t win = vbtable[2];
+    *reinterpret_cast<volatile uint32_t *>(subobject + primary) = primary_vtable;
+    *reinterpret_cast<volatile uint32_t *>(subobject + primary + 0x444) =
+        buffer_vtable;
+    *reinterpret_cast<volatile uint32_t *>(subobject + win) = win_vtable;
+    *reinterpret_cast<volatile int32_t *>(subobject + primary - 4) =
+        primary - primary_own_offset;
+    *reinterpret_cast<volatile int32_t *>(subobject + win - 4) =
+        win - win_own_offset;
+}
+
+}  // namespace
+
+/*
+Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
+         virtual base through that base's own vbtable, run the empty close,
+         destroy the EditGroup, SpriteBox and CheckBox members through their
+         original destructors, stage the embedded RadioButton's tables through
+         ITS own vbtable and run its recovered close, then run the embedded
+         ListBox's recovered teardown - whose base coincides with the
+         allocation base, so each staging overwrites the previous tables in
+         the original's exact order. The original's C++ exception frame
+         targets __CxxFrameHandler and is omitted as unreachable per policy.
+Original Offset: 00406910
+Return Value: EAX residue (ListBox::destroy's constant 0); declared void in
+              the mangled name, modelled as uint32_t like ListBox::destroy.
+Status: Complete with temporary EditGroup, SpriteBox and CheckBox destructor
+        dependencies
+Verification note: every member teardown is guarded on the allocation base
+being non-null (the original tests edi after `lea edi,[esi-0x188]`); the null
+branch feeds the bare adjustment offset and is unreachable for any real
+object, so no test drives it, and the sweep's surviving constant mutants in
+that branch are equivalent by unreachability. The surviving drop of the
+close() call is equivalent by construction: Dialogs::close is an empty body.
+*/
+uint32_t Dialogs::destroy() {
+    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
+
+    // Dialogs' own vbtable sits at the allocation base; the 0x188/0xBA0
+    // subtrahends are its most-derived entries, baked in by the original.
+    stage_virtual_tables(base, DialogsVbaseGraphicWinVtable,
+                         DialogsVbaseBufferVtable, DialogsVbaseWinVtable,
+                         0x188, 0xBA0);
+    close();
+
+    // The three widget members, each entered at its fixed adjustment past the
+    // member base, guarded as the original guards them. Integer arithmetic so
+    // the unreachable null branch stays exactly the original's `0 + adjust`.
+    const uintptr_t guard =
+        base != nullptr ? reinterpret_cast<uintptr_t>(base) : 0;
+    const auto guarded = [guard](uintptr_t member, uintptr_t adjust) {
+        return reinterpret_cast<void *>((guard ? guard + member : 0) + adjust);
+    };
+    DialogsEditGroupDestructor(guarded(0xF8, 0x8C));
+    DialogsSpriteBoxDestructor(guarded(0x70, 0x8C));
+    DialogsCheckBoxDestructor(guarded(0x58, 0x1C));
+
+    // The embedded RadioButton at base+0x44: its vbtable names the SHARED
+    // virtual bases, so this staging overwrites the step-one tables, and its
+    // recovered close walks them through the same vbtable.
+    auto *const radio = static_cast<uint8_t *>(guarded(0x44, 0));
+    stage_virtual_tables(radio, DialogsRadioPrimaryVtable,
+                         DialogsRadioBufferVtable, DialogsRadioWinVtable,
+                         0x18, 0xA30);
+    reinterpret_cast<RadioButton *>(radio)->close();
+
+    // The embedded ListBox's base coincides with the allocation base; its
+    // recovered destroy stages the ListBox tables - overwriting once more -
+    // and closes both shared bases. Unguarded, as the original left it.
+    return reinterpret_cast<ListBox *>(base)->destroy();
+}
+
+// ~Dialogs is entered with this = B + 0x188; recover the base first.
+uint32_t __fastcall dialogs_destructor_redirect(void *adjusted, void *) {
+    auto *self = reinterpret_cast<Dialogs *>(
+        static_cast<uint8_t *>(adjusted) - DialogsDestructorAdjustment);
+    return self->destroy();
+}
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the
+         trailing Dialog's recovered destructor, and the GraphicWin virtual
+         base's recovered destructor, then free the allocation base through
+         the executable's operator delete only when bit 0 of the mode asks.
+         Always returns the allocation base (this - 0x188), the original's
+         EAX. The fixed +0xBA0/+0x188 subobject offsets are complete-object
+         facts: this thunk is only ever entered on a most-derived Dialogs.
+Original Offset: 00407100
+Return Value: the allocation base
+Status: Complete
+*/
+void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
+                                              unsigned int mode) {
+    uint8_t *const base =
+        static_cast<uint8_t *>(adjusted) - DialogsDestructorAdjustment;
+    reinterpret_cast<Dialogs *>(base)->destroy();
+    reinterpret_cast<Dialog *>(base + 0xBA0)->destroy();
+    graphic_win_destructor_redirect(
+        reinterpret_cast<GraphicWin *>(base + 0x188), nullptr);
+    if (mode & 1) {
+        DialogsOperatorDelete(base);
+    }
+    return base;
 }
