@@ -10957,6 +10957,164 @@ void test_wave_init() {
     WaveDeviceReleaseGuard = saved_guard;
 }
 
+void test_wave_device_forwarder_family() {
+    std::vector<uint8_t> storage(sizeof(Wave_Device) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *device = reinterpret_cast<Wave_Device *>(obj);
+
+    void *dev_vtable[64];
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    auto arm = [&](size_t slot, void *fn) {
+        std::memset(dev_vtable, 0, sizeof(dev_vtable));
+        dev_vtable[slot / 4] = fn;
+        g_wave_fam_calls = 0;
+        g_wave_fam_arg_log.clear();
+    };
+    auto setp = [&](size_t off, const void *ptr) {
+        std::memcpy(obj + off, &ptr, 4);
+    };
+    auto bits_of = [](float f) {
+        uint32_t b;
+        std::memcpy(&b, &f, 4);
+        return b;
+    };
+    auto ptr_bits = [](const void *p) {
+        return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(p));
+    };
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x14, &fake_dev);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    // Device paths: verbatim answers, per-slot dispatch, argument dwords.
+    char raw_name[] = "dump.raw";
+    arm(0x50, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x2101;
+    expect(device->start_raw_dump(raw_name) == 0x2101);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev &&
+           g_wave_fam_args[0] == ptr_bits(raw_name));
+
+    auto *eax_props = reinterpret_cast<EAX_REVERB_PROPERTIES *>(raw_name);
+    arm(0x7C, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x2102;
+    expect(device->set_eax(eax_props) == 0x2102);
+    expect(g_wave_fam_args[0] == ptr_bits(raw_name));
+
+    arm(0x78, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x2103;
+    expect(device->set_eax(static_cast<unsigned long>(0xE1)) == 0x2103);
+    expect(g_wave_fam_args[0] == 0xE1);
+
+    arm(0x80, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x2104;
+    expect(device->set_eax_mix(0.25f) == 0x2104);
+    expect(g_wave_fam_args[0] == bits_of(0.25f));
+
+    arm(0x88, reinterpret_cast<void *>(&observe_wave_dev3));
+    g_wave_fam_ret = 0x2105;
+    expect(device->set_listener_position(1.5f, -2.5f, 3.5f) == 0x2105);
+    expect(g_wave_fam_args[0] == bits_of(1.5f) &&
+           g_wave_fam_args[1] == bits_of(-2.5f) &&
+           g_wave_fam_args[2] == bits_of(3.5f));
+
+    float fx = 0, fy = 0, fz = 0;
+    arm(0x8C, reinterpret_cast<void *>(&observe_wave_dev3));
+    g_wave_fam_ret = 0x2106;
+    expect(device->get_listener_position(&fx, &fy, &fz) == 0x2106);
+    expect(g_wave_fam_args[0] == ptr_bits(&fx) &&
+           g_wave_fam_args[1] == ptr_bits(&fy) &&
+           g_wave_fam_args[2] == ptr_bits(&fz));
+
+    const struct {
+        size_t slot;
+        bool setter;
+    } xyz[] = {
+        {0x90, true}, {0x94, false}, {0x98, true},
+        {0x9C, false}, {0xA0, true}, {0xA4, false},
+    };
+    int tag = 0x2110;
+    for (const auto &c : xyz) {
+        arm(c.slot, reinterpret_cast<void *>(&observe_wave_dev1));
+        g_wave_fam_ret = tag;
+        int result;
+        float value = 4.5f + tag;
+        switch (c.slot) {
+        case 0x90: result = device->set_listener_xpos(value); break;
+        case 0x94: result = device->get_listener_xpos(&fx); break;
+        case 0x98: result = device->set_listener_ypos(value); break;
+        case 0x9C: result = device->get_listener_ypos(&fy); break;
+        case 0xA0: result = device->set_listener_zpos(value); break;
+        default: result = device->get_listener_zpos(&fz); break;
+        }
+        expect(result == tag);
+        expect(g_wave_fam_calls == 1);
+        if (c.setter) {
+            expect(g_wave_fam_args[0] == bits_of(value));
+        }
+        ++tag;
+    }
+
+    // get_description: void, three arguments through slot 0x1C.
+    char descr[8] = {};
+    arm(0x1C, reinterpret_cast<void *>(&observe_wave_dev3));
+    device->get_description(2, descr, 7);
+    expect(g_wave_fam_calls == 1);
+    expect(g_wave_fam_args[0] == 2 && g_wave_fam_args[1] == ptr_bits(descr) &&
+           g_wave_fam_args[2] == 7);
+
+    // Nothing above wrote the object.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // No-device defaults: 0x14 everywhere except the raw dump's 3 and
+    // get_description's silence.
+    setp(0x14, nullptr);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_wave_fam_calls = 0;
+    expect(device->start_raw_dump(raw_name) == 3);
+    expect(device->set_eax(eax_props) == 0x14);
+    expect(device->set_eax(static_cast<unsigned long>(1)) == 0x14);
+    expect(device->set_eax_mix(1.0f) == 0x14);
+    expect(device->set_listener_position(1, 2, 3) == 0x14);
+    expect(device->get_listener_position(&fx, &fy, &fz) == 0x14);
+    expect(device->set_listener_xpos(1) == 0x14);
+    expect(device->get_listener_xpos(&fx) == 0x14);
+    expect(device->set_listener_ypos(1) == 0x14);
+    expect(device->get_listener_ypos(&fy) == 0x14);
+    expect(device->set_listener_zpos(1) == 0x14);
+    expect(device->get_listener_zpos(&fz) == 0x14);
+    device->get_description(1, descr, 1);
+    expect(g_wave_fam_calls == 0);
+    expect(descr[0] == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Redirect entries, one per export.
+    expect(wave_device_start_raw_dump_redirect(device, nullptr, raw_name) ==
+           3);
+    expect(wave_device_set_eax_props_redirect(device, nullptr, eax_props) ==
+           0x14);
+    expect(wave_device_set_eax_redirect(device, nullptr, 1) == 0x14);
+    expect(wave_device_set_eax_mix_redirect(device, nullptr, 1) == 0x14);
+    expect(wave_device_set_listener_position_redirect(device, nullptr, 1, 2,
+                                                      3) == 0x14);
+    expect(wave_device_get_listener_position_redirect(device, nullptr, &fx,
+                                                      &fy, &fz) == 0x14);
+    expect(wave_device_set_listener_xpos_redirect(device, nullptr, 1) ==
+           0x14);
+    expect(wave_device_get_listener_xpos_redirect(device, nullptr, &fx) ==
+           0x14);
+    expect(wave_device_set_listener_ypos_redirect(device, nullptr, 1) ==
+           0x14);
+    expect(wave_device_get_listener_ypos_redirect(device, nullptr, &fy) ==
+           0x14);
+    expect(wave_device_set_listener_zpos_redirect(device, nullptr, 1) ==
+           0x14);
+    expect(wave_device_get_listener_zpos_redirect(device, nullptr, &fz) ==
+           0x14);
+    wave_device_get_description_redirect(device, nullptr, 1, descr, 1);
+}
+
 void test_sound_small_setters() {
     std::vector<uint8_t> storage(0xA0 + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -18573,5 +18731,6 @@ int main() {
     test_sound_set_type_and_load();
     test_wave_device_groups();
     test_sound_small_setters();
+    test_wave_device_forwarder_family();
     return failures == 0 ? 0 : 1;
 }
