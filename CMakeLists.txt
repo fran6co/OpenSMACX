@@ -415,6 +415,7 @@ if(BUILD_TESTING)
         src/buffer.cpp
         src/buttongroup.cpp
         src/dialog.cpp
+        src/dialogs.cpp
         src/filemap_recovery.cpp
         src/flatbutton.cpp
         src/flic.cpp
