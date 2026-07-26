@@ -808,6 +808,8 @@ address,kind
 0x0045F940,jump
 0x00462970,jump
 0x00467960,jump
+0x0046AF40,jump
+0x0046B140,jump
 0x0046EBA0,jump
 0x0046EBD0,jump
 0x0046EBE0,jump

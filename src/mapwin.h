@@ -96,3 +96,40 @@ void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int
 void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2);
 void __fastcall map_win_on_left_double_click_redirect(MapWin *self, void *, int a1, int a2);
 void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2);
+
+// The map-window slot array the free drawing helpers broadcast to: eight
+// MapWin* in the image's zero-initialised .data at 0x007D3C3C, ending at the
+// exclusive 0x007D3C5C that draw_tile compares against
+// (`cmp esi, 0x7d3c5c` at 0x0046AF79 -> (0x7D3C5C - 0x7D3C3C) / 4 == 8).
+// The element type is pinned by ?mapwin_system_init@@YAXH@Z at 0x0047107F,
+// `mov ecx, dword ptr [esi*4 + 0x7d3c3c]`, and by ?zoom@BaseWin@@QAEXHH@Z at
+// 0x0041AAC3, which walks slot 0's vbtable. Populated at run time, so this is
+// a mutable global; rebindable so leaf tests can seed a controlled table.
+extern MapWin **MapWinTable;                  // 0x007D3C3C
+constexpr size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
+
+// Per-window "this window is live" dword. The MapWin constructor clears it
+// (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init
+// sets it per slot (0x00471090, 0x0047109E). Every free drawing helper gates
+// on it for slots 1..7. Kept as a documented raw offset rather than carved
+// into MapWin: the field is read from outside the class, MapWin's 0x21A6C
+// bytes of derived storage are deliberately unmapped, and carving it would
+// force inventing a public accessor for a field whose full meaning is not
+// recovered. Same idiom as scroll.cpp's read_volatile_bits.
+constexpr size_t MapWinActiveOffset = 0x1DD74;
+
+// MapWin::draw_radius at 0x0046A2A0 is still an original body: `ret 0x10` at
+// 0x0046A493 makes it __thiscall with four stack arguments, and `mov esi, ecx`
+// at 0x0046A2AF plus the vbtable walk at 0x0046A3FB confirm the incoming
+// pointer is an unadjusted MapWin*. It reaches gen_radius, Texture::draw_trans,
+// MapWin::compute_clip, GraphicWin::soft_update and do_all_draws, so it stays
+// original; bound through a rebindable seam so tests can substitute a probe
+// and the seam can later point at a recovered body.
+typedef void(__thiscall func_map_win_draw_radius)(
+    MapWin *self, int x_coord, int y_coord, int a3, int draw_type);
+extern func_map_win_draw_radius *MapWinOriginalDrawRadius;  // 0x0046A2A0
+
+// Free functions, __cdecl (the `ret` at 0x0046AF85 / 0x0046B185 pops nothing).
+// Redirected directly with no adapter; see src/mapwin.cpp.
+DLLEXPORT void __cdecl draw_tile(int x_coord, int y_coord, int draw_type);
+DLLEXPORT void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type);

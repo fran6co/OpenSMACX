@@ -174,3 +174,105 @@ int MapWin::UNK2() {
 int __fastcall map_win_unk2_redirect(MapWin *self, void *) {
     return self->UNK2();
 }
+
+MapWin **MapWinTable = reinterpret_cast<MapWin **>(0x007D3C3C);
+func_map_win_draw_radius *MapWinOriginalDrawRadius =
+    (func_map_win_draw_radius *)0x0046A2A0;
+
+/*
+Purpose: Broadcast a single-tile redraw to every live map window. Walks the
+         eight map-window slots at 0x007D3C3C, skips empty ones, and for every
+         slot past the first also skips windows whose 0x1DD74 activity dword is
+         clear - slot 0 is the primary map window and always draws. Each
+         surviving window is handed the tile through MapWin::draw_radius with a
+         radius argument of 0; ?draw_tiles@@YAXHHH@Z at 0x0046B140 is the same
+         body with a 1 there, and that single byte is the whole difference.
+         The original opens no exception frame; there is nothing to omit.
+
+         Kept as a full transcription rather than sharing a helper with
+         draw_tiles, even though the two bodies differ in one byte. The
+         originals are two separately compiled 70-byte functions, and
+         tools/mutate_and_verify.py only derives mutants from bodies carrying
+         an `Original Offset:` comment - and skips one-line bodies outright.
+         Folding the walk into a shared helper would therefore hide the slot
+         walk, the null guard, the slot-0 exemption, the activity gate and the
+         argument order from mutation testing entirely, leaving both functions
+         with zero mutants. The duplication buys verification.
+Original Offset: 0046AF40
+Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
+              residue, the zero flag read at 0x0046AF5F, or a stale value when
+              the last slot is empty), not a computed result, so unlike
+              GraphicWin::close there is no residue to preserve and the void
+              return is faithful.
+Status: Complete with temporary MapWin::draw_radius original dependency
+*/
+void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        // Re-read every iteration, as `mov ecx, dword ptr [esi]` at 0x0046AF51
+        // does: a callee that rewrites the table is seen by later slots.
+        MapWin *const window = MapWinTable[slot];
+        // 0x0046AF53 test / 0x0046AF55 je - the null test comes first, so an
+        // empty slot 0 draws nothing despite the exemption below.
+        if (window == nullptr) {
+            continue;
+        }
+        // 0x0046AF57 `cmp esi, 0x7d3c3c` / 0x0046AF5D je. The cursor only ever
+        // walks forward from the table base, so comparing it against that base
+        // is exactly "is this slot index 0?" - the primary map window is
+        // exempt from the activity gate.
+        if (slot != 0) {
+            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
+                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
+            if (active == 0) {
+                continue;
+            }
+        }
+        // 0x0046AF71: __thiscall on the slot value still live in ECX, with the
+        // pushes at 0x0046AF6C..0x0046AF70 giving the stack order
+        // (x_coord, y_coord, 0, draw_type) - the pushes run right to left, so
+        // the last one (`push eax`, [ebp+8]) is the first stack argument. The
+        // literal 0 is this function's discriminator; see draw_tiles.
+        MapWinOriginalDrawRadius(window, x_coord, y_coord, 0, draw_type);
+    }
+}
+
+/*
+Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
+         but each live map window redraws the tile together with its
+         surrounding ring rather than the single tile. The only difference in
+         the originals is `push 1` at 0x0046B16D against `push 0` at
+         0x0046AF6D; prologue, slot walk, null test, slot-0 exemption,
+         activity gate, argument order, loop bound and epilogue all match
+         instruction for instruction. Transcribed in full for the mutation
+         coverage reason recorded on draw_tile.
+Original Offset: 0046B140
+Return Value: n/a; same path-dependent EAX leftover as draw_tile.
+Status: Complete with temporary MapWin::draw_radius original dependency
+*/
+void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        // 0x0046B151, mirroring 0x0046AF51.
+        MapWin *const window = MapWinTable[slot];
+        // 0x0046B153 test / 0x0046B155 je.
+        if (window == nullptr) {
+            continue;
+        }
+        // 0x0046B157 `cmp esi, 0x7d3c3c` / 0x0046B15D je.
+        if (slot != 0) {
+            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
+                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
+            if (active == 0) {
+                continue;
+            }
+        }
+        // 0x0046B171, with `push 1` at 0x0046B16D supplying the radius.
+        MapWinOriginalDrawRadius(window, x_coord, y_coord, 1, draw_type);
+    }
+}
+
+// No redirect adapter for either. The original entry convention is __cdecl with
+// three stack arguments and a caller-cleaned stack, and there is no
+// this-adjustment to undo (contrast ListBox's destructor, entered at
+// this + 0x48), so DllMain points 0x0046AF40 and 0x0046B140 straight at the
+// recovered functions - the same shape as spying (0x0055BC00) and find_font
+// (0x005882F0).
