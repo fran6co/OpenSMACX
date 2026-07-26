@@ -101,7 +101,6 @@ P3,221,0x00406330,?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z,76,0,2,unre
 P0,1084421,0x00406380,?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z,332,84,4,original_dependency,ui_dependency,recover_popup_start_full,2,exact,exact,"void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)"
 P1,76121,0x004064D0,??1BasePop@@QAE@XZ,583,75,11,unrecovered,,,2,exact,entry_range,void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
 P3,220,0x00406670,sub_406670,75,0,2,unrecovered,,,2,exact,exact,
-P1,26120,0x00406820,sub_406820,27,26,1,unrecovered,,,2,exact,exact,
 P3,10,0x00406840,sub_406840,6,0,0,unrecovered,,,1,exact,missing,
 P0,1001020,0x00406850,??1Sprite@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_sprite_element_teardown,2,exact,exact,
 P3,11,0x00406860,?hide@BaseButton@@QAEXXZ,25,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)

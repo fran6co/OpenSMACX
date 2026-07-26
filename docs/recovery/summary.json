@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 328,
       "original_dependency": 94,
-      "source_complete": 1550,
+      "source_complete": 1551,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 3993
+      "unrecovered": 3992
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,14 +1317,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1496,
-    "matched_function_starts": 1496,
-    "unique_addresses": 1496,
+    "annotations": 1497,
+    "matched_function_starts": 1497,
+    "unique_addresses": 1497,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 537,
+      "data": 538,
       "function": 131
     },
     "items": [
@@ -6387,6 +6387,15 @@
         "type": "Strings *"
       },
       {
+        "address": "0x009B3374",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/stringstruct.cpp:256",
+        "symbol": "StringVirtualBaseOwner",
+        "type": "uint32_t *"
+      },
+      {
         "address": "0x0094F358",
         "function": "",
         "function_address": "",
@@ -7342,6 +7351,6 @@
       }
     ],
     "matched_function_starts": 131,
-    "total": 668
+    "total": 669
   }
 }

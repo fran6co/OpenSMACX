@@ -7304,6 +7304,250 @@ void test_string_struct_remove_all() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// StringList::destroy - the complete (non-deleting) ~StringList at 0x00406820.
+//
+// Compositional oracle, in the test_scroll_destructor sense: the one stage the
+// destructor composes is already-recovered code with exact tests of its own, so
+// the reference image is produced by running that component on a byte-identical
+// twin and the destructor must match it byte for byte.
+//
+// EVERY CONSTANT BELOW IS A LITERAL, NOT THE RECOVERY'S NAMED CONSTANT.
+// Building the reference out of StringVirtualBaseVtable /
+// StringListVirtualBaseOffset would move the reference and the implementation
+// together under a poison and make the whole comparison vacuous - the failure
+// mode AGENTS.md records for the stringstruct oracle's synthetic displacement.
+// The literals here are read straight from the disassembly:
+//     0x28       lea esi, [ecx + 0x28]           (0x00406821)
+//     0x006693AC mov dword ptr [esi], 0x6693ac   (0x0040682E)
+//     0x006693A4 mov dword ptr [esi], 0x6693a4   (0x00406782, the base stage)
+//     0x006693A0 mov [edx+ebx-0x24], 0x6693a0    (0x0040678E, the base stage)
+//
+// The function has exactly ONE dependency - the source-complete derived close
+// at 0x004066C0 (string_struct_derived_close_redirect) - and it is called
+// directly rather than through a seam, because AGENTS.md prescribes calling the
+// recovered C++ for a source_complete callee. There is therefore no recording
+// probe to install for it; delegation, entry target and ordering are pinned
+// instead by three properties of the resulting image:
+//
+//   * The close's final base stage writes 0x006693A4 at (entry - 0x28). Seeing
+//     it at [obj + 0x00] proves the callee was entered at exactly obj + 0x28.
+//   * The close clears head_/entry_count_/current_position_. Seeing them
+//     cleared proves the delegation actually ran.
+//   * In the most-derived shape the close stages 0x006693A0 into the SAME slot
+//     (obj + 0x28) that the destructor's tail then overwrites with 0x006693AC.
+//     Seeing 0x006693AC proves the tail ran AFTER the delegation; an
+//     implementation that ordered them the other way leaves 0x006693A0 there.
+//
+// Two genuinely different vbtables are installed, per the AGENTS.md RadioButton
+// rule. The second is adversarial on purpose: it names StringStruct's own 0x1C
+// displacement, which is exactly the wrong constant a careless recovery would
+// reuse. Under it the delegated close's virtual-base write moves to obj + 0x20
+// while the destructor's two accesses must STILL land at obj + 0x28, because
+// the original bakes `lea esi, [ecx + 0x28]` in rather than reading the vbtable.
+// A recovery that "improved" that constant into a vbtable read fails this shape
+// and only this shape.
+//
+// The list shapes are all non-walking. They have to be: close_with_tables
+// installs the real 0x006698C4 / 0x006693A4 table ADDRESSES into [this] before
+// remove_all dispatches through vtable[1], and those addresses are unmapped in
+// this executable - the limit AGENTS.md records for exactly this family. The
+// walk belongs to 0x004066C0 and is covered in-process by the stringstruct
+// runtime-oracle suite; nothing 0x00406820 itself does lives inside it.
+//
+// Scope note: a poison applied to close_with_tables moves the reference and the
+// storage together and is invisible here by construction. That is correct - it
+// is the dependency's own contract, covered by test_string_struct_remove_all
+// and the stringstruct runtime-oracle suite.
+
+// The pending-allocation global, wrapped in guards so a write of the wrong
+// width or into the wrong slot is visible rather than absorbed.
+uint32_t string_list_owner_cell[3];
+
+void test_string_list_destructor() {
+    static_assert(sizeof(StringList) == 0x30,
+                  "StringList destructor test requires the legacy 0x30 layout");
+
+    // Read straight from the disassembly; never the recovery's own names.
+    const uint32_t kVirtualBaseOwnVtable = 0x006693ACU;   // 0x0040682E
+    const uint32_t kStringStructVtable = 0x006693A4U;     // 0x00406782
+    const uint32_t kStringStructVbaseVtable = 0x006693A0U; // 0x0040678E
+    const size_t kVirtualBaseOffset = 0x28;               // 0x00406821
+    const uint32_t kOwnerSentinel = 0xC0FFEE01U;
+    const uint32_t kOwnerPrefill = 0xDEADBEEFU;
+    const uint32_t kOwnerLeadGuard = 0x11111111U;
+    const uint32_t kOwnerTrailGuard = 0x33333333U;
+
+    // The only global this test rewrites.
+    uint32_t *const saved_owner_global = StringVirtualBaseOwner;
+
+    // vbtable[0] is the vbptr's own offset (-4 in the original); only
+    // vbtable[1] is read, by close_with_tables.
+    //   0x24 - the real StringList vbtable 0x0066B0EC = { -4, 0x24 }: the
+    //          close's virtual-base write lands on obj + 0x28, the same slot
+    //          the destructor's tail overwrites.
+    //   0x1C - StringStruct's own most-derived displacement: the close's write
+    //          moves to obj + 0x20 and must NOT drag the destructor with it.
+    const int32_t displacements[2] = {0x24, 0x1C};
+
+    struct ListCase {
+        bool has_head;
+        int32_t count;
+    };
+    const ListCase lists[3] = {
+        // Empty list: remove_all returns immediately, so the close only stages
+        // the two table pairs and resets current_position_ - twice.
+        {false, 7},
+        // Populated head with a non-positive count: the clearing path runs
+        // without dispatching through the installed (real, unmapped) vtable.
+        {true, 0},
+        {true, -1},
+    };
+
+    for (int shape = 0; shape < 2; ++shape) {
+        const int32_t displacement = displacements[shape];
+        int32_t vbtable[2] = {-4, displacement};
+
+        for (const ListCase &list : lists) {
+            for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                // 16 leading + 16 trailing canary bytes around the 0x30 object.
+                alignas(StringList) uint8_t storage[sizeof(StringList) + 32];
+                alignas(StringList) uint8_t reference[sizeof(storage)];
+                alignas(StringList) uint8_t seed_copy[sizeof(storage)];
+                seed_storage(storage, reference, sizeof(storage));
+
+                // Never dereferenced: head_ only has to be non-null for the
+                // clearing path, and no shape here walks the list.
+                StringStructEntry entry = {};
+
+                int32_t *const vbtable_pointer = vbtable;
+                write_at(storage, 16 + 0x04, vbtable_pointer);
+                const uint32_t head = list.has_head
+                    ? static_cast<uint32_t>(
+                          reinterpret_cast<uintptr_t>(&entry))
+                    : 0U;
+                write_at(storage, 16 + 0x08, head);
+                write_at(storage, 16 + 0x10, list.count);
+                // current_position_ gets a nonzero sentinel: the close resets
+                // it unconditionally, and a zero-seeded field can never show
+                // that it was zeroed (the stringstruct_oracle lesson).
+                write_at(storage, 16 + 0x14, 0x77777777U);
+                // The saved allocation owner the destructor republishes.
+                write_at(storage, 16 + 0x2C, kOwnerSentinel);
+                std::memcpy(reference, storage, sizeof(storage));
+                std::memcpy(seed_copy, storage, sizeof(storage));
+
+                // --- reference image -------------------------------------
+                // The recovered dependency, entered exactly as the original
+                // enters it (this + 0x28, literal), on the byte-identical twin.
+                // It touches no global, so the guarded cell below is unaffected.
+                string_struct_derived_close_redirect(
+                    reference + 16 + kVirtualBaseOffset, nullptr);
+                // ...then the one tail store into the object, hand-built. The
+                // other two tail effects are the global write and the EAX
+                // residue, asserted separately below.
+                write_at(reference, 16 + kVirtualBaseOffset,
+                         kVirtualBaseOwnVtable);
+                // The dependency must actually have changed something, or the
+                // whole comparison would be comparing the seed with itself.
+                expect(std::memcmp(reference, seed_copy, sizeof(reference)) != 0);
+
+                // --- run under test --------------------------------------
+                string_list_owner_cell[0] = kOwnerLeadGuard;
+                string_list_owner_cell[1] = kOwnerPrefill;
+                string_list_owner_cell[2] = kOwnerTrailGuard;
+                StringVirtualBaseOwner = &string_list_owner_cell[1];
+
+                auto *const self = reinterpret_cast<StringList *>(storage + 16);
+                const uint32_t result = use_adapter
+                    ? string_list_destructor_redirect(self, nullptr)
+                    : self->destroy();
+
+                // Byte-exact object plus complete leading and trailing canaries.
+                if (std::memcmp(storage, reference, sizeof(storage)) != 0) {
+                    report_storage_mismatch("string_list_destructor",
+                                            storage, reference,
+                                            sizeof(storage));
+                }
+                expect_storage_bytes(storage, reference, sizeof(storage));
+
+                // EAX residue: the saved owner, not zero and not `this`.
+                expect(result == kOwnerSentinel);
+
+                // The global is republished: exactly four bytes, in place.
+                expect(string_list_owner_cell[0] == kOwnerLeadGuard);
+                expect(string_list_owner_cell[1] == kOwnerSentinel);
+                expect(string_list_owner_cell[2] == kOwnerTrailGuard);
+
+                // --- delegation, entry target and ordering ----------------
+                uint32_t primary = 0;
+                std::memcpy(&primary, storage + 16 + 0x00, sizeof(primary));
+                // The close's final base stage writes 0x006693A4 at
+                // (entry - 0x28); finding it at obj + 0x00 pins the entry
+                // pointer the destructor handed the callee.
+                expect(primary == kStringStructVtable);
+
+                uint32_t position = 0xFFFFFFFFU;
+                std::memcpy(&position, storage + 16 + 0x14, sizeof(position));
+                expect(position == 0U);   // the close's unconditional reset
+
+                if (list.has_head) {
+                    uint32_t cleared_head = 0xFFFFFFFFU;
+                    uint32_t cleared_count = 0xFFFFFFFFU;
+                    std::memcpy(&cleared_head, storage + 16 + 0x08,
+                                sizeof(cleared_head));
+                    std::memcpy(&cleared_count, storage + 16 + 0x10,
+                                sizeof(cleared_count));
+                    expect(cleared_head == 0U);
+                    expect(cleared_count == 0U);
+                    // The entry itself was never touched: no walk happened.
+                    expect(entry.id == 0);
+                    expect(entry.payload == 0);
+                } else {
+                    // An empty list short-circuits before the clearing writes,
+                    // so entry_count_ keeps the seeded value.
+                    uint32_t untouched_count = 0;
+                    std::memcpy(&untouched_count, storage + 16 + 0x10,
+                                sizeof(untouched_count));
+                    expect(untouched_count
+                           == static_cast<uint32_t>(list.count));
+                }
+
+                // The destructor's own vtable store always lands at +0x28.
+                uint32_t virtual_base_vtable = 0;
+                std::memcpy(&virtual_base_vtable,
+                            storage + 16 + kVirtualBaseOffset,
+                            sizeof(virtual_base_vtable));
+                expect(virtual_base_vtable == kVirtualBaseOwnVtable);
+
+                // The saved-owner slot is read, never written.
+                uint32_t retained_owner = 0;
+                std::memcpy(&retained_owner, storage + 16 + 0x2C,
+                            sizeof(retained_owner));
+                expect(retained_owner == kOwnerSentinel);
+
+                if (displacement == 0x24) {
+                    // Most-derived shape: the close staged 0x006693A0 into
+                    // obj + 0x28 first, so 0x006693AC there proves the tail ran
+                    // afterwards. Swapping the two halves of destroy() leaves
+                    // 0x006693A0 in the slot and fails here.
+                    expect(virtual_base_vtable != kStringStructVbaseVtable);
+                } else {
+                    // Adversarial vbtable: the close followed vbtable[1] to
+                    // obj + 4 + 0x1C, while the destructor stayed on its
+                    // baked-in +0x28. Both must hold at once.
+                    uint32_t staged = 0;
+                    std::memcpy(&staged, storage + 16 + 0x20, sizeof(staged));
+                    expect(staged == kStringStructVbaseVtable);
+                    expect(virtual_base_vtable == kVirtualBaseOwnVtable);
+                }
+            }
+        }
+    }
+
+    StringVirtualBaseOwner = saved_owner_global;
+}
+
 // Event log for the Dialog destructor. kind: 1 Dialog::close, 2 owner visitor,
 // 3 payload scalar dtor, 4 entry scalar dtor, 5 operator delete.
 struct DialogDtorEvent {
@@ -22158,6 +22402,7 @@ int main() {
     test_buffer_get_data();
     test_buffer_free_data();
     test_string_struct_remove_all();
+    test_string_list_destructor();
     test_dialog_destructor();
     test_dialogs_destructor();
     test_find_font();
