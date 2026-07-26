@@ -4,11 +4,12 @@ import os
 from pathlib import Path
 import subprocess
 
-from wine_runtime import find_wine
+from wine_runtime import disable_crash_dialog, find_wine
 
 
 OWNER_MARKER = ".opensmacx-test-owned"
 INITIALIZED_MARKER = ".opensmacx-test-initialized"
+CRASH_DIALOG_MARKER = ".opensmacx-test-crash-dialog-disabled"
 OWNER_CONTENT = "OpenSMACX dedicated runtime test prefix\n"
 
 
@@ -80,5 +81,21 @@ def prepare_owned_wine_prefix(prefix, wine):
                 [str(wineboot), "--init"], env=environment, check=True,
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             initialized.write_text("initialized\n", encoding="ascii")
+        # A test binary that faults - which is exactly what a killed mutant or
+        # a genuine regression does - otherwise blocks on winedbg's modal
+        # dialog until the runner times out, and the backtrace never reaches
+        # any log. Its own marker, because prefixes initialized before this
+        # existed still need the value written once.
+        crash_dialog = prefix / CRASH_DIALOG_MARKER
+        if crash_dialog.is_symlink() or (
+                crash_dialog.exists() and not crash_dialog.is_file()):
+            raise RuntimeError(
+                f"test Wine crash-dialog marker is not a regular file: {crash_dialog}")
+        if not crash_dialog.is_file():
+            # Beside wineboot, the same way wine_prefix_tools derives it, so a
+            # caller that redirected that lookup stays redirected here.
+            disable_crash_dialog(
+                wineboot.with_name("wine"), prefix_environment(prefix))
+            crash_dialog.write_text("disabled\n", encoding="ascii")
     finally:
         stop_owned_wine_prefix(prefix, wine)

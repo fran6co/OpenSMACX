@@ -220,10 +220,20 @@ terranx_hybrid.exe could not load imports
             prepare_owned_wine_prefix(prefix, "wine")
             self.assertTrue((prefix / ".opensmacx-test-owned").is_file())
             self.assertTrue((prefix / ".opensmacx-test-initialized").is_file())
+            self.assertTrue(
+                (prefix / ".opensmacx-test-crash-dialog-disabled").is_file())
             self.assertEqual(
                 [call.args[0][1] for call in run.call_args_list],
-                ["--init", "-k", "-w"],
+                ["--init", "reg", "-k", "-w"],
             )
+            # A faulting test binary must print its backtrace to stderr rather
+            # than block the runner on winedbg's modal dialog.
+            registry = next(call.args[0] for call in run.call_args_list
+                            if call.args[0][1] == "reg")
+            self.assertEqual(
+                registry[1:], ["reg", "add", r"HKCU\Software\Wine\WineDbg",
+                               "/v", "ShowCrashDialog", "/t", "REG_DWORD",
+                               "/d", "0", "/f"])
 
             run.reset_mock()
             prepare_owned_wine_prefix(prefix, "wine")
