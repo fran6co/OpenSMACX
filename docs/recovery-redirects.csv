@@ -616,8 +616,11 @@ address,kind
 0x004C5B60,jump
 0x004C5B70,jump
 0x004C5BF0,jump
+0x004C6120,jump
 0x004C61E0,jump
 0x004C6280,jump
+0x004C6370,jump
+0x004C63D0,jump
 0x004C6430,jump
 0x004C6440,jump
 0x004C6480,jump
@@ -675,6 +678,7 @@ address,kind
 0x004C71F0,jump
 0x004C7220,jump
 0x004C7250,jump
+0x004C92D0,jump
 0x004C9300,jump
 0x004D9DC0,jump
 0x004D9DD0,jump

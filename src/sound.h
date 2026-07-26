@@ -30,7 +30,7 @@
 class DLLEXPORT Sound {
  public:
   Sound() { ; }
-  ~Sound() { ; }
+  ~Sound();
   int UNK1(int);
   void fade(int a1);
   int is_playing();
@@ -53,13 +53,15 @@ class DLLEXPORT Sound {
   void fade_in(unsigned int a1);
   void set_pan(int a1);
   int unload();
+  int attach();
+  int detach();
 
  private:
   // The fields below are the slice Wave inherits and mirrors at the same
   // offsets: the loop dword at 0x30, the wrapped device at 0x3C, the flag
   // dword at 0x40 (bit 0 the loaded bit, plus set_type's class bits), the
   // heap-owned filename at 0x4C, and the type at 0x50.
-  uint8_t unmapped_[4];
+  uint32_t vtable_storage_;  // 0x00, opaque so no C++ vtable is generated
   uint32_t volume_;       // 0x04, low seven bits of set_volume's argument
   int32_t pan_8_;         // 0x08, set_pan's clamp to [-0x40, 0x3F]
   uint8_t unmapped_C_[0x24];
@@ -68,7 +70,8 @@ class DLLEXPORT Sound {
   uint32_t fade_38_;      // 0x38, the last nonzero fade/fade-in argument
   void *device_;
   uint32_t flags_40_;
-  uint8_t unmapped_44_[8];
+  Sound *chain_prev_;     // 0x44, toward the head slot at 0x90DB20
+  Sound *chain_next_;     // 0x48, toward the tail slot at 0x90DB1C
   void *fname_;
   uint32_t type_;
   uint8_t unmapped_54_[0x4C];
@@ -96,3 +99,8 @@ int __fastcall sound_set_fade_in_redirect(Sound *self, void *, unsigned int a1);
 void __fastcall sound_fade_in_arg_redirect(Sound *self, void *, unsigned int a1);
 void __fastcall sound_set_pan_redirect(Sound *self, void *, int a1);
 int __fastcall sound_unload_redirect(Sound *self, void *);
+void __fastcall sound_dtor_redirect(Sound *self, void *);
+void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
+                                            unsigned int mode);
+int __fastcall sound_attach_redirect(Sound *self, void *);
+int __fastcall sound_detach_redirect(Sound *self, void *);

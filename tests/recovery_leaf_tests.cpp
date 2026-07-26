@@ -11524,6 +11524,234 @@ void test_wave_device_lifecycle() {
     WaveDeviceDestroySlot = saved_destroy;
 }
 
+void test_sound_chain_and_dtor() {
+    std::vector<uint8_t> storage(0xA0 + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *sound = reinterpret_cast<Sound *>(obj);
+    g_wave_dtor_obj = obj;
+
+    auto *const saved_delete = WaveOperatorDelete;
+    auto **const saved_release_slot = WaveDeviceReleaseSlot;
+    int *const saved_guard = WaveDeviceReleaseGuard;
+    Wave **const saved_head = WaveChainHead;
+    Wave **const saved_tail = WaveChainTail;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+    func_wave_device_release *release_fn = &observe_wave_release;
+    WaveDeviceReleaseSlot = &release_fn;
+    int guard = 1;
+    WaveDeviceReleaseGuard = &guard;
+    Wave *chain_head = nullptr;
+    Wave *chain_tail = nullptr;
+    WaveChainHead = &chain_head;
+    WaveChainTail = &chain_tail;
+
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto setp = [&](size_t off, const void *ptr) {
+        std::memcpy(obj + off, &ptr, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *ptr;
+        std::memcpy(&ptr, obj + off, 4);
+        return ptr;
+    };
+
+    // --- attach ---
+    seed_storage(storage.data(), expected.data(), storage.size());
+    // Either neighbour set: left entirely alone.
+    setp(0x44, nullptr);
+    setp(0x48, obj);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    expect(sound->attach() == 0);
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+    setp(0x48, nullptr);
+    setp(0x44, obj);
+    expect(sound->attach() == 0);
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+
+    // An empty chain: the sound becomes both ends, bit 2 sets.
+    setp(0x44, nullptr);
+    setp(0x48, nullptr);
+    set32(0x40, 0xF1);
+    chain_head = nullptr;
+    chain_tail = nullptr;
+    expect(sound->attach() == 0);
+    expect(chain_head == reinterpret_cast<Wave *>(sound));
+    expect(chain_tail == reinterpret_cast<Wave *>(sound));
+    expect(getp(0x44) == nullptr && getp(0x48) == nullptr);
+    expect(get32(0x40) == 0xF3);
+
+    // A second sound appends at the tail.
+    uint8_t obj2[0xA0];
+    std::memset(obj2, 0, sizeof(obj2));
+    auto *sound2 = reinterpret_cast<Sound *>(obj2);
+    expect(sound2->attach() == 0);
+    expect(chain_head == reinterpret_cast<Wave *>(sound));
+    expect(chain_tail == reinterpret_cast<Wave *>(sound2));
+    expect(getp(0x48) == sound2);  // the old tail learned its next
+    void *p2;
+    std::memcpy(&p2, obj2 + 0x44, 4);
+    expect(p2 == sound);
+    uint32_t f2;
+    std::memcpy(&f2, obj2 + 0x40, 4);
+    expect(f2 == 2);
+
+    // --- detach ---
+    // An unchained sound does nothing at all.
+    uint8_t obj3[0xA0];
+    std::memset(obj3, 0, sizeof(obj3));
+    auto *sound3 = reinterpret_cast<Sound *>(obj3);
+    expect(sound3->detach() == 0);
+    expect(chain_head == reinterpret_cast<Wave *>(sound));
+
+    // The middle of three: neighbours relink around it.
+    expect(sound3->attach() == 0);  // chain: sound, sound2, sound3
+    expect(sound2->detach() == 0);
+    expect(getp(0x48) == sound3);
+    void *p3prev;
+    std::memcpy(&p3prev, obj3 + 0x44, 4);
+    expect(p3prev == sound);
+    std::memcpy(&p2, obj2 + 0x44, 4);
+    expect(p2 == nullptr);
+    std::memcpy(&f2, obj2 + 0x40, 4);
+    expect(f2 == 0);
+
+    // The head: the head slot advances.
+    expect(sound->detach() == 0);
+    expect(chain_head == reinterpret_cast<Wave *>(sound3));
+    expect(getp(0x44) == nullptr && getp(0x48) == nullptr);
+    expect(get32(0x40) == 0xF1);
+
+    // The tail (and only): both slots empty out.
+    expect(sound3->detach() == 0);
+    expect(chain_head == nullptr && chain_tail == nullptr);
+
+    // --- ~Sound ---
+    // Full teardown: filename freed and cleared, device through the guarded
+    // hook then forgotten, the chain unlinked, the base vtable published.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    uint8_t name_block[8];
+    int fake_dev = 0;
+    uint8_t prev_node[0xA0], next_node[0xA0];
+    std::memset(prev_node, 0x66, sizeof(prev_node));
+    std::memset(next_node, 0x77, sizeof(next_node));
+    setp(0x4C, name_block);
+    setp(0x3C, &fake_dev);
+    set32(0x40, 0xA5A5A5F3u);
+    setp(0x44, prev_node);
+    setp(0x48, next_node);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    guard = 1;
+    g_wave_dtor_deletes.clear();
+    g_wave_dtor_delete_seen_slot.clear();
+    g_wave_dtor_release_calls = 0;
+    g_wave_dtor_release_relinks = false;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    sound_dtor_redirect(sound, nullptr);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == name_block);
+    expect(g_wave_dtor_delete_seen_slot[0] == name_block);
+    expect(g_wave_dtor_release_calls == 1 &&
+           g_wave_dtor_release_dev == &fake_dev);
+    expect(g_wave_dtor_release_seen_vtable == 0x0066E3C0u);
+    void *stored;
+    std::memcpy(&stored, prev_node + 0x48, 4);
+    expect(stored == next_node);
+    std::memcpy(&stored, next_node + 0x44, 4);
+    expect(stored == prev_node);
+    expect(chain_head == reinterpret_cast<Wave *>(0x1111));
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        const uint32_t vt = 0x0066E444u;
+        const uint32_t zero = 0;
+        const uint32_t flags = 0xA5A5A5F1u;
+        std::memcpy(eobj + 0x00, &vt, 4);
+        std::memcpy(eobj + 0x3C, &zero, 4);
+        std::memcpy(eobj + 0x40, &flags, 4);
+        std::memcpy(eobj + 0x44, &zero, 4);
+        std::memcpy(eobj + 0x48, &zero, 4);
+        std::memcpy(eobj + 0x4C, &zero, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // The sparse path: no filename means the slot KEEPS its seed (unlike
+    // Wave's unconditional clear), a dead guard skips the hook but the
+    // device still clears, an unchained sound keeps its links.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x4C, nullptr);
+    setp(0x3C, &fake_dev);
+    set32(0x40, 0xA5A5A5F1u);
+    guard = 0;
+    g_wave_dtor_deletes.clear();
+    g_wave_dtor_release_calls = 0;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    sound_dtor_redirect(sound, nullptr);
+    expect(g_wave_dtor_deletes.empty());
+    expect(g_wave_dtor_release_calls == 0);
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        const uint32_t vt = 0x0066E444u;
+        const uint32_t zero = 0;
+        std::memcpy(eobj + 0x00, &vt, 4);
+        std::memcpy(eobj + 0x3C, &zero, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // A chained sound with no neighbours: both end slots empty out - the
+    // unlink's head and tail arms.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x4C, nullptr);
+    setp(0x3C, nullptr);
+    set32(0x40, 2);
+    setp(0x44, nullptr);
+    setp(0x48, nullptr);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    sound_dtor_redirect(sound, nullptr);
+    expect(chain_head == nullptr && chain_tail == nullptr);
+    expect(get32(0x40) == 0);
+
+    // The scalar deleting destructor: mode bit 0 frees the storage.
+    set32(0x68, 0);
+    set32(0x40, 0);
+    setp(0x4C, nullptr);
+    setp(0x3C, nullptr);
+    g_wave_dtor_deletes.clear();
+    set32(0x00, 0xDEADDEADu);  // a stale base vtable must not satisfy the canary
+    expect(sound_scalar_dtor_redirect(sound, nullptr, 0) == sound);
+    expect(g_wave_dtor_deletes.empty());
+    expect(get32(0x00) == 0x0066E444u);  // the destructor really ran
+    set32(0x40, 0);
+    expect(sound_scalar_dtor_redirect(sound, nullptr, 3) == sound);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == sound);
+
+    // Redirect entries.
+    set32(0x40, 0);
+    setp(0x44, nullptr);
+    setp(0x48, nullptr);
+    chain_head = nullptr;
+    chain_tail = nullptr;
+    expect(sound_attach_redirect(sound, nullptr) == 0);
+    expect(chain_tail == reinterpret_cast<Wave *>(sound));
+    expect(sound_detach_redirect(sound, nullptr) == 0);
+    expect(chain_tail == nullptr);
+
+    WaveOperatorDelete = saved_delete;
+    WaveDeviceReleaseSlot = saved_release_slot;
+    WaveDeviceReleaseGuard = saved_guard;
+    WaveChainHead = saved_head;
+    WaveChainTail = saved_tail;
+}
+
 void test_sound_small_setters() {
     std::vector<uint8_t> storage(0xA0 + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -19143,5 +19371,6 @@ int main() {
     test_wave_device_forwarder_family();
     test_wave_device_group_admin();
     test_wave_device_lifecycle();
+    test_sound_chain_and_dtor();
     return failures == 0 ? 0 : 1;
 }
