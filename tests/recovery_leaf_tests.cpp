@@ -9774,6 +9774,47 @@ int __thiscall observe_sound_own_slot54(Sound *self, uint32_t arg) {
     ++g_sound_own54_calls;
     return g_sound_own54_ret;
 }
+// Group-walk observers: per-slot logs, an enabled-byte witness, and an
+// optional cursor rewrite on the first visit (simulating a handler that
+// pulls waves from the group mid-walk).
+std::vector<Wave *> g_wave_volume_log;
+std::vector<uint32_t> g_wave_volume_args;
+std::vector<Wave *> g_wave_resume_log;
+std::vector<Wave *> g_wave_halt_log;
+std::vector<uint8_t> g_wave_visit_seen_enabled;
+uint8_t *g_wave_visit_group_base;
+void *g_wave_visit_cursor_write;
+int g_wave_visit_total;
+void wave_visit_common() {
+    ++g_wave_visit_total;
+    if (g_wave_visit_group_base) {
+        g_wave_visit_seen_enabled.push_back(g_wave_visit_group_base[0]);
+        if (g_wave_visit_cursor_write && g_wave_visit_total == 1) {
+            std::memcpy(g_wave_visit_group_base + 0x10,
+                        &g_wave_visit_cursor_write, 4);
+        }
+    }
+}
+std::vector<uint32_t> g_wave_visit_seen_volume;
+void __thiscall observe_wave_group_volume(Wave *self, uint32_t arg) {
+    g_wave_volume_log.push_back(self);
+    g_wave_volume_args.push_back(arg);
+    // The group's volume dword is stored BEFORE the walk; witness it.
+    if (g_wave_visit_group_base) {
+        uint32_t gv;
+        std::memcpy(&gv, g_wave_visit_group_base + 4, 4);
+        g_wave_visit_seen_volume.push_back(gv);
+    }
+    wave_visit_common();
+}
+void __thiscall observe_wave_group_resume(Wave *self) {
+    g_wave_resume_log.push_back(self);
+    wave_visit_common();
+}
+void __thiscall observe_wave_group_halt(Wave *self) {
+    g_wave_halt_log.push_back(self);
+    wave_visit_common();
+}
 int g_wave_stype_calls;
 Wave *g_wave_stype_wave;
 uint32_t g_wave_stype_type;
@@ -11113,6 +11154,180 @@ void test_wave_device_forwarder_family() {
     expect(wave_device_get_listener_zpos_redirect(device, nullptr, &fz) ==
            0x14);
     wave_device_get_description_redirect(device, nullptr, 1, descr, 1);
+}
+
+void test_wave_device_group_admin() {
+    std::vector<uint8_t> storage(sizeof(Wave_Device) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *device = reinterpret_cast<Wave_Device *>(obj);
+
+    void *wave_vtable[64];
+    std::memset(wave_vtable, 0, sizeof(wave_vtable));
+    wave_vtable[0x40 / 4] =
+        reinterpret_cast<void *>(&observe_wave_group_volume);
+    wave_vtable[0x8C / 4] =
+        reinterpret_cast<void *>(&observe_wave_group_resume);
+    wave_vtable[0x14 / 4] = reinterpret_cast<void *>(&observe_wave_group_halt);
+    auto make_wave = [&](uint8_t *w, uint32_t volume) {
+        std::memset(w, 0, 0x6C);
+        void *vt = wave_vtable;
+        std::memcpy(w, &vt, 4);
+        std::memcpy(w + 4, &volume, 4);
+        return reinterpret_cast<Wave *>(w);
+    };
+    uint8_t wb1[0x6C], wb2[0x6C], wb3[0x6C], wb4[0x6C];
+    Wave *w1 = make_wave(wb1, 7);
+    Wave *w2 = make_wave(wb2, 9);
+    Wave *w3 = make_wave(wb3, 11);
+    Wave *w4 = make_wave(wb4, 13);
+
+    auto group_base = [](unsigned g) { return 0x24 + g * 0x18; };
+    auto gset32 = [&](unsigned g, size_t off, uint32_t v) {
+        std::memcpy(obj + group_base(g) + off, &v, 4);
+    };
+    auto gget32 = [&](unsigned g, size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + group_base(g) + off, 4);
+        return v;
+    };
+    auto gsetp = [&](unsigned g, size_t off, const void *ptr) {
+        std::memcpy(obj + group_base(g) + off, &ptr, 4);
+    };
+    auto ggetp = [&](unsigned g, size_t off) {
+        void *ptr;
+        std::memcpy(&ptr, obj + group_base(g) + off, 4);
+        return ptr;
+    };
+    auto reset_walk = [&] {
+        g_wave_volume_log.clear();
+        g_wave_volume_args.clear();
+        g_wave_visit_seen_volume.clear();
+        g_wave_resume_log.clear();
+        g_wave_halt_log.clear();
+        g_wave_visit_seen_enabled.clear();
+        g_wave_visit_cursor_write = nullptr;
+        g_wave_visit_total = 0;
+    };
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    g_wave_visit_group_base = obj + group_base(3);
+
+    // set_group_volume: guards leave everything alone.
+    reset_walk();
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(device->set_group_volume(0x10, 5) == 0xA);
+    expect(device->set_group_volume(0, 0x80) == 0xA);
+    expect(g_wave_visit_total == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // The empty boundary group: volume stored, cursor cleared, no visits.
+    g_wave_visit_group_base = obj + group_base(0xF);
+    gsetp(0xF, 8, nullptr);
+    gsetp(0xF, 0x10, reinterpret_cast<void *>(0x1234));
+    reset_walk();
+    expect(device->set_group_volume(0xF, 0x7F) == 0);
+    expect(gget32(0xF, 4) == 0x7F);
+    expect(ggetp(0xF, 0x10) == nullptr);
+    expect(g_wave_visit_total == 0);
+
+    // Two members: each replays its OWN stored volume, the cursor walks off
+    // the end.
+    g_wave_visit_group_base = obj + group_base(3);
+    WaveGroupNode n1{}, n2{}, n3{}, n4{};
+    n1.next = &n2;
+    n1.wave = w1;
+    n2.prev = &n1;
+    n2.wave = w2;
+    gsetp(3, 8, &n1);
+    reset_walk();
+    expect(device->set_group_volume(3, 0x50) == 0);
+    expect(gget32(3, 4) == 0x50);
+    expect(g_wave_volume_log == std::vector<Wave *>({w1, w2}));
+    expect(g_wave_volume_args == std::vector<uint32_t>({7, 9}));
+    expect(g_wave_visit_seen_volume == std::vector<uint32_t>({0x50, 0x50}));
+    expect(ggetp(3, 0x10) == nullptr);
+
+    // A null wave stops the walk with the cursor parked on its node.
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = w1;
+    n2.prev = &n1;
+    n2.wave = nullptr;
+    gsetp(3, 8, &n1);
+    reset_walk();
+    expect(device->set_group_volume(3, 0x20) == 0);
+    expect(g_wave_volume_log == std::vector<Wave *>({w1}));
+    expect(ggetp(3, 0x10) == &n2);
+
+    // A handler that rewrites the cursor mid-walk: the walk resumes from the
+    // rewritten node's FOLLOWER - the original's self-removal skip rule.
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n3 = WaveGroupNode{};
+    n4 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = w1;
+    n2.prev = &n1;
+    n2.next = &n3;
+    n2.wave = w2;
+    n3.prev = &n2;
+    n3.next = &n4;
+    n3.wave = w3;
+    n4.prev = &n3;
+    n4.wave = w4;
+    gsetp(3, 8, &n1);
+    reset_walk();
+    g_wave_visit_cursor_write = &n3;
+    expect(device->set_group_volume(3, 0x30) == 0);
+    expect(g_wave_volume_log == std::vector<Wave *>({w1, w4}));
+
+    // enable_group: an enabled group is untouched, byte and all; a disabled
+    // one resumes every member BEFORE the byte flips to exactly 1.
+    reset_walk();
+    expect(device->enable_group(0x10) == 0xA);
+    obj[group_base(3)] = 5;
+    expect(device->enable_group(3) == 0);
+    expect(g_wave_resume_log.empty());
+    expect(obj[group_base(3)] == 5);
+    obj[group_base(3)] = 0;
+    reset_walk();
+    expect(device->enable_group(3) == 0);
+    expect(g_wave_resume_log == std::vector<Wave *>({w1, w2, w3, w4}));
+    expect(g_wave_visit_seen_enabled ==
+           std::vector<uint8_t>({0, 0, 0, 0}));
+    expect(obj[group_base(3)] == 1);
+
+    // Slot 15 is the last accepted group for both togglers.
+    obj[group_base(0xF)] = 0;
+    gsetp(0xF, 8, nullptr);
+    reset_walk();
+    expect(device->enable_group(0xF) == 0);
+    expect(obj[group_base(0xF)] == 1);
+    expect(device->disable_group(0xF) == 0);
+    expect(obj[group_base(0xF)] == 0);
+
+    // disable_group mirrors it with the halt slot.
+    reset_walk();
+    expect(device->disable_group(0x10) == 0xA);
+    obj[group_base(3)] = 0;
+    expect(device->disable_group(3) == 0);
+    expect(g_wave_halt_log.empty());
+    obj[group_base(3)] = 7;
+    reset_walk();
+    expect(device->disable_group(3) == 0);
+    expect(g_wave_halt_log == std::vector<Wave *>({w1, w2, w3, w4}));
+    expect(g_wave_visit_seen_enabled ==
+           std::vector<uint8_t>({7, 7, 7, 7}));
+    expect(obj[group_base(3)] == 0);
+
+    // Redirect entries.
+    expect(wave_device_set_group_volume_redirect(device, nullptr, 0x10, 1) ==
+           0xA);
+    expect(wave_device_enable_group_redirect(device, nullptr, 0x10) == 0xA);
+    expect(wave_device_disable_group_redirect(device, nullptr, 0x10) == 0xA);
+    g_wave_visit_group_base = nullptr;
 }
 
 void test_sound_small_setters() {
@@ -18732,5 +18947,6 @@ int main() {
     test_wave_device_groups();
     test_sound_small_setters();
     test_wave_device_forwarder_family();
+    test_wave_device_group_admin();
     return failures == 0 ? 0 : 1;
 }
