@@ -50,6 +50,7 @@ class DLLEXPORT Wave {
   void set_pitch(int a1);
   int load(int a1, int a2);
   int get_ms_length();
+  int is_playing();
  private:
   uint32_t vtable_storage_;      // 0x00
   uint32_t field_4_;
@@ -69,6 +70,7 @@ class DLLEXPORT Wave {
   int32_t pitch_;                // 0x58, clamped semitone offset
   uint32_t field_5C_;
   int32_t ms_length_;            // 0x60, playing length in milliseconds
+  uint32_t start_time_;          // 0x64, timeGetTime stamp when playing began
 };
 
 int __fastcall wave_set_asdr_redirect(Wave *self, void *);
@@ -81,3 +83,12 @@ int __fastcall wave_unload_redirect(Wave *self, void *);
 void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1);
 int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2);
 int __fastcall wave_get_ms_length_redirect(Wave *self, void *);
+
+// With no wrapped device the wave is timed against the clock, through the
+// game's imported timeGetTime. The seam is the address of that import slot -
+// the IAT entry the original calls indirectly - so it reads the live pointer
+// at run time and stays rebindable for tests.
+typedef DWORD(__stdcall func_time_get_time)(void);
+extern func_time_get_time **WaveTimeGetTimeSlot;
+
+int __fastcall wave_is_playing_redirect(Wave *self, void *);
