@@ -19698,6 +19698,183 @@ int __thiscall observe_buffer_copy_full(void *self, Buffer *src, int x, int y,
 }
 }  // namespace
 
+namespace {
+
+struct BoxLineCall {
+    int kind;      // 0 = hline, 1 = vline
+    Buffer *self;
+    int a, b, c;   // hline: x1, x2, y   vline: x, y1, y2
+    int color;
+};
+BoxLineCall g_box_line[8];
+int g_box_line_calls;
+RECT *g_box_mutate_rect;   // when set, the FIRST seam call rewrites the rect
+
+void record_box_line(int kind, Buffer *self, int a, int b, int c, int color) {
+    if (g_box_line_calls < 8) {
+        g_box_line[g_box_line_calls] = {kind, self, a, b, c, color};
+    }
+    ++g_box_line_calls;
+    // The original reads all four fields before the first call, so a callee
+    // that rewrites the rectangle must not move the remaining three edges.
+    // Distinguishes up-front reads from per-call re-reads.
+    if (g_box_mutate_rect != nullptr && g_box_line_calls == 1) {
+        g_box_mutate_rect->left = 0x7A7A7A7A;
+        g_box_mutate_rect->top = 0x7B7B7B7B;
+        g_box_mutate_rect->right = 0x7C7C7C7C;
+        g_box_mutate_rect->bottom = 0x7D7D7D7D;
+    }
+}
+
+void __thiscall observe_box_hline(Buffer *self, int x1, int x2, int y,
+                                  int color) {
+    record_box_line(0, self, x1, x2, y, color);
+}
+
+void __thiscall observe_box_vline(Buffer *self, int x, int y1, int y2,
+                                  int color) {
+    record_box_line(1, self, x, y1, y2, color);
+}
+
+// Named poison: the null-rectangle path dispatches nothing, so reaching
+// either seam at all on that path is the failure.
+void __thiscall poison_box_line_must_not_run(Buffer *, int, int, int, int) {
+    expect(false);
+}
+
+}  // namespace
+
+void test_buffer_box() {
+    func_buffer_line *const saved_h = BufferHLine;
+    func_buffer_line *const saved_v = BufferVLine;
+    BufferHLine = &observe_box_hline;
+    BufferVLine = &observe_box_vline;
+    g_box_mutate_rect = nullptr;
+
+    // Shape A: an exactly sized seeded allocation; the rectangle on the
+    // stack. The dispatcher must not read or write the Buffer at all.
+    std::vector<uint8_t> bs(sizeof(Buffer), 0);
+    std::vector<uint8_t> bexp(bs.size());
+    Buffer *const buf = reinterpret_cast<Buffer *>(bs.data());
+    seed_storage(bs.data(), bexp.data(), bs.size());
+
+    // Two distinct colors: real callers pass the same color twice, so only
+    // distinct values make a crossed color1/color2 visible.
+    const int color1 = 0x01111111;
+    const int color2 = 0x02222222;
+
+    // All four fields distinct, and no derived edge coincides with another,
+    // so a swapped span, an off-by-one, a reused edge, or a wrong-order call
+    // lands on a number no correct transcript contains.
+    RECT rect = {10, 20, 33, 47};   // left, top, right, bottom
+    g_box_line_calls = 0;
+    expect(buf->box(&rect, color1, color2) == 0);
+    expect(g_box_line_calls == 4);
+    // [0] top edge: hline(left+1, right-1, top, color1).
+    expect(g_box_line[0].kind == 0 && g_box_line[0].self == buf);
+    expect(g_box_line[0].a == 11 && g_box_line[0].b == 32);
+    expect(g_box_line[0].c == 20 && g_box_line[0].color == color1);
+    // [1] bottom edge: hline(left, right-2, bottom-1, color2).
+    expect(g_box_line[1].kind == 0 && g_box_line[1].self == buf);
+    expect(g_box_line[1].a == 10 && g_box_line[1].b == 31);
+    expect(g_box_line[1].c == 46 && g_box_line[1].color == color2);
+    // [2] left edge: vline(left, top, bottom-2, color1).
+    expect(g_box_line[2].kind == 1 && g_box_line[2].self == buf);
+    expect(g_box_line[2].a == 10 && g_box_line[2].b == 20);
+    expect(g_box_line[2].c == 45 && g_box_line[2].color == color1);
+    // [3] right edge: vline(right-1, top+1, bottom-1, color2).
+    expect(g_box_line[3].kind == 1 && g_box_line[3].self == buf);
+    expect(g_box_line[3].a == 32 && g_box_line[3].b == 21);
+    expect(g_box_line[3].c == 46 && g_box_line[3].color == color2);
+    // The dispatcher touches neither the object nor the rectangle.
+    expect_storage_bytes(bs.data(), bexp.data(), bs.size());
+    expect(rect.left == 10 && rect.top == 20);
+    expect(rect.right == 33 && rect.bottom == 47);
+
+    // Signed-extreme wrap through the redirect adapter: the original's
+    // inc/dec are raw 32-bit ops, so every edge wraps rather than saturates.
+    RECT wrap = {INT_MAX, INT_MAX, INT_MIN, INT_MIN};
+    g_box_line_calls = 0;
+    expect(buffer_box_redirect(buf, nullptr, &wrap, color1, color2) == 0);
+    expect(g_box_line_calls == 4);
+    expect(g_box_line[0].a == INT_MIN);          // left+1 wraps
+    expect(g_box_line[0].b == INT_MAX);          // right-1 wraps
+    expect(g_box_line[0].c == INT_MAX && g_box_line[0].color == color1);
+    expect(g_box_line[1].a == INT_MAX);          // left
+    expect(g_box_line[1].b == INT_MAX - 1);      // right-2 wraps
+    expect(g_box_line[1].c == INT_MAX && g_box_line[1].color == color2);
+    expect(g_box_line[2].a == INT_MAX && g_box_line[2].b == INT_MAX);
+    expect(g_box_line[2].c == INT_MAX - 1);      // bottom-2 wraps
+    expect(g_box_line[2].color == color1);
+    expect(g_box_line[3].a == INT_MAX);          // right-1 wraps
+    expect(g_box_line[3].b == INT_MIN);          // top+1 wraps
+    expect(g_box_line[3].c == INT_MAX && g_box_line[3].color == color2);
+    expect_storage_bytes(bs.data(), bexp.data(), bs.size());
+
+    // Shape B: the object embedded mid-arena between seeded guard bands with
+    // the rectangle inside the arena too, and a reversed/degenerate
+    // rectangle (right < left, bottom < top): box derives edges without
+    // comparing, so the raw values flow straight through.
+    std::vector<uint8_t> arena(sizeof(Buffer) + 128, 0);
+    std::vector<uint8_t> aexp(arena.size());
+    seed_storage(arena.data(), aexp.data(), arena.size());
+    Buffer *const embedded = reinterpret_cast<Buffer *>(arena.data() + 64);
+    RECT *const arect = reinterpret_cast<RECT *>(arena.data() + 16);
+    const RECT reversed = {-100, -200, -299, -403};
+    std::memcpy(arena.data() + 16, &reversed, sizeof(reversed));
+    std::memcpy(aexp.data() + 16, &reversed, sizeof(reversed));
+    g_box_line_calls = 0;
+    expect(embedded->box(arect, -7, -8) == 0);
+    expect(g_box_line_calls == 4);
+    expect(g_box_line[0].self == embedded);
+    expect(g_box_line[0].a == -99 && g_box_line[0].b == -300);
+    expect(g_box_line[0].c == -200 && g_box_line[0].color == -7);
+    expect(g_box_line[1].a == -100 && g_box_line[1].b == -301);
+    expect(g_box_line[1].c == -404 && g_box_line[1].color == -8);
+    expect(g_box_line[2].a == -100 && g_box_line[2].b == -200);
+    expect(g_box_line[2].c == -405 && g_box_line[2].color == -7);
+    expect(g_box_line[3].a == -300 && g_box_line[3].b == -199);
+    expect(g_box_line[3].c == -404 && g_box_line[3].color == -8);
+    // Guard bands, object bytes, and the in-arena rectangle all unchanged.
+    expect_storage_bytes(arena.data(), aexp.data(), arena.size());
+
+    // Pre-read probe: the first seam call rewrites the rectangle; the three
+    // remaining calls must still carry edges derived from the original
+    // fields, exactly as the original's up-front register loads do.
+    RECT mutable_rect = {10, 20, 33, 47};
+    g_box_mutate_rect = &mutable_rect;
+    g_box_line_calls = 0;
+    expect(buf->box(&mutable_rect, color1, color2) == 0);
+    g_box_mutate_rect = nullptr;
+    expect(g_box_line_calls == 4);
+    expect(g_box_line[0].a == 11 && g_box_line[0].b == 32 &&
+           g_box_line[0].c == 20);
+    expect(g_box_line[1].a == 10 && g_box_line[1].b == 31 &&
+           g_box_line[1].c == 46);
+    expect(g_box_line[2].a == 10 && g_box_line[2].b == 20 &&
+           g_box_line[2].c == 45);
+    expect(g_box_line[3].a == 32 && g_box_line[3].b == 21 &&
+           g_box_line[3].c == 46);
+    // The observer's writes stand - box does not restore the rectangle.
+    expect(mutable_rect.left == 0x7A7A7A7A);
+    expect(mutable_rect.top == 0x7B7B7B7B);
+    expect(mutable_rect.right == 0x7C7C7C7C);
+    expect(mutable_rect.bottom == 0x7D7D7D7D);
+    expect_storage_bytes(bs.data(), bexp.data(), bs.size());
+
+    // Null rectangle: EAX residue 3, nothing dispatched, nothing written.
+    // The poison seams turn any dispatch on this path into a hard failure,
+    // through both the direct call and the redirect adapter.
+    BufferHLine = &poison_box_line_must_not_run;
+    BufferVLine = &poison_box_line_must_not_run;
+    expect(buf->box(nullptr, color1, color2) == 3);
+    expect(buffer_box_redirect(buf, nullptr, nullptr, 5, 6) == 3);
+    expect_storage_bytes(bs.data(), bexp.data(), bs.size());
+
+    BufferHLine = saved_h;
+    BufferVLine = saved_v;
+}
+
 void test_buffer_copy_overload() {
     // The five-argument copy exists only to hand the destination coordinates
     // over a second time as the source coordinates. Distinct values in every
@@ -23257,6 +23434,7 @@ int main() {
     test_console_editor_undo_and_prod_picker_close();
     test_plan_win_close();
     test_buffer_copy_overload();
+    test_buffer_box();
     test_plan_win_blink_and_unk1();
     test_base_button_set();
     test_texture_lifecycle();

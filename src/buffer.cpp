@@ -874,6 +874,76 @@ int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text) {
     return self->text_width(text);
 }
 
+namespace {
+
+// RECT edges wrap as raw 32-bit values, exactly as the original's inc/dec
+// instructions do; the bit-cast round trip keeps the arithmetic out of
+// signed-overflow territory.
+uint32_t edge_bits(LONG value) {
+    uint32_t bits;
+    static_assert(sizeof(bits) == sizeof(value),
+                  "Buffer geometry requires 32-bit RECT fields");
+    memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+int edge_int(uint32_t bits) {
+    int value;
+    static_assert(sizeof(value) == sizeof(bits),
+                  "Buffer geometry requires 32-bit int");
+    memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+}  // namespace
+
+func_buffer_line *BufferHLine = (func_buffer_line *)0x005E1A80;
+func_buffer_line *BufferVLine = (func_buffer_line *)0x005E1BF0;
+
+/*
+Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
+         the first color, the bottom and right edges in the second, with the
+         corner ownership split the way the emboss look requires - the top
+         edge spans [left+1, right-1], the bottom [left, right-2] one row up
+         from the bottom, the left column [top, bottom-2], and the right
+         column [top+1, bottom-1] one column in from the right.
+Original Offset: 005E3203
+Return Value: No errors (0); null rectangle (3)
+Status: Complete with temporary hline/vline dependencies
+
+All four fields are read before the first line is drawn (0x005E321C through
+0x005E3227 load top, bottom, right and left, with left stashed into the
+incoming rectangle's own argument slot at 0x005E322B), so a callee that
+rewrites the rectangle cannot move the remaining edges. The edge arithmetic
+is the original's raw inc/dec - 32-bit wrapping, no ordering or emptiness
+checks - and a reversed or degenerate rectangle is handed to the primitives
+as-is. The primitives' EAX residues are discarded: the original zeroes EAX
+after the last call.
+*/
+int Buffer::box(RECT *rect, int color1, int color2) {
+    if (!rect) {
+        return 3;
+    }
+    const uint32_t left = edge_bits(rect->left);
+    const uint32_t top = edge_bits(rect->top);
+    const uint32_t right_in = edge_bits(rect->right) - 1U;
+    const uint32_t bottom_in = edge_bits(rect->bottom) - 1U;
+    BufferHLine(this, edge_int(left + 1U), edge_int(right_in), edge_int(top),
+                color1);
+    BufferHLine(this, edge_int(left), edge_int(right_in - 1U),
+                edge_int(bottom_in), color2);
+    BufferVLine(this, edge_int(left), edge_int(top), edge_int(bottom_in - 1U),
+                color1);
+    BufferVLine(this, edge_int(right_in), edge_int(top + 1U),
+                edge_int(bottom_in), color2);
+    return 0;
+}
+
+int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
+                                   int color1, int color2) {
+    return self->box(rect, color1, color2);
+}
+
 /*
 Purpose: Reset the buffer's link table - reinitialise the spot list to 40
          entries, clear the count, and free the twenty owned link pointers,

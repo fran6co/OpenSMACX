@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 96,
-      "source_complete": 1901,
+      "original_dependency": 98,
+      "source_complete": 1902,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 3641
+      "unrecovered": 3638
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1847,
-    "matched_function_starts": 1847,
-    "unique_addresses": 1847,
+    "annotations": 1848,
+    "matched_function_starts": 1848,
+    "unique_addresses": 1848,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 140
+      "function": 142
     },
     "items": [
       {
@@ -4830,6 +4830,24 @@
         "type": "func_buffer_text_width_measured *"
       },
       {
+        "address": "0x005E1A80",
+        "function": "?hline@Buffer@@QAEXHHHH@Z",
+        "function_address": "0x005E1A80",
+        "kind": "function",
+        "location": "src/buffer.cpp:900",
+        "symbol": "BufferHLine",
+        "type": "func_buffer_line *"
+      },
+      {
+        "address": "0x005E1BF0",
+        "function": "?vline@Buffer@@QAEXHHHH@Z",
+        "function_address": "0x005E1BF0",
+        "kind": "function",
+        "location": "src/buffer.cpp:901",
+        "symbol": "BufferVLine",
+        "type": "func_buffer_line *"
+      },
+      {
         "address": "0x0062B8A0",
         "function": "?button_click@ButtonGroup@@QAEHH@Z",
         "function_address": "0x0062B8A0",
@@ -7575,7 +7593,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 140,
-    "total": 694
+    "matched_function_starts": 142,
+    "total": 696
   }
 }
