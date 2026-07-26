@@ -215,6 +215,10 @@ void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
         virtual_base;
     // The legacy bodies inline the entry walk; it clears the same fields in
     // the same order, and does nothing at all when the list is already empty.
+    // The sweep's surviving swap of the walk against the position reset is
+    // observable only to a visitor reading current_position_ mid-walk, and no
+    // leaf fixture can walk through close: the real (unmapped) tables are
+    // installed first, so the walk tier belongs to the in-process oracle.
     remove_all();
     current_position_ = 0;
 }
@@ -250,4 +254,55 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted, void *) {
     self->close_with_tables(
         StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable);
     self->close();
+}
+
+const uint32_t StringVirtualBaseVtable = 0x006693AC;
+uint32_t *StringVirtualBaseOwner = (uint32_t *)0x009B3374;
+
+/*
+Purpose: Destroy a most-derived StringList: run the source-owned two-stage
+         derived close, then hand the virtual base back its own vtable and
+         republish the pending-allocation owner the constructor captured.
+Original Offset: 00406820
+Return Value: EAX residue - the saved owner value, republished into
+              *StringVirtualBaseOwner. The original is a void destructor;
+              modelled as uint32_t to preserve the residue, as
+              GraphicWin::close and Scroll::destroy do.
+Status: Complete
+Verification note: the delegated close installs the real 0x006698C4 /
+0x006693A4 table addresses into [this] before remove_all dispatches through
+vtable[1], so the entry walk cannot be driven from the leaf suite - those
+addresses are unmapped outside the game process. The sweep's three surviving
+constant mutants rewrite hex values that occur only in the margin comments
+naming each instruction; the code reads the named constants, so the mutants
+are byte-identical and equivalent by construction. The leaf test drives only
+non-walking list shapes, which reach every effect of this function; the walk
+belongs to 0x004066C0 and is covered in-process by the stringstruct
+runtime-oracle suite.
+*/
+uint32_t StringList::destroy() {
+    auto *const base = reinterpret_cast<uint8_t *>(this);
+    // `lea esi, [ecx + 0x28]` / `mov ecx, esi` / `call 0x004066C0`. The
+    // source-owned derived close is entered on the virtual base and recovers
+    // the object by subtracting the same 0x28, which is why the raw pointer
+    // is handed to the recovered entry point rather than cast to StringStruct.
+    uint8_t *const virtual_base = base + StringListVirtualBaseOffset;
+    string_struct_derived_close_redirect(virtual_base, nullptr);
+
+    // The three tail operations, in the original's order. The read of
+    // [esi + 4] precedes the store to [esi]; both are volatile so an
+    // optimised build keeps the legacy access order.
+    volatile uint32_t *const virtual_base_slots =
+        reinterpret_cast<volatile uint32_t *>(virtual_base);
+    const uint32_t owner = virtual_base_slots[1];    // mov eax, [esi + 4]
+    virtual_base_slots[0] = StringVirtualBaseVtable; // mov [esi], 0x006693AC
+    *StringVirtualBaseOwner = owner;                 // mov [0x9B3374], eax
+    return owner;                                    // EAX at the ret
+}
+
+// self == the StringList base: `ret` pops nothing (0xC3), `this` arrives in
+// ECX unadjusted, and there are no stack arguments, so the fastcall adapter
+// is a straight delegation with no this-adjustment.
+uint32_t __fastcall string_list_destructor_redirect(StringList *self, void *) {
+    return self->destroy();
 }
