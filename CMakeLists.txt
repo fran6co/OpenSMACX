@@ -566,6 +566,7 @@ if(BUILD_TESTING)
         src/faction.cpp
         src/filemap.cpp
         src/filemap_recovery.cpp
+        src/flatbutton.cpp
         src/font.cpp
         src/font_recovery.cpp
         src/game.cpp
@@ -1159,6 +1160,11 @@ if(MINGW)
             # default colours through Palette::get_rgbquad.
             src/autosound.cpp
             src/palette.cpp
+            # Scroll::destroy composes the embedded FlatButton destructors,
+            # which chain through the BaseButton teardown; their Time, CRT
+            # free, and allocator externals are link-only stubs in the suite.
+            src/flatbutton.cpp
+            src/basebutton.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)

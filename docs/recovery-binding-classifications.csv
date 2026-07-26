@@ -116,6 +116,7 @@ VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector
 WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
 WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
 AutoSoundOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the AutoSound scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
+ScrollOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Scroll scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
 PopupWaveIsPlaying,ui_dependency,runtime_redirect_entry,The popup wave callback queries Wave::is_playing through the original entry; the runtime redirect routes it into the recovered body
 PopupWaveLoad,ui_dependency,runtime_redirect_entry,The popup wave callback loads bank waves through the original no-argument Wave::load entry; the runtime redirect routes it into the recovered body
 PopupWavePlay,ui_dependency,runtime_redirect_entry,The popup wave callback plays bank waves through the original Wave::play entry; the runtime redirect routes it into the recovered body
