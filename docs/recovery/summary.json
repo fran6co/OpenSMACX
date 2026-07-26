@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 330,
       "original_dependency": 88,
-      "source_complete": 1466,
+      "source_complete": 1481,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4081
+      "unrecovered": 4066
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1412,
-    "matched_function_starts": 1412,
-    "unique_addresses": 1412,
+    "annotations": 1427,
+    "matched_function_starts": 1427,
+    "unique_addresses": 1427,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -6994,7 +6994,7 @@
         "function": "?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z",
         "function_address": "0x004C5280",
         "kind": "function",
-        "location": "src/wave.cpp:284",
+        "location": "src/wave.cpp:657",
         "symbol": "WaveDevicePullFromGroup",
         "type": "func_wave_device_pull_from_group *"
       },
@@ -7003,7 +7003,7 @@
         "function": "??3@YAXPAX@Z",
         "function_address": "0x0064557F",
         "kind": "function",
-        "location": "src/wave.cpp:286",
+        "location": "src/wave.cpp:659",
         "symbol": "WaveOperatorDelete",
         "type": "func_operator_delete *"
       },

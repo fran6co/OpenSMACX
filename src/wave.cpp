@@ -275,6 +275,379 @@ int __fastcall wave_play_redirect(Wave *self, void *, int a1) {
     return self->play(a1);
 }
 
+// The wrapped-device forwarder family: each method lets the device at 0x3C
+// answer through its own vtable slot, as the receiver, and returns a fixed
+// answer when no device is wrapped. Only the slot, the argument list, and the
+// no-device default vary.
+
+/*
+Purpose: Ask the wrapped device, through its vtable slot 0xC8, whether the
+         buffer is in hardware.
+Original Offset: 004C6AE0
+Return Value: the device's answer, or 0 when no device is wrapped
+Status: Complete
+*/
+int Wave::is_hwbuffer() {
+    typedef int(__thiscall * device_fn)(void *device);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xC8))(device_);
+    }
+    return 0;
+}
+
+int __fastcall wave_is_hwbuffer_redirect(Wave *self, void *) {
+    return self->is_hwbuffer();
+}
+
+/*
+Purpose: Ask the wrapped device for a time value through its vtable slot 0xB4,
+         passing the query argument on.
+Original Offset: 004C6FD0
+Return Value: the device's answer, or 0 when no device is wrapped
+Status: Complete
+*/
+int Wave::get_time(uint32_t a1) {
+    typedef int(__thiscall * device_fn)(void *device, uint32_t a1);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xB4))(device_,
+                                                                      a1);
+    }
+    return 0;
+}
+
+int __fastcall wave_get_time_redirect(Wave *self, void *, uint32_t a1) {
+    return self->get_time(a1);
+}
+
+/*
+Purpose: Ask the wrapped device for the current marker through its vtable
+         slot 0xB8.
+Original Offset: 004C6FF0
+Return Value: the device's answer, or -1 when no device is wrapped
+Status: Complete
+*/
+int Wave::get_current_marker() {
+    typedef int(__thiscall * device_fn)(void *device);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xB8))(device_);
+    }
+    return -1;
+}
+
+int __fastcall wave_get_current_marker_redirect(Wave *self, void *) {
+    return self->get_current_marker();
+}
+
+/*
+Purpose: Ask the wrapped device for the game window handle through its vtable
+         slot 0x3C.
+Original Offset: 004C7010
+Return Value: the device's answer, or 0 when no device is wrapped
+Status: Complete
+*/
+int Wave::get_game_hwnd() {
+    typedef int(__thiscall * device_fn)(void *device);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0x3C))(device_);
+    }
+    return 0;
+}
+
+int __fastcall wave_get_game_hwnd_redirect(Wave *self, void *) {
+    return self->get_game_hwnd();
+}
+
+/*
+Purpose: Ask the wrapped device for the device count through its vtable
+         slot 0xBC.
+Original Offset: 004C7020
+Return Value: the device's answer, or 0 when no device is wrapped
+Status: Complete
+*/
+int Wave::get_ndevices() {
+    typedef int(__thiscall * device_fn)(void *device);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xBC))(device_);
+    }
+    return 0;
+}
+
+int __fastcall wave_get_ndevices_redirect(Wave *self, void *) {
+    return self->get_ndevices();
+}
+
+/*
+Purpose: Unknown. The original chases the pointer chain that starts at the
+         wrapped device and continues through each node's own 0x3C slot until
+         it runs out, reads nothing else, and always answers 1. The argument
+         is ignored.
+Original Offset: 004C7080
+Return Value: 1, always
+Status: Complete
+*/
+int Wave::UNK1(int) {
+    uint8_t *cursor = static_cast<uint8_t *>(device_);
+    while (cursor) {
+        cursor = *reinterpret_cast<uint8_t **>(cursor + 0x3C);
+    }
+    return 1;
+}
+
+int __fastcall wave_unk1_redirect(Wave *self, void *, int a1) {
+    return self->UNK1(a1);
+}
+
+/*
+Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
+         wrapped device is told through its vtable slot 0xE0.
+Original Offset: 004C70A0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave::set_reverb_mix(float a1) {
+    reverb_mix_ = a1;
+    if (device_) {
+        typedef int(__thiscall * device_fn)(void *device, float a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0xE0))(device_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_set_reverb_mix_redirect(Wave *self, void *, float a1) {
+    return self->set_reverb_mix(a1);
+}
+
+/*
+Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
+         wave is 3D positioned.
+Original Offset: 004C7250
+Return Value: the device's answer, or 0 when no device is wrapped (the
+              original defines only AL on that path; callers test the byte)
+Status: Complete
+*/
+int Wave::is_3d() {
+    typedef int(__thiscall * device_fn)(void *device);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xDC))(device_);
+    }
+    return 0;
+}
+
+int __fastcall wave_is_3d_redirect(Wave *self, void *) {
+    return self->is_3d();
+}
+
+/*
+Purpose: Describe a device into the caller's buffer through the wrapped
+         device's vtable slot 0xC0. With no device the buffer is terminated
+         to an empty string - but only when the third argument is nonzero,
+         and without any null check on the buffer - and the answer is 1.
+Original Offset: 004C7040
+Return Value: the device's answer, or 1 when no device is wrapped
+Status: Complete
+*/
+int Wave::get_device_description(char *a1, int a2, int a3) {
+    typedef int(__thiscall * device_fn)(void *device, char *a1, int a2,
+                                        int a3);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xC0))(
+            device_, a1, a2, a3);
+    }
+    if (a3) {
+        *a1 = '\0';
+    }
+    return 1;
+}
+
+int __fastcall wave_get_device_description_redirect(Wave *self, void *,
+                                                    char *a1, int a2, int a3) {
+    return self->get_device_description(a1, a2, a3);
+}
+
+/*
+Purpose: Position the wave in 3D through the wrapped device's vtable
+         slot 0xCC.
+Original Offset: 004C7190
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave::set_position3d(float a1, float a2, float a3) {
+    typedef int(__thiscall * device_fn)(void *device, float a1, float a2,
+                                        float a3);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xCC))(
+            device_, a1, a2, a3);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_set_position3d_redirect(Wave *self, void *, float a1,
+                                            float a2, float a3) {
+    return self->set_position3d(a1, a2, a3);
+}
+
+/*
+Purpose: Set the wave's X position through the wrapped device's vtable
+         slot 0xD0.
+Original Offset: 004C71C0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave::set_xpos(float a1) {
+    typedef int(__thiscall * device_fn)(void *device, float a1);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xD0))(device_,
+                                                                      a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_set_xpos_redirect(Wave *self, void *, float a1) {
+    return self->set_xpos(a1);
+}
+
+/*
+Purpose: Set the wave's Y position through the wrapped device's vtable
+         slot 0xD4.
+Original Offset: 004C71F0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave::set_ypos(float a1) {
+    typedef int(__thiscall * device_fn)(void *device, float a1);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xD4))(device_,
+                                                                      a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1) {
+    return self->set_ypos(a1);
+}
+
+/*
+Purpose: Set the wave's Z position through the wrapped device's vtable
+         slot 0xD8.
+Original Offset: 004C7220
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave::set_zpos(float a1) {
+    typedef int(__thiscall * device_fn)(void *device, float a1);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_fn *>(device_vtable + 0xD8))(device_,
+                                                                      a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_set_zpos_redirect(Wave *self, void *, float a1) {
+    return self->set_zpos(a1);
+}
+
+/*
+Purpose: Store the attribute mask into the wave's own fields, then tell the
+         wrapped device through its vtable slot 0x6C. Bit 1 of the mask sets
+         the dword at 0x30; the other bits map onto the flag byte at 0x54
+         (bit 0 -> 1, bit 2 -> 2, bit 6 -> 8, bit 7 -> 0x10, and - only when
+         bit 2 is clear - bit 4 -> 4 and bit 8 -> 0x20). Bits already set at
+         0x54 are never cleared.
+Original Offset: 004C6F20
+Return Value: n/a
+Status: Complete
+*/
+void Wave::set_attrib(uint32_t a1) {
+    typedef int(__thiscall * device_fn)(void *device, uint32_t a1);
+    if (a1 & 2) {
+        field_30_ = 1;
+    }
+    if (a1 & 1) {
+        flags_54_ |= 1;
+    }
+    if (a1 & 4) {
+        flags_54_ |= 2;
+    }
+    if (a1 & 0x40) {
+        flags_54_ |= 8;
+    }
+    if (a1 & 0x80) {
+        flags_54_ |= 0x10;
+    }
+    if (!(a1 & 4) && (a1 & 0x10)) {
+        flags_54_ |= 4;
+    }
+    if (!(a1 & 4) && (a1 & 0x100)) {
+        flags_54_ |= 0x20;
+    }
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        (*reinterpret_cast<device_fn *>(device_vtable + 0x6C))(device_, a1);
+    }
+}
+
+void __fastcall wave_set_attrib_redirect(Wave *self, void *, uint32_t a1) {
+    self->set_attrib(a1);
+}
+
+/*
+Purpose: Compose the attribute mask back out of the wave's own fields, OR-ed
+         over whatever the wrapped device answers through its vtable
+         slot 0x70 (0 with no device). The mapping inverts set_attrib's:
+         the dword at 0x30 -> bit 1, and the 0x54 flag byte's bits
+         1 -> 0, 8 -> 6, 2 -> 2, 4 -> 4, 0x10 -> 7, 0x20 -> 8.
+Original Offset: 004C6F80
+Return Value: the composed attribute mask
+Status: Complete
+*/
+int Wave::get_attrib() {
+    int result = 0;
+    if (device_) {
+        typedef int(__thiscall * device_fn)(void *device);
+        result = (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x70))(device_);
+    }
+    if (field_30_) {
+        result |= 2;
+    }
+    const uint8_t flags = flags_54_;
+    if (flags & 1) {
+        result |= 1;
+    }
+    if (flags & 8) {
+        result |= 0x40;
+    }
+    if (flags & 2) {
+        result |= 4;
+    }
+    if (flags & 4) {
+        result |= 0x10;
+    }
+    if (flags & 0x10) {
+        result |= 0x80;
+    }
+    if (flags & 0x20) {
+        result |= 0x100;
+    }
+    return result;
+}
+
+int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
+    return self->get_attrib();
+}
+
 // The destructor's dependencies. pull_from_group is the Wave_Device method at
 // 0x004C5280 with its singleton receiver at 0x0090D978; the buffer free goes
 // to the game CRT's operator delete so the block returns to the heap that

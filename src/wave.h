@@ -51,6 +51,21 @@ class DLLEXPORT Wave {
   int get_ms_length();
   int is_playing();
   int play(int a1);
+  int is_hwbuffer();
+  int get_time(uint32_t a1);
+  int get_current_marker();
+  int get_game_hwnd();
+  int get_ndevices();
+  int UNK1(int a1);
+  int set_reverb_mix(float a1);
+  int is_3d();
+  int get_device_description(char *a1, int a2, int a3);
+  int set_position3d(float a1, float a2, float a3);
+  int set_xpos(float a1);
+  int set_ypos(float a1);
+  int set_zpos(float a1);
+  void set_attrib(uint32_t a1);
+  int get_attrib();
  private:
   uint32_t vtable_storage_;      // 0x00
   uint32_t field_4_;
@@ -68,7 +83,7 @@ class DLLEXPORT Wave {
   uint8_t flags_54_;             // 0x54, bit 1 suppresses the vtable callback
   uint8_t pad_55_[3];
   int32_t pitch_;                // 0x58, clamped semitone offset
-  uint32_t field_5C_;
+  float reverb_mix_;             // 0x5C, stored by set_reverb_mix
   int32_t ms_length_;            // 0x60, playing length in milliseconds
   uint32_t start_time_;          // 0x64, timeGetTime stamp when playing began
   uint32_t group_slot_;          // 0x68, pulled from its device group when < 0x10
@@ -96,6 +111,21 @@ extern func_time_get_time **WaveTimeGetTimeSlot;
 
 int __fastcall wave_is_playing_redirect(Wave *self, void *);
 int __fastcall wave_play_redirect(Wave *self, void *, int a1);
+int __fastcall wave_is_hwbuffer_redirect(Wave *self, void *);
+int __fastcall wave_get_time_redirect(Wave *self, void *, uint32_t a1);
+int __fastcall wave_get_current_marker_redirect(Wave *self, void *);
+int __fastcall wave_get_game_hwnd_redirect(Wave *self, void *);
+int __fastcall wave_get_ndevices_redirect(Wave *self, void *);
+int __fastcall wave_unk1_redirect(Wave *self, void *, int a1);
+int __fastcall wave_set_reverb_mix_redirect(Wave *self, void *, float a1);
+int __fastcall wave_is_3d_redirect(Wave *self, void *);
+int __fastcall wave_get_device_description_redirect(Wave *self, void *, char *a1, int a2, int a3);
+int __fastcall wave_set_position3d_redirect(Wave *self, void *, float a1, float a2, float a3);
+int __fastcall wave_set_xpos_redirect(Wave *self, void *, float a1);
+int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1);
+int __fastcall wave_set_zpos_redirect(Wave *self, void *, float a1);
+void __fastcall wave_set_attrib_redirect(Wave *self, void *, uint32_t a1);
+int __fastcall wave_get_attrib_redirect(Wave *self, void *);
 
 // The destructor's dependencies, each rebindable for the leaf tests. A wave
 // still holding one of the 0x10 device group slots is pulled from its group

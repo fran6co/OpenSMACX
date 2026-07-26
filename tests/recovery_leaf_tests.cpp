@@ -9595,6 +9595,32 @@ int __thiscall observe_wave_device_play(void *self, int arg) {
     ++g_wave_playm_calls;
     return g_wave_playm_ret;
 }
+// Shared observers for the wrapped-device forwarder family: one per arity,
+// armed one vtable slot at a time so an off-slot dispatch faults on null.
+void *g_wave_fam_self;
+uint32_t g_wave_fam_args[3];
+int g_wave_fam_calls;
+int g_wave_fam_ret;
+int __thiscall observe_wave_dev0(void *self) {
+    g_wave_fam_self = self;
+    ++g_wave_fam_calls;
+    return g_wave_fam_ret;
+}
+int __thiscall observe_wave_dev1(void *self, uint32_t a1) {
+    g_wave_fam_self = self;
+    g_wave_fam_args[0] = a1;
+    ++g_wave_fam_calls;
+    return g_wave_fam_ret;
+}
+int __thiscall observe_wave_dev3(void *self, uint32_t a1, uint32_t a2,
+                                 uint32_t a3) {
+    g_wave_fam_self = self;
+    g_wave_fam_args[0] = a1;
+    g_wave_fam_args[1] = a2;
+    g_wave_fam_args[2] = a3;
+    ++g_wave_fam_calls;
+    return g_wave_fam_ret;
+}
 void *g_wave_dtor_release_dev;
 int g_wave_dtor_release_calls;
 uint32_t g_wave_dtor_release_seen_vtable;
@@ -9794,6 +9820,242 @@ void test_wave_play() {
     g_wave_playm_ret = 9;
     expect(wave_play_redirect(wave, nullptr, 6) == 9);
     expect(g_wave_playm_arg == 6);
+}
+
+void test_wave_device_forwarders() {
+    // The rest of the wrapped-device family: each method dispatches through
+    // one device vtable slot with the device as receiver, or answers a fixed
+    // default with no device. Slots and defaults vary per method; nothing
+    // here writes the object except set_reverb_mix (0x5C) and set_attrib
+    // (0x30 and the 0x54 flag byte).
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+
+    void *dev_vtable[64];
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    auto arm = [&](size_t slot, void *fn) {
+        std::memset(dev_vtable, 0, sizeof(dev_vtable));
+        dev_vtable[slot / 4] = fn;
+        g_wave_fam_calls = 0;
+    };
+    auto set_device = [&](void *d) { std::memcpy(obj + 0x3C, &d, 4); };
+    auto bits_of = [](float f) {
+        uint32_t b;
+        std::memcpy(&b, &f, 4);
+        return b;
+    };
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set_device(&fake_dev);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    // --- the pure forwarders, device path: result verbatim, receiver the
+    // device, argument dwords passed through ---
+    arm(0xC8, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x1101;
+    expect(wave->is_hwbuffer() == 0x1101);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev);
+
+    arm(0xB8, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x1102;
+    expect(wave->get_current_marker() == 0x1102);
+    expect(g_wave_fam_calls == 1);
+
+    arm(0x3C, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x1103;
+    expect(wave->get_game_hwnd() == 0x1103);
+    expect(g_wave_fam_calls == 1);
+
+    arm(0xBC, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x1104;
+    expect(wave->get_ndevices() == 0x1104);
+    expect(g_wave_fam_calls == 1);
+
+    arm(0xDC, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x1105;
+    expect(wave->is_3d() == 0x1105);
+    expect(g_wave_fam_calls == 1);
+
+    arm(0xB4, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x1106;
+    expect(wave->get_time(0xCAFE) == 0x1106);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 0xCAFE);
+
+    arm(0xD0, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x1107;
+    expect(wave->set_xpos(2.5f) == 0x1107);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == bits_of(2.5f));
+
+    arm(0xD4, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x1108;
+    expect(wave->set_ypos(-3.25f) == 0x1108);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == bits_of(-3.25f));
+
+    arm(0xD8, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x1109;
+    expect(wave->set_zpos(0.5f) == 0x1109);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == bits_of(0.5f));
+
+    arm(0xCC, reinterpret_cast<void *>(&observe_wave_dev3));
+    g_wave_fam_ret = 0x110A;
+    expect(wave->set_position3d(1.0f, 2.0f, 3.0f) == 0x110A);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == bits_of(1.0f) &&
+           g_wave_fam_args[1] == bits_of(2.0f) &&
+           g_wave_fam_args[2] == bits_of(3.0f));
+
+    char descr_buf[4] = {'Z', 'Z', 'Z', 'Z'};
+    arm(0xC0, reinterpret_cast<void *>(&observe_wave_dev3));
+    g_wave_fam_ret = 0x110B;
+    expect(wave->get_device_description(descr_buf, 0x22, 0x33) == 0x110B);
+    expect(g_wave_fam_calls == 1 &&
+           g_wave_fam_args[0] == reinterpret_cast<uintptr_t>(descr_buf) &&
+           g_wave_fam_args[1] == 0x22 && g_wave_fam_args[2] == 0x33);
+    expect(descr_buf[0] == 'Z');  // the device path never touches the buffer
+
+    // None of the above wrote the object.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // --- the pure forwarders, no-device defaults ---
+    set_device(nullptr);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_wave_fam_calls = 0;
+    expect(wave->is_hwbuffer() == 0);
+    expect(wave->get_current_marker() == -1);
+    expect(wave->get_game_hwnd() == 0);
+    expect(wave->get_ndevices() == 0);
+    expect(wave->is_3d() == 0);
+    expect(wave->get_time(1) == 0);
+    expect(wave->set_xpos(1.0f) == 0x14);
+    expect(wave->set_ypos(1.0f) == 0x14);
+    expect(wave->set_zpos(1.0f) == 0x14);
+    expect(wave->set_position3d(1.0f, 1.0f, 1.0f) == 0x14);
+    expect(g_wave_fam_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // get_device_description with no device: the buffer is terminated - one
+    // byte only - but only when the third argument is nonzero.
+    std::memcpy(descr_buf, "ZZZ", 4);
+    expect(wave->get_device_description(descr_buf, 5, 0) == 1);
+    expect(descr_buf[0] == 'Z');
+    expect(wave->get_device_description(descr_buf, 5, 9) == 1);
+    expect(descr_buf[0] == '\0' && descr_buf[1] == 'Z');
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // --- UNK1: chases the +0x3C chain from the device until null, answers 1,
+    // ignores its argument ---
+    expect(wave->UNK1(0x7777) == 1);  // no device: immediate
+    uint8_t node_a[0x40] = {};
+    uint8_t node_b[0x40] = {};
+    void *link = node_b;
+    std::memcpy(node_a + 0x3C, &link, 4);  // a -> b -> null
+    // Poison offset 0 of both nodes with self-loops: a walk that follows the
+    // wrong offset never terminates instead of luckily reading a null.
+    void *self_a = node_a;
+    void *self_b = node_b;
+    std::memcpy(node_a, &self_a, 4);
+    std::memcpy(node_b, &self_b, 4);
+    set_device(node_a);
+    expect(wave->UNK1(-5) == 1);
+    set_device(nullptr);
+
+    // --- set_reverb_mix: stores the value at 0x5C on BOTH paths ---
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave->set_reverb_mix(7.75f) == 0x14);  // no device
+    {
+        const uint32_t bits = bits_of(7.75f);
+        std::memcpy(expected.data() + 16 + 0x5C, &bits, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    set_device(&fake_dev);
+    arm(0xE0, reinterpret_cast<void *>(&observe_wave_dev1));
+    g_wave_fam_ret = 0x110C;
+    expect(wave->set_reverb_mix(-1.5f) == 0x110C);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == bits_of(-1.5f));
+    {
+        const uint32_t bits = bits_of(-1.5f);
+        std::memcpy(expected.data() + 16 + 0x5C, &bits, 4);
+        void *d = &fake_dev;
+        std::memcpy(expected.data() + 16 + 0x3C, &d, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // --- set_attrib: per-bit mapping onto the 0x54 flag byte ---
+    const struct { uint32_t a1; uint8_t fl; } set_map[] = {
+        {0x001, 0x01}, {0x004, 0x02}, {0x040, 0x08},
+        {0x080, 0x10}, {0x010, 0x04}, {0x100, 0x20},
+        // bit 2 suppresses the bit-4 and bit-8 mappings
+        {0x014, 0x02}, {0x104, 0x02},
+    };
+    set_device(nullptr);
+    for (const auto &c : set_map) {
+        obj[0x54] = 0;
+        wave->set_attrib(c.a1);
+        expect(obj[0x54] == c.fl);
+    }
+    // Bits already set are never cleared, and bit 1 arms the dword at 0x30.
+    obj[0x54] = 0xC0;
+    uint32_t before_30;
+    std::memcpy(&before_30, obj + 0x30, 4);
+    wave->set_attrib(2);
+    expect(obj[0x54] == 0xC0);
+    uint32_t after_30;
+    std::memcpy(&after_30, obj + 0x30, 4);
+    expect(after_30 == 1 && before_30 != 1);
+    // The device hears the raw mask through slot 0x6C.
+    set_device(&fake_dev);
+    arm(0x6C, reinterpret_cast<void *>(&observe_wave_dev1));
+    wave->set_attrib(0x181);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 0x181);
+    expect(obj[0x54] == (0xC0 | 0x01 | 0x10 | 0x20));
+
+    // --- get_attrib: inverse mapping, OR-ed over the device's answer ---
+    const struct { uint8_t fl; int out; } get_map[] = {
+        {0x01, 0x001}, {0x02, 0x004}, {0x04, 0x010},
+        {0x08, 0x040}, {0x10, 0x080}, {0x20, 0x100},
+    };
+    set_device(nullptr);
+    std::memset(obj + 0x30, 0, 4);
+    for (const auto &c : get_map) {
+        obj[0x54] = c.fl;
+        expect(wave->get_attrib() == c.out);
+    }
+    obj[0x54] = 0;
+    std::memcpy(obj + 0x30, "\x05\x00\x00\x00", 4);
+    expect(wave->get_attrib() == 2);  // any nonzero 0x30 dword reads as bit 1
+    // Device path: its answer is the base the fields OR onto.
+    set_device(&fake_dev);
+    arm(0x70, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x10000;
+    obj[0x54] = 0x3F;
+    expect(wave->get_attrib() == (0x10000 | 2 | 0x1D5));
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev);
+
+    // --- redirect entries ---
+    set_device(nullptr);
+    expect(wave_is_hwbuffer_redirect(wave, nullptr) == 0);
+    expect(wave_get_time_redirect(wave, nullptr, 2) == 0);
+    expect(wave_get_current_marker_redirect(wave, nullptr) == -1);
+    expect(wave_get_game_hwnd_redirect(wave, nullptr) == 0);
+    expect(wave_get_ndevices_redirect(wave, nullptr) == 0);
+    expect(wave_unk1_redirect(wave, nullptr, 3) == 1);
+    expect(wave_set_reverb_mix_redirect(wave, nullptr, 1.0f) == 0x14);
+    expect(wave_is_3d_redirect(wave, nullptr) == 0);
+    char rbuf[2] = {'Q', 'Q'};
+    expect(wave_get_device_description_redirect(wave, nullptr, rbuf, 1, 1) ==
+           1);
+    expect(rbuf[0] == '\0');
+    expect(wave_set_position3d_redirect(wave, nullptr, 1, 2, 3) == 0x14);
+    expect(wave_set_xpos_redirect(wave, nullptr, 1) == 0x14);
+    expect(wave_set_ypos_redirect(wave, nullptr, 1) == 0x14);
+    expect(wave_set_zpos_redirect(wave, nullptr, 1) == 0x14);
+    obj[0x54] = 0;
+    std::memset(obj + 0x30, 0, 4);
+    wave_set_attrib_redirect(wave, nullptr, 1);
+    expect(obj[0x54] == 1);
+    expect(wave_get_attrib_redirect(wave, nullptr) == 1);
 }
 
 void test_wave_destructor() {
@@ -16718,5 +16980,6 @@ int main() {
     test_fx_and_font_queue_dtors();
     test_wave_destructor();
     test_wave_play();
+    test_wave_device_forwarders();
     return failures == 0 ? 0 : 1;
 }

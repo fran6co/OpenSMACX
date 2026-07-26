@@ -1803,27 +1803,12 @@ P2,16221,0x004C66E0,??0Wave@@QAE@XZ,239,16,2,unrecovered,,,2,entry_range,entry_r
 P0,1002220,0x004C67C0,??1Wave@@QAE@XZ,333,2,2,source_complete,ui_dependency,recover_wave_destructor,2,entry_range,entry_range,
 P1,20221,0x004C6920,?play@Wave@@QAEHXZ,141,20,2,unrecovered,,,2,exact,exact,int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
 P2,5621,0x004C69B0,?init@Wave@@QAEXPADK@Z,293,5,6,unrecovered,,,2,exact,exact,"void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)"
-P3,11,0x004C6AE0,?is_hwbuffer@Wave@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?is_hwbuffer@Wave@@QAEHXZ)(Wave* this)
 P3,411,0x004C6B60,?set_fname@Wave@@QAEHPBD@Z,75,0,4,unrecovered,,,1,missing,exact,"int (__thiscall ?set_fname@Wave@@QAEHPBD@Z)(Wave* this, int8*)"
 P3,11,0x004C6BB0,?dyna_load@Wave@@QAEHPAD@Z,106,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)"
 P3,4121,0x004C6C20,?load@Wave@@QAEHPBD@Z,184,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?load@Wave@@QAEHPBD@Z)(Wave* this, int8*)"
 P3,3121,0x004C6CE0,?load@Wave@@QAEHXZ,204,3,1,unrecovered,,,2,exact,exact,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
 P3,21,0x004C6DF0,?reload@Wave@@QAEHXZ,165,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this)
-P3,21,0x004C6F20,?set_attrib@Wave@@QAEXK@Z,96,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_attrib@Wave@@QAEXK@Z)(Wave* this, unsigned int)"
-P3,21,0x004C6F80,?get_attrib@Wave@@QAEHXZ,74,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?get_attrib@Wave@@QAEHXZ)(Wave* this)
-P3,21,0x004C6FD0,?get_time@Wave@@QAEHI@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_time@Wave@@QAEHI@Z)(Wave* this, unsigned int)"
-P3,11,0x004C6FF0,?get_current_marker@Wave@@QAEHXZ,19,0,0,unrecovered,,,1,start_only,missing,int (__thiscall ?get_current_marker@Wave@@QAEHXZ)(Wave* this)
-P3,11,0x004C7010,?get_game_hwnd@Wave@@QAEHXZ,15,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_game_hwnd@Wave@@QAEHXZ)(Wave* this)
-P3,11,0x004C7020,?get_ndevices@Wave@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_ndevices@Wave@@QAEHXZ)(Wave* this)
-P3,21,0x004C7040,?get_device_description@Wave@@QAEHPADHH@Z,56,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_device_description@Wave@@QAEHPADHH@Z)(Wave* this, int8*, int, int)"
-P3,1,0x004C7080,?UNK1@Wave@@QAEHH@Z,22,0,0,unrecovered,,,0,missing,missing,"int (__thiscall ?UNK1@Wave@@QAEHH@Z)(Wave* this, int)"
-P3,21,0x004C70A0,?set_reverb_mix@Wave@@QAEHM@Z,38,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_reverb_mix@Wave@@QAEHM@Z)(Wave* this, float)"
 P2,5121,0x004C7130,?set_volume@Wave@@QAEXH@Z,93,5,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_volume@Wave@@QAEXH@Z)(Wave* this, int)"
-P3,21,0x004C7190,?set_position3d@Wave@@QAEHMMM@Z,43,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_position3d@Wave@@QAEHMMM@Z)(Wave* this, float, float, float)"
-P3,21,0x004C71C0,?set_xpos@Wave@@QAEHM@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_xpos@Wave@@QAEHM@Z)(Wave* this, float)"
-P3,21,0x004C71F0,?set_ypos@Wave@@QAEHM@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_ypos@Wave@@QAEHM@Z)(Wave* this, float)"
-P3,21,0x004C7220,?set_zpos@Wave@@QAEHM@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_zpos@Wave@@QAEHM@Z)(Wave* this, float)"
-P3,11,0x004C7250,?is_3d@Wave@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?is_3d@Wave@@QAEHXZ)(Wave* this)
 P3,110,0x004C7270,sub_4c7270,46,0,1,unrecovered,,,1,missing,exact,
 P3,120,0x004C72A0,sub_4c72a0,85,0,1,unrecovered,,,2,exact,exact,
 P3,110,0x004C7300,sub_4c7300,115,0,1,unrecovered,,,1,missing,exact,
