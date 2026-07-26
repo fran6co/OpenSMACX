@@ -22,6 +22,8 @@
 #include "buffer.h"
 #include "buttongroup.h"
 #include "caviar.h"
+#include "font.h"
+#include "fx.h"
 #include "sprite.h"
 #include "texture.h"
 #include "wave.h"
@@ -29,8 +31,6 @@
 func_wave_destructor *WaveOriginalDestructor =
     (func_wave_destructor *)0x004C67C0;
 
-func_vector_dtor_iterator *VectorDtorIterator =
-    (func_vector_dtor_iterator *)0x006456E4;
 
 // Per-element teardowns the array walks dispatch to. The Wave one binds
 // the same address as WaveOriginalDestructor deliberately: it is the same
@@ -85,6 +85,7 @@ Wave *g_MENU_DOWN_WAVE = (Wave *)0x0074D960;
 Wave *g_SCOOT_WAVE = (Wave *)0x00749C18;
 Wave *g_OK_WAVE = (Wave *)0x0074D8F0;
 Wave *g_PASSOVER_WAVE = (Wave *)0x0074D9D0;
+FX *g_FX = (FX *)0x00749CF8;
 Buffer *g_PCX_PARSE_TEMP_BUFFER1 = (Buffer *)0x00798668;
 FactionArt *FactionArtGlobal = (FactionArt *)0x0078E978;
 Sprite *g_IFACE_CLOSE_X_SPRITES = (Sprite *)0x007794D8;
@@ -374,11 +375,14 @@ Sprite *g_UNUSED_SPRITE_VAR82 = (Sprite *)0x007ACB58;
 Sprite *g_UNUSED_SPRITE_VAR83 = (Sprite *)0x007ACC20;
 Sprite *g_BASEWIN_SPRITES = (Sprite *)0x0077A5C8;
 Wave *g_MAININTERFACE_WAVE = (Wave *)0x007D38B8;
+Font *g_JACKAL_FONT = (Font *)0x007D3948;
 Sprite *g_IFACE_GREEN_RIGHT_ARROW_SPRITE = (Sprite *)0x007F67C8;
 Wave *g_MULTIWIN_WAVE = (Wave *)0x007FFF00;
 ButtonGroup *g_PREFWIN_BUTTONGROUP = (ButtonGroup *)0x008577F0;
 Buffer *g_VEHDRAW_BUFFER = (Buffer *)0x008CC298;
 Sprite *g_CURSOR_SPRITES = (Sprite *)0x0093AA70;
+FontQueue *g_FONTQUEUE_VAL2 = (FontQueue *)0x0093FB88;
+FontQueue *g_FONTQUEUE_VAL1 = (FontQueue *)0x0093FAE8;
 Wave *g_TOP_MENU_WAVE = (Wave *)0x00945780;
 Font *g_FONTS = (Font *)0x0093FC58;
 Wave *g_CRASH_LANDING_WAVE = (Wave *)0x00945E08;
@@ -714,6 +718,16 @@ Status: Complete
 */
 void __cdecl destroy_passover_wave() {
     WaveOriginalDestructor(g_PASSOVER_WAVE);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FX.
+Original Offset: 004455B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_fx() {
+    g_FX->~FX();
 }
 
 /*
@@ -3607,6 +3621,16 @@ void __cdecl destroy_maininterface_wave() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_JACKAL_FONT.
+Original Offset: 0045F940
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_jackal_font() {
+    g_JACKAL_FONT->~Font();
+}
+
+/*
 Purpose: Atexit teardown thunk for g_IFACE_GREEN_RIGHT_ARROW_SPRITE.
 Original Offset: 00471380
 Return Value: n/a
@@ -3654,6 +3678,26 @@ Status: Complete
 */
 void __cdecl destroy_cursor_sprites() {
     VectorDtorIterator(g_CURSOR_SPRITES, 0x2C, 12, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FONTQUEUE_VAL2.
+Original Offset: 00559250
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_fontqueue_val2() {
+    g_FONTQUEUE_VAL2->~FontQueue();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FONTQUEUE_VAL1.
+Original Offset: 00559280
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_fontqueue_val1() {
+    g_FONTQUEUE_VAL1->~FontQueue();
 }
 
 /*

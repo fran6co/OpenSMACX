@@ -143,6 +143,7 @@ address,kind
 0x00445520,jump
 0x00445550,jump
 0x00445580,jump
+0x004455B0,jump
 0x00447220,jump
 0x00447230,jump
 0x00447240,jump
@@ -161,6 +162,7 @@ address,kind
 0x00447CA0,jump
 0x00447CB0,jump
 0x00447CC0,jump
+0x00448290,jump
 0x0044C880,jump
 0x0044C910,jump
 0x0044C940,jump
@@ -475,6 +477,7 @@ address,kind
 0x0045D160,jump
 0x0045EB60,jump
 0x0045EB70,jump
+0x0045F940,jump
 0x00462970,jump
 0x00467960,jump
 0x0046EBA0,jump
@@ -641,6 +644,9 @@ address,kind
 0x00530320,jump
 0x00558FC0,jump
 0x00559040,jump
+0x00559250,jump
+0x00559280,jump
+0x0055B740,jump
 0x0055BC00,jump
 0x00584D20,jump
 0x005882D0,jump

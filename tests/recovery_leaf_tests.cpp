@@ -33,6 +33,7 @@
 #include "../src/filewin.h"
 #include "../src/wave.h"
 #include "../src/atexit_thunks.h"
+#include "../src/fx.h"
 #include "../src/battlewin.h"
 #include "../src/councwin.h"
 #include "../src/credits.h"
@@ -15756,6 +15757,16 @@ const AtexitThunkCase g_atexit_group_cases[] = {
 const AtexitThunkCase g_atexit_battlewin_cases[] = {
     {&destroy_battlewin, &g_BattleWin},
 };
+const AtexitThunkCase g_atexit_fx_cases[] = {
+    {&destroy_fx, &g_FX},
+};
+const AtexitThunkCase g_atexit_fontqueue_cases[] = {
+    {&destroy_fontqueue_val2, &g_FONTQUEUE_VAL2},
+    {&destroy_fontqueue_val1, &g_FONTQUEUE_VAL1},
+};
+const AtexitThunkCase g_atexit_font_cases[] = {
+    {&destroy_jackal_font, &g_JACKAL_FONT},
+};
 struct AtexitArrayCase {
     void(__cdecl *thunk)();
     void *slot;
@@ -15905,6 +15916,7 @@ void test_atexit_teardown_thunks() {
     int memory_used = 0;
     SpriteMemoryUsed = &memory_used;
 
+    auto *const saved_iterator = VectorDtorIterator;
     for (const AtexitThunkCase &entry : g_atexit_sprite_cases) {
         alignas(4) uint8_t fake[sizeof(Sprite)] = {};
         int sentinel = 0;
@@ -15970,7 +15982,6 @@ void test_atexit_teardown_thunks() {
     // call must carry the rebound array, the exact element size and count,
     // and the rebound per-element teardown - proving the body reads all four
     // seams rather than any baked literal.
-    auto *const saved_iterator = VectorDtorIterator;
     VectorDtorIterator = &observe_vector_dtor;
     for (const AtexitArrayCase &entry : g_atexit_array_cases) {
         alignas(4) uint8_t fake[4] = {};
@@ -16020,6 +16031,50 @@ void test_atexit_teardown_thunks() {
         *slot = saved;
     }
 
+    // FX and FontQueue teardowns hand their member-array walk to the vector
+    // iterator; the observed array base must be the rebound global. Sizes and
+    // counts are pinned by the destructors' own suites.
+    VectorDtorIterator = &observe_vector_dtor;
+    for (const AtexitThunkCase &entry : g_atexit_fx_cases) {
+        alignas(4) uint8_t fake[sizeof(FX)];
+        auto **slot = static_cast<FX **>(entry.slot);
+        FX *const saved = *slot;
+        *slot = reinterpret_cast<FX *>(fake);
+        g_vector_calls = 0;
+        entry.thunk();
+        expect(g_vector_calls == 1);
+        expect(g_vector_array_seen == fake);
+        *slot = saved;
+    }
+    for (const AtexitThunkCase &entry : g_atexit_fontqueue_cases) {
+        alignas(4) uint8_t fake[sizeof(FontQueue)];
+        auto **slot = static_cast<FontQueue **>(entry.slot);
+        FontQueue *const saved = *slot;
+        *slot = reinterpret_cast<FontQueue *>(fake);
+        g_vector_calls = 0;
+        entry.thunk();
+        expect(g_vector_calls == 1);
+        expect(g_vector_array_seen == fake);
+        *slot = saved;
+    }
+    VectorDtorIterator = saved_iterator;
+
+    // The Font teardown runs the suite's Font::close double, whose writes to
+    // the rebound object are themselves the observation.
+    for (const AtexitThunkCase &entry : g_atexit_font_cases) {
+        alignas(4) uint8_t fake[sizeof(Font)];
+        uint8_t untouched[sizeof(Font)];
+        seed_storage(fake, untouched, sizeof(fake));
+        auto **slot = static_cast<Font **>(entry.slot);
+        Font *const saved = *slot;
+        *slot = reinterpret_cast<Font *>(fake);
+        entry.thunk();
+        int32_t first = 0;
+        std::memcpy(&first, fake, 4);
+        expect(first == -1);               // the double's signature write
+        *slot = saved;
+    }
+
     // The BattleWin teardown is the Time member at +8, observed through the
     // suite's Time::close double recording its receiver.
     for (const AtexitThunkCase &entry : g_atexit_battlewin_cases) {
@@ -16061,6 +16116,53 @@ void test_battle_win_dtor() {
     expect_storage_bytes(storage, expected, sizeof(storage));
     battle_win_dtor_redirect(win, nullptr);
     expect(time_close_calls == 2);
+}
+
+void test_fx_and_font_queue_dtors() {
+    // Both destructors hand a member-array walk to the vector iterator with
+    // the object itself as the array base: FX walks 0x61 Wave-shaped effects
+    // of 0x6C bytes, FontQueue walks its three 0x28-byte Font slots. The
+    // observer pins all four arguments, and the teardown argument must be
+    // whatever the element seam currently holds - rebound here - rather than
+    // any baked address.
+    auto *const saved_iterator = VectorDtorIterator;
+    VectorDtorIterator = &observe_vector_dtor;
+
+    alignas(4) uint8_t fx_storage[sizeof(FX)];
+    auto *fx = reinterpret_cast<FX *>(fx_storage);
+    func_thiscall_teardown *const saved_effect = EffectElementTeardown;
+    EffectElementTeardown =
+        reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel);
+    g_vector_calls = 0;
+    fx->~FX();
+    expect(g_vector_calls == 1);
+    expect(g_vector_array_seen == fx_storage);
+    expect(g_vector_size_seen == 0x6C);
+    expect(g_vector_count_seen == 0x61);
+    expect(g_vector_teardown_seen ==
+           reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel));
+    fx_dtor_redirect(fx, nullptr);
+    expect(g_vector_calls == 2);
+    EffectElementTeardown = saved_effect;
+
+    alignas(4) uint8_t queue_storage[sizeof(FontQueue)];
+    auto *queue = reinterpret_cast<FontQueue *>(queue_storage);
+    func_thiscall_teardown *const saved_font = FontQueueElementTeardown;
+    FontQueueElementTeardown =
+        reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel);
+    g_vector_calls = 0;
+    queue->~FontQueue();
+    expect(g_vector_calls == 1);
+    expect(g_vector_array_seen == queue_storage);
+    expect(g_vector_size_seen == 0x28);
+    expect(g_vector_count_seen == 3);
+    expect(g_vector_teardown_seen ==
+           reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel));
+    font_queue_dtor_redirect(queue, nullptr);
+    expect(g_vector_calls == 2);
+    FontQueueElementTeardown = saved_font;
+
+    VectorDtorIterator = saved_iterator;
 }
 
 int main() {
@@ -16238,5 +16340,6 @@ int main() {
     test_pop_pops_forwarders();
     test_atexit_teardown_thunks();
     test_battle_win_dtor();
+    test_fx_and_font_queue_dtors();
     return failures == 0 ? 0 : 1;
 }

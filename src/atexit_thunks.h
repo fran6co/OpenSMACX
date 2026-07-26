@@ -22,8 +22,10 @@ class BattleWin;
 class Buffer;
 class ButtonGroup;
 class CaviarData;
+class FX;
 struct FactionArt;
 class Font;
+class FontQueue;
 class Sprite;
 class TextIndex;
 class Texture;
@@ -51,21 +53,7 @@ typedef void(__thiscall func_wave_destructor)(Wave *wave);
 #endif
 extern func_wave_destructor *WaveOriginalDestructor;
 
-// The CRT's vector destructor iterator walks a global array, calling one
-// teardown per element; array thunks forward to it with their array, element
-// size, count, and per-element teardown, all held as rebindable seams.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
-typedef void(__thiscall func_thiscall_teardown)(void *object);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-typedef void(__stdcall func_vector_dtor_iterator)(
-    void *array, unsigned int element_size, int count,
-    func_thiscall_teardown *teardown);
-extern func_vector_dtor_iterator *VectorDtorIterator;
+#include "vector_teardown.h"
 extern func_thiscall_teardown *BufferElementTeardown;
 extern func_thiscall_teardown *CaviarDataElementTeardown;
 extern func_thiscall_teardown *FactionArtElementTeardown;
@@ -108,6 +96,7 @@ extern Wave *g_MENU_DOWN_WAVE;
 extern Wave *g_SCOOT_WAVE;
 extern Wave *g_OK_WAVE;
 extern Wave *g_PASSOVER_WAVE;
+extern FX *g_FX;
 extern Buffer *g_PCX_PARSE_TEMP_BUFFER1;
 extern FactionArt *FactionArtGlobal;
 extern Sprite *g_IFACE_CLOSE_X_SPRITES;
@@ -397,11 +386,14 @@ extern Sprite *g_UNUSED_SPRITE_VAR82;
 extern Sprite *g_UNUSED_SPRITE_VAR83;
 extern Sprite *g_BASEWIN_SPRITES;
 extern Wave *g_MAININTERFACE_WAVE;
+extern Font *g_JACKAL_FONT;
 extern Sprite *g_IFACE_GREEN_RIGHT_ARROW_SPRITE;
 extern Wave *g_MULTIWIN_WAVE;
 extern ButtonGroup *g_PREFWIN_BUTTONGROUP;
 extern Buffer *g_VEHDRAW_BUFFER;
 extern Sprite *g_CURSOR_SPRITES;
+extern FontQueue *g_FONTQUEUE_VAL2;
+extern FontQueue *g_FONTQUEUE_VAL1;
 extern Wave *g_TOP_MENU_WAVE;
 extern Font *g_FONTS;
 extern Wave *g_CRASH_LANDING_WAVE;
@@ -442,6 +434,7 @@ DLLEXPORT void __cdecl destroy_menu_down_wave();
 DLLEXPORT void __cdecl destroy_scoot_wave();
 DLLEXPORT void __cdecl destroy_ok_wave();
 DLLEXPORT void __cdecl destroy_passover_wave();
+DLLEXPORT void __cdecl destroy_fx();
 DLLEXPORT void __cdecl destroy_pcx_parse_temp_buffer1();
 DLLEXPORT void __cdecl destroy_factionart();
 DLLEXPORT void __cdecl destroy_iface_close_x_sprites();
@@ -731,11 +724,14 @@ DLLEXPORT void __cdecl destroy_unused_sprite_var82();
 DLLEXPORT void __cdecl destroy_unused_sprite_var83();
 DLLEXPORT void __cdecl destroy_basewin_sprites();
 DLLEXPORT void __cdecl destroy_maininterface_wave();
+DLLEXPORT void __cdecl destroy_jackal_font();
 DLLEXPORT void __cdecl destroy_iface_green_right_arrow_sprite();
 DLLEXPORT void __cdecl destroy_multiwin_wave();
 DLLEXPORT void __cdecl destroy_prefwin_buttongroup();
 DLLEXPORT void __cdecl destroy_vehdraw_buffer();
 DLLEXPORT void __cdecl destroy_cursor_sprites();
+DLLEXPORT void __cdecl destroy_fontqueue_val2();
+DLLEXPORT void __cdecl destroy_fontqueue_val1();
 DLLEXPORT void __cdecl destroy_top_menu_wave();
 DLLEXPORT void __cdecl destroy_fonts();
 DLLEXPORT void __cdecl destroy_crash_landing_wave();

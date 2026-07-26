@@ -79,6 +79,9 @@ DOMAINS = {
     "??1Buffer@@QAE@XZ": ("Buffer", "buffer.h", "->destroy()"),
     "?close@ButtonGroup@@QAEXXZ": ("ButtonGroup", "buttongroup.h", "->close()"),
     "??1BattleWin@@QAE@XZ": ("BattleWin", "battlewin.h", "->~BattleWin()"),
+    "??1FX@@QAE@XZ": ("FX", "fx.h", "->~FX()"),
+    "??1FontQueue@@QAE@XZ": ("FontQueue", "font.h", "->~FontQueue()"),
+    "??1Font@@QAE@XZ": ("Font", "font.h", "->~Font()"),
 }
 
 # The CRT's vector destructor iterator: walk an array, calling one teardown
@@ -225,21 +228,7 @@ def render_header(rows) -> str:
     lines.append("#endif")
     lines.append("extern func_wave_destructor *WaveOriginalDestructor;")
     lines.append("")
-    lines.append("""// The CRT's vector destructor iterator walks a global array, calling one
-// teardown per element; array thunks forward to it with their array, element
-// size, count, and per-element teardown, all held as rebindable seams.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
-typedef void(__thiscall func_thiscall_teardown)(void *object);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-typedef void(__stdcall func_vector_dtor_iterator)(
-    void *array, unsigned int element_size, int count,
-    func_thiscall_teardown *teardown);
-extern func_vector_dtor_iterator *VectorDtorIterator;""")
+    lines.append('#include "vector_teardown.h"')
     teardowns = sorted({row["teardown_name"] for row in rows
                         if row["target_name"] == VECTOR_DTOR_NAME})
     for name in teardowns:
@@ -270,8 +259,6 @@ def render_source(rows) -> str:
     lines.append("func_wave_destructor *WaveOriginalDestructor =")
     lines.append(f"    (func_wave_destructor *)0x{WAVE_DESTRUCTOR_ADDRESS:08X};")
     lines.append("")
-    lines.append("func_vector_dtor_iterator *VectorDtorIterator =")
-    lines.append(f"    (func_vector_dtor_iterator *)0x{VECTOR_DTOR_ADDRESS:08X};")
     teardown_addresses = {}
     for row in rows:
         if row["target_name"] == VECTOR_DTOR_NAME:
@@ -329,7 +316,10 @@ def render_tests(rows) -> str:
             ("??1Wave@@QAE@XZ", "g_atexit_wave_cases"),
             ("??1Buffer@@QAE@XZ", "g_atexit_buffer_cases"),
             ("?close@ButtonGroup@@QAEXXZ", "g_atexit_group_cases"),
-            ("??1BattleWin@@QAE@XZ", "g_atexit_battlewin_cases")):
+            ("??1BattleWin@@QAE@XZ", "g_atexit_battlewin_cases"),
+            ("??1FX@@QAE@XZ", "g_atexit_fx_cases"),
+            ("??1FontQueue@@QAE@XZ", "g_atexit_fontqueue_cases"),
+            ("??1Font@@QAE@XZ", "g_atexit_font_cases")):
         out.append(f"const AtexitThunkCase {table}[] = {{")
         for row in cases(target_name):
             out.append(f"    {{&destroy_{snake(row['global_name'])}, "
@@ -392,6 +382,7 @@ void test_atexit_teardown_thunks() {
     int memory_used = 0;
     SpriteMemoryUsed = &memory_used;
 
+    auto *const saved_iterator = VectorDtorIterator;
     for (const AtexitThunkCase &entry : g_atexit_sprite_cases) {
         alignas(4) uint8_t fake[sizeof(Sprite)] = {};
         int sentinel = 0;
@@ -457,7 +448,6 @@ void test_atexit_teardown_thunks() {
     // call must carry the rebound array, the exact element size and count,
     // and the rebound per-element teardown - proving the body reads all four
     // seams rather than any baked literal.
-    auto *const saved_iterator = VectorDtorIterator;
     VectorDtorIterator = &observe_vector_dtor;
     for (const AtexitArrayCase &entry : g_atexit_array_cases) {
         alignas(4) uint8_t fake[4] = {};
@@ -504,6 +494,50 @@ void test_atexit_teardown_thunks() {
         entry.thunk();
         reinterpret_cast<ButtonGroup *>(twin)->close();
         expect_storage_bytes(fake, twin, sizeof(fake));
+        *slot = saved;
+    }
+
+    // FX and FontQueue teardowns hand their member-array walk to the vector
+    // iterator; the observed array base must be the rebound global. Sizes and
+    // counts are pinned by the destructors' own suites.
+    VectorDtorIterator = &observe_vector_dtor;
+    for (const AtexitThunkCase &entry : g_atexit_fx_cases) {
+        alignas(4) uint8_t fake[sizeof(FX)];
+        auto **slot = static_cast<FX **>(entry.slot);
+        FX *const saved = *slot;
+        *slot = reinterpret_cast<FX *>(fake);
+        g_vector_calls = 0;
+        entry.thunk();
+        expect(g_vector_calls == 1);
+        expect(g_vector_array_seen == fake);
+        *slot = saved;
+    }
+    for (const AtexitThunkCase &entry : g_atexit_fontqueue_cases) {
+        alignas(4) uint8_t fake[sizeof(FontQueue)];
+        auto **slot = static_cast<FontQueue **>(entry.slot);
+        FontQueue *const saved = *slot;
+        *slot = reinterpret_cast<FontQueue *>(fake);
+        g_vector_calls = 0;
+        entry.thunk();
+        expect(g_vector_calls == 1);
+        expect(g_vector_array_seen == fake);
+        *slot = saved;
+    }
+    VectorDtorIterator = saved_iterator;
+
+    // The Font teardown runs the suite's Font::close double, whose writes to
+    // the rebound object are themselves the observation.
+    for (const AtexitThunkCase &entry : g_atexit_font_cases) {
+        alignas(4) uint8_t fake[sizeof(Font)];
+        uint8_t untouched[sizeof(Font)];
+        seed_storage(fake, untouched, sizeof(fake));
+        auto **slot = static_cast<Font **>(entry.slot);
+        Font *const saved = *slot;
+        *slot = reinterpret_cast<Font *>(fake);
+        entry.thunk();
+        int32_t first = 0;
+        std::memcpy(&first, fake, 4);
+        expect(first == -1);               // the double's signature write
         *slot = saved;
     }
 

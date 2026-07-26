@@ -69,6 +69,28 @@ extern int *FontSizeTable;
 extern Font *FontTable;
 constexpr size_t FontSizeTableCount = 12;
 
+/*
+ * FontQueue - three Font slots torn down together.
+ *
+ * The destructor walks 3 elements of 0x28 bytes from +0 through the CRT
+ * vector iterator with the Font destructor as the per-element teardown, which
+ * both types the slots and confirms sizeof(Font) = 0x28. Nothing pins more
+ * than the 0x78 the walk covers.
+ */
+class DLLEXPORT FontQueue {
+ public:
+  FontQueue() { ; }
+  ~FontQueue();
+
+ private:
+  uint8_t fonts_[3 * 0x28];
+};
+
+#include "vector_teardown.h"
+extern func_thiscall_teardown *FontQueueElementTeardown;
+
+void __fastcall font_queue_dtor_redirect(FontQueue *self, void *);
+
 DLLEXPORT Font *__cdecl find_font(int size, int style);
 #endif
 

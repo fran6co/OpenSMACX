@@ -86,6 +86,7 @@
 #include "font.h"
 #include "atexit_thunks.h"
 #include "flatbutton.h"
+#include "fx.h"
 #include "game.h"
 #include "graphicwin.h"
 #include "scroll.h"
@@ -107,7 +108,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 954;
+constexpr size_t RedirectCount = 960;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -943,6 +944,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00445580,
         },
         {
+            0x004455B0,
+            reinterpret_cast<uintptr_t>(&destroy_fx),
+            OPENSMACX_SIGNATURE_004455B0,
+        },
+        {
             0x00447220,
             reinterpret_cast<uintptr_t>(&faction_ambience_begin_redirect),
             OPENSMACX_SIGNATURE_00447220,
@@ -1031,6 +1037,11 @@ bool install_redirects() {
             0x00447CC0,
             reinterpret_cast<uintptr_t>(&g_ambience_eot_redirect),
             OPENSMACX_SIGNATURE_00447CC0,
+        },
+        {
+            0x00448290,
+            reinterpret_cast<uintptr_t>(&fx_dtor_redirect),
+            OPENSMACX_SIGNATURE_00448290,
         },
         {
             0x0044C880,
@@ -2598,6 +2609,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0045EB70,
         },
         {
+            0x0045F940,
+            reinterpret_cast<uintptr_t>(&destroy_jackal_font),
+            OPENSMACX_SIGNATURE_0045F940,
+        },
+        {
             0x00462970,
             reinterpret_cast<uintptr_t>(&map_win_unk2_redirect),
             OPENSMACX_SIGNATURE_00462970,
@@ -3371,6 +3387,21 @@ bool install_redirects() {
             0x00559040,
             reinterpret_cast<uintptr_t>(&popup_start_label_value_redirect),
             OPENSMACX_SIGNATURE_00559040,
+        },
+        {
+            0x00559250,
+            reinterpret_cast<uintptr_t>(&destroy_fontqueue_val2),
+            OPENSMACX_SIGNATURE_00559250,
+        },
+        {
+            0x00559280,
+            reinterpret_cast<uintptr_t>(&destroy_fontqueue_val1),
+            OPENSMACX_SIGNATURE_00559280,
+        },
+        {
+            0x0055B740,
+            reinterpret_cast<uintptr_t>(&font_queue_dtor_redirect),
+            OPENSMACX_SIGNATURE_0055B740,
         },
         {
             0x00584D20,

@@ -45,9 +45,11 @@ do_video,platform_service,recover_video_pump,Separate video processing from Win3
 draw_map,game_service,recover_map_render,Separate map-state updates from presentation
 draw_radius,game_service,recover_map_render,Separate radius state from map presentation
 EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
+EffectElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown the recovered FX bank destructor passes to the vector iterator; a jump thunk onto the Wave destructor and retires with it
 FactionArtElementTeardown,ui_dependency,recover_faction_art_teardown,Per-element teardown the recovered array thunk passes to the vector iterator until the FactionArt destructor is source-owned
 fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction after map loading
 FontElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the Font destructor jump thunk is source-owned
+FontQueueElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered FontQueue destructor passes to the vector iterator; binds the recovered Font destructor's original entry and retires with FontElementTeardown
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 line_timer,timer_callback,recover_timer_callback,Replace line animation callback
 ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
