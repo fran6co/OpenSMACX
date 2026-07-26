@@ -338,19 +338,31 @@ def main():
             "prototype": function["prototype"],
         })
 
-    priorities.sort(key=lambda row: (
-        0 if row["priority"] == "P0" else 1,
-        -row["score"],
-        int(row["address"], 0),
-    ))
-    for rank, row in enumerate(priorities, start=1):
-        row["rank"] = rank
+    # Address order on disk, rank derived on demand.
+    #
+    # This file used to be written in rank order with a stored `rank` column,
+    # and between them those made every recovery rewrite most of it: recovering
+    # one function drops it out of the catalog, which shifts the rank of every
+    # row below it and moves rows bodily up the file. A typical batch produced a
+    # 4,200-line diff carrying perhaps a dozen lines of information, which
+    # buried the rows that actually changed.
+    #
+    # Address order is stable under a state change, so the committed diff now
+    # shows just the functions a batch touched. Nothing is lost: rank is a pure
+    # function of (priority, -score, address), all three of which are still
+    # columns, so the single consumer recomputes it from the same key.
+    priorities.sort(key=lambda row: int(row["address"], 0))
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     correlation_fields = list(correlated[0])
     write_csv(args.output_dir / "analysis-correlation.csv", correlation_fields, correlated)
+    # `rank` is not a column here. It is a function of (priority, -score,
+    # address), so storing it would commit a value derived from the other
+    # columns - and one that shifts for every row past any function whose state
+    # changed, which is what made this file churn. The single consumer
+    # recomputes it from the same key.
     priority_fields = [
-        "rank", "priority", "score", "address", "name", "size", "caller_count",
+        "priority", "score", "address", "name", "size", "caller_count",
         "call_target_count", "recovery_state", "binding_category", "binding_strategy",
         "analysis_entry_agreement", "ida9_relation", "ghidra_relation", "prototype",
     ]

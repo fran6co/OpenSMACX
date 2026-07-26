@@ -743,6 +743,11 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_disasm.py"
     )
+
+    add_test(NAME delegate-analysis-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_analyze_delegates.py"
+    )
 endif()
 
 install(TARGETS OpenSMACX

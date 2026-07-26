@@ -246,6 +246,15 @@ def build_function_map(pe, source, functions_path, priorities_path, summary_path
 
     functions = {row["address"]: row for row in function_rows}
     correlations = {row["address"]: row for row in correlation_rows}
+    # priorities.csv is committed in address order so its diffs stay readable,
+    # and the rank it used to carry is derived rather than stored. Recompute it
+    # here from the same key the catalog is ranked by.
+    ranked = sorted(priorities, key=lambda row: (
+        0 if row["priority"] == "P0" else 1,
+        -int(row["score"]),
+        int(row["address"], 0),
+    ))
+    ranks = {row["address"]: index for index, row in enumerate(ranked, start=1)}
     priority_addresses = [row["address"] for row in priorities]
     if len(functions) != len(function_rows):
         raise RuntimeError("canonical inventory contains duplicate addresses")
@@ -354,7 +363,7 @@ def build_function_map(pe, source, functions_path, priorities_path, summary_path
             "mapping_state": mapping_state,
             "name": function["name"],
             "priority": priority["priority"],
-            "rank": int(priority["rank"]),
+            "rank": ranks[function["address"]],
             "recovery_state": function["recovery_state"],
             "source_address": source_address if mapping_state == "mapped" else None,
         })
