@@ -2430,7 +2430,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C69B0,0x004C6AD5,293,.text,?init@Wave@@QAEXPADK@Z,"void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)",0x004C69B0-0x004C6AD5,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,5
 0x004C6AE0,0x004C6AF2,18,.text,?is_hwbuffer@Wave@@QAEHXZ,int (__thiscall ?is_hwbuffer@Wave@@QAEHXZ)(Wave* this),0x004C6AE0-0x004C6AF2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C6B00,0x004C6B04,4,.text,?get_ms_length@Wave@@QAEHXZ,int (__thiscall ?get_ms_length@Wave@@QAEHXZ)(Wave* this),0x004C6B00-0x004C6B04,game,sp_ready;purged_ok,src/wave.cpp:196,Complete,,,source_complete,,,,0,0
-0x004C6B10,0x004C6B53,67,.text,?is_playing@Wave@@QAEHXZ,int (__thiscall ?is_playing@Wave@@QAEHXZ)(Wave* this),0x004C6B10-0x004C6B53,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,5
+0x004C6B10,0x004C6B53,67,.text,?is_playing@Wave@@QAEHXZ,int (__thiscall ?is_playing@Wave@@QAEHXZ)(Wave* this),0x004C6B10-0x004C6B53,game,sp_ready;purged_ok,src/wave.cpp:220,Complete,,,source_complete,,,,0,5
 0x004C6B60,0x004C6BAB,75,.text,?set_fname@Wave@@QAEHPBD@Z,"int (__thiscall ?set_fname@Wave@@QAEHPBD@Z)(Wave* this, int8*)",0x004C6B60-0x004C6BAB,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,0
 0x004C6BB0,0x004C6C1A,106,.text,?dyna_load@Wave@@QAEHPAD@Z,"int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)",0x004C6BB0-0x004C6C1A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C6C20,0x004C6CD8,184,.text,?load@Wave@@QAEHPBD@Z,"int (__thiscall ?load@Wave@@QAEHPBD@Z)(Wave* this, int8*)",0x004C6C20-0x004C6CD8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4

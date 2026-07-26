@@ -267,6 +267,7 @@ address,kind
 0x004C6690,jump
 0x004C66A0,jump
 0x004C6B00,jump
+0x004C6B10,jump
 0x004C6DB0,jump
 0x004C6EA0,jump
 0x004C6EE0,jump

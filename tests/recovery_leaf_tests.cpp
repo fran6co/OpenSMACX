@@ -9541,6 +9541,145 @@ void __thiscall observe_timer_proc(InfoWin *self, int arg) {
 }
 }  // namespace
 
+namespace {
+int g_wave_play_dev_calls;
+void *g_wave_play_dev_self;
+int g_wave_play_dev_ret;
+int __thiscall observe_wave_device_is_playing(void *self) {
+    g_wave_play_dev_self = self;
+    ++g_wave_play_dev_calls;
+    return g_wave_play_dev_ret;
+}
+int g_wave_time_calls;
+DWORD g_wave_time_value;
+DWORD __stdcall observe_wave_time_get_time(void) {
+    ++g_wave_time_calls;
+    return g_wave_time_value;
+}
+}  // namespace
+
+void test_wave_is_playing() {
+    // is_playing lets a wrapped device at 0x3C answer for itself through the
+    // device's own vtable slot 0x5C. With no device it times the wave against
+    // the clock: bit 4 of the flag byte at 0x54 arms it, a zero start stamp at
+    // 0x64 means it never began, and the stored length at 0x60 is compared
+    // UNSIGNED against the elapsed time.
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    auto *wave = reinterpret_cast<Wave *>(storage.data() + 16);
+    uint8_t *const obj = storage.data() + 16;
+
+    // Poison the neighbouring slots: an off-by-one dispatch faults rather than
+    // silently landing on another observer.
+    void *dev_vtable[32] = {};
+    dev_vtable[0x5C / 4] = reinterpret_cast<void *>(&observe_wave_device_is_playing);
+    dev_vtable[0x58 / 4] = nullptr;
+    dev_vtable[0x60 / 4] = nullptr;
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+
+    func_time_get_time *time_fn = &observe_wave_time_get_time;
+    func_time_get_time **const saved_slot = WaveTimeGetTimeSlot;
+    WaveTimeGetTimeSlot = &time_fn;
+
+    auto set_device = [&](void *d) { std::memcpy(obj + 0x3C, &d, sizeof(d)); };
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+
+    // A wrapped device answers, with itself as the receiver, and its result is
+    // returned verbatim rather than normalised to 0/1.
+    set_device(&fake_dev);
+    obj[0x54] = 0;
+    set32(0x60, 0);
+    set32(0x64, 0);
+    g_wave_play_dev_calls = g_wave_time_calls = 0;
+    g_wave_play_dev_ret = 0x2A;
+    expect(wave->is_playing() == 0x2A);
+    expect(g_wave_play_dev_calls == 1 && g_wave_play_dev_self == &fake_dev);
+    expect(g_wave_time_calls == 0);          // the clock is not consulted
+
+    // The device wins over every clock input: armed flag, live stamp, long
+    // length, and it still returns the device's own answer.
+    obj[0x54] = 0x10;
+    set32(0x60, 1000);
+    set32(0x64, 1);
+    g_wave_play_dev_calls = g_wave_time_calls = 0;
+    g_wave_play_dev_ret = 0;
+    expect(wave->is_playing() == 0);
+    expect(g_wave_play_dev_calls == 1);
+    expect(g_wave_time_calls == 0);
+
+    // No device and the arming bit clear: 0, and the clock is never read.
+    set_device(nullptr);
+    obj[0x54] = 0xEF;                        // every bit but 4
+    set32(0x60, 1000);
+    set32(0x64, 1);
+    g_wave_time_calls = 0;
+    expect(wave->is_playing() == 0);
+    expect(g_wave_time_calls == 0);
+
+    // Bit 4 alone arms it; the other bits are irrelevant either way.
+    obj[0x54] = 0x10;
+    set32(0x64, 0);                          // never started
+    g_wave_time_calls = 0;
+    expect(wave->is_playing() == 0);
+    expect(g_wave_time_calls == 0);          // the zero stamp short-circuits
+
+    // Started and still inside the length: playing.
+    obj[0x54] = 0xFF;
+    set32(0x60, 1000);
+    set32(0x64, 5000);
+    g_wave_time_value = 5999;                // elapsed 999
+    g_wave_time_calls = 0;
+    expect(wave->is_playing() == 1);
+    expect(g_wave_time_calls == 1);
+
+    // The boundary is `jbe`: elapsed == length is finished, one less is not.
+    g_wave_time_value = 6000;                // elapsed 1000 == length
+    expect(wave->is_playing() == 0);
+    g_wave_time_value = 5000;                // elapsed 0
+    expect(wave->is_playing() == 1);
+
+    // The comparison is unsigned, so a negative stored length reads as an
+    // enormous one rather than as already finished.
+    set32(0x60, 0xFFFFFFFFu);
+    g_wave_time_value = 5000u + 0x7FFFFFFFu;
+    expect(wave->is_playing() == 1);
+
+    // The subtraction is unsigned too: a clock that has wrapped below the
+    // stamp yields a huge elapsed, not a negative one.
+    set32(0x60, 1000);
+    set32(0x64, 0xFFFFFF00u);
+    g_wave_time_value = 4;                   // wrapped; elapsed 0x104
+    expect(wave->is_playing() == 1);
+    g_wave_time_value = 0xFFFFFEFFu;         // one tick before the stamp
+    expect(wave->is_playing() == 0);         // elapsed 0xFFFFFFFF
+
+    // Nothing above writes to the object. Seeding comes first: it fills every
+    // byte, including the device pointer at 0x3C, so the fields the clock path
+    // needs have to be written after it and snapshotted after that.
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set_device(nullptr);
+    obj[0x54] = 0x10;
+    set32(0x60, 1000);
+    set32(0x64, 5000);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_wave_time_value = 5500;
+    wave->is_playing();
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Redirect entry, on both branches.
+    set32(0x60, 1000);
+    set32(0x64, 5000);
+    obj[0x54] = 0x10;
+    g_wave_time_value = 5500;
+    expect(wave_is_playing_redirect(wave, nullptr) == 1);
+    set_device(&fake_dev);
+    g_wave_play_dev_ret = 0x77;
+    expect(wave_is_playing_redirect(wave, nullptr) == 0x77);
+
+    WaveTimeGetTimeSlot = saved_slot;
+}
+
 void test_delegating_closers() {
     // Popup::close has 104 callers, the most of anything left. Its Scroll sits
     // at 0x3230 - exactly sizeof(BasePop) - and Scroll::close is already
@@ -14424,5 +14563,6 @@ int main() {
     test_field_store_writes();
     test_button_group_set();
     test_delegating_closers();
+    test_wave_is_playing();
     return failures == 0 ? 0 : 1;
 }

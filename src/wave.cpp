@@ -204,3 +204,50 @@ int Wave::get_ms_length() {
 int __fastcall wave_get_ms_length_redirect(Wave *self, void *) {
     return self->get_ms_length();
 }
+
+// With no wrapped device the wave is timed against the clock. The original
+// reaches timeGetTime through `call dword ptr [0x669368]`, an indirect call
+// on an import slot, so the seam is the address of that slot rather than the
+// function: it reads the live pointer at run time exactly as the original
+// does, and stays rebindable without linking winmm into the leaf tests.
+func_time_get_time **WaveTimeGetTimeSlot =
+    reinterpret_cast<func_time_get_time **>(0x00669368);
+
+/*
+Purpose: Report whether the wave is still sounding. A wrapped device answers
+         for itself through its own vtable slot 0x5C; with no device the wave
+         is timed against the clock instead.
+Original Offset: 004C6B10
+Return Value: nonzero while playing, 0 once finished or when not started
+Status: Complete
+*/
+int Wave::is_playing() {
+    // The device answers through its live vtable rather than a C++ virtual
+    // call, and it is the receiver of that call - the original loads it into
+    // ecx first, then dispatches on `[[ecx]+0x5C]`.
+    typedef int(__thiscall * device_is_playing_fn)(void *device);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_is_playing_fn *>(
+            device_vtable + 0x5C))(device_);
+    }
+    // `shr eax, 4` then `test al, 1` on the dword at 0x54: bit 4, which lives
+    // in the low byte the header names.
+    if (!(flags_54_ & 0x10)) {
+        // The original merges here into a `test ecx, ecx` that can only fall
+        // through, because ecx is the null device it already tested. Nothing
+        // reachable follows it.
+        return 0;
+    }
+    if (start_time_ == 0) {
+        return 0;
+    }
+    const uint32_t elapsed = (*WaveTimeGetTimeSlot)() - start_time_;
+    // `cmp ecx, eax` / `jbe`: the length is compared unsigned, so a negative
+    // stored length reads as a very long one rather than as already finished.
+    return static_cast<uint32_t>(ms_length_) > elapsed ? 1 : 0;
+}
+
+int __fastcall wave_is_playing_redirect(Wave *self, void *) {
+    return self->is_playing();
+}
