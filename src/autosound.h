@@ -25,6 +25,9 @@ class DLLEXPORT AutoSound {
   AutoSound() { ; }
   ~AutoSound() { ; }
   void construct();
+  void close();
+  void close2();
+  void init();
 
  private:
   PVOID vtable_;
@@ -72,7 +75,18 @@ static_assert(sizeof(AutoSound) == 0x98,
 
 extern const uint32_t AutoSoundVtable;
 extern uint32_t *AutoSoundDefaults;
+
+// The game CRT operator delete the scalar deleting destructor frees the
+// object through; bound here rather than through wave.h so this file's
+// link closure stays self-contained.
+typedef void(__cdecl func_auto_sound_delete)(void *block);
+extern func_auto_sound_delete *AutoSoundOperatorDelete;
 AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *);
+void __fastcall auto_sound_close_redirect(AutoSound *self, void *);
+void __fastcall auto_sound_close2_redirect(AutoSound *self, void *);
+void __fastcall auto_sound_init_redirect(AutoSound *self, void *);
+void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
+                                                 unsigned int mode);
 
 DLLEXPORT void __cdecl do_sound();
 int __cdecl do_sound_redirect();

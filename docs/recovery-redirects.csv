@@ -848,6 +848,7 @@ address,kind
 0x005F6A40,jump
 0x005F7E90,jump
 0x005F8500,jump
+0x005F8640,jump
 0x005F86C0,jump
 0x005F88A0,jump
 0x005F8C90,jump
@@ -1023,6 +1024,9 @@ address,kind
 0x0062B870,jump
 0x0062B8A0,dependency
 0x0062BA80,jump
+0x0062BBF0,jump
+0x0062BD40,jump
+0x0062BDD0,jump
 0x0062ED30,jump
 0x006339A0,jump
 0x006339B0,jump

@@ -20,6 +20,7 @@
 
 const uint32_t AutoSoundVtable = 0x0066FF34;
 uint32_t *AutoSoundDefaults = reinterpret_cast<uint32_t *>(0x009BC080);
+func_auto_sound_delete *AutoSoundOperatorDelete = (func_auto_sound_delete *)0x0064557F;
 
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying
@@ -46,6 +47,95 @@ void AutoSound::construct() {
 
 AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {
     self->construct();
+    return self;
+}
+
+/*
+Purpose: Reset every field from the process-default block, in the same
+         legacy store order as construction but without touching the
+         virtual table.
+Original Offset: 0062BBF0
+Return Value: n/a
+Status: Complete
+*/
+void AutoSound::close() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile const uint32_t *const defaults = AutoSoundDefaults;
+    object[0x04 / 4] = defaults[0];
+    object[0x0C / 4] = defaults[1];
+    object[0x10 / 4] = defaults[2];
+    object[0x08 / 4] = defaults[3];
+    for (size_t index = 4; index < 37; ++index) {
+        object[index + 1] = defaults[index];
+    }
+}
+
+void __fastcall auto_sound_close_redirect(AutoSound *self, void *) {
+    self->close();
+}
+
+/*
+Purpose: Reset every field from the process-default block, exactly as close
+         does but storing in ascending field order - the two differ only in
+         which of the shuffled leading fields lands first.
+Original Offset: 0062BDD0
+Return Value: n/a
+Status: Complete
+*/
+void AutoSound::close2() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile const uint32_t *const defaults = AutoSoundDefaults;
+    object[0x04 / 4] = defaults[0];
+    object[0x08 / 4] = defaults[3];
+    object[0x0C / 4] = defaults[1];
+    object[0x10 / 4] = defaults[2];
+    for (size_t index = 4; index < 37; ++index) {
+        object[index + 1] = defaults[index];
+    }
+}
+
+void __fastcall auto_sound_close2_redirect(AutoSound *self, void *) {
+    self->close2();
+}
+
+/*
+Purpose: Zero every field, in the same legacy store order as construction,
+         leaving the virtual table alone.
+Original Offset: 0062BD40
+Return Value: n/a
+Status: Complete
+*/
+void AutoSound::init() {
+    // The original zeroes the fields in the same shuffled order the copies
+    // use, but a constant fill makes no order observable - one pass serves.
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    for (size_t index = 1; index < 38; ++index) {
+        object[index] = 0;
+    }
+}
+
+void __fastcall auto_sound_init_redirect(AutoSound *self, void *) {
+    self->init();
+}
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: re-install the
+         virtual table, reset the fields through close, and, when bit 0 of
+         the mode asks, free the storage to the game heap.
+Original Offset: 005F8640
+Return Value: the object pointer
+Status: Complete
+*/
+void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
+                                                 unsigned int mode) {
+    *reinterpret_cast<volatile uint32_t *>(self) = AutoSoundVtable;
+    self->close();
+    if (mode & 1) {
+        AutoSoundOperatorDelete(self);
+    }
     return self;
 }
 

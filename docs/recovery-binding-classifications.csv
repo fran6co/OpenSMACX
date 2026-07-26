@@ -115,3 +115,4 @@ WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for
 VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector constructor iterator the recovered Wave_Device constructor builds its group table through
 WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
 WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
+AutoSoundOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the AutoSound scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
