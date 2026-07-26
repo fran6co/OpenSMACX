@@ -34,3 +34,89 @@ DLLEXPORT int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
                                    int (__cdecl *callback)());
 DLLEXPORT int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
                                      int (__cdecl *callback)());
+
+/*
+ * Popup dialog helper, six-argument builder
+ *
+ * A sibling of the nine-argument popup builder above, without the sprite and
+ * the two trailing flags - the caption-less popup form. Its own forwarders
+ * default whichever combination of caption/title/override-text/flags the
+ * original call site did not need.
+ */
+typedef int (__cdecl func_x_pop_full)(char *, const char *, int, char *, int,
+                                      int (__cdecl *)());
+extern func_x_pop_full *XPopOriginalFull;
+
+DLLEXPORT int __cdecl x_pop_caption_label(char *caption, const char *label,
+                                          int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pop_value_flags(const char *label, int value, int flags,
+                                        int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pop_caption_value_flags(char *caption, const char *label,
+                                                int value, int flags,
+                                                int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pop_short(const char *label, int flags,
+                                  int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pop_caption_flags(char *caption, const char *label,
+                                          int flags, int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pop_default_caption(const char *label, int value,
+                                            char *text, int flags,
+                                            int (__cdecl *callback)());
+
+/*
+ * Popup dialog helper, nine-argument builder forwarders
+ *
+ * Each of these defaults a different subset of XPopsOriginalFull's nine
+ * arguments (caption, label, title, override text, value, sprite, the two
+ * flags, callback) to the values the original call site did not vary. Named
+ * for whichever of caption/title/override-text/value/flags each one exposes
+ * rather than defaulting.
+ */
+DLLEXPORT int __cdecl x_pops_flags(const char *label, Sprite *sprite,
+                                   int flag1, int flag2,
+                                   int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_caption_minimal(char *caption, const char *label,
+                                             Sprite *sprite,
+                                             int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_caption_flags(char *caption, const char *label,
+                                           Sprite *sprite, int flag1,
+                                           int flag2,
+                                           int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_title(const char *label, int title, int value,
+                                   Sprite *sprite,
+                                   int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_title_flags(const char *label, int title,
+                                         int value, Sprite *sprite,
+                                         int flag1, int flag2,
+                                         int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_caption_title(char *caption, const char *label,
+                                           int title, int value,
+                                           Sprite *sprite,
+                                           int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_no_text(char *caption, const char *label,
+                                     int title, int value, Sprite *sprite,
+                                     int flag1, int flag2,
+                                     int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_value_flags(const char *label, int value,
+                                         Sprite *sprite, int flag1, int flag2,
+                                         int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_caption_value(char *caption, const char *label,
+                                           int value, Sprite *sprite,
+                                           int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_caption_value_flags(char *caption,
+                                                 const char *label, int value,
+                                                 Sprite *sprite, int flag1,
+                                                 int flag2,
+                                                 int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_override_text(const char *label, int title,
+                                           char *text, int value,
+                                           Sprite *sprite,
+                                           int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_default_caption(const char *label, int title,
+                                             char *text, int value,
+                                             Sprite *sprite, int flag1,
+                                             int flag2,
+                                             int (__cdecl *callback)());
+DLLEXPORT int __cdecl x_pops_no_flags(char *caption, const char *label,
+                                      int title, char *text, int value,
+                                      Sprite *sprite,
+                                      int (__cdecl *callback)());

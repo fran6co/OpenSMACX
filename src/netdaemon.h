@@ -47,3 +47,35 @@ extern func_process_message *NetDaemonProcessMessage;
 extern void *NetDaemonNet;
 
 int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// NetDaemon::synch itself is not recovered - 4,905 bytes with its own call
+// targets, so it remains an original dependency. The fourteen synch_*
+// forwarders below all funnel into it, loading the same daemon at 0x0093CD90
+// that NetDaemonNet already binds above, and differ only in the opcode (and,
+// for synch_diplo, which of the two leading arguments carries which value).
+typedef void(__thiscall func_net_daemon_synch)(void *daemon, int16_t opcode,
+                                               int a, int b, int c, char *text,
+                                               int d, int16_t flags);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_net_daemon_synch *NetDaemonSynch;
+
+DLLEXPORT void __cdecl synch_veh(int id);
+DLLEXPORT void __cdecl synch_base(int id);
+DLLEXPORT void __cdecl synch_energy(int id);
+DLLEXPORT void __cdecl synch_researching(int id);
+DLLEXPORT void __cdecl synch_leader(int id);
+DLLEXPORT void __cdecl synch_ai(int id);
+DLLEXPORT void __cdecl synch_research(int id);
+DLLEXPORT void __cdecl synch_alloc(int id);
+DLLEXPORT void __cdecl synch_soc(int id);
+DLLEXPORT void __cdecl synch_proto(int id);
+DLLEXPORT void __cdecl synch_obs(int id);
+DLLEXPORT void __cdecl synch_diplo(int a, int b);
+DLLEXPORT void __cdecl synch_template(int id);
+DLLEXPORT void __cdecl synch_radius(int id);

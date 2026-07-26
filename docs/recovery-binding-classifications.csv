@@ -1,59 +1,4 @@
 symbol,category,strategy,notes
-BasePopExec,ui_dependency,recover_base_pop_exec,Temporary dependency for the recovered BasePop exec overloads until the two-argument exec is source-owned
-BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
-BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
-BaseWinClick,ui_dependency,recover_base_win_click,Temporary dependency for the recovered BaseWin click handlers until the shared click is source-owned
-BaseWinDrawSupported,ui_dependency,recover_base_win_draw_supported,Temporary dependency for the recovered BaseWin scroll handler until draw_supported is source-owned
-BaseWinIfaceClick,ui_dependency,recover_base_win_iface_click,Temporary dependency for the recovered BaseWin interface-click handlers until iface_click is source-owned
-BufferCopyFull,ui_dependency,recover_buffer_copy_full,Temporary dependency for the recovered five-argument Buffer copy until the seven-argument blitter is source-owned
-BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
-BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
-BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
-ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
-CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
-CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
-CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
-ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
-DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
-DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnLeftUp,ui_dependency,recover_dialogsspriteboxonleftup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightClick,ui_dependency,recover_dialogsspriteboxonrightclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightDoubleClick,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightDown,ui_dependency,recover_dialogsspriteboxonrightdown,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightUp,ui_dependency,recover_dialogsspriteboxonrightup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
-InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
-ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
-LockCurrentServer,ui_dependency,recover_current_server,Temporary dependency for the recovered Lock check_global_2 until current_server is source-owned
-LockMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered Lock check_global until message_data is source-owned
-LockSquareLock,ui_dependency,recover_square_lock_lock,Temporary dependency for the recovered Lock add_lock until SquareLock lock is source-owned
-LockSquareUnlock,ui_dependency,recover_square_lock_unlock,Temporary dependency for the recovered Lock unlock until SquareLock unlock is source-owned
-MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
-MapWinClick,ui_dependency,recover_map_win_click,Temporary dependency for the recovered MapWin click handlers until the shared click is source-owned
-MapWinFree,crt_ownership,replace_after_ownership_boundary,MapWin frees its owned buffer through the executable CRT until that ownership boundary moves
-NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
-NetDaemonNetGet,ui_dependency,recover_net_get,Temporary dependency for the recovered NetDaemon receive until Net get is source-owned
-NetDaemonProcessMessage,ui_dependency,recover_net_daemon_process_message,Temporary dependency for the recovered NetDaemon receive until process_message is source-owned
-PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
-PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
-PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
-RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered RadioButton close until Dialog close is source-owned
-ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
-SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
-SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
-StringBoxAddFixup,ui_dependency,recover_string_box_add_fixup,Temporary dependency for the recovered StringBox add until its fixup pass is source-owned
-StringBoxStructAdd,ui_dependency,recover_string_struct_add,Temporary dependency for the recovered StringBox add until StringStruct add is source-owned
-SubInterfaceOriginalReleaseIfaceMode,ui_dependency,recover_sub_interface_release_iface_mode,Temporary dependency for the recovered StatusWin reset until the interface-mode release is source-owned
-TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its owned pixel block through the executable CRT until that ownership boundary moves
-WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
-WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
-WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
-WinUpdateCursorOriginal,ui_dependency,recover_winupdatecursororiginal_body,Temporary dependency for the recovered cursor setter until the cursor refresh and its six call targets are source-owned
-WinUpdateScreenOriginal,ui_dependency,recover_winupdatescreenoriginal_body,Temporary dependency for the recovered bubble dismissal until the screen refresh and its four call targets are source-owned
-WorldWinClick,ui_dependency,recover_world_win_click,Temporary dependency for the recovered WorldWin click handlers until the shared click is source-owned
-XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
-X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
 _fgetc,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
 _fopen,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
 _fputc,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
@@ -63,27 +8,85 @@ _fwrite,crt_ownership,replace_after_file_boundary,FILE objects currently cross t
 _malloc,crt_ownership,replace_after_ownership_boundary,Allocations currently cross the executable/DLL CRT boundary
 _srand,crt_ownership,replace_with_owned_rng,Preserve original random sequence until deterministic tests exist
 alt_set,game_service,recover_map_mutation,Complete altitude mutation and dependent updates
+BasePopExec,ui_dependency,recover_base_pop_exec,Temporary dependency for the recovered BasePop exec overloads until the two-argument exec is source-owned
+BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
+BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
+BaseWinClick,ui_dependency,recover_base_win_click,Temporary dependency for the recovered BaseWin click handlers until the shared click is source-owned
+BaseWinDrawSupported,ui_dependency,recover_base_win_draw_supported,Temporary dependency for the recovered BaseWin scroll handler until draw_supported is source-owned
+BaseWinIfaceClick,ui_dependency,recover_base_win_iface_click,Temporary dependency for the recovered BaseWin interface-click handlers until iface_click is source-owned
 blink2_timer,timer_callback,recover_timer_callback,Replace secondary UI blink callback
 blink_timer,timer_callback,recover_timer_callback,Replace original UI blink callback
+BufferCopyFull,ui_dependency,recover_buffer_copy_full,Temporary dependency for the recovered five-argument Buffer copy until the seven-argument blitter is source-owned
+BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
+BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
+ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
+CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
+CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
+CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
 consider_designs,game_service,recover_ai_design,Recover AI unit design orchestration
+ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
+DatalinkExec,ui_dependency,recover_datalink_exec,Temporary dependency for the recovered help forwarders until Datalink exec is source-owned
+DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
+DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnLeftUp,ui_dependency,recover_dialogsspriteboxonleftup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightClick,ui_dependency,recover_dialogsspriteboxonrightclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightDoubleClick,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightDown,ui_dependency,recover_dialogsspriteboxonrightdown,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightUp,ui_dependency,recover_dialogsspriteboxonrightup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 do_net,platform_service,recover_network_pump,Define network dispatch service and no-network behavior
 do_non_input_,source_fallback,validate_source_implementation,Retain original fallback until Win32 message-loop behavior is tested
 do_video,platform_service,recover_video_pump,Separate video processing from Win32 message pumping
 draw_map,game_service,recover_map_render,Separate map-state updates from presentation
 draw_radius,game_service,recover_map_render,Separate radius state from map presentation
+EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
 fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction after map loading
+InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 line_timer,timer_callback,recover_timer_callback,Replace line animation callback
+ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
 load_daemon,game_service,recover_load_orchestration,Own load deserialization and state restoration
 load_faction_art,game_service,recover_faction_art,Own faction art loading and refresh state
+LockCurrentServer,ui_dependency,recover_current_server,Temporary dependency for the recovered Lock check_global_2 until current_server is source-owned
+LockMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered Lock check_global until message_data is source-owned
+LockSquareLock,ui_dependency,recover_square_lock_lock,Temporary dependency for the recovered Lock add_lock until SquareLock lock is source-owned
+LockSquareUnlock,ui_dependency,recover_square_lock_unlock,Temporary dependency for the recovered Lock unlock until SquareLock unlock is source-owned
+MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
 mapwin_terrain_fixup,game_service,recover_map_render,Replace map-window terrain cache updates
+MapWinClick,ui_dependency,recover_map_win_click,Temporary dependency for the recovered MapWin click handlers until the shared click is source-owned
+MapWinFree,crt_ownership,replace_after_ownership_boundary,MapWin frees its owned buffer through the executable CRT until that ownership boundary moves
+NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
+NetDaemonNetGet,ui_dependency,recover_net_get,Temporary dependency for the recovered NetDaemon receive until Net get is source-owned
+NetDaemonProcessMessage,ui_dependency,recover_net_daemon_process_message,Temporary dependency for the recovered NetDaemon receive until process_message is source-owned
+NetDaemonSynch,ui_dependency,recover_net_daemon_synch,Temporary dependency for the recovered synch forwarders until the network synch builder is source-owned
 parse_string_OG,source_fallback,finish_source_implementation,Remove fallback after parse_string differential tests pass
 popb,game_service,recover_script_popup,Replace base popup orchestration
 popp,game_service,recover_script_popup,Replace parameterized popup orchestration
+PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
+PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
+PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered RadioButton close until Dialog close is source-owned
 save_daemon,game_service,recover_save_orchestration,Own save serialization and filesystem lifecycle
+ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
 social_set,game_service,recover_social_model,Complete social model state application
+SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
+SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+StringBoxAddFixup,ui_dependency,recover_string_box_add_fixup,Temporary dependency for the recovered StringBox add until its fixup pass is source-owned
+StringBoxStructAdd,ui_dependency,recover_string_struct_add,Temporary dependency for the recovered StringBox add until StringStruct add is source-owned
+SubInterfaceOriginalReleaseIfaceMode,ui_dependency,recover_sub_interface_release_iface_mode,Temporary dependency for the recovered StatusWin reset until the interface-mode release is source-owned
 tech_val_OG,legacy_diagnostic,preserve_exported_diagnostic,Staged patching redirects tech_val so comparison is useful only with an unpatched executable
+TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its owned pixel block through the executable CRT until that ownership boundary moves
 turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
 wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
 wave_it,game_service,recover_audio_event,Route game audio events through a platform service
+WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
+WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
+WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
+WinUpdateCursorOriginal,ui_dependency,recover_winupdatecursororiginal_body,Temporary dependency for the recovered cursor setter until the cursor refresh and its six call targets are source-owned
+WinUpdateScreenOriginal,ui_dependency,recover_winupdatescreenoriginal_body,Temporary dependency for the recovered bubble dismissal until the screen refresh and its four call targets are source-owned
 world_rainfall,game_service,recover_world_generation,Complete deterministic rainfall generation
+WorldWinClick,ui_dependency,recover_world_win_click,Temporary dependency for the recovered WorldWin click handlers until the shared click is source-owned
+X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
+XPopOriginalFull,ui_dependency,recover_x_pop_full,Temporary dependency for the recovered caption-less popup forwarders until the six-argument builder is source-owned
+XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
