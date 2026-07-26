@@ -44,6 +44,7 @@ class DLLEXPORT Wave {
   int play();
   int load();
   int reload();
+  void init(char *a1, uint32_t a2);
   int dyna_load(char *a1);
   int load(const char *a1);
 
@@ -143,6 +144,7 @@ int __fastcall wave_reload_redirect(Wave *self, void *);
 int __fastcall wave_dyna_load_redirect(Wave *self, void *, char *a1);
 int __fastcall wave_load_fname_redirect(Wave *self, void *, const char *a1);
 Wave *__fastcall wave_ctor_redirect(Wave *self, void *);
+void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2);
 
 // The destructor's dependencies, each rebindable for the leaf tests. A wave
 // still holding one of the 0x10 device group slots is pulled from its group

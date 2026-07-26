@@ -610,6 +610,7 @@ address,kind
 0x004C67C0,jump
 0x004C68F0,jump
 0x004C6920,jump
+0x004C69B0,jump
 0x004C6AE0,jump
 0x004C6B00,jump
 0x004C6B10,jump

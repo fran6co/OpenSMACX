@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 329,
       "original_dependency": 92,
-      "source_complete": 1490,
+      "source_complete": 1491,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4054
+      "unrecovered": 4053
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1436,
-    "matched_function_starts": 1436,
-    "unique_addresses": 1436,
+    "annotations": 1437,
+    "matched_function_starts": 1437,
+    "unique_addresses": 1437,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -6994,7 +6994,7 @@
         "function": "??2@YAPAXI@Z",
         "function_address": "0x0064558A",
         "kind": "function",
-        "location": "src/wave.cpp:651",
+        "location": "src/wave.cpp:652",
         "symbol": "WaveOperatorNew",
         "type": "func_operator_new *"
       },
@@ -7003,7 +7003,7 @@
         "function": "?is_group_disabled@Wave_Device@@QAEHI@Z",
         "function_address": "0x004C5460",
         "kind": "function",
-        "location": "src/wave.cpp:653",
+        "location": "src/wave.cpp:654",
         "symbol": "WaveDeviceIsGroupDisabled",
         "type": "func_wave_device_is_group_disabled *"
       },
@@ -7012,7 +7012,7 @@
         "function": "?load@Wave@@QAEHXZ",
         "function_address": "0x004C6CE0",
         "kind": "function",
-        "location": "src/wave.cpp:654",
+        "location": "src/wave.cpp:655",
         "symbol": "WaveOriginalLoad",
         "type": "func_wave_original_load *"
       },
@@ -7021,7 +7021,7 @@
         "function": "?load@Sound@@QAEHPBD@Z",
         "function_address": "0x004C6280",
         "kind": "function",
-        "location": "src/wave.cpp:775",
+        "location": "src/wave.cpp:776",
         "symbol": "SoundOriginalLoad",
         "type": "func_sound_original_load *"
       },
@@ -7030,7 +7030,7 @@
         "function": "?set_type@Sound@@QAEXI@Z",
         "function_address": "0x004C61E0",
         "kind": "function",
-        "location": "src/wave.cpp:1037",
+        "location": "src/wave.cpp:1038",
         "symbol": "SoundSetType",
         "type": "func_sound_set_type *"
       },
@@ -7039,7 +7039,7 @@
         "function": "?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z",
         "function_address": "0x004C5280",
         "kind": "function",
-        "location": "src/wave.cpp:1111",
+        "location": "src/wave.cpp:1202",
         "symbol": "WaveDevicePullFromGroup",
         "type": "func_wave_device_pull_from_group *"
       },
@@ -7048,7 +7048,7 @@
         "function": "??3@YAXPAX@Z",
         "function_address": "0x0064557F",
         "kind": "function",
-        "location": "src/wave.cpp:1113",
+        "location": "src/wave.cpp:1204",
         "symbol": "WaveOperatorDelete",
         "type": "func_operator_delete *"
       },

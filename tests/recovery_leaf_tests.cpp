@@ -108,6 +108,17 @@ void __cdecl purge_spaces(LPSTR input) {
     }
 }
 
+// Scriptable stand-in for general.cpp's filefind_get; Wave::init resolves
+// its filename through it.
+LPSTR filefind_get_result = nullptr;
+LPCSTR filefind_get_request = nullptr;
+int filefind_get_calls = 0;
+LPSTR __cdecl filefind_get(LPCSTR file_name) {
+    filefind_get_request = file_name;
+    ++filefind_get_calls;
+    return filefind_get_result;
+}
+
 void __cdecl kill_lf(LPSTR input) {
     char *newline = std::strrchr(input, '\n');
     if (newline) {
@@ -9724,6 +9735,17 @@ int __thiscall observe_wave_own_slot70(Wave *self) {
     }
     return g_wave_own70_ret;
 }
+Wave *g_wave_own48_self;
+int g_wave_own48_arg;
+int g_wave_own48_calls;
+uint32_t g_wave_own48_seen_flags;
+void __thiscall observe_wave_own_slot48(Wave *self, int arg) {
+    g_wave_own48_self = self;
+    g_wave_own48_arg = arg;
+    ++g_wave_own48_calls;
+    std::memcpy(&g_wave_own48_seen_flags,
+                reinterpret_cast<uint8_t *>(self) + 0x54, 4);
+}
 int g_wave_stype_calls;
 Wave *g_wave_stype_wave;
 uint32_t g_wave_stype_type;
@@ -9743,11 +9765,20 @@ void __thiscall observe_wave_set_type(Wave *wave, uint32_t type) {
 }
 int g_wave_own7C_calls;
 uint32_t g_wave_own7C_seen_flags;
+void *g_wave_own7C_restores_vtbl;
 void __thiscall observe_wave_own_slot7C(Wave *self) {
     ++g_wave_own7C_calls;
     // reload sets the loaded bit BEFORE this callback; witness the word.
     std::memcpy(&g_wave_own7C_seen_flags,
                 reinterpret_cast<uint8_t *>(self) + 0x40, 4);
+    if (g_wave_own7C_restores_vtbl) {
+        // Undo a poison swap installed by the 0x70 observer: init dispatches
+        // through the LIVE device vtable after this callback, so the table
+        // must be healthy again by then.
+        void *device;
+        std::memcpy(&device, reinterpret_cast<uint8_t *>(self) + 0x3C, 4);
+        std::memcpy(device, &g_wave_own7C_restores_vtbl, 4);
+    }
 }
 void *g_wave_dtor_release_dev;
 int g_wave_dtor_release_calls;
@@ -10723,6 +10754,179 @@ void test_wave_load_empty() {
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;
     SoundOriginalLoad = saved_sload;
+}
+
+void test_wave_init() {
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+    g_wave_dtor_obj = obj;
+
+    auto *const saved_delete = WaveOperatorDelete;
+    auto *const saved_new = WaveOperatorNew;
+    auto **const saved_create = WaveDeviceCreateSlot;
+    int *const saved_guard = WaveDeviceReleaseGuard;
+    func_wave_device_create *create_fn = &observe_wave_device_create;
+    int guard = 1;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+    WaveOperatorNew = &observe_wave_operator_new;
+    WaveDeviceCreateSlot = &create_fn;
+    WaveDeviceReleaseGuard = &guard;
+
+    void *dev_vtable[64];
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0x6C / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    void *own_vtable[64];
+    std::memset(own_vtable, 0, sizeof(own_vtable));
+    own_vtable[0x48 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot48);
+    own_vtable[0x70 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot70);
+    own_vtable[0x7C / 4] = reinterpret_cast<void *>(&observe_wave_own_slot7C);
+
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto setp = [&](size_t off, const void *p) {
+        std::memcpy(obj + off, &p, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *p;
+        std::memcpy(&p, obj + off, 4);
+        return p;
+    };
+    auto reset_init = [&] {
+        filefind_get_calls = 0;
+        g_wave_new_calls = g_wave_create_calls = 0;
+        g_wave_own48_calls = g_wave_own70_calls = g_wave_own7C_calls = 0;
+        g_wave_fam_calls = 0;
+        g_wave_fam_arg_log.clear();
+        g_wave_dtor_deletes.clear();
+        g_wave_dtor_delete_seen_slot.clear();
+        g_wave_create_installs = nullptr;
+        g_wave_create_ret = 0;
+        g_wave_own70_ret = 0;
+    };
+    char name_arg[] = "menu.wav";
+    char resolved_buf[] = "snd/menu.wav";
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x00, own_vtable);
+
+    // Streaming refuses the bit-4 and bit-7 modes before resolving anything.
+    reset_init();
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave->init(name_arg, 4 | 0x10);
+    wave->init(name_arg, 4 | 0x80);
+    expect(filefind_get_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // An unresolvable name changes nothing - the old filename is kept.
+    reset_init();
+    filefind_get_result = nullptr;
+    wave->init(name_arg, 1);
+    expect(filefind_get_calls == 1 &&
+           filefind_get_request == static_cast<LPCSTR>(name_arg));
+    expect(g_wave_dtor_deletes.empty() && g_wave_new_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Non-streaming, every folding bit at once: the old name goes back to
+    // the game heap, the resolved path is copied in, the flag dword is
+    // rebuilt from zero, and mode bit 1 runs the wave's own slot 0x48 with
+    // the first two flag bits already placed and the high ones not yet.
+    char old_name[4] = {'x', 0, 0, 0};
+    setp(0x4C, old_name);
+    setp(0x3C, nullptr);
+    reset_init();
+    filefind_get_result = resolved_buf;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave->init(name_arg, 0x1D3);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == old_name);
+    expect(g_wave_new_calls == 1 && g_wave_new_size == 13);
+    expect(getp(0x4C) == g_wave_new_arena);
+    expect(std::strcmp(g_wave_new_arena, "snd/menu.wav") == 0);
+    expect(g_wave_create_calls == 0 && g_wave_fam_calls == 0);
+    expect(g_wave_own48_calls == 1 && g_wave_own48_self == wave &&
+           g_wave_own48_arg == 1);
+    expect(g_wave_own48_seen_flags == 5);  // bits 0 and 2 placed, rest later
+    expect(get32(0x54) == 0x3D);
+    {
+        void *arena = g_wave_new_arena;
+        std::memcpy(expected.data() + 16 + 0x4C, &arena, 4);
+        const uint32_t flags_word = 0x3D;
+        std::memcpy(expected.data() + 16 + 0x54, &flags_word, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Streaming with no device: creation from the RESOLVED path, the
+    // captured-vtable attribute round (the 0x70 query swaps the table for a
+    // poisoned one to prove the capture came first), the wave's own 0x7C,
+    // then the raw mode mask to the live device.
+    void *poison_vtbl2[64];
+    std::memset(poison_vtbl2, 0, sizeof(poison_vtbl2));
+    setp(0x3C, nullptr);
+    setp(0x4C, nullptr);
+    reset_init();
+    g_wave_create_installs = &fake_dev;
+    g_wave_own70_ret = 0x2AA;
+    g_wave_own70_swaps_vtbl = poison_vtbl2;
+    g_wave_own7C_restores_vtbl = dev_vtable;
+    wave->init(name_arg, 4);
+    g_wave_own70_swaps_vtbl = nullptr;
+    g_wave_own7C_restores_vtbl = nullptr;
+    fake_dev.vtbl = dev_vtable;
+    expect(g_wave_create_calls == 1);
+    expect(g_wave_create_name == static_cast<LPCSTR>(resolved_buf));
+    expect(g_wave_create_mode == 1);
+    expect(g_wave_own70_calls == 1 && g_wave_own7C_calls == 1);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({0x2AA, 4}));
+    expect(get32(0x54) == 2);
+    expect(g_wave_own48_calls == 0);
+
+    // Streaming with a device already wrapped: no creation, just the raw
+    // mode mask; mode bit 0 folds alongside the streaming bit.
+    reset_init();
+    wave->init(name_arg, 5);
+    expect(g_wave_create_calls == 0);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({5}));
+    expect(get32(0x54) == 3);
+
+    // Streaming with a dead hook: no creation, no device call, and a failing
+    // creation skips the attribute round but still folds the tail bits.
+    setp(0x3C, nullptr);
+    guard = 0;
+    reset_init();
+    wave->init(name_arg, 4);
+    expect(g_wave_create_calls == 0 && g_wave_fam_calls == 0);
+    expect(get32(0x54) == 2);
+    guard = 1;
+    reset_init();
+    g_wave_create_ret = 0x31;
+    wave->init(name_arg, 4 | 1);
+    expect(g_wave_create_calls == 1);
+    expect(g_wave_own70_calls == 0 && g_wave_fam_calls == 0);
+    expect(get32(0x54) == 3);
+
+    // Non-streaming keeps its bit-4 mapping (streaming suppressed it above).
+    reset_init();
+    wave->init(name_arg, 0x10);
+    expect(get32(0x54) == 4);
+
+    // Redirect entry.
+    reset_init();
+    filefind_get_result = nullptr;
+    wave_init_redirect(wave, nullptr, name_arg, 1);
+    expect(filefind_get_calls == 1);
+
+    WaveOperatorDelete = saved_delete;
+    WaveOperatorNew = saved_new;
+    WaveDeviceCreateSlot = saved_create;
+    WaveDeviceReleaseGuard = saved_guard;
 }
 
 void test_wave_ctor() {
@@ -17701,5 +17905,6 @@ int main() {
     test_wave_volume_fname_play();
     test_wave_load_empty();
     test_wave_ctor();
+    test_wave_init();
     return failures == 0 ? 0 : 1;
 }
