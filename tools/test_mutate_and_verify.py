@@ -212,6 +212,27 @@ class BuildMutantsTest(unittest.TestCase):
         self.assertEqual(1, len(constants))
         self.assertIn("ordered[0x000 / 4] = 1;", "".join(constants[0].lines))
 
+    def test_mutates_suffixed_literals_and_keeps_the_suffix(self):
+        # `1U` used to be exempt entirely: the `(?![\w.])` guard saw the `U`
+        # as a word character and refused the match, so suffixed constants -
+        # including the edge arithmetic in Buffer::box - were never perturbed.
+        # The suffix must survive into the replacement so the mutant keeps the
+        # original expression's type and still compiles.
+        source = SOURCE.replace(
+            "ordered[0] = 0;",
+            "ordered[0] = value + 1U;")
+        lines = source.splitlines(keepends=True)
+        function = mutate_and_verify.parse_functions(lines)[0]
+        constants = [
+            mutant for mutant in mutate_and_verify.build_mutants(lines, function)
+            if mutant.operator == "constant"
+            and "value + 1U" in mutant.description]
+        mutated_sources = ["".join(mutant.lines) for mutant in constants]
+        self.assertTrue(any("value + 0U;" in source
+                            for source in mutated_sources))
+        self.assertFalse(any("value + 0;" in source
+                             for source in mutated_sources))
+
     def test_mutates_repeated_literals_by_occurrence(self):
         lines, mutants = self._mutants("006343D0")
         constants = [

@@ -35,7 +35,15 @@ CONTROL_PREFIXES = (
 )
 
 FUNCTION_HEADER = re.compile(r"Original Offset:\s*([0-9A-Fa-f]{6,8})")
-INT_LITERAL = re.compile(r"(?<![\w.])(0[xX][0-9A-Fa-f]+|\d+)(?![\w.])")
+# The trailing group captures a C integer suffix. Without it the `(?![\w.])`
+# guard treated the `U` of `1U` as a word character and refused the whole
+# match, so every suffixed literal in the recovered sources - the `+ 1U` /
+# `- 1U` edge arithmetic in Buffer::box, and 97 others across src/ - was
+# silently exempt from the constant operator. The suffix is carried into the
+# replacement so `1U` becomes `0U` rather than `0`, keeping the expression's
+# type and signedness intact.
+INT_LITERAL = re.compile(
+    r"(?<![\w.])(0[xX][0-9A-Fa-f]+|\d+)([uUlL]*)(?![\w.])")
 INDEX_DIVISION = re.compile(
     r"\s*(?P<numerator>0[xX][0-9A-Fa-f]+|\d+)\s*/\s*"
     r"(?P<denominator>0[xX][0-9A-Fa-f]+|\d+)\s*")
@@ -260,8 +268,8 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
         emitted_constant_lines = set()
         for match in INT_LITERAL.finditer(line):
             literal = match.group(0)
-            value = int(literal, 0)
-            replacement = "1" if value == 0 else "0"
+            value = int(match.group(1), 0)
+            replacement = ("1" if value == 0 else "0") + match.group(2)
             if not changes_subscript_value(
                     line, match.start(), match.end(), replacement):
                 continue
