@@ -22,6 +22,19 @@ Purpose: Determine whether the current faction has intelligence visibility of
          the given subject faction.
 Original Offset: 0055BC00
 Status: Complete
+
+Verification note: a mutation sweep of this function against the default
+`recovery-leaf-tests` target reports 10 survivors out of 10 - every constant,
+not merely some. That is the suite split, not a coverage hole. There is no
+leaf test for spying and there is not meant to be one: its gate is
+run_spying_oracle_suite() below, an in-process differential oracle that runs
+the recovered body against the original at 0x0055BC00 across a swept matrix
+of faction, base index, observer and subject, with the status and base tables
+seeded so that a wrong stride cannot read another zero and compare equal.
+That is strictly stronger than any leaf fixture, and it runs under the hybrid
+smoke target rather than under ctest. To sweep this function meaningfully,
+point the harness at that gate; measured against the leaf suite the result is
+vacuous by construction.
 */
 int __cdecl spying(int subject) {
     const int faction = *SpyingCurrentFaction;
