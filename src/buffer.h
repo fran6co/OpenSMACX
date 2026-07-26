@@ -49,6 +49,7 @@ class DLLEXPORT Buffer {
   int text_line_height();
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
   int copy(Buffer *buffer, RECT *rect);
+  int box(RECT *rect, int color1, int color2);
   void close();
   // Destructor body kept as a named method so the trivial ~Buffer() stays
   // trivial and embedding classes keep their existing implicit destruction.
@@ -191,6 +192,26 @@ int __fastcall buffer_text_height_redirect(Buffer *self, void *);
 int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect);
 
 int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// The four-argument line primitives at 0x005E1A80 (hline) and 0x005E1BF0
+// (vline) are clipped pixel writers, still original dependencies. The
+// recovered box outline reaches them through these seams; tests rebind them.
+// Both are thiscall voids (ret 0x10) whose EAX residue the box body
+// deliberately discards - the original zeroes EAX after the last call
+// (`xor eax, eax` at 0x005E327A).
+typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_buffer_line *BufferHLine;
+extern func_buffer_line *BufferVLine;
+
+int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
+                                   int color1, int color2);
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
