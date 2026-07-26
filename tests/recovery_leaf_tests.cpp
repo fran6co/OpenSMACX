@@ -377,11 +377,13 @@ namespace {
 
 int failures = 0;
 
-void expect(bool condition) {
+void expect_at(bool condition, int line) {
     if (!condition) {
+        std::fprintf(stderr, "leaf expect failed at line %d\n", line);
         ++failures;
     }
 }
+#define expect(condition) expect_at((condition), __LINE__)
 
 void expect_tracked_free_calls(int expected) {
 #if defined(__MINGW32__)
@@ -12457,6 +12459,252 @@ void test_auto_sound_lifecycle() {
     AutoSoundOperatorDelete = saved_delete;
 }
 
+// --- Ambience destructor fixtures ---------------------------------------
+struct AmbEvent {
+    int tag;  // 1 = operator delete, 2 = device release
+    void *ptr;
+    uint32_t vtable;
+    void *fname_cell;
+    bool operator==(const AmbEvent &o) const {
+        return tag == o.tag && ptr == o.ptr && vtable == o.vtable &&
+               fname_cell == o.fname_cell;
+    }
+};
+
+std::vector<AmbEvent> g_amb_events;
+uint8_t *g_amb_obj = nullptr;
+void *g_amb_rearm_fname = nullptr;
+void *g_amb_rearm_device = nullptr;
+void *g_amb_delete_rearm_device = nullptr;
+bool g_amb_release_clears_guard = false;
+int *g_amb_guard_cell = nullptr;
+
+AmbEvent amb_event(int tag, void *ptr) {
+    uint32_t vt = 0;
+    void *fname = nullptr;
+    std::memcpy(&vt, g_amb_obj, 4);
+    std::memcpy(&fname, g_amb_obj + 0x4C, 4);
+    return AmbEvent{tag, ptr, vt, fname};
+}
+
+// The second-stage device release is reachable only through a write that
+// lands between the first stage's clear and the second stage's re-read -
+// and the only call in that window is the second-stage delete. So THIS
+// observer re-arms the device when it runs under the Sound-stage vtable.
+void __cdecl observe_amb_delete(void *block) {
+    g_amb_events.push_back(amb_event(1, block));
+    if (g_amb_delete_rearm_device &&
+        g_amb_events.back().vtable == 0x0066E3C0u) {
+        std::memcpy(g_amb_obj + 0x3C, &g_amb_delete_rearm_device, 4);
+    }
+}
+
+// The release hook can re-arm the already-cleared fields (or drop the
+// guard): that is what makes the inlined second-stage teardown - dead in
+// any straight-line run - observable.
+void __cdecl observe_amb_release(void *device) {
+    g_amb_events.push_back(amb_event(2, device));
+    if (g_amb_events.back().vtable == 0x0066E538u) {
+        if (g_amb_rearm_fname) {
+            std::memcpy(g_amb_obj + 0x4C, &g_amb_rearm_fname, 4);
+        }
+        if (g_amb_rearm_device) {
+            std::memcpy(g_amb_obj + 0x3C, &g_amb_rearm_device, 4);
+        }
+        if (g_amb_release_clears_guard) {
+            *g_amb_guard_cell = 0;
+        }
+    }
+}
+
+void test_ambience_dtor() {
+    auto *const saved_delete = WaveOperatorDelete;
+    auto *const saved_release_slot = WaveDeviceReleaseSlot;
+    auto *const saved_guard = WaveDeviceReleaseGuard;
+    Wave **const saved_head = WaveChainHead;
+    Wave **const saved_tail = WaveChainTail;
+
+    func_wave_device_release *release_fn = &observe_amb_release;
+    int guard = 1;
+    Wave *chain_head = nullptr;
+    Wave *chain_tail = nullptr;
+    WaveOperatorDelete = &observe_amb_delete;
+    WaveDeviceReleaseSlot = &release_fn;
+    WaveDeviceReleaseGuard = &guard;
+    WaveChainHead = &chain_head;
+    WaveChainTail = &chain_tail;
+
+    const size_t kAmb = 0x80;
+    std::vector<uint8_t> storage(kAmb + 32);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto put = [&](size_t off, const void *p) { std::memcpy(obj + off, &p, 4); };
+    auto put32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto eput = [&](size_t off, const void *p) {
+        std::memcpy(expected.data() + 16 + off, &p, 4);
+    };
+    auto eput32 = [&](size_t off, uint32_t v) {
+        std::memcpy(expected.data() + 16 + off, &v, 4);
+    };
+    char fbuf1, fbuf2, dbuf1, dbuf2;
+    void *const F = &fbuf1;
+    void *const F2 = &fbuf2;
+    void *const D = &dbuf1;
+    void *const D2 = &dbuf2;
+    g_amb_obj = obj;
+    g_amb_guard_cell = &guard;
+    auto reset = [&](uint32_t flags, void *fname, void *device) {
+        seed_storage(storage.data(), expected.data(), storage.size());
+        put32(0x00, 0xDEADDEADu);
+        put32(0x40, flags);
+        put(0x3C, device);
+        put(0x4C, fname);
+        std::memcpy(expected.data(), storage.data(), storage.size());
+        eput32(0x00, 0x0066E444u);
+        eput(0x3C, nullptr);
+        eput(0x4C, nullptr);
+        g_amb_events.clear();
+        g_amb_rearm_fname = nullptr;
+        g_amb_rearm_device = nullptr;
+        g_amb_delete_rearm_device = nullptr;
+        g_amb_release_clears_guard = false;
+        guard = 1;
+    };
+    auto run = [&] {
+        reinterpret_cast<Ambience *>(obj)->~Ambience();
+    };
+
+    // The plain run: one delete (name still in place at call time), one
+    // guarded release (name already scrubbed by then), every stage ending
+    // on the ultimate base vtable, nothing else touched.
+    reset(0x11, F, D);
+    run();
+    {
+        std::vector<AmbEvent> want{
+            {1, F, 0x0066E538u, F},
+            {2, D, 0x0066E538u, nullptr},
+        };
+        expect(g_amb_events == want);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Guard down: the device is forgotten but never released.
+    reset(0x11, F, D);
+    guard = 0;
+    run();
+    {
+        std::vector<AmbEvent> want{{1, F, 0x0066E538u, F}};
+        expect(g_amb_events == want);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Nothing to tear down still stages the vtable and scrubs the fields.
+    reset(0x11, nullptr, nullptr);
+    run();
+    expect(g_amb_events.empty());
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Mid-chain unlink through the redirect: the neighbours bridge, the
+    // links scrub, only the chained bit drops.
+    uint8_t prev_node[0x50], next_node[0x50];
+    std::memset(prev_node, 0x21, sizeof(prev_node));
+    std::memset(next_node, 0x22, sizeof(next_node));
+    reset(0x13, F, D);
+    put(0x44, prev_node);
+    put(0x48, next_node);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    eput(0x44, nullptr);
+    eput(0x48, nullptr);
+    eput32(0x40, 0x11);
+    ambience_dtor_redirect(reinterpret_cast<Ambience *>(obj), nullptr);
+    expect(g_amb_events.size() == 2);
+    {
+        void *bridged;
+        std::memcpy(&bridged, prev_node + 0x48, 4);
+        expect(bridged == next_node);
+        std::memcpy(&bridged, next_node + 0x44, 4);
+        expect(bridged == prev_node);
+    }
+    expect(chain_head == reinterpret_cast<Wave *>(0x1111));
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // A lone chained node retargets both chain ends instead.
+    reset(0x2, nullptr, nullptr);
+    put(0x44, nullptr);
+    put(0x48, nullptr);
+    chain_head = reinterpret_cast<Wave *>(obj);
+    chain_tail = reinterpret_cast<Wave *>(obj);
+    eput(0x44, nullptr);
+    eput(0x48, nullptr);
+    eput32(0x40, 0);
+    run();
+    expect(chain_head == nullptr);
+    expect(chain_tail == nullptr);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Re-armed by the release hook: the second-stage name teardown comes
+    // alive under the Sound-stage vtable. The re-armed device is wiped
+    // again by the first stage's own unconditional clear - no second
+    // release can come from here.
+    reset(0x11, F, D);
+    g_amb_rearm_fname = F2;
+    g_amb_rearm_device = D2;
+    run();
+    {
+        std::vector<AmbEvent> want{
+            {1, F, 0x0066E538u, F},
+            {2, D, 0x0066E538u, nullptr},
+            {1, F2, 0x0066E3C0u, F2},
+        };
+        expect(g_amb_events == want);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // A device re-armed by the second-stage DELETE lands in the only window
+    // the second stage still reads: its guarded release runs under the
+    // Sound-stage vtable, with the name already scrubbed.
+    reset(0x11, F, D);
+    g_amb_rearm_fname = F2;
+    g_amb_delete_rearm_device = D2;
+    run();
+    {
+        std::vector<AmbEvent> want{
+            {1, F, 0x0066E538u, F},
+            {2, D, 0x0066E538u, nullptr},
+            {1, F2, 0x0066E3C0u, F2},
+            {2, D2, 0x0066E3C0u, nullptr},
+        };
+        expect(g_amb_events == want);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // The same re-arm under a guard the first release dropped: the second
+    // stage re-checks the guard, skips the release, and still forgets the
+    // device.
+    reset(0x11, F, D);
+    g_amb_rearm_fname = F2;
+    g_amb_delete_rearm_device = D2;
+    g_amb_release_clears_guard = true;
+    run();
+    {
+        std::vector<AmbEvent> want{
+            {1, F, 0x0066E538u, F},
+            {2, D, 0x0066E538u, nullptr},
+            {1, F2, 0x0066E3C0u, F2},
+        };
+        expect(g_amb_events == want);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    WaveOperatorDelete = saved_delete;
+    WaveDeviceReleaseSlot = saved_release_slot;
+    WaveDeviceReleaseGuard = saved_guard;
+    WaveChainHead = saved_head;
+    WaveChainTail = saved_tail;
+}
+
 // --- popup_wave_callback fixtures ---------------------------------------
 enum {
     kPWaveIsPlaying = 1,
@@ -20403,5 +20651,6 @@ int main() {
     test_wave_device_select();
     test_auto_sound_lifecycle();
     test_popup_wave_callback();
+    test_ambience_dtor();
     return failures == 0 ? 0 : 1;
 }

@@ -1778,7 +1778,6 @@ P3,410,0x004C74B0,sub_4c74b0,64,0,4,unrecovered,,,1,missing,exact,
 P3,410,0x004C74F0,sub_4c74f0,176,0,4,unrecovered,,,1,missing,exact,
 P3,10,0x004C75A0,sub_4c75a0,7,0,0,unrecovered,,,1,exact,missing,
 P3,120,0x004C75B0,sub_4c75b0,214,0,1,unrecovered,,,2,entry_range,entry_range,
-P3,1121,0x004C7670,??1Ambience@@QAE@XZ,273,1,1,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
 P3,11,0x004C7760,?play@Midi@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?play@Midi@@QAEHXZ)(Midi* this)
 P3,21,0x004C7780,?set_volume@Midi@@QAEXH@Z,35,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_volume@Midi@@QAEXH@Z)(Midi* this, int)"
 P3,21,0x004C77B0,?switch_state@Midi@@QAEH_N@Z,26,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?switch_state@Midi@@QAEH_N@Z)(Midi* this, bool)"

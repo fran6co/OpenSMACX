@@ -684,6 +684,7 @@ address,kind
 0x004C71F0,jump
 0x004C7220,jump
 0x004C7250,jump
+0x004C7670,jump
 0x004C92D0,jump
 0x004C9300,jump
 0x004D9DC0,jump
