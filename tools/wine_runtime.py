@@ -3,7 +3,23 @@
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
+
+
+def disable_crash_dialog(wine, environment):
+    """Route crash backtraces to stderr instead of winedbg's modal dialog.
+
+    Without this, a fault inside the hybrid image blocks on a GUI dialog that
+    no log captures, so the faulting address never reaches a diagnostics file.
+    ShowCrashDialog=0 makes winedbg dump the same backtrace to stderr, which
+    every launcher here already redirects into its log.
+    """
+    subprocess.run(
+        [str(wine), "reg", "add", r"HKCU\Software\Wine\WineDbg",
+         "/v", "ShowCrashDialog", "/t", "REG_DWORD", "/d", "0", "/f"],
+        env=environment, check=False,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def find_wine(value):
