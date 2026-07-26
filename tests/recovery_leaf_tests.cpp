@@ -9558,6 +9558,64 @@ DWORD __stdcall observe_wave_time_get_time(void) {
     ++g_wave_time_calls;
     return g_wave_time_value;
 }
+
+// Wave destructor doubles. The callbacks reach back into the fixture through
+// g_wave_dtor_obj so they can witness which vtable was installed at call time
+// and, for the release hook, re-link the wave to make the inlined base
+// destructor's normally-dead unlink reachable.
+uint8_t *g_wave_dtor_obj;
+void *g_wave_dtor_pull_dev;
+Wave *g_wave_dtor_pull_wave;
+int g_wave_dtor_pull_calls;
+uint32_t g_wave_dtor_pull_seen_vtable;
+int __thiscall observe_wave_pull_from_group(void *device, Wave *wave) {
+    g_wave_dtor_pull_dev = device;
+    g_wave_dtor_pull_wave = wave;
+    ++g_wave_dtor_pull_calls;
+    std::memcpy(&g_wave_dtor_pull_seen_vtable, g_wave_dtor_obj, 4);
+    return 3;
+}
+std::vector<void *> g_wave_dtor_deletes;
+std::vector<void *> g_wave_dtor_delete_seen_slot;
+void __cdecl observe_wave_operator_delete(void *block) {
+    g_wave_dtor_deletes.push_back(block);
+    // The original clears the buffer slot only AFTER the free, so at call
+    // time the slot still names the block being freed - witness it.
+    void *slot;
+    std::memcpy(&slot, g_wave_dtor_obj + 0x4C, 4);
+    g_wave_dtor_delete_seen_slot.push_back(slot);
+}
+void *g_wave_playm_dev_self;
+int g_wave_playm_calls;
+int g_wave_playm_arg;
+int g_wave_playm_ret;
+int __thiscall observe_wave_device_play(void *self, int arg) {
+    g_wave_playm_dev_self = self;
+    g_wave_playm_arg = arg;
+    ++g_wave_playm_calls;
+    return g_wave_playm_ret;
+}
+void *g_wave_dtor_release_dev;
+int g_wave_dtor_release_calls;
+uint32_t g_wave_dtor_release_seen_vtable;
+bool g_wave_dtor_release_relinks;
+void *g_wave_dtor_release_relink_prev;
+void *g_wave_dtor_release_relink_next;
+void __cdecl observe_wave_release(void *device) {
+    g_wave_dtor_release_dev = device;
+    ++g_wave_dtor_release_calls;
+    std::memcpy(&g_wave_dtor_release_seen_vtable, g_wave_dtor_obj, 4);
+    if (g_wave_dtor_release_relinks) {
+        uint32_t flags;
+        std::memcpy(&flags, g_wave_dtor_obj + 0x40, 4);
+        flags |= 2;
+        std::memcpy(g_wave_dtor_obj + 0x40, &flags, 4);
+        std::memcpy(g_wave_dtor_obj + 0x44, &g_wave_dtor_release_relink_prev,
+                    4);
+        std::memcpy(g_wave_dtor_obj + 0x48, &g_wave_dtor_release_relink_next,
+                    4);
+    }
+}
 }  // namespace
 
 void test_wave_is_playing() {
@@ -9680,6 +9738,323 @@ void test_wave_is_playing() {
     expect(wave_is_playing_redirect(wave, nullptr) == 0x77);
 
     WaveTimeGetTimeSlot = saved_slot;
+}
+
+void test_wave_play() {
+    // play is the wrapped-device forwarder shape: the device at 0x3C answers
+    // through its own vtable slot 0x94 as the receiver, its result returned
+    // verbatim; with no device the answer is a fixed 0x14.
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+
+    // Poisoned neighbours: an off-by-one dispatch faults rather than landing
+    // on another observer.
+    void *dev_vtable[64] = {};
+    dev_vtable[0x94 / 4] = reinterpret_cast<void *>(&observe_wave_device_play);
+    dev_vtable[0x90 / 4] = nullptr;
+    dev_vtable[0x98 / 4] = nullptr;
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    void *dev = &fake_dev;
+    std::memcpy(obj + 0x3C, &dev, 4);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    g_wave_playm_calls = 0;
+    g_wave_playm_ret = 0x5A17;
+    expect(wave->play(0x1234) == 0x5A17);
+    expect(g_wave_playm_calls == 1);
+    expect(g_wave_playm_dev_self == &fake_dev);
+    expect(g_wave_playm_arg == 0x1234);
+
+    // The result is verbatim, not normalised.
+    g_wave_playm_ret = 0;
+    expect(wave->play(-7) == 0);
+    expect(g_wave_playm_arg == -7);
+
+    // Nothing writes the object on the device path.
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // No device: the fixed answer, no dispatch, still no writes.
+    dev = nullptr;
+    std::memcpy(obj + 0x3C, &dev, 4);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_wave_playm_calls = 0;
+    expect(wave->play(77) == 0x14);
+    expect(g_wave_playm_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Redirect entry, both paths.
+    expect(wave_play_redirect(wave, nullptr, 5) == 0x14);
+    dev = &fake_dev;
+    std::memcpy(obj + 0x3C, &dev, 4);
+    g_wave_playm_ret = 9;
+    expect(wave_play_redirect(wave, nullptr, 6) == 9);
+    expect(g_wave_playm_arg == 6);
+}
+
+void test_wave_destructor() {
+    static_assert(sizeof(Wave) == 0x6C, "Wave tests require the legacy layout");
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+    g_wave_dtor_obj = obj;
+
+    auto *const saved_pull = WaveDevicePullFromGroup;
+    void *const saved_dev_global = WaveDeviceGlobal;
+    auto *const saved_delete = WaveOperatorDelete;
+    auto **const saved_release_slot = WaveDeviceReleaseSlot;
+    int *const saved_guard = WaveDeviceReleaseGuard;
+    Wave **const saved_head = WaveChainHead;
+    Wave **const saved_tail = WaveChainTail;
+
+    int fake_device_singleton = 0;
+    func_wave_device_release *release_fn = &observe_wave_release;
+    int release_guard = 1;
+    Wave *chain_head = nullptr;
+    Wave *chain_tail = nullptr;
+    WaveDevicePullFromGroup = &observe_wave_pull_from_group;
+    WaveDeviceGlobal = &fake_device_singleton;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+    WaveDeviceReleaseSlot = &release_fn;
+    WaveDeviceReleaseGuard = &release_guard;
+    WaveChainHead = &chain_head;
+    WaveChainTail = &chain_tail;
+
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto setp = [&](size_t off, const void *p) {
+        std::memcpy(obj + off, &p, 4);
+    };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto getp = [&](size_t off) {
+        void *p;
+        std::memcpy(&p, obj + off, 4);
+        return p;
+    };
+    auto node_ptr = [](uint8_t *node, size_t off) {
+        void *p;
+        std::memcpy(&p, node + off, 4);
+        return p;
+    };
+    auto reset_counters = [&] {
+        g_wave_dtor_pull_calls = g_wave_dtor_release_calls = 0;
+        g_wave_dtor_deletes.clear();
+        g_wave_dtor_delete_seen_slot.clear();
+        g_wave_dtor_release_relinks = false;
+    };
+    // The fields the destructor always leaves behind, applied to the expected
+    // snapshot: the ultimate base vtable, a null device/prev/next/buffer, and
+    // the final flag dword.
+    auto apply_end_state = [&](uint32_t final_flags) {
+        uint8_t *const eobj = expected.data() + 16;
+        const uint32_t vt = 0x0066E444u;
+        const uint32_t zero = 0;
+        std::memcpy(eobj + 0x00, &vt, 4);
+        std::memcpy(eobj + 0x3C, &zero, 4);
+        std::memcpy(eobj + 0x40, &final_flags, 4);
+        std::memcpy(eobj + 0x44, &zero, 4);
+        std::memcpy(eobj + 0x48, &zero, 4);
+        std::memcpy(eobj + 0x4C, &zero, 4);
+    };
+
+    // Scenario 1: every primary path at once. Group slot 0xF (< 0x10) pulls
+    // the wave from the device singleton's group while the wave's OWN vtable
+    // is installed; the buffer is freed exactly once (the unconditional clear
+    // keeps the inlined base free from seeing it again); both chain
+    // neighbours are real nodes, so the chain end slots stay untouched; the
+    // release hook runs over the wrapped device with the MIDDLE vtable
+    // installed; only bit 1 of the flag dword is cleared.
+    uint8_t node_prev[0x6C];
+    uint8_t node_next[0x6C];
+    std::memset(node_prev, 0x66, sizeof(node_prev));
+    std::memset(node_next, 0x77, sizeof(node_next));
+    uint8_t buffer_block[8];
+    int fake_wrapped_device = 0;
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set32(0x68, 0x0F);
+    setp(0x4C, buffer_block);
+    set32(0x40, 0xA5A5A5F3u);
+    setp(0x44, node_prev);
+    setp(0x48, node_next);
+    setp(0x3C, &fake_wrapped_device);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    release_guard = 1;
+    reset_counters();
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave_dtor_redirect(wave, nullptr);
+    expect(g_wave_dtor_pull_calls == 1);
+    expect(g_wave_dtor_pull_dev == &fake_device_singleton);
+    expect(g_wave_dtor_pull_wave == wave);
+    expect(g_wave_dtor_pull_seen_vtable == 0x0066E44Cu);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == buffer_block);
+    expect(g_wave_dtor_delete_seen_slot.size() == 1 &&
+           g_wave_dtor_delete_seen_slot[0] == buffer_block);
+    expect(node_ptr(node_prev, 0x48) == node_next);
+    expect(node_ptr(node_next, 0x44) == node_prev);
+    expect(chain_head == reinterpret_cast<Wave *>(0x1111));
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+    expect(g_wave_dtor_release_calls == 1 &&
+           g_wave_dtor_release_dev == &fake_wrapped_device);
+    expect(g_wave_dtor_release_seen_vtable == 0x0066E3C0u);
+    apply_end_state(0xA5A5A5F1u);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    expect(get32(0x68) == 0x0F);
+
+    // Scenario 2: the two normally-dead base-destructor arms. The chain prev
+    // is aimed 4 bytes into the wave itself, so unlink #1's neighbour write
+    // (prev->next at +0x48) lands on the wave's OWN buffer slot at +0x4C and
+    // re-populates it with the next pointer - the inlined base free then
+    // fires on that block. The release hook re-arms the chain bit with a null
+    // prev, so unlink #2 takes the head-slot arm. Group slot exactly 0x10 is
+    // the boundary: NOT pulled.
+    uint8_t late_block[0x6C];
+    uint8_t node_q[0x6C];
+    std::memset(late_block, 0x33, sizeof(late_block));
+    std::memset(node_q, 0x77, sizeof(node_q));
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set32(0x68, 0x10);
+    setp(0x4C, nullptr);
+    set32(0x40, 2);
+    setp(0x44, obj + 4);
+    setp(0x48, late_block);
+    setp(0x3C, &fake_wrapped_device);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    release_guard = 1;
+    reset_counters();
+    g_wave_dtor_release_relinks = true;
+    g_wave_dtor_release_relink_prev = nullptr;
+    g_wave_dtor_release_relink_next = node_q;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave_dtor_redirect(wave, nullptr);
+    expect(g_wave_dtor_pull_calls == 0);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == late_block);
+    expect(g_wave_dtor_delete_seen_slot.size() == 1 &&
+           g_wave_dtor_delete_seen_slot[0] == late_block);
+    expect(node_ptr(late_block, 0x44) == obj + 4);  // next->prev in unlink #1
+    expect(g_wave_dtor_release_calls == 1);
+    expect(g_wave_dtor_release_seen_vtable == 0x0066E3C0u);
+    expect(chain_head == reinterpret_cast<Wave *>(node_q));  // unlink #2 head arm
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+    expect(node_ptr(node_q, 0x44) == nullptr);  // next->prev wrote the null prev
+    apply_end_state(0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Scenario 3: unlink #1's head arm. A null prev routes the next pointer
+    // into the chain head slot; no buffer, no device, no pull - and the
+    // buffer slot is still cleared unconditionally.
+    uint8_t node_s[0x6C];
+    std::memset(node_s, 0x55, sizeof(node_s));
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set32(0x68, 0x45);
+    setp(0x4C, nullptr);
+    set32(0x40, 0x13);
+    setp(0x44, nullptr);
+    setp(0x48, node_s);
+    setp(0x3C, nullptr);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    reset_counters();
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave_dtor_redirect(wave, nullptr);
+    expect(g_wave_dtor_pull_calls == 0);
+    expect(g_wave_dtor_deletes.empty());
+    expect(g_wave_dtor_release_calls == 0);
+    expect(chain_head == reinterpret_cast<Wave *>(node_s));
+    expect(chain_tail == reinterpret_cast<Wave *>(0x2222));
+    expect(node_ptr(node_s, 0x44) == nullptr);
+    apply_end_state(0x11);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Scenario 4: unlink #1's tail arm, and a dead release guard. A null next
+    // routes the prev pointer into the chain tail slot; the guard suppresses
+    // the release hook but the device is still forgotten.
+    uint8_t node_t[0x6C];
+    std::memset(node_t, 0x66, sizeof(node_t));
+    uint8_t block_d[8];
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set32(0x68, 0);
+    setp(0x4C, block_d);
+    set32(0x40, 2);
+    setp(0x44, node_t);
+    setp(0x48, nullptr);
+    setp(0x3C, &fake_wrapped_device);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    release_guard = 0;
+    reset_counters();
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave_dtor_redirect(wave, nullptr);
+    expect(g_wave_dtor_pull_calls == 1);  // slot 0 also counts as grouped
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == block_d);
+    expect(g_wave_dtor_delete_seen_slot.size() == 1 &&
+           g_wave_dtor_delete_seen_slot[0] == block_d);
+    expect(node_ptr(node_t, 0x48) == nullptr);
+    expect(chain_head == reinterpret_cast<Wave *>(0x1111));
+    expect(chain_tail == reinterpret_cast<Wave *>(node_t));
+    expect(g_wave_dtor_release_calls == 0);
+    expect(getp(0x3C) == nullptr);
+    apply_end_state(0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Scenario 5: unlink #2's tail arm, reached with the chain bit initially
+    // CLEAR - unlink #1 must not run (its would-be neighbour stays pristine),
+    // and only the release hook's re-link arms the second pass.
+    uint8_t poison_node[0x6C];
+    uint8_t poison_expected[0x6C];
+    uint8_t node_r[0x6C];
+    std::memset(poison_node, 0x44, sizeof(poison_node));
+    std::memcpy(poison_expected, poison_node, sizeof(poison_node));
+    std::memset(node_r, 0x88, sizeof(node_r));
+    uint8_t block_e[8];
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set32(0x68, 0x10);
+    setp(0x4C, block_e);
+    set32(0x40, 0x11);
+    setp(0x44, poison_node);
+    setp(0x48, poison_node);
+    setp(0x3C, &fake_wrapped_device);
+    chain_head = reinterpret_cast<Wave *>(0x1111);
+    chain_tail = reinterpret_cast<Wave *>(0x2222);
+    release_guard = 1;
+    reset_counters();
+    g_wave_dtor_release_relinks = true;
+    g_wave_dtor_release_relink_prev = node_r;
+    g_wave_dtor_release_relink_next = nullptr;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave_dtor_redirect(wave, nullptr);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == block_e);
+    expect(g_wave_dtor_delete_seen_slot.size() == 1 &&
+           g_wave_dtor_delete_seen_slot[0] == block_e);
+    expect(std::memcmp(poison_node, poison_expected, sizeof(poison_node)) ==
+           0);
+    expect(g_wave_dtor_release_calls == 1);
+    expect(node_ptr(node_r, 0x48) == nullptr);  // prev->next in unlink #2
+    expect(chain_head == reinterpret_cast<Wave *>(0x1111));
+    expect(chain_tail == reinterpret_cast<Wave *>(node_r));
+    apply_end_state(0x11);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    WaveDevicePullFromGroup = saved_pull;
+    WaveDeviceGlobal = saved_dev_global;
+    WaveOperatorDelete = saved_delete;
+    WaveDeviceReleaseSlot = saved_release_slot;
+    WaveDeviceReleaseGuard = saved_guard;
+    WaveChainHead = saved_head;
+    WaveChainTail = saved_tail;
 }
 
 void test_delegating_closers() {
@@ -16341,5 +16716,7 @@ int main() {
     test_atexit_teardown_thunks();
     test_battle_win_dtor();
     test_fx_and_font_queue_dtors();
+    test_wave_destructor();
+    test_wave_play();
     return failures == 0 ? 0 : 1;
 }

@@ -2318,7 +2318,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C5200,0x004C5220,32,.text,?start_raw_dump@Wave_Device@@QAEHPAD@Z,"int (__thiscall ?start_raw_dump@Wave_Device@@QAEHPAD@Z)(Wave_Device* this, int8*)",0x004C5200-0x004C5220,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C5220,0x004C5232,18,.text,?stop_raw_dump@Wave_Device@@QAEHXZ,int (__thiscall ?stop_raw_dump@Wave_Device@@QAEHXZ)(Wave_Device* this),0x004C5220-0x004C5232,game,hidden;sp_ready;purged_ok,src/wave_device.cpp:290,Complete,,,source_complete,,,,0,0
 0x004C5240,0x004C5277,55,.text,?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z,"int (__thiscall ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z)(Wave_Device* this, unsigned int, Wave*)",0x004C5240-0x004C5277,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
-0x004C5280,0x004C531C,156,.text,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)",0x004C5280-0x004C531C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
+0x004C5280,0x004C531C,156,.text,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)",0x004C5280-0x004C531C,game,frame;hidden;sp_ready;purged_ok,,,,WaveDevicePullFromGroup,original_dependency,,,,1,1
 0x004C5320,0x004C537F,95,.text,?set_group_volume@Wave_Device@@QAEHII@Z,"int (__thiscall ?set_group_volume@Wave_Device@@QAEHII@Z)(Wave_Device* this, unsigned int, unsigned int)",0x004C5320-0x004C537F,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x004C5380,0x004C539C,28,.text,?get_group_volume@Wave_Device@@QAEHI@Z,"int (__thiscall ?get_group_volume@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)",0x004C5380-0x004C539C,game,frame;hidden;sp_ready;purged_ok,src/wave_device.cpp:347,Complete,,,source_complete,,,,0,1
 0x004C53A0,0x004C5400,96,.text,?enable_group@Wave_Device@@QAEHI@Z,"int (__thiscall ?enable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)",0x004C53A0-0x004C5400,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -2424,8 +2424,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C66A0,0x004C66AF,15,.text,?get_time@Sound@@QAEHXZ,int (__thiscall ?get_time@Sound@@QAEHXZ)(Sound* this),0x004C66A0-0x004C66AF,game,hidden;sp_ready;purged_ok,src/sound.cpp:100,Complete,,,source_complete,,,,0,0
 0x004C66B0,0x004C66E0,48,.text,?set_pan@Sound@@QAEXH@Z,"void (__thiscall ?set_pan@Sound@@QAEXH@Z)(Sound* this, int)",0x004C66B0-0x004C66E0,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x004C66E0,0x004C67B6,239,.text,??0Wave@@QAE@XZ,void (__thiscall ??0Wave@@QAE@XZ)(Wave* this),0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,16
-0x004C67C0,0x004C68EC,333,.text,??1Wave@@QAE@XZ,,0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20,game,frame;sp_ready;purged_ok,,,,WaveOriginalDestructor | WaveElementTeardown,original_dependency,,,,2,2
-0x004C68F0,0x004C6913,35,.text,?play@Wave@@QAEHH@Z,"int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)",0x004C68F0-0x004C6913,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x004C67C0,0x004C68EC,333,.text,??1Wave@@QAE@XZ,,0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20,game,frame;sp_ready;purged_ok,src/wave.cpp:307,Complete,,WaveOriginalDestructor | WaveElementTeardown,source_complete,,,,2,2
+0x004C68F0,0x004C6913,35,.text,?play@Wave@@QAEHH@Z,"int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)",0x004C68F0-0x004C6913,game,frame;hidden;sp_ready;purged_ok,src/wave.cpp:260,Complete,,,source_complete,,,,0,0
 0x004C6920,0x004C69AD,141,.text,?play@Wave@@QAEHXZ,int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this),0x004C6920-0x004C69AD,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,20
 0x004C69B0,0x004C6AD5,293,.text,?init@Wave@@QAEXPADK@Z,"void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)",0x004C69B0-0x004C6AD5,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,5
 0x004C6AE0,0x004C6AF2,18,.text,?is_hwbuffer@Wave@@QAEHXZ,int (__thiscall ?is_hwbuffer@Wave@@QAEHXZ)(Wave* this),0x004C6AE0-0x004C6AF2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -5635,7 +5635,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00645460,0x00645467,7,.text,_strcpy,,0x00645460-0x00645467,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,98
 0x00645470,0x00645550,224,.text,_strcat,,0x00645470-0x00645550,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,446
 0x00645550,0x0064557F,47,.text,__alloca_probe,,0x00645550-0x0064557F,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,137
-0x0064557F,0x0064558A,11,.text,??3@YAXPAX@Z,,0x0064557F-0x0064558A,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,1,115
+0x0064557F,0x0064558A,11,.text,??3@YAXPAX@Z,,0x0064557F-0x0064558A,library,lib;hidden;sp_ready;purged_ok,,,,WaveOperatorDelete,original_dependency,,,,1,115
 0x0064558A,0x00645598,14,.text,??2@YAPAXI@Z,,0x0064558A-0x00645598,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,1,27
 0x00645598,0x006455C9,49,.text,_fclose,,0x00645598-0x006455C9,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,3,36
 0x006455C9,0x00645615,76,.text,__fclose_lk,,0x006455C9-0x00645615,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,4,1

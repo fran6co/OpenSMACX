@@ -1739,7 +1739,7 @@ P3,21,0x004C5030,?select@Wave_Device@@QAEHK@Z,191,0,0,unrecovered,,,2,exact,exac
 P3,21,0x004C50F0,?get_description@Wave_Device@@QAEXKPADK@Z,33,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?get_description@Wave_Device@@QAEXKPADK@Z)(Wave_Device* this, unsigned int, int8*, unsigned int)"
 P3,21,0x004C5200,?start_raw_dump@Wave_Device@@QAEHPAD@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?start_raw_dump@Wave_Device@@QAEHPAD@Z)(Wave_Device* this, int8*)"
 P3,2121,0x004C5240,?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z,55,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z)(Wave_Device* this, unsigned int, Wave*)"
-P3,1121,0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,156,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)"
+P0,1001121,0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,156,1,1,original_dependency,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)"
 P3,2021,0x004C5320,?set_group_volume@Wave_Device@@QAEHII@Z,95,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_group_volume@Wave_Device@@QAEHII@Z)(Wave_Device* this, unsigned int, unsigned int)"
 P3,1021,0x004C53A0,?enable_group@Wave_Device@@QAEHI@Z,96,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?enable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
 P3,1021,0x004C5400,?disable_group@Wave_Device@@QAEHI@Z,93,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?disable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
@@ -1800,8 +1800,7 @@ P3,21,0x004C65B0,?set_fade_in@Sound@@QAEHI@Z,41,0,0,unrecovered,,,2,exact,exact,
 P3,21,0x004C6660,?fade_in@Sound@@QAEXI@Z,33,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?fade_in@Sound@@QAEXI@Z)(Sound* this, unsigned int)"
 P3,2021,0x004C66B0,?set_pan@Sound@@QAEXH@Z,48,2,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_pan@Sound@@QAEXH@Z)(Sound* this, int)"
 P2,16221,0x004C66E0,??0Wave@@QAE@XZ,239,16,2,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0Wave@@QAE@XZ)(Wave* this)
-P0,1002220,0x004C67C0,??1Wave@@QAE@XZ,333,2,2,original_dependency,ui_dependency,recover_wave_destructor,2,entry_range,entry_range,
-P3,21,0x004C68F0,?play@Wave@@QAEHH@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)"
+P0,1002220,0x004C67C0,??1Wave@@QAE@XZ,333,2,2,source_complete,ui_dependency,recover_wave_destructor,2,entry_range,entry_range,
 P1,20221,0x004C6920,?play@Wave@@QAEHXZ,141,20,2,unrecovered,,,2,exact,exact,int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
 P2,5621,0x004C69B0,?init@Wave@@QAEXPADK@Z,293,5,6,unrecovered,,,2,exact,exact,"void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)"
 P3,11,0x004C6AE0,?is_hwbuffer@Wave@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?is_hwbuffer@Wave@@QAEHXZ)(Wave* this)
@@ -4118,6 +4117,7 @@ P3,2020,0x00644910,sub_644910,20,2,0,unrecovered,,,2,exact,exact,
 P3,2020,0x00644930,sub_644930,306,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x00644A70,_inflate_fast,834,1,0,unrecovered,,,2,exact,exact,
 P0,1170420,0x00644EF2,_free,72,170,4,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,exact,
+P0,1115120,0x0064557F,??3@YAXPAX@Z,11,115,1,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,exact,
 P0,1012120,0x00645646,_fopen,19,12,1,original_dependency,crt_ownership,replace_after_file_boundary,2,exact,exact,
 P0,1160221,0x006456E4,??_M@YGXPAXIHP6EX0@Z@Z,128,160,2,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,start_only,"void (__stdcall ??_M@YGXPAXIHP6EX0@Z@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*))"
 P3,320,0x0064584D,sub_64584d,23,0,3,unrecovered,,,2,exact,exact,
