@@ -9673,6 +9673,41 @@ void __thiscall observe_wave_own_slot80(Wave *self) {
     std::memcpy(&g_wave_own80_seen_stamp,
                 reinterpret_cast<uint8_t *>(self) + 0x64, 4);
 }
+// load() doubles: the device-creation hook, the base Sound::load, and the
+// wave's own vtable slot 0x58.
+void **g_wave_create_slot_arg;
+const char *g_wave_create_name;
+int g_wave_create_mode;
+int g_wave_create_calls;
+int g_wave_create_ret;
+void *g_wave_create_installs;
+int __cdecl observe_wave_device_create(void **slot, const char *name,
+                                       int mode) {
+    g_wave_create_slot_arg = slot;
+    g_wave_create_name = name;
+    g_wave_create_mode = mode;
+    ++g_wave_create_calls;
+    if (g_wave_create_installs) {
+        *slot = g_wave_create_installs;
+    }
+    return g_wave_create_ret;
+}
+Wave *g_wave_sload_wave;
+const char *g_wave_sload_name;
+int g_wave_sload_calls;
+int g_wave_sload_ret;
+int __thiscall observe_wave_sound_load(Wave *wave, const char *name) {
+    g_wave_sload_wave = wave;
+    g_wave_sload_name = name;
+    ++g_wave_sload_calls;
+    return g_wave_sload_ret;
+}
+int g_wave_own58_calls;
+int g_wave_own58_ret;
+int __thiscall observe_wave_own_slot58(Wave *) {
+    ++g_wave_own58_calls;
+    return g_wave_own58_ret;
+}
 void *g_wave_dtor_release_dev;
 int g_wave_dtor_release_calls;
 uint32_t g_wave_dtor_release_seen_vtable;
@@ -10348,6 +10383,146 @@ void test_wave_volume_fname_play() {
     WaveDeviceGroupVolumes = saved_gvol;
     WaveDeviceGlobal = saved_dev_global;
     WaveTimeGetTimeSlot = saved_time;
+}
+
+void test_wave_load_empty() {
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+
+    auto **const saved_create = WaveDeviceCreateSlot;
+    int *const saved_guard = WaveDeviceReleaseGuard;
+    auto *const saved_sload = SoundOriginalLoad;
+    func_wave_device_create *create_fn = &observe_wave_device_create;
+    int guard = 0;
+    WaveDeviceCreateSlot = &create_fn;
+    WaveDeviceReleaseGuard = &guard;
+    SoundOriginalLoad = &observe_wave_sound_load;
+
+    void *dev_vtable[64];
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0x6C / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    dev_vtable[0xC4 / 4] = reinterpret_cast<void *>(&observe_wave_dev0);
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    void *own_vtable[64];
+    std::memset(own_vtable, 0, sizeof(own_vtable));
+    own_vtable[0x58 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot58);
+
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto setp = [&](size_t off, const void *p) {
+        std::memcpy(obj + off, &p, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *p;
+        std::memcpy(&p, obj + off, 4);
+        return p;
+    };
+    auto reset_load = [&] {
+        g_wave_create_calls = g_wave_sload_calls = 0;
+        g_wave_own58_calls = g_wave_fam_calls = 0;
+        g_wave_create_installs = nullptr;
+        g_wave_create_ret = 0;
+        g_wave_own58_ret = 0;
+        g_wave_sload_ret = 0;
+    };
+    char name_buf[] = "x.wav";
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x00, own_vtable);
+
+    // No filename: the fixed 8, nothing runs.
+    setp(0x4C, nullptr);
+    reset_load();
+    expect(wave->load() == 8);
+    expect(g_wave_create_calls == 0 && g_wave_sload_calls == 0 &&
+           g_wave_own58_calls == 0);
+
+    // No device and a dead creation hook: 1, the hook is never entered.
+    setp(0x4C, name_buf);
+    setp(0x3C, nullptr);
+    guard = 0;
+    reset_load();
+    expect(wave->load() == 1);
+    expect(g_wave_create_calls == 0 && g_wave_sload_calls == 0);
+
+    // A failing creation propagates its error before any attribute work.
+    guard = 1;
+    reset_load();
+    g_wave_create_ret = 0x33;
+    expect(wave->load() == 0x33);
+    expect(g_wave_create_calls == 1);
+    expect(g_wave_create_slot_arg == reinterpret_cast<void **>(obj + 0x3C));
+    expect(g_wave_create_name == reinterpret_cast<char *>(name_buf) &&
+           g_wave_create_mode == 1);
+    expect(g_wave_sload_calls == 0 && g_wave_own58_calls == 0);
+
+    // Creation installs the device into 0x3C; a failing Sound::load then
+    // propagates ITS error after the device heard an empty attribute mask.
+    obj[0x54] = 0;
+    reset_load();
+    g_wave_create_installs = &fake_dev;
+    g_wave_sload_ret = 0x55;
+    expect(wave->load() == 0x55);
+    expect(getp(0x3C) == &fake_dev);
+    expect(g_wave_own58_calls == 1);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 0);
+    expect(g_wave_sload_calls == 1 && g_wave_sload_wave == wave &&
+           g_wave_sload_name == reinterpret_cast<char *>(name_buf));
+    expect(get32(0x60) != 0x7654u);  // no length query on failure
+
+    // Success with every flag bit: attributes fold per bit (bit 5 suppresses
+    // the bit-3 companion), the wave's own slot 0x58 adds bit 1, and the
+    // device's slot 0xC4 answer lands in the length field.
+    obj[0x54] = 0x3D;
+    reset_load();
+    g_wave_own58_ret = 7;
+    g_wave_fam_ret = 0x7654;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave->load() == 0);
+    expect(g_wave_create_calls == 0);  // the device already existed
+    expect(g_wave_own58_calls == 1);
+    expect(g_wave_fam_calls == 2 && g_wave_fam_args[0] == 0x1D3);
+    expect(g_wave_sload_calls == 1);
+    expect(get32(0x60) == 0x7654u);
+    {
+        const uint32_t len = 0x7654;
+        std::memcpy(expected.data() + 16 + 0x60, &len, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Bit 3 alone brings its companion bit 0 along.
+    obj[0x54] = 0x08;
+    reset_load();
+    g_wave_fam_ret = 0x11;
+    expect(wave->load() == 0);
+    expect(g_wave_fam_args[0] == 0x41);
+
+    // Bit 0 alone maps to attribute bit 0 with nothing to mask it.
+    obj[0x54] = 0x01;
+    reset_load();
+    expect(wave->load() == 0);
+    expect(g_wave_fam_args[0] == 1);
+
+    // Bit 5 suppresses bit 3's companion: 0x40 and 0x100, and nothing else.
+    obj[0x54] = 0x28;
+    reset_load();
+    expect(wave->load() == 0);
+    expect(g_wave_fam_args[0] == 0x140);
+
+    // Redirect entry.
+    setp(0x4C, nullptr);
+    expect(wave_load_empty_redirect(wave, nullptr) == 8);
+
+    WaveDeviceCreateSlot = saved_create;
+    WaveDeviceReleaseGuard = saved_guard;
+    SoundOriginalLoad = saved_sload;
 }
 
 void test_wave_destructor() {
@@ -17274,5 +17449,6 @@ int main() {
     test_wave_play();
     test_wave_device_forwarders();
     test_wave_volume_fname_play();
+    test_wave_load_empty();
     return failures == 0 ? 0 : 1;
 }

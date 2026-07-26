@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 329,
       "original_dependency": 91,
-      "source_complete": 1485,
+      "source_complete": 1486,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4060
+      "unrecovered": 4059
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1431,
-    "matched_function_starts": 1431,
-    "unique_addresses": 1431,
+    "annotations": 1432,
+    "matched_function_starts": 1432,
+    "unique_addresses": 1432,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 531,
-      "function": 110
+      "function": 111
     },
     "items": [
       {
@@ -7017,11 +7017,20 @@
         "type": "func_wave_original_load *"
       },
       {
+        "address": "0x004C6280",
+        "function": "?load@Sound@@QAEHPBD@Z",
+        "function_address": "0x004C6280",
+        "kind": "function",
+        "location": "src/wave.cpp:775",
+        "symbol": "SoundOriginalLoad",
+        "type": "func_sound_original_load *"
+      },
+      {
         "address": "0x004C5280",
         "function": "?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z",
         "function_address": "0x004C5280",
         "kind": "function",
-        "location": "src/wave.cpp:796",
+        "location": "src/wave.cpp:874",
         "symbol": "WaveDevicePullFromGroup",
         "type": "func_wave_device_pull_from_group *"
       },
@@ -7030,7 +7039,7 @@
         "function": "??3@YAXPAX@Z",
         "function_address": "0x0064557F",
         "kind": "function",
-        "location": "src/wave.cpp:798",
+        "location": "src/wave.cpp:876",
         "symbol": "WaveOperatorDelete",
         "type": "func_operator_delete *"
       },
@@ -7098,7 +7107,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 110,
-    "total": 641
+    "matched_function_starts": 111,
+    "total": 642
   }
 }

@@ -2400,7 +2400,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C6080,0x004C611A,179,.text,??0Sound@@QAE@XZ,void (__thiscall ??0Sound@@QAE@XZ)(Sound* this),0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x004C6120,0x004C61D4,205,.text,??1Sound@@QAE@XZ,void (__thiscall ??1Sound@@QAE@XZ)(Sound* this),0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x004C61E0,0x004C6260,128,.text,?set_type@Sound@@QAEXI@Z,"void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)",0x004C61E0-0x004C6260,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
-0x004C6280,0x004C6361,225,.text,?load@Sound@@QAEHPBD@Z,"int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)",0x004C6280-0x004C6361,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,5
+0x004C6280,0x004C6361,225,.text,?load@Sound@@QAEHPBD@Z,"int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)",0x004C6280-0x004C6361,game,frame;hidden;sp_ready;purged_ok,,,,SoundOriginalLoad,original_dependency,,,,5,5
 0x004C6370,0x004C63C1,81,.text,?attach@Sound@@QAEHXZ,int (__thiscall ?attach@Sound@@QAEHXZ)(Sound* this),0x004C6370-0x004C63C1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C63D0,0x004C642C,92,.text,?detach@Sound@@QAEHXZ,int (__thiscall ?detach@Sound@@QAEHXZ)(Sound* this),0x004C63D0-0x004C642C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C6430,0x004C6438,8,.text,?UNK1@Sound@@QAEHH@Z,"int (__thiscall ?UNK1@Sound@@QAEHH@Z)(Sound* this, int)",0x004C6430-0x004C6438,game,hidden;sp_ready;purged_ok,src/sound.cpp:24,Complete,,,source_complete,,,,0,0
@@ -2424,7 +2424,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C66A0,0x004C66AF,15,.text,?get_time@Sound@@QAEHXZ,int (__thiscall ?get_time@Sound@@QAEHXZ)(Sound* this),0x004C66A0-0x004C66AF,game,hidden;sp_ready;purged_ok,src/sound.cpp:100,Complete,,,source_complete,,,,0,0
 0x004C66B0,0x004C66E0,48,.text,?set_pan@Sound@@QAEXH@Z,"void (__thiscall ?set_pan@Sound@@QAEXH@Z)(Sound* this, int)",0x004C66B0-0x004C66E0,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x004C66E0,0x004C67B6,239,.text,??0Wave@@QAE@XZ,void (__thiscall ??0Wave@@QAE@XZ)(Wave* this),0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,16
-0x004C67C0,0x004C68EC,333,.text,??1Wave@@QAE@XZ,,0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20,game,frame;sp_ready;purged_ok,src/wave.cpp:819,Complete,,WaveOriginalDestructor | WaveElementTeardown,source_complete,,,,2,2
+0x004C67C0,0x004C68EC,333,.text,??1Wave@@QAE@XZ,,0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20,game,frame;sp_ready;purged_ok,src/wave.cpp:897,Complete,,WaveOriginalDestructor | WaveElementTeardown,source_complete,,,,2,2
 0x004C68F0,0x004C6913,35,.text,?play@Wave@@QAEHH@Z,"int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)",0x004C68F0-0x004C6913,game,frame;hidden;sp_ready;purged_ok,src/wave.cpp:260,Complete,,,source_complete,,,,0,0
 0x004C6920,0x004C69AD,141,.text,?play@Wave@@QAEHXZ,int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this),0x004C6920-0x004C69AD,game,sp_ready;purged_ok,src/wave.cpp:727,Complete,,,source_complete,,,,2,20
 0x004C69B0,0x004C6AD5,293,.text,?init@Wave@@QAEXPADK@Z,"void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)",0x004C69B0-0x004C6AD5,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,5
@@ -2434,7 +2434,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C6B60,0x004C6BAB,75,.text,?set_fname@Wave@@QAEHPBD@Z,"int (__thiscall ?set_fname@Wave@@QAEHPBD@Z)(Wave* this, int8*)",0x004C6B60-0x004C6BAB,game,frame;sp_ready;purged_ok,src/wave.cpp:695,Complete,,,source_complete,,,,4,0
 0x004C6BB0,0x004C6C1A,106,.text,?dyna_load@Wave@@QAEHPAD@Z,"int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)",0x004C6BB0-0x004C6C1A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C6C20,0x004C6CD8,184,.text,?load@Wave@@QAEHPBD@Z,"int (__thiscall ?load@Wave@@QAEHPBD@Z)(Wave* this, int8*)",0x004C6C20-0x004C6CD8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4
-0x004C6CE0,0x004C6DAC,204,.text,?load@Wave@@QAEHXZ,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this),0x004C6CE0-0x004C6DAC,game,frame;hidden;sp_ready;purged_ok,,,,WaveOriginalLoad,original_dependency,,,,1,3
+0x004C6CE0,0x004C6DAC,204,.text,?load@Wave@@QAEHXZ,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this),0x004C6CE0-0x004C6DAC,game,frame;hidden;sp_ready;purged_ok,src/wave.cpp:786,Complete,,WaveOriginalLoad,source_complete,,,,1,3
 0x004C6DB0,0x004C6DE6,54,.text,?load@Wave@@QAEHPADK@Z,"int (__thiscall ?load@Wave@@QAEHPADK@Z)(Wave* this, int8*, unsigned int)",0x004C6DB0-0x004C6DE6,game,frame;hidden;sp_ready;purged_ok,src/wave.cpp:168,Complete,,,source_complete,,,,0,5
 0x004C6DF0,0x004C6E95,165,.text,?reload@Wave@@QAEHXZ,int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this),0x004C6DF0-0x004C6E95,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C6EA0,0x004C6ED9,57,.text,?unload@Wave@@QAEXXZ,void (__thiscall ?unload@Wave@@QAEXXZ)(Wave* this),0x004C6EA0-0x004C6ED9,game,hidden;sp_ready;purged_ok,src/wave.cpp:111,Complete,,,source_complete,,,,0,7
@@ -2569,7 +2569,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C9050,0x004C9073,35,.text,?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z,"int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)",0x004C9050-0x004C9073,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C9080,0x004C92CF,749,.text,sub_4c9080,,0x004C9080-0x004C92CF;0x00659FF2-0x0065A090,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,16,1
 0x004C92D0,0x004C92F1,33,.text,??_GSound@@UAEPAXI@Z,"void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)",0x004C92D0-0x004C92F1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
-0x004C9300,0x004C9321,33,.text,??_GWave@@UAEPAXI@Z,"void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)",0x004C9300-0x004C9321,game,hidden;sp_ready;purged_ok,src/wave.cpp:777,Complete,,,source_complete,,,,2,0
+0x004C9300,0x004C9321,33,.text,??_GWave@@UAEPAXI@Z,"void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)",0x004C9300-0x004C9321,game,hidden;sp_ready;purged_ok,src/wave.cpp:855,Complete,,,source_complete,,,,2,0
 0x004C9330,0x004C9351,33,.text,??_GAmbience@@UAEPAXI@Z,"void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)",0x004C9330-0x004C9351,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x004C9360,0x004C9381,33,.text,??_GVideo@@UAEPAXI@Z,"void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)",0x004C9360-0x004C9381,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x004C9390,0x004C93A2,18,.text,sub_4c9390,,0x004C9390-0x004C93A2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
