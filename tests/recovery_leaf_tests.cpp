@@ -9606,9 +9606,11 @@ int __thiscall observe_wave_dev0(void *self) {
     ++g_wave_fam_calls;
     return g_wave_fam_ret;
 }
+std::vector<uint32_t> g_wave_fam_arg_log;
 int __thiscall observe_wave_dev1(void *self, uint32_t a1) {
     g_wave_fam_self = self;
     g_wave_fam_args[0] = a1;
+    g_wave_fam_arg_log.push_back(a1);
     ++g_wave_fam_calls;
     return g_wave_fam_ret;
 }
@@ -9707,6 +9709,28 @@ int g_wave_own58_ret;
 int __thiscall observe_wave_own_slot58(Wave *) {
     ++g_wave_own58_calls;
     return g_wave_own58_ret;
+}
+int g_wave_own70_calls;
+int g_wave_own70_ret;
+void *g_wave_own70_swaps_vtbl;
+int __thiscall observe_wave_own_slot70(Wave *self) {
+    ++g_wave_own70_calls;
+    if (g_wave_own70_swaps_vtbl) {
+        // dyna_load captures the device vtable BEFORE this query runs; a
+        // swapped table here proves the capture happened first.
+        void *device;
+        std::memcpy(&device, reinterpret_cast<uint8_t *>(self) + 0x3C, 4);
+        std::memcpy(device, &g_wave_own70_swaps_vtbl, 4);
+    }
+    return g_wave_own70_ret;
+}
+int g_wave_own7C_calls;
+uint32_t g_wave_own7C_seen_flags;
+void __thiscall observe_wave_own_slot7C(Wave *self) {
+    ++g_wave_own7C_calls;
+    // reload sets the loaded bit BEFORE this callback; witness the word.
+    std::memcpy(&g_wave_own7C_seen_flags,
+                reinterpret_cast<uint8_t *>(self) + 0x40, 4);
 }
 void *g_wave_dtor_release_dev;
 int g_wave_dtor_release_calls;
@@ -10409,6 +10433,8 @@ void test_wave_load_empty() {
     void *own_vtable[64];
     std::memset(own_vtable, 0, sizeof(own_vtable));
     own_vtable[0x58 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot58);
+    own_vtable[0x70 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot70);
+    own_vtable[0x7C / 4] = reinterpret_cast<void *>(&observe_wave_own_slot7C);
 
     auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
     auto get32 = [&](size_t off) {
@@ -10427,9 +10453,12 @@ void test_wave_load_empty() {
     auto reset_load = [&] {
         g_wave_create_calls = g_wave_sload_calls = 0;
         g_wave_own58_calls = g_wave_fam_calls = 0;
+        g_wave_own70_calls = g_wave_own7C_calls = 0;
+        g_wave_fam_arg_log.clear();
         g_wave_create_installs = nullptr;
         g_wave_create_ret = 0;
         g_wave_own58_ret = 0;
+        g_wave_own70_ret = 0;
         g_wave_sload_ret = 0;
     };
     char name_buf[] = "x.wav";
@@ -10516,9 +10545,163 @@ void test_wave_load_empty() {
     expect(wave->load() == 0);
     expect(g_wave_fam_args[0] == 0x140);
 
-    // Redirect entry.
+    // --- reload(): the loaded-bit protocol ---
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0x6C / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    dev_vtable[0x84 / 4] = reinterpret_cast<void *>(&observe_wave_dev0);
+    dev_vtable[0x48 / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+
+    setp(0x4C, nullptr);
+    reset_load();
+    expect(wave->reload() == 8);
+    setp(0x4C, name_buf);
+    setp(0x3C, nullptr);
+    guard = 0;
+    reset_load();
+    expect(wave->reload() == 1);
+    guard = 1;
+    reset_load();
+    g_wave_create_ret = 0x22;
+    expect(wave->reload() == 0x22);
+    expect(g_wave_create_calls == 1 && g_wave_fam_calls == 0);
+    expect(g_wave_create_mode == 1);
+
+    // A failing device reload propagates before the loaded-bit protocol.
+    setp(0x3C, &fake_dev);
+    obj[0x54] = 1;
+    set32(0x40, 0xF0);
+    set32(0x30, 7);
+    reset_load();
+    g_wave_own58_ret = 5;
+    g_wave_fam_ret = 0x66;
+    expect(wave->reload() == 0x66);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({3}));
+    expect(g_wave_own7C_calls == 0 && get32(0x40) == 0xF0);
+
+    // First success: the loaded bit is set before the wave's own 0x7C runs,
+    // and the nonzero dword at 0x30 starts the device looping with 1.
+    reset_load();
+    g_wave_own58_ret = 5;
+    g_wave_fam_ret = 0;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave->reload() == 0);
+    expect(get32(0x40) == 0xF1);
+    expect(g_wave_own7C_calls == 1 && g_wave_own7C_seen_flags == 0xF1);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({3, 1}));
+    {
+        const uint32_t loaded_word = 0xF1;
+        std::memcpy(expected.data() + 16 + 0x40, &loaded_word, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Already loaded: no bit work, no callback, no looping.
+    reset_load();
+    g_wave_own58_ret = 5;
+    g_wave_fam_ret = 0;
+    expect(wave->reload() == 0);
+    expect(g_wave_own7C_calls == 0);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({3}));
+
+    // A zero dword at 0x30 skips the looping call; with the 0x54 flag byte
+    // cleared too, the attribute mask is exactly zero.
+    set32(0x40, 0);
+    set32(0x30, 0);
+    obj[0x54] = 0;
+    reset_load();
+    expect(wave->reload() == 0);
+    expect(g_wave_own7C_calls == 1);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({0}));
+
+    // --- dyna_load(): in-memory creation ---
+    char data_buf[] = "DATA";
+    reset_load();
+    expect(wave->dyna_load(data_buf) == 0xC);  // a device already exists
+    expect(g_wave_create_calls == 0);
+    setp(0x3C, nullptr);
+    guard = 0;
+    reset_load();
+    expect(wave->dyna_load(data_buf) == 1);
+    guard = 1;
+    reset_load();
+    g_wave_create_ret = 0x44;
+    expect(wave->dyna_load(data_buf) == 0x44);
+    expect(g_wave_create_name == reinterpret_cast<char *>(data_buf));
+    expect(g_wave_create_mode == 1);
+    expect(g_wave_own70_calls == 0);
+    // Success - and the 0x70 query swaps the device's vtable for a poisoned
+    // one, so a capture taken after the query would dispatch into nulls.
+    void *poison_vtbl[64];
+    std::memset(poison_vtbl, 0, sizeof(poison_vtbl));
+    reset_load();
+    g_wave_create_installs = &fake_dev;
+    g_wave_own70_ret = 0x155;
+    g_wave_own70_swaps_vtbl = poison_vtbl;
+    expect(wave->dyna_load(data_buf) == 0);
+    g_wave_own70_swaps_vtbl = nullptr;
+    fake_dev.vtbl = dev_vtable;
+    expect(getp(0x3C) == &fake_dev);
+    expect(g_wave_own70_calls == 1);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({0x155}));
+    expect(g_wave_own7C_calls == 1);
+
+    // --- load(const char *): the replay tail ---
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0x6C / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    dev_vtable[0xC4 / 4] = reinterpret_cast<void *>(&observe_wave_dev0);
+    dev_vtable[0x40 / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    dev_vtable[0x98 / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    dev_vtable[0x44 / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    char name2_buf[] = "y.wav";
+
+    setp(0x3C, nullptr);
+    guard = 0;
+    reset_load();
+    expect(wave->load(name2_buf) == 1);
+    guard = 1;
+    reset_load();
+    g_wave_create_ret = 0x29;
+    expect(wave->load(name2_buf) == 0x29);
+    expect(g_wave_create_name == reinterpret_cast<char *>(name2_buf));
+    expect(g_wave_create_mode == 1);
+
+    // The caller's name - not the remembered one - reaches Sound::load; a
+    // failing load stops before the replay tail.
+    setp(0x3C, &fake_dev);
+    obj[0x54] = 0x19;
+    reset_load();
+    g_wave_sload_ret = 0x77;
+    expect(wave->load(name2_buf) == 0x77);
+    expect(g_wave_fam_arg_log == std::vector<uint32_t>({0xC1}));
+    expect(g_wave_sload_name == reinterpret_cast<char *>(name2_buf));
+
+    // Success: length lands, then volume, pitch, and the 0x08 dword replay
+    // through the device, in that order.
+    obj[0x54] = 0;
+    set32(0x04, 33);
+    set32(0x58, 0x111);
+    set32(0x08, 0x222);
+    reset_load();
+    g_wave_own58_ret = 9;
+    g_wave_fam_ret = 0x555;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave->load(name2_buf) == 0);
+    expect(get32(0x60) == 0x555u);
+    expect(g_wave_fam_arg_log ==
+           std::vector<uint32_t>({2, 33, 0x111, 0x222}));
+    {
+        const uint32_t len = 0x555;
+        std::memcpy(expected.data() + 16 + 0x60, &len, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Redirect entries.
     setp(0x4C, nullptr);
     expect(wave_load_empty_redirect(wave, nullptr) == 8);
+    expect(wave_reload_redirect(wave, nullptr) == 8);
+    expect(wave_dyna_load_redirect(wave, nullptr, data_buf) == 0xC);
+    setp(0x3C, nullptr);
+    guard = 0;
+    expect(wave_load_fname_redirect(wave, nullptr, name2_buf) == 1);
 
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;

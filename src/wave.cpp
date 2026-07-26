@@ -849,6 +849,192 @@ int __fastcall wave_load_empty_redirect(Wave *self, void *) {
 }
 
 /*
+Purpose: Reload the wave from its remembered filename. The device is created
+         through the guarded hook when missing, hears the folded attribute
+         mask (only the low two bits here) through its slot 0x6C, and
+         reloads through its slot 0x84. On a first successful load the
+         loaded bit of the 0x40 flag dword is set BEFORE the wave's own
+         vtable slot 0x7C runs, and a nonzero dword at 0x30 additionally
+         starts the device looping through its slot 0x48 with argument 1.
+Original Offset: 004C6DF0
+Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
+              or the creation/reload error
+Status: Complete
+*/
+int Wave::reload() {
+    const char *const fname = static_cast<const char *>(fname_);
+    if (!fname) {
+        return 8;
+    }
+    if (!device_) {
+        if (!*WaveDeviceReleaseGuard) {
+            return 1;
+        }
+        const int created = (*WaveDeviceCreateSlot)(&device_, fname, 1);
+        if (created) {
+            return created;
+        }
+    }
+    int attribs = 0;
+    if (flags_54_ & 1) {
+        attribs |= 1;
+    }
+    {
+        typedef int(__thiscall * wave_query_fn)(Wave *self);
+        if ((*reinterpret_cast<wave_query_fn *>(
+                *reinterpret_cast<uint8_t **>(this) + 0x58))(this)) {
+            attribs |= 2;
+        }
+    }
+    {
+        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        (*reinterpret_cast<device_attrib_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, attribs);
+    }
+    typedef int(__thiscall * device_reload_fn)(void *device);
+    const int reloaded = (*reinterpret_cast<device_reload_fn *>(
+        *reinterpret_cast<uint8_t **>(device_) + 0x84))(device_);
+    if (reloaded) {
+        return reloaded;
+    }
+    if (!(field_40_ & 1)) {
+        field_40_ |= 1;
+        {
+            typedef void(__thiscall * wave_vfn)(Wave *self);
+            (*reinterpret_cast<wave_vfn *>(
+                *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
+        }
+        if (field_30_) {
+            typedef void(__thiscall * device_loop_fn)(void *device, int on);
+            (*reinterpret_cast<device_loop_fn *>(
+                *reinterpret_cast<uint8_t **>(device_) + 0x48))(device_, 1);
+        }
+    }
+    return reloaded;
+}
+
+int __fastcall wave_reload_redirect(Wave *self, void *) {
+    return self->reload();
+}
+
+/*
+Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
+         already wrapped; otherwise the guarded creation hook builds one from
+         the data pointer. The device's vtable is captured BEFORE the wave's
+         own slot 0x70 composes the attribute mask - the original dispatches
+         the following slot 0x6C through that captured table on the re-read
+         device - and the wave's own slot 0x7C finishes.
+Original Offset: 004C6BB0
+Return Value: 0 on success, 0xC with a device already wrapped, 1 with a dead
+              creation hook, or the creation error
+Status: Complete
+*/
+int Wave::dyna_load(char *a1) {
+    if (device_) {
+        return 0xC;
+    }
+    if (!*WaveDeviceReleaseGuard) {
+        return 1;
+    }
+    const int created = (*WaveDeviceCreateSlot)(&device_, a1, 1);
+    if (created) {
+        return created;
+    }
+    uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+    const int attribs = (*reinterpret_cast<int(__thiscall **)(Wave *)>(
+        *reinterpret_cast<uint8_t **>(this) + 0x70))(this);
+    {
+        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        (*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C))(
+            device_, attribs);
+    }
+    typedef void(__thiscall * wave_vfn)(Wave *self);
+    (*reinterpret_cast<wave_vfn *>(
+        *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
+    return created;
+}
+
+int __fastcall wave_dyna_load_redirect(Wave *self, void *, char *a1) {
+    return self->dyna_load(a1);
+}
+
+/*
+Purpose: Load the wave from a caller-supplied filename. The guarded creation
+         hook builds a device from that name when none is wrapped; the folded
+         attribute mask (bits 0 and 1 plus the 0x40/0x80 mappings, without
+         the companions the no-argument load adds) goes through the device's
+         slot 0x6C; the base Sound::load reads the file; and on success the
+         device answers the length through slot 0xC4 and then hears the
+         stored volume, pitch, and the dword at 0x08 through its slots
+         0x40, 0x98, and 0x44.
+Original Offset: 004C6C20
+Return Value: 0 on success, 1 with a dead creation hook, or the
+              creation/load error
+Status: Complete
+*/
+int Wave::load(const char *a1) {
+    if (!device_) {
+        if (!*WaveDeviceReleaseGuard) {
+            return 1;
+        }
+        const int created = (*WaveDeviceCreateSlot)(&device_, a1, 1);
+        if (created) {
+            return created;
+        }
+    }
+    int attribs = 0;
+    if (flags_54_ & 1) {
+        attribs |= 1;
+    }
+    {
+        typedef int(__thiscall * wave_query_fn)(Wave *self);
+        if ((*reinterpret_cast<wave_query_fn *>(
+                *reinterpret_cast<uint8_t **>(this) + 0x58))(this)) {
+            attribs |= 2;
+        }
+    }
+    const uint8_t flags = flags_54_;
+    if (flags & 8) {
+        attribs |= 0x40;
+    }
+    if (flags & 0x10) {
+        attribs |= 0x80;
+    }
+    {
+        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        (*reinterpret_cast<device_attrib_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, attribs);
+    }
+    const int loaded = SoundOriginalLoad(this, a1);
+    if (loaded) {
+        return loaded;
+    }
+    {
+        typedef int(__thiscall * device_length_fn)(void *device);
+        ms_length_ = (*reinterpret_cast<device_length_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0xC4))(device_);
+    }
+    {
+        typedef void(__thiscall * device_level_fn)(void *device, uint32_t v);
+        (*reinterpret_cast<device_level_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, volume_);
+    }
+    {
+        typedef void(__thiscall * device_pitch_fn)(void *device, int pitch);
+        (*reinterpret_cast<device_pitch_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x98))(device_, pitch_);
+    }
+    typedef void(__thiscall * device_pan_fn)(void *device, uint32_t v);
+    (*reinterpret_cast<device_pan_fn *>(
+        *reinterpret_cast<uint8_t **>(device_) + 0x44))(device_, field_8_);
+    return 0;
+}
+
+int __fastcall wave_load_fname_redirect(Wave *self, void *, const char *a1) {
+    return self->load(a1);
+}
+
+/*
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
