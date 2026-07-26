@@ -1789,8 +1789,8 @@ P3,10,0x004C6030,sub_4c6030,34,0,0,unrecovered,,,1,missing,exact,
 P3,0,0x004C6060,sub_4c6060,17,0,0,unrecovered,,,0,missing,missing,
 P3,121,0x004C6080,??0Sound@@QAE@XZ,179,0,1,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0Sound@@QAE@XZ)(Sound* this)
 P3,1121,0x004C6120,??1Sound@@QAE@XZ,205,1,1,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??1Sound@@QAE@XZ)(Sound* this)
-P0,1005021,0x004C61E0,?set_type@Sound@@QAEXI@Z,128,5,0,original_dependency,ui_dependency,recover_sound,2,exact,exact,"void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)"
-P0,1005521,0x004C6280,?load@Sound@@QAEHPBD@Z,225,5,5,original_dependency,ui_dependency,recover_sound_load,2,exact,exact,"int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)"
+P0,1005021,0x004C61E0,?set_type@Sound@@QAEXI@Z,128,5,0,source_complete,ui_dependency,recover_sound,2,exact,exact,"void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)"
+P0,1005521,0x004C6280,?load@Sound@@QAEHPBD@Z,225,5,5,source_complete,ui_dependency,recover_sound_load,2,exact,exact,"int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)"
 P3,11,0x004C6370,?attach@Sound@@QAEHXZ,81,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?attach@Sound@@QAEHXZ)(Sound* this)
 P3,11,0x004C63D0,?detach@Sound@@QAEHXZ,92,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?detach@Sound@@QAEHXZ)(Sound* this)
 P3,21,0x004C6440,?unload@Sound@@QAEHXZ,50,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?unload@Sound@@QAEHXZ)(Sound* this)

@@ -45,9 +45,23 @@ class DLLEXPORT Sound {
   int fade();
   int fade_in();
   void ramp(int a1, int a2, unsigned int a3);
+  void set_type(unsigned int a1);
+  int load(const char *a1);
 
  private:
-  uint8_t unmapped_[0xA0];
+  // The fields below are the slice Wave inherits and mirrors at the same
+  // offsets: the loop dword at 0x30, the wrapped device at 0x3C, the flag
+  // dword at 0x40 (bit 0 the loaded bit, plus set_type's class bits), the
+  // heap-owned filename at 0x4C, and the type at 0x50.
+  uint8_t unmapped_[0x30];
+  uint32_t loop_flag_30_;
+  uint8_t unmapped_34_[8];
+  void *device_;
+  uint32_t flags_40_;
+  uint8_t unmapped_44_[8];
+  void *fname_;
+  uint32_t type_;
+  uint8_t unmapped_54_[0x4C];
 };
 
 int __fastcall sound_unk1_redirect(Sound *self, void *, int a1);
@@ -64,3 +78,5 @@ void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1);
 int __fastcall sound_fade_query_redirect(Sound *self, void *);
 int __fastcall sound_fade_in_redirect(Sound *self, void *);
 void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2, unsigned int a3);
+void __fastcall sound_set_type_redirect(Sound *self, void *, unsigned int a1);
+int __fastcall sound_load_redirect(Sound *self, void *, const char *a1);

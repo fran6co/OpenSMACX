@@ -10929,6 +10929,220 @@ void test_wave_init() {
     WaveDeviceReleaseGuard = saved_guard;
 }
 
+void test_sound_set_type_and_load() {
+    std::vector<uint8_t> storage(0xA0 + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *sound = reinterpret_cast<Sound *>(obj);
+    g_wave_dtor_obj = obj;
+
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto setp = [&](size_t off, const void *ptr) {
+        std::memcpy(obj + off, &ptr, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *ptr;
+        std::memcpy(&ptr, obj + off, 4);
+        return ptr;
+    };
+
+    // --- set_type: the whole jump table, plus the invalid arms (3 routes
+    // to the invalid arm despite being inside the table's range) ---
+    seed_storage(storage.data(), expected.data(), storage.size());
+    const struct { uint32_t type; uint32_t bit; } type_map[] = {
+        {1, 4}, {2, 8}, {4, 0x10}, {5, 0x28}, {6, 0x100}, {7, 0x80},
+    };
+    const uint32_t base = 0x60000201u;
+    for (const auto &c : type_map) {
+        set32(0x40, base);
+        set32(0x50, 0xEEEEEEEEu);
+        sound->set_type(c.type);
+        expect(get32(0x50) == c.type);
+        expect(get32(0x40) == (base | c.bit));
+    }
+    const uint32_t invalid_types[] = {0, 3, 8, 0x7FFFFFFFu};
+    for (const uint32_t t : invalid_types) {
+        set32(0x40, base);
+        set32(0x50, 0xEEEEEEEEu);
+        sound->set_type(t);
+        expect(get32(0x50) == 0);
+        expect(get32(0x40) == base);
+    }
+    set32(0x40, base);
+    set32(0x50, 0);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    sound->set_type(6);
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        const uint32_t t6 = 6;
+        const uint32_t f6 = base | 0x100;
+        std::memcpy(eobj + 0x50, &t6, 4);
+        std::memcpy(eobj + 0x40, &f6, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    sound_set_type_redirect(sound, nullptr, 2);
+    expect(get32(0x50) == 2);
+
+    // --- load ---
+    auto *const saved_delete = WaveOperatorDelete;
+    auto *const saved_new = WaveOperatorNew;
+    auto **const saved_create = WaveDeviceCreateSlot;
+    int *const saved_guard = WaveDeviceReleaseGuard;
+    func_wave_device_create *create_fn = &observe_wave_device_create;
+    int guard = 1;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+    WaveOperatorNew = &observe_wave_operator_new;
+    WaveDeviceCreateSlot = &create_fn;
+    WaveDeviceReleaseGuard = &guard;
+
+    void *dev_vtable[64];
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0x60 / 4] = reinterpret_cast<void *>(&observe_wave_dev0);
+    dev_vtable[0x10 / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    dev_vtable[0x48 / 4] = reinterpret_cast<void *>(&observe_wave_dev1);
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    void *own_vtable[64];
+    std::memset(own_vtable, 0, sizeof(own_vtable));
+    own_vtable[0x7C / 4] = reinterpret_cast<void *>(&observe_wave_own_slot7C);
+    setp(0x00, own_vtable);
+
+    auto reset_sload = [&] {
+        filefind_get_calls = 0;
+        g_wave_new_calls = g_wave_create_calls = 0;
+        g_wave_own7C_calls = g_wave_fam_calls = 0;
+        g_wave_fam_arg_log.clear();
+        g_wave_dtor_deletes.clear();
+        g_wave_dtor_delete_seen_slot.clear();
+        g_wave_create_installs = nullptr;
+        g_wave_create_ret = 0;
+    };
+    char name_arg[] = "menu.wav";
+    char resolved_buf[] = "snd/menu.wav";
+
+    // Unresolvable: 0xA, and nothing else was even consulted.
+    reset_sload();
+    filefind_get_result = nullptr;
+    expect(sound->load(name_arg) == 0xA);
+    expect(filefind_get_calls == 1 &&
+           filefind_get_request == static_cast<LPCSTR>(name_arg));
+    expect(g_wave_create_calls == 0 && g_wave_new_calls == 0);
+
+    // Resolvable but the hook guard is dead: 1, after the resolution.
+    reset_sload();
+    filefind_get_result = resolved_buf;
+    guard = 0;
+    expect(sound->load(name_arg) == 1);
+    expect(filefind_get_calls == 1 && g_wave_create_calls == 0);
+    guard = 1;
+
+    // A failing creation propagates.
+    setp(0x3C, nullptr);
+    reset_sload();
+    g_wave_create_ret = 0x2E;
+    expect(sound->load(name_arg) == 0x2E);
+    expect(g_wave_create_calls == 1 && g_wave_create_mode == 1 &&
+           g_wave_create_name == static_cast<LPCSTR>(resolved_buf));
+
+    // First successful load through a freshly created device: loaded bit
+    // set BEFORE the sound's own 0x7C, loop started, name remembered.
+    setp(0x4C, nullptr);
+    set32(0x40, 0xF0);
+    set32(0x30, 3);
+    reset_sload();
+    g_wave_create_installs = &fake_dev;
+    g_wave_fam_ret = 0;
+    // Scrub the shared arena: earlier tests left the same resolved string in
+    // it, which would mask a dropped copy.
+    std::memset(g_wave_new_arena, 0x5A, sizeof(g_wave_new_arena));
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(sound->load(name_arg) == 0);
+    expect(getp(0x3C) == &fake_dev);
+    expect(get32(0x40) == 0xF1);
+    expect(g_wave_own7C_calls == 1 && g_wave_own7C_seen_flags == 0xF1);
+    expect(g_wave_fam_arg_log ==
+           std::vector<uint32_t>(
+               {static_cast<uint32_t>(
+                    reinterpret_cast<uintptr_t>(resolved_buf)),
+                1}));
+    expect(g_wave_new_calls == 1 && g_wave_new_size == 13);
+    expect(getp(0x4C) == g_wave_new_arena);
+    expect(std::strcmp(g_wave_new_arena, "snd/menu.wav") == 0);
+    expect(g_wave_dtor_deletes.empty());
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        void *dev = &fake_dev;
+        const uint32_t f = 0xF1;
+        void *arena = g_wave_new_arena;
+        std::memcpy(eobj + 0x3C, &dev, 4);
+        std::memcpy(eobj + 0x40, &f, 4);
+        std::memcpy(eobj + 0x4C, &arena, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // A busy existing device answers 0xF before any load.
+    reset_sload();
+    g_wave_fam_ret = 7;
+    expect(sound->load(name_arg) == 0xF);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_arg_log.empty());
+
+    // A failing load on an already-loaded sound clears the loaded bit and
+    // still replaces the remembered name - new copy first, old freed after.
+    reset_sload();
+    g_wave_fam_ret = 0;  // not busy...
+    // ...but the load answer comes from the same shared return; use the
+    // arg-log to tell the calls apart and drive the answer per call through
+    // the busy observer being armed to return 0 and the load to fail: the
+    // shared return cannot differ per slot, so run the failing load against
+    // a sound with NO device instead (fresh creation, failing load).
+    setp(0x3C, nullptr);
+    set32(0x40, 0xF1);
+    reset_sload();
+    g_wave_create_installs = &fake_dev;
+    g_wave_fam_ret = 0x33;
+    expect(sound->load(name_arg) == 0x33);
+    expect(get32(0x40) == 0xF0);
+    expect(g_wave_own7C_calls == 0);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == g_wave_new_arena);
+    expect(getp(0x4C) == g_wave_new_arena);
+
+    // Success with the loaded bit already set: no protocol, no loop.
+    set32(0x40, 1);
+    reset_sload();
+    g_wave_fam_ret = 0;
+    expect(sound->load(name_arg) == 0);
+    expect(g_wave_own7C_calls == 0);
+    expect(get32(0x40) == 1);
+
+    // Success, bit clear, but a zero loop dword: the 0x7C protocol without
+    // the loop start.
+    set32(0x40, 0);
+    set32(0x30, 0);
+    reset_sload();
+    expect(sound->load(name_arg) == 0);
+    expect(g_wave_own7C_calls == 1);
+    // busy + load dispatched, and only the load logs an argument - the loop
+    // call would have logged a second.
+    expect(g_wave_fam_calls == 2 && g_wave_fam_arg_log.size() == 1);
+    expect(get32(0x40) == 1);
+
+    // Redirect entry.
+    reset_sload();
+    filefind_get_result = nullptr;
+    expect(sound_load_redirect(sound, nullptr, name_arg) == 0xA);
+
+    WaveOperatorDelete = saved_delete;
+    WaveOperatorNew = saved_new;
+    WaveDeviceCreateSlot = saved_create;
+    WaveDeviceReleaseGuard = saved_guard;
+}
+
 void test_wave_ctor() {
     std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -17906,5 +18120,6 @@ int main() {
     test_wave_load_empty();
     test_wave_ctor();
     test_wave_init();
+    test_sound_set_type_and_load();
     return failures == 0 ? 0 : 1;
 }

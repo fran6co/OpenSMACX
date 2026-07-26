@@ -17,6 +17,8 @@
  */
 #include "stdafx.h"
 #include "sound.h"
+#include "general.h"
+#include "wave.h"
 #include <cstring>
 
 /*
@@ -310,4 +312,123 @@ int __fastcall sound_fade_in_redirect(Sound *self, void *) {
 void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2,
                                     unsigned int a3) {
     self->ramp(a1, a2, a3);
+}
+
+/*
+Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
+         jump table routes to the invalid arm - store the type at 0x50 and OR
+         a per-type class bit into the flag dword at 0x40: 1 -> 4, 2 -> 8,
+         4 -> 0x10, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
+         type 0 and leaves the flags alone.
+Original Offset: 004C61E0
+Return Value: n/a
+Status: Complete
+*/
+void Sound::set_type(unsigned int a1) {
+    uint32_t class_bit;
+    switch (a1) {
+    case 1:
+        class_bit = 4;
+        break;
+    case 2:
+        class_bit = 8;
+        break;
+    case 4:
+        class_bit = 0x10;
+        break;
+    case 5:
+        class_bit = 0x28;
+        break;
+    case 6:
+        class_bit = 0x100;
+        break;
+    case 7:
+        class_bit = 0x80;
+        break;
+    default:
+        type_ = 0;
+        return;
+    }
+    type_ = a1;
+    flags_40_ |= class_bit;
+}
+
+void __fastcall sound_set_type_redirect(Sound *self, void *, unsigned int a1) {
+    self->set_type(a1);
+}
+
+/*
+Purpose: Load the sound from a filename. The name resolves through the
+         recovered filefind_get (0xA when it cannot); a dead creation-hook
+         guard answers 1; a missing device is built from the resolved path
+         through the guarded hook, while an existing one is first asked
+         through its vtable slot 0x60 whether it is busy (0xF if so). The
+         device loads the resolved path through its slot 0x10. On a first
+         success the loaded bit of the 0x40 flag dword is set BEFORE the
+         sound's own vtable slot 0x7C runs, and a nonzero loop dword at 0x30
+         starts the device looping through its slot 0x48; on failure the
+         loaded bit is cleared. Either way the resolved path is copied onto
+         the game heap - new copy first, old one freed after - and remembered
+         at 0x4C.
+Original Offset: 004C6280
+Return Value: the device's load answer, 0xA for an unresolvable name, 1 for
+              a dead creation hook, 0xF for a busy device, or the creation
+              error
+Status: Complete
+*/
+int Sound::load(const char *a1) {
+    char *const resolved = filefind_get(a1);
+    if (!resolved) {
+        return 0xA;
+    }
+    if (!*WaveDeviceReleaseGuard) {
+        return 1;
+    }
+    if (!device_) {
+        const int created = (*WaveDeviceCreateSlot)(&device_, resolved, 1);
+        if (created) {
+            return created;
+        }
+    } else {
+        typedef int(__thiscall * device_busy_fn)(void *device);
+        if ((*reinterpret_cast<device_busy_fn *>(
+                *reinterpret_cast<uint8_t **>(device_) + 0x60))(device_)) {
+            return 0xF;
+        }
+    }
+    int result;
+    {
+        typedef int(__thiscall * device_load_fn)(void *device,
+                                                 const char *name);
+        result = (*reinterpret_cast<device_load_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x10))(device_, resolved);
+    }
+    if (result == 0) {
+        if (!(flags_40_ & 1)) {
+            flags_40_ |= 1;
+            (*reinterpret_cast<void(__thiscall **)(Sound *)>(
+                *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
+            if (loop_flag_30_) {
+                typedef void(__thiscall * device_loop_fn)(void *device,
+                                                          int on);
+                (*reinterpret_cast<device_loop_fn *>(
+                    *reinterpret_cast<uint8_t **>(device_) + 0x48))(device_,
+                                                                    1);
+            }
+        }
+    } else {
+        flags_40_ &= ~1u;
+    }
+    char *const copy =
+        static_cast<char *>(WaveOperatorNew(strlen(resolved) + 1));
+    strcpy(copy, resolved);
+    if (fname_) {
+        WaveOperatorDelete(fname_);
+    }
+    fname_ = copy;
+    return result;
+}
+
+int __fastcall sound_load_redirect(Sound *self, void *, const char *a1) {
+    return self->load(a1);
 }
