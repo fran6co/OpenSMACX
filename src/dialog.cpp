@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "dialog.h"
+#include "stringstruct.h"
 
 /*
 Purpose: Set the three fonts used by the dialog.
@@ -245,4 +246,90 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 int __cdecl dialog_set_def_dialog_font_redirect(
         Font *font1, Font *font2, Font *font3) {
     return Dialog::set_def_dialog_font(font1, font2, font3);
+}
+
+func_dialog_close *DialogOriginalClose = (func_dialog_close *)0x00608F50;
+func_operator_delete *DialogOperatorDelete =
+    (func_operator_delete *)0x0064557F;
+
+const uint32_t DialogPrimaryVtable = 0x006703FC;
+uint32_t DialogListDerivedVtable = 0x006698C4;
+uint32_t DialogListDerivedVirtualBaseVtable = 0x006698C0;
+uint32_t DialogListVtable = 0x006693A4;
+uint32_t DialogListVirtualBaseVtable = 0x006693A0;
+const uint32_t DialogVirtualBaseFinalVtable = 0x006693AC;
+
+uint32_t *DialogPublishedGlobal = reinterpret_cast<uint32_t *>(0x009B3374);
+
+/*
+Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
+         destroy the embedded StringStruct-derived list at this+0xBC - its
+         derived close followed by its base StringStruct close, each staging
+         the primary table and the virtual-base table named by the list's OWN
+         vbtable, then walking and clearing the entry list - then destroy the
+         list's virtual-base subobject (read its context word, install its
+         final table, publish the word to the process global, in that order),
+         and finally shut down the embedded Heap. The original's C++ exception
+         frame targets __CxxFrameHandler and is omitted as unreachable per
+         policy.
+Original Offset: 00608E10
+Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
+              scalar deleting destructor overwrites it and the 116 direct
+              callers ignore it, so void is faithful)
+Status: Complete with temporary Dialog::close original dependency; the list
+        walk and the Heap teardown are the source-owned
+        StringStruct::close_with_tables/remove_all and Heap::shutdown.
+Verification note: the sweep's one survivor swaps the context-word read at
+virtual_base[1] past the final-table install at virtual_base[0]; the slots are
+disjoint, so the original's read-before-install order is unobservable and the
+mutant is equivalent by construction.
+*/
+void Dialog::destroy() {
+    volatile uint32_t *const object = reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = DialogPrimaryVtable;
+    DialogOriginalClose(this);
+
+    // The derived-close chain at 0x004066C0, inlined by the original: each
+    // stage resolves the virtual-base slot through the list's own vbtable at
+    // run time (never the compile-time 0x24 - the RadioButton rule), and the
+    // second stage's walk is a run-time no-op because the first emptied the
+    // list.
+    StringStruct *const list = reinterpret_cast<StringStruct *>(
+        reinterpret_cast<uint8_t *>(this) + 0xBC);
+    list->close_with_tables(DialogListDerivedVtable,
+                            DialogListDerivedVirtualBaseVtable);
+    list->close_with_tables(DialogListVtable, DialogListVirtualBaseVtable);
+
+    // The list virtual base's subobject destructor. ??1Dialog is the
+    // complete-object destructor, so the original addresses it at the fixed
+    // most-derived this+0xE4 rather than through the vbtable; reproduce that.
+    // Read the context word before installing the final table, then publish.
+    volatile uint32_t *const virtual_base = reinterpret_cast<volatile uint32_t *>(
+        reinterpret_cast<uint8_t *>(this) + 0xE4);
+    const uint32_t published = virtual_base[1];
+    virtual_base[0] = DialogVirtualBaseFinalVtable;
+    *DialogPublishedGlobal = published;
+
+    heap_.shutdown();
+}
+
+void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
+    self->destroy();
+}
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: run the complete
+         destructor and free the storage through the executable's operator
+         delete only when bit 0 of the mode asks. Always returns the object.
+Original Offset: 00609D90
+Return Value: the object
+Status: Complete
+*/
+void *__fastcall dialog_scalar_dtor_redirect(
+        Dialog *self, void *, unsigned int mode) {
+    self->destroy();
+    if (mode & 1) {
+        DialogOperatorDelete(self);
+    }
+    return self;
 }

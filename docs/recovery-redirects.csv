@@ -941,6 +941,7 @@ address,kind
 0x00607810,jump
 0x00607C80,jump
 0x00607DA0,jump
+0x00608E10,jump
 0x006099D0,jump
 0x00609A50,jump
 0x00609AF0,jump
@@ -950,6 +951,7 @@ address,kind
 0x00609CC0,jump
 0x00609CF0,jump
 0x00609D20,jump
+0x00609D90,jump
 0x00609EC0,jump
 0x00609F20,jump
 0x0060C7C0,jump

@@ -16,11 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "dialog.h"
+#include "dialog.h"   // func_dialog_close
 #include "graphicwin.h"
-
-// Both button classes reach an unrecovered Dialog::close the same way.
-typedef void (__thiscall func_dialog_close)(Dialog *);
 
 
  /*

@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 328,
       "original_dependency": 90,
-      "source_complete": 1544,
+      "source_complete": 1546,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4003
+      "unrecovered": 4001
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1490,
-    "matched_function_starts": 1490,
-    "unique_addresses": 1490,
+    "annotations": 1492,
+    "matched_function_starts": 1492,
+    "unique_addresses": 1492,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 535,
-      "function": 123
+      "function": 125
     },
     "items": [
       {
@@ -4911,6 +4911,24 @@
         "type": "func_datalink_exec *"
       },
       {
+        "address": "0x00608F50",
+        "function": "?close@Dialog@@QAEXXZ",
+        "function_address": "0x00608F50",
+        "kind": "function",
+        "location": "src/dialog.cpp:251",
+        "symbol": "DialogOriginalClose",
+        "type": "func_dialog_close *"
+      },
+      {
+        "address": "0x0064557F",
+        "function": "??3@YAXPAX@Z",
+        "function_address": "0x0064557F",
+        "kind": "function",
+        "location": "src/dialog.cpp:252",
+        "symbol": "DialogOperatorDelete",
+        "type": "func_operator_delete *"
+      },
+      {
         "address": "0x00609990",
         "function": "?item@Dialog@@QAEHPADH@Z",
         "function_address": "0x00609990",
@@ -7251,7 +7269,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 123,
-    "total": 658
+    "matched_function_starts": 125,
+    "total": 660
   }
 }

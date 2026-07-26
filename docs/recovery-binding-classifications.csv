@@ -8,6 +8,7 @@ _fwrite,crt_ownership,replace_after_file_boundary,FILE objects currently cross t
 _malloc,crt_ownership,replace_after_ownership_boundary,Allocations currently cross the executable/DLL CRT boundary
 _srand,crt_ownership,replace_with_owned_rng,Preserve original random sequence until deterministic tests exist
 alt_set,game_service,recover_map_mutation,Complete altitude mutation and dependent updates
+AutoSoundOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the AutoSound scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
 BasePopExec,ui_dependency,recover_base_pop_exec,Temporary dependency for the recovered BasePop exec overloads until the two-argument exec is source-owned
 BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
 BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
@@ -27,11 +28,12 @@ CaviarDataFreeRecord,ui_dependency,recover_caviar_free_record,Temporary dependen
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
 CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
-ListBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered ListBox close until Dialog close is source-owned
 CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
 consider_designs,game_service,recover_ai_design,Recover AI unit design orchestration
 ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
 DatalinkExec,ui_dependency,recover_datalink_exec,Temporary dependency for the recovered help forwarders until Datalink exec is source-owned
+DialogOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialog scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
+DialogOriginalClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered Dialog destructor until Dialog close is source-owned
 DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
 DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
@@ -53,6 +55,7 @@ FontElementTeardown,ui_dependency,recover_font_element_teardown,Per-element tear
 FontQueueElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered FontQueue destructor passes to the vector iterator; binds the recovered Font destructor's original entry and retires with FontElementTeardown
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 line_timer,timer_callback,recover_timer_callback,Replace line animation callback
+ListBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered ListBox close until Dialog close is source-owned
 ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
 load_daemon,game_service,recover_load_orchestration,Own load deserialization and state restoration
 load_faction_art,game_service,recover_faction_art,Own faction art loading and refresh state
@@ -72,13 +75,20 @@ parse_string_OG,source_fallback,finish_source_implementation,Remove fallback aft
 popb,game_service,recover_script_popup,Replace base popup orchestration
 popp,game_service,recover_script_popup,Replace parameterized popup orchestration
 PopsOriginalFull,ui_dependency,recover_pops_full,Temporary dependency for the recovered popup forwarders until the nine-argument pop builder is source-owned
+PopupFxPlay,ui_dependency,recover_fx_play,Temporary dependency for the popup wave callback until FX::play is source-owned
 PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
 PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
+PopupWaveIsPlaying,ui_dependency,runtime_redirect_entry,The popup wave callback queries Wave::is_playing through the original entry; the runtime redirect routes it into the recovered body
+PopupWaveLoad,ui_dependency,runtime_redirect_entry,The popup wave callback loads bank waves through the original no-argument Wave::load entry; the runtime redirect routes it into the recovered body
+PopupWavePlay,ui_dependency,runtime_redirect_entry,The popup wave callback plays bank waves through the original Wave::play entry; the runtime redirect routes it into the recovered body
 PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered RadioButton close until Dialog close is source-owned
 save_daemon,game_service,recover_save_orchestration,Own save serialization and filesystem lifecycle
+ScrollOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Scroll scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
 ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
 social_set,game_service,recover_social_model,Complete social model state application
+SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
+SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
 SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
 SpriteElementTeardown,ui_dependency,recover_sprite_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Sprite destructor jump thunk is source-owned
 SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
@@ -90,11 +100,20 @@ TextIndexElementTeardown,ui_dependency,recover_textindex_teardown,Per-element te
 TextureElementTeardown,ui_dependency,recover_texture_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Texture destructor jump thunk is source-owned
 TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its owned pixel block through the executable CRT until that ownership boundary moves
 turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
+VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector constructor iterator the recovered Wave_Device constructor builds its group table through
 VectorDtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector destructor iterator the recovered array thunks dispatch through
 wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
 wave_it,game_service,recover_audio_event,Route game audio events through a platform service
+WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
+WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
+WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
+WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
+WaveDevicePullFromGroup,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave destructor until Wave_Device::pull_from_group is source-owned
 WaveElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown binding the same Wave destructor address WaveOriginalDestructor holds; both retire together
+WaveOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the recovered Wave destructor frees its sample buffer through; the block was allocated by the game CRT so it must return to that heap
+WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT operator new the recovered set_fname allocates the filename copy on; the destructor and set_fname free it with the matching game delete
 WaveOriginalDestructor,ui_dependency,recover_wave_destructor,Temporary dependency for the recovered Wave atexit thunks until the Wave destructor is source-owned
+WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
 WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
 WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
 WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
@@ -105,20 +124,3 @@ WorldWinClick,ui_dependency,recover_world_win_click,Temporary dependency for the
 X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
 XPopOriginalFull,ui_dependency,recover_x_pop_full,Temporary dependency for the recovered caption-less popup forwarders until the six-argument builder is source-owned
 XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
-WaveDevicePullFromGroup,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave destructor until Wave_Device::pull_from_group is source-owned
-WaveOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the recovered Wave destructor frees its sample buffer through; the block was allocated by the game CRT so it must return to that heap
-WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT operator new the recovered set_fname allocates the filename copy on; the destructor and set_fname free it with the matching game delete
-WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
-WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
-SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
-SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
-WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
-VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector constructor iterator the recovered Wave_Device constructor builds its group table through
-WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
-WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
-AutoSoundOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the AutoSound scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
-ScrollOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Scroll scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
-PopupWaveIsPlaying,ui_dependency,runtime_redirect_entry,The popup wave callback queries Wave::is_playing through the original entry; the runtime redirect routes it into the recovered body
-PopupWaveLoad,ui_dependency,runtime_redirect_entry,The popup wave callback loads bank waves through the original no-argument Wave::load entry; the runtime redirect routes it into the recovered body
-PopupWavePlay,ui_dependency,runtime_redirect_entry,The popup wave callback plays bank waves through the original Wave::play entry; the runtime redirect routes it into the recovered body
-PopupFxPlay,ui_dependency,recover_fx_play,Temporary dependency for the popup wave callback until FX::play is source-owned

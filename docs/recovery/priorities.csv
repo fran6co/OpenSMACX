@@ -3328,7 +3328,6 @@ P3,3321,0x006087A0,?sort@StringList@@QAEXH@Z,480,3,3,unrecovered,,,2,exact,exact
 P1,21721,0x00608980,?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z,560,21,7,unrecovered,,,2,exact,entry_range,"int (__thiscall ?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z)(StringList* this, int8*, int8*, int, void (__cdecl *)(int8* this))"
 P3,2121,0x00608BA0,?add_special@StringList@@QAEXPAD@Z,92,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?add_special@StringList@@QAEXPAD@Z)(StringList* this, int8*)"
 P2,6121,0x00608C10,??0Dialog@@QAE@XZ,505,6,1,unrecovered,,,2,exact,exact,void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this)
-P1,116321,0x00608E10,??1Dialog@@QAE@XZ,351,116,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
 P0,1016121,0x00608F50,?close@Dialog@@QAEXXZ,499,16,1,original_dependency,ui_dependency,recover_dialog_close,2,exact,exact,void (__thiscall ?close@Dialog@@QAEXXZ)(Dialog* this)
 P3,111,0x00609150,?init@Dialog@@QAEHXZ,427,0,1,unrecovered,,,1,exact,missing,int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this)
 P3,3221,0x00609300,?init@Dialog@@QAEHHHHHH@Z,357,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHHHHHH@Z)(Dialog* this, int, int, int, int, int)"
@@ -3341,7 +3340,6 @@ P3,1,0x00609970,?UNK1@Dialog@@QAEXHH@Z,26,0,0,unrecovered,,,0,missing,missing,"v
 P0,1001121,0x00609990,?item@Dialog@@QAEHPADH@Z,52,1,1,original_dependency,ui_dependency,recover_dialog_item,2,exact,exact,"int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)"
 P3,11,0x00609BF0,?UNK2@Dialog@@QAEXHHHH@Z,112,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?UNK2@Dialog@@QAEXHHHH@Z)(Dialog* this, HWND hWndParent, UINT Msg, HWND hWnd, LPARAM lParam)"
 P3,1020,0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,60,1,0,unrecovered,,,2,exact,exact,
-P3,211,0x00609D90,??_GDialog@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)"
 P2,11221,0x00609DB0,??0ListBox@@QAE@H@Z,299,11,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0ListBox@@QAE@H@Z)(ListBox* this, int)"
 P2,17121,0x00609FA0,?set_selected_id@ListBox@@QAEXH@Z,115,17,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P1,21421,0x0060A020,?set_selected_pos@ListBox@@QAEXHH@Z,445,21,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_pos@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"

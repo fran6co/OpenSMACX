@@ -7304,6 +7304,234 @@ void test_string_struct_remove_all() {
     }
 }
 
+// Event log for the Dialog destructor. kind: 1 Dialog::close, 2 owner visitor,
+// 3 payload scalar dtor, 4 entry scalar dtor, 5 operator delete.
+struct DialogDtorEvent {
+    int kind;
+    const void *target;
+    uint32_t a;   // close: [this+0x00];  visit: [this+0xBC];  dtors: flags
+    uint32_t b;   // close: [this+0xC4];  visit: [this+0xE4]
+    uint32_t c;   // visit: [this+0x10] (Heap base_size_, still live mid-walk)
+};
+DialogDtorEvent dialog_dtor_events[16];
+int dialog_dtor_event_count = 0;
+uint8_t *dialog_dtor_base = nullptr;
+
+void dialog_dtor_record(int kind, const void *target,
+                        uint32_t a, uint32_t b, uint32_t c) {
+    const int index = dialog_dtor_event_count++;
+    if (index >= static_cast<int>(ARRAYSIZE(dialog_dtor_events))) {
+        return;
+    }
+    dialog_dtor_events[index] = {kind, target, a, b, c};
+}
+
+void __thiscall dialog_close_probe(Dialog *self) {
+    uint32_t vtable0 = 0;
+    uint32_t head = 0;
+    std::memcpy(&vtable0, dialog_dtor_base + 0x00, sizeof(vtable0));
+    std::memcpy(&head, dialog_dtor_base + 0xC4, sizeof(head));
+    dialog_dtor_record(1, self, vtable0, head, 0);
+}
+
+void __thiscall dialog_visitor_probe(void *, void *payload) {
+    uint32_t owner = 0;
+    uint32_t vbase = 0;
+    uint32_t heap_size = 0;
+    std::memcpy(&owner, dialog_dtor_base + 0xBC, sizeof(owner));
+    std::memcpy(&vbase, dialog_dtor_base + 0xE4, sizeof(vbase));
+    std::memcpy(&heap_size, dialog_dtor_base + 0x10, sizeof(heap_size));
+    dialog_dtor_record(2, payload, owner, vbase, heap_size);
+}
+
+void __thiscall dialog_payload_dtor_probe(void *self, int flags) {
+    dialog_dtor_record(3, self, static_cast<uint32_t>(flags), 0, 0);
+}
+
+void __thiscall dialog_entry_dtor_probe(void *self, int flags) {
+    dialog_dtor_record(4, self, static_cast<uint32_t>(flags), 0, 0);
+}
+
+void __cdecl dialog_operator_delete_probe(void *block) {
+    dialog_dtor_record(5, block, 0, 0, 0);
+}
+
+void test_dialog_destructor() {
+    static_assert(sizeof(Dialog) == 0xF4,
+                  "Dialog destructor test requires the legacy layout");
+
+    func_dialog_close *const saved_close = DialogOriginalClose;
+    func_operator_delete *const saved_delete = DialogOperatorDelete;
+    uint32_t *const saved_published = DialogPublishedGlobal;
+    const uint32_t saved_derived = DialogListDerivedVtable;
+    const uint32_t saved_derived_vb = DialogListDerivedVirtualBaseVtable;
+    const uint32_t saved_list = DialogListVtable;
+    const uint32_t saved_list_vb = DialogListVirtualBaseVtable;
+
+    // Stand-in stage-1 owner table: slot 1 is the recording visitor the
+    // embedded walk dispatches through once the destructor installs this
+    // table's address at this+0xBC. The other three staged tables are written
+    // but never dispatched, so distinct sentinels pin each write.
+    uint32_t owner_vtable[2] = {
+        0, reinterpret_cast<uint32_t>(&dialog_visitor_probe)};
+    uint32_t published_slot = 0;
+
+    DialogOriginalClose = &dialog_close_probe;
+    DialogOperatorDelete = &dialog_operator_delete_probe;
+    DialogPublishedGlobal = &published_slot;
+    DialogListDerivedVtable = reinterpret_cast<uint32_t>(owner_vtable);
+    DialogListDerivedVirtualBaseVtable = 0xB1B1B1B1U;   // stage-1 vbase table
+    DialogListVtable = 0xC2C2C2C2U;                     // stage-2 owner table
+    DialogListVirtualBaseVtable = 0xB2B2B2B2U;          // stage-2 vbase table
+
+    struct DtorCase { int entries; };
+    const DtorCase cases[] = { {0}, {3} };
+
+    for (const DtorCase &test : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(Dialog) uint8_t storage[sizeof(Dialog) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+
+            uint32_t vbtable[2] = {0xAAAAAAAAU, 0x24U};
+            StringStructEntry entries[3] = {};
+            Destructible entry_objects[3] = {};
+            Destructible payloads[3] = {};
+            for (int i = 0; i < test.entries; ++i) {
+                arm_destructible(entry_objects[i],
+                                 reinterpret_cast<void *>(&dialog_entry_dtor_probe));
+                arm_destructible(payloads[i],
+                                 reinterpret_cast<void *>(&dialog_payload_dtor_probe));
+                entries[i].abi_word =
+                    reinterpret_cast<uint32_t>(entry_objects[i].vtable);
+                entries[i].payload =
+                    static_cast<int>(reinterpret_cast<uintptr_t>(&payloads[i]));
+                entries[i].next =
+                    (i + 1 < test.entries) ? &entries[i + 1] : nullptr;
+            }
+
+            write_at(storage, 16 + 0x08, 0U);   // Heap base_: no real free
+            write_at(storage, 16 + 0x10, 0xFEEDF00DU);   // Heap base_size_ sentinel
+            write_at(storage, 16 + 0xC0, reinterpret_cast<uint32_t>(vbtable));
+            write_at(storage, 16 + 0xC4,
+                     test.entries ? reinterpret_cast<uint32_t>(&entries[0]) : 0U);
+            // Empty case: 0x55 proves the count survives when the walk block
+            // is skipped (the original's je past the clears).
+            write_at(storage, 16 + 0xCC,
+                     test.entries ? static_cast<uint32_t>(test.entries) : 0x55U);
+            write_at(storage, 16 + 0xE8, 0x1234ABCDU);   // vbase context word
+            std::memcpy(expected, storage, sizeof(storage));
+
+            write_at(expected, 16 + 0x00, DialogPrimaryVtable);
+            expect_heap_clear(expected, 16 + 0x04);
+            write_at(expected, 16 + 0xBC, DialogListVtable);   // stage-2 table last
+            write_at(expected, 16 + 0xD0, 0U);                 // position, both cases
+            write_at(expected, 16 + 0xE4, DialogVirtualBaseFinalVtable);
+            if (test.entries) {
+                write_at(expected, 16 + 0xC4, 0U);   // head_
+                write_at(expected, 16 + 0xC8, 0U);   // current_ past the tail
+                write_at(expected, 16 + 0xCC, 0U);   // entry_count_
+            }
+
+            auto *self = reinterpret_cast<Dialog *>(storage + 16);
+            dialog_dtor_base = storage + 16;
+            dialog_dtor_event_count = 0;
+            published_slot = 0;
+
+            if (use_adapter) {
+                dialog_destructor_redirect(self, nullptr);
+            } else {
+                self->destroy();
+            }
+
+            expect_storage_bytes(storage, expected, sizeof(storage));
+            expect(published_slot == 0x1234ABCDU);
+
+            const int walked = test.entries;
+            expect(dialog_dtor_event_count == 1 + walked * 3);
+
+            // Dialog::close runs first: the Dialog table is already staged and
+            // the list head is still intact.
+            expect(dialog_dtor_events[0].kind == 1);
+            expect(dialog_dtor_events[0].target == self);
+            expect(dialog_dtor_events[0].a == DialogPrimaryVtable);
+            expect(dialog_dtor_events[0].b ==
+                   (test.entries ? reinterpret_cast<uint32_t>(&entries[0]) : 0U));
+
+            for (int i = 0; i < walked; ++i) {
+                const DialogDtorEvent &visit = dialog_dtor_events[1 + i * 3];
+                const DialogDtorEvent &pdtor = dialog_dtor_events[2 + i * 3];
+                const DialogDtorEvent &edtor = dialog_dtor_events[3 + i * 3];
+                expect(visit.kind == 2);
+                expect(visit.target == &payloads[i]);
+                // Stage-1 tables staged before the walk: the owner table at
+                // this+0xBC and, through the vbtable displacement 0x24, the
+                // vbase sentinel landed at this+0xE4.
+                expect(visit.a == reinterpret_cast<uint32_t>(owner_vtable));
+                expect(visit.b == 0xB1B1B1B1U);
+                // The Heap is torn down after the walk, not before.
+                expect(visit.c == 0xFEEDF00DU);
+                expect(pdtor.kind == 3);
+                expect(pdtor.target == &payloads[i]);
+                expect(pdtor.a == 1U);   // deleting flag
+                expect(edtor.kind == 4);
+                expect(edtor.target == &entries[i]);
+                expect(edtor.a == 1U);
+                expect(entries[i].payload == 0);
+            }
+        }
+    }
+
+    // The scalar deleting destructor across modes: full destructor always,
+    // operator delete on bit 0 only, always returns the object.
+    const unsigned int modes[] = {0U, 1U, 2U};
+    for (unsigned int mode : modes) {
+        alignas(Dialog) uint8_t storage[sizeof(Dialog) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+
+        uint32_t vbtable[2] = {0xAAAAAAAAU, 0x24U};
+        write_at(storage, 16 + 0x08, 0U);
+        write_at(storage, 16 + 0xC0, reinterpret_cast<uint32_t>(vbtable));
+        write_at(storage, 16 + 0xC4, 0U);
+        write_at(storage, 16 + 0xCC, 0U);
+        write_at(storage, 16 + 0xE8, 0x1234ABCDU);
+        std::memcpy(expected, storage, sizeof(storage));
+
+        write_at(expected, 16 + 0x00, DialogPrimaryVtable);
+        expect_heap_clear(expected, 16 + 0x04);
+        write_at(expected, 16 + 0xBC, DialogListVtable);
+        write_at(expected, 16 + 0xD0, 0U);
+        write_at(expected, 16 + 0xE4, DialogVirtualBaseFinalVtable);
+
+        auto *self = reinterpret_cast<Dialog *>(storage + 16);
+        dialog_dtor_base = storage + 16;
+        dialog_dtor_event_count = 0;
+        published_slot = 0;
+
+        void *const result = dialog_scalar_dtor_redirect(self, nullptr, mode);
+        expect(result == self);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(published_slot == 0x1234ABCDU);
+
+        const bool deletes = (mode & 1U) != 0U;
+        expect(dialog_dtor_event_count == (deletes ? 2 : 1));
+        expect(dialog_dtor_events[0].kind == 1);
+        if (deletes) {
+            expect(dialog_dtor_events[1].kind == 5);
+            expect(dialog_dtor_events[1].target == self);
+        }
+    }
+
+    DialogOriginalClose = saved_close;
+    DialogOperatorDelete = saved_delete;
+    DialogPublishedGlobal = saved_published;
+    DialogListDerivedVtable = saved_derived;
+    DialogListDerivedVirtualBaseVtable = saved_derived_vb;
+    DialogListVtable = saved_list;
+    DialogListVirtualBaseVtable = saved_list_vb;
+}
+
 void test_find_font() {
     // sizes and table each carry one entry past FontSizeTableCount: a decoy
     // the function must never read, sized so its style-slot pointer
@@ -21067,6 +21295,7 @@ int main() {
     test_buffer_get_data();
     test_buffer_free_data();
     test_string_struct_remove_all();
+    test_dialog_destructor();
     test_find_font();
     test_buffer_text_line_height();
     test_win_paging();
