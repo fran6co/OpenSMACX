@@ -31,7 +31,7 @@
 class DLLEXPORT Texture {
  public:
   Texture();
-  ~Texture() { ; }
+  ~Texture();
   void close();
 
  private:
@@ -63,6 +63,8 @@ class DLLEXPORT TextureStore {
 // classes that own heap blocks do, until that ownership boundary moves.
 typedef void *func_texture_free(void *);
 extern func_texture_free *TextureFree;
+
+void __fastcall texture_dtor_redirect(Texture *self, void *);
 
 // The original constructor returns `this` in eax, as MSVC constructors do.
 Texture *__fastcall texture_ctor_redirect(Texture *self, void *);

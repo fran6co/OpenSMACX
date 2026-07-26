@@ -35,6 +35,28 @@ Texture::Texture() {
 }
 
 /*
+Purpose: Destroy the texture. Unlike close, which resets every field, the
+         destructor only settles the pixel block: freed and cleared when there
+         are pixels and they are ours, left entirely alone otherwise. The
+         descriptor fields and the borrowed flag keep whatever they held.
+Original Offset: 00619660
+Return Value: n/a
+Status: Complete
+*/
+Texture::~Texture() {
+    if (pixels_ && !borrowed_) {
+        TextureFree(pixels_);
+        // Written through a volatile view for the same reason
+        // TextureStore::~TextureStore does: this is the last store of a
+        // destructor, so nothing in C++ can observe it and an optimising
+        // build is entitled to drop it. The original performs it, and the
+        // caller's memory keeps the cleared pointer afterwards, so it has
+        // to survive.
+        *reinterpret_cast<void *volatile *>(&pixels_) = nullptr;
+    }
+}
+
+/*
 Purpose: Release the texture. The pixels are freed only when they are ours -
          that is, when there are pixels at all and the borrowed flag is clear;
          a borrowed texture keeps its block and is merely forgotten. Either way
@@ -79,6 +101,10 @@ Texture *__fastcall texture_ctor_redirect(Texture *self, void *) {
 
 void __fastcall texture_close_redirect(Texture *self, void *) {
     self->close();
+}
+
+void __fastcall texture_dtor_redirect(Texture *self, void *) {
+    self->~Texture();
 }
 
 void __fastcall texture_store_dtor_redirect(TextureStore *self, void *) {

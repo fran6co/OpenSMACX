@@ -33,7 +33,26 @@ Original Offset: 00616BC0
 Return Value: n/a
 Status: Complete
 */
-CaviarData::CaviarData() : fields_{} {
+CaviarData::CaviarData() : field_0_(0), field_4_(0), record_(nullptr) {
+}
+
+func_caviar_free_record *CaviarDataFreeRecord =
+    (func_caviar_free_record *)0x00638430;
+
+/*
+Purpose: Release the record this data slot owns. A slot with no record is left
+         entirely untouched; otherwise the helper walks the record and frees
+         its members, and the slot forgets it. The two leading fields keep
+         whatever they held either way.
+Original Offset: 00616C60
+Return Value: n/a
+Status: Complete
+*/
+void CaviarData::close() {
+    if (record_) {
+        CaviarDataFreeRecord(record_);
+        record_ = nullptr;
+    }
 }
 
 /*
@@ -92,6 +111,10 @@ float Caviar::get_scaling() {
     float scaling;
     memcpy(&scaling, reinterpret_cast<uint8_t *>(this) + 0xD5, sizeof(scaling));
     return scaling;
+}
+
+void __fastcall caviar_data_close_redirect(CaviarData *self, void *) {
+    self->close();
 }
 
 CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *) {

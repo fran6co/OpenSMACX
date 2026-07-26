@@ -20,9 +20,12 @@ struct VOX_Matrix {
 class DLLEXPORT CaviarData {
  public:
   CaviarData();
+  void close();
 
  private:
-  uint32_t fields_[3];
+  uint32_t field_0_;
+  uint32_t field_4_;
+  void *record_;   // 0x8, the renderer record close releases
 };
 
 class DLLEXPORT Caviar {
@@ -63,6 +66,12 @@ static_assert(sizeof(Caviar) == 0x13D0,
               "Caviar layout must match the original executable");
 
 CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *);
+void __fastcall caviar_data_close_redirect(CaviarData *self, void *);
+
+// The 413-byte helper that walks the record and frees its members is not yet
+// source-owned, so close reaches it through a rebindable dependency.
+typedef void(__cdecl func_caviar_free_record)(void *record);
+extern func_caviar_free_record *CaviarDataFreeRecord;
 Caviar *__fastcall caviar_construct_redirect(Caviar *self, void *);
 void __fastcall caviar_set_camera_direct_redirect(
     Caviar *self, void *, const VOX_Vect *camera, const VOX_Matrix *matrix);

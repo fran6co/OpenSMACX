@@ -21,6 +21,7 @@ BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations com
 BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
 ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
+CaviarDataFreeRecord,ui_dependency,recover_caviar_free_record,Temporary dependency for the recovered CaviarData close until the record-walking free helper is source-owned
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
 CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
@@ -63,6 +64,7 @@ NetDaemonSynch,ui_dependency,recover_net_daemon_synch,Temporary dependency for t
 parse_string_OG,source_fallback,finish_source_implementation,Remove fallback after parse_string differential tests pass
 popb,game_service,recover_script_popup,Replace base popup orchestration
 popp,game_service,recover_script_popup,Replace parameterized popup orchestration
+PopsOriginalFull,ui_dependency,recover_pops_full,Temporary dependency for the recovered popup forwarders until the nine-argument pop builder is source-owned
 PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
 PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
 PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
