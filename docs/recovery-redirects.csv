@@ -950,6 +950,8 @@ address,kind
 0x00609CC0,jump
 0x00609CF0,jump
 0x00609D20,jump
+0x00609EC0,jump
+0x00609F20,jump
 0x0060C7C0,jump
 0x0060D1B0,jump
 0x0060E7C0,jump
