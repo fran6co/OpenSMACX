@@ -14056,6 +14056,7 @@ void test_texture_lifecycle() {
     // which is the asymmetry worth pinning.
     auto *const saved = TextureFree;
     TextureFree = &observe_texture_free;
+    g_tex_free_calls = 0;
 
     std::vector<uint8_t> ts(sizeof(Texture) + 32);
     std::vector<uint8_t> texp(ts.size());
@@ -14965,6 +14966,542 @@ void test_x_pops_forwarders() {
     XPopsCaptionBuffer = saved_buffer;
 }
 
+namespace {
+void *g_caviar_freed;
+int g_caviar_free_calls;
+void __cdecl observe_caviar_free_record(void *record) {
+    g_caviar_freed = record;
+    ++g_caviar_free_calls;
+}
+}  // namespace
+
+void test_caviar_data_close() {
+    // close releases the record at 0x8 through the helper and forgets it; a
+    // slot with no record is left entirely untouched, and the two leading
+    // fields keep whatever they held either way.
+    auto *const saved = CaviarDataFreeRecord;
+    CaviarDataFreeRecord = &observe_caviar_free_record;
+
+    alignas(4) uint8_t storage[sizeof(CaviarData) + 16];
+    uint8_t expected[sizeof(storage)];
+    auto *slot = reinterpret_cast<CaviarData *>(storage);
+    int record = 0;
+
+    // No record: nothing is called and not one byte moves.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(storage + 8, 0, 4);
+    std::memcpy(expected, storage, sizeof(storage));
+    g_caviar_free_calls = 0;
+    slot->close();
+    expect(g_caviar_free_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // A record: the helper sees exactly that pointer, the slot forgets it,
+    // and everything else survives byte for byte.
+    seed_storage(storage, expected, sizeof(storage));
+    void *pointer = &record;
+    std::memcpy(storage + 8, &pointer, 4);
+    std::memcpy(expected, storage, sizeof(storage));
+    std::memset(expected + 8, 0, 4);
+    g_caviar_free_calls = 0;
+    g_caviar_freed = nullptr;
+    slot->close();
+    expect(g_caviar_free_calls == 1);
+    expect(g_caviar_freed == &record);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Redirect entry.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(storage + 8, &pointer, 4);
+    g_caviar_free_calls = 0;
+    caviar_data_close_redirect(slot, nullptr);
+    expect(g_caviar_free_calls == 1);
+
+    CaviarDataFreeRecord = saved;
+}
+
+void test_texture_dtor() {
+    // The destructor settles only the pixel block: freed and cleared when
+    // there are pixels and they are ours, left alone otherwise. Unlike close
+    // it resets nothing else - the descriptors and the borrowed flag keep
+    // their values on every path.
+    auto *const saved = TextureFree;
+    TextureFree = &observe_texture_free;
+
+    alignas(4) uint8_t storage[sizeof(Texture) + 16];
+    uint8_t expected[sizeof(storage)];
+    auto *texture = reinterpret_cast<Texture *>(storage);
+    int pixels = 0;
+    void *pointer = &pixels;
+
+    // No pixels: nothing freed, nothing written.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(storage + 0x00, 0, 4);
+    std::memcpy(expected, storage, sizeof(storage));
+    g_tex_free_calls = 0;
+    texture->~Texture();
+    expect(g_tex_free_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Borrowed pixels: kept, and still nothing written.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(storage + 0x00, &pointer, 4);
+    uint32_t borrowed = 1;
+    std::memcpy(storage + 0x6C, &borrowed, 4);
+    std::memcpy(expected, storage, sizeof(storage));
+    g_tex_free_calls = 0;
+    texture->~Texture();
+    expect(g_tex_free_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Our pixels: freed and cleared; descriptors and flag untouched.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(storage + 0x00, &pointer, 4);
+    std::memset(storage + 0x6C, 0, 4);
+    std::memcpy(expected, storage, sizeof(storage));
+    std::memset(expected + 0x00, 0, 4);
+    g_tex_free_calls = 0;
+    g_tex_freed = nullptr;
+    texture->~Texture();
+    expect(g_tex_free_calls == 1);
+    expect(g_tex_freed == &pixels);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Redirect entry.
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(storage + 0x00, &pointer, 4);
+    std::memset(storage + 0x6C, 0, 4);
+    g_tex_free_calls = 0;
+    texture_dtor_redirect(texture, nullptr);
+    expect(g_tex_free_calls == 1);
+
+    TextureFree = saved;
+}
+
+namespace {
+// Target: PopsOriginalFull. Field order mirrors func_pops_full: caption,
+// label, value, text, title, sprite, flag_a, flag_b, callback. Note both
+// caption and label are plain char* here (PAD in every mangled name), unlike
+// the const char* label used by the XPopsOriginalFull family.
+struct PopsCall {
+    char *caption; char *label; int value; char *text; int title;
+    Sprite *sprite; int flag_a; int flag_b;
+    int (__cdecl *callback)();
+    int calls;
+} g_pops = {};
+
+int __cdecl observe_pops(char *caption, char *label, int value, char *text,
+                         int title, Sprite *sprite, int flag_a, int flag_b,
+                         int (__cdecl *callback)()) {
+    g_pops = {caption, label, value, text, title, sprite, flag_a, flag_b,
+             callback, g_pops.calls + 1};
+    return 0x7A11;
+}
+int __cdecl pops_test_callback() { return 0; }
+}  // namespace
+
+void test_pop_pops_forwarders() {
+    // PopsOriginalFull(caption, label, value, text, title, sprite, flag_a,
+    // flag_b, callback) is the nine-argument popup builder at 0x006276A0
+    // that every pop_*/pops_* forwarder below reduces to. The pop_* family
+    // (8 functions) always passes a null sprite; the pops_* family (15
+    // functions) always forwards its own sprite argument. Every literal
+    // (-1, nullptr, 0, 1) and every passthrough position is asserted, with
+    // distinct sentinels per parameter, so a swapped argument cannot pass
+    // unnoticed.
+    auto *const saved_full = PopsOriginalFull;
+    char *const saved_caption = PopupStartCaption;
+    char buffer[8] = {};
+    PopsOriginalFull = &observe_pops;
+    PopupStartCaption = buffer;
+
+    char caption[] = "caption";
+    char label[] = "label";
+    char text[] = "text";
+    Sprite sprite_value;
+
+    const int kValue = 0x2002;
+    const int kTitle = 0x1001;
+    const int kFlagA = 0x4004;
+    const int kFlagB = 0x5005;
+
+    // pop_label_cb (0x00627130): shared (rebound) buffer, label/callback
+    // only; value -1, no override text, title 0, null sprite, both flags
+    // fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_label_cb(label, &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);  // proves the rebound seam is read
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == 0);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_caption (0x00627160): caller's own caption/label/callback; value
+    // -1, no override text, title 0, null sprite, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_caption(caption, label, &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == 0);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_value_title (0x006271D0): shared (rebound) buffer, caller's
+    // value/title; no override text, null sprite, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_value_title(label, kValue, kTitle,
+                           &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_caption_value_title (0x00627200): caller's caption/label/value/
+    // title; no override text, null sprite, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_caption_value_title(caption, label, kValue, kTitle,
+                                   &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_title (0x00627230): shared (rebound) buffer, value -1, caller's
+    // title only; no override text, null sprite, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_title(label, kTitle, &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_caption_title (0x00627260): caller's caption/label/title; value
+    // -1, no override text, null sprite, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_caption_title(caption, label, kTitle,
+                             &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_value_text_title (0x00627290): shared (rebound) buffer, caller's
+    // value/override text/title; null sprite, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_value_text_title(label, kValue, text, kTitle,
+                                &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == text);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pop_full (0x006272C0): everything but the sprite and flags caller-
+    // supplied - caption, value, override text, title; null sprite, both
+    // flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pop_full(caption, label, kValue, text, kTitle,
+                    &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == text);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == nullptr);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_minimal (0x00627310): shared (rebound) buffer, caller's sprite
+    // only; value -1, no override text, title 0, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_minimal(label, &sprite_value,
+                        &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == 0);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_flags (0x00627340): shared (rebound) buffer, caller's sprite and
+    // both flags; value -1, no override text, title 0.
+    g_pops.calls = 0;
+    expect(pops_flags(label, &sprite_value, kFlagA, kFlagB,
+                      &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == 0);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_caption (0x00627370): caller's caption/label/sprite; value -1,
+    // no override text, title 0, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_caption(caption, label, &sprite_value,
+                        &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == 0);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_caption_flags (0x006273A0): caller's caption/label/sprite/both
+    // flags; value -1, no override text, title 0.
+    g_pops.calls = 0;
+    expect(pops_caption_flags(caption, label, &sprite_value, kFlagA, kFlagB,
+                              &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == 0);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_value_title (0x006273D0): shared (rebound) buffer, caller's
+    // value/title/sprite; no override text, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_value_title(label, kValue, kTitle, &sprite_value,
+                            &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_value_title_flags (0x00627400): shared (rebound) buffer,
+    // caller's value/title/sprite/both flags; no override text.
+    g_pops.calls = 0;
+    expect(pops_value_title_flags(label, kValue, kTitle, &sprite_value,
+                                  kFlagA, kFlagB,
+                                  &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_caption_value_title (0x006274D0): caller's caption/label/value/
+    // title/sprite; no override text, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_caption_value_title(caption, label, kValue, kTitle,
+                                    &sprite_value,
+                                    &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_no_text (0x00627500): everything but the override text caller-
+    // supplied - caption, value, title, sprite and both flags.
+    g_pops.calls = 0;
+    expect(pops_no_text(caption, label, kValue, kTitle, &sprite_value,
+                        kFlagA, kFlagB, &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_title (0x00627540): shared (rebound) buffer, value -1, caller's
+    // title/sprite; no override text, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_title(label, kTitle, &sprite_value,
+                      &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_title_flags (0x00627570): shared (rebound) buffer, value -1,
+    // caller's title/sprite/both flags; no override text.
+    g_pops.calls = 0;
+    expect(pops_title_flags(label, kTitle, &sprite_value, kFlagA, kFlagB,
+                            &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_caption_title (0x006275A0): caller's caption/label/title/
+    // sprite; value -1, no override text, both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_caption_title(caption, label, kTitle, &sprite_value,
+                              &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_caption_title_flags (0x006275D0): caller's caption/label/title/
+    // sprite/both flags; value -1, no override text.
+    g_pops.calls = 0;
+    expect(pops_caption_title_flags(caption, label, kTitle, &sprite_value,
+                                    kFlagA, kFlagB,
+                                    &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == -1);
+    expect(g_pops.text == nullptr);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_value_text_title (0x00627600): shared (rebound) buffer, caller's
+    // value/override text/title/sprite; both flags fixed at 1.
+    g_pops.calls = 0;
+    expect(pops_value_text_title(label, kValue, text, kTitle, &sprite_value,
+                                 &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == text);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_default_caption (0x00627630): shared (rebound) buffer; every
+    // other argument - value, override text, title, sprite, both flags -
+    // caller-supplied.
+    g_pops.calls = 0;
+    expect(pops_default_caption(label, kValue, text, kTitle, &sprite_value,
+                                kFlagA, kFlagB,
+                                &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == buffer);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == text);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == kFlagA);
+    expect(g_pops.flag_b == kFlagB);
+    expect(g_pops.callback == &pops_test_callback);
+
+    // pops_no_flags (0x00627670): everything but the flags caller-supplied
+    // - caption, value, override text, title, sprite; both flags fixed at
+    // 1.
+    g_pops.calls = 0;
+    expect(pops_no_flags(caption, label, kValue, text, kTitle, &sprite_value,
+                         &pops_test_callback) == 0x7A11);
+    expect(g_pops.calls == 1);
+    expect(g_pops.caption == caption);
+    expect(g_pops.label == label);
+    expect(g_pops.value == kValue);
+    expect(g_pops.text == text);
+    expect(g_pops.title == kTitle);
+    expect(g_pops.sprite == &sprite_value);
+    expect(g_pops.flag_a == 1);
+    expect(g_pops.flag_b == 1);
+    expect(g_pops.callback == &pops_test_callback);
+
+    PopsOriginalFull = saved_full;
+    PopupStartCaption = saved_caption;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -15135,5 +15672,8 @@ int main() {
     test_net_daemon_synch_forwarders();
     test_x_pop_forwarders();
     test_x_pops_forwarders();
+    test_caviar_data_close();
+    test_texture_dtor();
+    test_pop_pops_forwarders();
     return failures == 0 ? 0 : 1;
 }

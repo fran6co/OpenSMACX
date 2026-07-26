@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 79,
-      "source_complete": 1099,
+      "original_dependency": 81,
+      "source_complete": 1124,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4452
+      "unrecovered": 4425
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1045,
-    "matched_function_starts": 1045,
-    "unique_addresses": 1045,
+    "annotations": 1070,
+    "matched_function_starts": 1070,
+    "unique_addresses": 1070,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 194,
-      "function": 91
+      "function": 93
     },
     "items": [
       {
@@ -1707,11 +1707,20 @@
         "type": "func_button_group_click *"
       },
       {
+        "address": "0x00638430",
+        "function": "sub_638430",
+        "function_address": "0x00638430",
+        "kind": "function",
+        "location": "src/caviar.cpp:39",
+        "symbol": "CaviarDataFreeRecord",
+        "type": "func_caviar_free_record *"
+      },
+      {
         "address": "0x00627D00",
         "function": "sub_627d00",
         "function_address": "0x00627D00",
         "kind": "function",
-        "location": "src/caviar.cpp:243",
+        "location": "src/caviar.cpp:266",
         "symbol": "CaviarOriginalApplyRotation",
         "type": "func_apply_rotation *"
       },
@@ -2794,6 +2803,15 @@
         "location": "src/popup.cpp:38",
         "symbol": "PopupOriginalStartFull",
         "type": "func_popup_start_full *"
+      },
+      {
+        "address": "0x006276A0",
+        "function": "?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z",
+        "function_address": "0x006276A0",
+        "kind": "function",
+        "location": "src/popup.cpp:105",
+        "symbol": "PopsOriginalFull",
+        "type": "func_pops_full *"
       },
       {
         "address": "0x00945B30",
@@ -3894,7 +3912,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 91,
-    "total": 285
+    "matched_function_starts": 93,
+    "total": 287
   }
 }

@@ -106,7 +106,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 595;
+constexpr size_t RedirectCount = 620;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -2432,6 +2432,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00614B80,
         },
         {
+            0x00616C60,
+            reinterpret_cast<uintptr_t>(&caviar_data_close_redirect),
+            OPENSMACX_SIGNATURE_00616C60,
+        },
+        {
             0x006176C0,
             reinterpret_cast<uintptr_t>(&caviar_unk3_redirect),
             OPENSMACX_SIGNATURE_006176C0,
@@ -2492,6 +2497,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00619650,
         },
         {
+            0x00619660,
+            reinterpret_cast<uintptr_t>(&texture_dtor_redirect),
+            OPENSMACX_SIGNATURE_00619660,
+        },
+        {
             0x00619690,
             reinterpret_cast<uintptr_t>(&texture_close_redirect),
             OPENSMACX_SIGNATURE_00619690,
@@ -2500,6 +2510,121 @@ bool install_redirects() {
             0x006252B0,
             reinterpret_cast<uintptr_t>(&texture_store_dtor_redirect),
             OPENSMACX_SIGNATURE_006252B0,
+        },
+        {
+            0x00627130,
+            reinterpret_cast<uintptr_t>(&pop_label_cb),
+            OPENSMACX_SIGNATURE_00627130,
+        },
+        {
+            0x00627160,
+            reinterpret_cast<uintptr_t>(&pop_caption),
+            OPENSMACX_SIGNATURE_00627160,
+        },
+        {
+            0x006271D0,
+            reinterpret_cast<uintptr_t>(&pop_value_title),
+            OPENSMACX_SIGNATURE_006271D0,
+        },
+        {
+            0x00627200,
+            reinterpret_cast<uintptr_t>(&pop_caption_value_title),
+            OPENSMACX_SIGNATURE_00627200,
+        },
+        {
+            0x00627230,
+            reinterpret_cast<uintptr_t>(&pop_title),
+            OPENSMACX_SIGNATURE_00627230,
+        },
+        {
+            0x00627260,
+            reinterpret_cast<uintptr_t>(&pop_caption_title),
+            OPENSMACX_SIGNATURE_00627260,
+        },
+        {
+            0x00627290,
+            reinterpret_cast<uintptr_t>(&pop_value_text_title),
+            OPENSMACX_SIGNATURE_00627290,
+        },
+        {
+            0x006272C0,
+            reinterpret_cast<uintptr_t>(&pop_full),
+            OPENSMACX_SIGNATURE_006272C0,
+        },
+        {
+            0x00627310,
+            reinterpret_cast<uintptr_t>(&pops_minimal),
+            OPENSMACX_SIGNATURE_00627310,
+        },
+        {
+            0x00627340,
+            reinterpret_cast<uintptr_t>(&pops_flags),
+            OPENSMACX_SIGNATURE_00627340,
+        },
+        {
+            0x00627370,
+            reinterpret_cast<uintptr_t>(&pops_caption),
+            OPENSMACX_SIGNATURE_00627370,
+        },
+        {
+            0x006273A0,
+            reinterpret_cast<uintptr_t>(&pops_caption_flags),
+            OPENSMACX_SIGNATURE_006273A0,
+        },
+        {
+            0x006273D0,
+            reinterpret_cast<uintptr_t>(&pops_value_title),
+            OPENSMACX_SIGNATURE_006273D0,
+        },
+        {
+            0x00627400,
+            reinterpret_cast<uintptr_t>(&pops_value_title_flags),
+            OPENSMACX_SIGNATURE_00627400,
+        },
+        {
+            0x006274D0,
+            reinterpret_cast<uintptr_t>(&pops_caption_value_title),
+            OPENSMACX_SIGNATURE_006274D0,
+        },
+        {
+            0x00627500,
+            reinterpret_cast<uintptr_t>(&pops_no_text),
+            OPENSMACX_SIGNATURE_00627500,
+        },
+        {
+            0x00627540,
+            reinterpret_cast<uintptr_t>(&pops_title),
+            OPENSMACX_SIGNATURE_00627540,
+        },
+        {
+            0x00627570,
+            reinterpret_cast<uintptr_t>(&pops_title_flags),
+            OPENSMACX_SIGNATURE_00627570,
+        },
+        {
+            0x006275A0,
+            reinterpret_cast<uintptr_t>(&pops_caption_title),
+            OPENSMACX_SIGNATURE_006275A0,
+        },
+        {
+            0x006275D0,
+            reinterpret_cast<uintptr_t>(&pops_caption_title_flags),
+            OPENSMACX_SIGNATURE_006275D0,
+        },
+        {
+            0x00627600,
+            reinterpret_cast<uintptr_t>(&pops_value_text_title),
+            OPENSMACX_SIGNATURE_00627600,
+        },
+        {
+            0x00627630,
+            reinterpret_cast<uintptr_t>(&pops_default_caption),
+            OPENSMACX_SIGNATURE_00627630,
+        },
+        {
+            0x00627670,
+            reinterpret_cast<uintptr_t>(&pops_no_flags),
+            OPENSMACX_SIGNATURE_00627670,
         },
         {
             0x00629710,
