@@ -82,6 +82,9 @@ DOMAINS = {
     "??1FX@@QAE@XZ": ("FX", "fx.h", "->~FX()"),
     "??1FontQueue@@QAE@XZ": ("FontQueue", "font.h", "->~FontQueue()"),
     "??1Font@@QAE@XZ": ("Font", "font.h", "->~Font()"),
+    # The AMBIENCE thunk reaches its destructor through the 5-byte jump
+    # thunk at 0x004483C0; the proven target keeps that spelling.
+    "j_??1Ambience@@QAE@XZ": ("Ambience", "ambience.h", "->~Ambience()"),
 }
 
 # The CRT's vector destructor iterator: walk an array, calling one teardown
