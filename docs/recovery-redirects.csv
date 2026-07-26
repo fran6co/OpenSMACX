@@ -592,6 +592,8 @@ address,kind
 0x004C5B50,jump
 0x004C5B60,jump
 0x004C5B70,jump
+0x004C61E0,jump
+0x004C6280,jump
 0x004C6430,jump
 0x004C6480,jump
 0x004C64A0,jump
