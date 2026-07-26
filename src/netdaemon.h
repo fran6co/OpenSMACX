@@ -27,14 +27,18 @@
   * 0x0093CD90 into ecx before calling Net::get - so that global is a
   * rebindable seam here, not the daemon itself.
   *
-  * Only receive() is recovered; the class's own layout past the AlphaNet base
-  * is not established, so nothing new is modelled and nothing pins its sizeof.
+  * receive() and unlock_veh() are recovered; the class's own layout past the
+  * AlphaNet base is still not established, so nothing new is modelled and
+  * nothing pins its sizeof. unlock_veh writes six dwords in the un-modelled
+  * tail (0x1B78, 0x1BAC, 0x1BB0, 0x1BC4, 0x1BC8, 0x1BCC) through raw volatile
+  * offsets rather than through invented placeholder fields.
   */
 class DLLEXPORT NetDaemon : AlphaNet {
  public:
   NetDaemon() { ; }
   ~NetDaemon() { ; }
   int receive();
+  uint32_t unlock_veh();
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
@@ -47,6 +51,30 @@ extern func_process_message *NetDaemonProcessMessage;
 extern void *NetDaemonNet;
 
 int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
+
+// The multiplayer-transport flag at 0x0093F660 and the local faction id at
+// 0x00939284, both read by unlock_veh. src/game.cpp binds the same two
+// addresses as IsMultiplayerNet / LocalFaction, but that translation unit is
+// not linked into recovery-leaf-tests, so NetDaemon owns its own rebindable
+// pair the way src/spying_recovery.cpp owns SpyingCurrentFaction for the very
+// same faction address.
+extern int *NetDaemonIsMultiplayerNet;
+extern int *NetDaemonLocalFaction;
+
+// message_data at 0x00592EE0 broadcasts one game event; it is still an
+// original dependency (it packs a 0x20-byte record and dispatches
+// NetDaemon::send_message at 0x00532940), so unlock_veh reaches it through a
+// rebindable seam. Declared returning uint32_t even though the original is
+// ?message_data@@YAXHHHHHH@Z: unlock_veh's own EAX residue on the announce
+// path IS this call's EAX, so the value has to be passed through rather than
+// discarded.
+typedef uint32_t(__cdecl func_net_message_data)(int a1, int a2, int a3, int a4,
+                                                int a5, int a6);
+extern func_net_message_data *NetDaemonMessageData;
+
+// unlock_veh is entered on an unadjusted `this` (the original does a plain
+// `mov esi, ecx`), so the adapter forwards without displacement.
+uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *);
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push

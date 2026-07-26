@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 328,
       "original_dependency": 94,
-      "source_complete": 1549,
+      "source_complete": 1550,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 3994
+      "unrecovered": 3993
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1495,
-    "matched_function_starts": 1495,
-    "unique_addresses": 1495,
+    "annotations": 1496,
+    "matched_function_starts": 1496,
+    "unique_addresses": 1496,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 535,
-      "function": 130
+      "data": 537,
+      "function": 131
     },
     "items": [
       {
@@ -4897,7 +4897,7 @@
         "function": "?redraw@StatusWin@@QAEXXZ",
         "function_address": "0x004B9EA0",
         "kind": "function",
-        "location": "src/console.cpp:181",
+        "location": "src/console.cpp:185",
         "symbol": "ConsoleOriginalStatusWinRedraw",
         "type": "func_status_win_redraw *"
       },
@@ -5977,7 +5977,7 @@
         "function": "?get@Net@@QAEHPAKPAK@Z",
         "function_address": "0x00630A00",
         "kind": "function",
-        "location": "src/netdaemon.cpp:21",
+        "location": "src/netdaemon.cpp:22",
         "symbol": "NetDaemonNetGet",
         "type": "func_net_get *"
       },
@@ -5986,7 +5986,7 @@
         "function": "?process_message@NetDaemon@@QAEXPADKH@Z",
         "function_address": "0x00534400",
         "kind": "function",
-        "location": "src/netdaemon.cpp:22",
+        "location": "src/netdaemon.cpp:23",
         "symbol": "NetDaemonProcessMessage",
         "type": "func_process_message *"
       },
@@ -5995,9 +5995,36 @@
         "function": "?synch@NetDaemon@@QAEXFHHHPADHF@Z",
         "function_address": "0x00532E00",
         "kind": "function",
-        "location": "src/netdaemon.cpp:25",
+        "location": "src/netdaemon.cpp:26",
         "symbol": "NetDaemonSynch",
         "type": "func_net_daemon_synch *"
+      },
+      {
+        "address": "0x0093F660",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/netdaemon.cpp:28",
+        "symbol": "NetDaemonIsMultiplayerNet",
+        "type": "int *"
+      },
+      {
+        "address": "0x00939284",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/netdaemon.cpp:29",
+        "symbol": "NetDaemonLocalFaction",
+        "type": "int *"
+      },
+      {
+        "address": "0x00592EE0",
+        "function": "?message_data@@YAXHHHHHH@Z",
+        "function_address": "0x00592EE0",
+        "kind": "function",
+        "location": "src/netdaemon.cpp:30",
+        "symbol": "NetDaemonMessageData",
+        "type": "func_net_message_data *"
       },
       {
         "address": "0x00404A80",
@@ -7314,7 +7341,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 130,
-    "total": 665
+    "matched_function_starts": 131,
+    "total": 668
   }
 }

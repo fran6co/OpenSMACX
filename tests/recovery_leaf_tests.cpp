@@ -19996,6 +19996,224 @@ void test_net_daemon_synch_forwarders() {
     NetDaemonNet = saved_net;
 }
 
+namespace {
+
+// unlock_veh's highest store is at 0x1BCC, so the object image must reach
+// 0x1BD0 - far past sizeof(NetDaemon), because the class tail is deliberately
+// un-modelled and the recovery writes it through raw offsets.
+const size_t NetDaemonUnlockVehSpan = 0x1BD0;
+
+// The four announce-side clears, in the original's own store order
+// (0x1BB0, 0x1BAC, 0x1BCC, 0x1BC8 - deliberately not monotonic), and the two
+// clears the shared tail performs on every path.
+const size_t NetDaemonAnnounceClears[4] = {0x1BB0, 0x1BAC, 0x1BCC, 0x1BC8};
+const size_t NetDaemonTailClears[2] = {0x1B78, 0x1BC4};
+
+struct NetDaemonMessageCall {
+    int a1, a2, a3, a4, a5, a6;
+    int calls;
+    // env_open_calls sampled on entry. log_say reaches env_open exactly once,
+    // so a value of 1 here proves log_say ran BEFORE message_data - the order
+    // the two call opcodes appear in at 0x0053110C and 0x0053111B.
+    int env_open_calls_at_entry;
+} g_nd_message = {};
+uint32_t g_nd_message_residue = 0;
+
+uint32_t __cdecl observe_net_daemon_message_data(int a1, int a2, int a3,
+                                                 int a4, int a5, int a6) {
+    g_nd_message = {a1, a2, a3, a4, a5, a6, g_nd_message.calls + 1,
+                    env_open_calls};
+    return g_nd_message_residue;
+}
+
+}  // namespace
+
+void test_net_daemon_unlock_veh() {
+    // unlock_veh is __thiscall/arity 0 (bare ret at 0x00531149) entered on an
+    // unadjusted this (mov esi, ecx at 0x005310FB, no vbtable load), so unlike
+    // the RadioButton/ListBox family there is no second vbtable shape to
+    // install here. The two genuinely different input shapes are the two arms
+    // of the only branch - the transport flag at 0x0093F660 - crossed with
+    // different faction ids, different seam residues, and different poison.
+    int *const saved_net_flag = NetDaemonIsMultiplayerNet;
+    int *const saved_faction = NetDaemonLocalFaction;
+    func_net_message_data *const saved_message = NetDaemonMessageData;
+    Log *const saved_logging = Logging;
+    BOOL *const saved_logging_disabled = IsLoggingDisabled;
+    const bool saved_capture = capture_closed_file;
+    const int saved_env_open_calls = env_open_calls;
+
+    // log_say at 0x006262F0 is source_complete, so the recovery calls it
+    // directly rather than through a seam and the test observes the real
+    // thing: a Log with a non-null file name and a clear disabled flag makes
+    // Log::say reach the harness's env_open, and __wrap_fclose copies the
+    // written bytes into closed_file_output. That is the same mechanism
+    // test_log_lifecycle uses, and it is what pins the "Client releasing
+    // lock" literal, the *LocalFaction argument, and the argument order.
+    alignas(uint32_t) uint8_t log_storage[sizeof(Log) + 32];
+    for (size_t index = 0; index < sizeof(log_storage); ++index) {
+        log_storage[index] = static_cast<uint8_t>(0xC7U + index * 13U);
+    }
+    char log_name[] = "unlock_veh.log";
+    LPSTR log_name_pointer = log_name;
+    write_at(log_storage, 16 + 0x00, log_name_pointer);  // Log::log_file_
+    const BOOL not_disabled = FALSE;
+    write_at(log_storage, 16 + 0x04, not_disabled);      // Log::is_disabled_
+    uint8_t log_expected[sizeof(log_storage)];
+    std::memcpy(log_expected, log_storage, sizeof(log_storage));
+
+    static BOOL logging_never_disabled = FALSE;
+    Logging = reinterpret_cast<Log *>(log_storage + 16);
+    IsLoggingDisabled = &logging_never_disabled;
+    capture_closed_file = true;
+
+    int net_flag = 0;
+    int faction = 0;
+    NetDaemonIsMultiplayerNet = &net_flag;
+    NetDaemonLocalFaction = &faction;
+    NetDaemonMessageData = &observe_net_daemon_message_data;
+
+    struct Shape {
+        int net_flag;              // the sole guard: cmp eax, edi against 0
+        int faction;               // log_say's num1
+        uint32_t residue;          // what message_data leaves in EAX
+        const char *expected_log;  // nullptr => log_say must not run at all
+        uint32_t poison;           // distinct pre-call sentinel per shape
+    };
+    const Shape shapes[] = {
+        // Not a net game. The whole announce block is skipped and the residue
+        // is the loaded zero flag - NOT the seam's residue, which is a loud
+        // nonzero value here so a wrong model cannot pass.
+        {0, 0x11223344, 0xFEEDFACEU, nullptr, 0x7A5100C1U},
+        // Ordinary net game.
+        {1, 7, 0xA5A5A5A5U, "Client releasing lock 7 0 0\n", 0x3C0DE001U},
+        // ANY nonzero flag announces (the original compares against zero, not
+        // one), and a negative faction pins the signedness of the second
+        // log_say argument. A zero residue proves the residue is read from
+        // the seam rather than assumed nonzero.
+        {-1, -3, 0x00000000U, "Client releasing lock -3 0 0\n", 0x11BADD11U},
+        // INT_MIN flag is still nonzero; faction 0 is a distinct text shape.
+        {-0x7FFFFFFF - 1, 0, 0xDEADBEEFU, "Client releasing lock 0 0 0\n",
+         0x600DF00DU},
+    };
+
+    for (size_t s = 0; s < ARRAYSIZE(shapes); ++s) {
+        const Shape &shape = shapes[s];
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            std::vector<uint8_t> storage(NetDaemonUnlockVehSpan + 32);
+            std::vector<uint8_t> reference(storage.size());
+            seed_storage(storage.data(), reference.data(), storage.size());
+
+            uint8_t *const object = storage.data() + 16;
+            uint8_t *const ref_object = reference.data() + 16;
+
+            // Poison every dword the function is expected to clear with a
+            // distinct nonzero sentinel first. A field that was already zero
+            // cannot demonstrate that it was zeroed.
+            for (size_t i = 0; i < ARRAYSIZE(NetDaemonAnnounceClears); ++i) {
+                const uint32_t value =
+                    shape.poison + static_cast<uint32_t>(i) * 0x1111U;
+                write_at(object, NetDaemonAnnounceClears[i], value);
+                write_at(ref_object, NetDaemonAnnounceClears[i], value);
+            }
+            for (size_t i = 0; i < ARRAYSIZE(NetDaemonTailClears); ++i) {
+                const uint32_t value =
+                    shape.poison + 0x4444U + static_cast<uint32_t>(i) * 0x1111U;
+                write_at(object, NetDaemonTailClears[i], value);
+                write_at(ref_object, NetDaemonTailClears[i], value);
+            }
+
+            // Byte-exact hand-built reference: exactly six dwords go to zero
+            // on the net path, exactly two on the other, and nothing else in
+            // the buffer moves. 16 leading and 16 trailing canary bytes.
+            const uint32_t zero = 0;
+            if (shape.net_flag != 0) {
+                for (size_t i = 0; i < ARRAYSIZE(NetDaemonAnnounceClears);
+                     ++i) {
+                    write_at(ref_object, NetDaemonAnnounceClears[i], zero);
+                }
+            }
+            for (size_t i = 0; i < ARRAYSIZE(NetDaemonTailClears); ++i) {
+                write_at(ref_object, NetDaemonTailClears[i], zero);
+            }
+
+            net_flag = shape.net_flag;
+            faction = shape.faction;
+            g_nd_message = NetDaemonMessageCall();
+            g_nd_message_residue = shape.residue;
+            env_open_calls = 0;
+            env_open_source = nullptr;
+            env_open_mode = nullptr;
+#if defined(__MINGW32__)
+            env_close_calls = 0;
+#endif
+            closed_file_output[0] = 0;
+
+            auto *const daemon = reinterpret_cast<NetDaemon *>(object);
+            const uint32_t result =
+                use_adapter ? net_daemon_unlock_veh_redirect(daemon, nullptr)
+                            : daemon->unlock_veh();
+
+            expect_storage_bytes(storage.data(), reference.data(),
+                                 storage.size());
+            // log_say must not disturb the Log object it logs through.
+            expect_storage_bytes(log_storage, log_expected,
+                                 sizeof(log_storage));
+
+            if (shape.net_flag == 0) {
+                // EAX residue on this path is the loaded transport flag,
+                // which is zero exactly because the branch was taken - not
+                // the seam's residue, which is 0xFEEDFACE for this shape.
+                expect(result == 0U);
+                expect(g_nd_message.calls == 0);
+                expect(env_open_calls == 0);
+#if defined(__MINGW32__)
+                expect(env_close_calls == 0);
+                expect(closed_file_output[0] == 0);
+#endif
+            } else {
+                // EAX residue on the announce path is message_data's EAX.
+                expect(result == shape.residue);
+
+                // message_data(0x2212, 0, 0, 0, 0, 0) - one call, exact args.
+                expect(g_nd_message.calls == 1);
+                expect(g_nd_message.a1 == 0x2212);
+                expect(g_nd_message.a2 == 0);
+                expect(g_nd_message.a3 == 0);
+                expect(g_nd_message.a4 == 0);
+                expect(g_nd_message.a5 == 0);
+                expect(g_nd_message.a6 == 0);
+                // Call order: log_say first (0x0053110C), message_data second
+                // (0x0053111B).
+                expect(g_nd_message.env_open_calls_at_entry == 1);
+
+                // Call target: the real source-owned log_say, reached through
+                // the rebound Logging object and no seam.
+                expect(env_open_calls == 1);
+                expect(env_open_source == log_name_pointer);
+                expect(env_open_mode &&
+                       std::strcmp(env_open_mode, "at") == 0);
+#if defined(__MINGW32__)
+                expect(env_close_calls == 1);
+                // Exact text: pins the 0x0068C2DC literal, *LocalFaction as
+                // num1, and the two trailing zeros as num2/num3.
+                expect(std::strcmp(closed_file_output,
+                                   shape.expected_log) == 0);
+#endif
+            }
+        }
+    }
+
+    env_open_calls = saved_env_open_calls;
+    capture_closed_file = saved_capture;
+    IsLoggingDisabled = saved_logging_disabled;
+    Logging = saved_logging;
+    NetDaemonMessageData = saved_message;
+    NetDaemonLocalFaction = saved_faction;
+    NetDaemonIsMultiplayerNet = saved_net_flag;
+}
+
+
 
 
 
@@ -22083,6 +22301,7 @@ int main() {
     test_wave_is_playing();
     test_datalink_help_forwarders();
     test_net_daemon_synch_forwarders();
+    test_net_daemon_unlock_veh();
     test_x_pop_forwarders();
     test_x_pops_forwarders();
     test_caviar_data_close();

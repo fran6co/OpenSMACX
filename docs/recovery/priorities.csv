@@ -2271,7 +2271,6 @@ P2,10221,0x00530D00,?unlock@NetDaemon@@QAEXXZ,78,10,2,unrecovered,,,2,exact,exac
 P1,26321,0x00530D50,?lock_base@NetDaemon@@QAEHHHHH@Z,248,26,3,unrecovered,,,2,exact,exact,"int (__thiscall ?lock_base@NetDaemon@@QAEHHHHH@Z)(NetDaemon* this, int, int, int, int)"
 P1,27021,0x00530E50,?unlock_base@NetDaemon@@QAEXH@Z,463,26,10,unrecovered,,,2,exact,exact,"void (__thiscall ?unlock_base@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)"
 P1,32221,0x00531020,?lock_veh@NetDaemon@@QAEHPAHHHHH@Z,203,32,2,unrecovered,,,2,exact,exact,"int (__thiscall ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z)(NetDaemon* this, int*, int, int, int, int)"
-P1,33221,0x005310F0,?unlock_veh@NetDaemon@@QAEXXZ,90,33,2,unrecovered,,,2,exact,exact,void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
 P3,2921,0x00531150,?automated_lock@NetDaemon@@QAEHPAHH@Z,422,2,9,unrecovered,,,2,exact,exact,"int (__thiscall ?automated_lock@NetDaemon@@QAEHPAHH@Z)(NetDaemon* this, int*, int)"
 P2,17921,0x00531300,?await_exec@NetDaemon@@QAEXH@Z,375,17,9,unrecovered,,,2,exact,exact,"void (__thiscall ?await_exec@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)"
 P1,22821,0x00531480,?await_synch@NetDaemon@@QAEXXZ,310,22,8,unrecovered,,,2,exact,exact,void (__thiscall ?await_synch@NetDaemon@@QAEXXZ)(NetDaemon* this)
