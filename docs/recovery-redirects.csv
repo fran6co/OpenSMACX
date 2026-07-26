@@ -705,6 +705,7 @@ address,kind
 0x0050E820,jump
 0x0050F650,jump
 0x00514189,jump
+0x00514880,jump
 0x00514EF0,jump
 0x00514F00,jump
 0x00514F10,jump

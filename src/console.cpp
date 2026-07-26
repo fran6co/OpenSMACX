@@ -19,6 +19,9 @@
 #include "console.h"
 #include "game.h"
 #include "general.h"
+#include "infowin.h"
+#include "mapwin.h"
+#include "statuswin.h"
 #include <cstring>
 
 func_pref_win_display *ConsolePrefWinDisplay = (func_pref_win_display *)0x0048FA00;
@@ -105,6 +108,10 @@ Purpose: Clear the console's active-group field and drop the highlight bit
 Original Offset: 0050F650
 Return Value: n/a
 Status: Complete
+Verification note: the sweep's surviving swaps reorder the object-field clear
+against the group-count load and one declaration against another; both pairs
+touch disjoint state, so the order is unobservable and the mutants are
+equivalent by construction.
 */
 void Console::clear_group() {
     const int32_t zero = 0;
@@ -173,4 +180,51 @@ void __fastcall console_set_adv_preferences_redirect(Console *self, void *) {
 
 void __fastcall console_editor_undo_redirect(Console *self, void *) {
     self->editor_undo();
+}
+
+func_status_win_redraw *ConsoleOriginalStatusWinRedraw =
+    (func_status_win_redraw *)0x004B9EA0;
+void *ConsoleInfoWin = reinterpret_cast<void *>(0x007AD2A0);
+void *ConsoleStatusWin = reinterpret_cast<void *>(0x008C5568);
+void **ConsoleMapWinSlot = reinterpret_cast<void **>(0x007D3C3C);
+
+/*
+Purpose: Refresh everything the console shows after a selection or turn change:
+         hand the change code to the shared InfoWin, redraw the shared
+         StatusWin, then push the map's caption into the main interface.
+Original Offset: 00514880
+Return Value: n/a
+Status: Complete with a temporary StatusWin::redraw original dependency
+Verification note: three properties of this body are unobservable at every
+oracle tier, because the original's own callees discard them rather than
+because the fixtures are weak.
+  1. InfoWin::change at 0x00458900 is a bare `ret 4` - it drops both its
+     `this` and its argument - so neither the call nor the value of a1 has any
+     effect to observe. src/infowin.cpp models it as an empty body.
+  2. MapWin::main_caption at 0x0046FB10 overwrites ecx before using it, so the
+     MapWin pointer loaded out of ConsoleMapWinSlot never reaches anything
+     that reads it.
+  3. The original leaves EAX holding main_caption's residue, whose chain is
+     already terminated by the committed `void MapWin::main_caption()`, so
+     there is no residue available to return and fabricating a constant would
+     be wrong. Kept `void`, matching the mangled name.
+Mutation-harness survivors for the dropped `change` call and for a perturbed
+a1 are therefore equivalent by construction.
+*/
+void Console::update_data(int a1) {
+    // 0x00514883 mov eax,[ebp+8] / 0x00514886 mov ecx,0x7ad2a0 /
+    // 0x0051488B push eax / 0x0051488C call 0x458900.
+    reinterpret_cast<InfoWin *>(ConsoleInfoWin)->change(a1);
+    // 0x00514891 mov ecx,0x8c5568 / 0x00514896 call 0x4b9ea0.
+    ConsoleOriginalStatusWinRedraw(ConsoleStatusWin);
+    // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
+    // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
+    reinterpret_cast<MapWin *>(*ConsoleMapWinSlot)->main_caption();
+}
+
+// `ret 4` on the original: one 4-byte stack argument plus the ecx `this`. The
+// entry needs no this-adjustment - update_data is entered on the Console
+// itself, not through a virtual-base adjustor.
+void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
+    self->update_data(a1);
 }
