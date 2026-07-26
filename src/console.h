@@ -59,6 +59,7 @@ class DLLEXPORT Console {
   int edit_lock();
   void set_adv_preferences();
   void editor_undo();
+  void update_data(int a1);
 
  private:
   uint8_t derived_storage_[0x23D94];
@@ -97,3 +98,27 @@ extern func_get_key_state **ConsoleEditKeyStateSlot;
 int __fastcall console_edit_lock_redirect(Console *self, void *);
 void __fastcall console_set_adv_preferences_redirect(Console *self, void *);
 void __fastcall console_editor_undo_redirect(Console *self, void *);
+
+// update_data drives the three fixed windows the original reaches by absolute
+// address and never through `this` - ecx is dead on entry and is overwritten
+// by `mov ecx, 0x7ad2a0` before anything reads it. The InfoWin at 0x007AD2A0
+// and the StatusWin at 0x008C5568 are the objects themselves (loaded as
+// immediates); 0x007D3C3C is a slot holding the current MapWin pointer
+// (loaded with `mov ecx, dword ptr [0x7d3c3c]`), published once at startup by
+// 0x0058F1C1, so it is read at call time exactly like ConsoleEditKeyStateSlot
+// above. All four bindings are rebindable so tests can substitute local
+// objects and probes.
+//
+// InfoWin::change (0x00458900) and MapWin::main_caption (0x0046FB10) are
+// source_complete and are called directly; StatusWin::redraw (0x004B9EA0) is
+// still original - it pulls in the 8885-byte draw_status, two indirect calls
+// through the runtime slot at 0x00669328, and GraphicWin::soft_update - so it
+// is reached through a rebindable seam, exactly as ListBox reaches
+// Dialog::close.
+typedef void (__thiscall func_status_win_redraw)(void *status_win);
+extern func_status_win_redraw *ConsoleOriginalStatusWinRedraw;  // 0x004B9EA0
+extern void *ConsoleInfoWin;      // 0x007AD2A0, the process-wide InfoWin
+extern void *ConsoleStatusWin;    // 0x008C5568, the process-wide StatusWin
+extern void **ConsoleMapWinSlot;  // 0x007D3C3C, holds the current MapWin *
+
+void __fastcall console_update_data_redirect(Console *self, void *, int a1);

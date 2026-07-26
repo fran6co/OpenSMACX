@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 328,
-      "original_dependency": 93,
-      "source_complete": 1548,
+      "original_dependency": 94,
+      "source_complete": 1549,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 3996
+      "unrecovered": 3994
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1494,
-    "matched_function_starts": 1494,
-    "unique_addresses": 1494,
+    "annotations": 1495,
+    "matched_function_starts": 1495,
+    "unique_addresses": 1495,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 535,
-      "function": 129
+      "function": 130
     },
     "items": [
       {
@@ -4888,9 +4888,18 @@
         "function": "?display@PrefWin@@QAEXH@Z",
         "function_address": "0x0048FA00",
         "kind": "function",
-        "location": "src/console.cpp:24",
+        "location": "src/console.cpp:27",
         "symbol": "ConsolePrefWinDisplay",
         "type": "func_pref_win_display *"
+      },
+      {
+        "address": "0x004B9EA0",
+        "function": "?redraw@StatusWin@@QAEXXZ",
+        "function_address": "0x004B9EA0",
+        "kind": "function",
+        "location": "src/console.cpp:181",
+        "symbol": "ConsoleOriginalStatusWinRedraw",
+        "type": "func_status_win_redraw *"
       },
       {
         "address": "0x009A6828",
@@ -7305,7 +7314,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 129,
-    "total": 664
+    "matched_function_starts": 130,
+    "total": 665
   }
 }

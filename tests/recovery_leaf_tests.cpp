@@ -21616,6 +21616,300 @@ void test_fx_and_font_queue_dtors() {
     VectorDtorIterator = saved_iterator;
 }
 
+
+// Console::update_data (0x00514880) is a straight-line three-call dispatch
+// that touches no field of any object: ecx is dead on entry and is overwritten
+// by `mov ecx, 0x7ad2a0` before anything reads it, and the body contains no
+// mov with a memory destination. The oracle is compositional: the reference
+// image and event log are produced by running the documented component chain
+//   InfoWin::change -> StatusWin::redraw seam -> MapWin::main_caption
+// over byte-identical twin objects, and update_data must reproduce both.
+//
+// Two effects are deliberately NOT asserted, because the original discards
+// them and so would an in-process differential against it: the a1 handed to
+// InfoWin::change (0x00458900 is a bare ret 4), and the MapWin pointer loaded
+// from the 0x007D3C3C slot (main_caption overwrites ecx before using it).
+// Both are recorded as Verification notes on the recovery.
+namespace {
+
+struct ConsoleUpdateEvent {
+    int kind;             // 1 = StatusWin::redraw, 2 = MainInterface::set_date
+    const void *target;   // the `this` the dependency was handed
+    const char *text;     // set_date's caption argument, nullptr otherwise
+    int probe;            // which of the two distinct probe bodies ran
+};
+
+ConsoleUpdateEvent console_update_events[8];
+int console_update_event_count = 0;
+
+void console_update_reset_log() {
+    console_update_event_count = 0;
+    std::memset(console_update_events, 0, sizeof(console_update_events));
+}
+
+void console_update_record(int kind, const void *target, const char *text,
+                           int probe) {
+    const int index = console_update_event_count++;
+    if (index >= static_cast<int>(ARRAYSIZE(console_update_events))) {
+        return;
+    }
+    ConsoleUpdateEvent &event = console_update_events[index];
+    event.kind = kind;
+    event.target = target;
+    event.text = text;
+    event.probe = probe;
+}
+
+// Two distinct bodies per seam. Shape 1 installs the second pair, so a seam
+// that were bound once instead of read per call would keep reporting probe 0.
+void __thiscall console_update_redraw_probe_a(void *self) {
+    console_update_record(1, self, nullptr, 0);
+}
+void __thiscall console_update_redraw_probe_b(void *self) {
+    console_update_record(1, self, nullptr, 1);
+}
+void __thiscall console_update_set_date_probe_a(void *self, char *text) {
+    console_update_record(2, self, text, 0);
+}
+void __thiscall console_update_set_date_probe_b(void *self, char *text) {
+    console_update_record(2, self, text, 1);
+}
+
+// Console and MapWin are 0x247A8 and 0x22480 bytes, so the per-byte
+// expect_storage_bytes() loop would issue ~1.2M assertions per suite run and
+// slow every mutation-harness iteration. Compare with memcmp and fall back to
+// the shared reporter, which names the fixture and the first differing
+// offset, only when the images actually differ.
+void console_update_expect_image(const char *fixture, const uint8_t *actual,
+                                 const uint8_t *reference, size_t size) {
+    const bool equal = std::memcmp(actual, reference, size) == 0;
+    if (!equal) {
+        report_storage_mismatch(fixture, actual, reference, size);
+    }
+    expect(equal);
+}
+
+}  // namespace
+
+void test_console_update_data() {
+    static_assert(sizeof(Console) == 0x247A8,
+                  "Console update_data fixture requires the legacy layout");
+    static_assert(sizeof(MapWin) == 0x22480,
+                  "Console update_data fixture requires the legacy MapWin layout");
+
+    // The four defaults are the only constants this body has; every one of
+    // them is rebound below, so assert them before rebinding or a wrong
+    // address would be invisible to this suite.
+    expect(ConsoleOriginalStatusWinRedraw
+           == reinterpret_cast<func_status_win_redraw *>(0x004B9EA0));
+    expect(ConsoleInfoWin == reinterpret_cast<void *>(0x007AD2A0));
+    expect(ConsoleStatusWin == reinterpret_cast<void *>(0x008C5568));
+    expect(ConsoleMapWinSlot == reinterpret_cast<void **>(0x007D3C3C));
+
+    func_status_win_redraw *const saved_redraw = ConsoleOriginalStatusWinRedraw;
+    void *const saved_info_win = ConsoleInfoWin;
+    void *const saved_status_win = ConsoleStatusWin;
+    void **const saved_map_slot = ConsoleMapWinSlot;
+    func_set_date *const saved_set_date = MainInterfaceOriginalSetDate;
+    void *const saved_interface = MainInterfaceGlobal;
+    char *const saved_caption = MapWinMainCaption;
+
+    char caption_a[] = "2101.01";
+    char caption_b[] = "2189.12";
+    int interface_a = 0;
+    int interface_b = 0;
+
+    for (int shape = 0; shape < 2; ++shape) {
+        // Two genuinely different shapes: different argument, different probe
+        // bodies behind both seams, different fixed-window objects, a
+        // different MapWin slot cell, a different MainInterface and caption.
+        const int argument = (shape == 0) ? 0 : -0x7FFFFFFF - 1;  // 0, INT_MIN
+        ConsoleOriginalStatusWinRedraw = (shape == 0)
+            ? &console_update_redraw_probe_a
+            : &console_update_redraw_probe_b;
+        MainInterfaceOriginalSetDate = (shape == 0)
+            ? &console_update_set_date_probe_a
+            : &console_update_set_date_probe_b;
+        MainInterfaceGlobal = (shape == 0) ? static_cast<void *>(&interface_a)
+                                           : static_cast<void *>(&interface_b);
+        MapWinMainCaption = (shape == 0) ? caption_a : caption_b;
+
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            // 16 bytes of leading and trailing canary around each of the four
+            // objects the dispatch can reach.
+            std::vector<uint8_t> console_storage(sizeof(Console) + 32);
+            std::vector<uint8_t> info_storage(sizeof(InfoWin) + 32);
+            std::vector<uint8_t> status_storage(sizeof(StatusWin) + 32);
+            std::vector<uint8_t> map_storage(sizeof(MapWin) + 32);
+            std::vector<uint8_t> console_seed(console_storage.size());
+            std::vector<uint8_t> info_seed(info_storage.size());
+            std::vector<uint8_t> status_seed(status_storage.size());
+            std::vector<uint8_t> map_seed(map_storage.size());
+            seed_storage(console_storage.data(), console_seed.data(),
+                         console_storage.size());
+            seed_storage(info_storage.data(), info_seed.data(),
+                         info_storage.size());
+            seed_storage(status_storage.data(), status_seed.data(),
+                         status_storage.size());
+            seed_storage(map_storage.data(), map_seed.data(),
+                         map_storage.size());
+
+            // Byte-identical twins. seed_storage() is a pure function of the
+            // index, so each twin starts equal to its primary byte for byte.
+            std::vector<uint8_t> console_twin(console_storage.size());
+            std::vector<uint8_t> info_twin(info_storage.size());
+            std::vector<uint8_t> status_twin(status_storage.size());
+            std::vector<uint8_t> map_twin(map_storage.size());
+            // Sized off the largest buffer: seed_storage() writes size bytes
+            // into BOTH arguments, so a short scratch would overrun.
+            std::vector<uint8_t> scratch(console_storage.size());
+            seed_storage(console_twin.data(), scratch.data(),
+                         console_twin.size());
+            seed_storage(info_twin.data(), scratch.data(), info_twin.size());
+            seed_storage(status_twin.data(), scratch.data(),
+                         status_twin.size());
+            seed_storage(map_twin.data(), scratch.data(), map_twin.size());
+            expect(std::memcmp(console_twin.data(), console_seed.data(),
+                               console_twin.size()) == 0);
+            expect(std::memcmp(map_twin.data(), map_seed.data(),
+                               map_twin.size()) == 0);
+
+            // ---- Reference pass: the component chain on the twins.
+            void *twin_slot_value = map_twin.data() + 16;
+            ConsoleInfoWin = info_twin.data() + 16;
+            ConsoleStatusWin = status_twin.data() + 16;
+            ConsoleMapWinSlot = &twin_slot_value;
+
+            console_update_reset_log();
+            reinterpret_cast<InfoWin *>(ConsoleInfoWin)->change(argument);
+            ConsoleOriginalStatusWinRedraw(ConsoleStatusWin);
+            reinterpret_cast<MapWin *>(*ConsoleMapWinSlot)->main_caption();
+
+            ConsoleUpdateEvent
+                reference_events[ARRAYSIZE(console_update_events)];
+            std::memcpy(reference_events, console_update_events,
+                        sizeof(reference_events));
+            const int reference_count = console_update_event_count;
+
+            // The chain is derived, not assumed, to be a byte-level no-op:
+            // the twins still match their own seeds, which is what makes
+            // comparing the primaries against the twins meaningful.
+            console_update_expect_image("update_data reference InfoWin",
+                                        info_twin.data(), info_seed.data(),
+                                        info_twin.size());
+            console_update_expect_image("update_data reference StatusWin",
+                                        status_twin.data(), status_seed.data(),
+                                        status_twin.size());
+            console_update_expect_image("update_data reference MapWin",
+                                        map_twin.data(), map_seed.data(),
+                                        map_twin.size());
+            expect(twin_slot_value == map_twin.data() + 16);
+
+            // ---- Function under test, on the primaries.
+            void *slot_value = map_storage.data() + 16;
+            ConsoleInfoWin = info_storage.data() + 16;
+            ConsoleStatusWin = status_storage.data() + 16;
+            ConsoleMapWinSlot = &slot_value;
+
+            auto *const console =
+                reinterpret_cast<Console *>(console_storage.data() + 16);
+            console_update_reset_log();
+            if (use_adapter) {
+                console_update_data_redirect(console, nullptr, argument);
+            } else {
+                console->update_data(argument);
+            }
+
+            // Exactly the two dependency calls the chain made, in order,
+            // through the probe bodies this shape installed.
+            expect(console_update_event_count == reference_count);
+            expect(console_update_event_count == 2);
+            for (int index = 0; index < 2; ++index) {
+                expect(console_update_events[index].kind
+                       == reference_events[index].kind);
+                expect(console_update_events[index].probe
+                       == reference_events[index].probe);
+                expect(console_update_events[index].probe == shape);
+            }
+            // StatusWin::redraw first, on the fixed StatusWin - not on the
+            // Console it is called through, the InfoWin, or the MapWin.
+            expect(console_update_events[0].kind == 1);
+            expect(console_update_events[0].target == ConsoleStatusWin);
+            expect(console_update_events[0].target
+                   != static_cast<const void *>(console_storage.data() + 16));
+            expect(console_update_events[0].target != ConsoleInfoWin);
+            expect(console_update_events[0].target
+                   != static_cast<const void *>(map_storage.data() + 16));
+            expect(console_update_events[0].text == nullptr);
+            // Then MapWin::main_caption, whose recovered body reaches the
+            // fixed MainInterface with the fixed caption.
+            expect(console_update_events[1].kind == 2);
+            expect(console_update_events[1].target == MainInterfaceGlobal);
+            expect(console_update_events[1].target
+                   != static_cast<const void *>(map_storage.data() + 16));
+            expect(console_update_events[1].text == MapWinMainCaption);
+            expect(console_update_events[1].text
+                   == ((shape == 0) ? caption_a : caption_b));
+            // Distinct targets, so a body that passed the same object to both
+            // dependencies cannot pass.
+            expect(console_update_events[0].target
+                   != console_update_events[1].target);
+
+            // Byte-exact compositional images: every primary must equal the
+            // twin the component chain ran on, canaries included.
+            console_update_expect_image("update_data Console",
+                                        console_storage.data(),
+                                        console_twin.data(),
+                                        console_storage.size());
+            console_update_expect_image("update_data InfoWin",
+                                        info_storage.data(), info_twin.data(),
+                                        info_storage.size());
+            console_update_expect_image("update_data StatusWin",
+                                        status_storage.data(),
+                                        status_twin.data(),
+                                        status_storage.size());
+            console_update_expect_image("update_data MapWin",
+                                        map_storage.data(), map_twin.data(),
+                                        map_storage.size());
+            // And, independently of the twins, still equal to their own
+            // seeds - the dispatch stores nothing anywhere.
+            console_update_expect_image("update_data Console seed",
+                                        console_storage.data(),
+                                        console_seed.data(),
+                                        console_storage.size());
+            console_update_expect_image("update_data MapWin seed",
+                                        map_storage.data(), map_seed.data(),
+                                        map_storage.size());
+
+            // The MapWin slot is read, never written.
+            expect(slot_value == map_storage.data() + 16);
+            // The bindings themselves are untouched by the call.
+            expect(ConsoleInfoWin
+                   == static_cast<void *>(info_storage.data() + 16));
+            expect(ConsoleStatusWin
+                   == static_cast<void *>(status_storage.data() + 16));
+            expect(ConsoleMapWinSlot == &slot_value);
+        }
+    }
+
+    ConsoleOriginalStatusWinRedraw = saved_redraw;
+    ConsoleInfoWin = saved_info_win;
+    ConsoleStatusWin = saved_status_win;
+    ConsoleMapWinSlot = saved_map_slot;
+    MainInterfaceOriginalSetDate = saved_set_date;
+    MainInterfaceGlobal = saved_interface;
+    MapWinMainCaption = saved_caption;
+    console_update_reset_log();
+
+    // Restored exactly, so no later test inherits this fixture's bindings.
+    expect(ConsoleOriginalStatusWinRedraw
+           == reinterpret_cast<func_status_win_redraw *>(0x004B9EA0));
+    expect(ConsoleInfoWin == reinterpret_cast<void *>(0x007AD2A0));
+    expect(ConsoleStatusWin == reinterpret_cast<void *>(0x008C5568));
+    expect(ConsoleMapWinSlot == reinterpret_cast<void **>(0x007D3C3C));
+}
+
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -21816,5 +22110,6 @@ int main() {
     test_auto_sound_lifecycle();
     test_popup_wave_callback();
     test_ambience_dtor();
+    test_console_update_data();
     return failures == 0 ? 0 : 1;
 }

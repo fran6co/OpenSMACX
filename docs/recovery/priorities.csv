@@ -1630,7 +1630,7 @@ P3,301,0x004B8DF0,?UNK3@StatusWin@@QAEXXZ,65,0,3,unrecovered,,,0,missing,missing
 P3,3321,0x004B8E40,?on_left_click@StatusWin@@QAEXHH@Z,403,2,13,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_click@StatusWin@@QAEXHH@Z)(StatusWin* this, int xCoord, int yCoord)"
 P3,6121,0x004B9010,?on_right_click@StatusWin@@QAEXHHH@Z,3858,1,51,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_right_click@StatusWin@@QAEXHHH@Z)(StatusWin* this, int xCoord, int yCoord, int)"
 P3,11,0x004B9E90,?UNK4@StatusWin@@QAEXXZ,13,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK4@StatusWin@@QAEXXZ)(StatusWin* this)
-P2,17321,0x004B9EA0,?redraw@StatusWin@@QAEXXZ,219,17,3,unrecovered,,,2,exact,exact,void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+P0,1017321,0x004B9EA0,?redraw@StatusWin@@QAEXXZ,219,17,3,original_dependency,ui_dependency,recover_status_win_redraw,2,exact,exact,void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
 P3,1521,0x004B9FC0,?init@StatusWin@@QAEXXZ,350,1,5,unrecovered,,,2,exact,exact,void (__thiscall ?init@StatusWin@@QAEXXZ)(StatusWin* this)
 P3,321,0x004BA120,??1StatusWin@@QAE@XZ,187,0,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1StatusWin@@QAE@XZ)(StatusWin* this)
 P3,1321,0x004BA1A0,??0StatusWin@@QAE@XZ,182,1,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??0StatusWin@@QAE@XZ)(StatusWin* this)
@@ -2115,7 +2115,6 @@ P3,3121,0x00513B90,?veh_turn@Console@@QAEHXZ,1065,1,21,unrecovered,,,2,exact,exa
 P3,321,0x00513FC0,?end_of_turn@Console@@QAEXXZ,144,0,3,unrecovered,,,2,start_only,start_only,void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
 P3,5221,0x00514050,?human_turn@Console@@QAEXXZ,1930,2,32,unrecovered,,,2,exact,exact,void (__thiscall ?human_turn@Console@@QAEXXZ)(Console* this)
 P2,6421,0x005147E0,?set_cursor@Console@@QAEXHH@Z,157,6,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_cursor@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)"
-P1,33321,0x00514880,?update_data@Console@@QAEXH@Z,42,33,3,unrecovered,,,2,exact,exact,"void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)"
 P3,511,0x005148B0,?move_cursor@Console@@QAEXH@Z,224,0,5,unrecovered,,,1,missing,start_only,"void (__thiscall ?move_cursor@Console@@QAEXH@Z)(Console* this, int)"
 P3,801,0x00514990,?quit_game@Console@@QAEXXZ,412,0,8,unrecovered,,,0,missing,missing,void (__thiscall ?quit_game@Console@@QAEXXZ)(Console* this)
 P3,3321,0x00514B30,?retire_game@Console@@QAEXXZ,507,2,13,unrecovered,,,2,exact,exact,void (__thiscall ?retire_game@Console@@QAEXXZ)(Console* this)
