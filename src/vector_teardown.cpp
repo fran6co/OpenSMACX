@@ -20,3 +20,5 @@
 
 func_vector_dtor_iterator *VectorDtorIterator =
     (func_vector_dtor_iterator *)0x006456E4;
+func_vector_ctor_iterator *VectorCtorIterator =
+    (func_vector_ctor_iterator *)0x006457C2;

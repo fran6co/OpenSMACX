@@ -442,7 +442,7 @@ int Wave_Device::pull_from_group(Wave *a1) {
     if (slot >= 0x10) {
         return 0xA;
     }
-    WaveGroup &group = groups_[slot];
+    WaveControlGroup &group = groups_[slot];
     WaveGroupNode *node = group.head;
     if (node) {
         while (node->wave != a1) {
@@ -823,7 +823,7 @@ namespace {
 // from the group, and pull_from_group maintains the cursor, so the walk
 // survives removal - and a self-removal skips the follower, exactly the
 // original's advance rule. A node with a null wave stops the walk.
-void walk_group_waves(WaveGroup &group, void (*visit)(Wave *wave)) {
+void walk_group_waves(WaveControlGroup &group, void (*visit)(Wave *wave)) {
     WaveGroupNode *const first = group.head;
     group.cursor = first;
     if (!first) {
@@ -885,7 +885,7 @@ int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
     if (a1 > 0xF || a2 > 0x7F) {
         return 0xA;
     }
-    WaveGroup &group = groups_[a1];
+    WaveControlGroup &group = groups_[a1];
     group.volume = a2;
     walk_group_waves(group, &replay_wave_volume);
     return 0;
@@ -910,7 +910,7 @@ int Wave_Device::enable_group(unsigned int a1) {
     if (a1 > 0xF) {
         return 0xA;
     }
-    WaveGroup &group = groups_[a1];
+    WaveControlGroup &group = groups_[a1];
     if (!group.enabled) {
         walk_group_waves(group, &resume_wave);
         group.enabled = 1;
@@ -935,7 +935,7 @@ int Wave_Device::disable_group(unsigned int a1) {
     if (a1 > 0xF) {
         return 0xA;
     }
-    WaveGroup &group = groups_[a1];
+    WaveControlGroup &group = groups_[a1];
     if (group.enabled) {
         walk_group_waves(group, &halt_wave);
         group.enabled = 0;
@@ -1062,4 +1062,120 @@ void Wave_Device::release() {
 
 void __fastcall wave_device_release_redirect(Wave_Device *self, void *) {
     self->release();
+}
+
+func_thiscall_teardown *WaveControlGroupOriginalCtor =
+    (func_thiscall_teardown *)0x004C5490;
+func_thiscall_teardown *WaveControlGroupOriginalDtor =
+    (func_thiscall_teardown *)0x004C5B80;
+
+/*
+Purpose: Construct one control group: the list fields - head, tail, cursor,
+         count - zero out; the enabled byte and volume are left untouched.
+Original Offset: 004C5490
+Return Value: n/a (the redirect leaves the object pointer where the original
+              does)
+Status: Complete
+*/
+void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
+                                                 void *) {
+    self->head = nullptr;
+    self->tail = nullptr;
+    self->cursor = nullptr;
+    self->count = 0;
+}
+
+/*
+Purpose: Destroy one control group by draining its node list from the head:
+         each node's follower loses its back link and becomes the head (the
+         last one empties both ends), the node goes back to the game heap,
+         and the count drops - but a node carrying a NULL wave stops the
+         drain right after it is freed, leaving the rest of the list in
+         place. The cursor is never touched.
+Original Offset: 004C5B80
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
+                                                 void *) {
+    WaveGroupNode *node = self->head;
+    while (node) {
+        WaveGroupNode *const next = node->next;
+        if (next) {
+            next->prev = nullptr;
+            self->head = next;
+        } else {
+            // One statement: the tail clears first, the head second, the
+            // original's store order.
+            self->head = (self->tail = nullptr);
+        }
+        Wave *const wave = node->wave;
+        WaveOperatorDelete(node);
+        self->count -= 1;
+        if (!wave) {
+            break;
+        }
+        node = self->head;
+    }
+}
+
+/*
+Purpose: Build the device singleton in two vtable stages: the base's vtable
+         (0x0066E098) up first while the scalar fields settle - full master
+         volume at 0x08, everything else zeroed, no wrapped device - then
+         the sixteen control groups construct through the CRT vector
+         constructor iterator (their destructor rides along for the
+         unreachable unwind path), the device's own vtable (0x0066E0E8)
+         publishes, and the trailing dword clears. The SEH frame is omitted.
+Original Offset: 004C4DD0
+Return Value: n/a (the redirect answers the object pointer)
+Status: Complete
+*/
+Wave_Device::Wave_Device() {
+    vtable_storage_ = 0x0066E098;
+    field_4_ = 0;
+    volume_8_ = 0x7F;
+    field_C_ = 0;
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_10_ = 0;
+    device_14_ = nullptr;
+    (*VectorCtorIterator)(groups_, 0x18, 0x10, WaveControlGroupOriginalCtor,
+                          WaveControlGroupOriginalDtor);
+    vtable_storage_ = 0x0066E0E8;
+    field_20_ = 0;
+}
+
+Wave_Device *__fastcall wave_device_ctor_redirect(Wave_Device *self, void *) {
+    return new (self) Wave_Device;
+}
+
+/*
+Purpose: Tear the device singleton down: its own vtable republishes, the
+         sixteen control groups drain through the CRT vector destructor
+         iterator, the base vtable takes over, and a wrapped device is wound
+         down through its slot 0x10 - kept in the field, since the object is
+         dying anyway. The SEH frame is omitted.
+Original Offset: 004C4E60
+Return Value: n/a
+Status: Complete
+*/
+Wave_Device::~Wave_Device() {
+    Wave_Device volatile *const self = this;
+    self->vtable_storage_ = 0x0066E0E8;
+    VectorDtorIterator(const_cast<WaveControlGroup *>(self->groups_), 0x18,
+                       0x10, WaveControlGroupOriginalDtor);
+    self->vtable_storage_ = 0x0066E098;
+    {
+        void *const device = self->device_14_;
+        if (device) {
+            typedef void(__thiscall * device_down_fn)(void *device);
+            (*reinterpret_cast<device_down_fn *>(
+                *reinterpret_cast<uint8_t **>(device) + 0x10))(device);
+        }
+    }
+}
+
+void __fastcall wave_device_dtor_redirect(Wave_Device *self, void *) {
+    self->~Wave_Device();
 }

@@ -36,3 +36,11 @@ typedef void(__stdcall func_vector_dtor_iterator)(
     void *array, unsigned int element_size, int count,
     func_thiscall_teardown *teardown);
 extern func_vector_dtor_iterator *VectorDtorIterator;
+
+// Its construction-side companion: walk an array calling one constructor per
+// element, with the destructor along for exception unwind (unreachable here,
+// but passed faithfully).
+typedef void(__stdcall func_vector_ctor_iterator)(
+    void *array, unsigned int element_size, int count,
+    func_thiscall_teardown *ctor, func_thiscall_teardown *dtor);
+extern func_vector_ctor_iterator *VectorCtorIterator;

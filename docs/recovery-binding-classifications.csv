@@ -112,3 +112,6 @@ WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the re
 SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
 SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
 WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
+VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector constructor iterator the recovered Wave_Device constructor builds its group table through
+WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
+WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
