@@ -1034,6 +1034,57 @@ int __fastcall wave_load_fname_redirect(Wave *self, void *, const char *a1) {
     return self->load(a1);
 }
 
+func_sound_set_type *SoundSetType = (func_sound_set_type *)0x004C61E0;
+
+/*
+Purpose: Build the wave. The original constructs in the same three vtable
+         stages the destructor tears down; between the stages only the CRT
+         memset runs, so the two intermediate vtable installs are
+         unobservable and - like the registered SEH frame - omitted, keeping
+         only the final Wave vtable publication. A device dispatch of the
+         0x3E8 default through slot 0 is provably dead (the device slot is
+         zeroed a few instructions earlier with nothing between) and omitted
+         under the same policy. The net field state: full volume, zeroed
+         regions, a 1000ms default at 0x38, flag dword 4, Sound::set_type
+         run with type 1, unit reverb mix, and the out-of-range group slot.
+Original Offset: 004C66E0
+Return Value: n/a (the redirect answers the object pointer, as the original
+              does in eax)
+Status: Complete
+*/
+Wave::Wave() {
+    volume_ = 0x7F;
+    field_8_ = 0;
+    for (uint8_t &region_byte : memset_region_) {
+        region_byte = 0;
+    }
+    field_30_ = 0;
+    chain_prev_ = nullptr;
+    chain_next_ = nullptr;
+    device_ = nullptr;
+    fname_ = nullptr;
+    // memset to zero, then the loaded bit cleared, then bit 2 set: net 4.
+    field_40_ = 0;
+    field_38_ = 0x3E8;
+    field_50_ = 0;
+    vtable_storage_ = 0x0066E44C;
+    flags_54_ = 0;
+    pad_55_[0] = 0;
+    pad_55_[1] = 0;
+    pad_55_[2] = 0;
+    field_40_ |= 4;
+    SoundSetType(this, 1);
+    pitch_ = 0;
+    reverb_mix_ = 1.0f;
+    group_slot_ = 0x10;
+    ms_length_ = 0;
+    start_time_ = 0;
+}
+
+Wave *__fastcall wave_ctor_redirect(Wave *self, void *) {
+    return new (self) Wave;
+}
+
 /*
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
