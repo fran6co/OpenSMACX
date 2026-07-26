@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "wave.h"
 #include "wave_device.h"
 #include <cstring>
 
@@ -389,4 +390,111 @@ int __fastcall wave_device_set_hwnd_redirect(Wave_Device *self, void *,
 int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *,
                                                      unsigned int a1) {
     return self->get_group_volume(a1);
+}
+
+func_wave_group_insert *WaveDeviceGroupInsert = (func_wave_group_insert *)0x004C5BF0;
+
+/*
+Purpose: Put a wave into one of the sixteen groups. The list-insert helper
+         threads it through the group's node list, and the wave's own group
+         slot at 0x68 records the group AFTER the insert - the original
+         writes the field last, so the helper still sees the old slot.
+Original Offset: 004C5240
+Return Value: 0, or 0xA for a bad group or a null wave
+Status: Complete
+*/
+int Wave_Device::add_to_group(unsigned int a1, Wave *a2) {
+    if (a1 > 0xF || !a2) {
+        return 0xA;
+    }
+    WaveDeviceGroupInsert(&groups_[a1].head, a2);
+    // The slot field is private to Wave and written here by offset, exactly
+    // as the original stores through [wave+0x68].
+    *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a2) + 0x68) =
+        a1;
+    return 0;
+}
+
+int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *,
+                                                 unsigned int a1, Wave *a2) {
+    return self->add_to_group(a1, a2);
+}
+
+/*
+Purpose: Take a wave out of its group. The wave's slot names the group; its
+         node is searched for in the group's list and, when found, unlinked
+         (head and tail maintained at the ends, the cursor left on the node
+         after the removal or nulled), freed to the game heap, and counted
+         out. A wave whose node is not on the list - or a group with no list
+         at all - just forgets its slot. Either way the wave's slot becomes
+         the out-of-range 0x10.
+Original Offset: 004C5280
+Return Value: 0, or 0xA for a null wave or an out-of-range slot
+Status: Complete
+*/
+int Wave_Device::pull_from_group(Wave *a1) {
+    if (!a1) {
+        return 0xA;
+    }
+    uint32_t *const slot_field =
+        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a1) + 0x68);
+    const uint32_t slot = *slot_field;
+    if (slot >= 0x10) {
+        return 0xA;
+    }
+    WaveGroup &group = groups_[slot];
+    WaveGroupNode *node = group.head;
+    if (node) {
+        while (node->wave != a1) {
+            node = node->next;
+            if (!node) {
+                *slot_field = 0x10;
+                return 0;
+            }
+        }
+        if (node->prev) {
+            node->prev->next = node->next;
+        } else {
+            group.head = node->next;
+        }
+        if (node->next) {
+            node->next->prev = node->prev;
+            group.cursor = node->next;
+        } else {
+            // One statement, comma-sequenced: the cursor clears first and
+            // the tail steps back second, exactly the original's store order.
+            group.tail = (group.cursor = nullptr, node->prev);
+        }
+        WaveOperatorDelete(node);
+        group.count -= 1;
+    }
+    *slot_field = 0x10;
+    return 0;
+}
+
+int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *,
+                                                    Wave *a1) {
+    return self->pull_from_group(a1);
+}
+
+/*
+Purpose: Report whether a group is disabled: out-of-range groups always are,
+         and a real one is disabled while its enabled byte is zero. The
+         original defines only AL on the out-of-range path; callers test the
+         byte.
+Original Offset: 004C5460
+Return Value: 1 when disabled, 0 when enabled
+Status: Complete
+*/
+int Wave_Device::is_group_disabled(unsigned int a1) {
+    if (a1 > 0xF) {
+        return 1;
+    }
+    return groups_[a1].enabled == 0 ? 1 : 0;
+}
+
+int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self,
+                                                      void *,
+                                                      unsigned int a1) {
+    return self->is_group_disabled(a1);
 }

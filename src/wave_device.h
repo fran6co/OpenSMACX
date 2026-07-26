@@ -17,15 +17,35 @@
  */
 #pragma once
 
+class Wave;
+
+// One node of a group's wave list, allocated on the game CRT heap by the
+// insert helper and freed by pull_from_group.
+struct WaveGroupNode {
+  WaveGroupNode *prev;
+  WaveGroupNode *next;
+  Wave *wave;
+};
+
+// One 24-byte group record; the device holds sixteen of them from 0x24.
+struct WaveGroup {
+  uint8_t enabled;        // +0x00, zero means the group is disabled
+  uint8_t pad[3];
+  uint32_t volume;        // +0x04, the scale Wave::set_volume folds in
+  WaveGroupNode *head;    // +0x08
+  WaveGroupNode *tail;    // +0x0C, updated only when the last node leaves
+  WaveGroupNode *cursor;  // +0x10, the node after the last removal, or null
+  uint32_t count;         // +0x14
+};
+
  /*
   * Wave_Device class
   *
-  * Layout not established. The one field these methods name is the pointer to
-  * the wrapped device at 0x14. get_group_volume is what sizes the storage
-  * below: it indexes a sixteen-entry table of 24-byte records based at 0x28,
-  * so the object reaches at least 0x194, well past the 0xB0 the other methods
-  * suggested. That is a floor, not a size - the rest is opaque storage, an
-  * object for the canary to seed rather than a modelled layout.
+  * Layout partially established. The one plain field these methods name is
+  * the pointer to the wrapped device at 0x14. The group methods pin a
+  * sixteen-entry table of 24-byte group records from 0x24 (whose volume
+  * dwords at +4 are the 0x28-based table get_group_volume reads), taking the
+  * extent to at least 0x1A4. That is still a floor, not a size.
   */
 class DLLEXPORT Wave_Device {
  public:
@@ -52,10 +72,29 @@ class DLLEXPORT Wave_Device {
   void set_volume(unsigned long a1);
   int set_hwnd(void *a1);
   int get_group_volume(unsigned int a1);
+  int add_to_group(unsigned int a1, Wave *a2);
+  int pull_from_group(Wave *a1);
+  int is_group_disabled(unsigned int a1);
 
  private:
-  uint8_t unmapped_[0x194];
+  uint8_t unmapped_[0x24];
+  WaveGroup groups_[16];  // 0x24..0x1A3
 };
+
+static_assert(sizeof(WaveGroup) == 0x18, "group records stride 24 bytes");
+
+// The list-insert helper add_to_group threads new waves through: not yet
+// source-owned, so it stays a rebindable dependency. Its receiver is the
+// address of the group's head field.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_wave_group_insert)(void *group_head, Wave *wave);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_wave_group_insert *WaveDeviceGroupInsert;
 
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1);
 int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1);
@@ -78,3 +117,6 @@ void __fastcall wave_device_set_rate_redirect(Wave_Device *self, void *, unsigne
 void __fastcall wave_device_set_volume_redirect(Wave_Device *self, void *, unsigned long a1);
 int __fastcall wave_device_set_hwnd_redirect(Wave_Device *self, void *, void *a1);
 int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, unsigned int a1);
+int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *, unsigned int a1, Wave *a2);
+int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *, Wave *a1);
+int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self, void *, unsigned int a1);
