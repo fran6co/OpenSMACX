@@ -947,3 +947,119 @@ int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *,
                                                   unsigned int a1) {
     return self->disable_group(a1);
 }
+
+func_wave_device_factory **WaveDeviceFactorySlot =
+    reinterpret_cast<func_wave_device_factory **>(0x0090DB34);
+func_wave_device_destroy **WaveDeviceDestroySlot =
+    reinterpret_cast<func_wave_device_destroy **>(0x0090DB38);
+
+/*
+Purpose: Build the wrapped device of the requested kind through the factory
+         hook, straight into the 0x14 field. A device already wrapped is
+         refused with 0xC; a dead factory answers 0x14.
+Original Offset: 004C4ED0
+Return Value: the factory's answer, 0xC with a device already wrapped, or
+              0x14 with no factory installed
+Status: Complete
+*/
+int Wave_Device::create_device(unsigned long a1) {
+    if (device_14_) {
+        return 0xC;
+    }
+    if (!*WaveDeviceFactorySlot) {
+        return 0x14;
+    }
+    return (*WaveDeviceFactorySlot)(&device_14_, a1);
+}
+
+int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *,
+                                                  unsigned long a1) {
+    return self->create_device(a1);
+}
+
+/*
+Purpose: Tear the wrapped device down through the argument-less destroy hook
+         and forget it. Without a device or a hook, 0x14 and nothing happens.
+Original Offset: 004C4F10
+Return Value: 0, or 0x14 with no device or no hook
+Status: Complete
+*/
+int Wave_Device::delete_device() {
+    if (!device_14_) {
+        return 0x14;
+    }
+    if (!*WaveDeviceDestroySlot) {
+        return 0x14;
+    }
+    (*WaveDeviceDestroySlot)();
+    device_14_ = nullptr;
+    return 0;
+}
+
+int __fastcall wave_device_delete_device_redirect(Wave_Device *self,
+                                                  void *) {
+    return self->delete_device();
+}
+
+/*
+Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
+         takes the mode first (the class does have a vtable, held opaque at
+         offset zero), then the wrapped device initialises through its slot
+         0xC with both arguments, and a failure there runs the Wave_Device's
+         own virtual slot 4 before the error propagates.
+Original Offset: 004C4F40
+Return Value: 0, or whichever stage's error came first
+Status: Complete
+*/
+int Wave_Device::init(void *a1, unsigned long a2) {
+    typedef int(__thiscall * own_mode_fn)(Wave_Device *self,
+                                          unsigned long mode);
+    const int staged = (*reinterpret_cast<own_mode_fn *>(
+        *reinterpret_cast<uint8_t **>(this) + 0))(this, a2);
+    if (staged) {
+        return staged;
+    }
+    typedef int(__thiscall * device_init_fn)(void *device, void *a1,
+                                             unsigned long a2);
+    const int result = (*reinterpret_cast<device_init_fn *>(
+        *reinterpret_cast<uint8_t **>(device_14_) + 0xC))(device_14_, a1, a2);
+    if (result) {
+        (*reinterpret_cast<void(__thiscall **)(Wave_Device *)>(
+            *reinterpret_cast<uint8_t **>(this) + 4))(this);
+        return result;
+    }
+    return 0;
+}
+
+int __fastcall wave_device_init_redirect(Wave_Device *self, void *, void *a1,
+                                         unsigned long a2) {
+    return self->init(a1, a2);
+}
+
+/*
+Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
+         and only if the device is STILL there afterwards - the callback may
+         have cleared it - does the destroy hook run. Either way the field is
+         forgotten.
+Original Offset: 004C4F80
+Return Value: n/a
+Status: Complete
+*/
+void Wave_Device::release() {
+    if (!device_14_) {
+        return;
+    }
+    {
+        typedef void(__thiscall * device_down_fn)(void *device);
+        (*reinterpret_cast<device_down_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x10))(device_14_);
+    }
+    if (device_14_ && *WaveDeviceDestroySlot) {
+        (*WaveDeviceDestroySlot)();
+    }
+    device_14_ = nullptr;
+}
+
+void __fastcall wave_device_release_redirect(Wave_Device *self, void *) {
+    self->release();
+}

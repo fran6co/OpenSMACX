@@ -85,6 +85,10 @@ class DLLEXPORT Wave_Device {
   int add_to_group(unsigned int a1, Wave *a2);
   int pull_from_group(Wave *a1);
   int is_group_disabled(unsigned int a1);
+  int create_device(unsigned long a1);
+  int delete_device();
+  int init(void *a1, unsigned long a2);
+  void release();
   int set_group_volume(unsigned int a1, unsigned int a2);
   int enable_group(unsigned int a1);
   int disable_group(unsigned int a1);
@@ -124,6 +128,16 @@ typedef void(__thiscall func_wave_group_insert)(void *group_head, Wave *wave);
 #endif
 extern func_wave_group_insert *WaveDeviceGroupInsert;
 
+// The device factory/destroy hooks: two more function-pointer slots beside
+// the creation hook the waves use, consulted by the device lifecycle. The
+// factory builds a device of the requested kind straight into the 0x14
+// field; the destroy hook takes no arguments at all.
+typedef int(__cdecl func_wave_device_factory)(void **device_slot,
+                                              unsigned long kind);
+typedef void(__cdecl func_wave_device_destroy)(void);
+extern func_wave_device_factory **WaveDeviceFactorySlot;
+extern func_wave_device_destroy **WaveDeviceDestroySlot;
+
 void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
                                            Wave *a1);
 
@@ -151,6 +165,10 @@ int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, 
 int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *, unsigned int a1, Wave *a2);
 int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *, Wave *a1);
 int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self, void *, unsigned int a1);
+int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *, unsigned long a1);
+int __fastcall wave_device_delete_device_redirect(Wave_Device *self, void *);
+int __fastcall wave_device_init_redirect(Wave_Device *self, void *, void *a1, unsigned long a2);
+void __fastcall wave_device_release_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_set_group_volume_redirect(Wave_Device *self, void *, unsigned int a1, unsigned int a2);
 int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *, unsigned int a1);
 int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *, unsigned int a1);
