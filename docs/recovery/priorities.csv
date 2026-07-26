@@ -1729,7 +1729,6 @@ P3,0,0x004C4CA0,??3WorldWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004C4CB0,sub_4c4cb0,81,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004C4D10,sub_4c4d10,92,0,0,unrecovered,,,0,missing,missing,
 P3,110,0x004C4D70,sub_4c4d70,54,0,1,unrecovered,,,1,missing,exact,
-P3,21,0x004C5030,?select@Wave_Device@@QAEHK@Z,191,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?select@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)"
 P0,1001121,0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,156,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)"
 P0,1001021,0x004C5460,?is_group_disabled@Wave_Device@@QAEHI@Z,33,1,0,source_complete,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
 P0,1000011,0x004C5490,??0WaveControlGroup@@QAE@XZ,27,0,0,source_complete,ui_dependency,recover_wave_control_group,1,exact,missing,void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)

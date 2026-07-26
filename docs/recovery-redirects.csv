@@ -555,6 +555,7 @@ address,kind
 0x004C4FF0,jump
 0x004C5000,jump
 0x004C5020,jump
+0x004C5030,jump
 0x004C50F0,jump
 0x004C5120,jump
 0x004C5140,jump

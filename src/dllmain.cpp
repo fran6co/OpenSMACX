@@ -108,7 +108,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1027;
+constexpr size_t RedirectCount = 1028;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -2992,6 +2992,11 @@ bool install_redirects() {
             0x004C5020,
             reinterpret_cast<uintptr_t>(&wave_device_get_hw_mem_size_redirect),
             OPENSMACX_SIGNATURE_004C5020,
+        },
+        {
+            0x004C5030,
+            reinterpret_cast<uintptr_t>(&wave_device_select_redirect),
+            OPENSMACX_SIGNATURE_004C5030,
         },
         {
             0x004C50F0,

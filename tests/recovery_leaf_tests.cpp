@@ -11946,6 +11946,397 @@ void test_wave_device_construction() {
     VectorDtorIterator = saved_vdtor;
 }
 
+// --- Wave_Device::select fixtures ---------------------------------------
+// Every observer appends to one shared event log, so ordering mutants
+// (halting after the device switch, replaying before it) surface as
+// sequence changes, not just count changes.
+enum {
+    kWSelAttrib = 1,
+    kWSelNext,
+    kWSelHalt,
+    kWSelPrev,
+    kWSelLoad,
+    kWSelDevSelect,
+};
+
+struct WSelEvent {
+    int tag;
+    void *obj;
+    void *arg;
+    bool operator==(const WSelEvent &o) const {
+        return tag == o.tag && obj == o.obj && arg == o.arg;
+    }
+};
+
+std::vector<WSelEvent> g_wsel_events;
+std::vector<std::pair<void *, void *>> g_wsel_load_links;
+int g_wsel_canary_hits = 0;
+
+uint32_t wsel_read32(void *self, size_t off) {
+    uint32_t v;
+    std::memcpy(&v, reinterpret_cast<uint8_t *>(self) + off, 4);
+    return v;
+}
+
+int __thiscall observe_wsel_attrib(void *self) {
+    g_wsel_events.push_back({kWSelAttrib, self, nullptr});
+    return static_cast<int>(wsel_read32(self, 8));
+}
+
+// The chain accessors are emulated exactly as the four-byte originals are
+// written: live reads of the link fields. The chain script lives in the
+// objects themselves, so a wrong-offset mutant reads the wrong cell.
+void *__thiscall observe_wsel_next(void *self) {
+    void *const v = reinterpret_cast<void *>(wsel_read32(self, 0x48));
+    g_wsel_events.push_back({kWSelNext, self, v});
+    return v;
+}
+
+void *__thiscall observe_wsel_prev(void *self) {
+    void *const v = reinterpret_cast<void *>(wsel_read32(self, 0x44));
+    g_wsel_events.push_back({kWSelPrev, self, v});
+    return v;
+}
+
+void __thiscall observe_wsel_halt(void *self) {
+    g_wsel_events.push_back({kWSelHalt, self, nullptr});
+}
+
+int __thiscall observe_wsel_load(void *self, char *fname) {
+    g_wsel_events.push_back({kWSelLoad, self, fname});
+    g_wsel_load_links.emplace_back(
+        reinterpret_cast<void *>(wsel_read32(self, 0x44)),
+        reinterpret_cast<void *>(wsel_read32(self, 0x48)));
+    return 0;
+}
+
+int __thiscall observe_wsel_dev_select(void *self, unsigned long a1) {
+    g_wsel_events.push_back({kWSelDevSelect, self,
+                             reinterpret_cast<void *>(a1)});
+    return 0;
+}
+
+int __thiscall observe_wsel_canary(void *) {
+    ++g_wsel_canary_hits;
+    return 0;
+}
+
+void test_wave_device_select() {
+    std::vector<uint8_t> storage(sizeof(Wave_Device) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *device = reinterpret_cast<Wave_Device *>(obj);
+    seed_storage(storage.data(), expected.data(), storage.size());
+
+    void *wave_vtable[64];
+    for (void *&slot : wave_vtable) {
+        slot = reinterpret_cast<void *>(&observe_wsel_canary);
+    }
+    wave_vtable[0x70 / 4] = reinterpret_cast<void *>(&observe_wsel_attrib);
+    wave_vtable[0x64 / 4] = reinterpret_cast<void *>(&observe_wsel_next);
+    wave_vtable[0x68 / 4] = reinterpret_cast<void *>(&observe_wsel_prev);
+    wave_vtable[0x14 / 4] = reinterpret_cast<void *>(&observe_wsel_halt);
+    wave_vtable[0x10 / 4] = reinterpret_cast<void *>(&observe_wsel_load);
+
+    void *dev_vtable[64];
+    for (void *&slot : dev_vtable) {
+        slot = reinterpret_cast<void *>(&observe_wsel_canary);
+    }
+    dev_vtable[0x18 / 4] = reinterpret_cast<void *>(&observe_wsel_dev_select);
+    uint8_t fake_dev[8];
+    {
+        void *vt = dev_vtable;
+        std::memcpy(fake_dev, &vt, 4);
+    }
+
+    Wave **const saved_head = WaveChainHead;
+    Wave *chain_head = nullptr;
+    WaveChainHead = &chain_head;
+
+    auto reset = [&] {
+        g_wsel_events.clear();
+        g_wsel_load_links.clear();
+        g_wsel_canary_hits = 0;
+    };
+    auto set_device = [&](void *dev) {
+        std::memcpy(obj + 0x14, &dev, 4);
+        std::memcpy(expected.data() + 16 + 0x14, &dev, 4);
+    };
+    auto put32 = [](uint8_t *base, size_t off, uint32_t v) {
+        std::memcpy(base + off, &v, 4);
+    };
+    auto putp = [](uint8_t *base, size_t off, const void *p) {
+        std::memcpy(base + off, &p, 4);
+    };
+
+    // Wave stand-ins: a seeded buffer and its expected mirror. The attribute
+    // observer answers from +8, the chain threads through +0x48.
+    const size_t kWaveBytes = 0x6C;
+    uint8_t wb[5][kWaveBytes], wb_want[5][kWaveBytes];
+    auto make_wave = [&](int i, uint32_t attrib) {
+        std::memset(wb[i], 0x50 + i, kWaveBytes);
+        void *vt = wave_vtable;
+        putp(wb[i], 0, vt);
+        put32(wb[i], 8, attrib);
+        return reinterpret_cast<Wave *>(wb[i]);
+    };
+    auto mirror_wave = [&](int i) {
+        std::memcpy(wb_want[i], wb[i], kWaveBytes);
+    };
+
+    // 1) Without a device the answer is 2 and nothing at all happens.
+    set_device(nullptr);
+    reset();
+    chain_head = make_wave(0, 1);
+    mirror_wave(0);
+    expect(device->select(0x21) == 2);
+    expect(g_wsel_events.empty());
+    expect(g_wsel_canary_hits == 0);
+    expect(std::memcmp(wb[0], wb_want[0], kWaveBytes) == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // 2) A device but an empty chain: only the device's own select runs,
+    //    and the argument passes straight through.
+    set_device(fake_dev);
+    reset();
+    chain_head = nullptr;
+    expect(device->select(0x33) == 0);
+    {
+        std::vector<WSelEvent> want{
+            {kWSelDevSelect, fake_dev, reinterpret_cast<void *>(0x33)},
+        };
+        expect(g_wsel_events == want);
+    }
+    expect(g_wsel_canary_hits == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // 3) A five-sound chain. Attribute words: 1 = halt-and-resume, 2 = bit 1
+    //    clear (one attribute fetch, skipped), 5 = bit 4 protects it (two
+    //    fetches, skipped), and the last active sound is NOT the chain end,
+    //    so its stale next link must be scrubbed before its reload.
+    Wave *const s1 = make_wave(0, 1);
+    Wave *const s2 = make_wave(1, 2);
+    Wave *const s3 = make_wave(2, 5);
+    Wave *const s4 = make_wave(3, 1);
+    Wave *const s5 = make_wave(4, 2);
+    putp(wb[0], 0x48, s2);
+    putp(wb[1], 0x48, s3);
+    putp(wb[2], 0x48, s4);
+    putp(wb[3], 0x48, s5);
+    putp(wb[4], 0x48, nullptr);
+    char *const fname1 = reinterpret_cast<char *>(0xF001);
+    char *const fname4 = reinterpret_cast<char *>(0xF004);
+    putp(wb[0], 0x4C, fname1);
+    putp(wb[3], 0x4C, fname4);
+    for (int i = 0; i < 5; ++i) {
+        put32(wb[i], 0x44, 0xABC0 + i);
+        mirror_wave(i);
+    }
+    // The two resumed sounds end with both links cleared; the skipped three
+    // keep every byte.
+    put32(wb_want[0], 0x44, 0);
+    putp(wb_want[0], 0x48, nullptr);
+    put32(wb_want[3], 0x44, 0);
+    putp(wb_want[3], 0x48, nullptr);
+    reset();
+    chain_head = s1;
+    expect(wave_device_select_redirect(device, nullptr, 0x77) == 0);
+    {
+        std::vector<WSelEvent> want{
+            {kWSelAttrib, s1, nullptr},
+            {kWSelAttrib, s1, nullptr},
+            {kWSelNext, s1, s2},
+            {kWSelHalt, s1, nullptr},
+            {kWSelAttrib, s2, nullptr},
+            {kWSelNext, s2, s3},
+            {kWSelAttrib, s3, nullptr},
+            {kWSelAttrib, s3, nullptr},
+            {kWSelNext, s3, s4},
+            {kWSelAttrib, s4, nullptr},
+            {kWSelAttrib, s4, nullptr},
+            {kWSelNext, s4, s5},
+            {kWSelHalt, s4, nullptr},
+            {kWSelAttrib, s5, nullptr},
+            {kWSelNext, s5, nullptr},
+            {kWSelDevSelect, fake_dev, reinterpret_cast<void *>(0x77)},
+            {kWSelPrev, s4, s1},
+            {kWSelLoad, s4, fname4},
+            {kWSelPrev, s1, nullptr},
+            {kWSelLoad, s1, fname1},
+        };
+        expect(g_wsel_events == want);
+    }
+    // Both links are already scrubbed when each reload is dispatched.
+    {
+        std::vector<std::pair<void *, void *>> want_links{
+            {nullptr, nullptr},
+            {nullptr, nullptr},
+        };
+        expect(g_wsel_load_links == want_links);
+    }
+    expect(g_wsel_canary_hits == 0);
+    for (int i = 0; i < 5; ++i) {
+        expect(std::memcmp(wb[i], wb_want[i], kWaveBytes) == 0);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // 4) Two overlapping stand-ins, B four bytes into A, so B's prev cell IS
+    //    A's next cell: the append's two stores hit the same address and
+    //    their order decides which pointer survives - the original leaves
+    //    the earlier sound there, and the replay walks [B, A], with A's
+    //    remembered name already scrubbed to null by B's next-link clear.
+    uint8_t ov[0x100], ov_want[0x100];
+    std::memset(ov, 0x77, sizeof(ov));
+    uint8_t *const wa = ov + 16;
+    uint8_t *const wob = wa + 4;
+    {
+        void *vt = wave_vtable;
+        putp(wa, 0, vt);
+        putp(wob, 0, vt);
+    }
+    put32(wa, 8, 1);
+    put32(wob, 8, 1);
+    putp(wa, 0x48, wob);      // A's chain next, aka B's prev cell
+    putp(wob, 0x48, nullptr); // B ends the chain, aka A's fname cell
+    char *const fnameB = reinterpret_cast<char *>(0xB00F);
+    putp(wob, 0x4C, fnameB);
+    put32(wa, 0x44, 0xABCF);
+    std::memcpy(ov_want, ov, sizeof(ov));
+    put32(ov_want + 16, 0x44, 0);  // A's prev, cleared on first threading
+    put32(ov_want + 16, 0x48, 0);  // the shared cell, scrubbed by B's replay
+    put32(ov_want + 16, 0x4C, 0);  // A's fname, aka B's next, scrubbed too
+    reset();
+    chain_head = reinterpret_cast<Wave *>(wa);
+    expect(device->select(0x55) == 0);
+    {
+        Wave *const A = reinterpret_cast<Wave *>(wa);
+        Wave *const B = reinterpret_cast<Wave *>(wob);
+        std::vector<WSelEvent> want{
+            {kWSelAttrib, A, nullptr},
+            {kWSelAttrib, A, nullptr},
+            {kWSelNext, A, B},
+            {kWSelHalt, A, nullptr},
+            {kWSelAttrib, B, nullptr},
+            {kWSelAttrib, B, nullptr},
+            {kWSelNext, B, nullptr},
+            {kWSelHalt, B, nullptr},
+            {kWSelDevSelect, fake_dev, reinterpret_cast<void *>(0x55)},
+            {kWSelPrev, B, A},
+            {kWSelLoad, B, fnameB},
+            {kWSelPrev, A, nullptr},
+            {kWSelLoad, A, nullptr},
+        };
+        expect(g_wsel_events == want);
+    }
+    expect(g_wsel_canary_hits == 0);
+    expect(std::memcmp(ov, ov_want, sizeof(ov)) == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // 5) The mirrored overlap, B four bytes BELOW A, aligns B's remembered
+    //    name with A's next cell: the append's forward store lands in it, so
+    //    B reloads by the pointer that store wrote - dropping the store
+    //    reloads B by the null A's first threading left there.
+    uint8_t ov5[0x100], ov5_want[0x100];
+    std::memset(ov5, 0x66, sizeof(ov5));
+    uint8_t *const wb5 = ov5 + 16;
+    uint8_t *const wa5 = wb5 + 4;
+    {
+        void *vt = wave_vtable;
+        putp(wa5, 0, vt);
+        putp(wb5, 0, vt);
+    }
+    put32(wa5, 8, 1);
+    put32(wb5, 8, 1);
+    putp(wa5, 0x48, wb5);      // A's chain next, aka B's fname cell
+    putp(wb5, 0x48, nullptr);  // B ends the chain, aka A's prev cell
+    char *const fnameA5 = reinterpret_cast<char *>(0xA005);
+    putp(wa5, 0x4C, fnameA5);
+    std::memcpy(ov5_want, ov5, sizeof(ov5));
+    put32(ov5_want + 16, 0x44, 0);       // B's prev (A's field 0x40 cell)
+    put32(ov5_want + 16 + 4, 0x44, 0);   // A's prev, aka B's next
+    put32(ov5_want + 16 + 4, 0x48, 0);   // A's next, aka B's fname
+    reset();
+    chain_head = reinterpret_cast<Wave *>(wa5);
+    expect(device->select(0x66) == 0);
+    {
+        Wave *const A = reinterpret_cast<Wave *>(wa5);
+        Wave *const B = reinterpret_cast<Wave *>(wb5);
+        std::vector<WSelEvent> want{
+            {kWSelAttrib, A, nullptr},
+            {kWSelAttrib, A, nullptr},
+            {kWSelNext, A, B},
+            {kWSelHalt, A, nullptr},
+            {kWSelAttrib, B, nullptr},
+            {kWSelAttrib, B, nullptr},
+            {kWSelNext, B, nullptr},
+            {kWSelHalt, B, nullptr},
+            {kWSelDevSelect, fake_dev, reinterpret_cast<void *>(0x66)},
+            {kWSelPrev, B, A},
+            {kWSelLoad, B, B},  // reloaded by the pointer the append stored
+            {kWSelPrev, A, nullptr},
+            {kWSelLoad, A, fnameA5},
+        };
+        expect(g_wsel_events == want);
+    }
+    {
+        std::vector<std::pair<void *, void *>> want_links{
+            {nullptr, nullptr},
+            {nullptr, nullptr},
+        };
+        expect(g_wsel_load_links == want_links);
+    }
+    expect(g_wsel_canary_hits == 0);
+    expect(std::memcmp(ov5, ov5_want, sizeof(ov5)) == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // 6) A two-sound cycle that revisits the first threaded sound: the walk
+    //    reaches it a second time only through the link its first threading
+    //    scrubbed, so the revisit's next fetch answers null and the walk
+    //    ends - without that scrub the cycle never terminates. The revisit
+    //    threads the sound onto itself, and the replay unwinds the self-loop
+    //    in exactly two reloads.
+    Wave *const s6a = make_wave(0, 1);
+    Wave *const s6d = make_wave(1, 2);
+    putp(wb[0], 0x48, s6d);
+    putp(wb[1], 0x48, s6a);  // the inactive sound points BACK at the first
+    char *const fname6 = reinterpret_cast<char *>(0xA006);
+    putp(wb[0], 0x4C, fname6);
+    put32(wb[0], 0x44, 0xABC9);
+    mirror_wave(0);
+    mirror_wave(1);
+    put32(wb_want[0], 0x44, 0);
+    putp(wb_want[0], 0x48, nullptr);
+    reset();
+    chain_head = s6a;
+    expect(device->select(0x11) == 0);
+    {
+        std::vector<WSelEvent> want{
+            {kWSelAttrib, s6a, nullptr},
+            {kWSelAttrib, s6a, nullptr},
+            {kWSelNext, s6a, s6d},
+            {kWSelHalt, s6a, nullptr},
+            {kWSelAttrib, s6d, nullptr},
+            {kWSelNext, s6d, s6a},
+            {kWSelAttrib, s6a, nullptr},
+            {kWSelAttrib, s6a, nullptr},
+            {kWSelNext, s6a, nullptr},
+            {kWSelHalt, s6a, nullptr},
+            {kWSelDevSelect, fake_dev, reinterpret_cast<void *>(0x11)},
+            {kWSelPrev, s6a, s6a},
+            {kWSelLoad, s6a, fname6},
+            {kWSelPrev, s6a, nullptr},
+            {kWSelLoad, s6a, fname6},
+        };
+        expect(g_wsel_events == want);
+    }
+    expect(g_wsel_canary_hits == 0);
+    expect(std::memcmp(wb[0], wb_want[0], kWaveBytes) == 0);
+    expect(std::memcmp(wb[1], wb_want[1], kWaveBytes) == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    WaveChainHead = saved_head;
+}
+
 void test_sound_small_setters() {
     std::vector<uint8_t> storage(0xA0 + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -19567,5 +19958,6 @@ int main() {
     test_wave_device_lifecycle();
     test_sound_chain_and_dtor();
     test_wave_device_construction();
+    test_wave_device_select();
     return failures == 0 ? 0 : 1;
 }
