@@ -42,6 +42,7 @@ class DLLEXPORT Wave {
   void set_volume(int a1);
   int set_fname(const char *a1);
   int play();
+  int load();
 
   int set_bufflimit(unsigned int a1);
   int set_attack(unsigned int a1, unsigned int a2, unsigned int a3);
@@ -134,6 +135,7 @@ int __fastcall wave_set_fname_redirect(Wave *self, void *, const char *a1);
 int __fastcall wave_play_empty_redirect(Wave *self, void *);
 void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
                                            unsigned int mode);
+int __fastcall wave_load_empty_redirect(Wave *self, void *);
 
 // The destructor's dependencies, each rebindable for the leaf tests. A wave
 // still holding one of the 0x10 device group slots is pulled from its group
@@ -184,5 +186,24 @@ typedef int(__thiscall func_wave_original_load)(Wave *wave);
 #endif
 extern func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled;
 extern func_wave_original_load *WaveOriginalLoad;
+
+// load()'s remaining surface: the device-creation hook lives in the slot
+// right beside the release hook, behind the same guard dword, and builds the
+// device straight into the wave's 0x3C field; Sound::load is the base-class
+// loader - Wave derives from Sound, which is what the destructor's staged
+// vtable descent walks - and it is not yet source-owned.
+typedef int(__cdecl func_wave_device_create)(void **device_slot,
+                                             const char *fname, int mode);
+extern func_wave_device_create **WaveDeviceCreateSlot;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef int(__thiscall func_sound_original_load)(Wave *wave,
+                                                 const char *fname);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_sound_original_load *SoundOriginalLoad;
 
 void __fastcall wave_dtor_redirect(Wave *self, void *);

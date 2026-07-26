@@ -770,6 +770,84 @@ int __fastcall wave_play_empty_redirect(Wave *self, void *) {
     return self->play();
 }
 
+func_wave_device_create **WaveDeviceCreateSlot =
+    reinterpret_cast<func_wave_device_create **>(0x0090DB24);
+func_sound_original_load *SoundOriginalLoad = (func_sound_original_load *)0x004C6280;
+
+/*
+Purpose: Load the wave from its remembered filename. With no wrapped device
+         yet, the creation hook - the slot beside the release hook, behind
+         the same guard - builds one directly into the 0x3C field; a dead
+         hook answers 1 and a failed creation its own error. The 0x54 flag
+         byte and the wave's own vtable slot 0x58 fold into an attribute mask
+         the device hears through its slot 0x6C, the base Sound::load reads
+         the file, and on success the device reports the length in
+         milliseconds through its slot 0xC4 into the field at 0x60.
+Original Offset: 004C6CE0
+Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
+              or the creation/load error
+Status: Complete
+*/
+int Wave::load() {
+    const char *const fname = static_cast<const char *>(fname_);
+    if (!fname) {
+        return 8;
+    }
+    if (!device_) {
+        if (!*WaveDeviceReleaseGuard) {
+            return 1;
+        }
+        const int created = (*WaveDeviceCreateSlot)(&device_, fname, 1);
+        if (created) {
+            return created;
+        }
+    }
+    int attribs = 0;
+    if (flags_54_ & 1) {
+        attribs |= 1;
+    }
+    {
+        typedef int(__thiscall * wave_query_fn)(Wave *self);
+        if ((*reinterpret_cast<wave_query_fn *>(
+                *reinterpret_cast<uint8_t **>(this) + 0x58))(this)) {
+            attribs |= 2;
+        }
+    }
+    const uint8_t flags = flags_54_;
+    if (flags & 4) {
+        attribs |= 0x11;
+    }
+    if (flags & 8) {
+        attribs |= 0x40;
+        if (!(flags & 0x20)) {
+            attribs |= 1;
+        }
+    }
+    if (flags & 0x10) {
+        attribs |= 0x80;
+    }
+    if (flags & 0x20) {
+        attribs |= 0x100;
+    }
+    {
+        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        (*reinterpret_cast<device_attrib_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, attribs);
+    }
+    const int loaded = SoundOriginalLoad(this, fname);
+    if (loaded) {
+        return loaded;
+    }
+    typedef int(__thiscall * device_length_fn)(void *device);
+    ms_length_ = (*reinterpret_cast<device_length_fn *>(
+        *reinterpret_cast<uint8_t **>(device_) + 0xC4))(device_);
+    return 0;
+}
+
+int __fastcall wave_load_empty_redirect(Wave *self, void *) {
+    return self->load();
+}
+
 /*
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
