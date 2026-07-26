@@ -673,6 +673,32 @@ add_custom_target(verify-recovery-metadata
     VERBATIM
 )
 
+# Every recovery invalidates the committed metadata by construction, so the
+# unpromoted gate is guaranteed to fail its first pass on any batch that landed
+# a body. Running this first regenerates, copies over docs/recovery/, and still
+# performs the byte comparison, which turns the standing two-pass cycle into
+# one. It is deliberately NOT a dependency of verify-recovery-batch: the gate
+# must keep failing on drift for anyone who has not consciously promoted.
+add_custom_target(promote-recovery-metadata
+    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
+        --idb "${OPENSMACX_RECOVERY_IDB}"
+        --verify-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
+        --promote
+    DEPENDS
+        "${OPENSMACX_RECOVERY_IDB}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ida9-functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
+    USES_TERMINAL
+    VERBATIM
+)
+
 add_custom_target(prepare-hybrid-image
     COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_prepare_hybrid_image.py"
