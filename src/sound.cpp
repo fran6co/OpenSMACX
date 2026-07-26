@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <algorithm>
 #include "sound.h"
 #include "general.h"
 #include "wave.h"
@@ -431,4 +432,149 @@ int Sound::load(const char *a1) {
 
 int __fastcall sound_load_redirect(Sound *self, void *, const char *a1) {
     return self->load(a1);
+}
+
+/*
+Purpose: Set the sound's volume: the low seven bits are stored at 0x04 and
+         the wrapped device, if any, hears them through its vtable slot 0x40.
+         Unlike Wave's override there is no group rescaling here.
+Original Offset: 004C6510
+Return Value: n/a
+Status: Complete
+*/
+void Sound::set_volume(int a1) {
+    const uint32_t vol = static_cast<uint32_t>(a1) & 0x7F;
+    volume_ = vol;
+    if (device_) {
+        typedef void(__thiscall * device_fn)(void *device, uint32_t vol);
+        (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, vol);
+    }
+}
+
+void __fastcall sound_set_volume_redirect(Sound *self, void *, int a1) {
+    self->set_volume(a1);
+}
+
+/*
+Purpose: Set the fade time. Zero is refused with 0xA; otherwise the value is
+         remembered at 0x38 and the wrapped device hears it through its
+         vtable slot 0.
+Original Offset: 004C6580
+Return Value: 0, or 0xA for a zero time
+Status: Complete
+*/
+int Sound::set_fade(unsigned long a1) {
+    if (!a1) {
+        return 0xA;
+    }
+    fade_38_ = a1;
+    if (device_) {
+        typedef void(__thiscall * device_fn)(void *device, unsigned long t);
+        (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0))(device_, a1);
+    }
+    return 0;
+}
+
+int __fastcall sound_set_fade_redirect(Sound *self, void *, unsigned long a1) {
+    return self->set_fade(a1);
+}
+
+/*
+Purpose: Set the fade-in time. Zero is refused with 0xA; otherwise the value
+         shares the 0x38 field with set_fade and the wrapped device hears it
+         through its vtable slot 0x54.
+Original Offset: 004C65B0
+Return Value: 0, or 0xA for a zero time
+Status: Complete
+*/
+int Sound::set_fade_in(unsigned int a1) {
+    if (!a1) {
+        return 0xA;
+    }
+    fade_38_ = a1;
+    if (device_) {
+        typedef void(__thiscall * device_fn)(void *device, unsigned int t);
+        (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x54))(device_, a1);
+    }
+    return 0;
+}
+
+int __fastcall sound_set_fade_in_redirect(Sound *self, void *,
+                                          unsigned int a1) {
+    return self->set_fade_in(a1);
+}
+
+/*
+Purpose: Fade the sound in: its own vtable slot 0x54 takes the time, and only
+         a zero answer lets its own slot 0x28 follow up.
+Original Offset: 004C6660
+Return Value: n/a
+Status: Complete
+*/
+void Sound::fade_in(unsigned int a1) {
+    typedef int(__thiscall * own_time_fn)(Sound *self, unsigned int t);
+    if ((*reinterpret_cast<own_time_fn *>(
+            *reinterpret_cast<uint8_t **>(this) + 0x54))(this, a1) == 0) {
+        (*reinterpret_cast<void(__thiscall **)(Sound *)>(
+            *reinterpret_cast<uint8_t **>(this) + 0x28))(this);
+    }
+}
+
+void __fastcall sound_fade_in_arg_redirect(Sound *self, void *,
+                                           unsigned int a1) {
+    self->fade_in(a1);
+}
+
+/*
+Purpose: Set the pan, clamped to the range the engine accepts (-0x40 to
+         0x3F), stored at 0x08 and handed to the wrapped device through its
+         vtable slot 0x44.
+Original Offset: 004C66B0
+Return Value: n/a
+Status: Complete
+*/
+void Sound::set_pan(int a1) {
+    const int pan = std::min(std::max(a1, -0x40), 0x3F);
+    pan_8_ = pan;
+    if (device_) {
+        typedef void(__thiscall * device_fn)(void *device, int pan);
+        (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x44))(device_, pan);
+    }
+}
+
+void __fastcall sound_set_pan_redirect(Sound *self, void *, int a1) {
+    self->set_pan(a1);
+}
+
+/*
+Purpose: Release the loaded sound. The wrapped device, if any, is asked to
+         unload through its own vtable slot 0x14 and its answer is the
+         result; the sound's own vtable slot 0x80 then runs UNCONDITIONALLY
+         (Wave's override suppresses it by flag; the base does not), the
+         device is forgotten, and the loaded bit at 0x40 is cleared.
+Original Offset: 004C6440
+Return Value: whatever the device's unload returned, or 0 with none wrapped
+Status: Complete
+*/
+int Sound::unload() {
+    int result = 0;
+    if (device_) {
+        typedef int(__thiscall * device_fn)(void *device);
+        result = (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x14))(device_);
+    }
+    (*reinterpret_cast<void(__thiscall **)(Sound *)>(
+        *reinterpret_cast<uint8_t **>(this) + 0x80))(this);
+    const uint32_t cleared = flags_40_ & ~1u;
+    device_ = nullptr;
+    flags_40_ = cleared;
+    return result;
+}
+
+int __fastcall sound_unload_redirect(Sound *self, void *) {
+    return self->unload();
 }

@@ -9764,6 +9764,16 @@ void __thiscall observe_wave_group_insert(void *group_head, Wave *wave) {
     std::memcpy(&g_wave_ginsert_seen_slot,
                 reinterpret_cast<uint8_t *>(wave) + 0x68, 4);
 }
+Sound *g_sound_own54_self;
+uint32_t g_sound_own54_arg;
+int g_sound_own54_calls;
+int g_sound_own54_ret;
+int __thiscall observe_sound_own_slot54(Sound *self, uint32_t arg) {
+    g_sound_own54_self = self;
+    g_sound_own54_arg = arg;
+    ++g_sound_own54_calls;
+    return g_sound_own54_ret;
+}
 int g_wave_stype_calls;
 Wave *g_wave_stype_wave;
 uint32_t g_wave_stype_type;
@@ -10945,6 +10955,153 @@ void test_wave_init() {
     WaveOperatorNew = saved_new;
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;
+}
+
+void test_sound_small_setters() {
+    std::vector<uint8_t> storage(0xA0 + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *sound = reinterpret_cast<Sound *>(obj);
+
+    void *dev_vtable[64];
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    auto arm_dev = [&](size_t slot, void *fn) {
+        std::memset(dev_vtable, 0, sizeof(dev_vtable));
+        dev_vtable[slot / 4] = fn;
+        g_wave_fam_calls = 0;
+        g_wave_fam_arg_log.clear();
+    };
+    void *own_vtable[64];
+    std::memset(own_vtable, 0, sizeof(own_vtable));
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto setp = [&](size_t off, const void *ptr) {
+        std::memcpy(obj + off, &ptr, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *ptr;
+        std::memcpy(&ptr, obj + off, 4);
+        return ptr;
+    };
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x00, own_vtable);
+    setp(0x3C, &fake_dev);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+
+    // set_volume: seven bits kept, no group rescaling, device slot 0x40.
+    arm_dev(0x40, reinterpret_cast<void *>(&observe_wave_dev1));
+    sound->set_volume(0x1FF);
+    expect(get32(0x04) == 0x7F);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev &&
+           g_wave_fam_args[0] == 0x7F);
+    {
+        const uint32_t vol = 0x7F;
+        std::memcpy(expected.data() + 16 + 0x04, &vol, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // set_fade: zero refused untouched; otherwise field 0x38 + device slot 0.
+    arm_dev(0, reinterpret_cast<void *>(&observe_wave_dev1));
+    expect(sound->set_fade(0) == 0xA);
+    expect(g_wave_fam_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    expect(sound->set_fade(0x777) == 0);
+    expect(get32(0x38) == 0x777);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 0x777);
+
+    // set_fade_in: the same field, device slot 0x54.
+    arm_dev(0x54, reinterpret_cast<void *>(&observe_wave_dev1));
+    expect(sound->set_fade_in(0) == 0xA);
+    expect(g_wave_fam_calls == 0);
+    expect(sound->set_fade_in(0x888) == 0);
+    expect(get32(0x38) == 0x888);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 0x888);
+
+    // Both fade setters skip the device quietly when none is wrapped.
+    setp(0x3C, nullptr);
+    arm_dev(0, reinterpret_cast<void *>(&observe_wave_dev1));
+    expect(sound->set_fade(5) == 0);
+    expect(get32(0x38) == 5 && g_wave_fam_calls == 0);
+    expect(sound->set_fade_in(6) == 0);
+    expect(get32(0x38) == 6 && g_wave_fam_calls == 0);
+    sound->set_volume(3);
+    expect(get32(0x04) == 3);
+
+    // fade_in: the own slot 0x54 answers; only zero lets slot 0x28 follow.
+    own_vtable[0x54 / 4] =
+        reinterpret_cast<void *>(&observe_sound_own_slot54);
+    own_vtable[0x28 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot80);
+    g_sound_own54_calls = 0;
+    g_wave_own80_calls = 0;
+    g_sound_own54_ret = 5;
+    sound->fade_in(0xABC);
+    expect(g_sound_own54_calls == 1 && g_sound_own54_self == sound &&
+           g_sound_own54_arg == 0xABC);
+    expect(g_wave_own80_calls == 0);
+    g_sound_own54_ret = 0;
+    sound->fade_in(0xDEF);
+    expect(g_sound_own54_arg == 0xDEF);
+    expect(g_wave_own80_calls == 1);
+
+    // set_pan: the clamp, the field, the device slot 0x44.
+    setp(0x3C, &fake_dev);
+    arm_dev(0x44, reinterpret_cast<void *>(&observe_wave_dev1));
+    sound->set_pan(-0x41);
+    expect(get32(0x08) == 0xFFFFFFC0u);
+    expect(g_wave_fam_args[0] == 0xFFFFFFC0u);
+    sound->set_pan(-0x40);
+    expect(get32(0x08) == 0xFFFFFFC0u);
+    sound->set_pan(0x40);
+    expect(get32(0x08) == 0x3F);
+    sound->set_pan(0x3F);
+    expect(get32(0x08) == 0x3F);
+    sound->set_pan(-1);
+    expect(get32(0x08) == 0xFFFFFFFFu);  // mid-range negatives pass through
+    sound->set_pan(1);
+    expect(get32(0x08) == 1);
+    expect(g_wave_fam_calls == 6);
+
+    // unload: the device's answer, the UNCONDITIONAL own slot 0x80 while the
+    // device is still remembered, then the device and loaded bit clear.
+    own_vtable[0x80 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot80);
+    arm_dev(0x14, reinterpret_cast<void *>(&observe_wave_dev0));
+    set32(0x40, 0xF1);
+    g_wave_own80_calls = 0;
+    g_wave_fam_ret = 0x77;
+    expect(sound->unload() == 0x77);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev);
+    expect(g_wave_own80_calls == 1 && g_wave_own80_seen_device == &fake_dev);
+    expect(getp(0x3C) == nullptr);
+    expect(get32(0x40) == 0xF0);
+    // No device: answer 0, the callback still runs.
+    set32(0x40, 1);
+    g_wave_own80_calls = 0;
+    g_wave_fam_calls = 0;
+    expect(sound->unload() == 0);
+    expect(g_wave_fam_calls == 0 && g_wave_own80_calls == 1);
+    expect(get32(0x40) == 0);
+
+    // Redirect entries.
+    setp(0x3C, nullptr);
+    sound_set_volume_redirect(sound, nullptr, 9);
+    expect(get32(0x04) == 9);
+    expect(sound_set_fade_redirect(sound, nullptr, 0) == 0xA);
+    expect(sound_set_fade_in_redirect(sound, nullptr, 0) == 0xA);
+    g_sound_own54_ret = 5;
+    g_sound_own54_calls = 0;
+    sound_fade_in_arg_redirect(sound, nullptr, 2);
+    expect(g_sound_own54_calls == 1);
+    sound_set_pan_redirect(sound, nullptr, 1);
+    expect(get32(0x08) == 1);
+    g_wave_own80_calls = 0;
+    expect(sound_unload_redirect(sound, nullptr) == 0);
+    expect(g_wave_own80_calls == 1);
 }
 
 void test_wave_device_groups() {
@@ -18415,5 +18572,6 @@ int main() {
     test_wave_init();
     test_sound_set_type_and_load();
     test_wave_device_groups();
+    test_sound_small_setters();
     return failures == 0 ? 0 : 1;
 }

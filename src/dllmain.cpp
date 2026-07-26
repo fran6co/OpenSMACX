@@ -108,7 +108,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 993;
+constexpr size_t RedirectCount = 999;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -3214,6 +3214,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C6430,
         },
         {
+            0x004C6440,
+            reinterpret_cast<uintptr_t>(&sound_unload_redirect),
+            OPENSMACX_SIGNATURE_004C6440,
+        },
+        {
             0x004C6480,
             reinterpret_cast<uintptr_t>(&sound_play_redirect),
             OPENSMACX_SIGNATURE_004C6480,
@@ -3239,6 +3244,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C64F0,
         },
         {
+            0x004C6510,
+            reinterpret_cast<uintptr_t>(&sound_set_volume_redirect),
+            OPENSMACX_SIGNATURE_004C6510,
+        },
+        {
             0x004C6540,
             reinterpret_cast<uintptr_t>(&sound_set_loop_state_redirect),
             OPENSMACX_SIGNATURE_004C6540,
@@ -3247,6 +3257,16 @@ bool install_redirects() {
             0x004C6560,
             reinterpret_cast<uintptr_t>(&sound_set_delay_redirect),
             OPENSMACX_SIGNATURE_004C6560,
+        },
+        {
+            0x004C6580,
+            reinterpret_cast<uintptr_t>(&sound_set_fade_redirect),
+            OPENSMACX_SIGNATURE_004C6580,
+        },
+        {
+            0x004C65B0,
+            reinterpret_cast<uintptr_t>(&sound_set_fade_in_redirect),
+            OPENSMACX_SIGNATURE_004C65B0,
         },
         {
             0x004C65E0,
@@ -3269,6 +3289,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C6640,
         },
         {
+            0x004C6660,
+            reinterpret_cast<uintptr_t>(&sound_fade_in_arg_redirect),
+            OPENSMACX_SIGNATURE_004C6660,
+        },
+        {
             0x004C6690,
             reinterpret_cast<uintptr_t>(&sound_is_looping_redirect),
             OPENSMACX_SIGNATURE_004C6690,
@@ -3277,6 +3302,11 @@ bool install_redirects() {
             0x004C66A0,
             reinterpret_cast<uintptr_t>(&sound_get_time_redirect),
             OPENSMACX_SIGNATURE_004C66A0,
+        },
+        {
+            0x004C66B0,
+            reinterpret_cast<uintptr_t>(&sound_set_pan_redirect),
+            OPENSMACX_SIGNATURE_004C66B0,
         },
         {
             0x004C66E0,
