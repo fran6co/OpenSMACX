@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 328,
       "original_dependency": 89,
-      "source_complete": 1532,
+      "source_complete": 1536,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4016
+      "unrecovered": 4012
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1478,
-    "matched_function_starts": 1478,
-    "unique_addresses": 1478,
+    "annotations": 1482,
+    "matched_function_starts": 1482,
+    "unique_addresses": 1482,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 531,
-      "function": 116
+      "function": 117
     },
     "items": [
       {
@@ -4560,6 +4560,15 @@
         "type": "TextIndex *"
       },
       {
+        "address": "0x0064557F",
+        "function": "??3@YAXPAX@Z",
+        "function_address": "0x0064557F",
+        "kind": "function",
+        "location": "src/autosound.cpp:23",
+        "symbol": "AutoSoundOperatorDelete",
+        "type": "func_auto_sound_delete *"
+      },
+      {
         "address": "0x009A4B68",
         "function": "",
         "function_address": "",
@@ -7152,7 +7161,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 116,
-    "total": 647
+    "matched_function_starts": 117,
+    "total": 648
   }
 }

@@ -4344,7 +4344,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005F85B0,0x005F85DD,45,.text,?on_mousewheel_down@Win@@QAEXH@Z,"void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)",0x005F85B0-0x005F85DD,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005F85E0,0x005F860D,45,.text,?on_mousewheel_up@Win@@QAEXH@Z,"void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)",0x005F85E0-0x005F860D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005F8610,0x005F862E,30,.text,??_GWin@@UAEPAXI@Z,"void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)",0x005F8610-0x005F862E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
-0x005F8640,0x005F8664,36,.text,??_GAutoSound@@UAEPAXI@Z,"void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)",0x005F8640-0x005F8664,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
+0x005F8640,0x005F8664,36,.text,??_GAutoSound@@UAEPAXI@Z,"void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)",0x005F8640-0x005F8664,game,hidden;sp_ready;purged_ok,src/autosound.cpp:128,Complete,,,source_complete,,,,2,0
 0x005F8670,0x005F869B,43,.text,sub_5f8670,,0x005F8670-0x005F869B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x005F86A0,0x005F86BF,31,.text,sub_5f86a0,,0x005F86A0-0x005F86BF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x005F86C0,0x005F86E6,38,.text,sub_5f86c0,,0x005F86C0-0x005F86E6,game,sp_ready;purged_ok,src/win.cpp:269,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,2
@@ -4467,7 +4467,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FD280,0x005FD281,1,.text,nullsub_192,,0x005FD280-0x005FD281,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FD290,0x005FD291,1,.text,nullsub_193,,0x005FD290-0x005FD291,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005FD2A0,0x005FD2A1,1,.text,nullsub_194,,0x005FD2A0-0x005FD2A1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x005FD2B0,0x005FD2B3,3,.text,?do_sound@@YAXXZ,,0x005FD2B0-0x005FD2B3,game,hidden;sp_ready;purged_ok,src/autosound.cpp:54,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,21
+0x005FD2B0,0x005FD2B3,3,.text,?do_sound@@YAXXZ,,0x005FD2B0-0x005FD2B3,game,hidden;sp_ready;purged_ok,src/autosound.cpp:144,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,21
 0x005FD2C0,0x005FD308,72,.text,sub_5fd2c0,,0x005FD2C0-0x005FD308,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD310,0x005FD35D,77,.text,sub_5fd310,,0x005FD310-0x005FD35D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD360,0x005FD36B,11,.text,?do_all_sounds@@YAXXZ,,0x005FD360-0x005FD36B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -5272,10 +5272,10 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0062B850,0x0062B86C,28,.text,?add@ButtonGroup@@QAEXPAUBaseButton@@@Z,"void (__thiscall ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z)(ButtonGroup* this, BaseButton* button)",0x0062B850-0x0062B86C,game,hidden;sp_ready;purged_ok,src/buttongroup.cpp:75,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,9
 0x0062B870,0x0062B89F,47,.text,?set@ButtonGroup@@QAEHHH@Z,"int (__thiscall ?set@ButtonGroup@@QAEHHH@Z)(ButtonGroup* this, int, int)",0x0062B870-0x0062B89F,game,hidden;sp_ready;purged_ok,src/buttongroup.cpp:110,Complete,,,source_complete,,,,1,35
 0x0062B8A0,0x0062BA77,471,.text,?button_click@ButtonGroup@@QAEHH@Z,"int (__thiscall ?button_click@ButtonGroup@@QAEHH@Z)(ButtonGroup* this, int)",0x0062B8A0-0x0062BA77,game,hidden;sp_ready;purged_ok,,,,ButtonGroupOriginalButtonClick,original_dependency,,,,1,5
-0x0062BA80,0x0062BBE8,360,.text,??0AutoSound@@QAE@XZ,void (__thiscall ??0AutoSound@@QAE@XZ)(AutoSound* this),0x0062BA80-0x0062BBE8,game,hidden;sp_ready;purged_ok,src/autosound.cpp:27,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,1
-0x0062BBF0,0x0062BD3D,333,.text,?close@AutoSound@@QAEXXZ,void (__thiscall ?close@AutoSound@@QAEXXZ)(AutoSound* this),0x0062BBF0-0x0062BD3D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
-0x0062BD40,0x0062BDC4,132,.text,?init@AutoSound@@QAEXXZ,void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this),0x0062BD40-0x0062BDC4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0062BDD0,0x0062BF1D,333,.text,?close2@AutoSound@@QAEXXZ,void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this),0x0062BDD0-0x0062BF1D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0062BA80,0x0062BBE8,360,.text,??0AutoSound@@QAE@XZ,void (__thiscall ??0AutoSound@@QAE@XZ)(AutoSound* this),0x0062BA80-0x0062BBE8,game,hidden;sp_ready;purged_ok,src/autosound.cpp:28,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,1
+0x0062BBF0,0x0062BD3D,333,.text,?close@AutoSound@@QAEXXZ,void (__thiscall ?close@AutoSound@@QAEXXZ)(AutoSound* this),0x0062BBF0-0x0062BD3D,game,hidden;sp_ready;purged_ok,src/autosound.cpp:57,Complete,,,source_complete,,,,0,3
+0x0062BD40,0x0062BDC4,132,.text,?init@AutoSound@@QAEXXZ,void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this),0x0062BD40-0x0062BDC4,game,hidden;sp_ready;purged_ok,src/autosound.cpp:106,Complete,,,source_complete,,,,0,0
+0x0062BDD0,0x0062BF1D,333,.text,?close2@AutoSound@@QAEXXZ,void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this),0x0062BDD0-0x0062BF1D,game,hidden;sp_ready;purged_ok,src/autosound.cpp:82,Complete,,,source_complete,,,,0,0
 0x0062BF20,0x0062C00E,238,.text,??0PushButton@@QAE@XZ,void (__thiscall ??0PushButton@@QAE@XZ)(PushButton* this),0x0062BF20-0x0062C00E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,3
 0x0062C010,0x0062C025,21,.text,??1PushButton@@QAE@XZ,void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this),0x0062C010-0x0062C025,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,7
 0x0062C030,0x0062C10C,220,.text,?close@PushButton@@QAEXXZ,void (__thiscall ?close@PushButton@@QAEXXZ)(PushButton* this),0x0062C030-0x0062C10C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
@@ -5635,7 +5635,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00645460,0x00645467,7,.text,_strcpy,,0x00645460-0x00645467,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,98
 0x00645470,0x00645550,224,.text,_strcat,,0x00645470-0x00645550,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,446
 0x00645550,0x0064557F,47,.text,__alloca_probe,,0x00645550-0x0064557F,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,137
-0x0064557F,0x0064558A,11,.text,??3@YAXPAX@Z,,0x0064557F-0x0064558A,library,lib;hidden;sp_ready;purged_ok,,,,WaveOperatorDelete,original_dependency,,,,1,115
+0x0064557F,0x0064558A,11,.text,??3@YAXPAX@Z,,0x0064557F-0x0064558A,library,lib;hidden;sp_ready;purged_ok,,,,AutoSoundOperatorDelete | WaveOperatorDelete,original_dependency,,,,1,115
 0x0064558A,0x00645598,14,.text,??2@YAPAXI@Z,,0x0064558A-0x00645598,library,lib;hidden;sp_ready;purged_ok,,,,WaveOperatorNew,original_dependency,,,,1,27
 0x00645598,0x006455C9,49,.text,_fclose,,0x00645598-0x006455C9,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,3,36
 0x006455C9,0x00645615,76,.text,__fclose_lk,,0x006455C9-0x00645615,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,4,1

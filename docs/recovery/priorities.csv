@@ -3139,7 +3139,6 @@ P3,101,0x005F8590,?on_mousewheel_up_horz@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,mis
 P3,1121,0x005F85B0,?on_mousewheel_down@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85E0,?on_mousewheel_up@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)"
 P3,221,0x005F8610,??_GWin@@UAEPAXI@Z,30,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)"
-P3,211,0x005F8640,??_GAutoSound@@UAEPAXI@Z,36,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)"
 P3,1020,0x005F8670,sub_5f8670,43,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005F86A0,sub_5f86a0,31,1,0,unrecovered,,,2,exact,exact,
 P3,210,0x005F8770,sub_5f8770,134,0,2,unrecovered,,,1,missing,exact,
@@ -3746,9 +3745,6 @@ P3,101,0x0062B600,?decode_black_trans@Flic@@QAEXXZ,110,0,1,unrecovered,,,0,missi
 P3,1321,0x0062B670,?decode_fli_copy_trans@Flic@@QAEXXZ,262,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?decode_fli_copy_trans@Flic@@QAEXXZ)(Flic* this)
 P3,101,0x0062B780,?UNK9@Flic@@QAEXXZ,63,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?UNK9@Flic@@QAEXXZ)(Flic* this)
 P0,1005121,0x0062B8A0,?button_click@ButtonGroup@@QAEHH@Z,471,5,1,original_dependency,ui_dependency,recover_button_group_button_click,2,exact,exact,"int (__thiscall ?button_click@ButtonGroup@@QAEHH@Z)(ButtonGroup* this, int)"
-P3,3021,0x0062BBF0,?close@AutoSound@@QAEXXZ,333,3,0,unrecovered,,,2,exact,exact,void (__thiscall ?close@AutoSound@@QAEXXZ)(AutoSound* this)
-P3,1,0x0062BD40,?init@AutoSound@@QAEXXZ,132,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this)
-P3,1,0x0062BDD0,?close2@AutoSound@@QAEXXZ,333,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this)
 P3,3121,0x0062BF20,??0PushButton@@QAE@XZ,238,3,1,unrecovered,,,2,exact,exact,void (__thiscall ??0PushButton@@QAE@XZ)(PushButton* this)
 P2,7021,0x0062C010,??1PushButton@@QAE@XZ,21,7,0,unrecovered,,,2,exact,exact,void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this)
 P3,121,0x0062C030,?close@PushButton@@QAEXXZ,220,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?close@PushButton@@QAEXXZ)(PushButton* this)

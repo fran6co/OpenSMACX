@@ -87,6 +87,7 @@
 #include "../src/vector.h"
 #include "../src/win.h"
 
+#include <array>
 #include <climits>
 #include <cstring>
 #include <float.h>
@@ -12337,6 +12338,125 @@ void test_wave_device_select() {
     WaveChainHead = saved_head;
 }
 
+// --- AutoSound lifecycle fixtures ---------------------------------------
+std::vector<void *> g_asnd_deletes;
+
+void __cdecl observe_asnd_delete(void *block) {
+    g_asnd_deletes.push_back(block);
+}
+
+// Replay one field-copy in its exact store order against the expected
+// buffer. `defaults` null means the source block IS the object - the
+// self-aliasing scenarios, where each read sees every store so far, so
+// the expected bytes depend on the precise legacy order.
+void asnd_simulate(uint8_t *expected, size_t base, const int (*order)[2],
+                   size_t count, const uint32_t *defaults) {
+    for (size_t step = 0; step < count; ++step) {
+        const int dst = order[step][0];
+        const int src = order[step][1];
+        uint32_t value;
+        if (defaults) {
+            value = defaults[src];
+        } else {
+            std::memcpy(&value, expected + base + src * 4u, 4);
+        }
+        std::memcpy(expected + base + dst * 4u, &value, 4);
+    }
+}
+
+void asnd_orders(std::vector<std::array<int, 2>> &close_order,
+                 std::vector<std::array<int, 2>> &close2_order) {
+    close_order = {{1, 0}, {3, 1}, {4, 2}, {2, 3}};
+    close2_order = {{1, 0}, {2, 3}, {3, 1}, {4, 2}};
+    for (int index = 4; index < 37; ++index) {
+        close_order.push_back({index + 1, index});
+        close2_order.push_back({index + 1, index});
+    }
+}
+
+void test_auto_sound_lifecycle() {
+    uint32_t defaults[37];
+    for (size_t index = 0; index < ARRAYSIZE(defaults); ++index) {
+        defaults[index] = 0x63000000U + index * 0x30201U;
+    }
+    uint32_t *const saved_defaults = AutoSoundDefaults;
+    auto *const saved_delete = AutoSoundOperatorDelete;
+    AutoSoundDefaults = defaults;
+    AutoSoundOperatorDelete = &observe_asnd_delete;
+
+    std::vector<std::array<int, 2>> close_order, close2_order;
+    asnd_orders(close_order, close2_order);
+    auto run = [&](void (*invoke)(AutoSound *),
+                   const std::vector<std::array<int, 2>> *order,
+                   bool self_alias, bool expect_vtable) {
+        alignas(AutoSound) uint8_t storage[sizeof(AutoSound) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        const uint32_t canary = 0xDEADDEADu;
+        std::memcpy(storage + 16, &canary, 4);
+        std::memcpy(expected + 16, &canary, 4);
+        auto *const self = reinterpret_cast<AutoSound *>(storage + 16);
+        AutoSoundDefaults =
+            self_alias ? reinterpret_cast<uint32_t *>(storage + 16) : defaults;
+        if (expect_vtable) {
+            write_at(expected, 16, AutoSoundVtable);
+        }
+        if (order) {
+            asnd_simulate(
+                expected, 16,
+                reinterpret_cast<const int(*)[2]>(order->data()->data()),
+                order->size(), self_alias ? nullptr : defaults);
+        } else {
+            for (size_t index = 1; index < 38; ++index) {
+                write_at(expected, 16 + index * 4, uint32_t(0));
+            }
+        }
+        invoke(self);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        AutoSoundDefaults = defaults;
+    };
+
+    // close and close2 against an independent default block, both directly
+    // and through their redirects.
+    run([](AutoSound *s) { s->close(); }, &close_order, false, false);
+    run([](AutoSound *s) { auto_sound_close_redirect(s, nullptr); },
+        &close_order, false, false);
+    run([](AutoSound *s) { s->close2(); }, &close2_order, false, false);
+    run([](AutoSound *s) { auto_sound_close2_redirect(s, nullptr); },
+        &close2_order, false, false);
+
+    // init zeroes the same extent; the vtable cell keeps its canary.
+    run([](AutoSound *s) { s->init(); }, nullptr, false, false);
+    run([](AutoSound *s) { auto_sound_init_redirect(s, nullptr); }, nullptr,
+        false, false);
+
+    // The default block aimed at the object itself: every read sees the
+    // stores so far, so the two legacy store orders produce two DIFFERENT
+    // final patterns - the byte compare pins each function to its own.
+    run([](AutoSound *s) { s->close(); }, &close_order, true, false);
+    run([](AutoSound *s) { s->close2(); }, &close2_order, true, false);
+
+    // The scalar deleting destructor: vtable re-installed BEFORE the field
+    // reset - the self-aliasing copy reads the fresh vtable through the
+    // default block, so a late install leaves the canary behind instead.
+    g_asnd_deletes.clear();
+    run([](AutoSound *s) {
+        expect(auto_sound_scalar_dtor_redirect(s, nullptr, 0) == s);
+    }, &close_order, true, true);
+    expect(g_asnd_deletes.empty());
+    run([](AutoSound *s) {
+        expect(auto_sound_scalar_dtor_redirect(s, nullptr, 2) == s);
+    }, &close_order, false, true);
+    expect(g_asnd_deletes.empty());
+    run([](AutoSound *s) {
+        expect(auto_sound_scalar_dtor_redirect(s, nullptr, 1) == s);
+        expect(g_asnd_deletes == std::vector<void *>({s}));
+    }, &close_order, false, true);
+
+    AutoSoundDefaults = saved_defaults;
+    AutoSoundOperatorDelete = saved_delete;
+}
+
 void test_sound_small_setters() {
     std::vector<uint8_t> storage(0xA0 + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -19959,5 +20079,6 @@ int main() {
     test_sound_chain_and_dtor();
     test_wave_device_construction();
     test_wave_device_select();
+    test_auto_sound_lifecycle();
     return failures == 0 ? 0 : 1;
 }
