@@ -115,6 +115,7 @@ endif()
 
 set(OPENSMACX_SOURCES
     src/alpha.cpp
+    src/atexit_thunks.cpp
     src/alphanet.cpp
     src/ambience.cpp
     src/autosound.cpp
@@ -398,6 +399,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
+        src/atexit_thunks.cpp
         src/alphanet.cpp
         src/basepop.cpp
         src/ambience.cpp
