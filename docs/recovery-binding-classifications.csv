@@ -18,11 +18,13 @@ BaseWinIfaceClick,ui_dependency,recover_base_win_iface_click,Temporary dependenc
 blink2_timer,timer_callback,recover_timer_callback,Replace secondary UI blink callback
 blink_timer,timer_callback,recover_timer_callback,Replace original UI blink callback
 BufferCopyFull,ui_dependency,recover_buffer_copy_full,Temporary dependency for the recovered five-argument Buffer copy until the seven-argument blitter is source-owned
+BufferElementCtor,ui_dependency,recover_buffer_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 BufferElementTeardown,ui_dependency,recover_buffer_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Buffer destructor jump thunk is source-owned
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
 ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
+CaviarDataElementCtor,ui_dependency,recover_caviardata_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 CaviarDataElementTeardown,ui_dependency,recover_caviar_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the CaviarData destructor jump thunk is source-owned
 CaviarDataFreeRecord,ui_dependency,recover_caviar_free_record,Temporary dependency for the recovered CaviarData close until the record-walking free helper is source-owned
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
@@ -56,8 +58,10 @@ EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary depende
 EffectElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown the recovered FX bank destructor passes to the vector iterator; a jump thunk onto the Wave destructor and retires with it
 FactionArtElementTeardown,ui_dependency,recover_faction_art_teardown,Per-element teardown the recovered array thunk passes to the vector iterator until the FactionArt destructor is source-owned
 fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction after map loading
+FontElementCtor,ui_dependency,recover_font_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 FontElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the Font destructor jump thunk is source-owned
 FontQueueElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered FontQueue destructor passes to the vector iterator; binds the recovered Font destructor's original entry and retires with FontElementTeardown
+GameAtexit,crt_ownership,replace_after_exit_list_boundary,The game CRT atexit the recovered dynamic initializers register their teardown thunks with; the exit list must stay in that CRT so teardown order remains inside its LIFO walk
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 line_timer,timer_callback,recover_timer_callback,Replace line animation callback
 ListBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered ListBox close until Dialog close is source-owned
@@ -96,13 +100,16 @@ social_set,game_service,recover_social_model,Complete social model state applica
 SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
 SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
 SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
+SpriteElementCtor,ui_dependency,recover_sprite_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 SpriteElementTeardown,ui_dependency,recover_sprite_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Sprite destructor jump thunk is source-owned
 SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
 StringBoxAddFixup,ui_dependency,recover_string_box_add_fixup,Temporary dependency for the recovered StringBox add until its fixup pass is source-owned
 StringBoxStructAdd,ui_dependency,recover_string_struct_add,Temporary dependency for the recovered StringBox add until StringStruct add is source-owned
 SubInterfaceOriginalReleaseIfaceMode,ui_dependency,recover_sub_interface_release_iface_mode,Temporary dependency for the recovered StatusWin reset until the interface-mode release is source-owned
 tech_val_OG,legacy_diagnostic,preserve_exported_diagnostic,Staged patching redirects tech_val so comparison is useful only with an unpatched executable
+TextIndexElementCtor,ui_dependency,recover_textindex_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 TextIndexElementTeardown,ui_dependency,recover_textindex_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the TextIndex destructor jump thunk is source-owned
+TextureElementCtor,ui_dependency,recover_texture_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 TextureElementTeardown,ui_dependency,recover_texture_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Texture destructor jump thunk is source-owned
 TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its owned pixel block through the executable CRT until that ownership boundary moves
 turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
@@ -115,6 +122,7 @@ WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group 
 WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
 WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
 WaveDevicePullFromGroup,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave destructor until Wave_Device::pull_from_group is source-owned
+WaveElementCtor,ui_dependency,recover_wave_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 WaveElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown binding the same Wave destructor address WaveOriginalDestructor holds; both retire together
 WaveOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the recovered Wave destructor frees its sample buffer through; the block was allocated by the game CRT so it must return to that heap
 WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT operator new the recovered set_fname allocates the filename copy on; the destructor and set_fname free it with the matching game delete

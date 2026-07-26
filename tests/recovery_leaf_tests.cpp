@@ -34,6 +34,7 @@
 #include "../src/filewin.h"
 #include "../src/wave.h"
 #include "../src/atexit_thunks.h"
+#include "../src/init_thunks.h"
 #include "../src/fx.h"
 #include "../src/battlewin.h"
 #include "../src/councwin.h"
@@ -22372,6 +22373,491 @@ void test_console_update_data() {
 }
 
 
+namespace {
+struct InitThunkCase {
+    void(__cdecl *thunk)();
+    void *slot;                     // the global seam
+    func_thiscall_teardown **ctor_slot;
+    func_atexit_callback *callback; // the ??__F it registers
+};
+const InitThunkCase g_init_scalar_cases[] = {
+    {&construct_alphamenu_wave, &g_ALPHAMENU_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00402F30U)},
+    {&construct_unused_sprite_var02, &g_UNUSED_SPRITE_VAR02, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404460U)},
+    {&construct_unused_sprite_var11, &g_UNUSED_SPRITE_VAR11, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404490U)},
+    {&construct_unused_sprite_var06, &g_UNUSED_SPRITE_VAR06, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004044C0U)},
+    {&construct_unused_sprite_var09, &g_UNUSED_SPRITE_VAR09, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004044F0U)},
+    {&construct_unused_sprite_var21, &g_UNUSED_SPRITE_VAR21, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404520U)},
+    {&construct_unused_sprite_var05, &g_UNUSED_SPRITE_VAR05, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404550U)},
+    {&construct_unused_sprite_var08, &g_UNUSED_SPRITE_VAR08, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404580U)},
+    {&construct_unused_sprite_var04, &g_UNUSED_SPRITE_VAR04, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004045B0U)},
+    {&construct_unused_sprite_var01, &g_UNUSED_SPRITE_VAR01, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004045E0U)},
+    {&construct_unused_sprite_var18, &g_UNUSED_SPRITE_VAR18, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404610U)},
+    {&construct_unused_sprite_var03, &g_UNUSED_SPRITE_VAR03, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404640U)},
+    {&construct_unused_sprite_var20, &g_UNUSED_SPRITE_VAR20, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404670U)},
+    {&construct_unused_sprite_var16, &g_UNUSED_SPRITE_VAR16, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004046A0U)},
+    {&construct_unused_sprite_var14, &g_UNUSED_SPRITE_VAR14, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004046D0U)},
+    {&construct_unused_sprite_var22, &g_UNUSED_SPRITE_VAR22, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404700U)},
+    {&construct_unused_sprite_var10, &g_UNUSED_SPRITE_VAR10, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404730U)},
+    {&construct_unused_sprite_var15, &g_UNUSED_SPRITE_VAR15, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404760U)},
+    {&construct_unused_sprite_var13, &g_UNUSED_SPRITE_VAR13, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404790U)},
+    {&construct_unused_sprite_var17, &g_UNUSED_SPRITE_VAR17, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004047C0U)},
+    {&construct_unused_sprite_var19, &g_UNUSED_SPRITE_VAR19, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004047F0U)},
+    {&construct_unused_sprite_var12, &g_UNUSED_SPRITE_VAR12, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404820U)},
+    {&construct_unused_sprite_var07, &g_UNUSED_SPRITE_VAR07, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00404850U)},
+    {&construct_basewin_wave, &g_BASEWIN_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00408400U)},
+    {&construct_credits_wave, &g_CREDITS_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00428770U)},
+    {&construct_designwin_wave, &g_DESIGNWIN_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x004328A0U)},
+    {&construct_menu_up_wave, &g_MENU_UP_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x004454C0U)},
+    {&construct_menu_down_wave, &g_MENU_DOWN_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x004454F0U)},
+    {&construct_scoot_wave, &g_SCOOT_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00445520U)},
+    {&construct_ok_wave, &g_OK_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00445550U)},
+    {&construct_passover_wave, &g_PASSOVER_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00445580U)},
+    {&construct_pcx_parse_temp_buffer1, &g_PCX_PARSE_TEMP_BUFFER1, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044CC40U)},
+    {&construct_iface_std_popups_top_left_sprite, &g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044CFE0U)},
+    {&construct_iface_std_popups_top_right_sprite, &g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D010U)},
+    {&construct_iface_std_popups_bot_left_sprite, &g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D040U)},
+    {&construct_iface_std_popups_bot_right_sprite, &g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D070U)},
+    {&construct_iface_std_popups_top_mid_sprite, &g_IFACE_STD_POPUPS_TOP_MID_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D0A0U)},
+    {&construct_iface_std_popups_bot_mid_sprite, &g_IFACE_STD_POPUPS_BOT_MID_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D0D0U)},
+    {&construct_iface_std_popups_mid_left_sprite, &g_IFACE_STD_POPUPS_MID_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D100U)},
+    {&construct_iface_std_popups_mid_right_sprite, &g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D130U)},
+    {&construct_iface_std_popups_middle_buffer, &g_IFACE_STD_POPUPS_MIDDLE_BUFFER, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D160U)},
+    {&construct_unused_caviardata_var1, &g_UNUSED_CAVIARDATA_VAR1, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D190U)},
+    {&construct_ssf_caviardata, &g_SSF_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D1C0U)},
+    {&construct_sdp_caviardata, &g_SDP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D1F0U)},
+    {&construct_sas_caviardata, &g_SAS_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D220U)},
+    {&construct_scd_caviardata, &g_SCD_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D250U)},
+    {&construct_scj_caviardata, &g_SCJ_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D280U)},
+    {&construct_sags_caviardata, &g_SAGS_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D2B0U)},
+    {&construct_sft_caviardata, &g_SFT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D2E0U)},
+    {&construct_vhr_caviardata1, &g_VHR_CAVIARDATA1, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D310U)},
+    {&construct_sht_caviardata, &g_SHT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D340U)},
+    {&construct_srb_caviardata, &g_SRB_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D370U)},
+    {&construct_asas_caviardata, &g_ASAS_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D3A0U)},
+    {&construct_reslaser_caviardata, &g_RESLASER_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D3D0U)},
+    {&construct_resbolt_caviardata, &g_RESBOLT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D400U)},
+    {&construct_funload_caviardata, &g_FUNLOAD_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D430U)},
+    {&construct_tecload_caviardata, &g_TECLOAD_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D460U)},
+    {&construct_sp_disswave_caviardata, &g_SP_DISSWAVE_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D490U)},
+    {&construct_sp_marined_caviardata, &g_SP_MARINED_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D4C0U)},
+    {&construct_sp_nanoo_caviardata, &g_SP_NANOO_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D4F0U)},
+    {&construct_sp_soporific_caviardata, &g_SP_SOPORIFIC_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D520U)},
+    {&construct_aa01_caviardata, &g_AA01_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D550U)},
+    {&construct_aa_rover_caviardata, &g_AA_ROVER_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D580U)},
+    {&construct_ax_caviardata, &g_AX_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D650U)},
+    {&construct_aa_caviardata, &g_AA_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D680U)},
+    {&construct_acolpod_caviardata, &g_ACOLPOD_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D6B0U)},
+    {&construct_at_caviardata, &g_AT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D6E0U)},
+    {&construct_vta_caviardata, &g_VTA_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D710U)},
+    {&construct_atp_caviardata, &g_ATP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D740U)},
+    {&construct_ssfa_caviardata, &g_SSFA_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D770U)},
+    {&construct_sfta_caviardata, &g_SFTA_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D7A0U)},
+    {&construct_vw00_caviardata, &g_VW00_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D7D0U)},
+    {&construct_viptawl_caviardata, &g_VIPTAWL_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D800U)},
+    {&construct_viptasgn_caviardata, &g_VIPTASGN_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D830U)},
+    {&construct_viptapsi_caviardata, &g_VIPTAPSI_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D860U)},
+    {&construct_ptmod_caviardata, &g_PTMOD_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D930U)},
+    {&construct_vb_caviardata, &g_VB_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D960U)},
+    {&construct_vbp_caviardata, &g_VBP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D990U)},
+    {&construct_vgmc_caviardata, &g_VGMC_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D9C0U)},
+    {&construct_vgmcp_caviardata, &g_VGMCP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044D9F0U)},
+    {&construct_vlights_caviardata, &g_VLIGHTS_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DA20U)},
+    {&construct_vpt_caviardata, &g_VPT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DA50U)},
+    {&construct_a_caviardata, &g_A_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DA80U)},
+    {&construct_apwall_caviardata, &g_APWALL_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DAB0U)},
+    {&construct_asgen_caviardata, &g_ASGEN_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DAE0U)},
+    {&construct_apsid_caviardata, &g_APSID_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DB10U)},
+    {&construct_va01_caviardata, &g_VA01_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DB40U)},
+    {&construct_vhr_caviardata2, &g_VHR_CAVIARDATA2, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DBC0U)},
+    {&construct_vi_caviardata, &g_VI_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DC40U)},
+    {&construct_vgmt_caviardata, &g_VGMT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DC70U)},
+    {&construct_vgmtp_caviardata, &g_VGMTP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DCA0U)},
+    {&construct_unused_caviardata_var2, &g_UNUSED_CAVIARDATA_VAR2, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DCD0U)},
+    {&construct_vwntu_caviardata, &g_VWNTU_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DD00U)},
+    {&construct_vt_caviardata, &g_VT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DD30U)},
+    {&construct_drop_caviardata, &g_DROP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DD60U)},
+    {&construct_droplet_caviardata, &g_DROPLET_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DD90U)},
+    {&construct_vcl_caviardata, &g_VCL_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DDC0U)},
+    {&construct_vclt00_caviardata, &g_VCLT00_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DE40U)},
+    {&construct_vht_vbp_caviardata, &g_VHT_VBP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DE70U)},
+    {&construct_vhtp_caviardata, &g_VHTP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DEA0U)},
+    {&construct_vhttp_caviardata, &g_VHTTP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DF20U)},
+    {&construct_vsp_caviardata, &g_VSP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044DFA0U)},
+    {&construct_vsptf_caviardata, &g_VSPTF_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E020U)},
+    {&construct_vsptb_caviardata, &g_VSPTB_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E050U)},
+    {&construct_vfl_caviardata, &g_VFL_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E080U)},
+    {&construct_vgs_caviardata, &g_VGS_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E0B0U)},
+    {&construct_vgsp_caviardata, &g_VGSP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E0E0U)},
+    {&construct_vjtp_caviardata, &g_VJTP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E110U)},
+    {&construct_vcu_caviardata, &g_VCU_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E190U)},
+    {&construct_vcup_caviardata, &g_VCUP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E1C0U)},
+    {&construct_vcuw_caviardata, &g_VCUW_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E240U)},
+    {&construct_vct_caviardata, &g_VCT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E270U)},
+    {&construct_vctp_caviardata, &g_VCTP_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E2A0U)},
+    {&construct_vctb_caviardata, &g_VCTB_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E2D0U)},
+    {&construct_vwntt_caviardata, &g_VWNTT_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E350U)},
+    {&construct_vwnst_caviardata, &g_VWNST_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E380U)},
+    {&construct_vwnaa_caviardata, &g_VWNAA_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E3B0U)},
+    {&construct_vm_caviardata, &g_VM_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E430U)},
+    {&construct_vm13_caviardata, &g_VM13_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E460U)},
+    {&construct_nw_caviardata, &g_NW_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E530U)},
+    {&construct_ni_caviardata, &g_NI_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E560U)},
+    {&construct_nlc_caviardata, &g_NLC_CAVIARDATA, &CaviarDataInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E590U)},
+    {&construct_radius1_texture, &g_RADIUS1_TEXTURE, &TextureInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E610U)},
+    {&construct_radius2_texture, &g_RADIUS2_TEXTURE, &TextureInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E640U)},
+    {&construct_flat_arid_land_texture, &g_FLAT_ARID_LAND_TEXTURE, &TextureInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E710U)},
+    {&construct_dune_land_texture, &g_DUNE_LAND_TEXTURE, &TextureInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044E830U)},
+    {&construct_rainfall_single_tile_texture, &g_RAINFALL_SINGLE_TILE_TEXTURE, &TextureInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044EB80U)},
+    {&construct_ter1_mine_sprite, &g_TER1_MINE_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044ECA0U)},
+    {&construct_ter1_solar_collector_sprite, &g_TER1_SOLAR_COLLECTOR_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044ECD0U)},
+    {&construct_ter1_tidal_harness_sprite, &g_TER1_TIDAL_HARNESS_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044ED00U)},
+    {&construct_ter1_mining_platform_sprite, &g_TER1_MINING_PLATFORM_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044ED30U)},
+    {&construct_ter1_tut_blank_sprite, &g_TER1_TUT_BLANK_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044ED60U)},
+    {&construct_ter1_kelp_farm_sprite, &g_TER1_KELP_FARM_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044ED90U)},
+    {&construct_ter1_condenser_sprite, &g_TER1_CONDENSER_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044EDC0U)},
+    {&construct_ter1_echelon_mirror_sprite, &g_TER1_ECHELON_MIRROR_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044EDF0U)},
+    {&construct_ter1_borehole_sprite, &g_TER1_BOREHOLE_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044EE20U)},
+    {&construct_ter1_borehole_cluster_sprite, &g_TER1_BOREHOLE_CLUSTER_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044EE50U)},
+    {&construct_ter1_monolith_sprite, &g_TER1_MONOLITH_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F1F0U)},
+    {&construct_ter1_bunker_sprite, &g_TER1_BUNKER_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F220U)},
+    {&construct_ter1_airbase_sprite, &g_TER1_AIRBASE_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F250U)},
+    {&construct_ter1_sensor_array_sprite, &g_TER1_SENSOR_ARRAY_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F280U)},
+    {&construct_red_alien_head_icon_sprite, &g_RED_ALIEN_HEAD_ICON_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F6C0U)},
+    {&construct_red_male_head_icon_sprite, &g_RED_MALE_HEAD_ICON_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F790U)},
+    {&construct_null_resource_icon_sprite, &g_NULL_RESOURCE_ICON_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F7C0U)},
+    {&construct_icon_tile_square_sprite, &g_ICON_TILE_SQUARE_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F840U)},
+    {&construct_battle_mind_worm_sprite, &g_BATTLE_MIND_WORM_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F910U)},
+    {&construct_battle_isle_deep_sprite, &g_BATTLE_ISLE_DEEP_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F940U)},
+    {&construct_battle_locusts_chiron_sprite, &g_BATTLE_LOCUSTS_CHIRON_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F970U)},
+    {&construct_battle_fungal_tower_sprite, &g_BATTLE_FUNGAL_TOWER_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F9A0U)},
+    {&construct_battle_spore_launcher_sprite, &g_BATTLE_SPORE_LAUNCHER_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044F9D0U)},
+    {&construct_battle_sealurk_sprite, &g_BATTLE_SEALURK_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FA00U)},
+    {&construct_scroll_bar_filler_icon_sprites, &g_SCROLL_BAR_FILLER_ICON_SPRITES, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FC10U)},
+    {&construct_scroll_bar_small_filler_icon_sprite, &g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FC40U)},
+    {&construct_iface_general_windows_top_left_sprite, &g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FD10U)},
+    {&construct_iface_general_windows_top_right_sprite, &g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FD40U)},
+    {&construct_iface_general_windows_bot_left_sprite, &g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FD70U)},
+    {&construct_iface_general_windows_bot_right_sprite, &g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FDA0U)},
+    {&construct_iface_general_windows_mid_left_sprite, &g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FDD0U)},
+    {&construct_iface_general_windows_mid_right_sprite, &g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FE00U)},
+    {&construct_iface_general_windows_top_mid_sprite, &g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FE30U)},
+    {&construct_iface_general_windows_bot_mid_sprite, &g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FE60U)},
+    {&construct_iface_general_windows_noncap_mid_sprite, &g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FE90U)},
+    {&construct_iface_general_windows_noncap_left_sprite, &g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FEC0U)},
+    {&construct_iface_general_windows_noncap_right_sprite, &g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FEF0U)},
+    {&construct_unused_sprite_var23, &g_UNUSED_SPRITE_VAR23, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FF20U)},
+    {&construct_unused_sprite_var24, &g_UNUSED_SPRITE_VAR24, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FF50U)},
+    {&construct_unused_sprite_var25, &g_UNUSED_SPRITE_VAR25, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FF80U)},
+    {&construct_unused_sprite_var26, &g_UNUSED_SPRITE_VAR26, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FFB0U)},
+    {&construct_unused_sprite_var27, &g_UNUSED_SPRITE_VAR27, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0044FFE0U)},
+    {&construct_unused_sprite_var28, &g_UNUSED_SPRITE_VAR28, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450010U)},
+    {&construct_unused_sprite_var29, &g_UNUSED_SPRITE_VAR29, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450040U)},
+    {&construct_unused_sprite_var30, &g_UNUSED_SPRITE_VAR30, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450070U)},
+    {&construct_unused_sprite_var31, &g_UNUSED_SPRITE_VAR31, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004500A0U)},
+    {&construct_unused_sprite_var32, &g_UNUSED_SPRITE_VAR32, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004500D0U)},
+    {&construct_unused_sprite_var33, &g_UNUSED_SPRITE_VAR33, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450100U)},
+    {&construct_unused_sprite_var34, &g_UNUSED_SPRITE_VAR34, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450130U)},
+    {&construct_unused_sprite_var35, &g_UNUSED_SPRITE_VAR35, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450160U)},
+    {&construct_unused_sprite_var36, &g_UNUSED_SPRITE_VAR36, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450190U)},
+    {&construct_unused_sprite_var37, &g_UNUSED_SPRITE_VAR37, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004501C0U)},
+    {&construct_unused_sprite_var38, &g_UNUSED_SPRITE_VAR38, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004501F0U)},
+    {&construct_unused_sprite_var39, &g_UNUSED_SPRITE_VAR39, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450220U)},
+    {&construct_unused_sprite_var40, &g_UNUSED_SPRITE_VAR40, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450250U)},
+    {&construct_unused_sprite_var41, &g_UNUSED_SPRITE_VAR41, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450280U)},
+    {&construct_unused_sprite_var42, &g_UNUSED_SPRITE_VAR42, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004502B0U)},
+    {&construct_unused_sprite_var43, &g_UNUSED_SPRITE_VAR43, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004502E0U)},
+    {&construct_unused_sprite_var44, &g_UNUSED_SPRITE_VAR44, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450310U)},
+    {&construct_unused_sprite_var45, &g_UNUSED_SPRITE_VAR45, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450340U)},
+    {&construct_unused_sprite_var46, &g_UNUSED_SPRITE_VAR46, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450370U)},
+    {&construct_unused_sprite_var47, &g_UNUSED_SPRITE_VAR47, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004503F0U)},
+    {&construct_unused_sprite_var48, &g_UNUSED_SPRITE_VAR48, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450420U)},
+    {&construct_unused_sprite_var49, &g_UNUSED_SPRITE_VAR49, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450450U)},
+    {&construct_unused_sprite_var50, &g_UNUSED_SPRITE_VAR50, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450480U)},
+    {&construct_unused_sprite_var51, &g_UNUSED_SPRITE_VAR51, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004504B0U)},
+    {&construct_unused_sprite_var52, &g_UNUSED_SPRITE_VAR52, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004504E0U)},
+    {&construct_unused_sprite_var53, &g_UNUSED_SPRITE_VAR53, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450510U)},
+    {&construct_unused_sprite_var54, &g_UNUSED_SPRITE_VAR54, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450540U)},
+    {&construct_unused_sprite_var55, &g_UNUSED_SPRITE_VAR55, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450570U)},
+    {&construct_unused_sprite_var56, &g_UNUSED_SPRITE_VAR56, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004505A0U)},
+    {&construct_unused_sprite_var57, &g_UNUSED_SPRITE_VAR57, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004505D0U)},
+    {&construct_unused_sprite_var58, &g_UNUSED_SPRITE_VAR58, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450600U)},
+    {&construct_unused_sprite_var59, &g_UNUSED_SPRITE_VAR59, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450630U)},
+    {&construct_unused_sprite_var60, &g_UNUSED_SPRITE_VAR60, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450660U)},
+    {&construct_unused_sprite_var61, &g_UNUSED_SPRITE_VAR61, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450690U)},
+    {&construct_unused_sprite_var62, &g_UNUSED_SPRITE_VAR62, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004506C0U)},
+    {&construct_unused_sprite_var63, &g_UNUSED_SPRITE_VAR63, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004506F0U)},
+    {&construct_unused_sprite_var64, &g_UNUSED_SPRITE_VAR64, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450720U)},
+    {&construct_unused_sprite_var65, &g_UNUSED_SPRITE_VAR65, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450750U)},
+    {&construct_unused_sprite_var66, &g_UNUSED_SPRITE_VAR66, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450780U)},
+    {&construct_unused_sprite_var67, &g_UNUSED_SPRITE_VAR67, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004507B0U)},
+    {&construct_unused_sprite_var68, &g_UNUSED_SPRITE_VAR68, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004507E0U)},
+    {&construct_unused_sprite_var69, &g_UNUSED_SPRITE_VAR69, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450810U)},
+    {&construct_unused_sprite_var70, &g_UNUSED_SPRITE_VAR70, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450840U)},
+    {&construct_unused_sprite_var71, &g_UNUSED_SPRITE_VAR71, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450870U)},
+    {&construct_unused_sprite_var72, &g_UNUSED_SPRITE_VAR72, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004508A0U)},
+    {&construct_unused_sprite_var73, &g_UNUSED_SPRITE_VAR73, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x004508D0U)},
+    {&construct_unused_sprite_var74, &g_UNUSED_SPRITE_VAR74, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450900U)},
+    {&construct_unused_sprite_var75, &g_UNUSED_SPRITE_VAR75, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450C00U)},
+    {&construct_unused_sprite_var76, &g_UNUSED_SPRITE_VAR76, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450C30U)},
+    {&construct_unused_sprite_var77, &g_UNUSED_SPRITE_VAR77, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450C60U)},
+    {&construct_unused_sprite_var78, &g_UNUSED_SPRITE_VAR78, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450C90U)},
+    {&construct_unused_sprite_var79, &g_UNUSED_SPRITE_VAR79, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450CC0U)},
+    {&construct_unused_sprite_var80, &g_UNUSED_SPRITE_VAR80, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450CF0U)},
+    {&construct_unused_sprite_var81, &g_UNUSED_SPRITE_VAR81, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450D20U)},
+    {&construct_unused_sprite_var82, &g_UNUSED_SPRITE_VAR82, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450D50U)},
+    {&construct_unused_sprite_var83, &g_UNUSED_SPRITE_VAR83, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00450D80U)},
+    {&construct_maininterface_wave, &g_MAININTERFACE_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x004595B0U)},
+    {&construct_jackal_font, &g_JACKAL_FONT, &FontInitCtor, reinterpret_cast<func_atexit_callback *>(0x0045F940U)},
+    {&construct_multiwin_wave, &g_MULTIWIN_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00477E60U)},
+    {&construct_prefwin_buttongroup, &g_PREFWIN_BUTTONGROUP, &ButtonGroupInitCtor, reinterpret_cast<func_atexit_callback *>(0x0048D540U)},
+    {&construct_vehdraw_caviar, &g_VEHDRAW_CAVIAR, &CaviarInitCtor, reinterpret_cast<func_atexit_callback *>(0x004BF700U)},
+    {&construct_vehdraw_buffer, &g_VEHDRAW_BUFFER, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x004BF730U)},
+    {&construct_wave_device, &g_WAVE_DEVICE, &WaveDeviceInitCtor, reinterpret_cast<func_atexit_callback *>(0x004C5C70U)},
+    {&construct_console_timer, &g_CONSOLE_TIMER, &TimeInitCtor, reinterpret_cast<func_atexit_callback *>(0x0050E9A0U)},
+    {&construct_top_menu_wave, &g_TOP_MENU_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x00584D20U)},
+    {&construct_crash_landing_wave, &g_CRASH_LANDING_WAVE, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x005AE110U)},
+    {&construct_wave_general, &g_WAVE_GENERAL, &WaveInitCtor, reinterpret_cast<func_atexit_callback *>(0x005B9C30U)},
+    {&construct_buffer_sprite, &g_BUFFER_SPRITE, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x005D71F0U)},
+    {&construct_buffer, &g_BUFFER, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x005E37D0U)},
+    {&construct_win_buffer, &g_WIN_BUFFER, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x005EB370U)},
+    {&construct_radiobutton_sprite_1, &g_RADIOBUTTON_SPRITE_1, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0060D080U)},
+    {&construct_radiobutton_sprite_2, &g_RADIOBUTTON_SPRITE_2, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0060D0C0U)},
+    {&construct_checkbox_sprite_1, &g_CHECKBOX_SPRITE_1, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0060E610U)},
+    {&construct_checkbox_sprite_2, &g_CHECKBOX_SPRITE_2, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x0060E650U)},
+    {&construct_filewin_sprite_1, &g_FILEWIN_SPRITE_1, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x006137B0U)},
+    {&construct_filewin_sprite_2, &g_FILEWIN_SPRITE_2, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x006137F0U)},
+    {&construct_filewin_sprite_3, &g_FILEWIN_SPRITE_3, &SpriteInitCtor, reinterpret_cast<func_atexit_callback *>(0x00613830U)},
+    {&construct_stringtable, &StringTable, &StringsInitCtor, reinterpret_cast<func_atexit_callback *>(0x006168C0U)},
+    {&construct_caviar_buffer_1, &g_CAVIAR_BUFFER_1, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x00616AC0U)},
+    {&construct_caviar_buffer_2, &g_CAVIAR_BUFFER_2, &BufferInitCtor, reinterpret_cast<func_atexit_callback *>(0x00616B00U)},
+};
+struct InitArrayCase {
+    void(__cdecl *thunk)();
+    void *slot;
+    uint32_t element_size;
+    int count;
+    func_thiscall_teardown **ctor_slot;
+    func_thiscall_teardown **dtor_slot;
+    func_atexit_callback *callback;
+};
+const InitArrayCase g_init_array_cases[] = {
+    {&construct_cpu_waves, &g_CPU_WAVES, 0x6C, 45, &WaveElementCtor, &WaveElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00445480U)},
+    {&construct_iface_close_x_sprites, &g_IFACE_CLOSE_X_SPRITES, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CCD0U)},
+    {&construct_iface_box_sprites1, &g_IFACE_BOX_SPRITES1, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CD20U)},
+    {&construct_iface_box_sprites2, &g_IFACE_BOX_SPRITES2, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CD70U)},
+    {&construct_iface_box_sprites3, &g_IFACE_BOX_SPRITES3, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CDC0U)},
+    {&construct_iface_box_sprites4, &g_IFACE_BOX_SPRITES4, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CE10U)},
+    {&construct_iface_box_sprites5, &g_IFACE_BOX_SPRITES5, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CE60U)},
+    {&construct_iface_box_sprites6, &g_IFACE_BOX_SPRITES6, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CEB0U)},
+    {&construct_iface_box_sprites7, &g_IFACE_BOX_SPRITES7, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CF00U)},
+    {&construct_iface_box_sprites8, &g_IFACE_BOX_SPRITES8, 0x2C, 51, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CF50U)},
+    {&construct_iface_box_sprite_buffers, &g_IFACE_BOX_SPRITE_BUFFERS, 0x588, 51, &BufferElementCtor, &BufferElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044CFA0U)},
+    {&construct_aa_wing_caviardata, &g_AA_WING_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044D5C0U)},
+    {&construct_acp_caviardata, &g_ACP_CAVIARDATA, 0xC, 4, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044D610U)},
+    {&construct_viptr_caviardata, &g_VIPTR_CAVIARDATA, 0xC, 4, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044D8A0U)},
+    {&construct_vipta_caviardata, &g_VIPTA_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044D8F0U)},
+    {&construct_vr_caviardata, &g_VR_CAVIARDATA, 0xC, 4, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044DB80U)},
+    {&construct_vrc_caviardata, &g_VRC_CAVIARDATA, 0xC, 4, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044DC00U)},
+    {&construct_unused_caviardata_var3, &g_UNUSED_CAVIARDATA_VAR3, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044DE00U)},
+    {&construct_vhta0_caviardata, &g_VHTA0_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044DEE0U)},
+    {&construct_vhttpa0_caviardata, &g_VHTTPA0_CAVIARDATA, 0xC, 3, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044DF60U)},
+    {&construct_vspa0_caviardata, &g_VSPA0_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044DFE0U)},
+    {&construct_vjt0_caviardata, &g_VJT0_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E150U)},
+    {&construct_vcua0_caviardata, &g_VCUA0_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E200U)},
+    {&construct_vct0_caviardata, &g_VCT0_CAVIARDATA, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E310U)},
+    {&construct_vw_caviardata, &g_VW_CAVIARDATA, 0xC, 16, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E3F0U)},
+    {&construct_vpbr0_caviardata, &g_VPBR0_CAVIARDATA, 0xC, 4, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E4A0U)},
+    {&construct_unused_caviardata_var4, &g_UNUSED_CAVIARDATA_VAR4, 0xC, 2, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E4F0U)},
+    {&construct_unused_caviardata_var5, &g_UNUSED_CAVIARDATA_VAR5, 0xC, 5, &CaviarDataElementCtor, &CaviarDataElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E5D0U)},
+    {&construct_rocky_textures, &g_ROCKY_TEXTURES, 0x70, 4, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E680U)},
+    {&construct_ocean_textures, &g_OCEAN_TEXTURES, 0x70, 2, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E6D0U)},
+    {&construct_moist_land_textures, &g_MOIST_LAND_TEXTURES, 0x70, 16, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E750U)},
+    {&construct_rainy_land_textures, &g_RAINY_LAND_TEXTURES, 0x70, 16, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E7A0U)},
+    {&construct_jungle_land_textures, &g_JUNGLE_LAND_TEXTURES, 0x70, 15, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E7F0U)},
+    {&construct_sunny_mesa_textures, &g_SUNNY_MESA_TEXTURES, 0x70, 8, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E870U)},
+    {&construct_rainfall_single_tile_textures, &g_RAINFALL_SINGLE_TILE_TEXTURES, 0x70, 2, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E8C0U)},
+    {&construct_road_textures, &g_ROAD_TEXTURES, 0x70, 9, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E910U)},
+    {&construct_magtube_textures, &g_MAGTUBE_TEXTURES, 0x70, 9, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E960U)},
+    {&construct_river_textures, &g_RIVER_TEXTURES, 0x70, 16, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044E9B0U)},
+    {&construct_mount_planet_textures, &g_MOUNT_PLANET_TEXTURES, 0x70, 3, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EA00U)},
+    {&construct_garland_crater_textures, &g_GARLAND_CRATER_TEXTURES, 0x70, 3, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EA50U)},
+    {&construct_fungus_textures, &g_FUNGUS_TEXTURES, 0x70, 30, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EAA0U)},
+    {&construct_farm_textures, &g_FARM_TEXTURES, 0x70, 9, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EAF0U)},
+    {&construct_forest_textures, &g_FOREST_TEXTURES, 0x70, 16, &TextureElementCtor, &TextureElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EB40U)},
+    {&construct_ter1_white_org_yel_tile_sprites, &g_TER1_WHITE_ORG_YEL_TILE_SPRITES, 0x2C, 6, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EBC0U)},
+    {&construct_ter1_bottom_left_tile_sprites, &g_TER1_BOTTOM_LEFT_TILE_SPRITES, 0x2C, 9, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EC10U)},
+    {&construct_ter1_unused_sprites2, &g_TER1_UNUSED_SPRITES2, 0x2C, 2, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EC60U)},
+    {&construct_ter1_manifold_nexus_sprites, &g_TER1_MANIFOLD_NEXUS_SPRITES, 0x2C, 6, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EE90U)},
+    {&construct_ter1wreck_unity_wreckage_sprites, &g_TER1WRECK_UNITY_WRECKAGE_SPRITES, 0x2C, 15, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EEE0U)},
+    {&construct_ter1wreck_unity_wreckage_alt_sprites, &g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES, 0x2C, 4, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EF30U)},
+    {&construct_fossil_field_ridge_sprites, &g_FOSSIL_FIELD_RIDGE_SPRITES, 0x2C, 6, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EF80U)},
+    {&construct_ter1_unused_sprites1, &g_TER1_UNUSED_SPRITES1, 0x2C, 5, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044EFD0U)},
+    {&construct_ter1_farm_sprites, &g_TER1_FARM_SPRITES, 0x2C, 5, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F020U)},
+    {&construct_ter1_soil_enricher_sprites, &g_TER1_SOIL_ENRICHER_SPRITES, 0x2C, 5, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F070U)},
+    {&construct_ter1_sea_land_resource_sprites, &g_TER1_SEA_LAND_RESOURCE_SPRITES, 0x2C, 12, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F0C0U)},
+    {&construct_ter1_landmark_resource_sprites, &g_TER1_LANDMARK_RESOURCE_SPRITES, 0x2C, 6, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F110U)},
+    {&construct_glow_sprites, &g_GLOW_SPRITES, 0x2C, 2, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F160U)},
+    {&construct_ter1_unity_pod_sprites, &g_TER1_UNITY_POD_SPRITES, 0x2C, 6, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F1B0U)},
+    {&construct_rainfall_double_tile_sprites, &g_RAINFALL_DOUBLE_TILE_SPRITES, 0x2C, 2, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F2C0U)},
+    {&construct_veh_sprites, &g_VEH_SPRITES, 0x2C, 152, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F310U)},
+    {&construct_flags_veh_sprites, &g_FLAGS_VEH_SPRITES, 0x2C, 112, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F360U)},
+    {&construct_icons_general_sprites, &g_ICONS_GENERAL_SPRITES, 0x2C, 16, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F3B0U)},
+    {&construct_resource_icon_sprites, &g_RESOURCE_ICON_SPRITES, 0x2C, 32, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F400U)},
+    {&construct_citizen_lg_cursor_sprites, &g_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 8, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F450U)},
+    {&construct_specialist_lg_cursor_sprites, &g_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F4A0U)},
+    {&construct_citizen_sm_cursor_sprites, &g_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 8, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F4F0U)},
+    {&construct_specialist_sm_cursor_sprites, &g_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F540U)},
+    {&construct_al_citizen_lg_cursor_sprites, &g_AL_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 4, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F590U)},
+    {&construct_al_specialist_lg_cursor_sprites, &g_AL_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F5E0U)},
+    {&construct_al_citizen_sm_cursor_sprites, &g_AL_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 4, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F630U)},
+    {&construct_al_specialist_sm_cursor_sprites, &g_AL_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F680U)},
+    {&construct_silver_menu_icon_sprites, &g_SILVER_MENU_ICON_SPRITES, 0x2C, 4, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F700U)},
+    {&construct_silver_checkbox_icon_sprites, &g_SILVER_CHECKBOX_ICON_SPRITES, 0x2C, 2, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F750U)},
+    {&construct_peace_sign_sprites, &g_PEACE_SIGN_SPRITES, 0x2C, 2, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F800U)},
+    {&construct_xi_boom_veh_sprites, &g_XI_BOOM_VEH_SPRITES, 0x2C, 144, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F880U)},
+    {&construct_xf_boom_veh_sprites, &g_XF_BOOM_VEH_SPRITES, 0x2C, 64, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044F8D0U)},
+    {&construct_tech_icon_sprites, &g_TECH_ICON_SPRITES, 0x2C, 89, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FA40U)},
+    {&construct_facility_icon_sprites, &g_FACILITY_ICON_SPRITES, 0x2C, 70, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FA90U)},
+    {&construct_secret_project_icon_sprites, &g_SECRET_PROJECT_ICON_SPRITES, 0x2C, 64, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FAE0U)},
+    {&construct_iface_mp_combo_arrow_sprites, &g_IFACE_MP_COMBO_ARROW_SPRITES, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FB30U)},
+    {&construct_scroll_bar_arrow_icon_sprites, &g_SCROLL_BAR_ARROW_ICON_SPRITES, 0x2C, 12, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FB80U)},
+    {&construct_scroll_bar_small_arrow_icon_sprites, &g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES, 0x2C, 12, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FBD0U)},
+    {&construct_iface_lock_sprites, &g_IFACE_LOCK_SPRITES, 0x2C, 2, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FC80U)},
+    {&construct_unused_sprites_var01, &g_UNUSED_SPRITES_VAR01, 0x2C, 8, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0044FCD0U)},
+    {&construct_iface_tech_tree_arrow_sprites, &g_IFACE_TECH_TREE_ARROW_SPRITES, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x004503B0U)},
+    {&construct_unused_sprites_var02, &g_UNUSED_SPRITES_VAR02, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450940U)},
+    {&construct_unused_sprites_var03, &g_UNUSED_SPRITES_VAR03, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450990U)},
+    {&construct_unused_sprites_var04, &g_UNUSED_SPRITES_VAR04, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x004509E0U)},
+    {&construct_unused_sprites_var05, &g_UNUSED_SPRITES_VAR05, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450A30U)},
+    {&construct_unused_sprites_var06, &g_UNUSED_SPRITES_VAR06, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450A80U)},
+    {&construct_unused_sprites_var07, &g_UNUSED_SPRITES_VAR07, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450AD0U)},
+    {&construct_unused_sprites_var08, &g_UNUSED_SPRITES_VAR08, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450B20U)},
+    {&construct_unused_sprites_var09, &g_UNUSED_SPRITES_VAR09, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450B70U)},
+    {&construct_unused_sprites_var10, &g_UNUSED_SPRITES_VAR10, 0x2C, 3, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450BC0U)},
+    {&construct_basewin_sprites, &g_BASEWIN_SPRITES, 0x2C, 27, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00450DC0U)},
+    {&construct_iface_green_right_arrow_sprite, &g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x00471380U)},
+    {&construct_newtechwin_sprites, &g_NEWTECHWIN_SPRITES, 0x2C, 6, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x004838B0U)},
+    {&construct_cursor_sprites, &g_CURSOR_SPRITES, 0x2C, 12, &SpriteElementCtor, &SpriteElementTeardown, reinterpret_cast<func_atexit_callback *>(0x0052DAF0U)},
+    {&construct_fonts, &g_FONTS, 0x28, 48, &FontElementCtor, &FontElementTeardown, reinterpret_cast<func_atexit_callback *>(0x005882D0U)},
+    {&construct_txtindex, &TxtIndexGlobal, 0x118, 4, &TextIndexElementCtor, &TextIndexElementTeardown, reinterpret_cast<func_atexit_callback *>(0x005FD510U)},
+};
+
+func_atexit_callback *g_init_registered;
+int g_init_atexit_calls;
+int g_init_atexit_calls_at_ctor = -1;
+int __cdecl observe_game_atexit(func_atexit_callback *callback) {
+    g_init_registered = callback;
+    ++g_init_atexit_calls;
+    return 0;
+}
+void *g_init_constructed;
+int g_init_ctor_calls;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall observe_init_ctor(void *object) {
+    g_init_constructed = object;
+    ++g_init_ctor_calls;
+    // Sampled so the order assertion below proves construction precedes
+    // registration, the original's push-after-call order.
+    g_init_atexit_calls_at_ctor = g_init_atexit_calls;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+void *g_init_vector_array;
+uint32_t g_init_vector_size;
+int g_init_vector_count;
+func_thiscall_teardown *g_init_vector_ctor;
+func_thiscall_teardown *g_init_vector_dtor;
+int g_init_vector_calls;
+void __stdcall observe_vector_ctor(void *array, unsigned int element_size,
+                                   int count, func_thiscall_teardown *ctor,
+                                   func_thiscall_teardown *dtor) {
+    g_init_vector_array = array;
+    g_init_vector_size = element_size;
+    g_init_vector_count = count;
+    g_init_vector_ctor = ctor;
+    g_init_vector_dtor = dtor;
+    ++g_init_vector_calls;
+    g_init_atexit_calls_at_ctor = g_init_atexit_calls;
+}
+int g_init_dtor_sentinel;
+}  // namespace
+
+void test_init_thunks() {
+    func_game_atexit *const saved_atexit = GameAtexit;
+    GameAtexit = &observe_game_atexit;
+
+    // Scalar thunks: the construction seam must be handed exactly the
+    // rebound global, once, before exactly one registration of exactly the
+    // catalogued ??__F address.
+    for (const InitThunkCase &entry : g_init_scalar_cases) {
+        alignas(4) uint8_t fake[4] = {};
+        auto **slot = static_cast<void **>(entry.slot);
+        void *const saved_slot = *slot;
+        func_thiscall_teardown *const saved_ctor = *entry.ctor_slot;
+        *slot = fake;
+        *entry.ctor_slot = &observe_init_ctor;
+        g_init_ctor_calls = 0;
+        g_init_constructed = nullptr;
+        g_init_atexit_calls = 0;
+        g_init_registered = nullptr;
+        g_init_atexit_calls_at_ctor = -1;
+        entry.thunk();
+        expect(g_init_ctor_calls == 1);
+        expect(g_init_constructed == fake);
+        expect(g_init_atexit_calls == 1);
+        expect(g_init_registered == entry.callback);
+        expect(g_init_atexit_calls_at_ctor == 0);
+        *entry.ctor_slot = saved_ctor;
+        *slot = saved_slot;
+    }
+
+    // Array thunks hand the walk to the iterator seam: the observed call
+    // must carry the rebound array, the exact size and count, and both
+    // rebound per-element seams - proving the body reads every seam rather
+    // than any baked literal - before the one registration.
+    auto *const saved_iterator = VectorCtorIterator;
+    VectorCtorIterator = &observe_vector_ctor;
+    for (const InitArrayCase &entry : g_init_array_cases) {
+        alignas(4) uint8_t fake[4] = {};
+        auto **slot = static_cast<void **>(entry.slot);
+        void *const saved_slot = *slot;
+        func_thiscall_teardown *const saved_ctor = *entry.ctor_slot;
+        func_thiscall_teardown *const saved_dtor = *entry.dtor_slot;
+        *slot = fake;
+        *entry.ctor_slot =
+            reinterpret_cast<func_thiscall_teardown *>(&g_init_dtor_sentinel);
+        *entry.dtor_slot =
+            reinterpret_cast<func_thiscall_teardown *>(&g_init_dtor_sentinel) + 1;
+        g_init_vector_calls = 0;
+        g_init_atexit_calls = 0;
+        g_init_registered = nullptr;
+        g_init_atexit_calls_at_ctor = -1;
+        entry.thunk();
+        expect(g_init_vector_calls == 1);
+        expect(g_init_vector_array == fake);
+        expect(g_init_vector_size == entry.element_size);
+        expect(g_init_vector_count == entry.count);
+        expect(g_init_vector_ctor ==
+               reinterpret_cast<func_thiscall_teardown *>(
+                   &g_init_dtor_sentinel));
+        expect(g_init_vector_dtor ==
+               reinterpret_cast<func_thiscall_teardown *>(
+                   &g_init_dtor_sentinel) + 1);
+        expect(g_init_atexit_calls == 1);
+        expect(g_init_registered == entry.callback);
+        expect(g_init_atexit_calls_at_ctor == 0);
+        *entry.ctor_slot = saved_ctor;
+        *entry.dtor_slot = saved_dtor;
+        *slot = saved_slot;
+    }
+    VectorCtorIterator = saved_iterator;
+    GameAtexit = saved_atexit;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -22575,5 +23061,6 @@ int main() {
     test_popup_wave_callback();
     test_ambience_dtor();
     test_console_update_data();
+    test_init_thunks();
     return failures == 0 ? 0 : 1;
 }

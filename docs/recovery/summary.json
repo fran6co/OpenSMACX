@@ -14,12 +14,12 @@
       "thunk": 35
     },
     "by_recovery_state": {
-      "external_library": 328,
-      "original_dependency": 94,
-      "source_complete": 1551,
+      "external_library": 327,
+      "original_dependency": 95,
+      "source_complete": 1899,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 3992
+      "unrecovered": 3644
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1497,
-    "matched_function_starts": 1497,
-    "unique_addresses": 1497,
+    "annotations": 1845,
+    "matched_function_starts": 1845,
+    "unique_addresses": 1845,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 538,
-      "function": 131
+      "data": 554,
+      "function": 139
     },
     "items": [
       {
@@ -5559,6 +5559,222 @@
         "type": "func_info_win_timer_proc *"
       },
       {
+        "address": "0x00645398",
+        "function": "_atexit",
+        "function_address": "0x00645398",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:38",
+        "symbol": "GameAtexit",
+        "type": "func_game_atexit *"
+      },
+      {
+        "address": "0x005D7210",
+        "function": "??0Buffer@@QAE@XZ",
+        "function_address": "0x005D7210",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:45",
+        "symbol": "BufferElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00616BC0",
+        "function": "??0CaviarData@@QAE@XZ",
+        "function_address": "0x00616BC0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:47",
+        "symbol": "CaviarDataElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00618EA0",
+        "function": "??0Font@@QAE@XZ",
+        "function_address": "0x00618EA0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:49",
+        "symbol": "FontElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x005E37E0",
+        "function": "??0Sprite@@QAE@XZ",
+        "function_address": "0x005E37E0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:51",
+        "symbol": "SpriteElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x005FDF40",
+        "function": "??0TextIndex@@QAE@XZ",
+        "function_address": "0x005FDF40",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:53",
+        "symbol": "TextIndexElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00619650",
+        "function": "??0Texture@@QAE@XZ",
+        "function_address": "0x00619650",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:55",
+        "symbol": "TextureElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C66E0",
+        "function": "??0Wave@@QAE@XZ",
+        "function_address": "0x004C66E0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:57",
+        "symbol": "WaveElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00822610",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:121",
+        "symbol": "g_NEWTECHWIN_SPRITES",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x008CC828",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:122",
+        "symbol": "g_VEHDRAW_CAVIAR",
+        "type": "Caviar *"
+      },
+      {
+        "address": "0x0090D978",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:123",
+        "symbol": "g_WAVE_DEVICE",
+        "type": "Wave_Device *"
+      },
+      {
+        "address": "0x00939E88",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:124",
+        "symbol": "g_CONSOLE_TIMER",
+        "type": "Time *"
+      },
+      {
+        "address": "0x009B3A50",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:125",
+        "symbol": "g_BUFFER_SPRITE",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B6F08",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:126",
+        "symbol": "g_WIN_BUFFER",
+        "type": "Buffer *"
+      },
+      {
+        "address": "0x009B8EF8",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:127",
+        "symbol": "g_RADIOBUTTON_SPRITE_1",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B8F28",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:128",
+        "symbol": "g_RADIOBUTTON_SPRITE_2",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B8F60",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:129",
+        "symbol": "g_CHECKBOX_SPRITE_1",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B8F90",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:130",
+        "symbol": "g_CHECKBOX_SPRITE_2",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B9048",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:131",
+        "symbol": "g_FILEWIN_SPRITE_1",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B9018",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:132",
+        "symbol": "g_FILEWIN_SPRITE_2",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B9078",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:133",
+        "symbol": "g_FILEWIN_SPRITE_3",
+        "type": "Sprite *"
+      },
+      {
+        "address": "0x009B90D8",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:134",
+        "symbol": "StringTable",
+        "type": "Strings *"
+      },
+      {
+        "address": "0x009B9108",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:135",
+        "symbol": "g_CAVIAR_BUFFER_1",
+        "type": "Buffer *"
+      },
+      {
+        "address": "0x009B96B0",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/init_thunks.cpp:136",
+        "symbol": "g_CAVIAR_BUFFER_2",
+        "type": "Buffer *"
+      },
+      {
         "address": "0x00608F50",
         "function": "?close@Dialog@@QAEXXZ",
         "function_address": "0x00608F50",
@@ -6391,7 +6607,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/stringstruct.cpp:256",
+        "location": "src/stringstruct.cpp:260",
         "symbol": "StringVirtualBaseOwner",
         "type": "uint32_t *"
       },
@@ -7350,7 +7566,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 131,
-    "total": 669
+    "matched_function_starts": 139,
+    "total": 693
   }
 }
