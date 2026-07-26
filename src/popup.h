@@ -149,3 +149,53 @@ DLLEXPORT int __cdecl pops_default_caption(char *label, int value,
 DLLEXPORT int __cdecl pops_no_flags(char *caption, char *label, int value,
                                     char *text, int title, Sprite *sprite,
                                     int (__cdecl *callback)());
+
+class Wave;
+class FX;
+
+// The popup state the wave callback reads. Only the two fields it touches
+// are carved: the wave index at 0x104 and the armed marker at 0x108 that
+// must be set for anything to sound.
+struct PopupWave {
+  uint8_t opaque_[0x104];
+  int32_t wave_index_;  // +0x104
+  void *armed_108_;     // +0x108
+};
+
+static_assert(offsetof(PopupWave, wave_index_) == 0x104,
+              "the callback reads the index at 0x104");
+static_assert(offsetof(PopupWave, armed_108_) == 0x108,
+              "the callback reads the armed marker at 0x108");
+
+// The callback's dependencies, every one rebindable: the sound-enable flag
+// word (bit 0x400 gates everything), the context whose field at 0x50 turns
+// wave 0x19 into 0x25 deep below sea level, the voiceover wave, the
+// forty-five entry popup wave bank with its last-played index beside it,
+// the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
+// that plays effect 0x38 after wave 0x10.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef int(__thiscall func_popup_wave_query)(Wave *wave);
+typedef void(__thiscall func_popup_fx_play)(FX *fx, int effect);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+typedef unsigned long(__stdcall func_popup_time_source)(void);
+
+extern uint32_t *PopupWaveFlags;
+extern void **PopupWaveContext;
+extern Wave *PopupWaveVoice;
+extern Wave *PopupWaveBank;
+extern int32_t *PopupWaveLastIndex;
+extern void **PopupWaveOwnerSlot;
+extern FX *PopupWaveFx;
+extern func_popup_wave_query *PopupWaveIsPlaying;
+extern func_popup_wave_query *PopupWaveLoad;
+extern func_popup_wave_query *PopupWavePlay;
+extern func_popup_fx_play *PopupFxPlay;
+extern func_popup_time_source **PopupWaveTimeSlot;
+
+DLLEXPORT void __cdecl popup_wave_callback(PopupWave *popup, int);
+void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2);

@@ -576,14 +576,13 @@ P3,10,0x004455E0,??__Fg_AMBIENCE@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P0,1007320,0x004455F0,?wave_it@@YAXH@Z,93,7,3,original_dependency,game_service,recover_audio_event,2,exact,exact,
 P3,1220,0x00445650,?ok_callback@@YAXXZ,77,1,2,unrecovered,,,2,exact,exact,
 P3,10,0x004456A0,?passover_callback@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
-P3,420,0x004456B0,?popup_wave_callback@@YAXPAUPopupWave@@H@Z,270,0,4,unrecovered,,,2,exact,exact,
 P3,0,0x004457C0,?input_callback@@YAXXZ,19,0,0,unrecovered,,,0,missing,missing,
 P3,2620,0x004457E0,?load_music@@YAXH@Z,1062,2,6,unrecovered,,,2,exact,entry_range,
 P3,1521,0x00445BB0,?init@Effect@@QAEXPADJ@Z,278,1,5,unrecovered,,,2,exact,exact,"void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, unsigned int32)"
 P3,1721,0x00445CD0,?init@FX@@QAEXXZ,3089,1,7,unrecovered,,,2,exact,exact,void (__thiscall ?init@FX@@QAEXXZ)(FX* this)
 P3,10,0x004468F0,sub_4468f0,107,0,0,unrecovered,,,1,missing,exact,
 P3,4021,0x00446960,?play@FX@@QAEXHHH@Z,153,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?play@FX@@QAEXHHH@Z)(FX* this, int, int xCoord, int yCoord)"
-P1,24021,0x00446A00,?play@FX@@QAEXH@Z,142,24,0,unrecovered,,,2,exact,exact,"void (__thiscall ?play@FX@@QAEXH@Z)(FX* this, int)"
+P0,1024021,0x00446A00,?play@FX@@QAEXH@Z,142,24,0,original_dependency,ui_dependency,recover_fx_play,2,exact,exact,"void (__thiscall ?play@FX@@QAEXH@Z)(FX* this, int)"
 P3,1021,0x00446A90,?stop@FX@@QAEXH@Z,25,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?stop@FX@@QAEXH@Z)(FX* this, int)"
 P3,11,0x00446AB0,?release@FX@@QAEXH@Z,25,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?release@FX@@QAEXH@Z)(FX* this, int)"
 P3,4021,0x00446AD0,?fade@FX@@QAEXH@Z,25,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?fade@FX@@QAEXH@Z)(FX* this, int)"
@@ -1767,7 +1766,9 @@ P3,121,0x004C6080,??0Sound@@QAE@XZ,179,0,1,unrecovered,,,2,entry_range,entry_ran
 P0,1005021,0x004C61E0,?set_type@Sound@@QAEXI@Z,128,5,0,source_complete,ui_dependency,recover_sound,2,exact,exact,"void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)"
 P0,1005521,0x004C6280,?load@Sound@@QAEHPBD@Z,225,5,5,source_complete,ui_dependency,recover_sound_load,2,exact,exact,"int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)"
 P0,1002220,0x004C67C0,??1Wave@@QAE@XZ,333,2,2,source_complete,ui_dependency,recover_wave_destructor,2,entry_range,entry_range,
-P0,1003121,0x004C6CE0,?load@Wave@@QAEHXZ,204,3,1,source_complete,ui_dependency,recover_wave_load,2,exact,exact,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
+P0,1020221,0x004C6920,?play@Wave@@QAEHXZ,141,20,2,source_complete,ui_dependency,runtime_redirect_entry,2,exact,exact,int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
+P0,1005021,0x004C6B10,?is_playing@Wave@@QAEHXZ,67,5,0,source_complete,ui_dependency,runtime_redirect_entry,2,exact,exact,int (__thiscall ?is_playing@Wave@@QAEHXZ)(Wave* this)
+P0,1003121,0x004C6CE0,?load@Wave@@QAEHXZ,204,3,1,source_complete,ui_dependency,recover_wave_load;runtime_redirect_entry,2,exact,exact,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
 P3,110,0x004C7270,sub_4c7270,46,0,1,unrecovered,,,1,missing,exact,
 P3,120,0x004C72A0,sub_4c72a0,85,0,1,unrecovered,,,2,exact,exact,
 P3,110,0x004C7300,sub_4c7300,115,0,1,unrecovered,,,1,missing,exact,

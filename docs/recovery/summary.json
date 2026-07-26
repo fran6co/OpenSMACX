@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 328,
-      "original_dependency": 89,
-      "source_complete": 1536,
+      "original_dependency": 90,
+      "source_complete": 1537,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4012
+      "unrecovered": 4010
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1482,
-    "matched_function_starts": 1482,
-    "unique_addresses": 1482,
+    "annotations": 1483,
+    "matched_function_starts": 1483,
+    "unique_addresses": 1483,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 531,
-      "function": 117
+      "data": 532,
+      "function": 121
     },
     "items": [
       {
@@ -5932,7 +5932,7 @@
         "function": "?close@BasePop@@QAEXXZ",
         "function_address": "0x00600F00",
         "kind": "function",
-        "location": "src/popup.cpp:21",
+        "location": "src/popup.cpp:22",
         "symbol": "BasePopOriginalClose",
         "type": "func_base_pop_close *"
       },
@@ -5941,7 +5941,7 @@
         "function": "?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z",
         "function_address": "0x00406380",
         "kind": "function",
-        "location": "src/popup.cpp:38",
+        "location": "src/popup.cpp:39",
         "symbol": "PopupOriginalStartFull",
         "type": "func_popup_start_full *"
       },
@@ -5950,9 +5950,54 @@
         "function": "?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z",
         "function_address": "0x006276A0",
         "kind": "function",
-        "location": "src/popup.cpp:105",
+        "location": "src/popup.cpp:106",
         "symbol": "PopsOriginalFull",
         "type": "func_pops_full *"
+      },
+      {
+        "address": "0x004C6B10",
+        "function": "?is_playing@Wave@@QAEHXZ",
+        "function_address": "0x004C6B10",
+        "kind": "function",
+        "location": "src/popup.cpp:437",
+        "symbol": "PopupWaveIsPlaying",
+        "type": "func_popup_wave_query *"
+      },
+      {
+        "address": "0x004C6CE0",
+        "function": "?load@Wave@@QAEHXZ",
+        "function_address": "0x004C6CE0",
+        "kind": "function",
+        "location": "src/popup.cpp:438",
+        "symbol": "PopupWaveLoad",
+        "type": "func_popup_wave_query *"
+      },
+      {
+        "address": "0x004C6920",
+        "function": "?play@Wave@@QAEHXZ",
+        "function_address": "0x004C6920",
+        "kind": "function",
+        "location": "src/popup.cpp:439",
+        "symbol": "PopupWavePlay",
+        "type": "func_popup_wave_query *"
+      },
+      {
+        "address": "0x00446A00",
+        "function": "?play@FX@@QAEXH@Z",
+        "function_address": "0x00446A00",
+        "kind": "function",
+        "location": "src/popup.cpp:440",
+        "symbol": "PopupFxPlay",
+        "type": "func_popup_fx_play *"
+      },
+      {
+        "address": "0x00669368",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/popup.cpp:441",
+        "symbol": "PopupWaveTimeSlot",
+        "type": "func_popup_time_source **"
       },
       {
         "address": "0x00945B30",
@@ -7161,7 +7206,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 117,
-    "total": 648
+    "matched_function_starts": 121,
+    "total": 653
   }
 }

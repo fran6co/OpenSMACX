@@ -12457,6 +12457,328 @@ void test_auto_sound_lifecycle() {
     AutoSoundOperatorDelete = saved_delete;
 }
 
+// --- popup_wave_callback fixtures ---------------------------------------
+enum {
+    kPWaveIsPlaying = 1,
+    kPWaveLoad,
+    kPWavePlay,
+    kPWaveTime,
+    kPWaveOwner,
+    kPWaveFx,
+};
+
+struct PWaveEvent {
+    int tag;
+    void *obj;
+    long arg;
+    bool operator==(const PWaveEvent &o) const {
+        return tag == o.tag && obj == o.obj && arg == o.arg;
+    }
+};
+
+std::vector<PWaveEvent> g_pwave_events;
+int g_pwave_canary_hits = 0;
+Wave *g_pwave_playing_wave = nullptr;
+unsigned long g_pwave_time_value = 0;
+uint32_t *g_pwave_time_clears = nullptr;
+
+int __thiscall observe_pwave_is_playing(Wave *wave) {
+    g_pwave_events.push_back({kPWaveIsPlaying, wave, 0});
+    return wave == g_pwave_playing_wave ? 1 : 0;
+}
+
+// The load observer witnesses the last-played slot at call time: the
+// original remembers the index BEFORE loading.
+int __thiscall observe_pwave_load(Wave *wave) {
+    g_pwave_events.push_back({kPWaveLoad, wave, *PopupWaveLastIndex});
+    return 1;
+}
+
+int __thiscall observe_pwave_play(Wave *wave) {
+    g_pwave_events.push_back({kPWavePlay, wave, 0});
+    return 1;
+}
+
+unsigned long __stdcall observe_pwave_time() {
+    g_pwave_events.push_back(
+        {kPWaveTime, nullptr, static_cast<long>(g_pwave_time_value)});
+    if (g_pwave_time_clears) {
+        *g_pwave_time_clears &= ~0x400u;
+    }
+    return g_pwave_time_value;
+}
+
+void __thiscall observe_pwave_owner(void *self) {
+    g_pwave_events.push_back({kPWaveOwner, self, 0});
+}
+
+void __thiscall observe_pwave_fx(FX *fx, int effect) {
+    g_pwave_events.push_back({kPWaveFx, fx, effect});
+}
+
+void __thiscall observe_pwave_canary(void *) {
+    ++g_pwave_canary_hits;
+}
+
+void test_popup_wave_callback() {
+    uint32_t *const saved_flags = PopupWaveFlags;
+    void **const saved_context = PopupWaveContext;
+    Wave *const saved_voice = PopupWaveVoice;
+    Wave *const saved_bank = PopupWaveBank;
+    int32_t *const saved_last = PopupWaveLastIndex;
+    void **const saved_owner_slot = PopupWaveOwnerSlot;
+    FX *const saved_fx = PopupWaveFx;
+    auto *const saved_is_playing = PopupWaveIsPlaying;
+    auto *const saved_load = PopupWaveLoad;
+    auto *const saved_play = PopupWavePlay;
+    auto *const saved_fx_play = PopupFxPlay;
+    auto *const saved_time_slot = PopupWaveTimeSlot;
+
+    uint32_t flags = 0x400;
+    uint8_t context_bytes[0x60];
+    std::memset(context_bytes, 0x7F, sizeof(context_bytes));
+    void *context = context_bytes;
+    std::vector<uint8_t> bank(45 * sizeof(Wave), 0x41);
+    uint8_t voice_bytes[sizeof(Wave)];
+    int32_t last = 7;
+    void *owner_vtable[0x148 / 4];
+    for (void *&slot : owner_vtable) {
+        slot = reinterpret_cast<void *>(&observe_pwave_canary);
+    }
+    owner_vtable[0x138 / 4] = reinterpret_cast<void *>(&observe_pwave_owner);
+    uint8_t owner_bytes[8];
+    {
+        void *vt = owner_vtable;
+        std::memcpy(owner_bytes, &vt, 4);
+    }
+    void *owner = nullptr;
+    uint8_t fx_bytes[8];
+    func_popup_time_source *time_fn = &observe_pwave_time;
+
+    PopupWaveFlags = &flags;
+    PopupWaveContext = &context;
+    PopupWaveVoice = reinterpret_cast<Wave *>(voice_bytes);
+    PopupWaveBank = reinterpret_cast<Wave *>(bank.data());
+    PopupWaveLastIndex = &last;
+    PopupWaveOwnerSlot = &owner;
+    PopupWaveFx = reinterpret_cast<FX *>(fx_bytes);
+    PopupWaveIsPlaying = &observe_pwave_is_playing;
+    PopupWaveLoad = &observe_pwave_load;
+    PopupWavePlay = &observe_pwave_play;
+    PopupFxPlay = &observe_pwave_fx;
+    PopupWaveTimeSlot = &time_fn;
+
+    Wave *const voice = PopupWaveVoice;
+    Wave *const bank0 = PopupWaveBank;
+    std::vector<uint8_t> popup_bytes(sizeof(PopupWave), 0x5C);
+    auto *const popup = reinterpret_cast<PopupWave *>(popup_bytes.data());
+    auto reset = [&](int32_t index) {
+        g_pwave_events.clear();
+        g_pwave_canary_hits = 0;
+        g_pwave_playing_wave = nullptr;
+        g_pwave_time_clears = nullptr;
+        flags = 0x400;
+        popup->wave_index_ = index;
+        popup->armed_108_ = popup_bytes.data();
+    };
+
+    // Every gate alone silences it: the flag bit, a null popup, a negative
+    // or out-of-range index, an unarmed popup.
+    reset(5);
+    flags = ~0x400u;
+    popup_wave_callback(popup, 0);
+    expect(g_pwave_events.empty());
+    reset(5);
+    popup_wave_callback(nullptr, 0);
+    expect(g_pwave_events.empty());
+    reset(-1);
+    popup_wave_callback(popup, 0);
+    expect(g_pwave_events.empty());
+    reset(5);
+    popup->armed_108_ = nullptr;
+    popup_wave_callback(popup, 0);
+    expect(g_pwave_events.empty());
+    reset(0x2D);
+    popup_wave_callback(popup, 0);
+    expect(g_pwave_events.empty());
+
+    // The plain path: both waves idle, the index is remembered before its
+    // bank entry loads, and the boundary index 0x2C is still inside.
+    reset(5);
+    last = 7;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 7, 0},
+            {kPWaveLoad, bank0 + 5, 5},
+            {kPWavePlay, bank0 + 5, 0},
+        };
+        expect(g_pwave_events == want);
+    }
+    expect(last == 5);
+    expect(popup->wave_index_ == 5);
+    reset(0x2C);
+    last = 3;
+    popup_wave_callback(popup, 0);
+    expect(g_pwave_events.size() == 4);
+    expect(last == 0x2C);
+
+    // Index zero is a real wave, not a rejected one.
+    reset(0);
+    last = 3;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 3, 0},
+            {kPWaveLoad, bank0 + 0, 0},
+            {kPWavePlay, bank0 + 0, 0},
+        };
+        expect(g_pwave_events == want);
+    }
+    expect(last == 0);
+
+    // A playing voiceover or a still-playing last wave stops the reload.
+    reset(5);
+    last = 9;
+    g_pwave_playing_wave = voice;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{{kPWaveIsPlaying, voice, 0}};
+        expect(g_pwave_events == want);
+    }
+    expect(last == 9);
+    reset(5);
+    last = 9;
+    g_pwave_playing_wave = bank0 + 9;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 9, 0},
+        };
+        expect(g_pwave_events == want);
+    }
+    expect(last == 9);
+
+    // Wave 0x19 turns into 0x25 only below -0x46, and once rewritten the
+    // owner's virtual no longer fires.
+    reset(0x19);
+    last = 2;
+    owner = owner_bytes;
+    write_at(context_bytes, 0x50, uint32_t(-0x47));
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 2, 0},
+            {kPWaveLoad, bank0 + 0x25, 0x25},
+            {kPWavePlay, bank0 + 0x25, 0},
+        };
+        expect(g_pwave_events == want);
+    }
+    expect(popup->wave_index_ == 0x25);
+    expect(last == 0x25);
+
+    // At exactly -0x46 it stays 0x19 and the owner fires - unless unset.
+    reset(0x19);
+    last = 2;
+    owner = owner_bytes;
+    write_at(context_bytes, 0x50, uint32_t(-0x46));
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 2, 0},
+            {kPWaveLoad, bank0 + 0x19, 0x19},
+            {kPWavePlay, bank0 + 0x19, 0},
+            {kPWaveOwner, owner_bytes, 0},
+        };
+        expect(g_pwave_events == want);
+    }
+    expect(popup->wave_index_ == 0x19);
+    reset(0x19);
+    last = 2;
+    owner = nullptr;
+    popup_wave_callback(popup, 0);
+    expect(g_pwave_events.size() == 4);
+    expect(g_pwave_canary_hits == 0);
+
+    // Wave 0x2B rolls the millisecond clock: only remainder one sounds.
+    reset(0x2B);
+    last = 1;
+    g_pwave_time_value = 5;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{{kPWaveTime, nullptr, 5}};
+        expect(g_pwave_events == want);
+    }
+    expect(last == 1);
+    reset(0x2B);
+    last = 1;
+    g_pwave_time_value = 4;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveTime, nullptr, 4},
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 1, 0},
+            {kPWaveLoad, bank0 + 0x2B, 0x2B},
+            {kPWavePlay, bank0 + 0x2B, 0},
+        };
+        expect(g_pwave_events == want);
+    }
+
+    // The flag word is consulted AGAIN after the clock: a clock handler
+    // that clears the bit silences the reload mid-flight.
+    reset(0x2B);
+    last = 1;
+    g_pwave_time_value = 7;
+    g_pwave_time_clears = &flags;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{{kPWaveTime, nullptr, 7}};
+        expect(g_pwave_events == want);
+    }
+    expect(last == 1);
+
+    // Wave 0x10 chases the reload with effect 0x38, and the redirect is the
+    // same callback.
+    reset(0x10);
+    last = 0;
+    popup_wave_callback(popup, 0);
+    {
+        std::vector<PWaveEvent> want{
+            {kPWaveIsPlaying, voice, 0},
+            {kPWaveIsPlaying, bank0 + 0, 0},
+            {kPWaveLoad, bank0 + 0x10, 0x10},
+            {kPWavePlay, bank0 + 0x10, 0},
+            {kPWaveFx, fx_bytes, 0x38},
+        };
+        expect(g_pwave_events == want);
+    }
+    reset(6);
+    last = 0;
+    popup_wave_callback_redirect(popup, 0);
+    expect(g_pwave_events.size() == 4);
+    expect(last == 6);
+    expect(g_pwave_canary_hits == 0);
+
+    PopupWaveFlags = saved_flags;
+    PopupWaveContext = saved_context;
+    PopupWaveVoice = saved_voice;
+    PopupWaveBank = saved_bank;
+    PopupWaveLastIndex = saved_last;
+    PopupWaveOwnerSlot = saved_owner_slot;
+    PopupWaveFx = saved_fx;
+    PopupWaveIsPlaying = saved_is_playing;
+    PopupWaveLoad = saved_load;
+    PopupWavePlay = saved_play;
+    PopupFxPlay = saved_fx_play;
+    PopupWaveTimeSlot = saved_time_slot;
+}
+
 void test_sound_small_setters() {
     std::vector<uint8_t> storage(0xA0 + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -20080,5 +20402,6 @@ int main() {
     test_wave_device_construction();
     test_wave_device_select();
     test_auto_sound_lifecycle();
+    test_popup_wave_callback();
     return failures == 0 ? 0 : 1;
 }

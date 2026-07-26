@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "popup.h"
+#include "wave.h"
 
 func_base_pop_close *BasePopOriginalClose = (func_base_pop_close *)0x00600F00;
 
@@ -424,4 +425,84 @@ int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
                           int (__cdecl *callback)()) {
     return PopsOriginalFull(caption, label, value, text, title, sprite, 1, 1,
                             callback);
+}
+
+uint32_t *PopupWaveFlags = reinterpret_cast<uint32_t *>(0x009A6490);
+void **PopupWaveContext = reinterpret_cast<void **>(0x0090EA30);
+Wave *PopupWaveVoice = reinterpret_cast<Wave *>(0x00945ED0);
+Wave *PopupWaveBank = reinterpret_cast<Wave *>(0x0074C5F0);
+int32_t *PopupWaveLastIndex = reinterpret_cast<int32_t *>(0x0074DAA4);
+void **PopupWaveOwnerSlot = reinterpret_cast<void **>(0x0074DAA0);
+FX *PopupWaveFx = reinterpret_cast<FX *>(0x00749CF8);
+func_popup_wave_query *PopupWaveIsPlaying = (func_popup_wave_query *)0x004C6B10;
+func_popup_wave_query *PopupWaveLoad = (func_popup_wave_query *)0x004C6CE0;
+func_popup_wave_query *PopupWavePlay = (func_popup_wave_query *)0x004C6920;
+func_popup_fx_play *PopupFxPlay = (func_popup_fx_play *)0x00446A00;
+func_popup_time_source **PopupWaveTimeSlot = (func_popup_time_source **)0x00669368;
+
+/*
+Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
+         word is set, the popup is armed, and its index is inside the
+         forty-five entry bank. Wave 0x19 becomes 0x25 when the context
+         field at 0x50 is below -0x46; wave 0x2B only sounds when the
+         millisecond clock modulo three is one. With both the voiceover
+         wave and the last-played bank wave idle, the index is remembered
+         and its bank entry loads and plays. Afterwards - whether or not
+         anything sounded - wave 0x19 fires the owner's virtual at 0x138
+         and wave 0x10 plays effect 0x38.
+Original Offset: 004456B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl popup_wave_callback(PopupWave *popup, int) {
+    if (!(*PopupWaveFlags & 0x400)) {
+        return;
+    }
+    if (!popup) {
+        return;
+    }
+    const int32_t index = popup->wave_index_;
+    if (index < 0) {
+        return;
+    }
+    if (!popup->armed_108_) {
+        return;
+    }
+    if (index >= 0x2D) {
+        return;
+    }
+    if (index == 0x19) {
+        const uint8_t *const context =
+            static_cast<const uint8_t *>(*PopupWaveContext);
+        if (*reinterpret_cast<const int32_t *>(context + 0x50) < -0x46) {
+            popup->wave_index_ = 0x25;
+        }
+    }
+    if (popup->wave_index_ == 0x2B && (*PopupWaveTimeSlot)() % 3 != 1) {
+        return;
+    }
+    const int32_t chosen = popup->wave_index_;
+    if (*PopupWaveFlags & 0x400) {
+        if (!PopupWaveIsPlaying(PopupWaveVoice) &&
+            !PopupWaveIsPlaying(PopupWaveBank + *PopupWaveLastIndex)) {
+            *PopupWaveLastIndex = chosen;
+            Wave *const wave = PopupWaveBank + chosen;
+            PopupWaveLoad(wave);
+            PopupWavePlay(wave);
+        }
+    }
+    if (popup->wave_index_ == 0x19) {
+        void *const owner = *PopupWaveOwnerSlot;
+        if (owner) {
+            (*reinterpret_cast<void(__thiscall **)(void *)>(
+                *reinterpret_cast<uint8_t **>(owner) + 0x138))(owner);
+        }
+    }
+    if (popup->wave_index_ == 0x10) {
+        PopupFxPlay(PopupWaveFx, 0x38);
+    }
+}
+
+void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2) {
+    popup_wave_callback(popup, a2);
 }
