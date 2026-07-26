@@ -2381,7 +2381,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C5B60,0x004C5B6F,15,.text,?start_record@Wave_In_Device@@QAEHXZ,int (__thiscall ?start_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this),0x004C5B60-0x004C5B6F,game,hidden;sp_ready;purged_ok,src/sounddevice.cpp:408,Complete,,,source_complete,,,,0,1
 0x004C5B70,0x004C5B7F,15,.text,?end_record@Wave_In_Device@@QAEHXZ,int (__thiscall ?end_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this),0x004C5B70-0x004C5B7F,game,sp_ready;purged_ok,src/sounddevice.cpp:420,Complete,,,source_complete,,,,0,1
 0x004C5B80,0x004C5BEF,111,.text,??1WaveControlGroup@@QAE@XZ,void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this),0x004C5B80-0x004C5BEF,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x004C5BF0,0x004C5C4A,90,.text,sub_4c5bf0,,0x004C5BF0-0x004C5C4A,game,frame;hidden;sp_ready;purged_ok,,,,WaveDeviceGroupInsert,original_dependency,,,,1,1
+0x004C5BF0,0x004C5C4A,90,.text,sub_4c5bf0,,0x004C5BF0-0x004C5C4A,game,frame;hidden;sp_ready;purged_ok,src/wave_device.cpp:511,Complete,,WaveDeviceGroupInsert,source_complete,,,,1,1
 0x004C5C50,0x004C5C66,22,.text,??__Eg_WAVE_DEVICE@@YAXXZ,,0x004C5C50-0x004C5C66,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x004C5C70,0x004C5C7A,10,.text,??__Fg_WAVE_DEVICE@@YAXXZ,,0x004C5C70-0x004C5C7A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C5C80,0x004C5C96,22,.text,??__Eg_MIDI_DEVICE@@YAXXZ,,0x004C5C80-0x004C5C96,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0

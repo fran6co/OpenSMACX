@@ -1770,7 +1770,7 @@ P3,1021,0x004C5A50,?release@Wave_In_Device@@QAEXXZ,33,1,0,unrecovered,,,2,exact,
 P3,21,0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)"
 P3,21,0x004C5AA0,?set_vxw_key@Wave_In_Device@@QAEHPAC@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z)(Wave_In_Device* this, int8*)"
 P3,121,0x004C5B80,??1WaveControlGroup@@QAE@XZ,111,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
-P0,1001120,0x004C5BF0,sub_4c5bf0,90,1,1,original_dependency,ui_dependency,recover_wave_device,2,exact,exact,
+P0,1001120,0x004C5BF0,sub_4c5bf0,90,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,
 P3,210,0x004C5C50,??__Eg_WAVE_DEVICE@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004C5C70,??__Fg_WAVE_DEVICE@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,210,0x004C5C80,??__Eg_MIDI_DEVICE@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,

@@ -9646,10 +9646,11 @@ int __thiscall observe_wave_dev3(void *self, uint32_t a1, uint32_t a2,
 unsigned g_wave_new_size;
 int g_wave_new_calls;
 char g_wave_new_arena[64];
+bool g_wave_new_fails;
 void *__cdecl observe_wave_operator_new(unsigned int size) {
     g_wave_new_size = size;
     ++g_wave_new_calls;
-    return g_wave_new_arena;
+    return g_wave_new_fails ? nullptr : g_wave_new_arena;
 }
 void *g_wave_gd_dev;
 uint32_t g_wave_gd_slot;
@@ -11159,6 +11160,55 @@ void test_wave_device_groups() {
     expect(ggetp(4, 8) == nullptr && ggetp(4, 0xC) == nullptr &&
            ggetp(4, 0x10) == nullptr);
     expect(g_wave_dtor_deletes.size() == 1);
+
+    // --- the recovered insert helper itself ---
+    auto *const saved_new2 = WaveOperatorNew;
+    WaveOperatorNew = &observe_wave_operator_new;
+    auto *arena_node = reinterpret_cast<WaveGroupNode *>(g_wave_new_arena);
+
+    // Empty list: the node becomes both ends.
+    WaveGroupList list{};
+    list.count = 5;
+    list.cursor = reinterpret_cast<WaveGroupNode *>(0x9999);
+    g_wave_new_calls = 0;
+    g_wave_new_fails = false;
+    wave_group_insert_redirect(&list, nullptr, wa);
+    expect(g_wave_new_calls == 1 && g_wave_new_size == 0xC);
+    expect(list.head == arena_node && list.tail == arena_node);
+    expect(list.count == 6);
+    expect(list.cursor == reinterpret_cast<WaveGroupNode *>(0x9999));
+    expect(arena_node->prev == nullptr && arena_node->next == nullptr &&
+           arena_node->wave == wa);
+
+    // Live tail: append after it; the new node's prev is the re-read tail.
+    WaveGroupNode t1{};
+    list.head = &t1;
+    list.tail = &t1;
+    list.count = 1;
+    wave_group_insert_redirect(&list, nullptr, wb);
+    expect(t1.next == arena_node);
+    expect(arena_node->prev == &t1 && arena_node->next == nullptr &&
+           arena_node->wave == wb);
+    expect(list.head == &t1 && list.tail == arena_node && list.count == 2);
+
+    // A tail aimed at the list itself: the old tail's next write lands ON
+    // the tail field, so the re-read prev is the new node - the write
+    // order is visible in which value the prev holds.
+    list = WaveGroupList{};
+    list.tail = reinterpret_cast<WaveGroupNode *>(&list);
+    wave_group_insert_redirect(&list, nullptr, wa);
+    expect(arena_node->prev == arena_node);
+    expect(list.tail == arena_node);
+
+    // A failed allocation on an empty list still counts the phantom node.
+    list = WaveGroupList{};
+    list.count = 9;
+    g_wave_new_fails = true;
+    wave_group_insert_redirect(&list, nullptr, wa);
+    g_wave_new_fails = false;
+    expect(list.head == nullptr && list.tail == nullptr);
+    expect(list.count == 10);
+    WaveOperatorNew = saved_new2;
 
     // Redirect entries.
     expect(wave_device_add_to_group_redirect(device, nullptr, 0x10, wa) ==

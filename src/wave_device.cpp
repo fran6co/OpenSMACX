@@ -498,3 +498,43 @@ int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self,
                                                       unsigned int a1) {
     return self->is_group_disabled(a1);
 }
+
+/*
+Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
+         from the game heap and joins at the tail; an empty list makes it
+         both ends. The original presses on when the allocation fails: a
+         live tail would fault writing the null node's prev, and an empty
+         list quietly "appends" the null while still counting it - both
+         shapes are kept. With a live tail the new node's prev is the
+         RE-READ tail field, after the old tail's next was written - an
+         order the original's aliasing permits to matter.
+Original Offset: 004C5BF0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
+                                           Wave *a1) {
+    WaveGroupNode *const node =
+        static_cast<WaveGroupNode *>(WaveOperatorNew(0xC));
+    if (node) {
+        node->prev = nullptr;
+        node->next = nullptr;
+        node->wave = a1;
+    }
+    WaveGroupNode *const tail = self->tail;
+    if (tail) {
+        // The old tail's next is written first and the tail field re-read
+        // second, exactly as the original orders its memory operations; the
+        // volatile views keep the pair honest when the two locations alias
+        // (the optimizer's type-based analysis would otherwise fold the
+        // re-read).
+        *reinterpret_cast<WaveGroupNode *volatile *>(&tail->next) = node;
+        node->prev = *reinterpret_cast<WaveGroupNode *volatile *>(&self->tail);
+        self->tail = node;
+        self->count += 1;
+    } else {
+        self->head = node;
+        self->tail = node;
+        self->count += 1;
+    }
+}
