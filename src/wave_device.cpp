@@ -815,3 +815,135 @@ int Wave_Device::get_listener_zpos(float *a1) {
 int __fastcall wave_device_get_listener_zpos_redirect(Wave_Device *self, void *, float *a1) {
     return self->get_listener_zpos(a1);
 }
+
+namespace {
+
+// The removal-safe walk the three group administrators share. The cursor
+// field is re-read after every callback: a wave's handler may pull waves
+// from the group, and pull_from_group maintains the cursor, so the walk
+// survives removal - and a self-removal skips the follower, exactly the
+// original's advance rule. A node with a null wave stops the walk.
+void walk_group_waves(WaveGroup &group, void (*visit)(Wave *wave)) {
+    WaveGroupNode *const first = group.head;
+    group.cursor = first;
+    if (!first) {
+        return;
+    }
+    Wave *wave = first->wave;
+    if (!wave) {
+        return;
+    }
+    for (;;) {
+        visit(wave);
+        WaveGroupNode *const cursor = group.cursor;
+        if (!cursor) {
+            return;
+        }
+        WaveGroupNode *const next = cursor->next;
+        group.cursor = next;
+        if (!next) {
+            return;
+        }
+        wave = next->wave;
+        if (!wave) {
+            return;
+        }
+    }
+}
+
+// Per-wave handlers: replay the wave's own stored volume through its vtable
+// slot 0x40, resume through slot 0x8C, halt through slot 0x14. The volume
+// field is private to Wave and read by offset, as the original does.
+void replay_wave_volume(Wave *wave) {
+    uint32_t vol;
+    std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
+    (*reinterpret_cast<void(__thiscall **)(Wave *, uint32_t)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x40))(wave, vol);
+}
+
+void resume_wave(Wave *wave) {
+    (*reinterpret_cast<void(__thiscall **)(Wave *)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x8C))(wave);
+}
+
+void halt_wave(Wave *wave) {
+    (*reinterpret_cast<void(__thiscall **)(Wave *)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x14))(wave);
+}
+
+}  // namespace
+
+/*
+Purpose: Set a group's volume scale and replay every member wave's own
+         stored volume through its vtable slot 0x40, so the new scale takes
+         effect. Bad slots and volumes above 0x7F answer 0xA.
+Original Offset: 004C5320
+Return Value: 0, or 0xA for a bad slot or volume
+Status: Complete
+*/
+int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
+    if (a1 > 0xF || a2 > 0x7F) {
+        return 0xA;
+    }
+    WaveGroup &group = groups_[a1];
+    group.volume = a2;
+    walk_group_waves(group, &replay_wave_volume);
+    return 0;
+}
+
+int __fastcall wave_device_set_group_volume_redirect(Wave_Device *self,
+                                                     void *, unsigned int a1,
+                                                     unsigned int a2) {
+    return self->set_group_volume(a1, a2);
+}
+
+/*
+Purpose: Enable a group. Only a disabled one does any work: every member
+         wave resumes through its vtable slot 0x8C, and the enabled byte is
+         written AFTER the walk. An already-enabled group is left exactly as
+         it is, nonzero byte and all.
+Original Offset: 004C53A0
+Return Value: 0, or 0xA for a bad slot
+Status: Complete
+*/
+int Wave_Device::enable_group(unsigned int a1) {
+    if (a1 > 0xF) {
+        return 0xA;
+    }
+    WaveGroup &group = groups_[a1];
+    if (!group.enabled) {
+        walk_group_waves(group, &resume_wave);
+        group.enabled = 1;
+    }
+    return 0;
+}
+
+int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *,
+                                                 unsigned int a1) {
+    return self->enable_group(a1);
+}
+
+/*
+Purpose: Disable a group. Only an enabled one does any work: every member
+         wave halts through its vtable slot 0x14, and the enabled byte is
+         cleared AFTER the walk.
+Original Offset: 004C5400
+Return Value: 0, or 0xA for a bad slot
+Status: Complete
+*/
+int Wave_Device::disable_group(unsigned int a1) {
+    if (a1 > 0xF) {
+        return 0xA;
+    }
+    WaveGroup &group = groups_[a1];
+    if (group.enabled) {
+        walk_group_waves(group, &halt_wave);
+        group.enabled = 0;
+    }
+    return 0;
+}
+
+int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *,
+                                                  unsigned int a1) {
+    return self->disable_group(a1);
+}

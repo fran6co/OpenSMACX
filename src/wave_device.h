@@ -85,6 +85,9 @@ class DLLEXPORT Wave_Device {
   int add_to_group(unsigned int a1, Wave *a2);
   int pull_from_group(Wave *a1);
   int is_group_disabled(unsigned int a1);
+  int set_group_volume(unsigned int a1, unsigned int a2);
+  int enable_group(unsigned int a1);
+  int disable_group(unsigned int a1);
   void get_description(unsigned long a1, char *a2, unsigned long a3);
   int start_raw_dump(char *a1);
   int set_eax(EAX_REVERB_PROPERTIES *a1);
@@ -148,6 +151,9 @@ int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, 
 int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *, unsigned int a1, Wave *a2);
 int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *, Wave *a1);
 int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self, void *, unsigned int a1);
+int __fastcall wave_device_set_group_volume_redirect(Wave_Device *self, void *, unsigned int a1, unsigned int a2);
+int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *, unsigned int a1);
+int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *, unsigned int a1);
 void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, unsigned long a1, char *a2, unsigned long a3);
 int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, char *a1);
 int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX_REVERB_PROPERTIES *a1);

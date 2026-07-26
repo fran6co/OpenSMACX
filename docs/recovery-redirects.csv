@@ -565,7 +565,10 @@ address,kind
 0x004C5220,jump
 0x004C5240,jump
 0x004C5280,jump
+0x004C5320,jump
 0x004C5380,jump
+0x004C53A0,jump
+0x004C5400,jump
 0x004C5460,jump
 0x004C54B0,jump
 0x004C54C0,jump
