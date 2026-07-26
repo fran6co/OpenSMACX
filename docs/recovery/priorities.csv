@@ -383,7 +383,7 @@ P3,0,0x00428F80,??3Credits@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x00428F90,??__Eg_DATALINK@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00428FB0,??__Fg_DATALINK@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,1921,0x00428FC0,??0Datalink@@QAE@XZ,737,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Datalink@@QAE@XZ)(Datalink* this)
-P2,18821,0x00429180,?exec@Datalink@@QAEXIH@Z,380,18,8,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID datalinkID, int)"
+P0,1018821,0x00429180,?exec@Datalink@@QAEXIH@Z,380,18,8,original_dependency,ui_dependency,recover_datalink_exec,2,exact,exact,"void (__thiscall ?exec@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID datalinkID, int)"
 P3,4421,0x00429300,?init@Datalink@@QAEXXZ,3367,2,24,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@Datalink@@QAEXXZ)(Datalink* this)
 P3,11,0x0042A020,?UNK1@Datalink@@QAEHHH@Z,30,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@Datalink@@QAEHHH@Z)(Datalink* this, int, int)"
 P3,1021,0x0042A040,?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z,54,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z)(Datalink* this, int, DatalinkID*, int*)"
@@ -708,7 +708,6 @@ P3,110,0x0044C830,sub_44c830,28,0,1,unrecovered,,,1,missing,exact,
 P3,10,0x0044C850,nullsub_191,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C860,sub_44c860,13,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x0044C870,sub_44c870,8,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044C880,?help_tech@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044C8A0,nullsub_226,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C8B0,nullsub_227,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C8C0,sub_44c8c0,3,0,0,unrecovered,,,1,exact,missing,
@@ -716,32 +715,23 @@ P3,10,0x0044C8D0,nullsub_229,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C8E0,nullsub_230,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C8F0,nullsub_231,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C900,nullsub_232,1,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044C910,?help_weapon@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044C930,nullsub_233,1,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044C940,?help_armor@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044C960,nullsub_234,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044C970,sub_44c970,3,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044C980,?help_chassis@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044C9A0,nullsub_235,1,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044C9B0,?help_facility@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044C9D0,nullsub_236,1,0,0,unrecovered,,,1,exact,missing,
 P3,1120,0x0044C9E0,?help_project@@YAXH@Z,24,1,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044CA00,nullsub_237,1,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044CA10,?help_abil@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044CA30,nullsub_238,1,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044CA40,?help_social@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044CA60,nullsub_239,1,0,0,unrecovered,,,1,exact,missing,
-P3,110,0x0044CA70,?help_faction@@YAXH@Z,21,0,1,unrecovered,,,1,missing,exact,
 P3,110,0x0044CA90,sub_44ca90,42,0,1,unrecovered,,,1,missing,exact,
 P3,10,0x0044CAC0,nullsub_240,1,0,0,unrecovered,,,1,exact,missing,
-P3,120,0x0044CAD0,?help_veh@@YAXH@Z,21,0,1,unrecovered,,,2,exact,exact,
 P3,10,0x0044CAF0,nullsub_241,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044CB00,nullsub_242,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044CB10,nullsub_243,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0044CB20,nullsub_244,1,0,0,unrecovered,,,1,exact,missing,
 P2,5120,0x0044CB30,?help_any@@YAXXZ,15,5,1,unrecovered,,,2,exact,exact,
 P3,1020,0x0044CB40,sub_44cb40,22,1,0,unrecovered,,,2,exact,exact,
-P2,9121,0x0044CB60,?help_topic@@YAXIH@Z,23,9,1,unrecovered,,,2,exact,exact,"void (__cdecl ?help_topic@@YAXIH@Z)(DatalinkID id, int entryID)"
 P3,1120,0x0044CB80,?help_create_link@@YAXPAD00@Z,66,1,1,unrecovered,,,2,exact,exact,
 P3,110,0x0044CBD0,sub_44cbd0,72,0,1,unrecovered,,,1,missing,exact,
 P3,210,0x0044CC20,??__Eg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
@@ -2688,7 +2678,7 @@ P3,211,0x005328C0,?end_of_event@NetDaemon@@QAEHHH@Z,116,0,2,unrecovered,,,1,miss
 P2,12221,0x00532940,?send_message@NetDaemon@@QAEXPADKH@Z,260,12,2,unrecovered,,,2,exact,exact,"void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)"
 P3,10,0x00532A50,sub_532a50,49,0,0,unrecovered,,,1,missing,exact,
 P3,1320,0x00532C30,?synch_display@@YAXHHHH@Z,370,1,3,unrecovered,,,2,exact,exact,
-P1,26321,0x00532E00,?synch@NetDaemon@@QAEXFHHHPADHF@Z,4905,24,23,unrecovered,,,2,exact,exact,"void (__thiscall ?synch@NetDaemon@@QAEXFHHHPADHF@Z)(NetDaemon* this, int16, int id, int, int, int8*, int uDelay, int16)"
+P0,1026321,0x00532E00,?synch@NetDaemon@@QAEXFHHHPADHF@Z,4905,24,23,original_dependency,ui_dependency,recover_net_daemon_synch,2,exact,exact,"void (__thiscall ?synch@NetDaemon@@QAEXFHHHPADHF@Z)(NetDaemon* this, int16, int id, int, int, int8*, int uDelay, int16)"
 P3,1121,0x00534330,?fixup_message@NetDaemon@@QAEHPAD@Z,204,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?fixup_message@NetDaemon@@QAEHPAD@Z)(NetDaemon* this, int8*)"
 P0,1031321,0x00534400,?process_message@NetDaemon@@QAEXPADKH@Z,18489,18,133,original_dependency,ui_dependency,recover_net_daemon_process_message,2,exact,entry_range,"void (__thiscall ?process_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, MessageFactionData*, unsigned int, int)"
 P3,1421,0x005389F0,??0NetDaemon@@QAE@XZ,378,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
@@ -2930,22 +2920,8 @@ P3,1120,0x00592FF0,?message_big_data@@YAXHHPAHH@Z,153,1,1,unrecovered,,,2,exact,
 P3,2120,0x00593090,?message_lock@@YAXHHHHHHHH@Z,120,2,1,unrecovered,,,2,exact,exact,
 P3,1220,0x00593110,?message_landmark@@YAXHHPADHHHH@Z,128,1,2,unrecovered,,,2,exact,exact,
 P3,3220,0x00593190,?message_chat@@YAXHHPAD@Z,133,3,2,unrecovered,,,2,exact,exact,
-P1,32121,0x00593220,?synch_veh@@YAXH@Z,34,32,1,unrecovered,,,2,exact,exact,void (__cdecl ?synch_veh@@YAXH@Z)(int vehID)
-P2,6120,0x00593250,?synch_base@@YAXH@Z,34,6,1,unrecovered,,,2,exact,exact,
-P3,3120,0x00593280,?synch_energy@@YAXH@Z,34,3,1,unrecovered,,,2,exact,exact,
-P3,1121,0x005932B0,?synch_researching@@YAXH@Z,34,1,1,unrecovered,,,2,exact,exact,void (__cdecl ?synch_researching@@YAXH@Z)(int factionID)
-P3,3120,0x005932E0,?synch_leader@@YAXH@Z,34,3,1,unrecovered,,,2,exact,exact,
-P3,3120,0x00593310,?synch_ai@@YAXH@Z,34,3,1,unrecovered,,,2,exact,exact,
-P3,1120,0x00593340,?synch_research@@YAXH@Z,34,1,1,unrecovered,,,2,exact,exact,
 P3,100,0x00593370,sub_593370,28,0,1,unrecovered,,,0,missing,missing,
-P3,1120,0x00593390,?synch_alloc@@YAXH@Z,34,1,1,unrecovered,,,2,exact,exact,
-P3,2120,0x005933C0,?synch_soc@@YAXH@Z,34,2,1,unrecovered,,,2,exact,exact,
-P3,4120,0x005933F0,?synch_proto@@YAXH@Z,34,4,1,unrecovered,,,2,exact,exact,
-P3,3120,0x00593420,?synch_obs@@YAXH@Z,34,3,1,unrecovered,,,2,exact,exact,
-P3,1121,0x00593450,?synch_diplo@@YAXHH@Z,36,1,1,unrecovered,,,2,exact,exact,"void (__cdecl ?synch_diplo@@YAXHH@Z)(int factionID, int)"
 P3,110,0x00593480,sub_593480,34,0,1,unrecovered,,,1,missing,exact,
-P3,1120,0x005934B0,?synch_template@@YAXH@Z,34,1,1,unrecovered,,,2,exact,exact,
-P3,1120,0x005934E0,?synch_radius@@YAXH@Z,34,1,1,unrecovered,,,2,exact,exact,
 P3,5721,0x00593A00,?supply_options@@YAHHH@Z,4374,2,37,unrecovered,,,2,exact,entry_range,"int (__cdecl ?supply_options@@YAHHH@Z)(int vehID, int baseID)"
 P2,16121,0x005947C0,?order_veh@@YAHHHH@Z,23716,5,111,unrecovered,,,2,exact,entry_range,"int (__cdecl ?order_veh@@YAHHHH@Z)(int vehID, int factionID, int)"
 P3,110,0x0059A1B0,??__EPaths@@YAXXZ,12,0,1,unrecovered,,,1,exact,missing,
@@ -3037,29 +3013,10 @@ P3,10,0x005BEC90,??__Fg_PALETTE2@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P2,19221,0x005BECA0,?X_text_open@@YAHPADPBD@Z,119,19,2,unrecovered,,,2,exact,exact,"int (__cdecl ?X_text_open@@YAHPADPBD@Z)(int8* srcFileID, int8* sectionID)"
 P3,2221,0x005BED20,?do_unity_crash@@YAHHHH@Z,703,1,12,unrecovered,,,2,exact,exact,"int (__cdecl ?do_unity_crash@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)"
 P0,1070120,0x005BF310,?X_pop@@YAHPBDP6AHXZ@Z,32,70,1,original_dependency,game_service,recover_script_popup,2,exact,exact,
-P2,17120,0x005BF330,?X_pop@@YAHPADPBDP6AHXZ@Z,31,17,1,unrecovered,,,2,exact,exact,
 P3,210,0x005BF350,?X_pop@@YAHPADPBDPADHP6AHXZ@Z,52,0,2,unrecovered,,,1,missing,exact,
-P3,1120,0x005BF390,?X_pop@@YAHPBDHHP6AHXZ@Z,36,1,1,unrecovered,,,2,exact,exact,
-P3,2120,0x005BF3C0,?X_pop@@YAHPADPBDHHP6AHXZ@Z,35,2,1,unrecovered,,,2,exact,exact,
-P2,17120,0x005BF3F0,?X_pop@@YAHPBDHP6AHXZ@Z,34,17,1,unrecovered,,,2,exact,exact,
-P3,4120,0x005BF420,?X_pop@@YAHPADPBDHP6AHXZ@Z,33,4,1,unrecovered,,,2,exact,exact,
-P3,110,0x005BF450,?X_pop@@YAHPBDHPADHP6AHXZ@Z,38,0,1,unrecovered,,,1,missing,exact,
-P2,9421,0x005BF480,?X_pop@@YAHPADPBDHPADHP6AHXZ@Z,322,9,4,unrecovered,,,2,exact,exact,"int (__cdecl ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, int (__cdecl *)())"
-P3,110,0x005BF600,?X_pops@@YAHPBDPAUSprite@@HHP6AHXZ@Z,44,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF630,?X_pops@@YAHPADPBDPAUSprite@@P6AHXZ@Z,39,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF660,?X_pops@@YAHPADPBDPAUSprite@@HHP6AHXZ@Z,43,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF690,?X_pops@@YAHPBDHHPAUSprite@@P6AHXZ@Z,44,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF6C0,?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z,48,0,1,unrecovered,,,1,missing,exact,
+P0,1009421,0x005BF480,?X_pop@@YAHPADPBDHPADHP6AHXZ@Z,322,9,4,original_dependency,ui_dependency,recover_x_pop_full,2,exact,exact,"int (__cdecl ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, int (__cdecl *)())"
 P3,210,0x005BF6F0,?X_pops@@YAHPADPBDPADHPAUSprite@@P6AHXZ@Z,60,0,2,unrecovered,,,1,missing,exact,
 P3,210,0x005BF730,?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z,64,0,2,unrecovered,,,1,missing,exact,
-P3,110,0x005BF770,?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z,43,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF7A0,?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z,47,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF800,?X_pops@@YAHPBDHPAUSprite@@HHP6AHXZ@Z,46,0,1,unrecovered,,,1,missing,exact,
-P3,1120,0x005BF830,?X_pops@@YAHPADPBDHPAUSprite@@P6AHXZ@Z,41,1,1,unrecovered,,,2,exact,exact,
-P3,110,0x005BF860,?X_pops@@YAHPADPBDHPAUSprite@@HHP6AHXZ@Z,45,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF890,?X_pops@@YAHPBDHPADHPAUSprite@@P6AHXZ@Z,46,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF8C0,?X_pops@@YAHPBDHPADHPAUSprite@@HHP6AHXZ@Z,50,0,1,unrecovered,,,1,missing,exact,
-P3,110,0x005BF900,?X_pops@@YAHPADPBDHPADHPAUSprite@@P6AHXZ@Z,45,0,1,unrecovered,,,1,missing,exact,
 P0,1017421,0x005BF930,?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z,370,17,4,original_dependency,ui_dependency,recover_x_pops_full,2,exact,exact,"int (__cdecl ?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, Sprite*, int, int, int (__cdecl *)())"
 P2,11120,0x005BFAB0,?X_pop_ask@@YAHPBDHPADP6AHXZH@Z,38,11,1,unrecovered,,,2,exact,exact,
 P3,110,0x005BFAE0,?X_pop_ask@@YAHPADPBDHP6AHXZH@Z,35,0,1,unrecovered,,,1,missing,exact,

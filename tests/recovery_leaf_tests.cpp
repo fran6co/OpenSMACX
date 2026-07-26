@@ -14398,6 +14398,573 @@ void test_guarded_store_recoveries() {
     BasePopFalloutGate = saved_gate;
 }
 
+namespace {
+void *g_datalink_exec_self = nullptr;
+unsigned int g_datalink_exec_topic = 0;
+int g_datalink_exec_index = 0;
+int g_datalink_exec_calls = 0;
+void __thiscall observe_datalink_exec(void *self, unsigned int topic,
+                                      int index) {
+    g_datalink_exec_self = self;
+    g_datalink_exec_topic = topic;
+    g_datalink_exec_index = index;
+    ++g_datalink_exec_calls;
+}
+}  // namespace
+
+void test_datalink_help_forwarders() {
+    // Every help_* forwarder is a thin dispatch to Datalink::exec against the
+    // fixed-address Datalink singleton: `DatalinkExec(DatalinkMain, topic,
+    // index)`. Rebinding both seams and asserting the observed `self` equals
+    // the REBOUND DatalinkMain (not the real singleton address) proves each
+    // forwarder reads the seam rather than the original 0x00703EA0 literal.
+    auto *const saved_exec = DatalinkExec;
+    void *const saved_main = DatalinkMain;
+    int fake_datalink = 0;
+    DatalinkExec = &observe_datalink_exec;
+    DatalinkMain = &fake_datalink;
+
+    // help_tech -> topic 0xE
+    g_datalink_exec_calls = 0;
+    help_tech(101);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0xE);
+    expect(g_datalink_exec_index == 101);
+
+    // help_weapon -> topic 0x6
+    g_datalink_exec_calls = 0;
+    help_weapon(102);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0x6);
+    expect(g_datalink_exec_index == 102);
+
+    // help_armor -> topic 0x7
+    g_datalink_exec_calls = 0;
+    help_armor(103);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0x7);
+    expect(g_datalink_exec_index == 103);
+
+    // help_chassis -> topic 0x4
+    g_datalink_exec_calls = 0;
+    help_chassis(104);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0x4);
+    expect(g_datalink_exec_index == 104);
+
+    // help_facility -> topic 0xA
+    g_datalink_exec_calls = 0;
+    help_facility(105);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0xA);
+    expect(g_datalink_exec_index == 105);
+
+    // help_abil -> topic 0x8
+    g_datalink_exec_calls = 0;
+    help_abil(106);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0x8);
+    expect(g_datalink_exec_index == 106);
+
+    // help_social -> topic 0xC
+    g_datalink_exec_calls = 0;
+    help_social(107);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0xC);
+    expect(g_datalink_exec_index == 107);
+
+    // help_faction -> topic 0xF
+    g_datalink_exec_calls = 0;
+    help_faction(108);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0xF);
+    expect(g_datalink_exec_index == 108);
+
+    // help_veh -> topic 0x3
+    g_datalink_exec_calls = 0;
+    help_veh(109);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0x3);
+    expect(g_datalink_exec_index == 109);
+
+    // help_topic passes its own topic argument straight through, rather than
+    // a literal - so this call uses a topic value none of the fixed helpers
+    // above use, to make sure it is not silently constant.
+    g_datalink_exec_calls = 0;
+    help_topic(0x1234, 110);
+    expect(g_datalink_exec_calls == 1);
+    expect(g_datalink_exec_self == &fake_datalink);
+    expect(g_datalink_exec_topic == 0x1234);
+    expect(g_datalink_exec_index == 110);
+
+    DatalinkExec = saved_exec;
+    DatalinkMain = saved_main;
+}
+
+namespace {
+void *g_synch_self = nullptr;
+int16_t g_synch_opcode = 0;
+int g_synch_a = 0;
+int g_synch_b = 0;
+int g_synch_c = 0;
+char *g_synch_text = nullptr;
+int g_synch_d = 0;
+int16_t g_synch_flags = 0;
+int g_synch_calls = 0;
+void __thiscall observe_synch(void *daemon, int16_t opcode, int a, int b,
+                              int c, char *text, int d, int16_t flags) {
+    g_synch_self = daemon;
+    g_synch_opcode = opcode;
+    g_synch_a = a;
+    g_synch_b = b;
+    g_synch_c = c;
+    g_synch_text = text;
+    g_synch_d = d;
+    g_synch_flags = flags;
+    ++g_synch_calls;
+}
+}  // namespace
+
+void test_net_daemon_synch_forwarders() {
+    // Fourteen forwarders, all one shape: push the four shared literals
+    // (0, 0, nullptr, 1, 0x2101) plus one caller id and a fixed opcode,
+    // then call NetDaemon::synch on the daemon at 0x0093CD90 - the same
+    // receiver NetDaemonNet already binds for the receive path. synch_diplo
+    // is the one exception: both leading arguments come from its caller.
+    auto *const saved_synch = NetDaemonSynch;
+    void *const saved_net = NetDaemonNet;
+    int fake_net = 0;
+    NetDaemonSynch = &observe_synch;
+    NetDaemonNet = &fake_net;
+
+    auto check_id_forward = [&](void (*fn)(int), int16_t opcode, int id) {
+        g_synch_calls = 0;
+        fn(id);
+        expect(g_synch_calls == 1);
+        expect(g_synch_self == &fake_net);   // rebound NetDaemonNet, not NetDaemonSynch
+        expect(g_synch_opcode == opcode);
+        expect(g_synch_a == id);
+        expect(g_synch_b == 0);
+        expect(g_synch_c == 0);
+        expect(g_synch_text == nullptr);
+        expect(g_synch_d == 1);
+        expect(g_synch_flags == 0x2101);
+    };
+
+    check_id_forward(&synch_veh, 0x11, 1001);
+    check_id_forward(&synch_base, 0x13, 1002);
+    check_id_forward(&synch_energy, 0xB, 1003);
+    check_id_forward(&synch_researching, 0xA, 1004);
+    check_id_forward(&synch_leader, 0x6, 1005);
+    check_id_forward(&synch_ai, 0x8, 1006);
+    check_id_forward(&synch_research, 0x9, 1007);
+    check_id_forward(&synch_alloc, 0xC, 1008);
+    check_id_forward(&synch_soc, 0xD, 1009);
+    check_id_forward(&synch_proto, 0xE, 1010);
+    check_id_forward(&synch_obs, 0x10, 1011);
+    check_id_forward(&synch_template, 0x18, 1012);
+    check_id_forward(&synch_radius, 0x23, 1013);
+
+    // synch_diplo takes two caller arguments; two distinct sentinels pin
+    // that a and b are not swapped en route to NetDaemon::synch.
+    g_synch_calls = 0;
+    synch_diplo(2001, 2002);
+    expect(g_synch_calls == 1);
+    expect(g_synch_self == &fake_net);
+    expect(g_synch_opcode == 0x16);
+    expect(g_synch_a == 2001);
+    expect(g_synch_b == 2002);
+    expect(g_synch_c == 0);
+    expect(g_synch_text == nullptr);
+    expect(g_synch_d == 1);
+    expect(g_synch_flags == 0x2101);
+
+    NetDaemonSynch = saved_synch;
+    NetDaemonNet = saved_net;
+}
+
+
+
+
+namespace {
+// Six-argument family (target: XPopOriginalFull). Field order mirrors
+// func_x_pop_full: caption, label, value, text, flags, callback.
+struct XPopCall {
+    char *caption; const char *label; int value; char *text; int flags;
+    int (__cdecl *callback)();
+    int calls;
+} g_xpop6 = {};
+int __cdecl observe_xpop6(char *caption, const char *label, int value,
+                          char *text, int flags, int (__cdecl *callback)()) {
+    g_xpop6 = {caption, label, value, text, flags, callback, g_xpop6.calls + 1};
+    return 0x5AA7;
+}
+int __cdecl xpop6_callback() { return 0; }
+
+// Nine-argument family (target: XPopsOriginalFull). Field order mirrors
+// func_x_pops_full: caption, label, title, text, value, sprite, flag1,
+// flag2, callback.
+struct XPopsCall9 {
+    char *caption; const char *label; int title; char *text; int value;
+    Sprite *sprite; int flag1; int flag2;
+    int (__cdecl *callback)();
+    int calls;
+} g_xpops9 = {};
+int __cdecl observe_xpops9(char *caption, const char *label, int title,
+                           char *text, int value, Sprite *sprite, int flag1,
+                           int flag2, int (__cdecl *callback)()) {
+    g_xpops9 = {caption, label, title, text, value, sprite, flag1, flag2,
+               callback, g_xpops9.calls + 1};
+    return 0x5AA7;
+}
+int __cdecl xpops9_callback() { return 0; }
+}  // namespace
+
+void test_x_pop_forwarders() {
+    // XPopOriginalFull(caption, label, value, text, flags, callback) is the
+    // six-argument sibling of the nine-argument popup builder (no sprite, no
+    // trailing flag pair). Each of the six forwarders below defaults a
+    // different subset of these six arguments; every literal and every
+    // passthrough position is asserted, with distinct sentinels per
+    // parameter, so a swapped argument cannot pass unnoticed.
+    auto *const saved_full = XPopOriginalFull;
+    char *const saved_buffer = XPopsCaptionBuffer;
+    char buffer[8] = {};
+    XPopOriginalFull = &observe_xpop6;
+    XPopsCaptionBuffer = buffer;
+
+    char caption[] = "caption";
+    const char label[] = "label";
+    char text[] = "text";
+    const int kValue = 0x2002;
+    const int kFlags = 0x3003;
+
+    // x_pop_caption_label: caller's own caption/label/callback; value -1,
+    // text nullptr and flags 0 all default.
+    g_xpop6.calls = 0;
+    expect(x_pop_caption_label(caption, label, &xpop6_callback) == 0x5AA7);
+    expect(g_xpop6.calls == 1);
+    expect(g_xpop6.caption == caption);
+    expect(g_xpop6.label == label);
+    expect(g_xpop6.value == -1);
+    expect(g_xpop6.text == nullptr);
+    expect(g_xpop6.flags == 0);
+    expect(g_xpop6.callback == &xpop6_callback);
+
+    // x_pop_value_flags: shared (rebound) buffer, caller's value and flags,
+    // no override text.
+    g_xpop6.calls = 0;
+    expect(x_pop_value_flags(label, kValue, kFlags, &xpop6_callback) == 0x5AA7);
+    expect(g_xpop6.calls == 1);
+    expect(g_xpop6.caption == buffer);  // proves the rebound seam is read
+    expect(g_xpop6.label == label);
+    expect(g_xpop6.value == kValue);
+    expect(g_xpop6.text == nullptr);
+    expect(g_xpop6.flags == kFlags);
+    expect(g_xpop6.callback == &xpop6_callback);
+
+    // x_pop_caption_value_flags: caller's caption/label/value/flags, no
+    // override text.
+    g_xpop6.calls = 0;
+    expect(x_pop_caption_value_flags(caption, label, kValue, kFlags,
+                                     &xpop6_callback) == 0x5AA7);
+    expect(g_xpop6.calls == 1);
+    expect(g_xpop6.caption == caption);
+    expect(g_xpop6.label == label);
+    expect(g_xpop6.value == kValue);
+    expect(g_xpop6.text == nullptr);
+    expect(g_xpop6.flags == kFlags);
+    expect(g_xpop6.callback == &xpop6_callback);
+
+    // x_pop_short: shared (rebound) buffer, value -1, no override text,
+    // caller's flags.
+    g_xpop6.calls = 0;
+    expect(x_pop_short(label, kFlags, &xpop6_callback) == 0x5AA7);
+    expect(g_xpop6.calls == 1);
+    expect(g_xpop6.caption == buffer);
+    expect(g_xpop6.label == label);
+    expect(g_xpop6.value == -1);
+    expect(g_xpop6.text == nullptr);
+    expect(g_xpop6.flags == kFlags);
+    expect(g_xpop6.callback == &xpop6_callback);
+
+    // x_pop_caption_flags: caller's caption/label/flags; value -1, no
+    // override text.
+    g_xpop6.calls = 0;
+    expect(x_pop_caption_flags(caption, label, kFlags, &xpop6_callback) == 0x5AA7);
+    expect(g_xpop6.calls == 1);
+    expect(g_xpop6.caption == caption);
+    expect(g_xpop6.label == label);
+    expect(g_xpop6.value == -1);
+    expect(g_xpop6.text == nullptr);
+    expect(g_xpop6.flags == kFlags);
+    expect(g_xpop6.callback == &xpop6_callback);
+
+    // x_pop_default_caption: shared (rebound) buffer; caller's label, value,
+    // override text and flags.
+    g_xpop6.calls = 0;
+    expect(x_pop_default_caption(label, kValue, text, kFlags,
+                                 &xpop6_callback) == 0x5AA7);
+    expect(g_xpop6.calls == 1);
+    expect(g_xpop6.caption == buffer);
+    expect(g_xpop6.label == label);
+    expect(g_xpop6.value == kValue);
+    expect(g_xpop6.text == text);
+    expect(g_xpop6.flags == kFlags);
+    expect(g_xpop6.callback == &xpop6_callback);
+
+    XPopOriginalFull = saved_full;
+    XPopsCaptionBuffer = saved_buffer;
+}
+
+void test_x_pops_forwarders() {
+    // XPopsOriginalFull(caption, label, title, text, value, sprite, flag1,
+    // flag2, callback) is the nine-argument popup builder already exercised
+    // by x_pops_short/x_pops_minimal. Each of the thirteen forwarders below
+    // defaults a different subset of these nine arguments; every literal and
+    // every passthrough position is asserted, with distinct sentinels per
+    // parameter, so a swapped argument cannot pass unnoticed.
+    auto *const saved_full = XPopsOriginalFull;
+    char *const saved_buffer = XPopsCaptionBuffer;
+    char buffer[8] = {};
+    XPopsOriginalFull = &observe_xpops9;
+    XPopsCaptionBuffer = buffer;
+
+    char caption[] = "caption";
+    const char label[] = "label";
+    char text[] = "text";
+    Sprite sprite_value;
+
+    const int kTitle = 0x1001;
+    const int kValue = 0x2002;
+    const int kFlag1 = 0x4004;
+    const int kFlag2 = 0x5005;
+
+    // x_pops_flags: shared (rebound) buffer, title -1, no override text,
+    // value 0; caller's sprite and both flags (unlike short/minimal, the
+    // flags are not fixed at 1 here).
+    g_xpops9.calls = 0;
+    expect(x_pops_flags(label, &sprite_value, kFlag1, kFlag2,
+                        &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == buffer);  // proves the rebound seam is read
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == -1);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == 0);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_caption_minimal: caller's caption/label/sprite/callback; title
+    // -1, no override text, value 0, both flags fixed at 1.
+    g_xpops9.calls = 0;
+    expect(x_pops_caption_minimal(caption, label, &sprite_value,
+                                  &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == -1);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == 0);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == 1);
+    expect(g_xpops9.flag2 == 1);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_caption_flags: caller's caption/label/sprite/both flags; title
+    // -1, no override text, value 0.
+    g_xpops9.calls = 0;
+    expect(x_pops_caption_flags(caption, label, &sprite_value, kFlag1, kFlag2,
+                                &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == -1);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == 0);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_title: shared (rebound) buffer, caller's title/value/sprite; no
+    // override text, both flags fixed at 1.
+    g_xpops9.calls = 0;
+    expect(x_pops_title(label, kTitle, kValue, &sprite_value,
+                        &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == buffer);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == 1);
+    expect(g_xpops9.flag2 == 1);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_title_flags: shared (rebound) buffer, caller's title/value/
+    // sprite/both flags; no override text.
+    g_xpops9.calls = 0;
+    expect(x_pops_title_flags(label, kTitle, kValue, &sprite_value, kFlag1,
+                              kFlag2, &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == buffer);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_caption_title: caller's caption/label/title/value/sprite; no
+    // override text, both flags fixed at 1.
+    g_xpops9.calls = 0;
+    expect(x_pops_caption_title(caption, label, kTitle, kValue, &sprite_value,
+                                &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == 1);
+    expect(g_xpops9.flag2 == 1);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_no_text: everything but the override text caller-supplied -
+    // caption, label, title, value, sprite and both flags.
+    g_xpops9.calls = 0;
+    expect(x_pops_no_text(caption, label, kTitle, kValue, &sprite_value,
+                          kFlag1, kFlag2, &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_value_flags: shared (rebound) buffer, title -1, no override
+    // text; caller's value/sprite/both flags.
+    g_xpops9.calls = 0;
+    expect(x_pops_value_flags(label, kValue, &sprite_value, kFlag1, kFlag2,
+                              &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == buffer);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == -1);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_caption_value: caller's caption/label/value/sprite; title -1,
+    // no override text, both flags fixed at 1.
+    g_xpops9.calls = 0;
+    expect(x_pops_caption_value(caption, label, kValue, &sprite_value,
+                                &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == -1);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == 1);
+    expect(g_xpops9.flag2 == 1);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_caption_value_flags: caller's caption/label/value/sprite/both
+    // flags; title -1, no override text.
+    g_xpops9.calls = 0;
+    expect(x_pops_caption_value_flags(caption, label, kValue, &sprite_value,
+                                      kFlag1, kFlag2,
+                                      &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == -1);
+    expect(g_xpops9.text == nullptr);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_override_text: shared (rebound) buffer, caller's title/override
+    // text/value/sprite; both flags fixed at 1.
+    g_xpops9.calls = 0;
+    expect(x_pops_override_text(label, kTitle, text, kValue, &sprite_value,
+                                &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == buffer);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == text);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == 1);
+    expect(g_xpops9.flag2 == 1);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_default_caption: shared (rebound) buffer; everything else -
+    // label, title, override text, value, sprite and both flags -
+    // caller-supplied.
+    g_xpops9.calls = 0;
+    expect(x_pops_default_caption(label, kTitle, text, kValue, &sprite_value,
+                                  kFlag1, kFlag2,
+                                  &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == buffer);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == text);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == kFlag1);
+    expect(g_xpops9.flag2 == kFlag2);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    // x_pops_no_flags: everything but the flags caller-supplied; both flags
+    // fixed at 1.
+    g_xpops9.calls = 0;
+    expect(x_pops_no_flags(caption, label, kTitle, text, kValue,
+                           &sprite_value, &xpops9_callback) == 0x5AA7);
+    expect(g_xpops9.calls == 1);
+    expect(g_xpops9.caption == caption);
+    expect(g_xpops9.label == label);
+    expect(g_xpops9.title == kTitle);
+    expect(g_xpops9.text == text);
+    expect(g_xpops9.value == kValue);
+    expect(g_xpops9.sprite == &sprite_value);
+    expect(g_xpops9.flag1 == 1);
+    expect(g_xpops9.flag2 == 1);
+    expect(g_xpops9.callback == &xpops9_callback);
+
+    XPopsOriginalFull = saved_full;
+    XPopsCaptionBuffer = saved_buffer;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -14564,5 +15131,9 @@ int main() {
     test_button_group_set();
     test_delegating_closers();
     test_wave_is_playing();
+    test_datalink_help_forwarders();
+    test_net_daemon_synch_forwarders();
+    test_x_pop_forwarders();
+    test_x_pops_forwarders();
     return failures == 0 ? 0 : 1;
 }

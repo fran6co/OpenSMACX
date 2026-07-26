@@ -18,6 +18,10 @@
 #include "stdafx.h"
 #include "datalink.h"
 
+func_datalink_exec *DatalinkExec = (func_datalink_exec *)0x00429180;
+// Unclassified data seam: the Datalink singleton object, not a call target.
+void *DatalinkMain = reinterpret_cast<void *>(0x00703EA0);
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 Original Offset: 0042BEA0
@@ -253,4 +257,106 @@ void Datalink::close() {
 
 void __fastcall datalink_close_redirect(Datalink *self, void *) {
     self->close();
+}
+
+/*
+Purpose: Show the technology help topic for the given id.
+Original Offset: 0044C880
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_tech(int id) {
+    DatalinkExec(DatalinkMain, 0xE, id);
+}
+
+/*
+Purpose: Show the weapon help topic for the given id.
+Original Offset: 0044C910
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_weapon(int id) {
+    DatalinkExec(DatalinkMain, 0x6, id);
+}
+
+/*
+Purpose: Show the armor help topic for the given id.
+Original Offset: 0044C940
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_armor(int id) {
+    DatalinkExec(DatalinkMain, 0x7, id);
+}
+
+/*
+Purpose: Show the chassis help topic for the given id.
+Original Offset: 0044C980
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_chassis(int id) {
+    DatalinkExec(DatalinkMain, 0x4, id);
+}
+
+/*
+Purpose: Show the facility help topic for the given id.
+Original Offset: 0044C9B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_facility(int id) {
+    DatalinkExec(DatalinkMain, 0xA, id);
+}
+
+/*
+Purpose: Show the secret project/ability help topic for the given id.
+Original Offset: 0044CA10
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_abil(int id) {
+    DatalinkExec(DatalinkMain, 0x8, id);
+}
+
+/*
+Purpose: Show the social engineering help topic for the given id.
+Original Offset: 0044CA40
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_social(int id) {
+    DatalinkExec(DatalinkMain, 0xC, id);
+}
+
+/*
+Purpose: Show the faction help topic for the given id.
+Original Offset: 0044CA70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_faction(int id) {
+    DatalinkExec(DatalinkMain, 0xF, id);
+}
+
+/*
+Purpose: Show the vehicle help topic for the given id.
+Original Offset: 0044CAD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_veh(int id) {
+    DatalinkExec(DatalinkMain, 0x3, id);
+}
+
+/*
+Purpose: Show an arbitrary help topic/index pair, for callers that already
+         hold the topic id rather than going through one of the typed
+         help_* wrappers above.
+Original Offset: 0044CB60
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl help_topic(unsigned int topic, int index) {
+    DatalinkExec(DatalinkMain, topic, index);
 }

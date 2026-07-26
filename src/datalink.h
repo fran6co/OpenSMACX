@@ -84,3 +84,34 @@ void __fastcall datalink_on_iface_right_double_click_redirect(Datalink *self, vo
 void __fastcall datalink_on_iface_button_clicked_redirect(Datalink *self, void *, int a1);
 void __fastcall datalink_on_iface_button_toggled_redirect(Datalink *self, void *, int a1, int a2);
 void __fastcall datalink_close_redirect(Datalink *self, void *);
+
+// Datalink::exec (thiscall, `void exec(unsigned int topic, int index)`) is not
+// yet source-owned; every help_* forwarder below dispatches through it
+// against the fixed-address Datalink singleton, so both the exec entry point
+// and the singleton object are seams here rather than baked-in literals.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_datalink_exec)(void *datalink, unsigned int topic,
+                                            int index);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_datalink_exec *DatalinkExec;
+
+// The Datalink singleton the forwarders dispatch against - plain data, not a
+// call target, so it stays an unclassified rebindable seam rather than a
+// classified dependency.
+extern void *DatalinkMain;
+
+DLLEXPORT void __cdecl help_tech(int id);
+DLLEXPORT void __cdecl help_weapon(int id);
+DLLEXPORT void __cdecl help_armor(int id);
+DLLEXPORT void __cdecl help_chassis(int id);
+DLLEXPORT void __cdecl help_facility(int id);
+DLLEXPORT void __cdecl help_abil(int id);
+DLLEXPORT void __cdecl help_social(int id);
+DLLEXPORT void __cdecl help_faction(int id);
+DLLEXPORT void __cdecl help_veh(int id);
+DLLEXPORT void __cdecl help_topic(unsigned int topic, int index);

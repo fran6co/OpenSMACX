@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 332,
-      "original_dependency": 76,
-      "source_complete": 1056,
+      "original_dependency": 79,
+      "source_complete": 1099,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4498
+      "unrecovered": 4452
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1002,
-    "matched_function_starts": 1002,
-    "unique_addresses": 1002,
+    "annotations": 1045,
+    "matched_function_starts": 1045,
+    "unique_addresses": 1045,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 194,
-      "function": 88
+      "function": 91
     },
     "items": [
       {
@@ -1759,6 +1759,15 @@
         "location": "src/council.cpp:24",
         "symbol": "Proposal",
         "type": "RulesProposal *"
+      },
+      {
+        "address": "0x00429180",
+        "function": "?exec@Datalink@@QAEXIH@Z",
+        "function_address": "0x00429180",
+        "kind": "function",
+        "location": "src/datalink.cpp:21",
+        "symbol": "DatalinkExec",
+        "type": "func_datalink_exec *"
       },
       {
         "address": "0x00609990",
@@ -2731,6 +2740,15 @@
         "location": "src/netdaemon.cpp:22",
         "symbol": "NetDaemonProcessMessage",
         "type": "func_process_message *"
+      },
+      {
+        "address": "0x00532E00",
+        "function": "?synch@NetDaemon@@QAEXFHHHPADHF@Z",
+        "function_address": "0x00532E00",
+        "kind": "function",
+        "location": "src/netdaemon.cpp:25",
+        "symbol": "NetDaemonSynch",
+        "type": "func_net_daemon_synch *"
       },
       {
         "address": "0x00404A80",
@@ -3858,16 +3876,25 @@
         "type": "func_x_pops_full *"
       },
       {
+        "address": "0x005BF480",
+        "function": "?X_pop@@YAHPADPBDHPADHP6AHXZ@Z",
+        "function_address": "0x005BF480",
+        "kind": "function",
+        "location": "src/xpops.cpp:22",
+        "symbol": "XPopOriginalFull",
+        "type": "func_x_pop_full *"
+      },
+      {
         "address": "0x009B8AA8",
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/xpops.cpp:22",
+        "location": "src/xpops.cpp:23",
         "symbol": "XPopsCaptionBuffer",
         "type": "char *"
       }
     ],
-    "matched_function_starts": 88,
-    "total": 282
+    "matched_function_starts": 91,
+    "total": 285
   }
 }

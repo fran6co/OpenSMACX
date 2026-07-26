@@ -19,6 +19,7 @@
 #include "xpops.h"
 
 func_x_pops_full *XPopsOriginalFull = (func_x_pops_full *)0x005BF930;
+func_x_pop_full *XPopOriginalFull = (func_x_pop_full *)0x005BF480;
 char *XPopsCaptionBuffer = (char *)0x009B8AA8;
 
 /*
@@ -45,4 +46,272 @@ int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
                            int (__cdecl *callback)()) {
     return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, 0,
                              sprite, 1, 1, callback);
+}
+
+/*
+Purpose: Raise the caption-less popup with its own caption and label supplied
+         by the caller, rather than the shared buffer - value, override text
+         and flags all take their defaults (-1, none, 0).
+Original Offset: 005BF330
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pop_caption_label(char *caption, const char *label,
+                                int (__cdecl *callback)()) {
+    return XPopOriginalFull(caption, label, -1, nullptr, 0, callback);
+}
+
+/*
+Purpose: Raise the caption-less popup against the shared caption buffer, with
+         both the value and the flags supplied by the caller. No override
+         text.
+Original Offset: 005BF390
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pop_value_flags(const char *label, int value, int flags,
+                              int (__cdecl *callback)()) {
+    return XPopOriginalFull(XPopsCaptionBuffer, label, value, nullptr, flags,
+                            callback);
+}
+
+/*
+Purpose: Raise the caption-less popup with a caller-supplied caption, value
+         and flags. No override text.
+Original Offset: 005BF3C0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pop_caption_value_flags(char *caption, const char *label,
+                                     int value, int flags,
+                                     int (__cdecl *callback)()) {
+    return XPopOriginalFull(caption, label, value, nullptr, flags, callback);
+}
+
+/*
+Purpose: The short form of the caption-less popup - shared caption buffer,
+         value defaulted to -1, no override text, only the flags exposed.
+Original Offset: 005BF3F0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pop_short(const char *label, int flags,
+                        int (__cdecl *callback)()) {
+    return XPopOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, flags,
+                            callback);
+}
+
+/*
+Purpose: Raise the caption-less popup with a caller-supplied caption and
+         flags; value defaults to -1 and there is no override text.
+Original Offset: 005BF420
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pop_caption_flags(char *caption, const char *label, int flags,
+                                int (__cdecl *callback)()) {
+    return XPopOriginalFull(caption, label, -1, nullptr, flags, callback);
+}
+
+/*
+Purpose: Raise the caption-less popup against the shared caption buffer with
+         everything else - value, override text and flags - supplied by the
+         caller.
+Original Offset: 005BF450
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pop_default_caption(const char *label, int value, char *text,
+                                  int flags, int (__cdecl *callback)()) {
+    return XPopOriginalFull(XPopsCaptionBuffer, label, value, text, flags,
+                            callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with title
+         defaulted to -1, no override text and value forced to 0; the sprite
+         and both flags are caller-supplied. Unlike x_pops_short/minimal, the
+         flags are not fixed to 1/1 here.
+Original Offset: 005BF600
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_flags(const char *label, Sprite *sprite, int flag1,
+                         int flag2, int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, 0,
+                             sprite, flag1, flag2, callback);
+}
+
+/*
+Purpose: The minimal popup form with a caller-supplied caption instead of the
+         shared buffer - title -1, no override text, value 0, both flags
+         fixed at 1.
+Original Offset: 005BF630
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_caption_minimal(char *caption, const char *label,
+                                   Sprite *sprite,
+                                   int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, -1, nullptr, 0, sprite, 1, 1,
+                             callback);
+}
+
+/*
+Purpose: Like x_pops_flags but with a caller-supplied caption in place of the
+         shared buffer - title -1, no override text, value forced to 0, both
+         flags caller-supplied.
+Original Offset: 005BF660
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_caption_flags(char *caption, const char *label,
+                                 Sprite *sprite, int flag1, int flag2,
+                                 int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, -1, nullptr, 0, sprite, flag1,
+                             flag2, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with both
+         title and value exposed (unlike the short form, which only exposes
+         value); no override text, both flags fixed at 1.
+Original Offset: 005BF690
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_title(const char *label, int title, int value,
+                         Sprite *sprite, int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, nullptr, value,
+                             sprite, 1, 1, callback);
+}
+
+/*
+Purpose: Like x_pops_title but with both flags caller-supplied instead of
+         fixed at 1; shared caption buffer, no override text.
+Original Offset: 005BF6C0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_title_flags(const char *label, int title, int value,
+                               Sprite *sprite, int flag1, int flag2,
+                               int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, nullptr, value,
+                             sprite, flag1, flag2, callback);
+}
+
+/*
+Purpose: Like x_pops_title but with a caller-supplied caption instead of the
+         shared buffer; no override text, both flags fixed at 1.
+Original Offset: 005BF770
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_caption_title(char *caption, const char *label, int title,
+                                 int value, Sprite *sprite,
+                                 int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, title, nullptr, value, sprite, 1,
+                             1, callback);
+}
+
+/*
+Purpose: Raise the full popup with everything but the override text
+         caller-supplied - caption, title, value, sprite and both flags.
+Original Offset: 005BF7A0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_no_text(char *caption, const char *label, int title,
+                           int value, Sprite *sprite, int flag1, int flag2,
+                           int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, title, nullptr, value, sprite,
+                             flag1, flag2, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with title
+         defaulted to -1 and no override text; value and both flags are
+         caller-supplied.
+Original Offset: 005BF800
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_value_flags(const char *label, int value, Sprite *sprite,
+                               int flag1, int flag2,
+                               int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, value,
+                             sprite, flag1, flag2, callback);
+}
+
+/*
+Purpose: Like x_pops_value_flags but with a caller-supplied caption in place
+         of the shared buffer and both flags fixed at 1; title defaults to
+         -1, no override text.
+Original Offset: 005BF830
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_caption_value(char *caption, const char *label, int value,
+                                 Sprite *sprite,
+                                 int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, -1, nullptr, value, sprite, 1, 1,
+                             callback);
+}
+
+/*
+Purpose: Like x_pops_caption_value but with both flags caller-supplied
+         instead of fixed at 1; title defaults to -1, no override text.
+Original Offset: 005BF860
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_caption_value_flags(char *caption, const char *label,
+                                      int value, Sprite *sprite, int flag1,
+                                      int flag2,
+                                      int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, -1, nullptr, value, sprite,
+                             flag1, flag2, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with title,
+         override text and value all caller-supplied; both flags fixed at 1.
+Original Offset: 005BF890
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_override_text(const char *label, int title, char *text,
+                                 int value, Sprite *sprite,
+                                 int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, text, value,
+                             sprite, 1, 1, callback);
+}
+
+/*
+Purpose: Raise the full popup against the shared caption buffer with every
+         other argument - title, override text, value, sprite and both flags
+         - caller-supplied. Only the caption defaults.
+Original Offset: 005BF8C0
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_default_caption(const char *label, int title, char *text,
+                                   int value, Sprite *sprite, int flag1,
+                                   int flag2, int (__cdecl *callback)()) {
+    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, text, value,
+                             sprite, flag1, flag2, callback);
+}
+
+/*
+Purpose: Raise the full popup with caption, title, override text, value and
+         sprite all caller-supplied; only the two flags default, fixed at 1.
+Original Offset: 005BF900
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl x_pops_no_flags(char *caption, const char *label, int title,
+                            char *text, int value, Sprite *sprite,
+                            int (__cdecl *callback)()) {
+    return XPopsOriginalFull(caption, label, title, text, value, sprite, 1, 1,
+                             callback);
 }
