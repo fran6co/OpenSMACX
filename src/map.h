@@ -386,3 +386,6 @@ DLLEXPORT uint32_t __cdecl zoc_veh(int x, int y, uint32_t faction_id);
 DLLEXPORT uint32_t __cdecl zoc_sea(int x, int y, uint32_t faction_id);
 DLLEXPORT uint32_t __cdecl zoc_move(uint32_t x, uint32_t y, uint32_t faction_id);
 DLLEXPORT int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
+DLLEXPORT int __cdecl mandate_color(int mandate);
+int __cdecl mandate_color_redirect(int mandate);
+extern uint32_t *MandateColors;
