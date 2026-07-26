@@ -28,6 +28,7 @@
 #include "dialog.h"
 #include "dialogs.h"
 #include "maininterface.h"
+#include "map.h"
 #include "mapwin.h"
 #include "basewin.h"
 #include "datalink.h"
@@ -108,7 +109,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1037;
+constexpr size_t RedirectCount = 1038;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -3687,6 +3688,11 @@ bool install_redirects() {
             0x004E1F40,
             reinterpret_cast<uintptr_t>(&console_edit_lock_redirect),
             OPENSMACX_SIGNATURE_004E1F40,
+        },
+        {
+            0x0050E820,
+            reinterpret_cast<uintptr_t>(&mandate_color_redirect),
+            OPENSMACX_SIGNATURE_0050E820,
         },
         {
             0x0050F650,

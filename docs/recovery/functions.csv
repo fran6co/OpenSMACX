@@ -2860,7 +2860,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0050E310,0x0050E3BD,173,.text,?transport_base@@YAHH@Z,int (__cdecl ?transport_base@@YAHH@Z)(int baseID),0x0050E310-0x0050E3BD,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:333,Complete,,,source_complete,,,,2,1
 0x0050E3C0,0x0050E5BE,510,.text,?naval_base@@YAHH@Z,int (__cdecl ?naval_base@@YAHH@Z)(int baseID),0x0050E3C0-0x0050E5BE,game,frame;sp_ready;purged_ok,src/map.cpp:350,Complete,,,source_complete,,,,1,1
 0x0050E5C0,0x0050E81C,604,.text,?convoy@@YAHHH@Z,"int (__cdecl ?convoy@@YAHHH@Z)(int vehID, int baseID)",0x0050E5C0-0x0050E81C,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:371,Complete,,,source_complete,,,,0,1
-0x0050E820,0x0050E84D,45,.text,?mandate_color@@YAHH@Z,int (__cdecl ?mandate_color@@YAHH@Z)(int category),0x0050E820-0x0050E84D,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,"0x0050E820: (E)xplore, (D)iscover, (B)uild, (C)onquer",0,9
+0x0050E820,0x0050E84D,45,.text,?mandate_color@@YAHH@Z,int (__cdecl ?mandate_color@@YAHH@Z)(int category),0x0050E820-0x0050E84D,game,frame;sp_ready;purged_ok,src/map_color.cpp:31,Complete,,,source_complete,,,"0x0050E820: (E)xplore, (D)iscover, (B)uild, (C)onquer",0,9
 0x0050E850,0x0050E868,24,.text,??__Eg_CONSOLE@@YAXXZ,,0x0050E850-0x0050E868,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0050E870,0x0050E884,20,.text,??__Fg_CONSOLE@@YAXXZ,,0x0050E870-0x0050E884,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0050E890,0x0050E97E,238,.text,?auto_play_callback@@YAXH@Z,,0x0050E890-0x0050E97E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0

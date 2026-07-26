@@ -17,6 +17,7 @@
 #include "../src/font.h"
 #include "../src/log.h"
 #include "../src/maininterface.h"
+#include "../src/map.h"
 #include "../src/mapwin.h"
 #include "../src/alphamovie.h"
 #include "../src/basewin.h"
@@ -540,6 +541,31 @@ void test_in_box_edges() {
     expect(!in_box(29, 40, &rect));
     expect(!in_box(9, 20, &rect));
     expect(!in_box(10, 19, &rect));
+}
+
+void test_mandate_color() {
+    // Four colours, one dword every eight bytes; index 3 is the default the
+    // switch falls through to for any selector outside 0..2.
+    uint32_t table[7] = {
+        0x11111111U, 0xDEADDEADU, 0x22222222U, 0xDEADDEADU,
+        0x33333333U, 0xDEADDEADU, 0x44444444U,
+    };
+    uint32_t *const saved = MandateColors;
+    MandateColors = table;
+
+    // The three explicit selectors read entries 0, 1, 2.
+    expect(mandate_color(0) == static_cast<int>(0x11111111U));
+    expect(mandate_color(1) == static_cast<int>(0x22222222U));
+    expect(mandate_color(2) == static_cast<int>(0x33333333U));
+    // Everything else - above the range, and negative - returns the fourth.
+    expect(mandate_color(3) == static_cast<int>(0x44444444U));
+    expect(mandate_color(100) == static_cast<int>(0x44444444U));
+    expect(mandate_color(-1) == static_cast<int>(0x44444444U));
+    // The redirect forwards verbatim.
+    expect(mandate_color_redirect(1) == static_cast<int>(0x22222222U));
+    expect(mandate_color_redirect(-7) == static_cast<int>(0x44444444U));
+
+    MandateColors = saved;
 }
 
 void set_text_pointer(Text *text, size_t offset, const void *value) {
@@ -20844,6 +20870,7 @@ int main() {
     test_win_paging();
     test_scroll_close();
     test_scroll_destructor();
+    test_mandate_color();
     test_scroll_init_wrappers();
     test_scroll_range();
     test_scroll_style_setters();

@@ -2076,7 +2076,6 @@ P3,4220,0x0050C2E0,?act_of_aggression@@YAHHH@Z,82,4,2,unrecovered,,,2,exact,exac
 P3,2721,0x0050C340,?steal_tech@@YAHHHH@Z,367,2,7,unrecovered,,,2,exact,exact,"int (__cdecl ?steal_tech@@YAHHHH@Z)(int factionID1, int factionID2, int)"
 P3,8021,0x0050C510,?capture_base@@YAXHHH@Z,6271,3,50,unrecovered,,,2,exact,exact,"void (__cdecl ?capture_base@@YAXHHH@Z)(int baseID, int factionID, int)"
 P2,7220,0x0050DD90,?clock_wait@@YAXH@Z,42,7,2,unrecovered,,,2,exact,exact,
-P2,9021,0x0050E820,?mandate_color@@YAHH@Z,45,9,0,unrecovered,,,2,exact,exact,int (__cdecl ?mandate_color@@YAHH@Z)(int category)
 P3,210,0x0050E850,??__Eg_CONSOLE@@YAXXZ,24,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x0050E870,??__Fg_CONSOLE@@YAXXZ,20,0,1,unrecovered,,,1,exact,missing,
 P3,210,0x0050E890,?auto_play_callback@@YAXH@Z,238,0,2,unrecovered,,,1,exact,missing,

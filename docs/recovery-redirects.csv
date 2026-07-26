@@ -700,6 +700,7 @@ address,kind
 0x004E2660,jump
 0x004E26B0,jump
 0x004E3A50,jump
+0x0050E820,jump
 0x0050F650,jump
 0x00514189,jump
 0x00514EF0,jump

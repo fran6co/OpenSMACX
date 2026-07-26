@@ -150,6 +150,7 @@ set(OPENSMACX_SOURCES
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/map_color.cpp
     src/mapwin.cpp
     src/basewin.cpp
     src/datalink.cpp
@@ -410,6 +411,7 @@ if(BUILD_TESTING)
         src/autosound.cpp
         src/basebutton.cpp
         src/basepop_font.cpp
+        src/map_color.cpp
         src/buffer.cpp
         src/buttongroup.cpp
         src/dialog.cpp
