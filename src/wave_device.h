@@ -27,6 +27,15 @@ struct WaveGroupNode {
   Wave *wave;
 };
 
+// The view the list-insert helper takes: its receiver is the address of a
+// group's head field, so it sees the trailing four fields of WaveGroup.
+struct WaveGroupList {
+  WaveGroupNode *head;
+  WaveGroupNode *tail;
+  WaveGroupNode *cursor;
+  uint32_t count;
+};
+
 // One 24-byte group record; the device holds sixteen of them from 0x24.
 struct WaveGroup {
   uint8_t enabled;        // +0x00, zero means the group is disabled
@@ -95,6 +104,9 @@ typedef void(__thiscall func_wave_group_insert)(void *group_head, Wave *wave);
 #pragma GCC diagnostic pop
 #endif
 extern func_wave_group_insert *WaveDeviceGroupInsert;
+
+void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
+                                           Wave *a1);
 
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1);
 int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1);
