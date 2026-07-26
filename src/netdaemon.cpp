@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "netdaemon.h"
+#include "log.h"  // log_say, source-owned at 0x006262F0
 
 func_net_get *NetDaemonNetGet = (func_net_get *)0x00630A00;
 func_process_message *NetDaemonProcessMessage =
@@ -24,6 +25,10 @@ func_process_message *NetDaemonProcessMessage =
 void *NetDaemonNet = reinterpret_cast<void *>(0x0093CD90);
 func_net_daemon_synch *NetDaemonSynch =
     (func_net_daemon_synch *)0x00532E00;
+int *NetDaemonIsMultiplayerNet = (int *)0x0093F660;
+int *NetDaemonLocalFaction = (int *)0x00939284;
+func_net_message_data *NetDaemonMessageData =
+    (func_net_message_data *)0x00592EE0;
 
 /*
 Purpose: Poll the network for one message; dispatch it when one arrives and
@@ -32,6 +37,10 @@ Purpose: Poll the network for one message; dispatch it when one arrives and
 Original Offset: 00530320
 Return Value: 1 when a message was received and dispatched, 0 when none was
 Status: Complete
+Verification note: the original leaves both out-params as uninitialized stack
+garbage for Net::get to fill and reads them only after a nonzero return; the
+zero initializers here pin an unspecified value deterministically, so the
+sweep's surviving constant mutants on them are equivalent by construction.
 */
 int NetDaemon::receive() {
     unsigned long first = 0;
@@ -192,4 +201,50 @@ Status: Complete
 */
 void __cdecl synch_radius(int id) {
     NetDaemonSynch(NetDaemonNet, 0x23, id, 0, 0, nullptr, 1, 0x2101);
+}
+
+/*
+Purpose: Release the vehicle lock this client is holding. In a net game, tell
+         the log and the other players first - log_say names the faction that
+         is releasing and message_data broadcasts event 0x2212 - then clear the
+         four announce-side fields; in every game, clear the locked vehicle
+         record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
+         0x0093F660 gates the announce; any nonzero value is a net game.
+Original Offset: 005310F0
+Return Value: EAX residue. The original is ?unlock_veh@NetDaemon@@QAEXXZ, but
+              EAX is live at its ret: on the non-net path it is the loaded
+              transport flag, which is zero exactly because that path was
+              taken; on the net path it is message_data's residue. Modelled as
+              uint32_t and returned, like GraphicWin::close and ListBox::close.
+Status: Complete with temporary message_data original dependency
+*/
+uint32_t NetDaemon::unlock_veh() {
+    // The layout past the AlphaNet base is not established, so the six fields
+    // are written through raw volatile offsets - the ListBox::close idiom -
+    // which also preserves the original's deliberately non-monotonic store
+    // order (B0, AC, CC, C8, then the shared 78, C4) under optimization.
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+
+    // Loaded exactly once, and it is also the EAX the non-net path returns.
+    uint32_t residue = static_cast<uint32_t>(*NetDaemonIsMultiplayerNet);
+    if (residue != 0) {
+        // `cmp eax, edi` against a zeroed edi: any nonzero flag announces.
+        log_say("Client releasing lock", *NetDaemonLocalFaction, 0, 0);
+        residue = NetDaemonMessageData(0x2212, 0, 0, 0, 0, 0);
+        object[0x1BB0 / 4] = 0;
+        object[0x1BAC / 4] = 0;
+        object[0x1BCC / 4] = 0;
+        object[0x1BC8 / 4] = 0;
+    }
+    // Shared tail; 0x1B78 is the vehicle record lock_veh (0x00531020) stores.
+    object[0x1B78 / 4] = 0;
+    object[0x1BC4 / 4] = 0;
+    return residue;
+}
+
+// self == the NetDaemon; the original takes `this` straight out of ecx with no
+// adjustment, so there is nothing to subtract here.
+uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *) {
+    return self->unlock_veh();
 }

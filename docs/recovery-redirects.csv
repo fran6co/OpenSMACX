@@ -719,6 +719,7 @@ address,kind
 0x0052DC70,jump
 0x0052DCD0,jump
 0x00530320,jump
+0x005310F0,jump
 0x00558FC0,jump
 0x00559040,jump
 0x00559250,jump

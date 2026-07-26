@@ -73,6 +73,7 @@ mapwin_terrain_fixup,game_service,recover_map_render,Replace map-window terrain 
 MapWinClick,ui_dependency,recover_map_win_click,Temporary dependency for the recovered MapWin click handlers until the shared click is source-owned
 MapWinFree,crt_ownership,replace_after_ownership_boundary,MapWin frees its owned buffer through the executable CRT until that ownership boundary moves
 NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
+NetDaemonMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered NetDaemon unlock_veh until message_data is source-owned
 NetDaemonNetGet,ui_dependency,recover_net_get,Temporary dependency for the recovered NetDaemon receive until Net get is source-owned
 NetDaemonProcessMessage,ui_dependency,recover_net_daemon_process_message,Temporary dependency for the recovered NetDaemon receive until process_message is source-owned
 NetDaemonSynch,ui_dependency,recover_net_daemon_synch,Temporary dependency for the recovered synch forwarders until the network synch builder is source-owned
