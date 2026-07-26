@@ -18,6 +18,7 @@
 #pragma once
 
 class Wave;
+struct EAX_REVERB_PROPERTIES;
 
 // One node of a group's wave list, allocated on the game CRT heap by the
 // insert helper and freed by pull_from_group.
@@ -84,9 +85,24 @@ class DLLEXPORT Wave_Device {
   int add_to_group(unsigned int a1, Wave *a2);
   int pull_from_group(Wave *a1);
   int is_group_disabled(unsigned int a1);
+  void get_description(unsigned long a1, char *a2, unsigned long a3);
+  int start_raw_dump(char *a1);
+  int set_eax(EAX_REVERB_PROPERTIES *a1);
+  int set_eax(unsigned long a1);
+  int set_eax_mix(float a1);
+  int set_listener_position(float a1, float a2, float a3);
+  int get_listener_position(float *a1, float *a2, float *a3);
+  int set_listener_xpos(float a1);
+  int get_listener_xpos(float *a1);
+  int set_listener_ypos(float a1);
+  int get_listener_ypos(float *a1);
+  int set_listener_zpos(float a1);
+  int get_listener_zpos(float *a1);
 
  private:
-  uint8_t unmapped_[0x24];
+  uint8_t unmapped_[0x14];
+  void *device_14_;       // 0x14, the wrapped device the forwarders consult
+  uint8_t unmapped_18_[0xC];
   WaveGroup groups_[16];  // 0x24..0x1A3
 };
 
@@ -132,3 +148,16 @@ int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, 
 int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *, unsigned int a1, Wave *a2);
 int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *, Wave *a1);
 int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self, void *, unsigned int a1);
+void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, unsigned long a1, char *a2, unsigned long a3);
+int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, char *a1);
+int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX_REVERB_PROPERTIES *a1);
+int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned long a1);
+int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float a1);
+int __fastcall wave_device_set_listener_position_redirect(Wave_Device *self, void *, float a1, float a2, float a3);
+int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, void *, float *a1, float *a2, float *a3);
+int __fastcall wave_device_set_listener_xpos_redirect(Wave_Device *self, void *, float a1);
+int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *, float *a1);
+int __fastcall wave_device_set_listener_ypos_redirect(Wave_Device *self, void *, float a1);
+int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *, float *a1);
+int __fastcall wave_device_set_listener_zpos_redirect(Wave_Device *self, void *, float a1);
+int __fastcall wave_device_get_listener_zpos_redirect(Wave_Device *self, void *, float *a1);

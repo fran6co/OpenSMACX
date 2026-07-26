@@ -538,3 +538,280 @@ void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
         self->count += 1;
     }
 }
+
+// The Wave_Device forwarder family over the wrapped device at 0x14: each
+// method dispatches through one slot of the device's vtable with the device
+// as receiver, or answers a fixed default with no device (0x14 for most,
+// 3 for the raw dump, nothing at all for get_description).
+
+/*
+Purpose: Forward get_description to the wrapped device through its vtable slot
+         0x1c.
+Original Offset: 004C50F0
+Return Value: n/a
+Status: Complete
+*/
+void Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {
+    if (device_14_) {
+        typedef void(__thiscall * device_fn)(void *device, unsigned long a1, char *a2, unsigned long a3);
+        (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x1c))(
+            device_14_, a1, a2, a3);
+    }
+}
+
+void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, unsigned long a1, char *a2, unsigned long a3) {
+    self->get_description(a1, a2, a3);
+}
+
+/*
+Purpose: Forward start_raw_dump to the wrapped device through its vtable slot
+         0x50.
+Original Offset: 004C5200
+Return Value: the device's answer, or 3 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::start_raw_dump(char *a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, char *a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x50))(
+            device_14_, a1);
+    }
+    return 3;
+}
+
+int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, char *a1) {
+    return self->start_raw_dump(a1);
+}
+
+/*
+Purpose: Forward set_eax to the wrapped device through its vtable slot
+         0x7c.
+Original Offset: 004C54C0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, EAX_REVERB_PROPERTIES *a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x7c))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX_REVERB_PROPERTIES *a1) {
+    return self->set_eax(a1);
+}
+
+/*
+Purpose: Forward set_eax to the wrapped device through its vtable slot
+         0x78.
+Original Offset: 004C54E0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_eax(unsigned long a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, unsigned long a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x78))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned long a1) {
+    return self->set_eax(a1);
+}
+
+/*
+Purpose: Forward set_eax_mix to the wrapped device through its vtable slot
+         0x80.
+Original Offset: 004C5500
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_eax_mix(float a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x80))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float a1) {
+    return self->set_eax_mix(a1);
+}
+
+/*
+Purpose: Forward set_listener_position to the wrapped device through its vtable slot
+         0x88.
+Original Offset: 004C5550
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_listener_position(float a1, float a2, float a3) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float a1, float a2, float a3);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x88))(
+            device_14_, a1, a2, a3);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_listener_position_redirect(Wave_Device *self, void *, float a1, float a2, float a3) {
+    return self->set_listener_position(a1, a2, a3);
+}
+
+/*
+Purpose: Forward get_listener_position to the wrapped device through its vtable slot
+         0x8c.
+Original Offset: 004C5580
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::get_listener_position(float *a1, float *a2, float *a3) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float *a1, float *a2, float *a3);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x8c))(
+            device_14_, a1, a2, a3);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, void *, float *a1, float *a2, float *a3) {
+    return self->get_listener_position(a1, a2, a3);
+}
+
+/*
+Purpose: Forward set_listener_xpos to the wrapped device through its vtable slot
+         0x90.
+Original Offset: 004C55B0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_listener_xpos(float a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x90))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_listener_xpos_redirect(Wave_Device *self, void *, float a1) {
+    return self->set_listener_xpos(a1);
+}
+
+/*
+Purpose: Forward get_listener_xpos to the wrapped device through its vtable slot
+         0x94.
+Original Offset: 004C55E0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::get_listener_xpos(float *a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float *a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x94))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *, float *a1) {
+    return self->get_listener_xpos(a1);
+}
+
+/*
+Purpose: Forward set_listener_ypos to the wrapped device through its vtable slot
+         0x98.
+Original Offset: 004C5610
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_listener_ypos(float a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x98))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_listener_ypos_redirect(Wave_Device *self, void *, float a1) {
+    return self->set_listener_ypos(a1);
+}
+
+/*
+Purpose: Forward get_listener_ypos to the wrapped device through its vtable slot
+         0x9c.
+Original Offset: 004C5640
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::get_listener_ypos(float *a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float *a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0x9c))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *, float *a1) {
+    return self->get_listener_ypos(a1);
+}
+
+/*
+Purpose: Forward set_listener_zpos to the wrapped device through its vtable slot
+         0xa0.
+Original Offset: 004C5670
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::set_listener_zpos(float a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0xa0))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_set_listener_zpos_redirect(Wave_Device *self, void *, float a1) {
+    return self->set_listener_zpos(a1);
+}
+
+/*
+Purpose: Forward get_listener_zpos to the wrapped device through its vtable slot
+         0xa4.
+Original Offset: 004C56A0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::get_listener_zpos(float *a1) {
+    if (device_14_) {
+        typedef int(__thiscall * device_fn)(void *device, float *a1);
+        return (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_14_) + 0xa4))(
+            device_14_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_device_get_listener_zpos_redirect(Wave_Device *self, void *, float *a1) {
+    return self->get_listener_zpos(a1);
+}
