@@ -138,3 +138,4 @@ WorldWinClick,ui_dependency,recover_world_win_click,Temporary dependency for the
 X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
 XPopOriginalFull,ui_dependency,recover_x_pop_full,Temporary dependency for the recovered caption-less popup forwarders until the six-argument builder is source-owned
 XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
+MapWinOriginalDrawRadius,ui_dependency,recover_map_win_draw_radius,Temporary dependency for the recovered draw_tile and draw_tiles broadcasts until MapWin::draw_radius is source-owned

@@ -802,17 +802,15 @@ P3,2921,0x00469720,?draw_legend@MapWin@@QAEXXZ,442,2,9,unrecovered,,,2,exact,ent
 P3,1621,0x004698D0,?draw_wars@MapWin@@QAEXXZ,610,1,6,unrecovered,,,2,exact,exact,void (__thiscall ?draw_wars@MapWin@@QAEXXZ)(MapWin* this)
 P3,1221,0x00469B40,?gen_bases_only@MapWin@@QAEXXZ,351,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?gen_bases_only@MapWin@@QAEXXZ)(MapWin* this)
 P3,1921,0x00469CA0,?gen_map@MapWin@@QAEXHH@Z,1522,1,9,unrecovered,,,2,exact,exact,"void (__thiscall ?gen_map@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P2,10521,0x0046A2A0,?draw_radius@MapWin@@QAEXHHHH@Z,502,10,5,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_radius@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)"
+P0,1010521,0x0046A2A0,?draw_radius@MapWin@@QAEXHHHH@Z,502,10,5,original_dependency,ui_dependency,recover_map_win_draw_radius,2,exact,exact,"void (__thiscall ?draw_radius@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)"
 P3,1121,0x0046A4A0,?draw_tile@MapWin@@QAEXHHH@Z,143,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_tile@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"
 P3,111,0x0046A530,?draw_radius@MapWin@@QAEXHHH@Z,26,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?draw_radius@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"
 P1,34821,0x0046A550,?draw_map@MapWin@@QAEXH@Z,2049,34,8,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_map@MapWin@@QAEXH@Z)(MapWin* this, int)"
 P2,10121,0x0046AD60,?draw_cursor@MapWin@@QAEXXZ,145,10,1,unrecovered,,,2,exact,exact,void (__thiscall ?draw_cursor@MapWin@@QAEXXZ)(MapWin* this)
 P2,10220,0x0046AE00,?draw_cursor@@YAXXZ,237,10,2,unrecovered,,,2,exact,exact,
 P0,1017120,0x0046AEF0,?draw_radius@@YAXHHHH@Z,72,17,1,original_dependency,game_service,recover_map_render,2,exact,exact,
-P1,34121,0x0046AF40,?draw_tile@@YAXHHH@Z,70,34,1,unrecovered,,,2,exact,exact,"void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)"
 P2,7120,0x0046AF90,?draw_tile_fixup@@YAXHHHH@Z,161,7,1,unrecovered,,,2,exact,exact,
 P3,1120,0x0046B040,?draw_tile_fixup@@YAXHHHHHH@Z,242,1,1,unrecovered,,,2,exact,exact,
-P2,10120,0x0046B140,?draw_tiles@@YAXHHH@Z,70,10,1,unrecovered,,,2,exact,exact,
 P0,1068120,0x0046B190,?draw_map@@YAXH@Z,58,68,1,original_dependency,game_service,recover_map_render,2,exact,exact,
 P3,111,0x0046B1D0,?on_redraw@MapWin@@QAEXXZ,24,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
 P1,22521,0x0046B1F0,?set_center@MapWin@@QAEXHHH@Z,275,22,5,unrecovered,,,2,exact,exact,"void (__thiscall ?set_center@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"

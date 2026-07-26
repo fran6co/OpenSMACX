@@ -1621,17 +1621,17 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004698D0,0x00469B32,610,.text,?draw_wars@MapWin@@QAEXXZ,void (__thiscall ?draw_wars@MapWin@@QAEXXZ)(MapWin* this),0x004698D0-0x00469B32,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
 0x00469B40,0x00469C9F,351,.text,?gen_bases_only@MapWin@@QAEXXZ,void (__thiscall ?gen_bases_only@MapWin@@QAEXXZ)(MapWin* this),0x00469B40-0x00469C9F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x00469CA0,0x0046A292,1522,.text,?gen_map@MapWin@@QAEXHH@Z,"void (__thiscall ?gen_map@MapWin@@QAEXHH@Z)(MapWin* this, int, int)",0x00469CA0-0x0046A292,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,1
-0x0046A2A0,0x0046A496,502,.text,?draw_radius@MapWin@@QAEXHHHH@Z,"void (__thiscall ?draw_radius@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)",0x0046A2A0-0x0046A496,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,10
+0x0046A2A0,0x0046A496,502,.text,?draw_radius@MapWin@@QAEXHHHH@Z,"void (__thiscall ?draw_radius@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)",0x0046A2A0-0x0046A496,game,frame;hidden;sp_ready;purged_ok,,,,MapWinOriginalDrawRadius,original_dependency,,,,5,10
 0x0046A4A0,0x0046A52F,143,.text,?draw_tile@MapWin@@QAEXHHH@Z,"void (__thiscall ?draw_tile@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046A4A0-0x0046A52F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x0046A530,0x0046A54A,26,.text,?draw_radius@MapWin@@QAEXHHH@Z,"void (__thiscall ?draw_radius@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046A530-0x0046A54A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0046A550,0x0046AD51,2049,.text,?draw_map@MapWin@@QAEXH@Z,"void (__thiscall ?draw_map@MapWin@@QAEXH@Z)(MapWin* this, int)",0x0046A550-0x0046AD51,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,8,34
 0x0046AD60,0x0046ADF1,145,.text,?draw_cursor@MapWin@@QAEXXZ,void (__thiscall ?draw_cursor@MapWin@@QAEXXZ)(MapWin* this),0x0046AD60-0x0046ADF1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,10
 0x0046AE00,0x0046AEED,237,.text,?draw_cursor@@YAXXZ,,0x0046AE00-0x0046AEED,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,10
 0x0046AEF0,0x0046AF38,72,.text,?draw_radius@@YAXHHHH@Z,,0x0046AEF0-0x0046AF38,game,frame;sp_ready;purged_ok,,,,draw_radius,original_dependency,,,,1,17
-0x0046AF40,0x0046AF86,70,.text,?draw_tile@@YAXHHH@Z,"void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)",0x0046AF40-0x0046AF86,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,34
+0x0046AF40,0x0046AF86,70,.text,?draw_tile@@YAXHHH@Z,"void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)",0x0046AF40-0x0046AF86,game,frame;hidden;sp_ready;purged_ok,src/mapwin.cpp:201,Complete with temporary MapWin::draw_radius original dependency,,,source_complete,,,,1,34
 0x0046AF90,0x0046B031,161,.text,?draw_tile_fixup@@YAXHHHH@Z,,0x0046AF90-0x0046B031,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,7
 0x0046B040,0x0046B132,242,.text,?draw_tile_fixup@@YAXHHHHHH@Z,,0x0046B040-0x0046B132,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
-0x0046B140,0x0046B186,70,.text,?draw_tiles@@YAXHHH@Z,,0x0046B140-0x0046B186,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,10
+0x0046B140,0x0046B186,70,.text,?draw_tiles@@YAXHHH@Z,,0x0046B140-0x0046B186,game,frame;hidden;sp_ready;purged_ok,src/mapwin.cpp:248,Complete with temporary MapWin::draw_radius original dependency,,,source_complete,,,,1,10
 0x0046B190,0x0046B1CA,58,.text,?draw_map@@YAXH@Z,,0x0046B190-0x0046B1CA,game,frame;hidden;sp_ready;purged_ok,,,,draw_map,original_dependency,,,,1,68
 0x0046B1D0,0x0046B1E8,24,.text,?on_redraw@MapWin@@QAEXXZ,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this),0x0046B1D0-0x0046B1E8,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0046B1F0,0x0046B303,275,.text,?set_center@MapWin@@QAEXHHH@Z,"void (__thiscall ?set_center@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046B1F0-0x0046B303,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,22

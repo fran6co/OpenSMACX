@@ -17130,6 +17130,241 @@ void test_window_click_forwarders() {
 }
 
 namespace {
+
+// draw_tile's and draw_tiles' only dependency is MapWin::draw_radius
+// (0x0046A2A0), which is still an original body reaching gen_radius,
+// Texture::draw_trans, compute_clip, GraphicWin::soft_update and do_all_draws.
+// The seam replaces it wholesale with this recorder, so the whole of the
+// observable behaviour - which slots dispatch, in what order, with what
+// arguments - is captured here.
+struct DrawTileCall {
+    const MapWin *self;
+    int x;
+    int y;
+    int radius;               // the literal at 0x0046AF6D / 0x0046B16D
+    int draw_type;
+    uint32_t active_at_call;  // [self + 0x1DD74] observed inside the probe
+};
+
+DrawTileCall draw_tile_calls[16];
+int draw_tile_call_count = 0;
+
+void __thiscall observe_draw_radius(MapWin *self, int x, int y, int radius,
+                                    int draw_type) {
+    const int index = draw_tile_call_count++;
+    if (index >= static_cast<int>(ARRAYSIZE(draw_tile_calls))) {
+        return;
+    }
+    DrawTileCall &call = draw_tile_calls[index];
+    call.self = self;
+    call.x = x;
+    call.y = y;
+    call.radius = radius;
+    call.draw_type = draw_type;
+    std::memcpy(&call.active_at_call,
+                reinterpret_cast<const uint8_t *>(self) + MapWinActiveOffset,
+                sizeof(call.active_at_call));
+}
+
+struct DrawTileShape {
+    const char *name;
+    int occupant[MapWinTableSlots];       // window index per slot, -1 = empty
+    uint32_t active[MapWinTableSlots];    // 0x1DD74 dword, per window index
+    int x;
+    int y;
+    int draw_type;
+    int expected[MapWinTableSlots + 1];   // slots expected to draw, -1 ends
+};
+
+// Both originals are run through every shape. `radius` is the one byte that
+// separates them, so passing it in is what makes a body that copied the wrong
+// discriminator fail.
+void run_draw_tile_shape(const DrawTileShape &shape,
+                         void(__cdecl *broadcast)(int, int, int),
+                         int expected_radius) {
+    // One arena backs all eight stand-in windows. The window pointers are four
+    // bytes apart, so their 0x1DD74 activity dwords land in one contiguous,
+    // individually addressable band at the far end - a real 0x22480-byte
+    // MapWin each would be 1.1MB of fixture for two fields nobody reads. The
+    // windows deliberately overlap: the body only ever reads +0x1DD74, and
+    // distinct pointers with distinct gates are exactly what must be pinned.
+    const size_t flag_band = 16 + MapWinActiveOffset;
+    std::vector<uint8_t> arena(flag_band + MapWinTableSlots * 4 + 16);
+    std::vector<uint8_t> arena_want(arena.size());
+    seed_storage(arena.data(), arena_want.data(), arena.size());
+
+    // The table gets its own storage with 16 seeded bytes on each side. The
+    // trailing canary is deliberately NOT null: a loop that runs past slot 7
+    // reads a nonzero garbage pointer and faults on its 0x1DD74 gate, which is
+    // how an over-long bound gets killed rather than silently tolerated.
+    std::vector<uint8_t> table(16 + MapWinTableSlots * 4 + 16);
+    std::vector<uint8_t> table_want(table.size());
+    seed_storage(table.data(), table_want.data(), table.size());
+
+    MapWin *windows[MapWinTableSlots];
+    for (size_t w = 0; w < MapWinTableSlots; ++w) {
+        windows[w] = reinterpret_cast<MapWin *>(arena.data() + 16 + w * 4);
+        std::memcpy(arena.data() + flag_band + w * 4, &shape.active[w],
+                    sizeof(shape.active[w]));
+    }
+    MapWin **const slots = reinterpret_cast<MapWin **>(table.data() + 16);
+    for (size_t s = 0; s < MapWinTableSlots; ++s) {
+        slots[s] = shape.occupant[s] < 0
+            ? nullptr
+            : windows[shape.occupant[s]];
+    }
+
+    // The reference image. Neither body writes anywhere - they contain no store
+    // instruction at all - so the byte-exact expectation is the input itself,
+    // snapshotted once the shape is installed. Both the window arena and the
+    // table, canaries included, must come back untouched.
+    std::memcpy(arena_want.data(), arena.data(), arena.size());
+    std::memcpy(table_want.data(), table.data(), table.size());
+
+    MapWinTable = slots;
+    draw_tile_call_count = 0;
+    std::memset(draw_tile_calls, 0, sizeof(draw_tile_calls));
+
+    broadcast(shape.x, shape.y, shape.draw_type);
+
+    expect_storage_bytes(arena.data(), arena_want.data(), arena.size());
+    expect_storage_bytes(table.data(), table_want.data(), table.size());
+    // The walk is over the table, not over the global: the body must not
+    // repoint it.
+    expect(MapWinTable == slots);
+
+    int expected_count = 0;
+    while (expected_count < static_cast<int>(MapWinTableSlots)
+           && shape.expected[expected_count] >= 0) {
+        ++expected_count;
+    }
+    expect(draw_tile_call_count == expected_count);
+
+    for (int index = 0; index < expected_count; ++index) {
+        if (index >= draw_tile_call_count) {
+            break;
+        }
+        const int slot = shape.expected[index];
+        const DrawTileCall &call = draw_tile_calls[index];
+        // Call order and target: slot order, ascending, with the exact slot
+        // value as `this` (0x0046AF51 loads it, 0x0046AF71 dispatches on it).
+        expect(call.self == windows[shape.occupant[slot]]);
+        // Arguments forwarded verbatim, in the order the pushes at
+        // 0x0046AF6C..0x0046AF70 build the frame.
+        expect(call.x == shape.x);
+        expect(call.y == shape.y);
+        expect(call.draw_type == shape.draw_type);
+        // The hardcoded discriminator: `push 0` at 0x0046AF6D for draw_tile,
+        // `push 1` at 0x0046B16D for draw_tiles. This single assertion is what
+        // separates the two otherwise byte-identical bodies.
+        expect(call.radius == expected_radius);
+        // Nothing was written before the dispatch: the gate the loop had just
+        // read still holds the value the fixture seeded.
+        expect(call.active_at_call == shape.active[shape.occupant[slot]]);
+    }
+}
+
+}  // namespace
+
+void test_draw_tile_broadcast() {
+    // Both constants live in src/mapwin.h, where tools/mutate_and_verify.py
+    // cannot reach them (it only derives mutants from literals inside the
+    // annotated function bodies), so pin them here at compile time and cover
+    // them behaviourally in the shapes below.
+    static_assert(MapWinTableSlots == 8,
+                  "draw_tile walks 0x007D3C3C..0x007D3C5C exclusive, 8 slots");
+    static_assert(MapWinActiveOffset == 0x1DD74,
+                  "draw_tile gates on the MapWin dword at +0x1DD74");
+
+    func_map_win_draw_radius *const saved_draw_radius = MapWinOriginalDrawRadius;
+    MapWin **const saved_table = MapWinTable;
+
+    MapWinOriginalDrawRadius = &observe_draw_radius;
+
+    static const DrawTileShape shapes[] = {
+        // 1. Full table, gates strictly alternating. Slot 0 draws even though
+        //    its gate is clear (the `cmp esi, 0x7d3c3c` exemption at
+        //    0x0046AF57); every other slot obeys its gate, and nonzero means
+        //    nonzero - 0x80000000 and 0xFFFFFFFF pass just as 1 does, because
+        //    the original tests with `test eax,eax`, not a comparison. The
+        //    alternation is the point: shifting the gate offset by one dword
+        //    inverts the entire drawn set.
+        {
+            "draw_tile full-table-alternating-gates",
+            { 0, 1, 2, 3, 4, 5, 6, 7 },
+            { 0u, 1u, 0u, 0x80000000u, 0u, 1u, 0u, 0xFFFFFFFFu },
+            0x12345678, -1, 3,
+            { 0, 1, 3, 5, 7, -1 },
+        },
+        // 2. Holes, and an EMPTY slot 0. The null test at 0x0046AF53 precedes
+        //    the slot-0 exemption, so the primary slot draws nothing here, and
+        //    the walk still continues past it. Signed extremes in the
+        //    coordinates and a negative draw type.
+        {
+            "draw_tile holes-and-null-primary",
+            { -1, -1, 2, 3, -1, 5, 6, -1 },
+            { 1u, 1u, 0u, 7u, 1u, 0u, 0xFFFFFFFFu, 1u },
+            INT_MIN, INT_MAX, -5,
+            { 3, 6, -1 },
+        },
+        // 3. The exemption in isolation: only slot 0 is occupied and its gate
+        //    is clear, so a correct body makes exactly one call and a body
+        //    that lost the exemption makes none.
+        {
+            "draw_tile primary-only-gate-clear",
+            { 0, -1, -1, -1, -1, -1, -1, -1 },
+            { 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
+            0, 0, 0,
+            { 0, -1 },
+        },
+        // 4. The SAME window pointer in slot 0 and slot 4, both reading the
+        //    one gate, which is clear. Slot 0 draws, slot 4 does not: the
+        //    exemption is keyed on the slot index, not on pointer identity or
+        //    on "the primary window object". A body that compared the window
+        //    against MapWinTable[0] instead of comparing the cursor against
+        //    the table base would draw twice here and pass every other shape.
+        {
+            "draw_tile primary-aliased-into-slot-4",
+            { 0, -1, -1, -1, 0, -1, -1, -1 },
+            { 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
+            7, -7, 1,
+            { 0, -1 },
+        },
+        // 5. Last slot only. Shape 1 also draws slot 7, but here it is the
+        //    only call, so a bound short of eight drops the call count to zero
+        //    rather than merely shortening a list.
+        {
+            "draw_tile last-slot-only",
+            { -1, -1, -1, -1, -1, -1, -1, 7 },
+            { 0u, 0u, 0u, 0u, 0u, 0u, 0u, 1u },
+            -3, 4, 2,
+            { 7, -1 },
+        },
+        // 6. Empty table: eight null slots, every gate set. No dispatch at
+        //    all, and still not one byte written.
+        {
+            "draw_tile empty-table",
+            { -1, -1, -1, -1, -1, -1, -1, -1 },
+            { 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u },
+            1, 2, 3,
+            { -1 },
+        },
+    };
+
+    for (size_t index = 0; index < ARRAYSIZE(shapes); ++index) {
+        run_draw_tile_shape(shapes[index], &draw_tile, 0);
+        run_draw_tile_shape(shapes[index], &draw_tiles, 1);
+    }
+
+    MapWinOriginalDrawRadius = saved_draw_radius;
+    MapWinTable = saved_table;
+    expect(MapWinOriginalDrawRadius == saved_draw_radius);
+    expect(MapWinTable == saved_table);
+    draw_tile_call_count = 0;
+    std::memset(draw_tile_calls, 0, sizeof(draw_tile_calls));
+}
+
+namespace {
 BasePop *g_exec_self = nullptr;
 int g_exec_flag = -1;
 int (__cdecl *g_exec_cb)() = nullptr;
@@ -22979,6 +23214,7 @@ int main() {
     test_self_contained_stores();
     test_base_pop_set_width();
     test_map_win_close();
+    test_draw_tile_broadcast();
     test_string_box_add();
     test_buffer_clear_links();
     test_net_daemon_receive();
