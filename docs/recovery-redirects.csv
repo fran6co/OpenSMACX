@@ -606,6 +606,7 @@ address,kind
 0x004C6640,jump
 0x004C6690,jump
 0x004C66A0,jump
+0x004C66E0,jump
 0x004C67C0,jump
 0x004C68F0,jump
 0x004C6920,jump

@@ -9724,6 +9724,23 @@ int __thiscall observe_wave_own_slot70(Wave *self) {
     }
     return g_wave_own70_ret;
 }
+int g_wave_stype_calls;
+Wave *g_wave_stype_wave;
+uint32_t g_wave_stype_type;
+uint32_t g_wave_stype_seen_vtable;
+uint32_t g_wave_stype_seen_f40;
+uint8_t g_wave_stype_seen_f54;
+uint32_t g_wave_stype_seen_pitch;
+void __thiscall observe_wave_set_type(Wave *wave, uint32_t type) {
+    g_wave_stype_wave = wave;
+    g_wave_stype_type = type;
+    ++g_wave_stype_calls;
+    const uint8_t *raw = reinterpret_cast<const uint8_t *>(wave);
+    std::memcpy(&g_wave_stype_seen_vtable, raw, 4);
+    std::memcpy(&g_wave_stype_seen_f40, raw + 0x40, 4);
+    g_wave_stype_seen_f54 = raw[0x54];
+    std::memcpy(&g_wave_stype_seen_pitch, raw + 0x58, 4);
+}
 int g_wave_own7C_calls;
 uint32_t g_wave_own7C_seen_flags;
 void __thiscall observe_wave_own_slot7C(Wave *self) {
@@ -10706,6 +10723,56 @@ void test_wave_load_empty() {
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;
     SoundOriginalLoad = saved_sload;
+}
+
+void test_wave_ctor() {
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+
+    auto *const saved_stype = SoundSetType;
+    SoundSetType = &observe_wave_set_type;
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    uint32_t pre_pitch;
+    std::memcpy(&pre_pitch, obj + 0x58, 4);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_wave_stype_calls = 0;
+    expect(wave_ctor_redirect(wave, nullptr) == wave);
+    expect(g_wave_stype_calls == 1 && g_wave_stype_wave == wave);
+    expect(g_wave_stype_type == 1);
+    // At set_type time the final vtable is up, the flag dword reads 4, the
+    // 0x54 byte is cleared, and the pitch dword still holds its seed - the
+    // tail stores run after the call.
+    expect(g_wave_stype_seen_vtable == 0x0066E44Cu);
+    expect(g_wave_stype_seen_f40 == 4);
+    expect(g_wave_stype_seen_f54 == 0);
+    expect(g_wave_stype_seen_pitch == pre_pitch);
+    // Full end state, byte for byte; only the dword at 0x34 keeps its seed.
+    uint8_t *const eobj = expected.data() + 16;
+    auto e32 = [&](size_t off, uint32_t v) { std::memcpy(eobj + off, &v, 4); };
+    e32(0x00, 0x0066E44Cu);
+    e32(0x04, 0x7F);
+    e32(0x08, 0);
+    std::memset(eobj + 0x0C, 0, 0x24);
+    e32(0x30, 0);
+    e32(0x38, 0x3E8);
+    e32(0x3C, 0);
+    e32(0x40, 4);
+    e32(0x44, 0);
+    e32(0x48, 0);
+    e32(0x4C, 0);
+    e32(0x50, 0);
+    e32(0x54, 0);
+    e32(0x58, 0);
+    e32(0x5C, 0x3F800000u);
+    e32(0x60, 0);
+    e32(0x64, 0);
+    e32(0x68, 0x10);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    SoundSetType = saved_stype;
 }
 
 void test_wave_destructor() {
@@ -17633,5 +17700,6 @@ int main() {
     test_wave_device_forwarders();
     test_wave_volume_fname_play();
     test_wave_load_empty();
+    test_wave_ctor();
     return failures == 0 ? 0 : 1;
 }

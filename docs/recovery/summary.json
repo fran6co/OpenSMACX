@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 329,
-      "original_dependency": 91,
-      "source_complete": 1489,
+      "original_dependency": 92,
+      "source_complete": 1490,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4056
+      "unrecovered": 4054
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1435,
-    "matched_function_starts": 1435,
-    "unique_addresses": 1435,
+    "annotations": 1436,
+    "matched_function_starts": 1436,
+    "unique_addresses": 1436,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 531,
-      "function": 111
+      "function": 112
     },
     "items": [
       {
@@ -7026,11 +7026,20 @@
         "type": "func_sound_original_load *"
       },
       {
+        "address": "0x004C61E0",
+        "function": "?set_type@Sound@@QAEXI@Z",
+        "function_address": "0x004C61E0",
+        "kind": "function",
+        "location": "src/wave.cpp:1037",
+        "symbol": "SoundSetType",
+        "type": "func_sound_set_type *"
+      },
+      {
         "address": "0x004C5280",
         "function": "?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z",
         "function_address": "0x004C5280",
         "kind": "function",
-        "location": "src/wave.cpp:1060",
+        "location": "src/wave.cpp:1111",
         "symbol": "WaveDevicePullFromGroup",
         "type": "func_wave_device_pull_from_group *"
       },
@@ -7039,7 +7048,7 @@
         "function": "??3@YAXPAX@Z",
         "function_address": "0x0064557F",
         "kind": "function",
-        "location": "src/wave.cpp:1062",
+        "location": "src/wave.cpp:1113",
         "symbol": "WaveOperatorDelete",
         "type": "func_operator_delete *"
       },
@@ -7107,7 +7116,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 111,
-    "total": 642
+    "matched_function_starts": 112,
+    "total": 643
   }
 }

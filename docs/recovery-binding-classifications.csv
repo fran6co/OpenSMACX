@@ -110,3 +110,4 @@ WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT oper
 WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
 WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
 SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
+SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
