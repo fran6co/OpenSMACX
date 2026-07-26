@@ -613,8 +613,11 @@ address,kind
 0x004C6B00,jump
 0x004C6B10,jump
 0x004C6B60,jump
+0x004C6BB0,jump
+0x004C6C20,jump
 0x004C6CE0,jump
 0x004C6DB0,jump
+0x004C6DF0,jump
 0x004C6EA0,jump
 0x004C6EE0,jump
 0x004C6F20,jump
