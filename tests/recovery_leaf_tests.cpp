@@ -15744,6 +15744,123 @@ const AtexitThunkCase g_atexit_wave_cases[] = {
     {&destroy_crash_landing_wave, &g_CRASH_LANDING_WAVE},
     {&destroy_wave_general, &g_WAVE_GENERAL},
 };
+const AtexitThunkCase g_atexit_buffer_cases[] = {
+    {&destroy_pcx_parse_temp_buffer1, &g_PCX_PARSE_TEMP_BUFFER1},
+    {&destroy_iface_std_popups_middle_buffer, &g_IFACE_STD_POPUPS_MIDDLE_BUFFER},
+    {&destroy_vehdraw_buffer, &g_VEHDRAW_BUFFER},
+    {&destroy_buffer, &g_BUFFER},
+};
+const AtexitThunkCase g_atexit_group_cases[] = {
+    {&destroy_prefwin_buttongroup, &g_PREFWIN_BUTTONGROUP},
+};
+struct AtexitArrayCase {
+    void(__cdecl *thunk)();
+    void *slot;
+    uint32_t element_size;
+    int count;
+    func_thiscall_teardown **teardown_slot;
+};
+const AtexitArrayCase g_atexit_array_cases[] = {
+    {&destroy_cpu_waves, &g_CPU_WAVES, 0x6C, 45, &WaveElementTeardown},
+    {&destroy_factionart, &FactionArtGlobal, 0x65C, 8, &FactionArtElementTeardown},
+    {&destroy_iface_close_x_sprites, &g_IFACE_CLOSE_X_SPRITES, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites1, &g_IFACE_BOX_SPRITES1, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites2, &g_IFACE_BOX_SPRITES2, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites3, &g_IFACE_BOX_SPRITES3, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites4, &g_IFACE_BOX_SPRITES4, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites5, &g_IFACE_BOX_SPRITES5, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites6, &g_IFACE_BOX_SPRITES6, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites7, &g_IFACE_BOX_SPRITES7, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprites8, &g_IFACE_BOX_SPRITES8, 0x2C, 51, &SpriteElementTeardown},
+    {&destroy_iface_box_sprite_buffers, &g_IFACE_BOX_SPRITE_BUFFERS, 0x588, 51, &BufferElementTeardown},
+    {&destroy_aa_wing_caviardata, &g_AA_WING_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_acp_caviardata, &g_ACP_CAVIARDATA, 0xC, 4, &CaviarDataElementTeardown},
+    {&destroy_viptr_caviardata, &g_VIPTR_CAVIARDATA, 0xC, 4, &CaviarDataElementTeardown},
+    {&destroy_vipta_caviardata, &g_VIPTA_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vr_caviardata, &g_VR_CAVIARDATA, 0xC, 4, &CaviarDataElementTeardown},
+    {&destroy_vrc_caviardata, &g_VRC_CAVIARDATA, 0xC, 4, &CaviarDataElementTeardown},
+    {&destroy_unused_caviardata_var3, &g_UNUSED_CAVIARDATA_VAR3, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vhta0_caviardata, &g_VHTA0_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vhttpa0_caviardata, &g_VHTTPA0_CAVIARDATA, 0xC, 3, &CaviarDataElementTeardown},
+    {&destroy_vspa0_caviardata, &g_VSPA0_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vjt0_caviardata, &g_VJT0_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vcua0_caviardata, &g_VCUA0_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vct0_caviardata, &g_VCT0_CAVIARDATA, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_vw_caviardata, &g_VW_CAVIARDATA, 0xC, 16, &CaviarDataElementTeardown},
+    {&destroy_vpbr0_caviardata, &g_VPBR0_CAVIARDATA, 0xC, 4, &CaviarDataElementTeardown},
+    {&destroy_unused_caviardata_var4, &g_UNUSED_CAVIARDATA_VAR4, 0xC, 2, &CaviarDataElementTeardown},
+    {&destroy_unused_caviardata_var5, &g_UNUSED_CAVIARDATA_VAR5, 0xC, 5, &CaviarDataElementTeardown},
+    {&destroy_rocky_textures, &g_ROCKY_TEXTURES, 0x70, 4, &TextureElementTeardown},
+    {&destroy_ocean_textures, &g_OCEAN_TEXTURES, 0x70, 2, &TextureElementTeardown},
+    {&destroy_moist_land_textures, &g_MOIST_LAND_TEXTURES, 0x70, 16, &TextureElementTeardown},
+    {&destroy_rainy_land_textures, &g_RAINY_LAND_TEXTURES, 0x70, 16, &TextureElementTeardown},
+    {&destroy_jungle_land_textures, &g_JUNGLE_LAND_TEXTURES, 0x70, 15, &TextureElementTeardown},
+    {&destroy_sunny_mesa_textures, &g_SUNNY_MESA_TEXTURES, 0x70, 8, &TextureElementTeardown},
+    {&destroy_rainfall_single_tile_textures, &g_RAINFALL_SINGLE_TILE_TEXTURES, 0x70, 2, &TextureElementTeardown},
+    {&destroy_road_textures, &g_ROAD_TEXTURES, 0x70, 9, &TextureElementTeardown},
+    {&destroy_magtube_textures, &g_MAGTUBE_TEXTURES, 0x70, 9, &TextureElementTeardown},
+    {&destroy_river_textures, &g_RIVER_TEXTURES, 0x70, 16, &TextureElementTeardown},
+    {&destroy_mount_planet_textures, &g_MOUNT_PLANET_TEXTURES, 0x70, 3, &TextureElementTeardown},
+    {&destroy_garland_crater_textures, &g_GARLAND_CRATER_TEXTURES, 0x70, 3, &TextureElementTeardown},
+    {&destroy_fungus_textures, &g_FUNGUS_TEXTURES, 0x70, 30, &TextureElementTeardown},
+    {&destroy_farm_textures, &g_FARM_TEXTURES, 0x70, 9, &TextureElementTeardown},
+    {&destroy_forest_textures, &g_FOREST_TEXTURES, 0x70, 16, &TextureElementTeardown},
+    {&destroy_ter1_white_org_yel_tile_sprites, &g_TER1_WHITE_ORG_YEL_TILE_SPRITES, 0x2C, 6, &SpriteElementTeardown},
+    {&destroy_ter1_bottom_left_tile_sprites, &g_TER1_BOTTOM_LEFT_TILE_SPRITES, 0x2C, 9, &SpriteElementTeardown},
+    {&destroy_ter1_unused_sprites2, &g_TER1_UNUSED_SPRITES2, 0x2C, 2, &SpriteElementTeardown},
+    {&destroy_ter1_manifold_nexus_sprites, &g_TER1_MANIFOLD_NEXUS_SPRITES, 0x2C, 6, &SpriteElementTeardown},
+    {&destroy_ter1wreck_unity_wreckage_sprites, &g_TER1WRECK_UNITY_WRECKAGE_SPRITES, 0x2C, 15, &SpriteElementTeardown},
+    {&destroy_ter1wreck_unity_wreckage_alt_sprites, &g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES, 0x2C, 4, &SpriteElementTeardown},
+    {&destroy_fossil_field_ridge_sprites, &g_FOSSIL_FIELD_RIDGE_SPRITES, 0x2C, 6, &SpriteElementTeardown},
+    {&destroy_ter1_unused_sprites1, &g_TER1_UNUSED_SPRITES1, 0x2C, 5, &SpriteElementTeardown},
+    {&destroy_ter1_farm_sprites, &g_TER1_FARM_SPRITES, 0x2C, 5, &SpriteElementTeardown},
+    {&destroy_ter1_soil_enricher_sprites, &g_TER1_SOIL_ENRICHER_SPRITES, 0x2C, 5, &SpriteElementTeardown},
+    {&destroy_ter1_sea_land_resource_sprites, &g_TER1_SEA_LAND_RESOURCE_SPRITES, 0x2C, 12, &SpriteElementTeardown},
+    {&destroy_ter1_landmark_resource_sprites, &g_TER1_LANDMARK_RESOURCE_SPRITES, 0x2C, 6, &SpriteElementTeardown},
+    {&destroy_glow_sprites, &g_GLOW_SPRITES, 0x2C, 2, &SpriteElementTeardown},
+    {&destroy_ter1_unity_pod_sprites, &g_TER1_UNITY_POD_SPRITES, 0x2C, 6, &SpriteElementTeardown},
+    {&destroy_rainfall_double_tile_sprites, &g_RAINFALL_DOUBLE_TILE_SPRITES, 0x2C, 2, &SpriteElementTeardown},
+    {&destroy_veh_sprites, &g_VEH_SPRITES, 0x2C, 152, &SpriteElementTeardown},
+    {&destroy_flags_veh_sprites, &g_FLAGS_VEH_SPRITES, 0x2C, 112, &SpriteElementTeardown},
+    {&destroy_icons_general_sprites, &g_ICONS_GENERAL_SPRITES, 0x2C, 16, &SpriteElementTeardown},
+    {&destroy_resource_icon_sprites, &g_RESOURCE_ICON_SPRITES, 0x2C, 32, &SpriteElementTeardown},
+    {&destroy_citizen_lg_cursor_sprites, &g_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 8, &SpriteElementTeardown},
+    {&destroy_specialist_lg_cursor_sprites, &g_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, &SpriteElementTeardown},
+    {&destroy_citizen_sm_cursor_sprites, &g_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 8, &SpriteElementTeardown},
+    {&destroy_specialist_sm_cursor_sprites, &g_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, &SpriteElementTeardown},
+    {&destroy_al_citizen_lg_cursor_sprites, &g_AL_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 4, &SpriteElementTeardown},
+    {&destroy_al_specialist_lg_cursor_sprites, &g_AL_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, &SpriteElementTeardown},
+    {&destroy_al_citizen_sm_cursor_sprites, &g_AL_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 4, &SpriteElementTeardown},
+    {&destroy_al_specialist_sm_cursor_sprites, &g_AL_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, &SpriteElementTeardown},
+    {&destroy_silver_menu_icon_sprites, &g_SILVER_MENU_ICON_SPRITES, 0x2C, 4, &SpriteElementTeardown},
+    {&destroy_silver_checkbox_icon_sprites, &g_SILVER_CHECKBOX_ICON_SPRITES, 0x2C, 2, &SpriteElementTeardown},
+    {&destroy_peace_sign_sprites, &g_PEACE_SIGN_SPRITES, 0x2C, 2, &SpriteElementTeardown},
+    {&destroy_xi_boom_veh_sprites, &g_XI_BOOM_VEH_SPRITES, 0x2C, 144, &SpriteElementTeardown},
+    {&destroy_xf_boom_veh_sprites, &g_XF_BOOM_VEH_SPRITES, 0x2C, 64, &SpriteElementTeardown},
+    {&destroy_tech_icon_sprites, &g_TECH_ICON_SPRITES, 0x2C, 89, &SpriteElementTeardown},
+    {&destroy_facility_icon_sprites, &g_FACILITY_ICON_SPRITES, 0x2C, 70, &SpriteElementTeardown},
+    {&destroy_secret_project_icon_sprites, &g_SECRET_PROJECT_ICON_SPRITES, 0x2C, 64, &SpriteElementTeardown},
+    {&destroy_iface_mp_combo_arrow_sprites, &g_IFACE_MP_COMBO_ARROW_SPRITES, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_scroll_bar_arrow_icon_sprites, &g_SCROLL_BAR_ARROW_ICON_SPRITES, 0x2C, 12, &SpriteElementTeardown},
+    {&destroy_scroll_bar_small_arrow_icon_sprites, &g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES, 0x2C, 12, &SpriteElementTeardown},
+    {&destroy_iface_lock_sprites, &g_IFACE_LOCK_SPRITES, 0x2C, 2, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var01, &g_UNUSED_SPRITES_VAR01, 0x2C, 8, &SpriteElementTeardown},
+    {&destroy_iface_tech_tree_arrow_sprites, &g_IFACE_TECH_TREE_ARROW_SPRITES, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var02, &g_UNUSED_SPRITES_VAR02, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var03, &g_UNUSED_SPRITES_VAR03, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var04, &g_UNUSED_SPRITES_VAR04, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var05, &g_UNUSED_SPRITES_VAR05, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var06, &g_UNUSED_SPRITES_VAR06, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var07, &g_UNUSED_SPRITES_VAR07, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var08, &g_UNUSED_SPRITES_VAR08, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var09, &g_UNUSED_SPRITES_VAR09, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_unused_sprites_var10, &g_UNUSED_SPRITES_VAR10, 0x2C, 3, &SpriteElementTeardown},
+    {&destroy_basewin_sprites, &g_BASEWIN_SPRITES, 0x2C, 27, &SpriteElementTeardown},
+    {&destroy_iface_green_right_arrow_sprite, &g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, &SpriteElementTeardown},
+    {&destroy_cursor_sprites, &g_CURSOR_SPRITES, 0x2C, 12, &SpriteElementTeardown},
+    {&destroy_fonts, &g_FONTS, 0x28, 48, &FontElementTeardown},
+    {&destroy_txtindex, &TxtIndexGlobal, 0x118, 4, &TextIndexElementTeardown},
+};
 
 Wave *g_atexit_wave_seen;
 int g_atexit_wave_calls;
@@ -15751,6 +15868,21 @@ void __thiscall observe_wave_destructor(Wave *wave) {
     g_atexit_wave_seen = wave;
     ++g_atexit_wave_calls;
 }
+void *g_vector_array_seen;
+uint32_t g_vector_size_seen;
+int g_vector_count_seen;
+func_thiscall_teardown *g_vector_teardown_seen;
+int g_vector_calls;
+void __stdcall observe_vector_dtor(void *array, unsigned int element_size,
+                                   int count,
+                                   func_thiscall_teardown *teardown) {
+    g_vector_array_seen = array;
+    g_vector_size_seen = element_size;
+    g_vector_count_seen = count;
+    g_vector_teardown_seen = teardown;
+    ++g_vector_calls;
+}
+int g_vector_sentinel;
 }  // namespace
 
 void test_atexit_teardown_thunks() {
@@ -15828,6 +15960,60 @@ void test_atexit_teardown_thunks() {
         entry.thunk();
         expect(g_atexit_wave_calls == 1);
         expect(g_atexit_wave_seen == reinterpret_cast<Wave *>(fake));
+        *slot = saved;
+    }
+
+    // Array thunks hand the whole walk to the iterator seam: the observed
+    // call must carry the rebound array, the exact element size and count,
+    // and the rebound per-element teardown - proving the body reads all four
+    // seams rather than any baked literal.
+    auto *const saved_iterator = VectorDtorIterator;
+    VectorDtorIterator = &observe_vector_dtor;
+    for (const AtexitArrayCase &entry : g_atexit_array_cases) {
+        alignas(4) uint8_t fake[4] = {};
+        auto **slot = static_cast<void **>(entry.slot);
+        void *const saved_slot = *slot;
+        func_thiscall_teardown *const saved_teardown = *entry.teardown_slot;
+        *slot = fake;
+        *entry.teardown_slot =
+            reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel);
+        g_vector_calls = 0;
+        entry.thunk();
+        expect(g_vector_calls == 1);
+        expect(g_vector_array_seen == fake);
+        expect(g_vector_size_seen == entry.element_size);
+        expect(g_vector_count_seen == entry.count);
+        expect(g_vector_teardown_seen ==
+               reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel));
+        *slot = saved_slot;
+        *entry.teardown_slot = saved_teardown;
+    }
+    VectorDtorIterator = saved_iterator;
+
+    // Buffer and ButtonGroup teardowns are already source-owned, so each
+    // thunk is checked against ground truth directly: run the real teardown
+    // on an identical twin and require the bytes to agree.
+    for (const AtexitThunkCase &entry : g_atexit_buffer_cases) {
+        alignas(4) uint8_t fake[sizeof(Buffer)] = {};
+        alignas(4) uint8_t twin[sizeof(Buffer)] = {};
+        auto **slot = static_cast<Buffer **>(entry.slot);
+        Buffer *const saved = *slot;
+        *slot = reinterpret_cast<Buffer *>(fake);
+        entry.thunk();
+        reinterpret_cast<Buffer *>(twin)->destroy();
+        expect_storage_bytes(fake, twin, sizeof(fake));
+        *slot = saved;
+    }
+    for (const AtexitThunkCase &entry : g_atexit_group_cases) {
+        alignas(4) uint8_t fake[sizeof(ButtonGroup)];
+        alignas(4) uint8_t twin[sizeof(ButtonGroup)];
+        seed_storage(fake, twin, sizeof(fake));
+        auto **slot = static_cast<ButtonGroup **>(entry.slot);
+        ButtonGroup *const saved = *slot;
+        *slot = reinterpret_cast<ButtonGroup *>(fake);
+        entry.thunk();
+        reinterpret_cast<ButtonGroup *>(twin)->close();
+        expect_storage_bytes(fake, twin, sizeof(fake));
         *slot = saved;
     }
 

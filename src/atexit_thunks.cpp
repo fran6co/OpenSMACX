@@ -18,9 +18,38 @@
 
 #include "stdafx.h"
 #include "atexit_thunks.h"
+#include "buffer.h"
+#include "buttongroup.h"
+#include "caviar.h"
+#include "sprite.h"
+#include "texture.h"
+#include "wave.h"
 
 func_wave_destructor *WaveOriginalDestructor =
     (func_wave_destructor *)0x004C67C0;
+
+func_vector_dtor_iterator *VectorDtorIterator =
+    (func_vector_dtor_iterator *)0x006456E4;
+
+// Per-element teardowns the array walks dispatch to. The Wave one binds
+// the same address as WaveOriginalDestructor deliberately: it is the same
+// original body, held separately so the array seam rebinds alone.
+func_thiscall_teardown *BufferElementTeardown =
+    (func_thiscall_teardown *)0x005D7410;
+func_thiscall_teardown *CaviarDataElementTeardown =
+    (func_thiscall_teardown *)0x00456100;
+func_thiscall_teardown *FactionArtElementTeardown =
+    (func_thiscall_teardown *)0x00456010;
+func_thiscall_teardown *FontElementTeardown =
+    (func_thiscall_teardown *)0x00618EE0;
+func_thiscall_teardown *SpriteElementTeardown =
+    (func_thiscall_teardown *)0x00406850;
+func_thiscall_teardown *TextIndexElementTeardown =
+    (func_thiscall_teardown *)0x005FDF60;
+func_thiscall_teardown *TextureElementTeardown =
+    (func_thiscall_teardown *)0x00619660;
+func_thiscall_teardown *WaveElementTeardown =
+    (func_thiscall_teardown *)0x004C67C0;
 
 Wave *g_ALPHAMENU_WAVE = (Wave *)0x006A7090;
 Sprite *g_UNUSED_SPRITE_VAR02 = (Sprite *)0x006A7130;
@@ -48,11 +77,24 @@ Sprite *g_UNUSED_SPRITE_VAR07 = (Sprite *)0x006A7220;
 Wave *g_BASEWIN_WAVE = (Wave *)0x006EEE68;
 Wave *g_CREDITS_WAVE = (Wave *)0x00703E30;
 Wave *g_DESIGNWIN_WAVE = (Wave *)0x0071F240;
+Wave *g_CPU_WAVES = (Wave *)0x0074C5F0;
 Wave *g_MENU_UP_WAVE = (Wave *)0x00749C88;
 Wave *g_MENU_DOWN_WAVE = (Wave *)0x0074D960;
 Wave *g_SCOOT_WAVE = (Wave *)0x00749C18;
 Wave *g_OK_WAVE = (Wave *)0x0074D8F0;
 Wave *g_PASSOVER_WAVE = (Wave *)0x0074D9D0;
+Buffer *g_PCX_PARSE_TEMP_BUFFER1 = (Buffer *)0x00798668;
+FactionArt *FactionArtGlobal = (FactionArt *)0x0078E978;
+Sprite *g_IFACE_CLOSE_X_SPRITES = (Sprite *)0x007794D8;
+Sprite *g_IFACE_BOX_SPRITES1 = (Sprite *)0x007AC290;
+Sprite *g_IFACE_BOX_SPRITES2 = (Sprite *)0x0076DC98;
+Sprite *g_IFACE_BOX_SPRITES3 = (Sprite *)0x0078AE58;
+Sprite *g_IFACE_BOX_SPRITES4 = (Sprite *)0x0078CC60;
+Sprite *g_IFACE_BOX_SPRITES5 = (Sprite *)0x00779CB0;
+Sprite *g_IFACE_BOX_SPRITES6 = (Sprite *)0x007A6978;
+Sprite *g_IFACE_BOX_SPRITES7 = (Sprite *)0x0078E0A0;
+Sprite *g_IFACE_BOX_SPRITES8 = (Sprite *)0x0075B950;
+Buffer *g_IFACE_BOX_SPRITE_BUFFERS = (Buffer *)0x0075C218;
 Sprite *g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE = (Sprite *)0x007921E8;
 Sprite *g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE = (Sprite *)0x00779478;
 Sprite *g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE = (Sprite *)0x007AC1C0;
@@ -61,6 +103,7 @@ Sprite *g_IFACE_STD_POPUPS_TOP_MID_SPRITE = (Sprite *)0x007793F0;
 Sprite *g_IFACE_STD_POPUPS_BOT_MID_SPRITE = (Sprite *)0x007871D0;
 Sprite *g_IFACE_STD_POPUPS_MID_LEFT_SPRITE = (Sprite *)0x007ACFB0;
 Sprite *g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE = (Sprite *)0x0075B058;
+Buffer *g_IFACE_STD_POPUPS_MIDDLE_BUFFER = (Buffer *)0x0077AA70;
 CaviarData *g_UNUSED_CAVIARDATA_VAR1 = (CaviarData *)0x00791D68;
 CaviarData *g_SSF_CAVIARDATA = (CaviarData *)0x007ACCA0;
 CaviarData *g_SDP_CAVIARDATA = (CaviarData *)0x0079A6A0;
@@ -83,6 +126,8 @@ CaviarData *g_SP_NANOO_CAVIARDATA = (CaviarData *)0x0075AEF0;
 CaviarData *g_SP_SOPORIFIC_CAVIARDATA = (CaviarData *)0x007AD130;
 CaviarData *g_AA01_CAVIARDATA = (CaviarData *)0x007AD040;
 CaviarData *g_AA_ROVER_CAVIARDATA = (CaviarData *)0x0075AFC0;
+CaviarData *g_AA_WING_CAVIARDATA = (CaviarData *)0x00779288;
+CaviarData *g_ACP_CAVIARDATA = (CaviarData *)0x0078A610;
 CaviarData *g_AX_CAVIARDATA = (CaviarData *)0x0079A6F0;
 CaviarData *g_AA_CAVIARDATA = (CaviarData *)0x00789A50;
 CaviarData *g_ACOLPOD_CAVIARDATA = (CaviarData *)0x0078A600;
@@ -95,6 +140,8 @@ CaviarData *g_VW00_CAVIARDATA = (CaviarData *)0x007871C0;
 CaviarData *g_VIPTAWL_CAVIARDATA = (CaviarData *)0x0079A700;
 CaviarData *g_VIPTASGN_CAVIARDATA = (CaviarData *)0x007AB3F0;
 CaviarData *g_VIPTAPSI_CAVIARDATA = (CaviarData *)0x007795A0;
+CaviarData *g_VIPTR_CAVIARDATA = (CaviarData *)0x00799628;
+CaviarData *g_VIPTA_CAVIARDATA = (CaviarData *)0x007791D0;
 CaviarData *g_PTMOD_CAVIARDATA = (CaviarData *)0x0078A500;
 CaviarData *g_VB_CAVIARDATA = (CaviarData *)0x00779230;
 CaviarData *g_VBP_CAVIARDATA = (CaviarData *)0x0078E968;
@@ -107,7 +154,9 @@ CaviarData *g_APWALL_CAVIARDATA = (CaviarData *)0x0078A490;
 CaviarData *g_ASGEN_CAVIARDATA = (CaviarData *)0x007AD120;
 CaviarData *g_APSID_CAVIARDATA = (CaviarData *)0x007ACCB0;
 CaviarData *g_VA01_CAVIARDATA = (CaviarData *)0x007AD0E0;
+CaviarData *g_VR_CAVIARDATA = (CaviarData *)0x0076E560;
 CaviarData *g_VHR_CAVIARDATA2 = (CaviarData *)0x00779560;
+CaviarData *g_VRC_CAVIARDATA = (CaviarData *)0x0075ADB8;
 CaviarData *g_VI_CAVIARDATA = (CaviarData *)0x0078B740;
 CaviarData *g_VGMT_CAVIARDATA = (CaviarData *)0x0077A5B8;
 CaviarData *g_VGMTP_CAVIARDATA = (CaviarData *)0x0078B720;
@@ -117,36 +166,65 @@ CaviarData *g_VT_CAVIARDATA = (CaviarData *)0x0075AD78;
 CaviarData *g_DROP_CAVIARDATA = (CaviarData *)0x007ACD60;
 CaviarData *g_DROPLET_CAVIARDATA = (CaviarData *)0x0076EBD0;
 CaviarData *g_VCL_CAVIARDATA = (CaviarData *)0x007AD170;
+CaviarData *g_UNUSED_CAVIARDATA_VAR3 = (CaviarData *)0x007795F0;
 CaviarData *g_VCLT00_CAVIARDATA = (CaviarData *)0x00789B58;
 CaviarData *g_VHT_VBP_CAVIARDATA = (CaviarData *)0x00779608;
 CaviarData *g_VHTP_CAVIARDATA = (CaviarData *)0x0078A640;
+CaviarData *g_VHTA0_CAVIARDATA = (CaviarData *)0x00779648;
 CaviarData *g_VHTTP_CAVIARDATA = (CaviarData *)0x00759310;
+CaviarData *g_VHTTPA0_CAVIARDATA = (CaviarData *)0x0078B750;
 CaviarData *g_VSP_CAVIARDATA = (CaviarData *)0x007A6820;
+CaviarData *g_VSPA0_CAVIARDATA = (CaviarData *)0x00779270;
 CaviarData *g_VSPTF_CAVIARDATA = (CaviarData *)0x007A7290;
 CaviarData *g_VSPTB_CAVIARDATA = (CaviarData *)0x007A7280;
 CaviarData *g_VFL_CAVIARDATA = (CaviarData *)0x007ACC50;
 CaviarData *g_VGS_CAVIARDATA = (CaviarData *)0x007A7240;
 CaviarData *g_VGSP_CAVIARDATA = (CaviarData *)0x00798BF0;
 CaviarData *g_VJTP_CAVIARDATA = (CaviarData *)0x007795B0;
+CaviarData *g_VJT0_CAVIARDATA = (CaviarData *)0x0078A2B8;
 CaviarData *g_VCU_CAVIARDATA = (CaviarData *)0x0075AEE0;
 CaviarData *g_VCUP_CAVIARDATA = (CaviarData *)0x0075B440;
+CaviarData *g_VCUA0_CAVIARDATA = (CaviarData *)0x0078CAB8;
 CaviarData *g_VCUW_CAVIARDATA = (CaviarData *)0x0075B088;
 CaviarData *g_VCT_CAVIARDATA = (CaviarData *)0x0079A680;
 CaviarData *g_VCTP_CAVIARDATA = (CaviarData *)0x007ACFA0;
 CaviarData *g_VCTB_CAVIARDATA = (CaviarData *)0x0076E890;
+CaviarData *g_VCT0_CAVIARDATA = (CaviarData *)0x0079A628;
 CaviarData *g_VWNTT_CAVIARDATA = (CaviarData *)0x0078B730;
 CaviarData *g_VWNST_CAVIARDATA = (CaviarData *)0x0078DE20;
 CaviarData *g_VWNAA_CAVIARDATA = (CaviarData *)0x007AC1A0;
+CaviarData *g_VW_CAVIARDATA = (CaviarData *)0x00787100;
 CaviarData *g_VM_CAVIARDATA = (CaviarData *)0x00791D78;
 CaviarData *g_VM13_CAVIARDATA = (CaviarData *)0x0078A5F0;
+CaviarData *g_VPBR0_CAVIARDATA = (CaviarData *)0x0076E9B0;
+CaviarData *g_UNUSED_CAVIARDATA_VAR4 = (CaviarData *)0x007791E8;
 CaviarData *g_NW_CAVIARDATA = (CaviarData *)0x0079A690;
 CaviarData *g_NI_CAVIARDATA = (CaviarData *)0x007791C0;
 CaviarData *g_NLC_CAVIARDATA = (CaviarData *)0x00779660;
+CaviarData *g_UNUSED_CAVIARDATA_VAR5 = (CaviarData *)0x00787E08;
 Texture *g_RADIUS1_TEXTURE = (Texture *)0x00787FB8;
 Texture *g_RADIUS2_TEXTURE = (Texture *)0x0075B858;
+Texture *g_ROCKY_TEXTURES = (Texture *)0x0076E9E0;
+Texture *g_OCEAN_TEXTURES = (Texture *)0x007A7820;
 Texture *g_FLAT_ARID_LAND_TEXTURE = (Texture *)0x00799E48;
+Texture *g_MOIST_LAND_TEXTURES = (Texture *)0x00799EB8;
+Texture *g_RAINY_LAND_TEXTURES = (Texture *)0x00799738;
+Texture *g_JUNGLE_LAND_TEXTURES = (Texture *)0x00789C28;
 Texture *g_DUNE_LAND_TEXTURE = (Texture *)0x007AC220;
+Texture *g_SUNNY_MESA_TEXTURES = (Texture *)0x007797F8;
+Texture *g_RAINFALL_SINGLE_TILE_TEXTURES = (Texture *)0x0076E8A0;
+Texture *g_ROAD_TEXTURES = (Texture *)0x00792218;
+Texture *g_MAGTUBE_TEXTURES = (Texture *)0x00798E08;
+Texture *g_RIVER_TEXTURES = (Texture *)0x007A7AA0;
+Texture *g_MOUNT_PLANET_TEXTURES = (Texture *)0x0078A340;
+Texture *g_GARLAND_CRATER_TEXTURES = (Texture *)0x00788100;
+Texture *g_FUNGUS_TEXTURES = (Texture *)0x00776A80;
+Texture *g_FARM_TEXTURES = (Texture *)0x00799238;
+Texture *g_FOREST_TEXTURES = (Texture *)0x0078A758;
 Texture *g_RAINFALL_SINGLE_TILE_TEXTURE = (Texture *)0x0078DD80;
+Sprite *g_TER1_WHITE_ORG_YEL_TILE_SPRITES = (Sprite *)0x00791C58;
+Sprite *g_TER1_BOTTOM_LEFT_TILE_SPRITES = (Sprite *)0x007A99A0;
+Sprite *g_TER1_UNUSED_SPRITES2 = (Sprite *)0x00779420;
 Sprite *g_TER1_MINE_SPRITE = (Sprite *)0x00776A50;
 Sprite *g_TER1_SOLAR_COLLECTOR_SPRITE = (Sprite *)0x007991F8;
 Sprite *g_TER1_TIDAL_HARNESS_SPRITE = (Sprite *)0x0078A5B0;
@@ -157,22 +235,59 @@ Sprite *g_TER1_CONDENSER_SPRITE = (Sprite *)0x00779390;
 Sprite *g_TER1_ECHELON_MIRROR_SPRITE = (Sprite *)0x007ABF60;
 Sprite *g_TER1_BOREHOLE_SPRITE = (Sprite *)0x0078DD20;
 Sprite *g_TER1_BOREHOLE_CLUSTER_SPRITE = (Sprite *)0x007ACB88;
+Sprite *g_TER1_MANIFOLD_NEXUS_SPRITES = (Sprite *)0x007AC098;
+Sprite *g_TER1WRECK_UNITY_WRECKAGE_SPRITES = (Sprite *)0x00776758;
+Sprite *g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES = (Sprite *)0x00799658;
+Sprite *g_FOSSIL_FIELD_RIDGE_SPRITES = (Sprite *)0x007ACD70;
+Sprite *g_TER1_UNUSED_SPRITES1 = (Sprite *)0x007792B0;
+Sprite *g_TER1_FARM_SPRITES = (Sprite *)0x00791FC8;
+Sprite *g_TER1_SOIL_ENRICHER_SPRITES = (Sprite *)0x0079A710;
+Sprite *g_TER1_SEA_LAND_RESOURCE_SPRITES = (Sprite *)0x0075B230;
+Sprite *g_TER1_LANDMARK_RESOURCE_SPRITES = (Sprite *)0x0078A650;
+Sprite *g_GLOW_SPRITES = (Sprite *)0x00779770;
+Sprite *g_TER1_UNITY_POD_SPRITES = (Sprite *)0x0077AFF8;
 Sprite *g_TER1_MONOLITH_SPRITE = (Sprite *)0x0075B098;
 Sprite *g_TER1_BUNKER_SPRITE = (Sprite *)0x007AD010;
 Sprite *g_TER1_AIRBASE_SPRITE = (Sprite *)0x007ACC60;
 Sprite *g_TER1_SENSOR_ARRAY_SPRITE = (Sprite *)0x007A6830;
+Sprite *g_RAINFALL_DOUBLE_TILE_SPRITES = (Sprite *)0x007ACBB8;
+Sprite *g_VEH_SPRITES = (Sprite *)0x007777A0;
+Sprite *g_FLAGS_VEH_SPRITES = (Sprite *)0x0078B778;
+Sprite *g_ICONS_GENERAL_SPRITES = (Sprite *)0x0075B450;
+Sprite *g_RESOURCE_ICON_SPRITES = (Sprite *)0x007A72A0;
+Sprite *g_CITIZEN_LG_CURSOR_SPRITES = (Sprite *)0x0078CAD0;
+Sprite *g_SPECIALIST_LG_CURSOR_SPRITES = (Sprite *)0x007765C0;
+Sprite *g_CITIZEN_SM_CURSOR_SPRITES = (Sprite *)0x00776420;
+Sprite *g_SPECIALIST_SM_CURSOR_SPRITES = (Sprite *)0x00779B78;
+Sprite *g_AL_CITIZEN_LG_CURSOR_SPRITES = (Sprite *)0x007AD1B0;
+Sprite *g_AL_SPECIALIST_LG_CURSOR_SPRITES = (Sprite *)0x00798CD0;
+Sprite *g_AL_CITIZEN_SM_CURSOR_SPRITES = (Sprite *)0x0075B180;
+Sprite *g_AL_SPECIALIST_SM_CURSOR_SPRITES = (Sprite *)0x0075B710;
 Sprite *g_RED_ALIEN_HEAD_ICON_SPRITE = (Sprite *)0x00791F98;
+Sprite *g_SILVER_MENU_ICON_SPRITES = (Sprite *)0x0075AE20;
+Sprite *g_SILVER_CHECKBOX_ICON_SPRITES = (Sprite *)0x0075AF68;
 Sprite *g_RED_MALE_HEAD_ICON_SPRITE = (Sprite *)0x0075AD88;
 Sprite *g_NULL_RESOURCE_ICON_SPRITE = (Sprite *)0x0078A520;
+Sprite *g_PEACE_SIGN_SPRITES = (Sprite *)0x0075AF10;
 Sprite *g_ICON_TILE_SQUARE_SPRITE = (Sprite *)0x00776728;
+Sprite *g_XI_BOOM_VEH_SPRITES = (Sprite *)0x007A9B30;
+Sprite *g_XF_BOOM_VEH_SPRITES = (Sprite *)0x007AB460;
 Sprite *g_BATTLE_MIND_WORM_SPRITE = (Sprite *)0x00779200;
 Sprite *g_BATTLE_ISLE_DEEP_SPRITE = (Sprite *)0x0076DC30;
 Sprite *g_BATTLE_LOCUSTS_CHIRON_SPRITE = (Sprite *)0x0078A4A0;
 Sprite *g_BATTLE_FUNGAL_TOWER_SPRITE = (Sprite *)0x00787E70;
 Sprite *g_BATTLE_SPORE_LAUNCHER_SPRITE = (Sprite *)0x007AC000;
 Sprite *g_BATTLE_SEALURK_SPRITE = (Sprite *)0x00779570;
+Sprite *g_TECH_ICON_SPRITES = (Sprite *)0x00759E28;
+Sprite *g_FACILITY_ICON_SPRITES = (Sprite *)0x00787200;
+Sprite *g_SECRET_PROJECT_ICON_SPRITES = (Sprite *)0x00759320;
+Sprite *g_IFACE_MP_COMBO_ARROW_SPRITES = (Sprite *)0x00788038;
+Sprite *g_SCROLL_BAR_ARROW_ICON_SPRITES = (Sprite *)0x00791D88;
+Sprite *g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES = (Sprite *)0x0078DE30;
 Sprite *g_SCROLL_BAR_FILLER_ICON_SPRITES = (Sprite *)0x0079A5E8;
 Sprite *g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE = (Sprite *)0x007796B0;
+Sprite *g_IFACE_LOCK_SPRITES = (Sprite *)0x007AC040;
+Sprite *g_UNUSED_SPRITES_VAR01 = (Sprite *)0x007A7940;
 Sprite *g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE = (Sprite *)0x0078DD50;
 Sprite *g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE = (Sprite *)0x00789BC8;
 Sprite *g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE = (Sprite *)0x00776580;
@@ -208,6 +323,7 @@ Sprite *g_UNUSED_SPRITE_VAR43 = (Sprite *)0x007AD080;
 Sprite *g_UNUSED_SPRITE_VAR44 = (Sprite *)0x00792608;
 Sprite *g_UNUSED_SPRITE_VAR45 = (Sprite *)0x00787EA0;
 Sprite *g_UNUSED_SPRITE_VAR46 = (Sprite *)0x007ACCD0;
+Sprite *g_IFACE_TECH_TREE_ARROW_SPRITES = (Sprite *)0x0075AFD0;
 Sprite *g_UNUSED_SPRITE_VAR47 = (Sprite *)0x00779740;
 Sprite *g_UNUSED_SPRITE_VAR48 = (Sprite *)0x0078A4D0;
 Sprite *g_UNUSED_SPRITE_VAR49 = (Sprite *)0x007AD140;
@@ -236,6 +352,15 @@ Sprite *g_UNUSED_SPRITE_VAR71 = (Sprite *)0x007A6890;
 Sprite *g_UNUSED_SPRITE_VAR72 = (Sprite *)0x007763F0;
 Sprite *g_UNUSED_SPRITE_VAR73 = (Sprite *)0x007ACD30;
 Sprite *g_UNUSED_SPRITE_VAR74 = (Sprite *)0x007ABF90;
+Sprite *g_UNUSED_SPRITES_VAR02 = (Sprite *)0x007A68F0;
+Sprite *g_UNUSED_SPRITES_VAR03 = (Sprite *)0x00789A90;
+Sprite *g_UNUSED_SPRITES_VAR04 = (Sprite *)0x00792160;
+Sprite *g_UNUSED_SPRITES_VAR05 = (Sprite *)0x0075B0C8;
+Sprite *g_UNUSED_SPRITES_VAR06 = (Sprite *)0x0075B8C8;
+Sprite *g_UNUSED_SPRITES_VAR07 = (Sprite *)0x00787ED0;
+Sprite *g_UNUSED_SPRITES_VAR08 = (Sprite *)0x007ACE80;
+Sprite *g_UNUSED_SPRITES_VAR09 = (Sprite *)0x007920A8;
+Sprite *g_UNUSED_SPRITES_VAR10 = (Sprite *)0x007ACF08;
 Sprite *g_UNUSED_SPRITE_VAR75 = (Sprite *)0x007794A8;
 Sprite *g_UNUSED_SPRITE_VAR76 = (Sprite *)0x00779670;
 Sprite *g_UNUSED_SPRITE_VAR77 = (Sprite *)0x007AB430;
@@ -245,11 +370,19 @@ Sprite *g_UNUSED_SPRITE_VAR80 = (Sprite *)0x007A67F0;
 Sprite *g_UNUSED_SPRITE_VAR81 = (Sprite *)0x00779618;
 Sprite *g_UNUSED_SPRITE_VAR82 = (Sprite *)0x007ACB58;
 Sprite *g_UNUSED_SPRITE_VAR83 = (Sprite *)0x007ACC20;
+Sprite *g_BASEWIN_SPRITES = (Sprite *)0x0077A5C8;
 Wave *g_MAININTERFACE_WAVE = (Wave *)0x007D38B8;
+Sprite *g_IFACE_GREEN_RIGHT_ARROW_SPRITE = (Sprite *)0x007F67C8;
 Wave *g_MULTIWIN_WAVE = (Wave *)0x007FFF00;
+ButtonGroup *g_PREFWIN_BUTTONGROUP = (ButtonGroup *)0x008577F0;
+Buffer *g_VEHDRAW_BUFFER = (Buffer *)0x008CC298;
+Sprite *g_CURSOR_SPRITES = (Sprite *)0x0093AA70;
 Wave *g_TOP_MENU_WAVE = (Wave *)0x00945780;
+Font *g_FONTS = (Font *)0x0093FC58;
 Wave *g_CRASH_LANDING_WAVE = (Wave *)0x00945E08;
 Wave *g_WAVE_GENERAL = (Wave *)0x00945ED0;
+Buffer *g_BUFFER = (Buffer *)0x009B6080;
+TextIndex *TxtIndexGlobal = (TextIndex *)0x009B7D08;
 
 /*
 Purpose: Atexit teardown thunk for g_ALPHAMENU_WAVE.
@@ -512,6 +645,16 @@ void __cdecl destroy_designwin_wave() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_CPU_WAVES.
+Original Offset: 00445480
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_cpu_waves() {
+    VectorDtorIterator(g_CPU_WAVES, 0x6C, 45, WaveElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_MENU_UP_WAVE.
 Original Offset: 004454C0
 Return Value: n/a
@@ -559,6 +702,126 @@ Status: Complete
 */
 void __cdecl destroy_passover_wave() {
     WaveOriginalDestructor(g_PASSOVER_WAVE);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_PCX_PARSE_TEMP_BUFFER1.
+Original Offset: 0044CC40
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_pcx_parse_temp_buffer1() {
+    g_PCX_PARSE_TEMP_BUFFER1->destroy();
+}
+
+/*
+Purpose: Atexit teardown thunk for FactionArt.
+Original Offset: 0044CC80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_factionart() {
+    VectorDtorIterator(FactionArtGlobal, 0x65C, 8, FactionArtElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_CLOSE_X_SPRITES.
+Original Offset: 0044CCD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_close_x_sprites() {
+    VectorDtorIterator(g_IFACE_CLOSE_X_SPRITES, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES1.
+Original Offset: 0044CD20
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites1() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES1, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES2.
+Original Offset: 0044CD70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites2() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES2, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES3.
+Original Offset: 0044CDC0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites3() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES3, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES4.
+Original Offset: 0044CE10
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites4() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES4, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES5.
+Original Offset: 0044CE60
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites5() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES5, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES6.
+Original Offset: 0044CEB0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites6() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES6, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES7.
+Original Offset: 0044CF00
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites7() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES7, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES8.
+Original Offset: 0044CF50
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprites8() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITES8, 0x2C, 51, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITE_BUFFERS.
+Original Offset: 0044CFA0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_box_sprite_buffers() {
+    VectorDtorIterator(g_IFACE_BOX_SPRITE_BUFFERS, 0x588, 51, BufferElementTeardown);
 }
 
 /*
@@ -639,6 +902,16 @@ Status: Complete
 */
 void __cdecl destroy_iface_std_popups_mid_right_sprite() {
     g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_MIDDLE_BUFFER.
+Original Offset: 0044D160
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_std_popups_middle_buffer() {
+    g_IFACE_STD_POPUPS_MIDDLE_BUFFER->destroy();
 }
 
 /*
@@ -862,6 +1135,26 @@ void __cdecl destroy_aa_rover_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_AA_WING_CAVIARDATA.
+Original Offset: 0044D5C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_aa_wing_caviardata() {
+    VectorDtorIterator(g_AA_WING_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_ACP_CAVIARDATA.
+Original Offset: 0044D610
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_acp_caviardata() {
+    VectorDtorIterator(g_ACP_CAVIARDATA, 0xC, 4, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_AX_CAVIARDATA.
 Original Offset: 0044D650
 Return Value: n/a
@@ -979,6 +1272,26 @@ Status: Complete
 */
 void __cdecl destroy_viptapsi_caviardata() {
     g_VIPTAPSI_CAVIARDATA->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VIPTR_CAVIARDATA.
+Original Offset: 0044D8A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_viptr_caviardata() {
+    VectorDtorIterator(g_VIPTR_CAVIARDATA, 0xC, 4, CaviarDataElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VIPTA_CAVIARDATA.
+Original Offset: 0044D8F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vipta_caviardata() {
+    VectorDtorIterator(g_VIPTA_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
 }
 
 /*
@@ -1102,6 +1415,16 @@ void __cdecl destroy_va01_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_VR_CAVIARDATA.
+Original Offset: 0044DB80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vr_caviardata() {
+    VectorDtorIterator(g_VR_CAVIARDATA, 0xC, 4, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VHR_CAVIARDATA2.
 Original Offset: 0044DBC0
 Return Value: n/a
@@ -1109,6 +1432,16 @@ Status: Complete
 */
 void __cdecl destroy_vhr_caviardata2() {
     g_VHR_CAVIARDATA2->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VRC_CAVIARDATA.
+Original Offset: 0044DC00
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vrc_caviardata() {
+    VectorDtorIterator(g_VRC_CAVIARDATA, 0xC, 4, CaviarDataElementTeardown);
 }
 
 /*
@@ -1202,6 +1535,16 @@ void __cdecl destroy_vcl_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR3.
+Original Offset: 0044DE00
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_caviardata_var3() {
+    VectorDtorIterator(g_UNUSED_CAVIARDATA_VAR3, 0xC, 2, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VCLT00_CAVIARDATA.
 Original Offset: 0044DE40
 Return Value: n/a
@@ -1232,6 +1575,16 @@ void __cdecl destroy_vhtp_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_VHTA0_CAVIARDATA.
+Original Offset: 0044DEE0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vhta0_caviardata() {
+    VectorDtorIterator(g_VHTA0_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VHTTP_CAVIARDATA.
 Original Offset: 0044DF20
 Return Value: n/a
@@ -1242,6 +1595,16 @@ void __cdecl destroy_vhttp_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_VHTTPA0_CAVIARDATA.
+Original Offset: 0044DF60
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vhttpa0_caviardata() {
+    VectorDtorIterator(g_VHTTPA0_CAVIARDATA, 0xC, 3, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VSP_CAVIARDATA.
 Original Offset: 0044DFA0
 Return Value: n/a
@@ -1249,6 +1612,16 @@ Status: Complete
 */
 void __cdecl destroy_vsp_caviardata() {
     g_VSP_CAVIARDATA->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VSPA0_CAVIARDATA.
+Original Offset: 0044DFE0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vspa0_caviardata() {
+    VectorDtorIterator(g_VSPA0_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
 }
 
 /*
@@ -1312,6 +1685,16 @@ void __cdecl destroy_vjtp_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_VJT0_CAVIARDATA.
+Original Offset: 0044E150
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vjt0_caviardata() {
+    VectorDtorIterator(g_VJT0_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VCU_CAVIARDATA.
 Original Offset: 0044E190
 Return Value: n/a
@@ -1329,6 +1712,16 @@ Status: Complete
 */
 void __cdecl destroy_vcup_caviardata() {
     g_VCUP_CAVIARDATA->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VCUA0_CAVIARDATA.
+Original Offset: 0044E200
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vcua0_caviardata() {
+    VectorDtorIterator(g_VCUA0_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
 }
 
 /*
@@ -1372,6 +1765,16 @@ void __cdecl destroy_vctb_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_VCT0_CAVIARDATA.
+Original Offset: 0044E310
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vct0_caviardata() {
+    VectorDtorIterator(g_VCT0_CAVIARDATA, 0xC, 2, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VWNTT_CAVIARDATA.
 Original Offset: 0044E350
 Return Value: n/a
@@ -1402,6 +1805,16 @@ void __cdecl destroy_vwnaa_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_VW_CAVIARDATA.
+Original Offset: 0044E3F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vw_caviardata() {
+    VectorDtorIterator(g_VW_CAVIARDATA, 0xC, 16, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_VM_CAVIARDATA.
 Original Offset: 0044E430
 Return Value: n/a
@@ -1419,6 +1832,26 @@ Status: Complete
 */
 void __cdecl destroy_vm13_caviardata() {
     g_VM13_CAVIARDATA->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VPBR0_CAVIARDATA.
+Original Offset: 0044E4A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vpbr0_caviardata() {
+    VectorDtorIterator(g_VPBR0_CAVIARDATA, 0xC, 4, CaviarDataElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR4.
+Original Offset: 0044E4F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_caviardata_var4() {
+    VectorDtorIterator(g_UNUSED_CAVIARDATA_VAR4, 0xC, 2, CaviarDataElementTeardown);
 }
 
 /*
@@ -1452,6 +1885,16 @@ void __cdecl destroy_nlc_caviardata() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR5.
+Original Offset: 0044E5D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_caviardata_var5() {
+    VectorDtorIterator(g_UNUSED_CAVIARDATA_VAR5, 0xC, 5, CaviarDataElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_RADIUS1_TEXTURE.
 Original Offset: 0044E610
 Return Value: n/a
@@ -1472,6 +1915,26 @@ void __cdecl destroy_radius2_texture() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_ROCKY_TEXTURES.
+Original Offset: 0044E680
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_rocky_textures() {
+    VectorDtorIterator(g_ROCKY_TEXTURES, 0x70, 4, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_OCEAN_TEXTURES.
+Original Offset: 0044E6D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ocean_textures() {
+    VectorDtorIterator(g_OCEAN_TEXTURES, 0x70, 2, TextureElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_FLAT_ARID_LAND_TEXTURE.
 Original Offset: 0044E710
 Return Value: n/a
@@ -1479,6 +1942,36 @@ Status: Complete
 */
 void __cdecl destroy_flat_arid_land_texture() {
     g_FLAT_ARID_LAND_TEXTURE->~Texture();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MOIST_LAND_TEXTURES.
+Original Offset: 0044E750
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_moist_land_textures() {
+    VectorDtorIterator(g_MOIST_LAND_TEXTURES, 0x70, 16, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_RAINY_LAND_TEXTURES.
+Original Offset: 0044E7A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_rainy_land_textures() {
+    VectorDtorIterator(g_RAINY_LAND_TEXTURES, 0x70, 16, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_JUNGLE_LAND_TEXTURES.
+Original Offset: 0044E7F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_jungle_land_textures() {
+    VectorDtorIterator(g_JUNGLE_LAND_TEXTURES, 0x70, 15, TextureElementTeardown);
 }
 
 /*
@@ -1492,6 +1985,106 @@ void __cdecl destroy_dune_land_texture() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_SUNNY_MESA_TEXTURES.
+Original Offset: 0044E870
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_sunny_mesa_textures() {
+    VectorDtorIterator(g_SUNNY_MESA_TEXTURES, 0x70, 8, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_RAINFALL_SINGLE_TILE_TEXTURES.
+Original Offset: 0044E8C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_rainfall_single_tile_textures() {
+    VectorDtorIterator(g_RAINFALL_SINGLE_TILE_TEXTURES, 0x70, 2, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_ROAD_TEXTURES.
+Original Offset: 0044E910
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_road_textures() {
+    VectorDtorIterator(g_ROAD_TEXTURES, 0x70, 9, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MAGTUBE_TEXTURES.
+Original Offset: 0044E960
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_magtube_textures() {
+    VectorDtorIterator(g_MAGTUBE_TEXTURES, 0x70, 9, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_RIVER_TEXTURES.
+Original Offset: 0044E9B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_river_textures() {
+    VectorDtorIterator(g_RIVER_TEXTURES, 0x70, 16, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MOUNT_PLANET_TEXTURES.
+Original Offset: 0044EA00
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_mount_planet_textures() {
+    VectorDtorIterator(g_MOUNT_PLANET_TEXTURES, 0x70, 3, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_GARLAND_CRATER_TEXTURES.
+Original Offset: 0044EA50
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_garland_crater_textures() {
+    VectorDtorIterator(g_GARLAND_CRATER_TEXTURES, 0x70, 3, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FUNGUS_TEXTURES.
+Original Offset: 0044EAA0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_fungus_textures() {
+    VectorDtorIterator(g_FUNGUS_TEXTURES, 0x70, 30, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FARM_TEXTURES.
+Original Offset: 0044EAF0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_farm_textures() {
+    VectorDtorIterator(g_FARM_TEXTURES, 0x70, 9, TextureElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FOREST_TEXTURES.
+Original Offset: 0044EB40
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_forest_textures() {
+    VectorDtorIterator(g_FOREST_TEXTURES, 0x70, 16, TextureElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_RAINFALL_SINGLE_TILE_TEXTURE.
 Original Offset: 0044EB80
 Return Value: n/a
@@ -1499,6 +2092,36 @@ Status: Complete
 */
 void __cdecl destroy_rainfall_single_tile_texture() {
     g_RAINFALL_SINGLE_TILE_TEXTURE->~Texture();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_WHITE_ORG_YEL_TILE_SPRITES.
+Original Offset: 0044EBC0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_white_org_yel_tile_sprites() {
+    VectorDtorIterator(g_TER1_WHITE_ORG_YEL_TILE_SPRITES, 0x2C, 6, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_BOTTOM_LEFT_TILE_SPRITES.
+Original Offset: 0044EC10
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_bottom_left_tile_sprites() {
+    VectorDtorIterator(g_TER1_BOTTOM_LEFT_TILE_SPRITES, 0x2C, 9, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_UNUSED_SPRITES2.
+Original Offset: 0044EC60
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_unused_sprites2() {
+    VectorDtorIterator(g_TER1_UNUSED_SPRITES2, 0x2C, 2, SpriteElementTeardown);
 }
 
 /*
@@ -1602,6 +2225,116 @@ void __cdecl destroy_ter1_borehole_cluster_sprite() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_TER1_MANIFOLD_NEXUS_SPRITES.
+Original Offset: 0044EE90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_manifold_nexus_sprites() {
+    VectorDtorIterator(g_TER1_MANIFOLD_NEXUS_SPRITES, 0x2C, 6, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1WRECK_UNITY_WRECKAGE_SPRITES.
+Original Offset: 0044EEE0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1wreck_unity_wreckage_sprites() {
+    VectorDtorIterator(g_TER1WRECK_UNITY_WRECKAGE_SPRITES, 0x2C, 15, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES.
+Original Offset: 0044EF30
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1wreck_unity_wreckage_alt_sprites() {
+    VectorDtorIterator(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES, 0x2C, 4, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FOSSIL_FIELD_RIDGE_SPRITES.
+Original Offset: 0044EF80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_fossil_field_ridge_sprites() {
+    VectorDtorIterator(g_FOSSIL_FIELD_RIDGE_SPRITES, 0x2C, 6, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_UNUSED_SPRITES1.
+Original Offset: 0044EFD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_unused_sprites1() {
+    VectorDtorIterator(g_TER1_UNUSED_SPRITES1, 0x2C, 5, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_FARM_SPRITES.
+Original Offset: 0044F020
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_farm_sprites() {
+    VectorDtorIterator(g_TER1_FARM_SPRITES, 0x2C, 5, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_SOIL_ENRICHER_SPRITES.
+Original Offset: 0044F070
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_soil_enricher_sprites() {
+    VectorDtorIterator(g_TER1_SOIL_ENRICHER_SPRITES, 0x2C, 5, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_SEA_LAND_RESOURCE_SPRITES.
+Original Offset: 0044F0C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_sea_land_resource_sprites() {
+    VectorDtorIterator(g_TER1_SEA_LAND_RESOURCE_SPRITES, 0x2C, 12, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_LANDMARK_RESOURCE_SPRITES.
+Original Offset: 0044F110
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_landmark_resource_sprites() {
+    VectorDtorIterator(g_TER1_LANDMARK_RESOURCE_SPRITES, 0x2C, 6, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_GLOW_SPRITES.
+Original Offset: 0044F160
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_glow_sprites() {
+    VectorDtorIterator(g_GLOW_SPRITES, 0x2C, 2, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TER1_UNITY_POD_SPRITES.
+Original Offset: 0044F1B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_ter1_unity_pod_sprites() {
+    VectorDtorIterator(g_TER1_UNITY_POD_SPRITES, 0x2C, 6, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_TER1_MONOLITH_SPRITE.
 Original Offset: 0044F1F0
 Return Value: n/a
@@ -1642,6 +2375,136 @@ void __cdecl destroy_ter1_sensor_array_sprite() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_RAINFALL_DOUBLE_TILE_SPRITES.
+Original Offset: 0044F2C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_rainfall_double_tile_sprites() {
+    VectorDtorIterator(g_RAINFALL_DOUBLE_TILE_SPRITES, 0x2C, 2, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VEH_SPRITES.
+Original Offset: 0044F310
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_veh_sprites() {
+    VectorDtorIterator(g_VEH_SPRITES, 0x2C, 152, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FLAGS_VEH_SPRITES.
+Original Offset: 0044F360
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_flags_veh_sprites() {
+    VectorDtorIterator(g_FLAGS_VEH_SPRITES, 0x2C, 112, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_ICONS_GENERAL_SPRITES.
+Original Offset: 0044F3B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_icons_general_sprites() {
+    VectorDtorIterator(g_ICONS_GENERAL_SPRITES, 0x2C, 16, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_RESOURCE_ICON_SPRITES.
+Original Offset: 0044F400
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_resource_icon_sprites() {
+    VectorDtorIterator(g_RESOURCE_ICON_SPRITES, 0x2C, 32, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_CITIZEN_LG_CURSOR_SPRITES.
+Original Offset: 0044F450
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_citizen_lg_cursor_sprites() {
+    VectorDtorIterator(g_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 8, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SPECIALIST_LG_CURSOR_SPRITES.
+Original Offset: 0044F4A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_specialist_lg_cursor_sprites() {
+    VectorDtorIterator(g_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_CITIZEN_SM_CURSOR_SPRITES.
+Original Offset: 0044F4F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_citizen_sm_cursor_sprites() {
+    VectorDtorIterator(g_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 8, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SPECIALIST_SM_CURSOR_SPRITES.
+Original Offset: 0044F540
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_specialist_sm_cursor_sprites() {
+    VectorDtorIterator(g_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_AL_CITIZEN_LG_CURSOR_SPRITES.
+Original Offset: 0044F590
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_al_citizen_lg_cursor_sprites() {
+    VectorDtorIterator(g_AL_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 4, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_AL_SPECIALIST_LG_CURSOR_SPRITES.
+Original Offset: 0044F5E0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_al_specialist_lg_cursor_sprites() {
+    VectorDtorIterator(g_AL_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_AL_CITIZEN_SM_CURSOR_SPRITES.
+Original Offset: 0044F630
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_al_citizen_sm_cursor_sprites() {
+    VectorDtorIterator(g_AL_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 4, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_AL_SPECIALIST_SM_CURSOR_SPRITES.
+Original Offset: 0044F680
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_al_specialist_sm_cursor_sprites() {
+    VectorDtorIterator(g_AL_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_RED_ALIEN_HEAD_ICON_SPRITE.
 Original Offset: 0044F6C0
 Return Value: n/a
@@ -1649,6 +2512,26 @@ Status: Complete
 */
 void __cdecl destroy_red_alien_head_icon_sprite() {
     g_RED_ALIEN_HEAD_ICON_SPRITE->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SILVER_MENU_ICON_SPRITES.
+Original Offset: 0044F700
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_silver_menu_icon_sprites() {
+    VectorDtorIterator(g_SILVER_MENU_ICON_SPRITES, 0x2C, 4, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SILVER_CHECKBOX_ICON_SPRITES.
+Original Offset: 0044F750
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_silver_checkbox_icon_sprites() {
+    VectorDtorIterator(g_SILVER_CHECKBOX_ICON_SPRITES, 0x2C, 2, SpriteElementTeardown);
 }
 
 /*
@@ -1672,6 +2555,16 @@ void __cdecl destroy_null_resource_icon_sprite() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_PEACE_SIGN_SPRITES.
+Original Offset: 0044F800
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_peace_sign_sprites() {
+    VectorDtorIterator(g_PEACE_SIGN_SPRITES, 0x2C, 2, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_ICON_TILE_SQUARE_SPRITE.
 Original Offset: 0044F840
 Return Value: n/a
@@ -1679,6 +2572,26 @@ Status: Complete
 */
 void __cdecl destroy_icon_tile_square_sprite() {
     g_ICON_TILE_SQUARE_SPRITE->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_XI_BOOM_VEH_SPRITES.
+Original Offset: 0044F880
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_xi_boom_veh_sprites() {
+    VectorDtorIterator(g_XI_BOOM_VEH_SPRITES, 0x2C, 144, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_XF_BOOM_VEH_SPRITES.
+Original Offset: 0044F8D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_xf_boom_veh_sprites() {
+    VectorDtorIterator(g_XF_BOOM_VEH_SPRITES, 0x2C, 64, SpriteElementTeardown);
 }
 
 /*
@@ -1742,6 +2655,66 @@ void __cdecl destroy_battle_sealurk_sprite() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_TECH_ICON_SPRITES.
+Original Offset: 0044FA40
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_tech_icon_sprites() {
+    VectorDtorIterator(g_TECH_ICON_SPRITES, 0x2C, 89, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FACILITY_ICON_SPRITES.
+Original Offset: 0044FA90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_facility_icon_sprites() {
+    VectorDtorIterator(g_FACILITY_ICON_SPRITES, 0x2C, 70, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SECRET_PROJECT_ICON_SPRITES.
+Original Offset: 0044FAE0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_secret_project_icon_sprites() {
+    VectorDtorIterator(g_SECRET_PROJECT_ICON_SPRITES, 0x2C, 64, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_MP_COMBO_ARROW_SPRITES.
+Original Offset: 0044FB30
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_mp_combo_arrow_sprites() {
+    VectorDtorIterator(g_IFACE_MP_COMBO_ARROW_SPRITES, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SCROLL_BAR_ARROW_ICON_SPRITES.
+Original Offset: 0044FB80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_scroll_bar_arrow_icon_sprites() {
+    VectorDtorIterator(g_SCROLL_BAR_ARROW_ICON_SPRITES, 0x2C, 12, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES.
+Original Offset: 0044FBD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_scroll_bar_small_arrow_icon_sprites() {
+    VectorDtorIterator(g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES, 0x2C, 12, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_FILLER_ICON_SPRITES.
 Original Offset: 0044FC10
 Return Value: n/a
@@ -1759,6 +2732,26 @@ Status: Complete
 */
 void __cdecl destroy_scroll_bar_small_filler_icon_sprite() {
     g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_LOCK_SPRITES.
+Original Offset: 0044FC80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_lock_sprites() {
+    VectorDtorIterator(g_IFACE_LOCK_SPRITES, 0x2C, 2, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR01.
+Original Offset: 0044FCD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var01() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR01, 0x2C, 8, SpriteElementTeardown);
 }
 
 /*
@@ -2112,6 +3105,16 @@ void __cdecl destroy_unused_sprite_var46() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_IFACE_TECH_TREE_ARROW_SPRITES.
+Original Offset: 004503B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_tech_tree_arrow_sprites() {
+    VectorDtorIterator(g_IFACE_TECH_TREE_ARROW_SPRITES, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR47.
 Original Offset: 004503F0
 Return Value: n/a
@@ -2392,6 +3395,96 @@ void __cdecl destroy_unused_sprite_var74() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR02.
+Original Offset: 00450940
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var02() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR02, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR03.
+Original Offset: 00450990
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var03() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR03, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR04.
+Original Offset: 004509E0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var04() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR04, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR05.
+Original Offset: 00450A30
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var05() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR05, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR06.
+Original Offset: 00450A80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var06() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR06, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR07.
+Original Offset: 00450AD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var07() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR07, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR08.
+Original Offset: 00450B20
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var08() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR08, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR09.
+Original Offset: 00450B70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var09() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR09, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR10.
+Original Offset: 00450BC0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_unused_sprites_var10() {
+    VectorDtorIterator(g_UNUSED_SPRITES_VAR10, 0x2C, 3, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR75.
 Original Offset: 00450C00
 Return Value: n/a
@@ -2482,6 +3575,16 @@ void __cdecl destroy_unused_sprite_var83() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_BASEWIN_SPRITES.
+Original Offset: 00450DC0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_basewin_sprites() {
+    VectorDtorIterator(g_BASEWIN_SPRITES, 0x2C, 27, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_MAININTERFACE_WAVE.
 Original Offset: 004595B0
 Return Value: n/a
@@ -2489,6 +3592,16 @@ Status: Complete
 */
 void __cdecl destroy_maininterface_wave() {
     WaveOriginalDestructor(g_MAININTERFACE_WAVE);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_IFACE_GREEN_RIGHT_ARROW_SPRITE.
+Original Offset: 00471380
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_iface_green_right_arrow_sprite() {
+    VectorDtorIterator(g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, SpriteElementTeardown);
 }
 
 /*
@@ -2502,6 +3615,36 @@ void __cdecl destroy_multiwin_wave() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_PREFWIN_BUTTONGROUP.
+Original Offset: 0048D540
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_prefwin_buttongroup() {
+    g_PREFWIN_BUTTONGROUP->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VEHDRAW_BUFFER.
+Original Offset: 004BF730
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vehdraw_buffer() {
+    g_VEHDRAW_BUFFER->destroy();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_CURSOR_SPRITES.
+Original Offset: 0052DAF0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_cursor_sprites() {
+    VectorDtorIterator(g_CURSOR_SPRITES, 0x2C, 12, SpriteElementTeardown);
+}
+
+/*
 Purpose: Atexit teardown thunk for g_TOP_MENU_WAVE.
 Original Offset: 00584D20
 Return Value: n/a
@@ -2509,6 +3652,16 @@ Status: Complete
 */
 void __cdecl destroy_top_menu_wave() {
     WaveOriginalDestructor(g_TOP_MENU_WAVE);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FONTS.
+Original Offset: 005882D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_fonts() {
+    VectorDtorIterator(g_FONTS, 0x28, 48, FontElementTeardown);
 }
 
 /*
@@ -2529,4 +3682,24 @@ Status: Complete
 */
 void __cdecl destroy_wave_general() {
     WaveOriginalDestructor(g_WAVE_GENERAL);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_BUFFER.
+Original Offset: 005E37D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_buffer() {
+    g_BUFFER->destroy();
+}
+
+/*
+Purpose: Atexit teardown thunk for TxtIndex.
+Original Offset: 005FD510
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_txtindex() {
+    VectorDtorIterator(TxtIndexGlobal, 0x118, 4, TextIndexElementTeardown);
 }

@@ -107,7 +107,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 848;
+constexpr size_t RedirectCount = 952;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -903,6 +903,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00443E40,
         },
         {
+            0x00445480,
+            reinterpret_cast<uintptr_t>(&destroy_cpu_waves),
+            OPENSMACX_SIGNATURE_00445480,
+        },
+        {
             0x004454C0,
             reinterpret_cast<uintptr_t>(&destroy_menu_up_wave),
             OPENSMACX_SIGNATURE_004454C0,
@@ -1068,6 +1073,66 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044CB60,
         },
         {
+            0x0044CC40,
+            reinterpret_cast<uintptr_t>(&destroy_pcx_parse_temp_buffer1),
+            OPENSMACX_SIGNATURE_0044CC40,
+        },
+        {
+            0x0044CC80,
+            reinterpret_cast<uintptr_t>(&destroy_factionart),
+            OPENSMACX_SIGNATURE_0044CC80,
+        },
+        {
+            0x0044CCD0,
+            reinterpret_cast<uintptr_t>(&destroy_iface_close_x_sprites),
+            OPENSMACX_SIGNATURE_0044CCD0,
+        },
+        {
+            0x0044CD20,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites1),
+            OPENSMACX_SIGNATURE_0044CD20,
+        },
+        {
+            0x0044CD70,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites2),
+            OPENSMACX_SIGNATURE_0044CD70,
+        },
+        {
+            0x0044CDC0,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites3),
+            OPENSMACX_SIGNATURE_0044CDC0,
+        },
+        {
+            0x0044CE10,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites4),
+            OPENSMACX_SIGNATURE_0044CE10,
+        },
+        {
+            0x0044CE60,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites5),
+            OPENSMACX_SIGNATURE_0044CE60,
+        },
+        {
+            0x0044CEB0,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites6),
+            OPENSMACX_SIGNATURE_0044CEB0,
+        },
+        {
+            0x0044CF00,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites7),
+            OPENSMACX_SIGNATURE_0044CF00,
+        },
+        {
+            0x0044CF50,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprites8),
+            OPENSMACX_SIGNATURE_0044CF50,
+        },
+        {
+            0x0044CFA0,
+            reinterpret_cast<uintptr_t>(&destroy_iface_box_sprite_buffers),
+            OPENSMACX_SIGNATURE_0044CFA0,
+        },
+        {
             0x0044CFE0,
             reinterpret_cast<uintptr_t>(&destroy_iface_std_popups_top_left_sprite),
             OPENSMACX_SIGNATURE_0044CFE0,
@@ -1106,6 +1171,11 @@ bool install_redirects() {
             0x0044D130,
             reinterpret_cast<uintptr_t>(&destroy_iface_std_popups_mid_right_sprite),
             OPENSMACX_SIGNATURE_0044D130,
+        },
+        {
+            0x0044D160,
+            reinterpret_cast<uintptr_t>(&destroy_iface_std_popups_middle_buffer),
+            OPENSMACX_SIGNATURE_0044D160,
         },
         {
             0x0044D190,
@@ -1218,6 +1288,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044D580,
         },
         {
+            0x0044D5C0,
+            reinterpret_cast<uintptr_t>(&destroy_aa_wing_caviardata),
+            OPENSMACX_SIGNATURE_0044D5C0,
+        },
+        {
+            0x0044D610,
+            reinterpret_cast<uintptr_t>(&destroy_acp_caviardata),
+            OPENSMACX_SIGNATURE_0044D610,
+        },
+        {
             0x0044D650,
             reinterpret_cast<uintptr_t>(&destroy_ax_caviardata),
             OPENSMACX_SIGNATURE_0044D650,
@@ -1276,6 +1356,16 @@ bool install_redirects() {
             0x0044D860,
             reinterpret_cast<uintptr_t>(&destroy_viptapsi_caviardata),
             OPENSMACX_SIGNATURE_0044D860,
+        },
+        {
+            0x0044D8A0,
+            reinterpret_cast<uintptr_t>(&destroy_viptr_caviardata),
+            OPENSMACX_SIGNATURE_0044D8A0,
+        },
+        {
+            0x0044D8F0,
+            reinterpret_cast<uintptr_t>(&destroy_vipta_caviardata),
+            OPENSMACX_SIGNATURE_0044D8F0,
         },
         {
             0x0044D930,
@@ -1338,9 +1428,19 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044DB40,
         },
         {
+            0x0044DB80,
+            reinterpret_cast<uintptr_t>(&destroy_vr_caviardata),
+            OPENSMACX_SIGNATURE_0044DB80,
+        },
+        {
             0x0044DBC0,
             reinterpret_cast<uintptr_t>(&destroy_vhr_caviardata2),
             OPENSMACX_SIGNATURE_0044DBC0,
+        },
+        {
+            0x0044DC00,
+            reinterpret_cast<uintptr_t>(&destroy_vrc_caviardata),
+            OPENSMACX_SIGNATURE_0044DC00,
         },
         {
             0x0044DC40,
@@ -1388,6 +1488,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044DDC0,
         },
         {
+            0x0044DE00,
+            reinterpret_cast<uintptr_t>(&destroy_unused_caviardata_var3),
+            OPENSMACX_SIGNATURE_0044DE00,
+        },
+        {
             0x0044DE40,
             reinterpret_cast<uintptr_t>(&destroy_vclt00_caviardata),
             OPENSMACX_SIGNATURE_0044DE40,
@@ -1403,14 +1508,29 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044DEA0,
         },
         {
+            0x0044DEE0,
+            reinterpret_cast<uintptr_t>(&destroy_vhta0_caviardata),
+            OPENSMACX_SIGNATURE_0044DEE0,
+        },
+        {
             0x0044DF20,
             reinterpret_cast<uintptr_t>(&destroy_vhttp_caviardata),
             OPENSMACX_SIGNATURE_0044DF20,
         },
         {
+            0x0044DF60,
+            reinterpret_cast<uintptr_t>(&destroy_vhttpa0_caviardata),
+            OPENSMACX_SIGNATURE_0044DF60,
+        },
+        {
             0x0044DFA0,
             reinterpret_cast<uintptr_t>(&destroy_vsp_caviardata),
             OPENSMACX_SIGNATURE_0044DFA0,
+        },
+        {
+            0x0044DFE0,
+            reinterpret_cast<uintptr_t>(&destroy_vspa0_caviardata),
+            OPENSMACX_SIGNATURE_0044DFE0,
         },
         {
             0x0044E020,
@@ -1443,6 +1563,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044E110,
         },
         {
+            0x0044E150,
+            reinterpret_cast<uintptr_t>(&destroy_vjt0_caviardata),
+            OPENSMACX_SIGNATURE_0044E150,
+        },
+        {
             0x0044E190,
             reinterpret_cast<uintptr_t>(&destroy_vcu_caviardata),
             OPENSMACX_SIGNATURE_0044E190,
@@ -1451,6 +1576,11 @@ bool install_redirects() {
             0x0044E1C0,
             reinterpret_cast<uintptr_t>(&destroy_vcup_caviardata),
             OPENSMACX_SIGNATURE_0044E1C0,
+        },
+        {
+            0x0044E200,
+            reinterpret_cast<uintptr_t>(&destroy_vcua0_caviardata),
+            OPENSMACX_SIGNATURE_0044E200,
         },
         {
             0x0044E240,
@@ -1473,6 +1603,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044E2D0,
         },
         {
+            0x0044E310,
+            reinterpret_cast<uintptr_t>(&destroy_vct0_caviardata),
+            OPENSMACX_SIGNATURE_0044E310,
+        },
+        {
             0x0044E350,
             reinterpret_cast<uintptr_t>(&destroy_vwntt_caviardata),
             OPENSMACX_SIGNATURE_0044E350,
@@ -1488,6 +1623,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044E3B0,
         },
         {
+            0x0044E3F0,
+            reinterpret_cast<uintptr_t>(&destroy_vw_caviardata),
+            OPENSMACX_SIGNATURE_0044E3F0,
+        },
+        {
             0x0044E430,
             reinterpret_cast<uintptr_t>(&destroy_vm_caviardata),
             OPENSMACX_SIGNATURE_0044E430,
@@ -1496,6 +1636,16 @@ bool install_redirects() {
             0x0044E460,
             reinterpret_cast<uintptr_t>(&destroy_vm13_caviardata),
             OPENSMACX_SIGNATURE_0044E460,
+        },
+        {
+            0x0044E4A0,
+            reinterpret_cast<uintptr_t>(&destroy_vpbr0_caviardata),
+            OPENSMACX_SIGNATURE_0044E4A0,
+        },
+        {
+            0x0044E4F0,
+            reinterpret_cast<uintptr_t>(&destroy_unused_caviardata_var4),
+            OPENSMACX_SIGNATURE_0044E4F0,
         },
         {
             0x0044E530,
@@ -1513,6 +1663,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044E590,
         },
         {
+            0x0044E5D0,
+            reinterpret_cast<uintptr_t>(&destroy_unused_caviardata_var5),
+            OPENSMACX_SIGNATURE_0044E5D0,
+        },
+        {
             0x0044E610,
             reinterpret_cast<uintptr_t>(&destroy_radius1_texture),
             OPENSMACX_SIGNATURE_0044E610,
@@ -1523,9 +1678,34 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044E640,
         },
         {
+            0x0044E680,
+            reinterpret_cast<uintptr_t>(&destroy_rocky_textures),
+            OPENSMACX_SIGNATURE_0044E680,
+        },
+        {
+            0x0044E6D0,
+            reinterpret_cast<uintptr_t>(&destroy_ocean_textures),
+            OPENSMACX_SIGNATURE_0044E6D0,
+        },
+        {
             0x0044E710,
             reinterpret_cast<uintptr_t>(&destroy_flat_arid_land_texture),
             OPENSMACX_SIGNATURE_0044E710,
+        },
+        {
+            0x0044E750,
+            reinterpret_cast<uintptr_t>(&destroy_moist_land_textures),
+            OPENSMACX_SIGNATURE_0044E750,
+        },
+        {
+            0x0044E7A0,
+            reinterpret_cast<uintptr_t>(&destroy_rainy_land_textures),
+            OPENSMACX_SIGNATURE_0044E7A0,
+        },
+        {
+            0x0044E7F0,
+            reinterpret_cast<uintptr_t>(&destroy_jungle_land_textures),
+            OPENSMACX_SIGNATURE_0044E7F0,
         },
         {
             0x0044E830,
@@ -1533,9 +1713,74 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044E830,
         },
         {
+            0x0044E870,
+            reinterpret_cast<uintptr_t>(&destroy_sunny_mesa_textures),
+            OPENSMACX_SIGNATURE_0044E870,
+        },
+        {
+            0x0044E8C0,
+            reinterpret_cast<uintptr_t>(&destroy_rainfall_single_tile_textures),
+            OPENSMACX_SIGNATURE_0044E8C0,
+        },
+        {
+            0x0044E910,
+            reinterpret_cast<uintptr_t>(&destroy_road_textures),
+            OPENSMACX_SIGNATURE_0044E910,
+        },
+        {
+            0x0044E960,
+            reinterpret_cast<uintptr_t>(&destroy_magtube_textures),
+            OPENSMACX_SIGNATURE_0044E960,
+        },
+        {
+            0x0044E9B0,
+            reinterpret_cast<uintptr_t>(&destroy_river_textures),
+            OPENSMACX_SIGNATURE_0044E9B0,
+        },
+        {
+            0x0044EA00,
+            reinterpret_cast<uintptr_t>(&destroy_mount_planet_textures),
+            OPENSMACX_SIGNATURE_0044EA00,
+        },
+        {
+            0x0044EA50,
+            reinterpret_cast<uintptr_t>(&destroy_garland_crater_textures),
+            OPENSMACX_SIGNATURE_0044EA50,
+        },
+        {
+            0x0044EAA0,
+            reinterpret_cast<uintptr_t>(&destroy_fungus_textures),
+            OPENSMACX_SIGNATURE_0044EAA0,
+        },
+        {
+            0x0044EAF0,
+            reinterpret_cast<uintptr_t>(&destroy_farm_textures),
+            OPENSMACX_SIGNATURE_0044EAF0,
+        },
+        {
+            0x0044EB40,
+            reinterpret_cast<uintptr_t>(&destroy_forest_textures),
+            OPENSMACX_SIGNATURE_0044EB40,
+        },
+        {
             0x0044EB80,
             reinterpret_cast<uintptr_t>(&destroy_rainfall_single_tile_texture),
             OPENSMACX_SIGNATURE_0044EB80,
+        },
+        {
+            0x0044EBC0,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_white_org_yel_tile_sprites),
+            OPENSMACX_SIGNATURE_0044EBC0,
+        },
+        {
+            0x0044EC10,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_bottom_left_tile_sprites),
+            OPENSMACX_SIGNATURE_0044EC10,
+        },
+        {
+            0x0044EC60,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_unused_sprites2),
+            OPENSMACX_SIGNATURE_0044EC60,
         },
         {
             0x0044ECA0,
@@ -1588,6 +1833,61 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044EE50,
         },
         {
+            0x0044EE90,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_manifold_nexus_sprites),
+            OPENSMACX_SIGNATURE_0044EE90,
+        },
+        {
+            0x0044EEE0,
+            reinterpret_cast<uintptr_t>(&destroy_ter1wreck_unity_wreckage_sprites),
+            OPENSMACX_SIGNATURE_0044EEE0,
+        },
+        {
+            0x0044EF30,
+            reinterpret_cast<uintptr_t>(&destroy_ter1wreck_unity_wreckage_alt_sprites),
+            OPENSMACX_SIGNATURE_0044EF30,
+        },
+        {
+            0x0044EF80,
+            reinterpret_cast<uintptr_t>(&destroy_fossil_field_ridge_sprites),
+            OPENSMACX_SIGNATURE_0044EF80,
+        },
+        {
+            0x0044EFD0,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_unused_sprites1),
+            OPENSMACX_SIGNATURE_0044EFD0,
+        },
+        {
+            0x0044F020,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_farm_sprites),
+            OPENSMACX_SIGNATURE_0044F020,
+        },
+        {
+            0x0044F070,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_soil_enricher_sprites),
+            OPENSMACX_SIGNATURE_0044F070,
+        },
+        {
+            0x0044F0C0,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_sea_land_resource_sprites),
+            OPENSMACX_SIGNATURE_0044F0C0,
+        },
+        {
+            0x0044F110,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_landmark_resource_sprites),
+            OPENSMACX_SIGNATURE_0044F110,
+        },
+        {
+            0x0044F160,
+            reinterpret_cast<uintptr_t>(&destroy_glow_sprites),
+            OPENSMACX_SIGNATURE_0044F160,
+        },
+        {
+            0x0044F1B0,
+            reinterpret_cast<uintptr_t>(&destroy_ter1_unity_pod_sprites),
+            OPENSMACX_SIGNATURE_0044F1B0,
+        },
+        {
             0x0044F1F0,
             reinterpret_cast<uintptr_t>(&destroy_ter1_monolith_sprite),
             OPENSMACX_SIGNATURE_0044F1F0,
@@ -1608,9 +1908,84 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044F280,
         },
         {
+            0x0044F2C0,
+            reinterpret_cast<uintptr_t>(&destroy_rainfall_double_tile_sprites),
+            OPENSMACX_SIGNATURE_0044F2C0,
+        },
+        {
+            0x0044F310,
+            reinterpret_cast<uintptr_t>(&destroy_veh_sprites),
+            OPENSMACX_SIGNATURE_0044F310,
+        },
+        {
+            0x0044F360,
+            reinterpret_cast<uintptr_t>(&destroy_flags_veh_sprites),
+            OPENSMACX_SIGNATURE_0044F360,
+        },
+        {
+            0x0044F3B0,
+            reinterpret_cast<uintptr_t>(&destroy_icons_general_sprites),
+            OPENSMACX_SIGNATURE_0044F3B0,
+        },
+        {
+            0x0044F400,
+            reinterpret_cast<uintptr_t>(&destroy_resource_icon_sprites),
+            OPENSMACX_SIGNATURE_0044F400,
+        },
+        {
+            0x0044F450,
+            reinterpret_cast<uintptr_t>(&destroy_citizen_lg_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F450,
+        },
+        {
+            0x0044F4A0,
+            reinterpret_cast<uintptr_t>(&destroy_specialist_lg_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F4A0,
+        },
+        {
+            0x0044F4F0,
+            reinterpret_cast<uintptr_t>(&destroy_citizen_sm_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F4F0,
+        },
+        {
+            0x0044F540,
+            reinterpret_cast<uintptr_t>(&destroy_specialist_sm_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F540,
+        },
+        {
+            0x0044F590,
+            reinterpret_cast<uintptr_t>(&destroy_al_citizen_lg_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F590,
+        },
+        {
+            0x0044F5E0,
+            reinterpret_cast<uintptr_t>(&destroy_al_specialist_lg_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F5E0,
+        },
+        {
+            0x0044F630,
+            reinterpret_cast<uintptr_t>(&destroy_al_citizen_sm_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F630,
+        },
+        {
+            0x0044F680,
+            reinterpret_cast<uintptr_t>(&destroy_al_specialist_sm_cursor_sprites),
+            OPENSMACX_SIGNATURE_0044F680,
+        },
+        {
             0x0044F6C0,
             reinterpret_cast<uintptr_t>(&destroy_red_alien_head_icon_sprite),
             OPENSMACX_SIGNATURE_0044F6C0,
+        },
+        {
+            0x0044F700,
+            reinterpret_cast<uintptr_t>(&destroy_silver_menu_icon_sprites),
+            OPENSMACX_SIGNATURE_0044F700,
+        },
+        {
+            0x0044F750,
+            reinterpret_cast<uintptr_t>(&destroy_silver_checkbox_icon_sprites),
+            OPENSMACX_SIGNATURE_0044F750,
         },
         {
             0x0044F790,
@@ -1623,9 +1998,24 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044F7C0,
         },
         {
+            0x0044F800,
+            reinterpret_cast<uintptr_t>(&destroy_peace_sign_sprites),
+            OPENSMACX_SIGNATURE_0044F800,
+        },
+        {
             0x0044F840,
             reinterpret_cast<uintptr_t>(&destroy_icon_tile_square_sprite),
             OPENSMACX_SIGNATURE_0044F840,
+        },
+        {
+            0x0044F880,
+            reinterpret_cast<uintptr_t>(&destroy_xi_boom_veh_sprites),
+            OPENSMACX_SIGNATURE_0044F880,
+        },
+        {
+            0x0044F8D0,
+            reinterpret_cast<uintptr_t>(&destroy_xf_boom_veh_sprites),
+            OPENSMACX_SIGNATURE_0044F8D0,
         },
         {
             0x0044F910,
@@ -1658,6 +2048,36 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0044FA00,
         },
         {
+            0x0044FA40,
+            reinterpret_cast<uintptr_t>(&destroy_tech_icon_sprites),
+            OPENSMACX_SIGNATURE_0044FA40,
+        },
+        {
+            0x0044FA90,
+            reinterpret_cast<uintptr_t>(&destroy_facility_icon_sprites),
+            OPENSMACX_SIGNATURE_0044FA90,
+        },
+        {
+            0x0044FAE0,
+            reinterpret_cast<uintptr_t>(&destroy_secret_project_icon_sprites),
+            OPENSMACX_SIGNATURE_0044FAE0,
+        },
+        {
+            0x0044FB30,
+            reinterpret_cast<uintptr_t>(&destroy_iface_mp_combo_arrow_sprites),
+            OPENSMACX_SIGNATURE_0044FB30,
+        },
+        {
+            0x0044FB80,
+            reinterpret_cast<uintptr_t>(&destroy_scroll_bar_arrow_icon_sprites),
+            OPENSMACX_SIGNATURE_0044FB80,
+        },
+        {
+            0x0044FBD0,
+            reinterpret_cast<uintptr_t>(&destroy_scroll_bar_small_arrow_icon_sprites),
+            OPENSMACX_SIGNATURE_0044FBD0,
+        },
+        {
             0x0044FC10,
             reinterpret_cast<uintptr_t>(&destroy_scroll_bar_filler_icon_sprites),
             OPENSMACX_SIGNATURE_0044FC10,
@@ -1666,6 +2086,16 @@ bool install_redirects() {
             0x0044FC40,
             reinterpret_cast<uintptr_t>(&destroy_scroll_bar_small_filler_icon_sprite),
             OPENSMACX_SIGNATURE_0044FC40,
+        },
+        {
+            0x0044FC80,
+            reinterpret_cast<uintptr_t>(&destroy_iface_lock_sprites),
+            OPENSMACX_SIGNATURE_0044FC80,
+        },
+        {
+            0x0044FCD0,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var01),
+            OPENSMACX_SIGNATURE_0044FCD0,
         },
         {
             0x0044FD10,
@@ -1843,6 +2273,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00450370,
         },
         {
+            0x004503B0,
+            reinterpret_cast<uintptr_t>(&destroy_iface_tech_tree_arrow_sprites),
+            OPENSMACX_SIGNATURE_004503B0,
+        },
+        {
             0x004503F0,
             reinterpret_cast<uintptr_t>(&destroy_unused_sprite_var47),
             OPENSMACX_SIGNATURE_004503F0,
@@ -1983,6 +2418,51 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00450900,
         },
         {
+            0x00450940,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var02),
+            OPENSMACX_SIGNATURE_00450940,
+        },
+        {
+            0x00450990,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var03),
+            OPENSMACX_SIGNATURE_00450990,
+        },
+        {
+            0x004509E0,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var04),
+            OPENSMACX_SIGNATURE_004509E0,
+        },
+        {
+            0x00450A30,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var05),
+            OPENSMACX_SIGNATURE_00450A30,
+        },
+        {
+            0x00450A80,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var06),
+            OPENSMACX_SIGNATURE_00450A80,
+        },
+        {
+            0x00450AD0,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var07),
+            OPENSMACX_SIGNATURE_00450AD0,
+        },
+        {
+            0x00450B20,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var08),
+            OPENSMACX_SIGNATURE_00450B20,
+        },
+        {
+            0x00450B70,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var09),
+            OPENSMACX_SIGNATURE_00450B70,
+        },
+        {
+            0x00450BC0,
+            reinterpret_cast<uintptr_t>(&destroy_unused_sprites_var10),
+            OPENSMACX_SIGNATURE_00450BC0,
+        },
+        {
             0x00450C00,
             reinterpret_cast<uintptr_t>(&destroy_unused_sprite_var75),
             OPENSMACX_SIGNATURE_00450C00,
@@ -2026,6 +2506,11 @@ bool install_redirects() {
             0x00450D80,
             reinterpret_cast<uintptr_t>(&destroy_unused_sprite_var83),
             OPENSMACX_SIGNATURE_00450D80,
+        },
+        {
+            0x00450DC0,
+            reinterpret_cast<uintptr_t>(&destroy_basewin_sprites),
+            OPENSMACX_SIGNATURE_00450DC0,
         },
         {
             0x004562F0,
@@ -2148,6 +2633,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00470F70,
         },
         {
+            0x00471380,
+            reinterpret_cast<uintptr_t>(&destroy_iface_green_right_arrow_sprite),
+            OPENSMACX_SIGNATURE_00471380,
+        },
+        {
             0x004713A0,
             reinterpret_cast<uintptr_t>(&message_win_unk1_redirect),
             OPENSMACX_SIGNATURE_004713A0,
@@ -2231,6 +2721,11 @@ bool install_redirects() {
             0x0048BC50,
             reinterpret_cast<uintptr_t>(&plan_win_close_redirect),
             OPENSMACX_SIGNATURE_0048BC50,
+        },
+        {
+            0x0048D540,
+            reinterpret_cast<uintptr_t>(&destroy_prefwin_buttongroup),
+            OPENSMACX_SIGNATURE_0048D540,
         },
         {
             0x004926B0,
@@ -2386,6 +2881,11 @@ bool install_redirects() {
             0x004BDDD0,
             reinterpret_cast<uintptr_t>(&tut_win_unk3_redirect),
             OPENSMACX_SIGNATURE_004BDDD0,
+        },
+        {
+            0x004BF730,
+            reinterpret_cast<uintptr_t>(&destroy_vehdraw_buffer),
+            OPENSMACX_SIGNATURE_004BF730,
         },
         {
             0x004C3E50,
@@ -2833,6 +3333,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00514F40,
         },
         {
+            0x0052DAF0,
+            reinterpret_cast<uintptr_t>(&destroy_cursor_sprites),
+            OPENSMACX_SIGNATURE_0052DAF0,
+        },
+        {
             0x0052DC70,
             reinterpret_cast<uintptr_t>(&not_my_turn),
             OPENSMACX_SIGNATURE_0052DC70,
@@ -2861,6 +3366,11 @@ bool install_redirects() {
             0x00584D20,
             reinterpret_cast<uintptr_t>(&destroy_top_menu_wave),
             OPENSMACX_SIGNATURE_00584D20,
+        },
+        {
+            0x005882D0,
+            reinterpret_cast<uintptr_t>(&destroy_fonts),
+            OPENSMACX_SIGNATURE_005882D0,
         },
         {
             0x0058FD70,
@@ -3193,6 +3703,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_005DEF90,
         },
         {
+            0x005E37D0,
+            reinterpret_cast<uintptr_t>(&destroy_buffer),
+            OPENSMACX_SIGNATURE_005E37D0,
+        },
+        {
             0x005E4ADA,
             reinterpret_cast<uintptr_t>(&sprite_unk1_redirect),
             OPENSMACX_SIGNATURE_005E4ADA,
@@ -3351,6 +3866,11 @@ bool install_redirects() {
             0x005FC6A0,
             reinterpret_cast<uintptr_t>(&menu_requested_height_redirect),
             OPENSMACX_SIGNATURE_005FC6A0,
+        },
+        {
+            0x005FD510,
+            reinterpret_cast<uintptr_t>(&destroy_txtindex),
+            OPENSMACX_SIGNATURE_005FD510,
         },
         {
             0x005FED10,
