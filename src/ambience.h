@@ -33,9 +33,14 @@
   * pins their sizeof and no field may be appended without deriving it first.
   */
 class DLLEXPORT Ambience {
+ public:
+  ~Ambience();
+
  protected:
   uint8_t base_storage_[0x58];
 };
+
+void __fastcall ambience_dtor_redirect(Ambience *self, void *);
 
 class DLLEXPORT FactionAmbience : Ambience {
  public:
