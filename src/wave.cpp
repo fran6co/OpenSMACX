@@ -251,3 +251,142 @@ int Wave::is_playing() {
 int __fastcall wave_is_playing_redirect(Wave *self, void *) {
     return self->is_playing();
 }
+
+/*
+Purpose: Start the wave playing. A wrapped device answers through its own
+         vtable slot 0x94, as the receiver, with the play argument passed on;
+         its result is returned verbatim. With no device the answer is a
+         fixed 0x14.
+Original Offset: 004C68F0
+Return Value: the device's answer, or 0x14 when no device is wrapped
+Status: Complete
+*/
+int Wave::play(int a1) {
+    typedef int(__thiscall * device_play_fn)(void *device, int a1);
+    if (device_) {
+        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
+        return (*reinterpret_cast<device_play_fn *>(device_vtable + 0x94))(
+            device_, a1);
+    }
+    return 0x14;
+}
+
+int __fastcall wave_play_redirect(Wave *self, void *, int a1) {
+    return self->play(a1);
+}
+
+// The destructor's dependencies. pull_from_group is the Wave_Device method at
+// 0x004C5280 with its singleton receiver at 0x0090D978; the buffer free goes
+// to the game CRT's operator delete so the block returns to the heap that
+// allocated it; the release hook is an indirect call on the slot at 0x0090DB28
+// guarded by the dword at 0x0090DB7C; the chain end slots are the dwords the
+// unlink falls back to when a neighbour is null.
+func_wave_device_pull_from_group *WaveDevicePullFromGroup = (func_wave_device_pull_from_group *)0x004C5280;
+void *WaveDeviceGlobal = reinterpret_cast<void *>(0x0090D978);
+func_operator_delete *WaveOperatorDelete = (func_operator_delete *)0x0064557F;
+func_wave_device_release **WaveDeviceReleaseSlot =
+    reinterpret_cast<func_wave_device_release **>(0x0090DB28);
+int *WaveDeviceReleaseGuard = reinterpret_cast<int *>(0x0090DB7C);
+Wave **WaveChainHead = reinterpret_cast<Wave **>(0x0090DB20);
+Wave **WaveChainTail = reinterpret_cast<Wave **>(0x0090DB1C);
+
+/*
+Purpose: Destroy the wave. The original is a three-stage teardown of an
+         inlined hierarchy, republishing a vtable pointer at each stage: its
+         own (0x0066E44C) at entry, the base's (0x0066E3C0) midway, and the
+         ultimate base's (0x0066E444) on the way out. While the wave still
+         holds a device group slot it is pulled from its group; the sample
+         buffer goes back to the game CRT heap; a chained wave unlinks itself
+         from the global wave chain; the wrapped device is put through the
+         release hook when the hook is live, then forgotten. The inlined base
+         destructor then repeats the buffer free and the unlink - normally
+         dead, but kept because an aliased chain neighbour or a re-linking
+         release hook re-arms them, exactly as in the original. The registered
+         SEH frame is omitted: the binary has no throw entry point, so it is
+         unreachable.
+Original Offset: 004C67C0
+Return Value: n/a
+Status: Complete
+*/
+Wave::~Wave() {
+    // A destructor's member stores are dead to the optimizer once the object's
+    // lifetime ends, so every access goes through a volatile view (the Texture
+    // precedent, extended to the whole body): each store happens, in the
+    // original's order, and each guard re-reads memory where the original does.
+    Wave volatile *const self = this;
+    self->vtable_storage_ = 0x0066E44C;
+    if (self->group_slot_ < 0x10) {
+        WaveDevicePullFromGroup(WaveDeviceGlobal, this);
+    }
+    void *const block = self->buffer_;
+    if (block) {
+        WaveOperatorDelete(block);
+    }
+    self->buffer_ = nullptr;
+    if (self->field_40_ & 2) {
+        // Unlink from the wave chain. The neighbour writes go through volatile
+        // views too, and the second neighbour is re-read after the first write
+        // because a neighbour pointer may alias this very object - the
+        // original re-reads it the same way. The flag update folds the
+        // original's early read of the word into the final store; the two
+        // null stores between them cannot touch it.
+        Wave *const prev = self->chain_prev_;
+        if (prev) {
+            reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
+                self->chain_next_;
+        } else {
+            *WaveChainHead = self->chain_next_;
+        }
+        Wave *const next = self->chain_next_;
+        if (next) {
+            reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
+                self->chain_prev_;
+        } else {
+            *WaveChainTail = self->chain_prev_;
+        }
+        self->chain_next_ = nullptr;
+        self->chain_prev_ = nullptr;
+        self->field_40_ &= ~2u;
+    }
+    self->vtable_storage_ = 0x0066E3C0;
+    // The inlined base destructor's copy of the free: reachable only when the
+    // unlink above re-populated the slot through an aliased neighbour.
+    void *const late_block = self->buffer_;
+    if (late_block) {
+        WaveOperatorDelete(late_block);
+        self->buffer_ = nullptr;
+    }
+    void *const device = self->device_;
+    if (device) {
+        if (*WaveDeviceReleaseGuard) {
+            (*WaveDeviceReleaseSlot)(device);
+        }
+        self->device_ = nullptr;
+    }
+    if (self->field_40_ & 2) {
+        // The inlined base destructor's copy of the unlink: reachable only
+        // when the release hook re-armed the chain bit.
+        Wave *const prev = self->chain_prev_;
+        if (prev) {
+            reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
+                self->chain_next_;
+        } else {
+            *WaveChainHead = self->chain_next_;
+        }
+        Wave *const next = self->chain_next_;
+        if (next) {
+            reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
+                self->chain_prev_;
+        } else {
+            *WaveChainTail = self->chain_prev_;
+        }
+        self->chain_next_ = nullptr;
+        self->chain_prev_ = nullptr;
+        self->field_40_ &= ~2u;
+    }
+    self->vtable_storage_ = 0x0066E444;
+}
+
+void __fastcall wave_dtor_redirect(Wave *self, void *) {
+    self->~Wave();
+}
