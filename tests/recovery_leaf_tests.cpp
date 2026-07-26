@@ -9588,6 +9588,8 @@ int __thiscall observe_wave_pull_from_group(void *device, Wave *wave) {
 }
 std::vector<void *> g_wave_dtor_deletes;
 std::vector<void *> g_wave_dtor_delete_seen_slot;
+uint32_t *g_wave_delete_watch;
+uint32_t g_wave_delete_watch_seen;
 void __cdecl observe_wave_operator_delete(void *block) {
     g_wave_dtor_deletes.push_back(block);
     // The original clears the buffer slot only AFTER the free, so at call
@@ -9595,6 +9597,9 @@ void __cdecl observe_wave_operator_delete(void *block) {
     void *slot;
     std::memcpy(&slot, g_wave_dtor_obj + 0x4C, 4);
     g_wave_dtor_delete_seen_slot.push_back(slot);
+    if (g_wave_delete_watch) {
+        g_wave_delete_watch_seen = *g_wave_delete_watch;
+    }
 }
 void *g_wave_playm_dev_self;
 int g_wave_playm_calls;
@@ -9745,6 +9750,18 @@ void __thiscall observe_wave_own_slot48(Wave *self, int arg) {
     ++g_wave_own48_calls;
     std::memcpy(&g_wave_own48_seen_flags,
                 reinterpret_cast<uint8_t *>(self) + 0x54, 4);
+}
+void *g_wave_ginsert_head;
+Wave *g_wave_ginsert_wave;
+int g_wave_ginsert_calls;
+uint32_t g_wave_ginsert_seen_slot;
+void __thiscall observe_wave_group_insert(void *group_head, Wave *wave) {
+    g_wave_ginsert_head = group_head;
+    g_wave_ginsert_wave = wave;
+    ++g_wave_ginsert_calls;
+    // add_to_group stores the wave's slot AFTER the insert; witness it.
+    std::memcpy(&g_wave_ginsert_seen_slot,
+                reinterpret_cast<uint8_t *>(wave) + 0x68, 4);
 }
 int g_wave_stype_calls;
 Wave *g_wave_stype_wave;
@@ -10927,6 +10944,232 @@ void test_wave_init() {
     WaveOperatorNew = saved_new;
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;
+}
+
+void test_wave_device_groups() {
+    static_assert(sizeof(Wave_Device) == 0x1A4,
+                  "the group table must reach slot 15's count");
+    std::vector<uint8_t> storage(sizeof(Wave_Device) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *device = reinterpret_cast<Wave_Device *>(obj);
+
+    auto *const saved_insert = WaveDeviceGroupInsert;
+    auto *const saved_delete = WaveOperatorDelete;
+    WaveDeviceGroupInsert = &observe_wave_group_insert;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+
+    auto group_base = [](unsigned g) { return 0x24 + g * 0x18; };
+    auto gset32 = [&](unsigned g, size_t off, uint32_t v) {
+        std::memcpy(obj + group_base(g) + off, &v, 4);
+    };
+    auto gsetp = [&](unsigned g, size_t off, const void *ptr) {
+        std::memcpy(obj + group_base(g) + off, &ptr, 4);
+    };
+    auto gget32 = [&](unsigned g, size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + group_base(g) + off, 4);
+        return v;
+    };
+    auto ggetp = [&](unsigned g, size_t off) {
+        void *ptr;
+        std::memcpy(&ptr, obj + group_base(g) + off, 4);
+        return ptr;
+    };
+    uint8_t wave_a[0x6C];
+    uint8_t wave_b[0x6C];
+    auto *wa = reinterpret_cast<Wave *>(wave_a);
+    auto *wb = reinterpret_cast<Wave *>(wave_b);
+    auto wave_slot = [&](uint8_t *w) {
+        uint32_t v;
+        std::memcpy(&v, w + 0x68, 4);
+        return v;
+    };
+    auto set_wave_slot = [&](uint8_t *w, uint32_t v) {
+        std::memcpy(w + 0x68, &v, 4);
+    };
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    std::memset(wave_a, 0, sizeof(wave_a));
+    std::memset(wave_b, 0, sizeof(wave_b));
+
+    // --- add_to_group ---
+    g_wave_ginsert_calls = 0;
+    expect(device->add_to_group(0x10, wa) == 0xA);
+    expect(device->add_to_group(3, nullptr) == 0xA);
+    expect(g_wave_ginsert_calls == 0);
+    set_wave_slot(wave_a, 0xEE);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(device->add_to_group(5, wa) == 0);
+    expect(g_wave_ginsert_calls == 1);
+    expect(g_wave_ginsert_head == obj + group_base(5) + 8);
+    expect(g_wave_ginsert_wave == wa);
+    expect(g_wave_ginsert_seen_slot == 0xEE);  // stored after the insert
+    expect(wave_slot(wave_a) == 5);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    // Slot 15 is the last accepted one.
+    set_wave_slot(wave_a, 0xEE);
+    expect(device->add_to_group(0xF, wa) == 0);
+    expect(g_wave_ginsert_calls == 2 && wave_slot(wave_a) == 0xF);
+
+    // --- is_group_disabled ---
+    expect(device->is_group_disabled(0x10) == 1);
+    obj[group_base(2)] = 0;
+    expect(device->is_group_disabled(2) == 1);
+    obj[group_base(2)] = 9;
+    expect(device->is_group_disabled(2) == 0);
+    obj[group_base(0xF)] = 1;
+    expect(device->is_group_disabled(0xF) == 0);  // 15 is still in range
+    obj[group_base(0xF)] = expected[16 + group_base(0xF)];
+    obj[group_base(2)] = expected[16 + group_base(2)];
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // --- pull_from_group ---
+    g_wave_dtor_deletes.clear();
+    expect(device->pull_from_group(nullptr) == 0xA);
+    set_wave_slot(wave_a, 0x10);
+    expect(device->pull_from_group(wa) == 0xA);
+    set_wave_slot(wave_a, 0x33);
+    expect(device->pull_from_group(wa) == 0xA);
+
+    // An empty group just forgets the slot.
+    set_wave_slot(wave_a, 3);
+    gsetp(3, 8, nullptr);
+    expect(device->pull_from_group(wa) == 0);
+    expect(wave_slot(wave_a) == 0x10);
+    expect(g_wave_dtor_deletes.empty());
+
+    // A wave whose node is not on the list walks it and forgets the slot.
+    WaveGroupNode n1{};
+    WaveGroupNode n2{};
+    WaveGroupNode n3{};
+    n1.next = &n2;
+    n2.prev = &n1;
+    n2.wave = wb;
+    set_wave_slot(wave_a, 4);
+    gsetp(4, 8, &n1);
+    expect(device->pull_from_group(wa) == 0);
+    expect(wave_slot(wave_a) == 0x10);
+    expect(g_wave_dtor_deletes.empty());
+    expect(n1.next == &n2 && n2.prev == &n1);
+
+    // Found in the middle: neighbours re-linked, cursor on the follower,
+    // head and tail untouched, node freed, count down one.
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n3 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = wb;
+    n2.prev = &n1;
+    n2.next = &n3;
+    n2.wave = wa;
+    n3.prev = &n2;
+    n3.wave = wb;
+    set_wave_slot(wave_a, 4);
+    gsetp(4, 8, &n1);
+    gsetp(4, 0xC, &n3);
+    gsetp(4, 0x10, reinterpret_cast<void *>(0x7777));
+    gset32(4, 0x14, 7);
+    g_wave_delete_watch =
+        reinterpret_cast<uint32_t *>(obj + group_base(4) + 0x14);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(device->pull_from_group(wa) == 0);
+    // The node is freed BEFORE the count drops; the free observer saw 7.
+    expect(g_wave_delete_watch_seen == 7);
+    g_wave_delete_watch = nullptr;
+    expect(n1.next == &n3 && n3.prev == &n1);
+    expect(ggetp(4, 8) == &n1 && ggetp(4, 0xC) == &n3);
+    expect(ggetp(4, 0x10) == &n3);
+    expect(gget32(4, 0x14) == 6);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == &n2);
+    expect(wave_slot(wave_a) == 0x10);
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        void *cur = &n3;
+        const uint32_t cnt = 6;
+        std::memcpy(eobj + group_base(4) + 0x10, &cur, 4);
+        std::memcpy(eobj + group_base(4) + 0x14, &cnt, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Found at the head: the head advances, the follower loses its prev.
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = wa;
+    n2.prev = &n1;
+    n2.wave = wb;
+    set_wave_slot(wave_a, 4);
+    gsetp(4, 8, &n1);
+    g_wave_dtor_deletes.clear();
+    expect(device->pull_from_group(wa) == 0);
+    expect(ggetp(4, 8) == &n2 && n2.prev == nullptr);
+    expect(ggetp(4, 0x10) == &n2);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == &n1);
+
+    // Found at the tail: the cursor clears and the tail steps back.
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = wb;
+    n2.prev = &n1;
+    n2.wave = wa;
+    set_wave_slot(wave_a, 4);
+    gsetp(4, 8, &n1);
+    gsetp(4, 0xC, &n2);
+    gsetp(4, 0x10, reinterpret_cast<void *>(0x8888));
+    g_wave_dtor_deletes.clear();
+    expect(device->pull_from_group(wa) == 0);
+    expect(n1.next == nullptr);
+    expect(ggetp(4, 0x10) == nullptr && ggetp(4, 0xC) == &n1);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == &n2);
+
+    // A follower that IS the cursor field: the neighbour store lands on the
+    // cursor first and the cursor store overwrites it second, so their order
+    // is visible in which value survives.
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = wb;
+    n2.prev = &n1;
+    n2.next = reinterpret_cast<WaveGroupNode *>(obj + group_base(4) + 0x10);
+    n2.wave = wa;
+    set_wave_slot(wave_a, 4);
+    gsetp(4, 8, &n1);
+    g_wave_dtor_deletes.clear();
+    expect(device->pull_from_group(wa) == 0);
+    expect(n1.next == n2.next);
+    // next->prev wrote &n1 into the cursor field, then the cursor store
+    // replaced it with the follower's address.
+    expect(ggetp(4, 0x10) == obj + group_base(4) + 0x10);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == &n2);
+
+    // The only node: head, tail, and cursor all empty out.
+    n1 = WaveGroupNode{};
+    n1.wave = wa;
+    set_wave_slot(wave_a, 4);
+    gsetp(4, 8, &n1);
+    gsetp(4, 0xC, &n1);
+    g_wave_dtor_deletes.clear();
+    expect(device->pull_from_group(wa) == 0);
+    expect(ggetp(4, 8) == nullptr && ggetp(4, 0xC) == nullptr &&
+           ggetp(4, 0x10) == nullptr);
+    expect(g_wave_dtor_deletes.size() == 1);
+
+    // Redirect entries.
+    expect(wave_device_add_to_group_redirect(device, nullptr, 0x10, wa) ==
+           0xA);
+    expect(wave_device_is_group_disabled_redirect(device, nullptr, 0x10) ==
+           1);
+    expect(wave_device_pull_from_group_redirect(device, nullptr, nullptr) ==
+           0xA);
+
+    WaveDeviceGroupInsert = saved_insert;
+    WaveOperatorDelete = saved_delete;
 }
 
 void test_sound_set_type_and_load() {
@@ -18121,5 +18364,6 @@ int main() {
     test_wave_ctor();
     test_wave_init();
     test_sound_set_type_and_load();
+    test_wave_device_groups();
     return failures == 0 ? 0 : 1;
 }

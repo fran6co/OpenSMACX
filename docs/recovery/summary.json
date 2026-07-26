@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 329,
-      "original_dependency": 90,
-      "source_complete": 1493,
+      "original_dependency": 89,
+      "source_complete": 1496,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4053
+      "unrecovered": 4051
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1439,
-    "matched_function_starts": 1439,
-    "unique_addresses": 1439,
+    "annotations": 1442,
+    "matched_function_starts": 1442,
+    "unique_addresses": 1442,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 531,
-      "function": 112
+      "function": 113
     },
     "items": [
       {
@@ -7053,6 +7053,15 @@
         "type": "func_operator_delete *"
       },
       {
+        "address": "0x004C5BF0",
+        "function": "sub_4c5bf0",
+        "function_address": "0x004C5BF0",
+        "kind": "function",
+        "location": "src/wave_device.cpp:395",
+        "symbol": "WaveDeviceGroupInsert",
+        "type": "func_wave_group_insert *"
+      },
+      {
         "address": "0x005F1820",
         "function": "?update_cursor@Win@@QAAHPAUWin@@H@Z",
         "function_address": "0x005F1820",
@@ -7116,7 +7125,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 112,
-    "total": 643
+    "matched_function_starts": 113,
+    "total": 644
   }
 }

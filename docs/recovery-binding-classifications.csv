@@ -111,3 +111,4 @@ WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency
 WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
 SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
 SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
+WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
