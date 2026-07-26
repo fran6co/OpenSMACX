@@ -158,8 +158,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00406BA0,0x00406BCC,44,.text,sub_406ba0,,0x00406BA0-0x00406BCC,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00406BD0,0x00406BF1,33,.text,??_GPopup@@UAEPAXI@Z,,0x00406BD0-0x00406BF1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00406C00,0x00406E52,836,.text,??1Popup@@QAE@XZ,void (__thiscall ??1Popup@@QAE@XZ)(Popup* this),0x00406C00-0x00406E52;0x00650AB0-0x00650BA2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,12,6
-0x00406E60,0x00406F1A,248,.text,??1Scroll@@QAE@XZ,void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this),0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,41
-0x00406F20,0x00406F41,33,.text,??_GScroll@@UAEPAXI@Z,,0x00406F20-0x00406F41,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
+0x00406E60,0x00406F1A,248,.text,??1Scroll@@QAE@XZ,void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this),0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE,game,frame;hidden;sp_ready;purged_ok,src/scroll.cpp:804,Complete,,,source_complete,,,,4,41
+0x00406F20,0x00406F41,33,.text,??_GScroll@@UAEPAXI@Z,,0x00406F20-0x00406F41,game,hidden;sp_ready;purged_ok,src/scroll.cpp:829,Complete,,,source_complete,,,,2,0
 0x00406F50,0x00406F58,8,.text,??1thunk1_RadioButton@@QAE@H@Z,"void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)",0x00406F50-0x00406F58,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00406F60,0x00406FE2,130,.text,??1RadioButton@@QAE@H@Z,"void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)",0x00406F60-0x00406FE2,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,0
 0x00406FF0,0x00406FF8,8,.text,?on_redraw@thunk1_RadioButton@@QAEXXZ,void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this),0x00406FF0-0x00406FF8,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -5635,7 +5635,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00645460,0x00645467,7,.text,_strcpy,,0x00645460-0x00645467,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,98
 0x00645470,0x00645550,224,.text,_strcat,,0x00645470-0x00645550,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,446
 0x00645550,0x0064557F,47,.text,__alloca_probe,,0x00645550-0x0064557F,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,137
-0x0064557F,0x0064558A,11,.text,??3@YAXPAX@Z,,0x0064557F-0x0064558A,library,lib;hidden;sp_ready;purged_ok,,,,AutoSoundOperatorDelete | WaveOperatorDelete,original_dependency,,,,1,115
+0x0064557F,0x0064558A,11,.text,??3@YAXPAX@Z,,0x0064557F-0x0064558A,library,lib;hidden;sp_ready;purged_ok,,,,AutoSoundOperatorDelete | ScrollOperatorDelete | WaveOperatorDelete,original_dependency,,,,1,115
 0x0064558A,0x00645598,14,.text,??2@YAPAXI@Z,,0x0064558A-0x00645598,library,lib;hidden;sp_ready;purged_ok,,,,WaveOperatorNew,original_dependency,,,,1,27
 0x00645598,0x006455C9,49,.text,_fclose,,0x00645598-0x006455C9,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,3,36
 0x006455C9,0x00645615,76,.text,__fclose_lk,,0x006455C9-0x00645615,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,4,1

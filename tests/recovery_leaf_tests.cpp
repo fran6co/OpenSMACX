@@ -6374,6 +6374,308 @@ void test_base_button_and_flat_button_lifecycle() {
     std::memset(time_close_targets, 0, sizeof(time_close_targets));
 }
 
+// Scroll destructor events. Every stage the destructor composes is recovered
+// code with exact tests of its own, so the oracle here is compositional: the
+// reference image is produced by running the documented component chain on a
+// byte-identical object, and the destructor must match it exactly while the
+// event log pins the stage order, the object each stage receives, and the two
+// staged Scroll vtables that only the close-phase events can observe before
+// the final GraphicWin stage overwrites them.
+struct ScrollDtorEvent {
+    int kind;  // 1 left vclose, 2 right vclose, 3 win close, 4 buffer close,
+               // 5 buffer dtor, 6 win dtor, 7 free, 8 operator delete
+    const void *target;
+    uint32_t scroll_vtable0;
+    uint32_t scroll_vtable444;
+    int time_count;
+};
+ScrollDtorEvent scroll_dtor_events[24];
+int scroll_dtor_event_count = 0;
+uint8_t *scroll_dtor_base = nullptr;
+
+void scroll_dtor_record(int kind, const void *target) {
+    const int index = scroll_dtor_event_count++;
+    if (index >= static_cast<int>(ARRAYSIZE(scroll_dtor_events))) {
+        return;
+    }
+    ScrollDtorEvent &event = scroll_dtor_events[index];
+    event.kind = kind;
+    event.target = target;
+    std::memcpy(&event.scroll_vtable0, scroll_dtor_base, 4);
+    std::memcpy(&event.scroll_vtable444, scroll_dtor_base + 0x444, 4);
+    event.time_count = time_close_calls;
+}
+
+uint32_t __fastcall scroll_dtor_left_vclose(void *self, void *) {
+    scroll_dtor_record(1, self);
+    return 0;
+}
+
+uint32_t __fastcall scroll_dtor_right_vclose(void *self, void *) {
+    scroll_dtor_record(2, self);
+    return 0;
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall scroll_dtor_win_close(void *self) {
+    scroll_dtor_record(3, self);
+}
+
+void __thiscall scroll_dtor_buffer_close(void *self) {
+    scroll_dtor_record(4, self);
+}
+
+void __thiscall scroll_dtor_buffer_destructor(void *self) {
+    scroll_dtor_record(5, self);
+}
+
+void __thiscall scroll_dtor_win_destructor(void *self) {
+    scroll_dtor_record(6, self);
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void *scroll_dtor_free_probe(void *block) {
+    scroll_dtor_record(7, block);
+    return nullptr;
+}
+
+void __cdecl scroll_dtor_operator_delete(void *block) {
+    scroll_dtor_record(8, block);
+}
+
+// Seams shared by every stage the destructor reaches, installed for the
+// reference component chain and the destructor run alike.
+struct ScrollDtorFixture {
+    uint32_t scroll_fixed[11];
+    uint32_t scroll_dynamic[17];
+    uint32_t base_fixed[5];
+    uint32_t base_dynamic[2];
+    uint32_t flat_defaults[27];
+    uint32_t graphic_default = 0x7B3D19E5U;
+    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {};
+    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {};
+
+    uint32_t *saved_scroll_fixed;
+    uint32_t *saved_scroll_dynamic;
+    uint32_t *saved_base_fixed;
+    uint32_t *saved_base_dynamic;
+    uint32_t *saved_flat_defaults;
+    uint32_t *saved_graphic_default;
+    func_subobject_close *saved_win_close;
+    func_subobject_close *saved_buffer_close;
+    func_subobject_destructor *saved_win_destructor;
+    func_subobject_destructor *saved_buffer_destructor;
+    func2 *saved_free;
+    func_operator_delete *saved_operator_delete;
+
+    void install() {
+        for (size_t index = 0; index < ARRAYSIZE(scroll_fixed); ++index) {
+            scroll_fixed[index] = 0x51000000U
+                + static_cast<uint32_t>(index) * 0x010203U;
+        }
+        for (size_t index = 0; index < ARRAYSIZE(scroll_dynamic); ++index) {
+            scroll_dynamic[index] = 0xA1000000U
+                + static_cast<uint32_t>(index) * 0x010101U;
+        }
+        for (size_t index = 0; index < ARRAYSIZE(base_fixed); ++index) {
+            base_fixed[index] = 0x61000000U
+                + static_cast<uint32_t>(index) * 0x010203U;
+        }
+        for (size_t index = 0; index < ARRAYSIZE(base_dynamic); ++index) {
+            base_dynamic[index] = 0xB1000000U
+                + static_cast<uint32_t>(index) * 0x011011U;
+        }
+        for (size_t index = 0; index < ARRAYSIZE(flat_defaults); ++index) {
+            flat_defaults[index] = 0xD1000000U
+                + static_cast<uint32_t>(index) * 0x010101U;
+        }
+        left_vtable[0x168 / sizeof(uintptr_t)] =
+            reinterpret_cast<uintptr_t>(&scroll_dtor_left_vclose);
+        right_vtable[0x168 / sizeof(uintptr_t)] =
+            reinterpret_cast<uintptr_t>(&scroll_dtor_right_vclose);
+        saved_scroll_fixed = ScrollCloseStaticDefaults;
+        saved_scroll_dynamic = ScrollCloseDynamicDefaults;
+        saved_base_fixed = BaseButtonStaticDefaults;
+        saved_base_dynamic = BaseButtonDynamicDefaults;
+        saved_flat_defaults = FlatButtonDefaults;
+        saved_graphic_default = GraphicWinFieldA0CDefault;
+        saved_win_close = WinOriginalClose;
+        saved_buffer_close = BufferSubobjectClose;
+        saved_win_destructor = WinOriginalDestructor;
+        saved_buffer_destructor = BufferSubobjectDestructor;
+        saved_free = _free;
+        saved_operator_delete = ScrollOperatorDelete;
+        ScrollCloseStaticDefaults = scroll_fixed;
+        ScrollCloseDynamicDefaults = scroll_dynamic;
+        BaseButtonStaticDefaults = base_fixed;
+        BaseButtonDynamicDefaults = base_dynamic;
+        FlatButtonDefaults = flat_defaults;
+        GraphicWinFieldA0CDefault = &graphic_default;
+        WinOriginalClose = scroll_dtor_win_close;
+        BufferSubobjectClose = scroll_dtor_buffer_close;
+        WinOriginalDestructor = scroll_dtor_win_destructor;
+        BufferSubobjectDestructor = scroll_dtor_buffer_destructor;
+        _free = scroll_dtor_free_probe;
+        ScrollOperatorDelete = scroll_dtor_operator_delete;
+    }
+
+    // Identical bytes in both storages, the button vtables aimed at the
+    // recording probes, and every field a stage follows as a pointer zeroed:
+    // the three 0xA08 release targets and both buttons' owned strings.
+    void prepare(uint8_t *storage, uint8_t *reference, size_t size) {
+        seed_storage(storage, reference, size);
+        uintptr_t *left = left_vtable;
+        uintptr_t *right = right_vtable;
+        std::memcpy(storage + 16 + 0xAAC, &left, sizeof(left));
+        std::memcpy(storage + 16 + 0x15F8, &right, sizeof(right));
+        const uint32_t zero = 0;
+        std::memcpy(storage + 16 + 0xA08, &zero, sizeof(zero));
+        for (size_t button = 0; button < 2; ++button) {
+            const size_t base = button ? 0x15F8 : 0xAAC;
+            std::memcpy(storage + 16 + base + 0xA08, &zero, sizeof(zero));
+            std::memcpy(storage + 16 + base + 0xA7C, &zero, sizeof(zero));
+            std::memcpy(storage + 16 + base + 0xA80, &zero, sizeof(zero));
+        }
+        std::memcpy(reference, storage, size);
+        scroll_dtor_base = storage + 16;
+        scroll_dtor_event_count = 0;
+        time_close_calls = 0;
+        std::memset(time_close_targets, 0, sizeof(time_close_targets));
+    }
+
+    // The documented component chain, run on the reference copy. The event
+    // recorder reads the destructor-run object, so swap the base in and out.
+    void run_reference(uint8_t *reference) {
+        uint8_t *const saved_base = scroll_dtor_base;
+        scroll_dtor_base = reference + 16;
+        auto *ref = reinterpret_cast<Scroll *>(reference + 16);
+        ref->close();
+        reinterpret_cast<FlatButton *>(reference + 16 + 0x15F8)->destroy();
+        reinterpret_cast<FlatButton *>(reference + 16 + 0xAAC)->destroy();
+        graphic_win_destructor_redirect(
+            reinterpret_cast<GraphicWin *>(reference + 16), nullptr);
+        scroll_dtor_base = saved_base;
+        scroll_dtor_event_count = 0;
+        time_close_calls = 0;
+        std::memset(time_close_targets, 0, sizeof(time_close_targets));
+    }
+
+    void restore() {
+        ScrollCloseStaticDefaults = saved_scroll_fixed;
+        ScrollCloseDynamicDefaults = saved_scroll_dynamic;
+        BaseButtonStaticDefaults = saved_base_fixed;
+        BaseButtonDynamicDefaults = saved_base_dynamic;
+        FlatButtonDefaults = saved_flat_defaults;
+        GraphicWinFieldA0CDefault = saved_graphic_default;
+        WinOriginalClose = saved_win_close;
+        BufferSubobjectClose = saved_buffer_close;
+        WinOriginalDestructor = saved_win_destructor;
+        BufferSubobjectDestructor = saved_buffer_destructor;
+        _free = saved_free;
+        ScrollOperatorDelete = saved_operator_delete;
+        time_close_calls = 0;
+        std::memset(time_close_targets, 0, sizeof(time_close_targets));
+    }
+};
+
+void expect_scroll_dtor_events(uint8_t *base) {
+    const struct {
+        int kind;
+        size_t offset;
+        int time_count;
+    } expected[] = {
+        // Scroll::close under the staged Scroll vtables: the two button
+        // virtual closes left then right, then the GraphicWin close pair.
+        {1, 0xAAC, 0}, {2, 0x15F8, 0}, {3, 0x000, 0}, {4, 0x444, 0},
+        // Right button FlatButton::destroy: Time1 closes first, GraphicWin
+        // close runs twice (FlatButton::close then BaseButton::destroy's
+        // close), Time2 and Time1 are destroyed, then Buffer before Win.
+        {3, 0x15F8 + 0x000, 1}, {4, 0x15F8 + 0x444, 1},
+        {3, 0x15F8 + 0x000, 1}, {4, 0x15F8 + 0x444, 1},
+        {5, 0x15F8 + 0x444, 3}, {6, 0x15F8 + 0x000, 3},
+        // Left button, same shape.
+        {3, 0xAAC + 0x000, 4}, {4, 0xAAC + 0x444, 4},
+        {3, 0xAAC + 0x000, 4}, {4, 0xAAC + 0x444, 4},
+        {5, 0xAAC + 0x444, 6}, {6, 0xAAC + 0x000, 6},
+        // The GraphicWin base teardown of the Scroll itself.
+        {5, 0x444, 6}, {6, 0x000, 6},
+    };
+    expect(scroll_dtor_event_count == static_cast<int>(ARRAYSIZE(expected)));
+    for (size_t index = 0; index < ARRAYSIZE(expected); ++index) {
+        const ScrollDtorEvent &event = scroll_dtor_events[index];
+        expect(event.kind == expected[index].kind);
+        expect(event.target == base + expected[index].offset);
+        expect(event.time_count == expected[index].time_count);
+        // The staged Scroll vtables are visible at every event until the
+        // final GraphicWin stage installs its own pair first.
+        if (index < ARRAYSIZE(expected) - 2) {
+            expect(event.scroll_vtable0 == ScrollPrimaryVtable);
+            expect(event.scroll_vtable444 == ScrollBufferVtable);
+        } else {
+            expect(event.scroll_vtable0 == GraphicWinPrimaryVtable);
+            expect(event.scroll_vtable444 == GraphicWinBufferVtable);
+        }
+    }
+    expect(time_close_calls == 6);
+    const size_t time_targets[6] = {
+        0x15F8 + 0xA1C, 0x15F8 + 0xA4C, 0x15F8 + 0xA1C,
+        0xAAC + 0xA1C, 0xAAC + 0xA4C, 0xAAC + 0xA1C,
+    };
+    for (size_t index = 0; index < 6; ++index) {
+        expect(time_close_targets[index]
+               == reinterpret_cast<Time *>(base + time_targets[index]));
+    }
+}
+
+void test_scroll_destructor() {
+    ScrollDtorFixture fixture;
+    fixture.install();
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+        uint8_t reference[sizeof(storage)];
+        fixture.prepare(storage, reference, sizeof(storage));
+        fixture.run_reference(reference);
+
+        auto *self = reinterpret_cast<Scroll *>(storage + 16);
+        Scroll *const result = use_adapter
+            ? scroll_destructor_redirect(self, nullptr) : self->destroy();
+        expect(result == self);
+        expect_scroll_dtor_events(storage + 16);
+        expect_storage_bytes(storage, reference, sizeof(storage));
+    }
+
+    // The scalar deleting destructor frees only on bit 0, after the complete
+    // destructor, and always returns the object.
+    const unsigned int modes[] = {0U, 1U, 2U};
+    for (size_t mode_index = 0; mode_index < ARRAYSIZE(modes); ++mode_index) {
+        const unsigned int mode = modes[mode_index];
+        alignas(Scroll) uint8_t storage[sizeof(Scroll) + 32];
+        uint8_t reference[sizeof(storage)];
+        fixture.prepare(storage, reference, sizeof(storage));
+        fixture.run_reference(reference);
+
+        auto *self = reinterpret_cast<Scroll *>(storage + 16);
+        expect(scroll_scalar_dtor_redirect(self, nullptr, mode) == self);
+        const bool deletes = (mode & 1U) != 0U;
+        expect(scroll_dtor_event_count == 18 + (deletes ? 1 : 0));
+        if (deletes) {
+            expect(scroll_dtor_events[18].kind == 8);
+            expect(scroll_dtor_events[18].target == self);
+        }
+        scroll_dtor_event_count = 18;
+        expect_scroll_dtor_events(storage + 16);
+        expect_storage_bytes(storage, reference, sizeof(storage));
+    }
+
+    fixture.restore();
+}
+
 int sprite_close_free_calls = 0;
 void *sprite_close_free_targets[4];
 
@@ -20541,6 +20843,7 @@ int main() {
     test_buffer_text_line_height();
     test_win_paging();
     test_scroll_close();
+    test_scroll_destructor();
     test_scroll_init_wrappers();
     test_scroll_range();
     test_scroll_style_setters();

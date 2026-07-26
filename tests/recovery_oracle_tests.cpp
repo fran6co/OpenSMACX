@@ -16,6 +16,7 @@
 
 #include "../src/spot.h"
 #include "../src/font.h"
+#include "../src/temp.h"
 
 // Link-only stubs. This binary compiles src/pulldown.cpp for the PullDown
 // differentials; its destructor delegates to the GraphicWin destructor, which
@@ -36,6 +37,34 @@ int Font::init(LPCSTR, int, uint32_t) {
 
 void Font::close() {
     std::fprintf(stderr, "Font::close is a link-only stub in this binary\n");
+    std::abort();
+}
+
+// Scroll::destroy, linked in through scroll.cpp, composes the embedded
+// FlatButton destructors, so flatbutton.cpp and basebutton.cpp are in this
+// target; their Time members, executable-CRT free, and string allocator
+// resolve here. No oracle in this suite tears down a Scroll or a button.
+Time *Time::TimeModal = nullptr;
+int Time::TimeInitCount = 0;
+func2 *_free = nullptr;
+
+Time::Time() {
+    std::fprintf(stderr, "Time::Time is a link-only stub in this binary\n");
+    std::abort();
+}
+
+Time::~Time() {
+    std::fprintf(stderr, "Time::~Time is a link-only stub in this binary\n");
+    std::abort();
+}
+
+void Time::close() {
+    std::fprintf(stderr, "Time::close is a link-only stub in this binary\n");
+    std::abort();
+}
+
+LPVOID __cdecl mem_get_old(size_t) {
+    std::fprintf(stderr, "mem_get_old is a link-only stub in this binary\n");
     std::abort();
 }
 

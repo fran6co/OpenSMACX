@@ -791,3 +791,50 @@ void Scroll::on_left_click(int, int) {
 void __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2) {
     self->on_left_click(a1, a2);
 }
+
+const uint32_t ScrollPrimaryVtable = 0x00669D58;
+const uint32_t ScrollBufferVtable = 0x00669D50;
+func_operator_delete *ScrollOperatorDelete = (func_operator_delete *)0x0064557F;
+
+/*
+Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
+         the embedded right then left FlatButtons, and finish with the
+         GraphicWin base teardown. The original's exception frame is omitted
+         as unreachable per policy.
+Original Offset: 00406E60
+Return Value: Instance pointer in EAX
+Status: Complete
+*/
+Scroll *Scroll::destroy() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = ScrollPrimaryVtable;
+    object[0x444 / 4] = ScrollBufferVtable;
+    close();
+    flat_button_right_.destroy();
+    flat_button_left_.destroy();
+    graphic_win_destructor_redirect(
+        static_cast<GraphicWin *>(this), nullptr);
+    return this;
+}
+
+Scroll *__fastcall scroll_destructor_redirect(Scroll *self, void *) {
+    return self->destroy();
+}
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: run the complete
+         destructor and, when bit 0 of the mode asks, free the storage to the
+         game heap.
+Original Offset: 00406F20
+Return Value: the object pointer
+Status: Complete
+*/
+void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
+                                             unsigned int mode) {
+    self->destroy();
+    if (mode & 1) {
+        ScrollOperatorDelete(self);
+    }
+    return self;
+}

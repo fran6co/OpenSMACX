@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 328,
       "original_dependency": 90,
-      "source_complete": 1539,
+      "source_complete": 1541,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4008
+      "unrecovered": 4006
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1485,
-    "matched_function_starts": 1485,
-    "unique_addresses": 1485,
+    "annotations": 1487,
+    "matched_function_starts": 1487,
+    "unique_addresses": 1487,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 533,
-      "function": 121
+      "function": 122
     },
     "items": [
       {
@@ -6144,6 +6144,15 @@
         "type": "func_scroll_init *"
       },
       {
+        "address": "0x0064557F",
+        "function": "??3@YAXPAX@Z",
+        "function_address": "0x0064557F",
+        "kind": "function",
+        "location": "src/scroll.cpp:797",
+        "symbol": "ScrollOperatorDelete",
+        "type": "func_operator_delete *"
+      },
+      {
         "address": "0x00644EF2",
         "function": "_free",
         "function_address": "0x00644EF2",
@@ -7215,7 +7224,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 121,
-    "total": 654
+    "matched_function_starts": 122,
+    "total": 655
   }
 }
