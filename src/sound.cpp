@@ -578,3 +578,144 @@ int Sound::unload() {
 int __fastcall sound_unload_redirect(Sound *self, void *) {
     return self->unload();
 }
+
+/*
+Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
+         base stage: publish the Sound vtable, return the filename copy to
+         the game heap (cleared only when there was one), put the wrapped
+         device through the guarded release hook and forget it, unlink from
+         the sound chain, and publish the ultimate base's vtable on the way
+         out. The registered SEH frame is omitted as unreachable.
+Original Offset: 004C6120
+Return Value: n/a
+Status: Complete
+*/
+Sound::~Sound() {
+    // The whole body runs through a volatile view: a destructor's trailing
+    // member stores are otherwise dead to the optimizer (the Wave precedent).
+    Sound volatile *const self = this;
+    self->vtable_storage_ = 0x0066E3C0;
+    {
+        void *const name = self->fname_;
+        if (name) {
+            WaveOperatorDelete(name);
+            self->fname_ = nullptr;
+        }
+    }
+    void *const device = self->device_;
+    if (device) {
+        if (*WaveDeviceReleaseGuard) {
+            (*WaveDeviceReleaseSlot)(device);
+        }
+        self->device_ = nullptr;
+    }
+    if (self->flags_40_ & 2) {
+        Sound *const prev = self->chain_prev_;
+        if (prev) {
+            reinterpret_cast<Sound volatile *>(prev)->chain_next_ =
+                self->chain_next_;
+        } else {
+            *WaveChainHead = reinterpret_cast<Wave *>(self->chain_next_);
+        }
+        Sound *const next = self->chain_next_;
+        if (next) {
+            reinterpret_cast<Sound volatile *>(next)->chain_prev_ =
+                self->chain_prev_;
+        } else {
+            *WaveChainTail = reinterpret_cast<Wave *>(self->chain_prev_);
+        }
+        self->chain_next_ = nullptr;
+        self->chain_prev_ = nullptr;
+        self->flags_40_ &= ~2u;
+    }
+    self->vtable_storage_ = 0x0066E444;
+}
+
+void __fastcall sound_dtor_redirect(Sound *self, void *) {
+    self->~Sound();
+}
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: destroy the
+         sound and, when bit 0 of the mode asks, free the storage to the
+         game heap.
+Original Offset: 004C92D0
+Return Value: the object pointer
+Status: Complete
+*/
+void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
+                                            unsigned int mode) {
+    self->~Sound();
+    if (mode & 1) {
+        WaveOperatorDelete(self);
+    }
+    return self;
+}
+
+/*
+Purpose: Join the sound chain at the tail. A sound with either neighbour
+         already set is left alone. An empty chain makes it both ends;
+         otherwise the old tail becomes its prev - re-read after the tail
+         slot advances, as the original orders it - and learns its next.
+         Either way the chained bit sets.
+Original Offset: 004C6370
+Return Value: 0, always
+Status: Complete
+*/
+int Sound::attach() {
+    if (chain_next_ || chain_prev_) {
+        return 0;
+    }
+    // The original re-zeroes both links in each arm; the guard above proves
+    // they are already null, so those stores are omitted as unobservable.
+    if (!*WaveChainTail) {
+        *WaveChainHead = reinterpret_cast<Wave *>(this);
+        *WaveChainTail = reinterpret_cast<Wave *>(this);
+        flags_40_ |= 2;
+        return 0;
+    }
+    chain_prev_ = reinterpret_cast<Sound *>(*WaveChainTail);
+    *WaveChainTail = reinterpret_cast<Wave *>(this);
+    chain_prev_->chain_next_ = this;
+    flags_40_ |= 2;
+    return 0;
+}
+
+int __fastcall sound_attach_redirect(Sound *self, void *) {
+    return self->attach();
+}
+
+/*
+Purpose: Leave the sound chain: nothing at all for an unchained sound;
+         otherwise the standard unlink with the head and tail slots
+         maintained at the ends, both links cleared, and the chained bit
+         dropped.
+Original Offset: 004C63D0
+Return Value: 0, always
+Status: Complete
+*/
+int Sound::detach() {
+    if (!(flags_40_ & 2)) {
+        return 0;
+    }
+    Sound *const prev = chain_prev_;
+    if (prev) {
+        prev->chain_next_ = chain_next_;
+    } else {
+        *WaveChainHead = reinterpret_cast<Wave *>(chain_next_);
+    }
+    Sound *const next = chain_next_;
+    if (next) {
+        next->chain_prev_ = chain_prev_;
+    } else {
+        *WaveChainTail = reinterpret_cast<Wave *>(chain_prev_);
+    }
+    chain_next_ = nullptr;
+    flags_40_ &= ~2u;
+    chain_prev_ = nullptr;
+    return 0;
+}
+
+int __fastcall sound_detach_redirect(Sound *self, void *) {
+    return self->detach();
+}
