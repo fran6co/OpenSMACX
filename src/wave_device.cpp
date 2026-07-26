@@ -871,6 +871,45 @@ void halt_wave(Wave *wave) {
         *reinterpret_cast<uint8_t **>(wave) + 0x14))(wave);
 }
 
+// The chain-link view select repurposes: once a sound is halted off the
+// global chain, its link fields at 0x44/0x48 thread the private resume
+// list instead, and 0x4C remembers the filename to reload by. All three
+// fields are private to the sound classes and reached by offset, as the
+// original does.
+struct WaveResumeLinks {
+    Wave *prev;   // +0x44
+    Wave *next;   // +0x48
+    char *fname;  // +0x4C
+};
+
+WaveResumeLinks *resume_links(Wave *wave) {
+    return reinterpret_cast<WaveResumeLinks *>(
+        reinterpret_cast<uint8_t *>(wave) + 0x44);
+}
+
+// The sound-side virtuals select dispatches through: the attribute word
+// (slot 0x70), the chain-next and chain-prev accessors (slots 0x64/0x68),
+// and load-by-name (slot 0x10).
+int wave_attrib(Wave *wave) {
+    return (*reinterpret_cast<int(__thiscall **)(Wave *)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x70))(wave);
+}
+
+Wave *wave_chain_next(Wave *wave) {
+    return (*reinterpret_cast<Wave *(__thiscall **)(Wave *)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x64))(wave);
+}
+
+Wave *wave_chain_prev(Wave *wave) {
+    return (*reinterpret_cast<Wave *(__thiscall **)(Wave *)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x68))(wave);
+}
+
+void load_wave_by_name(Wave *wave, char *fname) {
+    (*reinterpret_cast<int(__thiscall **)(Wave *, char *)>(
+        *reinterpret_cast<uint8_t **>(wave) + 0x10))(wave, fname);
+}
+
 }  // namespace
 
 /*
@@ -946,6 +985,62 @@ int Wave_Device::disable_group(unsigned int a1) {
 int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *,
                                                   unsigned int a1) {
     return self->disable_group(a1);
+}
+
+/*
+Purpose: Switch the wrapped device to another output. Every sound on the
+         global chain whose attribute word has bit 1 set and bit 4 clear
+         (playing, not protected from the switch) is halted - which detaches
+         it - and threaded onto a private resume list through its freed
+         chain-link fields. The device then selects the new output through
+         its vtable slot 0x18, and the list replays tail-first: each sound's
+         links are cleared and it reloads by its remembered filename. The
+         attribute word is fetched twice per chained sound, and a sound
+         appended to the resume list keeps whatever its next link held until
+         the replay clears it.
+Original Offset: 004C5030
+Return Value: 0, or 2 when no device is wrapped
+Status: Complete
+*/
+int Wave_Device::select(unsigned long a1) {
+    if (!device_14_) {
+        return 2;
+    }
+    Wave *resume_tail = nullptr;
+    Wave *sound = *WaveChainHead;
+    while (sound) {
+        if ((wave_attrib(sound) & 1) && !(wave_attrib(sound) & 4)) {
+            Wave *const next = wave_chain_next(sound);
+            halt_wave(sound);
+            if (resume_tail) {
+                resume_links(resume_tail)->next = sound;
+                resume_links(sound)->prev = resume_tail;
+            } else {
+                resume_links(sound)->prev = nullptr;
+                resume_links(sound)->next = nullptr;
+            }
+            resume_tail = sound;
+            sound = next;
+        } else {
+            sound = wave_chain_next(sound);
+        }
+    }
+    (*reinterpret_cast<int(__thiscall **)(void *, unsigned long)>(
+        *reinterpret_cast<uint8_t **>(device_14_) + 0x18))(device_14_, a1);
+    for (Wave *replay = resume_tail; replay;) {
+        char *const fname = resume_links(replay)->fname;
+        Wave *const prev = wave_chain_prev(replay);
+        resume_links(replay)->next = nullptr;
+        resume_links(replay)->prev = nullptr;
+        load_wave_by_name(replay, fname);
+        replay = prev;
+    }
+    return 0;
+}
+
+int __fastcall wave_device_select_redirect(Wave_Device *self, void *,
+                                           unsigned long a1) {
+    return self->select(a1);
 }
 
 func_wave_device_factory **WaveDeviceFactorySlot =

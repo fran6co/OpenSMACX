@@ -86,6 +86,7 @@ class DLLEXPORT Wave_Device {
   int add_to_group(unsigned int a1, Wave *a2);
   int pull_from_group(Wave *a1);
   int is_group_disabled(unsigned int a1);
+  int select(unsigned long a1);
   int create_device(unsigned long a1);
   int delete_device();
   int init(void *a1, unsigned long a2);
@@ -185,6 +186,7 @@ int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, 
 int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *, unsigned int a1, Wave *a2);
 int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *, Wave *a1);
 int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self, void *, unsigned int a1);
+int __fastcall wave_device_select_redirect(Wave_Device *self, void *, unsigned long a1);
 int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *, unsigned long a1);
 int __fastcall wave_device_delete_device_redirect(Wave_Device *self, void *);
 int __fastcall wave_device_init_redirect(Wave_Device *self, void *, void *a1, unsigned long a2);
