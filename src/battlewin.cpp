@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "battlewin.h"
+#include "time.h"
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -25,6 +26,22 @@ Return Value: n/a
 Status: Complete
 */
 void BattleWin::on_iface_left_click(int, int) {
+}
+
+/*
+Purpose: Destroy the window. The whole teardown is the Time member at +8; the
+         original advances `this` by 8 and tail-jumps into the Time
+         destructor, and nothing else in the object is touched.
+Original Offset: 00422ED0
+Return Value: n/a
+Status: Complete
+*/
+BattleWin::~BattleWin() {
+    reinterpret_cast<Time *>(reinterpret_cast<uint8_t *>(this) + 8)->~Time();
+}
+
+void __fastcall battle_win_dtor_redirect(BattleWin *self, void *) {
+    self->~BattleWin();
 }
 
 void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *, int a1, int a2) {

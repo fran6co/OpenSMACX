@@ -78,6 +78,7 @@ DOMAINS = {
     # destruction, which is why the call is a named method.
     "??1Buffer@@QAE@XZ": ("Buffer", "buffer.h", "->destroy()"),
     "?close@ButtonGroup@@QAEXXZ": ("ButtonGroup", "buttongroup.h", "->close()"),
+    "??1BattleWin@@QAE@XZ": ("BattleWin", "battlewin.h", "->~BattleWin()"),
 }
 
 # The CRT's vector destructor iterator: walk an array, calling one teardown
@@ -327,7 +328,8 @@ def render_tests(rows) -> str:
             ("??1Texture@@QAE@XZ", "g_atexit_texture_cases"),
             ("??1Wave@@QAE@XZ", "g_atexit_wave_cases"),
             ("??1Buffer@@QAE@XZ", "g_atexit_buffer_cases"),
-            ("?close@ButtonGroup@@QAEXXZ", "g_atexit_group_cases")):
+            ("?close@ButtonGroup@@QAEXXZ", "g_atexit_group_cases"),
+            ("??1BattleWin@@QAE@XZ", "g_atexit_battlewin_cases")):
         out.append(f"const AtexitThunkCase {table}[] = {{")
         for row in cases(target_name):
             out.append(f"    {{&destroy_{snake(row['global_name'])}, "
@@ -502,6 +504,20 @@ void test_atexit_teardown_thunks() {
         entry.thunk();
         reinterpret_cast<ButtonGroup *>(twin)->close();
         expect_storage_bytes(fake, twin, sizeof(fake));
+        *slot = saved;
+    }
+
+    // The BattleWin teardown is the Time member at +8, observed through the
+    // suite's Time::close double recording its receiver.
+    for (const AtexitThunkCase &entry : g_atexit_battlewin_cases) {
+        alignas(4) uint8_t fake[sizeof(BattleWin)] = {};
+        auto **slot = static_cast<BattleWin **>(entry.slot);
+        BattleWin *const saved = *slot;
+        *slot = reinterpret_cast<BattleWin *>(fake);
+        time_close_calls = 0;
+        entry.thunk();
+        expect(time_close_calls == 1);
+        expect(time_close_targets[0] == reinterpret_cast<Time *>(fake + 8));
         *slot = saved;
     }
 

@@ -18,6 +18,7 @@
 
 #pragma once
 
+class BattleWin;
 class Buffer;
 class ButtonGroup;
 class CaviarData;
@@ -98,6 +99,7 @@ extern Sprite *g_UNUSED_SPRITE_VAR19;
 extern Sprite *g_UNUSED_SPRITE_VAR12;
 extern Sprite *g_UNUSED_SPRITE_VAR07;
 extern Wave *g_BASEWIN_WAVE;
+extern BattleWin *g_BattleWin;
 extern Wave *g_CREDITS_WAVE;
 extern Wave *g_DESIGNWIN_WAVE;
 extern Wave *g_CPU_WAVES;
@@ -431,6 +433,7 @@ DLLEXPORT void __cdecl destroy_unused_sprite_var19();
 DLLEXPORT void __cdecl destroy_unused_sprite_var12();
 DLLEXPORT void __cdecl destroy_unused_sprite_var07();
 DLLEXPORT void __cdecl destroy_basewin_wave();
+DLLEXPORT void __cdecl destroy_battlewin();
 DLLEXPORT void __cdecl destroy_credits_wave();
 DLLEXPORT void __cdecl destroy_designwin_wave();
 DLLEXPORT void __cdecl destroy_cpu_waves();

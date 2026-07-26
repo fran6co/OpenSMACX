@@ -18,6 +18,7 @@
 
 #include "stdafx.h"
 #include "atexit_thunks.h"
+#include "battlewin.h"
 #include "buffer.h"
 #include "buttongroup.h"
 #include "caviar.h"
@@ -75,6 +76,7 @@ Sprite *g_UNUSED_SPRITE_VAR19 = (Sprite *)0x006A7460;
 Sprite *g_UNUSED_SPRITE_VAR12 = (Sprite *)0x006A7310;
 Sprite *g_UNUSED_SPRITE_VAR07 = (Sprite *)0x006A7220;
 Wave *g_BASEWIN_WAVE = (Wave *)0x006EEE68;
+BattleWin *g_BattleWin = (BattleWin *)0x006EEED8;
 Wave *g_CREDITS_WAVE = (Wave *)0x00703E30;
 Wave *g_DESIGNWIN_WAVE = (Wave *)0x0071F240;
 Wave *g_CPU_WAVES = (Wave *)0x0074C5F0;
@@ -622,6 +624,16 @@ Status: Complete
 */
 void __cdecl destroy_basewin_wave() {
     WaveOriginalDestructor(g_BASEWIN_WAVE);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_BattleWin.
+Original Offset: 004219D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_battlewin() {
+    g_BattleWin->~BattleWin();
 }
 
 /*
