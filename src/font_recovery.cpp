@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "font.h"
+#include "vector_teardown.h"
 
 Font::Font()
     : unk_1_(-1),
@@ -24,6 +25,28 @@ Font::Font(LPSTR font_name, int height, int style) {
 
 Font::~Font() {
     close();
+}
+
+// The per-element teardown the queue passes: the Font destructor, bound here
+// under its own name so this file needs nothing from the generated thunk
+// family. atexit_thunks.cpp binds the same address as FontElementTeardown.
+func_thiscall_teardown *FontQueueElementTeardown =
+    (func_thiscall_teardown *)0x00618EE0;
+
+/*
+Purpose: Destroy the queue: hand the three-slot walk to the CRT vector
+         iterator with the queue itself as the array base and the Font
+         destructor as the per-element teardown.
+Original Offset: 0055B740
+Return Value: n/a
+Status: Complete
+*/
+FontQueue::~FontQueue() {
+    VectorDtorIterator(this, 0x28, 3, FontQueueElementTeardown);
+}
+
+void __fastcall font_queue_dtor_redirect(FontQueue *self, void *) {
+    self->~FontQueue();
 }
 
 Font **FontDefaultPtr = (Font **)0x009BB484;

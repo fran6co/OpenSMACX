@@ -116,6 +116,8 @@ endif()
 set(OPENSMACX_SOURCES
     src/alpha.cpp
     src/atexit_thunks.cpp
+    src/fx.cpp
+    src/vector_teardown.cpp
     src/alphanet.cpp
     src/ambience.cpp
     src/autosound.cpp
@@ -400,6 +402,8 @@ if(BUILD_TESTING)
     add_executable(recovery-leaf-tests
         tests/recovery_leaf_tests.cpp
         src/atexit_thunks.cpp
+        src/fx.cpp
+        src/vector_teardown.cpp
         src/alphanet.cpp
         src/basepop.cpp
         src/ambience.cpp
@@ -553,6 +557,7 @@ if(BUILD_TESTING)
     add_executable(recovery-gameplay-tests
         tests/recovery_gameplay_tests.cpp
         src/alpha.cpp
+        src/vector_teardown.cpp
         src/base.cpp
         src/basebutton.cpp
         src/buffer.cpp
@@ -1147,6 +1152,8 @@ if(MINGW)
             src/buffer.cpp
             src/spot_recovery.cpp
             src/font_recovery.cpp
+            # FontQueue's teardown dispatches through the vector iterator seam.
+            src/vector_teardown.cpp
             # The recovered constructors extend that closure: Win::construct
             # builds its AutoSound member and Buffer::construct resolves its
             # default colours through Palette::get_rgbquad.
