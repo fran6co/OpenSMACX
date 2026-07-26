@@ -32,6 +32,7 @@
 #include "../src/statuswin.h"
 #include "../src/filewin.h"
 #include "../src/wave.h"
+#include "../src/atexit_thunks.h"
 #include "../src/battlewin.h"
 #include "../src/councwin.h"
 #include "../src/credits.h"
@@ -15502,6 +15503,341 @@ void test_pop_pops_forwarders() {
     PopupStartCaption = saved_caption;
 }
 
+namespace {
+struct AtexitThunkCase {
+    void(__cdecl *thunk)();
+    void *slot;   // the global seam to rebind
+};
+const AtexitThunkCase g_atexit_sprite_cases[] = {
+    {&destroy_unused_sprite_var02, &g_UNUSED_SPRITE_VAR02},
+    {&destroy_unused_sprite_var11, &g_UNUSED_SPRITE_VAR11},
+    {&destroy_unused_sprite_var06, &g_UNUSED_SPRITE_VAR06},
+    {&destroy_unused_sprite_var09, &g_UNUSED_SPRITE_VAR09},
+    {&destroy_unused_sprite_var21, &g_UNUSED_SPRITE_VAR21},
+    {&destroy_unused_sprite_var05, &g_UNUSED_SPRITE_VAR05},
+    {&destroy_unused_sprite_var08, &g_UNUSED_SPRITE_VAR08},
+    {&destroy_unused_sprite_var04, &g_UNUSED_SPRITE_VAR04},
+    {&destroy_unused_sprite_var01, &g_UNUSED_SPRITE_VAR01},
+    {&destroy_unused_sprite_var18, &g_UNUSED_SPRITE_VAR18},
+    {&destroy_unused_sprite_var03, &g_UNUSED_SPRITE_VAR03},
+    {&destroy_unused_sprite_var20, &g_UNUSED_SPRITE_VAR20},
+    {&destroy_unused_sprite_var16, &g_UNUSED_SPRITE_VAR16},
+    {&destroy_unused_sprite_var14, &g_UNUSED_SPRITE_VAR14},
+    {&destroy_unused_sprite_var22, &g_UNUSED_SPRITE_VAR22},
+    {&destroy_unused_sprite_var10, &g_UNUSED_SPRITE_VAR10},
+    {&destroy_unused_sprite_var15, &g_UNUSED_SPRITE_VAR15},
+    {&destroy_unused_sprite_var13, &g_UNUSED_SPRITE_VAR13},
+    {&destroy_unused_sprite_var17, &g_UNUSED_SPRITE_VAR17},
+    {&destroy_unused_sprite_var19, &g_UNUSED_SPRITE_VAR19},
+    {&destroy_unused_sprite_var12, &g_UNUSED_SPRITE_VAR12},
+    {&destroy_unused_sprite_var07, &g_UNUSED_SPRITE_VAR07},
+    {&destroy_iface_std_popups_top_left_sprite, &g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE},
+    {&destroy_iface_std_popups_top_right_sprite, &g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE},
+    {&destroy_iface_std_popups_bot_left_sprite, &g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE},
+    {&destroy_iface_std_popups_bot_right_sprite, &g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE},
+    {&destroy_iface_std_popups_top_mid_sprite, &g_IFACE_STD_POPUPS_TOP_MID_SPRITE},
+    {&destroy_iface_std_popups_bot_mid_sprite, &g_IFACE_STD_POPUPS_BOT_MID_SPRITE},
+    {&destroy_iface_std_popups_mid_left_sprite, &g_IFACE_STD_POPUPS_MID_LEFT_SPRITE},
+    {&destroy_iface_std_popups_mid_right_sprite, &g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE},
+    {&destroy_ter1_mine_sprite, &g_TER1_MINE_SPRITE},
+    {&destroy_ter1_solar_collector_sprite, &g_TER1_SOLAR_COLLECTOR_SPRITE},
+    {&destroy_ter1_tidal_harness_sprite, &g_TER1_TIDAL_HARNESS_SPRITE},
+    {&destroy_ter1_mining_platform_sprite, &g_TER1_MINING_PLATFORM_SPRITE},
+    {&destroy_ter1_tut_blank_sprite, &g_TER1_TUT_BLANK_SPRITE},
+    {&destroy_ter1_kelp_farm_sprite, &g_TER1_KELP_FARM_SPRITE},
+    {&destroy_ter1_condenser_sprite, &g_TER1_CONDENSER_SPRITE},
+    {&destroy_ter1_echelon_mirror_sprite, &g_TER1_ECHELON_MIRROR_SPRITE},
+    {&destroy_ter1_borehole_sprite, &g_TER1_BOREHOLE_SPRITE},
+    {&destroy_ter1_borehole_cluster_sprite, &g_TER1_BOREHOLE_CLUSTER_SPRITE},
+    {&destroy_ter1_monolith_sprite, &g_TER1_MONOLITH_SPRITE},
+    {&destroy_ter1_bunker_sprite, &g_TER1_BUNKER_SPRITE},
+    {&destroy_ter1_airbase_sprite, &g_TER1_AIRBASE_SPRITE},
+    {&destroy_ter1_sensor_array_sprite, &g_TER1_SENSOR_ARRAY_SPRITE},
+    {&destroy_red_alien_head_icon_sprite, &g_RED_ALIEN_HEAD_ICON_SPRITE},
+    {&destroy_red_male_head_icon_sprite, &g_RED_MALE_HEAD_ICON_SPRITE},
+    {&destroy_null_resource_icon_sprite, &g_NULL_RESOURCE_ICON_SPRITE},
+    {&destroy_icon_tile_square_sprite, &g_ICON_TILE_SQUARE_SPRITE},
+    {&destroy_battle_mind_worm_sprite, &g_BATTLE_MIND_WORM_SPRITE},
+    {&destroy_battle_isle_deep_sprite, &g_BATTLE_ISLE_DEEP_SPRITE},
+    {&destroy_battle_locusts_chiron_sprite, &g_BATTLE_LOCUSTS_CHIRON_SPRITE},
+    {&destroy_battle_fungal_tower_sprite, &g_BATTLE_FUNGAL_TOWER_SPRITE},
+    {&destroy_battle_spore_launcher_sprite, &g_BATTLE_SPORE_LAUNCHER_SPRITE},
+    {&destroy_battle_sealurk_sprite, &g_BATTLE_SEALURK_SPRITE},
+    {&destroy_scroll_bar_filler_icon_sprites, &g_SCROLL_BAR_FILLER_ICON_SPRITES},
+    {&destroy_scroll_bar_small_filler_icon_sprite, &g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE},
+    {&destroy_iface_general_windows_top_left_sprite, &g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE},
+    {&destroy_iface_general_windows_top_right_sprite, &g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE},
+    {&destroy_iface_general_windows_bot_left_sprite, &g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE},
+    {&destroy_iface_general_windows_bot_right_sprite, &g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE},
+    {&destroy_iface_general_windows_mid_left_sprite, &g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE},
+    {&destroy_iface_general_windows_mid_right_sprite, &g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE},
+    {&destroy_iface_general_windows_top_mid_sprite, &g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE},
+    {&destroy_iface_general_windows_bot_mid_sprite, &g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE},
+    {&destroy_iface_general_windows_noncap_mid_sprite, &g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE},
+    {&destroy_iface_general_windows_noncap_left_sprite, &g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE},
+    {&destroy_iface_general_windows_noncap_right_sprite, &g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE},
+    {&destroy_unused_sprite_var23, &g_UNUSED_SPRITE_VAR23},
+    {&destroy_unused_sprite_var24, &g_UNUSED_SPRITE_VAR24},
+    {&destroy_unused_sprite_var25, &g_UNUSED_SPRITE_VAR25},
+    {&destroy_unused_sprite_var26, &g_UNUSED_SPRITE_VAR26},
+    {&destroy_unused_sprite_var27, &g_UNUSED_SPRITE_VAR27},
+    {&destroy_unused_sprite_var28, &g_UNUSED_SPRITE_VAR28},
+    {&destroy_unused_sprite_var29, &g_UNUSED_SPRITE_VAR29},
+    {&destroy_unused_sprite_var30, &g_UNUSED_SPRITE_VAR30},
+    {&destroy_unused_sprite_var31, &g_UNUSED_SPRITE_VAR31},
+    {&destroy_unused_sprite_var32, &g_UNUSED_SPRITE_VAR32},
+    {&destroy_unused_sprite_var33, &g_UNUSED_SPRITE_VAR33},
+    {&destroy_unused_sprite_var34, &g_UNUSED_SPRITE_VAR34},
+    {&destroy_unused_sprite_var35, &g_UNUSED_SPRITE_VAR35},
+    {&destroy_unused_sprite_var36, &g_UNUSED_SPRITE_VAR36},
+    {&destroy_unused_sprite_var37, &g_UNUSED_SPRITE_VAR37},
+    {&destroy_unused_sprite_var38, &g_UNUSED_SPRITE_VAR38},
+    {&destroy_unused_sprite_var39, &g_UNUSED_SPRITE_VAR39},
+    {&destroy_unused_sprite_var40, &g_UNUSED_SPRITE_VAR40},
+    {&destroy_unused_sprite_var41, &g_UNUSED_SPRITE_VAR41},
+    {&destroy_unused_sprite_var42, &g_UNUSED_SPRITE_VAR42},
+    {&destroy_unused_sprite_var43, &g_UNUSED_SPRITE_VAR43},
+    {&destroy_unused_sprite_var44, &g_UNUSED_SPRITE_VAR44},
+    {&destroy_unused_sprite_var45, &g_UNUSED_SPRITE_VAR45},
+    {&destroy_unused_sprite_var46, &g_UNUSED_SPRITE_VAR46},
+    {&destroy_unused_sprite_var47, &g_UNUSED_SPRITE_VAR47},
+    {&destroy_unused_sprite_var48, &g_UNUSED_SPRITE_VAR48},
+    {&destroy_unused_sprite_var49, &g_UNUSED_SPRITE_VAR49},
+    {&destroy_unused_sprite_var50, &g_UNUSED_SPRITE_VAR50},
+    {&destroy_unused_sprite_var51, &g_UNUSED_SPRITE_VAR51},
+    {&destroy_unused_sprite_var52, &g_UNUSED_SPRITE_VAR52},
+    {&destroy_unused_sprite_var53, &g_UNUSED_SPRITE_VAR53},
+    {&destroy_unused_sprite_var54, &g_UNUSED_SPRITE_VAR54},
+    {&destroy_unused_sprite_var55, &g_UNUSED_SPRITE_VAR55},
+    {&destroy_unused_sprite_var56, &g_UNUSED_SPRITE_VAR56},
+    {&destroy_unused_sprite_var57, &g_UNUSED_SPRITE_VAR57},
+    {&destroy_unused_sprite_var58, &g_UNUSED_SPRITE_VAR58},
+    {&destroy_unused_sprite_var59, &g_UNUSED_SPRITE_VAR59},
+    {&destroy_unused_sprite_var60, &g_UNUSED_SPRITE_VAR60},
+    {&destroy_unused_sprite_var61, &g_UNUSED_SPRITE_VAR61},
+    {&destroy_unused_sprite_var62, &g_UNUSED_SPRITE_VAR62},
+    {&destroy_unused_sprite_var63, &g_UNUSED_SPRITE_VAR63},
+    {&destroy_unused_sprite_var64, &g_UNUSED_SPRITE_VAR64},
+    {&destroy_unused_sprite_var65, &g_UNUSED_SPRITE_VAR65},
+    {&destroy_unused_sprite_var66, &g_UNUSED_SPRITE_VAR66},
+    {&destroy_unused_sprite_var67, &g_UNUSED_SPRITE_VAR67},
+    {&destroy_unused_sprite_var68, &g_UNUSED_SPRITE_VAR68},
+    {&destroy_unused_sprite_var69, &g_UNUSED_SPRITE_VAR69},
+    {&destroy_unused_sprite_var70, &g_UNUSED_SPRITE_VAR70},
+    {&destroy_unused_sprite_var71, &g_UNUSED_SPRITE_VAR71},
+    {&destroy_unused_sprite_var72, &g_UNUSED_SPRITE_VAR72},
+    {&destroy_unused_sprite_var73, &g_UNUSED_SPRITE_VAR73},
+    {&destroy_unused_sprite_var74, &g_UNUSED_SPRITE_VAR74},
+    {&destroy_unused_sprite_var75, &g_UNUSED_SPRITE_VAR75},
+    {&destroy_unused_sprite_var76, &g_UNUSED_SPRITE_VAR76},
+    {&destroy_unused_sprite_var77, &g_UNUSED_SPRITE_VAR77},
+    {&destroy_unused_sprite_var78, &g_UNUSED_SPRITE_VAR78},
+    {&destroy_unused_sprite_var79, &g_UNUSED_SPRITE_VAR79},
+    {&destroy_unused_sprite_var80, &g_UNUSED_SPRITE_VAR80},
+    {&destroy_unused_sprite_var81, &g_UNUSED_SPRITE_VAR81},
+    {&destroy_unused_sprite_var82, &g_UNUSED_SPRITE_VAR82},
+    {&destroy_unused_sprite_var83, &g_UNUSED_SPRITE_VAR83},
+};
+const AtexitThunkCase g_atexit_caviar_cases[] = {
+    {&destroy_unused_caviardata_var1, &g_UNUSED_CAVIARDATA_VAR1},
+    {&destroy_ssf_caviardata, &g_SSF_CAVIARDATA},
+    {&destroy_sdp_caviardata, &g_SDP_CAVIARDATA},
+    {&destroy_sas_caviardata, &g_SAS_CAVIARDATA},
+    {&destroy_scd_caviardata, &g_SCD_CAVIARDATA},
+    {&destroy_scj_caviardata, &g_SCJ_CAVIARDATA},
+    {&destroy_sags_caviardata, &g_SAGS_CAVIARDATA},
+    {&destroy_sft_caviardata, &g_SFT_CAVIARDATA},
+    {&destroy_vhr_caviardata1, &g_VHR_CAVIARDATA1},
+    {&destroy_sht_caviardata, &g_SHT_CAVIARDATA},
+    {&destroy_srb_caviardata, &g_SRB_CAVIARDATA},
+    {&destroy_asas_caviardata, &g_ASAS_CAVIARDATA},
+    {&destroy_reslaser_caviardata, &g_RESLASER_CAVIARDATA},
+    {&destroy_resbolt_caviardata, &g_RESBOLT_CAVIARDATA},
+    {&destroy_funload_caviardata, &g_FUNLOAD_CAVIARDATA},
+    {&destroy_tecload_caviardata, &g_TECLOAD_CAVIARDATA},
+    {&destroy_sp_disswave_caviardata, &g_SP_DISSWAVE_CAVIARDATA},
+    {&destroy_sp_marined_caviardata, &g_SP_MARINED_CAVIARDATA},
+    {&destroy_sp_nanoo_caviardata, &g_SP_NANOO_CAVIARDATA},
+    {&destroy_sp_soporific_caviardata, &g_SP_SOPORIFIC_CAVIARDATA},
+    {&destroy_aa01_caviardata, &g_AA01_CAVIARDATA},
+    {&destroy_aa_rover_caviardata, &g_AA_ROVER_CAVIARDATA},
+    {&destroy_ax_caviardata, &g_AX_CAVIARDATA},
+    {&destroy_aa_caviardata, &g_AA_CAVIARDATA},
+    {&destroy_acolpod_caviardata, &g_ACOLPOD_CAVIARDATA},
+    {&destroy_at_caviardata, &g_AT_CAVIARDATA},
+    {&destroy_vta_caviardata, &g_VTA_CAVIARDATA},
+    {&destroy_atp_caviardata, &g_ATP_CAVIARDATA},
+    {&destroy_ssfa_caviardata, &g_SSFA_CAVIARDATA},
+    {&destroy_sfta_caviardata, &g_SFTA_CAVIARDATA},
+    {&destroy_vw00_caviardata, &g_VW00_CAVIARDATA},
+    {&destroy_viptawl_caviardata, &g_VIPTAWL_CAVIARDATA},
+    {&destroy_viptasgn_caviardata, &g_VIPTASGN_CAVIARDATA},
+    {&destroy_viptapsi_caviardata, &g_VIPTAPSI_CAVIARDATA},
+    {&destroy_ptmod_caviardata, &g_PTMOD_CAVIARDATA},
+    {&destroy_vb_caviardata, &g_VB_CAVIARDATA},
+    {&destroy_vbp_caviardata, &g_VBP_CAVIARDATA},
+    {&destroy_vgmc_caviardata, &g_VGMC_CAVIARDATA},
+    {&destroy_vgmcp_caviardata, &g_VGMCP_CAVIARDATA},
+    {&destroy_vlights_caviardata, &g_VLIGHTS_CAVIARDATA},
+    {&destroy_vpt_caviardata, &g_VPT_CAVIARDATA},
+    {&destroy_a_caviardata, &g_A_CAVIARDATA},
+    {&destroy_apwall_caviardata, &g_APWALL_CAVIARDATA},
+    {&destroy_asgen_caviardata, &g_ASGEN_CAVIARDATA},
+    {&destroy_apsid_caviardata, &g_APSID_CAVIARDATA},
+    {&destroy_va01_caviardata, &g_VA01_CAVIARDATA},
+    {&destroy_vhr_caviardata2, &g_VHR_CAVIARDATA2},
+    {&destroy_vi_caviardata, &g_VI_CAVIARDATA},
+    {&destroy_vgmt_caviardata, &g_VGMT_CAVIARDATA},
+    {&destroy_vgmtp_caviardata, &g_VGMTP_CAVIARDATA},
+    {&destroy_unused_caviardata_var2, &g_UNUSED_CAVIARDATA_VAR2},
+    {&destroy_vwntu_caviardata, &g_VWNTU_CAVIARDATA},
+    {&destroy_vt_caviardata, &g_VT_CAVIARDATA},
+    {&destroy_drop_caviardata, &g_DROP_CAVIARDATA},
+    {&destroy_droplet_caviardata, &g_DROPLET_CAVIARDATA},
+    {&destroy_vcl_caviardata, &g_VCL_CAVIARDATA},
+    {&destroy_vclt00_caviardata, &g_VCLT00_CAVIARDATA},
+    {&destroy_vht_vbp_caviardata, &g_VHT_VBP_CAVIARDATA},
+    {&destroy_vhtp_caviardata, &g_VHTP_CAVIARDATA},
+    {&destroy_vhttp_caviardata, &g_VHTTP_CAVIARDATA},
+    {&destroy_vsp_caviardata, &g_VSP_CAVIARDATA},
+    {&destroy_vsptf_caviardata, &g_VSPTF_CAVIARDATA},
+    {&destroy_vsptb_caviardata, &g_VSPTB_CAVIARDATA},
+    {&destroy_vfl_caviardata, &g_VFL_CAVIARDATA},
+    {&destroy_vgs_caviardata, &g_VGS_CAVIARDATA},
+    {&destroy_vgsp_caviardata, &g_VGSP_CAVIARDATA},
+    {&destroy_vjtp_caviardata, &g_VJTP_CAVIARDATA},
+    {&destroy_vcu_caviardata, &g_VCU_CAVIARDATA},
+    {&destroy_vcup_caviardata, &g_VCUP_CAVIARDATA},
+    {&destroy_vcuw_caviardata, &g_VCUW_CAVIARDATA},
+    {&destroy_vct_caviardata, &g_VCT_CAVIARDATA},
+    {&destroy_vctp_caviardata, &g_VCTP_CAVIARDATA},
+    {&destroy_vctb_caviardata, &g_VCTB_CAVIARDATA},
+    {&destroy_vwntt_caviardata, &g_VWNTT_CAVIARDATA},
+    {&destroy_vwnst_caviardata, &g_VWNST_CAVIARDATA},
+    {&destroy_vwnaa_caviardata, &g_VWNAA_CAVIARDATA},
+    {&destroy_vm_caviardata, &g_VM_CAVIARDATA},
+    {&destroy_vm13_caviardata, &g_VM13_CAVIARDATA},
+    {&destroy_nw_caviardata, &g_NW_CAVIARDATA},
+    {&destroy_ni_caviardata, &g_NI_CAVIARDATA},
+    {&destroy_nlc_caviardata, &g_NLC_CAVIARDATA},
+};
+const AtexitThunkCase g_atexit_texture_cases[] = {
+    {&destroy_radius1_texture, &g_RADIUS1_TEXTURE},
+    {&destroy_radius2_texture, &g_RADIUS2_TEXTURE},
+    {&destroy_flat_arid_land_texture, &g_FLAT_ARID_LAND_TEXTURE},
+    {&destroy_dune_land_texture, &g_DUNE_LAND_TEXTURE},
+    {&destroy_rainfall_single_tile_texture, &g_RAINFALL_SINGLE_TILE_TEXTURE},
+};
+const AtexitThunkCase g_atexit_wave_cases[] = {
+    {&destroy_alphamenu_wave, &g_ALPHAMENU_WAVE},
+    {&destroy_basewin_wave, &g_BASEWIN_WAVE},
+    {&destroy_credits_wave, &g_CREDITS_WAVE},
+    {&destroy_designwin_wave, &g_DESIGNWIN_WAVE},
+    {&destroy_menu_up_wave, &g_MENU_UP_WAVE},
+    {&destroy_menu_down_wave, &g_MENU_DOWN_WAVE},
+    {&destroy_scoot_wave, &g_SCOOT_WAVE},
+    {&destroy_ok_wave, &g_OK_WAVE},
+    {&destroy_passover_wave, &g_PASSOVER_WAVE},
+    {&destroy_maininterface_wave, &g_MAININTERFACE_WAVE},
+    {&destroy_multiwin_wave, &g_MULTIWIN_WAVE},
+    {&destroy_top_menu_wave, &g_TOP_MENU_WAVE},
+    {&destroy_crash_landing_wave, &g_CRASH_LANDING_WAVE},
+    {&destroy_wave_general, &g_WAVE_GENERAL},
+};
+
+Wave *g_atexit_wave_seen;
+int g_atexit_wave_calls;
+void __thiscall observe_wave_destructor(Wave *wave) {
+    g_atexit_wave_seen = wave;
+    ++g_atexit_wave_calls;
+}
+}  // namespace
+
+void test_atexit_teardown_thunks() {
+    // Every thunk is "tear down the object at this fixed address". Rebinding
+    // the per-global seam to a local object and watching the teardown's own
+    // observable - the free seam it calls, or the destructor dependency -
+    // proves each thunk reaches its own global and the right teardown.
+    auto *const saved_sprite_free = SpriteFree;
+    int *const saved_sprite_memory = SpriteMemoryUsed;
+    auto *const saved_caviar_free = CaviarDataFreeRecord;
+    auto *const saved_texture_free = TextureFree;
+    auto *const saved_wave_dtor = WaveOriginalDestructor;
+    SpriteFree = &observe_texture_free;   // same shape; shared observer
+    TextureFree = &observe_texture_free;
+    CaviarDataFreeRecord = &observe_caviar_free_record;
+    WaveOriginalDestructor = &observe_wave_destructor;
+    int memory_used = 0;
+    SpriteMemoryUsed = &memory_used;
+
+    for (const AtexitThunkCase &entry : g_atexit_sprite_cases) {
+        alignas(4) uint8_t fake[sizeof(Sprite)] = {};
+        int sentinel = 0;
+        void *pointer = &sentinel;
+        std::memcpy(fake + 0x00, &pointer, 4);    // second free branch only
+        auto **slot = static_cast<Sprite **>(entry.slot);
+        Sprite *const saved = *slot;
+        *slot = reinterpret_cast<Sprite *>(fake);
+        g_tex_free_calls = 0;
+        g_tex_freed = nullptr;
+        entry.thunk();
+        expect(g_tex_free_calls == 1);
+        expect(g_tex_freed == &sentinel);         // its own global, freed once
+        *slot = saved;
+    }
+
+    for (const AtexitThunkCase &entry : g_atexit_caviar_cases) {
+        alignas(4) uint8_t fake[sizeof(CaviarData)] = {};
+        int sentinel = 0;
+        void *pointer = &sentinel;
+        std::memcpy(fake + 0x8, &pointer, 4);
+        auto **slot = static_cast<CaviarData **>(entry.slot);
+        CaviarData *const saved = *slot;
+        *slot = reinterpret_cast<CaviarData *>(fake);
+        g_caviar_free_calls = 0;
+        g_caviar_freed = nullptr;
+        entry.thunk();
+        expect(g_caviar_free_calls == 1);
+        expect(g_caviar_freed == &sentinel);
+        *slot = saved;
+    }
+
+    for (const AtexitThunkCase &entry : g_atexit_texture_cases) {
+        alignas(4) uint8_t fake[sizeof(Texture)] = {};
+        int sentinel = 0;
+        void *pointer = &sentinel;
+        std::memcpy(fake + 0x00, &pointer, 4);    // ours: borrowed_ stays 0
+        auto **slot = static_cast<Texture **>(entry.slot);
+        Texture *const saved = *slot;
+        *slot = reinterpret_cast<Texture *>(fake);
+        g_tex_free_calls = 0;
+        g_tex_freed = nullptr;
+        entry.thunk();
+        expect(g_tex_free_calls == 1);
+        expect(g_tex_freed == &sentinel);
+        *slot = saved;
+    }
+
+    for (const AtexitThunkCase &entry : g_atexit_wave_cases) {
+        alignas(4) uint8_t fake[sizeof(Wave)] = {};
+        auto **slot = static_cast<Wave **>(entry.slot);
+        Wave *const saved = *slot;
+        *slot = reinterpret_cast<Wave *>(fake);
+        g_atexit_wave_calls = 0;
+        g_atexit_wave_seen = nullptr;
+        entry.thunk();
+        expect(g_atexit_wave_calls == 1);
+        expect(g_atexit_wave_seen == reinterpret_cast<Wave *>(fake));
+        *slot = saved;
+    }
+
+    SpriteFree = saved_sprite_free;
+    SpriteMemoryUsed = saved_sprite_memory;
+    CaviarDataFreeRecord = saved_caviar_free;
+    TextureFree = saved_texture_free;
+    WaveOriginalDestructor = saved_wave_dtor;
+}
+
 int main() {
     // Sprite's constructor charges a fixed-address accounting global that is
     // only mapped inside the hybrid process. Objects embedding Sprite by value
@@ -15675,5 +16011,6 @@ int main() {
     test_caviar_data_close();
     test_texture_dtor();
     test_pop_pops_forwarders();
+    test_atexit_teardown_thunks();
     return failures == 0 ? 0 : 1;
 }

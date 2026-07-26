@@ -82,6 +82,7 @@ TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its own
 turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
 wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
 wave_it,game_service,recover_audio_event,Route game audio events through a platform service
+WaveOriginalDestructor,ui_dependency,recover_wave_destructor,Temporary dependency for the recovered Wave atexit thunks until the Wave destructor is source-owned
 WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
 WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
 WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
