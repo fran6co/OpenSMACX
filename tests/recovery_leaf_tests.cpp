@@ -9630,6 +9630,13 @@ int __thiscall observe_wave_dev1(void *self, uint32_t a1) {
     ++g_wave_fam_calls;
     return g_wave_fam_ret;
 }
+int __thiscall observe_wave_dev2(void *self, uint32_t a1, uint32_t a2) {
+    g_wave_fam_self = self;
+    g_wave_fam_args[0] = a1;
+    g_wave_fam_args[1] = a2;
+    ++g_wave_fam_calls;
+    return g_wave_fam_ret;
+}
 int __thiscall observe_wave_dev3(void *self, uint32_t a1, uint32_t a2,
                                  uint32_t a3) {
     g_wave_fam_self = self;
@@ -9814,6 +9821,51 @@ void __thiscall observe_wave_group_resume(Wave *self) {
 void __thiscall observe_wave_group_halt(Wave *self) {
     g_wave_halt_log.push_back(self);
     wave_visit_common();
+}
+int g_wdev_factory_calls;
+void **g_wdev_factory_slot_arg;
+unsigned long g_wdev_factory_kind;
+int g_wdev_factory_ret;
+void *g_wdev_factory_installs;
+int __cdecl observe_wdev_factory(void **slot, unsigned long kind) {
+    ++g_wdev_factory_calls;
+    g_wdev_factory_slot_arg = slot;
+    g_wdev_factory_kind = kind;
+    if (g_wdev_factory_installs) {
+        *slot = g_wdev_factory_installs;
+    }
+    return g_wdev_factory_ret;
+}
+uint8_t *g_wdev_down_obj;
+int g_wdev_destroy_calls;
+void *g_wdev_destroy_seen_device;
+void __cdecl observe_wdev_destroy(void) {
+    ++g_wdev_destroy_calls;
+    // The hook runs BEFORE the field clears; witness what it still sees.
+    std::memcpy(&g_wdev_destroy_seen_device, g_wdev_down_obj + 0x14, 4);
+}
+int g_wdev_own0_calls;
+unsigned long g_wdev_own0_mode;
+int g_wdev_own0_ret;
+int __thiscall observe_wdev_own_slot0(Wave_Device *, unsigned long mode) {
+    ++g_wdev_own0_calls;
+    g_wdev_own0_mode = mode;
+    return g_wdev_own0_ret;
+}
+int g_wdev_own4_calls;
+void __thiscall observe_wdev_own_slot4(Wave_Device *) {
+    ++g_wdev_own4_calls;
+}
+int g_wdev_down_calls;
+bool g_wdev_down_clears;
+void __thiscall observe_wdev_device_down(void *) {
+    ++g_wdev_down_calls;
+    if (g_wdev_down_clears) {
+        // release re-reads the device field after this callback; clearing it
+        // here must suppress the destroy hook.
+        const uint32_t zero = 0;
+        std::memcpy(g_wdev_down_obj + 0x14, &zero, 4);
+    }
 }
 int g_wave_stype_calls;
 Wave *g_wave_stype_wave;
@@ -11328,6 +11380,148 @@ void test_wave_device_group_admin() {
     expect(wave_device_enable_group_redirect(device, nullptr, 0x10) == 0xA);
     expect(wave_device_disable_group_redirect(device, nullptr, 0x10) == 0xA);
     g_wave_visit_group_base = nullptr;
+}
+
+void test_wave_device_lifecycle() {
+    std::vector<uint8_t> storage(sizeof(Wave_Device) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *device = reinterpret_cast<Wave_Device *>(obj);
+    g_wdev_down_obj = obj;
+
+    auto **const saved_factory = WaveDeviceFactorySlot;
+    auto **const saved_destroy = WaveDeviceDestroySlot;
+    func_wave_device_factory *factory_fn = &observe_wdev_factory;
+    func_wave_device_destroy *destroy_fn = &observe_wdev_destroy;
+    WaveDeviceFactorySlot = &factory_fn;
+    WaveDeviceDestroySlot = &destroy_fn;
+
+    void *dev_vtable[64];
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0xC / 4] = reinterpret_cast<void *>(&observe_wave_dev2);
+    dev_vtable[0x10 / 4] =
+        reinterpret_cast<void *>(&observe_wdev_device_down);
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    void *own_vtable[64];
+    std::memset(own_vtable, 0, sizeof(own_vtable));
+    own_vtable[0] = reinterpret_cast<void *>(&observe_wdev_own_slot0);
+    own_vtable[1] = reinterpret_cast<void *>(&observe_wdev_own_slot4);
+
+    auto setp = [&](size_t off, const void *ptr) {
+        std::memcpy(obj + off, &ptr, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *ptr;
+        std::memcpy(&ptr, obj + off, 4);
+        return ptr;
+    };
+    auto reset_life = [&] {
+        g_wdev_factory_calls = g_wdev_destroy_calls = 0;
+        g_wdev_own0_calls = g_wdev_own4_calls = 0;
+        g_wdev_down_calls = 0;
+        g_wave_fam_calls = 0;
+        g_wdev_factory_installs = nullptr;
+        g_wdev_factory_ret = 0;
+        g_wdev_own0_ret = 0;
+        g_wdev_down_clears = false;
+    };
+
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x00, own_vtable);
+
+    // create_device: an existing device refuses before the factory; a dead
+    // factory answers 0x14; otherwise the factory's answer stands and the
+    // device lands in the field.
+    setp(0x14, &fake_dev);
+    reset_life();
+    expect(device->create_device(3) == 0xC);
+    expect(g_wdev_factory_calls == 0);
+    setp(0x14, nullptr);
+    factory_fn = nullptr;
+    expect(device->create_device(3) == 0x14);
+    factory_fn = &observe_wdev_factory;
+    reset_life();
+    g_wdev_factory_installs = &fake_dev;
+    g_wdev_factory_ret = 0x2A;
+    expect(device->create_device(7) == 0x2A);
+    expect(g_wdev_factory_calls == 1 &&
+           g_wdev_factory_slot_arg ==
+               reinterpret_cast<void **>(obj + 0x14) &&
+           g_wdev_factory_kind == 7);
+    expect(getp(0x14) == &fake_dev);
+
+    // delete_device: needs both a device and a hook; then the hook runs and
+    // the field clears.
+    reset_life();
+    destroy_fn = nullptr;
+    expect(device->delete_device() == 0x14);
+    expect(getp(0x14) == &fake_dev);  // kept without a hook
+    destroy_fn = &observe_wdev_destroy;
+    expect(device->delete_device() == 0);
+    expect(g_wdev_destroy_calls == 1 && getp(0x14) == nullptr);
+    expect(g_wdev_destroy_seen_device == &fake_dev);  // hook before the clear
+    expect(device->delete_device() == 0x14);  // nothing left
+    expect(g_wdev_destroy_calls == 1);
+
+    // init: the device stack in order - own slot 0 gates, the device's slot
+    // 0xC does the work, own slot 4 only cleans up a failure.
+    setp(0x14, &fake_dev);
+    reset_life();
+    g_wdev_own0_ret = 0x31;
+    expect(device->init(reinterpret_cast<void *>(0x1234), 9) == 0x31);
+    expect(g_wdev_own0_calls == 1 && g_wdev_own0_mode == 9);
+    expect(g_wave_fam_calls == 0 && g_wdev_own4_calls == 0);
+    reset_life();
+    g_wave_fam_ret = 0;
+    expect(device->init(reinterpret_cast<void *>(0x1234), 5) == 0);
+    expect(g_wdev_own0_calls == 1 && g_wave_fam_calls == 1);
+    expect(g_wave_fam_args[0] == 0x1234 && g_wave_fam_args[1] == 5);
+    expect(g_wdev_own4_calls == 0);
+    reset_life();
+    g_wave_fam_ret = 0x55;
+    expect(device->init(nullptr, 2) == 0x55);
+    expect(g_wdev_own4_calls == 1);
+
+    // release: slot 0x10 winds the device down; the destroy hook only runs
+    // if the callback left the device in place; the field always clears.
+    reset_life();
+    expect(getp(0x14) == &fake_dev);
+    device->release();
+    expect(g_wdev_down_calls == 1);
+    expect(g_wdev_destroy_calls == 1);
+    expect(getp(0x14) == nullptr);
+    device->release();  // no device: silence
+    expect(g_wdev_down_calls == 1);
+    // A callback that clears the device suppresses the hook.
+    setp(0x14, &fake_dev);
+    reset_life();
+    g_wdev_down_clears = true;
+    device->release();
+    expect(g_wdev_down_calls == 1 && g_wdev_destroy_calls == 0);
+    expect(getp(0x14) == nullptr);
+    // A dead hook is skipped but the teardown still happens.
+    setp(0x14, &fake_dev);
+    reset_life();
+    destroy_fn = nullptr;
+    device->release();
+    expect(g_wdev_down_calls == 1 && getp(0x14) == nullptr);
+    destroy_fn = &observe_wdev_destroy;
+
+    // Redirect entries.
+    setp(0x14, nullptr);
+    expect(wave_device_delete_device_redirect(device, nullptr) == 0x14);
+    g_wdev_factory_installs = &fake_dev;
+    g_wdev_factory_ret = 0;
+    expect(wave_device_create_device_redirect(device, nullptr, 1) == 0);
+    reset_life();
+    g_wdev_own0_ret = 1;
+    expect(wave_device_init_redirect(device, nullptr, nullptr, 1) == 1);
+    wave_device_release_redirect(device, nullptr);
+    expect(getp(0x14) == nullptr);
+
+    WaveDeviceFactorySlot = saved_factory;
+    WaveDeviceDestroySlot = saved_destroy;
 }
 
 void test_sound_small_setters() {
@@ -18948,5 +19142,6 @@ int main() {
     test_sound_small_setters();
     test_wave_device_forwarder_family();
     test_wave_device_group_admin();
+    test_wave_device_lifecycle();
     return failures == 0 ? 0 : 1;
 }

@@ -1731,10 +1731,6 @@ P3,0,0x004C4D10,sub_4c4d10,92,0,0,unrecovered,,,0,missing,missing,
 P3,110,0x004C4D70,sub_4c4d70,54,0,1,unrecovered,,,1,missing,exact,
 P3,1221,0x004C4DD0,??0Wave_Device@@QAE@XZ,179,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Wave_Device@@QAE@XZ)(Wave_Device* this)
 P3,121,0x004C4E60,??1Wave_Device@@QAE@XZ,139,0,1,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Wave_Device@@QAE@XZ)(Wave_Device* this)
-P3,21,0x004C4ED0,?create_device@Wave_Device@@QAEHK@Z,55,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?create_device@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)"
-P3,21,0x004C4F10,?delete_device@Wave_Device@@QAEHXZ,39,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?delete_device@Wave_Device@@QAEHXZ)(Wave_Device* this)
-P3,1021,0x004C4F40,?init@Wave_Device@@QAEHPAXK@Z,61,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Wave_Device@@QAEHPAXK@Z)(Wave_Device* this, void*, unsigned int)"
-P3,1021,0x004C4F80,?release@Wave_Device@@QAEXXZ,51,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?release@Wave_Device@@QAEXXZ)(Wave_Device* this)
 P3,21,0x004C5030,?select@Wave_Device@@QAEHK@Z,191,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?select@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)"
 P0,1001121,0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,156,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)"
 P0,1001021,0x004C5460,?is_group_disabled@Wave_Device@@QAEHI@Z,33,1,0,source_complete,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"

@@ -543,6 +543,10 @@ address,kind
 0x004C3E70,jump
 0x004C3E90,jump
 0x004C45E0,jump
+0x004C4ED0,jump
+0x004C4F10,jump
+0x004C4F40,jump
+0x004C4F80,jump
 0x004C4FC0,jump
 0x004C4FD0,jump
 0x004C4FE0,jump
