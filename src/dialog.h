@@ -50,6 +50,10 @@ class DLLEXPORT Dialog {
   Dialog() { ; }
   ~Dialog() { ; }
 
+  // The recovered complete-object destructor body (0x00608E10); the inline
+  // ~Dialog stays trivial so classes embedding a Dialog keep their layout-only
+  // semantics, exactly as Scroll::destroy does.
+  void destroy();
   int set_dialog_font(Font *font1, Font *font2, Font *font3);
   void set_dialog_text_color(int color1, int color2, int color3, int color4);
   void set_dialog_text_color2(int color1, int color2, int color3, int color4);
@@ -139,3 +143,33 @@ int __cdecl dialog_set_def_dialog_font_redirect(
 
 // Default dialog font slots at 0x009B8EC0; tests rebind this.
 extern Font **DialogDefaultFonts;
+
+// Every teardown that reaches the still-original Dialog::close (0x00608F50)
+// binds it through this signature; RadioButton/CheckBox/ListBox share it.
+typedef void (__thiscall func_dialog_close)(Dialog *);
+typedef void(__cdecl func_operator_delete)(void *block);
+
+// ~Dialog's own body reaches Dialog::close through a rebindable seam, and the
+// scalar deleting destructor frees through the executable's operator delete.
+extern func_dialog_close *DialogOriginalClose;          // default 0x00608F50
+extern func_operator_delete *DialogOperatorDelete;      // default 0x0064557F
+
+// Virtual tables the destructor stages. The Dialog primary table and the
+// list virtual base's final table are written but never dispatched, so they
+// are fixed constants like Scroll's. The four list-stage tables ARE dispatched
+// through - the embedded StringStruct walk reads the table installed at
+// this+0xBC - so they are rebindable: outside the hybrid process the game
+// addresses are unmapped and a leaf test must substitute a stand-in.
+extern const uint32_t DialogPrimaryVtable;              // this+0x00 = 0x006703FC
+extern uint32_t DialogListDerivedVtable;                // this+0xBC = 0x006698C4
+extern uint32_t DialogListDerivedVirtualBaseVtable;     // this+0xE4 = 0x006698C0
+extern uint32_t DialogListVtable;                       // this+0xBC = 0x006693A4
+extern uint32_t DialogListVirtualBaseVtable;            // this+0xE4 = 0x006693A0
+extern const uint32_t DialogVirtualBaseFinalVtable;     // this+0xE4 = 0x006693AC
+
+// The list virtual base's context word is published here on teardown.
+extern uint32_t *DialogPublishedGlobal;                 // 0x009B3374
+
+void __fastcall dialog_destructor_redirect(Dialog *self, void *);
+void *__fastcall dialog_scalar_dtor_redirect(
+    Dialog *self, void *, unsigned int mode);
