@@ -31,7 +31,7 @@
 class DLLEXPORT BattleWin {
  public:
   BattleWin() { ; }
-  ~BattleWin() { ; }
+  ~BattleWin();
   void on_iface_left_click(int a1, int a2);
   void on_iface_right_click(int a1, int a2);
   void on_iface_right_down(int a1, int a2);
@@ -42,10 +42,12 @@ class DLLEXPORT BattleWin {
  private:
   // Not a base class: the constructor builds a Time at +0x0 on an offset
   // `this`, which puts a Time member at the start rather than a Time base.
-  // Nothing further about the extent is established.
-  uint8_t unmapped_0_[0x28];
+  // The destructor tears down a Time at +8, so the object reaches at least
+  // 0x30; nothing further about the extent is established.
+  uint8_t unmapped_0_[0x30];
 };
 
+void __fastcall battle_win_dtor_redirect(BattleWin *self, void *);
 void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *, int a1, int a2);
 void __fastcall battle_win_on_iface_right_click_redirect(BattleWin *self, void *, int a1, int a2);
 void __fastcall battle_win_on_iface_right_down_redirect(BattleWin *self, void *, int a1, int a2);

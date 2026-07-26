@@ -15753,6 +15753,9 @@ const AtexitThunkCase g_atexit_buffer_cases[] = {
 const AtexitThunkCase g_atexit_group_cases[] = {
     {&destroy_prefwin_buttongroup, &g_PREFWIN_BUTTONGROUP},
 };
+const AtexitThunkCase g_atexit_battlewin_cases[] = {
+    {&destroy_battlewin, &g_BattleWin},
+};
 struct AtexitArrayCase {
     void(__cdecl *thunk)();
     void *slot;
@@ -16017,11 +16020,47 @@ void test_atexit_teardown_thunks() {
         *slot = saved;
     }
 
+    // The BattleWin teardown is the Time member at +8, observed through the
+    // suite's Time::close double recording its receiver.
+    for (const AtexitThunkCase &entry : g_atexit_battlewin_cases) {
+        alignas(4) uint8_t fake[sizeof(BattleWin)] = {};
+        auto **slot = static_cast<BattleWin **>(entry.slot);
+        BattleWin *const saved = *slot;
+        *slot = reinterpret_cast<BattleWin *>(fake);
+        time_close_calls = 0;
+        entry.thunk();
+        expect(time_close_calls == 1);
+        expect(time_close_targets[0] == reinterpret_cast<Time *>(fake + 8));
+        *slot = saved;
+    }
+
     SpriteFree = saved_sprite_free;
     SpriteMemoryUsed = saved_sprite_memory;
     CaviarDataFreeRecord = saved_caviar_free;
     TextureFree = saved_texture_free;
     WaveOriginalDestructor = saved_wave_dtor;
+}
+
+void test_battle_win_dtor() {
+    // The whole teardown is the Time member at +8: its close runs with that
+    // member as `this`, and nothing outside that member is written. The
+    // suite's Time::close double zeroes the member and stamps its resolution,
+    // so the expectation models exactly that span and nothing else.
+    alignas(4) uint8_t storage[sizeof(BattleWin) + 16];
+    uint8_t expected[sizeof(storage)];
+    auto *win = reinterpret_cast<BattleWin *>(storage);
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(expected, storage, sizeof(storage));
+    std::memset(expected + 8, 0, sizeof(Time));
+    const uint32_t resolution = 5;
+    std::memcpy(expected + 8 + 0x20, &resolution, sizeof(resolution));
+    time_close_calls = 0;      // the recording window is the first 8 calls
+    win->~BattleWin();
+    expect(time_close_calls == 1);
+    expect(time_close_targets[0] == reinterpret_cast<Time *>(storage + 8));
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    battle_win_dtor_redirect(win, nullptr);
+    expect(time_close_calls == 2);
 }
 
 int main() {
@@ -16198,5 +16237,6 @@ int main() {
     test_texture_dtor();
     test_pop_pops_forwarders();
     test_atexit_teardown_thunks();
+    test_battle_win_dtor();
     return failures == 0 ? 0 : 1;
 }

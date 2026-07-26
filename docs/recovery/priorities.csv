@@ -297,7 +297,6 @@ P3,0,0x00421980,PopMenu::delete1,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x00421990,PopMenu::delete2,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004219A0,PopMenu::delete3,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x004219B0,??__Eg_BattleWin@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
-P3,10,0x004219D0,??__Fg_BattleWin@@YAXXZ,10,0,0,unrecovered,,,1,entry_range,missing,
 P3,1221,0x004219E0,?init@BattleWin@@QAEXXZ,319,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?init@BattleWin@@QAEXXZ)(BattleWin* this)
 P3,1121,0x00421B20,?pulse_timer@BattleWin@@QAEXXZ,23,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?pulse_timer@BattleWin@@QAEXXZ)(BattleWin* this)
 P3,2021,0x00421B40,?stop_timer@BattleWin@@QAEXXZ,8,2,0,unrecovered,,,2,exact,exact,void (__thiscall ?stop_timer@BattleWin@@QAEXXZ)(BattleWin* this)
@@ -309,7 +308,6 @@ P3,221,0x00422DE0,?on_iface_group_clicked@BattleWin@@QAEXHHH@Z,38,0,2,unrecovere
 P3,221,0x00422E30,?on_iface_left_down@BattleWin@@QAEXHH@Z,52,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_left_down@BattleWin@@QAEXHH@Z)(BattleWin* this, int xCoord, int yCoord)"
 P3,10,0x00422EB0,?timer_callback_daemon@BattleWin@@QAAXHH@Z,10,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00422EC0,?timer_callback_daemon@BattleWin@@QAAXH@Z,10,0,0,unrecovered,,,1,exact,missing,
-P3,1,0x00422ED0,??1BattleWin@@QAE@XZ,8,0,0,unrecovered,,,0,missing,missing,void (__thiscall ??1BattleWin@@QAE@XZ)(BattleWin* this)
 P3,1121,0x00422EE0,??0BattleWin@@QAE@XZ,27,1,1,unrecovered,,,2,exact,exact,void (__thiscall ??0BattleWin@@QAE@XZ)(BattleWin* this)
 P3,2720,0x00422F20,?compare_palettes@@YAHXZ,236,2,7,unrecovered,,,2,exact,entry_range,
 P3,3020,0x00423000,?colortables_init_faction@@YAXH@Z,1422,1,20,unrecovered,,,2,exact,entry_range,
