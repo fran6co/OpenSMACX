@@ -27,6 +27,7 @@ CaviarDataFreeRecord,ui_dependency,recover_caviar_free_record,Temporary dependen
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
 CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
+ListBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered ListBox close until Dialog close is source-owned
 CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
 consider_designs,game_service,recover_ai_design,Recover AI unit design orchestration
 ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned

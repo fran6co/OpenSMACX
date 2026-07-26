@@ -6400,6 +6400,208 @@ void test_base_button_and_flat_button_lifecycle() {
     std::memset(time_close_targets, 0, sizeof(time_close_targets));
 }
 
+namespace {
+
+struct ListBoxEvent {
+    int kind;               // 1 win close, 2 buffer close, 3 dialog close
+    const void *target;
+    uint32_t graphic_vptr;  // observed [obj + graphic_disp] at call time
+    uint32_t dialog_vptr;   // observed [obj + dialog_disp] at call time
+};
+
+ListBoxEvent list_box_events[8];
+int list_box_event_count = 0;
+uint8_t *list_box_obj = nullptr;
+int32_t list_box_graphic_disp = 0;
+int32_t list_box_dialog_disp = 0;
+
+void list_box_record(int kind, const void *target) {
+    const int index = list_box_event_count++;
+    if (index >= static_cast<int>(ARRAYSIZE(list_box_events))) {
+        return;
+    }
+    ListBoxEvent &event = list_box_events[index];
+    event.kind = kind;
+    event.target = target;
+    std::memcpy(&event.graphic_vptr, list_box_obj + list_box_graphic_disp, 4);
+    std::memcpy(&event.dialog_vptr, list_box_obj + list_box_dialog_disp, 4);
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// GraphicWin::close's two sub-seams and the Dialog::close seam, all recording.
+void __thiscall list_box_win_close_probe(void *self) { list_box_record(1, self); }
+void __thiscall list_box_buffer_close_probe(void *self) { list_box_record(2, self); }
+void __thiscall list_box_dialog_close_probe(Dialog *self) { list_box_record(3, self); }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// Controlled default tables, so every defaulted field is a distinct sentinel.
+uint32_t list_box_static_defaults[4];
+uint32_t list_box_dynamic_default;
+uint32_t list_box_graphic_a0c_default;
+
+// The ListBox-owned field resets close() performs, applied to a reference copy.
+void list_box_apply_resets(uint8_t *obj, int32_t dialog_disp) {
+    auto set = [&](size_t off, uint32_t value) {
+        std::memcpy(obj + off, &value, sizeof(value));
+    };
+    set(0x04, 0); set(0x08, 0); set(0x18, 0); set(0x1C, 0); set(0x20, 0);
+    set(0x24, list_box_static_defaults[0]);   // 0x006970E0
+    set(0x28, list_box_dynamic_default);      // 0x009B8EE0
+    set(0x2C, list_box_static_defaults[1]);   // 0x006970E4
+    set(0x10, list_box_static_defaults[2]);   // 0x006970E8
+    set(0x14, list_box_static_defaults[3]);   // 0x006970EC
+    set(dialog_disp + 0xB4, 1);               // Dialog::field_B4_
+    set(0x30, 0); set(0x34, 0); set(0x38, 0); set(0x3C, 0); set(0x40, 0);
+    set(0x0C, 0);
+}
+
+// The three vtable installs + two vbase-adjust writes destroy() performs.
+void list_box_apply_stages(uint8_t *obj, int32_t g, int32_t d) {
+    const uint32_t gw = 0x0067041C, bf = 0x00670414, dl = 0x00670408;
+    std::memcpy(obj + g, &gw, 4);
+    std::memcpy(obj + g + 0x444, &bf, 4);
+    std::memcpy(obj + d, &dl, 4);
+    const int32_t ga = g - 0x48, da = d - 0xa60;
+    std::memcpy(obj + g - 4, &ga, 4);
+    std::memcpy(obj + d - 4, &da, 4);
+}
+
+}  // namespace
+
+void test_list_box_teardown() {
+    static_assert(sizeof(GraphicWin) == 0xA14,
+                  "ListBox teardown test requires the legacy GraphicWin layout");
+    static_assert(sizeof(Dialog) == 0xF4,
+                  "ListBox teardown test requires the legacy Dialog layout");
+
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_a0c = GraphicWinFieldA0CDefault;
+    func_dialog_close *const saved_dialog = ListBoxOriginalDialogClose;
+    uint32_t *const saved_static = ListBoxCloseStaticDefaults;
+    uint32_t *const saved_dynamic = ListBoxCloseDynamicDefault;
+
+    for (int i = 0; i < 4; ++i) {
+        list_box_static_defaults[i] =
+            0x515A0000U + static_cast<uint32_t>(i) * 0x010203U;
+    }
+    list_box_dynamic_default = 0xB16B00B5U;
+    list_box_graphic_a0c_default = 0x7B3D19E5U;
+
+    WinOriginalClose = list_box_win_close_probe;
+    BufferSubobjectClose = list_box_buffer_close_probe;
+    GraphicWinFieldA0CDefault = &list_box_graphic_a0c_default;
+    ListBoxOriginalDialogClose = list_box_dialog_close_probe;
+    ListBoxCloseStaticDefaults = list_box_static_defaults;
+    ListBoxCloseDynamicDefault = &list_box_dynamic_default;
+
+    struct Shape { int32_t g; int32_t d; };
+    // {most-derived}, {embedded / shifted vbtable}.
+    const Shape shapes[2] = { {0x48, 0xa60}, {0x60, 0xB00} };
+
+    for (int s = 0; s < 2; ++s) {
+        const int32_t g = shapes[s].g;
+        const int32_t d = shapes[s].d;
+        int32_t vbtable[3] = { 0, g, d };
+
+        for (int is_dtor = 0; is_dtor < 2; ++is_dtor) {
+            for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                // Big enough for the shifted Dialog subobject + trailing canary.
+                alignas(uint32_t) uint8_t storage[0xC40];
+                alignas(uint32_t) uint8_t reference[0xC40];
+                seed_storage(storage, reference, sizeof(storage));
+
+                // Point [L] at this shape's vbtable and null the GraphicWin
+                // release target (field_A08_) so GraphicWin::close stays on its
+                // no-release path. Re-sync the reference to these edits.
+                int32_t *const vbptr = vbtable;
+                std::memcpy(storage + 16 + 0x00, &vbptr, sizeof(vbptr));
+                const uint32_t zero = 0;
+                std::memcpy(storage + 16 + g + 0xA08, &zero, sizeof(zero));
+                std::memcpy(reference, storage, sizeof(storage));
+
+                uint8_t *const obj = storage + 16;
+                uint8_t *const ref_obj = reference + 16;
+
+                // Build the reference bytes with the same source dependency:
+                // (destructor) stage the vtables, then run the real
+                // GraphicWin::close over the base region, then the ListBox
+                // resets. The probe events from this build are discarded.
+                list_box_obj = ref_obj;
+                list_box_graphic_disp = g;
+                list_box_dialog_disp = d;
+                if (is_dtor) {
+                    list_box_apply_stages(ref_obj, g, d);
+                }
+                reinterpret_cast<GraphicWin *>(ref_obj + g)->close();
+                list_box_apply_resets(ref_obj, d);
+
+                // Run the function under test on the storage copy.
+                list_box_obj = obj;
+                list_box_event_count = 0;
+                auto *const self = reinterpret_cast<ListBox *>(obj);
+                uint32_t result;
+                if (is_dtor) {
+                    result = use_adapter
+                        ? list_box_destructor_redirect(
+                              obj + ListBoxDestructorAdjustment, nullptr)
+                        : self->destroy();
+                } else {
+                    result = use_adapter
+                        ? list_box_close_redirect(self, nullptr)
+                        : self->close();
+                }
+
+                // Byte-exact object and complete leading/trailing canaries.
+                expect_storage_bytes(storage, reference, sizeof(storage));
+                expect(result == 0U);
+
+                // Call order: GraphicWin::close (Win then Buffer) then Dialog::close,
+                // each on the subobject located through the runtime displacement.
+                expect(list_box_event_count == 3);
+                expect(list_box_events[0].kind == 1);
+                expect(list_box_events[0].target == obj + g);
+                expect(list_box_events[1].kind == 2);
+                expect(list_box_events[1].target == obj + g + 0x444);
+                expect(list_box_events[2].kind == 3);
+                expect(list_box_events[2].target == obj + d);
+
+                if (is_dtor) {
+                    // The destructor staged the base vtables before any close,
+                    // so every dependency observes ListBox's staged values (no
+                    // later stage overwrites them here).
+                    for (int e = 0; e < 3; ++e) {
+                        expect(list_box_events[e].graphic_vptr == 0x0067041CU);
+                        expect(list_box_events[e].dialog_vptr == 0x00670408U);
+                    }
+                    uint32_t buffer_vtable = 0;
+                    std::memcpy(&buffer_vtable, obj + g + 0x444, 4);
+                    expect(buffer_vtable == 0x00670414U);
+                    // vbase-adjust = runtime displacement minus most-derived offset.
+                    int32_t graphic_adjust = 0;
+                    int32_t dialog_adjust = 0;
+                    std::memcpy(&graphic_adjust, obj + g - 4, 4);
+                    std::memcpy(&dialog_adjust, obj + d - 4, 4);
+                    expect(graphic_adjust == g - 0x48);
+                    expect(dialog_adjust == d - 0xa60);
+                }
+            }
+        }
+    }
+
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_a0c;
+    ListBoxOriginalDialogClose = saved_dialog;
+    ListBoxCloseStaticDefaults = saved_static;
+    ListBoxCloseDynamicDefault = saved_dynamic;
+}
+
 // Scroll destructor events. Every stage the destructor composes is recovered
 // code with exact tests of its own, so the oracle here is compositional: the
 // reference image is produced by running the documented component chain on a
@@ -20870,6 +21072,7 @@ int main() {
     test_win_paging();
     test_scroll_close();
     test_scroll_destructor();
+    test_list_box_teardown();
     test_mandate_color();
     test_scroll_init_wrappers();
     test_scroll_range();

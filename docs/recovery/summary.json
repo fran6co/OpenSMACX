@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 328,
       "original_dependency": 90,
-      "source_complete": 1542,
+      "source_complete": 1544,
       "source_in_progress": 5,
       "thunk": 30,
-      "unrecovered": 4005
+      "unrecovered": 4003
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1488,
-    "matched_function_starts": 1488,
-    "unique_addresses": 1488,
+    "annotations": 1490,
+    "matched_function_starts": 1490,
+    "unique_addresses": 1490,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 533,
-      "function": 122
+      "data": 535,
+      "function": 123
     },
     "items": [
       {
@@ -5496,6 +5496,33 @@
         "type": "func_info_win_timer_proc *"
       },
       {
+        "address": "0x00608F50",
+        "function": "?close@Dialog@@QAEXXZ",
+        "function_address": "0x00608F50",
+        "kind": "function",
+        "location": "src/listbox.cpp:34",
+        "symbol": "ListBoxOriginalDialogClose",
+        "type": "func_dialog_close *"
+      },
+      {
+        "address": "0x006970E0",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/listbox.cpp:36",
+        "symbol": "ListBoxCloseStaticDefaults",
+        "type": "uint32_t *"
+      },
+      {
+        "address": "0x009B8EE0",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/listbox.cpp:37",
+        "symbol": "ListBoxCloseDynamicDefault",
+        "type": "uint32_t *"
+      },
+      {
         "address": "0x0058FD90",
         "function": "?unlock@SquareLock@@QAEXH@Z",
         "function_address": "0x0058FD90",
@@ -7224,7 +7251,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 122,
-    "total": 655
+    "matched_function_starts": 123,
+    "total": 658
   }
 }

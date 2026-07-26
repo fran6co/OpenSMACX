@@ -3343,8 +3343,6 @@ P3,11,0x00609BF0,?UNK2@Dialog@@QAEXHHHH@Z,112,0,0,unrecovered,,,1,exact,missing,
 P3,1020,0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,60,1,0,unrecovered,,,2,exact,exact,
 P3,211,0x00609D90,??_GDialog@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)"
 P2,11221,0x00609DB0,??0ListBox@@QAE@H@Z,299,11,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0ListBox@@QAE@H@Z)(ListBox* this, int)"
-P1,35121,0x00609EC0,??1ListBox@@QAE@XZ,83,35,1,unrecovered,,,2,exact,exact,void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
-P1,35221,0x00609F20,?close@ListBox@@QAEXXZ,125,35,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
 P2,17121,0x00609FA0,?set_selected_id@ListBox@@QAEXH@Z,115,17,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P1,21421,0x0060A020,?set_selected_pos@ListBox@@QAEXHH@Z,445,21,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_pos@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
 P3,2621,0x0060A1E0,?calculate_dimensions@ListBox@@QAEHXZ,1163,2,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@ListBox@@QAEHXZ)(ListBox* this)
