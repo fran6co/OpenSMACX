@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "general.h"
 #include "wave.h"
 
 /*
@@ -1083,6 +1084,96 @@ Wave::Wave() {
 
 Wave *__fastcall wave_ctor_redirect(Wave *self, void *) {
     return new (self) Wave;
+}
+
+/*
+Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
+         (bit 2) refuse the bit-4 and bit-7 modes outright. The name resolves
+         through the recovered filefind_get; an unresolvable name changes
+         nothing. The resolved path replaces the remembered filename on the
+         game heap and the 0x54 flag dword is cleared. A streaming wave marks
+         flag bit 1 and, with no device yet and a live creation hook, builds
+         one from the resolved path - capturing the device vtable before its
+         own slot 0x70 composes the attribute mask, like dyna_load - then
+         hands the RAW mode mask to whatever device exists through its slot
+         0x6C. The mode bits then fold onto the flag byte as in set_attrib
+         (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
+         bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
+Original Offset: 004C69B0
+Return Value: n/a
+Status: Complete
+*/
+void Wave::init(char *a1, uint32_t a2) {
+    const uint32_t streaming = a2 & 4;
+    if (streaming && (a2 & 0x10)) {
+        return;
+    }
+    if (streaming && (a2 & 0x80)) {
+        return;
+    }
+    char *const resolved = filefind_get(a1);
+    if (!resolved) {
+        return;
+    }
+    if (fname_) {
+        WaveOperatorDelete(fname_);
+    }
+    fname_ = WaveOperatorNew(strlen(resolved) + 1);
+    strcpy(static_cast<char *>(fname_), resolved);
+    for (uint8_t *flag_byte = &flags_54_; flag_byte != &flags_54_ + 4;
+         ++flag_byte) {
+        *flag_byte = 0;
+    }
+    if (streaming) {
+        flags_54_ |= 2;
+        if (!device_ && *WaveDeviceReleaseGuard) {
+            const int created = (*WaveDeviceCreateSlot)(&device_, resolved, 1);
+            if (!created) {
+                uint8_t *const device_vtable =
+                    *reinterpret_cast<uint8_t **>(device_);
+                const int attribs =
+                    (*reinterpret_cast<int(__thiscall **)(Wave *)>(
+                        *reinterpret_cast<uint8_t **>(this) + 0x70))(this);
+                {
+                    typedef void(__thiscall * device_attrib_fn)(void *device,
+                                                                int attribs);
+                    (*reinterpret_cast<device_attrib_fn *>(
+                        device_vtable + 0x6C))(device_, attribs);
+                }
+                (*reinterpret_cast<void(__thiscall **)(Wave *)>(
+                    *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
+            }
+        }
+        if (device_) {
+            typedef void(__thiscall * device_mode_fn)(void *device,
+                                                      uint32_t mode);
+            (*reinterpret_cast<device_mode_fn *>(
+                *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, a2);
+        }
+    }
+    if (a2 & 1) {
+        flags_54_ |= 1;
+    }
+    if ((a2 & 0x10) && !streaming) {
+        flags_54_ |= 4;
+    }
+    if (a2 & 2) {
+        (*reinterpret_cast<void(__thiscall **)(Wave *, int)>(
+            *reinterpret_cast<uint8_t **>(this) + 0x48))(this, 1);
+    }
+    if (a2 & 0x40) {
+        flags_54_ |= 8;
+    }
+    if (a2 & 0x80) {
+        flags_54_ |= 0x10;
+    }
+    if (a2 & 0x100) {
+        flags_54_ |= 0x20;
+    }
+}
+
+void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2) {
+    self->init(a1, a2);
 }
 
 /*
