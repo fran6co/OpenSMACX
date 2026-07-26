@@ -1729,12 +1729,10 @@ P3,0,0x004C4CA0,??3WorldWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004C4CB0,sub_4c4cb0,81,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004C4D10,sub_4c4d10,92,0,0,unrecovered,,,0,missing,missing,
 P3,110,0x004C4D70,sub_4c4d70,54,0,1,unrecovered,,,1,missing,exact,
-P3,1221,0x004C4DD0,??0Wave_Device@@QAE@XZ,179,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Wave_Device@@QAE@XZ)(Wave_Device* this)
-P3,121,0x004C4E60,??1Wave_Device@@QAE@XZ,139,0,1,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Wave_Device@@QAE@XZ)(Wave_Device* this)
 P3,21,0x004C5030,?select@Wave_Device@@QAEHK@Z,191,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?select@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)"
 P0,1001121,0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,156,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)"
 P0,1001021,0x004C5460,?is_group_disabled@Wave_Device@@QAEHI@Z,33,1,0,source_complete,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
-P3,11,0x004C5490,??0WaveControlGroup@@QAE@XZ,27,0,0,unrecovered,,,1,exact,missing,void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
+P0,1000011,0x004C5490,??0WaveControlGroup@@QAE@XZ,27,0,0,source_complete,ui_dependency,recover_wave_control_group,1,exact,missing,void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 P3,21,0x004C56D0,?create_device@Midi_Device@@QAEHK@Z,55,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?create_device@Midi_Device@@QAEHK@Z)(Midi_Device* this, unsigned int)"
 P3,21,0x004C5710,?delete_device@Midi_Device@@QAEHXZ,39,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?delete_device@Midi_Device@@QAEHXZ)(Midi_Device* this)
 P3,1121,0x004C5740,??0Midi_Device@@QAE@XZ,60,1,1,unrecovered,,,2,exact,exact,void (__thiscall ??0Midi_Device@@QAE@XZ)(Midi_Device* this)
@@ -1749,7 +1747,7 @@ P3,1021,0x004C5A10,?init@Wave_In_Device@@QAEHPAXK@Z,61,1,0,unrecovered,,,2,exact
 P3,1021,0x004C5A50,?release@Wave_In_Device@@QAEXXZ,33,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?release@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 P3,21,0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)"
 P3,21,0x004C5AA0,?set_vxw_key@Wave_In_Device@@QAEHPAC@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z)(Wave_In_Device* this, int8*)"
-P3,121,0x004C5B80,??1WaveControlGroup@@QAE@XZ,111,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
+P0,1000121,0x004C5B80,??1WaveControlGroup@@QAE@XZ,111,0,1,source_complete,ui_dependency,recover_wave_control_group,2,exact,exact,void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 P0,1001120,0x004C5BF0,sub_4c5bf0,90,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,
 P3,210,0x004C5C50,??__Eg_WAVE_DEVICE@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004C5C70,??__Fg_WAVE_DEVICE@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
@@ -4066,6 +4064,7 @@ P0,1115120,0x0064557F,??3@YAXPAX@Z,11,115,1,original_dependency,crt_ownership,re
 P0,1027120,0x0064558A,??2@YAPAXI@Z,14,27,1,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,exact,
 P0,1012120,0x00645646,_fopen,19,12,1,original_dependency,crt_ownership,replace_after_file_boundary,2,exact,exact,
 P0,1160221,0x006456E4,??_M@YGXPAXIHP6EX0@Z@Z,128,160,2,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,start_only,"void (__stdcall ??_M@YGXPAXIHP6EX0@Z@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*))"
+P0,1132221,0x006457C2,??_L@YGXPAXIHP6EX0@Z1@Z,130,132,2,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,start_only,"void (__stdcall ??_L@YGXPAXIHP6EX0@Z1@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*), void (__thiscall *)(void*))"
 P3,320,0x0064584D,sub_64584d,23,0,3,unrecovered,,,2,exact,exact,
 P3,20,0x00645864,nullsub_18,1,0,0,unrecovered,,,2,exact,exact,
 P0,1001120,0x00646010,_srand,13,1,1,original_dependency,crt_ownership,replace_with_owned_rng,2,exact,exact,

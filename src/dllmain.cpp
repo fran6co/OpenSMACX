@@ -108,7 +108,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1023;
+constexpr size_t RedirectCount = 1027;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -2934,6 +2934,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C45E0,
         },
         {
+            0x004C4DD0,
+            reinterpret_cast<uintptr_t>(&wave_device_ctor_redirect),
+            OPENSMACX_SIGNATURE_004C4DD0,
+        },
+        {
+            0x004C4E60,
+            reinterpret_cast<uintptr_t>(&wave_device_dtor_redirect),
+            OPENSMACX_SIGNATURE_004C4E60,
+        },
+        {
             0x004C4ED0,
             reinterpret_cast<uintptr_t>(&wave_device_create_device_redirect),
             OPENSMACX_SIGNATURE_004C4ED0,
@@ -3087,6 +3097,11 @@ bool install_redirects() {
             0x004C5460,
             reinterpret_cast<uintptr_t>(&wave_device_is_group_disabled_redirect),
             OPENSMACX_SIGNATURE_004C5460,
+        },
+        {
+            0x004C5490,
+            reinterpret_cast<uintptr_t>(&wave_control_group_ctor_redirect),
+            OPENSMACX_SIGNATURE_004C5490,
         },
         {
             0x004C54B0,
@@ -3292,6 +3307,11 @@ bool install_redirects() {
             0x004C5B70,
             reinterpret_cast<uintptr_t>(&wave_in_device_end_record_redirect),
             OPENSMACX_SIGNATURE_004C5B70,
+        },
+        {
+            0x004C5B80,
+            reinterpret_cast<uintptr_t>(&wave_control_group_dtor_redirect),
+            OPENSMACX_SIGNATURE_004C5B80,
         },
         {
             0x004C5BF0,

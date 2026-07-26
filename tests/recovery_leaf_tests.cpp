@@ -9590,8 +9590,13 @@ std::vector<void *> g_wave_dtor_deletes;
 std::vector<void *> g_wave_dtor_delete_seen_slot;
 uint32_t *g_wave_delete_watch;
 uint32_t g_wave_delete_watch_seen;
+bool g_wave_delete_poisons;
 void __cdecl observe_wave_operator_delete(void *block) {
     g_wave_dtor_deletes.push_back(block);
+    if (g_wave_delete_poisons) {
+        // Model the block dying at the free: reads after it see zeros.
+        std::memset(block, 0, 12);
+    }
     // The original clears the buffer slot only AFTER the free, so at call
     // time the slot still names the block being freed - witness it.
     void *slot;
@@ -9837,6 +9842,36 @@ int __cdecl observe_wdev_factory(void **slot, unsigned long kind) {
     return g_wdev_factory_ret;
 }
 uint8_t *g_wdev_down_obj;
+uint32_t g_wdev_down_seen_vtable;
+void *g_vec_iter_array;
+unsigned int g_vec_iter_size;
+int g_vec_iter_count;
+void *g_vec_iter_ctor;
+void *g_vec_iter_dtor;
+int g_vec_iter_calls;
+uint32_t g_vec_iter_seen_vtable;
+void __stdcall observe_vector_ctor_iter(void *array, unsigned int size,
+                                        int count,
+                                        func_thiscall_teardown *ctor,
+                                        func_thiscall_teardown *dtor) {
+    g_vec_iter_array = array;
+    g_vec_iter_size = size;
+    g_vec_iter_count = count;
+    g_vec_iter_ctor = reinterpret_cast<void *>(ctor);
+    g_vec_iter_dtor = reinterpret_cast<void *>(dtor);
+    ++g_vec_iter_calls;
+    std::memcpy(&g_vec_iter_seen_vtable, g_wdev_down_obj, 4);
+}
+void __stdcall observe_vector_dtor_iter(void *array, unsigned int size,
+                                        int count,
+                                        func_thiscall_teardown *teardown) {
+    g_vec_iter_array = array;
+    g_vec_iter_size = size;
+    g_vec_iter_count = count;
+    g_vec_iter_dtor = reinterpret_cast<void *>(teardown);
+    ++g_vec_iter_calls;
+    std::memcpy(&g_vec_iter_seen_vtable, g_wdev_down_obj, 4);
+}
 int g_wdev_destroy_calls;
 void *g_wdev_destroy_seen_device;
 void __cdecl observe_wdev_destroy(void) {
@@ -9860,6 +9895,7 @@ int g_wdev_down_calls;
 bool g_wdev_down_clears;
 void __thiscall observe_wdev_device_down(void *) {
     ++g_wdev_down_calls;
+    std::memcpy(&g_wdev_down_seen_vtable, g_wdev_down_obj, 4);
     if (g_wdev_down_clears) {
         // release re-reads the device field after this callback; clearing it
         // here must suppress the destroy hook.
@@ -11750,6 +11786,164 @@ void test_sound_chain_and_dtor() {
     WaveDeviceReleaseGuard = saved_guard;
     WaveChainHead = saved_head;
     WaveChainTail = saved_tail;
+}
+
+void test_wave_device_construction() {
+    std::vector<uint8_t> storage(sizeof(Wave_Device) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *device = reinterpret_cast<Wave_Device *>(obj);
+    g_wdev_down_obj = obj;
+
+    auto *const saved_delete = WaveOperatorDelete;
+    auto *const saved_vctor = VectorCtorIterator;
+    auto *const saved_vdtor = VectorDtorIterator;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+    VectorCtorIterator = &observe_vector_ctor_iter;
+    VectorDtorIterator = &observe_vector_dtor_iter;
+
+    // --- the control group's own pair ---
+    uint8_t rec[0x18];
+    std::memset(rec, 0xA7, sizeof(rec));
+    auto *group = reinterpret_cast<WaveControlGroup *>(rec);
+    wave_control_group_ctor_redirect(group, nullptr);
+    expect(group->head == nullptr && group->tail == nullptr &&
+           group->cursor == nullptr && group->count == 0);
+    expect(rec[0] == 0xA7 && rec[4] == 0xA7);  // enabled and volume untouched
+
+    // Draining: full, null-wave stop, and the single-node tail arm.
+    uint8_t wavebuf[0x6C];
+    std::memset(wavebuf, 0, sizeof(wavebuf));
+    auto *w = reinterpret_cast<Wave *>(wavebuf);
+    WaveGroupNode n1{}, n2{};
+    n1.next = &n2;
+    n1.wave = w;
+    n2.prev = &n1;
+    n2.wave = w;
+    group->head = &n1;
+    group->tail = &n2;
+    group->cursor = reinterpret_cast<WaveGroupNode *>(0x5150);
+    group->count = 5;
+    g_wave_dtor_deletes.clear();
+    g_wave_dtor_delete_seen_slot.clear();
+    g_wave_delete_poisons = true;  // the drain must read a node BEFORE freeing it
+    g_wave_delete_watch = &group->count;
+    wave_control_group_dtor_redirect(group, nullptr);
+    g_wave_delete_poisons = false;
+    g_wave_delete_watch = nullptr;
+    expect(g_wave_delete_watch_seen == 4);  // the count drops after each free
+    expect(g_wave_dtor_deletes ==
+           std::vector<void *>({&n1, &n2}));
+    expect(group->head == nullptr && group->tail == nullptr);
+    expect(group->count == 3);
+    expect(group->cursor == reinterpret_cast<WaveGroupNode *>(0x5150));
+
+    n1 = WaveGroupNode{};
+    n2 = WaveGroupNode{};
+    n1.next = &n2;
+    n1.wave = nullptr;  // stops the drain after its own free
+    n2.prev = &n1;
+    n2.wave = w;
+    group->head = &n1;
+    group->tail = &n2;
+    group->count = 5;
+    g_wave_dtor_deletes.clear();
+    wave_control_group_dtor_redirect(group, nullptr);
+    expect(g_wave_dtor_deletes == std::vector<void *>({&n1}));
+    expect(group->head == &n2 && n2.prev == nullptr);
+    expect(group->count == 4);
+    expect(group->tail == &n2);
+
+    group->head = nullptr;
+    g_wave_dtor_deletes.clear();
+    wave_control_group_dtor_redirect(group, nullptr);
+    expect(g_wave_dtor_deletes.empty());
+
+    // A follower aimed at the head field itself: the back-link clear lands
+    // on the head first and the head store overwrites it second, so the
+    // order shows in which value survives.
+    n1 = WaveGroupNode{};
+    n1.next = reinterpret_cast<WaveGroupNode *>(rec + 8);
+    n1.wave = nullptr;  // stop after the first free
+    group->head = &n1;
+    g_wave_dtor_deletes.clear();
+    wave_control_group_dtor_redirect(group, nullptr);
+    expect(group->head == reinterpret_cast<WaveGroupNode *>(rec + 8));
+    expect(g_wave_dtor_deletes.size() == 1);
+
+    // --- the device constructor ---
+    seed_storage(storage.data(), expected.data(), storage.size());
+    g_vec_iter_calls = 0;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave_device_ctor_redirect(device, nullptr) == device);
+    expect(g_vec_iter_calls == 1);
+    expect(g_vec_iter_array == obj + 0x24);
+    expect(g_vec_iter_size == 0x18 && g_vec_iter_count == 0x10);
+    expect(g_vec_iter_ctor ==
+           reinterpret_cast<void *>(WaveControlGroupOriginalCtor));
+    expect(g_vec_iter_dtor ==
+           reinterpret_cast<void *>(WaveControlGroupOriginalDtor));
+    expect(g_vec_iter_seen_vtable == 0x0066E098u);  // base up during the walk
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        auto e32 = [&](size_t off, uint32_t v) {
+            std::memcpy(eobj + off, &v, 4);
+        };
+        e32(0x00, 0x0066E0E8u);
+        e32(0x04, 0);
+        e32(0x08, 0x7F);
+        e32(0x0C, 0);
+        e32(0x10, 0);
+        e32(0x14, 0);
+        e32(0x18, 0);
+        e32(0x1C, 0);
+        e32(0x20, 0);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // --- the device destructor ---
+    void *dev_vtable[64];
+    std::memset(dev_vtable, 0, sizeof(dev_vtable));
+    dev_vtable[0x10 / 4] =
+        reinterpret_cast<void *>(&observe_wdev_device_down);
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    {
+        const uint32_t stale = 0xDEADDEADu;  // the ctor's vtable must not
+        std::memcpy(obj + 0x00, &stale, 4);  // satisfy the dtor's witness
+    }
+    void *devp = &fake_dev;
+    std::memcpy(obj + 0x14, &devp, 4);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    g_vec_iter_calls = 0;
+    g_wdev_down_calls = 0;
+    g_wdev_down_clears = false;
+    wave_device_dtor_redirect(device, nullptr);
+    expect(g_vec_iter_calls == 1);
+    expect(g_vec_iter_array == obj + 0x24);
+    expect(g_vec_iter_size == 0x18 && g_vec_iter_count == 0x10);
+    expect(g_vec_iter_seen_vtable == 0x0066E0E8u);  // own vtable up first
+    expect(g_wdev_down_calls == 1);
+    expect(g_wdev_down_seen_vtable == 0x0066E098u);  // base before wind-down
+    {
+        uint8_t *const eobj = expected.data() + 16;
+        const uint32_t vt = 0x0066E098u;
+        std::memcpy(eobj + 0x00, &vt, 4);
+        void *dp = &fake_dev;
+        std::memcpy(eobj + 0x14, &dp, 4);  // the field is NOT cleared
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // Without a device the wind-down never happens.
+    devp = nullptr;
+    std::memcpy(obj + 0x14, &devp, 4);
+    g_wdev_down_calls = 0;
+    wave_device_dtor_redirect(device, nullptr);
+    expect(g_wdev_down_calls == 0);
+
+    WaveOperatorDelete = saved_delete;
+    VectorCtorIterator = saved_vctor;
+    VectorDtorIterator = saved_vdtor;
 }
 
 void test_sound_small_setters() {
@@ -19372,5 +19566,6 @@ int main() {
     test_wave_device_group_admin();
     test_wave_device_lifecycle();
     test_sound_chain_and_dtor();
+    test_wave_device_construction();
     return failures == 0 ? 0 : 1;
 }

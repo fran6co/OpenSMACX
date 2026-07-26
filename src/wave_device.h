@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "vector_teardown.h"
 
 class Wave;
 struct EAX_REVERB_PROPERTIES;
@@ -29,7 +30,7 @@ struct WaveGroupNode {
 };
 
 // The view the list-insert helper takes: its receiver is the address of a
-// group's head field, so it sees the trailing four fields of WaveGroup.
+// group's head field, so it sees the trailing four fields of WaveControlGroup.
 struct WaveGroupList {
   WaveGroupNode *head;
   WaveGroupNode *tail;
@@ -38,7 +39,7 @@ struct WaveGroupList {
 };
 
 // One 24-byte group record; the device holds sixteen of them from 0x24.
-struct WaveGroup {
+struct WaveControlGroup {
   uint8_t enabled;        // +0x00, zero means the group is disabled
   uint8_t pad[3];
   uint32_t volume;        // +0x04, the scale Wave::set_volume folds in
@@ -59,8 +60,8 @@ struct WaveGroup {
   */
 class DLLEXPORT Wave_Device {
  public:
-  Wave_Device() { ; }
-  ~Wave_Device() { ; }
+  Wave_Device();
+  ~Wave_Device();
   void set_pan(int);
   int fade(int);
   void enable();
@@ -107,13 +108,19 @@ class DLLEXPORT Wave_Device {
   int get_listener_zpos(float *a1);
 
  private:
-  uint8_t unmapped_[0x14];
+  uint32_t vtable_storage_;  // 0x00, opaque so no C++ vtable is generated
+  uint32_t field_4_;         // 0x04, zeroed at construction
+  uint32_t volume_8_;        // 0x08, 0x7F at construction
+  uint32_t field_C_;
+  uint32_t field_10_;
   void *device_14_;       // 0x14, the wrapped device the forwarders consult
-  uint8_t unmapped_18_[0xC];
-  WaveGroup groups_[16];  // 0x24..0x1A3
+  uint32_t field_18_;
+  uint32_t field_1C_;
+  uint32_t field_20_;        // 0x20, zeroed at construction
+  WaveControlGroup groups_[16];  // 0x24..0x1A3
 };
 
-static_assert(sizeof(WaveGroup) == 0x18, "group records stride 24 bytes");
+static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes");
 
 // The list-insert helper add_to_group threads new waves through: not yet
 // source-owned, so it stays a rebindable dependency. Its receiver is the
@@ -137,6 +144,19 @@ typedef int(__cdecl func_wave_device_factory)(void **device_slot,
 typedef void(__cdecl func_wave_device_destroy)(void);
 extern func_wave_device_factory **WaveDeviceFactorySlot;
 extern func_wave_device_destroy **WaveDeviceDestroySlot;
+
+// The per-group construct/teardown pair the device's own lifetime hands to
+// the CRT vector iterators; both stay rebindable while they double as the
+// iterator arguments.
+extern func_thiscall_teardown *WaveControlGroupOriginalCtor;
+extern func_thiscall_teardown *WaveControlGroupOriginalDtor;
+
+void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
+                                                 void *);
+void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
+                                                 void *);
+Wave_Device *__fastcall wave_device_ctor_redirect(Wave_Device *self, void *);
+void __fastcall wave_device_dtor_redirect(Wave_Device *self, void *);
 
 void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
                                            Wave *a1);
