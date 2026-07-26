@@ -4,6 +4,84 @@
 
 Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 islands are only a temporary recovery mechanism. Final distributable builds must require no original executable, copied machine code, fixed-address redirects, or proprietary assembly.
 
+## Start Here (read before doing anything)
+
+This file is the handoff, but it is not self-sufficient. A session starting
+from scratch must first read the companion docs, because the mechanics they
+describe are assumed everywhere below and are not repeated here:
+
+- `docs/RECOVERY.md` — the canonical inventory, how to regenerate it, and what
+  every `recovery_state` / `binding_category` value means.
+- `docs/RUNTIME_ORACLE.md` — the in-process differential oracle: when a
+  function needs one instead of a copied-byte oracle, and how to author a suite.
+- `docs/HYBRID.md` — the staged-hybrid workflow, `tools/run_game.py`, and the
+  smoke gate that every recovery must pass.
+- `docs/LEGACY_ISLANDS.md` — island generation, eligibility, and the
+  zero-island release rule.
+- `docs/STATIC_RECOMPILATION.md`, `docs/PORTING.md` — the stopped static-recompile
+  pilot and the general porting notes.
+
+The environment lives outside git: the hash-pinned executables, the IDB, the
+Ghidra project, and the Python venv are all under the gitignored `.opensmacx/`
+and `build/`. Use `.opensmacx/venv/bin/python` for every tool invocation
+(`tools/disasm.py`, `tools/add_redirect.py`, `tools/mutate_and_verify.py`, the
+metadata tools). `tools/disasm.py <addr-or-mangled-name>` over the pinned
+executable is the ground truth for arity, offsets, and store order; the cached
+Ghidra decompilations under `build/ghidra-decompile/` are hypotheses to confirm
+against it, never to trust directly.
+
+### The per-recovery loop, concretely
+
+1. `tools/disasm.py` the target and every callee; classify each call as
+   source-owned or original-dependency; confirm the SEH prologue targets
+   `__CxxFrameHandler` at `0x00644FD6` (safe to omit) versus an
+   `_except_handler3` frame (not omittable — see the closing Caveat).
+2. Write the leaf test first (`tests/recovery_leaf_tests.cpp`); for a
+   composed teardown, build the reference image by running the already-recovered
+   component chain on a byte-identical twin and require an exact match, as
+   `test_scroll_destructor` does.
+3. Implement in the class's existing `src/*.cpp`, matching the recovered style:
+   `volatile uint32_t*` field writes at documented offsets, staged vtables,
+   rebindable seams (a function-pointer global defaulting to the fixed address)
+   for every original-dependency call, EH frame omitted.
+4. `tools/add_redirect.py <addr> <symbol>` wires the CSV, signature header,
+   dllmain table, and count in one checked step. New original-dependency
+   bindings must be classified in `docs/recovery-binding-classifications.csv`
+   or metadata regeneration fails with `unclassified original function
+   bindings`.
+5. Build `promote-recovery-metadata` (Release preset) *before* the gate.
+6. `verify-recovery-batch` in **both** presets; then
+   `tools/mutate_and_verify.py <source> --address <addr> --reuse-owned-wine-prefix`
+   and require every valid mutant killed.
+7. Commit the batch.
+
+### Parallel recovery across agents
+
+Multiple recoveries can run at once, but only the analysis-and-drafting phase
+parallelizes. Do **not** use git worktrees for this: a fresh worktree has no
+`.opensmacx/` and no `build/`, so it cannot disassemble, build, or gate. The
+build directories and the marker-protected Wine prefix are single-instance
+shared resources, so wiring, building, the two-preset gate, mutation sweeps,
+and commits are serial by construction.
+
+The working split that respects those constraints:
+
+- **Fan out** one agent per independent target. Each reads `AGENTS.md` and the
+  companion docs, runs `tools/disasm.py` (read-only over the shared pinned
+  executable), reads its cached decompilation, and produces three drafts in the
+  scratchpad: an annotated-disassembly analysis, a ready-to-paste implementation
+  (plus header additions and redirect wrappers), and a ready-to-paste leaf test.
+  Agents must not edit `src/`, run builds, wire redirects, promote metadata, or
+  run Wine — those touch shared files and resources and would collide.
+- **Integrate serially.** The coordinator applies each draft, wires it, runs the
+  gate and the mutation sweep, and commits — one target at a time — because the
+  redirect table, the signature header, the catalogs, and the shared test files
+  are edited by every recovery and cannot be merged blindly.
+- **Pick genuinely independent targets** so integration stays clean: prefer
+  functions in different `src/*.cpp` files whose only shared touchpoints are the
+  auto-managed wiring files. A cluster that all edits the same class body is
+  better done in one agent.
+
 ## Working Rules
 
 - Continue incrementally and commit each completed recovery batch.
@@ -50,9 +128,11 @@ Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery backlog: 5,018 candidates.
+- Current recovery state (regenerated): 1,541 `source_complete`, 90
+  `original_dependency`, 5 `source_in_progress`, 328 `external_library`, 30
+  `thunk`, 4,006 `unrecovered`; 4,117 ranked recovery candidates.
 - Current local legacy-island count: 114, reduced from 174.
-- `DllMain` entry redirects: 112, comprising 110 source recoveries and two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured.
+- `DllMain` install-time redirects: 1,037 (the `RedirectCount` a `static_assert` checks against the table in `src/dllmain.cpp`), overwhelmingly source recoveries plus two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured. `docs/recovery-redirects.csv` is the authoritative address/kind catalog; `tools/add_redirect.py` keeps the CSV, `src/redirect_signatures.h`, the dllmain table, and the count in sync.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -389,16 +469,29 @@ non-releasing coverage in phase one, which is cheaper and runs unconditionally.
 
 ## Next Steps
 
-1. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
-2. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
-3. Recover the BasePop and Dialog default-font setters at `0x006048C0`, `0x006049C0` and `0x00609D20`, which follow the static-default shape already recovered for BaseButton. Note the mutation harness cannot perturb a bare null-pointer guard - it carries no literal or comparison - so cover those branches behaviourally and keep each dispatch on one statement, or the sweep reports no signal at all.
-4. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
+The audio cluster (Wave/Sound/Ambience/AutoSound) and the Scroll teardown are
+complete. The current front is the UI teardown/lifecycle family, whose
+destructors compose the already-recovered close/destructor chains and are good
+parallel-agent targets (see "Parallel recovery" above):
+
+1. UI teardown cluster, in flight as parallel drafts: `ListBox::~ListBox` /
+   `ListBox::close` (`0x00609EC0`, `0x00609F20`), `Dialog::~Dialog`
+   (`0x00608E10`, 116 callers), and `Dialogs::~Dialogs` (`0x00406910`). The
+   Dialogs destructor tears down the embedded `RadioButton` at `0x44`, so its
+   test must install two different vbtables per the vbtable rule above.
+2. `BasePop::~BasePop` (`0x004064D0`), `Popup` constructor (`0x004048A0`), and
+   the remaining `GraphicWin` methods (`soft_update` `0x005D5930`/`0x005D5890`,
+   `fill` `0x005D5250`, `redraw` `0x005D5A70`, `init` `0x005D4EF0`).
+3. Replace the wrappers' temporary `Scroll::init` dependency at `0x006054D0` by recovering its remaining `GraphicWin::init`, `BaseButton::init`, and Win dependency closure; its shared RECT-construction helper is already source-owned.
+4. Recover the Scroll input and button handlers at `0x006061E0` through `0x00606C43`.
+5. Recover the BasePop and Dialog default-font setters at `0x006048C0`, `0x006049C0` and `0x00609D20`, which follow the static-default shape already recovered for BaseButton. Note the mutation harness cannot perturb a bare null-pointer guard - it carries no literal or comparison - so cover those branches behaviourally and keep each dispatch on one statement, or the sweep reports no signal at all.
+6. Keep pixel or accessibility-based UI automation limited to menu, new-game/load-game, and map-entry integration coverage.
 
 ## Relevant Files
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects; 110 source recoveries plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute.
+- `src/dllmain.cpp`: transactional signature-checked redirects (the `RedirectCount` table, currently 1,037) plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute. Never hand-edit the table; use `tools/add_redirect.py`.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
