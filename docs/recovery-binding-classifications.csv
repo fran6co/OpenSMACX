@@ -106,3 +106,6 @@ XPopOriginalFull,ui_dependency,recover_x_pop_full,Temporary dependency for the r
 XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
 WaveDevicePullFromGroup,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave destructor until Wave_Device::pull_from_group is source-owned
 WaveOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the recovered Wave destructor frees its sample buffer through; the block was allocated by the game CRT so it must return to that heap
+WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT operator new the recovered set_fname allocates the filename copy on; the destructor and set_fname free it with the matching game delete
+WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
+WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned

@@ -648,6 +648,145 @@ int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
     return self->get_attrib();
 }
 
+func_operator_new *WaveOperatorNew = (func_operator_new *)0x0064558A;
+uint32_t *WaveDeviceGroupVolumes = reinterpret_cast<uint32_t *>(0x0090D9A0);
+func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled = (func_wave_device_is_group_disabled *)0x004C5460;
+func_wave_original_load *WaveOriginalLoad = (func_wave_original_load *)0x004C6CE0;
+
+/*
+Purpose: Set the wave's volume. The low seven bits of the argument are stored
+         at 0x04; while the wave holds a device group slot the level handed
+         to the device is rescaled by that group's own volume dword (one
+         every 24 bytes in the singleton's table), as level/127 * group in
+         double precision truncated back to an integer. The wrapped device,
+         if any, hears the result through its vtable slot 0x40.
+Original Offset: 004C7130
+Return Value: n/a
+Status: Complete
+*/
+void Wave::set_volume(int a1) {
+    const uint32_t vol = static_cast<uint32_t>(a1) & 0x7F;
+    volume_ = vol;
+    int level = static_cast<int>(vol);
+    if (group_slot_ < 0x10) {
+        // The original loads the group dword zero-extended through a 64-bit
+        // fild, so the scale is the UNSIGNED value of the table entry.
+        const double group = static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6]);
+        level = static_cast<int>(static_cast<long long>(
+            static_cast<double>(static_cast<int>(vol)) * (1.0 / 127.0) *
+            group));
+    }
+    if (device_) {
+        typedef void(__thiscall * device_fn)(void *device, int level);
+        (*reinterpret_cast<device_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, level);
+    }
+}
+
+void __fastcall wave_set_volume_redirect(Wave *self, void *, int a1) {
+    self->set_volume(a1);
+}
+
+/*
+Purpose: Remember the wave's filename. The previous copy, if any, goes back
+         to the game CRT heap first; the new string is measured, allocated on
+         that same heap, recorded at 0x4C, and copied in - in that order, so
+         the field already names the block while it is still being filled.
+Original Offset: 004C6B60
+Return Value: 0, or 0xA when the name is null
+Status: Complete
+*/
+int Wave::set_fname(const char *a1) {
+    if (!a1) {
+        return 0xA;
+    }
+    if (fname_) {
+        WaveOperatorDelete(fname_);
+    }
+    fname_ = WaveOperatorNew(strlen(a1) + 1);
+    strcpy(static_cast<char *>(fname_), a1);
+    return 0;
+}
+
+int __fastcall wave_set_fname_redirect(Wave *self, void *, const char *a1) {
+    return self->set_fname(a1);
+}
+
+/*
+Purpose: Start the wave. While it holds a device group slot, a disabled group
+         answers 0x14 immediately (the original trusts only the answer's low
+         byte); otherwise, when bit 4 of the 0x54 flag byte marks a clocked
+         wave, the wave's own vtable slot 0x40 replays the stored volume. A
+         wrapped device then starts through its slot 0x1C and its answer is
+         the result; with no device, a clocked wave runs the original
+         no-argument load and starts the device that load may have wrapped
+         (answering 0 when it wrapped none), while an unclocked one answers
+         0x14. Finally a clocked wave stamps the start time from the game's
+         timeGetTime import, runs its own vtable slot 0x80, and forgets the
+         device.
+Original Offset: 004C6920
+Return Value: the device's start answer, 0x14 when disabled or unstartable,
+              0 when a clocked load wrapped no device
+Status: Complete
+*/
+int Wave::play() {
+    int result = 0;
+    if (group_slot_ < 0x10) {
+        if (static_cast<uint8_t>(
+                WaveDeviceIsGroupDisabled(WaveDeviceGlobal, group_slot_))) {
+            return 0x14;
+        }
+        if (flags_54_ & 0x10) {
+            typedef void(__thiscall * wave_volume_fn)(Wave *self,
+                                                      uint32_t volume);
+            (*reinterpret_cast<wave_volume_fn *>(
+                *reinterpret_cast<uint8_t **>(this) + 0x40))(this, volume_);
+        }
+    }
+    if (device_) {
+        typedef int(__thiscall * device_start_fn)(void *device);
+        result = (*reinterpret_cast<device_start_fn *>(
+            *reinterpret_cast<uint8_t **>(device_) + 0x1C))(device_);
+    } else if (flags_54_ & 0x10) {
+        WaveOriginalLoad(this);
+        if (device_) {
+            typedef int(__thiscall * device_start_fn)(void *device);
+            result = (*reinterpret_cast<device_start_fn *>(
+                *reinterpret_cast<uint8_t **>(device_) + 0x1C))(device_);
+        }
+    } else {
+        result = 0x14;
+    }
+    if (flags_54_ & 0x10) {
+        start_time_ = (*WaveTimeGetTimeSlot)();
+        (*reinterpret_cast<void(__thiscall **)(Wave *)>(
+            *reinterpret_cast<uint8_t **>(this) + 0x80))(this);
+        device_ = nullptr;
+    }
+    return result;
+}
+
+int __fastcall wave_play_empty_redirect(Wave *self, void *) {
+    return self->play();
+}
+
+/*
+Purpose: The compiler-generated scalar deleting destructor: destroy the wave
+         and, when bit 0 of the mode argument asks for it, return the storage
+         to the game CRT heap.
+Original Offset: 004C9300
+Return Value: the object pointer
+Status: Complete
+*/
+void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
+                                           unsigned int mode) {
+    self->~Wave();
+    if (mode & 1) {
+        WaveOperatorDelete(self);
+    }
+    return self;
+}
+
 // The destructor's dependencies. pull_from_group is the Wave_Device method at
 // 0x004C5280 with its singleton receiver at 0x0090D978; the buffer free goes
 // to the game CRT's operator delete so the block returns to the heap that
@@ -668,8 +807,8 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          inlined hierarchy, republishing a vtable pointer at each stage: its
          own (0x0066E44C) at entry, the base's (0x0066E3C0) midway, and the
          ultimate base's (0x0066E444) on the way out. While the wave still
-         holds a device group slot it is pulled from its group; the sample
-         buffer goes back to the game CRT heap; a chained wave unlinks itself
+         holds a device group slot it is pulled from its group; the filename
+         copy goes back to the game CRT heap; a chained wave unlinks itself
          from the global wave chain; the wrapped device is put through the
          release hook when the hook is live, then forgotten. The inlined base
          destructor then repeats the buffer free and the unlink - normally
@@ -691,11 +830,11 @@ Wave::~Wave() {
     if (self->group_slot_ < 0x10) {
         WaveDevicePullFromGroup(WaveDeviceGlobal, this);
     }
-    void *const block = self->buffer_;
+    void *const block = self->fname_;
     if (block) {
         WaveOperatorDelete(block);
     }
-    self->buffer_ = nullptr;
+    self->fname_ = nullptr;
     if (self->field_40_ & 2) {
         // Unlink from the wave chain. The neighbour writes go through volatile
         // views too, and the second neighbour is re-read after the first write
@@ -724,10 +863,10 @@ Wave::~Wave() {
     self->vtable_storage_ = 0x0066E3C0;
     // The inlined base destructor's copy of the free: reachable only when the
     // unlink above re-populated the slot through an aliased neighbour.
-    void *const late_block = self->buffer_;
+    void *const late_block = self->fname_;
     if (late_block) {
         WaveOperatorDelete(late_block);
-        self->buffer_ = nullptr;
+        self->fname_ = nullptr;
     }
     void *const device = self->device_;
     if (device) {

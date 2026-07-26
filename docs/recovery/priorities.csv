@@ -1743,7 +1743,7 @@ P0,1001121,0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,156,1,1,orig
 P3,2021,0x004C5320,?set_group_volume@Wave_Device@@QAEHII@Z,95,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_group_volume@Wave_Device@@QAEHII@Z)(Wave_Device* this, unsigned int, unsigned int)"
 P3,1021,0x004C53A0,?enable_group@Wave_Device@@QAEHI@Z,96,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?enable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
 P3,1021,0x004C5400,?disable_group@Wave_Device@@QAEHI@Z,93,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?disable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
-P3,1021,0x004C5460,?is_group_disabled@Wave_Device@@QAEHI@Z,33,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
+P0,1001021,0x004C5460,?is_group_disabled@Wave_Device@@QAEHI@Z,33,1,0,original_dependency,ui_dependency,recover_wave_device,2,exact,exact,"int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)"
 P3,11,0x004C5490,??0WaveControlGroup@@QAE@XZ,27,0,0,unrecovered,,,1,exact,missing,void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 P3,21,0x004C54C0,?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z)(Wave_Device* this, EAX_REVERB_PROPERTIES*)"
 P3,21,0x004C54E0,?set_eax@Wave_Device@@QAEHK@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_eax@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)"
@@ -1801,14 +1801,11 @@ P3,21,0x004C6660,?fade_in@Sound@@QAEXI@Z,33,0,0,unrecovered,,,2,exact,exact,"voi
 P3,2021,0x004C66B0,?set_pan@Sound@@QAEXH@Z,48,2,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_pan@Sound@@QAEXH@Z)(Sound* this, int)"
 P2,16221,0x004C66E0,??0Wave@@QAE@XZ,239,16,2,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0Wave@@QAE@XZ)(Wave* this)
 P0,1002220,0x004C67C0,??1Wave@@QAE@XZ,333,2,2,source_complete,ui_dependency,recover_wave_destructor,2,entry_range,entry_range,
-P1,20221,0x004C6920,?play@Wave@@QAEHXZ,141,20,2,unrecovered,,,2,exact,exact,int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
 P2,5621,0x004C69B0,?init@Wave@@QAEXPADK@Z,293,5,6,unrecovered,,,2,exact,exact,"void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)"
-P3,411,0x004C6B60,?set_fname@Wave@@QAEHPBD@Z,75,0,4,unrecovered,,,1,missing,exact,"int (__thiscall ?set_fname@Wave@@QAEHPBD@Z)(Wave* this, int8*)"
 P3,11,0x004C6BB0,?dyna_load@Wave@@QAEHPAD@Z,106,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)"
 P3,4121,0x004C6C20,?load@Wave@@QAEHPBD@Z,184,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?load@Wave@@QAEHPBD@Z)(Wave* this, int8*)"
-P3,3121,0x004C6CE0,?load@Wave@@QAEHXZ,204,3,1,unrecovered,,,2,exact,exact,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
+P0,1003121,0x004C6CE0,?load@Wave@@QAEHXZ,204,3,1,original_dependency,ui_dependency,recover_wave_load,2,exact,exact,int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
 P3,21,0x004C6DF0,?reload@Wave@@QAEHXZ,165,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this)
-P2,5121,0x004C7130,?set_volume@Wave@@QAEXH@Z,93,5,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_volume@Wave@@QAEXH@Z)(Wave* this, int)"
 P3,110,0x004C7270,sub_4c7270,46,0,1,unrecovered,,,1,missing,exact,
 P3,120,0x004C72A0,sub_4c72a0,85,0,1,unrecovered,,,2,exact,exact,
 P3,110,0x004C7300,sub_4c7300,115,0,1,unrecovered,,,1,missing,exact,
@@ -1917,7 +1914,6 @@ P3,11,0x004C9030,?get_next_buffer@VoiceTx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,m
 P3,21,0x004C9050,?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)"
 P3,2620,0x004C9080,sub_4c9080,749,1,16,unrecovered,,,2,exact,entry_range,
 P3,221,0x004C92D0,??_GSound@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)"
-P3,221,0x004C9300,??_GWave@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)"
 P3,221,0x004C9330,??_GAmbience@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)"
 P3,221,0x004C9360,??_GVideo@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)"
 P3,10,0x004C9390,sub_4c9390,18,0,0,unrecovered,,,1,exact,missing,
@@ -4103,6 +4099,7 @@ P3,2020,0x00644930,sub_644930,306,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x00644A70,_inflate_fast,834,1,0,unrecovered,,,2,exact,exact,
 P0,1170420,0x00644EF2,_free,72,170,4,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,exact,
 P0,1115120,0x0064557F,??3@YAXPAX@Z,11,115,1,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,exact,
+P0,1027120,0x0064558A,??2@YAPAXI@Z,14,27,1,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,exact,
 P0,1012120,0x00645646,_fopen,19,12,1,original_dependency,crt_ownership,replace_after_file_boundary,2,exact,exact,
 P0,1160221,0x006456E4,??_M@YGXPAXIHP6EX0@Z@Z,128,160,2,original_dependency,crt_ownership,replace_after_ownership_boundary,2,exact,start_only,"void (__stdcall ??_M@YGXPAXIHP6EX0@Z@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*))"
 P3,320,0x0064584D,sub_64584d,23,0,3,unrecovered,,,2,exact,exact,

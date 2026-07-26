@@ -31,7 +31,7 @@
   * the inlined hierarchy). The wrapped device pointer sits at 0x3C, a flag
   * dword at 0x40 (bit 0 the loaded bit, bit 1 set while the wave is linked
   * into the global wave chain), the chain neighbours at 0x44/0x48, the
-  * heap-owned sample buffer at 0x4C, and a flag byte region at 0x54. The
+  * heap-owned filename copy at 0x4C, and a flag byte region at 0x54. The
   * gaps between named fields stay unnamed padding.
   */
 class DLLEXPORT Wave {
@@ -39,6 +39,9 @@ class DLLEXPORT Wave {
   Wave() { ; }
   ~Wave();
   int set_asdr();
+  void set_volume(int a1);
+  int set_fname(const char *a1);
+  int play();
 
   int set_bufflimit(unsigned int a1);
   int set_attack(unsigned int a1, unsigned int a2, unsigned int a3);
@@ -68,7 +71,7 @@ class DLLEXPORT Wave {
   int get_attrib();
  private:
   uint32_t vtable_storage_;      // 0x00
-  uint32_t field_4_;
+  uint32_t volume_;              // 0x04, low 7 bits of set_volume's argument
   uint32_t field_8_;
   uint8_t memset_region_[0x24];  // 0x0C..0x2F
   uint32_t field_30_;
@@ -78,7 +81,7 @@ class DLLEXPORT Wave {
   uint32_t field_40_;            // 0x40, bit 0 cleared on unload, bit 1 chained
   Wave *chain_prev_;             // 0x44, chain neighbour; null at the head end
   Wave *chain_next_;             // 0x48, chain neighbour; null at the tail end
-  void *buffer_;                 // 0x4C, heap block freed on destruction
+  void *fname_;                  // 0x4C, heap-owned filename copy
   uint32_t field_50_;
   uint8_t flags_54_;             // 0x54, bit 1 suppresses the vtable callback
   uint8_t pad_55_[3];
@@ -126,10 +129,15 @@ int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1);
 int __fastcall wave_set_zpos_redirect(Wave *self, void *, float a1);
 void __fastcall wave_set_attrib_redirect(Wave *self, void *, uint32_t a1);
 int __fastcall wave_get_attrib_redirect(Wave *self, void *);
+void __fastcall wave_set_volume_redirect(Wave *self, void *, int a1);
+int __fastcall wave_set_fname_redirect(Wave *self, void *, const char *a1);
+int __fastcall wave_play_empty_redirect(Wave *self, void *);
+void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
+                                           unsigned int mode);
 
 // The destructor's dependencies, each rebindable for the leaf tests. A wave
 // still holding one of the 0x10 device group slots is pulled from its group
-// by the device singleton at a fixed address; the sample buffer was allocated
+// by the device singleton at a fixed address; the filename copy was allocated
 // by the game CRT, so it must be returned to the game's own operator delete
 // rather than ours; the release hook slot runs over the wrapped device when
 // the guard dword says the hook is live; and a chained wave unlinks itself
@@ -154,5 +162,27 @@ extern func_wave_device_release **WaveDeviceReleaseSlot;
 extern int *WaveDeviceReleaseGuard;
 extern Wave **WaveChainHead;
 extern Wave **WaveChainTail;
+
+// The rest of the Wave dependency surface. The filename copy is allocated on
+// the game CRT heap (the destructor and set_fname free it there, so the new
+// must match); the per-group volume table lives inside the device singleton,
+// one dword every 24 bytes from 0x0090D9A0; is_group_disabled is the device
+// singleton method play consults before starting; and the no-argument load
+// is the not-yet-recovered Wave::load() that play falls back to.
+typedef void *(__cdecl func_operator_new)(unsigned int size);
+extern func_operator_new *WaveOperatorNew;
+extern uint32_t *WaveDeviceGroupVolumes;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef int(__thiscall func_wave_device_is_group_disabled)(void *device,
+                                                           uint32_t slot);
+typedef int(__thiscall func_wave_original_load)(Wave *wave);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled;
+extern func_wave_original_load *WaveOriginalLoad;
 
 void __fastcall wave_dtor_redirect(Wave *self, void *);

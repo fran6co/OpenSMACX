@@ -108,7 +108,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 977;
+constexpr size_t RedirectCount = 981;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -3259,6 +3259,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C68F0,
         },
         {
+            0x004C6920,
+            reinterpret_cast<uintptr_t>(&wave_play_empty_redirect),
+            OPENSMACX_SIGNATURE_004C6920,
+        },
+        {
             0x004C6AE0,
             reinterpret_cast<uintptr_t>(&wave_is_hwbuffer_redirect),
             OPENSMACX_SIGNATURE_004C6AE0,
@@ -3272,6 +3277,11 @@ bool install_redirects() {
             0x004C6B10,
             reinterpret_cast<uintptr_t>(&wave_is_playing_redirect),
             OPENSMACX_SIGNATURE_004C6B10,
+        },
+        {
+            0x004C6B60,
+            reinterpret_cast<uintptr_t>(&wave_set_fname_redirect),
+            OPENSMACX_SIGNATURE_004C6B60,
         },
         {
             0x004C6DB0,
@@ -3364,6 +3374,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C7120,
         },
         {
+            0x004C7130,
+            reinterpret_cast<uintptr_t>(&wave_set_volume_redirect),
+            OPENSMACX_SIGNATURE_004C7130,
+        },
+        {
             0x004C7190,
             reinterpret_cast<uintptr_t>(&wave_set_position3d_redirect),
             OPENSMACX_SIGNATURE_004C7190,
@@ -3387,6 +3402,11 @@ bool install_redirects() {
             0x004C7250,
             reinterpret_cast<uintptr_t>(&wave_is_3d_redirect),
             OPENSMACX_SIGNATURE_004C7250,
+        },
+        {
+            0x004C9300,
+            reinterpret_cast<uintptr_t>(&wave_scalar_dtor_redirect),
+            OPENSMACX_SIGNATURE_004C9300,
         },
         {
             0x004D9DC0,

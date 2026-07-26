@@ -9621,6 +9621,58 @@ int __thiscall observe_wave_dev3(void *self, uint32_t a1, uint32_t a2,
     ++g_wave_fam_calls;
     return g_wave_fam_ret;
 }
+// Doubles for set_volume/set_fname/play: the game-heap allocator, the
+// device singleton's group-disabled query, the original no-argument load
+// (which may wrap a device as its observable effect), and the wave's own
+// vtable slots 0x40/0x80.
+unsigned g_wave_new_size;
+int g_wave_new_calls;
+char g_wave_new_arena[64];
+void *__cdecl observe_wave_operator_new(unsigned int size) {
+    g_wave_new_size = size;
+    ++g_wave_new_calls;
+    return g_wave_new_arena;
+}
+void *g_wave_gd_dev;
+uint32_t g_wave_gd_slot;
+int g_wave_gd_calls;
+int g_wave_gd_ret;
+int __thiscall observe_wave_group_disabled(void *device, uint32_t slot) {
+    g_wave_gd_dev = device;
+    g_wave_gd_slot = slot;
+    ++g_wave_gd_calls;
+    return g_wave_gd_ret;
+}
+int g_wave_oload_calls;
+void *g_wave_oload_installs;  // written into the wave's device slot when set
+int __thiscall observe_wave_original_load(Wave *wave) {
+    ++g_wave_oload_calls;
+    std::memcpy(reinterpret_cast<uint8_t *>(wave) + 0x3C,
+                &g_wave_oload_installs, 4);
+    return 7;
+}
+Wave *g_wave_own40_self;
+uint32_t g_wave_own40_arg;
+int g_wave_own40_calls;
+void __thiscall observe_wave_own_slot40(Wave *self, uint32_t arg) {
+    g_wave_own40_self = self;
+    g_wave_own40_arg = arg;
+    ++g_wave_own40_calls;
+}
+Wave *g_wave_own80_self;
+int g_wave_own80_calls;
+void *g_wave_own80_seen_device;
+uint32_t g_wave_own80_seen_stamp;
+void __thiscall observe_wave_own_slot80(Wave *self) {
+    g_wave_own80_self = self;
+    ++g_wave_own80_calls;
+    // The original stamps the start time and still holds the device when its
+    // own slot 0x80 runs; witness both so the ordering is pinned.
+    std::memcpy(&g_wave_own80_seen_device,
+                reinterpret_cast<uint8_t *>(self) + 0x3C, 4);
+    std::memcpy(&g_wave_own80_seen_stamp,
+                reinterpret_cast<uint8_t *>(self) + 0x64, 4);
+}
 void *g_wave_dtor_release_dev;
 int g_wave_dtor_release_calls;
 uint32_t g_wave_dtor_release_seen_vtable;
@@ -10056,6 +10108,246 @@ void test_wave_device_forwarders() {
     wave_set_attrib_redirect(wave, nullptr, 1);
     expect(obj[0x54] == 1);
     expect(wave_get_attrib_redirect(wave, nullptr) == 1);
+}
+
+void test_wave_volume_fname_play() {
+    std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *wave = reinterpret_cast<Wave *>(obj);
+    g_wave_dtor_obj = obj;
+
+    auto *const saved_new = WaveOperatorNew;
+    auto *const saved_delete = WaveOperatorDelete;
+    auto *const saved_gd = WaveDeviceIsGroupDisabled;
+    auto *const saved_load = WaveOriginalLoad;
+    uint32_t *const saved_gvol = WaveDeviceGroupVolumes;
+    void *const saved_dev_global = WaveDeviceGlobal;
+    func_time_get_time **const saved_time = WaveTimeGetTimeSlot;
+
+    int fake_singleton = 0;
+    func_time_get_time *time_fn = &observe_wave_time_get_time;
+    uint32_t gtable[16 * 6];
+    for (auto &v : gtable) v = 0xDDDDDDDDu;
+    WaveOperatorNew = &observe_wave_operator_new;
+    WaveOperatorDelete = &observe_wave_operator_delete;
+    WaveDeviceIsGroupDisabled = &observe_wave_group_disabled;
+    WaveOriginalLoad = &observe_wave_original_load;
+    WaveDeviceGroupVolumes = gtable;
+    WaveDeviceGlobal = &fake_singleton;
+    WaveTimeGetTimeSlot = &time_fn;
+
+    void *dev_vtable[64];
+    struct FakeDev { void *vtbl; } fake_dev;
+    fake_dev.vtbl = dev_vtable;
+    auto arm_dev = [&](size_t slot, void *fn) {
+        std::memset(dev_vtable, 0, sizeof(dev_vtable));
+        dev_vtable[slot / 4] = fn;
+        g_wave_fam_calls = 0;
+    };
+    void *own_vtable[64];
+    std::memset(own_vtable, 0, sizeof(own_vtable));
+    own_vtable[0x40 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot40);
+    own_vtable[0x80 / 4] = reinterpret_cast<void *>(&observe_wave_own_slot80);
+
+    auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
+    auto get32 = [&](size_t off) {
+        uint32_t v;
+        std::memcpy(&v, obj + off, 4);
+        return v;
+    };
+    auto setp = [&](size_t off, const void *p) {
+        std::memcpy(obj + off, &p, 4);
+    };
+    auto getp = [&](size_t off) {
+        void *p;
+        std::memcpy(&p, obj + off, 4);
+        return p;
+    };
+
+    // --- set_volume: the group-scaled level ---
+    seed_storage(storage.data(), expected.data(), storage.size());
+    set32(0x68, 3);
+    gtable[3 * 6] = 200;
+    setp(0x3C, &fake_dev);
+    arm_dev(0x40, reinterpret_cast<void *>(&observe_wave_dev1));
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    wave->set_volume(0x180 | 0x7F);  // only the low seven bits survive
+    expect(get32(0x04) == 127);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev);
+    expect(g_wave_fam_args[0] == 200);  // 127/127 * 200
+    {
+        const uint32_t vol = 127;
+        std::memcpy(expected.data() + 16 + 0x04, &vol, 4);
+    }
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    gtable[3 * 6] = 100;
+    arm_dev(0x40, reinterpret_cast<void *>(&observe_wave_dev1));
+    wave->set_volume(64);
+    expect(get32(0x04) == 64);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 50);  // 64/127*100
+
+    // Outside the group range the raw masked level reaches the device.
+    set32(0x68, 0x10);
+    arm_dev(0x40, reinterpret_cast<void *>(&observe_wave_dev1));
+    wave->set_volume(90);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_args[0] == 90);
+
+    // No device: the volume is still remembered, nothing is dispatched.
+    setp(0x3C, nullptr);
+    arm_dev(0x40, reinterpret_cast<void *>(&observe_wave_dev1));
+    wave->set_volume(5);
+    expect(get32(0x04) == 5 && g_wave_fam_calls == 0);
+
+    // --- set_fname: game-heap string ownership ---
+    g_wave_dtor_deletes.clear();
+    g_wave_dtor_delete_seen_slot.clear();
+    g_wave_new_calls = 0;
+    setp(0x4C, nullptr);
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave->set_fname(nullptr) == 0xA);
+    expect(g_wave_new_calls == 0 && g_wave_dtor_deletes.empty());
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    expect(wave->set_fname("wav/menu.wav") == 0);
+    expect(g_wave_new_calls == 1 && g_wave_new_size == 13);
+    expect(getp(0x4C) == g_wave_new_arena);
+    expect(std::strcmp(g_wave_new_arena, "wav/menu.wav") == 0);
+    expect(g_wave_dtor_deletes.empty());  // nothing to free the first time
+
+    // A previous name goes back to the game heap first.
+    char old_name[4] = {'x', 0, 0, 0};
+    setp(0x4C, old_name);
+    g_wave_new_calls = 0;
+    expect(wave->set_fname("ok") == 0);
+    expect(g_wave_dtor_deletes.size() == 1 &&
+           g_wave_dtor_deletes[0] == old_name);
+    expect(g_wave_new_calls == 1 && g_wave_new_size == 3);
+    expect(getp(0x4C) == g_wave_new_arena &&
+           std::strcmp(g_wave_new_arena, "ok") == 0);
+
+    // --- play(): the start protocol ---
+    auto reset_play = [&] {
+        g_wave_gd_calls = g_wave_oload_calls = 0;
+        g_wave_own40_calls = g_wave_own80_calls = 0;
+        g_wave_fam_calls = 0;
+        g_wave_time_calls = 0;
+        g_wave_oload_installs = nullptr;
+    };
+    seed_storage(storage.data(), expected.data(), storage.size());
+    setp(0x00, own_vtable);
+
+    // A: in range, "disabled" answer with a zero low byte does NOT disable;
+    // unclocked wave with a device: only the device start runs.
+    set32(0x68, 5);
+    obj[0x54] = 0xEF;  // every bit but 4
+    setp(0x3C, &fake_dev);
+    set32(0x04, 77);
+    arm_dev(0x1C, reinterpret_cast<void *>(&observe_wave_dev0));
+    reset_play();
+    g_wave_gd_ret = 0x100;
+    g_wave_fam_ret = 0x2211;
+    std::memcpy(expected.data(), storage.data(), storage.size());
+    expect(wave->play() == 0x2211);
+    expect(g_wave_gd_calls == 1 && g_wave_gd_dev == &fake_singleton &&
+           g_wave_gd_slot == 5);
+    expect(g_wave_own40_calls == 0);
+    expect(g_wave_fam_calls == 1 && g_wave_fam_self == &fake_dev);
+    expect(g_wave_own80_calls == 0 && g_wave_time_calls == 0);
+    expect(getp(0x3C) == &fake_dev);  // unclocked: the device is kept
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // B: a genuinely disabled group answers 0x14 before anything happens.
+    reset_play();
+    g_wave_gd_ret = 1;
+    expect(wave->play() == 0x14);
+    expect(g_wave_gd_calls == 1 && g_wave_own40_calls == 0 &&
+           g_wave_fam_calls == 0 && g_wave_oload_calls == 0);
+
+    // C: clocked wave with a device: volume replay through the wave's own
+    // slot 0x40, device start, then the epilogue - timestamp, own slot 0x80,
+    // device forgotten.
+    obj[0x54] = 0x10;
+    reset_play();
+    g_wave_gd_ret = 0;
+    g_wave_fam_ret = 0x3322;
+    g_wave_time_value = 0xABCD1234u;
+    expect(wave->play() == 0x3322);
+    expect(g_wave_own40_calls == 1 && g_wave_own40_self == wave &&
+           g_wave_own40_arg == 77);
+    expect(g_wave_fam_calls == 1);
+    expect(g_wave_time_calls == 1 && get32(0x64) == 0xABCD1234u);
+    expect(g_wave_own80_calls == 1 && g_wave_own80_self == wave);
+    expect(g_wave_own80_seen_stamp == 0xABCD1234u);
+    expect(g_wave_own80_seen_device == &fake_dev);
+    expect(getp(0x3C) == nullptr);
+
+    // D: out of group range (no disabled query), clocked, no device: the
+    // original load runs and the device it wraps is started.
+    set32(0x68, 0x10);
+    reset_play();
+    g_wave_oload_installs = &fake_dev;
+    arm_dev(0x1C, reinterpret_cast<void *>(&observe_wave_dev0));
+    g_wave_fam_ret = 0x4433;
+    expect(wave->play() == 0x4433);
+    expect(g_wave_gd_calls == 0 && g_wave_own40_calls == 0);
+    expect(g_wave_oload_calls == 1);
+    expect(g_wave_fam_calls == 1);
+    expect(g_wave_own80_calls == 1 && getp(0x3C) == nullptr);
+    expect(g_wave_own80_seen_device == &fake_dev);
+
+    // E: the load wraps nothing: the answer is 0, the epilogue still runs.
+    reset_play();
+    expect(wave->play() == 0);
+    expect(g_wave_oload_calls == 1 && g_wave_fam_calls == 0);
+    expect(g_wave_own80_calls == 1);
+
+    // F: unclocked with no device: the fixed 0x14, and nothing runs at all.
+    obj[0x54] = 0xEF;
+    reset_play();
+    expect(wave->play() == 0x14);
+    expect(g_wave_gd_calls == 0 && g_wave_oload_calls == 0 &&
+           g_wave_own40_calls == 0 && g_wave_own80_calls == 0 &&
+           g_wave_time_calls == 0);
+
+    // --- the scalar deleting destructor ---
+    auto *const saved_pull = WaveDevicePullFromGroup;
+    WaveDevicePullFromGroup = &observe_wave_pull_from_group;
+    g_wave_dtor_pull_calls = 0;
+    g_wave_dtor_deletes.clear();
+    g_wave_dtor_delete_seen_slot.clear();
+    set32(0x68, 0x10);  // no group pull
+    set32(0x40, 0);     // not chained
+    setp(0x4C, nullptr);
+    setp(0x3C, nullptr);
+    expect(wave_scalar_dtor_redirect(wave, nullptr, 0) == wave);
+    expect(get32(0x00) == 0x0066E444u);  // the destructor really ran
+    expect(g_wave_dtor_deletes.empty()); // mode 0: storage kept
+    set32(0x68, 0x10);
+    set32(0x40, 0);
+    expect(wave_scalar_dtor_redirect(wave, nullptr, 3) == wave);
+    expect(g_wave_dtor_deletes.size() == 1 && g_wave_dtor_deletes[0] == wave);
+    expect(g_wave_dtor_pull_calls == 0);
+    WaveDevicePullFromGroup = saved_pull;
+
+    // --- redirect entries ---
+    set32(0x68, 0x10);
+    setp(0x3C, nullptr);
+    wave_set_volume_redirect(wave, nullptr, 9);
+    expect(get32(0x04) == 9);
+    setp(0x4C, nullptr);
+    expect(wave_set_fname_redirect(wave, nullptr, nullptr) == 0xA);
+    obj[0x54] = 0xEF;
+    expect(wave_play_empty_redirect(wave, nullptr) == 0x14);
+
+    WaveOperatorNew = saved_new;
+    WaveOperatorDelete = saved_delete;
+    WaveDeviceIsGroupDisabled = saved_gd;
+    WaveOriginalLoad = saved_load;
+    WaveDeviceGroupVolumes = saved_gvol;
+    WaveDeviceGlobal = saved_dev_global;
+    WaveTimeGetTimeSlot = saved_time;
 }
 
 void test_wave_destructor() {
@@ -16981,5 +17273,6 @@ int main() {
     test_wave_destructor();
     test_wave_play();
     test_wave_device_forwarders();
+    test_wave_volume_fname_play();
     return failures == 0 ? 0 : 1;
 }
