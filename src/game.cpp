@@ -44,6 +44,31 @@ uint32_t *MountPlanetY = (uint32_t *)0x009A6808;
 int *DustCloudDuration = (int *)0x009A680C;
 BOOL *IsMultiplayerNet = (BOOL *)0x0093F660; // DirectPlay - Serial, Modem, Internet (TCP/IP)
 BOOL *IsMultiplayerPBEM = (BOOL *)0x0093A95C; // HotSeat / PBEM
+uint8_t *NetTurnFlags = (uint8_t *)0x009A681C;
+int *NetTurnFaction = (int *)0x009A6820;
+int *LocalFaction = (int *)0x00939284;
+
+/*
+Purpose: Determine whether the turn currently belongs to another faction in a
+         networked game, which is what gates local input.
+Original Offset: 0052DC70
+Return Value: TRUE only in a net game that is handing the turn around and whose
+              active faction is not the local one
+Status: Complete
+*/
+BOOL __cdecl not_my_turn() {
+    // Both guards return before the comparison, so a non-net game and a net
+    // game that is not currently passing the turn are both "my turn".
+    if (!*IsMultiplayerNet) {
+        return false;
+    }
+    if (!(*NetTurnFlags & 0x10)) {
+        return false;
+    }
+    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
+    // normalised flag, and the faction identity is what decides it.
+    return *NetTurnFaction != *LocalFaction;
+}
 
 /*
 Purpose: Handle creation of pop-up message on Planetfall.

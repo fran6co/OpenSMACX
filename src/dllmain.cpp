@@ -85,6 +85,7 @@
 #include "scenario.h"
 #include "font.h"
 #include "flatbutton.h"
+#include "game.h"
 #include "graphicwin.h"
 #include "scroll.h"
 #include "sounddevice.h"
@@ -105,7 +106,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 551;
+constexpr size_t RedirectCount = 552;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -1654,6 +1655,11 @@ bool install_redirects() {
             0x00514F40,
             reinterpret_cast<uintptr_t>(&console_set_map_display_redirect),
             OPENSMACX_SIGNATURE_00514F40,
+        },
+        {
+            0x0052DC70,
+            reinterpret_cast<uintptr_t>(&not_my_turn),
+            OPENSMACX_SIGNATURE_0052DC70,
         },
         {
             0x0052DCD0,

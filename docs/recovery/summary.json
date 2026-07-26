@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 332,
       "original_dependency": 76,
-      "source_complete": 1055,
+      "source_complete": 1056,
       "source_in_progress": 5,
       "thunk": 33,
-      "unrecovered": 4499
+      "unrecovered": 4498
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,14 +1317,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1001,
-    "matched_function_starts": 1001,
-    "unique_addresses": 1001,
+    "annotations": 1002,
+    "matched_function_starts": 1002,
+    "unique_addresses": 1002,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 191,
+      "data": 194,
       "function": 88
     },
     "items": [
@@ -2236,6 +2236,33 @@
         "location": "src/game.cpp:46",
         "symbol": "IsMultiplayerPBEM",
         "type": "BOOL *"
+      },
+      {
+        "address": "0x009A681C",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/game.cpp:47",
+        "symbol": "NetTurnFlags",
+        "type": "uint8_t *"
+      },
+      {
+        "address": "0x009A6820",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/game.cpp:48",
+        "symbol": "NetTurnFaction",
+        "type": "int *"
+      },
+      {
+        "address": "0x00939284",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/game.cpp:49",
+        "symbol": "LocalFaction",
+        "type": "int *"
       },
       {
         "address": "0x009BBFEC",
@@ -3841,6 +3868,6 @@
       }
     ],
     "matched_function_starts": 88,
-    "total": 279
+    "total": 282
   }
 }

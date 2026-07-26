@@ -486,7 +486,8 @@ if(BUILD_TESTING)
     )
     target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
     target_compile_options(recovery-leaf-tests PRIVATE -fno-exceptions)
-    target_compile_definitions(recovery-leaf-tests PRIVATE BUILD_DLL)
+    target_compile_definitions(recovery-leaf-tests PRIVATE
+        BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
     set_target_properties(recovery-leaf-tests PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD 11
@@ -531,6 +532,104 @@ if(BUILD_TESTING)
         )
     else()
         add_test(NAME recovery-leaf-tests COMMAND recovery-leaf-tests)
+    endif()
+
+    # Direct-source tests for the gameplay core.
+    #
+    # These cannot live in recovery-leaf-tests: that binary defines file-scope
+    # stand-ins for map.cpp and general.cpp symbols - a scriptable mem_get,
+    # call-recording lock_map/unlock_map, xrange, purge_spaces - which its own
+    # fixtures assert against, so linking the real translation units there
+    # collides with every one of those observers. Splitting by link closure
+    # rather than by subject gives the ~1,800 gameplay free functions a home
+    # without disturbing the existing suite.
+    #
+    # The closure below is self-satisfying: the support classes are present
+    # because the gameplay tree calls into them, and the only symbols it does
+    # not resolve internally are Win32 imports (gdi32, winmm) and the deferred
+    # oracle entry point, which the test file stubs.
+    add_executable(recovery-gameplay-tests
+        tests/recovery_gameplay_tests.cpp
+        src/alpha.cpp
+        src/base.cpp
+        src/basebutton.cpp
+        src/buffer.cpp
+        src/buttongroup.cpp
+        src/council.cpp
+        src/faction.cpp
+        src/filemap.cpp
+        src/filemap_recovery.cpp
+        src/font.cpp
+        src/font_recovery.cpp
+        src/game.cpp
+        src/general.cpp
+        src/graphicwin.cpp
+        src/heap.cpp
+        src/log.cpp
+        src/maininterface.cpp
+        src/map.cpp
+        src/palette.cpp
+        src/path.cpp
+        src/probe.cpp
+        src/random.cpp
+        src/scenario.cpp
+        src/scroll.cpp
+        src/spot.cpp
+        src/spot_recovery.cpp
+        src/sprite.cpp
+        src/strings.cpp
+        src/technology.cpp
+        src/temp.cpp
+        src/terraforming.cpp
+        src/text.cpp
+        src/text_recovery.cpp
+        src/textindex.cpp
+        src/textindex_recovery.cpp
+        src/time.cpp
+        src/time_recovery.cpp
+        src/veh.cpp
+        src/win.cpp
+        src/autosound.cpp
+    )
+    target_compile_features(recovery-gameplay-tests PRIVATE cxx_std_11)
+    target_compile_options(recovery-gameplay-tests PRIVATE -fno-exceptions)
+    target_compile_definitions(recovery-gameplay-tests PRIVATE BUILD_DLL)
+    set_target_properties(recovery-gameplay-tests PROPERTIES
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+
+    if(MINGW)
+        target_compile_options(recovery-gameplay-tests PRIVATE
+            -Wall
+            -Wextra
+            -Wno-comment
+            -Wno-parentheses
+            -Wno-unknown-pragmas
+            $<$<CONFIG:Debug>:-Og>
+            $<$<CONFIG:Release>:-O2>
+        )
+        target_link_options(recovery-gameplay-tests PRIVATE -static)
+        target_link_libraries(recovery-gameplay-tests PRIVATE gdi32 winmm)
+    endif()
+
+    if(CMAKE_CROSSCOMPILING)
+        set(OPENSMACX_GAMEPLAY_TEST_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:recovery-gameplay-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+        )
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_GAMEPLAY_TEST_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_test(NAME recovery-gameplay-tests
+            COMMAND ${OPENSMACX_GAMEPLAY_TEST_COMMAND}
+        )
+    else()
+        add_test(NAME recovery-gameplay-tests COMMAND recovery-gameplay-tests)
     endif()
 
     if(MINGW)
@@ -1050,7 +1149,8 @@ if(MINGW)
         )
         target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)
         target_compile_options(recovery-oracle-tests PRIVATE -fno-exceptions)
-        target_compile_definitions(recovery-oracle-tests PRIVATE BUILD_DLL)
+        target_compile_definitions(recovery-oracle-tests PRIVATE
+            BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
         target_compile_options(recovery-oracle-tests PRIVATE
             -pedantic
             -Wall
@@ -1315,6 +1415,7 @@ if(MINGW AND BUILD_TESTING)
             verify-recovery-oracles
             verify-redirect-signatures
             recovery-leaf-tests
+            recovery-gameplay-tests
             assemble-legacy-leaves
             smoke-hybrid-game
         USES_TERMINAL
