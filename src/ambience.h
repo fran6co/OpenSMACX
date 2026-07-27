@@ -62,6 +62,12 @@ class DLLEXPORT FactionAmbience : Ambience {
   void hostility();
   void energy_resources();
   void base_liberated();
+  // The two flag bytes below are what these four toggle - the only
+  // FactionAmbience methods that write anything at all.
+  void basewin_show();
+  void basewin_hide();
+  void design_window_show();
+  void design_window_hide();
 
  private:
   uint32_t field_58_;
@@ -93,6 +99,7 @@ class DLLEXPORT GAmbience : Ambience {
   void production();
   void popup1();
   void eot();
+  void basewin_hide();
 
  private:
   uint32_t field_58_;
@@ -124,3 +131,12 @@ void __fastcall g_ambience_tech_redirect(GAmbience *self, void *);
 void __fastcall g_ambience_production_redirect(GAmbience *self, void *);
 void __fastcall g_ambience_popup1_redirect(GAmbience *self, void *);
 void __fastcall g_ambience_eot_redirect(GAmbience *self, void *);
+void __fastcall faction_ambience_basewin_show_redirect(
+    FactionAmbience *self, void *);
+void __fastcall faction_ambience_basewin_hide_redirect(
+    FactionAmbience *self, void *);
+void __fastcall faction_ambience_design_window_show_redirect(
+    FactionAmbience *self, void *);
+void __fastcall faction_ambience_design_window_hide_redirect(
+    FactionAmbience *self, void *);
+void __fastcall g_ambience_basewin_hide_redirect(GAmbience *self, void *);

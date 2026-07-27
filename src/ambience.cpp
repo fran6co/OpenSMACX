@@ -432,3 +432,78 @@ Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
     self->construct();
     return self;
 }
+
+/*
+Purpose: FactionAmbience records the event in a flag byte and does nothing else;
+         the legacy implementation is a single store.
+Original Offset: 00447270
+Return Value: n/a
+Status: Complete
+*/
+void FactionAmbience::basewin_show() {
+    field_6C_ = 1;
+}
+
+void __fastcall faction_ambience_basewin_show_redirect(FactionAmbience *self, void *) {
+    self->basewin_show();
+}
+
+/*
+Purpose: FactionAmbience records the event in a flag byte and does nothing else;
+         the legacy implementation is a single store.
+Original Offset: 00447280
+Return Value: n/a
+Status: Complete
+*/
+void FactionAmbience::basewin_hide() {
+    field_6C_ = 0;
+}
+
+void __fastcall faction_ambience_basewin_hide_redirect(FactionAmbience *self, void *) {
+    self->basewin_hide();
+}
+
+/*
+Purpose: FactionAmbience records the event in a flag byte and does nothing else;
+         the legacy implementation is a single store.
+Original Offset: 00447290
+Return Value: n/a
+Status: Complete
+*/
+void FactionAmbience::design_window_show() {
+    field_6D_ = 1;
+}
+
+void __fastcall faction_ambience_design_window_show_redirect(FactionAmbience *self, void *) {
+    self->design_window_show();
+}
+
+/*
+Purpose: FactionAmbience records the event in a flag byte and does nothing else;
+         the legacy implementation is a single store.
+Original Offset: 004472A0
+Return Value: n/a
+Status: Complete
+*/
+void FactionAmbience::design_window_hide() {
+    field_6D_ = 0;
+}
+
+void __fastcall faction_ambience_design_window_hide_redirect(FactionAmbience *self, void *) {
+    self->design_window_hide();
+}
+
+/*
+Purpose: GAmbience records the event in a flag byte and does nothing else;
+         the legacy implementation is a single store.
+Original Offset: 00447BF0
+Return Value: n/a
+Status: Complete
+*/
+void GAmbience::basewin_hide() {
+    field_6C_ = 0;
+}
+
+void __fastcall g_ambience_basewin_hide_redirect(GAmbience *self, void *) {
+    self->basewin_hide();
+}
