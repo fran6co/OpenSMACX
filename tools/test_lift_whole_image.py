@@ -131,6 +131,68 @@ class LoadFunctionsTests(unittest.TestCase):
         self.assertEqual([f["name"] for f in functions], ["a", "b", "c"])
 
 
+class BodySpanTests(unittest.TestCase):
+    """`size` is the SUM of body_ranges, never a contiguous extent.
+
+    402 of the 5,673 game functions (7.1%) carry a second span in the cold
+    0x0065xxxx region, and for every one of them `address + size` runs past the
+    first span into the next function - up to 2,102 bytes past, on the largest
+    functions in the game. Reading that many bytes from the entry point was the
+    original bug here, and it is invisible in skeleton mode because a wrong
+    byte count only inflates a placeholder body.
+    """
+
+    def test_multiple_ranges_are_parsed_not_summed(self):
+        spans = lifter.body_spans({
+            "address": "0x00612830", "size": "418",
+            "body_ranges": "0x00612830-0x0061295F;0x00663060-0x006630D3",
+        })
+        self.assertEqual(spans, [(0x00612830, 0x0061295F),
+                                 (0x00663060, 0x006630D3)])
+        # The summed size is 418, but the first span is only 303 bytes. A
+        # contiguous read of 418 would reach 0x006129D2, well past the body.
+        self.assertEqual(sum(high - low for low, high in spans), 418)
+        self.assertNotEqual(spans[0][1], 0x00612830 + 418)
+
+    def test_single_range_still_works(self):
+        self.assertEqual(
+            lifter.body_spans({"address": "0x00401000", "size": "16",
+                               "body_ranges": "0x00401000-0x00401010"}),
+            [(0x00401000, 0x00401010)])
+
+    def test_missing_ranges_fall_back_to_address_plus_size(self):
+        self.assertEqual(
+            lifter.body_spans({"address": "0x00401000", "size": "16",
+                               "body_ranges": ""}),
+            [(0x00401000, 0x00401010)])
+
+    def test_spans_are_sorted(self):
+        # The cold span can be listed first; emission and label resolution both
+        # assume ascending order.
+        spans = lifter.body_spans({
+            "address": "0x00401000", "size": "32",
+            "body_ranges": "0x00663060-0x00663070;0x00401000-0x00401010",
+        })
+        self.assertEqual(spans, [(0x00401000, 0x00401010),
+                                 (0x00663060, 0x00663070)])
+
+    def test_loaded_functions_carry_spans_and_span_bytes(self):
+        header = ("address,end_address,size,segment,name,prototype,"
+                  "body_ranges,binary_kind,flags,source_locations,"
+                  "source_statuses,redirect_exports,original_dependencies,"
+                  "recovery_state,priority,notes,comments,call_target_count,"
+                  "caller_count")
+        row = ("0x00401000,0x00401010,32,.text,outlined,,"
+               "0x00401000-0x00401010;0x00663000-0x00663010,"
+               "game,,,,,,unrecovered,,,,0,0")
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "functions.csv"
+            path.write_text(header + "\n" + row + "\n", encoding="utf-8")
+            functions = lifter.load_functions(build_pe(), path)
+        self.assertEqual(len(functions[0]["spans"]), 2)
+        self.assertEqual(functions[0]["span_bytes"], 32)
+
+
 class SymbolTests(unittest.TestCase):
     def test_symbols_are_address_derived_and_unique(self):
         first = lifter.symbol_for({"address": 0x004BA870})
@@ -145,6 +207,7 @@ class EmissionTests(unittest.TestCase):
             out = Path(raw)
             functions = [{
                 "address": 0x00664000, "size": 16, "name": "sub_664000",
+                "spans": [(0x00664000, 0x00664010)], "span_bytes": 16,
                 "section": "_selfmod", "instructions": 4,
                 "fully_decoded": True, "state": "unrecovered",
             }]
