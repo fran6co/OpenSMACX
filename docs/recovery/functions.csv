@@ -1624,7 +1624,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0046A2A0,0x0046A496,502,.text,?draw_radius@MapWin@@QAEXHHHH@Z,"void (__thiscall ?draw_radius@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)",0x0046A2A0-0x0046A496,game,frame;hidden;sp_ready;purged_ok,,,,MapWinOriginalDrawRadius,original_dependency,,,,5,10
 0x0046A4A0,0x0046A52F,143,.text,?draw_tile@MapWin@@QAEXHHH@Z,"void (__thiscall ?draw_tile@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046A4A0-0x0046A52F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x0046A530,0x0046A54A,26,.text,?draw_radius@MapWin@@QAEXHHH@Z,"void (__thiscall ?draw_radius@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046A530-0x0046A54A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x0046A550,0x0046AD51,2049,.text,?draw_map@MapWin@@QAEXH@Z,"void (__thiscall ?draw_map@MapWin@@QAEXH@Z)(MapWin* this, int)",0x0046A550-0x0046AD51,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,8,34
+0x0046A550,0x0046AD51,2049,.text,?draw_map@MapWin@@QAEXH@Z,"void (__thiscall ?draw_map@MapWin@@QAEXH@Z)(MapWin* this, int)",0x0046A550-0x0046AD51,game,frame;sp_ready;purged_ok,,,,ConsoleOriginalMapWinDrawMap,original_dependency,,,,8,34
 0x0046AD60,0x0046ADF1,145,.text,?draw_cursor@MapWin@@QAEXXZ,void (__thiscall ?draw_cursor@MapWin@@QAEXXZ)(MapWin* this),0x0046AD60-0x0046ADF1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,10
 0x0046AE00,0x0046AEED,237,.text,?draw_cursor@@YAXXZ,,0x0046AE00-0x0046AEED,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,10
 0x0046AEF0,0x0046AF38,72,.text,?draw_radius@@YAXHHHH@Z,,0x0046AEF0-0x0046AF38,game,frame;sp_ready;purged_ok,,,,draw_radius,original_dependency,,,,1,17
@@ -1635,7 +1635,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0046B190,0x0046B1CA,58,.text,?draw_map@@YAXH@Z,,0x0046B190-0x0046B1CA,game,frame;hidden;sp_ready;purged_ok,,,,draw_map,original_dependency,,,,1,68
 0x0046B1D0,0x0046B1E8,24,.text,?on_redraw@MapWin@@QAEXXZ,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this),0x0046B1D0-0x0046B1E8,game,sp_ready;purged_ok,,,,MapWinOnRedrawTarget,original_dependency,,,,1,0
 0x0046B1F0,0x0046B303,275,.text,?set_center@MapWin@@QAEXHHH@Z,"void (__thiscall ?set_center@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046B1F0-0x0046B303,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,22
-0x0046B310,0x0046B50C,508,.text,?focus@MapWin@@QAEHHH@Z,"int (__thiscall ?focus@MapWin@@QAEHHH@Z)(MapWin* this, int, int)",0x0046B310-0x0046B50C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,9
+0x0046B310,0x0046B50C,508,.text,?focus@MapWin@@QAEHHH@Z,"int (__thiscall ?focus@MapWin@@QAEHHH@Z)(MapWin* this, int, int)",0x0046B310-0x0046B50C,game,frame;hidden;sp_ready;purged_ok,,,,ConsoleOriginalMapWinFocus,original_dependency,,,,2,9
 0x0046B510,0x0046BFCF,2751,.text,?editor@MapWin@@QAEXHHH@Z,"void (__thiscall ?editor@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)",0x0046B510-0x0046BFCF,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,12,4
 0x0046C020,0x0046C0C9,169,.text,?UNK4@MapWin@@QAEXHH@Z,"void (__thiscall ?UNK4@MapWin@@QAEXHH@Z)(MapWin* this, int xCoord, int yCoord)",0x0046C020-0x0046C0C9,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x0046C0D0,0x0046D552,5271,.text,?right_menu@MapWin@@QAEXHHHH@Z,"void (__thiscall ?right_menu@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)",0x0046C0D0-0x0046D552;0x00655944-0x00655959,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,55,1
@@ -2891,8 +2891,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00510520,0x005105BE,158,.text,?cursor_off@Console@@QAEXXZ,void (__thiscall ?cursor_off@Console@@QAEXXZ)(Console* this),0x00510520-0x005105BE,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x005105C0,0x005107D5,533,.text,?selecting@Console@@QAEHHH@Z,"int (__thiscall ?selecting@Console@@QAEHHH@Z)(Console* this, int xCoord, int yCoord)",0x005105C0-0x005107D5,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x005107E0,0x00510899,185,.text,?selected@Console@@QAEXXZ,void (__thiscall ?selected@Console@@QAEXXZ)(Console* this),0x005107E0-0x00510899,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
-0x005108A0,0x005109A3,259,.text,?focus@Console@@QAEXHHH@Z,"void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)",0x005108A0-0x005109A3,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,32
-0x005109B0,0x00510A59,169,.text,?cursor_next@Console@@QAEXHH@Z,"void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)",0x005109B0-0x00510A59,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,11
+0x005108A0,0x005109A3,259,.text,?focus@Console@@QAEXHHH@Z,"void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)",0x005108A0-0x005109A3,game,frame;hidden;sp_ready;purged_ok,src/console.cpp:250,"Complete with temporary Console::cursor_next, MapWin::focus,",,,source_complete,,,,4,32
+0x005109B0,0x00510A59,169,.text,?cursor_next@Console@@QAEXHH@Z,"void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)",0x005109B0-0x00510A59,game,frame;hidden;sp_ready;purged_ok,,,,ConsoleOriginalCursorNext,original_dependency,,,,2,11
 0x00510A60,0x00510B70,272,.text,?prev_cursor@Console@@QAEXXZ,void (__thiscall ?prev_cursor@Console@@QAEXXZ)(Console* this),0x00510A60-0x00510B70,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,0
 0x00510B70,0x00510C89,281,.text,?next_cursor@Console@@QAEXXZ,void (__thiscall ?next_cursor@Console@@QAEXXZ)(Console* this),0x00510B70-0x00510C89,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,2
 0x00510C90,0x00510CE0,80,.text,sub_510c90,,0x00510C90-0x00510CE0,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
@@ -3047,7 +3047,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0052DB70,0x0052DB9C,44,.text,sub_52db70,,0x0052DB70-0x0052DB9C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0052DBA0,0x0052DBE6,70,.text,?current_server@@YAHXZ,,0x0052DBA0-0x0052DBE6,game,hidden;sp_ready;purged_ok,,,,LockCurrentServer,original_dependency,,,,0,3
 0x0052DBF0,0x0052DC68,120,.text,?next_player_turn@@YAHXZ,,0x0052DBF0-0x0052DC68,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
-0x0052DC70,0x0052DC9C,44,.text,?not_my_turn@@YAHXZ,,0x0052DC70-0x0052DC9C,game,hidden;sp_ready;purged_ok,src/game.cpp:54,Complete,,,source_complete,,,,0,8
+0x0052DC70,0x0052DC9C,44,.text,?not_my_turn@@YAHXZ,,0x0052DC70-0x0052DC9C,game,hidden;sp_ready;purged_ok,src/game.cpp:53,Complete,,,source_complete,,,,0,8
 0x0052DCA0,0x0052DCC1,33,.text,??0DeletionList@@QAE@XZ,void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this),0x0052DCA0-0x0052DCC1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0052DCD0,0x0052DCEC,28,.text,?clear@DeletionList@@QAEXH@Z,"void (__thiscall ?clear@DeletionList@@QAEXH@Z)(DeletionList* this, int)",0x0052DCD0-0x0052DCEC,game,frame;hidden;sp_ready;purged_ok,src/deletionlist.cpp:25,Complete,,,source_complete,,,,0,1
 0x0052DCF0,0x0052DD10,32,.text,?UNK1@DeletionList@@QAEHXZ,int (__thiscall ?UNK1@DeletionList@@QAEHXZ)(DeletionList* this),0x0052DCF0-0x0052DD10,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -3336,7 +3336,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00588A30,0x00588A9A,106,.text,sub_588a30,,0x00588A30-0x00588A9A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x00588AA0,0x00588F8E,1262,.text,?config_popups@@YAXXZ,,0x00588AA0-0x00588F8E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,1
 0x00588F90,0x0058917C,492,.text,?alien_start@@YAXXZ,,0x00588F90-0x0058917C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
-0x00589180,0x00589329,425,.text,?planetfall@@YAXH@Z,void (__cdecl ?planetfall@@YAXH@Z)(int factionID),0x00589180-0x00589329,game,frame;sp_ready;purged_ok,src/game.cpp:75,Complete,,,source_complete,,,,6,2
+0x00589180,0x00589329,425,.text,?planetfall@@YAXH@Z,void (__cdecl ?planetfall@@YAXH@Z)(int factionID),0x00589180-0x00589329,game,frame;sp_ready;purged_ok,src/game.cpp:74,Complete,,,source_complete,,,,6,2
 0x00589330,0x0058954A,538,.text,?time_controls_dialog@@YAXPAUPopup@@@Z,,0x00589330-0x0058954A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,3
 0x00589550,0x00589555,5,.text,j_GraphicWin::close,,0x00589550-0x00589555,thunk,hidden;thunk;sp_ready;purged_ok,,,,,thunk,,,,0,0
 0x00589560,0x00589748,488,.text,sub_589560,,0x00589560-0x00589748,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,10,0
@@ -3603,7 +3603,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005B0D70,0x005B0DF3,131,.text,?compute_faction_modifiers@@YAXH@Z,void (__cdecl ?compute_faction_modifiers@@YAXH@Z)(int factionID),0x005B0D70-0x005B0DF3,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:888,Complete,,,source_complete,,,,0,4
 0x005B0E00,0x005B337C,9596,.text,?setup_player@@YAHHHH@Z,"int (__cdecl ?setup_player@@YAHHHH@Z)(int8*, int protoID, int)",0x005B0E00-0x005B337C,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,37,4
 0x005B3380,0x005B38C6,1350,.text,?eliminate_player@@YAHHH@Z,,0x005B3380-0x005B38C6,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,17,8
-0x005B38D0,0x005B3919,73,.text,?clear_scenario@@YAXXZ,,0x005B38D0-0x005B3919,game,sp_ready;purged_ok,src/game.cpp:107,Complete,?clear_scenario@@YAXXZ,,source_complete,,,,0,1
+0x005B38D0,0x005B3919,73,.text,?clear_scenario@@YAXXZ,,0x005B38D0-0x005B3919,game,sp_ready;purged_ok,src/game.cpp:106,Complete,?clear_scenario@@YAXXZ,,source_complete,,,,0,1
 0x005B3920,0x005B4201,2273,.text,?setup_game@@YAXH@Z,,0x005B3920-0x005B4201,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,22,4
 0x005B4210,0x005B44C9,697,.text,?social_calc@@YAXPAHPAHHHH@Z,"void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)",0x005B4210-0x005B44C9,game,frame;sp_ready;purged_ok,src/faction.cpp:906,Complete,,,source_complete,,,,1,7
 0x005B44D0,0x005B4550,128,.text,?social_upkeep@@YAXH@Z,void (__cdecl ?social_upkeep@@YAXH@Z)(int factionID),0x005B44D0-0x005B4550,game,frame;sp_ready;purged_ok,src/faction.cpp:984,Complete,,,source_complete,,,,1,2
@@ -3778,8 +3778,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005C83B0,0x005C8627,631,.text,?world_geothermal@@YAXHH@Z,"void (__cdecl ?world_geothermal@@YAXHH@Z)(int xCoord, int yCoord)",0x005C83B0-0x005C8627,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:2706,Complete - testing,,,source_complete,,,,6,3
 0x005C8630,0x005C86DC,172,.text,?world_landmarks@@YAXXZ,,0x005C8630-0x005C86DC,game,hidden;sp_ready;purged_ok,src/map.cpp:2749,Complete - testing,,,source_complete,,,,15,0
 0x005C86E0,0x005C899D,701,.text,?world_build@@YAXXZ,,0x005C86E0-0x005C899D,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,33,4
-0x005C89A0,0x005C89B0,16,.text,?game_year@@YAHH@Z,int (__cdecl ?game_year@@YAHH@Z)(int turn),0x005C89A0-0x005C89B0,game,frame;hidden;sp_ready;purged_ok,src/game.cpp:123,Complete,,,source_complete,,,,0,30
-0x005C89B0,0x005C89E4,52,.text,?say_year@@YAXPAD@Z,,0x005C89B0-0x005C89E4,game,frame;hidden;sp_ready;purged_ok,src/game.cpp:133,Complete,?say_year@@YAXPAD@Z,,source_complete,,,,2,19
+0x005C89A0,0x005C89B0,16,.text,?game_year@@YAHH@Z,int (__cdecl ?game_year@@YAHH@Z)(int turn),0x005C89A0-0x005C89B0,game,frame;hidden;sp_ready;purged_ok,src/game.cpp:122,Complete,,,source_complete,,,,0,30
+0x005C89B0,0x005C89E4,52,.text,?say_year@@YAXPAD@Z,,0x005C89B0-0x005C89E4,game,frame;hidden;sp_ready;purged_ok,src/game.cpp:132,Complete,?say_year@@YAXPAD@Z,,source_complete,,,,2,19
 0x005C89F0,0x005C8AC0,208,.text,?zoc_any@@YAHHHH@Z,"int (__cdecl ?zoc_any@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)",0x005C89F0-0x005C8AC0,game,frame;sp_ready;purged_ok,src/map.cpp:2775,Complete,,,source_complete,,,,0,5
 0x005C8AC0,0x005C8B97,215,.text,?zoc_veh@@YAHHHH@Z,"int (__cdecl ?zoc_veh@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)",0x005C8AC0-0x005C8B97,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:2796,Complete,,,source_complete,,,,0,4
 0x005C8BA0,0x005C8D36,406,.text,?zoc_sea@@YAHHHH@Z,"int (__cdecl ?zoc_sea@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)",0x005C8BA0-0x005C8D36,game,frame;sp_ready;purged_ok,src/map.cpp:2821,Complete,,,source_complete,,,,1,5
@@ -4461,7 +4461,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005FCFE0,0x005FD04B,107,.text,?do_all_chars@@YAXXZ,,0x005FCFE0-0x005FD04B,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x005FD050,0x005FD09D,77,.text,?do_mouse@@YAXXZ,,0x005FD050-0x005FD09D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005FD0A0,0x005FD115,117,.text,?do_all_mouse@@YAXXZ,,0x005FD0A0-0x005FD115,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
-0x005FD120,0x005FD1BA,154,.text,?flush_input@@YAXXZ,,0x005FD120-0x005FD1BA,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,17
+0x005FD120,0x005FD1BA,154,.text,?flush_input@@YAXXZ,,0x005FD120-0x005FD1BA,game,sp_ready;purged_ok,,,,ConsoleOriginalFlushInput,original_dependency,,,,1,17
 0x005FD1C0,0x005FD21A,90,.text,?flush_keyboard@@YAXXZ,,0x005FD1C0-0x005FD21A,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD220,0x005FD27A,90,.text,?flush_mouse@@YAXXZ,,0x005FD220-0x005FD27A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005FD280,0x005FD281,1,.text,nullsub_192,,0x005FD280-0x005FD281,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0

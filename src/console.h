@@ -60,6 +60,7 @@ class DLLEXPORT Console {
   void set_adv_preferences();
   void editor_undo();
   void update_data(int a1);
+  int focus(int x_coord, int y_coord, int faction_id);
 
  private:
   uint8_t derived_storage_[0x23D94];
@@ -122,3 +123,55 @@ extern void *ConsoleStatusWin;    // 0x008C5568, the process-wide StatusWin
 extern void **ConsoleMapWinSlot;  // 0x007D3C3C, holds the current MapWin *
 
 void __fastcall console_update_data_redirect(Console *self, void *, int a1);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// focus walks the eight map-window slots and, for the primary window only,
+// runs the console cursor and the survey-overlay latch first. Four of its
+// callees are still original bodies, so each gets a rebindable seam. Nothing
+// here binds an address that is already bound: the table is mapwin.h's
+// MapWinTable at 0x007D3C3C (which also carries MapWinTableSlots and
+// MapWinActiveOffset) and the faction id is game.h's LocalFaction.
+//
+// Console::cursor_next (0x005109B0, ret 8) is entered on the process-wide
+// Console the original names with `mov ecx, 0x9156b0` at 0x00510921 - never on
+// `this`. That object is bound separately so a test can hand focus a Console
+// that is NOT the process-wide one and observe which of the two each half of
+// the body touches.
+typedef void(__thiscall func_console_cursor_next)(void *console, int x_coord,
+                                                  int y_coord);
+// MapWin::focus (0x0046B310, ret 8) reports whether it moved the view;
+// MapWin::draw_map (0x0046A550, ret 4) repaints one. Both are unrecovered -
+// focus reaches in_box and set_center, draw_map is 2049 bytes - so both stay
+// original behind a seam.
+typedef int(__thiscall func_console_map_win_focus)(void *map_win, int x_coord,
+                                                   int y_coord);
+typedef void(__thiscall func_console_map_win_draw_map)(void *map_win,
+                                                       int draw_type);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+// ?flush_input@@YAXXZ at 0x005FD120 - __cdecl, no arguments - drains the queued
+// input once the focus walk actually moved the primary view. Still original; it
+// pumps the message loop through check_net.
+typedef void(__cdecl func_console_flush_input)(void);
+
+extern func_console_cursor_next *ConsoleOriginalCursorNext;          // 0x005109B0
+extern func_console_map_win_focus *ConsoleOriginalMapWinFocus;       // 0x0046B310
+extern func_console_map_win_draw_map *ConsoleOriginalMapWinDrawMap;  // 0x0046A550
+extern func_console_flush_input *ConsoleOriginalFlushInput;          // 0x005FD120
+extern void *ConsoleGlobal;  // 0x009156B0, the process-wide Console
+
+// The dword at 0x0093A938 is set while a turn is played out under program
+// control rather than interactively. A linear scan of .text finds exactly four
+// writers: control_turn stores 1 at 0x00527680 and 0 at 0x0052823B,
+// net_end_of_turn stores 1 at 0x0052A1CB, and net_control_turn stores 1 at
+// 0x0052A301 and 0 at 0x0052A4ED. Over a hundred sites read it, always as a
+// plain zero/non-zero gate. focus consults it only at 0x00510910, to decide
+// whether an untagged primary window still gets the cursor path.
+extern int32_t *ConsoleControlTurnActive;  // 0x0093A938
+
+int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
+                                      int y_coord, int faction_id);

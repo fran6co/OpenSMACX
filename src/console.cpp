@@ -228,3 +228,173 @@ void Console::update_data(int a1) {
 void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
     self->update_data(a1);
 }
+
+func_console_cursor_next *ConsoleOriginalCursorNext =
+    (func_console_cursor_next *)0x005109B0;
+func_console_map_win_focus *ConsoleOriginalMapWinFocus =
+    (func_console_map_win_focus *)0x0046B310;
+func_console_map_win_draw_map *ConsoleOriginalMapWinDrawMap =
+    (func_console_map_win_draw_map *)0x0046A550;
+func_console_flush_input *ConsoleOriginalFlushInput =
+    (func_console_flush_input *)0x005FD120;
+void *ConsoleGlobal = reinterpret_cast<void *>(0x009156B0);
+int32_t *ConsoleControlTurnActive = reinterpret_cast<int32_t *>(0x0093A938);
+
+/*
+Purpose: Point the map windows at one tile on behalf of one faction. Build a
+         view-tag mask from the faction argument, walk the eight map-window
+         slots, and hand the coordinate to every window whose tag the mask
+         selects. The primary window, slot 0, is handled quite differently from
+         the rest, and only its success counts: when it moves, the queued input
+         is flushed and 1 is returned.
+Original Offset: 005108A0
+Return Value: 1 when the primary map window took the coordinate, 0 otherwise
+Status: Complete with temporary Console::cursor_next, MapWin::focus,
+        MapWin::draw_map and flush_input original dependencies
+Verification note: the catalogued mangled name ?focus@Console@@QAEXHHH@Z says
+        void and is wrong. EAX is loaded from the [ebp-4] flag slot at
+        0x0051098B and 0x0051099A, and 12 of the 61 call sites branch on it two
+        instructions later - 0x004F7D7D, 0x00508838 and 0x0050D606 among them.
+        Declared int; do not "fix" it back on the strength of the name.
+Verification note: slot 0 is special in FOUR distinct ways, each transcribed at
+        the address that decides it.
+          1. 0x005108ED / 0x005108EF - slot 0 skips the per-window activity gate
+             at 0x1DD74 entirely, the same exemption draw_tile makes.
+          2. 0x0051090C / 0x0051090E - an UNTAGGED slot 1..7 is dropped, while
+             an untagged slot 0 falls through to 0x00510910 and gets a second
+             chance from the control-turn global.
+          3. 0x0051091B / 0x0051091D - a TAGGED slot 1..7 goes straight to the
+             plain focus call at 0x00510964, while a tagged slot 0 runs the
+             console cursor and the survey-overlay latch first.
+          4. 0x00510976 / 0x00510978 - a successful focus on slots 1..7 does NOT
+             raise the flag. Only slot 0 can set it, so only slot 0 can reach
+             flush_input or make this function return 1.
+Verification note: the reload of the flag slot at 0x0051099A, after flush_input
+        returns, is a register-clobber reload of a local this frame owns.
+        flush_input is a cdecl no-argument function and cannot touch it, so the
+        reload is not observable and is transcribed as one `return focused;`.
+Verification note: the mask is computed once at 0x005108C1-0x005108D5 and then
+        reloaded from the [ebp+0x10] argument slot at 0x005108FF on every
+        iteration, and `this` is reloaded from [ebp-8] at 0x0051092B. Nothing
+        this body calls can write a caller-pushed argument slot or another
+        frame's local, so both are register-allocation artifacts and the single
+        locals below are faithful. The MapWinTable reloads are NOT in that
+        class and are kept - see their own comments.
+Verification note: the original has no null check other than the slot test at
+        0x005108E5. It does not defend against a null `this`, a null
+        ConsoleGlobal, a null seam, or a null MapWinTable[0] at 0x00510946 and
+        0x00510955 - the last two genuinely reachable if a callee empties the
+        slot mid-iteration, and the original would fault. That absence is
+        deliberate and is not repaired here.
+*/
+int Console::focus(int x_coord, int y_coord, int faction_id) {
+    // 0x005108AD `cmp eax, esi` against an already-zeroed ESI, then 0x005108B6
+    // `jge`: a negative faction takes 0x60000000 and matches both view tags at
+    // once. Otherwise the neg/sbb/and/add idiom at 0x005108C1-0x005108D5 folds
+    // one equality into a constant, giving 0x40000000 for a different faction
+    // and 0x20000000 for the local one. LocalFaction is read only on the
+    // non-negative path, exactly as the original's branch structure has it.
+    uint32_t mask;
+    if (faction_id < 0) {
+        mask = 0x60000000U;
+    } else {
+        mask = (faction_id != *LocalFaction) ? 0x40000000U : 0x20000000U;
+    }
+    // 0x005108B3 `mov [ebp-4], esi` with ESI zero. The literal 1 at 0x0051097A
+    // is the ONLY store into that slot, so this is a plain 0/1 flag and the
+    // returns are exactly 0 and 1, never a callee's residue.
+    int focused = 0;
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        // 0x005108DE `mov eax, [esi*4 + 0x7d3c3c]`. Re-read every iteration,
+        // do NOT hoist: cursor_next, MapWin::focus and MapWin::draw_map below
+        // can republish the table, and later slots must see that.
+        MapWin *const window = MapWinTable[slot];
+        // 0x005108E5 test / 0x005108E7 je. The null test runs FIRST, so an
+        // empty slot 0 is skipped despite every exemption below.
+        if (window == nullptr) {
+            continue;
+        }
+        if (slot != 0) {
+            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
+                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
+            if (active == 0) {
+                continue;
+            }
+        }
+        // 0x00510902 reads the window's wide flag dword, one dword ahead of the
+        // activity field mapwin.h already names. Kept as a documented literal
+        // rather than a constant in another class's header: MapWin owns the
+        // field, and console.h is not the place to name it. 0x00510908
+        // `test ecx, edx` is a bitwise AND against the tag bits, not an
+        // equality, so a window carrying 0x60000000 matches either mask.
+        const uint32_t flags = *reinterpret_cast<const volatile uint32_t *>(
+            reinterpret_cast<const uint8_t *>(window) + 0x1DD70);
+        const bool tagged = (mask & flags) != 0;
+        if (slot == 0) {
+            // Specialisation 2. Short-circuit order matches the original: the
+            // control-turn global is read only when the tag missed.
+            if (!tagged && *ConsoleControlTurnActive == 0) {
+                continue;
+            }
+            // Specialisation 3. cursor_next runs on the process-wide Console at
+            // 0x009156B0, NOT on `this`. Every call site happens to enter focus
+            // with the same object, but the constant is in the instruction
+            // stream and is transcribed as one.
+            ConsoleOriginalCursorNext(ConsoleGlobal, x_coord, y_coord);
+            // 0x0051092B reloads `this`, 0x0051092E reads the survey-overlay
+            // latch. Read AFTER the call, do NOT hoist: this comes from `this`
+            // while cursor_next was handed ConsoleGlobal, and cursor_next
+            // writes its own object's fields in this region. Held as a raw
+            // offset into the unmapped derived storage, the way clear_group
+            // holds 0x23D1C.
+            volatile uint32_t *const overlay =
+                reinterpret_cast<volatile uint32_t *>(
+                    reinterpret_cast<uint8_t *>(this) + 0x23C00);
+            if (*overlay != 0) {
+                // 0x0051093C clears the latch BEFORE the table load at
+                // 0x00510946 and before the call at 0x0051094C. The clear is
+                // ordered against MapWin::focus, not folded into it.
+                *overlay = 0;
+                // 0x00510946 reads slot 0 by absolute address, with no [esi*4]
+                // index, and as a fresh load. Do NOT reuse `window`:
+                // cursor_next may have republished the table.
+                MapWin *const primary = MapWinTable[0];
+                if (ConsoleOriginalMapWinFocus(primary, x_coord, y_coord) != 0) {
+                    focused = 1;
+                    continue;
+                }
+                // 0x00510955 reads slot 0 a SECOND time, after MapWin::focus
+                // returned. Re-read, do NOT hoist and do not share with the
+                // load above. The literal 1 is the draw type.
+                MapWin *const repaint = MapWinTable[0];
+                ConsoleOriginalMapWinDrawMap(repaint, 1);
+                continue;
+            }
+            // Latch already clear (0x00510936 je 0x510964): fall through to the
+            // plain focus call, exactly as a tagged slot 1..7 does.
+        } else if (!tagged) {
+            continue;
+        }
+        // 0x00510964 - the third table read this iteration can make. Re-read,
+        // do NOT hoist: on the slot-0 path cursor_next has already run between
+        // this and the load at 0x005108DE.
+        MapWin *const target = MapWinTable[slot];
+        // Specialisation 4: a successful focus on slots 1..7 is discarded; only
+        // the primary window raises the flag.
+        if (ConsoleOriginalMapWinFocus(target, x_coord, y_coord) != 0
+            && slot == 0) {
+            focused = 1;
+        }
+    }
+    // 0x00510991 test / 0x00510993 je / 0x00510995 call - once, after the whole
+    // eight-slot walk, never inside it.
+    if (focused != 0) {
+        ConsoleOriginalFlushInput();
+    }
+    return focused;
+}
+
+int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
+                                      int y_coord, int faction_id) {
+    return self->focus(x_coord, y_coord, faction_id);
+}

@@ -24372,6 +24372,321 @@ void console_update_expect_image(const char *fixture, const uint8_t *actual,
 
 }  // namespace
 
+namespace {
+
+// Console::focus fixture. Every callee is a recorder, and the two that can run
+// mid-walk are able to republish the map-window table so the body's re-reads
+// are observable rather than merely asserted in a comment.
+struct FocusRecord {
+    int cursor_calls;
+    void *cursor_self;
+    int cursor_x;
+    int cursor_y;
+    int focus_calls;
+    void *focus_targets[16];
+    int focus_x;
+    int focus_y;
+    int draw_calls;
+    void *draw_target;
+    int draw_type;
+    int flush_calls;
+    int flush_at_focus_calls;
+    uint32_t sequence;
+};
+FocusRecord g_focus_rec;
+int g_focus_result;
+// When set, the cursor recorder swaps this in as slot 0, so a body that reused
+// the pointer it loaded at the top of the iteration is caught.
+void *g_focus_cursor_installs;
+void **g_focus_table_slot0;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall focus_stub_cursor_next(void *console, int x, int y) {
+    ++g_focus_rec.cursor_calls;
+    g_focus_rec.cursor_self = console;
+    g_focus_rec.cursor_x = x;
+    g_focus_rec.cursor_y = y;
+    g_focus_rec.sequence = g_focus_rec.sequence * 16 + 1;
+    if (g_focus_cursor_installs) {
+        *g_focus_table_slot0 = g_focus_cursor_installs;
+    }
+}
+int __thiscall focus_stub_map_focus(void *map_win, int x, int y) {
+    if (g_focus_rec.focus_calls <
+        static_cast<int>(sizeof(g_focus_rec.focus_targets) / sizeof(void *))) {
+        g_focus_rec.focus_targets[g_focus_rec.focus_calls] = map_win;
+    }
+    ++g_focus_rec.focus_calls;
+    g_focus_rec.focus_x = x;
+    g_focus_rec.focus_y = y;
+    g_focus_rec.sequence = g_focus_rec.sequence * 16 + 2;
+    return g_focus_result;
+}
+void __thiscall focus_stub_draw_map(void *map_win, int draw_type) {
+    ++g_focus_rec.draw_calls;
+    g_focus_rec.draw_target = map_win;
+    g_focus_rec.draw_type = draw_type;
+    g_focus_rec.sequence = g_focus_rec.sequence * 16 + 3;
+}
+void __cdecl focus_stub_flush_input(void) {
+    ++g_focus_rec.flush_calls;
+    g_focus_rec.flush_at_focus_calls = g_focus_rec.focus_calls;
+    g_focus_rec.sequence = g_focus_rec.sequence * 16 + 4;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// A MapWin stand-in reaching only as far as the two dwords focus reads.
+constexpr size_t FocusWindowBytes = 0x1DD80;
+constexpr size_t FocusFlagsOffset = 0x1DD70;
+
+}  // namespace
+
+void test_console_focus() {
+    static_assert(MapWinTableSlots == 8,
+                  "Console::focus walks exactly the eight catalogued slots");
+
+    auto *const saved_cursor = ConsoleOriginalCursorNext;
+    auto *const saved_focus = ConsoleOriginalMapWinFocus;
+    auto *const saved_draw = ConsoleOriginalMapWinDrawMap;
+    auto *const saved_flush = ConsoleOriginalFlushInput;
+    void *const saved_global = ConsoleGlobal;
+    int32_t *const saved_control = ConsoleControlTurnActive;
+    MapWin **const saved_table = MapWinTable;
+    int *const saved_local = LocalFaction;
+
+    ConsoleOriginalCursorNext = &focus_stub_cursor_next;
+    ConsoleOriginalMapWinFocus = &focus_stub_map_focus;
+    ConsoleOriginalMapWinDrawMap = &focus_stub_draw_map;
+    ConsoleOriginalFlushInput = &focus_stub_flush_input;
+    int console_marker = 0;
+    ConsoleGlobal = &console_marker;
+    int32_t control_turn = 0;
+    ConsoleControlTurnActive = &control_turn;
+    int local_faction = 4;
+    LocalFaction = &local_faction;
+
+    std::vector<uint8_t> console_storage(sizeof(Console));
+    auto *const console = reinterpret_cast<Console *>(console_storage.data());
+    volatile uint32_t *const overlay = reinterpret_cast<volatile uint32_t *>(
+        console_storage.data() + 0x23C00);
+
+    // Four stand-in windows is enough: slot 0, an active tagged one, an active
+    // untagged one, and an inactive one.
+    std::vector<uint8_t> w0(FocusWindowBytes), w1(FocusWindowBytes),
+        w2(FocusWindowBytes), w3(FocusWindowBytes),
+        sentinel(FocusWindowBytes);
+    auto as_win = [](std::vector<uint8_t> &raw) {
+        return reinterpret_cast<MapWin *>(raw.data());
+    };
+    auto set_win = [](std::vector<uint8_t> &raw, uint32_t flags, uint32_t active) {
+        std::memcpy(raw.data() + FocusFlagsOffset, &flags, sizeof(flags));
+        std::memcpy(raw.data() + MapWinActiveOffset, &active, sizeof(active));
+    };
+    // One slot MORE than the body may walk. It holds a window that would be
+    // accepted on every count, so a loop bound that runs one past the eight
+    // catalogued slots focuses it and is caught.
+    MapWin *table[MapWinTableSlots + 1];
+    MapWinTable = table;
+    g_focus_table_slot0 = reinterpret_cast<void **>(&table[0]);
+
+    auto arrange = [&](uint32_t slot0_flags) {
+        std::memset(console_storage.data(), 0, console_storage.size());
+        for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+            table[slot] = nullptr;
+        }
+        set_win(sentinel, 0x60000000U, 1);
+        table[MapWinTableSlots] = as_win(sentinel);
+        // Slot 0 carries no activity dword on purpose: the body must never
+        // consult one for it, and a zero there would drop the slot if it did.
+        set_win(w0, slot0_flags, 0);
+        table[0] = as_win(w0);
+        g_focus_rec = FocusRecord{};
+        g_focus_result = 0;
+        g_focus_cursor_installs = nullptr;
+        control_turn = 0;
+    };
+
+    // --- the mask, read through which windows a secondary slot accepts ---
+    // MapWin::init publishes 0x20000000 on a net game's primary window,
+    // 0x60000000 on a non-net primary, and 0x40000000 on a secondary. The test
+    // is `test ecx, edx`, a bitwise AND, so a 0x60000000 window matches every
+    // mask while the two single-bit windows are selective.
+    struct MaskCase { int faction; uint32_t window; bool accepted; };
+    const MaskCase mask_cases[] = {
+        {-1, 0x20000000U, true},  {-1, 0x40000000U, true},
+        {-1, 0x60000000U, true},  {-1, 0x00000000U, false},
+        {4, 0x20000000U, true},   {4, 0x40000000U, false},
+        {4, 0x60000000U, true},
+        {5, 0x20000000U, false},  {5, 0x40000000U, true},
+        {5, 0x60000000U, true},
+        {INT_MIN, 0x40000000U, true},
+        // Faction 0 is the one value that separates `< 0` from `<= 0`: it is
+        // not negative, so it must take the comparison arm and land on
+        // 0x40000000 against a local faction of 4, rejecting this window.
+        {0, 0x20000000U, false},  {0, 0x40000000U, true},
+    };
+    for (const MaskCase &test : mask_cases) {
+        arrange(0);
+        // Slot 0 untagged with no control turn drops out, leaving slot 3 the
+        // only window in play.
+        set_win(w1, test.window, 1);
+        table[3] = as_win(w1);
+        g_focus_result = 1;
+        expect(console->focus(11, 22, test.faction) == 0);
+        expect(g_focus_rec.focus_calls == (test.accepted ? 1 : 0));
+        if (test.accepted) {
+            expect(g_focus_rec.focus_targets[0] == w1.data());
+            expect(g_focus_rec.focus_x == 11 && g_focus_rec.focus_y == 22);
+        }
+        // Specialisation 4: a secondary window's success never raises the flag,
+        // so flush_input never runs and the answer stays 0.
+        expect(g_focus_rec.flush_calls == 0);
+    }
+
+    // --- the activity gate applies to slots 1..7 and NOT to slot 0 ---
+    arrange(0x20000000U);
+    set_win(w1, 0x20000000U, 0);   // tagged but inactive
+    table[3] = as_win(w1);
+    g_focus_result = 0;
+    expect(console->focus(11, 22, 4) == 0);
+    // Slot 0 ran despite its own activity dword being zero; slot 3 did not.
+    expect(g_focus_rec.cursor_calls == 1);
+    expect(g_focus_rec.focus_calls == 1);
+    expect(g_focus_rec.focus_targets[0] == w0.data());
+
+    // --- an empty slot is skipped before any exemption, slot 0 included ---
+    arrange(0x60000000U);
+    table[0] = nullptr;
+    expect(console->focus(11, 22, -1) == 0);
+    expect(g_focus_rec.cursor_calls == 0);
+    expect(g_focus_rec.focus_calls == 0);
+
+    // --- specialisation 2: an untagged slot 0 and the control-turn global ---
+    for (int active = 0; active < 2; ++active) {
+        arrange(0);
+        control_turn = active ? 1 : 0;
+        g_focus_result = 0;
+        expect(console->focus(11, 22, 4) == 0);
+        // The global is consulted only because the tag missed, and only it can
+        // pull an untagged primary onto the cursor path.
+        expect(g_focus_rec.cursor_calls == (active ? 1 : 0));
+    }
+    // A TAGGED slot 0 takes the cursor path whatever the global says.
+    arrange(0x20000000U);
+    control_turn = 0;
+    expect(console->focus(11, 22, 4) == 0);
+    expect(g_focus_rec.cursor_calls == 1);
+
+    // --- cursor_next runs on the process-wide Console, not on `this` ---
+    expect(g_focus_rec.cursor_self == &console_marker);
+    expect(g_focus_rec.cursor_self != console_storage.data());
+    expect(g_focus_rec.cursor_x == 11 && g_focus_rec.cursor_y == 22);
+
+    // --- the survey-overlay latch ---
+    // Set: cleared first, then slot 0 is focused. Success raises the flag and
+    // flushes; failure repaints instead, with draw type 1.
+    for (int moved = 0; moved < 2; ++moved) {
+        arrange(0x20000000U);
+        *overlay = 0x99;
+        g_focus_result = moved;
+        const int result = console->focus(11, 22, 4);
+        expect(result == moved);
+        expect(*overlay == 0);
+        expect(g_focus_rec.focus_calls == 1);
+        expect(g_focus_rec.focus_targets[0] == w0.data());
+        expect(g_focus_rec.draw_calls == (moved ? 0 : 1));
+        if (!moved) {
+            expect(g_focus_rec.draw_target == w0.data());
+            expect(g_focus_rec.draw_type == 1);
+        }
+        expect(g_focus_rec.flush_calls == (moved ? 1 : 0));
+        // cursor, focus, then either flush or draw - and the flush is last,
+        // after the whole walk, never inside it.
+        expect(g_focus_rec.sequence == (moved ? 0x124U : 0x123U));
+    }
+    // Clear: the latch path is skipped entirely and slot 0 goes through the
+    // same plain focus call a tagged secondary would.
+    arrange(0x20000000U);
+    *overlay = 0;
+    g_focus_result = 1;
+    expect(console->focus(11, 22, 4) == 1);
+    expect(g_focus_rec.cursor_calls == 1);
+    expect(g_focus_rec.draw_calls == 0);
+    expect(g_focus_rec.focus_calls == 1);
+    expect(g_focus_rec.flush_calls == 1);
+    // The same clear latch with a primary that REFUSES. This is the one
+    // arrangement in which the two slot-0 paths diverge observably: the latch
+    // path repaints on refusal, the plain path does not. Without it a body
+    // that took the latch arm unconditionally would pass every other case.
+    arrange(0x20000000U);
+    *overlay = 0;
+    g_focus_result = 0;
+    expect(console->focus(11, 22, 4) == 0);
+    expect(g_focus_rec.focus_calls == 1);
+    expect(g_focus_rec.draw_calls == 0);
+    expect(g_focus_rec.flush_calls == 0);
+
+    // --- the table is RE-READ after cursor_next ---
+    // The cursor recorder republishes slot 0. A body that reused the pointer it
+    // loaded at the top of the iteration would focus the OLD window.
+    for (int latched = 0; latched < 2; ++latched) {
+        arrange(0x20000000U);
+        set_win(w2, 0x20000000U, 1);
+        g_focus_cursor_installs = w2.data();
+        *overlay = latched ? 0x99 : 0;
+        g_focus_result = 0;
+        expect(console->focus(11, 22, 4) == 0);
+        expect(g_focus_rec.focus_calls == 1);
+        expect(g_focus_rec.focus_targets[0] == w2.data());
+        if (latched) {
+            // The repaint reads slot 0 a SECOND time, after MapWin::focus
+            // returned, so it sees the republished window too.
+            expect(g_focus_rec.draw_target == w2.data());
+        }
+    }
+
+    // --- flush_input runs once, after the whole eight-slot walk ---
+    arrange(0x20000000U);
+    *overlay = 0x99;
+    set_win(w1, 0x40000000U, 1);
+    set_win(w3, 0x40000000U, 1);
+    table[3] = as_win(w1);
+    table[7] = as_win(w3);
+    g_focus_result = 1;
+    expect(console->focus(11, 22, -1) == 1);
+    expect(g_focus_rec.focus_calls == 3);
+    expect(g_focus_rec.flush_calls == 1);
+    // The ninth slot is never reached, whatever it holds.
+    for (int visit = 0; visit < g_focus_rec.focus_calls; ++visit) {
+        expect(g_focus_rec.focus_targets[visit] != sentinel.data());
+    }
+    // Every window had been visited before the flush, so it is not inside the
+    // loop even though the flag was raised on the first iteration.
+    expect(g_focus_rec.flush_at_focus_calls == 3);
+
+    // --- through the redirect adapter ---
+    arrange(0x20000000U);
+    *overlay = 0x99;
+    g_focus_result = 1;
+    expect(console_focus_redirect(console, nullptr, 33, 44, 4) == 1);
+    expect(g_focus_rec.focus_x == 33 && g_focus_rec.focus_y == 44);
+    expect(g_focus_rec.flush_calls == 1);
+
+    ConsoleOriginalCursorNext = saved_cursor;
+    ConsoleOriginalMapWinFocus = saved_focus;
+    ConsoleOriginalMapWinDrawMap = saved_draw;
+    ConsoleOriginalFlushInput = saved_flush;
+    ConsoleGlobal = saved_global;
+    ConsoleControlTurnActive = saved_control;
+    MapWinTable = saved_table;
+    LocalFaction = saved_local;
+}
+
 void test_console_update_data() {
     static_assert(sizeof(Console) == 0x247A8,
                   "Console update_data fixture requires the legacy layout");
@@ -26301,6 +26616,7 @@ int main() {
     test_popup_wave_callback();
     test_ambience_dtor();
     test_console_update_data();
+    test_console_focus();
     test_init_thunks();
     test_adjustor_thunks();
     test_deleting_thunks();
