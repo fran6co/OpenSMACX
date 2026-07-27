@@ -2081,7 +2081,6 @@ P3,1021,0x005D6F50,?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ,210,1,0,unr
 P0,1003021,0x005D7030,?compute_min_size@GraphicWin@@QAEXXZ,272,3,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P3,210,0x005D7170,sub_5d7170,36,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x005D71A0,sub_5d71a0,40,0,1,unrecovered,,,1,exact,missing,
-P3,10,0x005D71F0,??__Fg_BUFFER_SPRITE@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P0,1080221,0x005D7210,??0Buffer@@QAE@XZ,530,80,2,source_complete,ui_dependency,recover_buffer_element_ctor,2,exact,entry_range,void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
 P0,1087221,0x005D7410,??1Buffer@@QAE@XZ,107,87,2,source_complete,ui_dependency,recover_buffer_element_teardown,2,exact,entry_range,void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 P0,1042621,0x005D7670,?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z,847,42,6,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int width, int height, int, ExtDirectDraw*)"
@@ -2247,9 +2246,7 @@ P3,621,0x005EB0BF,?load@Sprite@@QAEHH@Z,344,0,6,unrecovered,,,2,exact,entry_rang
 P2,8021,0x005EB20F,?fill_scaling_table@Sprite@@QAEXXZ,133,8,0,unrecovered,,,2,exact,exact,void (__thiscall ?fill_scaling_table@Sprite@@QAEXXZ)(Sprite* this)
 P3,421,0x005EB29F,?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z,129,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z)(SpriteList* this, SpriteStruct*)"
 P3,111,0x005EB32F,?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z,28,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z)(SpriteList* this, SpriteStruct*)"
-P3,10,0x005EB370,??__Fg_WIN_BUFFER@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,210,0x005EB390,sub_5eb390,22,0,2,unrecovered,,,1,exact,missing,
-P3,10,0x005EB3B0,sub_5eb3b0,31,0,0,unrecovered,,,1,exact,missing,
 P0,1004621,0x005EB640,?close@Win@@QAEXXZ,1610,4,6,original_dependency,ui_dependency,recover_win_close,2,exact,exact,void (__thiscall ?close@Win@@QAEXXZ)(Win* this)
 P0,1002321,0x005EBC90,??1Win@@QAE@XZ,401,2,3,original_dependency,ui_dependency,recover_win_close,2,entry_range,entry_range,void (__thiscall ??1Win@@QAE@XZ)(Win* this)
 P0,1003721,0x005EBD80,?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z,2285,2,17,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"int (__thiscall ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)"
@@ -2624,8 +2621,6 @@ P3,10,0x0060CED0,sub_60ced0,49,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0060CF10,sub_60cf10,61,0,0,unrecovered,,,1,exact,missing,
 P3,400,0x0060D010,sub_60d010,144,0,4,unrecovered,,,0,missing,missing,
 P3,400,0x0060D030,sub_60d030,141,0,4,unrecovered,,,0,missing,missing,
-P3,10,0x0060D080,??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x0060D0C0,??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,1221,0x0060D0E0,??0RadioButton@@QAE@H@Z,230,1,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)"
 P0,1002621,0x0060D1F0,?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z,391,2,6,original_dependency,ui_dependency,recover_radio_button_attach,2,exact,exact,"int (__thiscall ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)"
 P3,1621,0x0060D380,?calculate_dimensions@RadioButton@@QAEHXZ,965,1,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@RadioButton@@QAEHXZ)(RadioButton* this)
@@ -2639,8 +2634,6 @@ P0,1001221,0x0060E320,?on_mouse_move@RadioButton@@QAEXHH@Z,372,1,2,original_depe
 P0,1001021,0x0060E4A0,?on_mouse_leave@RadioButton@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_radio_button_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
 P3,1520,0x0060E4D0,?init_class@RadioButton@@QAAHXZ,263,1,5,unrecovered,,,2,exact,entry_range,
 P3,1120,0x0060E5D0,?close_class@RadioButton@@QAAXXZ,20,1,1,unrecovered,,,2,exact,exact,
-P3,10,0x0060E610,??__Fg_CHECKBOX_SPRITE_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x0060E650,??__Fg_CHECKBOX_SPRITE_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,4221,0x0060E670,??0CheckBox@@QAE@H@Z,233,4,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)"
 P0,1024221,0x0060E740,??1CheckBox@@QAE@XZ,128,24,2,original_dependency,ui_dependency,recover_check_box_destructor,2,exact,exact,void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
 P0,1002621,0x0060E800,?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z,383,2,6,original_dependency,ui_dependency,recover_check_box_attach,2,exact,exact,"int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
@@ -2742,9 +2735,6 @@ P3,1621,0x006134A0,?init@Dialogs@@QAEHH@Z,132,1,6,unrecovered,,,2,exact,exact,"i
 P3,621,0x00613530,?init@Dialogs@@QAEHHHHHPAUHeap@@@Z,210,0,6,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z)(Dialogs* this, int, int, int, int, Heap*)"
 P3,621,0x00613610,?init@Dialogs@@QAEHPAURECT@@PAUHeap@@@Z,145,0,6,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialogs@@QAEHPAURECT@@PAUHeap@@@Z)(Dialogs* this, RECT*, Heap*)"
 P3,1621,0x006136B0,?init@Dialogs@@QAEHPAUHeap@@@Z,132,1,6,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialogs@@QAEHPAUHeap@@@Z)(Dialogs* this, Heap*)"
-P3,10,0x006137B0,??__Fg_FILEWIN_SPRITE_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x006137F0,??__Fg_FILEWIN_SPRITE_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x00613830,??__Fg_FILEWIN_SPRITE_3@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,1421,0x00613850,??0FileWin@@QAE@XZ,221,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??0FileWin@@QAE@XZ)(FileWin* this)
 P2,5421,0x00613900,?close@FileWin@@QAEXXZ,172,5,4,unrecovered,,,2,exact,exact,void (__thiscall ?close@FileWin@@QAEXXZ)(FileWin* this)
 P3,1521,0x006139B0,?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z,487,1,5,unrecovered,,,2,exact,exact,"int (__thiscall ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z)(FileWin* this, int8*, GraphicWin*, FileWinConstruct*)"
@@ -2781,8 +2771,6 @@ P3,11,0x00616140,?pass_dialog_focus@EditBox@@QAEXXZ,86,0,0,unrecovered,,,1,exact
 P3,111,0x006161A0,?UNK2@EditBox@@QAEXXZ,42,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
 P0,1030121,0x00616200,??1Time@@QAE@XZ,96,30,1,source_complete,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1Time@@QAE@XZ)(Time* this)
 P0,1000011,0x006169C0,??1Strings@@QAE@XZ,5,0,0,source_complete,ui_dependency,recover_owning_class,1,exact,missing,void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)
-P3,10,0x00616AC0,??__Fg_CAVIAR_BUFFER_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x00616B00,??__Fg_CAVIAR_BUFFER_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00616B20,sub_616b20,13,0,0,unrecovered,,,1,exact,missing,
 P3,100,0x00616B40,sub_616b40,118,0,1,unrecovered,,,0,missing,missing,
 P0,1082021,0x00616BC0,??0CaviarData@@QAE@XZ,13,82,0,source_complete,ui_dependency,recover_caviardata_element_ctor,2,exact,exact,void (__thiscall ??0CaviarData@@QAE@XZ)(CaviarData* this)
@@ -3151,7 +3139,6 @@ P3,1320,0x0063B940,?trig_init@@YAHXZ,110,1,3,unrecovered,,,2,exact,exact,
 P3,2020,0x0063B9B0,?sin@@YAHHH@Z,267,2,0,unrecovered,,,2,exact,exact,
 P3,100,0x0063BAC0,?cos@@YAHHH@Z,25,0,1,unrecovered,,,0,missing,missing,
 P3,210,0x0063BAE0,sub_63bae0,22,0,2,unrecovered,,,1,exact,missing,
-P3,10,0x0063BB00,sub_63bb00,31,0,0,unrecovered,,,1,exact,missing,
 P3,1520,0x0063BB20,sub_63bb20,574,1,5,unrecovered,,,2,exact,entry_range,
 P3,2320,0x0063BD10,sub_63bd10,413,2,3,unrecovered,,,2,exact,exact,
 P3,0,0x0063BEB0,sub_63beb0,33,0,0,unrecovered,,,0,missing,missing,

@@ -122,6 +122,7 @@ set(OPENSMACX_SOURCES
     src/delegation_thunks.cpp
     src/nullsub_thunks.cpp
     src/global_arith.cpp
+    src/guarded_teardowns.cpp
     src/fx.cpp
     src/vector_teardown.cpp
     src/alphanet.cpp
@@ -418,6 +419,7 @@ if(BUILD_TESTING)
         src/delegation_thunks.cpp
         src/nullsub_thunks.cpp
         src/global_arith.cpp
+        src/guarded_teardowns.cpp
         src/fx.cpp
         src/vector_teardown.cpp
         src/alphanet.cpp

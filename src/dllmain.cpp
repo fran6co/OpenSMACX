@@ -90,6 +90,7 @@
 #include "atexit_thunks.h"
 #include "delegation_thunks.h"
 #include "global_arith.h"
+#include "guarded_teardowns.h"
 #include "nullsub_thunks.h"
 #include "deleting_thunks.h"
 #include "init_thunks.h"
@@ -117,7 +118,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1870;
+constexpr size_t RedirectCount = 1883;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -7758,6 +7759,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_005D71D0,
         },
         {
+            0x005D71F0,
+            reinterpret_cast<uintptr_t>(&teardown_g_buffer_sprite),
+            OPENSMACX_SIGNATURE_005D71F0,
+        },
+        {
             0x005D8360,
             reinterpret_cast<uintptr_t>(&global_arith_005d8360_redirect),
             OPENSMACX_SIGNATURE_005D8360,
@@ -7841,6 +7847,16 @@ bool install_redirects() {
             0x005EB350,
             reinterpret_cast<uintptr_t>(&construct_win_buffer),
             OPENSMACX_SIGNATURE_005EB350,
+        },
+        {
+            0x005EB370,
+            reinterpret_cast<uintptr_t>(&teardown_g_win_buffer),
+            OPENSMACX_SIGNATURE_005EB370,
+        },
+        {
+            0x005EB3B0,
+            reinterpret_cast<uintptr_t>(&teardown_005eb3b0),
+            OPENSMACX_SIGNATURE_005EB3B0,
         },
         {
             0x005EC680,
@@ -8288,9 +8304,19 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0060D060,
         },
         {
+            0x0060D080,
+            reinterpret_cast<uintptr_t>(&teardown_g_radiobutton_sprite_1),
+            OPENSMACX_SIGNATURE_0060D080,
+        },
+        {
             0x0060D0A0,
             reinterpret_cast<uintptr_t>(&construct_radiobutton_sprite_2),
             OPENSMACX_SIGNATURE_0060D0A0,
+        },
+        {
+            0x0060D0C0,
+            reinterpret_cast<uintptr_t>(&teardown_g_radiobutton_sprite_2),
+            OPENSMACX_SIGNATURE_0060D0C0,
         },
         {
             0x0060D1B0,
@@ -8303,9 +8329,19 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0060E5F0,
         },
         {
+            0x0060E610,
+            reinterpret_cast<uintptr_t>(&teardown_g_checkbox_sprite_1),
+            OPENSMACX_SIGNATURE_0060E610,
+        },
+        {
             0x0060E630,
             reinterpret_cast<uintptr_t>(&construct_checkbox_sprite_2),
             OPENSMACX_SIGNATURE_0060E630,
+        },
+        {
+            0x0060E650,
+            reinterpret_cast<uintptr_t>(&teardown_g_checkbox_sprite_2),
+            OPENSMACX_SIGNATURE_0060E650,
         },
         {
             0x0060E7C0,
@@ -8543,14 +8579,29 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00613790,
         },
         {
+            0x006137B0,
+            reinterpret_cast<uintptr_t>(&teardown_g_filewin_sprite_1),
+            OPENSMACX_SIGNATURE_006137B0,
+        },
+        {
             0x006137D0,
             reinterpret_cast<uintptr_t>(&construct_filewin_sprite_2),
             OPENSMACX_SIGNATURE_006137D0,
         },
         {
+            0x006137F0,
+            reinterpret_cast<uintptr_t>(&teardown_g_filewin_sprite_2),
+            OPENSMACX_SIGNATURE_006137F0,
+        },
+        {
             0x00613810,
             reinterpret_cast<uintptr_t>(&construct_filewin_sprite_3),
             OPENSMACX_SIGNATURE_00613810,
+        },
+        {
+            0x00613830,
+            reinterpret_cast<uintptr_t>(&teardown_g_filewin_sprite_3),
+            OPENSMACX_SIGNATURE_00613830,
         },
         {
             0x00614320,
@@ -8583,9 +8634,19 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00616AA0,
         },
         {
+            0x00616AC0,
+            reinterpret_cast<uintptr_t>(&teardown_g_caviar_buffer_1),
+            OPENSMACX_SIGNATURE_00616AC0,
+        },
+        {
             0x00616AE0,
             reinterpret_cast<uintptr_t>(&construct_caviar_buffer_2),
             OPENSMACX_SIGNATURE_00616AE0,
+        },
+        {
+            0x00616B00,
+            reinterpret_cast<uintptr_t>(&teardown_g_caviar_buffer_2),
+            OPENSMACX_SIGNATURE_00616B00,
         },
         {
             0x00616B30,
@@ -9613,6 +9674,11 @@ bool install_redirects() {
             0x0063B930,
             reinterpret_cast<uintptr_t>(&cursor_close_cursor_class_redirect),
             OPENSMACX_SIGNATURE_0063B930,
+        },
+        {
+            0x0063BB00,
+            reinterpret_cast<uintptr_t>(&teardown_0063bb00),
+            OPENSMACX_SIGNATURE_0063BB00,
         },
         {
             0x0063C500,
