@@ -23,7 +23,7 @@
  * tools/generate_delegation_thunks.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * One shape, 34 times over: read a member object pointer, answer a constant
+ * One shape, 40 times over: read a member object pointer, answer a constant
  * when it is absent, otherwise forward the arguments through a slot of that
  * member's OWN vtable. The four numbers that differ per function - the member
  * offset, the slot, the forwarded argument count and the absent-member
@@ -69,6 +69,7 @@ int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, int a1);
 int __fastcall midi_play_trackset_redirect(void *self, void *, int a1);
 int __fastcall midi_xpose_trackset_redirect(void *self, void *, int a1, int a2);
 int __fastcall midi_stop_trackset_redirect(void *self, void *, int a1);
+int __fastcall midi_add_active_trackset_redirect(void *self, void *, int a1);
 int __fastcall midi_set_active_range_lo_redirect(void *self, void *, int a1, int a2);
 int __fastcall midi_set_active_range_hi_redirect(void *self, void *, int a1, int a2);
 int __fastcall midi_remove_active_trackset_redirect(void *self, void *, int a1);
@@ -81,7 +82,12 @@ int __fastcall midi_set_tempo_redirect(void *self, void *, int a1);
 int __fastcall midi_get_time_redirect(void *self, void *, int a1);
 int __fastcall midi_get_control_track_redirect(void *self, void *);
 int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, int a1);
+int __fastcall midi_set_channel_ctrl_redirect(void *self, void *, int a1);
+int __fastcall midi_set_program_ctrl_redirect(void *self, void *, int a1);
+int __fastcall midi_set_track_ctrl_redirect(void *self, void *, int a1);
 int __fastcall voice_rx_unload_redirect(void *self, void *);
+int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1);
 int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *);
 int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *);
 int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *);
+int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1);

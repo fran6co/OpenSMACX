@@ -113,7 +113,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1759;
+constexpr size_t RedirectCount = 1765;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -6464,6 +6464,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C7A80,
         },
         {
+            0x004C7AD0,
+            reinterpret_cast<uintptr_t>(&midi_add_active_trackset_redirect),
+            OPENSMACX_SIGNATURE_004C7AD0,
+        },
+        {
             0x004C7B00,
             reinterpret_cast<uintptr_t>(&midi_set_active_range_lo_redirect),
             OPENSMACX_SIGNATURE_004C7B00,
@@ -6524,6 +6529,21 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C7EC0,
         },
         {
+            0x004C7EE0,
+            reinterpret_cast<uintptr_t>(&midi_set_channel_ctrl_redirect),
+            OPENSMACX_SIGNATURE_004C7EE0,
+        },
+        {
+            0x004C7F10,
+            reinterpret_cast<uintptr_t>(&midi_set_program_ctrl_redirect),
+            OPENSMACX_SIGNATURE_004C7F10,
+        },
+        {
+            0x004C7F40,
+            reinterpret_cast<uintptr_t>(&midi_set_track_ctrl_redirect),
+            OPENSMACX_SIGNATURE_004C7F40,
+        },
+        {
             0x004C8460,
             reinterpret_cast<uintptr_t>(&ambience_construct_redirect),
             OPENSMACX_SIGNATURE_004C8460,
@@ -6532,6 +6552,11 @@ bool install_redirects() {
             0x004C8C50,
             reinterpret_cast<uintptr_t>(&voice_rx_unload_redirect),
             OPENSMACX_SIGNATURE_004C8C50,
+        },
+        {
+            0x004C8C70,
+            reinterpret_cast<uintptr_t>(&voice_rx_add_buffer_redirect),
+            OPENSMACX_SIGNATURE_004C8C70,
         },
         {
             0x004C8CA0,
@@ -6547,6 +6572,11 @@ bool install_redirects() {
             0x004C9030,
             reinterpret_cast<uintptr_t>(&voice_tx_get_next_buffer_redirect),
             OPENSMACX_SIGNATURE_004C9030,
+        },
+        {
+            0x004C9050,
+            reinterpret_cast<uintptr_t>(&voice_tx_return_buffer_redirect),
+            OPENSMACX_SIGNATURE_004C9050,
         },
         {
             0x004C92D0,

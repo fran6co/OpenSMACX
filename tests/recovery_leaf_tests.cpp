@@ -25451,6 +25451,7 @@ const DelegationCase g_delegation_cases[] = {
     {reinterpret_cast<void *>(&midi_play_trackset_redirect), 0x3c, 0x10c, 1, 0x14},
     {reinterpret_cast<void *>(&midi_xpose_trackset_redirect), 0x3c, 0x114, 2, 0x14},
     {reinterpret_cast<void *>(&midi_stop_trackset_redirect), 0x3c, 0x110, 1, 0x14},
+    {reinterpret_cast<void *>(&midi_add_active_trackset_redirect), 0x3c, 0x98, 1, 0x14},
     {reinterpret_cast<void *>(&midi_set_active_range_lo_redirect), 0x3c, 0xa0, 2, 0x14},
     {reinterpret_cast<void *>(&midi_set_active_range_hi_redirect), 0x3c, 0xa4, 2, 0x14},
     {reinterpret_cast<void *>(&midi_remove_active_trackset_redirect), 0x3c, 0xa8, 1, 0x14},
@@ -25463,10 +25464,15 @@ const DelegationCase g_delegation_cases[] = {
     {reinterpret_cast<void *>(&midi_get_time_redirect), 0x3c, 0xd4, 1, 0x0},
     {reinterpret_cast<void *>(&midi_get_control_track_redirect), 0x3c, 0xf4, 0, 0x0},
     {reinterpret_cast<void *>(&midi_get_total_track_ticks_redirect), 0x3c, 0xf8, 1, 0x0},
+    {reinterpret_cast<void *>(&midi_set_channel_ctrl_redirect), 0x3c, 0xe4, 1, 0x14},
+    {reinterpret_cast<void *>(&midi_set_program_ctrl_redirect), 0x3c, 0xe8, 1, 0x14},
+    {reinterpret_cast<void *>(&midi_set_track_ctrl_redirect), 0x3c, 0xc0, 1, 0x14},
     {reinterpret_cast<void *>(&voice_rx_unload_redirect), 0x3c, 0x14, 0, 0x13},
+    {reinterpret_cast<void *>(&voice_rx_add_buffer_redirect), 0x3c, 0x8c, 1, 0x13},
     {reinterpret_cast<void *>(&voice_rx_get_buffer_size_redirect), 0x3c, 0x90, 0, 0x0},
     {reinterpret_cast<void *>(&voice_tx_get_nbuffers_redirect), 0x3c, 0x94, 0, 0x0},
     {reinterpret_cast<void *>(&voice_tx_get_next_buffer_redirect), 0x3c, 0x88, 0, 0x0},
+    {reinterpret_cast<void *>(&voice_tx_return_buffer_redirect), 0x3c, 0x8c, 1, 0x13},
 };
 
 // One recorder per arity, plus a poison for every other slot: the delegate

@@ -99,7 +99,12 @@ def token(text: str, index: int) -> tuple[str | None, int]:
 
 def declared_arity(mangled: str) -> tuple[str, int] | None:
     """(convention, bytes of parameters) for names simple enough to read."""
-    match = re.match(r"^\?[\w@]+@@(.)(.*)$", mangled)
+    # NON-greedy, and that is load-bearing. The qualified name ends at the
+    # FIRST `@@`; a greedy match walks past it to the last one, which for a
+    # parameter naming a struct - ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z
+    # - lands inside the parameter list and leaves nothing readable behind it.
+    # Every function taking a class or struct pointer was declined that way.
+    match = re.match(r"^\?[\w@]+?@@(.)(.*)$", mangled)
     if not match:
         return None
     first, tail = match.groups()

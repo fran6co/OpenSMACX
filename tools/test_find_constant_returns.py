@@ -65,6 +65,19 @@ class DeclaredArityTest(unittest.TestCase):
         self.assertEqual(("stdcall", 8),
                          finder.declared_arity("?handler@@YGXHH@Z"))
 
+    def test_reads_a_parameter_naming_a_struct(self):
+        # The qualified name ends at the FIRST `@@`. A greedy match walks past
+        # it to the `@@` inside this parameter and leaves nothing readable, so
+        # every function taking a class or struct pointer used to be declined.
+        self.assertEqual(
+            ("thiscall", 4),
+            finder.declared_arity("?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z"))
+
+    def test_reads_two_parameters_naming_structs(self):
+        self.assertEqual(
+            ("thiscall", 8),
+            finder.declared_arity("?pair@X@@QAEHPAUOne@@PAVTwo@@@Z"))
+
     def test_declines_a_name_it_cannot_read(self):
         self.assertIsNone(finder.declared_arity("sub_628220"))
 
