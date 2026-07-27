@@ -220,23 +220,25 @@ class LoweringTests(unittest.TestCase):
                 for one in decoder.disasm(bytes.fromhex(encoded), address)]
 
     def test_a_refusal_traps_one_instruction_and_lowering_continues(self):
-        # nop; div ecx; nop - the middle instruction has no lowering. Both
-        # neighbours must still be reached, and the trap must name the
-        # refused address rather than the function's.
-        lines, refused = lifter.lower_body(self.items("90f7f140"))
-        self.assertEqual({"div": 1}, dict(refused))
+        # nop; bswap eax; inc eax - the middle instruction has no lowering.
+        # Both neighbours must still be reached, and the trap must name the
+        # refused address rather than the function's. (`div` was the example
+        # here until the multiply/divide helpers landed and it started to
+        # lower.)
+        lines, refused = lifter.lower_body(self.items("900fc840"))
+        self.assertEqual({"bswap": 1}, dict(refused))
         text = "\n".join(lines)
-        self.assertIn("opensmacx_trap(0x00401001U, \"div\");", text)
-        # The inc after the div is what proves lowering did not stop.
+        self.assertIn("opensmacx_trap(0x00401001U, \"bswap\");", text)
+        # The inc after the bswap is what proves lowering did not stop.
         self.assertIn("opensmacx_inc32", text)
 
     def test_the_histogram_counts_every_occurrence_not_every_function(self):
-        # Two divs in one body are two entries in the work queue: the phase 4
+        # Two bswaps in one body are two entries in the work queue: the phase 4
         # ordering is by how often an instruction appears, so deduplicating
         # per function would rank a rare instruction in many functions above a
         # common one concentrated in few.
-        _, refused = lifter.lower_body(self.items("f7f1f7f1"))
-        self.assertEqual({"div": 2}, dict(refused))
+        _, refused = lifter.lower_body(self.items("0fc80fc8"))
+        self.assertEqual({"bswap": 2}, dict(refused))
 
     def test_a_branch_inside_the_function_gets_a_label(self):
         # jmp +0 - the target is the next instruction, which is inside this

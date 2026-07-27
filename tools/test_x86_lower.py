@@ -34,9 +34,11 @@ means something else:
 * A refusal has to name the instruction that caused it, because the caller
   turns the message into a trap and "register id 50" identifies nothing.
 """
+import types
 import unittest
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+from capstone import x86 as capstone_x86
 
 import x86_lower
 
@@ -56,13 +58,31 @@ def decode(encoded, address=BASE):
     return instructions[0]
 
 
+def fake_x87(mnemonic, st_indices):
+    """An x87 instruction capstone will not produce, for the refusal paths.
+
+    Capstone's `X86Op` has no setters, so a shape it never emits cannot be
+    made by mutating a decoded one. Only the fields the lowering reads are
+    provided; anything else it touches should be a loud AttributeError rather
+    than a plausible default.
+    """
+    operands = [types.SimpleNamespace(
+        type=x86_lower.X86_OP_REG,
+        reg=getattr(capstone_x86, f"X86_REG_ST{index}"),
+        size=10) for index in st_indices]
+    return types.SimpleNamespace(
+        mnemonic=mnemonic, op_str="(hand-built)", address=BASE, size=2,
+        operands=operands, opcode=(0xDC, 0, 0, 0), prefix=(0, 0, 0, 0),
+        bytes=b"\xdc\xe1")
+
+
 def no_labels(_address):
     """A `label_for` for functions with no branch targets of their own."""
     return None
 
 
-def lower(encoded, label_for=no_labels, address=BASE):
-    return x86_lower.lower(decode(encoded, address), label_for)
+def lower(encoded, label_for=no_labels, address=BASE, case_targets=None):
+    return x86_lower.lower(decode(encoded, address), label_for, case_targets)
 
 
 def lower_one(encoded, label_for=no_labels, address=BASE):
@@ -432,35 +452,52 @@ class RefusalTests(unittest.TestCase):
     """A refusal is turned into a trap, so it has to say which instruction."""
 
     def test_an_unknown_mnemonic_is_refused(self):
-        # div ecx - no lowering, and no pretending there is one.
+        # bswap eax - no lowering, and no pretending there is one. It stands in
+        # for `div ecx`, which used to be the example here and now lowers.
         with self.assertRaises(x86_lower.Unsupported):
-            lower("f7f1")
+            lower("0fc8")
 
     def test_the_refusal_names_the_address(self):
         with self.assertRaisesRegex(x86_lower.Unsupported, "0x00401000"):
-            lower("f7f1")
+            lower("0fc8")
 
     def test_the_refusal_names_the_instruction(self):
-        with self.assertRaisesRegex(x86_lower.Unsupported, "div"):
-            lower("f7f1")
+        with self.assertRaisesRegex(x86_lower.Unsupported, "bswap"):
+            lower("0fc8")
 
     def test_the_address_in_the_refusal_is_the_instruction_s_own(self):
         # Two instructions, one message each: the trap has to point at the
         # right one, not at the start of the function.
         with self.assertRaisesRegex(x86_lower.Unsupported, "0x00402340"):
-            lower("f7f1", no_labels, 0x00402340)
+            lower("0fc8", no_labels, 0x00402340)
 
-    def test_segment_relative_memory_is_refused(self):
-        # mov eax, fs:[0] - the SEH chain. Lowering it as a flat access would
-        # read and write image memory at address 0.
+    def test_a_non_fs_segment_is_still_refused(self):
+        # mov eax, gs:[0]. Only fs: is modelled, because only fs: appears -
+        # a gs: operand would be a different thread block on a different
+        # platform, and lowering it into the fs: one would silently merge two
+        # address spaces.
         with self.assertRaisesRegex(x86_lower.Unsupported, "segment"):
-            lower("64a100000000")
+            lower("65a100000000")
 
     def test_the_segment_refusal_also_names_the_address(self):
         # The refusal comes from inside the operand model rather than from the
         # mnemonic table, and it has to be just as identifiable.
         with self.assertRaisesRegex(x86_lower.Unsupported, "0x00401000"):
-            lower("64a100000000")
+            lower("65a100000000")
+
+    def test_fs_relative_memory_with_a_register_term_is_refused(self):
+        # mov eax, fs:[ecx]. A COMPUTED thread-block offset: the displacement
+        # is no longer the whole address, so the constant-displacement helper
+        # would index the block with whatever ECX held.
+        with self.assertRaisesRegex(x86_lower.Unsupported, "register term"):
+            lower("648b01")
+
+    def test_lea_of_an_fs_operand_is_still_refused(self):
+        # lea eax, fs:[0x18]. LEA wants a FLAT address and the thread block has
+        # none, so the routing in read_operand must not be mistaken for
+        # making fs: generally addressable.
+        with self.assertRaisesRegex(x86_lower.Unsupported, "flat address"):
+            lower("648d0518000000")
 
     def test_sixteen_bit_addressing_is_refused(self):
         # mov eax, [bx + si] under a 0x67 prefix. The 16-bit address wraps
@@ -488,16 +525,29 @@ class RefusalTests(unittest.TestCase):
         with self.assertRaisesRegex(x86_lower.Unsupported, "0x00401000"):
             lower("0f20c0")
 
-    def test_a_floating_point_instruction_is_refused(self):
-        # fld dword ptr [eax] - x87 is a later phase, not a silent no-op.
+    def test_an_unmodelled_x87_form_is_refused(self):
+        # fbld tbyte ptr [eax] - packed BCD, which occurs zero times in this
+        # image. The `f`-prefix dispatch must not swallow it into a plausible
+        # neighbour just because the mnemonic starts with an f.
         with self.assertRaises(x86_lower.Unsupported):
-            lower("d900")
+            lower("df20")
 
-    def test_a_repeated_string_instruction_is_refused(self):
-        # rep movsb - the repeat prefix is a loop; dropping it would copy one
-        # byte and call it done.
+    def test_the_sse_movsd_is_not_a_string_copy(self):
+        # f2 0f 10 05 - `movsd xmm0, [0x11223344]` shares its MNEMONIC with the
+        # dword string move and nothing else. The opcode is what separates
+        # them, which is why the string rule tests the opcode.
         with self.assertRaises(x86_lower.Unsupported):
-            lower("f3a4")
+            lower("f20f100544332211")
+
+    def test_a_16_bit_address_size_string_op_is_refused(self):
+        # 67 f3 ab - `rep stosd` over DI and CX, which wraps within 64K.
+        with self.assertRaises(x86_lower.Unsupported):
+            lower("67f3ab")
+
+    def test_a_segment_overridden_string_source_is_refused(self):
+        # 65 f3 a4 - `rep movsb` reading gs:[esi], the thread block.
+        with self.assertRaises(x86_lower.Unsupported):
+            lower("65f3a4")
 
 
 class MiscellaneousTests(unittest.TestCase):
@@ -525,7 +575,7 @@ class MiscellaneousTests(unittest.TestCase):
             with self.subTest(mnemonic=mnemonic):
                 self.assertIn(mnemonic, x86_lower.candidate_mnemonics())
                 lower(encoded)
-        self.assertNotIn("div", x86_lower.candidate_mnemonics())
+        self.assertNotIn("bswap", x86_lower.candidate_mnemonics())
 
     def test_the_candidate_set_is_an_upper_bound_not_coverage(self):
         # `mov` is in the set and these three `mov`s are all refused, so any
@@ -535,13 +585,295 @@ class MiscellaneousTests(unittest.TestCase):
         # set is keyed on the mnemonic and the refusals are about operands.
         # The measured number has to come from calling `lower`.
         self.assertIn("mov", x86_lower.candidate_mnemonics())
-        for encoded, why in (("64a100000000", "segment override"),
+        for encoded, why in (("65a100000000", "gs segment override"),
                              ("678b00", "16-bit addressing"),
                              ("0f20c0", "control register")):
             with self.subTest(why=why):
                 self.assertEqual("mov", decode(encoded).mnemonic)
                 with self.assertRaises(x86_lower.Unsupported):
                     lower(encoded)
+
+
+
+class MultiplyDivideTests(unittest.TestCase):
+    """The one-operand forms, whose register pair is implicit.
+
+    Capstone reports exactly one operand for these, the explicit source; AX /
+    DX:AX / EDX:EAX never appear in the operand list, so the lowering cannot
+    read them off the instruction and the helper owns them instead. That is
+    why these emit a bare statement rather than a `write_operand`.
+    """
+
+    def test_mul_passes_only_the_explicit_source(self):
+        # mul ecx
+        self.assertEqual(["opensmacx_mul1_32(s, s.ecx);"], lower("f7e1"))
+
+    def test_mul_takes_its_width_from_the_operand(self):
+        # mul cl / mul cx - the widths that decide which register pair moves.
+        self.assertEqual(["opensmacx_mul1_8(s, (s.ecx & 0xffU));"],
+                         lower("f6e1"))
+        self.assertEqual(["opensmacx_mul1_16(s, (s.ecx & 0xffffU));"],
+                         lower("66f7e1"))
+
+    def test_div_carries_the_instruction_address(self):
+        # div ecx - a divide can fault, and the trap has to name the divide,
+        # not the function, so the address is an argument.
+        self.assertEqual(["opensmacx_div1_32(s, s.ecx, 0x00401000U);"],
+                         lower("f7f1"))
+
+    def test_idiv_is_a_different_helper_not_a_flag(self):
+        # idiv ecx - signed and unsigned divide disagree about the quotient
+        # range and about the sign of the remainder, so one helper taking a
+        # boolean would be two functions wearing a coat.
+        self.assertEqual(["opensmacx_idiv1_32(s, s.ecx, 0x00401000U);"],
+                         lower("f7f9"))
+
+    def test_a_memory_source_still_goes_through_the_operand_model(self):
+        # idiv dword ptr [0x691e70] - 256 of the image's idivs are this shape.
+        self.assertEqual(
+            ["opensmacx_idiv1_32(s, opensmacx_mem32(0x00691e70U),"
+             " 0x00401000U);"],
+            lower("f73d701e6900"))
+
+    def test_the_address_is_the_instruction_s_own(self):
+        # A divide part-way into a body must name where it actually is.
+        self.assertEqual(["opensmacx_idiv1_32(s, s.ecx, 0x00402340U);"],
+                         lower("f7f9", no_labels, 0x00402340))
+
+    def test_the_candidate_set_admits_all_three(self):
+        for mnemonic in ("mul", "div", "idiv"):
+            with self.subTest(mnemonic=mnemonic):
+                self.assertIn(mnemonic, x86_lower.candidate_mnemonics())
+
+
+class SegmentRelativeTests(unittest.TestCase):
+    """fs: is a separate address space, so it gets separate accessors.
+
+    Every one of the image's 1,330 segment-prefixed operands is a bare
+    `fs:[0]`, so the shape asserted here is not a sample - it is the whole
+    surface. What makes a wrong lowering dangerous is that it is still
+    well-formed: `opensmacx_mem32(0)` compiles, and reads four megabytes below
+    the image array.
+    """
+
+    def test_reading_fs_goes_to_the_thread_block_not_the_image(self):
+        # mov eax, fs:[0]
+        self.assertEqual(["s.eax = opensmacx_fs32(0x00000000U);"],
+                         lower("64a100000000"))
+
+    def test_writing_fs_goes_to_the_thread_block_not_the_image(self):
+        # mov fs:[0], esp - the install half of the SEH prologue.
+        self.assertEqual(
+            ["opensmacx_store_fs32(0x00000000U, s.esp);"],
+            lower("64892500000000"))
+
+    def test_the_displacement_is_the_whole_address(self):
+        # mov eax, fs:[0x2c] - the TLS array. The displacement is passed
+        # through unchanged rather than added to any base, because the block
+        # has no base in the flat image.
+        self.assertEqual(["s.eax = opensmacx_fs32(0x0000002cU);"],
+                         lower("64a12c000000"))
+
+    def test_no_image_helper_appears_in_an_fs_lowering(self):
+        # The failure mode is a lowering that is right about the value and
+        # wrong about the space, so assert the space explicitly.
+        for encoded in ("64a100000000", "64892500000000"):
+            with self.subTest(encoded=encoded):
+                emitted = " ".join(lower(encoded))
+                self.assertNotIn("opensmacx_mem", emitted)
+                self.assertNotIn("opensmacx_store32", emitted)
+
+
+class StringTests(unittest.TestCase):
+    def test_a_repeated_string_instruction_is_one_call(self):
+        # ESI, EDI and ECX are implicit and the direction comes from DF, so
+        # there is nothing to lower but the name.
+        self.assertEqual(["opensmacx_rep_movs8(s);"], lower("f3a4"))
+
+    def test_the_mnemonic_suffix_selects_the_element_width(self):
+        self.assertEqual(["opensmacx_rep_stos8(s);"], lower("f3aa"))
+        self.assertEqual(["opensmacx_rep_stos16(s);"], lower("66f3ab"))
+        self.assertEqual(["opensmacx_rep_stos32(s);"], lower("f3ab"))
+
+    def test_repe_and_repne_keep_their_prefixes(self):
+        # f3/ae and f2/ae differ only in which way ZF ends the loop; collapsing
+        # them to one helper would run a failed search to ECX == 0.
+        self.assertEqual(["opensmacx_repe_scas8(s);"], lower("f3ae"))
+        self.assertEqual(["opensmacx_repne_scas8(s);"], lower("f2ae"))
+
+    def test_an_unrepeated_string_instruction_has_no_prefix_in_its_name(self):
+        self.assertEqual(["opensmacx_movs8(s);"], lower("a4"))
+        self.assertEqual(["opensmacx_lods8(s);"], lower("ac"))
+
+    def test_f2_on_a_moving_op_is_a_repeat_not_a_repne(self):
+        # `f2 a5` is the case the printed name cannot answer. Capstone reports
+        # it as a BARE "movsd" with the prefix array cleared - it consumes the
+        # F2 and does not report it, because the mnemonic collides with the SSE
+        # movsd - so a lowering that reads the repeat off the name copies four
+        # bytes where the hardware copies the whole buffer, and with ECX = 0
+        # writes memory the original never touches. On MOVS/STOS/LODS the
+        # hardware treats F2 exactly as REP, which is what this asserts.
+        self.assertEqual(["opensmacx_rep_movs32(s);"], lower("f2a5"))
+        self.assertEqual(["opensmacx_rep_movs8(s);"], lower("f2a4"))
+        self.assertEqual(["opensmacx_rep_stos32(s);"], lower("f2ab"))
+        self.assertEqual(["opensmacx_rep_lods32(s);"], lower("f2ad"))
+        self.assertEqual(["opensmacx_rep_movs16(s);"], lower("66f2a5"))
+
+    def test_f2_on_a_comparing_op_really_is_repne(self):
+        # The other half of the same rule: on SCAS and CMPS the two prefixes
+        # are genuinely different loops, so the encoding must not be collapsed
+        # there.
+        self.assertEqual(["opensmacx_repne_cmps8(s);"], lower("f2a6"))
+        self.assertEqual(["opensmacx_repe_cmps8(s);"], lower("f3a6"))
+
+    def test_cld_and_std_write_the_direction_flag(self):
+        self.assertEqual(["opensmacx_cld(s);"], lower("fc"))
+        self.assertEqual(["opensmacx_std(s);"], lower("fd"))
+
+
+class X87Tests(unittest.TestCase):
+    """The x87 is a second machine, and its encoding rows are not parallel.
+
+    The dangerous mistakes here are all well-formed. A reversed subtract
+    compiles and returns a number; the wrong ST index compiles and returns a
+    number; a `fstp` lowered as `fst` leaves the stack one deep and corrupts
+    the NEXT function's register numbering rather than this one's answer.
+    """
+
+    def test_the_two_encoding_rows_are_different_operations(self):
+        # D8 E1 disassembles as `fsub st(1)` with ONE operand and means
+        # ST(0) -= ST(1). DC E1 disassembles as `fsubr st(1), st(0)` with TWO
+        # and means ST(1) = ST(0) - ST(1). The rows are swapped in the opcode
+        # map, so a lowering that keyed on the opcode's position rather than on
+        # capstone's resolved mnemonic would negate every one of them.
+        self.assertEqual(
+            ["opensmacx_x87_binary_st0(OpensmacxX87Sub,"
+             " opensmacx_x87_get(1U));"],
+            lower("d8e1"))
+        self.assertEqual(
+            ["opensmacx_x87_binary_sti(OpensmacxX87Subr, 1U, false);"],
+            lower("dce1"))
+
+    def test_the_popping_form_pops(self):
+        # de c1 - faddp st(1), st(0). The `true` is the whole difference
+        # between a balanced body and one that leaks a stack slot per call.
+        self.assertEqual(
+            ["opensmacx_x87_binary_sti(OpensmacxX87Add, 1U, true);"],
+            lower("dec1"))
+
+    def test_a_memory_operand_selects_the_width_helper(self):
+        # d8 00 / dc 00 - fadd dword ptr [eax] and fadd qword ptr [eax]. The
+        # width is the OPERAND's, and reading a float as a double reads four
+        # bytes past it.
+        self.assertEqual(
+            ["opensmacx_x87_binary_st0(OpensmacxX87Add,"
+             " opensmacx_x87_mem32(s.eax));"],
+            lower("d800"))
+        self.assertEqual(
+            ["opensmacx_x87_binary_st0(OpensmacxX87Add,"
+             " opensmacx_x87_mem64(s.eax));"],
+            lower("dc00"))
+
+    def test_the_integer_forms_go_through_the_integer_accessors(self):
+        # da 00 - fiadd dword ptr [eax]. Same operation, different decode of
+        # the operand: `imem` reads an int32, `mem` would read a float.
+        self.assertEqual(
+            ["opensmacx_x87_binary_st0(OpensmacxX87Add,"
+             " opensmacx_x87_imem32(s.eax));"],
+            lower("da00"))
+
+    def test_load_and_store_widths(self):
+        self.assertEqual(["opensmacx_x87_fld32(s.eax);"], lower("d900"))
+        self.assertEqual(["opensmacx_x87_fld64(s.eax);"], lower("dd00"))
+        self.assertEqual(["opensmacx_x87_fld80(s.eax);"], lower("db28"))
+        self.assertEqual(["opensmacx_x87_fild64(s.eax);"], lower("df28"))
+        self.assertEqual(["opensmacx_x87_fst32(s.eax, true);"], lower("d918"))
+        self.assertEqual(["opensmacx_x87_fst64(s.eax, false);"], lower("dd10"))
+        self.assertEqual(["opensmacx_x87_fist32(s.eax, true);"], lower("db18"))
+
+    def test_fnstsw_ax_is_a_sixteen_bit_merge(self):
+        # df e0 - the status word goes into AX, and AX is half of EAX. An
+        # assignment to `s.eax` would destroy the top 16 bits, which on this
+        # path hold whatever the caller left there.
+        self.assertEqual(
+            ["s.eax = (s.eax & 0xffff0000U)"
+             " | ((opensmacx_x87_status_word() << 0) & 0x0000ffffU);"],
+            lower("dfe0"))
+
+    def test_fcompp_compares_against_st1_and_pops_twice(self):
+        self.assertEqual(["opensmacx_x87_fcom(opensmacx_x87_get(1U), 2U);"],
+                         lower("ded9"))
+
+    def test_fwait_emits_nothing_rather_than_being_refused(self):
+        # Every exception is masked in this image, so there is nothing to wait
+        # for - but 81 of these appear, and a refusal would be 81 traps.
+        self.assertEqual([], lower("9b"))
+
+    def test_the_constants_are_instructions_not_literals(self):
+        self.assertEqual(["opensmacx_x87_fldpi();"], lower("d9eb"))
+
+    def test_a_form_whose_source_is_not_st0_is_refused(self):
+        # No disassembler emits this today, and capstone's own operands cannot
+        # be edited to produce it, so the instruction is built by hand. If a
+        # future capstone ever spells the DC or DE row this way, the index
+        # these rules would pick is the wrong one - so they must trap rather
+        # than silently reverse the destination.
+        for mnemonic in ("fsubr", "faddp"):
+            with self.subTest(mnemonic=mnemonic):
+                with self.assertRaisesRegex(x86_lower.Unsupported,
+                                            "not ST\\(0\\)"):
+                    x86_lower.lower(
+                        fake_x87(mnemonic, [1, 2]), no_labels)
+
+
+class SwitchTests(unittest.TestCase):
+    """A jump through a table is control flow INSIDE the function.
+
+    Lowering it as a dispatch compiles and is counted as a success, and then
+    fails the moment it runs: the dispatch table holds function STARTS, and
+    every switch arm is an address interior to a function. So the wrong answer
+    here is invisible to the refusal histogram - which is exactly why it needs
+    a test that asserts the goto rather than the absence of a trap.
+    """
+
+    @staticmethod
+    def labels(address):
+        return f"L_{address:08x}" if address in (0x401100, 0x401200) else None
+
+    def test_the_arms_become_gotos_in_index_order(self):
+        # jmp dword ptr [eax*4 + 0x401000]
+        self.assertEqual(
+            ["switch (s.eax) {",
+             "case 0U: goto L_00401100;",
+             "case 1U: goto L_00401200;",
+             "}",
+             "opensmacx_dispatch(opensmacx_mem32((s.eax * 4U)"
+             " + 0x00401000U))(s);",
+             "return;"],
+            lower("ff248500104000", self.labels, BASE,
+                  [0x401100, 0x401200]))
+
+    def test_the_index_register_comes_from_the_operand(self):
+        # jmp dword ptr [ecx*4 + 0x401000] - the switch must key on the
+        # register the ADDRESS uses, not on a fixed one.
+        self.assertIn("switch (s.ecx) {",
+                      lower("ff248d00104000", self.labels, BASE,
+                            [0x401100]))
+
+    def test_an_unlabelled_arm_refuses_the_whole_jump(self):
+        # A recovered target that is not an instruction start in this function
+        # cannot become a goto. A trap that names the jump beats a body that
+        # does not compile, and beats a goto into the middle of an instruction.
+        with self.assertRaises(x86_lower.Unsupported):
+            lower("ff248500104000", self.labels, BASE, [0x401100, 0x409999])
+
+    def test_without_a_table_it_is_still_a_dispatch(self):
+        # The 71 vtable and computed forms have no table, and must be left
+        # exactly as they were.
+        self.assertEqual(
+            ["opensmacx_dispatch(opensmacx_mem32((s.eax * 4U)"
+             " + 0x00401000U))(s);", "return;"],
+            lower("ff248500104000", self.labels))
 
 
 if __name__ == "__main__":

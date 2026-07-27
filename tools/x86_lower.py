@@ -92,6 +92,22 @@ SHIFT = {"shl": "opensmacx_shl", "sal": "opensmacx_shl",
          "shr": "opensmacx_shr", "sar": "opensmacx_sar",
          "rol": "opensmacx_rol", "ror": "opensmacx_ror"}
 
+# The one-byte string opcodes: MOVS, CMPS, STOS, LODS and SCAS, at both widths.
+# The OPCODE decides membership, never the mnemonic - `movsd` is also the SSE
+# scalar double move and `movsx` is not a string operation at all, so a
+# name-based test lowers two unrelated instructions as a dword string copy.
+STRING_OPCODES = frozenset({0xA4, 0xA5, 0xA6, 0xA7, 0xAA, 0xAB,
+                            0xAC, 0xAD, 0xAE, 0xAF})
+
+# The mnemonic's last letter is its width, at any repeat prefix.
+STRING_WIDTHS = {"b": 8, "w": 16, "d": 32}
+
+# Every byte that can precede an opcode. Used to find the repeat prefix in the
+# ENCODING, which is the only place it is reliably reported - see the string
+# rule in `_lower` for the case that forces this.
+PREFIX_BYTES = frozenset({0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65,
+                          0x66, 0x67, 0xF0, 0xF2, 0xF3})
+
 
 class Unsupported(Exception):
     """Raised for an instruction this module does not lower yet.
@@ -142,6 +158,33 @@ def stack_step(operand) -> int:
     return operand.size
 
 
+def segment_displacement(mem):
+    """The thread-block displacement for an fs:-relative operand, else None.
+
+    Segment-prefixed memory is a DIFFERENT ADDRESS SPACE, not an offset into
+    the flat image, so it does not go through `memory_address` at all - see
+    `tools/lifted_tls.h` for what conflating the two corrupts.
+
+    Measured over terranx.exe: 1,330 segment-prefixed operands, every one of
+    them `mov`, 32-bit, and a bare `fs:[0]` with no base or index - the SEH
+    registration chain head - spread over 389 functions. (305 further operands
+    carry an `es:` prefix, but all 305 are the implicit destination of a string
+    instruction and have no displacement of their own.) So the shape below is
+    the whole segment surface of this image, and every other shape still
+    refuses rather than guessing.
+    """
+    if mem.segment == x86.X86_REG_INVALID:
+        return None
+    if mem.segment != x86.X86_REG_FS:
+        raise Unsupported("segment-relative memory")
+    if mem.base != x86.X86_REG_INVALID or mem.index != x86.X86_REG_INVALID:
+        # `fs:[eax]` would be a COMPUTED thread-block offset. It appears zero
+        # times here, and lowering it blind would index the thread block with a
+        # register that was meant for some other address space.
+        raise Unsupported("fs-relative memory with a register term")
+    return f"{mem.disp & 0xFFFFFFFF:#010x}U"
+
+
 def memory_address(mem) -> str:
     """`base + index*scale + disp`, as an expression over the state."""
     if mem.base in HALF or mem.index in HALF:
@@ -152,11 +195,14 @@ def memory_address(mem) -> str:
         # reason as segment-relative memory below - modelling it needs the
         # segment, which is phase 4.
         raise Unsupported("16-bit address size")
-    if mem.segment != x86.X86_REG_INVALID:
-        # fs:/gs: is the thread block: SEH chains and TLS. Modelling it needs a
-        # per-thread region, which is phase 4, so refuse rather than silently
-        # lower it as a flat-image access and corrupt the image instead.
-        raise Unsupported("segment-relative memory")
+    if segment_displacement(mem) is not None:
+        # The thread block has no flat address, so there is nothing to return:
+        # `opensmacx_at` would turn fs:[0] into `opensmacx_image - 0x00400000`.
+        # `read_operand` and `write_operand` route segment operands to the TIB
+        # helpers before reaching here, so this guards the other callers - the
+        # ones that want an ADDRESS rather than an access - instead of refusing
+        # fs: itself.
+        raise Unsupported("segment-relative memory used as a flat address")
     terms = []
     if mem.base != x86.X86_REG_INVALID:
         terms.append(read_register(mem.base))
@@ -184,6 +230,9 @@ def read_operand(operand) -> str:
         width = operand.size * 8
         if width not in (8, 16, 32):
             raise Unsupported(f"{operand.size}-byte memory operand")
+        displacement = segment_displacement(operand.mem)
+        if displacement is not None:
+            return f"opensmacx_fs{width}({displacement})"
         return f"opensmacx_mem{width}({memory_address(operand.mem)})"
     raise Unsupported(f"operand type {operand.type}")
 
@@ -195,6 +244,9 @@ def write_operand(operand, value: str) -> str:
         width = operand.size * 8
         if width not in (8, 16, 32):
             raise Unsupported(f"{operand.size}-byte memory operand")
+        displacement = segment_displacement(operand.mem)
+        if displacement is not None:
+            return f"opensmacx_store_fs{width}({displacement}, {value});"
         return f"opensmacx_store{width}({memory_address(operand.mem)}, {value});"
     raise Unsupported(f"write to operand type {operand.type}")
 
@@ -206,7 +258,189 @@ def sign_extend(value: str, from_bits: int) -> str:
             f"static_cast<int{from_bits}_t>({value})))")
 
 
-def lower(instruction, label_for) -> list[str]:
+# ---------------------------------------------------------------------------
+# x87
+#
+# The x87 is a second machine: eight registers addressed RELATIVE to a
+# top-of-stack index that the instructions themselves move. None of it fits the
+# operand model above - there is no state field to write and no width to mask -
+# so every rule here is a call into `lifted_x87.h`, and the only thing lowered
+# locally is which ST index, or which address.
+#
+# Capstone's operand FORM carries the encoding asymmetry, which is what lets
+# these rules be this short. `fmul st(3)` with one operand is the D8 row and
+# means ST(0) *= ST(3); `fmul st(3), st(0)` with two is the DC row and means
+# ST(3) *= ST(0). And DC E0+i disassembles as FSUBR where D8 E0+i disassembles
+# as FSUB - the rows are not parallel - so the mnemonic arriving here is
+# already the true operation rather than the opcode's position in a table.
+# ---------------------------------------------------------------------------
+
+X87_OPS = {"fadd": "OpensmacxX87Add", "fmul": "OpensmacxX87Mul",
+           "fsub": "OpensmacxX87Sub", "fsubr": "OpensmacxX87Subr",
+           "fdiv": "OpensmacxX87Div", "fdivr": "OpensmacxX87Divr"}
+
+# The popping forms and the integer-memory forms are the same six operations
+# reached by a different encoding, so they map onto the same six names.
+X87_POP_OPS = {"faddp": "fadd", "fmulp": "fmul", "fsubp": "fsub",
+               "fsubrp": "fsubr", "fdivp": "fdiv", "fdivrp": "fdivr"}
+X87_INTEGER_OPS = {"fiadd": "fadd", "fimul": "fmul", "fisub": "fsub",
+                   "fisubr": "fsubr", "fidiv": "fdiv", "fidivr": "fdivr"}
+
+X87_NULLARY = {
+    "fchs": "opensmacx_x87_chs();", "fabs": "opensmacx_x87_abs();",
+    "fsqrt": "opensmacx_x87_sqrt();", "frndint": "opensmacx_x87_rndint();",
+    "fsin": "opensmacx_x87_sin();", "fcos": "opensmacx_x87_cos();",
+    "fpatan": "opensmacx_x87_patan();", "ftst": "opensmacx_x87_ftst();",
+    "fninit": "opensmacx_x87_fninit();", "fnclex": "opensmacx_x87_fnclex();",
+    "fld1": "opensmacx_x87_fld1();", "fldz": "opensmacx_x87_fldz();",
+    "fldpi": "opensmacx_x87_fldpi();", "fldl2e": "opensmacx_x87_fldl2e();",
+    "fldl2t": "opensmacx_x87_fldl2t();", "fldlg2": "opensmacx_x87_fldlg2();",
+    "fldln2": "opensmacx_x87_fldln2();",
+    # FWAIT only waits for a pending unmasked exception, and this image masks
+    # every one of them, so there is nothing to model. 81 in the image.
+    "wait": "", "fwait": "",
+}
+
+ST_REGISTERS = {getattr(x86, f"X86_REG_ST{index}"): index for index in range(8)}
+
+
+def x87_index(operand) -> int:
+    if operand.type != X86_OP_REG or operand.reg not in ST_REGISTERS:
+        raise Unsupported("x87 operand is not a stack register")
+    return ST_REGISTERS[operand.reg]
+
+
+def x87_value(operand, integer: bool = False) -> str:
+    """The operand's VALUE as an x87 register value - every binary form."""
+    if operand.type == X86_OP_REG:
+        if integer:
+            raise Unsupported("integer x87 form with a register operand")
+        return f"opensmacx_x87_get({x87_index(operand)}U)"
+    if operand.type != X86_OP_MEM:
+        raise Unsupported(f"x87 operand type {operand.type}")
+    width = operand.size * 8
+    allowed = (16, 32, 64) if integer else (32, 64, 80)
+    if width not in allowed:
+        raise Unsupported(f"{operand.size}-byte x87 memory operand")
+    prefix = "imem" if integer else "mem"
+    return f"opensmacx_x87_{prefix}{width}({memory_address(operand.mem)})"
+
+
+def x87_address(operand) -> str:
+    if operand.type != X86_OP_MEM:
+        raise Unsupported("x87 form needs a memory operand")
+    return memory_address(operand.mem)
+
+
+def _lower_x87(instruction) -> list[str]:
+    mnemonic = instruction.mnemonic
+    operands = instruction.operands
+
+    if mnemonic in X87_NULLARY and not operands:
+        statement = X87_NULLARY[mnemonic]
+        return [statement] if statement else []
+
+    if mnemonic == "fcompp" and not operands:
+        return ["opensmacx_x87_fcom(opensmacx_x87_get(1U), 2U);"]
+
+    if mnemonic == "fnstsw" and len(operands) == 1:
+        # The register form writes AX, and a 16-bit write is a MERGE - so it
+        # goes through `write_operand` rather than assigning `s.eax`, exactly
+        # like every other sub-register destination in this module.
+        if operands[0].type == X86_OP_REG:
+            return [write_operand(operands[0], "opensmacx_x87_status_word()")]
+        return [f"opensmacx_x87_fnstsw_mem({x87_address(operands[0])});"]
+
+    if mnemonic in ("fldcw", "fnstcw") and len(operands) == 1:
+        return [f"opensmacx_x87_{mnemonic}({x87_address(operands[0])});"]
+
+    if mnemonic == "fxch":
+        # Capstone spells this `fxch st(0), st(i)`; the no-operand encoding
+        # means ST(1).
+        if len(operands) == 2:
+            index = x87_index(operands[1])
+        elif len(operands) == 1:
+            index = x87_index(operands[0])
+        else:
+            index = 1
+        return [f"opensmacx_x87_fxch({index}U);"]
+
+    if mnemonic == "fld" and len(operands) == 1:
+        if operands[0].type == X86_OP_REG:
+            return [f"opensmacx_x87_fld_st({x87_index(operands[0])}U);"]
+        width = operands[0].size * 8
+        if width not in (32, 64, 80):
+            raise Unsupported(f"{operands[0].size}-byte fld operand")
+        return [f"opensmacx_x87_fld{width}({x87_address(operands[0])});"]
+
+    if mnemonic == "fild" and len(operands) == 1:
+        width = operands[0].size * 8
+        if width not in (16, 32, 64):
+            raise Unsupported(f"{operands[0].size}-byte fild operand")
+        return [f"opensmacx_x87_fild{width}({x87_address(operands[0])});"]
+
+    if mnemonic in ("fst", "fstp") and len(operands) == 1:
+        pop = "true" if mnemonic == "fstp" else "false"
+        if operands[0].type == X86_OP_REG:
+            return [f"opensmacx_x87_fst_st({x87_index(operands[0])}U, {pop});"]
+        width = operands[0].size * 8
+        if width not in (32, 64, 80):
+            raise Unsupported(f"{operands[0].size}-byte {mnemonic} operand")
+        return [f"opensmacx_x87_fst{width}("
+                f"{x87_address(operands[0])}, {pop});"]
+
+    if mnemonic in ("fist", "fistp") and len(operands) == 1:
+        pop = "true" if mnemonic == "fistp" else "false"
+        width = operands[0].size * 8
+        if width not in (16, 32, 64):
+            raise Unsupported(f"{operands[0].size}-byte {mnemonic} operand")
+        return [f"opensmacx_x87_fist{width}("
+                f"{x87_address(operands[0])}, {pop});"]
+
+    if mnemonic == "ffree" and len(operands) == 1:
+        return [f"opensmacx_x87_ffree({x87_index(operands[0])}U, false);"]
+
+    if mnemonic in ("fcom", "fcomp", "ficom", "ficomp") and len(operands) == 1:
+        pops = 1 if mnemonic.endswith("p") else 0
+        integer = mnemonic.startswith("fi")
+        return [f"opensmacx_x87_fcom({x87_value(operands[0], integer)},"
+                f" {pops}U);"]
+
+    if mnemonic in X87_OPS and len(operands) in (1, 2):
+        operation = X87_OPS[mnemonic]
+        if len(operands) == 1:
+            # ST(0) <- ST(0) op source. Both the memory forms and the D8 row.
+            return [f"opensmacx_x87_binary_st0({operation},"
+                    f" {x87_value(operands[0])});"]
+        # The DC row: ST(i) <- ST(i) op ST(0). The second operand is always
+        # ST(0) in this encoding; refusing anything else means a future
+        # capstone that spells the D8 row with two operands becomes a trap
+        # rather than a silently reversed destination.
+        if x87_index(operands[1]) != 0:
+            raise Unsupported("two-operand x87 form whose source is not ST(0)")
+        return [f"opensmacx_x87_binary_sti({operation},"
+                f" {x87_index(operands[0])}U, false);"]
+
+    if mnemonic in X87_POP_OPS:
+        operation = X87_OPS[X87_POP_OPS[mnemonic]]
+        # The same guard the two-operand branch above carries, and for the same
+        # reason: `faddp st(2), st(0)` is the only shape capstone emits today,
+        # so a second operand that is not ST(0) is a disassembler this rule was
+        # not written against and must trap rather than pick an index.
+        if len(operands) == 2 and x87_index(operands[1]) != 0:
+            raise Unsupported("popping x87 form whose source is not ST(0)")
+        index = x87_index(operands[0]) if operands else 1
+        return [f"opensmacx_x87_binary_sti({operation}, {index}U, true);"]
+
+    if mnemonic in X87_INTEGER_OPS and len(operands) == 1:
+        operation = X87_OPS[X87_INTEGER_OPS[mnemonic]]
+        return [f"opensmacx_x87_binary_st0({operation},"
+                f" {x87_value(operands[0], True)});"]
+
+    raise Unsupported("no lowering for this x87 mnemonic")
+
+
+def lower(instruction, label_for, case_targets=None) -> list[str]:
     """Statements implementing one instruction.
 
     `label_for(address)` returns a local label when the address is a branch
@@ -220,14 +454,14 @@ def lower(instruction, label_for) -> list[str]:
     724,814 instructions; the trap the caller emits needs the instruction.
     """
     try:
-        return _lower(instruction, label_for)
+        return _lower(instruction, label_for, case_targets)
     except Unsupported as reason:
         text = f"{instruction.mnemonic} {instruction.op_str}".strip()
         raise Unsupported(
             f"{instruction.address:#010x}: {text} ({reason})") from None
 
 
-def _lower(instruction, label_for) -> list[str]:
+def _lower(instruction, label_for, case_targets=None) -> list[str]:
     mnemonic = instruction.mnemonic
     operands = instruction.operands
     width = operands[0].size * 8 if operands else 32
@@ -320,6 +554,15 @@ def _lower(instruction, label_for) -> list[str]:
                 f"opensmacx_imul{width}(s, {read_operand(operands[1])},"
                 f" {read_operand(operands[2])})")]
 
+    if mnemonic == "mul" and len(operands) == 1:
+        return [f"opensmacx_mul1_{width}(s, {read_operand(operands[0])});"]
+
+    if mnemonic in ("div", "idiv") and len(operands) == 1:
+        # The address travels with the call because a bad divide is a #DE, and
+        # a trap that cannot name the instruction is a trap nobody can act on.
+        return [f"opensmacx_{mnemonic}1_{width}(s, {read_operand(operands[0])},"
+                f" {instruction.address:#010x}U);"]
+
     if mnemonic == "cdq":
         return ["s.edx = (s.eax & 0x80000000U) ? 0xFFFFFFFFU : 0U;"]
     if mnemonic == "cwde":
@@ -346,6 +589,29 @@ def _lower(instruction, label_for) -> list[str]:
             # whatever it left in the state.
             return [f"opensmacx_dispatch({operands[0].imm:#010x}U)(s);",
                     "return;"]
+        # A switch. `case_targets` is the table the caller recovered for THIS
+        # jump, in index order, so case k is the arm for index k - which is
+        # what `[reg*4 + T]` means. Every arm is interior to this function, so
+        # each is a goto; the dispatch below stays as the default, because it
+        # holds function STARTS only and would trap on all of them. Falling out
+        # of the switch is therefore an out-of-range index failing loudly,
+        # exactly as it does today, instead of running on into the next case.
+        if case_targets and operands[0].type == X86_OP_MEM:
+            lines = [f"switch ({read_register(operands[0].mem.index)}) {{"]
+            for case, target in enumerate(case_targets):
+                label = label_for(target)
+                if label is None:
+                    # The recovered target is not a labelled instruction start
+                    # in this function. Emitting `goto` to nothing would not
+                    # compile and guessing would be worse, so refuse the whole
+                    # instruction and let it become a trap that names it.
+                    raise Unsupported(
+                        f"case {case} target {target:#010x} has no label")
+                lines.append(f"case {case}U: goto {label};")
+            lines.append("}")
+            return lines + [
+                f"opensmacx_dispatch({read_operand(operands[0])})(s);",
+                "return;"]
         return [f"opensmacx_dispatch({read_operand(operands[0])})(s);",
                 "return;"]
 
@@ -389,10 +655,62 @@ def _lower(instruction, label_for) -> list[str]:
                 "s.ebp = opensmacx_mem32(s.esp);",
                 "s.esp += 4U;"]
 
+    if mnemonic in ("cld", "std"):
+        return [f"opensmacx_{mnemonic}(s);"]
+
+    if instruction.opcode[0] in STRING_OPCODES:
+        # A string operation has no operands to lower: ESI, EDI, ECX and the
+        # accumulator are implicit, and the direction comes from DF. The whole
+        # instruction is therefore its NAME plus its repeat prefix.
+        if 0x67 in instruction.prefix:
+            # The address-size prefix substitutes CX/SI/DI for their 32-bit
+            # selves, which wraps at 64K within a segment - refused for the
+            # same reason as 16-bit addressing above.
+            raise Unsupported("16-bit address size")
+        if instruction.prefix[1] in (0x64, 0x65):
+            # An fs:/gs: override on the SOURCE puts it in the thread block,
+            # which the operand model routes to separate accessors for every
+            # other instruction and which the implicit-operand form would
+            # otherwise smuggle past. cs:/ss:/ds:/es: are deliberately NOT
+            # refused here: this is a flat model, those four have the same
+            # base, and the asymmetry with `memory_address` is that decision
+            # rather than an oversight.
+            raise Unsupported("segment-relative string source")
+        words = mnemonic.split()
+        base, suffix = words[-1][:-1], words[-1][-1:]
+        # The repeat comes from the ENCODING, not the printed name. Capstone
+        # reports `f2 a5` as a bare "movsd" with the prefix array cleared - it
+        # consumes the F2 but does not report it, because the mnemonic collides
+        # with the SSE movsd - so trusting the name there lowers a whole-buffer
+        # copy as a single element. It also prints F2 on a moving op as
+        # "repne", for which no helper exists and none should: on MOVS/STOS/
+        # LODS the hardware treats F2 exactly as REP, which is what the F2
+        # group of the differential checks against the real instruction.
+        found = None
+        for byte in instruction.bytes:
+            if byte in (0xF2, 0xF3):
+                found = byte
+            elif byte not in PREFIX_BYTES:
+                break
+        comparing = base in ("scas", "cmps")
+        if found == 0xF3:
+            repeat = "repe_" if comparing else "rep_"
+        elif found == 0xF2:
+            repeat = "repne_" if comparing else "rep_"
+        else:
+            repeat = ""
+        if suffix in STRING_WIDTHS:
+            return [f"opensmacx_{repeat}{base}{STRING_WIDTHS[suffix]}(s);"]
+
     if mnemonic == "xchg" and len(operands) == 2:
         return [f"{{ const uint32_t swap = {read_operand(operands[0])};",
                 f"  {write_operand(operands[0], read_operand(operands[1]))}",
                 f"  {write_operand(operands[1], 'swap')} }}"]
+
+    # Everything left beginning with `f` is x87, plus FWAIT which spells
+    # itself `wait`. No integer mnemonic in 32-bit x86 starts with `f`.
+    if mnemonic.startswith("f") or mnemonic in ("wait", "fwait"):
+        return _lower_x87(instruction)
 
     raise Unsupported("no lowering for this mnemonic")
 
@@ -414,9 +732,20 @@ def candidate_mnemonics() -> set[str]:
     decoding operands.
     """
     names = {"nop", "hint_nop", "fnop", "mov", "movsx", "movsxd", "movzx",
-             "lea", "push", "pop", "inc", "dec", "neg", "not", "imul", "cdq",
+             "lea", "push", "pop", "inc", "dec", "neg", "not", "imul", "mul",
+             "div", "idiv", "cdq",
              "cwde", "jmp", "call", "ret", "leave", "xchg"}
     names |= set(ARITH) | set(SHIFT)
+    names |= {"cld", "std"}
+    names |= {f"{repeat}{base}{suffix}"
+              for repeat in ("", "rep ", "repe ", "repne ")
+              for base in ("movs", "stos", "lods", "scas", "cmps")
+              for suffix in STRING_WIDTHS}
+    names |= set(X87_OPS) | set(X87_POP_OPS) | set(X87_INTEGER_OPS)
+    names |= set(X87_NULLARY)
+    names |= {"fcompp", "fnstsw", "fldcw", "fnstcw", "fxch", "fld", "fild",
+              "fst", "fstp", "fist", "fistp", "ffree", "fcom", "fcomp",
+              "ficom", "ficomp"}
     names |= {f"set{name}" for name in CONDITIONS}
     names |= {f"cmov{name}" for name in CONDITIONS}
     names |= {f"j{name}" for name in CONDITIONS}
