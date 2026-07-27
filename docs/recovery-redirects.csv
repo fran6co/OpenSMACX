@@ -1349,9 +1349,12 @@ address,kind
 0x004C8140,jump
 0x004C8460,jump
 0x004C8950,jump
+0x004C8C20,jump
+0x004C8C40,jump
 0x004C8C50,jump
 0x004C8C70,jump
 0x004C8CA0,jump
+0x004C8EA0,jump
 0x004C9010,jump
 0x004C9030,jump
 0x004C9050,jump

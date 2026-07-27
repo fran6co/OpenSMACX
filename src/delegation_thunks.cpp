@@ -24,7 +24,7 @@
  * tools/generate_delegation_thunks.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * One shape, 56 times over: read a member object pointer, answer a constant
+ * One shape, 59 times over: read a member object pointer, answer a constant
  * when it is absent, otherwise forward the arguments through a slot of that
  * member's OWN vtable. The four numbers that differ per function - the member
  * offset, the slot, the forwarded argument count and the absent-member
@@ -795,6 +795,48 @@ int __fastcall midi_set_track_ctrl_redirect(void *self, void *, int a1) {
 }
 
 /*
+Purpose: ?start@VoiceRx@@QAEHXZ - dispatch to slot 0x88 of the object at
+         0x3c when it is present, and answer 0x0 either way: both
+         paths land on the same zeroing, so the delegate's own result
+         never reaches the caller.
+Original Offset: 004C8C20
+Return Value: 0x0, whether the delegate ran or not
+Status: Complete
+*/
+int __fastcall voice_rx_start_redirect(void *self, void *) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x0;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0x88 / sizeof(void *)])(member);
+    return 0x0;
+}
+
+/*
+Purpose: ?stop@VoiceRx@@QAEHXZ - dispatch to slot 0x20 of the object at
+         0x3c when it is present, and answer 0x0 either way: both
+         paths land on the same zeroing, so the delegate's own result
+         never reaches the caller.
+Original Offset: 004C8C40
+Return Value: 0x0, whether the delegate ran or not
+Status: Complete
+*/
+int __fastcall voice_rx_stop_redirect(void *self, void *) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x0;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0x20 / sizeof(void *)])(member);
+    return 0x0;
+}
+
+/*
 Purpose: ?unload@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x14 of the
          object at +0x3c, answering 0x13 when that object is absent.
 Original Offset: 004C8C50
@@ -846,6 +888,27 @@ int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *) {
     void **const vtable = *reinterpret_cast<void ***>(member);
     return reinterpret_cast<func_delegation_0 *>(
         vtable[0x90 / sizeof(void *)])(member);
+}
+
+/*
+Purpose: ?release@VoiceTx@@QAEXXZ - dispatch to slot 0x38 of the object at
+         0x3c when it is present, and answer 0x0 either way: both
+         paths land on the same zeroing, so the delegate's own result
+         never reaches the caller.
+Original Offset: 004C8EA0
+Return Value: 0x0, whether the delegate ran or not
+Status: Complete
+*/
+int __fastcall voice_tx_release_redirect(void *self, void *) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x0;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0x38 / sizeof(void *)])(member);
+    return 0x0;
 }
 
 /*

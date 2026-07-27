@@ -23,7 +23,7 @@
  * tools/generate_delegation_thunks.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * One shape, 56 times over: read a member object pointer, answer a constant
+ * One shape, 59 times over: read a member object pointer, answer a constant
  * when it is absent, otherwise forward the arguments through a slot of that
  * member's OWN vtable. The four numbers that differ per function - the member
  * offset, the slot, the forwarded argument count and the absent-member
@@ -95,9 +95,12 @@ int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, int a1);
 int __fastcall midi_set_channel_ctrl_redirect(void *self, void *, int a1);
 int __fastcall midi_set_program_ctrl_redirect(void *self, void *, int a1);
 int __fastcall midi_set_track_ctrl_redirect(void *self, void *, int a1);
+int __fastcall voice_rx_start_redirect(void *self, void *);
+int __fastcall voice_rx_stop_redirect(void *self, void *);
 int __fastcall voice_rx_unload_redirect(void *self, void *);
 int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1);
 int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *);
+int __fastcall voice_tx_release_redirect(void *self, void *);
 int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *);
 int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *);
 int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1);
