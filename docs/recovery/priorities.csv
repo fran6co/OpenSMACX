@@ -2255,7 +2255,6 @@ P1,47921,0x005D4EF0,?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizi
 P2,7121,0x005D50A0,?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,72,7,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)"
 P3,610,0x005D50F0,sub_5d50f0,325,0,6,unrecovered,,,1,missing,exact,
 P3,10,0x005D5240,nullsub_224,1,0,0,unrecovered,,,1,exact,missing,
-P1,58321,0x005D5250,?fill@GraphicWin@@QAEXH@Z,246,58,3,unrecovered,,,2,exact,exact,"void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)"
 P2,18321,0x005D5350,?fill@GraphicWin@@QAEHPAURECT@@H@Z,238,18,3,unrecovered,,,2,exact,exact,"int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)"
 P3,100,0x005D5470,sub_5d5470,34,0,1,unrecovered,,,0,missing,missing,
 P3,100,0x005D54A0,sub_5d54a0,34,0,1,unrecovered,,,0,missing,missing,
@@ -2269,7 +2268,6 @@ P2,8421,0x005D56B0,?update@GraphicWin@@QAEXPAUGraphicWin@@@Z,109,8,4,unrecovered
 P3,1221,0x005D5720,?soft_update@GraphicWin@@QAEXHHHH@Z,364,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?soft_update@GraphicWin@@QAEXHHHH@Z)(GraphicWin* this, int, int, int, int)"
 P1,41221,0x005D5890,?soft_update@GraphicWin@@QAEXXZ,157,41,2,unrecovered,,,2,exact,exact,void (__thiscall ?soft_update@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P1,82221,0x005D5930,?soft_update@GraphicWin@@QAEXPAURECT@@@Z,318,82,2,unrecovered,,,2,exact,exact,"void (__thiscall ?soft_update@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)"
-P1,42321,0x005D5A70,?redraw@GraphicWin@@QAEXXZ,244,42,3,unrecovered,,,2,exact,exact,void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P3,800,0x005D5B80,sub_5d5b80,206,0,8,unrecovered,,,0,missing,missing,
 P3,10,0x005D5C50,PrevWndFunc,154,0,0,unrecovered,,,1,exact,missing,
 P3,811,0x005D5CF0,?on_paint@GraphicWin@@QAEHPAURECT@@@Z,1306,0,8,unrecovered,,,1,exact,missing,"int (__thiscall ?on_paint@GraphicWin@@QAEHPAURECT@@@Z)(GraphicWin* this, RECT*)"
@@ -2282,7 +2280,7 @@ P3,0,0x005D63B0,sub_5d63b0,46,0,0,unrecovered,,,0,missing,missing,
 P3,411,0x005D63F0,?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z,1223,0,4,unrecovered,,,1,exact,missing,"void (__thiscall ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z)(GraphicWin* this, RECT*, int)"
 P3,10,0x005D68C0,sub_5d68c0,386,0,0,unrecovered,,,1,exact,missing,
 P3,1020,0x005D6A50,?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z,106,1,0,unrecovered,,,2,exact,exact,
-P3,1421,0x005D6AC0,?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z,1015,1,4,unrecovered,,,2,exact,exact,"void (__thiscall ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)"
+P0,1001421,0x005D6AC0,?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z,1015,1,4,original_dependency,ui_dependency,recover_graphic_win_overlay,2,exact,exact,"void (__thiscall ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)"
 P3,0,0x005D6EC0,sub_5d6ec0,139,0,0,unrecovered,,,0,missing,missing,
 P3,1021,0x005D6F50,?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ,210,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P3,3021,0x005D7030,?compute_min_size@GraphicWin@@QAEXXZ,272,3,0,unrecovered,,,2,exact,exact,void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
@@ -2328,7 +2326,7 @@ P3,4321,0x005D9610,?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z,730,4,3,unrecovered,,
 P3,310,0x005D98F0,sub_5d98f0,743,0,3,unrecovered,,,1,exact,missing,
 P3,2821,0x005D9BE0,?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z,975,2,8,unrecovered,,,2,exact,exact,"int (__thiscall ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z)(Buffer* this, Win*, int, int, int, int, int, int)"
 P3,810,0x005D9FB0,sub_5d9fb0,888,0,8,unrecovered,,,1,exact,missing,
-P3,2021,0x005DA330,?map_colors@Buffer@@QAEHHHHHPAE@Z,401,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHHHHHPAE@Z)(Buffer* this, int, int, int, int, unsigned int8*)"
+P0,1002021,0x005DA330,?map_colors@Buffer@@QAEHHHHHPAE@Z,401,2,0,original_dependency,ui_dependency,recover_buffer_map_colors,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHHHHHPAE@Z)(Buffer* this, int, int, int, int, unsigned int8*)"
 P3,2021,0x005DA4D0,?map_colors@Buffer@@QAEHPAURECT@@PAE@Z,429,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z)(Buffer* this, RECT*, unsigned int8*)"
 P3,1120,0x005DA680,?poly@Buffer@@QAEHPAUVert@@HH@Z,27,1,1,unrecovered,,,2,exact,exact,
 P3,10,0x005DA6A0,sub_5da6a0,8,0,0,unrecovered,,,1,exact,missing,
@@ -2391,7 +2389,7 @@ P3,110,0x005DEB20,sub_5deb20,1135,0,1,unrecovered,,,1,missing,exact,
 P3,610,0x005DEFE0,sub_5defe0,1419,0,6,unrecovered,,,1,missing,exact,
 P3,2821,0x005DF590,?write_pcx@Buffer@@QAEHPAD@Z,908,2,8,unrecovered,,,2,exact,entry_range,"int (__thiscall ?write_pcx@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)"
 P3,411,0x005DF910,?write_bmp@Buffer@@QAEHPAD@Z,568,0,4,unrecovered,,,1,start_only,missing,"int (__thiscall ?write_bmp@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)"
-P1,20121,0x005DFB50,?fill@Buffer@@QAEHH@Z,381,20,1,unrecovered,,,2,exact,exact,"int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)"
+P0,1020121,0x005DFB50,?fill@Buffer@@QAEHH@Z,381,20,1,original_dependency,ui_dependency,recover_buffer_fill,2,exact,exact,"int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)"
 P2,8021,0x005DFCD0,?fill@Buffer@@QAEHPAURECT@@H@Z,556,8,0,unrecovered,,,2,exact,exact,"int (__thiscall ?fill@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT* rect, int)"
 P0,1051221,0x005DFF00,?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z,2203,51,2,original_dependency,ui_dependency,recover_buffer_copy_full,2,exact,exact,"int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer* buffer, int xCoord, int yCoord, int, int, int width, int height)"
 P3,10,0x005E07A0,sub_5e07a0,555,0,0,unrecovered,,,1,exact,missing,

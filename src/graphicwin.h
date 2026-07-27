@@ -33,6 +33,8 @@ class DLLEXPORT GraphicWin : Win {
   void construct();
   uint32_t close();
   int fill(int x1, int y1, int x2, int y2, int color);
+  void fill(int color);
+  void redraw();
  private:
   Buffer buffer_;
   uint32_t field_9CC_;
@@ -111,3 +113,43 @@ int graphic_win_destructor_probe_win_calls();
 void *graphic_win_destructor_probe_buffer_target();
 void *graphic_win_destructor_probe_win_target();
 int graphic_win_destructor_probe_order();
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// Buffer::fill(int) at 0x005DFB50 (ret 4) paints the whole surface in one
+// colour; Buffer::map_colors at 0x005DA330 (ret 0x14) remaps a region through
+// a translation table. Both are still original bodies. The fill's extents are
+// INCLUSIVE: the recovered caller passes width-1 and -1-height, which the
+// RECT sibling at 0x005D5350 independently confirms by passing right-1 and
+// bottom-1.
+typedef int(__thiscall func_graphic_win_buffer_fill_color)(void *, int);
+typedef int(__thiscall func_graphic_win_map_colors)(void *, int, int, int, int,
+                                                    void *);
+// GraphicWin::overlay_nonclient 0x005D6AC0 (ret 4) repaints the frame.
+typedef void(__thiscall func_graphic_win_overlay_nonclient)(void *, RECT *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_graphic_win_buffer_fill_color *BufferOriginalFillColor;
+extern func_graphic_win_map_colors *BufferOriginalMapColors;
+extern func_graphic_win_overlay_nonclient *GraphicWinOverlayNonclient;
+
+// The translation table fill consults before remapping. A null table means
+// the plain blit is the whole operation, which is the common case.
+extern void **GraphicWinColorMapTable;
+// USER32!InvalidateRect through the import at 0x00669304.
+typedef BOOL(__stdcall func_graphic_win_invalidate_rect)(HWND, const RECT *,
+                                                          BOOL);
+extern func_graphic_win_invalidate_rect *GraphicWinInvalidateRect;
+
+// The optional hook stored at 0xA10. See redraw's Verification note: it is
+// entered by a bare `call eax` with nothing pushed and ECX not set, so it is
+// not __thiscall, and zero-argument __cdecl and __stdcall are
+// indistinguishable here.
+typedef void(__cdecl func_graphic_win_paint_hook)();
+
+void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
+                                                int color);
+void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *);

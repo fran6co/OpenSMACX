@@ -6037,6 +6037,386 @@ uint32_t __thiscall graphic_win_stub_release(void *target, uint32_t flags) {
 #pragma GCC diagnostic pop
 #endif
 
+namespace {
+
+struct GwFillCall { void *self; int color; int calls; };
+GwFillCall g_gw_fill;
+struct GwMapCall { void *self; int a, b, c, d; void *table; int calls; };
+GwMapCall g_gw_map;
+struct GwCopyCall { void *self; void *buffer; int x, y, e, f, w, h; int calls; };
+GwCopyCall g_gw_copy;
+struct GwOverlayCall { void *self; RECT *rect; int calls; };
+GwOverlayCall g_gw_overlay;
+int g_paint_calls;
+int g_hook_calls;
+// Nibble-packed call order, so the sequence hook -> paint -> overlay is
+// asserted rather than just the three counts.
+uint32_t g_gw_order;
+struct GwInvalidateCall { HWND window; RECT rect; BOOL erase; int calls; };
+GwInvalidateCall g_gw_invalidate;
+// The paint hook sets a bit on 0x1A0 so the test can prove the clear re-reads
+// the field instead of writing back the value latched before the hook ran.
+void *g_hook_object;
+// When set, the paint hook calls redraw again on the same window. The latch
+// at bit 0 of 0x1A0 is what makes that second entry a no-op; without it the
+// recursion would paint twice.
+GraphicWin *g_hook_reenters;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+int __thiscall observe_fill_color(void *self, int color) {
+    g_gw_fill = {self, color, g_gw_fill.calls + 1};
+    return 0;
+}
+int __thiscall poison_fill_color(void *, int) { expect(false); return 0; }
+int __thiscall observe_map_colors(void *self, int a, int b, int c, int d,
+                                  void *table) {
+    g_gw_map = {self, a, b, c, d, table, g_gw_map.calls + 1};
+    return 0;
+}
+int __thiscall poison_map_colors(void *, int, int, int, int, void *) {
+    expect(false);
+    return 0;
+}
+int __thiscall observe_gw_copy_full(void *self, Buffer *buffer, int x, int y,
+                                 int e, int f, int w, int h) {
+    g_gw_copy = {self, buffer, x, y, e, f, w, h, g_gw_copy.calls + 1};
+    return 0;
+}
+int __thiscall poison_gw_copy_full(void *, Buffer *, int, int, int, int, int,
+                                int) {
+    expect(false);
+    return 0;
+}
+void __thiscall observe_overlay(void *self, RECT *rect) {
+    g_gw_overlay = {self, rect, g_gw_overlay.calls + 1};
+    g_gw_order = (g_gw_order << 4) | 3;
+}
+void __thiscall observe_paint(void *) {
+    ++g_paint_calls;
+    g_gw_order = (g_gw_order << 4) | 2;
+}
+void *__thiscall parent_says_transparent(void *self) { return self; }
+void *__thiscall parent_says_opaque(void *) { return nullptr; }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+void __cdecl observe_paint_hook() {
+    ++g_hook_calls;
+    g_gw_order = (g_gw_order << 4) | 1;
+    if (g_hook_reenters != nullptr) {
+        GraphicWin *const again = g_hook_reenters;
+        g_hook_reenters = nullptr;   // one level is enough to prove it
+        again->redraw();
+    }
+    if (g_hook_object != nullptr) {
+        uint32_t state;
+        std::memcpy(&state,
+                    static_cast<uint8_t *>(g_hook_object) + 0x1A0,
+                    sizeof(state));
+        state |= 0x40U;
+        std::memcpy(static_cast<uint8_t *>(g_hook_object) + 0x1A0, &state,
+                    sizeof(state));
+    }
+}
+
+BOOL __stdcall observe_invalidate(HWND window, const RECT *rect, BOOL erase) {
+    g_gw_invalidate.window = window;
+    g_gw_invalidate.rect = *rect;
+    g_gw_invalidate.erase = erase;
+    ++g_gw_invalidate.calls;
+    return TRUE;
+}
+
+void reset_graphic_win_paint_probes() {
+    g_gw_fill = GwFillCall{};
+    g_gw_map = GwMapCall{};
+    g_gw_copy = GwCopyCall{};
+    g_gw_overlay = GwOverlayCall{};
+    g_paint_calls = 0;
+    g_hook_calls = 0;
+    g_gw_order = 0;
+    g_hook_object = nullptr;
+    g_hook_reenters = nullptr;
+    g_gw_invalidate = GwInvalidateCall{};
+}
+
+}  // namespace
+
+// GraphicWin::fill(int). Three conditions gate the transparent copy path and
+// all three must hold: flag bit 19, a non-null parent, and a nonzero answer
+// from the parent's vtable slot 0xF4.
+void test_graphic_win_fill_color() {
+    auto *const saved_fill = BufferOriginalFillColor;
+    auto *const saved_map = BufferOriginalMapColors;
+    auto *const saved_copy = BufferCopyFull;
+    // The seam is repointed at a local slot, never written through: its
+    // default target 0x009B3390 is an address in the original image and is
+    // not mapped in the standalone leaf process.
+    void **const saved_table = GraphicWinColorMapTable;
+    void *table_slot = nullptr;
+    GraphicWinColorMapTable = &table_slot;
+
+    alignas(GraphicWin) uint8_t storage[sizeof(GraphicWin) + 32];
+    alignas(GraphicWin) uint8_t parent_storage[sizeof(GraphicWin) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *const object = storage + 16;
+    auto *const window = reinterpret_cast<GraphicWin *>(object);
+    auto *const parent = parent_storage + 16;
+
+    uintptr_t parent_vtable[64];
+    struct Gate { const char *label; uint32_t flags; bool has_parent;
+                  bool answers; bool copies; };
+    const Gate gates[] = {
+        {"opaque",          0x00000000U, true,  true,  false},
+        {"bit19 no parent", 0x00080000U, false, true,  false},
+        {"bit19 says no",   0x00080000U, true,  false, false},
+        {"bit19 says yes",  0x00080000U, true,  true,  true},
+        {"other bits only", 0xFFF7FFFFU, true,  true,  false},
+        {"all bits",        0xFFFFFFFFU, true,  true,  true},
+    };
+    for (const Gate &gate : gates) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(storage, expected, sizeof(storage));
+            std::memset(parent_storage, 0, sizeof(parent_storage));
+            for (size_t slot = 0; slot < 64; ++slot) {
+                parent_vtable[slot] = 0;
+            }
+            parent_vtable[0xF4 / 4] = reinterpret_cast<uintptr_t>(
+                gate.answers ? &parent_says_transparent : &parent_says_opaque);
+            uintptr_t *const table_pointer = parent_vtable;
+            std::memcpy(parent, &table_pointer, sizeof(table_pointer));
+            write_at(storage, 16 + 0x98, gate.flags);
+            uint8_t *const parent_value = gate.has_parent ? parent : nullptr;
+            std::memcpy(object + 0xC4, &parent_value, sizeof(parent_value));
+            write_at(storage, 16 + 0x14C, 100);
+            write_at(storage, 16 + 0x150, 200);
+            write_at(storage, 16 + 0x13C, 7);
+            write_at(storage, 16 + 0x140, 9);
+            write_at(storage, 16 + 0x4C4, 40);
+            write_at(storage, 16 + 0x4C8, 25);
+            std::memcpy(expected, storage, sizeof(storage));
+            reset_graphic_win_paint_probes();
+            table_slot = nullptr;
+            BufferOriginalFillColor =
+                gate.copies ? &poison_fill_color : &observe_fill_color;
+            BufferCopyFull = gate.copies ? &observe_gw_copy_full
+                                         : &poison_gw_copy_full;
+            BufferOriginalMapColors = &poison_map_colors;
+
+            if (adapter) {
+                graphic_win_fill_color_redirect(window, nullptr, 0x5A);
+            } else {
+                window->fill(0x5A);
+            }
+
+            if (gate.copies) {
+                expect(g_gw_copy.calls == 1);
+                expect(g_gw_copy.self == parent + 0x444);
+                expect(g_gw_copy.buffer ==
+                       reinterpret_cast<Buffer *>(object + 0x444));
+                expect(g_gw_copy.x == 107);          // 100 + 7
+                expect(g_gw_copy.y == 209);          // 200 + 9
+                expect(g_gw_copy.e == 0 && g_gw_copy.f == 0);
+                expect(g_gw_copy.w == 40);
+                expect(g_gw_copy.h == -25);          // negated height
+                expect(g_gw_fill.calls == 0);
+            } else {
+                expect(g_gw_fill.calls == 1);
+                expect(g_gw_fill.self == object + 0x444);
+                expect(g_gw_fill.color == 0x5A);
+                expect(g_gw_copy.calls == 0);
+            }
+            expect(g_gw_map.calls == 0);             // null table remaps nothing
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // With a table present the copy path remaps, and the bounds are
+    // INCLUSIVE: width-1 and -1-height, re-read after the blit.
+    int table_object = 0;
+    seed_storage(storage, expected, sizeof(storage));
+    std::memset(parent_storage, 0, sizeof(parent_storage));
+    parent_vtable[0xF4 / 4] =
+        reinterpret_cast<uintptr_t>(&parent_says_transparent);
+    uintptr_t *const table_pointer = parent_vtable;
+    std::memcpy(parent, &table_pointer, sizeof(table_pointer));
+    write_at(storage, 16 + 0x98, 0x00080000U);
+    uint8_t *const parent_value = parent;
+    std::memcpy(object + 0xC4, &parent_value, sizeof(parent_value));
+    write_at(storage, 16 + 0x14C, 0);
+    write_at(storage, 16 + 0x150, 0);
+    write_at(storage, 16 + 0x13C, 0);
+    write_at(storage, 16 + 0x140, 0);
+    write_at(storage, 16 + 0x4C4, 40);
+    write_at(storage, 16 + 0x4C8, 25);
+    std::memcpy(expected, storage, sizeof(storage));
+    reset_graphic_win_paint_probes();
+    table_slot = &table_object;
+    BufferOriginalFillColor = &poison_fill_color;
+    BufferCopyFull = &observe_gw_copy_full;
+    BufferOriginalMapColors = &observe_map_colors;
+    window->fill(3);
+    expect(g_gw_copy.calls == 1);
+    expect(g_gw_map.calls == 1);
+    expect(g_gw_map.self == object + 0x444);
+    expect(g_gw_map.a == 0 && g_gw_map.b == 0);
+    expect(g_gw_map.c == 39);        // width - 1
+    expect(g_gw_map.d == -26);       // -1 - height
+    expect(g_gw_map.table == &table_object);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    GraphicWinColorMapTable = saved_table;
+    BufferCopyFull = saved_copy;
+    BufferOriginalMapColors = saved_map;
+    BufferOriginalFillColor = saved_fill;
+}
+
+// GraphicWin::redraw. The re-entrancy latch, and the fact that the clear
+// re-reads 0x1A0 so bits the paint hook set survive it.
+void test_graphic_win_redraw() {
+    auto *const saved_overlay = GraphicWinOverlayNonclient;
+    auto *const saved_invalidate = GraphicWinInvalidateRect;
+    HWND *const saved_handle_slot = WinHdcWindow;
+    Win **const saved_current = ScrollCurrentWin;
+
+    alignas(GraphicWin) uint8_t storage[sizeof(GraphicWin) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *const object = storage + 16;
+    auto *const window = reinterpret_cast<GraphicWin *>(object);
+    uintptr_t vtable[64];
+    HWND handle = reinterpret_cast<HWND>(0x1234);
+    Win *current = nullptr;
+    WinHdcWindow = &handle;
+    ScrollCurrentWin = &current;
+
+    auto arrange = [&](uint32_t state, uint32_t visible_flags,
+                       bool with_hook) {
+        seed_storage(storage, expected, sizeof(storage));
+        for (size_t slot = 0; slot < 64; ++slot) {
+            vtable[slot] = 0;
+        }
+        vtable[0x30 / 4] = reinterpret_cast<uintptr_t>(&observe_paint);
+        uintptr_t *const table_pointer = vtable;
+        std::memcpy(object, &table_pointer, sizeof(table_pointer));
+        write_at(storage, 16 + 0x1A0, state);
+        write_at(storage, 16 + 0x9C, visible_flags);
+        write_at(storage, 16 + 0xC4, static_cast<uint32_t>(0));
+        func_graphic_win_paint_hook *const hook =
+            with_hook ? &observe_paint_hook : nullptr;
+        std::memcpy(object + 0xA10, &hook, sizeof(hook));
+        RECT area = {10, 20, 110, 61};
+        std::memcpy(object + 0x474, &area, sizeof(area));
+        // Win::client_to_screen ADDS client_rect_+outer_rect_ (0x14C/0x13C
+        // and 0x150/0x140, read straight off 0x005ED249) to what it is
+        // handed, so non-zero values here make both the translation and the
+        // zero-initialisers observable in the rectangle asserted below. A
+        // null parent at 0xC4 stops it after the first step.
+        write_at(storage, 16 + 0x14C, 5);
+        write_at(storage, 16 + 0x13C, 3);   // x offset 8
+        write_at(storage, 16 + 0x150, 2);
+        write_at(storage, 16 + 0x140, 4);   // y offset 6
+        std::memcpy(expected, storage, sizeof(storage));
+        reset_graphic_win_paint_probes();
+        GraphicWinOverlayNonclient = &observe_overlay;
+        GraphicWinInvalidateRect = &observe_invalidate;
+    };
+
+    // Already inside a redraw: nothing runs, nothing is published.
+    arrange(1, 1, true);
+    current = nullptr;
+    window->redraw();
+    expect(g_paint_calls == 0 && g_hook_calls == 0);
+    expect(g_gw_overlay.calls == 0 && g_gw_invalidate.calls == 0);
+    expect(current == nullptr);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // No window handle at all: the guard is checked before the latch.
+    HWND absent = nullptr;
+    WinHdcWindow = &absent;
+    arrange(0, 1, true);
+    window->redraw();
+    expect(g_paint_calls == 0 && g_hook_calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    WinHdcWindow = &handle;
+
+    // Visible, with a hook: the hook runs, then the virtual paint, then the
+    // nonclient overlay with a null rect, and the latch is cleared.
+    arrange(0, 1, true);
+    g_hook_object = object;
+    write_at(expected, 16 + 0x1A0, 0x40U);   // the hook's bit survives
+    window->redraw();
+    expect(g_hook_calls == 1);
+    expect(g_paint_calls == 1);
+    expect(g_gw_overlay.calls == 1);
+    // hook, then the virtual paint, then the nonclient overlay.
+    expect(g_gw_order == 0x123U);
+    expect(g_gw_overlay.self == object);
+    expect(g_gw_overlay.rect == nullptr);
+    expect(current == reinterpret_cast<Win *>(window));
+    expect(g_gw_invalidate.calls == 1);
+    expect(g_gw_invalidate.window == handle);
+    expect(g_gw_invalidate.erase == FALSE);
+    // The rectangle is the client rect at 0x474 translated to screen space.
+    expect(g_gw_invalidate.rect.left == 18);      // 10 + 8
+    expect(g_gw_invalidate.rect.top == 26);       // 20 + 6
+    expect(g_gw_invalidate.rect.right == 118);    // 110 + 8
+    expect(g_gw_invalidate.rect.bottom == 67);    // 61 + 6
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Re-entrancy: the paint hook redraws the same window. The latch set on
+    // entry is what makes that inner call return immediately - the window is
+    // painted once, and the screen area is invalidated once.
+    arrange(0, 1, true);
+    g_hook_reenters = window;
+    window->redraw();
+    expect(g_hook_calls == 1);
+    expect(g_paint_calls == 1);
+    expect(g_gw_overlay.calls == 1);
+    expect(g_gw_invalidate.calls == 1);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Invisible: everything up to and including the clear still runs, but no
+    // screen area is invalidated.
+    arrange(0, 0, false);
+    window->redraw();
+    expect(g_paint_calls == 1);
+    expect(g_gw_overlay.calls == 1);
+    expect(g_gw_invalidate.calls == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // No hook installed: the null is simply skipped.
+    arrange(0, 1, false);
+    window->redraw();
+    expect(g_hook_calls == 0);
+    expect(g_paint_calls == 1);
+    expect(g_gw_invalidate.calls == 1);
+    expect(g_gw_invalidate.rect.left == 18 && g_gw_invalidate.rect.top == 26);
+    expect(g_gw_invalidate.rect.right == 118);
+    expect(g_gw_invalidate.rect.bottom == 67);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // Through the redirect adapter.
+    arrange(0, 1, true);
+    g_hook_object = object;
+    write_at(expected, 16 + 0x1A0, 0x40U);
+    graphic_win_redraw_redirect(window, nullptr);
+    expect(g_hook_calls == 1 && g_paint_calls == 1);
+    expect(g_gw_invalidate.calls == 1);
+    expect(g_gw_invalidate.rect.left == 18 && g_gw_invalidate.rect.top == 26);
+    expect(g_gw_invalidate.rect.right == 118);
+    expect(g_gw_invalidate.rect.bottom == 67);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    ScrollCurrentWin = saved_current;
+    WinHdcWindow = saved_handle_slot;
+    GraphicWinInvalidateRect = saved_invalidate;
+    GraphicWinOverlayNonclient = saved_overlay;
+}
+
 void test_graphic_win_close() {
     static_assert(sizeof(GraphicWin) == 0xA14,
                   "GraphicWin close tests require the legacy layout");
@@ -24535,6 +24915,8 @@ int main() {
     test_sprite_construct();
     test_graphic_win_destructor();
     test_graphic_win_close();
+    test_graphic_win_fill_color();
+    test_graphic_win_redraw();
     test_base_button_and_flat_button_lifecycle();
     test_sprite_close();
     test_buffer_get_data();
