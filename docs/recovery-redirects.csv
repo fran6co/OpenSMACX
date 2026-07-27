@@ -1265,6 +1265,7 @@ address,kind
 0x005EC690,jump
 0x005EC6F0,jump
 0x005EC7C0,jump
+0x005ECE20,jump
 0x005ECE80,jump
 0x005ED240,jump
 0x005ED7C0,jump

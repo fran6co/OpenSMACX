@@ -2567,7 +2567,6 @@ P3,101,0x005ECB60,?remove_parent_dialog@Win@@QAEXXZ,224,0,1,unrecovered,,,0,miss
 P3,21,0x005ECC40,?set_dialog_focus@Win@@QAEXPAVWin@@@Z,219,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_dialog_focus@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)"
 P3,21,0x005ECD20,?pass_dialog_focus@Win@@QAEXXZ,154,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?pass_dialog_focus@Win@@QAEXXZ)(Win* this)
 P3,2111,0x005ECDC0,?UNK2@Win@@QAEHH@Z,85,2,1,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)"
-P3,4121,0x005ECE20,?is_descendant@Win@@QAEHPAVWin@@@Z,83,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)"
 P3,111,0x005ECEC0,?UNK4@Win@@QAEHXZ,92,0,1,unrecovered,,,1,exact,missing,int (__thiscall ?UNK4@Win@@QAEHXZ)(Win* this)
 P3,4121,0x005ECF20,?screen_to_client@Win@@QAEXPAURECT@@@Z,184,4,1,unrecovered,,,2,exact,exact,"void (__thiscall ?screen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
 P2,12121,0x005ECFE0,?client_to_screen@Win@@QAEXPAURECT@@@Z,180,12,1,unrecovered,,,2,exact,exact,"void (__thiscall ?client_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"

@@ -4178,7 +4178,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005ECC40,0x005ECD1B,219,.text,?set_dialog_focus@Win@@QAEXPAVWin@@@Z,"void (__thiscall ?set_dialog_focus@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)",0x005ECC40-0x005ECD1B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005ECD20,0x005ECDBA,154,.text,?pass_dialog_focus@Win@@QAEXXZ,void (__thiscall ?pass_dialog_focus@Win@@QAEXXZ)(Win* this),0x005ECD20-0x005ECDBA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005ECDC0,0x005ECE15,85,.text,?UNK2@Win@@QAEHH@Z,"int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)",0x005ECDC0-0x005ECE15,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
-0x005ECE20,0x005ECE73,83,.text,?is_descendant@Win@@QAEHPAVWin@@@Z,"int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)",0x005ECE20-0x005ECE73,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4
+0x005ECE20,0x005ECE73,83,.text,?is_descendant@Win@@QAEHPAVWin@@@Z,"int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)",0x005ECE20-0x005ECE73,game,hidden;sp_ready;purged_ok,src/win.cpp:834,Complete,,,source_complete,,,,1,4
 0x005ECE80,0x005ECEB6,54,.text,?UNK3@Win@@QAEHH@Z,"int (__thiscall ?UNK3@Win@@QAEHH@Z)(Win* this, int)",0x005ECE80-0x005ECEB6,game,hidden;sp_ready;purged_ok,src/win.cpp:805,Complete,,,source_complete,,,,0,0
 0x005ECEC0,0x005ECF1C,92,.text,?UNK4@Win@@QAEHXZ,int (__thiscall ?UNK4@Win@@QAEHXZ)(Win* this),0x005ECEC0-0x005ECF1C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005ECF20,0x005ECFD8,184,.text,?screen_to_client@Win@@QAEXPAURECT@@@Z,"void (__thiscall ?screen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)",0x005ECF20-0x005ECFD8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4

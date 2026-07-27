@@ -5594,6 +5594,96 @@ void test_win_is_visible() {
     }
 }
 
+// Depth-first search over the child array at 0x1A4, whose count lives at
+// 0x3FC. The original never null-checks a slot before recursing into it, so
+// every populated slot here is a real object - a defensive null check would be
+// unfaithful and is deliberately absent from the recovery.
+void test_win_is_descendant() {
+    struct WinNode {
+        alignas(Win) uint8_t storage[sizeof(Win) + 32];
+        uint8_t expected[sizeof(Win) + 32];
+
+        Win *object() { return reinterpret_cast<Win *>(storage + 16); }
+    };
+    WinNode nodes[6];
+    auto reset = [&]() {
+        for (WinNode &node : nodes) {
+            seed_storage(node.storage, node.expected, sizeof(node.storage));
+            write_at(node.storage, 16 + 0x3FC, 0);
+            std::memcpy(node.expected, node.storage, sizeof(node.storage));
+        }
+    };
+    auto adopt = [&](int parent, std::initializer_list<int> kids) {
+        int slot = 0;
+        for (int kid : kids) {
+            write_at(nodes[parent].storage, 16 + 0x1A4 + slot * 4,
+                     nodes[kid].object());
+            ++slot;
+        }
+        write_at(nodes[parent].storage, 16 + 0x3FC, slot);
+        std::memcpy(nodes[parent].expected, nodes[parent].storage,
+                    sizeof(nodes[parent].storage));
+    };
+    auto ask = [&](int adapter, int parent, Win *candidate) {
+        return adapter ? win_is_descendant_redirect(nodes[parent].object(),
+                                                    nullptr, candidate)
+                       : nodes[parent].object()->is_descendant(candidate);
+    };
+    auto untouched = [&]() {
+        for (WinNode &node : nodes) {
+            expect_storage_bytes(node.storage, node.expected,
+                                 sizeof(node.storage));
+        }
+    };
+
+    for (int adapter = 0; adapter < 2; ++adapter) {
+        // A null candidate is rejected before the count is even read.
+        reset();
+        adopt(0, {1, 2});
+        expect(ask(adapter, 0, nullptr) == 0);
+        untouched();
+
+        // An empty list, and a NEGATIVE count: the guard is signed (`jle`),
+        // so a negative count must not be treated as "some children".
+        reset();
+        expect(ask(adapter, 0, nodes[1].object()) == 0);
+        write_at(nodes[0].storage, 16 + 0x3FC, -1);
+        std::memcpy(nodes[0].expected, nodes[0].storage,
+                    sizeof(nodes[0].storage));
+        expect(ask(adapter, 0, nodes[1].object()) == 0);
+        untouched();
+
+        // Direct hit in the first and in the last slot, and the exact 1.
+        reset();
+        adopt(0, {1, 2, 3});
+        expect(ask(adapter, 0, nodes[1].object()) == 1);
+        expect(ask(adapter, 0, nodes[3].object()) == 1);
+        expect(ask(adapter, 0, nodes[4].object()) == 0);
+        untouched();
+
+        // Depth: 0 -> 1 -> 4 -> 5. Only the recursion can find node 5, and
+        // the miss has to walk the whole tree before returning 0.
+        reset();
+        adopt(0, {1, 2});
+        adopt(1, {4});
+        adopt(4, {5});
+        expect(ask(adapter, 0, nodes[5].object()) == 1);
+        expect(ask(adapter, 0, nodes[3].object()) == 0);
+        // A descendant of a sibling is not a descendant of that sibling.
+        expect(ask(adapter, 2, nodes[5].object()) == 0);
+        // ...but it is one of its own parent.
+        expect(ask(adapter, 4, nodes[5].object()) == 1);
+        untouched();
+
+        // A window is not its own descendant unless it is genuinely parked in
+        // its own child list; the search starts at the children, not at this.
+        reset();
+        adopt(0, {1});
+        expect(ask(adapter, 0, nodes[0].object()) == 0);
+        untouched();
+    }
+}
+
 void test_win_client_to_screen() {
     // Each node contributes client_rect_.left/top (0x14C/0x150) plus
     // outer_rect_.left/top (0x13C/0x140); bit 5 of the dword at 0x98 continues
@@ -24162,6 +24252,7 @@ int main() {
     test_vector_arithmetic();
     test_win_move();
     test_win_is_visible();
+    test_win_is_descendant();
     test_sprite_construct();
     test_graphic_win_destructor();
     test_graphic_win_close();
