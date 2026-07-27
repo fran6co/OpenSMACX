@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 222,
-      "source_complete": 2148,
+      "original_dependency": 268,
+      "source_complete": 2223,
       "source_in_progress": 5,
-      "thunk": 29,
-      "unrecovered": 3269
+      "thunk": 28,
+      "unrecovered": 3149
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2094,
-    "matched_function_starts": 2094,
-    "unique_addresses": 2094,
+    "annotations": 2169,
+    "matched_function_starts": 2169,
+    "unique_addresses": 2169,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 289
+      "function": 338
     },
     "items": [
       {
@@ -2373,11 +2373,119 @@
         "type": "func_thiscall_teardown *"
       },
       {
+        "address": "0x004594A0",
+        "function": "??1InfoWin@@QAE@XZ",
+        "function_address": "0x004594A0",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:59",
+        "symbol": "InfoWinDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00472020",
+        "function": "??1MessageWin@@QAE@XZ",
+        "function_address": "0x00472020",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:61",
+        "symbol": "MessageWinDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004ACDA0",
+        "function": "??1ReportIf@@QAE@XZ",
+        "function_address": "0x004ACDA0",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:63",
+        "symbol": "ReportIfDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004BA120",
+        "function": "??1StatusWin@@QAE@XZ",
+        "function_address": "0x004BA120",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:65",
+        "symbol": "StatusWinDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C4E60",
+        "function": "??1Wave_Device@@QAE@XZ",
+        "function_address": "0x004C4E60",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:67",
+        "symbol": "Wave_DeviceDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C5780",
+        "function": "??1Midi_Device@@QAE@XZ",
+        "function_address": "0x004C5780",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:69",
+        "symbol": "Midi_DeviceDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C5980",
+        "function": "??1Wave_In_Device@@QAE@XZ",
+        "function_address": "0x004C5980",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:71",
+        "symbol": "Wave_In_DeviceDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00538D10",
+        "function": "??1NetDaemon@@QAE@XZ",
+        "function_address": "0x00538D10",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:73",
+        "symbol": "NetDaemonDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x005FE2E0",
+        "function": "??1Palette@@QAE@XZ",
+        "function_address": "0x005FE2E0",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:75",
+        "symbol": "PaletteDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00616200",
+        "function": "??1Time@@QAE@XZ",
+        "function_address": "0x00616200",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:77",
+        "symbol": "TimeDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x006169C0",
+        "function": "??1Strings@@QAE@XZ",
+        "function_address": "0x006169C0",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:79",
+        "symbol": "StringsDtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00617020",
+        "function": "?close@Caviar@@QAEXXZ",
+        "function_address": "0x00617020",
+        "kind": "function",
+        "location": "src/atexit_thunks.cpp:81",
+        "symbol": "CaviarCloseTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
         "address": "0x006A7090",
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:56",
+        "location": "src/atexit_thunks.cpp:84",
         "symbol": "g_ALPHAMENU_WAVE",
         "type": "Wave *"
       },
@@ -2386,7 +2494,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:57",
+        "location": "src/atexit_thunks.cpp:85",
         "symbol": "g_UNUSED_SPRITE_VAR02",
         "type": "Sprite *"
       },
@@ -2395,7 +2503,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:58",
+        "location": "src/atexit_thunks.cpp:86",
         "symbol": "g_UNUSED_SPRITE_VAR11",
         "type": "Sprite *"
       },
@@ -2404,7 +2512,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:59",
+        "location": "src/atexit_thunks.cpp:87",
         "symbol": "g_UNUSED_SPRITE_VAR06",
         "type": "Sprite *"
       },
@@ -2413,7 +2521,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:60",
+        "location": "src/atexit_thunks.cpp:88",
         "symbol": "g_UNUSED_SPRITE_VAR09",
         "type": "Sprite *"
       },
@@ -2422,7 +2530,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:61",
+        "location": "src/atexit_thunks.cpp:89",
         "symbol": "g_UNUSED_SPRITE_VAR21",
         "type": "Sprite *"
       },
@@ -2431,7 +2539,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:62",
+        "location": "src/atexit_thunks.cpp:90",
         "symbol": "g_UNUSED_SPRITE_VAR05",
         "type": "Sprite *"
       },
@@ -2440,7 +2548,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:63",
+        "location": "src/atexit_thunks.cpp:91",
         "symbol": "g_UNUSED_SPRITE_VAR08",
         "type": "Sprite *"
       },
@@ -2449,7 +2557,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:64",
+        "location": "src/atexit_thunks.cpp:92",
         "symbol": "g_UNUSED_SPRITE_VAR04",
         "type": "Sprite *"
       },
@@ -2458,7 +2566,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:65",
+        "location": "src/atexit_thunks.cpp:93",
         "symbol": "g_UNUSED_SPRITE_VAR01",
         "type": "Sprite *"
       },
@@ -2467,7 +2575,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:66",
+        "location": "src/atexit_thunks.cpp:94",
         "symbol": "g_UNUSED_SPRITE_VAR18",
         "type": "Sprite *"
       },
@@ -2476,7 +2584,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:67",
+        "location": "src/atexit_thunks.cpp:95",
         "symbol": "g_UNUSED_SPRITE_VAR03",
         "type": "Sprite *"
       },
@@ -2485,7 +2593,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:68",
+        "location": "src/atexit_thunks.cpp:96",
         "symbol": "g_UNUSED_SPRITE_VAR20",
         "type": "Sprite *"
       },
@@ -2494,7 +2602,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:69",
+        "location": "src/atexit_thunks.cpp:97",
         "symbol": "g_UNUSED_SPRITE_VAR16",
         "type": "Sprite *"
       },
@@ -2503,7 +2611,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:70",
+        "location": "src/atexit_thunks.cpp:98",
         "symbol": "g_UNUSED_SPRITE_VAR14",
         "type": "Sprite *"
       },
@@ -2512,7 +2620,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:71",
+        "location": "src/atexit_thunks.cpp:99",
         "symbol": "g_UNUSED_SPRITE_VAR22",
         "type": "Sprite *"
       },
@@ -2521,7 +2629,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:72",
+        "location": "src/atexit_thunks.cpp:100",
         "symbol": "g_UNUSED_SPRITE_VAR10",
         "type": "Sprite *"
       },
@@ -2530,7 +2638,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:73",
+        "location": "src/atexit_thunks.cpp:101",
         "symbol": "g_UNUSED_SPRITE_VAR15",
         "type": "Sprite *"
       },
@@ -2539,7 +2647,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:74",
+        "location": "src/atexit_thunks.cpp:102",
         "symbol": "g_UNUSED_SPRITE_VAR13",
         "type": "Sprite *"
       },
@@ -2548,7 +2656,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:75",
+        "location": "src/atexit_thunks.cpp:103",
         "symbol": "g_UNUSED_SPRITE_VAR17",
         "type": "Sprite *"
       },
@@ -2557,7 +2665,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:76",
+        "location": "src/atexit_thunks.cpp:104",
         "symbol": "g_UNUSED_SPRITE_VAR19",
         "type": "Sprite *"
       },
@@ -2566,7 +2674,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:77",
+        "location": "src/atexit_thunks.cpp:105",
         "symbol": "g_UNUSED_SPRITE_VAR12",
         "type": "Sprite *"
       },
@@ -2575,7 +2683,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:78",
+        "location": "src/atexit_thunks.cpp:106",
         "symbol": "g_UNUSED_SPRITE_VAR07",
         "type": "Sprite *"
       },
@@ -2584,7 +2692,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:79",
+        "location": "src/atexit_thunks.cpp:107",
         "symbol": "g_BASEWIN_WAVE",
         "type": "Wave *"
       },
@@ -2593,7 +2701,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:80",
+        "location": "src/atexit_thunks.cpp:108",
         "symbol": "g_BattleWin",
         "type": "BattleWin *"
       },
@@ -2602,7 +2710,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:81",
+        "location": "src/atexit_thunks.cpp:109",
         "symbol": "g_CREDITS_WAVE",
         "type": "Wave *"
       },
@@ -2611,7 +2719,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:82",
+        "location": "src/atexit_thunks.cpp:110",
         "symbol": "g_DESIGNWIN_WAVE",
         "type": "Wave *"
       },
@@ -2620,7 +2728,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:83",
+        "location": "src/atexit_thunks.cpp:111",
         "symbol": "g_CPU_WAVES",
         "type": "Wave *"
       },
@@ -2629,7 +2737,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:84",
+        "location": "src/atexit_thunks.cpp:112",
         "symbol": "g_MENU_UP_WAVE",
         "type": "Wave *"
       },
@@ -2638,7 +2746,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:85",
+        "location": "src/atexit_thunks.cpp:113",
         "symbol": "g_MENU_DOWN_WAVE",
         "type": "Wave *"
       },
@@ -2647,7 +2755,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:86",
+        "location": "src/atexit_thunks.cpp:114",
         "symbol": "g_SCOOT_WAVE",
         "type": "Wave *"
       },
@@ -2656,7 +2764,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:87",
+        "location": "src/atexit_thunks.cpp:115",
         "symbol": "g_OK_WAVE",
         "type": "Wave *"
       },
@@ -2665,7 +2773,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:88",
+        "location": "src/atexit_thunks.cpp:116",
         "symbol": "g_PASSOVER_WAVE",
         "type": "Wave *"
       },
@@ -2674,7 +2782,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:89",
+        "location": "src/atexit_thunks.cpp:117",
         "symbol": "g_FX",
         "type": "FX *"
       },
@@ -2683,7 +2791,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:90",
+        "location": "src/atexit_thunks.cpp:118",
         "symbol": "g_AMBIENCE",
         "type": "Ambience *"
       },
@@ -2692,7 +2800,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:91",
+        "location": "src/atexit_thunks.cpp:119",
         "symbol": "g_PCX_PARSE_TEMP_BUFFER1",
         "type": "Buffer *"
       },
@@ -2701,7 +2809,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:92",
+        "location": "src/atexit_thunks.cpp:120",
         "symbol": "FactionArtGlobal",
         "type": "FactionArt *"
       },
@@ -2710,7 +2818,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:93",
+        "location": "src/atexit_thunks.cpp:121",
         "symbol": "g_IFACE_CLOSE_X_SPRITES",
         "type": "Sprite *"
       },
@@ -2719,7 +2827,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:94",
+        "location": "src/atexit_thunks.cpp:122",
         "symbol": "g_IFACE_BOX_SPRITES1",
         "type": "Sprite *"
       },
@@ -2728,7 +2836,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:95",
+        "location": "src/atexit_thunks.cpp:123",
         "symbol": "g_IFACE_BOX_SPRITES2",
         "type": "Sprite *"
       },
@@ -2737,7 +2845,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:96",
+        "location": "src/atexit_thunks.cpp:124",
         "symbol": "g_IFACE_BOX_SPRITES3",
         "type": "Sprite *"
       },
@@ -2746,7 +2854,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:97",
+        "location": "src/atexit_thunks.cpp:125",
         "symbol": "g_IFACE_BOX_SPRITES4",
         "type": "Sprite *"
       },
@@ -2755,7 +2863,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:98",
+        "location": "src/atexit_thunks.cpp:126",
         "symbol": "g_IFACE_BOX_SPRITES5",
         "type": "Sprite *"
       },
@@ -2764,7 +2872,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:99",
+        "location": "src/atexit_thunks.cpp:127",
         "symbol": "g_IFACE_BOX_SPRITES6",
         "type": "Sprite *"
       },
@@ -2773,7 +2881,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:100",
+        "location": "src/atexit_thunks.cpp:128",
         "symbol": "g_IFACE_BOX_SPRITES7",
         "type": "Sprite *"
       },
@@ -2782,7 +2890,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:101",
+        "location": "src/atexit_thunks.cpp:129",
         "symbol": "g_IFACE_BOX_SPRITES8",
         "type": "Sprite *"
       },
@@ -2791,7 +2899,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:102",
+        "location": "src/atexit_thunks.cpp:130",
         "symbol": "g_IFACE_BOX_SPRITE_BUFFERS",
         "type": "Buffer *"
       },
@@ -2800,7 +2908,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:103",
+        "location": "src/atexit_thunks.cpp:131",
         "symbol": "g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -2809,7 +2917,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:104",
+        "location": "src/atexit_thunks.cpp:132",
         "symbol": "g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -2818,7 +2926,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:105",
+        "location": "src/atexit_thunks.cpp:133",
         "symbol": "g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -2827,7 +2935,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:106",
+        "location": "src/atexit_thunks.cpp:134",
         "symbol": "g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -2836,7 +2944,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:107",
+        "location": "src/atexit_thunks.cpp:135",
         "symbol": "g_IFACE_STD_POPUPS_TOP_MID_SPRITE",
         "type": "Sprite *"
       },
@@ -2845,7 +2953,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:108",
+        "location": "src/atexit_thunks.cpp:136",
         "symbol": "g_IFACE_STD_POPUPS_BOT_MID_SPRITE",
         "type": "Sprite *"
       },
@@ -2854,7 +2962,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:109",
+        "location": "src/atexit_thunks.cpp:137",
         "symbol": "g_IFACE_STD_POPUPS_MID_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -2863,7 +2971,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:110",
+        "location": "src/atexit_thunks.cpp:138",
         "symbol": "g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -2872,7 +2980,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:111",
+        "location": "src/atexit_thunks.cpp:139",
         "symbol": "g_IFACE_STD_POPUPS_MIDDLE_BUFFER",
         "type": "Buffer *"
       },
@@ -2881,7 +2989,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:112",
+        "location": "src/atexit_thunks.cpp:140",
         "symbol": "g_UNUSED_CAVIARDATA_VAR1",
         "type": "CaviarData *"
       },
@@ -2890,7 +2998,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:113",
+        "location": "src/atexit_thunks.cpp:141",
         "symbol": "g_SSF_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2899,7 +3007,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:114",
+        "location": "src/atexit_thunks.cpp:142",
         "symbol": "g_SDP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2908,7 +3016,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:115",
+        "location": "src/atexit_thunks.cpp:143",
         "symbol": "g_SAS_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2917,7 +3025,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:116",
+        "location": "src/atexit_thunks.cpp:144",
         "symbol": "g_SCD_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2926,7 +3034,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:117",
+        "location": "src/atexit_thunks.cpp:145",
         "symbol": "g_SCJ_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2935,7 +3043,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:118",
+        "location": "src/atexit_thunks.cpp:146",
         "symbol": "g_SAGS_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2944,7 +3052,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:119",
+        "location": "src/atexit_thunks.cpp:147",
         "symbol": "g_SFT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2953,7 +3061,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:120",
+        "location": "src/atexit_thunks.cpp:148",
         "symbol": "g_VHR_CAVIARDATA1",
         "type": "CaviarData *"
       },
@@ -2962,7 +3070,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:121",
+        "location": "src/atexit_thunks.cpp:149",
         "symbol": "g_SHT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2971,7 +3079,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:122",
+        "location": "src/atexit_thunks.cpp:150",
         "symbol": "g_SRB_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2980,7 +3088,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:123",
+        "location": "src/atexit_thunks.cpp:151",
         "symbol": "g_ASAS_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2989,7 +3097,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:124",
+        "location": "src/atexit_thunks.cpp:152",
         "symbol": "g_RESLASER_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -2998,7 +3106,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:125",
+        "location": "src/atexit_thunks.cpp:153",
         "symbol": "g_RESBOLT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3007,7 +3115,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:126",
+        "location": "src/atexit_thunks.cpp:154",
         "symbol": "g_FUNLOAD_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3016,7 +3124,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:127",
+        "location": "src/atexit_thunks.cpp:155",
         "symbol": "g_TECLOAD_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3025,7 +3133,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:128",
+        "location": "src/atexit_thunks.cpp:156",
         "symbol": "g_SP_DISSWAVE_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3034,7 +3142,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:129",
+        "location": "src/atexit_thunks.cpp:157",
         "symbol": "g_SP_MARINED_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3043,7 +3151,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:130",
+        "location": "src/atexit_thunks.cpp:158",
         "symbol": "g_SP_NANOO_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3052,7 +3160,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:131",
+        "location": "src/atexit_thunks.cpp:159",
         "symbol": "g_SP_SOPORIFIC_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3061,7 +3169,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:132",
+        "location": "src/atexit_thunks.cpp:160",
         "symbol": "g_AA01_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3070,7 +3178,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:133",
+        "location": "src/atexit_thunks.cpp:161",
         "symbol": "g_AA_ROVER_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3079,7 +3187,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:134",
+        "location": "src/atexit_thunks.cpp:162",
         "symbol": "g_AA_WING_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3088,7 +3196,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:135",
+        "location": "src/atexit_thunks.cpp:163",
         "symbol": "g_ACP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3097,7 +3205,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:136",
+        "location": "src/atexit_thunks.cpp:164",
         "symbol": "g_AX_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3106,7 +3214,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:137",
+        "location": "src/atexit_thunks.cpp:165",
         "symbol": "g_AA_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3115,7 +3223,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:138",
+        "location": "src/atexit_thunks.cpp:166",
         "symbol": "g_ACOLPOD_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3124,7 +3232,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:139",
+        "location": "src/atexit_thunks.cpp:167",
         "symbol": "g_AT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3133,7 +3241,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:140",
+        "location": "src/atexit_thunks.cpp:168",
         "symbol": "g_VTA_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3142,7 +3250,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:141",
+        "location": "src/atexit_thunks.cpp:169",
         "symbol": "g_ATP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3151,7 +3259,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:142",
+        "location": "src/atexit_thunks.cpp:170",
         "symbol": "g_SSFA_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3160,7 +3268,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:143",
+        "location": "src/atexit_thunks.cpp:171",
         "symbol": "g_SFTA_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3169,7 +3277,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:144",
+        "location": "src/atexit_thunks.cpp:172",
         "symbol": "g_VW00_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3178,7 +3286,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:145",
+        "location": "src/atexit_thunks.cpp:173",
         "symbol": "g_VIPTAWL_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3187,7 +3295,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:146",
+        "location": "src/atexit_thunks.cpp:174",
         "symbol": "g_VIPTASGN_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3196,7 +3304,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:147",
+        "location": "src/atexit_thunks.cpp:175",
         "symbol": "g_VIPTAPSI_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3205,7 +3313,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:148",
+        "location": "src/atexit_thunks.cpp:176",
         "symbol": "g_VIPTR_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3214,7 +3322,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:149",
+        "location": "src/atexit_thunks.cpp:177",
         "symbol": "g_VIPTA_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3223,7 +3331,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:150",
+        "location": "src/atexit_thunks.cpp:178",
         "symbol": "g_PTMOD_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3232,7 +3340,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:151",
+        "location": "src/atexit_thunks.cpp:179",
         "symbol": "g_VB_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3241,7 +3349,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:152",
+        "location": "src/atexit_thunks.cpp:180",
         "symbol": "g_VBP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3250,7 +3358,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:153",
+        "location": "src/atexit_thunks.cpp:181",
         "symbol": "g_VGMC_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3259,7 +3367,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:154",
+        "location": "src/atexit_thunks.cpp:182",
         "symbol": "g_VGMCP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3268,7 +3376,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:155",
+        "location": "src/atexit_thunks.cpp:183",
         "symbol": "g_VLIGHTS_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3277,7 +3385,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:156",
+        "location": "src/atexit_thunks.cpp:184",
         "symbol": "g_VPT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3286,7 +3394,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:157",
+        "location": "src/atexit_thunks.cpp:185",
         "symbol": "g_A_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3295,7 +3403,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:158",
+        "location": "src/atexit_thunks.cpp:186",
         "symbol": "g_APWALL_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3304,7 +3412,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:159",
+        "location": "src/atexit_thunks.cpp:187",
         "symbol": "g_ASGEN_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3313,7 +3421,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:160",
+        "location": "src/atexit_thunks.cpp:188",
         "symbol": "g_APSID_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3322,7 +3430,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:161",
+        "location": "src/atexit_thunks.cpp:189",
         "symbol": "g_VA01_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3331,7 +3439,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:162",
+        "location": "src/atexit_thunks.cpp:190",
         "symbol": "g_VR_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3340,7 +3448,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:163",
+        "location": "src/atexit_thunks.cpp:191",
         "symbol": "g_VHR_CAVIARDATA2",
         "type": "CaviarData *"
       },
@@ -3349,7 +3457,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:164",
+        "location": "src/atexit_thunks.cpp:192",
         "symbol": "g_VRC_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3358,7 +3466,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:165",
+        "location": "src/atexit_thunks.cpp:193",
         "symbol": "g_VI_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3367,7 +3475,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:166",
+        "location": "src/atexit_thunks.cpp:194",
         "symbol": "g_VGMT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3376,7 +3484,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:167",
+        "location": "src/atexit_thunks.cpp:195",
         "symbol": "g_VGMTP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3385,7 +3493,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:168",
+        "location": "src/atexit_thunks.cpp:196",
         "symbol": "g_UNUSED_CAVIARDATA_VAR2",
         "type": "CaviarData *"
       },
@@ -3394,7 +3502,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:169",
+        "location": "src/atexit_thunks.cpp:197",
         "symbol": "g_VWNTU_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3403,7 +3511,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:170",
+        "location": "src/atexit_thunks.cpp:198",
         "symbol": "g_VT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3412,7 +3520,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:171",
+        "location": "src/atexit_thunks.cpp:199",
         "symbol": "g_DROP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3421,7 +3529,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:172",
+        "location": "src/atexit_thunks.cpp:200",
         "symbol": "g_DROPLET_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3430,7 +3538,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:173",
+        "location": "src/atexit_thunks.cpp:201",
         "symbol": "g_VCL_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3439,7 +3547,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:174",
+        "location": "src/atexit_thunks.cpp:202",
         "symbol": "g_UNUSED_CAVIARDATA_VAR3",
         "type": "CaviarData *"
       },
@@ -3448,7 +3556,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:175",
+        "location": "src/atexit_thunks.cpp:203",
         "symbol": "g_VCLT00_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3457,7 +3565,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:176",
+        "location": "src/atexit_thunks.cpp:204",
         "symbol": "g_VHT_VBP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3466,7 +3574,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:177",
+        "location": "src/atexit_thunks.cpp:205",
         "symbol": "g_VHTP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3475,7 +3583,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:178",
+        "location": "src/atexit_thunks.cpp:206",
         "symbol": "g_VHTA0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3484,7 +3592,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:179",
+        "location": "src/atexit_thunks.cpp:207",
         "symbol": "g_VHTTP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3493,7 +3601,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:180",
+        "location": "src/atexit_thunks.cpp:208",
         "symbol": "g_VHTTPA0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3502,7 +3610,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:181",
+        "location": "src/atexit_thunks.cpp:209",
         "symbol": "g_VSP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3511,7 +3619,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:182",
+        "location": "src/atexit_thunks.cpp:210",
         "symbol": "g_VSPA0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3520,7 +3628,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:183",
+        "location": "src/atexit_thunks.cpp:211",
         "symbol": "g_VSPTF_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3529,7 +3637,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:184",
+        "location": "src/atexit_thunks.cpp:212",
         "symbol": "g_VSPTB_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3538,7 +3646,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:185",
+        "location": "src/atexit_thunks.cpp:213",
         "symbol": "g_VFL_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3547,7 +3655,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:186",
+        "location": "src/atexit_thunks.cpp:214",
         "symbol": "g_VGS_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3556,7 +3664,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:187",
+        "location": "src/atexit_thunks.cpp:215",
         "symbol": "g_VGSP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3565,7 +3673,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:188",
+        "location": "src/atexit_thunks.cpp:216",
         "symbol": "g_VJTP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3574,7 +3682,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:189",
+        "location": "src/atexit_thunks.cpp:217",
         "symbol": "g_VJT0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3583,7 +3691,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:190",
+        "location": "src/atexit_thunks.cpp:218",
         "symbol": "g_VCU_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3592,7 +3700,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:191",
+        "location": "src/atexit_thunks.cpp:219",
         "symbol": "g_VCUP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3601,7 +3709,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:192",
+        "location": "src/atexit_thunks.cpp:220",
         "symbol": "g_VCUA0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3610,7 +3718,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:193",
+        "location": "src/atexit_thunks.cpp:221",
         "symbol": "g_VCUW_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3619,7 +3727,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:194",
+        "location": "src/atexit_thunks.cpp:222",
         "symbol": "g_VCT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3628,7 +3736,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:195",
+        "location": "src/atexit_thunks.cpp:223",
         "symbol": "g_VCTP_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3637,7 +3745,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:196",
+        "location": "src/atexit_thunks.cpp:224",
         "symbol": "g_VCTB_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3646,7 +3754,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:197",
+        "location": "src/atexit_thunks.cpp:225",
         "symbol": "g_VCT0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3655,7 +3763,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:198",
+        "location": "src/atexit_thunks.cpp:226",
         "symbol": "g_VWNTT_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3664,7 +3772,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:199",
+        "location": "src/atexit_thunks.cpp:227",
         "symbol": "g_VWNST_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3673,7 +3781,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:200",
+        "location": "src/atexit_thunks.cpp:228",
         "symbol": "g_VWNAA_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3682,7 +3790,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:201",
+        "location": "src/atexit_thunks.cpp:229",
         "symbol": "g_VW_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3691,7 +3799,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:202",
+        "location": "src/atexit_thunks.cpp:230",
         "symbol": "g_VM_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3700,7 +3808,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:203",
+        "location": "src/atexit_thunks.cpp:231",
         "symbol": "g_VM13_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3709,7 +3817,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:204",
+        "location": "src/atexit_thunks.cpp:232",
         "symbol": "g_VPBR0_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3718,7 +3826,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:205",
+        "location": "src/atexit_thunks.cpp:233",
         "symbol": "g_UNUSED_CAVIARDATA_VAR4",
         "type": "CaviarData *"
       },
@@ -3727,7 +3835,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:206",
+        "location": "src/atexit_thunks.cpp:234",
         "symbol": "g_NW_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3736,7 +3844,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:207",
+        "location": "src/atexit_thunks.cpp:235",
         "symbol": "g_NI_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3745,7 +3853,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:208",
+        "location": "src/atexit_thunks.cpp:236",
         "symbol": "g_NLC_CAVIARDATA",
         "type": "CaviarData *"
       },
@@ -3754,7 +3862,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:209",
+        "location": "src/atexit_thunks.cpp:237",
         "symbol": "g_UNUSED_CAVIARDATA_VAR5",
         "type": "CaviarData *"
       },
@@ -3763,7 +3871,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:210",
+        "location": "src/atexit_thunks.cpp:238",
         "symbol": "g_RADIUS1_TEXTURE",
         "type": "Texture *"
       },
@@ -3772,7 +3880,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:211",
+        "location": "src/atexit_thunks.cpp:239",
         "symbol": "g_RADIUS2_TEXTURE",
         "type": "Texture *"
       },
@@ -3781,7 +3889,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:212",
+        "location": "src/atexit_thunks.cpp:240",
         "symbol": "g_ROCKY_TEXTURES",
         "type": "Texture *"
       },
@@ -3790,7 +3898,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:213",
+        "location": "src/atexit_thunks.cpp:241",
         "symbol": "g_OCEAN_TEXTURES",
         "type": "Texture *"
       },
@@ -3799,7 +3907,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:214",
+        "location": "src/atexit_thunks.cpp:242",
         "symbol": "g_FLAT_ARID_LAND_TEXTURE",
         "type": "Texture *"
       },
@@ -3808,7 +3916,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:215",
+        "location": "src/atexit_thunks.cpp:243",
         "symbol": "g_MOIST_LAND_TEXTURES",
         "type": "Texture *"
       },
@@ -3817,7 +3925,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:216",
+        "location": "src/atexit_thunks.cpp:244",
         "symbol": "g_RAINY_LAND_TEXTURES",
         "type": "Texture *"
       },
@@ -3826,7 +3934,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:217",
+        "location": "src/atexit_thunks.cpp:245",
         "symbol": "g_JUNGLE_LAND_TEXTURES",
         "type": "Texture *"
       },
@@ -3835,7 +3943,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:218",
+        "location": "src/atexit_thunks.cpp:246",
         "symbol": "g_DUNE_LAND_TEXTURE",
         "type": "Texture *"
       },
@@ -3844,7 +3952,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:219",
+        "location": "src/atexit_thunks.cpp:247",
         "symbol": "g_SUNNY_MESA_TEXTURES",
         "type": "Texture *"
       },
@@ -3853,7 +3961,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:220",
+        "location": "src/atexit_thunks.cpp:248",
         "symbol": "g_RAINFALL_SINGLE_TILE_TEXTURES",
         "type": "Texture *"
       },
@@ -3862,7 +3970,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:221",
+        "location": "src/atexit_thunks.cpp:249",
         "symbol": "g_ROAD_TEXTURES",
         "type": "Texture *"
       },
@@ -3871,7 +3979,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:222",
+        "location": "src/atexit_thunks.cpp:250",
         "symbol": "g_MAGTUBE_TEXTURES",
         "type": "Texture *"
       },
@@ -3880,7 +3988,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:223",
+        "location": "src/atexit_thunks.cpp:251",
         "symbol": "g_RIVER_TEXTURES",
         "type": "Texture *"
       },
@@ -3889,7 +3997,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:224",
+        "location": "src/atexit_thunks.cpp:252",
         "symbol": "g_MOUNT_PLANET_TEXTURES",
         "type": "Texture *"
       },
@@ -3898,7 +4006,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:225",
+        "location": "src/atexit_thunks.cpp:253",
         "symbol": "g_GARLAND_CRATER_TEXTURES",
         "type": "Texture *"
       },
@@ -3907,7 +4015,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:226",
+        "location": "src/atexit_thunks.cpp:254",
         "symbol": "g_FUNGUS_TEXTURES",
         "type": "Texture *"
       },
@@ -3916,7 +4024,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:227",
+        "location": "src/atexit_thunks.cpp:255",
         "symbol": "g_FARM_TEXTURES",
         "type": "Texture *"
       },
@@ -3925,7 +4033,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:228",
+        "location": "src/atexit_thunks.cpp:256",
         "symbol": "g_FOREST_TEXTURES",
         "type": "Texture *"
       },
@@ -3934,7 +4042,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:229",
+        "location": "src/atexit_thunks.cpp:257",
         "symbol": "g_RAINFALL_SINGLE_TILE_TEXTURE",
         "type": "Texture *"
       },
@@ -3943,7 +4051,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:230",
+        "location": "src/atexit_thunks.cpp:258",
         "symbol": "g_TER1_WHITE_ORG_YEL_TILE_SPRITES",
         "type": "Sprite *"
       },
@@ -3952,7 +4060,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:231",
+        "location": "src/atexit_thunks.cpp:259",
         "symbol": "g_TER1_BOTTOM_LEFT_TILE_SPRITES",
         "type": "Sprite *"
       },
@@ -3961,7 +4069,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:232",
+        "location": "src/atexit_thunks.cpp:260",
         "symbol": "g_TER1_UNUSED_SPRITES2",
         "type": "Sprite *"
       },
@@ -3970,7 +4078,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:233",
+        "location": "src/atexit_thunks.cpp:261",
         "symbol": "g_TER1_MINE_SPRITE",
         "type": "Sprite *"
       },
@@ -3979,7 +4087,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:234",
+        "location": "src/atexit_thunks.cpp:262",
         "symbol": "g_TER1_SOLAR_COLLECTOR_SPRITE",
         "type": "Sprite *"
       },
@@ -3988,7 +4096,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:235",
+        "location": "src/atexit_thunks.cpp:263",
         "symbol": "g_TER1_TIDAL_HARNESS_SPRITE",
         "type": "Sprite *"
       },
@@ -3997,7 +4105,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:236",
+        "location": "src/atexit_thunks.cpp:264",
         "symbol": "g_TER1_MINING_PLATFORM_SPRITE",
         "type": "Sprite *"
       },
@@ -4006,7 +4114,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:237",
+        "location": "src/atexit_thunks.cpp:265",
         "symbol": "g_TER1_TUT_BLANK_SPRITE",
         "type": "Sprite *"
       },
@@ -4015,7 +4123,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:238",
+        "location": "src/atexit_thunks.cpp:266",
         "symbol": "g_TER1_KELP_FARM_SPRITE",
         "type": "Sprite *"
       },
@@ -4024,7 +4132,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:239",
+        "location": "src/atexit_thunks.cpp:267",
         "symbol": "g_TER1_CONDENSER_SPRITE",
         "type": "Sprite *"
       },
@@ -4033,7 +4141,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:240",
+        "location": "src/atexit_thunks.cpp:268",
         "symbol": "g_TER1_ECHELON_MIRROR_SPRITE",
         "type": "Sprite *"
       },
@@ -4042,7 +4150,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:241",
+        "location": "src/atexit_thunks.cpp:269",
         "symbol": "g_TER1_BOREHOLE_SPRITE",
         "type": "Sprite *"
       },
@@ -4051,7 +4159,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:242",
+        "location": "src/atexit_thunks.cpp:270",
         "symbol": "g_TER1_BOREHOLE_CLUSTER_SPRITE",
         "type": "Sprite *"
       },
@@ -4060,7 +4168,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:243",
+        "location": "src/atexit_thunks.cpp:271",
         "symbol": "g_TER1_MANIFOLD_NEXUS_SPRITES",
         "type": "Sprite *"
       },
@@ -4069,7 +4177,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:244",
+        "location": "src/atexit_thunks.cpp:272",
         "symbol": "g_TER1WRECK_UNITY_WRECKAGE_SPRITES",
         "type": "Sprite *"
       },
@@ -4078,7 +4186,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:245",
+        "location": "src/atexit_thunks.cpp:273",
         "symbol": "g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES",
         "type": "Sprite *"
       },
@@ -4087,7 +4195,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:246",
+        "location": "src/atexit_thunks.cpp:274",
         "symbol": "g_FOSSIL_FIELD_RIDGE_SPRITES",
         "type": "Sprite *"
       },
@@ -4096,7 +4204,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:247",
+        "location": "src/atexit_thunks.cpp:275",
         "symbol": "g_TER1_UNUSED_SPRITES1",
         "type": "Sprite *"
       },
@@ -4105,7 +4213,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:248",
+        "location": "src/atexit_thunks.cpp:276",
         "symbol": "g_TER1_FARM_SPRITES",
         "type": "Sprite *"
       },
@@ -4114,7 +4222,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:249",
+        "location": "src/atexit_thunks.cpp:277",
         "symbol": "g_TER1_SOIL_ENRICHER_SPRITES",
         "type": "Sprite *"
       },
@@ -4123,7 +4231,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:250",
+        "location": "src/atexit_thunks.cpp:278",
         "symbol": "g_TER1_SEA_LAND_RESOURCE_SPRITES",
         "type": "Sprite *"
       },
@@ -4132,7 +4240,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:251",
+        "location": "src/atexit_thunks.cpp:279",
         "symbol": "g_TER1_LANDMARK_RESOURCE_SPRITES",
         "type": "Sprite *"
       },
@@ -4141,7 +4249,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:252",
+        "location": "src/atexit_thunks.cpp:280",
         "symbol": "g_GLOW_SPRITES",
         "type": "Sprite *"
       },
@@ -4150,7 +4258,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:253",
+        "location": "src/atexit_thunks.cpp:281",
         "symbol": "g_TER1_UNITY_POD_SPRITES",
         "type": "Sprite *"
       },
@@ -4159,7 +4267,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:254",
+        "location": "src/atexit_thunks.cpp:282",
         "symbol": "g_TER1_MONOLITH_SPRITE",
         "type": "Sprite *"
       },
@@ -4168,7 +4276,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:255",
+        "location": "src/atexit_thunks.cpp:283",
         "symbol": "g_TER1_BUNKER_SPRITE",
         "type": "Sprite *"
       },
@@ -4177,7 +4285,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:256",
+        "location": "src/atexit_thunks.cpp:284",
         "symbol": "g_TER1_AIRBASE_SPRITE",
         "type": "Sprite *"
       },
@@ -4186,7 +4294,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:257",
+        "location": "src/atexit_thunks.cpp:285",
         "symbol": "g_TER1_SENSOR_ARRAY_SPRITE",
         "type": "Sprite *"
       },
@@ -4195,7 +4303,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:258",
+        "location": "src/atexit_thunks.cpp:286",
         "symbol": "g_RAINFALL_DOUBLE_TILE_SPRITES",
         "type": "Sprite *"
       },
@@ -4204,7 +4312,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:259",
+        "location": "src/atexit_thunks.cpp:287",
         "symbol": "g_VEH_SPRITES",
         "type": "Sprite *"
       },
@@ -4213,7 +4321,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:260",
+        "location": "src/atexit_thunks.cpp:288",
         "symbol": "g_FLAGS_VEH_SPRITES",
         "type": "Sprite *"
       },
@@ -4222,7 +4330,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:261",
+        "location": "src/atexit_thunks.cpp:289",
         "symbol": "g_ICONS_GENERAL_SPRITES",
         "type": "Sprite *"
       },
@@ -4231,7 +4339,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:262",
+        "location": "src/atexit_thunks.cpp:290",
         "symbol": "g_RESOURCE_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4240,7 +4348,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:263",
+        "location": "src/atexit_thunks.cpp:291",
         "symbol": "g_CITIZEN_LG_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4249,7 +4357,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:264",
+        "location": "src/atexit_thunks.cpp:292",
         "symbol": "g_SPECIALIST_LG_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4258,7 +4366,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:265",
+        "location": "src/atexit_thunks.cpp:293",
         "symbol": "g_CITIZEN_SM_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4267,7 +4375,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:266",
+        "location": "src/atexit_thunks.cpp:294",
         "symbol": "g_SPECIALIST_SM_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4276,7 +4384,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:267",
+        "location": "src/atexit_thunks.cpp:295",
         "symbol": "g_AL_CITIZEN_LG_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4285,7 +4393,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:268",
+        "location": "src/atexit_thunks.cpp:296",
         "symbol": "g_AL_SPECIALIST_LG_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4294,7 +4402,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:269",
+        "location": "src/atexit_thunks.cpp:297",
         "symbol": "g_AL_CITIZEN_SM_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4303,7 +4411,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:270",
+        "location": "src/atexit_thunks.cpp:298",
         "symbol": "g_AL_SPECIALIST_SM_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -4312,7 +4420,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:271",
+        "location": "src/atexit_thunks.cpp:299",
         "symbol": "g_RED_ALIEN_HEAD_ICON_SPRITE",
         "type": "Sprite *"
       },
@@ -4321,7 +4429,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:272",
+        "location": "src/atexit_thunks.cpp:300",
         "symbol": "g_SILVER_MENU_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4330,7 +4438,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:273",
+        "location": "src/atexit_thunks.cpp:301",
         "symbol": "g_SILVER_CHECKBOX_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4339,7 +4447,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:274",
+        "location": "src/atexit_thunks.cpp:302",
         "symbol": "g_RED_MALE_HEAD_ICON_SPRITE",
         "type": "Sprite *"
       },
@@ -4348,7 +4456,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:275",
+        "location": "src/atexit_thunks.cpp:303",
         "symbol": "g_NULL_RESOURCE_ICON_SPRITE",
         "type": "Sprite *"
       },
@@ -4357,7 +4465,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:276",
+        "location": "src/atexit_thunks.cpp:304",
         "symbol": "g_PEACE_SIGN_SPRITES",
         "type": "Sprite *"
       },
@@ -4366,7 +4474,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:277",
+        "location": "src/atexit_thunks.cpp:305",
         "symbol": "g_ICON_TILE_SQUARE_SPRITE",
         "type": "Sprite *"
       },
@@ -4375,7 +4483,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:278",
+        "location": "src/atexit_thunks.cpp:306",
         "symbol": "g_XI_BOOM_VEH_SPRITES",
         "type": "Sprite *"
       },
@@ -4384,7 +4492,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:279",
+        "location": "src/atexit_thunks.cpp:307",
         "symbol": "g_XF_BOOM_VEH_SPRITES",
         "type": "Sprite *"
       },
@@ -4393,7 +4501,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:280",
+        "location": "src/atexit_thunks.cpp:308",
         "symbol": "g_BATTLE_MIND_WORM_SPRITE",
         "type": "Sprite *"
       },
@@ -4402,7 +4510,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:281",
+        "location": "src/atexit_thunks.cpp:309",
         "symbol": "g_BATTLE_ISLE_DEEP_SPRITE",
         "type": "Sprite *"
       },
@@ -4411,7 +4519,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:282",
+        "location": "src/atexit_thunks.cpp:310",
         "symbol": "g_BATTLE_LOCUSTS_CHIRON_SPRITE",
         "type": "Sprite *"
       },
@@ -4420,7 +4528,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:283",
+        "location": "src/atexit_thunks.cpp:311",
         "symbol": "g_BATTLE_FUNGAL_TOWER_SPRITE",
         "type": "Sprite *"
       },
@@ -4429,7 +4537,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:284",
+        "location": "src/atexit_thunks.cpp:312",
         "symbol": "g_BATTLE_SPORE_LAUNCHER_SPRITE",
         "type": "Sprite *"
       },
@@ -4438,7 +4546,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:285",
+        "location": "src/atexit_thunks.cpp:313",
         "symbol": "g_BATTLE_SEALURK_SPRITE",
         "type": "Sprite *"
       },
@@ -4447,7 +4555,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:286",
+        "location": "src/atexit_thunks.cpp:314",
         "symbol": "g_TECH_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4456,7 +4564,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:287",
+        "location": "src/atexit_thunks.cpp:315",
         "symbol": "g_FACILITY_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4465,7 +4573,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:288",
+        "location": "src/atexit_thunks.cpp:316",
         "symbol": "g_SECRET_PROJECT_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4474,7 +4582,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:289",
+        "location": "src/atexit_thunks.cpp:317",
         "symbol": "g_IFACE_MP_COMBO_ARROW_SPRITES",
         "type": "Sprite *"
       },
@@ -4483,7 +4591,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:290",
+        "location": "src/atexit_thunks.cpp:318",
         "symbol": "g_SCROLL_BAR_ARROW_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4492,7 +4600,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:291",
+        "location": "src/atexit_thunks.cpp:319",
         "symbol": "g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4501,7 +4609,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:292",
+        "location": "src/atexit_thunks.cpp:320",
         "symbol": "g_SCROLL_BAR_FILLER_ICON_SPRITES",
         "type": "Sprite *"
       },
@@ -4510,7 +4618,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:293",
+        "location": "src/atexit_thunks.cpp:321",
         "symbol": "g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE",
         "type": "Sprite *"
       },
@@ -4519,7 +4627,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:294",
+        "location": "src/atexit_thunks.cpp:322",
         "symbol": "g_IFACE_LOCK_SPRITES",
         "type": "Sprite *"
       },
@@ -4528,7 +4636,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:295",
+        "location": "src/atexit_thunks.cpp:323",
         "symbol": "g_UNUSED_SPRITES_VAR01",
         "type": "Sprite *"
       },
@@ -4537,7 +4645,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:296",
+        "location": "src/atexit_thunks.cpp:324",
         "symbol": "g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -4546,7 +4654,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:297",
+        "location": "src/atexit_thunks.cpp:325",
         "symbol": "g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -4555,7 +4663,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:298",
+        "location": "src/atexit_thunks.cpp:326",
         "symbol": "g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -4564,7 +4672,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:299",
+        "location": "src/atexit_thunks.cpp:327",
         "symbol": "g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -4573,7 +4681,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:300",
+        "location": "src/atexit_thunks.cpp:328",
         "symbol": "g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -4582,7 +4690,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:301",
+        "location": "src/atexit_thunks.cpp:329",
         "symbol": "g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -4591,7 +4699,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:302",
+        "location": "src/atexit_thunks.cpp:330",
         "symbol": "g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE",
         "type": "Sprite *"
       },
@@ -4600,7 +4708,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:303",
+        "location": "src/atexit_thunks.cpp:331",
         "symbol": "g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE",
         "type": "Sprite *"
       },
@@ -4609,7 +4717,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:304",
+        "location": "src/atexit_thunks.cpp:332",
         "symbol": "g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE",
         "type": "Sprite *"
       },
@@ -4618,7 +4726,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:305",
+        "location": "src/atexit_thunks.cpp:333",
         "symbol": "g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE",
         "type": "Sprite *"
       },
@@ -4627,7 +4735,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:306",
+        "location": "src/atexit_thunks.cpp:334",
         "symbol": "g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE",
         "type": "Sprite *"
       },
@@ -4636,7 +4744,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:307",
+        "location": "src/atexit_thunks.cpp:335",
         "symbol": "g_UNUSED_SPRITE_VAR23",
         "type": "Sprite *"
       },
@@ -4645,7 +4753,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:308",
+        "location": "src/atexit_thunks.cpp:336",
         "symbol": "g_UNUSED_SPRITE_VAR24",
         "type": "Sprite *"
       },
@@ -4654,7 +4762,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:309",
+        "location": "src/atexit_thunks.cpp:337",
         "symbol": "g_UNUSED_SPRITE_VAR25",
         "type": "Sprite *"
       },
@@ -4663,7 +4771,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:310",
+        "location": "src/atexit_thunks.cpp:338",
         "symbol": "g_UNUSED_SPRITE_VAR26",
         "type": "Sprite *"
       },
@@ -4672,7 +4780,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:311",
+        "location": "src/atexit_thunks.cpp:339",
         "symbol": "g_UNUSED_SPRITE_VAR27",
         "type": "Sprite *"
       },
@@ -4681,7 +4789,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:312",
+        "location": "src/atexit_thunks.cpp:340",
         "symbol": "g_UNUSED_SPRITE_VAR28",
         "type": "Sprite *"
       },
@@ -4690,7 +4798,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:313",
+        "location": "src/atexit_thunks.cpp:341",
         "symbol": "g_UNUSED_SPRITE_VAR29",
         "type": "Sprite *"
       },
@@ -4699,7 +4807,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:314",
+        "location": "src/atexit_thunks.cpp:342",
         "symbol": "g_UNUSED_SPRITE_VAR30",
         "type": "Sprite *"
       },
@@ -4708,7 +4816,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:315",
+        "location": "src/atexit_thunks.cpp:343",
         "symbol": "g_UNUSED_SPRITE_VAR31",
         "type": "Sprite *"
       },
@@ -4717,7 +4825,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:316",
+        "location": "src/atexit_thunks.cpp:344",
         "symbol": "g_UNUSED_SPRITE_VAR32",
         "type": "Sprite *"
       },
@@ -4726,7 +4834,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:317",
+        "location": "src/atexit_thunks.cpp:345",
         "symbol": "g_UNUSED_SPRITE_VAR33",
         "type": "Sprite *"
       },
@@ -4735,7 +4843,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:318",
+        "location": "src/atexit_thunks.cpp:346",
         "symbol": "g_UNUSED_SPRITE_VAR34",
         "type": "Sprite *"
       },
@@ -4744,7 +4852,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:319",
+        "location": "src/atexit_thunks.cpp:347",
         "symbol": "g_UNUSED_SPRITE_VAR35",
         "type": "Sprite *"
       },
@@ -4753,7 +4861,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:320",
+        "location": "src/atexit_thunks.cpp:348",
         "symbol": "g_UNUSED_SPRITE_VAR36",
         "type": "Sprite *"
       },
@@ -4762,7 +4870,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:321",
+        "location": "src/atexit_thunks.cpp:349",
         "symbol": "g_UNUSED_SPRITE_VAR37",
         "type": "Sprite *"
       },
@@ -4771,7 +4879,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:322",
+        "location": "src/atexit_thunks.cpp:350",
         "symbol": "g_UNUSED_SPRITE_VAR38",
         "type": "Sprite *"
       },
@@ -4780,7 +4888,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:323",
+        "location": "src/atexit_thunks.cpp:351",
         "symbol": "g_UNUSED_SPRITE_VAR39",
         "type": "Sprite *"
       },
@@ -4789,7 +4897,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:324",
+        "location": "src/atexit_thunks.cpp:352",
         "symbol": "g_UNUSED_SPRITE_VAR40",
         "type": "Sprite *"
       },
@@ -4798,7 +4906,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:325",
+        "location": "src/atexit_thunks.cpp:353",
         "symbol": "g_UNUSED_SPRITE_VAR41",
         "type": "Sprite *"
       },
@@ -4807,7 +4915,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:326",
+        "location": "src/atexit_thunks.cpp:354",
         "symbol": "g_UNUSED_SPRITE_VAR42",
         "type": "Sprite *"
       },
@@ -4816,7 +4924,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:327",
+        "location": "src/atexit_thunks.cpp:355",
         "symbol": "g_UNUSED_SPRITE_VAR43",
         "type": "Sprite *"
       },
@@ -4825,7 +4933,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:328",
+        "location": "src/atexit_thunks.cpp:356",
         "symbol": "g_UNUSED_SPRITE_VAR44",
         "type": "Sprite *"
       },
@@ -4834,7 +4942,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:329",
+        "location": "src/atexit_thunks.cpp:357",
         "symbol": "g_UNUSED_SPRITE_VAR45",
         "type": "Sprite *"
       },
@@ -4843,7 +4951,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:330",
+        "location": "src/atexit_thunks.cpp:358",
         "symbol": "g_UNUSED_SPRITE_VAR46",
         "type": "Sprite *"
       },
@@ -4852,7 +4960,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:331",
+        "location": "src/atexit_thunks.cpp:359",
         "symbol": "g_IFACE_TECH_TREE_ARROW_SPRITES",
         "type": "Sprite *"
       },
@@ -4861,7 +4969,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:332",
+        "location": "src/atexit_thunks.cpp:360",
         "symbol": "g_UNUSED_SPRITE_VAR47",
         "type": "Sprite *"
       },
@@ -4870,7 +4978,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:333",
+        "location": "src/atexit_thunks.cpp:361",
         "symbol": "g_UNUSED_SPRITE_VAR48",
         "type": "Sprite *"
       },
@@ -4879,7 +4987,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:334",
+        "location": "src/atexit_thunks.cpp:362",
         "symbol": "g_UNUSED_SPRITE_VAR49",
         "type": "Sprite *"
       },
@@ -4888,7 +4996,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:335",
+        "location": "src/atexit_thunks.cpp:363",
         "symbol": "g_UNUSED_SPRITE_VAR50",
         "type": "Sprite *"
       },
@@ -4897,7 +5005,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:336",
+        "location": "src/atexit_thunks.cpp:364",
         "symbol": "g_UNUSED_SPRITE_VAR51",
         "type": "Sprite *"
       },
@@ -4906,7 +5014,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:337",
+        "location": "src/atexit_thunks.cpp:365",
         "symbol": "g_UNUSED_SPRITE_VAR52",
         "type": "Sprite *"
       },
@@ -4915,7 +5023,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:338",
+        "location": "src/atexit_thunks.cpp:366",
         "symbol": "g_UNUSED_SPRITE_VAR53",
         "type": "Sprite *"
       },
@@ -4924,7 +5032,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:339",
+        "location": "src/atexit_thunks.cpp:367",
         "symbol": "g_UNUSED_SPRITE_VAR54",
         "type": "Sprite *"
       },
@@ -4933,7 +5041,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:340",
+        "location": "src/atexit_thunks.cpp:368",
         "symbol": "g_UNUSED_SPRITE_VAR55",
         "type": "Sprite *"
       },
@@ -4942,7 +5050,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:341",
+        "location": "src/atexit_thunks.cpp:369",
         "symbol": "g_UNUSED_SPRITE_VAR56",
         "type": "Sprite *"
       },
@@ -4951,7 +5059,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:342",
+        "location": "src/atexit_thunks.cpp:370",
         "symbol": "g_UNUSED_SPRITE_VAR57",
         "type": "Sprite *"
       },
@@ -4960,7 +5068,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:343",
+        "location": "src/atexit_thunks.cpp:371",
         "symbol": "g_UNUSED_SPRITE_VAR58",
         "type": "Sprite *"
       },
@@ -4969,7 +5077,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:344",
+        "location": "src/atexit_thunks.cpp:372",
         "symbol": "g_UNUSED_SPRITE_VAR59",
         "type": "Sprite *"
       },
@@ -4978,7 +5086,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:345",
+        "location": "src/atexit_thunks.cpp:373",
         "symbol": "g_UNUSED_SPRITE_VAR60",
         "type": "Sprite *"
       },
@@ -4987,7 +5095,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:346",
+        "location": "src/atexit_thunks.cpp:374",
         "symbol": "g_UNUSED_SPRITE_VAR61",
         "type": "Sprite *"
       },
@@ -4996,7 +5104,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:347",
+        "location": "src/atexit_thunks.cpp:375",
         "symbol": "g_UNUSED_SPRITE_VAR62",
         "type": "Sprite *"
       },
@@ -5005,7 +5113,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:348",
+        "location": "src/atexit_thunks.cpp:376",
         "symbol": "g_UNUSED_SPRITE_VAR63",
         "type": "Sprite *"
       },
@@ -5014,7 +5122,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:349",
+        "location": "src/atexit_thunks.cpp:377",
         "symbol": "g_UNUSED_SPRITE_VAR64",
         "type": "Sprite *"
       },
@@ -5023,7 +5131,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:350",
+        "location": "src/atexit_thunks.cpp:378",
         "symbol": "g_UNUSED_SPRITE_VAR65",
         "type": "Sprite *"
       },
@@ -5032,7 +5140,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:351",
+        "location": "src/atexit_thunks.cpp:379",
         "symbol": "g_UNUSED_SPRITE_VAR66",
         "type": "Sprite *"
       },
@@ -5041,7 +5149,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:352",
+        "location": "src/atexit_thunks.cpp:380",
         "symbol": "g_UNUSED_SPRITE_VAR67",
         "type": "Sprite *"
       },
@@ -5050,7 +5158,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:353",
+        "location": "src/atexit_thunks.cpp:381",
         "symbol": "g_UNUSED_SPRITE_VAR68",
         "type": "Sprite *"
       },
@@ -5059,7 +5167,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:354",
+        "location": "src/atexit_thunks.cpp:382",
         "symbol": "g_UNUSED_SPRITE_VAR69",
         "type": "Sprite *"
       },
@@ -5068,7 +5176,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:355",
+        "location": "src/atexit_thunks.cpp:383",
         "symbol": "g_UNUSED_SPRITE_VAR70",
         "type": "Sprite *"
       },
@@ -5077,7 +5185,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:356",
+        "location": "src/atexit_thunks.cpp:384",
         "symbol": "g_UNUSED_SPRITE_VAR71",
         "type": "Sprite *"
       },
@@ -5086,7 +5194,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:357",
+        "location": "src/atexit_thunks.cpp:385",
         "symbol": "g_UNUSED_SPRITE_VAR72",
         "type": "Sprite *"
       },
@@ -5095,7 +5203,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:358",
+        "location": "src/atexit_thunks.cpp:386",
         "symbol": "g_UNUSED_SPRITE_VAR73",
         "type": "Sprite *"
       },
@@ -5104,7 +5212,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:359",
+        "location": "src/atexit_thunks.cpp:387",
         "symbol": "g_UNUSED_SPRITE_VAR74",
         "type": "Sprite *"
       },
@@ -5113,7 +5221,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:360",
+        "location": "src/atexit_thunks.cpp:388",
         "symbol": "g_UNUSED_SPRITES_VAR02",
         "type": "Sprite *"
       },
@@ -5122,7 +5230,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:361",
+        "location": "src/atexit_thunks.cpp:389",
         "symbol": "g_UNUSED_SPRITES_VAR03",
         "type": "Sprite *"
       },
@@ -5131,7 +5239,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:362",
+        "location": "src/atexit_thunks.cpp:390",
         "symbol": "g_UNUSED_SPRITES_VAR04",
         "type": "Sprite *"
       },
@@ -5140,7 +5248,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:363",
+        "location": "src/atexit_thunks.cpp:391",
         "symbol": "g_UNUSED_SPRITES_VAR05",
         "type": "Sprite *"
       },
@@ -5149,7 +5257,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:364",
+        "location": "src/atexit_thunks.cpp:392",
         "symbol": "g_UNUSED_SPRITES_VAR06",
         "type": "Sprite *"
       },
@@ -5158,7 +5266,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:365",
+        "location": "src/atexit_thunks.cpp:393",
         "symbol": "g_UNUSED_SPRITES_VAR07",
         "type": "Sprite *"
       },
@@ -5167,7 +5275,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:366",
+        "location": "src/atexit_thunks.cpp:394",
         "symbol": "g_UNUSED_SPRITES_VAR08",
         "type": "Sprite *"
       },
@@ -5176,7 +5284,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:367",
+        "location": "src/atexit_thunks.cpp:395",
         "symbol": "g_UNUSED_SPRITES_VAR09",
         "type": "Sprite *"
       },
@@ -5185,7 +5293,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:368",
+        "location": "src/atexit_thunks.cpp:396",
         "symbol": "g_UNUSED_SPRITES_VAR10",
         "type": "Sprite *"
       },
@@ -5194,7 +5302,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:369",
+        "location": "src/atexit_thunks.cpp:397",
         "symbol": "g_UNUSED_SPRITE_VAR75",
         "type": "Sprite *"
       },
@@ -5203,7 +5311,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:370",
+        "location": "src/atexit_thunks.cpp:398",
         "symbol": "g_UNUSED_SPRITE_VAR76",
         "type": "Sprite *"
       },
@@ -5212,7 +5320,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:371",
+        "location": "src/atexit_thunks.cpp:399",
         "symbol": "g_UNUSED_SPRITE_VAR77",
         "type": "Sprite *"
       },
@@ -5221,7 +5329,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:372",
+        "location": "src/atexit_thunks.cpp:400",
         "symbol": "g_UNUSED_SPRITE_VAR78",
         "type": "Sprite *"
       },
@@ -5230,7 +5338,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:373",
+        "location": "src/atexit_thunks.cpp:401",
         "symbol": "g_UNUSED_SPRITE_VAR79",
         "type": "Sprite *"
       },
@@ -5239,7 +5347,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:374",
+        "location": "src/atexit_thunks.cpp:402",
         "symbol": "g_UNUSED_SPRITE_VAR80",
         "type": "Sprite *"
       },
@@ -5248,7 +5356,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:375",
+        "location": "src/atexit_thunks.cpp:403",
         "symbol": "g_UNUSED_SPRITE_VAR81",
         "type": "Sprite *"
       },
@@ -5257,7 +5365,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:376",
+        "location": "src/atexit_thunks.cpp:404",
         "symbol": "g_UNUSED_SPRITE_VAR82",
         "type": "Sprite *"
       },
@@ -5266,7 +5374,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:377",
+        "location": "src/atexit_thunks.cpp:405",
         "symbol": "g_UNUSED_SPRITE_VAR83",
         "type": "Sprite *"
       },
@@ -5275,7 +5383,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:378",
+        "location": "src/atexit_thunks.cpp:406",
         "symbol": "g_BASEWIN_SPRITES",
         "type": "Sprite *"
       },
@@ -5284,7 +5392,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:379",
+        "location": "src/atexit_thunks.cpp:407",
         "symbol": "g_MAININTERFACE_WAVE",
         "type": "Wave *"
       },
@@ -5293,7 +5401,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:380",
+        "location": "src/atexit_thunks.cpp:408",
         "symbol": "g_JACKAL_FONT",
         "type": "Font *"
       },
@@ -5302,7 +5410,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:381",
+        "location": "src/atexit_thunks.cpp:409",
         "symbol": "g_IFACE_GREEN_RIGHT_ARROW_SPRITE",
         "type": "Sprite *"
       },
@@ -5311,7 +5419,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:382",
+        "location": "src/atexit_thunks.cpp:410",
         "symbol": "g_MULTIWIN_WAVE",
         "type": "Wave *"
       },
@@ -5320,7 +5428,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:383",
+        "location": "src/atexit_thunks.cpp:411",
         "symbol": "g_PREFWIN_BUTTONGROUP",
         "type": "ButtonGroup *"
       },
@@ -5329,7 +5437,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:384",
+        "location": "src/atexit_thunks.cpp:412",
         "symbol": "g_VEHDRAW_BUFFER",
         "type": "Buffer *"
       },
@@ -5338,7 +5446,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:385",
+        "location": "src/atexit_thunks.cpp:413",
         "symbol": "g_CURSOR_SPRITES",
         "type": "Sprite *"
       },
@@ -5347,7 +5455,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:386",
+        "location": "src/atexit_thunks.cpp:414",
         "symbol": "g_FONTQUEUE_VAL2",
         "type": "FontQueue *"
       },
@@ -5356,7 +5464,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:387",
+        "location": "src/atexit_thunks.cpp:415",
         "symbol": "g_FONTQUEUE_VAL1",
         "type": "FontQueue *"
       },
@@ -5365,7 +5473,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:388",
+        "location": "src/atexit_thunks.cpp:416",
         "symbol": "g_TOP_MENU_WAVE",
         "type": "Wave *"
       },
@@ -5374,7 +5482,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:389",
+        "location": "src/atexit_thunks.cpp:417",
         "symbol": "g_FONTS",
         "type": "Font *"
       },
@@ -5383,7 +5491,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:390",
+        "location": "src/atexit_thunks.cpp:418",
         "symbol": "g_CRASH_LANDING_WAVE",
         "type": "Wave *"
       },
@@ -5392,7 +5500,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:391",
+        "location": "src/atexit_thunks.cpp:419",
         "symbol": "g_WAVE_GENERAL",
         "type": "Wave *"
       },
@@ -5401,7 +5509,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:392",
+        "location": "src/atexit_thunks.cpp:420",
         "symbol": "g_BUFFER",
         "type": "Buffer *"
       },
@@ -5410,7 +5518,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/atexit_thunks.cpp:393",
+        "location": "src/atexit_thunks.cpp:421",
         "symbol": "TxtIndexGlobal",
         "type": "TextIndex *"
       },
@@ -6972,11 +7080,344 @@
         "type": "func_thiscall_teardown *"
       },
       {
+        "address": "0x00408490",
+        "function": "??0BaseWin@@QAE@XZ",
+        "function_address": "0x00408490",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:124",
+        "symbol": "BaseWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00422EE0",
+        "function": "??0BattleWin@@QAE@XZ",
+        "function_address": "0x00422EE0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:126",
+        "symbol": "BattleWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00428620",
+        "function": "??0CouncWin@@QAE@XZ",
+        "function_address": "0x00428620",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:128",
+        "symbol": "CouncWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00428FC0",
+        "function": "??0Datalink@@QAE@XZ",
+        "function_address": "0x00428FC0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:130",
+        "symbol": "DatalinkCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00434480",
+        "function": "??0DesignWin@@QAE@XZ",
+        "function_address": "0x00434480",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:132",
+        "symbol": "DesignWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0043EFF0",
+        "function": "??0DiploPop@@QAE@XZ",
+        "function_address": "0x0043EFF0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:134",
+        "symbol": "DiploPopCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00444FC0",
+        "function": "??0DiploWin@@QAE@XZ",
+        "function_address": "0x00444FC0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:136",
+        "symbol": "DiploWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004482A0",
+        "function": "??0FX@@QAE@XZ",
+        "function_address": "0x004482A0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:138",
+        "symbol": "FXCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0044B200",
+        "function": "??0FameWin@@QAE@XZ",
+        "function_address": "0x0044B200",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:140",
+        "symbol": "FameWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00455F10",
+        "function": "??0FactionArt@@QAE@XZ",
+        "function_address": "0x00455F10",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:142",
+        "symbol": "FactionArtCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00459500",
+        "function": "??0InfoWin@@QAE@XZ",
+        "function_address": "0x00459500",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:144",
+        "symbol": "InfoWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0045EF10",
+        "function": "??0MainInterface@@QAE@XZ",
+        "function_address": "0x0045EF10",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:146",
+        "symbol": "MainInterfaceCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004626E0",
+        "function": "??0MapWin@@QAE@H@Z",
+        "function_address": "0x004626E0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:148",
+        "symbol": "MapWinCtorTarget",
+        "type": "func_opaque_ctor_i *"
+      },
+      {
+        "address": "0x00472190",
+        "function": "??0MessageWin@@QAE@XZ",
+        "function_address": "0x00472190",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:150",
+        "symbol": "MessageWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00477C80",
+        "function": "??0MonuWin@@QAE@XZ",
+        "function_address": "0x00477C80",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:152",
+        "symbol": "MonuWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0047A590",
+        "function": "??0MultiWin@@QAE@XZ",
+        "function_address": "0x0047A590",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:154",
+        "symbol": "MultiWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0047ACF0",
+        "function": "??0NetMsg@@QAE@HHH@Z",
+        "function_address": "0x0047ACF0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:156",
+        "symbol": "NetMsgCtorTarget",
+        "type": "func_opaque_ctor_iii *"
+      },
+      {
+        "address": "0x00481C50",
+        "function": "??0NetWin@@QAE@XZ",
+        "function_address": "0x00481C50",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:158",
+        "symbol": "NetWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004849D0",
+        "function": "??0NewTechWin@@QAE@XZ",
+        "function_address": "0x004849D0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:160",
+        "symbol": "NewTechWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0048AC10",
+        "function": "??0PickWin@@QAE@XZ",
+        "function_address": "0x0048AC10",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:162",
+        "symbol": "PickWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0048BCD0",
+        "function": "??0PlanWin@@QAE@H@Z",
+        "function_address": "0x0048BCD0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:164",
+        "symbol": "PlanWinCtorTarget",
+        "type": "func_opaque_ctor_i *"
+      },
+      {
+        "address": "0x004921E0",
+        "function": "??0PrefWin@@QAE@XZ",
+        "function_address": "0x004921E0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:166",
+        "symbol": "PrefWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00496810",
+        "function": "??0QuayleWin@@QAE@XZ",
+        "function_address": "0x00496810",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:168",
+        "symbol": "QuayleWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004AD170",
+        "function": "??0ReportIf@@QAE@XZ",
+        "function_address": "0x004AD170",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:170",
+        "symbol": "ReportIfCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004AD6B0",
+        "function": "??0ReportWin@@QAE@XZ",
+        "function_address": "0x004AD6B0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:172",
+        "symbol": "ReportWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004AE9E0",
+        "function": "??0SocialWin@@QAE@XZ",
+        "function_address": "0x004AE9E0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:174",
+        "symbol": "SocialWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004BA1A0",
+        "function": "??0StatusWin@@QAE@XZ",
+        "function_address": "0x004BA1A0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:176",
+        "symbol": "StatusWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004BA6B0",
+        "function": "??0TutWin@@QAE@XZ",
+        "function_address": "0x004BA6B0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:178",
+        "symbol": "TutWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C4BF0",
+        "function": "??0WorldWin@@QAE@XZ",
+        "function_address": "0x004C4BF0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:180",
+        "symbol": "WorldWinCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C5740",
+        "function": "??0Midi_Device@@QAE@XZ",
+        "function_address": "0x004C5740",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:182",
+        "symbol": "Midi_DeviceCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C5940",
+        "function": "??0Wave_In_Device@@QAE@XZ",
+        "function_address": "0x004C5940",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:184",
+        "symbol": "Wave_In_DeviceCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x004C8460",
+        "function": "??0Ambience@@QAE@XZ",
+        "function_address": "0x004C8460",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:186",
+        "symbol": "AmbienceCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x0050F460",
+        "function": "??0Console@@QAE@H@Z",
+        "function_address": "0x0050F460",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:188",
+        "symbol": "ConsoleCtorTarget",
+        "type": "func_opaque_ctor_i *"
+      },
+      {
+        "address": "0x005389F0",
+        "function": "??0NetDaemon@@QAE@XZ",
+        "function_address": "0x005389F0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:190",
+        "symbol": "NetDaemonCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x00559290",
+        "function": "??0FontQueue@@QAE@XZ",
+        "function_address": "0x00559290",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:192",
+        "symbol": "FontQueueCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x005C97F0",
+        "function": "??0MultiDebug@@QAE@XZ",
+        "function_address": "0x005C97F0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:194",
+        "symbol": "MultiDebugCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
+        "address": "0x005FE2A0",
+        "function": "??0Palette@@QAE@XZ",
+        "function_address": "0x005FE2A0",
+        "kind": "function",
+        "location": "src/init_thunks.cpp:196",
+        "symbol": "PaletteCtorTarget",
+        "type": "func_thiscall_teardown *"
+      },
+      {
         "address": "0x00822610",
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:121",
+        "location": "src/init_thunks.cpp:199",
         "symbol": "g_NEWTECHWIN_SPRITES",
         "type": "Sprite *"
       },
@@ -6985,7 +7426,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:122",
+        "location": "src/init_thunks.cpp:200",
         "symbol": "g_VEHDRAW_CAVIAR",
         "type": "Caviar *"
       },
@@ -6994,7 +7435,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:123",
+        "location": "src/init_thunks.cpp:201",
         "symbol": "g_WAVE_DEVICE",
         "type": "Wave_Device *"
       },
@@ -7003,7 +7444,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:124",
+        "location": "src/init_thunks.cpp:202",
         "symbol": "g_CONSOLE_TIMER",
         "type": "Time *"
       },
@@ -7012,7 +7453,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:125",
+        "location": "src/init_thunks.cpp:203",
         "symbol": "g_BUFFER_SPRITE",
         "type": "Sprite *"
       },
@@ -7021,7 +7462,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:126",
+        "location": "src/init_thunks.cpp:204",
         "symbol": "g_WIN_BUFFER",
         "type": "Buffer *"
       },
@@ -7030,7 +7471,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:127",
+        "location": "src/init_thunks.cpp:205",
         "symbol": "g_RADIOBUTTON_SPRITE_1",
         "type": "Sprite *"
       },
@@ -7039,7 +7480,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:128",
+        "location": "src/init_thunks.cpp:206",
         "symbol": "g_RADIOBUTTON_SPRITE_2",
         "type": "Sprite *"
       },
@@ -7048,7 +7489,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:129",
+        "location": "src/init_thunks.cpp:207",
         "symbol": "g_CHECKBOX_SPRITE_1",
         "type": "Sprite *"
       },
@@ -7057,7 +7498,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:130",
+        "location": "src/init_thunks.cpp:208",
         "symbol": "g_CHECKBOX_SPRITE_2",
         "type": "Sprite *"
       },
@@ -7066,7 +7507,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:131",
+        "location": "src/init_thunks.cpp:209",
         "symbol": "g_FILEWIN_SPRITE_1",
         "type": "Sprite *"
       },
@@ -7075,7 +7516,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:132",
+        "location": "src/init_thunks.cpp:210",
         "symbol": "g_FILEWIN_SPRITE_2",
         "type": "Sprite *"
       },
@@ -7084,7 +7525,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:133",
+        "location": "src/init_thunks.cpp:211",
         "symbol": "g_FILEWIN_SPRITE_3",
         "type": "Sprite *"
       },
@@ -7093,7 +7534,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:134",
+        "location": "src/init_thunks.cpp:212",
         "symbol": "StringTable",
         "type": "Strings *"
       },
@@ -7102,7 +7543,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:135",
+        "location": "src/init_thunks.cpp:213",
         "symbol": "g_CAVIAR_BUFFER_1",
         "type": "Buffer *"
       },
@@ -7111,7 +7552,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:136",
+        "location": "src/init_thunks.cpp:214",
         "symbol": "g_CAVIAR_BUFFER_2",
         "type": "Buffer *"
       },
@@ -8916,7 +9357,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 289,
-    "total": 843
+    "matched_function_starts": 338,
+    "total": 892
   }
 }

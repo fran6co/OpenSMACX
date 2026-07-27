@@ -75,6 +75,61 @@ extern func_thiscall_teardown *TimeInitCtor;
 extern func_thiscall_teardown *WaveDeviceInitCtor;
 extern func_thiscall_teardown *WaveInitCtor;
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef void(__thiscall func_opaque_ctor_i)(void *object, int a0);
+typedef void(__thiscall func_opaque_ctor_iii)(void *object, int a0, int a1,
+                                              int a2);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// Opaque-storage construction seams. These globals' classes
+// are not modelled in source, so the thunk hands the storage
+// address straight to the original constructor through a seam
+// rather than naming a type. Seams are deduped on the ADDRESS
+// they default to; one already bound at the same address
+// elsewhere is reused, never redefined here.
+extern func_thiscall_teardown *BaseWinCtorTarget;   // 0x00408490
+extern func_thiscall_teardown *BattleWinCtorTarget;   // 0x00422EE0
+extern func_thiscall_teardown *CouncWinCtorTarget;   // 0x00428620
+extern func_thiscall_teardown *DatalinkCtorTarget;   // 0x00428FC0
+extern func_thiscall_teardown *DesignWinCtorTarget;   // 0x00434480
+extern func_thiscall_teardown *DiploPopCtorTarget;   // 0x0043EFF0
+extern func_thiscall_teardown *DiploWinCtorTarget;   // 0x00444FC0
+extern func_thiscall_teardown *FXCtorTarget;   // 0x004482A0
+extern func_thiscall_teardown *FameWinCtorTarget;   // 0x0044B200
+extern func_thiscall_teardown *FactionArtCtorTarget;   // 0x00455F10
+extern func_thiscall_teardown *InfoWinCtorTarget;   // 0x00459500
+extern func_thiscall_teardown *MainInterfaceCtorTarget;   // 0x0045EF10
+extern func_opaque_ctor_i *MapWinCtorTarget;   // 0x004626E0
+extern func_thiscall_teardown *MessageWinCtorTarget;   // 0x00472190
+extern func_thiscall_teardown *MonuWinCtorTarget;   // 0x00477C80
+extern func_thiscall_teardown *MultiWinCtorTarget;   // 0x0047A590
+extern func_opaque_ctor_iii *NetMsgCtorTarget;   // 0x0047ACF0
+extern func_thiscall_teardown *NetWinCtorTarget;   // 0x00481C50
+extern func_thiscall_teardown *NewTechWinCtorTarget;   // 0x004849D0
+extern func_thiscall_teardown *PickWinCtorTarget;   // 0x0048AC10
+extern func_opaque_ctor_i *PlanWinCtorTarget;   // 0x0048BCD0
+extern func_thiscall_teardown *PrefWinCtorTarget;   // 0x004921E0
+extern func_thiscall_teardown *QuayleWinCtorTarget;   // 0x00496810
+extern func_thiscall_teardown *ReportIfCtorTarget;   // 0x004AD170
+extern func_thiscall_teardown *ReportWinCtorTarget;   // 0x004AD6B0
+extern func_thiscall_teardown *SocialWinCtorTarget;   // 0x004AE9E0
+extern func_thiscall_teardown *StatusWinCtorTarget;   // 0x004BA1A0
+extern func_thiscall_teardown *TutWinCtorTarget;   // 0x004BA6B0
+extern func_thiscall_teardown *WorldWinCtorTarget;   // 0x004C4BF0
+extern func_thiscall_teardown *Midi_DeviceCtorTarget;   // 0x004C5740
+extern func_thiscall_teardown *Wave_In_DeviceCtorTarget;   // 0x004C5940
+extern func_thiscall_teardown *AmbienceCtorTarget;   // 0x004C8460
+extern func_opaque_ctor_i *ConsoleCtorTarget;   // 0x0050F460
+extern func_thiscall_teardown *NetDaemonCtorTarget;   // 0x005389F0
+extern func_thiscall_teardown *FontQueueCtorTarget;   // 0x00559290
+extern func_thiscall_teardown *MultiDebugCtorTarget;   // 0x005C97F0
+extern func_thiscall_teardown *PaletteCtorTarget;   // 0x005FE2A0
+
 extern Sprite *g_NEWTECHWIN_SPRITES;
 extern Caviar *g_VEHDRAW_CAVIAR;
 extern Wave_Device *g_WAVE_DEVICE;
@@ -115,16 +170,27 @@ DLLEXPORT void __cdecl construct_unused_sprite_var17();
 DLLEXPORT void __cdecl construct_unused_sprite_var19();
 DLLEXPORT void __cdecl construct_unused_sprite_var12();
 DLLEXPORT void __cdecl construct_unused_sprite_var07();
+DLLEXPORT void __cdecl construct_basewin();
 DLLEXPORT void __cdecl construct_basewin_wave();
+DLLEXPORT void __cdecl construct_battlewin();
+DLLEXPORT void __cdecl construct_councwin();
 DLLEXPORT void __cdecl construct_credits_wave();
+DLLEXPORT void __cdecl construct_datalink();
+DLLEXPORT void __cdecl construct_designwin();
 DLLEXPORT void __cdecl construct_designwin_wave();
+DLLEXPORT void __cdecl construct_diplopop();
+DLLEXPORT void __cdecl construct_diplowin();
 DLLEXPORT void __cdecl construct_cpu_waves();
 DLLEXPORT void __cdecl construct_menu_up_wave();
 DLLEXPORT void __cdecl construct_menu_down_wave();
 DLLEXPORT void __cdecl construct_scoot_wave();
 DLLEXPORT void __cdecl construct_ok_wave();
 DLLEXPORT void __cdecl construct_passover_wave();
+DLLEXPORT void __cdecl construct_fx();
+DLLEXPORT void __cdecl construct_ambience();
+DLLEXPORT void __cdecl construct_famewin();
 DLLEXPORT void __cdecl construct_pcx_parse_temp_buffer1();
+DLLEXPORT void __cdecl construct_factionart();
 DLLEXPORT void __cdecl construct_iface_close_x_sprites();
 DLLEXPORT void __cdecl construct_iface_box_sprites1();
 DLLEXPORT void __cdecl construct_iface_box_sprites2();
@@ -411,21 +477,50 @@ DLLEXPORT void __cdecl construct_unused_sprite_var81();
 DLLEXPORT void __cdecl construct_unused_sprite_var82();
 DLLEXPORT void __cdecl construct_unused_sprite_var83();
 DLLEXPORT void __cdecl construct_basewin_sprites();
+DLLEXPORT void __cdecl construct_infowin();
+DLLEXPORT void __cdecl construct_maininterface();
 DLLEXPORT void __cdecl construct_maininterface_wave();
 DLLEXPORT void __cdecl construct_jackal_font();
+DLLEXPORT void __cdecl construct_mapwin();
+DLLEXPORT void __cdecl construct_messagewin();
 DLLEXPORT void __cdecl construct_iface_green_right_arrow_sprite();
+DLLEXPORT void __cdecl construct_monuwin();
+DLLEXPORT void __cdecl construct_multiwin();
 DLLEXPORT void __cdecl construct_multiwin_wave();
+DLLEXPORT void __cdecl construct_netmsg1();
+DLLEXPORT void __cdecl construct_netmsg2();
+DLLEXPORT void __cdecl construct_netwin();
+DLLEXPORT void __cdecl construct_newtechwin();
 DLLEXPORT void __cdecl construct_newtechwin_sprites();
+DLLEXPORT void __cdecl construct_pickwin();
+DLLEXPORT void __cdecl construct_planwin();
+DLLEXPORT void __cdecl construct_prefwin();
 DLLEXPORT void __cdecl construct_prefwin_buttongroup();
+DLLEXPORT void __cdecl construct_quaylewin();
+DLLEXPORT void __cdecl construct_reportif();
+DLLEXPORT void __cdecl construct_reportwin();
+DLLEXPORT void __cdecl construct_socialwinparent();
+DLLEXPORT void __cdecl construct_statuswin();
+DLLEXPORT void __cdecl construct_tutwin();
 DLLEXPORT void __cdecl construct_vehdraw_caviar();
 DLLEXPORT void __cdecl construct_vehdraw_buffer();
+DLLEXPORT void __cdecl construct_worldwin();
 DLLEXPORT void __cdecl construct_wave_device();
+DLLEXPORT void __cdecl construct_midi_device();
+DLLEXPORT void __cdecl construct_wave_in_device();
+DLLEXPORT void __cdecl construct_console();
 DLLEXPORT void __cdecl construct_console_timer();
 DLLEXPORT void __cdecl construct_cursor_sprites();
+DLLEXPORT void __cdecl construct_netdaemon();
+DLLEXPORT void __cdecl construct_fontqueue_val2();
+DLLEXPORT void __cdecl construct_fontqueue_val1();
 DLLEXPORT void __cdecl construct_top_menu_wave();
 DLLEXPORT void __cdecl construct_fonts();
 DLLEXPORT void __cdecl construct_crash_landing_wave();
 DLLEXPORT void __cdecl construct_wave_general();
+DLLEXPORT void __cdecl construct_palette1();
+DLLEXPORT void __cdecl construct_palette2();
+DLLEXPORT void __cdecl construct_multidebug();
 DLLEXPORT void __cdecl construct_buffer_sprite();
 DLLEXPORT void __cdecl construct_buffer();
 DLLEXPORT void __cdecl construct_win_buffer();

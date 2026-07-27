@@ -64,6 +64,27 @@ extern func_thiscall_teardown *TextIndexElementTeardown;
 extern func_thiscall_teardown *TextureElementTeardown;
 extern func_thiscall_teardown *WaveElementTeardown;
 
+#include "deleting_thunks.h"
+
+// Opaque-storage teardown seams. These globals' classes are not
+// modelled in source, so the thunk hands the storage address
+// straight to the original teardown through a seam rather than
+// naming a type. Seams are deduped on the ADDRESS they default
+// to: one already bound at the same address elsewhere is reused
+// from the header above, never redefined here.
+extern func_thiscall_teardown *InfoWinDtorTarget;   // 0x004594A0
+extern func_thiscall_teardown *MessageWinDtorTarget;   // 0x00472020
+extern func_thiscall_teardown *ReportIfDtorTarget;   // 0x004ACDA0
+extern func_thiscall_teardown *StatusWinDtorTarget;   // 0x004BA120
+extern func_thiscall_teardown *Wave_DeviceDtorTarget;   // 0x004C4E60
+extern func_thiscall_teardown *Midi_DeviceDtorTarget;   // 0x004C5780
+extern func_thiscall_teardown *Wave_In_DeviceDtorTarget;   // 0x004C5980
+extern func_thiscall_teardown *NetDaemonDtorTarget;   // 0x00538D10
+extern func_thiscall_teardown *PaletteDtorTarget;   // 0x005FE2E0
+extern func_thiscall_teardown *TimeDtorTarget;   // 0x00616200
+extern func_thiscall_teardown *StringsDtorTarget;   // 0x006169C0
+extern func_thiscall_teardown *CaviarCloseTarget;   // 0x00617020
+
 extern Wave *g_ALPHAMENU_WAVE;
 extern Sprite *g_UNUSED_SPRITE_VAR02;
 extern Sprite *g_UNUSED_SPRITE_VAR11;
@@ -426,10 +447,16 @@ DLLEXPORT void __cdecl destroy_unused_sprite_var17();
 DLLEXPORT void __cdecl destroy_unused_sprite_var19();
 DLLEXPORT void __cdecl destroy_unused_sprite_var12();
 DLLEXPORT void __cdecl destroy_unused_sprite_var07();
+DLLEXPORT void __cdecl destroy_basewin();
 DLLEXPORT void __cdecl destroy_basewin_wave();
 DLLEXPORT void __cdecl destroy_battlewin();
+DLLEXPORT void __cdecl destroy_councwin();
 DLLEXPORT void __cdecl destroy_credits_wave();
+DLLEXPORT void __cdecl destroy_datalink();
+DLLEXPORT void __cdecl destroy_designwin();
 DLLEXPORT void __cdecl destroy_designwin_wave();
+DLLEXPORT void __cdecl destroy_diplopop();
+DLLEXPORT void __cdecl destroy_diplowin();
 DLLEXPORT void __cdecl destroy_cpu_waves();
 DLLEXPORT void __cdecl destroy_menu_up_wave();
 DLLEXPORT void __cdecl destroy_menu_down_wave();
@@ -438,6 +465,7 @@ DLLEXPORT void __cdecl destroy_ok_wave();
 DLLEXPORT void __cdecl destroy_passover_wave();
 DLLEXPORT void __cdecl destroy_fx();
 DLLEXPORT void __cdecl destroy_ambience();
+DLLEXPORT void __cdecl destroy_famewin();
 DLLEXPORT void __cdecl destroy_pcx_parse_temp_buffer1();
 DLLEXPORT void __cdecl destroy_factionart();
 DLLEXPORT void __cdecl destroy_iface_close_x_sprites();
@@ -726,18 +754,46 @@ DLLEXPORT void __cdecl destroy_unused_sprite_var81();
 DLLEXPORT void __cdecl destroy_unused_sprite_var82();
 DLLEXPORT void __cdecl destroy_unused_sprite_var83();
 DLLEXPORT void __cdecl destroy_basewin_sprites();
+DLLEXPORT void __cdecl destroy_infowin();
+DLLEXPORT void __cdecl destroy_maininterface();
 DLLEXPORT void __cdecl destroy_maininterface_wave();
 DLLEXPORT void __cdecl destroy_jackal_font();
+DLLEXPORT void __cdecl destroy_messagewin();
 DLLEXPORT void __cdecl destroy_iface_green_right_arrow_sprite();
+DLLEXPORT void __cdecl destroy_monuwin();
+DLLEXPORT void __cdecl destroy_multiwin();
 DLLEXPORT void __cdecl destroy_multiwin_wave();
+DLLEXPORT void __cdecl destroy_netmsg1();
+DLLEXPORT void __cdecl destroy_netmsg2();
+DLLEXPORT void __cdecl destroy_netwin();
+DLLEXPORT void __cdecl destroy_newtechwin();
+DLLEXPORT void __cdecl destroy_pickwin();
+DLLEXPORT void __cdecl destroy_prefwin();
 DLLEXPORT void __cdecl destroy_prefwin_buttongroup();
+DLLEXPORT void __cdecl destroy_quaylewin();
+DLLEXPORT void __cdecl destroy_reportif();
+DLLEXPORT void __cdecl destroy_reportwin();
+DLLEXPORT void __cdecl destroy_socialwinparent();
+DLLEXPORT void __cdecl destroy_statuswin();
+DLLEXPORT void __cdecl destroy_tutwin();
+DLLEXPORT void __cdecl destroy_vehdraw_caviar();
 DLLEXPORT void __cdecl destroy_vehdraw_buffer();
+DLLEXPORT void __cdecl destroy_worldwin();
+DLLEXPORT void __cdecl destroy_wave_device();
+DLLEXPORT void __cdecl destroy_midi_device();
+DLLEXPORT void __cdecl destroy_wave_in_device();
+DLLEXPORT void __cdecl destroy_console_timer();
 DLLEXPORT void __cdecl destroy_cursor_sprites();
+DLLEXPORT void __cdecl destroy_netdaemon();
 DLLEXPORT void __cdecl destroy_fontqueue_val2();
 DLLEXPORT void __cdecl destroy_fontqueue_val1();
 DLLEXPORT void __cdecl destroy_top_menu_wave();
 DLLEXPORT void __cdecl destroy_fonts();
 DLLEXPORT void __cdecl destroy_crash_landing_wave();
 DLLEXPORT void __cdecl destroy_wave_general();
+DLLEXPORT void __cdecl destroy_palette1();
+DLLEXPORT void __cdecl destroy_palette2();
+DLLEXPORT void __cdecl destroy_multidebug();
 DLLEXPORT void __cdecl destroy_buffer();
 DLLEXPORT void __cdecl destroy_txtindex();
+DLLEXPORT void __cdecl destroy_stringtable();

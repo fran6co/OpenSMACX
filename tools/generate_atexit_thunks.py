@@ -11,9 +11,17 @@ the atexit call lives in the `??__E`, and the `??__F` body is a bare
 The family is zero-variance, which is why this is a generator rather than a
 work order: every accepted body is proven by the forwarder acceptor
 (tools/analyze_delegates.py) to be exactly that shape, and everything emitted
-here differs only in a name, an address, and which of four teardowns it calls.
-Anything whose proven target is not one of those four is skipped and named,
-never emitted.
+here differs only in a name, an address, and which teardown it calls.
+Anything whose proven target is not one of the modelled ones and does not
+match the opaque template below is skipped and named, never emitted.
+
+Two spellings come out of that. A thunk whose class the source models keeps
+the typed spelling, `g_ALPHAMENU_WAVE->close()`. A thunk whose class has no
+modelled type - three dozen of them, BaseWin through Strings - is emitted over
+OPAQUE STORAGE instead: the address is a literal and the teardown goes through
+a rebindable function-pointer seam defaulting to the original destructor.
+Nothing about those bytes is harder; what was missing was a C++ type, and the
+opaque spelling needs none, so no class header is written or touched.
 
 The recovery also names the globals. Each thunk's mangled name carries the
 original global's name (`??__Fg_ALPHAMENU_WAVE@@YAXXZ`), so the emitted seam
@@ -130,6 +138,322 @@ def snake(name: str) -> str:
     return re.sub(r"__+", "_", text.lower())
 
 
+# --------------------------------------------------------------------------
+# Opaque storage
+#
+# Most of these thunks name a class the source models. About three dozen name
+# one it does not - BaseWin, DiploWin, Palette, Wave_In_Device, Strings - and
+# the blocker was never the bytes: they are the same two instructions as every
+# accepted thunk. It was that the typed spelling needs a C++ type, and writing
+# a class header for a class nothing else in the tree uses is how a scripted
+# batch once overwrote src/dialogs.h.
+#
+# The opaque spelling needs no type at all:
+#
+#     DiploWinDtorTarget(reinterpret_cast<void *>(0x0073ACD8));
+#
+# The storage stays a literal - there is no typed global to declare, so there
+# is nothing to keep in sync with a header - and the teardown goes through a
+# rebindable function-pointer seam defaulting to the original destructor's
+# fixed address, exactly like every other original-dependency seam here. The
+# hybrid redirects that address to a recovered body at run time; the leaf
+# suite rebinds the seam to a recorder and checks the address it is handed.
+# --------------------------------------------------------------------------
+
+
+def adjustor_module():
+    """tools/generate_adjustor_thunks, imported on demand.
+
+    That module imports this one at module scope for LICENSE, so importing it
+    back at module scope here would close the cycle: the partially initialised
+    module would not have `entry_extent` bound yet at the moment this body
+    looked it up. A deferred import is the whole fix.
+    """
+    import generate_adjustor_thunks  # noqa: PLC0415  (see the docstring)
+    return generate_adjustor_thunks
+
+
+def entry_extent(row):
+    """generate_adjustor_thunks.entry_extent, through the deferred import.
+
+    NOT `size`: that column sums every span in `body_ranges`, and 416
+    catalogued functions are split, so decoding `size` bytes from the entry of
+    one of those runs into whatever follows it.
+    """
+    return adjustor_module().entry_extent(row)
+
+
+# `extern <type> *<Name>;   // 0xADDR` - how every seam in this tree records
+# the original address it defaults to. Seams dedupe on that ADDRESS and never
+# on the name: a second name for one address is a duplicate definition, and
+# the link error lands a long way from its cause.
+BINDING_RE = re.compile(
+    r"^extern\s+(\w+)\s*\*(\w+);\s*//\s*0x([0-9A-Fa-f]+)\s*$")
+
+# Typedef names that spell exactly `void(__thiscall)(void *)`, so a seam
+# already bound under one of them carries an opaque nullary teardown or
+# constructor unchanged.
+OPAQUE_NULLARY = "func_thiscall_teardown"
+NULLARY_TYPEDEFS = frozenset({
+    OPAQUE_NULLARY, "func_deleting_dtor", "func_adjustor_v"})
+
+# The headers a generated thunk file may pull in to pick up a reused seam.
+# A seam bound anywhere else is bound next to a real class declaration, and
+# including that from here is how these files would acquire a dependency on a
+# hand-written header - so that case refuses rather than reusing, and refuses
+# rather than defining a second name for the same address.
+SEAM_HEADERS = frozenset({
+    "adjustor_thunks.h", "atexit_thunks.h", "deleting_thunks.h",
+    "init_thunks.h", "vector_teardown.h"})
+
+
+def load_bindings(source_dir: Path, exclude=()):
+    """(by address, by name) over every seam binding declared in src/*.h.
+
+    `exclude` drops the generator's own output, which would otherwise report
+    last run's seams as prior art and make a rerun depend on what is already
+    on disk.
+    """
+    by_address: dict[int, tuple[str, str, str]] = {}
+    by_name: dict[str, tuple[int, str]] = {}
+    for header in sorted(Path(source_dir).glob("*.h")):
+        if header.name in exclude:
+            continue
+        for line in header.read_text().splitlines():
+            match = BINDING_RE.match(line)
+            if not match:
+                continue
+            typedef, name = match.group(1), match.group(2)
+            address = int(match.group(3), 16)
+            previous = by_address.get(address)
+            if previous and previous[0] != name:
+                raise SystemExit(
+                    f"0x{address:08X} is bound as {previous[0]} in "
+                    f"{previous[2]} and as {name} in {header.name}; "
+                    f"refusing to guess which one an opaque seam may reuse")
+            by_address[address] = (name, typedef, header.name)
+            by_name[name] = (address, header.name)
+    return by_address, by_name
+
+
+def merge_bindings(bindings, extra):
+    """Fold computed seam bindings into a scanned (by address, by name) pair.
+
+    The scan only sees `extern T *N;   // 0xADDR`. Seams declared without that
+    trailing comment - the per-element teardowns, WaveOriginalDestructor - are
+    just as real, and a second definition of one of their addresses is the same
+    link error. `extra` is {address: (name, typedef, header)}; the scan wins
+    where both describe an address, and a disagreement refuses.
+    """
+    by_address = dict(bindings[0])
+    by_name = dict(bindings[1])
+    for address, entry in sorted(extra.items()):
+        existing = by_address.get(address)
+        if existing is None:
+            by_address[address] = entry
+            by_name.setdefault(entry[0], (address, entry[2]))
+        elif existing[0] != entry[0]:
+            raise SystemExit(
+                f"0x{address:08X} is bound as {existing[0]} in {existing[2]} "
+                f"and as {entry[0]} in {entry[2]}")
+    return by_address, by_name
+
+
+def side_bindings(pe, functions, source_dir):
+    """{address: (name, typedef, header)} for the seams atexit_thunks.h owns.
+
+    Computed rather than read back, so the init side can dedupe against this
+    file's seams whether or not the copy on disk is current.
+    """
+    rows, _ = collect(pe, functions)
+    bindings = load_bindings(
+        source_dir, exclude=("atexit_thunks.h", "init_thunks.h"))
+    seams, _declare, _includes = resolve_seams(opaque_needs(rows), bindings)
+    table = {address: (name, OPAQUE_NULLARY, "atexit_thunks.h")
+             for address, name in seams.items()}
+    for row in rows:
+        if row["target_name"] == VECTOR_DTOR_NAME:
+            table[row["teardown_address"]] = (
+                ELEMENT_TEARDOWNS[row["teardown_name"]][2], OPAQUE_NULLARY,
+                "atexit_thunks.h")
+    if WAVE_DESTRUCTOR_ADDRESS:
+        table.setdefault(WAVE_DESTRUCTOR_ADDRESS,
+                         ("WaveOriginalDestructor", "func_wave_destructor",
+                          "atexit_thunks.h"))
+    return table
+
+
+def seam_name(mangled: str) -> str:
+    """A seam name for a ctor/dtor/method target, from its own mangled name.
+
+    Deliberately the spelling tools/generate_adjustor_thunks.target_symbol
+    uses, because that is what the seams already sitting in deleting_thunks.h
+    are named after: a target bound there resolves to the same name here and
+    is reused rather than redefined.
+    """
+    match = re.match(r"^(?:j_)?\?\?1(\w+)@@", mangled)
+    if match:
+        return f"{match.group(1)}DtorTarget"
+    match = re.match(r"^(?:j_)?\?\?0(\w+)@@", mangled)
+    if match:
+        return f"{match.group(1)}CtorTarget"
+    match = re.match(r"^\?(\w+)@(\w+)@@", mangled)
+    if match:
+        camel = adjustor_module().camel(match.group(1))
+        return f"{match.group(2)}{camel}Target"
+    return ""
+
+
+def resolve_seams(needs, bindings):
+    """Assign one seam per distinct ADDRESS, reusing what src/*.h already has.
+
+    `needs` maps address -> (mangled target name, required typedef). Returns
+    (address -> seam name, [(address, name, typedef)] to declare here, sorted
+    header names to include for the reused ones). Every refusal is a SystemExit
+    naming both sides, because the alternative is a second definition of one
+    address under two names.
+    """
+    by_address, by_name = bindings
+    seams: dict[int, str] = {}
+    declare: list[tuple[int, str, str]] = []
+    declared: dict[str, int] = {}
+    includes: set[str] = set()
+    for address in sorted(needs):
+        mangled, typedef = needs[address]
+        preferred = seam_name(mangled)
+        if not preferred:
+            raise SystemExit(f"cannot derive a seam name for {mangled} "
+                             f"at 0x{address:08X}")
+        bound = by_address.get(address)
+        if bound is not None:
+            name, bound_typedef, header = bound
+            if header not in SEAM_HEADERS:
+                raise SystemExit(
+                    f"0x{address:08X} ({mangled}) is already bound as {name} "
+                    f"in {header}, which is not a generated seam header; "
+                    f"reusing it would pull that header in here and defining "
+                    f"a second name would be a duplicate definition")
+            compatible = (bound_typedef in NULLARY_TYPEDEFS
+                          if typedef == OPAQUE_NULLARY
+                          else bound_typedef == typedef)
+            if not compatible:
+                raise SystemExit(
+                    f"0x{address:08X} ({mangled}) is bound as {name} of type "
+                    f"{bound_typedef} in {header}, but this needs {typedef}")
+            seams[address] = name
+            includes.add(header)
+            continue
+        clash = by_name.get(preferred)
+        if clash is not None:
+            raise SystemExit(
+                f"seam {preferred} for 0x{address:08X} ({mangled}) is already "
+                f"bound to 0x{clash[0]:08X} in {clash[1]}")
+        if preferred in declared:
+            raise SystemExit(
+                f"seam {preferred} would be defined for both "
+                f"0x{declared[preferred]:08X} and 0x{address:08X}")
+        declared[preferred] = address
+        declare.append((address, preferred, typedef))
+        seams[address] = preferred
+    return seams, declare, sorted(includes)
+
+
+def wrapped_call(indent: str, callee: str, arguments) -> list[str]:
+    """`callee(a, b, c);` wrapped under the open paren at 79 columns."""
+    one_line = f"{indent}{callee}({', '.join(arguments)});"
+    if len(one_line) <= 79:
+        return [one_line]
+    continuation = " " * (len(indent) + len(callee) + 1)
+    lines = [f"{indent}{callee}("]
+    for index, argument in enumerate(arguments):
+        piece = argument + (", " if index + 1 < len(arguments) else ");")
+        if lines[-1].endswith("(") or len(lines[-1]) + len(piece) <= 79:
+            lines[-1] += piece
+        else:
+            lines.append(continuation + piece)
+    return [line.rstrip() for line in lines]
+
+
+def storage_literal(address: int) -> str:
+    return f"reinterpret_cast<void *>(0x{address:08X})"
+
+
+def decode_opaque_teardown_raw(data: bytes, address: int):
+    """(storage, target) read straight off the encoding, or None.
+
+    The capstone path renders every operand to text before anything reads it,
+    which puts a text renderer between the bytes and an address that ends up
+    in committed source. This reads the same two instructions out of the
+    opcode and immediate bytes instead, and collect() requires the two to
+    agree before either is emitted.
+
+        B9 <imm32>   mov ecx, <storage>
+        E9 <rel32>   jmp <teardown>          tail call, or
+        E8 <rel32>   call <teardown> / C3    call then return
+    """
+    if len(data) < 10 or data[0] != 0xB9:
+        return None
+    storage = int.from_bytes(data[1:5], "little")
+    opcode = data[5]
+    if opcode not in (0xE8, 0xE9):
+        return None
+    relative = int.from_bytes(data[6:10], "little", signed=True)
+    target = (address + 10 + relative) & 0xFFFFFFFF
+    rest = data[10:]
+    while rest and rest[-1] in (0x90, 0xCC):     # alignment padding
+        rest = rest[:-1]
+    if rest != (b"\xc3" if opcode == 0xE8 else b""):
+        return None
+    return storage, target
+
+
+def opaque_teardown_row(pe, functions, row, forward):
+    """An opaque-storage row for a ??__F whose class is not modelled.
+
+    Returns the row, or a string saying why the body was left alone. The
+    template is the same two instructions every accepted thunk has; what is
+    checked here is that the target really is a nullary `__thiscall` - the
+    only signature `void(__thiscall)(void *)` can carry - proven twice, from
+    the mangled name and from the callee-pop byte count the body itself ends
+    with. A destructor that popped arguments would corrupt the caller's stack.
+    """
+    target_row = functions.get(forward.target)
+    if target_row is None:
+        return f"target 0x{forward.target:08X} not catalogued"
+    target_name = target_row["name"]
+    receiver = forward.receiver or ""
+    if forward.arguments or not receiver.startswith("global:0x"):
+        return f"target {target_name}: unexpected contract"
+    if not seam_name(target_name):
+        return f"cannot name a seam for target {target_name}"
+    if delegates.name_convention_and_arity(target_name) != ("thiscall", 0):
+        return f"target {target_name} is not a nullary thiscall"
+    pop = adjustor_module().callee_pop(pe, functions, forward.target)
+    if pop != 0:
+        return (f"target {target_name} pops {pop}"
+                if pop is not None
+                else f"target {target_name} callee-pop not determinable")
+
+    address = int(row["address"], 16)
+    raw = decode_opaque_teardown_raw(
+        disasm.read_range(pe, address, entry_extent(row)), address)
+    if raw is None:
+        return f"target {target_name}: bytes are not the opaque template"
+    decoded = (int(forward.receiver.split("global:")[1], 16), forward.target)
+    if raw != decoded:
+        raise SystemExit(
+            f"{row['name']}: capstone reads "
+            f"(0x{decoded[0]:08X}, 0x{decoded[1]:08X}), the encoding reads "
+            f"(0x{raw[0]:08X}, 0x{raw[1]:08X}); refusing to emit either")
+    return {
+        "address": address,
+        "global_address": raw[0],
+        "target_name": target_name,
+        "target_address": raw[1],
+        "opaque": True,
+    }
+
+
 def collect(pe, functions):
     """(domain rows, leftovers): every unrecovered ??__F, proven and sorted."""
     rows = []
@@ -177,8 +501,12 @@ def collect(pe, functions):
             })
             continue
         if target_name not in DOMAINS:
-            leftovers.append(
-                (row["address"], row["name"], f"target {target_name or hex(forward.target)}"))
+            opaque = opaque_teardown_row(pe, functions, row, forward)
+            if isinstance(opaque, str):
+                leftovers.append((row["address"], row["name"], opaque))
+                continue
+            opaque["global_name"] = match.group(1)
+            rows.append(opaque)
             continue
         if forward.arguments or not (forward.receiver or "").startswith("global:0x"):
             leftovers.append((row["address"], row["name"], "unexpected contract"))
@@ -193,18 +521,44 @@ def collect(pe, functions):
     return rows, leftovers
 
 
+def typed(rows):
+    """The rows that name a modelled class, in address order."""
+    return [row for row in rows if not row.get("opaque")]
+
+
+def opaque(rows):
+    """The rows emitted over opaque storage, in address order."""
+    return [row for row in rows if row.get("opaque")]
+
+
+def opaque_needs(rows):
+    """{target address: (mangled name, typedef)} for the opaque rows."""
+    return {row["target_address"]: (row["target_name"], OPAQUE_NULLARY)
+            for row in opaque(rows)}
+
+
 def kind_of(row):
+    if row.get("opaque"):
+        return None
     if row["target_name"] == VECTOR_DTOR_NAME:
         return ELEMENT_TEARDOWNS[row["teardown_name"]][0]
     return DOMAINS[row["target_name"]][0]
 
 
-def render_header(rows) -> str:
+def render_seam_block(declare, comment) -> list[str]:
+    """`extern T *Name;   // 0xADDR` per new seam, in address order."""
+    lines = list(comment)
+    for address, name, typedef in declare:
+        lines.append(f"extern {typedef} *{name};   // 0x{address:08X}")
+    return lines
+
+
+def render_header(rows, declare=(), includes=()) -> str:
     lines = [LICENSE, "#pragma once", ""]
     # Only pointers cross this header, so the element types stay forward
     # declarations; faction.h in particular does not stand alone, and nothing
     # here needs a complete type. The bodies include what they call.
-    kinds = sorted({kind_of(row) for row in rows})
+    kinds = sorted({kind_of(row) for row in typed(rows)})
     for kind in kinds:
         keyword = "struct" if kind == "FactionArt" else "class"
         lines.append(f"{keyword} {kind};")
@@ -238,7 +592,20 @@ def render_header(rows) -> str:
         seam = ELEMENT_TEARDOWNS[name][2]
         lines.append(f"extern func_thiscall_teardown *{seam};")
     lines.append("")
-    for row in rows:
+    if includes or declare:
+        lines.extend(f'#include "{header}"' for header in includes)
+        if includes and declare:
+            lines.append("")
+        lines.extend(render_seam_block(declare, [
+            "// Opaque-storage teardown seams. These globals' classes are not",
+            "// modelled in source, so the thunk hands the storage address",
+            "// straight to the original teardown through a seam rather than",
+            "// naming a type. Seams are deduped on the ADDRESS they default",
+            "// to: one already bound at the same address elsewhere is reused",
+            "// from the header above, never redefined here.",
+        ]))
+        lines.append("")
+    for row in typed(rows):
         lines.append(f"extern {kind_of(row)} *{variable_of(row)};")
     lines.append("")
     for row in rows:
@@ -252,7 +619,7 @@ WAVE_DESTRUCTOR_ADDRESS = 0
 VECTOR_DTOR_ADDRESS = 0
 
 
-def render_source(rows) -> str:
+def render_source(rows, declare=()) -> str:
     lines = [LICENSE, '#include "stdafx.h"', '#include "atexit_thunks.h"']
     # Complete types are needed only where a method is called; array bodies
     # pass pointers through the iterator and stay on the forward declarations.
@@ -274,20 +641,31 @@ def render_source(rows) -> str:
         seam = ELEMENT_TEARDOWNS[name][2]
         lines.append(f"func_thiscall_teardown *{seam} =")
         lines.append(f"    (func_thiscall_teardown *)0x{teardown_addresses[name]:08X};")
+    if declare:
+        lines.append("")
+        lines.append("// The opaque-storage teardowns, each defaulting to the")
+        lines.append("// original destructor the thunk tail jumps to; the")
+        lines.append("// hybrid redirects it to a recovered body at run time.")
+        for address, name, typedef in declare:
+            lines.append(f"{typedef} *{name} =")
+            lines.append(f"    ({typedef} *)0x{address:08X};")
     lines.append("")
-    for row in rows:
+    for row in typed(rows):
         lines.append(f"{kind_of(row)} *{variable_of(row)} = "
                      f"({kind_of(row)} *)0x{row['global_address']:08X};")
     lines.append("")
     for row in rows:
-        if row["target_name"] == VECTOR_DTOR_NAME:
+        if row.get("opaque"):
+            body = wrapped_call("    ", row["seam"],
+                                [storage_literal(row["global_address"])])
+        elif row["target_name"] == VECTOR_DTOR_NAME:
             seam = ELEMENT_TEARDOWNS[row["teardown_name"]][2]
-            body = (f"    VectorDtorIterator({variable_of(row)}, "
-                    f"0x{row['element_size']:X}, {row['count']}, {seam});")
+            body = [f"    VectorDtorIterator({variable_of(row)}, "
+                    f"0x{row['element_size']:X}, {row['count']}, {seam});"]
         else:
             call = DOMAINS[row["target_name"]][2]
-            body = (f"    WaveOriginalDestructor({variable_of(row)});"
-                    if call is None else f"    {variable_of(row)}{call};")
+            body = [f"    WaveOriginalDestructor({variable_of(row)});"
+                    if call is None else f"    {variable_of(row)}{call};"]
         lines.append("/*")
         lines.append(f"Purpose: Atexit teardown thunk for {row['global_name']}.")
         lines.append(f"Original Offset: {row['address']:08X}")
@@ -295,7 +673,7 @@ def render_source(rows) -> str:
         lines.append("Status: Complete")
         lines.append("*/")
         lines.append(f"void __cdecl destroy_{snake(row['global_name'])}() {{")
-        lines.append(body)
+        lines.extend(body)
         lines.append("}")
         lines.append("")
     return "\n".join(lines)
@@ -344,6 +722,24 @@ def render_tests(rows) -> str:
                    f"&{variable_of(row)}, 0x{row['element_size']:X}, "
                    f"{row['count']}, &{seam}}},")
     out.append("};")
+    if opaque(rows):
+        out.append("// The opaque-storage thunks carry no typed global to")
+        out.append("// rebind, so the storage address itself is the")
+        out.append("// expectation: rebind the teardown seam and check the")
+        out.append("// pointer it is handed. Two thunks sharing a seam")
+        out.append("// (NetMsg, Palette) each still assert their own address.")
+        out.append("struct AtexitOpaqueCase {")
+        out.append("    void(__cdecl *thunk)();")
+        out.append("    func_thiscall_teardown **slot;")
+        out.append("    void *storage;")
+        out.append("};")
+        out.append("const AtexitOpaqueCase g_atexit_opaque_cases[] = {")
+        for row in opaque(rows):
+            entry = (f"    {{&destroy_{snake(row['global_name'])}, "
+                     f"&{row['seam']},")
+            out.append(entry)
+            out.append(f"     {storage_literal(row['global_address'])}}},")
+        out.append("};")
     out.append("""
 Wave *g_atexit_wave_seen;
 int g_atexit_wave_calls;
@@ -365,8 +761,15 @@ void __stdcall observe_vector_dtor(void *array, unsigned int element_size,
     g_vector_teardown_seen = teardown;
     ++g_vector_calls;
 }
-int g_vector_sentinel;
-}  // namespace
+int g_vector_sentinel;""")
+    if opaque(rows):
+        out.append("""void *g_atexit_opaque_seen;
+int g_atexit_opaque_calls;
+void __thiscall observe_opaque_teardown(void *object) {
+    g_atexit_opaque_seen = object;
+    ++g_atexit_opaque_calls;
+}""")
+    out.append("""}  // namespace
 
 void test_atexit_teardown_thunks() {
     // Every thunk is "tear down the object at this fixed address". Rebinding
@@ -476,6 +879,17 @@ void test_atexit_teardown_thunks() {
     // Buffer and ButtonGroup teardowns are already source-owned, so each
     // thunk is checked against ground truth directly: run the real teardown
     // on an identical twin and require the bytes to agree.
+    //
+    // Buffer::close reads *BufferResetValue520, whose default target is an
+    // address in the original image. Nothing maps that address in the
+    // standalone leaf process, so it has to be repointed at a local slot
+    // first. This suite got away without it for a long time only because the
+    // address happened to fall inside the test binary's own image; growing
+    // the binary moved it outside and turned it into a page fault in the
+    // release build while debug still passed.
+    uint32_t *const saved_reset_520 = BufferResetValue520;
+    uint32_t reset_520_slot = 0;
+    BufferResetValue520 = &reset_520_slot;
     for (const AtexitThunkCase &entry : g_atexit_buffer_cases) {
         alignas(4) uint8_t fake[sizeof(Buffer)] = {};
         alignas(4) uint8_t twin[sizeof(Buffer)] = {};
@@ -487,6 +901,7 @@ void test_atexit_teardown_thunks() {
         expect_storage_bytes(fake, twin, sizeof(fake));
         *slot = saved;
     }
+    BufferResetValue520 = saved_reset_520;
     for (const AtexitThunkCase &entry : g_atexit_group_cases) {
         alignas(4) uint8_t fake[sizeof(ButtonGroup)];
         alignas(4) uint8_t twin[sizeof(ButtonGroup)];
@@ -557,8 +972,26 @@ void test_atexit_teardown_thunks() {
         expect(time_close_targets[0] == reinterpret_cast<Time *>(fake + 8));
         *slot = saved;
     }
-
-    SpriteFree = saved_sprite_free;
+""")
+    if opaque(rows):
+        out.append(
+            """    // Opaque-storage thunks: the whole body is to hand this
+    // address to that teardown, so the rebound seam receiving exactly
+    // the recorded address, exactly once, is the whole contract. The
+    // address is a literal in the body rather than a rebindable global,
+    // which is what lets one seam serve two thunks over different storage.
+    for (const AtexitOpaqueCase &entry : g_atexit_opaque_cases) {
+        func_thiscall_teardown *const saved = *entry.slot;
+        *entry.slot = &observe_opaque_teardown;
+        g_atexit_opaque_calls = 0;
+        g_atexit_opaque_seen = nullptr;
+        entry.thunk();
+        expect(g_atexit_opaque_calls == 1);
+        expect(g_atexit_opaque_seen == entry.storage);
+        *entry.slot = saved;
+    }
+""")
+    out.append("""    SpriteFree = saved_sprite_free;
     SpriteMemoryUsed = saved_sprite_memory;
     CaviarDataFreeRecord = saved_caviar_free;
     TextureFree = saved_texture_free;
@@ -574,6 +1007,11 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--exe", type=Path, default=disasm.DEFAULT_EXE)
     parser.add_argument("--scratch-dir", type=Path, required=True)
+    parser.add_argument("--source-dir", type=Path,
+                        default=REPO_ROOT / "src",
+                        help="where the committed source pair is written; "
+                             "point it at a scratch tree to diff a change "
+                             "without touching src/")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -593,16 +1031,30 @@ def main() -> int:
         raise SystemExit("expected exactly one vector destructor iterator")
     VECTOR_DTOR_ADDRESS = vector_dtors[0]
     rows, leftovers = collect(pe, functions)
+    # Seams dedupe on address against what src/*.h already binds. This file's
+    # own output is excluded so a rerun does not read last run's seams back as
+    # prior art, and init_thunks.h is excluded because nothing here includes
+    # it - reusing from there would invert the dependency between the pair.
+    bindings = load_bindings(REPO_ROOT / "src",
+                             exclude=("atexit_thunks.h", "init_thunks.h"))
+    seams, declare, includes = resolve_seams(opaque_needs(rows), bindings)
+    for row in opaque(rows):
+        row["seam"] = seams[row["target_address"]]
 
     by_domain = {}
     for row in rows:
         label = kind_of(row)
-        if row["target_name"] == VECTOR_DTOR_NAME:
+        if label is None:
+            label = "opaque"
+        elif row["target_name"] == VECTOR_DTOR_NAME:
             label += "[]"
         by_domain.setdefault(label, []).append(row)
     print(f"thunks accepted: {len(rows)}")
     for domain, entries in sorted(by_domain.items(), key=lambda i: -len(i[1])):
         print(f"  {domain:12} {len(entries):4}")
+    print(f"opaque seams: {len(declare)} defined here, "
+          f"{len(seams) - len(declare)} reused from {', '.join(includes)}"
+          if includes else f"opaque seams: {len(declare)} defined here")
     if leftovers:
         print(f"left alone: {len(leftovers)}")
         for address, name, reason in leftovers[:10]:
@@ -611,19 +1063,26 @@ def main() -> int:
     names = [row["global_name"] for row in rows]
     if len(set(names)) != len(names):
         raise SystemExit("duplicate global names; refusing to emit")
+    symbols = [snake(row["global_name"]) for row in rows]
+    if len(set(symbols)) != len(symbols):
+        raise SystemExit("duplicate emitted symbols; refusing to emit")
 
     if args.dry_run:
         return 0
 
-    (REPO_ROOT / "src" / "atexit_thunks.h").write_text(render_header(rows))
-    (REPO_ROOT / "src" / "atexit_thunks.cpp").write_text(render_source(rows))
+    source_dir = Path(args.source_dir)
+    source_dir.mkdir(parents=True, exist_ok=True)
+    (source_dir / "atexit_thunks.h").write_text(
+        render_header(rows, declare, includes))
+    (source_dir / "atexit_thunks.cpp").write_text(render_source(rows, declare))
     args.scratch_dir.mkdir(parents=True, exist_ok=True)
     (args.scratch_dir / "atexit-thunk-tests.cpp").write_text(render_tests(rows))
     wire = "\n".join(
         f"0x{row['address']:08X} destroy_{snake(row['global_name'])}"
         for row in rows) + "\n"
     (args.scratch_dir / "atexit-wire.txt").write_text(wire)
-    print("emitted src/atexit_thunks.{h,cpp}, test fragment, wire list")
+    print(f"emitted {source_dir}/atexit_thunks.{{h,cpp}}, test fragment, "
+          "wire list")
     return 0
 
 

@@ -118,6 +118,84 @@ func_thiscall_teardown *TimeInitCtor = &timeinitctor_default;
 func_thiscall_teardown *WaveDeviceInitCtor = &wavedeviceinitctor_default;
 func_thiscall_teardown *WaveInitCtor = &waveinitctor_default;
 
+// The opaque-storage constructors, each defaulting to
+// the original the thunk calls; the hybrid redirects
+// it to a recovered body at run time.
+func_thiscall_teardown *BaseWinCtorTarget =
+    (func_thiscall_teardown *)0x00408490;
+func_thiscall_teardown *BattleWinCtorTarget =
+    (func_thiscall_teardown *)0x00422EE0;
+func_thiscall_teardown *CouncWinCtorTarget =
+    (func_thiscall_teardown *)0x00428620;
+func_thiscall_teardown *DatalinkCtorTarget =
+    (func_thiscall_teardown *)0x00428FC0;
+func_thiscall_teardown *DesignWinCtorTarget =
+    (func_thiscall_teardown *)0x00434480;
+func_thiscall_teardown *DiploPopCtorTarget =
+    (func_thiscall_teardown *)0x0043EFF0;
+func_thiscall_teardown *DiploWinCtorTarget =
+    (func_thiscall_teardown *)0x00444FC0;
+func_thiscall_teardown *FXCtorTarget =
+    (func_thiscall_teardown *)0x004482A0;
+func_thiscall_teardown *FameWinCtorTarget =
+    (func_thiscall_teardown *)0x0044B200;
+func_thiscall_teardown *FactionArtCtorTarget =
+    (func_thiscall_teardown *)0x00455F10;
+func_thiscall_teardown *InfoWinCtorTarget =
+    (func_thiscall_teardown *)0x00459500;
+func_thiscall_teardown *MainInterfaceCtorTarget =
+    (func_thiscall_teardown *)0x0045EF10;
+func_opaque_ctor_i *MapWinCtorTarget =
+    (func_opaque_ctor_i *)0x004626E0;
+func_thiscall_teardown *MessageWinCtorTarget =
+    (func_thiscall_teardown *)0x00472190;
+func_thiscall_teardown *MonuWinCtorTarget =
+    (func_thiscall_teardown *)0x00477C80;
+func_thiscall_teardown *MultiWinCtorTarget =
+    (func_thiscall_teardown *)0x0047A590;
+func_opaque_ctor_iii *NetMsgCtorTarget =
+    (func_opaque_ctor_iii *)0x0047ACF0;
+func_thiscall_teardown *NetWinCtorTarget =
+    (func_thiscall_teardown *)0x00481C50;
+func_thiscall_teardown *NewTechWinCtorTarget =
+    (func_thiscall_teardown *)0x004849D0;
+func_thiscall_teardown *PickWinCtorTarget =
+    (func_thiscall_teardown *)0x0048AC10;
+func_opaque_ctor_i *PlanWinCtorTarget =
+    (func_opaque_ctor_i *)0x0048BCD0;
+func_thiscall_teardown *PrefWinCtorTarget =
+    (func_thiscall_teardown *)0x004921E0;
+func_thiscall_teardown *QuayleWinCtorTarget =
+    (func_thiscall_teardown *)0x00496810;
+func_thiscall_teardown *ReportIfCtorTarget =
+    (func_thiscall_teardown *)0x004AD170;
+func_thiscall_teardown *ReportWinCtorTarget =
+    (func_thiscall_teardown *)0x004AD6B0;
+func_thiscall_teardown *SocialWinCtorTarget =
+    (func_thiscall_teardown *)0x004AE9E0;
+func_thiscall_teardown *StatusWinCtorTarget =
+    (func_thiscall_teardown *)0x004BA1A0;
+func_thiscall_teardown *TutWinCtorTarget =
+    (func_thiscall_teardown *)0x004BA6B0;
+func_thiscall_teardown *WorldWinCtorTarget =
+    (func_thiscall_teardown *)0x004C4BF0;
+func_thiscall_teardown *Midi_DeviceCtorTarget =
+    (func_thiscall_teardown *)0x004C5740;
+func_thiscall_teardown *Wave_In_DeviceCtorTarget =
+    (func_thiscall_teardown *)0x004C5940;
+func_thiscall_teardown *AmbienceCtorTarget =
+    (func_thiscall_teardown *)0x004C8460;
+func_opaque_ctor_i *ConsoleCtorTarget =
+    (func_opaque_ctor_i *)0x0050F460;
+func_thiscall_teardown *NetDaemonCtorTarget =
+    (func_thiscall_teardown *)0x005389F0;
+func_thiscall_teardown *FontQueueCtorTarget =
+    (func_thiscall_teardown *)0x00559290;
+func_thiscall_teardown *MultiDebugCtorTarget =
+    (func_thiscall_teardown *)0x005C97F0;
+func_thiscall_teardown *PaletteCtorTarget =
+    (func_thiscall_teardown *)0x005FE2A0;
+
 Sprite *g_NEWTECHWIN_SPRITES = (Sprite *)0x00822610;
 Caviar *g_VEHDRAW_CAVIAR = (Caviar *)0x008CC828;
 Wave_Device *g_WAVE_DEVICE = (Wave_Device *)0x0090D978;
@@ -389,6 +467,17 @@ void __cdecl construct_unused_sprite_var07() {
 }
 
 /*
+Purpose: Dynamic initializer for g_BASEWIN; registers its ??__F teardown.
+Original Offset: 004083B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_basewin() {
+    BaseWinCtorTarget(reinterpret_cast<void *>(0x006A7628));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004083D0));
+}
+
+/*
 Purpose: Dynamic initializer for g_BASEWIN_WAVE; registers its ??__F teardown.
 Original Offset: 004083E0
 Return Value: n/a
@@ -397,6 +486,28 @@ Status: Complete
 void __cdecl construct_basewin_wave() {
     WaveInitCtor(g_BASEWIN_WAVE);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00408400));
+}
+
+/*
+Purpose: Dynamic initializer for g_BattleWin; registers its ??__F teardown.
+Original Offset: 004219B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_battlewin() {
+    BattleWinCtorTarget(reinterpret_cast<void *>(0x006EEED8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004219D0));
+}
+
+/*
+Purpose: Dynamic initializer for g_COUNCWIN; registers its ??__F teardown.
+Original Offset: 004243A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_councwin() {
+    CouncWinCtorTarget(reinterpret_cast<void *>(0x006FEC80));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004243C0));
 }
 
 /*
@@ -411,6 +522,28 @@ void __cdecl construct_credits_wave() {
 }
 
 /*
+Purpose: Dynamic initializer for g_DATALINK; registers its ??__F teardown.
+Original Offset: 00428F90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_datalink() {
+    DatalinkCtorTarget(reinterpret_cast<void *>(0x00703EA0));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00428FB0));
+}
+
+/*
+Purpose: Dynamic initializer for g_DESIGNWIN; registers its ??__F teardown.
+Original Offset: 00432850
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_designwin() {
+    DesignWinCtorTarget(reinterpret_cast<void *>(0x0071F2B0));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00432870));
+}
+
+/*
 Purpose: Dynamic initializer for g_DESIGNWIN_WAVE; registers its ??__F teardown.
 Original Offset: 00432880
 Return Value: n/a
@@ -419,6 +552,28 @@ Status: Complete
 void __cdecl construct_designwin_wave() {
     WaveInitCtor(g_DESIGNWIN_WAVE);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004328A0));
+}
+
+/*
+Purpose: Dynamic initializer for g_DIPLOPOP; registers its ??__F teardown.
+Original Offset: 0043EFC0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_diplopop() {
+    DiploPopCtorTarget(reinterpret_cast<void *>(0x00733990));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0043EFE0));
+}
+
+/*
+Purpose: Dynamic initializer for g_DIPLOWIN; registers its ??__F teardown.
+Original Offset: 00440F00
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_diplowin() {
+    DiploWinCtorTarget(reinterpret_cast<void *>(0x0073ACD8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00440F20));
 }
 
 /*
@@ -488,6 +643,39 @@ void __cdecl construct_passover_wave() {
 }
 
 /*
+Purpose: Dynamic initializer for g_FX; registers its ??__F teardown.
+Original Offset: 00445590
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_fx() {
+    FXCtorTarget(reinterpret_cast<void *>(0x00749CF8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455B0));
+}
+
+/*
+Purpose: Dynamic initializer for g_AMBIENCE; registers its ??__F teardown.
+Original Offset: 004455C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_ambience() {
+    AmbienceCtorTarget(reinterpret_cast<void *>(0x0074DA40));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455E0));
+}
+
+/*
+Purpose: Dynamic initializer for g_FAMEWIN; registers its ??__F teardown.
+Original Offset: 004483D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_famewin() {
+    FameWinCtorTarget(reinterpret_cast<void *>(0x0074DAF8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004483F0));
+}
+
+/*
 Purpose: Dynamic initializer for g_PCX_PARSE_TEMP_BUFFER1; registers its ??__F teardown.
 Original Offset: 0044CC20
 Return Value: n/a
@@ -496,6 +684,18 @@ Status: Complete
 void __cdecl construct_pcx_parse_temp_buffer1() {
     BufferInitCtor(g_PCX_PARSE_TEMP_BUFFER1);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CC40));
+}
+
+/*
+Purpose: Dynamic initializer for FactionArt; registers its ??__F teardown.
+Original Offset: 0044CC50
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_factionart() {
+    VectorCtorIterator(reinterpret_cast<void *>(0x0078E978), 0x65C, 8,
+                       FactionArtCtorTarget, FactionArtElementTeardown);
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CC80));
 }
 
 /*
@@ -3645,6 +3845,28 @@ void __cdecl construct_basewin_sprites() {
 }
 
 /*
+Purpose: Dynamic initializer for g_INFOWIN; registers its ??__F teardown.
+Original Offset: 004562C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_infowin() {
+    InfoWinCtorTarget(reinterpret_cast<void *>(0x007AD2A0));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004562E0));
+}
+
+/*
+Purpose: Dynamic initializer for g_MAININTERFACE; registers its ??__F teardown.
+Original Offset: 00459560
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_maininterface() {
+    MainInterfaceCtorTarget(reinterpret_cast<void *>(0x007AE820));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00459580));
+}
+
+/*
 Purpose: Dynamic initializer for g_MAININTERFACE_WAVE; registers its ??__F teardown.
 Original Offset: 00459590
 Return Value: n/a
@@ -3667,6 +3889,28 @@ void __cdecl construct_jackal_font() {
 }
 
 /*
+Purpose: Dynamic initializer for g_MAPWIN; registers its ??__F teardown.
+Original Offset: 00462080
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_mapwin() {
+    MapWinCtorTarget(reinterpret_cast<void *>(0x007D4060), 1);
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004620A0));
+}
+
+/*
+Purpose: Dynamic initializer for g_MESSAGEWIN; registers its ??__F teardown.
+Original Offset: 00471320
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_messagewin() {
+    MessageWinCtorTarget(reinterpret_cast<void *>(0x007F67F8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00471340));
+}
+
+/*
 Purpose: Dynamic initializer for g_IFACE_GREEN_RIGHT_ARROW_SPRITE; registers its ??__F teardown.
 Original Offset: 00471350
 Return Value: n/a
@@ -3675,6 +3919,28 @@ Status: Complete
 void __cdecl construct_iface_green_right_arrow_sprite() {
     VectorCtorIterator(g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, SpriteElementCtor, SpriteElementTeardown);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00471380));
+}
+
+/*
+Purpose: Dynamic initializer for g_MONUWIN; registers its ??__F teardown.
+Original Offset: 00472200
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_monuwin() {
+    MonuWinCtorTarget(reinterpret_cast<void *>(0x007F9F58));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00472220));
+}
+
+/*
+Purpose: Dynamic initializer for g_MULTIWIN; registers its ??__F teardown.
+Original Offset: 00477E10
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_multiwin() {
+    MultiWinCtorTarget(reinterpret_cast<void *>(0x007FD648));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00477E30));
 }
 
 /*
@@ -3689,6 +3955,50 @@ void __cdecl construct_multiwin_wave() {
 }
 
 /*
+Purpose: Dynamic initializer for g_NETMSG1; registers its ??__F teardown.
+Original Offset: 0047A770
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_netmsg1() {
+    NetMsgCtorTarget(reinterpret_cast<void *>(0x00805338), 4096, 8, 0);
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
+}
+
+/*
+Purpose: Dynamic initializer for g_NETMSG2; registers its ??__F teardown.
+Original Offset: 0047A7A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_netmsg2() {
+    NetMsgCtorTarget(reinterpret_cast<void *>(0x007FFF80), -5, 40, 1);
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
+}
+
+/*
+Purpose: Dynamic initializer for g_NETWIN; registers its ??__F teardown.
+Original Offset: 0047AFF0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_netwin() {
+    NetWinCtorTarget(reinterpret_cast<void *>(0x0080A6F8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047B010));
+}
+
+/*
+Purpose: Dynamic initializer for g_NEWTECHWIN; registers its ??__F teardown.
+Original Offset: 00483850
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_newtechwin() {
+    NewTechWinCtorTarget(reinterpret_cast<void *>(0x00811E40));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00483870));
+}
+
+/*
 Purpose: Dynamic initializer for g_NEWTECHWIN_SPRITES; registers its ??__F teardown.
 Original Offset: 00483880
 Return Value: n/a
@@ -3700,6 +4010,39 @@ void __cdecl construct_newtechwin_sprites() {
 }
 
 /*
+Purpose: Dynamic initializer for g_PICKWIN; registers its ??__F teardown.
+Original Offset: 00488750
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_pickwin() {
+    PickWinCtorTarget(reinterpret_cast<void *>(0x00822718));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00488770));
+}
+
+/*
+Purpose: Dynamic initializer for g_PLANWIN; registers its ??__F teardown.
+Original Offset: 0048AE00
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_planwin() {
+    PlanWinCtorTarget(reinterpret_cast<void *>(0x00834D70), 1);
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048AE20));
+}
+
+/*
+Purpose: Dynamic initializer for g_PREFWIN; registers its ??__F teardown.
+Original Offset: 0048D4F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_prefwin() {
+    PrefWinCtorTarget(reinterpret_cast<void *>(0x008578D8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048D510));
+}
+
+/*
 Purpose: Dynamic initializer for g_PREFWIN_BUTTONGROUP; registers its ??__F teardown.
 Original Offset: 0048D520
 Return Value: n/a
@@ -3708,6 +4051,72 @@ Status: Complete
 void __cdecl construct_prefwin_buttongroup() {
     ButtonGroupInitCtor(g_PREFWIN_BUTTONGROUP);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048D540));
+}
+
+/*
+Purpose: Dynamic initializer for g_QUAYLEWIN; registers its ??__F teardown.
+Original Offset: 00495170
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_quaylewin() {
+    QuayleWinCtorTarget(reinterpret_cast<void *>(0x00872CB0));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00495190));
+}
+
+/*
+Purpose: Dynamic initializer for g_REPORTIF; registers its ??__F teardown.
+Original Offset: 00496900
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_reportif() {
+    ReportIfCtorTarget(reinterpret_cast<void *>(0x00885F38));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00496920));
+}
+
+/*
+Purpose: Dynamic initializer for g_REPORTWIN; registers its ??__F teardown.
+Original Offset: 00496930
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_reportwin() {
+    ReportWinCtorTarget(reinterpret_cast<void *>(0x00876478));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00496950));
+}
+
+/*
+Purpose: Dynamic initializer for SocialWinParent; registers its ??__F teardown.
+Original Offset: 004AE9B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_socialwinparent() {
+    SocialWinCtorTarget(reinterpret_cast<void *>(0x008A6270));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004AE9D0));
+}
+
+/*
+Purpose: Dynamic initializer for g_STATUSWIN; registers its ??__F teardown.
+Original Offset: 004B3FA0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_statuswin() {
+    StatusWinCtorTarget(reinterpret_cast<void *>(0x008C5568));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004B3FC0));
+}
+
+/*
+Purpose: Dynamic initializer for g_TUTWIN; registers its ??__F teardown.
+Original Offset: 004BA5C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_tutwin() {
+    TutWinCtorTarget(reinterpret_cast<void *>(0x008C6E68));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BA5E0));
 }
 
 /*
@@ -3733,6 +4142,17 @@ void __cdecl construct_vehdraw_buffer() {
 }
 
 /*
+Purpose: Dynamic initializer for g_WORLDWIN; registers its ??__F teardown.
+Original Offset: 004C38B0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_worldwin() {
+    WorldWinCtorTarget(reinterpret_cast<void *>(0x008E9F60));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C38D0));
+}
+
+/*
 Purpose: Dynamic initializer for g_WAVE_DEVICE; registers its ??__F teardown.
 Original Offset: 004C5C50
 Return Value: n/a
@@ -3741,6 +4161,39 @@ Status: Complete
 void __cdecl construct_wave_device() {
     WaveDeviceInitCtor(g_WAVE_DEVICE);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5C70));
+}
+
+/*
+Purpose: Dynamic initializer for g_MIDI_DEVICE; registers its ??__F teardown.
+Original Offset: 004C5C80
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_midi_device() {
+    Midi_DeviceCtorTarget(reinterpret_cast<void *>(0x0090D950));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5CA0));
+}
+
+/*
+Purpose: Dynamic initializer for g_WAVE_IN_DEVICE; registers its ??__F teardown.
+Original Offset: 004C5CB0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_wave_in_device() {
+    Wave_In_DeviceCtorTarget(reinterpret_cast<void *>(0x0090DB50));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5CD0));
+}
+
+/*
+Purpose: Dynamic initializer for g_CONSOLE; registers its ??__F teardown.
+Original Offset: 0050E850
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_console() {
+    ConsoleCtorTarget(reinterpret_cast<void *>(0x009156B0), 1);
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0050E870));
 }
 
 /*
@@ -3763,6 +4216,39 @@ Status: Complete
 void __cdecl construct_cursor_sprites() {
     VectorCtorIterator(g_CURSOR_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0052DAF0));
+}
+
+/*
+Purpose: Dynamic initializer for g_NETDAEMON; registers its ??__F teardown.
+Original Offset: 0052DB10
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_netdaemon() {
+    NetDaemonCtorTarget(reinterpret_cast<void *>(0x0093CD90));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0052DB30));
+}
+
+/*
+Purpose: Dynamic initializer for g_FONTQUEUE_VAL2; registers its ??__F teardown.
+Original Offset: 00559230
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_fontqueue_val2() {
+    FontQueueCtorTarget(reinterpret_cast<void *>(0x0093FB88));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00559250));
+}
+
+/*
+Purpose: Dynamic initializer for g_FONTQUEUE_VAL1; registers its ??__F teardown.
+Original Offset: 00559260
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_fontqueue_val1() {
+    FontQueueCtorTarget(reinterpret_cast<void *>(0x0093FAE8));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00559280));
 }
 
 /*
@@ -3807,6 +4293,39 @@ Status: Complete
 void __cdecl construct_wave_general() {
     WaveInitCtor(g_WAVE_GENERAL);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005B9C30));
+}
+
+/*
+Purpose: Dynamic initializer for g_PALETTE1; registers its ??__F teardown.
+Original Offset: 005BEC40
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_palette1() {
+    PaletteCtorTarget(reinterpret_cast<void *>(0x0094C590));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005BEC60));
+}
+
+/*
+Purpose: Dynamic initializer for g_PALETTE2; registers its ??__F teardown.
+Original Offset: 005BEC70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_palette2() {
+    PaletteCtorTarget(reinterpret_cast<void *>(0x009523A0));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005BEC90));
+}
+
+/*
+Purpose: Dynamic initializer for g_MULTIDEBUG; registers its ??__F teardown.
+Original Offset: 005C97C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl construct_multidebug() {
+    MultiDebugCtorTarget(reinterpret_cast<void *>(0x009B22F0));
+    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005C97E0));
 }
 
 /*
