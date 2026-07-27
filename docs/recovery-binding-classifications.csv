@@ -141,3 +141,97 @@ XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the
 MapWinOriginalDrawRadius,ui_dependency,recover_map_win_draw_radius,Temporary dependency for the recovered draw_tile and draw_tiles broadcasts until MapWin::draw_radius is source-owned
 BufferHLine,ui_dependency,recover_buffer_hline,Temporary dependency for the recovered two-color box outline until the clipped horizontal line primitive is source-owned
 BufferVLine,ui_dependency,recover_buffer_vline,Temporary dependency for the recovered two-color box outline until the clipped vertical line primitive is source-owned
+CheckBoxAttachTarget,ui_dependency,recover_check_box_attach,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060E800 is source-owned
+CheckBoxOnDialogFocusTarget,ui_dependency,recover_check_box_on_dialog_focus,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FB90 is source-owned
+CheckBoxOnKeyDownTarget,ui_dependency,recover_check_box_on_key_down,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060F8B0 is source-owned
+CheckBoxOnLeftDoubleClickTarget,ui_dependency,recover_check_box_on_left_double_click,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FA80 is source-owned
+CheckBoxOnLeftDownTarget,ui_dependency,recover_check_box_on_left_down,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060F700 is source-owned
+CheckBoxOnMouseLeaveTarget,ui_dependency,recover_check_box_on_mouse_leave,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FC30 is source-owned
+CheckBoxOnMouseMoveTarget,ui_dependency,recover_check_box_on_mouse_move,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FBB0 is source-owned
+CheckBoxOnRedrawTarget,ui_dependency,recover_check_box_on_redraw,"Temporary dependency for the recovered CheckBox::thunk1, CheckBox::thunk3 adjustor thunks until the method at 0x0060FAB0 is source-owned"
+ConsoleOnKeyClickTarget,ui_dependency,recover_console_on_key_click,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x005178C0 is source-owned
+ConsoleOnNcHittestTarget,ui_dependency,recover_console_on_nc_hittest,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050F680 is source-owned
+ConsoleOnNcLeftDownTarget,ui_dependency,recover_console_on_nc_left_down,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050FB10 is source-owned
+ConsoleOnNcLeftUpTarget,ui_dependency,recover_console_on_nc_left_up,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050FE70 is source-owned
+ConsoleOnNcMouseMoveTarget,ui_dependency,recover_console_on_nc_mouse_move,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x00510110 is source-owned
+ConsoleOnPostRedrawNcBufferTarget,ui_dependency,recover_console_on_post_redraw_nc_buffer,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050F960 is source-owned
+ConsoleOnSysCloseTarget,ui_dependency,recover_console_on_sys_close,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0051D7C0 is source-owned
+ConsoleScalarDeleteTarget,ui_dependency,recover_console_scalar_delete,"Temporary dependency for the recovered Console::thunk1, Console::thunk2 adjustor thunks until the method at 0x0051DDF0 is source-owned"
+DialogsAttachTarget,ui_dependency,recover_dialogs_attach,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612FE0 is source-owned
+DialogsOnDialogFocusTarget,ui_dependency,recover_dialogs_on_dialog_focus,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x006130E0 is source-owned
+DialogsOnKeyDownTarget,ui_dependency,recover_dialogs_on_key_down,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612CC0 is source-owned
+DialogsOnLeftClickTarget,ui_dependency,recover_dialogs_on_left_click,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612E80 is source-owned
+DialogsOnLeftDoubleClickTarget,ui_dependency,recover_dialogs_on_left_double_click,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612D60 is source-owned
+DialogsOnLeftDownTarget,ui_dependency,recover_dialogs_on_left_down,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612C20 is source-owned
+DialogsOnLeftUpTarget,ui_dependency,recover_dialogs_on_left_up,Adjustor thunks bind 0x00612F10 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnMouseLeaveTarget,ui_dependency,recover_dialogs_on_mouse_leave,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612AE0 is source-owned
+DialogsOnMouseMoveTarget,ui_dependency,recover_dialogs_on_mouse_move,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612B80 is source-owned
+DialogsOnMousewheelTarget,ui_dependency,recover_dialogs_on_mousewheel,Adjustor thunks bind 0x00612FC0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnRedrawTarget,ui_dependency,recover_dialogs_on_redraw,"Temporary dependency for the recovered Dialogs::thunk1, Dialogs::thunk3 adjustor thunks until the method at 0x00612E00 is source-owned"
+DialogsOnRightClickTarget,ui_dependency,recover_dialogs_on_right_click,Adjustor thunks bind 0x00612F60 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnRightDoubleClickTarget,ui_dependency,recover_dialogs_on_right_double_click,Adjustor thunks bind 0x00612EF0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnRightDownTarget,ui_dependency,recover_dialogs_on_right_down,Adjustor thunks bind 0x00612ED0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnRightUpTarget,ui_dependency,recover_dialogs_on_right_up,Adjustor thunks bind 0x00612F40 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnScrollCreateTarget,ui_dependency,recover_dialogs_on_scroll_create,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00613220 is source-owned
+DialogsOnScrollDeleteTarget,ui_dependency,recover_dialogs_on_scroll_delete,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00613260 is source-owned
+DialogsOnScrolledTarget,ui_dependency,recover_dialogs_on_scrolled,Adjustor thunks bind 0x00612F80 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOnScrollingTarget,ui_dependency,recover_dialogs_on_scrolling,Adjustor thunks bind 0x00612FA0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsPassDialogFocusTarget,ui_dependency,recover_dialogs_pass_dialog_focus,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00613180 is source-owned
+DialogsScalarDeleteTarget,ui_dependency,recover_dialogs_scalar_delete,Adjustor thunks bind 0x00407100 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+EditGroupAttachTarget,ui_dependency,recover_edit_group_attach,Temporary dependency for the recovered EditGroup::thunk1 adjustor thunks until the method at 0x00611AF0 is source-owned
+EditGroupOnDialogFocusTarget,ui_dependency,recover_edit_group_on_dialog_focus,Temporary dependency for the recovered EditGroup::thunk1 adjustor thunks until the method at 0x00612670 is source-owned
+EditGroupOnRedrawTarget,ui_dependency,recover_edit_group_on_redraw,"Temporary dependency for the recovered EditGroup::thunk1, EditGroup::thunk3 adjustor thunks until the method at 0x00612450 is source-owned"
+EditGroupPassDialogFocusTarget,ui_dependency,recover_edit_group_pass_dialog_focus,Temporary dependency for the recovered EditGroup::thunk1 adjustor thunks until the method at 0x006126C0 is source-owned
+ListBoxAttachTarget,ui_dependency,recover_list_box_attach,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060A670 is source-owned
+ListBoxOnDialogFocusTarget,ui_dependency,recover_list_box_on_dialog_focus,Adjustor thunks bind 0x0060C7C0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+ListBoxOnKeyDownTarget,ui_dependency,recover_list_box_on_key_down,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060AF90 is source-owned
+ListBoxOnLeftDoubleClickTarget,ui_dependency,recover_list_box_on_left_double_click,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060C710 is source-owned
+ListBoxOnLeftDownTarget,ui_dependency,recover_list_box_on_left_down,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060AA60 is source-owned
+ListBoxOnMouseLeaveTarget,ui_dependency,recover_list_box_on_mouse_leave,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060CE10 is source-owned
+ListBoxOnMouseMoveTarget,ui_dependency,recover_list_box_on_mouse_move,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060CBC0 is source-owned
+ListBoxOnMousewheelTarget,ui_dependency,recover_list_box_on_mousewheel,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060CB70 is source-owned
+ListBoxOnRedrawTarget,ui_dependency,recover_list_box_on_redraw,"Temporary dependency for the recovered ListBox::thunk1, ListBox::thunk3 adjustor thunks until the method at 0x0060C350 is source-owned"
+ListBoxOnRightDoubleClickTarget,ui_dependency,recover_list_box_on_right_double_click,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060C6D0 is source-owned
+ListBoxOnRightDownTarget,ui_dependency,recover_list_box_on_right_down,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060AA20 is source-owned
+ListBoxOnScrolledTarget,ui_dependency,recover_list_box_on_scrolled,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060C6A0 is source-owned
+ListBoxOnScrollingTarget,ui_dependency,recover_list_box_on_scrolling,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060C5D0 is source-owned
+MapWinOnButtonClickedTarget,ui_dependency,recover_map_win_on_button_clicked,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046F8C0 is source-owned"
+MapWinOnLeftClickTarget,ui_dependency,recover_map_win_on_left_click,Adjustor thunks bind 0x0046EBA0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+MapWinOnLeftDoubleClickTarget,ui_dependency,recover_map_win_on_left_double_click,Adjustor thunks bind 0x0046EBD0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+MapWinOnLeftDownTarget,ui_dependency,recover_map_win_on_left_down,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046ED30 is source-owned"
+MapWinOnLeftUpTarget,ui_dependency,recover_map_win_on_left_up,Adjustor thunks bind 0x0046EFF0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+MapWinOnLoseMouseCaptureTarget,ui_dependency,recover_map_win_on_lose_mouse_capture,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046EB90 is source-owned"
+MapWinOnMouseMoveTarget,ui_dependency,recover_map_win_on_mouse_move,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046F000 is source-owned"
+MapWinOnNcHittestTarget,ui_dependency,recover_map_win_on_nc_hittest,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk5 adjustor thunks until the method at 0x0046F660 is source-owned"
+MapWinOnNcLeftDownTarget,ui_dependency,recover_map_win_on_nc_left_down,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk5 adjustor thunks until the method at 0x0046F700 is source-owned"
+MapWinOnRedrawTarget,ui_dependency,recover_map_win_on_redraw,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4 adjustor thunks until the method at 0x0046B1D0 is source-owned"
+MapWinOnResizeTarget,ui_dependency,recover_map_win_on_resize,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046FA00 is source-owned"
+MapWinOnRightClickTarget,ui_dependency,recover_map_win_on_right_click,Adjustor thunks bind 0x0046EBE0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+MapWinOnRightDownTarget,ui_dependency,recover_map_win_on_right_down,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046EC10 is source-owned"
+MapWinOnSysCloseTarget,ui_dependency,recover_map_win_on_sys_close,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk5 adjustor thunks until the method at 0x0046F880 is source-owned"
+MapWinScalarDeleteTarget,ui_dependency,recover_map_win_scalar_delete,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk2 adjustor thunks until the method at 0x00421830 is source-owned"
+PlanWinOnRedrawTarget,ui_dependency,recover_plan_win_on_redraw,Temporary dependency for the recovered PlanWin::thunk1 adjustor thunks until the method at 0x0048AF30 is source-owned
+PlanWinScalarDeleteTarget,ui_dependency,recover_plan_win_scalar_delete,Temporary dependency for the recovered PlanWin::thunk2 adjustor thunks until the method at 0x0048BF20 is source-owned
+RadioButtonAttachTarget,ui_dependency,recover_radio_button_attach,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060D1F0 is source-owned
+RadioButtonDtorTarget,ui_dependency,recover_radio_button_dtor,"Temporary dependency for the recovered RadioButton::thunk1, RadioButton::thunk2, RadioButton::thunk3 adjustor thunks until the method at 0x00406F60 is source-owned"
+RadioButtonOnDialogFocusTarget,ui_dependency,recover_radio_button_on_dialog_focus,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E300 is source-owned
+RadioButtonOnKeyDownTarget,ui_dependency,recover_radio_button_on_key_down,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E020 is source-owned
+RadioButtonOnLeftDoubleClickTarget,ui_dependency,recover_radio_button_on_left_double_click,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E1E0 is source-owned
+RadioButtonOnLeftDownTarget,ui_dependency,recover_radio_button_on_left_down,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060DE10 is source-owned
+RadioButtonOnMouseLeaveTarget,ui_dependency,recover_radio_button_on_mouse_leave,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E4A0 is source-owned
+RadioButtonOnMouseMoveTarget,ui_dependency,recover_radio_button_on_mouse_move,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E320 is source-owned
+RadioButtonOnRedrawTarget,ui_dependency,recover_radio_button_on_redraw,"Temporary dependency for the recovered RadioButton::thunk1, RadioButton::thunk3 adjustor thunks until the method at 0x0060E220 is source-owned"
+SpriteBoxAttachTarget,ui_dependency,recover_sprite_box_attach,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00610540 is source-owned
+SpriteBoxOnDialogFocusTarget,ui_dependency,recover_sprite_box_on_dialog_focus,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x006115E0 is source-owned
+SpriteBoxOnKeyDownTarget,ui_dependency,recover_sprite_box_on_key_down,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611400 is source-owned
+SpriteBoxOnLeftClickTarget,ui_dependency,recover_sprite_box_on_left_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611060 is source-owned
+SpriteBoxOnLeftDoubleClickTarget,ui_dependency,recover_sprite_box_on_left_double_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x006112E0 is source-owned
+SpriteBoxOnLeftDownTarget,ui_dependency,recover_sprite_box_on_left_down,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611150 is source-owned
+SpriteBoxOnLeftUpTarget,ui_dependency,recover_sprite_box_on_left_up,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x006111A0 is source-owned
+SpriteBoxOnMouseLeaveTarget,ui_dependency,recover_sprite_box_on_mouse_leave,Adjustor thunks bind 0x00611050 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+SpriteBoxOnMouseMoveTarget,ui_dependency,recover_sprite_box_on_mouse_move,Adjustor thunks bind 0x00611040 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+SpriteBoxOnRedrawTarget,ui_dependency,recover_sprite_box_on_redraw,"Temporary dependency for the recovered SpriteBox::thunk1, SpriteBox::thunk3 adjustor thunks until the method at 0x00611380 is source-owned"
+SpriteBoxOnRightClickTarget,ui_dependency,recover_sprite_box_on_right_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x006111F0 is source-owned
+SpriteBoxOnRightDoubleClickTarget,ui_dependency,recover_sprite_box_on_right_double_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611330 is source-owned
+SpriteBoxOnRightDownTarget,ui_dependency,recover_sprite_box_on_right_down,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611240 is source-owned
+SpriteBoxOnRightUpTarget,ui_dependency,recover_sprite_box_on_right_up,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611290 is source-owned

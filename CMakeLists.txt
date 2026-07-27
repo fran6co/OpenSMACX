@@ -117,6 +117,7 @@ set(OPENSMACX_SOURCES
     src/alpha.cpp
     src/atexit_thunks.cpp
     src/init_thunks.cpp
+    src/adjustor_thunks.cpp
     src/fx.cpp
     src/vector_teardown.cpp
     src/alphanet.cpp
@@ -405,6 +406,7 @@ if(BUILD_TESTING)
         tests/recovery_leaf_tests.cpp
         src/atexit_thunks.cpp
         src/init_thunks.cpp
+    src/adjustor_thunks.cpp
         src/fx.cpp
         src/vector_teardown.cpp
         src/alphanet.cpp
