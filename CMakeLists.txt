@@ -146,6 +146,7 @@ set(OPENSMACX_SOURCES
     src/font.cpp
     src/font_recovery.cpp
     src/game.cpp
+    src/game_recovery.cpp
     src/general.cpp
     src/graphicwin.cpp
     src/graphicwin_oracle.cpp
@@ -430,6 +431,7 @@ if(BUILD_TESTING)
         src/log.cpp
         src/maininterface.cpp
         src/mapwin.cpp
+        src/game_recovery.cpp
         src/basewin.cpp
         src/datalink.cpp
         src/netwin.cpp
@@ -579,6 +581,7 @@ if(BUILD_TESTING)
         src/font.cpp
         src/font_recovery.cpp
         src/game.cpp
+        src/game_recovery.cpp
         src/general.cpp
         src/graphicwin.cpp
         src/heap.cpp

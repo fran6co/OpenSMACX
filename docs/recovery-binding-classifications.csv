@@ -342,3 +342,7 @@ WinOriginalInit,ui_dependency,recover_owning_class,The 2285-byte Win::init windo
 GraphicWinOriginalComputeMinSize,ui_dependency,recover_owning_class,GraphicWin::compute_min_size at 0x005D7030; 272 bytes of frame arithmetic init runs after publishing the buffer back pointer
 WinOriginalNonclientToClient,ui_dependency,recover_owning_class,Win::nonclient_to_client at 0x005EEF60; converts an outer size to a client size in place on the non-0x800 arm of GraphicWin::init
 BufferOriginalInit,ui_dependency,recover_owning_class,Buffer::init at 0x005D7670; 847 bytes of DirectDraw and GDI surface creation GraphicWin::init hands its computed size to
+ConsoleOriginalCursorNext,ui_dependency,recover_owning_class,Console::cursor_next at 0x005109B0; focus runs it on the process-wide Console at 0x009156B0 rather than on this
+ConsoleOriginalMapWinFocus,ui_dependency,recover_owning_class,MapWin::focus at 0x0046B310; reports whether the window moved its view and is what decides Console::focus own answer
+ConsoleOriginalMapWinDrawMap,ui_dependency,recover_owning_class,MapWin::draw_map at 0x0046A550; 2049 bytes repainting one map window when the primary refused the coordinate
+ConsoleOriginalFlushInput,ui_dependency,recover_owning_class,flush_input at 0x005FD120; drains queued input once the primary view actually moved and pumps the message loop through check_net

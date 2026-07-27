@@ -46,7 +46,6 @@ BOOL *IsMultiplayerNet = (BOOL *)0x0093F660; // DirectPlay - Serial, Modem, Inte
 BOOL *IsMultiplayerPBEM = (BOOL *)0x0093A95C; // HotSeat / PBEM
 uint8_t *NetTurnFlags = (uint8_t *)0x009A681C;
 int *NetTurnFaction = (int *)0x009A6820;
-int *LocalFaction = (int *)0x00939284;
 
 /*
 Purpose: Determine whether the turn currently belongs to another faction in a
