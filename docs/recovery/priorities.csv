@@ -2537,7 +2537,6 @@ P3,101,0x005F8570,?on_mousewheel_up_vert@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,mis
 P3,101,0x005F8590,?on_mousewheel_up_horz@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?on_mousewheel_up_horz@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85B0,?on_mousewheel_down@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85E0,?on_mousewheel_up@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)"
-P3,1020,0x005F8670,sub_5f8670,43,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005F86A0,sub_5f86a0,31,1,0,unrecovered,,,2,exact,exact,
 P3,210,0x005F8770,sub_5f8770,134,0,2,unrecovered,,,1,missing,exact,
 P1,26121,0x005F8800,??0PullDown@@QAE@XZ,147,26,1,unrecovered,,,2,exact,exact,void (__thiscall ??0PullDown@@QAE@XZ)(PullDown* this)

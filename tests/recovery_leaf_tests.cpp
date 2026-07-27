@@ -1440,6 +1440,44 @@ uint32_t reference_rect_center(
 }
 
 void test_geometry_helpers() {
+    // offset_rect slides both x fields by the first delta and both y fields by
+    // the second. Every case uses dx != dy and four distinct field values, so
+    // a delta applied to the wrong axis moves the wrong pair and shows up in
+    // the byte compare; the wrapping cases pin that the adds are modular
+    // rather than saturating, the way `add` is.
+    struct OffsetCase {
+        uint32_t left;
+        uint32_t top;
+        uint32_t right;
+        uint32_t bottom;
+        uint32_t dx;
+        uint32_t dy;
+    };
+    const OffsetCase offset_cases[] = {
+        {10, 20, 30, 40, 0, 0},
+        {10, 20, 30, 40, 3, 7},
+        {10, 20, 30, 40, 0xFFFFFFFDU, 0xFFFFFFF9U},
+        {0xFFFFFFFFU, 0x7FFFFFFFU, 0x80000000U, 0x80000000U, 1, 1},
+        {0, 0, 0, 0, 0x80000000U, 0x7FFFFFFFU},
+    };
+    for (const OffsetCase &test : offset_cases) {
+        alignas(RECT) uint8_t storage[sizeof(RECT) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16, test.left);
+        write_at(storage, 20, test.top);
+        write_at(storage, 24, test.right);
+        write_at(storage, 28, test.bottom);
+        std::memcpy(expected, storage, sizeof(storage));
+        write_at(expected, 16, test.left + test.dx);
+        write_at(expected, 20, test.top + test.dy);
+        write_at(expected, 24, test.right + test.dx);
+        write_at(expected, 28, test.bottom + test.dy);
+        offset_rect(reinterpret_cast<RECT *>(storage + 16),
+                    int_from_bits(test.dx), int_from_bits(test.dy));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
     struct RectCase {
         uint32_t x;
         uint32_t y;
