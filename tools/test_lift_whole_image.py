@@ -201,6 +201,90 @@ class SymbolTests(unittest.TestCase):
         self.assertNotEqual(first, second)
 
 
+class LoweringTests(unittest.TestCase):
+    """One refused instruction must cost one trap, not a whole function.
+
+    The tempting rule is to abandon a body at its first refusal, and it is
+    wrong in a way that hides: 879 of the 5,655 liftable functions contain at
+    least one instruction the lowerer refuses, so abandoning would throw away
+    the other 99% of each of those bodies AND collapse a 6,491-entry histogram
+    into "879 functions failed", which names nothing to build next.
+    """
+
+    @staticmethod
+    def items(encoded: str, address: int = 0x00401000) -> list[tuple]:
+        from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+        decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+        decoder.detail = True
+        return [("code", one)
+                for one in decoder.disasm(bytes.fromhex(encoded), address)]
+
+    def test_a_refusal_traps_one_instruction_and_lowering_continues(self):
+        # nop; div ecx; nop - the middle instruction has no lowering. Both
+        # neighbours must still be reached, and the trap must name the
+        # refused address rather than the function's.
+        lines, refused = lifter.lower_body(self.items("90f7f140"))
+        self.assertEqual({"div": 1}, dict(refused))
+        text = "\n".join(lines)
+        self.assertIn("opensmacx_trap(0x00401001U, \"div\");", text)
+        # The inc after the div is what proves lowering did not stop.
+        self.assertIn("opensmacx_inc32", text)
+
+    def test_the_histogram_counts_every_occurrence_not_every_function(self):
+        # Two divs in one body are two entries in the work queue: the phase 4
+        # ordering is by how often an instruction appears, so deduplicating
+        # per function would rank a rare instruction in many functions above a
+        # common one concentrated in few.
+        _, refused = lifter.lower_body(self.items("f7f1f7f1"))
+        self.assertEqual({"div": 2}, dict(refused))
+
+    def test_a_branch_inside_the_function_gets_a_label(self):
+        # jmp +0 - the target is the next instruction, which is inside this
+        # body, so it must be a goto and the label must exist.
+        lines = lifter.lower_body(self.items("eb0090"))[0]
+        text = "\n".join(lines)
+        self.assertIn("goto L_00401002;", text)
+        self.assertIn("L_00401002: ;", text)
+
+    def test_a_branch_outside_the_function_gets_no_label(self):
+        # jmp +0x40 lands past the end of this two-instruction body, so it is
+        # a tail call. Emitting a label for it would be a goto to nowhere and
+        # would not compile; emitting the dispatch is the whole reason the
+        # label set is computed per function.
+        text = "\n".join(lifter.lower_body(self.items("eb4090"))[0])
+        self.assertIn("opensmacx_dispatch(0x00401042U)(s);", text)
+        self.assertNotIn("goto", text)
+
+    def test_a_self_recursive_call_is_not_turned_into_a_goto(self):
+        # call +0, whose target is the next instruction and therefore inside
+        # the body. A call is still a call: lowering it as a jump would skip
+        # the pushed return address and the matching RET would then pop a
+        # word of the caller's frame.
+        text = "\n".join(lifter.lower_body(self.items("e80000000090"))[0])
+        self.assertIn("opensmacx_dispatch(0x00401005U)(s);", text)
+        self.assertNotIn("goto", text)
+
+    def test_every_label_is_followed_by_a_statement(self):
+        # A C++17 label at the end of a compound statement is a syntax error,
+        # and a NOP lowers to nothing at all - so `jmp +1; nop` puts a label
+        # in front of an empty lowering at the end of the body.
+        lines = lifter.lower_body(self.items("eb0090"))[0]
+        # The NOP emits nothing, so the label really is the last line here.
+        self.assertTrue(lines[-1].startswith("L_"), lines)
+        for line in lines:
+            if line.startswith("L_"):
+                self.assertTrue(line.endswith(": ;"), line)
+
+    def test_undecodable_bytes_become_a_trap_rather_than_a_gap(self):
+        # 0xff 0xff does not decode. Dropping it would emit a body that runs
+        # straight past a stretch of the original as if it were not there.
+        lines, refused = lifter.lower_body(
+            [("data", (0x00401004, 2))])
+        self.assertEqual({"(undecodable)": 1}, dict(refused))
+        self.assertIn("opensmacx_trap(0x00401004U, \"2 undecodable bytes\");",
+                      lines[0])
+
+
 class EmissionTests(unittest.TestCase):
     def test_unliftable_function_body_traps_instead_of_lowering(self):
         with tempfile.TemporaryDirectory() as raw:
