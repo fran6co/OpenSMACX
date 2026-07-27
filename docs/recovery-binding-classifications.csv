@@ -235,3 +235,4 @@ SpriteBoxOnRightClickTarget,ui_dependency,recover_sprite_box_on_right_click,Temp
 SpriteBoxOnRightDoubleClickTarget,ui_dependency,recover_sprite_box_on_right_double_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611330 is source-owned
 SpriteBoxOnRightDownTarget,ui_dependency,recover_sprite_box_on_right_down,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611240 is source-owned
 SpriteBoxOnRightUpTarget,ui_dependency,recover_sprite_box_on_right_up,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611290 is source-owned
+BufferWriteMultiFontRawL,ui_dependency,recover_buffer_write_multi_font_raw_l,Temporary dependency for the four recovered length-limited text writers until the multi-font raster writer at 0x005DCAE0 is source-owned

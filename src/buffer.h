@@ -50,6 +50,10 @@ class DLLEXPORT Buffer {
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
   int copy(Buffer *buffer, RECT *rect);
   int box(RECT *rect, int color1, int color2);
+  int write_l(LPSTR text, int x_coord, int y_coord, int len);
+  int write_l(LPSTR text, RECT *rect, int len);
+  int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
+  int write_cent_l(LPSTR text, RECT *rect, int len);
   void close();
   // Destructor body kept as a named method so the trivial ~Buffer() stays
   // trivial and embedding classes keep their existing implicit destruction.
@@ -224,3 +228,32 @@ typedef int(__thiscall func_buffer_text_width_measured)(Buffer *, LPSTR, size_t)
 #pragma GCC diagnostic pop
 #endif
 extern func_buffer_text_width_measured *BufferTextWidthMeasured;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// The 835-byte multi-font raster writer at 0x005DCAE0 is the real glyph
+// emitter behind every length-limited text entry point, and is still an
+// original dependency. All four recovered writers reach it through this seam;
+// the leaf tests rebind it to a recorder. Its EAX passes straight through -
+// the original ends `mov eax, edi` at 0x005DCE18, handing back the advanced
+// pen position, which is why the scalar writers return the incoming x when
+// they emit nothing.
+typedef int(__thiscall func_buffer_write_multi_font_raw_l)(Buffer *, LPSTR,
+                                                           int, int, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_buffer_write_multi_font_raw_l *BufferWriteMultiFontRawL;
+
+int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
+                                       int x_coord, int y_coord, int len);
+int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
+                                            RECT *rect, int len);
+int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
+                                            int x_coord, int y_coord,
+                                            int width, int len);
+int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
+                                                 LPSTR text, RECT *rect,
+                                                 int len);

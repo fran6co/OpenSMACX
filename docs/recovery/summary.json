@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 169,
-      "source_complete": 2032,
+      "original_dependency": 170,
+      "source_complete": 2036,
       "source_in_progress": 5,
       "thunk": 29,
-      "unrecovered": 3438
+      "unrecovered": 3433
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1978,
-    "matched_function_starts": 1978,
-    "unique_addresses": 1978,
+    "annotations": 1982,
+    "matched_function_starts": 1982,
+    "unique_addresses": 1982,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 236
+      "function": 237
     },
     "items": [
       {
@@ -5694,6 +5694,15 @@
         "type": "func_buffer_line *"
       },
       {
+        "address": "0x005DCAE0",
+        "function": "?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z",
+        "function_address": "0x005DCAE0",
+        "kind": "function",
+        "location": "src/buffer.cpp:971",
+        "symbol": "BufferWriteMultiFontRawL",
+        "type": "func_buffer_write_multi_font_raw_l *"
+      },
+      {
         "address": "0x0062B8A0",
         "function": "?button_click@ButtonGroup@@QAEHH@Z",
         "function_address": "0x0062B8A0",
@@ -8439,7 +8448,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 236,
-    "total": 790
+    "matched_function_starts": 237,
+    "total": 791
   }
 }

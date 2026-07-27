@@ -19876,6 +19876,414 @@ void test_buffer_box() {
     BufferVLine = saved_v;
 }
 
+namespace {
+
+struct RawWriteCall {
+    Buffer *self;
+    LPSTR text;
+    int x, y, len;
+};
+RawWriteCall g_raw_write;
+int g_raw_write_calls;
+int g_raw_write_result;
+
+struct TextWidthCall {
+    Buffer *self;
+    LPSTR text;
+    size_t length;
+};
+TextWidthCall g_tw;
+int g_tw_calls;
+int g_tw_result;
+// When set, the measured overload clears the buffer's font1_ slot, standing
+// in for the default-font rebind the real measured body performs at
+// 0x005DC7D3. Only write_cent_l's rectangle overload can observe it.
+Buffer *g_tw_clear_font_of;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+int __thiscall observe_raw_write(Buffer *self, LPSTR text, int x, int y,
+                                 int len) {
+    g_raw_write = {self, text, x, y, len};
+    ++g_raw_write_calls;
+    return g_raw_write_result;
+}
+
+// Named poison: every rejection path dispatches nothing, so reaching the
+// raster writer at all on one of them is the failure.
+int __thiscall poison_raw_write(Buffer *, LPSTR, int, int, int) {
+    expect(false);
+    return 0;
+}
+
+int __thiscall observe_writer_text_width(Buffer *self, LPSTR text,
+                                         size_t length) {
+    g_tw = {self, text, length};
+    ++g_tw_calls;
+    if (g_tw_clear_font_of != nullptr) {
+        write_at(reinterpret_cast<uint8_t *>(g_tw_clear_font_of), 0x52C,
+                 static_cast<Font *>(nullptr));
+    }
+    return g_tw_result;
+}
+
+// The two left-aligned overloads measure nothing at all; reaching the
+// measured overload from either is the failure.
+int __thiscall poison_text_width(Buffer *, LPSTR, size_t) {
+    expect(false);
+    return 0;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// A Font shaped just enough for these writers: font_obj_ at 0x08 is the
+// initialised flag they guard on, height_ at 0x10 drives vertical centring.
+void make_writer_font(uint8_t *font_storage, uint32_t object_handle,
+                      int height) {
+    std::memset(font_storage, 0, sizeof(Font));
+    write_at(font_storage, 0x08, object_handle);
+    write_at(font_storage, 0x10, height);
+}
+
+void reset_writer_probes() {
+    g_raw_write = RawWriteCall{};
+    g_raw_write_calls = 0;
+    g_tw = TextWidthCall{};
+    g_tw_calls = 0;
+    g_tw_result = 0;
+    g_tw_clear_font_of = nullptr;
+}
+
+}  // namespace
+
+// The four length-limited text writers. Their whole reason for being four
+// separate transcriptions is three asymmetries that a shared helper would
+// erase, so each is pinned here explicitly:
+//   - the font guard returns 3 from 0x005DCEA0, 0x005DD020 and 0x005DD130 but
+//     0 from 0x005DCF40, so the two RECT overloads disagree with each other;
+//   - 0x005DD020 measures the CLAMPED count while 0x005DD130 measures a fresh
+//     strlen of the whole string;
+//   - an empty draw returns the incoming x from the scalar overloads and 0
+//     from the RECT overloads.
+void test_buffer_text_writers() {
+    auto *const saved_raw = BufferWriteMultiFontRawL;
+    auto *const saved_width = BufferTextWidthMeasured;
+
+    alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *const buffer = reinterpret_cast<Buffer *>(storage + 16);
+    alignas(Font) uint8_t font_storage[sizeof(Font)];
+    auto *const font = reinterpret_cast<Font *>(font_storage);
+
+    char text[] = "hello world";   // 11 characters
+    char empty[] = "";
+
+    // Which overload, spelled once so every shape below runs through all four.
+    enum Which { ScalarPlain, RectPlain, ScalarCent, RectCent };
+    RECT rect = {10, 20, 110, 61};
+    auto call = [&](Which which, LPSTR subject, RECT *box, int len) {
+        switch (which) {
+            case ScalarPlain:
+                return buffer->write_l(subject, 4242, 77, len);
+            case RectPlain:
+                return buffer->write_l(subject, box, len);
+            case ScalarCent:
+                return buffer->write_cent_l(subject, 1234, 77, 100, len);
+            default:
+                return buffer->write_cent_l(subject, box, len);
+        }
+    };
+    auto call_adapter = [&](Which which, LPSTR subject, RECT *box, int len) {
+        switch (which) {
+            case ScalarPlain:
+                return buffer_write_l_redirect(buffer, nullptr, subject, 4242,
+                                               77, len);
+            case RectPlain:
+                return buffer_write_l_rect_redirect(buffer, nullptr, subject,
+                                                    box, len);
+            case ScalarCent:
+                return buffer_write_cent_l_redirect(buffer, nullptr, subject,
+                                                    1234, 77, 100, len);
+            default:
+                return buffer_write_cent_l_rect_redirect(buffer, nullptr,
+                                                         subject, box, len);
+        }
+    };
+    auto install = [&](uint32_t font_obj, int height, bool font_set) {
+        make_writer_font(font_storage, font_obj, height);
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16 + 0x52C,
+                 font_set ? font : static_cast<Font *>(nullptr));
+        std::memcpy(expected, storage, sizeof(storage));
+        reset_writer_probes();
+    };
+
+    // ---- the rejection matrix, and with it the return-code asymmetry ----
+    // Each row is a reason to reject; each column is what that overload hands
+    // back. The 3-vs-0 split between the two RECT overloads is the single
+    // most likely thing to get wrong by sharing a guard helper.
+    struct RejectCase {
+        const char *label;
+        bool font_set; uint32_t font_obj; LPSTR subject; bool use_rect;
+        int len;
+        int want[4];      // ScalarPlain, RectPlain, ScalarCent, RectCent
+        bool applies[4];  // a null rect is not a rejection for the scalars,
+                          // which never look at one
+    };
+    const RejectCase rejects[] = {
+        {"null string",   true,  0xF0F0F0F0U, nullptr, true,  5,
+         {4242, 0, 1234, 0}, {true, true, true, true}},
+        {"null rect",     true,  0xF0F0F0F0U, text,    false, 5,
+         {0, 0, 0, 0},       {false, true, false, true}},
+        {"no font",       false, 0U,          text,    true,  5,
+         {3, 0, 3, 3},       {true, true, true, true}},
+        {"font unopened", true,  0U,          text,    true,  5,
+         {3, 0, 3, 3},       {true, true, true, true}},
+        {"negative len",  true,  0xF0F0F0F0U, text,    true,  -1,
+         {4242, 0, 1234, 0}, {true, true, true, true}},
+        {"zero len",      true,  0xF0F0F0F0U, text,    true,  0,
+         {4242, 0, 1234, 0}, {true, true, true, true}},
+        {"empty string",  true,  0xF0F0F0F0U, empty,   true,  5,
+         {4242, 0, 1234, 0}, {true, true, true, true}},
+        {"signed extreme", true, 0xF0F0F0F0U, text,    true,  INT_MIN,
+         {4242, 0, 1234, 0}, {true, true, true, true}},
+    };
+    for (const RejectCase &shape : rejects) {
+        for (int which = 0; which < 4; ++which) {
+            if (!shape.applies[which]) {
+                continue;
+            }
+            for (int adapter = 0; adapter < 2; ++adapter) {
+                BufferWriteMultiFontRawL = &poison_raw_write;
+                BufferTextWidthMeasured = &poison_text_width;
+                install(shape.font_obj, 7, shape.font_set);
+                RECT box = rect;
+                RECT *const arg = shape.use_rect ? &box : nullptr;
+                const int result = adapter
+                    ? call_adapter(static_cast<Which>(which), shape.subject,
+                                   arg, shape.len)
+                    : call(static_cast<Which>(which), shape.subject, arg,
+                           shape.len);
+                expect(result == shape.want[which]);
+                expect(g_raw_write_calls == 0);
+                expect(g_tw_calls == 0);
+                // No writer touches the object on a rejection.
+                expect_storage_bytes(storage, expected, sizeof(storage));
+                expect(box.left == rect.left && box.top == rect.top);
+                expect(box.right == rect.right && box.bottom == rect.bottom);
+            }
+        }
+    }
+
+    // ---- the clamp: min(strlen, len), signed, all three orderings ----
+    struct ClampCase { int len; int drawn_len; };
+    const ClampCase clamps[] = {
+        {20, 11},          // strlen wins
+        {4, 4},            // len wins
+        {11, 11},          // equal
+        {1, 1},            // the smallest drawing count
+        {INT_MAX, 11},     // signed extreme on the losing side
+    };
+    for (const ClampCase &shape : clamps) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            BufferWriteMultiFontRawL = &observe_raw_write;
+            BufferTextWidthMeasured = &poison_text_width;
+            install(0xF0F0F0F0U, 7, true);
+            g_raw_write_result = -5150;   // the residue passes straight out
+            const int result = adapter
+                ? call_adapter(ScalarPlain, text, nullptr, shape.len)
+                : call(ScalarPlain, text, nullptr, shape.len);
+            expect(result == -5150);
+            expect(g_raw_write_calls == 1);
+            expect(g_raw_write.self == buffer);
+            expect(g_raw_write.text == text);
+            expect(g_raw_write.x == 4242);   // forwarded verbatim
+            expect(g_raw_write.y == 77);
+            expect(g_raw_write.len == shape.drawn_len);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // ---- one glyph is still a draw ----
+    // The clamp table above reaches len == 1 through the scalar plain overload
+    // only, which left `if (limit <= 0)` unobserved in the other three:
+    // widening it to `<= 1` would silently swallow every single-character
+    // draw and no assertion here would have moved. One row per overload.
+    for (int which = 0; which < 4; ++which) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            const bool measures = which == ScalarCent || which == RectCent;
+            BufferWriteMultiFontRawL = &observe_raw_write;
+            BufferTextWidthMeasured =
+                measures ? &observe_writer_text_width : &poison_text_width;
+            install(0xF0F0F0F0U, 7, true);
+            g_tw_result = 6;
+            g_raw_write_result = 1717;
+            RECT box = rect;
+            const int result = adapter
+                ? call_adapter(static_cast<Which>(which), text, &box, 1)
+                : call(static_cast<Which>(which), text, &box, 1);
+            expect(result == 1717);
+            expect(g_raw_write_calls == 1);
+            expect(g_raw_write.len == 1);
+            expect(g_tw_calls == (measures ? 1 : 0));
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // Signed-extreme coordinates travel through untouched: the scalar plain
+    // overload performs no arithmetic on them at all.
+    BufferWriteMultiFontRawL = &observe_raw_write;
+    BufferTextWidthMeasured = &poison_text_width;
+    install(0xF0F0F0F0U, 7, true);
+    g_raw_write_result = 0;
+    expect(buffer->write_l(text, INT_MIN, INT_MAX, 3) == 0);
+    expect(g_raw_write.x == INT_MIN && g_raw_write.y == INT_MAX);
+    expect(g_raw_write.len == 3);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // ---- vertical centring, write_l's RECT overload ----
+    // top + (bottom - height - top) / 2, truncating toward zero, and x is
+    // rect->left with no arithmetic and nothing measured.
+    struct VCase { LONG left, top, right, bottom; int height;
+                   int want_x, want_y; };
+    const VCase vertical[] = {
+        {10, 20, 33, 61, 1, 10, 40},        // span 40 -> +20
+        {-5, 100, 7, 50, 3, -5, 74},        // span -53 -> -26 toward zero
+        {77, 0, 1, 7, 0, 77, 3},            // span 7 -> +3 toward zero
+        // The subtraction wraps: the span is INT_MIN, half of it is
+        // 0xC0000000, and the sum back onto top wraps positive. Signed
+        // saturation would give a different row.
+        {INT_MIN, INT_MIN, 0, 0, 0, INT_MIN, 0x40000000},
+    };
+    for (const VCase &shape : vertical) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            BufferWriteMultiFontRawL = &observe_raw_write;
+            BufferTextWidthMeasured = &poison_text_width;
+            install(0xF0F0F0F0U, shape.height, true);
+            g_raw_write_result = 909;
+            RECT box = {shape.left, shape.top, shape.right, shape.bottom};
+            const int result = adapter
+                ? call_adapter(RectPlain, text, &box, 4)
+                : call(RectPlain, text, &box, 4);
+            expect(result == 909);
+            expect(g_raw_write_calls == 1);
+            expect(g_raw_write.x == shape.want_x);
+            expect(g_raw_write.y == shape.want_y);
+            expect(g_raw_write.len == 4);
+            expect(box.left == shape.left && box.top == shape.top);
+            expect(box.right == shape.right && box.bottom == shape.bottom);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // ---- horizontal centring, and the measured-length asymmetry ----
+    // write_cent_l's scalar overload measures the CLAMPED count.
+    struct HCase { int x, width, drawn, len; int want_len, want_x; };
+    const HCase horizontal[] = {
+        {10, 100, 30, 4, 4, 45},          // clamped to 4; span 70 -> +35
+        {10, 100, 30, 20, 11, 45},        // clamped to 11 by strlen
+        {0, 100, 31, 11, 11, 34},         // odd span 69 -> +34 toward zero
+        {10, 10, 13, 11, 11, 9},          // negative span -3 -> -1
+        {INT_MIN, INT_MIN, 0, 11, 11, 0x40000000},   // wraps positive
+    };
+    for (const HCase &shape : horizontal) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            BufferWriteMultiFontRawL = &observe_raw_write;
+            BufferTextWidthMeasured = &observe_writer_text_width;
+            install(0xF0F0F0F0U, 7, true);
+            g_tw_result = shape.drawn;
+            g_raw_write_result = -31337;
+            const int result = adapter
+                ? buffer_write_cent_l_redirect(buffer, nullptr, text, shape.x,
+                                               77, shape.width, shape.len)
+                : buffer->write_cent_l(text, shape.x, 77, shape.width,
+                                       shape.len);
+            expect(result == -31337);
+            expect(g_tw_calls == 1);
+            expect(g_tw.self == buffer);
+            expect(g_tw.text == text);
+            // The clamped count, NOT strlen - this is the discriminator
+            // against the rectangle overload below.
+            expect(g_tw.length == static_cast<size_t>(shape.want_len));
+            expect(g_raw_write_calls == 1);
+            expect(g_raw_write.x == shape.want_x);
+            expect(g_raw_write.y == 77);      // forwarded verbatim
+            expect(g_raw_write.len == shape.want_len);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // ---- write_cent_l's RECT overload: both centres, whole-string measure --
+    struct BothCase { LONG left, top, right, bottom; int height, drawn, len;
+                      int want_len, want_x, want_y; };
+    const BothCase both[] = {
+        {10, 20, 110, 61, 1, 30, 4, 4, 45, 40},     // measures 11, draws 4
+        {10, 20, 110, 61, 1, 30, 20, 11, 45, 40},
+        {-5, 100, -60, 50, 3, 8, 11, 11, -36, 74},  // both spans negative odd
+        {0, 0, 7, 7, 0, 0, 11, 11, 3, 3},           // odd spans toward zero
+        {INT_MIN, INT_MIN, 0, 0, 0, 0, 11, 11, 0x40000000, 0x40000000},
+    };
+    for (const BothCase &shape : both) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            BufferWriteMultiFontRawL = &observe_raw_write;
+            BufferTextWidthMeasured = &observe_writer_text_width;
+            install(0xF0F0F0F0U, shape.height, true);
+            g_tw_result = shape.drawn;
+            g_raw_write_result = 4711;
+            RECT box = {shape.left, shape.top, shape.right, shape.bottom};
+            const int result = adapter
+                ? call_adapter(RectCent, text, &box, shape.len)
+                : call(RectCent, text, &box, shape.len);
+            expect(result == 4711);
+            expect(g_tw_calls == 1);
+            // Always strlen, never the clamped count.
+            expect(g_tw.length == 11);
+            expect(g_raw_write_calls == 1);
+            expect(g_raw_write.x == shape.want_x);
+            expect(g_raw_write.y == shape.want_y);
+            expect(g_raw_write.len == shape.want_len);
+            expect(box.left == shape.left && box.top == shape.top);
+            expect(box.right == shape.right && box.bottom == shape.bottom);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // ---- the rebind only write_cent_l's RECT overload can reach ----
+    // The measured overload clears font1_; this body re-reads it afterwards
+    // and substitutes the process default without re-running the guard, so an
+    // unopened default font is used as-is. The other three would have to
+    // dereference a null font to get here at all.
+    alignas(Font) uint8_t default_font_storage[sizeof(Font)];
+    auto *const default_font =
+        reinterpret_cast<Font *>(default_font_storage);
+    make_writer_font(default_font_storage, 0U, 9);   // deliberately unopened
+    Font **const saved_default_ptr = FontDefaultPtr;
+    Font *default_slot = default_font;
+    FontDefaultPtr = &default_slot;
+    BufferWriteMultiFontRawL = &observe_raw_write;
+    BufferTextWidthMeasured = &observe_writer_text_width;
+    install(0xF0F0F0F0U, 1, true);
+    write_at(expected, 16 + 0x52C, default_font);   // the rebind is stored
+    g_tw_clear_font_of = buffer;
+    g_tw_result = 30;
+    g_raw_write_result = 0;
+    RECT rebind_rect = {10, 20, 110, 61};
+    expect(buffer_write_cent_l_rect_redirect(buffer, nullptr, text,
+                                             &rebind_rect, 11) == 0);
+    g_tw_clear_font_of = nullptr;
+    FontDefaultPtr = saved_default_ptr;
+    expect(g_raw_write_calls == 1);
+    expect(g_raw_write.x == 45);
+    expect(g_raw_write.y == 36);          // (61 - 9 - 20) / 2 + 20
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    BufferTextWidthMeasured = saved_width;
+    BufferWriteMultiFontRawL = saved_raw;
+}
+
 void test_buffer_copy_overload() {
     // The five-argument copy exists only to hand the destination coordinates
     // over a second time as the source coordinates. Distinct values in every
@@ -23897,6 +24305,7 @@ int main() {
     test_plan_win_close();
     test_buffer_copy_overload();
     test_buffer_box();
+    test_buffer_text_writers();
     test_plan_win_blink_and_unk1();
     test_base_button_set();
     test_texture_lifecycle();
