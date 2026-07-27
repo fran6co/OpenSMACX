@@ -1147,6 +1147,10 @@ address,kind
 0x004BA5E0,jump
 0x004BA720,jump
 0x004BA830,jump
+0x004BC5A0,jump
+0x004BC5F0,jump
+0x004BC640,jump
+0x004BC690,jump
 0x004BDDD0,jump
 0x004BE9F0,jump
 0x004BEA20,jump

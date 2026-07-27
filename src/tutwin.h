@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "win.h"
 
  /*
   * TutWin class
@@ -34,6 +35,10 @@ class DLLEXPORT TutWin {
   ~TutWin() { ; }
   void UNK1();
   void UNK3(int a1);
+  void iface_rect(RECT *rect, int *x, int *y);
+  void base_rect(RECT *rect, int *x, int *y);
+  void soc_rect(RECT *rect, int *x, int *y);
+  void des_rect(RECT *rect, int *x, int *y);
 
  private:
   uint8_t unmapped_0_[0x537C];
@@ -57,3 +62,21 @@ extern uint32_t *TutWinShownFlag;
 
 void __fastcall tut_win_unk1_redirect(TutWin *self, void *);
 void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1);
+
+// The fixed window iface_rect centres onto, at 0x007AE820.
+extern Win *TutWinIfaceWindow;
+// The fixed window base_rect centres onto, at 0x006A7628.
+extern Win *TutWinBaseWindow;
+// The fixed window soc_rect centres onto, at 0x008A6270.
+extern Win *TutWinSocWindow;
+// The fixed window des_rect centres onto, at 0x0071F2B0.
+extern Win *TutWinDesWindow;
+
+void __fastcall tut_win_iface_rect_redirect(
+    TutWin *self, void *, RECT *rect, int *x, int *y);
+void __fastcall tut_win_base_rect_redirect(
+    TutWin *self, void *, RECT *rect, int *x, int *y);
+void __fastcall tut_win_soc_rect_redirect(
+    TutWin *self, void *, RECT *rect, int *x, int *y);
+void __fastcall tut_win_des_rect_redirect(
+    TutWin *self, void *, RECT *rect, int *x, int *y);

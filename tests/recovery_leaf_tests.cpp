@@ -86,6 +86,7 @@
 #include "../src/strings.h"
 #include "../src/text_recovery.h"
 #include "../src/textindex.h"
+#include "../src/tutwin.h"
 #include "../src/temp.h"
 #include "../src/time.h"
 #include "../src/vector.h"
@@ -5964,6 +5965,113 @@ void test_win_is_descendant() {
         adopt(0, {1});
         expect(ask(adapter, 0, nodes[0].object()) == 0);
         untouched();
+    }
+}
+
+void test_tut_win_rects() {
+    // Four 67-byte clones that centre a rectangle and convert the result
+    // through a FIXED window - never through `this`. All four windows default
+    // to addresses in the original image that are unmapped here, so each is
+    // rebound to its own Win arena, and each arena carries DISTINCT offsets:
+    // that is what proves each sibling reaches its own window rather than
+    // whichever one happened to be bound last.
+    struct RectOp {
+        void (TutWin::*method)(RECT *, int *, int *);
+        void (__fastcall *redirect)(TutWin *, void *, RECT *, int *, int *);
+        Win **window;
+    };
+    const RectOp rect_ops[] = {
+        {&TutWin::iface_rect, &tut_win_iface_rect_redirect, &TutWinIfaceWindow},
+        {&TutWin::base_rect, &tut_win_base_rect_redirect, &TutWinBaseWindow},
+        {&TutWin::soc_rect, &tut_win_soc_rect_redirect, &TutWinSocWindow},
+        {&TutWin::des_rect, &tut_win_des_rect_redirect, &TutWinDesWindow},
+    };
+    const size_t op_count = sizeof(rect_ops) / sizeof(rect_ops[0]);
+
+    std::vector<std::vector<uint8_t>> arenas(op_count);
+    std::vector<Win *> saved(op_count);
+    for (size_t index = 0; index < op_count; ++index) {
+        arenas[index].assign(sizeof(Win), 0);
+        // client_rect_.left/top at 0x14C/0x150, outer_rect_.left/top at
+        // 0x13C/0x140 - the same four the client_to_screen fixture uses. Bit 5
+        // of 0x98 stays clear so the walk stops here and no parent is needed.
+        write_at(arenas[index].data(), 0x14C,
+                 static_cast<int32_t>(1000 * (index + 1)));
+        write_at(arenas[index].data(), 0x150,
+                 static_cast<int32_t>(2000 * (index + 1)));
+        write_at(arenas[index].data(), 0x13C,
+                 static_cast<int32_t>(10 * (index + 1)));
+        write_at(arenas[index].data(), 0x140,
+                 static_cast<int32_t>(20 * (index + 1)));
+        saved[index] = *rect_ops[index].window;
+        *rect_ops[index].window =
+            reinterpret_cast<Win *>(arenas[index].data());
+    }
+
+    struct Centre { int32_t l, t, r, b; int cx; int cy; };
+    const Centre centres[] = {
+        {0, 0, 10, 20, 5, 10},
+        {10, 20, 30, 40, 20, 30},
+        // The centre is `near + (far - near) / 2`, and that division
+        // truncates toward ZERO because the original halves with
+        // `cdq` / `sub` / `sar` rather than with a bare arithmetic shift. The
+        // consequence is that an odd extent biases the answer toward the NEAR
+        // edge in both directions - the centre of [-5, 0] is -3, not -2, so
+        // an expectation computed as "the true centre truncated toward zero"
+        // disagrees with the bytes on exactly these cases.
+        {0, 0, 5, 7, 2, 3},
+        {-5, -7, 0, 0, -3, -4},
+        {-11, -13, -2, -4, -7, -9},
+        // A width that overflows a signed subtraction: the original wraps.
+        {INT_MIN, INT_MIN, INT_MAX, INT_MAX, INT_MIN + 0, INT_MIN + 0},
+        // INVERTED rectangles, where right < left. These are the only cases
+        // that exercise the sign bit carried back over the halving: the
+        // original shifts with `sar`, and emulating that on an unsigned value
+        // needs the top bit restored. Drop it and a negative width halves to
+        // an enormous positive one instead, which every non-inverted case
+        // above is blind to.
+        {10, 20, 0, 0, 5, 10},
+        {0, 0, -9, -21, -4, -10},
+        {100, 200, 1, 3, 51, 102},
+    };
+    for (size_t index = 0; index < op_count; ++index) {
+        const RectOp &op = rect_ops[index];
+        for (const Centre &c : centres) {
+            for (int adapter = 0; adapter < 2; ++adapter) {
+                alignas(TutWin) uint8_t storage[sizeof(TutWin)];
+                uint8_t expected[sizeof(TutWin)];
+                seed_storage(storage, expected, sizeof(storage));
+                std::memcpy(expected, storage, sizeof(storage));
+                auto *tut = reinterpret_cast<TutWin *>(storage);
+                RECT rect = {c.l, c.t, c.r, c.b};
+                const RECT untouched = rect;
+                int x = 0x5A5A;
+                int y = 0x3C3C;
+                if (adapter) {
+                    op.redirect(tut, nullptr, &rect, &x, &y);
+                } else {
+                    (tut->*op.method)(&rect, &x, &y);
+                }
+                // The incoming *x and *y are OVERWRITTEN, not accumulated -
+                // the centre is stored before client_to_screen adds to it.
+                const int32_t shift_x = 1000 * static_cast<int32_t>(index + 1)
+                                      + 10 * static_cast<int32_t>(index + 1);
+                const int32_t shift_y = 2000 * static_cast<int32_t>(index + 1)
+                                      + 20 * static_cast<int32_t>(index + 1);
+                expect(x == c.cx + shift_x);
+                expect(y == c.cy + shift_y);
+                // The rectangle is read, never written.
+                expect(rect.left == untouched.left && rect.top == untouched.top);
+                expect(rect.right == untouched.right
+                       && rect.bottom == untouched.bottom);
+                // And the TutWin receiver is not touched at all.
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+
+    for (size_t index = 0; index < op_count; ++index) {
+        *rect_ops[index].window = saved[index];
     }
 }
 
@@ -27578,6 +27686,7 @@ int main() {
     test_win_set_def_focus();
     test_base_pop_instance_colors();
     test_guarded_store_recoveries();
+    test_tut_win_rects();
     test_win_client_to_screen();
     test_popup_close();
     test_guarded_delegates();

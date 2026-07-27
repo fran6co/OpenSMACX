@@ -1051,10 +1051,6 @@ P3,1921,0x004BAA70,?tour6@TutWin@@QAEXXZ,1186,1,9,unrecovered,,,2,exact,exact,vo
 P3,1721,0x004BAF20,?tour7@TutWin@@QAEXXZ,1107,1,7,unrecovered,,,2,exact,exact,void (__thiscall ?tour7@TutWin@@QAEXXZ)(TutWin* this)
 P3,2221,0x004BB380,?tour5@TutWin@@QAEXXZ,1041,1,12,unrecovered,,,2,exact,exact,void (__thiscall ?tour5@TutWin@@QAEXXZ)(TutWin* this)
 P3,2421,0x004BB7A0,?tour1@TutWin@@QAEXXZ,3569,1,14,unrecovered,,,2,exact,exact,void (__thiscall ?tour1@TutWin@@QAEXXZ)(TutWin* this)
-P3,3121,0x004BC5A0,?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z,67,3,1,unrecovered,,,2,exact,exact,"void (__thiscall ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)"
-P3,2121,0x004BC5F0,?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z,67,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)"
-P3,2121,0x004BC640,?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z,67,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)"
-P3,2121,0x004BC690,?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z,67,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)"
 P2,7921,0x004BC6E0,?tour@TutWin@@QAEXXZ,5598,5,29,unrecovered,,,2,exact,exact,void (__thiscall ?tour@TutWin@@QAEXXZ)(TutWin* this)
 P3,121,0x004BDCC0,?on_button_clicked@TutWin@@QAEXH@Z,226,0,1,unrecovered,,,2,exact,start_only,"void (__thiscall ?on_button_clicked@TutWin@@QAEXH@Z)(TutWin* this, int)"
 P3,11,0x004BDDB0,?on_move@TutWin@@QAEXHH@Z,21,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)"

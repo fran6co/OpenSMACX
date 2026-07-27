@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 279,
-      "source_complete": 2418,
+      "source_complete": 2422,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2943
+      "unrecovered": 2939
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,9 +1317,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2364,
-    "matched_function_starts": 2364,
-    "unique_addresses": 2364,
+    "annotations": 2368,
+    "matched_function_starts": 2368,
+    "unique_addresses": 2368,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -9073,7 +9073,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/tutwin.cpp:23",
+        "location": "src/tutwin.cpp:24",
         "symbol": "TutWinShownFlag",
         "type": "uint32_t *"
       },
