@@ -3430,6 +3430,118 @@ void test_menu_accessors() {
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
 
+    // The seven menu-item operations. They are 84-byte clones of one another
+    // differing only in which PullDown method they end on, so the table drives
+    // all seven through the same three questions: a hit dispatches to THAT
+    // method on the entry's own PullDown, a miss answers 0xB without
+    // dispatching, and neither writes through the Menu.
+    struct ItemOp {
+        int (Menu::*method)(int, int);
+        int (__fastcall *redirect)(Menu *, void *, int, int);
+        // What a successful dispatch answers. Six of the seven end in a
+        // PullDown method that returns 0 once it finds the item; UNK3 ends in
+        // PullDown::UNK2, which is itself a stub returning 8 whatever it is
+        // handed. Both are "dispatched" and neither is 0xB, which is what a
+        // search miss answers.
+        int hit_answer;
+    };
+    const ItemOp item_ops[] = {
+        {&Menu::UNK3, &menu_unk3_redirect, 8},
+        {&Menu::hide_menu_item, &menu_hide_menu_item_redirect,
+         0},
+        {&Menu::show_menu_item, &menu_show_menu_item_redirect,
+         0},
+        {&Menu::disable_menu_item, &menu_disable_menu_item_redirect,
+         0},
+        {&Menu::enable_menu_item, &menu_enable_menu_item_redirect,
+         0},
+        {&Menu::check_menu_item, &menu_check_menu_item_redirect,
+         0},
+        {&Menu::uncheck_menu_item, &menu_uncheck_menu_item_redirect,
+         0},
+    };
+    // The PullDown these dispatch into is seeded with ONE item whose id is 7
+    // and a -1 sentinel behind it. That matters: every one of the six
+    // PullDown methods answers 11 when it cannot find the item, and 11 is
+    // also what Menu answers on a search miss - so an unseeded PullDown makes
+    // "dispatched" and "did not dispatch" indistinguishable. With the item
+    // present the dispatch answers 0 instead.
+    // PullDownItem is 0x14 bytes with id at +8; items_ starts at 0xA18.
+    constexpr size_t kItems = 0xA18;
+    constexpr size_t kItemId = 8;
+    auto seed_pulldown = [&](uint8_t *raw) {
+        std::memset(raw, 0, sizeof(PullDown));
+        write_at(raw, kItems + kItemId, 7);
+        write_at(raw, kItems + 0x14 + kItemId, -1);
+    };
+    for (const ItemOp &op : item_ops) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            alignas(PullDown) uint8_t pull_storage[sizeof(PullDown)];
+            auto *pull = reinterpret_cast<PullDown *>(pull_storage);
+
+            // A. Match on entry 0. Starting the walk anywhere but zero misses
+            //    it, so this is what pins the initial index.
+            alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+            uint8_t expected[sizeof(storage)];
+            auto build = [&](int match_index, bool sentinel_after) {
+                seed_storage(storage, expected, sizeof(storage));
+                for (int index = 0; index < 15; ++index) {
+                    int id = 500 + index;
+                    if (index == match_index) { id = 777; }
+                    else if (sentinel_after && index == match_index + 1) { id = -1; }
+                    write_at(storage, 16 + 0xA38 + index * 0x14, id);
+                    write_at(storage, 16 + 0xA48 + index * 0x14,
+                             index == match_index ? pull : nullptr);
+                }
+                std::memcpy(expected, storage, sizeof(storage));
+            };
+            auto invoke = [&](int menu_id) {
+                auto *menu = reinterpret_cast<Menu *>(storage + 16);
+                return adapter ? op.redirect(menu, nullptr, menu_id, 7)
+                               : (menu->*op.method)(menu_id, 7);
+            };
+
+            build(0, true);
+            seed_pulldown(pull_storage);
+            expect(invoke(777) == op.hit_answer);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // B. Match on the LAST entry, no sentinel anywhere. The walk has
+            //    to reach index 14 without tripping the bound.
+            build(14, false);
+            seed_pulldown(pull_storage);
+            expect(invoke(777) == op.hit_answer);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // C. No match and no sentinel: the walk runs off the end of the
+            //    fifteen entries. Every entry's PullDown is null, so a body
+            //    that dispatched anyway would fault rather than answer.
+            //
+            //    A SIXTEENTH entry is planted immediately past the array -
+            //    entries_[15] lands at exactly sizeof(Menu), 0xB64 - and it
+            //    matches. The correct body never reads it; a bound of `> 15`
+            //    instead of `>= 15` reads one entry too far, finds it, and
+            //    dispatches. Without this the two answer 0xB alike and the
+            //    off-by-one survives, which is how it survived the first
+            //    version of this fixture.
+            build(-1, false);
+            write_at(storage, 16 + 0xB64, 777);
+            write_at(storage, 16 + 0xB74, pull);
+            std::memcpy(expected, storage, sizeof(storage));
+            seed_pulldown(pull_storage);
+            expect(invoke(777) == 0xB);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // D. Sentinel at entry 0 ends the walk before the match behind
+            //    it. Reading the sentinel test backwards would find entry 2.
+            build(2, false);
+            write_at(storage, 16 + 0xA38, -1);
+            std::memcpy(expected, storage, sizeof(storage));
+            expect(invoke(777) == 0xB);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
     // The loop bound is 15 real entries; index 15 sits just past entries_[14]
     // in the trailing canary region, which sizeof(Menu) + 32 keeps safely
     // addressable. Planting the requested ID only there distinguishes the

@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "menu.h"
+#include "pulldown.h"
 
 /*
 Purpose: Set the callback invoked for menu events.
@@ -104,4 +105,278 @@ int Menu::requested_height() {
 
 int __fastcall menu_requested_height_redirect(Menu *self, void *) {
     return self->requested_height();
+}
+
+/*
+ * The seven menu-item operations below are ONE function seven times over: the
+ * image holds them as 84-byte clones differing at exactly two byte offsets,
+ * the displacement of the single call at the end. Everything else - the
+ * inlined search, the two 0xB exits, the entry stride - is byte-identical
+ * across all seven, which is why they are transcribed as a family rather than
+ * derived one at a time.
+ *
+ * The search is INLINED in each, not delegated to Menu::id_to_index, because
+ * that is what the original does: id_to_index exists separately at 0x005FB280
+ * and every one of these carries its own copy of the same loop. Factoring
+ * them onto a shared helper would leave the mutation sweep with one body to
+ * perturb instead of seven.
+ */
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB1D0
+Return Value: PullDown::UNK2's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB1FC before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::UNK3(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->UNK2(item_id);
+}
+
+int __fastcall menu_unk3_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->UNK3(menu_id, item_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB300
+Return Value: PullDown::hide_item's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB32C before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::hide_menu_item(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->hide_item(item_id);
+}
+
+int __fastcall menu_hide_menu_item_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->hide_menu_item(menu_id, item_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB3C0
+Return Value: PullDown::show_item's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB3EC before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::show_menu_item(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->show_item(item_id);
+}
+
+int __fastcall menu_show_menu_item_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->show_menu_item(menu_id, item_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB480
+Return Value: PullDown::disable_item's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB4AC before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::disable_menu_item(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->disable_item(item_id);
+}
+
+int __fastcall menu_disable_menu_item_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->disable_menu_item(menu_id, item_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB540
+Return Value: PullDown::enable_item's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB56C before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::enable_menu_item(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->enable_item(item_id);
+}
+
+int __fastcall menu_enable_menu_item_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->enable_menu_item(menu_id, item_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB760
+Return Value: PullDown::check_item's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB78C before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::check_menu_item(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->check_item(item_id);
+}
+
+int __fastcall menu_check_menu_item_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->check_menu_item(menu_id, item_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and forward the item id to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+Original Offset: 005FB7C0
+Return Value: PullDown::uncheck_item's, or 0xB when no entry matches
+Status: Complete
+Verification note: the original checks the found index against -1 at
+         0x005FB7EC before dispatching, which can never fire - the index
+         is a loop counter that starts at 0 and only increments. Dead in the
+         original and omitted here rather than transcribed as an unreachable
+         branch.
+*/
+int Menu::uncheck_menu_item(int menu_id, int item_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    return entries_[index].pull_down->uncheck_item(item_id);
+}
+
+int __fastcall menu_uncheck_menu_item_redirect(
+        Menu *self, void *, int menu_id, int item_id) {
+    return self->uncheck_menu_item(menu_id, item_id);
 }

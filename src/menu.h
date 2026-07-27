@@ -51,6 +51,13 @@ class DLLEXPORT Menu : GraphicWin {
 
   void set_menu_proc(MenuProc proc);
   int id_to_index(int id);
+  int UNK3(int menu_id, int item_id);
+  int hide_menu_item(int menu_id, int item_id);
+  int show_menu_item(int menu_id, int item_id);
+  int disable_menu_item(int menu_id, int item_id);
+  int enable_menu_item(int menu_id, int item_id);
+  int check_menu_item(int menu_id, int item_id);
+  int uncheck_menu_item(int menu_id, int item_id);
 
  private:
   MenuProc proc_;
@@ -68,6 +75,20 @@ static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
 MenuProc __fastcall menu_set_menu_proc_redirect(
     Menu *self, void *, MenuProc proc);
 int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id);
+int __fastcall menu_unk3_redirect(
+    Menu *self, void *, int menu_id, int item_id);
+int __fastcall menu_hide_menu_item_redirect(
+    Menu *self, void *, int menu_id, int item_id);
+int __fastcall menu_show_menu_item_redirect(
+    Menu *self, void *, int menu_id, int item_id);
+int __fastcall menu_disable_menu_item_redirect(
+    Menu *self, void *, int menu_id, int item_id);
+int __fastcall menu_enable_menu_item_redirect(
+    Menu *self, void *, int menu_id, int item_id);
+int __fastcall menu_check_menu_item_redirect(
+    Menu *self, void *, int menu_id, int item_id);
+int __fastcall menu_uncheck_menu_item_redirect(
+    Menu *self, void *, int menu_id, int item_id);
 
 int __fastcall menu_unk2_redirect(
     Menu *self, void *, int a);
