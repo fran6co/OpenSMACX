@@ -265,6 +265,34 @@ BOOL __cdecl in_box(int x, int y, const RECT *rect) {
 }
 
 /*
+Purpose: Slide a rectangle by a delta on each axis, the wrapping counterpart of
+         the Win32 OffsetRect. Its neighbour make_rect below builds rectangles
+         with the same wrapping arithmetic, and this one is entered the same
+         way: `ret` with no operand and the caller's `add esp, 0xc` at
+         0x005EDC92, so __cdecl with three arguments. EAX still holds the
+         rectangle pointer at the return because nothing overwrites it after
+         the load at 0x005F8670, but that is a residue and not a value: the
+         one caller clobbers EAX two instructions later at 0x005EDC95.
+Original Offset: 005F8670
+Status: Complete
+Verification note: the original writes left, right, top, bottom in that
+         interleaved order, reloading the y delta between the right and top
+         stores. The four fields cannot alias, so a mutant that swaps two
+         adjacent stores is an equivalent mutant no assertion can separate;
+         the order is pinned through `volatile` only so the emitted stores
+         keep matching the original, exactly as make_rect does.
+*/
+void __cdecl offset_rect(RECT *rect, int dx, int dy) {
+    volatile RECT *ordered = rect;
+    const uint32_t x_bits = static_cast<uint32_t>(dx);
+    const uint32_t y_bits = static_cast<uint32_t>(dy);
+    ordered->left = long_from_bits(long_bits(ordered->left) + x_bits);
+    ordered->right = long_from_bits(long_bits(ordered->right) + x_bits);
+    ordered->top = long_from_bits(long_bits(ordered->top) + y_bits);
+    ordered->bottom = long_from_bits(long_bits(ordered->bottom) + y_bits);
+}
+
+/*
 Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
 Original Offset: 005F86C0
 Status: Complete
