@@ -380,3 +380,171 @@ int __fastcall menu_uncheck_menu_item_redirect(
         Menu *self, void *, int menu_id, int item_id) {
     return self->uncheck_menu_item(menu_id, item_id);
 }
+
+/*
+ * A second Menu clone family: four 96-byte bodies differing at two byte
+ * offsets, which are the flag instruction itself - `and dl, 0xFE`,
+ * `or dl, 1`, `or dl, 2`, `and dl, 0xFD`. Two bits, set and cleared. As with
+ * the item operations above, the search is inlined in each rather than
+ * delegated, because the original carries four copies of it.
+ */
+
+/*
+Purpose: Find the menu whose id matches and clear bit 0 of its entry's flag byte,
+         then let the window repaint itself. An unknown menu answers 0xB.
+Original Offset: 005FB2A0
+Return Value: 0 once the flag is written, 0xB when no entry matches
+Status: Complete
+Verification note: the repaint is a virtual dispatch on THIS object's own
+         vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
+         its PullDown, and it takes no arguments. It runs only on the found
+         path, after the flag is written.
+Verification note: as in the item operations, the original tests the found
+         index against -1 before using it, which cannot fire for a counter
+         that starts at 0 and only increments. Dead, and omitted.
+*/
+int Menu::UNK6(int menu_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    entries_[index].flags &= 0xFE;
+    void **const vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_menu_repaint *>(
+        vtable[0xF8 / sizeof(void *)])(this);
+    return 0;
+}
+
+int __fastcall menu_unk6_redirect(
+        Menu *self, void *, int menu_id) {
+    return self->UNK6(menu_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and set bit 0 of its entry's flag byte,
+         then let the window repaint itself. An unknown menu answers 0xB.
+Original Offset: 005FB360
+Return Value: 0 once the flag is written, 0xB when no entry matches
+Status: Complete
+Verification note: the repaint is a virtual dispatch on THIS object's own
+         vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
+         its PullDown, and it takes no arguments. It runs only on the found
+         path, after the flag is written.
+Verification note: as in the item operations, the original tests the found
+         index against -1 before using it, which cannot fire for a counter
+         that starts at 0 and only increments. Dead, and omitted.
+*/
+int Menu::UNK7(int menu_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    entries_[index].flags |= 0x01;
+    void **const vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_menu_repaint *>(
+        vtable[0xF8 / sizeof(void *)])(this);
+    return 0;
+}
+
+int __fastcall menu_unk7_redirect(
+        Menu *self, void *, int menu_id) {
+    return self->UNK7(menu_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and set bit 1 of its entry's flag byte,
+         then let the window repaint itself. An unknown menu answers 0xB.
+Original Offset: 005FB420
+Return Value: 0 once the flag is written, 0xB when no entry matches
+Status: Complete
+Verification note: the repaint is a virtual dispatch on THIS object's own
+         vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
+         its PullDown, and it takes no arguments. It runs only on the found
+         path, after the flag is written.
+Verification note: as in the item operations, the original tests the found
+         index against -1 before using it, which cannot fire for a counter
+         that starts at 0 and only increments. Dead, and omitted.
+*/
+int Menu::UNK8(int menu_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    entries_[index].flags |= 0x02;
+    void **const vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_menu_repaint *>(
+        vtable[0xF8 / sizeof(void *)])(this);
+    return 0;
+}
+
+int __fastcall menu_unk8_redirect(
+        Menu *self, void *, int menu_id) {
+    return self->UNK8(menu_id);
+}
+
+/*
+Purpose: Find the menu whose id matches and clear bit 1 of its entry's flag byte,
+         then let the window repaint itself. An unknown menu answers 0xB.
+Original Offset: 005FB4E0
+Return Value: 0 once the flag is written, 0xB when no entry matches
+Status: Complete
+Verification note: the repaint is a virtual dispatch on THIS object's own
+         vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
+         its PullDown, and it takes no arguments. It runs only on the found
+         path, after the flag is written.
+Verification note: as in the item operations, the original tests the found
+         index against -1 before using it, which cannot fire for a counter
+         that starts at 0 and only increments. Dead, and omitted.
+*/
+int Menu::UNK9(int menu_id) {
+    int index = 0;
+    for (;;) {
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+        if (++index >= 15) {
+            return 0xB;
+        }
+    }
+    entries_[index].flags &= 0xFD;
+    void **const vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_menu_repaint *>(
+        vtable[0xF8 / sizeof(void *)])(this);
+    return 0;
+}
+
+int __fastcall menu_unk9_redirect(
+        Menu *self, void *, int menu_id) {
+    return self->UNK9(menu_id);
+}
