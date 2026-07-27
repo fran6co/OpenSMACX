@@ -32,6 +32,8 @@ class DLLEXPORT GraphicWin : Win {
   ~GraphicWin() { ; }
   void construct();
   uint32_t close();
+  int init(int x, int y, int width, int height, LPSTR title, int flags,
+           Win *parent, Menu *menu, BorderSizing *border);
   int fill(int x1, int y1, int x2, int y2, int color);
   void fill(int color);
   void redraw();
@@ -153,3 +155,36 @@ typedef void(__cdecl func_graphic_win_paint_hook)();
 void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
                                                 int color);
 void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// GraphicWin::init's four remaining original dependencies. Win::init at
+// 0x005EBD80 (ret 0x24) is the 2285-byte window-creation body,
+// GraphicWin::compute_min_size at 0x005D7030 (bare ret) is 272 bytes of frame
+// arithmetic, Win::nonclient_to_client at 0x005EEF60 (ret 8) converts an outer
+// size to a client size in place, and Buffer::init at 0x005D7670 (ret 0x10) is
+// the 847-byte DirectDraw/GDI surface creator. Tests rebind all four.
+typedef int(__thiscall func_win_init)(void *, int, int, int, int, LPSTR, int,
+                                      Win *, Menu *, BorderSizing *);
+typedef void(__thiscall func_graphic_win_compute_min_size)(void *);
+typedef void(__thiscall func_win_nonclient_to_client)(void *, int *, int *);
+typedef int(__thiscall func_buffer_init)(void *, int, int, int, void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_win_init *WinOriginalInit;
+extern func_graphic_win_compute_min_size *GraphicWinOriginalComputeMinSize;
+extern func_win_nonclient_to_client *WinOriginalNonclientToClient;
+extern func_buffer_init *BufferOriginalInit;
+
+// The eleven process window defaults init republishes, at 0x009B3394 - one
+// contiguous block between the colour-map slot GraphicWinColorMapTable
+// already binds at 0x009B3390 and GraphicWinFieldA0CDefault at 0x009B33C0.
+extern uint32_t *GraphicWinInitDefaults;
+
+int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
+                                         int x, int y, int width, int height,
+                                         LPSTR title, int flags, Win *parent,
+                                         Menu *menu, BorderSizing *border);

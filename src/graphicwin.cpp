@@ -19,6 +19,7 @@
 #include "graphicwin.h"
 #include "buffer.h"
 #include "scroll.h"
+#include "vector_teardown.h"
 
 #include <cstring>
 
@@ -392,4 +393,166 @@ void GraphicWin::redraw() {
 
 void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
     self->redraw();
+}
+
+// GraphicWin::init's four remaining original dependencies. Win::init carries
+// the whole window-creation closure, compute_min_size is frame arithmetic,
+// nonclient_to_client converts an outer size to a client size in place, and
+// Buffer::init is DirectDraw/GDI surface creation; all four stay at their
+// original addresses until that closure is source-owned. Tests rebind them.
+func_win_init *WinOriginalInit = (func_win_init *)0x005EBD80;
+func_graphic_win_compute_min_size *GraphicWinOriginalComputeMinSize =
+    (func_graphic_win_compute_min_size *)0x005D7030;
+func_win_nonclient_to_client *WinOriginalNonclientToClient =
+    (func_win_nonclient_to_client *)0x005EEF60;
+func_buffer_init *BufferOriginalInit = (func_buffer_init *)0x005D7670;
+
+uint32_t *GraphicWinInitDefaults = reinterpret_cast<uint32_t *>(0x009B3394);
+
+/*
+Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
+         process window defaults when the style asks for them, optionally
+         allocate the owned Buffer the window parks at 0xA08, initialise the
+         Win base, then size and initialise the window's own drawing surface
+         and sync it to the active palette.
+Original Offset: 005D4EF0
+Return Value: 0 on success; otherwise the nonzero failure code passed straight
+              through from Win::init or from Buffer::init
+Status: Complete with temporary Win init/nonclient_to_client, GraphicWin
+        compute_min_size and Buffer init dependencies
+Verification note: the catalogued mangled name
+        ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+        spells the return type X, void, and that name is wrong - the bytes
+        return int. BaseButton::init calls this at 0x006072A2 and immediately
+        does `test eax, eax` / `jne 0x0060734C` at 0x006072A7, and all three
+        exits set EAX deliberately: the Win::init passthrough (`jne
+        0x005D5083` at 0x005D500E), the Buffer::init passthrough (`jne
+        0x005D5083` at 0x005D5071), and `xor eax, eax` at 0x005D5081. The
+        independent IDA prototype in docs/recovery/functions.csv already reads
+        `int (__thiscall ...)`, so only the symbol string is stale. Do not
+        "fix" this back to void on the strength of the name.
+Verification note: three stores in the original have no counterpart here
+        because they belong to the omitted C++ EH frame - the operator-new
+        pointer spilled into the caller's sixth argument slot at 0x005D4FB3,
+        and the two EH state writes at 0x005D4FB9 and 0x005D4FCE. The only
+        reader of that spill is the unwind funclet at 0x00662B34, which runs
+        operator delete on it; the handler pushed at 0x005D4EF8 is a
+        `mov eax, <FuncInfo>` / `jmp __CxxFrameHandler` thunk, so the frame is
+        omittable. The style argument itself survives the clobber because the
+        original latched it into EDI at 0x005D4F0E, before the spill.
+Verification note: the emission order of the eleven default stores is
+        transcribed but is not observable - eleven distinct fields from eleven
+        distinct table slots, so any permutation leaves the same final state
+        and those swap mutants are equivalent by construction. What IS
+        observable, and what the fixture pins with eleven distinct sentinels,
+        is the slot-to-field mapping, which is not the identity.
+Verification note: the original has no null check on title, parent, menu,
+        border or on `this`, and none on the operator-new result beyond
+        skipping the constructor. Their absence is deliberate.
+*/
+int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
+                     int flags, Win *parent, Menu *menu,
+                     BorderSizing *border) {
+    // Direct call at 0x005D4F09, not a virtual dispatch, and its return is
+    // discarded: init on a live window tears the old one down first.
+    close();
+
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+
+    // One `test edi, 0x30000000` at 0x005D4F12 covers both style bits: either
+    // one republishes the whole block.
+    if ((flags & 0x30000000) != 0) {
+        volatile uint32_t *const defaults =
+            reinterpret_cast<volatile uint32_t *>(GraphicWinInitDefaults);
+        // The most error-prone part of the function, because the table slot
+        // and the destination field are two different permutations. Read
+        // straight off the stores at 0x005D4F1E through 0x005D4F98, the
+        // slot-to-field map is
+        //   [0]->0x9CC  [1]->0x9D0  [2]->0x9D4  [3]->0x9D8
+        //   [4]->0x9E8  [5]->0x9E4  [6]->0x9DC  [7]->0x9E0
+        //   [8]->0x9F0  [9]->0x9EC  [10]->0x9F4
+        // so slots 4..7 land on 0x9E8/0x9E4/0x9DC/0x9E0 rather than in
+        // ascending order, and 8/9 are crossed. The statement order below is
+        // additionally the original's own, which visits the slots
+        // 0, 2, 1, 3, 4, 5, 6, 7, 9, 8, 10 - note that the 1/2 inversion is
+        // scheduling only, since both of those slots map to their own field.
+        object[0x9CC / 4] = defaults[0];
+        object[0x9D4 / 4] = defaults[2];
+        object[0x9D0 / 4] = defaults[1];
+        object[0x9D8 / 4] = defaults[3];
+        object[0x9E8 / 4] = defaults[4];
+        object[0x9E4 / 4] = defaults[5];
+        object[0x9DC / 4] = defaults[6];
+        object[0x9E0 / 4] = defaults[7];
+        object[0x9EC / 4] = defaults[9];
+        object[0x9F0 / 4] = defaults[8];
+        object[0x9F4 / 4] = defaults[10];
+    }
+
+    // 0x588 is sizeof(Buffer). The allocation goes through the executable's
+    // own operator new at 0x0064558A, already bound for the Wave work - the
+    // address is what matters, not the name - and the legacy body stores
+    // whatever it got, null included, at 0xA08. It does not check that 0xA08
+    // was empty first; close() has just cleared it if it held anything.
+    if ((flags & 0x40000000) != 0) {
+        void *const block = WaveOperatorNew(0x588);
+        Buffer *owned = nullptr;
+        if (block != nullptr) {
+            owned = reinterpret_cast<Buffer *>(block);
+            owned->construct();
+        }
+        object[0xA08 / 4] =
+            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(owned));
+    }
+
+    // All nine arguments go straight through in order.
+    const int base_result = WinOriginalInit(this, x, y, width, height, title,
+                                            flags, parent, menu, border);
+    if (base_result != 0) {
+        return base_result;
+    }
+
+    // The window's own Buffer keeps a back pointer to the window in its field
+    // at 0x4, written as `mov [esi+0x448], esi` at 0x005D5012 - before the
+    // minimum-size computation, in the original's order.
+    object[0x448 / 4] =
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
+    GraphicWinOriginalComputeMinSize(this);
+
+    if ((flags & 0x800) == 0) {
+        // Converts the outer size to a client size in place. What the callee
+        // subtracts is its own business and is not asserted here.
+        WinOriginalNonclientToClient(this, &width, &height);
+    } else {
+        // The 0x800 arm goes the other way and ADDS the process scrollbar
+        // thickness, pairing bit 3 of the 0x98 flag dword with the width and
+        // bit 2 with the height. Both the flag dword and the thickness are
+        // loaded once, at 0x005D5038 and 0x005D503E, ahead of either test;
+        // the original tests only AL, which is equivalent for bits 2 and 3.
+        const uint32_t nonclient_flags = object[0x98 / 4];
+        const int thickness = *ScrollDefaultThickness;
+        if ((nonclient_flags & 8) != 0) {
+            width += thickness;
+        }
+        if ((nonclient_flags & 4) != 0) {
+            height += thickness;
+        }
+    }
+
+    const int surface_result =
+        BufferOriginalInit(&buffer_, width, height, 0, nullptr);
+    if (surface_result != 0) {
+        return surface_result;
+    }
+    // Return discarded: the original zeroes EAX at 0x005D5081 straight after.
+    buffer_.sync_to_palette(*WinActivePalette);
+    return 0;
+}
+
+int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
+                                         int x, int y, int width, int height,
+                                         LPSTR title, int flags, Win *parent,
+                                         Menu *menu, BorderSizing *border) {
+    return self->init(x, y, width, height, title, flags, parent, menu, border);
 }

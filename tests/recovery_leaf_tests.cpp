@@ -6455,6 +6455,387 @@ void test_graphic_win_redraw() {
     GraphicWinOverlayNonclient = saved_overlay;
 }
 
+namespace {
+
+// GraphicWin::init fixture. Every dependency is a recorder: the four original
+// seams, the process allocator, and the two closes init reaches through
+// GraphicWin::close.
+struct InitRecord {
+    int close_win_calls;
+    int close_buffer_calls;
+    int alloc_calls;
+    unsigned int alloc_size;
+    int base_calls;
+    void *base_self;
+    int base_args[9];
+    int min_size_calls;
+    uint32_t min_size_seen_448;
+    int nonclient_calls;
+    void *nonclient_self;
+    int nonclient_in_width;
+    int nonclient_in_height;
+    int surface_calls;
+    void *surface_self;
+    int surface_width;
+    int surface_height;
+    int surface_third;
+    void *surface_fourth;
+    uint32_t sequence;
+};
+InitRecord g_init_rec;
+void init_step(uint32_t step) { g_init_rec.sequence = g_init_rec.sequence * 16 + step; }
+
+int g_init_base_result;
+int g_init_surface_result;
+void *g_init_alloc_block;
+int g_init_nonclient_out_width;
+int g_init_nonclient_out_height;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall init_stub_win_close(void *) {
+    ++g_init_rec.close_win_calls;
+    init_step(1);
+}
+void __thiscall init_stub_buffer_close(void *) {
+    ++g_init_rec.close_buffer_calls;
+    init_step(2);
+}
+void *__cdecl init_stub_alloc(unsigned int size) {
+    ++g_init_rec.alloc_calls;
+    g_init_rec.alloc_size = size;
+    init_step(3);
+    return g_init_alloc_block;
+}
+int __thiscall init_stub_base(void *self, int a1, int a2, int a3, int a4,
+                              LPSTR a5, int a6, Win *a7, Menu *a8,
+                              BorderSizing *a9) {
+    ++g_init_rec.base_calls;
+    g_init_rec.base_self = self;
+    const int seen[9] = {a1, a2, a3, a4, static_cast<int>(reinterpret_cast<intptr_t>(a5)),
+                         a6, static_cast<int>(reinterpret_cast<intptr_t>(a7)),
+                         static_cast<int>(reinterpret_cast<intptr_t>(a8)),
+                         static_cast<int>(reinterpret_cast<intptr_t>(a9))};
+    for (int index = 0; index < 9; ++index) { g_init_rec.base_args[index] = seen[index]; }
+    init_step(4);
+    return g_init_base_result;
+}
+void __thiscall init_stub_min_size(void *self) {
+    ++g_init_rec.min_size_calls;
+    // Reads the back pointer, so a body that wrote 0x448 afterwards would
+    // show up here as zero rather than as the window.
+    g_init_rec.min_size_seen_448 =
+        graphic_win_field(self, 0x448);
+    init_step(5);
+}
+void __thiscall init_stub_nonclient(void *self, int *width, int *height) {
+    ++g_init_rec.nonclient_calls;
+    g_init_rec.nonclient_self = self;
+    g_init_rec.nonclient_in_width = *width;
+    g_init_rec.nonclient_in_height = *height;
+    *width = g_init_nonclient_out_width;
+    *height = g_init_nonclient_out_height;
+    init_step(6);
+}
+int __thiscall init_stub_surface(void *self, int width, int height, int third,
+                                 void *fourth) {
+    ++g_init_rec.surface_calls;
+    g_init_rec.surface_self = self;
+    g_init_rec.surface_width = width;
+    g_init_rec.surface_height = height;
+    g_init_rec.surface_third = third;
+    g_init_rec.surface_fourth = fourth;
+    init_step(7);
+    return g_init_surface_result;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// The eleven table slots, each a distinct sentinel so the slot-to-field map is
+// pinned exactly rather than up to a permutation.
+const uint32_t g_init_default_slots[11] = {
+    0xD0000001U, 0xD0000002U, 0xD0000003U, 0xD0000004U, 0xD0000005U,
+    0xD0000006U, 0xD0000007U, 0xD0000008U, 0xD0000009U, 0xD000000AU,
+    0xD000000BU,
+};
+// Read straight off the stores at 0x005D4F1E..0x005D4F98: field offset, then
+// the table slot that lands in it. Slots 4..7 and 8..9 are crossed.
+const struct { size_t offset; int slot; } g_init_default_map[11] = {
+    {0x9CC, 0}, {0x9D0, 1}, {0x9D4, 2}, {0x9D8, 3},
+    {0x9DC, 6}, {0x9E0, 7}, {0x9E4, 5}, {0x9E8, 4},
+    {0x9EC, 9}, {0x9F0, 8}, {0x9F4, 10},
+};
+
+}  // namespace
+
+void test_graphic_win_init() {
+    static_assert(sizeof(GraphicWin) == 0xA14,
+                  "GraphicWin init tests require the legacy layout");
+
+    func_subobject_close *const saved_win_close = WinOriginalClose;
+    func_subobject_close *const saved_buffer_close = BufferSubobjectClose;
+    uint32_t *const saved_a0c_default = GraphicWinFieldA0CDefault;
+    func_win_init *const saved_base = WinOriginalInit;
+    func_graphic_win_compute_min_size *const saved_min =
+        GraphicWinOriginalComputeMinSize;
+    func_win_nonclient_to_client *const saved_nonclient =
+        WinOriginalNonclientToClient;
+    func_buffer_init *const saved_surface = BufferOriginalInit;
+    uint32_t *const saved_defaults = GraphicWinInitDefaults;
+    func_operator_new *const saved_alloc = WaveOperatorNew;
+    int *const saved_thickness = ScrollDefaultThickness;
+    Palette **const saved_palette = WinActivePalette;
+
+    WinOriginalClose = &init_stub_win_close;
+    BufferSubobjectClose = &init_stub_buffer_close;
+    WinOriginalInit = &init_stub_base;
+    GraphicWinOriginalComputeMinSize = &init_stub_min_size;
+    WinOriginalNonclientToClient = &init_stub_nonclient;
+    BufferOriginalInit = &init_stub_surface;
+    WaveOperatorNew = &init_stub_alloc;
+    uint32_t a0c_default = 0x11223344U;
+    GraphicWinFieldA0CDefault = &a0c_default;
+    uint32_t defaults[11];
+    for (int slot = 0; slot < 11; ++slot) { defaults[slot] = g_init_default_slots[slot]; }
+    GraphicWinInitDefaults = defaults;
+    int thickness = 9;
+    ScrollDefaultThickness = &thickness;
+    // The allocation arm runs the real Buffer::construct, which reads three
+    // process globals that still default to addresses in the original image -
+    // and the palette one it dereferences. Nothing maps those here, so they
+    // are bound before the first call rather than after the first fault. A
+    // null palette sends construct down its deterministic ramp arm.
+    uint32_t *const saved_reset_520 = BufferResetValue520;
+    Font **const saved_font_default = FontDefaultPtr;
+    Palette **const saved_buffer_palette = BufferPalette;
+    uint32_t reset_520_slot = 0;
+    Font *font_slot = nullptr;
+    Palette *construct_palette_slot = nullptr;
+    BufferResetValue520 = &reset_520_slot;
+    FontDefaultPtr = &font_slot;
+    BufferPalette = &construct_palette_slot;
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette)] = {};
+    auto *const palette = reinterpret_cast<Palette *>(palette_storage);
+    Palette *palette_slot = palette;
+    WinActivePalette = &palette_slot;
+
+    alignas(GraphicWin) uint8_t storage[sizeof(GraphicWin) + 32];
+    uint8_t expected[sizeof(storage)];
+    auto *const self = reinterpret_cast<GraphicWin *>(storage + 16);
+    char title[] = "t";
+    auto *const parent = reinterpret_cast<Win *>(0x71000000);
+    auto *const menu = reinterpret_cast<Menu *>(0x72000000);
+    auto *const border = reinterpret_cast<BorderSizing *>(0x73000000);
+
+    // Everything GraphicWin::close writes, applied to the expected image
+    // before a case layers its own effects on top.
+    auto apply_close = [&](uint8_t *image) {
+        const uint32_t zero = 0;
+        write_at(image, 16 + 0xA10, zero);
+        write_at(image, 16 + 0x134, zero);
+        write_at(image, 16 + 0x138, zero);
+        for (size_t offset = 0x9CC; offset <= 0xA04; offset += 4) {
+            write_at(image, 16 + offset, zero);
+        }
+        write_at(image, 16 + 0xA08, static_cast<void *>(nullptr));
+        write_at(image, 16 + 0xA0C, a0c_default);
+    };
+    auto arrange = [&](int flags) {
+        seed_storage(storage, expected, sizeof(storage));
+        // The seed leaves garbage at 0xA08, and GraphicWin::close dispatches a
+        // release through whatever sits there. Every case enters with it empty
+        // so close() is the no-op arm its own test already covers in full.
+        write_at(storage, 16 + 0xA08, static_cast<void *>(nullptr));
+        std::memcpy(expected, storage, sizeof(storage));
+        apply_close(expected);
+        g_init_rec = InitRecord{};
+        g_init_base_result = 0;
+        g_init_surface_result = 0;
+        g_init_alloc_block = nullptr;
+        g_init_nonclient_out_width = 0;
+        g_init_nonclient_out_height = 0;
+        (void)flags;
+    };
+
+    // --- the eleven defaults, and the proof close() runs before them ---
+    // close() zeroes 0x9CC..0xA04 outright. If the republish ran first, every
+    // one of these fields would read back zero instead of its sentinel, so
+    // this single assertion pins both the slot-to-field map and the ordering.
+    for (const int style : {0x10000000, 0x20000000, 0x30000000}) {
+        arrange(style);
+        g_init_base_result = 0x5A5A5A5A;  // stop after Win::init
+        for (int index = 0; index < 11; ++index) {
+            write_at(expected, 16 + g_init_default_map[index].offset,
+                     g_init_default_slots[g_init_default_map[index].slot]);
+        }
+        expect(self->init(1, 2, 3, 4, title, style, parent, menu, border)
+               == 0x5A5A5A5A);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(g_init_rec.sequence == 0x124U);
+        expect(g_init_rec.alloc_calls == 0);
+        expect(g_init_rec.min_size_calls == 0);
+        expect(g_init_rec.surface_calls == 0);
+    }
+
+    // Neither style bit: the block is not republished, so close()'s zeroes
+    // stand. Same arrangement, opposite outcome.
+    arrange(0);
+    g_init_base_result = 0x5A5A5A5A;
+    expect(self->init(1, 2, 3, 4, title, 0x0F000000, parent, menu, border)
+           == 0x5A5A5A5A);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // --- the owned buffer ---
+    alignas(Buffer) uint8_t owned_storage[sizeof(Buffer)];
+    for (int allocated = 0; allocated < 2; ++allocated) {
+        arrange(0x40000000);
+        g_init_base_result = 0x5A5A5A5A;
+        std::memset(owned_storage, 0xEE, sizeof(owned_storage));
+        g_init_alloc_block = allocated ? owned_storage : nullptr;
+        write_at(expected, 16 + 0xA08, g_init_alloc_block);
+        expect(self->init(1, 2, 3, 4, title, 0x40000000, parent, menu, border)
+               == 0x5A5A5A5A);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(g_init_rec.alloc_calls == 1);
+        // 0x588 is sizeof(Buffer) and the allocation runs before Win::init.
+        expect(g_init_rec.alloc_size == 0x588);
+        expect(g_init_rec.sequence == 0x1234U);
+        // A block is constructed in place; a null one is not touched at all.
+        alignas(Buffer) uint8_t untouched[sizeof(Buffer)];
+        std::memset(untouched, 0xEE, sizeof(untouched));
+        expect((std::memcmp(owned_storage, untouched, sizeof(untouched)) != 0)
+               == (allocated != 0));
+    }
+
+    // Without the bit the allocator is never consulted and 0xA08 keeps the
+    // null close() left.
+    arrange(0);
+    g_init_base_result = 0x5A5A5A5A;
+    g_init_alloc_block = owned_storage;
+    expect(self->init(1, 2, 3, 4, title, 0x20000000, parent, menu, border)
+           == 0x5A5A5A5A);
+    expect(g_init_rec.alloc_calls == 0);
+
+    // --- nine-argument forwarding, with the allocation arm live ---
+    // The original spills the operator-new pointer into its own sixth
+    // argument slot at 0x005D4FB3 and survives only because the style was
+    // latched into EDI first. Forwarding the spilled slot would show up here
+    // as the sixth argument being the Buffer pointer instead of the style.
+    arrange(0x40000001);
+    g_init_base_result = 0x5A5A5A5A;
+    g_init_alloc_block = owned_storage;
+    expect(self->init(11, 22, 33, 44, title, 0x40000001, parent, menu, border)
+           == 0x5A5A5A5A);
+    expect(g_init_rec.base_calls == 1);
+    expect(g_init_rec.base_self == storage + 16);
+    expect(g_init_rec.base_args[0] == 11);
+    expect(g_init_rec.base_args[1] == 22);
+    expect(g_init_rec.base_args[2] == 33);
+    expect(g_init_rec.base_args[3] == 44);
+    expect(g_init_rec.base_args[4] ==
+           static_cast<int>(reinterpret_cast<intptr_t>(title)));
+    expect(g_init_rec.base_args[5] == 0x40000001);
+    expect(g_init_rec.base_args[6] ==
+           static_cast<int>(reinterpret_cast<intptr_t>(parent)));
+    expect(g_init_rec.base_args[7] ==
+           static_cast<int>(reinterpret_cast<intptr_t>(menu)));
+    expect(g_init_rec.base_args[8] ==
+           static_cast<int>(reinterpret_cast<intptr_t>(border)));
+
+    // --- the back pointer, and that it precedes compute_min_size ---
+    arrange(0);
+    g_init_surface_result = 0x0BADF00D;
+    write_at(expected, 16 + 0x448, static_cast<void *>(self));
+    g_init_nonclient_out_width = 55;
+    g_init_nonclient_out_height = 66;
+    expect(self->init(1, 2, 3, 4, title, 0, parent, menu, border)
+           == 0x0BADF00D);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+    expect(g_init_rec.min_size_seen_448 ==
+           static_cast<uint32_t>(reinterpret_cast<uintptr_t>(self)));
+    expect(g_init_rec.sequence == 0x124567U);
+    // The non-0x800 arm converts the size in place and the converted values
+    // are what reach the surface.
+    expect(g_init_rec.nonclient_calls == 1);
+    expect(g_init_rec.nonclient_self == storage + 16);
+    expect(g_init_rec.nonclient_in_width == 3);
+    expect(g_init_rec.nonclient_in_height == 4);
+    expect(g_init_rec.surface_calls == 1);
+    expect(g_init_rec.surface_self == storage + 16 + 0x444);
+    expect(g_init_rec.surface_width == 55);
+    expect(g_init_rec.surface_height == 66);
+    expect(g_init_rec.surface_third == 0);
+    expect(g_init_rec.surface_fourth == nullptr);
+
+    // --- the 0x800 arm: bit 3 of 0x98 is the width, bit 2 is the height ---
+    struct ThicknessCase { uint32_t nonclient_flags; int width; int height; };
+    const ThicknessCase thickness_cases[] = {
+        {0x0, 3, 4}, {0x8, 12, 4}, {0x4, 3, 13}, {0xC, 12, 13},
+        // Only the two bits count; the rest of the dword must not leak in.
+        {0xFFFFFFF3U, 3, 4},
+    };
+    for (const ThicknessCase &test : thickness_cases) {
+        arrange(0x800);
+        g_init_surface_result = 0x0BADF00D;
+        write_at(storage, 16 + 0x98, test.nonclient_flags);
+        std::memcpy(expected, storage, sizeof(storage));
+        apply_close(expected);
+        write_at(expected, 16 + 0x448, static_cast<void *>(self));
+        expect(self->init(1, 2, 3, 4, title, 0x800, parent, menu, border)
+               == 0x0BADF00D);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(g_init_rec.nonclient_calls == 0);
+        expect(g_init_rec.surface_width == test.width);
+        expect(g_init_rec.surface_height == test.height);
+    }
+
+    // --- the success path, and that the palette comes from the seam ---
+    // The surface is arranged so sync_to_palette takes its cheap arm: pixel
+    // storage present and the generation tag already matching, which leaves
+    // only the trailing pair to publish. That pair is the observable - it
+    // proves the call ran AND which palette it was handed.
+    const uint32_t tag = 0x1234ABCDU;
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        arrange(0);
+        LPVOID pixels[1] = {};
+        write_at(storage, 16 + 0x444 + 0x54, static_cast<LPVOID *>(pixels));
+        write_at(storage, 16 + 0x444 + 0x4A4, tag);
+        write_at(palette_storage, 0x400, tag);
+        std::memcpy(expected, storage, sizeof(storage));
+        apply_close(expected);
+        write_at(expected, 16 + 0x448, static_cast<void *>(self));
+        write_at(expected, 16 + 0x444 + 0x57C, 1U);
+        write_at(expected, 16 + 0x444 + 0x584, palette);
+        g_init_nonclient_out_width = 55;
+        g_init_nonclient_out_height = 66;
+        const int result = use_adapter
+            ? graphic_win_init_redirect(self, nullptr, 1, 2, 3, 4, title, 0,
+                                        parent, menu, border)
+            : self->init(1, 2, 3, 4, title, 0, parent, menu, border);
+        expect(result == 0);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+        expect(g_init_rec.sequence == 0x124567U);
+    }
+
+    WinOriginalClose = saved_win_close;
+    BufferSubobjectClose = saved_buffer_close;
+    GraphicWinFieldA0CDefault = saved_a0c_default;
+    WinOriginalInit = saved_base;
+    GraphicWinOriginalComputeMinSize = saved_min;
+    WinOriginalNonclientToClient = saved_nonclient;
+    BufferOriginalInit = saved_surface;
+    GraphicWinInitDefaults = saved_defaults;
+    WaveOperatorNew = saved_alloc;
+    ScrollDefaultThickness = saved_thickness;
+    WinActivePalette = saved_palette;
+    BufferResetValue520 = saved_reset_520;
+    FontDefaultPtr = saved_font_default;
+    BufferPalette = saved_buffer_palette;
+}
+
 void test_graphic_win_close() {
     static_assert(sizeof(GraphicWin) == 0xA14,
                   "GraphicWin close tests require the legacy layout");
@@ -25337,6 +25718,7 @@ int main() {
     test_sprite_construct();
     test_graphic_win_destructor();
     test_graphic_win_close();
+    test_graphic_win_init();
     test_graphic_win_fill_color();
     test_graphic_win_redraw();
     test_base_button_and_flat_button_lifecycle();

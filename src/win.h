@@ -24,6 +24,10 @@
 #include "sprite.h"
 
 class Menu; // forward declaration
+// The ninth Win::init / GraphicWin::init argument, spelled PAUBorderSizing@@
+// in both mangled names - a struct, hence the tag. Nothing on the recovered
+// surface dereferences it, so it stays incomplete.
+struct BorderSizing;
 class Scroll; // forward declaration
 
  /*
