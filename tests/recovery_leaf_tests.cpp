@@ -11152,6 +11152,47 @@ void test_constant_return_stubs() {
     g_ambience_eot_redirect(g_ambience, nullptr);
     expect_storage_bytes(ga_storage, ga_expected, sizeof(ga_storage));
 
+    // The five that DO write: a single flag byte each, and nothing else in
+    // the object. The two FactionAmbience pairs share a byte apiece, so the
+    // show/hide of one must leave the other's byte alone - which a body that
+    // wrote the wrong offset would break silently in the other direction.
+    struct FlagCase {
+        size_t offset;
+        int value;
+        void (__fastcall *redirect)(FactionAmbience *, void *);
+    };
+    const FlagCase faction_flags[] = {
+        {0x6C, 1, &faction_ambience_basewin_show_redirect},
+        {0x6C, 0, &faction_ambience_basewin_hide_redirect},
+        {0x6D, 1, &faction_ambience_design_window_show_redirect},
+        {0x6D, 0, &faction_ambience_design_window_hide_redirect},
+    };
+    for (const FlagCase &test : faction_flags) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(fa_storage, fa_expected, sizeof(fa_storage));
+            std::memcpy(fa_expected, fa_storage, sizeof(fa_storage));
+            fa_expected[16 + test.offset] = static_cast<uint8_t>(test.value);
+            if (adapter) {
+                test.redirect(faction_ambience, nullptr);
+            } else if (test.offset == 0x6C) {
+                if (test.value) { faction_ambience->basewin_show(); }
+                else { faction_ambience->basewin_hide(); }
+            } else {
+                if (test.value) { faction_ambience->design_window_show(); }
+                else { faction_ambience->design_window_hide(); }
+            }
+            expect_storage_bytes(fa_storage, fa_expected, sizeof(fa_storage));
+        }
+    }
+    for (int adapter = 0; adapter < 2; ++adapter) {
+        seed_storage(ga_storage, ga_expected, sizeof(ga_storage));
+        std::memcpy(ga_expected, ga_storage, sizeof(ga_storage));
+        ga_expected[16 + 0x6C] = 0;
+        if (adapter) { g_ambience_basewin_hide_redirect(g_ambience, nullptr); }
+        else { g_ambience->basewin_hide(); }
+        expect_storage_bytes(ga_storage, ga_expected, sizeof(ga_storage));
+    }
+
     // Two sound devices that decline to be polled, suspended, or restarted,
     // and one Win clip reset that resets nothing. Their layouts are bounded
     // rather than established, so as with the ambience hooks the canary is

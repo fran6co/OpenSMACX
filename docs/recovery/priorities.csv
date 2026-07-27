@@ -434,10 +434,6 @@ P3,1021,0x00446B10,?engine_pitch@FX@@QAEXH@Z,39,1,0,unrecovered,,,2,exact,exact,
 P2,18120,0x00446B40,?ambience@@YAHH@Z,406,18,1,unrecovered,,,2,exact,exact,
 P3,2120,0x00446D10,?ambience_veh@@YAXH@Z,1246,2,1,unrecovered,,,2,exact,exact,
 P3,1121,0x004471F0,??0FactionAmbience@@QAE@XZ,41,1,1,unrecovered,,,2,exact,exact,void (__thiscall ??0FactionAmbience@@QAE@XZ)(FactionAmbience* this)
-P3,11,0x00447270,?basewin_show@FactionAmbience@@QAEXXZ,5,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?basewin_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
-P3,11,0x00447280,?basewin_hide@FactionAmbience@@QAEXXZ,5,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?basewin_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
-P3,11,0x00447290,?design_window_show@FactionAmbience@@QAEXXZ,5,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?design_window_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
-P3,11,0x004472A0,?design_window_hide@FactionAmbience@@QAEXXZ,5,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?design_window_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 P3,111,0x00447310,??0MAmbience@@QAE@XZ,44,0,1,unrecovered,,,1,missing,exact,void (__thiscall ??0MAmbience@@QAE@XZ)(MAmbience* this)
 P3,21,0x00447340,?begin@MAmbience@@QAEXXZ,22,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?begin@MAmbience@@QAEXXZ)(MAmbience* this)
 P3,21,0x00447360,?general@MAmbience@@QAEXXZ,266,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?general@MAmbience@@QAEXXZ)(MAmbience* this)
@@ -467,7 +463,6 @@ P3,21,0x00447B60,?base_liberated@BAmbience@@QAEXXZ,43,0,0,unrecovered,,,2,exact,
 P3,111,0x00447B90,??0GAmbience@@QAE@XZ,44,0,1,unrecovered,,,1,missing,exact,void (__thiscall ??0GAmbience@@QAE@XZ)(GAmbience* this)
 P3,21,0x00447BC0,?begin@GAmbience@@QAEXXZ,29,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?begin@GAmbience@@QAEXXZ)(GAmbience* this)
 P3,11,0x00447BE0,?basewin_show@GAmbience@@QAEXXZ,12,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?basewin_show@GAmbience@@QAEXXZ)(GAmbience* this)
-P3,11,0x00447BF0,?basewin_hide@GAmbience@@QAEXXZ,5,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?basewin_hide@GAmbience@@QAEXXZ)(GAmbience* this)
 P3,21,0x00447C00,?general@GAmbience@@QAEXXZ,88,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?general@GAmbience@@QAEXXZ)(GAmbience* this)
 P3,11,0x00447C70,?terraform@GAmbience@@QAEXXZ,42,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?terraform@GAmbience@@QAEXXZ)(GAmbience* this)
 P3,21,0x00447CD0,?new_base@GAmbience@@QAEXXZ,55,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?new_base@GAmbience@@QAEXXZ)(GAmbience* this)
