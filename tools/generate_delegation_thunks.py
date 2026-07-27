@@ -60,6 +60,7 @@ DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 JUMP_PATCH_BYTES = 5
 MAX_BODY_BYTES = 48
+OWN_SOURCE = "src/delegation_thunks.cpp"
 
 
 def read_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
@@ -189,7 +190,15 @@ def main() -> int:
 
     accepted, skipped = [], []
     for row in rows:
-        if row["recovery_state"] != "unrecovered":
+        # Idempotency. Selecting only `unrecovered` would make every
+        # regeneration DROP the bodies the previous run recovered, because
+        # they are `source_complete` by then - so a later run that picks up
+        # six new candidates would silently delete thirty-four working ones.
+        # A function this generator already owns is fair game to re-emit; one
+        # recovered by hand anywhere else is not, and stays skipped so the two
+        # can never collide at link time.
+        owned = OWN_SOURCE in row["source_locations"]
+        if row["recovery_state"] != "unrecovered" and not owned:
             continue
         if not row["name"].startswith("?"):
             continue

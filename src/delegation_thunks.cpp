@@ -24,7 +24,7 @@
  * tools/generate_delegation_thunks.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * One shape, 34 times over: read a member object pointer, answer a constant
+ * One shape, 40 times over: read a member object pointer, answer a constant
  * when it is absent, otherwise forward the arguments through a slot of that
  * member's OWN vtable. The four numbers that differ per function - the member
  * offset, the slot, the forwarded argument count and the absent-member
@@ -362,6 +362,24 @@ int __fastcall midi_stop_trackset_redirect(void *self, void *, int a1) {
 }
 
 /*
+Purpose: ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z - forward 1 argument(s) to slot 0x98 of the
+         object at +0x3c, answering 0x14 when that object is absent.
+Original Offset: 004C7AD0
+Return Value: the delegate's, or 0x14 when the member is null
+Status: Complete
+*/
+int __fastcall midi_add_active_trackset_redirect(void *self, void *, int a1) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x14;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    return reinterpret_cast<func_delegation_1 *>(
+        vtable[0x98 / sizeof(void *)])(member, a1);
+}
+
+/*
 Purpose: ?set_active_range_lo@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 Original Offset: 004C7B00
@@ -578,6 +596,60 @@ int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, int a1) {
 }
 
 /*
+Purpose: ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z - forward 1 argument(s) to slot 0xe4 of the
+         object at +0x3c, answering 0x14 when that object is absent.
+Original Offset: 004C7EE0
+Return Value: the delegate's, or 0x14 when the member is null
+Status: Complete
+*/
+int __fastcall midi_set_channel_ctrl_redirect(void *self, void *, int a1) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x14;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    return reinterpret_cast<func_delegation_1 *>(
+        vtable[0xe4 / sizeof(void *)])(member, a1);
+}
+
+/*
+Purpose: ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z - forward 1 argument(s) to slot 0xe8 of the
+         object at +0x3c, answering 0x14 when that object is absent.
+Original Offset: 004C7F10
+Return Value: the delegate's, or 0x14 when the member is null
+Status: Complete
+*/
+int __fastcall midi_set_program_ctrl_redirect(void *self, void *, int a1) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x14;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    return reinterpret_cast<func_delegation_1 *>(
+        vtable[0xe8 / sizeof(void *)])(member, a1);
+}
+
+/*
+Purpose: ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z - forward 1 argument(s) to slot 0xc0 of the
+         object at +0x3c, answering 0x14 when that object is absent.
+Original Offset: 004C7F40
+Return Value: the delegate's, or 0x14 when the member is null
+Status: Complete
+*/
+int __fastcall midi_set_track_ctrl_redirect(void *self, void *, int a1) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x14;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    return reinterpret_cast<func_delegation_1 *>(
+        vtable[0xc0 / sizeof(void *)])(member, a1);
+}
+
+/*
 Purpose: ?unload@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x14 of the
          object at +0x3c, answering 0x13 when that object is absent.
 Original Offset: 004C8C50
@@ -593,6 +665,24 @@ int __fastcall voice_rx_unload_redirect(void *self, void *) {
     void **const vtable = *reinterpret_cast<void ***>(member);
     return reinterpret_cast<func_delegation_0 *>(
         vtable[0x14 / sizeof(void *)])(member);
+}
+
+/*
+Purpose: ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
+         object at +0x3c, answering 0x13 when that object is absent.
+Original Offset: 004C8C70
+Return Value: the delegate's, or 0x13 when the member is null
+Status: Complete
+*/
+int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x13;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    return reinterpret_cast<func_delegation_1 *>(
+        vtable[0x8c / sizeof(void *)])(member, a1);
 }
 
 /*
@@ -647,4 +737,22 @@ int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *) {
     void **const vtable = *reinterpret_cast<void ***>(member);
     return reinterpret_cast<func_delegation_0 *>(
         vtable[0x88 / sizeof(void *)])(member);
+}
+
+/*
+Purpose: ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
+         object at +0x3c, answering 0x13 when that object is absent.
+Original Offset: 004C9050
+Return Value: the delegate's, or 0x13 when the member is null
+Status: Complete
+*/
+int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1) {
+    void *const member = *reinterpret_cast<void **>(
+        static_cast<uint8_t *>(self) + 0x3c);
+    if (member == nullptr) {
+        return 0x13;
+    }
+    void **const vtable = *reinterpret_cast<void ***>(member);
+    return reinterpret_cast<func_delegation_1 *>(
+        vtable[0x8c / sizeof(void *)])(member, a1);
 }
