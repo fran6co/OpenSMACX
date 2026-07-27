@@ -139,6 +139,33 @@ def decode(code: bytes, address: int) -> tuple[int, int, int, int]:
         int(matches[7].group(1), 16)
 
 
+SEQUENCE_ONE = [r"mov ecx, (0x[0-9a-f]+)", r"jmp 0x([0-9a-f]+)"]
+SEQUENCE_TWO = [r"mov ecx, (0x[0-9a-f]+)", r"call 0x([0-9a-f]+)",
+                r"mov ecx, (0x[0-9a-f]+)", r"jmp 0x([0-9a-f]+)"]
+
+
+def decode_sequence(code: bytes, address: int) -> list[tuple[int, int]]:
+    """[(object, teardown)] for the unguarded forwarders.
+
+    One or two steps, the last tail-jumped. The tail jump means the final
+    callee's `ret` returns to OUR caller, so the step list is the whole body -
+    there is nothing after it to transcribe.
+    """
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    text = [f"{i.mnemonic} {i.op_str}".rstrip()
+            for i in md.disasm(code, address)]
+    for pattern in (SEQUENCE_ONE, SEQUENCE_TWO):
+        if len(text) != len(pattern):
+            continue
+        matches = [re.fullmatch(entry, line)
+                   for entry, line in zip(pattern, text)]
+        if not all(matches):
+            continue
+        values = [int(m.group(1), 16) for m in matches]
+        return list(zip(values[0::2], values[1::2]))
+    raise Unsettled("not an unguarded forwarder")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -163,34 +190,42 @@ def main() -> int:
         if row["recovery_state"] != "unrecovered" and not owned:
             continue
         size = int(row["size"] or 0)
-        if not 20 <= size <= 48:
+        if not 5 <= size <= 48:
             continue
         address = int(row["address"], 16)
+        code = read_bytes(pe, address, size)
         try:
-            flag, mask, obj, target = decode(
-                read_bytes(pe, address, size), address)
+            flag, mask, obj, target = decode(code, address)
+            steps = [(obj, target)]
         except Unsettled:
-            continue
-        holder = states.get(target)
-        if holder is None or holder["recovery_state"] != "source_complete":
-            skipped.append(
-                (row, f"teardown {target:#x} is not source_complete"))
+            flag, mask = None, None
+            try:
+                steps = decode_sequence(code, address)
+            except Unsettled:
+                continue
+        unresolved = [target for _, target in steps
+                      if states.get(target) is None]
+        if unresolved:
+            skipped.append((row, f"teardown {unresolved[0]:#x} is uncatalogued"))
             continue
         slack = following.get(address, address + size) - address
         if slack < JUMP_PATCH_BYTES:
             skipped.append((row, f"only {slack}B of slack"))
             continue
-        accepted.append((row, flag, mask, obj, target, holder["name"]))
+        accepted.append((row, flag, mask, steps,
+                         [states[target]["name"] for _, target in steps]))
 
     accepted.sort(key=lambda entry: int(entry[0]["address"], 16))
-    targets = sorted({entry[4] for entry in accepted})
-    print(f"{len(accepted)} once-guarded teardowns, "
-          f"{len(targets)} distinct teardown targets")
-    for row, flag, mask, obj, target, name in accepted:
-        reuse = HANDLED_TARGETS.get(target)
-        note = f"reuses {reuse[0]}" if reuse else "new seam"
-        print(f"  {row['address']}  flag {flag:#x} bit {mask:<2} "
-              f"obj {obj:#x}  -> {name[:28]:<28} {note}")
+    targets = sorted({target for entry in accepted
+                      for _, target in entry[3]})
+    guarded = sum(1 for entry in accepted if entry[1] is not None)
+    print(f"{guarded} once-guarded teardowns, {len(accepted) - guarded} "
+          f"unguarded forwarders, {len(targets)} distinct targets")
+    for row, flag, mask, steps, names in accepted:
+        gate = f"flag {flag:#x} bit {mask}" if flag is not None else "unguarded"
+        chain = " then ".join(
+            f"{obj:#x}->{name[:24]}" for (obj, _), name in zip(steps, names))
+        print(f"  {row['address']}  {gate:<22} {chain}")
     if skipped:
         print(f"\n{len(skipped)} skipped - never guessed, always named:")
         for row, reason in sorted(skipped, key=lambda e: e[0]["address"]):
@@ -242,8 +277,10 @@ def symbol_for(row) -> str:
 
 def emit(accepted, targets, existing):
     banner = BANNER % len(accepted)
-    flags = sorted({entry[1] for entry in accepted})
-    objects = sorted({entry[3] for entry in accepted})
+    flags = sorted({entry[1] for entry in accepted}
+                   - {None})
+    objects = sorted({obj for entry in accepted
+                      for obj, _ in entry[3]})
 
     lines = [LICENCE, "#pragma once", '#include "vector_teardown.h"',
              '#include "atexit_thunks.h"', "", banner]
@@ -255,14 +292,17 @@ def emit(accepted, targets, existing):
             reuse_headers.add(existing[obj][1])
             continue
         lines.append(f"extern void *TeardownObject{obj:08X};")
-    for name in sorted(reuse_headers):
-        lines.insert(3, f'#include "{name}"')
     for target in targets:
-        if target not in HANDLED_TARGETS:
-            lines.append(f"extern func_thiscall_teardown "
-                         f"*TeardownTarget{target:08X};")
+        if target in HANDLED_TARGETS or target in existing:
+            if target in existing:
+                reuse_headers.add(existing[target][1])
+            continue
+        lines.append(f"extern func_thiscall_teardown "
+                     f"*TeardownTarget{target:08X};")
     for target in sorted(set(targets) & set(RECOVERED_TARGETS)):
         lines.insert(3, f'#include "{RECOVERED_TARGETS[target][1]}"')
+    for name in sorted(reuse_headers):
+        lines.insert(3, f'#include "{name}"')
     lines.append("")
     for row, *_ in accepted:
         lines.append(f"void __cdecl {symbol_for(row)}();")
@@ -278,7 +318,7 @@ def emit(accepted, targets, existing):
         body.append(f"void *TeardownObject{obj:08X} = "
                     f"reinterpret_cast<void *>(0x{obj:08X});")
     for target in targets:
-        if target in HANDLED_TARGETS:
+        if target in HANDLED_TARGETS or target in existing:
             continue
         recovered = RECOVERED_TARGETS.get(target)
         if recovered is None:
@@ -301,47 +341,86 @@ def emit(accepted, targets, existing):
     body.append("")
 
     wire, cases = [], []
-    for row, flag, mask, obj, target, name in accepted:
+    for row, flag, mask, steps, names in accepted:
         symbol = symbol_for(row)
         address = int(row["address"], 16)
-        reuse = HANDLED_TARGETS.get(target)
-        seam = reuse[0] if reuse else f"TeardownTarget{target:08X}"
+        arguments = []
+        for obj, target in steps:
+            holder = existing.get(obj)
+            arguments.append(holder[0] if holder
+                             else f"TeardownObject{obj:08X}")
+        seams, raw_seams = [], []
+        for _, target in steps:
+            reuse = HANDLED_TARGETS.get(target) or existing.get(target)
+            if reuse is None:
+                seams.append(f"TeardownTarget{target:08X}")
+                raw_seams.append(f"TeardownTarget{target:08X}")
+            else:
+                raw_seams.append(reuse[0])
+                # Cast the pointer VALUE, not a fixed address: the seam is
+                # read at call time, so rebinding it still takes effect.
+                seams.append(f"reinterpret_cast<func_thiscall_teardown *>(\n"
+                             f"        {reuse[0]})")
         body.append("/*")
-        body.append(f"Purpose: {row['name']} - tear down the global at "
-                    f"{obj:#x} through")
-        body.append(f"         {name}, at most once, gated on bit {mask} of "
-                    f"the flag byte at")
-        body.append(f"         {flag:#x}.")
+        if flag is not None:
+            body.append(f"Purpose: {row['name']} - tear down the global at "
+                        f"{steps[0][0]:#x} through")
+            body.append(f"         {names[0]}, at most once, gated on bit "
+                        f"{mask} of the flag byte")
+            body.append(f"         at {flag:#x}.")
+        else:
+            body.append(f"Purpose: {row['name']} - run "
+                        f"{len(steps)} teardown(s) on fixed globals,")
+            body.append("         unguarded. The last is a tail jump in the "
+                        "original, so its")
+            body.append("         return goes straight to this function's "
+                        "caller.")
         body.append(f"Original Offset: {address:08X}")
         body.append("Return Value: n/a")
         body.append("Status: Complete")
         body.append("*/")
         body.append(f"void __cdecl {symbol}() {{")
-        body.append(f"    const uint8_t flags = *TeardownFlags{flag:08X};")
-        body.append(f"    if (({mask} & flags) != 0) {{")
-        body.append("        return;")
-        body.append("    }")
-        body.append(f"    // Set BEFORE the teardown, not after: the original")
-        body.append(f"    // stores at the instruction preceding its tail jump.")
-        body.append(f"    *TeardownFlags{flag:08X} = "
-                    f"static_cast<uint8_t>(flags | {mask});")
-        holder = existing.get(obj)
-        argument = (holder[0] if holder
-                    else f"TeardownObject{obj:08X}")
-        body.append(f"    {seam}({argument});")
+        if flag is not None:
+            body.append(f"    const uint8_t flags = *TeardownFlags{flag:08X};")
+            body.append(f"    if (({mask} & flags) != 0) {{")
+            body.append("        return;")
+            body.append("    }")
+            body.append("    // Set BEFORE the teardown, not after: the "
+                        "original stores at the")
+            body.append("    // instruction preceding its tail jump.")
+            body.append(f"    *TeardownFlags{flag:08X} = "
+                        f"static_cast<uint8_t>(flags | {mask});")
+        for seam, argument in zip(seams, arguments):
+            body.append(f"    {seam}({argument});")
         body.append("}")
         body.append("")
         wire.append(f"0x{address:08X} {symbol}")
-        cases.append(f"    {{&{symbol}, &TeardownFlags{flag:08X}, {mask}, "
-                     f"reinterpret_cast<void **>(&{argument}), &{seam}}},")
+        cases.append(
+            f"    {{&{symbol}, "
+            + (f"&TeardownFlags{flag:08X}, {mask}, " if flag is not None
+               else "nullptr, 0, ")
+            + f"{len(steps)}, "
+            + "{"
+            + ", ".join(f"reinterpret_cast<void **>(&{a})" for a in arguments)
+            + (", nullptr" if len(steps) < 2 else "")
+            + "}, {"
+            # The fixture needs a rebindable HANDLE, so it takes the address of
+            # the seam variable and casts the pointer-to-pointer - `&` cannot
+            # be applied to the cast expression the call site uses.
+            + ", ".join(
+                f"reinterpret_cast<func_thiscall_teardown **>(&{raw})"
+                for raw in raw_seams)
+            + (", nullptr" if len(steps) < 2 else "")
+            + "}},")
 
     fragment = ["// GENERATED by tools/generate_guarded_teardowns.py.",
                 "struct GuardedTeardownCase {",
                 "    void (__cdecl *thunk)();",
-                "    uint8_t **flags;",
+                "    uint8_t **flags;   // null when the body is unguarded",
                 "    int mask;",
-                "    void **object;",
-                "    func_thiscall_teardown **target;",
+                "    int steps;",
+                "    void **object[2];",
+                "    func_thiscall_teardown **target[2];",
                 "};",
                 "const GuardedTeardownCase g_guarded_teardown_cases[] = {"]
     fragment += cases + ["};"]
