@@ -3354,6 +3354,20 @@ void test_pull_down_get_selected() {
 
 void __cdecl menu_proc_fixture(int) {}
 
+namespace {
+int g_menu_repaints;
+int g_menu_poisons;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall menu_observe_repaint(void *) { ++g_menu_repaints; }
+void __thiscall menu_poison_repaint(void *) { ++g_menu_poisons; }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+}  // namespace
+
 void test_menu_accessors() {
     for (MenuProc proc : {static_cast<MenuProc>(nullptr), &menu_proc_fixture}) {
         for (int adapter = 0; adapter < 2; ++adapter) {
@@ -3460,6 +3474,118 @@ void test_menu_accessors() {
         {&Menu::uncheck_menu_item, &menu_uncheck_menu_item_redirect,
          0},
     };
+    // The four flag operations. Same inlined search, but they end by writing
+    // ONE bit of the entry's flag byte and repainting through the Menu's own
+    // vtable slot 0xF8. The fixture installs a fake vtable so that dispatch
+    // is observable, and poisons every other slot so reaching the delegate at
+    // all proves the slot literal.
+    struct FlagOp {
+        int (Menu::*method)(int);
+        int (__fastcall *redirect)(Menu *, void *, int);
+        uint8_t set;      // bits this operation turns on
+        uint8_t cleared;  // bits it turns off
+    };
+    const FlagOp flag_ops[] = {
+        {&Menu::UNK6, &menu_unk6_redirect, 0x00, 0x01},
+        {&Menu::UNK7, &menu_unk7_redirect, 0x01, 0x00},
+        {&Menu::UNK8, &menu_unk8_redirect, 0x02, 0x00},
+        {&Menu::UNK9, &menu_unk9_redirect, 0x00, 0x02},
+    };
+    for (const FlagOp &op : flag_ops) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+            uint8_t expected[sizeof(storage)];
+            void *vtable[0x100] = {};
+            vtable[0xF8 / sizeof(void *)] =
+                reinterpret_cast<void *>(&menu_observe_repaint);
+            for (size_t slot = 0; slot < 0x100; ++slot) {
+                if (slot != 0xF8 / sizeof(void *)) {
+                    vtable[slot] = reinterpret_cast<void *>(&menu_poison_repaint);
+                }
+            }
+            auto *menu = reinterpret_cast<Menu *>(storage + 16);
+            auto build = [&](int match_index) {
+                seed_storage(storage, expected, sizeof(storage));
+                write_at(storage, 16, static_cast<void *>(vtable));
+                for (int index = 0; index < 15; ++index) {
+                    write_at(storage, 16 + 0xA38 + index * 0x14,
+                             index == match_index ? 777 : 500 + index);
+                    // Every flag byte starts 0xFF, so a set is invisible and
+                    // only a CLEAR shows - and then 0x00, so only a SET does.
+                    storage[16 + 0xA40 + index * 0x14] = 0xFF;
+                }
+                std::memcpy(expected, storage, sizeof(storage));
+            };
+            auto invoke = [&](int menu_id) {
+                return adapter ? op.redirect(menu, nullptr, menu_id)
+                               : (menu->*op.method)(menu_id);
+            };
+
+            // Entry 4 matches. From all-ones, only the cleared bits move.
+            build(4);
+            expected[16 + 0xA40 + 4 * 0x14] =
+                static_cast<uint8_t>(0xFF & ~op.cleared);
+            g_menu_repaints = 0;
+            g_menu_poisons = 0;
+            expect(invoke(777) == 0);
+            expect(g_menu_repaints == 1);
+            expect(g_menu_poisons == 0);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // From all-zeroes, only the set bits move - which is what tells
+            // the two `or` siblings apart from the two `and` ones.
+            build(4);
+            for (int index = 0; index < 15; ++index) {
+                storage[16 + 0xA40 + index * 0x14] = 0x00;
+            }
+            std::memcpy(expected, storage, sizeof(storage));
+            expected[16 + 0xA40 + 4 * 0x14] = op.set;
+            g_menu_repaints = 0;
+            expect(invoke(777) == 0);
+            expect(g_menu_repaints == 1);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // Match on entry ZERO. Starting the walk anywhere else misses
+            // it, which is the only thing that pins the initial index - and
+            // the reason this case exists is that the sibling fixture above
+            // already needed it and this one was written without it.
+            build(0);
+            expected[16 + 0xA40] = static_cast<uint8_t>(0xFF & ~op.cleared);
+            g_menu_repaints = 0;
+            expect(invoke(777) == 0);
+            expect(g_menu_repaints == 1);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // A -1 SENTINEL at entry 0, with the match sitting behind it.
+            // Nothing else exercises the sentinel test or the 0xB it exits
+            // through; a table of ordinary ids reaches neither.
+            build(3);
+            write_at(storage, 16 + 0xA38, -1);
+            std::memcpy(expected, storage, sizeof(storage));
+            g_menu_repaints = 0;
+            expect(invoke(777) == 0xB);
+            expect(g_menu_repaints == 0);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // A miss writes no flag and does not repaint.
+            build(-1);
+            g_menu_repaints = 0;
+            expect(invoke(999) == 0xB);
+            expect(g_menu_repaints == 0);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+
+            // The overread trap again: a sixteenth entry at sizeof(Menu).
+            build(-1);
+            write_at(storage, 16 + 0xB64, 777);
+            storage[16 + 0xB6C] = 0xFF;
+            std::memcpy(expected, storage, sizeof(storage));
+            g_menu_repaints = 0;
+            expect(invoke(777) == 0xB);
+            expect(g_menu_repaints == 0);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
     // The PullDown these dispatch into is seeded with ONE item whose id is 7
     // and a -1 sentinel behind it. That matters: every one of the six
     // PullDown methods answers 11 when it cannot find the item, and 11 is

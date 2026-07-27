@@ -41,10 +41,25 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
  /*
   * Menu class
   */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// Slot 0xF8 of the Menu's OWN vtable: the repaint the flag operations end on.
+// It takes no arguments and its result is discarded.
+typedef void(__thiscall func_menu_repaint)(void *self);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 class DLLEXPORT Menu : GraphicWin {
  public:
   int requested_height();
   int UNK2(int a);
+  int UNK6(int menu_id);
+  int UNK7(int menu_id);
+  int UNK8(int menu_id);
+  int UNK9(int menu_id);
   int UNK4(int a, int b, int c);
   Menu() { ; }
   ~Menu() { ; }
@@ -75,6 +90,10 @@ static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
 MenuProc __fastcall menu_set_menu_proc_redirect(
     Menu *self, void *, MenuProc proc);
 int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id);
+int __fastcall menu_unk6_redirect(Menu *self, void *, int menu_id);
+int __fastcall menu_unk7_redirect(Menu *self, void *, int menu_id);
+int __fastcall menu_unk8_redirect(Menu *self, void *, int menu_id);
+int __fastcall menu_unk9_redirect(Menu *self, void *, int menu_id);
 int __fastcall menu_unk3_redirect(
     Menu *self, void *, int menu_id, int item_id);
 int __fastcall menu_hide_menu_item_redirect(
