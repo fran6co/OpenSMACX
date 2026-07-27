@@ -191,10 +191,28 @@ def decode_raw_template(data: bytes, address: int):
     return displacement, adjust, target & 0xFFFFFFFF
 
 
+def entry_extent(row):
+    """Bytes decodable from the entry address.
+
+    NOT `size`: that column sums every span in `body_ranges`, and 416
+    catalogued functions are split across two spans because MSVC parked an EH
+    funclet in a separate region. Decoding `size` bytes from the entry of one
+    of those runs off the end of the real body and into whatever follows it,
+    so a `ret` belonging to the next function can be mistaken for this one's.
+    `end_address` is exclusive and always ends the entry span, which is
+    exactly the contiguous run a decoder may read. The two agree for every
+    unsplit function, so this changes nothing for them."""
+    try:
+        extent = int(row["end_address"], 16) - int(row["address"], 16)
+    except (KeyError, TypeError, ValueError):
+        extent = 0
+    return extent if extent > 0 else int(row["size"])
+
+
 def decode_template(pe, row):
     """(displacement, adjust, target) for a conforming thunk, else a reason."""
     instructions = delegates.trailing_padding(
-        delegates.decode(pe, int(row["address"], 16), int(row["size"])))
+        delegates.decode(pe, int(row["address"], 16), entry_extent(row)))
     if not 2 <= len(instructions) <= 3:
         return f"{len(instructions)} instructions, expected 2 or 3"
     displacement = adjust = target = None
@@ -227,7 +245,7 @@ def callee_pop(pe, functions, address, hops=4):
         if row is None or not row.get("size"):
             return None
         instructions = delegates.trailing_padding(
-            delegates.decode(pe, address, int(row["size"])))
+            delegates.decode(pe, address, entry_extent(row)))
         if not instructions:
             return None
         # A pure jump thunk forwards the same stack contract; keep walking.
@@ -276,7 +294,7 @@ def collect(pe, functions):
             continue
         displacement, adjust, target = decoded
         raw = decode_raw_template(
-            disasm.read_range(pe, address, int(row["size"])), address)
+            disasm.read_range(pe, address, entry_extent(row)), address)
         if raw != decoded:
             raise SystemExit(
                 f"{row['name']}: capstone reads {decoded}, the encoding "
