@@ -18,10 +18,12 @@
 
 #pragma once
 
+class Ambience;
 class Buffer;
 class ButtonGroup;
 class Caviar;
 class CaviarData;
+class FX;
 class Font;
 class Sprite;
 class Strings;
@@ -63,10 +65,12 @@ extern func_thiscall_teardown *WaveElementCtor;
 // constructors. Rebindable because those constructors
 // reach their own deeper seams, whose defaults are
 // unmapped outside the game process.
+extern func_thiscall_teardown *AmbienceInitCtor;
 extern func_thiscall_teardown *BufferInitCtor;
 extern func_thiscall_teardown *ButtonGroupInitCtor;
 extern func_thiscall_teardown *CaviarDataInitCtor;
 extern func_thiscall_teardown *CaviarInitCtor;
+extern func_thiscall_teardown *FXInitCtor;
 extern func_thiscall_teardown *FontInitCtor;
 extern func_thiscall_teardown *SpriteInitCtor;
 extern func_thiscall_teardown *StringsInitCtor;
@@ -99,7 +103,6 @@ extern func_thiscall_teardown *DatalinkCtorTarget;   // 0x00428FC0
 extern func_thiscall_teardown *DesignWinCtorTarget;   // 0x00434480
 extern func_thiscall_teardown *DiploPopCtorTarget;   // 0x0043EFF0
 extern func_thiscall_teardown *DiploWinCtorTarget;   // 0x00444FC0
-extern func_thiscall_teardown *FXCtorTarget;   // 0x004482A0
 extern func_thiscall_teardown *FameWinCtorTarget;   // 0x0044B200
 extern func_thiscall_teardown *FactionArtCtorTarget;   // 0x00455F10
 extern func_thiscall_teardown *InfoWinCtorTarget;   // 0x00459500
@@ -123,7 +126,6 @@ extern func_thiscall_teardown *TutWinCtorTarget;   // 0x004BA6B0
 extern func_thiscall_teardown *WorldWinCtorTarget;   // 0x004C4BF0
 extern func_thiscall_teardown *Midi_DeviceCtorTarget;   // 0x004C5740
 extern func_thiscall_teardown *Wave_In_DeviceCtorTarget;   // 0x004C5940
-extern func_thiscall_teardown *AmbienceCtorTarget;   // 0x004C8460
 extern func_opaque_ctor_i *ConsoleCtorTarget;   // 0x0050F460
 extern func_thiscall_teardown *NetDaemonCtorTarget;   // 0x005389F0
 extern func_thiscall_teardown *FontQueueCtorTarget;   // 0x00559290

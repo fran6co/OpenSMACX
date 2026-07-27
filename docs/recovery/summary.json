@@ -1325,7 +1325,7 @@
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 347
+      "function": 345
     },
     "items": [
       {
@@ -7093,7 +7093,7 @@
         "function": "_atexit",
         "function_address": "0x00645398",
         "kind": "function",
-        "location": "src/init_thunks.cpp:38",
+        "location": "src/init_thunks.cpp:40",
         "symbol": "GameAtexit",
         "type": "func_game_atexit *"
       },
@@ -7102,7 +7102,7 @@
         "function": "??0Buffer@@QAE@XZ",
         "function_address": "0x005D7210",
         "kind": "function",
-        "location": "src/init_thunks.cpp:45",
+        "location": "src/init_thunks.cpp:47",
         "symbol": "BufferElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7111,7 +7111,7 @@
         "function": "??0CaviarData@@QAE@XZ",
         "function_address": "0x00616BC0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:47",
+        "location": "src/init_thunks.cpp:49",
         "symbol": "CaviarDataElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7120,7 +7120,7 @@
         "function": "??0Font@@QAE@XZ",
         "function_address": "0x00618EA0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:49",
+        "location": "src/init_thunks.cpp:51",
         "symbol": "FontElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7129,7 +7129,7 @@
         "function": "??0Sprite@@QAE@XZ",
         "function_address": "0x005E37E0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:51",
+        "location": "src/init_thunks.cpp:53",
         "symbol": "SpriteElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7138,7 +7138,7 @@
         "function": "??0TextIndex@@QAE@XZ",
         "function_address": "0x005FDF40",
         "kind": "function",
-        "location": "src/init_thunks.cpp:53",
+        "location": "src/init_thunks.cpp:55",
         "symbol": "TextIndexElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7147,7 +7147,7 @@
         "function": "??0Texture@@QAE@XZ",
         "function_address": "0x00619650",
         "kind": "function",
-        "location": "src/init_thunks.cpp:55",
+        "location": "src/init_thunks.cpp:57",
         "symbol": "TextureElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7156,7 +7156,7 @@
         "function": "??0Wave@@QAE@XZ",
         "function_address": "0x004C66E0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:57",
+        "location": "src/init_thunks.cpp:59",
         "symbol": "WaveElementCtor",
         "type": "func_thiscall_teardown *"
       },
@@ -7165,7 +7165,7 @@
         "function": "??0BaseWin@@QAE@XZ",
         "function_address": "0x00408490",
         "kind": "function",
-        "location": "src/init_thunks.cpp:124",
+        "location": "src/init_thunks.cpp:134",
         "symbol": "BaseWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7174,7 +7174,7 @@
         "function": "??0BattleWin@@QAE@XZ",
         "function_address": "0x00422EE0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:126",
+        "location": "src/init_thunks.cpp:136",
         "symbol": "BattleWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7183,7 +7183,7 @@
         "function": "??0CouncWin@@QAE@XZ",
         "function_address": "0x00428620",
         "kind": "function",
-        "location": "src/init_thunks.cpp:128",
+        "location": "src/init_thunks.cpp:138",
         "symbol": "CouncWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7192,7 +7192,7 @@
         "function": "??0Datalink@@QAE@XZ",
         "function_address": "0x00428FC0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:130",
+        "location": "src/init_thunks.cpp:140",
         "symbol": "DatalinkCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7201,7 +7201,7 @@
         "function": "??0DesignWin@@QAE@XZ",
         "function_address": "0x00434480",
         "kind": "function",
-        "location": "src/init_thunks.cpp:132",
+        "location": "src/init_thunks.cpp:142",
         "symbol": "DesignWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7210,7 +7210,7 @@
         "function": "??0DiploPop@@QAE@XZ",
         "function_address": "0x0043EFF0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:134",
+        "location": "src/init_thunks.cpp:144",
         "symbol": "DiploPopCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7219,17 +7219,8 @@
         "function": "??0DiploWin@@QAE@XZ",
         "function_address": "0x00444FC0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:136",
+        "location": "src/init_thunks.cpp:146",
         "symbol": "DiploWinCtorTarget",
-        "type": "func_thiscall_teardown *"
-      },
-      {
-        "address": "0x004482A0",
-        "function": "??0FX@@QAE@XZ",
-        "function_address": "0x004482A0",
-        "kind": "function",
-        "location": "src/init_thunks.cpp:138",
-        "symbol": "FXCtorTarget",
         "type": "func_thiscall_teardown *"
       },
       {
@@ -7237,7 +7228,7 @@
         "function": "??0FameWin@@QAE@XZ",
         "function_address": "0x0044B200",
         "kind": "function",
-        "location": "src/init_thunks.cpp:140",
+        "location": "src/init_thunks.cpp:148",
         "symbol": "FameWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7246,7 +7237,7 @@
         "function": "??0FactionArt@@QAE@XZ",
         "function_address": "0x00455F10",
         "kind": "function",
-        "location": "src/init_thunks.cpp:142",
+        "location": "src/init_thunks.cpp:150",
         "symbol": "FactionArtCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7255,7 +7246,7 @@
         "function": "??0InfoWin@@QAE@XZ",
         "function_address": "0x00459500",
         "kind": "function",
-        "location": "src/init_thunks.cpp:144",
+        "location": "src/init_thunks.cpp:152",
         "symbol": "InfoWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7264,7 +7255,7 @@
         "function": "??0MainInterface@@QAE@XZ",
         "function_address": "0x0045EF10",
         "kind": "function",
-        "location": "src/init_thunks.cpp:146",
+        "location": "src/init_thunks.cpp:154",
         "symbol": "MainInterfaceCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7273,7 +7264,7 @@
         "function": "??0MapWin@@QAE@H@Z",
         "function_address": "0x004626E0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:148",
+        "location": "src/init_thunks.cpp:156",
         "symbol": "MapWinCtorTarget",
         "type": "func_opaque_ctor_i *"
       },
@@ -7282,7 +7273,7 @@
         "function": "??0MessageWin@@QAE@XZ",
         "function_address": "0x00472190",
         "kind": "function",
-        "location": "src/init_thunks.cpp:150",
+        "location": "src/init_thunks.cpp:158",
         "symbol": "MessageWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7291,7 +7282,7 @@
         "function": "??0MonuWin@@QAE@XZ",
         "function_address": "0x00477C80",
         "kind": "function",
-        "location": "src/init_thunks.cpp:152",
+        "location": "src/init_thunks.cpp:160",
         "symbol": "MonuWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7300,7 +7291,7 @@
         "function": "??0MultiWin@@QAE@XZ",
         "function_address": "0x0047A590",
         "kind": "function",
-        "location": "src/init_thunks.cpp:154",
+        "location": "src/init_thunks.cpp:162",
         "symbol": "MultiWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7309,7 +7300,7 @@
         "function": "??0NetMsg@@QAE@HHH@Z",
         "function_address": "0x0047ACF0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:156",
+        "location": "src/init_thunks.cpp:164",
         "symbol": "NetMsgCtorTarget",
         "type": "func_opaque_ctor_iii *"
       },
@@ -7318,7 +7309,7 @@
         "function": "??0NetWin@@QAE@XZ",
         "function_address": "0x00481C50",
         "kind": "function",
-        "location": "src/init_thunks.cpp:158",
+        "location": "src/init_thunks.cpp:166",
         "symbol": "NetWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7327,7 +7318,7 @@
         "function": "??0NewTechWin@@QAE@XZ",
         "function_address": "0x004849D0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:160",
+        "location": "src/init_thunks.cpp:168",
         "symbol": "NewTechWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7336,7 +7327,7 @@
         "function": "??0PickWin@@QAE@XZ",
         "function_address": "0x0048AC10",
         "kind": "function",
-        "location": "src/init_thunks.cpp:162",
+        "location": "src/init_thunks.cpp:170",
         "symbol": "PickWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7345,7 +7336,7 @@
         "function": "??0PlanWin@@QAE@H@Z",
         "function_address": "0x0048BCD0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:164",
+        "location": "src/init_thunks.cpp:172",
         "symbol": "PlanWinCtorTarget",
         "type": "func_opaque_ctor_i *"
       },
@@ -7354,7 +7345,7 @@
         "function": "??0PrefWin@@QAE@XZ",
         "function_address": "0x004921E0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:166",
+        "location": "src/init_thunks.cpp:174",
         "symbol": "PrefWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7363,7 +7354,7 @@
         "function": "??0QuayleWin@@QAE@XZ",
         "function_address": "0x00496810",
         "kind": "function",
-        "location": "src/init_thunks.cpp:168",
+        "location": "src/init_thunks.cpp:176",
         "symbol": "QuayleWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7372,7 +7363,7 @@
         "function": "??0ReportIf@@QAE@XZ",
         "function_address": "0x004AD170",
         "kind": "function",
-        "location": "src/init_thunks.cpp:170",
+        "location": "src/init_thunks.cpp:178",
         "symbol": "ReportIfCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7381,7 +7372,7 @@
         "function": "??0ReportWin@@QAE@XZ",
         "function_address": "0x004AD6B0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:172",
+        "location": "src/init_thunks.cpp:180",
         "symbol": "ReportWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7390,7 +7381,7 @@
         "function": "??0SocialWin@@QAE@XZ",
         "function_address": "0x004AE9E0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:174",
+        "location": "src/init_thunks.cpp:182",
         "symbol": "SocialWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7399,7 +7390,7 @@
         "function": "??0StatusWin@@QAE@XZ",
         "function_address": "0x004BA1A0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:176",
+        "location": "src/init_thunks.cpp:184",
         "symbol": "StatusWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7408,7 +7399,7 @@
         "function": "??0TutWin@@QAE@XZ",
         "function_address": "0x004BA6B0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:178",
+        "location": "src/init_thunks.cpp:186",
         "symbol": "TutWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7417,7 +7408,7 @@
         "function": "??0WorldWin@@QAE@XZ",
         "function_address": "0x004C4BF0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:180",
+        "location": "src/init_thunks.cpp:188",
         "symbol": "WorldWinCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7426,7 +7417,7 @@
         "function": "??0Midi_Device@@QAE@XZ",
         "function_address": "0x004C5740",
         "kind": "function",
-        "location": "src/init_thunks.cpp:182",
+        "location": "src/init_thunks.cpp:190",
         "symbol": "Midi_DeviceCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7435,17 +7426,8 @@
         "function": "??0Wave_In_Device@@QAE@XZ",
         "function_address": "0x004C5940",
         "kind": "function",
-        "location": "src/init_thunks.cpp:184",
+        "location": "src/init_thunks.cpp:192",
         "symbol": "Wave_In_DeviceCtorTarget",
-        "type": "func_thiscall_teardown *"
-      },
-      {
-        "address": "0x004C8460",
-        "function": "??0Ambience@@QAE@XZ",
-        "function_address": "0x004C8460",
-        "kind": "function",
-        "location": "src/init_thunks.cpp:186",
-        "symbol": "AmbienceCtorTarget",
         "type": "func_thiscall_teardown *"
       },
       {
@@ -7453,7 +7435,7 @@
         "function": "??0Console@@QAE@H@Z",
         "function_address": "0x0050F460",
         "kind": "function",
-        "location": "src/init_thunks.cpp:188",
+        "location": "src/init_thunks.cpp:194",
         "symbol": "ConsoleCtorTarget",
         "type": "func_opaque_ctor_i *"
       },
@@ -7462,7 +7444,7 @@
         "function": "??0NetDaemon@@QAE@XZ",
         "function_address": "0x005389F0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:190",
+        "location": "src/init_thunks.cpp:196",
         "symbol": "NetDaemonCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7471,7 +7453,7 @@
         "function": "??0FontQueue@@QAE@XZ",
         "function_address": "0x00559290",
         "kind": "function",
-        "location": "src/init_thunks.cpp:192",
+        "location": "src/init_thunks.cpp:198",
         "symbol": "FontQueueCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7480,7 +7462,7 @@
         "function": "??0MultiDebug@@QAE@XZ",
         "function_address": "0x005C97F0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:194",
+        "location": "src/init_thunks.cpp:200",
         "symbol": "MultiDebugCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7489,7 +7471,7 @@
         "function": "??0Palette@@QAE@XZ",
         "function_address": "0x005FE2A0",
         "kind": "function",
-        "location": "src/init_thunks.cpp:196",
+        "location": "src/init_thunks.cpp:202",
         "symbol": "PaletteCtorTarget",
         "type": "func_thiscall_teardown *"
       },
@@ -7498,7 +7480,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:199",
+        "location": "src/init_thunks.cpp:205",
         "symbol": "g_NEWTECHWIN_SPRITES",
         "type": "Sprite *"
       },
@@ -7507,7 +7489,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:200",
+        "location": "src/init_thunks.cpp:206",
         "symbol": "g_VEHDRAW_CAVIAR",
         "type": "Caviar *"
       },
@@ -7516,7 +7498,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:201",
+        "location": "src/init_thunks.cpp:207",
         "symbol": "g_WAVE_DEVICE",
         "type": "Wave_Device *"
       },
@@ -7525,7 +7507,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:202",
+        "location": "src/init_thunks.cpp:208",
         "symbol": "g_CONSOLE_TIMER",
         "type": "Time *"
       },
@@ -7534,7 +7516,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:203",
+        "location": "src/init_thunks.cpp:209",
         "symbol": "g_BUFFER_SPRITE",
         "type": "Sprite *"
       },
@@ -7543,7 +7525,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:204",
+        "location": "src/init_thunks.cpp:210",
         "symbol": "g_WIN_BUFFER",
         "type": "Buffer *"
       },
@@ -7552,7 +7534,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:205",
+        "location": "src/init_thunks.cpp:211",
         "symbol": "g_RADIOBUTTON_SPRITE_1",
         "type": "Sprite *"
       },
@@ -7561,7 +7543,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:206",
+        "location": "src/init_thunks.cpp:212",
         "symbol": "g_RADIOBUTTON_SPRITE_2",
         "type": "Sprite *"
       },
@@ -7570,7 +7552,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:207",
+        "location": "src/init_thunks.cpp:213",
         "symbol": "g_CHECKBOX_SPRITE_1",
         "type": "Sprite *"
       },
@@ -7579,7 +7561,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:208",
+        "location": "src/init_thunks.cpp:214",
         "symbol": "g_CHECKBOX_SPRITE_2",
         "type": "Sprite *"
       },
@@ -7588,7 +7570,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:209",
+        "location": "src/init_thunks.cpp:215",
         "symbol": "g_FILEWIN_SPRITE_1",
         "type": "Sprite *"
       },
@@ -7597,7 +7579,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:210",
+        "location": "src/init_thunks.cpp:216",
         "symbol": "g_FILEWIN_SPRITE_2",
         "type": "Sprite *"
       },
@@ -7606,7 +7588,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:211",
+        "location": "src/init_thunks.cpp:217",
         "symbol": "g_FILEWIN_SPRITE_3",
         "type": "Sprite *"
       },
@@ -7615,7 +7597,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:212",
+        "location": "src/init_thunks.cpp:218",
         "symbol": "StringTable",
         "type": "Strings *"
       },
@@ -7624,7 +7606,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:213",
+        "location": "src/init_thunks.cpp:219",
         "symbol": "g_CAVIAR_BUFFER_1",
         "type": "Buffer *"
       },
@@ -7633,7 +7615,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:214",
+        "location": "src/init_thunks.cpp:220",
         "symbol": "g_CAVIAR_BUFFER_2",
         "type": "Buffer *"
       },
@@ -9438,7 +9420,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 347,
-    "total": 901
+    "matched_function_starts": 345,
+    "total": 899
   }
 }
