@@ -99,11 +99,22 @@ def token(text: str, index: int) -> tuple[str | None, int]:
 
 def declared_arity(mangled: str) -> tuple[str, int] | None:
     """(convention, bytes of parameters) for names simple enough to read."""
-    match = re.match(r"^\?[\w@]+@@(.)(.)(.)(.*)$", mangled)
+    match = re.match(r"^\?[\w@]+@@(.)(.*)$", mangled)
     if not match:
         return None
-    _, _, convention, rest = match.groups()
-    if convention not in "EAG":
+    first, tail = match.groups()
+    # A free function is `Y` followed straight by the calling convention -
+    # ?energy_limit@@YAHH@Z is Y, A (cdecl), H (int return), H (one int), @Z.
+    # A member carries an access byte and a near/far byte first, so its
+    # convention is two positions further along: ?requested_height@AlphaMenu@@
+    # QAEHXZ is Q (public), A (near), E (thiscall), H, X, Z. Reading the
+    # member layout off a free name lands on the RETURN TYPE and rejects it,
+    # which is why every `@@YA...` function was invisible to this scan.
+    if first == "Y":
+        convention, rest = tail[:1], tail[1:]
+    else:
+        convention, rest = tail[1:2], tail[2:]
+    if convention not in ("E", "A", "G"):
         return None
     convention = {"E": "thiscall", "A": "cdecl", "G": "stdcall"}[convention]
 
