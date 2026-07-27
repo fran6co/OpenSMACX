@@ -18,8 +18,12 @@
 
 #pragma once
 #include "vector_teardown.h"
-#include "sprite.h"
+#include "statuswin.h"
+#include "popup.h"
 #include "init_thunks.h"
+#include "deleting_thunks.h"
+#include "atexit_thunks.h"
+#include "sprite.h"
 #include "atexit_thunks.h"
 
 /*
@@ -27,7 +31,7 @@
  * tools/generate_guarded_teardowns.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * 13 ??__F bodies that tear a global down AT MOST ONCE, gated on a bit in a
+ * 25 ??__F bodies that tear a global down AT MOST ONCE, gated on a bit in a
  * shared flag byte. The teardown runs only when the bit is CLEAR, and the bit
  * is set BEFORE the call rather than after. Flag bytes are shared: three
  * FileWin sprites use bits 1, 2 and 4 of one byte, so the mask belongs to the
@@ -44,20 +48,43 @@ extern uint8_t *TeardownFlags009B8F58;
 extern uint8_t *TeardownFlags009B9014;
 extern uint8_t *TeardownFlags009B9104;
 extern uint8_t *TeardownFlags009BEAE0;
+extern void *TeardownObject007F5ACC;
+extern void *TeardownObject00856DC0;
+extern void *TeardownObject0090EA68;
+extern void *TeardownObject00915068;
+extern void *TeardownObject00939444;
+extern void *TeardownObject009403E0;
 extern void *TeardownObject009B7490;
 extern void *TeardownObject009BEAE8;
+extern func_thiscall_teardown *TeardownTarget00420F90;
+extern func_thiscall_teardown *TeardownTarget004327A0;
+extern func_thiscall_teardown *TeardownTarget0048BD80;
+extern func_thiscall_teardown *TeardownTarget0051D9F0;
+extern func_thiscall_teardown *TeardownTarget005D4DD0;
 extern func_thiscall_teardown *TeardownTarget005E3820;
 
+void __cdecl teardown_00422eb0();
+void __cdecl teardown_00422ec0();
+void __cdecl teardown_004456a0();
+void __cdecl teardown_g_mapwin();
+void __cdecl teardown_g_planwin();
+void __cdecl teardown_00505d20();
+void __cdecl teardown_00505d30();
+void __cdecl teardown_g_console();
+void __cdecl teardown_00589890();
 void __cdecl teardown_g_buffer_sprite();
 void __cdecl teardown_g_win_buffer();
 void __cdecl teardown_005eb3b0();
 void __cdecl teardown_g_radiobutton_sprite_1();
 void __cdecl teardown_g_radiobutton_sprite_2();
+void __cdecl teardown_0060e5d0();
 void __cdecl teardown_g_checkbox_sprite_1();
 void __cdecl teardown_g_checkbox_sprite_2();
+void __cdecl teardown_0060fd60();
 void __cdecl teardown_g_filewin_sprite_1();
 void __cdecl teardown_g_filewin_sprite_2();
 void __cdecl teardown_g_filewin_sprite_3();
 void __cdecl teardown_g_caviar_buffer_1();
 void __cdecl teardown_g_caviar_buffer_2();
 void __cdecl teardown_0063bb00();
+void __cdecl teardown_0063cef0();

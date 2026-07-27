@@ -344,3 +344,8 @@ ConsoleOriginalCursorNext,ui_dependency,recover_owning_class,Console::cursor_nex
 ConsoleOriginalMapWinFocus,ui_dependency,recover_owning_class,MapWin::focus at 0x0046B310; reports whether the window moved its view and is what decides Console::focus own answer
 ConsoleOriginalMapWinDrawMap,ui_dependency,recover_owning_class,MapWin::draw_map at 0x0046A550; 2049 bytes repainting one map window when the primary refused the coordinate
 ConsoleOriginalFlushInput,ui_dependency,recover_owning_class,flush_input at 0x005FD120; drains queued input once the primary view actually moved and pumps the message loop through check_net
+TeardownTarget00420F90,ui_dependency,recover_owning_class,MapWin destructor at 0x00420F90 that the ??__F g_MAPWIN teardown runs before descending to the GraphicWin base
+TeardownTarget004327A0,ui_dependency,recover_owning_class,Flic destructor at 0x004327A0 that the recovered g_BOOM_FLIC teardown thunk runs on the process global
+TeardownTarget0048BD80,ui_dependency,recover_owning_class,PlanWin destructor at 0x0048BD80 that the ??__F g_PLANWIN teardown runs before descending to the GraphicWin base
+TeardownTarget0051D9F0,ui_dependency,recover_owning_class,Console destructor at 0x0051D9F0 that the ??__F g_CONSOLE teardown runs before descending to the GraphicWin base
+TeardownTarget005D4DD0,ui_dependency,recover_owning_class,GraphicWin destructor at 0x005D4DD0 that three of the recovered two-step teardown thunks tail-jump to after the derived destructor
