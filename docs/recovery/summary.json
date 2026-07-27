@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 279,
-      "source_complete": 2422,
+      "original_dependency": 280,
+      "source_complete": 2426,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2939
+      "unrecovered": 2934
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2368,
-    "matched_function_starts": 2368,
-    "unique_addresses": 2368,
+    "annotations": 2372,
+    "matched_function_starts": 2372,
+    "unique_addresses": 2372,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 350
+      "function": 351
     },
     "items": [
       {
@@ -9073,9 +9073,18 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/tutwin.cpp:24",
+        "location": "src/tutwin.cpp:25",
         "symbol": "TutWinShownFlag",
         "type": "uint32_t *"
+      },
+      {
+        "address": "0x004BDFE0",
+        "function": "?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z",
+        "function_address": "0x004BDFE0",
+        "kind": "function",
+        "location": "src/tutwin.cpp:202",
+        "symbol": "TutWinOriginalShow",
+        "type": "func_tut_win_show *"
       },
       {
         "address": "0x006456E4",
@@ -9465,7 +9474,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 350,
-    "total": 904
+    "matched_function_starts": 351,
+    "total": 905
   }
 }

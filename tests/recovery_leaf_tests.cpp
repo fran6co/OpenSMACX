@@ -5968,6 +5968,32 @@ void test_win_is_descendant() {
     }
 }
 
+namespace {
+struct TutShowRecord {
+    int calls; void *self; void *window; const char *text;
+    int x, y; void *sprite; int flag, a7, a8;
+};
+TutShowRecord g_tut_show;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+int __thiscall observe_tut_win_show(void *self, void *window,
+                                    const char *text, int x, int y,
+                                    void *sprite, int flag, int a7, int a8) {
+    ++g_tut_show.calls;
+    g_tut_show.self = self;   g_tut_show.window = window;
+    g_tut_show.text = text;   g_tut_show.x = x;
+    g_tut_show.y = y;         g_tut_show.sprite = sprite;
+    g_tut_show.flag = flag;   g_tut_show.a7 = a7;
+    g_tut_show.a8 = a8;
+    return 0;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+}  // namespace
+
 void test_tut_win_rects() {
     // Four 67-byte clones that centre a rectangle and convert the result
     // through a FIXED window - never through `this`. All four windows default
@@ -6069,6 +6095,88 @@ void test_tut_win_rects() {
             }
         }
     }
+
+    // The four do_* helpers share those same windows and centring, then hand
+    // the result to TutWin::tut_win against the primary map window, virtual-
+    // base adjusted. Reusing the arenas above is the point: a sibling that
+    // centred through the wrong window fails on the shift, exactly as in the
+    // rect cases.
+    struct ShowOp {
+        void (TutWin::*method)(RECT *, const char *, int);
+        void (__fastcall *redirect)(TutWin *, void *, RECT *, const char *, int);
+    };
+    // ORDERED TO MATCH rect_ops, not to match the addresses. Each entry here
+    // must line up with the arena its window was bound to above - do_base uses
+    // TutWinBaseWindow, which is rect_ops[1] - and getting that wrong makes
+    // every centre assertion fail against the neighbour's offsets.
+    const ShowOp show_ops[] = {
+        {&TutWin::do_iface, &tut_win_do_iface_redirect},
+        {&TutWin::do_base, &tut_win_do_base_redirect},
+        {&TutWin::do_soc, &tut_win_do_soc_redirect},
+        {&TutWin::do_des, &tut_win_do_des_redirect},
+    };
+    func_tut_win_show *const saved_show = TutWinOriginalShow;
+    MapWin **const saved_table = MapWinTable;
+    TutWinOriginalShow = &observe_tut_win_show;
+
+    // A map window whose vbtable displacement is deliberately NON-ZERO, so a
+    // body that skipped the adjustment and passed the raw pointer fails.
+    std::vector<uint8_t> primary(0x200, 0);
+    const int32_t vbtable[2] = {0, 0x40};
+    const int32_t *vbtable_pointer = vbtable;
+    std::memcpy(primary.data(), &vbtable_pointer, sizeof(vbtable_pointer));
+    MapWin *table[MapWinTableSlots] = {};
+    table[0] = reinterpret_cast<MapWin *>(primary.data());
+    MapWinTable = table;
+
+    for (size_t index = 0; index < op_count; ++index) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            for (int empty_slot = 0; empty_slot < 2; ++empty_slot) {
+                table[0] = empty_slot
+                    ? nullptr : reinterpret_cast<MapWin *>(primary.data());
+                alignas(TutWin) uint8_t storage[sizeof(TutWin)];
+                uint8_t expected[sizeof(TutWin)];
+                seed_storage(storage, expected, sizeof(storage));
+                std::memcpy(expected, storage, sizeof(storage));
+                auto *tut = reinterpret_cast<TutWin *>(storage);
+                // TWO rectangles, and the second is INVERTED. The centring
+                // here is the same code as the rect helpers above, so it has
+                // the same blind spot: with only a positive width the
+                // sign-carry term is unobserved and its mutants survive. That
+                // was learned one batch ago and re-learned here; the lesson
+                // is that a clone family needs the clone fixture's CASES, not
+                // just its shape.
+                const RECT rects[2] = {{10, 20, 30, 40}, {30, 40, 10, 20}};
+                RECT rect = rects[empty_slot];
+                const char *text = "tutorial";
+                g_tut_show = TutShowRecord{};
+                if (adapter) {
+                    show_ops[index].redirect(tut, nullptr, &rect, text, 5);
+                } else {
+                    (tut->*show_ops[index].method)(&rect, text, 5);
+                }
+                expect(g_tut_show.calls == 1);
+                expect(g_tut_show.self == tut);
+                // Null slot passes a null through; a live one is adjusted by
+                // the vbtable displacement rather than passed raw.
+                expect(g_tut_show.window ==
+                       (empty_slot ? nullptr : primary.data() + 0x40));
+                expect(g_tut_show.text == text);
+                expect(g_tut_show.x ==
+                       20 + 1000 * static_cast<int>(index + 1)
+                          + 10 * static_cast<int>(index + 1));
+                expect(g_tut_show.y ==
+                       30 + 2000 * static_cast<int>(index + 1)
+                          + 20 * static_cast<int>(index + 1));
+                expect(g_tut_show.sprite == nullptr);
+                expect(g_tut_show.flag == 5);
+                expect(g_tut_show.a7 == -1 && g_tut_show.a8 == -1);
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+    MapWinTable = saved_table;
+    TutWinOriginalShow = saved_show;
 
     for (size_t index = 0; index < op_count; ++index) {
         *rect_ops[index].window = saved[index];

@@ -1043,10 +1043,6 @@ P2,7020,0x004BA5F0,?tut_check@@YAHH@Z,94,7,0,unrecovered,,,2,exact,exact,
 P2,9020,0x004BA650,?tut_check2@@YAHH@Z,94,9,0,unrecovered,,,2,exact,exact,
 P0,1001121,0x004BA6B0,??0TutWin@@QAE@XZ,110,1,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0TutWin@@QAE@XZ)(TutWin* this)
 P3,121,0x004BA770,?on_key_click@TutWin@@QAEHHH@Z,190,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@TutWin@@QAEHHH@Z)(TutWin* this, int, int)"
-P3,2221,0x004BA870,?do_base@TutWin@@QAEXPAURECT@@PBDH@Z,123,2,2,unrecovered,,,2,exact,exact,"void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)"
-P3,1221,0x004BA8F0,?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z,123,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)"
-P3,1221,0x004BA970,?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z,123,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)"
-P3,1221,0x004BA9F0,?do_des@TutWin@@QAEXPAURECT@@PBDH@Z,123,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)"
 P3,1921,0x004BAA70,?tour6@TutWin@@QAEXXZ,1186,1,9,unrecovered,,,2,exact,exact,void (__thiscall ?tour6@TutWin@@QAEXXZ)(TutWin* this)
 P3,1721,0x004BAF20,?tour7@TutWin@@QAEXXZ,1107,1,7,unrecovered,,,2,exact,exact,void (__thiscall ?tour7@TutWin@@QAEXXZ)(TutWin* this)
 P3,2221,0x004BB380,?tour5@TutWin@@QAEXXZ,1041,1,12,unrecovered,,,2,exact,exact,void (__thiscall ?tour5@TutWin@@QAEXXZ)(TutWin* this)
@@ -1059,7 +1055,7 @@ P3,3121,0x004BDEA0,?draw_arrow@TutWin@@QAEXXZ,118,3,1,unrecovered,,,2,exact,exac
 P3,120,0x004BDF20,?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,70,0,1,unrecovered,,,2,exact,exact,
 P3,121,0x004BDF70,?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,48,0,1,unrecovered,,,2,exact,exact,"void (__cdecl ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(Sprite*, GraphicWin*, int vehID, int, int)"
 P3,120,0x004BDFA0,?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,61,0,1,unrecovered,,,2,exact,exact,
-P2,14621,0x004BDFE0,?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z,1653,13,16,unrecovered,,,2,exact,entry_range,"int (__thiscall ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z)(TutWin* this, GraphicWin*, int8*, int, int, Sprite*, int, int, int)"
+P0,1014621,0x004BDFE0,?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z,1653,13,16,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"int (__thiscall ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z)(TutWin* this, GraphicWin*, int8*, int, int, Sprite*, int, int, int)"
 P2,9321,0x004BE650,?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z,374,9,3,unrecovered,,,2,exact,exact,"int (__thiscall ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z)(TutWin* this, int8*, int xCoord, int yCoord, int, Sprite*, int, int, int)"
 P0,1002421,0x004BE7D0,??1TutWin@@QAE@XZ,773,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this)
 P3,1121,0x004BEA30,??0UV2Player@@QAE@XZ,28,1,1,unrecovered,,,2,exact,exact,void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
