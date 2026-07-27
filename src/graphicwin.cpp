@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "graphicwin.h"
 #include "buffer.h"
+#include "scroll.h"
+
+#include <cstring>
 
 const uint32_t GraphicWinPrimaryVtable = 0x0066FC50;
 const uint32_t GraphicWinBufferVtable = 0x0066FC48;
@@ -231,4 +234,162 @@ int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
                                          int x1, int y1, int x2, int y2,
                                          int color) {
     return self->fill(x1, y1, x2, y2, color);
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// Slot 0xF4 on the parent's vtable. The stock body at 0x004042B0 is
+// `mov eax, ecx; ret`, so a non-null parent answers with itself.
+typedef void *(__thiscall func_graphic_win_parent_query)(void *);
+// Virtual slot 0x30, the window's own paint.
+typedef void(__thiscall func_graphic_win_paint)(void *);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+func_graphic_win_buffer_fill_color *BufferOriginalFillColor =
+    (func_graphic_win_buffer_fill_color *)0x005DFB50;
+func_graphic_win_map_colors *BufferOriginalMapColors =
+    (func_graphic_win_map_colors *)0x005DA330;
+func_graphic_win_overlay_nonclient *GraphicWinOverlayNonclient =
+    (func_graphic_win_overlay_nonclient *)0x005D6AC0;
+void **GraphicWinColorMapTable = reinterpret_cast<void **>(0x009B3390);
+func_graphic_win_invalidate_rect *GraphicWinInvalidateRect =
+    *reinterpret_cast<func_graphic_win_invalidate_rect **>(0x00669304);
+
+/*
+Purpose: Paint the window's surface in one colour. A window that is marked
+         transparent and whose parent agrees copies the parent's pixels in
+         instead, then remaps them through the process colour table.
+Original Offset: 005D5250
+Return Value: n/a
+Status: Complete
+Verification note: three loads the original performs are deliberately absent.
+         It copies a RECT at 0x14C into stack scratch and then overwrites that
+         scratch with the one at 0x13C before either is read, so the first
+         pair (0x154, 0x158) is dead; only the two sums that reach the blit
+         survive here. It also emits `test esi, esi` at 0x005D52BC and passes
+         a null source buffer on the false arm - unreachable, because `this`
+         cannot be null on a thiscall, so that arm is not transcribed. A
+         reader diffing against the disassembly will see both differences.
+*/
+void GraphicWin::fill(int color) {
+    uint8_t *const object = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const surface = object + 0x444;
+    uint32_t flags;
+    std::memcpy(&flags, object + 0x98, sizeof(flags));
+    uint8_t *parent;
+    std::memcpy(&parent, object + 0xC4, sizeof(parent));
+    // Bit 19 alone does not make the window transparent: the parent has to
+    // exist and has to answer its slot 0xF4 with a nonzero value. The stock
+    // implementation at 0x004042B0 is `mov eax, ecx; ret`, so a non-null
+    // parent answers with itself and the copy path is the default.
+    bool transparent = false;
+    if ((flags & 0x80000) != 0 && parent != nullptr) {
+        uintptr_t *const parent_vtable =
+            *reinterpret_cast<uintptr_t **>(parent);
+        func_graphic_win_parent_query *const query =
+            reinterpret_cast<func_graphic_win_parent_query *>(
+                parent_vtable[0xF4 / 4]);
+        transparent = query(parent) != nullptr;
+    }
+    if (!transparent) {
+        BufferOriginalFillColor(surface, color);
+        return;
+    }
+    int32_t outer_x, outer_y, inner_x, inner_y;
+    std::memcpy(&outer_x, object + 0x14C, sizeof(outer_x));
+    std::memcpy(&outer_y, object + 0x150, sizeof(outer_y));
+    std::memcpy(&inner_x, object + 0x13C, sizeof(inner_x));
+    std::memcpy(&inner_y, object + 0x140, sizeof(inner_y));
+    int32_t width, height;
+    std::memcpy(&width, object + 0x4C4, sizeof(width));
+    std::memcpy(&height, object + 0x4C8, sizeof(height));
+    BufferCopyFull(parent + 0x444, reinterpret_cast<Buffer *>(surface),
+                   outer_x + inner_x, outer_y + inner_y, 0, 0,
+                   width, -height);
+    void *const table = *GraphicWinColorMapTable;
+    if (table == nullptr) {
+        return;
+    }
+    // Re-read, do NOT hoist onto the pair above: the original reloads both at
+    // 0x005D5302 and 0x005D5308, so a blit that resized the surface is seen
+    // by the remap. The bounds are inclusive, hence width-1 and -1-height.
+    std::memcpy(&width, object + 0x4C4, sizeof(width));
+    std::memcpy(&height, object + 0x4C8, sizeof(height));
+    BufferOriginalMapColors(surface, 0, 0, width - 1, -1 - height, table);
+}
+
+void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
+                                                int color) {
+    self->fill(color);
+}
+
+/*
+Purpose: Repaint the window and invalidate the screen area it occupies. A
+         window already inside a redraw is skipped, so a paint hook that
+         redraws again cannot recurse.
+Original Offset: 005D5A70
+Return Value: n/a
+Status: Complete
+Verification note: the calling convention of the 0xA10 paint hook is inferred,
+         not decoded. It is reached by a bare `call eax` at 0x005D5AA9 with
+         nothing pushed and ECX not set, which rules out __thiscall but leaves
+         zero-argument __cdecl and __stdcall indistinguishable - they are
+         ABI-identical here, so either spelling works and neither is a
+         callee-pop fact.
+*/
+void GraphicWin::redraw() {
+    uint8_t *const object = reinterpret_cast<uint8_t *>(this);
+    if (*WinHdcWindow == nullptr) {
+        return;
+    }
+    uint32_t state;
+    std::memcpy(&state, object + 0x1A0, sizeof(state));
+    if ((state & 1) != 0) {
+        return;
+    }
+    state |= 1;
+    std::memcpy(object + 0x1A0, &state, sizeof(state));
+    *ScrollCurrentWin = static_cast<Win *>(this);
+
+    func_graphic_win_paint_hook *hook;
+    std::memcpy(&hook, object + 0xA10, sizeof(hook));
+    if (hook != nullptr) {
+        hook();
+    }
+    uintptr_t *const vtable = *reinterpret_cast<uintptr_t **>(object);
+    func_graphic_win_paint *const paint =
+        reinterpret_cast<func_graphic_win_paint *>(vtable[0x30 / 4]);
+    paint(this);
+    GraphicWinOverlayNonclient(this, nullptr);
+
+    // Re-read, do NOT reuse the latched value: the original reloads at
+    // 0x005D5ABB before clearing bit 0, so any bit the paint hook or the
+    // virtual paint set on 0x1A0 survives this clear.
+    std::memcpy(&state, object + 0x1A0, sizeof(state));
+    state &= 0xFFFFFFFEU;
+    std::memcpy(object + 0x1A0, &state, sizeof(state));
+
+    if (!static_cast<Win *>(this)->is_visible()) {
+        return;
+    }
+    RECT area;
+    std::memcpy(&area, object + 0x474, sizeof(area));
+    int x_offset = 0;
+    int y_offset = 0;
+    static_cast<Win *>(this)->client_to_screen(&x_offset, &y_offset);
+    area.left += x_offset;
+    area.right += x_offset;
+    area.top += y_offset;
+    area.bottom += y_offset;
+    // The window handle is read again here rather than reused from the guard
+    // above, matching the original's second load at 0x005D5B43.
+    GraphicWinInvalidateRect(*WinHdcWindow, &area, FALSE);
+}
+
+void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
+    self->redraw();
 }

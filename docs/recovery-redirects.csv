@@ -1310,7 +1310,9 @@ address,kind
 0x005D4CF0,jump
 0x005D4DD0,jump
 0x005D4E40,jump
+0x005D5250,jump
 0x005D5440,jump
+0x005D5A70,jump
 0x005D7140,jump
 0x005D7160,jump
 0x005D71D0,jump
