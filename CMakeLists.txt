@@ -120,6 +120,7 @@ set(OPENSMACX_SOURCES
     src/adjustor_thunks.cpp
     src/deleting_thunks.cpp
     src/delegation_thunks.cpp
+    src/nullsub_thunks.cpp
     src/fx.cpp
     src/vector_teardown.cpp
     src/alphanet.cpp
@@ -414,6 +415,7 @@ if(BUILD_TESTING)
         src/adjustor_thunks.cpp
         src/deleting_thunks.cpp
         src/delegation_thunks.cpp
+        src/nullsub_thunks.cpp
         src/fx.cpp
         src/vector_teardown.cpp
         src/alphanet.cpp
@@ -778,6 +780,11 @@ if(BUILD_TESTING)
     add_test(NAME delegation-thunk-generator-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_delegation_thunks.py"
+    )
+
+    add_test(NAME nullsub-thunk-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_nullsub_thunks.py"
     )
 
     add_test(NAME deleting-thunk-generator-tests
