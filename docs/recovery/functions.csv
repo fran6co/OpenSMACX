@@ -847,7 +847,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0044C830,0x0044C84C,28,.text,sub_44c830,,0x0044C830-0x0044C84C,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0044C850,0x0044C851,1,.text,nullsub_191,,0x0044C850-0x0044C851,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:72,Complete,,,source_complete,,,,0,0
 0x0044C860,0x0044C86D,13,.text,sub_44c860,,0x0044C860-0x0044C86D,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0044C870,0x0044C878,8,.text,sub_44c870,,0x0044C870-0x0044C878,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0044C870,0x0044C878,8,.text,sub_44c870,,0x0044C870-0x0044C878,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:77,Complete,,,source_complete,,,,0,0
 0x0044C880,0x0044C895,21,.text,?help_tech@@YAXH@Z,,0x0044C880-0x0044C895,game,frame;hidden;sp_ready;purged_ok,src/datalink.cpp:264,Complete,,,source_complete,,,,1,0
 0x0044C8A0,0x0044C8A1,1,.text,nullsub_226,,0x0044C8A0-0x0044C8A1,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:82,Complete,,,source_complete,,,,0,0
 0x0044C8B0,0x0044C8B1,1,.text,nullsub_227,,0x0044C8B0-0x0044C8B1,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:92,Complete,,,source_complete,,,,0,0
@@ -1916,31 +1916,31 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0048D510,0x0048D51A,10,.text,??__Fg_PREFWIN@@YAXXZ,,0x0048D510-0x0048D51A,game,hidden;sp_ready;purged_ok,src/atexit_thunks.cpp:3865,Complete,,,source_complete,,,,0,0
 0x0048D520,0x0048D536,22,.text,??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ,,0x0048D520-0x0048D536,game,hidden;sp_ready;purged_ok,src/init_thunks.cpp:4053,Complete,,,source_complete,,,,2,0
 0x0048D540,0x0048D54A,10,.text,??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ,,0x0048D540-0x0048D54A,game,hidden;sp_ready;purged_ok,src/atexit_thunks.cpp:3875,Complete,,,source_complete,,,,0,0
-0x0048D550,0x0048D55E,14,.text,sub_48d550,,0x0048D550-0x0048D55E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D560,0x0048D56B,11,.text,sub_48d560,,0x0048D560-0x0048D56B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D570,0x0048D587,23,.text,sub_48d570,,0x0048D570-0x0048D587,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D590,0x0048D5A7,23,.text,sub_48d590,,0x0048D590-0x0048D5A7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D5B0,0x0048D5C4,20,.text,sub_48d5b0,,0x0048D5B0-0x0048D5C4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D5D0,0x0048D5E4,20,.text,sub_48d5d0,,0x0048D5D0-0x0048D5E4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D5F0,0x0048D607,23,.text,sub_48d5f0,,0x0048D5F0-0x0048D607,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D610,0x0048D62B,27,.text,sub_48d610,,0x0048D610-0x0048D62B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D630,0x0048D644,20,.text,sub_48d630,,0x0048D630-0x0048D644,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0048D550,0x0048D55E,14,.text,sub_48d550,,0x0048D550-0x0048D55E,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:88,Complete,,,source_complete,,,,0,0
+0x0048D560,0x0048D56B,11,.text,sub_48d560,,0x0048D560-0x0048D56B,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:101,Complete,,,source_complete,,,,0,0
+0x0048D570,0x0048D587,23,.text,sub_48d570,,0x0048D570-0x0048D587,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:113,Complete,,,source_complete,,,,0,0
+0x0048D590,0x0048D5A7,23,.text,sub_48d590,,0x0048D590-0x0048D5A7,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:128,Complete,,,source_complete,,,,0,0
+0x0048D5B0,0x0048D5C4,20,.text,sub_48d5b0,,0x0048D5B0-0x0048D5C4,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:143,Complete,,,source_complete,,,,0,0
+0x0048D5D0,0x0048D5E4,20,.text,sub_48d5d0,,0x0048D5D0-0x0048D5E4,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:157,Complete,,,source_complete,,,,0,0
+0x0048D5F0,0x0048D607,23,.text,sub_48d5f0,,0x0048D5F0-0x0048D607,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:171,Complete,,,source_complete,,,,0,0
+0x0048D610,0x0048D62B,27,.text,sub_48d610,,0x0048D610-0x0048D62B,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:186,Complete,,,source_complete,,,,0,0
+0x0048D630,0x0048D644,20,.text,sub_48d630,,0x0048D630-0x0048D644,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:202,Complete,,,source_complete,,,,0,0
 0x0048D650,0x0048D66E,30,.text,sub_48d650,,0x0048D650-0x0048D66E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D670,0x0048D687,23,.text,sub_48d670,,0x0048D670-0x0048D687,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D690,0x0048D6A4,20,.text,sub_48d690,,0x0048D690-0x0048D6A4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D6B0,0x0048D6C4,20,.text,sub_48d6b0,,0x0048D6B0-0x0048D6C4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D6D0,0x0048D6E7,23,.text,sub_48d6d0,,0x0048D6D0-0x0048D6E7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D6F0,0x0048D704,20,.text,sub_48d6f0,,0x0048D6F0-0x0048D704,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D710,0x0048D724,20,.text,sub_48d710,,0x0048D710-0x0048D724,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D730,0x0048D747,23,.text,sub_48d730,,0x0048D730-0x0048D747,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D750,0x0048D75B,11,.text,sub_48d750,,0x0048D750-0x0048D75B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D760,0x0048D770,16,.text,sub_48d760,,0x0048D760-0x0048D770,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D770,0x0048D787,23,.text,sub_48d770,,0x0048D770-0x0048D787,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D790,0x0048D7AB,27,.text,sub_48d790,,0x0048D790-0x0048D7AB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D7B0,0x0048D7C4,20,.text,sub_48d7b0,,0x0048D7B0-0x0048D7C4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D7D0,0x0048D7E4,20,.text,sub_48d7d0,,0x0048D7D0-0x0048D7E4,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D7F0,0x0048D80B,27,.text,sub_48d7f0,,0x0048D7F0-0x0048D80B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0048D810,0x0048D81E,14,.text,sub_48d810,,0x0048D810-0x0048D81E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0048D670,0x0048D687,23,.text,sub_48d670,,0x0048D670-0x0048D687,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:216,Complete,,,source_complete,,,,0,0
+0x0048D690,0x0048D6A4,20,.text,sub_48d690,,0x0048D690-0x0048D6A4,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:231,Complete,,,source_complete,,,,0,0
+0x0048D6B0,0x0048D6C4,20,.text,sub_48d6b0,,0x0048D6B0-0x0048D6C4,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:245,Complete,,,source_complete,,,,0,0
+0x0048D6D0,0x0048D6E7,23,.text,sub_48d6d0,,0x0048D6D0-0x0048D6E7,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:259,Complete,,,source_complete,,,,0,0
+0x0048D6F0,0x0048D704,20,.text,sub_48d6f0,,0x0048D6F0-0x0048D704,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:274,Complete,,,source_complete,,,,0,0
+0x0048D710,0x0048D724,20,.text,sub_48d710,,0x0048D710-0x0048D724,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:288,Complete,,,source_complete,,,,0,0
+0x0048D730,0x0048D747,23,.text,sub_48d730,,0x0048D730-0x0048D747,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:302,Complete,,,source_complete,,,,0,0
+0x0048D750,0x0048D75B,11,.text,sub_48d750,,0x0048D750-0x0048D75B,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:317,Complete,,,source_complete,,,,0,0
+0x0048D760,0x0048D770,16,.text,sub_48d760,,0x0048D760-0x0048D770,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:329,Complete,,,source_complete,,,,0,0
+0x0048D770,0x0048D787,23,.text,sub_48d770,,0x0048D770-0x0048D787,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:342,Complete,,,source_complete,,,,0,0
+0x0048D790,0x0048D7AB,27,.text,sub_48d790,,0x0048D790-0x0048D7AB,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:357,Complete,,,source_complete,,,,0,0
+0x0048D7B0,0x0048D7C4,20,.text,sub_48d7b0,,0x0048D7B0-0x0048D7C4,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:373,Complete,,,source_complete,,,,0,0
+0x0048D7D0,0x0048D7E4,20,.text,sub_48d7d0,,0x0048D7D0-0x0048D7E4,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:387,Complete,,,source_complete,,,,0,0
+0x0048D7F0,0x0048D80B,27,.text,sub_48d7f0,,0x0048D7F0-0x0048D80B,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:401,Complete,,,source_complete,,,,0,0
+0x0048D810,0x0048D81E,14,.text,sub_48d810,,0x0048D810-0x0048D81E,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:417,Complete,,,source_complete,,,,0,0
 0x0048D820,0x0048D83E,30,.text,sub_48d820,,0x0048D820-0x0048D83E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0048D840,0x0048F9F5,8629,.text,?init@PrefWin@@QAEXXZ,void (__thiscall ?init@PrefWin@@QAEXXZ)(PrefWin* this),0x0048D840-0x0048F9F5,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,21,1
 0x0048FA00,0x0048FCC5,709,.text,?display@PrefWin@@QAEXH@Z,"void (__thiscall ?display@PrefWin@@QAEXH@Z)(PrefWin* this, int)",0x0048FA00-0x0048FCC5,game,frame;hidden;sp_ready;purged_ok,,,,ConsolePrefWinDisplay,original_dependency,,,,7,6
@@ -3972,7 +3972,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005D8200,0x005D823D,61,.text,?set_clip@Buffer@@QAEHHHHH@Z,"int (__thiscall ?set_clip@Buffer@@QAEHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width)",0x005D8200-0x005D823D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x005D8240,0x005D8282,66,.text,?fill@Buffer@@QAEHHHHHH@Z,"int (__thiscall ?fill@Buffer@@QAEHHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width, int)",0x005D8240-0x005D8282,game,hidden;sp_ready;purged_ok,,,,BufferOriginalFill,original_dependency,,,,1,4
 0x005D8290,0x005D835C,204,.text,?setup_buff_sprite@Buffer@@QAEXH@Z,"void (__thiscall ?setup_buff_sprite@Buffer@@QAEXH@Z)(Buffer* this, int)",0x005D8290-0x005D835C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x005D8360,0x005D836B,11,.text,sub_5d8360,,0x005D8360-0x005D836B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x005D8360,0x005D836B,11,.text,sub_5d8360,,0x005D8360-0x005D836B,game,hidden;sp_ready;purged_ok,src/global_arith.cpp:430,Complete,,,source_complete,,,,0,0
 0x005D8370,0x005D84B7,327,.text,?draw@Buffer@@QAEHPAVBuffer@@HHH@Z,"int (__thiscall ?draw@Buffer@@QAEHPAVBuffer@@HHH@Z)(Buffer* this, Buffer*, int, int horiz_pos, int vert_pos)",0x005D8370-0x005D84B7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,3
 0x005D84C0,0x005D8646,390,.text,?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z,"int (__thiscall ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int)",0x005D84C0-0x005D8646,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,14
 0x005D8650,0x005D873E,238,.text,sub_5d8650,,0x005D8650-0x005D873E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
