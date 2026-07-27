@@ -142,6 +142,46 @@ def decode(code: bytes, address: int) -> tuple[int, int, int, int, int]:
         return (_displacement(text[0]), _displacement(text[4]), 0, popped,
                 constant)
 
+    # The unguarded forms dispatch through the THUNK'S OWN vtable, so the
+    # receiver is `this` and there is no absent-member path at all.
+    #
+    # Bare: `mov eax,[ecx]; call [eax+SLOT]; ret N`, with NOTHING pushed. The
+    # arguments this function was given are simply discarded - the delegate is
+    # entered with none - and the `ret N` cleans them up afterwards. That is
+    # not an inference: no push separates the vtable load from the call.
+    if (len(text) in (3, 4) and text[0] == "mov eax, dword ptr [ecx]"
+            and text[1].startswith("call dword ptr [eax +")
+            and not any(t.startswith(("test ", "cmp ", "j")) for t in text)):
+        constant = None
+        if len(text) == 4:
+            constant = _constant_from(text[2:])
+            if constant is None:
+                raise Unsettled("trailing tail not read")
+        return None, _displacement(text[1]), 0, popped, constant
+
+    # Framed: the same dispatch, but the arguments ARE pushed, in reverse
+    # order, before the call.
+    #
+    # "Unguarded" has to mean NO BRANCH ANYWHERE, not merely "no member load".
+    # Two functions in this family guard on a GLOBAL instead - DiploPop::
+    # on_button_clicked tests [0x9b8d7c], Midi::set_volume tests a member and
+    # then writes a field afterwards - and a filter that only excluded member
+    # loads let both through as unguarded, which would have emitted bodies
+    # with the null check silently dropped. Any jump or test disqualifies.
+    branchless = not any(
+        t.startswith(("test ", "cmp ", "j")) for t in text)
+    if (len(text) >= 8 and branchless
+            and text[0] == "push ebp" and text[1] == "mov ebp, esp"
+            and any(t == "mov eax, dword ptr [ecx]" for t in text)
+            and any(t.startswith("call dword ptr [eax +") for t in text)
+            and not any(t.startswith("mov eax, dword ptr [ecx -") for t in text)):
+        call = next(t for t in text if t.startswith("call dword ptr [eax +"))
+        forwarded = sum(1 for t in text
+                        if re.match(r"mov e\w\w, dword ptr \[ebp \+", t))
+        index = text.index(call)
+        constant = _constant_from(text[index + 1:])
+        return None, _displacement(call), forwarded, popped, constant
+
     raise Unsettled("not a guarded delegation")
 
 
@@ -222,7 +262,10 @@ def main() -> int:
             skipped.append(
                 (row, f"name says {declared}B, body pops {popped}B"))
             continue
-        if declared != forwarded * 4:
+        # The bare unguarded form declares parameters and forwards none of
+        # them on purpose, so only the guarded and framed forms can be
+        # cross-checked this way.
+        if member is not None and declared != forwarded * 4:
             skipped.append(
                 (row, f"name says {declared}B, body forwards {forwarded}"))
             continue
@@ -236,7 +279,7 @@ def main() -> int:
             skipped.append((row, str(reason)))
             continue
         accepted.append((row, class_name, method, member, slot, forwarded,
-                         popped, constant))
+                         popped, constant, declared // 4))
 
     accepted.sort(key=lambda entry: int(entry[0]["address"], 16))
     # Midi::map_patch and Midi::set_active_tracks are each C++ OVERLOADS: two
@@ -258,11 +301,12 @@ def main() -> int:
                          f"{sorted(s for s in symbols if symbols.count(s) > 1)}")
 
     print(f"{len(accepted)} guarded delegation thunks")
-    for symbol, (row, _, _, member, slot, forwarded, popped, constant) \
-            in zip(symbols, accepted):
+    for symbol, (row, _, _, member, slot, forwarded, popped, constant,
+                 declared) in zip(symbols, accepted):
+        where = "own vtable  " if member is None else f"member +0x{member:<4X}"
+        answer = "-" if constant is None else f"{constant:#x}"
         print(f"  {row['address']}  {symbol:<34} "
-              f"member +0x{member:<4X} slot 0x{slot:<4X} args {forwarded} "
-              f"absent {constant:#x}")
+              f"{where} slot 0x{slot:<4X} args {forwarded} absent {answer}")
     if skipped:
         print(f"\n{len(skipped)} skipped - never guessed, always named:")
         for row, reason in sorted(skipped,
@@ -346,49 +390,96 @@ def emit(symbols, accepted):
     lines.append("#endif")
     lines.append("")
     for symbol, entry in zip(symbols, accepted):
-        forwarded = entry[5]
-        params = "".join(f", int a{index + 1}" for index in range(forwarded))
-        lines.append(f"int __fastcall {symbol}_redirect("
+        forwarded, constant, declared = entry[5], entry[7], entry[8]
+        params = "".join(f", int a{index + 1}"
+                          for index in range(declared))
+        returns = "void" if (entry[3] is None and constant is None) else "int"
+        lines.append(f"{returns} __fastcall {symbol}_redirect("
                      f"void *self, void *{params});")
     header = "\n".join(lines) + "\n"
 
     body = [LICENCE, '#include "stdafx.h"', '#include "delegation_thunks.h"',
             "", banner]
     wire = []
-    for symbol, (row, _, _, member, slot, forwarded, popped, constant) in zip(
-            symbols, accepted):
-        params = "".join(f", int a{index + 1}" for index in range(forwarded))
+    for symbol, (row, _, _, member, slot, forwarded, popped, constant,
+                 declared) in zip(symbols, accepted):
+        # SIGNATURE takes every declared parameter - the redirect is
+        # installed at the original address and must pop exactly what the
+        # original's `ret N` popped. CALL passes only the forwarded ones.
+        params = "".join(f", int a{index + 1}"
+                          for index in range(declared))
         forwarded_args = "".join(f", a{index + 1}"
                                  for index in range(forwarded))
         address = int(row["address"], 16)
+        declared = "" if forwarded == 0 else params
+        # The bare unguarded form declares parameters it never forwards, so
+        # they are named in the signature for ABI shape and left unused.
+        signature_params = params
+        returns = "void" if (member is None and constant is None) else "int"
         body.append("/*")
-        body.append(f"Purpose: {row['name']} - forward {forwarded} argument(s)"
-                    f" to slot {slot:#x} of the")
-        body.append(f"         object at +{member:#x}, answering {constant:#x}"
-                    " when that object is absent.")
+        if member is None:
+            body.append(f"Purpose: {row['name']} - dispatch to slot "
+                        f"{slot:#x} of this object's OWN")
+            if forwarded:
+                body.append(f"         vtable, forwarding {forwarded}"
+                            " argument(s).")
+            else:
+                body.append("         vtable with NO arguments: the original"
+                            " pushes nothing between the")
+                body.append("         vtable load and the call, so the"
+                            " parameters this function declares are")
+                body.append("         discarded and only the `ret` cleans"
+                            " them up.")
+        else:
+            body.append(f"Purpose: {row['name']} - forward {forwarded}"
+                        f" argument(s) to slot {slot:#x} of the")
+            body.append(f"         object at +{member:#x}, answering"
+                        f" {constant:#x} when that object is absent.")
         body.append(f"Original Offset: {address:08X}")
-        body.append("Return Value: the delegate's, or "
-                    f"{constant:#x} when the member is null")
+        if member is None:
+            body.append("Return Value: " + ("n/a" if constant is None
+                                            else f"{constant:#x}, a constant"))
+        else:
+            body.append("Return Value: the delegate's, or "
+                        f"{constant:#x} when the member is null")
         body.append("Status: Complete")
         body.append("*/")
-        body.append(f"int __fastcall {symbol}_redirect("
-                    f"void *self, void *{params}) {{")
-        body.append("    void *const member = *reinterpret_cast<void **>(")
-        body.append(f"        static_cast<uint8_t *>(self) + {member:#x});")
-        body.append("    if (member == nullptr) {")
-        body.append(f"        return {constant:#x};")
-        body.append("    }")
-        body.append("    void **const vtable = "
-                    "*reinterpret_cast<void ***>(member);")
-        body.append(f"    return reinterpret_cast<func_delegation_{forwarded} "
-                    f"*>(")
-        body.append(f"        vtable[{slot:#x} / sizeof(void *)])"
-                    f"(member{forwarded_args});")
-        body.append("}")
+        body.append(f"{returns} __fastcall {symbol}_redirect("
+                    f"void *self, void *{signature_params}) {{")
+        if member is None:
+            body.append("    void **const vtable = "
+                        "*reinterpret_cast<void ***>(self);")
+            call = (f"reinterpret_cast<func_delegation_{forwarded} *>(\n"
+                    f"        vtable[{slot:#x} / sizeof(void *)])"
+                    f"(self{forwarded_args});")
+            if constant is None:
+                body.append("    (void)" + call)
+                body.append("}")
+            else:
+                body.append("    " + call)
+                body.append(f"    return {constant:#x};")
+                body.append("}")
+        else:
+            body.append("    void *const member = *reinterpret_cast<void **>(")
+            body.append(f"        static_cast<uint8_t *>(self) + {member:#x});")
+            body.append("    if (member == nullptr) {")
+            body.append(f"        return {constant:#x};")
+            body.append("    }")
+            body.append("    void **const vtable = "
+                        "*reinterpret_cast<void ***>(member);")
+            body.append(f"    return reinterpret_cast<func_delegation_"
+                        f"{forwarded} *>(")
+            body.append(f"        vtable[{slot:#x} / sizeof(void *)])"
+                        f"(member{forwarded_args});")
+            body.append("}")
         body.append("")
         wire.append(f"0x{address:08X} {symbol}_redirect")
     source = "\n".join(body)
 
+    # Only the guarded family goes in the shared case table: the unguarded
+    # bodies have no member offset and no absent-member answer, so a single
+    # table would carry two sentinels and a driver that branches on them.
+    # They get their own table instead.
     cases = ["// GENERATED by tools/generate_delegation_thunks.py.",
              "struct DelegationCase {",
              "    void *thunk;",
@@ -398,11 +489,28 @@ def emit(symbols, accepted):
              "    int absent;",
              "};",
              "const DelegationCase g_delegation_cases[] = {"]
-    for symbol, (row, _, _, member, slot, forwarded, popped, constant) in zip(
-            symbols, accepted):
-        cases.append(f"    {{reinterpret_cast<void *>(&{symbol}_redirect), "
-                     f"{member:#x}, {slot:#x}, {forwarded}, {constant:#x}}},")
+    plain = ["struct PlainDelegationCase {",
+             "    void *thunk;",
+             "    size_t slot;",
+             "    int forwarded;   // how many reach the delegate",
+             "    int declared;    // how many the thunk must POP",
+             "    int answer;      // -1 when the thunk returns void",
+             "};",
+             "const PlainDelegationCase g_plain_delegation_cases[] = {"]
+    for symbol, (row, _, _, member, slot, forwarded, popped, constant,
+                 declared) in zip(symbols, accepted):
+        if member is None:
+            answer = -1 if constant is None else constant
+            plain.append(
+                f"    {{reinterpret_cast<void *>(&{symbol}_redirect), "
+                f"{slot:#x}, {forwarded}, {declared}, {answer}}},")
+        else:
+            cases.append(
+                f"    {{reinterpret_cast<void *>(&{symbol}_redirect), "
+                f"{member:#x}, {slot:#x}, {forwarded}, {constant:#x}}},")
     cases.append("};")
+    plain.append("};")
+    cases += [""] + plain
     fragment = "\n".join(cases) + "\n"
     return header, source, fragment, "\n".join(wire) + "\n"
 
