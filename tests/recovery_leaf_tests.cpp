@@ -25483,6 +25483,32 @@ const DelegationCase g_delegation_cases[] = {
     {reinterpret_cast<void *>(&voice_tx_return_buffer_redirect), 0x3c, 0x8c, 1, 0x13},
 };
 
+struct PlainDelegationCase {
+    void *thunk;
+    size_t slot;
+    int forwarded;   // how many reach the delegate
+    int declared;    // how many the thunk must POP
+    int answer;      // -1 when the thunk returns void
+};
+const PlainDelegationCase g_plain_delegation_cases[] = {
+    {reinterpret_cast<void *>(&alpha_movie_on_key_click_redirect), 0xe8, 0, 2, 1},
+    {reinterpret_cast<void *>(&base_win_on_scrolling_redirect), 0xc0, 2, 2, -1},
+    {reinterpret_cast<void *>(&base_win_on_iface_scrolling_redirect), 0x4, 2, 2, -1},
+    {reinterpret_cast<void *>(&credits_on_key_click_redirect), 0xe8, 0, 2, 1},
+    {reinterpret_cast<void *>(&credits_on_left_click_redirect), 0xe8, 0, 2, -1},
+    {reinterpret_cast<void *>(&select_part_win_on_scrolling_redirect), 0xc0, 2, 2, -1},
+    {reinterpret_cast<void *>(&interlude_on_key_down_redirect), 0xe8, 0, 1, 1},
+    {reinterpret_cast<void *>(&interlude_on_left_down_redirect), 0xe8, 0, 2, -1},
+    {reinterpret_cast<void *>(&new_tech_win_on_button_clicked_redirect), 0xe8, 0, 1, -1},
+    {reinterpret_cast<void *>(&prod_picker_on_scrolling_redirect), 0xc0, 2, 2, -1},
+    {reinterpret_cast<void *>(&replay_win_on_left_click_redirect), 0xe8, 0, 2, -1},
+    {reinterpret_cast<void *>(&replay_win_on_right_click_redirect), 0xe8, 0, 2, -1},
+    {reinterpret_cast<void *>(&replay_win_on_button_clicked_redirect), 0xe8, 0, 1, -1},
+    {reinterpret_cast<void *>(&replay_win_on_key_click_redirect), 0xe8, 0, 2, 1},
+    {reinterpret_cast<void *>(&gamma_on_scrolling_redirect), 0xc0, 2, 2, -1},
+    {reinterpret_cast<void *>(&base_button_on_dialog_focus_redirect), 0xf8, 0, 1, -1},
+};
+
 // One recorder per arity, plus a poison for every other slot: the delegate
 // must be reached through THE slot the bytes name, not merely through some
 // slot of the member's table.
@@ -25526,6 +25552,29 @@ int __thiscall delegation_poison(void *) {
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+int call_plain(const PlainDelegationCase &entry, void *self,
+               const int (&args)[3]) {
+    // The thunk must be entered with every DECLARED argument, not just the
+    // forwarded ones: it is installed at the original address and pops what
+    // the original's  popped. Calling it with fewer would unbalance
+    // the stack whatever the body does.
+    switch (entry.declared) {
+    case 0:
+        return reinterpret_cast<int(__fastcall *)(void *, void *)>(
+            entry.thunk)(self, nullptr);
+    case 1:
+        return reinterpret_cast<int(__fastcall *)(void *, void *, int)>(
+            entry.thunk)(self, nullptr, args[0]);
+    case 2:
+        return reinterpret_cast<int(__fastcall *)(void *, void *, int, int)>(
+            entry.thunk)(self, nullptr, args[0], args[1]);
+    default:
+        return reinterpret_cast<
+            int(__fastcall *)(void *, void *, int, int, int)>(
+            entry.thunk)(self, nullptr, args[0], args[1], args[2]);
+    }
+}
 
 int call_delegation(const DelegationCase &entry, void *self,
                     const int (&args)[3]) {
@@ -25593,6 +25642,38 @@ void test_delegation_thunks() {
         expect(g_delegation_probe.poison_calls == 0);
         for (int index = 0; index < entry.forwarded; ++index) {
             expect(g_delegation_probe.args[index] == args[index]);
+        }
+        expect(std::memcmp(object.data(), expected.data(), object.size()) == 0);
+    }
+
+    // The unguarded family: no member, no absent-member path, and the
+    // receiver is the thunk's OWN object rather than something it loaded.
+    for (const PlainDelegationCase &entry : g_plain_delegation_cases) {
+        std::vector<uint8_t> object(0x400, 0);
+        std::vector<void *> vtable(0x100,
+                                   reinterpret_cast<void *>(&delegation_poison));
+        vtable[entry.slot / sizeof(void *)] =
+            entry.forwarded == 0 ? reinterpret_cast<void *>(&delegation_observe_0)
+          : entry.forwarded == 1 ? reinterpret_cast<void *>(&delegation_observe_1)
+          : entry.forwarded == 2 ? reinterpret_cast<void *>(&delegation_observe_2)
+                                 : reinterpret_cast<void *>(&delegation_observe_3);
+        void *const vtable_pointer = vtable.data();
+        std::memcpy(object.data(), &vtable_pointer, sizeof(vtable_pointer));
+        std::vector<uint8_t> expected(object);
+
+        g_delegation_probe = DelegationProbe{};
+        const int result = call_plain(entry, object.data(), args);
+        expect(g_delegation_probe.calls == 1);
+        // The receiver is the object itself here, not a member of it.
+        expect(g_delegation_probe.self == object.data());
+        expect(g_delegation_probe.poison_calls == 0);
+        for (int index = 0; index < entry.forwarded; ++index) {
+            expect(g_delegation_probe.args[index] == args[index]);
+        }
+        if (entry.answer >= 0) {
+            // A constant answer, not the delegate's - the delegate returns
+            // DelegationAnswer, so a body that passed it through would fail.
+            expect(result == entry.answer);
         }
         expect(std::memcmp(object.data(), expected.data(), object.size()) == 0);
     }

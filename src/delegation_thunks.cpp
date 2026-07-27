@@ -24,7 +24,7 @@
  * tools/generate_delegation_thunks.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * One shape, 40 times over: read a member object pointer, answer a constant
+ * One shape, 56 times over: read a member object pointer, answer a constant
  * when it is absent, otherwise forward the arguments through a slot of that
  * member's OWN vtable. The four numbers that differ per function - the member
  * offset, the slot, the forwarded argument count and the absent-member
@@ -36,6 +36,151 @@
  * installed at the original address either way, and nothing here touches a
  * class header.
  */
+
+/*
+Purpose: ?on_key_click@AlphaMovie@@QAEHHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 00404210
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+    return 0x1;
+}
+
+/*
+Purpose: ?on_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+Original Offset: 0041B4C0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_2 *>(
+        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+}
+
+/*
+Purpose: ?on_iface_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0x4 of this object's OWN
+         vtable, forwarding 2 argument(s).
+Original Offset: 0041DCB0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall base_win_on_iface_scrolling_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_2 *>(
+        vtable[0x4 / sizeof(void *)])(self, a1, a2);
+}
+
+/*
+Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 00428D60
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int __fastcall credits_on_key_click_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+    return 0x1;
+}
+
+/*
+Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 00428D70
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+}
+
+/*
+Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+Original Offset: 00433F50
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall select_part_win_on_scrolling_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_2 *>(
+        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+}
+
+/*
+Purpose: ?on_key_down@Interlude@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 0045F6F0
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int __fastcall interlude_on_key_down_redirect(void *self, void *, int a1) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+    return 0x1;
+}
+
+/*
+Purpose: ?on_left_down@Interlude@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 0045F700
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall interlude_on_left_down_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+}
+
+/*
+Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 00483E80
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int a1) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+}
+
+/*
+Purpose: ?on_scrolling@ProdPicker@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+Original Offset: 00493E70
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_2 *>(
+        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+}
 
 /*
 Purpose: ?set_codec@Wave_In_Device@@QAEHK@Z - forward 1 argument(s) to slot 0x60 of the
@@ -755,4 +900,93 @@ int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1) {
     void **const vtable = *reinterpret_cast<void ***>(member);
     return reinterpret_cast<func_delegation_1 *>(
         vtable[0x8c / sizeof(void *)])(member, a1);
+}
+
+/*
+Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 005AD3B0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall replay_win_on_left_click_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+}
+
+/*
+Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 005AD3C0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall replay_win_on_right_click_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+}
+
+/*
+Purpose: ?on_button_clicked@ReplayWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 005AD430
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall replay_win_on_button_clicked_redirect(void *self, void *, int a1) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+}
+
+/*
+Purpose: ?on_key_click@ReplayWin@@QAEHHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 005AD440
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    reinterpret_cast<func_delegation_0 *>(
+        vtable[0xe8 / sizeof(void *)])(self);
+    return 0x1;
+}
+
+/*
+Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+Original Offset: 005C93A0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall gamma_on_scrolling_redirect(void *self, void *, int a1, int a2) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_2 *>(
+        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+}
+
+/*
+Purpose: ?on_dialog_focus@BaseButton@@QAEXH@Z - dispatch to slot 0xf8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+Original Offset: 00607B00
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall base_button_on_dialog_focus_redirect(void *self, void *, int a1) {
+    void **const vtable = *reinterpret_cast<void ***>(self);
+    (void)reinterpret_cast<func_delegation_0 *>(
+        vtable[0xf8 / sizeof(void *)])(self);
 }

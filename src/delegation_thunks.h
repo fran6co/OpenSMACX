@@ -23,7 +23,7 @@
  * tools/generate_delegation_thunks.py. Do not edit by hand; edit the
  * generator and regenerate.
  *
- * One shape, 40 times over: read a member object pointer, answer a constant
+ * One shape, 56 times over: read a member object pointer, answer a constant
  * when it is absent, otherwise forward the arguments through a slot of that
  * member's OWN vtable. The four numbers that differ per function - the member
  * offset, the slot, the forwarded argument count and the absent-member
@@ -51,6 +51,16 @@ typedef int(__thiscall func_delegation_3)(void *, int, int, int);
 #pragma GCC diagnostic pop
 #endif
 
+int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int a2);
+void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a2);
+void __fastcall base_win_on_iface_scrolling_redirect(void *self, void *, int a1, int a2);
+int __fastcall credits_on_key_click_redirect(void *self, void *, int a1, int a2);
+void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a2);
+void __fastcall select_part_win_on_scrolling_redirect(void *self, void *, int a1, int a2);
+int __fastcall interlude_on_key_down_redirect(void *self, void *, int a1);
+void __fastcall interlude_on_left_down_redirect(void *self, void *, int a1, int a2);
+void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int a1);
+void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, int a2);
 int __fastcall wave_in_device_set_codec_redirect(void *self, void *, int a1);
 int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1);
 int __fastcall midi_play_redirect(void *self, void *);
@@ -91,3 +101,9 @@ int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *);
 int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *);
 int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *);
 int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1);
+void __fastcall replay_win_on_left_click_redirect(void *self, void *, int a1, int a2);
+void __fastcall replay_win_on_right_click_redirect(void *self, void *, int a1, int a2);
+void __fastcall replay_win_on_button_clicked_redirect(void *self, void *, int a1);
+int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int a2);
+void __fastcall gamma_on_scrolling_redirect(void *self, void *, int a1, int a2);
+void __fastcall base_button_on_dialog_focus_redirect(void *self, void *, int a1);
