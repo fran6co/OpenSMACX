@@ -349,3 +349,4 @@ TeardownTarget004327A0,ui_dependency,recover_owning_class,Flic destructor at 0x0
 TeardownTarget0048BD80,ui_dependency,recover_owning_class,PlanWin destructor at 0x0048BD80 that the ??__F g_PLANWIN teardown runs before descending to the GraphicWin base
 TeardownTarget0051D9F0,ui_dependency,recover_owning_class,Console destructor at 0x0051D9F0 that the ??__F g_CONSOLE teardown runs before descending to the GraphicWin base
 TeardownTarget005D4DD0,ui_dependency,recover_owning_class,GraphicWin destructor at 0x005D4DD0 that three of the recovered two-step teardown thunks tail-jump to after the derived destructor
+TutWinOriginalShow,ui_dependency,recover_owning_class,TutWin::tut_win at 0x004BDFE0; the shared tail of the four do_* helpers that actually paints the tutorial callout

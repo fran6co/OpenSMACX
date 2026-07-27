@@ -35,6 +35,10 @@ class DLLEXPORT TutWin {
   ~TutWin() { ; }
   void UNK1();
   void UNK3(int a1);
+  void do_base(RECT *rect, const char *text, int flag);
+  void do_iface(RECT *rect, const char *text, int flag);
+  void do_soc(RECT *rect, const char *text, int flag);
+  void do_des(RECT *rect, const char *text, int flag);
   void iface_rect(RECT *rect, int *x, int *y);
   void base_rect(RECT *rect, int *x, int *y);
   void soc_rect(RECT *rect, int *x, int *y);
@@ -80,3 +84,26 @@ void __fastcall tut_win_soc_rect_redirect(
     TutWin *self, void *, RECT *rect, int *x, int *y);
 void __fastcall tut_win_des_rect_redirect(
     TutWin *self, void *, RECT *rect, int *x, int *y);
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+// The shared tail of the four do_* helpers: 0x004BDFE0, still original.
+typedef int(__thiscall func_tut_win_show)(void *self, void *window,
+                                          const char *text, int x, int y,
+                                          void *sprite, int flag, int a7,
+                                          int a8);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+extern func_tut_win_show *TutWinOriginalShow;
+
+void __fastcall tut_win_do_base_redirect(
+    TutWin *self, void *, RECT *rect, const char *text, int flag);
+void __fastcall tut_win_do_iface_redirect(
+    TutWin *self, void *, RECT *rect, const char *text, int flag);
+void __fastcall tut_win_do_soc_redirect(
+    TutWin *self, void *, RECT *rect, const char *text, int flag);
+void __fastcall tut_win_do_des_redirect(
+    TutWin *self, void *, RECT *rect, const char *text, int flag);

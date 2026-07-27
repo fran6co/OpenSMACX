@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "tutwin.h"
 #include "win.h"
+#include "mapwin.h"
 
 // The tutorial's "already shown" marker, cleared alongside the window's own
 // state. Bound at its canonical address because nothing here owns it yet.
@@ -196,4 +197,190 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
 void __fastcall tut_win_des_rect_redirect(
         TutWin *self, void *, RECT *rect, int *x, int *y) {
     self->des_rect(rect, x, y);
+}
+
+func_tut_win_show *TutWinOriginalShow = (func_tut_win_show *)0x004BDFE0;
+
+/*
+ * The four do_* helpers: 123-byte clones whose ONLY real difference is which
+ * fixed window they centre through. The other differing bytes are the two
+ * call displacements, which move because the calls are relative and the four
+ * bodies sit 0x80 apart - not because either target differs. Both targets are
+ * the same for all four.
+ */
+
+/*
+Purpose: Centre the rectangle, convert it through the base window, and
+         show the tutorial text there against the primary map window.
+Original Offset: 004BA870
+Return Value: n/a - the show's result is discarded
+Status: Complete with a temporary TutWin::tut_win dependency
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
+*/
+void TutWin::do_base(RECT *rect, const char *text, int flag) {
+    const uint32_t left = static_cast<uint32_t>(rect->left);
+    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
+    const uint32_t width_adjusted = width + (width >> 31);
+    int x = static_cast<int>(
+        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
+    const uint32_t top = static_cast<uint32_t>(rect->top);
+    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
+    const uint32_t height_adjusted = height + (height >> 31);
+    int y = static_cast<int>(
+        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    TutWinBaseWindow->client_to_screen(&x, &y);
+
+    void *window = nullptr;
+    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    if (primary != nullptr) {
+        // The virtual-base displacement lives at offset 4 of the object's
+        // vbtable, which is the dword at offset 0.
+        const int32_t *const vbtable =
+            *reinterpret_cast<int32_t *const *>(primary);
+        window = primary + vbtable[1];
+    }
+    TutWinOriginalShow(this, window, text, x, y, nullptr, flag, -1, -1);
+}
+
+void __fastcall tut_win_do_base_redirect(
+        TutWin *self, void *, RECT *rect, const char *text, int flag) {
+    self->do_base(rect, text, flag);
+}
+
+/*
+Purpose: Centre the rectangle, convert it through the iface window, and
+         show the tutorial text there against the primary map window.
+Original Offset: 004BA8F0
+Return Value: n/a - the show's result is discarded
+Status: Complete with a temporary TutWin::tut_win dependency
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
+*/
+void TutWin::do_iface(RECT *rect, const char *text, int flag) {
+    const uint32_t left = static_cast<uint32_t>(rect->left);
+    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
+    const uint32_t width_adjusted = width + (width >> 31);
+    int x = static_cast<int>(
+        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
+    const uint32_t top = static_cast<uint32_t>(rect->top);
+    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
+    const uint32_t height_adjusted = height + (height >> 31);
+    int y = static_cast<int>(
+        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    TutWinIfaceWindow->client_to_screen(&x, &y);
+
+    void *window = nullptr;
+    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    if (primary != nullptr) {
+        // The virtual-base displacement lives at offset 4 of the object's
+        // vbtable, which is the dword at offset 0.
+        const int32_t *const vbtable =
+            *reinterpret_cast<int32_t *const *>(primary);
+        window = primary + vbtable[1];
+    }
+    TutWinOriginalShow(this, window, text, x, y, nullptr, flag, -1, -1);
+}
+
+void __fastcall tut_win_do_iface_redirect(
+        TutWin *self, void *, RECT *rect, const char *text, int flag) {
+    self->do_iface(rect, text, flag);
+}
+
+/*
+Purpose: Centre the rectangle, convert it through the soc window, and
+         show the tutorial text there against the primary map window.
+Original Offset: 004BA970
+Return Value: n/a - the show's result is discarded
+Status: Complete with a temporary TutWin::tut_win dependency
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
+*/
+void TutWin::do_soc(RECT *rect, const char *text, int flag) {
+    const uint32_t left = static_cast<uint32_t>(rect->left);
+    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
+    const uint32_t width_adjusted = width + (width >> 31);
+    int x = static_cast<int>(
+        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
+    const uint32_t top = static_cast<uint32_t>(rect->top);
+    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
+    const uint32_t height_adjusted = height + (height >> 31);
+    int y = static_cast<int>(
+        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    TutWinSocWindow->client_to_screen(&x, &y);
+
+    void *window = nullptr;
+    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    if (primary != nullptr) {
+        // The virtual-base displacement lives at offset 4 of the object's
+        // vbtable, which is the dword at offset 0.
+        const int32_t *const vbtable =
+            *reinterpret_cast<int32_t *const *>(primary);
+        window = primary + vbtable[1];
+    }
+    TutWinOriginalShow(this, window, text, x, y, nullptr, flag, -1, -1);
+}
+
+void __fastcall tut_win_do_soc_redirect(
+        TutWin *self, void *, RECT *rect, const char *text, int flag) {
+    self->do_soc(rect, text, flag);
+}
+
+/*
+Purpose: Centre the rectangle, convert it through the des window, and
+         show the tutorial text there against the primary map window.
+Original Offset: 004BA9F0
+Return Value: n/a - the show's result is discarded
+Status: Complete with a temporary TutWin::tut_win dependency
+Verification note: the GraphicWin handed to the show is MapWinTable[0]
+         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
+         `add eax,ecx` - and a null slot passes a null through rather than
+         faulting, which is the only branch in the body.
+Verification note: the original writes the y centre over its own first
+         argument slot before taking its address, so the RECT pointer is dead
+         from that point. A local is equivalent and is what is used here.
+*/
+void TutWin::do_des(RECT *rect, const char *text, int flag) {
+    const uint32_t left = static_cast<uint32_t>(rect->left);
+    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
+    const uint32_t width_adjusted = width + (width >> 31);
+    int x = static_cast<int>(
+        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
+    const uint32_t top = static_cast<uint32_t>(rect->top);
+    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
+    const uint32_t height_adjusted = height + (height >> 31);
+    int y = static_cast<int>(
+        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    TutWinDesWindow->client_to_screen(&x, &y);
+
+    void *window = nullptr;
+    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    if (primary != nullptr) {
+        // The virtual-base displacement lives at offset 4 of the object's
+        // vbtable, which is the dword at offset 0.
+        const int32_t *const vbtable =
+            *reinterpret_cast<int32_t *const *>(primary);
+        window = primary + vbtable[1];
+    }
+    TutWinOriginalShow(this, window, text, x, y, nullptr, flag, -1, -1);
+}
+
+void __fastcall tut_win_do_des_redirect(
+        TutWin *self, void *, RECT *rect, const char *text, int flag) {
+    self->do_des(rect, text, flag);
 }
