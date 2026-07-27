@@ -1385,6 +1385,7 @@ address,kind
 0x005D4CF0,jump
 0x005D4DD0,jump
 0x005D4E40,jump
+0x005D4EF0,jump
 0x005D5250,jump
 0x005D5440,jump
 0x005D5A70,jump

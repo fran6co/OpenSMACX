@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "vector_teardown.h"
 
  /*
   * Wave class
@@ -180,8 +181,8 @@ extern Wave **WaveChainTail;
 // one dword every 24 bytes from 0x0090D9A0; is_group_disabled is the device
 // singleton method play consults before starting; and the no-argument load
 // is the not-yet-recovered Wave::load() that play falls back to.
-typedef void *(__cdecl func_operator_new)(unsigned int size);
-extern func_operator_new *WaveOperatorNew;
+// WaveOperatorNew and its typedef now live in "vector_teardown.h" above -
+// the seam outgrew this header once GraphicWin::init needed it too.
 extern uint32_t *WaveDeviceGroupVolumes;
 #if defined(__GNUC__)
 #pragma GCC diagnostic push

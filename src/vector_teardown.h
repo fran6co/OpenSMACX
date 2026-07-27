@@ -44,3 +44,14 @@ typedef void(__stdcall func_vector_ctor_iterator)(
     void *array, unsigned int element_size, int count,
     func_thiscall_teardown *ctor, func_thiscall_teardown *dtor);
 extern func_vector_ctor_iterator *VectorCtorIterator;
+
+// The game's own operator new, ??2@YAPAXI@Z at 0x0064558A - a 14-byte
+// _nh_malloc(size, 1) forwarder that answers null rather than raising.
+// Anything the recovered code allocates and the original frees has to come
+// from here, so it lives beside the iterators for the same reason they do: it
+// has three callers already (Wave, Sound, Wave_Device) and now a fourth in
+// GraphicWin::init, and it must reach every one of them without dragging the
+// audio closure into their link. The name records the recovery that first
+// bound it, not an ownership claim - it is the process-wide allocator.
+typedef void *(__cdecl func_operator_new)(unsigned int size);
+extern func_operator_new *WaveOperatorNew;

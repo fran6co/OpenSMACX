@@ -649,7 +649,6 @@ int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
     return self->get_attrib();
 }
 
-func_operator_new *WaveOperatorNew = (func_operator_new *)0x0064558A;
 uint32_t *WaveDeviceGroupVolumes = reinterpret_cast<uint32_t *>(0x0090D9A0);
 func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled = (func_wave_device_is_group_disabled *)0x004C5460;
 func_wave_original_load *WaveOriginalLoad = (func_wave_original_load *)0x004C6CE0;
