@@ -25773,19 +25773,19 @@ struct GuardedTeardownCase {
     func_thiscall_teardown **target;
 };
 const GuardedTeardownCase g_guarded_teardown_cases[] = {
-    {&teardown_g_buffer_sprite, &TeardownFlags009B37CC, 2, &TeardownObject009B3A50, &TeardownTarget005E3820},
-    {&teardown_g_win_buffer, &TeardownFlags009B6E30, 1, &TeardownObject009B6F08, &BufferElementTeardown},
-    {&teardown_005eb3b0, &TeardownFlags009B6E30, 2, &TeardownObject009B7490, &BufferElementTeardown},
-    {&teardown_g_radiobutton_sprite_1, &TeardownFlags009B8EF0, 1, &TeardownObject009B8EF8, &TeardownTarget005E3820},
-    {&teardown_g_radiobutton_sprite_2, &TeardownFlags009B8EF0, 2, &TeardownObject009B8F28, &TeardownTarget005E3820},
-    {&teardown_g_checkbox_sprite_1, &TeardownFlags009B8F58, 1, &TeardownObject009B8F60, &TeardownTarget005E3820},
-    {&teardown_g_checkbox_sprite_2, &TeardownFlags009B8F58, 2, &TeardownObject009B8F90, &TeardownTarget005E3820},
-    {&teardown_g_filewin_sprite_1, &TeardownFlags009B9014, 1, &TeardownObject009B9048, &TeardownTarget005E3820},
-    {&teardown_g_filewin_sprite_2, &TeardownFlags009B9014, 2, &TeardownObject009B9018, &TeardownTarget005E3820},
-    {&teardown_g_filewin_sprite_3, &TeardownFlags009B9014, 4, &TeardownObject009B9078, &TeardownTarget005E3820},
-    {&teardown_g_caviar_buffer_1, &TeardownFlags009B9104, 1, &TeardownObject009B9108, &BufferElementTeardown},
-    {&teardown_g_caviar_buffer_2, &TeardownFlags009B9104, 2, &TeardownObject009B96B0, &BufferElementTeardown},
-    {&teardown_0063bb00, &TeardownFlags009BEAE0, 1, &TeardownObject009BEAE8, &TeardownTarget005E3820},
+    {&teardown_g_buffer_sprite, &TeardownFlags009B37CC, 2, reinterpret_cast<void **>(&g_BUFFER_SPRITE), &TeardownTarget005E3820},
+    {&teardown_g_win_buffer, &TeardownFlags009B6E30, 1, reinterpret_cast<void **>(&g_WIN_BUFFER), &BufferElementTeardown},
+    {&teardown_005eb3b0, &TeardownFlags009B6E30, 2, reinterpret_cast<void **>(&TeardownObject009B7490), &BufferElementTeardown},
+    {&teardown_g_radiobutton_sprite_1, &TeardownFlags009B8EF0, 1, reinterpret_cast<void **>(&g_RADIOBUTTON_SPRITE_1), &TeardownTarget005E3820},
+    {&teardown_g_radiobutton_sprite_2, &TeardownFlags009B8EF0, 2, reinterpret_cast<void **>(&g_RADIOBUTTON_SPRITE_2), &TeardownTarget005E3820},
+    {&teardown_g_checkbox_sprite_1, &TeardownFlags009B8F58, 1, reinterpret_cast<void **>(&g_CHECKBOX_SPRITE_1), &TeardownTarget005E3820},
+    {&teardown_g_checkbox_sprite_2, &TeardownFlags009B8F58, 2, reinterpret_cast<void **>(&g_CHECKBOX_SPRITE_2), &TeardownTarget005E3820},
+    {&teardown_g_filewin_sprite_1, &TeardownFlags009B9014, 1, reinterpret_cast<void **>(&g_FILEWIN_SPRITE_1), &TeardownTarget005E3820},
+    {&teardown_g_filewin_sprite_2, &TeardownFlags009B9014, 2, reinterpret_cast<void **>(&g_FILEWIN_SPRITE_2), &TeardownTarget005E3820},
+    {&teardown_g_filewin_sprite_3, &TeardownFlags009B9014, 4, reinterpret_cast<void **>(&g_FILEWIN_SPRITE_3), &TeardownTarget005E3820},
+    {&teardown_g_caviar_buffer_1, &TeardownFlags009B9104, 1, reinterpret_cast<void **>(&g_CAVIAR_BUFFER_1), &BufferElementTeardown},
+    {&teardown_g_caviar_buffer_2, &TeardownFlags009B9104, 2, reinterpret_cast<void **>(&g_CAVIAR_BUFFER_2), &BufferElementTeardown},
+    {&teardown_0063bb00, &TeardownFlags009BEAE0, 1, reinterpret_cast<void **>(&TeardownObject009BEAE8), &TeardownTarget005E3820},
 };
 
 int g_guarded_calls;

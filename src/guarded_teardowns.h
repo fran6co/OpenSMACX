@@ -19,6 +19,7 @@
 #pragma once
 #include "vector_teardown.h"
 #include "sprite.h"
+#include "init_thunks.h"
 #include "atexit_thunks.h"
 
 /*
@@ -43,18 +44,7 @@ extern uint8_t *TeardownFlags009B8F58;
 extern uint8_t *TeardownFlags009B9014;
 extern uint8_t *TeardownFlags009B9104;
 extern uint8_t *TeardownFlags009BEAE0;
-extern void *TeardownObject009B3A50;
-extern void *TeardownObject009B6F08;
 extern void *TeardownObject009B7490;
-extern void *TeardownObject009B8EF8;
-extern void *TeardownObject009B8F28;
-extern void *TeardownObject009B8F60;
-extern void *TeardownObject009B8F90;
-extern void *TeardownObject009B9018;
-extern void *TeardownObject009B9048;
-extern void *TeardownObject009B9078;
-extern void *TeardownObject009B9108;
-extern void *TeardownObject009B96B0;
 extern void *TeardownObject009BEAE8;
 extern func_thiscall_teardown *TeardownTarget005E3820;
 
