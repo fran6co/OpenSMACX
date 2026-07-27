@@ -37,10 +37,14 @@ class DLLEXPORT Popup : BasePop {
   void start(const char *label);
   void start(const char *label, int value);
   int on_dialog_back_draw(::GraphicWin *window);
+  void on_redraw_nc(int, int);
 
  private:
   Scroll scroll_;
 };
+
+void __fastcall popup_on_redraw_nc_redirect(
+    Popup *self, void *, int a1, int a2);
 
 // BasePop::close is not recovered yet.
 typedef void (__thiscall func_base_pop_close)(BasePop *);
