@@ -53,6 +53,34 @@ func_thiscall_teardown *TextureElementTeardown =
 func_thiscall_teardown *WaveElementTeardown =
     (func_thiscall_teardown *)0x004C67C0;
 
+// The opaque-storage teardowns, each defaulting to the
+// original destructor the thunk tail jumps to; the
+// hybrid redirects it to a recovered body at run time.
+func_thiscall_teardown *InfoWinDtorTarget =
+    (func_thiscall_teardown *)0x004594A0;
+func_thiscall_teardown *MessageWinDtorTarget =
+    (func_thiscall_teardown *)0x00472020;
+func_thiscall_teardown *ReportIfDtorTarget =
+    (func_thiscall_teardown *)0x004ACDA0;
+func_thiscall_teardown *StatusWinDtorTarget =
+    (func_thiscall_teardown *)0x004BA120;
+func_thiscall_teardown *Wave_DeviceDtorTarget =
+    (func_thiscall_teardown *)0x004C4E60;
+func_thiscall_teardown *Midi_DeviceDtorTarget =
+    (func_thiscall_teardown *)0x004C5780;
+func_thiscall_teardown *Wave_In_DeviceDtorTarget =
+    (func_thiscall_teardown *)0x004C5980;
+func_thiscall_teardown *NetDaemonDtorTarget =
+    (func_thiscall_teardown *)0x00538D10;
+func_thiscall_teardown *PaletteDtorTarget =
+    (func_thiscall_teardown *)0x005FE2E0;
+func_thiscall_teardown *TimeDtorTarget =
+    (func_thiscall_teardown *)0x00616200;
+func_thiscall_teardown *StringsDtorTarget =
+    (func_thiscall_teardown *)0x006169C0;
+func_thiscall_teardown *CaviarCloseTarget =
+    (func_thiscall_teardown *)0x00617020;
+
 Wave *g_ALPHAMENU_WAVE = (Wave *)0x006A7090;
 Sprite *g_UNUSED_SPRITE_VAR02 = (Sprite *)0x006A7130;
 Sprite *g_UNUSED_SPRITE_VAR11 = (Sprite *)0x006A72E0;
@@ -623,6 +651,16 @@ void __cdecl destroy_unused_sprite_var07() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_BASEWIN.
+Original Offset: 004083D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_basewin() {
+    BaseWinDtorTarget(reinterpret_cast<void *>(0x006A7628));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_BASEWIN_WAVE.
 Original Offset: 00408400
 Return Value: n/a
@@ -643,6 +681,16 @@ void __cdecl destroy_battlewin() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_COUNCWIN.
+Original Offset: 004243C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_councwin() {
+    CouncWinDtorTarget(reinterpret_cast<void *>(0x006FEC80));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_CREDITS_WAVE.
 Original Offset: 00428770
 Return Value: n/a
@@ -653,6 +701,26 @@ void __cdecl destroy_credits_wave() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_DATALINK.
+Original Offset: 00428FB0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_datalink() {
+    DatalinkDtorTarget(reinterpret_cast<void *>(0x00703EA0));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_DESIGNWIN.
+Original Offset: 00432870
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_designwin() {
+    DesignWinDtorTarget(reinterpret_cast<void *>(0x0071F2B0));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_DESIGNWIN_WAVE.
 Original Offset: 004328A0
 Return Value: n/a
@@ -660,6 +728,26 @@ Status: Complete
 */
 void __cdecl destroy_designwin_wave() {
     WaveOriginalDestructor(g_DESIGNWIN_WAVE);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_DIPLOPOP.
+Original Offset: 0043EFE0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_diplopop() {
+    DiploPopDtorTarget(reinterpret_cast<void *>(0x00733990));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_DIPLOWIN.
+Original Offset: 00440F20
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_diplowin() {
+    DiploWinDtorTarget(reinterpret_cast<void *>(0x0073ACD8));
 }
 
 /*
@@ -740,6 +828,16 @@ Status: Complete
 */
 void __cdecl destroy_ambience() {
     g_AMBIENCE->~Ambience();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_FAMEWIN.
+Original Offset: 004483F0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_famewin() {
+    FameWinDtorTarget(reinterpret_cast<void *>(0x0074DAF8));
 }
 
 /*
@@ -3623,6 +3721,26 @@ void __cdecl destroy_basewin_sprites() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_INFOWIN.
+Original Offset: 004562E0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_infowin() {
+    InfoWinDtorTarget(reinterpret_cast<void *>(0x007AD2A0));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MAININTERFACE.
+Original Offset: 00459580
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_maininterface() {
+    MainInterfaceDtorTarget(reinterpret_cast<void *>(0x007AE820));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_MAININTERFACE_WAVE.
 Original Offset: 004595B0
 Return Value: n/a
@@ -3643,6 +3761,16 @@ void __cdecl destroy_jackal_font() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_MESSAGEWIN.
+Original Offset: 00471340
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_messagewin() {
+    MessageWinDtorTarget(reinterpret_cast<void *>(0x007F67F8));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_IFACE_GREEN_RIGHT_ARROW_SPRITE.
 Original Offset: 00471380
 Return Value: n/a
@@ -3650,6 +3778,26 @@ Status: Complete
 */
 void __cdecl destroy_iface_green_right_arrow_sprite() {
     VectorDtorIterator(g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MONUWIN.
+Original Offset: 00472220
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_monuwin() {
+    MonuWinDtorTarget(reinterpret_cast<void *>(0x007F9F58));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MULTIWIN.
+Original Offset: 00477E30
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_multiwin() {
+    MultiWinDtorTarget(reinterpret_cast<void *>(0x007FD648));
 }
 
 /*
@@ -3663,6 +3811,66 @@ void __cdecl destroy_multiwin_wave() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_NETMSG1.
+Original Offset: 0047A790
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_netmsg1() {
+    NetMsgDtorTarget(reinterpret_cast<void *>(0x00805338));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_NETMSG2.
+Original Offset: 0047A7C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_netmsg2() {
+    NetMsgDtorTarget(reinterpret_cast<void *>(0x007FFF80));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_NETWIN.
+Original Offset: 0047B010
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_netwin() {
+    NetWinDtorTarget(reinterpret_cast<void *>(0x0080A6F8));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_NEWTECHWIN.
+Original Offset: 00483870
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_newtechwin() {
+    NewTechWinDtorTarget(reinterpret_cast<void *>(0x00811E40));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_PICKWIN.
+Original Offset: 00488770
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_pickwin() {
+    PickWinDtorTarget(reinterpret_cast<void *>(0x00822718));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_PREFWIN.
+Original Offset: 0048D510
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_prefwin() {
+    PrefWinDtorTarget(reinterpret_cast<void *>(0x008578D8));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_PREFWIN_BUTTONGROUP.
 Original Offset: 0048D540
 Return Value: n/a
@@ -3670,6 +3878,76 @@ Status: Complete
 */
 void __cdecl destroy_prefwin_buttongroup() {
     g_PREFWIN_BUTTONGROUP->close();
+}
+
+/*
+Purpose: Atexit teardown thunk for g_QUAYLEWIN.
+Original Offset: 00495190
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_quaylewin() {
+    QuayleWinDtorTarget(reinterpret_cast<void *>(0x00872CB0));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_REPORTIF.
+Original Offset: 00496920
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_reportif() {
+    ReportIfDtorTarget(reinterpret_cast<void *>(0x00885F38));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_REPORTWIN.
+Original Offset: 00496950
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_reportwin() {
+    ReportWinDtorTarget(reinterpret_cast<void *>(0x00876478));
+}
+
+/*
+Purpose: Atexit teardown thunk for SocialWinParent.
+Original Offset: 004AE9D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_socialwinparent() {
+    SocialWinDtorTarget(reinterpret_cast<void *>(0x008A6270));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_STATUSWIN.
+Original Offset: 004B3FC0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_statuswin() {
+    StatusWinDtorTarget(reinterpret_cast<void *>(0x008C5568));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_TUTWIN.
+Original Offset: 004BA5E0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_tutwin() {
+    TutWinDtorTarget(reinterpret_cast<void *>(0x008C6E68));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_VEHDRAW_CAVIAR.
+Original Offset: 004BF700
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_vehdraw_caviar() {
+    CaviarCloseTarget(reinterpret_cast<void *>(0x008CC828));
 }
 
 /*
@@ -3683,6 +3961,56 @@ void __cdecl destroy_vehdraw_buffer() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_WORLDWIN.
+Original Offset: 004C38D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_worldwin() {
+    WorldWinDtorTarget(reinterpret_cast<void *>(0x008E9F60));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_WAVE_DEVICE.
+Original Offset: 004C5C70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_wave_device() {
+    Wave_DeviceDtorTarget(reinterpret_cast<void *>(0x0090D978));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MIDI_DEVICE.
+Original Offset: 004C5CA0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_midi_device() {
+    Midi_DeviceDtorTarget(reinterpret_cast<void *>(0x0090D950));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_WAVE_IN_DEVICE.
+Original Offset: 004C5CD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_wave_in_device() {
+    Wave_In_DeviceDtorTarget(reinterpret_cast<void *>(0x0090DB50));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_CONSOLE_TIMER.
+Original Offset: 0050E9A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_console_timer() {
+    TimeDtorTarget(reinterpret_cast<void *>(0x00939E88));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_CURSOR_SPRITES.
 Original Offset: 0052DAF0
 Return Value: n/a
@@ -3690,6 +4018,16 @@ Status: Complete
 */
 void __cdecl destroy_cursor_sprites() {
     VectorDtorIterator(g_CURSOR_SPRITES, 0x2C, 12, SpriteElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for g_NETDAEMON.
+Original Offset: 0052DB30
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_netdaemon() {
+    NetDaemonDtorTarget(reinterpret_cast<void *>(0x0093CD90));
 }
 
 /*
@@ -3753,6 +4091,36 @@ void __cdecl destroy_wave_general() {
 }
 
 /*
+Purpose: Atexit teardown thunk for g_PALETTE1.
+Original Offset: 005BEC60
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_palette1() {
+    PaletteDtorTarget(reinterpret_cast<void *>(0x0094C590));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_PALETTE2.
+Original Offset: 005BEC90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_palette2() {
+    PaletteDtorTarget(reinterpret_cast<void *>(0x009523A0));
+}
+
+/*
+Purpose: Atexit teardown thunk for g_MULTIDEBUG.
+Original Offset: 005C97E0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_multidebug() {
+    MultiDebugDtorTarget(reinterpret_cast<void *>(0x009B22F0));
+}
+
+/*
 Purpose: Atexit teardown thunk for g_BUFFER.
 Original Offset: 005E37D0
 Return Value: n/a
@@ -3770,4 +4138,14 @@ Status: Complete
 */
 void __cdecl destroy_txtindex() {
     VectorDtorIterator(TxtIndexGlobal, 0x118, 4, TextIndexElementTeardown);
+}
+
+/*
+Purpose: Atexit teardown thunk for StringTable.
+Original Offset: 006168C0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl destroy_stringtable() {
+    StringsDtorTarget(reinterpret_cast<void *>(0x009B90D8));
 }
