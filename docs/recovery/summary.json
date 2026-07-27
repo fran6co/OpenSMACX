@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 170,
-      "source_complete": 2037,
+      "original_dependency": 219,
+      "source_complete": 2146,
       "source_in_progress": 5,
       "thunk": 29,
-      "unrecovered": 3432
+      "unrecovered": 3274
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1983,
-    "matched_function_starts": 1983,
-    "unique_addresses": 1983,
+    "annotations": 2092,
+    "matched_function_starts": 2092,
+    "unique_addresses": 2092,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 237
+      "function": 286
     },
     "items": [
       {
@@ -5793,6 +5793,447 @@
         "type": "func_datalink_exec *"
       },
       {
+        "address": "0x0051DC10",
+        "function": "??1AlphaMenu@@QAE@XZ",
+        "function_address": "0x0051DC10",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:57",
+        "symbol": "AlphaMenuDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00404310",
+        "function": "??1AlphaMovie@@QAE@XZ",
+        "function_address": "0x00404310",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:59",
+        "symbol": "AlphaMovieDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00408170",
+        "function": "??1AlphaSave@@QAE@XZ",
+        "function_address": "0x00408170",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:61",
+        "symbol": "AlphaSaveDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004064D0",
+        "function": "??1BasePop@@QAE@XZ",
+        "function_address": "0x004064D0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:63",
+        "symbol": "BasePopDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00420A70",
+        "function": "??1BaseWin@@QAE@XZ",
+        "function_address": "0x00420A70",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:65",
+        "symbol": "BaseWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004B3EC0",
+        "function": "??1CheckButton@@QAE@XZ",
+        "function_address": "0x004B3EC0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:67",
+        "symbol": "CheckButtonDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00428550",
+        "function": "??1CouncWin@@QAE@XZ",
+        "function_address": "0x00428550",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:69",
+        "symbol": "CouncWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00428E90",
+        "function": "??1Credits@@QAE@XZ",
+        "function_address": "0x00428E90",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:71",
+        "symbol": "CreditsDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00432290",
+        "function": "??1Datalink@@QAE@XZ",
+        "function_address": "0x00432290",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:73",
+        "symbol": "DatalinkDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0043ECB0",
+        "function": "??1DesignWin@@QAE@XZ",
+        "function_address": "0x0043ECB0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:75",
+        "symbol": "DesignWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004E2240",
+        "function": "??1DipEdit@@QAE@XZ",
+        "function_address": "0x004E2240",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:77",
+        "symbol": "DipEditDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00440D50",
+        "function": "??1DiploPop@@QAE@XZ",
+        "function_address": "0x00440D50",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:79",
+        "symbol": "DiploPopDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00444DB0",
+        "function": "??1DiploWin@@QAE@XZ",
+        "function_address": "0x00444DB0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:81",
+        "symbol": "DiploWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00408010",
+        "function": "??1EditBox@@QAE@XZ",
+        "function_address": "0x00408010",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:83",
+        "symbol": "EditBoxDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0044B100",
+        "function": "??1FameWin@@QAE@XZ",
+        "function_address": "0x0044B100",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:85",
+        "symbol": "FameWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00456110",
+        "function": "??1Gamma@@QAE@XZ",
+        "function_address": "0x00456110",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:87",
+        "symbol": "GammaDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00625310",
+        "function": "??1ImageButton@@QAE@XZ",
+        "function_address": "0x00625310",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:89",
+        "symbol": "ImageButtonDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0045F740",
+        "function": "??1Interlude@@QAE@XZ",
+        "function_address": "0x0045F740",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:91",
+        "symbol": "InterludeDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0045EB80",
+        "function": "??1MainInterface@@QAE@XZ",
+        "function_address": "0x0045EB80",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:93",
+        "symbol": "MainInterfaceDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x005FAD00",
+        "function": "??1Menu@@QAE@XZ",
+        "function_address": "0x005FAD00",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:95",
+        "symbol": "MenuDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00477B10",
+        "function": "??1MonuWin@@QAE@XZ",
+        "function_address": "0x00477B10",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:97",
+        "symbol": "MonuWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x005C9E00",
+        "function": "??1MultiDebug@@QAE@XZ",
+        "function_address": "0x005C9E00",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:99",
+        "symbol": "MultiDebugDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0047A430",
+        "function": "??1MultiWin@@QAE@XZ",
+        "function_address": "0x0047A430",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:101",
+        "symbol": "MultiWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0047ADA0",
+        "function": "??1NetMsg@@QAE@XZ",
+        "function_address": "0x0047ADA0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:103",
+        "symbol": "NetMsgDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004834E0",
+        "function": "??1NetWin@@QAE@XZ",
+        "function_address": "0x004834E0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:105",
+        "symbol": "NetWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00484810",
+        "function": "??1NewTechWin@@QAE@XZ",
+        "function_address": "0x00484810",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:107",
+        "symbol": "NewTechWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00488690",
+        "function": "??1PickTech@@QAE@XZ",
+        "function_address": "0x00488690",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:109",
+        "symbol": "PickTechDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0048A8E0",
+        "function": "??1PickWin@@QAE@XZ",
+        "function_address": "0x0048A8E0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:111",
+        "symbol": "PickWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00421400",
+        "function": "??1PopMenu@@QAE@XZ",
+        "function_address": "0x00421400",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:113",
+        "symbol": "PopMenuDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00406C00",
+        "function": "??1Popup@@QAE@XZ",
+        "function_address": "0x00406C00",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:115",
+        "symbol": "PopupDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00491DF0",
+        "function": "??1PrefWin@@QAE@XZ",
+        "function_address": "0x00491DF0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:117",
+        "symbol": "PrefWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00421100",
+        "function": "??1ProdPicker@@QAE@XZ",
+        "function_address": "0x00421100",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:119",
+        "symbol": "ProdPickerDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0062C010",
+        "function": "??1PushButton@@QAE@XZ",
+        "function_address": "0x0062C010",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:121",
+        "symbol": "PushButtonDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00496710",
+        "function": "??1QuayleWin@@QAE@XZ",
+        "function_address": "0x00496710",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:123",
+        "symbol": "QuayleWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x005ADF10",
+        "function": "??1ReplayWin@@QAE@XZ",
+        "function_address": "0x005ADF10",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:125",
+        "symbol": "ReplayWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004AD3B0",
+        "function": "??1ReportWin@@QAE@XZ",
+        "function_address": "0x004AD3B0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:127",
+        "symbol": "ReportWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x0043EE10",
+        "function": "??1SelectPartWin@@QAE@XZ",
+        "function_address": "0x0043EE10",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:129",
+        "symbol": "SelectPartWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004AE790",
+        "function": "??1SetupWin@@QAE@XZ",
+        "function_address": "0x004AE790",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:131",
+        "symbol": "SetupWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004B3C80",
+        "function": "??1SocialWin@@QAE@XZ",
+        "function_address": "0x004B3C80",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:133",
+        "symbol": "SocialWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004325C0",
+        "function": "??1StringBox@@QAE@XZ",
+        "function_address": "0x004325C0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:135",
+        "symbol": "StringBoxDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004042B0",
+        "function": "sub_4042b0",
+        "function_address": "0x004042B0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:137",
+        "symbol": "Sub004042B0Target",
+        "type": "func_deleting_forward_nullary *"
+      },
+      {
+        "address": "0x004C86D0",
+        "function": "sub_4c86d0",
+        "function_address": "0x004C86D0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:139",
+        "symbol": "Sub004C86D0Target",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x00612710",
+        "function": "sub_612710",
+        "function_address": "0x00612710",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:141",
+        "symbol": "Sub00612710Target",
+        "type": "func_deleting_forward *"
+      },
+      {
+        "address": "0x00633010",
+        "function": "sub_633010",
+        "function_address": "0x00633010",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:143",
+        "symbol": "Sub00633010Target",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x006336D0",
+        "function": "sub_6336d0",
+        "function_address": "0x006336D0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:145",
+        "symbol": "Sub006336D0Target",
+        "type": "func_deleting_forward *"
+      },
+      {
+        "address": "0x004BE7D0",
+        "function": "??1TutWin@@QAE@XZ",
+        "function_address": "0x004BE7D0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:147",
+        "symbol": "TutWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004C8A50",
+        "function": "??1VoiceRx@@QAE@XZ",
+        "function_address": "0x004C8A50",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:149",
+        "symbol": "VoiceRxDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004C8DB0",
+        "function": "??1VoiceTx@@QAE@XZ",
+        "function_address": "0x004C8DB0",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:151",
+        "symbol": "VoiceTxDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
+        "address": "0x004C4A70",
+        "function": "??1WorldWin@@QAE@XZ",
+        "function_address": "0x004C4A70",
+        "kind": "function",
+        "location": "src/deleting_thunks.cpp:153",
+        "symbol": "WorldWinDtorTarget",
+        "type": "func_deleting_dtor *"
+      },
+      {
         "address": "0x00608F50",
         "function": "?close@Dialog@@QAEXXZ",
         "function_address": "0x00608F50",
@@ -8448,7 +8889,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 237,
-    "total": 791
+    "matched_function_starts": 286,
+    "total": 840
   }
 }

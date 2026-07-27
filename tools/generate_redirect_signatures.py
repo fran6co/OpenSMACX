@@ -66,6 +66,31 @@ def load_redirects(path):
     return rows
 
 
+def function_extents():
+    """{address: bytes from the entry that still belong to that function}.
+
+    An extension may only anchor inside the body it identifies. Beyond the
+    body the bytes belong to whatever the linker put next, and the hybrid
+    image does not keep those stable: the import thunks the hybrid build adds
+    overwrite whole functions. 0x006256F0 is the case that proved it - an
+    11-byte thunk whose extension anchored at +11 read one byte of the
+    function at 0x00625700, which reads `68 20` in both the canonical and the
+    PRACX executables and `ff 25` in the assembled hybrid. Both cross-checks
+    here passed and every redirect still failed its preflight at run time."""
+    extents = {}
+    path = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+    with path.open(newline="", encoding="utf-8") as file:
+        for row in csv.DictReader(file):
+            try:
+                start = int(row["address"], 16)
+                end = int(row["end_address"], 16)
+            except (KeyError, TypeError, ValueError):
+                continue
+            if end > start:
+                extents[start] = end - start
+    return extents
+
+
 def derive_extensions(disassembler, canonical, collisions):
     """Derive instruction-aligned 6-byte extensions for colliding addresses.
 
@@ -77,6 +102,7 @@ def derive_extensions(disassembler, canonical, collisions):
     """
     extensions = []
     identical = []
+    extents = function_extents()
     for signature, addresses in sorted(collisions.items()):
         window_size = SIGNATURE_SIZE + EXTENSION_SEARCH_LIMIT
         bodies = {
@@ -94,10 +120,13 @@ def derive_extensions(disassembler, canonical, collisions):
             if not remaining:
                 identical.append(address)
                 continue
+            # The anchor has to stay inside this function, not merely inside
+            # the search window - see function_extents().
+            limit = min(window_size, extents.get(address, window_size))
             anchors = [
                 instruction.address
                 for instruction in disassembler.disasm(body, 0)
-                if instruction.address + EXTENSION_SIZE <= window_size
+                if instruction.address + EXTENSION_SIZE <= limit
             ]
             # Greedily emit windows until every distinguishable collider is
             # excluded; an address may need more than one window when its
@@ -117,14 +146,20 @@ def derive_extensions(disassembler, canonical, collisions):
                         if other not in distinguished
                     ]
             if remaining:
-                raise RuntimeError(
-                    f"no instruction-aligned windows distinguish "
-                    f"0x{address:08X} from its collision group")
+                # Indistinguishable within its own body. That is the same
+                # position as a wholly byte-identical collider, and it is
+                # reported the same way: the runtime check stays equivalent
+                # for either body rather than asserting bytes this image does
+                # not own.
+                identical.append(address)
     if identical:
+        listed = sorted(identical)
+        shown = ", ".join(f"0x{address:08X}" for address in listed[:8])
+        if len(listed) > 8:
+            shown += f", ... (+{len(listed) - 8} more)"
         print(
-            "generate-redirect-signatures: byte-identical collision bodies "
-            "left without extensions: "
-            + ", ".join(f"0x{address:08X}" for address in sorted(identical)))
+            f"generate-redirect-signatures: {len(listed)} colliding bodies "
+            f"left without extensions: {shown}")
     return extensions
 
 

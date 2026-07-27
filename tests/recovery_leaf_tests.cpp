@@ -36,6 +36,7 @@
 #include "../src/atexit_thunks.h"
 #include "../src/init_thunks.h"
 #include "../src/adjustor_thunks.h"
+#include "../src/deleting_thunks.h"
 #include "../src/fx.h"
 #include "../src/battlewin.h"
 #include "../src/councwin.h"
@@ -24016,6 +24017,284 @@ const AdjustorCase_v_pi g_adjustor_cases_v_pi[] = {
 
 }  // namespace
 
+namespace {
+
+// The receiver sits inside a poisoned arena with room ahead of
+// it for the largest adjustment the family uses and for the
+// vtordisp the two-instruction form reads. Every four-byte
+// window holds a distinct value, so a body that reads its
+// vtordisp from the wrong place cannot happen to read an equal
+// one. Adjusted receivers are only ever compared, never
+// dereferenced, so they may land anywhere.
+constexpr size_t DeletingArenaLead = 24576;
+constexpr size_t DeletingArenaTail = 256;
+uint8_t g_deleting_arena[DeletingArenaLead + DeletingArenaTail];
+uint8_t *deleting_receiver() {
+    for (size_t index = 0; index < sizeof(g_deleting_arena); ++index) {
+        g_deleting_arena[index] = static_cast<uint8_t>(index * 7u + 1u);
+    }
+    return g_deleting_arena + DeletingArenaLead;
+}
+
+void *g_deleting_dtor_seen;
+int g_deleting_dtor_calls;
+void *g_deleting_free_seen;
+int g_deleting_free_calls;
+void *g_deleting_forward_seen;
+unsigned int g_deleting_forward_arg;
+int g_deleting_forward_calls;
+
+void __cdecl observe_deleting_free(void *block) {
+    g_deleting_free_seen = block;
+    ++g_deleting_free_calls;
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+void __thiscall observe_deleting_dtor(void *self) {
+    g_deleting_dtor_seen = self;
+    ++g_deleting_dtor_calls;
+}
+void *__thiscall observe_deleting_forward(void *self,
+                                          unsigned int arg0) {
+    g_deleting_forward_seen = self;
+    g_deleting_forward_arg = arg0;
+    ++g_deleting_forward_calls;
+    return &g_deleting_forward_calls;
+}
+void *__thiscall observe_deleting_forward_nullary(void *self) {
+    g_deleting_forward_seen = self;
+    ++g_deleting_forward_calls;
+    return &g_deleting_forward_calls;
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+typedef void *(__fastcall *DeletingBody)(void *, void *,
+                                         unsigned int);
+typedef void *(__fastcall *DeletingBodyNullary)(void *,
+                                                void *);
+
+struct DeletingCase {
+    DeletingBody body;
+    func_deleting_dtor **slot;
+};
+const DeletingCase g_deleting_cases[] = {
+    {&scalar_delete_alpha_movie, &AlphaMovieDtorTarget},
+    {&scalar_delete_base_pop, &BasePopDtorTarget},
+    {&scalar_delete_popup, &PopupDtorTarget},
+    {&scalar_delete_edit_box, &EditBoxDtorTarget},
+    {&scalar_delete_alpha_save, &AlphaSaveDtorTarget},
+    {&scalar_delete_prod_picker, &ProdPickerDtorTarget},
+    {&scalar_delete_base_win, &BaseWinDtorTarget},
+    {&scalar_delete_pop_menu, &PopMenuDtorTarget},
+    {&scalar_delete_counc_win, &CouncWinDtorTarget},
+    {&scalar_delete_credits, &CreditsDtorTarget},
+    {&scalar_delete_string_box, &StringBoxDtorTarget},
+    {&scalar_delete_datalink, &DatalinkDtorTarget},
+    {&scalar_delete_design_win, &DesignWinDtorTarget},
+    {&scalar_delete_select_part_win, &SelectPartWinDtorTarget},
+    {&scalar_delete_diplo_pop, &DiploPopDtorTarget},
+    {&scalar_delete_diplo_win, &DiploWinDtorTarget},
+    {&scalar_delete_fame_win, &FameWinDtorTarget},
+    {&scalar_delete_gamma, &GammaDtorTarget},
+    {&scalar_delete_main_interface, &MainInterfaceDtorTarget},
+    {&scalar_delete_interlude, &InterludeDtorTarget},
+    {&scalar_delete_monu_win, &MonuWinDtorTarget},
+    {&scalar_delete_multi_win, &MultiWinDtorTarget},
+    {&scalar_delete_net_msg, &NetMsgDtorTarget},
+    {&scalar_delete_net_win, &NetWinDtorTarget},
+    {&scalar_delete_new_tech_win, &NewTechWinDtorTarget},
+    {&scalar_delete_pick_tech, &PickTechDtorTarget},
+    {&scalar_delete_pick_win, &PickWinDtorTarget},
+    {&scalar_delete_pref_win, &PrefWinDtorTarget},
+    {&scalar_delete_quayle_win, &QuayleWinDtorTarget},
+    {&scalar_delete_report_win, &ReportWinDtorTarget},
+    {&scalar_delete_setup_win, &SetupWinDtorTarget},
+    {&scalar_delete_check_button, &CheckButtonDtorTarget},
+    {&scalar_delete_social_win, &SocialWinDtorTarget},
+    {&scalar_delete_tut_win, &TutWinDtorTarget},
+    {&scalar_delete_world_win, &WorldWinDtorTarget},
+    {&scalar_delete_video, &Sub004C86D0Target},
+    {&scalar_delete_voice_rx, &VoiceRxDtorTarget},
+    {&scalar_delete_voice_tx, &VoiceTxDtorTarget},
+    {&scalar_delete_dip_edit, &DipEditDtorTarget},
+    {&scalar_delete_alpha_menu, &AlphaMenuDtorTarget},
+    {&scalar_delete_replay_win, &ReplayWinDtorTarget},
+    {&scalar_delete_multi_debug, &MultiDebugDtorTarget},
+    {&scalar_delete_menu, &MenuDtorTarget},
+    {&scalar_delete_image_button, &ImageButtonDtorTarget},
+    {&scalar_delete_push_button, &PushButtonDtorTarget},
+    {&scalar_delete_sub_633160, &Sub00633010Target},
+};
+
+// The fixup is observed through the destructor its target
+// runs: with bit 0 set, the recorder and the free both see
+// the adjusted receiver the fixup computed.
+struct DeletingAdjustCase {
+    DeletingBody body;
+    func_deleting_dtor **slot;
+    int adjust;
+    int vtordisp;
+};
+const DeletingAdjustCase g_deleting_adjust_cases[] = {
+    {&adjust_this_alpha_movie, &AlphaMovieDtorTarget, 0x444, 0},
+    {&adjust_this_base_pop, &BasePopDtorTarget, 0x444, 0},
+    {&adjust_this_popup, &PopupDtorTarget, 0x444, 0},
+    {&adjust_this_alpha_save, &AlphaSaveDtorTarget, 0x444, 0},
+    {&adjust_this_edit_box, &EditBoxDtorTarget, 0x444, 0},
+    {&adjust_this_base_win, &BaseWinDtorTarget, 0x444, 0},
+    {&adjust_this_prod_picker, &ProdPickerDtorTarget, 0x444, 0},
+    {&adjust_this_pop_menu_delete1, &PopMenuDtorTarget, 0x444, 0},
+    {&adjust_this_pop_menu_delete2, &PopMenuDtorTarget, 0x537C, 0},
+    {&adjust_this_pop_menu_delete3, &PopMenuDtorTarget, 0x57C0, 0},
+    {&adjust_this_counc_win, &CouncWinDtorTarget, 0x444, 0},
+    {&adjust_this_credits, &CreditsDtorTarget, 0x444, 0},
+    {&adjust_this_string_box, &StringBoxDtorTarget, 0x444, 0},
+    {&adjust_this_datalink, &DatalinkDtorTarget, 0x444, 0},
+    {&adjust_this_design_win, &DesignWinDtorTarget, 0x444, 0},
+    {&adjust_this_select_part_win, &SelectPartWinDtorTarget, 0x444, 0},
+    {&adjust_this_diplo_pop, &DiploPopDtorTarget, 0x444, 0},
+    {&adjust_this_diplo_win, &DiploWinDtorTarget, 0x444, 0},
+    {&adjust_this_fame_win, &FameWinDtorTarget, 0x444, 0},
+    {&adjust_this_gamma, &GammaDtorTarget, 0x444, 0},
+    {&adjust_this_main_interface, &MainInterfaceDtorTarget, 0x444, 0},
+    {&adjust_this_interlude, &InterludeDtorTarget, 0x444, 0},
+    {&adjust_this_monu_win, &MonuWinDtorTarget, 0x444, 0},
+    {&adjust_this_multi_win, &MultiWinDtorTarget, 0x444, 0},
+    {&adjust_this_net_msg, &NetMsgDtorTarget, 0x444, 0},
+    {&adjust_this_net_win, &NetWinDtorTarget, 0x444, 0},
+    {&adjust_this_new_tech_win, &NewTechWinDtorTarget, 0x444, 0},
+    {&adjust_this_pick_tech, &PickTechDtorTarget, 0x444, 0},
+    {&adjust_this_pick_win, &PickWinDtorTarget, 0x444, 0},
+    {&adjust_this_pref_win, &PrefWinDtorTarget, 0x444, 0},
+    {&adjust_this_quayle_win, &QuayleWinDtorTarget, 0x444, 0},
+    {&adjust_this_report_win, &ReportWinDtorTarget, 0x444, 0},
+    {&adjust_this_setup_win, &SetupWinDtorTarget, 0x444, 0},
+    {&adjust_this_check_button, &CheckButtonDtorTarget, 0x444, 0},
+    {&adjust_this_social_win, &SocialWinDtorTarget, 0x444, 0},
+    {&adjust_this_tut_win, &TutWinDtorTarget, 0x444, 0},
+    {&adjust_this_world_win, &WorldWinDtorTarget, 0x444, 0},
+    {&adjust_this_dip_edit, &DipEditDtorTarget, 0x444, 0},
+    {&adjust_this_alpha_menu, &AlphaMenuDtorTarget, 0x444, 0},
+    {&adjust_this_replay_win, &ReplayWinDtorTarget, 0x444, 0},
+    {&adjust_this_multi_debug, &MultiDebugDtorTarget, 0x444, 0},
+    {&adjust_this_menu, &MenuDtorTarget, 0x444, 0},
+    {&adjust_this_image_button, &ImageButtonDtorTarget, 0x444, 0},
+    {&adjust_this_push_button, &PushButtonDtorTarget, 0x444, 0},
+    {&adjust_this_sub_633740, &Sub00633010Target, 0x444, 0},
+};
+
+struct DeletingSeamCase_nullary {
+    DeletingBodyNullary body;
+    func_deleting_forward_nullary **slot;
+    int adjust;
+    int vtordisp;
+};
+const DeletingSeamCase_nullary g_deleting_seam_cases_nullary[] = {
+    {&adjust_this_sub_404420, &Sub004042B0Target, 0x444, 0},
+};
+
+struct DeletingSeamCase {
+    DeletingBody body;
+    func_deleting_forward **slot;
+    int adjust;
+    int vtordisp;
+};
+const DeletingSeamCase g_deleting_seam_cases[] = {
+    {&adjust_this_plan_win, &PlanWinScalarDeleteTarget, 0, 1},
+    {&adjust_this_sub_612700, &Sub00612710Target, 0, 1},
+    {&adjust_this_sub_633730, &Sub006336D0Target, 0x58, 0},
+};
+
+}  // namespace
+
+void test_deleting_thunks() {
+    func_operator_delete *const saved_free = ScrollOperatorDelete;
+    ScrollOperatorDelete = &observe_deleting_free;
+    for (const DeletingCase &entry : g_deleting_cases) {
+        // Every flag value, so a body that freed on any nonzero
+        // word rather than on bit 0 is caught by mode 2.
+        for (unsigned int mode = 0; mode < 4; ++mode) {
+            func_deleting_dtor *const saved = *entry.slot;
+            *entry.slot = &observe_deleting_dtor;
+            void *const object = deleting_receiver();
+            g_deleting_dtor_calls = 0;
+            g_deleting_dtor_seen = nullptr;
+            g_deleting_free_calls = 0;
+            g_deleting_free_seen = nullptr;
+            void *const result = entry.body(object, nullptr, mode);
+            expect(g_deleting_dtor_calls == 1);
+            expect(g_deleting_dtor_seen == object);
+            expect(g_deleting_free_calls == static_cast<int>(mode & 1));
+            expect(g_deleting_free_seen ==
+                   ((mode & 1) ? object : nullptr));
+            expect(result == object);
+            *entry.slot = saved;
+        }
+    }
+    for (const DeletingAdjustCase &entry : g_deleting_adjust_cases) {
+        func_deleting_dtor *const saved = *entry.slot;
+        *entry.slot = &observe_deleting_dtor;
+        uint8_t *const object = deleting_receiver();
+        const int32_t vtordisp = entry.vtordisp
+            ? *reinterpret_cast<const int32_t *>(object - 4) : 0;
+        void *const expected = object - entry.adjust - vtordisp;
+        g_deleting_dtor_calls = 0;
+        g_deleting_dtor_seen = nullptr;
+        g_deleting_free_calls = 0;
+        g_deleting_free_seen = nullptr;
+        void *const result = entry.body(object, nullptr, 1u);
+        expect(g_deleting_dtor_calls == 1);
+        expect(g_deleting_dtor_seen == expected);
+        expect(g_deleting_free_calls == 1);
+        expect(g_deleting_free_seen == expected);
+        expect(result == expected);
+        *entry.slot = saved;
+    }
+    for (const DeletingSeamCase_nullary &entry :
+             g_deleting_seam_cases_nullary) {
+        func_deleting_forward_nullary *const saved = *entry.slot;
+        *entry.slot = &observe_deleting_forward_nullary;
+        uint8_t *const object = deleting_receiver();
+        const int32_t vtordisp = entry.vtordisp
+            ? *reinterpret_cast<const int32_t *>(object - 4)
+            : 0;
+        void *const expected = object - entry.adjust - vtordisp;
+        g_deleting_forward_calls = 0;
+        g_deleting_forward_seen = nullptr;
+        g_deleting_forward_arg = 0;
+        void *const result = entry.body(object, nullptr);
+        expect(g_deleting_forward_calls == 1);
+        expect(g_deleting_forward_seen == expected);
+        expect(result == &g_deleting_forward_calls);
+        *entry.slot = saved;
+    }
+    for (const DeletingSeamCase &entry :
+             g_deleting_seam_cases) {
+        func_deleting_forward *const saved = *entry.slot;
+        *entry.slot = &observe_deleting_forward;
+        uint8_t *const object = deleting_receiver();
+        const int32_t vtordisp = entry.vtordisp
+            ? *reinterpret_cast<const int32_t *>(object - 4)
+            : 0;
+        void *const expected = object - entry.adjust - vtordisp;
+        g_deleting_forward_calls = 0;
+        g_deleting_forward_seen = nullptr;
+        g_deleting_forward_arg = 0;
+        void *const result = entry.body(object, nullptr, 0x2A2Au);
+        expect(g_deleting_forward_calls == 1);
+        expect(g_deleting_forward_seen == expected);
+        expect(result == &g_deleting_forward_calls);
+        expect(g_deleting_forward_arg == 0x2A2Au);
+        *entry.slot = saved;
+    }
+    ScrollOperatorDelete = saved_free;
+}
+
 void test_adjustor_thunks() {
     for (const AdjustorCase_i_i &entry : g_adjustor_cases_i_i) {
         func_adjustor_i_i *const saved = *entry.slot;
@@ -24439,5 +24718,6 @@ int main() {
     test_console_update_data();
     test_init_thunks();
     test_adjustor_thunks();
+    test_deleting_thunks();
     return failures == 0 ? 0 : 1;
 }

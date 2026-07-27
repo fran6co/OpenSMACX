@@ -49,13 +49,10 @@ P3,1,0x00404200,?UNK1@AlphaMovie@@QAEXXZ,8,0,0,unrecovered,,,0,missing,missing,v
 P3,11,0x00404210,?on_key_click@AlphaMovie@@QAEHHH@Z,16,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_click@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)"
 P3,21,0x00404230,?UNK3@AlphaMovie@@QAEHH@Z,10,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK3@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)"
 P3,111,0x00404290,?update@AlphaMovie@@QAEXXZ,8,0,1,unrecovered,,,1,exact,missing,void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
-P3,10,0x004042B0,sub_4042b0,3,0,0,unrecovered,,,1,exact,missing,
+P0,1000010,0x004042B0,sub_4042b0,3,0,0,original_dependency,ui_dependency,recover_owning_class,1,exact,missing,
 P3,1221,0x004042C0,??1MCIVideo@@QAE@XZ,94,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MCIVideo@@QAE@XZ)(MCIVideo* this)
-P3,1421,0x00404310,??1AlphaMovie@@QAE@XZ,176,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??1AlphaMovie@@QAE@XZ)(AlphaMovie* this)
-P3,220,0x004043A0,??_GAlphaMovie@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
+P0,1001421,0x00404310,??1AlphaMovie@@QAE@XZ,176,1,4,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 P3,221,0x004043D0,??1UV2Player@@QAE@XZ,100,0,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??1UV2Player@@QAE@XZ)(UV2Player* this)
-P3,10,0x00404420,sub_404420,11,0,0,unrecovered,,,1,exact,missing,
-P3,0,0x00404430,??3AlphaMovie@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,120,0x00404860,?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z,54,0,1,unrecovered,,,2,exact,exact,
 P1,104221,0x004048A0,??0Popup@@QAE@XZ,105,104,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Popup@@QAE@XZ)(Popup* this)
 P3,721,0x00404920,?show@Popup@@QAEXH@Z,348,0,7,unrecovered,,,2,exact,exact,"void (__thiscall ?show@Popup@@QAEXH@Z)(Popup* this, int)"
@@ -76,27 +73,20 @@ P3,921,0x00405C80,?on_draw_background@Popup@@QAEHXZ,1489,0,9,unrecovered,,,2,exa
 P3,421,0x00406260,?on_listbox_scroll_create@Popup@@QAEHXZ,195,0,4,unrecovered,,,2,exact,exact,int (__thiscall ?on_listbox_scroll_create@Popup@@QAEHXZ)(Popup* this)
 P3,221,0x00406330,?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z,76,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z)(Popup* this, Scroll*)"
 P0,1084421,0x00406380,?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z,332,84,4,original_dependency,ui_dependency,recover_popup_start_full,2,exact,exact,"void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)"
-P1,76121,0x004064D0,??1BasePop@@QAE@XZ,583,75,11,unrecovered,,,2,exact,entry_range,void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
+P0,1076121,0x004064D0,??1BasePop@@QAE@XZ,583,75,11,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
 P3,220,0x00406670,sub_406670,75,0,2,unrecovered,,,2,exact,exact,
 P3,10,0x00406840,sub_406840,6,0,0,unrecovered,,,1,exact,missing,
 P0,1001020,0x00406850,??1Sprite@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_sprite_element_teardown,2,exact,exact,
 P3,11,0x00406860,?hide@BaseButton@@QAEXXZ,25,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)
-P3,221,0x004068E0,??_GFlatButton@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)"
 P3,10,0x00406A80,sub_406a80,5,0,0,unrecovered,,,1,exact,missing,
 P2,9120,0x00406A90,sub_406a90,83,9,1,unrecovered,,,2,exact,exact,
 P2,9320,0x00406AF0,sub_406af0,38,9,3,unrecovered,,,2,exact,exact,
 P3,10,0x00406B20,nullsub_27,3,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00406B30,sub_406b30,3,0,0,unrecovered,,,1,exact,missing,
-P3,220,0x00406B40,??_GBasePop@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
 P3,20,0x00406B70,sub_406b70,44,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x00406BA0,sub_406ba0,44,0,0,unrecovered,,,2,exact,exact,
-P3,220,0x00406BD0,??_GPopup@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P2,7221,0x00406C00,??1Popup@@QAE@XZ,836,6,12,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
+P0,1007221,0x00406C00,??1Popup@@QAE@XZ,836,6,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
 P0,1000411,0x00406F60,??1RadioButton@@QAE@H@Z,130,0,4,original_dependency,ui_dependency,recover_radio_button_dtor,1,missing,exact,"void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)"
-P3,0,0x004070B0,??3BasePop@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x004070C0,??3Scroll@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x004070D0,??3Popup@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x004070E0,??3FlatButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P0,1000411,0x00407100,??_GDialogs@@UAEPAXI@Z,65,0,4,source_complete,ui_dependency,recover_dialogs_scalar_delete,1,missing,exact,"void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
 P3,220,0x004072D0,?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z,120,0,2,unrecovered,,,2,exact,exact,
 P3,3621,0x00407350,??0AlphaSave@@QAE@XZ,304,3,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0AlphaSave@@QAE@XZ)(AlphaSave* this)
@@ -112,15 +102,11 @@ P3,311,0x00407D90,?on_selected@AlphaSave@@QAEXH@Z,235,0,3,unrecovered,,,1,exact,
 P3,421,0x00407E80,?on_listbox_scroll_create@AlphaSave@@QAEHXZ,74,0,4,unrecovered,,,2,exact,exact,int (__thiscall ?on_listbox_scroll_create@AlphaSave@@QAEHXZ)(AlphaSave* this)
 P3,221,0x00407ED0,?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z,35,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z)(AlphaSave* this, Scroll*)"
 P3,2821,0x00407F00,??1FileWin@@QAE@XZ,363,2,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
-P3,2321,0x00408010,??1EditBox@@QAE@XZ,135,2,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1EditBox@@QAE@XZ)(EditBox* this)
-P3,220,0x00408080,??_GEditBox@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
+P0,1002321,0x00408010,??1EditBox@@QAE@XZ,135,2,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1EditBox@@QAE@XZ)(EditBox* this)
 P3,3320,0x004080B0,sub_4080b0,35,3,3,unrecovered,,,2,exact,exact,
 P3,21,0x004080E0,?on_scrolling@AlphaSave@@QAEXHH@Z,44,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolling@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)"
 P3,21,0x00408110,?on_scrolled@AlphaSave@@QAEXHH@Z,44,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolled@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)"
-P3,220,0x00408140,??_GAlphaSave@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,2221,0x00408170,??1AlphaSave@@QAE@XZ,803,1,12,unrecovered,,,2,exact,entry_range,void (__thiscall ??1AlphaSave@@QAE@XZ)(AlphaSave* this)
-P3,0,0x00408390,??3AlphaSave@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x004083A0,??3EditBox@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1002221,0x00408170,??1AlphaSave@@QAE@XZ,803,1,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1AlphaSave@@QAE@XZ)(AlphaSave* this)
 P3,210,0x004083B0,??__Eg_BASEWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004083D0,??__Fg_BASEWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,500,0x00408410,?load_inverts@@YAXXZ,91,0,5,unrecovered,,,0,missing,missing,
@@ -202,20 +188,12 @@ P3,221,0x0041E890,?show@BaseWin@@QAEXH@Z,27,0,2,unrecovered,,,2,exact,exact,"voi
 P3,221,0x0041E8B0,?hide@BaseWin@@QAEXXZ,25,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,4021,0x0041E8D0,?init@BaseWin@@QAEXXZ,8578,1,30,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,121,0x00420A40,?on_nc_hittest@BaseWin@@QAEHHH@Z,47,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_nc_hittest@BaseWin@@QAEHHH@Z)(BaseWin* this, int, int)"
-P3,2721,0x00420A70,??1BaseWin@@QAE@XZ,2201,1,17,unrecovered,,,2,exact,entry_range,void (__thiscall ??1BaseWin@@QAE@XZ)(BaseWin* this)
+P0,1002721,0x00420A70,??1BaseWin@@QAE@XZ,2201,1,17,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1BaseWin@@QAE@XZ)(BaseWin* this)
 P2,6521,0x00420F90,??1MapWin@@QAE@XZ,507,6,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MapWin@@QAE@XZ)(MapWin* this)
-P3,2121,0x00421100,??1ProdPicker@@QAE@XZ,952,1,11,unrecovered,,,2,exact,entry_range,void (__thiscall ??1ProdPicker@@QAE@XZ)(ProdPicker* this)
-P3,220,0x004213A0,??_GProdPicker@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,220,0x004213D0,??_GBaseWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,2521,0x00421400,??1PopMenu@@QAE@XZ,803,1,15,unrecovered,,,2,exact,entry_range,void (__thiscall ??1PopMenu@@QAE@XZ)(PopMenu* this)
-P3,220,0x00421640,??_GPopMenu@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
+P0,1002121,0x00421100,??1ProdPicker@@QAE@XZ,952,1,11,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1ProdPicker@@QAE@XZ)(ProdPicker* this)
+P0,1002521,0x00421400,??1PopMenu@@QAE@XZ,803,1,15,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1PopMenu@@QAE@XZ)(PopMenu* this)
 P3,3020,0x004216F0,sub_4216f0,284,3,0,unrecovered,,,2,exact,exact,
-P3,0,0x00421810,??3BaseWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P0,1000311,0x00421830,??_GMapWin@@UAEPAXI@Z,54,0,3,original_dependency,ui_dependency,recover_map_win_scalar_delete,1,missing,exact,"void* (__thiscall ??_GMapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)"
-P3,0,0x00421970,??3ProdPicker@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x00421980,PopMenu::delete1,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x00421990,PopMenu::delete2,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x004219A0,PopMenu::delete3,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x004219B0,??__Eg_BattleWin@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,1221,0x004219E0,?init@BattleWin@@QAEXXZ,319,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?init@BattleWin@@QAEXXZ)(BattleWin* this)
 P3,1121,0x00421B20,?pulse_timer@BattleWin@@QAEXXZ,23,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?pulse_timer@BattleWin@@QAEXXZ)(BattleWin* this)
@@ -255,10 +233,8 @@ P3,111,0x00427160,?close@CouncWin@@QAEXXZ,94,0,1,unrecovered,,,1,exact,missing,v
 P3,1121,0x004271C0,?arrived@CouncWin@@QAEXH@Z,109,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?arrived@CouncWin@@QAEXH@Z)(CouncWin* this, int)"
 P3,4321,0x00427230,?init@CouncWin@@QAEXHH@Z,4396,1,33,unrecovered,,,2,exact,entry_range,"void (__thiscall ?init@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)"
 P3,3520,0x00428350,?council@@YAXHHH@Z,510,3,5,unrecovered,,,2,exact,exact,
-P3,1421,0x00428550,??1CouncWin@@QAE@XZ,312,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??1CouncWin@@QAE@XZ)(CouncWin* this)
+P0,1001421,0x00428550,??1CouncWin@@QAE@XZ,312,1,4,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1CouncWin@@QAE@XZ)(CouncWin* this)
 P3,1421,0x00428620,??0CouncWin@@QAE@XZ,346,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??0CouncWin@@QAE@XZ)(CouncWin* this)
-P3,221,0x00428710,??_GCouncWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GCouncWin@@UAEPAXI@Z)(CouncWin* this, unsigned int)"
-P3,0,0x00428740,??3CouncWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,1521,0x00428780,??0Credits@@QAE@XZ,250,1,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Credits@@QAE@XZ)(Credits* this)
 P3,211,0x00428830,?unload@Credits@@QAEXXZ,77,0,2,unrecovered,,,1,exact,missing,void (__thiscall ?unload@Credits@@QAEXXZ)(Credits* this)
 P3,2021,0x00428880,?load@Credits@@QAEXXZ,314,1,10,unrecovered,,,2,exact,exact,void (__thiscall ?load@Credits@@QAEXXZ)(Credits* this)
@@ -270,9 +246,7 @@ P3,11,0x00428D70,?on_left_click@Credits@@QAEXHH@Z,11,0,0,unrecovered,,,1,exact,m
 P3,11,0x00428DC0,?timer_callback_daemon@Credits@@QAEXXZ,11,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?timer_callback_daemon@Credits@@QAEXXZ)(Credits* this)
 P3,120,0x00428DD0,?timer_callback_daemon@Credits@@QAAXH@Z,23,0,1,unrecovered,,,2,exact,exact,
 P3,4420,0x00428DF0,?show_credits@@YAXXZ,128,4,4,unrecovered,,,2,exact,entry_range,
-P3,220,0x00428E60,??_GCredits@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,1821,0x00428E90,??1Credits@@QAE@XZ,322,1,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Credits@@QAE@XZ)(Credits* this)
-P3,0,0x00428F80,??3Credits@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001821,0x00428E90,??1Credits@@QAE@XZ,322,1,8,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Credits@@QAE@XZ)(Credits* this)
 P3,210,0x00428F90,??__Eg_DATALINK@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00428FB0,??__Fg_DATALINK@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,1921,0x00428FC0,??0Datalink@@QAE@XZ,737,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Datalink@@QAE@XZ)(Datalink* this)
@@ -332,14 +306,10 @@ P3,121,0x00432010,?on_button_passover@Datalink@@QAEXHH@Z,34,0,1,unrecovered,,,2,
 P3,111,0x00432040,?on_selected@Datalink@@QAEXH@Z,18,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_selected@Datalink@@QAEXH@Z)(Datalink* this, int)"
 P3,521,0x00432060,?on_status@Datalink@@QAEXH@Z,242,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@Datalink@@QAEXH@Z)(Datalink* this, int)"
 P3,321,0x00432210,?on_iface_group_clicked@Datalink@@QAEXHHH@Z,123,0,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_group_clicked@Datalink@@QAEXHHH@Z)(Datalink* this, int, int, int)"
-P3,2321,0x00432290,??1Datalink@@QAE@XZ,1260,1,13,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Datalink@@QAE@XZ)(Datalink* this)
-P3,1621,0x004325C0,??1StringBox@@QAE@XZ,448,1,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??1StringBox@@QAE@XZ)(StringBox* this)
+P0,1002321,0x00432290,??1Datalink@@QAE@XZ,1260,1,13,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Datalink@@QAE@XZ)(Datalink* this)
+P0,1001621,0x004325C0,??1StringBox@@QAE@XZ,448,1,6,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1StringBox@@QAE@XZ)(StringBox* this)
 P3,21,0x00432720,?on_link_clicked@StringBox@@QAEXHPAD@Z,65,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_link_clicked@StringBox@@QAEXHPAD@Z)(StringBox* this, int, int8*)"
-P3,221,0x00432770,??_GStringBox@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GStringBox@@UAEPAXI@Z)(StringBox* this, unsigned int)"
 P3,321,0x004327A0,??1Flic@@QAE@XZ,123,0,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Flic@@QAE@XZ)(Flic* this)
-P3,221,0x00432800,??_GDatalink@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GDatalink@@UAEPAXI@Z)(Datalink* this, unsigned int)"
-P3,0,0x00432830,??3StringBox@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x00432840,??3Datalink@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x00432850,??__Eg_DESIGNWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00432870,??__Fg_DESIGNWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,4521,0x004328B0,??0SelectPartWin@@QAE@XZ,251,4,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??0SelectPartWin@@QAE@XZ)(SelectPartWin* this)
@@ -411,12 +381,8 @@ P2,10021,0x0043DD50,?draw_flash@DesignWin@@QAEXXZ,1875,8,20,unrecovered,,,2,exac
 P3,3721,0x0043E490,?setup_veh@DesignWin@@QAEXHH@Z,1218,3,7,unrecovered,,,2,exact,exact,"void (__thiscall ?setup_veh@DesignWin@@QAEXHH@Z)(DesignWin* this, int protoID, int)"
 P3,2321,0x0043E960,?shut_that_badboy_down@DesignWin@@QAEXXZ,61,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?shut_that_badboy_down@DesignWin@@QAEXXZ)(DesignWin* this)
 P3,5921,0x0043E9A0,?exec@DesignWin@@QAEHHH@Z,802,4,19,unrecovered,,,2,exact,entry_range,"int (__thiscall ?exec@DesignWin@@QAEHHH@Z)(DesignWin* this, int, int)"
-P3,1821,0x0043ECB0,??1DesignWin@@QAE@XZ,403,1,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1DesignWin@@QAE@XZ)(DesignWin* this)
-P3,220,0x0043EDB0,??_GDesignWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,220,0x0043EDE0,??_GSelectPartWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,1921,0x0043EE10,??1SelectPartWin@@QAE@XZ,486,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ??1SelectPartWin@@QAE@XZ)(SelectPartWin* this)
-P3,0,0x0043EFA0,??3DesignWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x0043EFB0,??3SelectPartWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001821,0x0043ECB0,??1DesignWin@@QAE@XZ,403,1,8,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1DesignWin@@QAE@XZ)(DesignWin* this)
+P0,1001921,0x0043EE10,??1SelectPartWin@@QAE@XZ,486,1,9,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1SelectPartWin@@QAE@XZ)(SelectPartWin* this)
 P3,210,0x0043EFC0,??__Eg_DIPLOPOP@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x0043EFE0,??__Fg_DIPLOPOP@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,1521,0x0043EFF0,??0DiploPop@@QAE@XZ,366,1,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??0DiploPop@@QAE@XZ)(DiploPop* this)
@@ -440,9 +406,7 @@ P3,621,0x00440550,?on_iface_button_clicked@DiploPop@@QAEXH@Z,180,0,6,unrecovered
 P3,521,0x00440620,?on_iface_group_clicked@DiploPop@@QAEXHHH@Z,171,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z)(DiploPop* this, int, int, int)"
 P3,121,0x004406D0,?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z,28,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z)(DiploPop* this, int, int (__cdecl *)(), Win*)"
 P3,2821,0x00440700,?init@DiploPop@@QAEXXZ,1654,1,18,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@DiploPop@@QAEXXZ)(DiploPop* this)
-P3,1921,0x00440D50,??1DiploPop@@QAE@XZ,553,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ??1DiploPop@@QAE@XZ)(DiploPop* this)
-P3,221,0x00440EC0,??_GDiploPop@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GDiploPop@@UAEPAXI@Z)(DiploPop* this, unsigned int)"
-P3,0,0x00440EF0,??3DiploPop@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001921,0x00440D50,??1DiploPop@@QAE@XZ,553,1,9,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1DiploPop@@QAE@XZ)(DiploPop* this)
 P3,210,0x00440F00,??__Eg_DIPLOWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00440F20,??__Fg_DIPLOWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,210,0x00440F30,sub_440f30,36,0,2,unrecovered,,,1,exact,missing,
@@ -475,11 +439,9 @@ P3,721,0x00443C70,?on_status@DiploWin@@QAEXH@Z,263,0,7,unrecovered,,,2,exact,exa
 P3,421,0x00443E50,?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z,188,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(DiploWin* this, GraphicWin*, int, int, RECT*)"
 P3,3421,0x00443F10,?exec@DiploWin@@QAEXHH@Z,3707,1,24,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)"
 P3,4120,0x00444D90,?diplo@@YAXHH@Z,23,4,1,unrecovered,,,2,exact,exact,
-P3,2221,0x00444DB0,??1DiploWin@@QAE@XZ,722,1,12,unrecovered,,,2,exact,entry_range,void (__thiscall ??1DiploWin@@QAE@XZ)(DiploWin* this)
+P0,1002221,0x00444DB0,??1DiploWin@@QAE@XZ,722,1,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1DiploWin@@QAE@XZ)(DiploWin* this)
 P3,1721,0x00444FC0,??0DiploWin@@QAE@XZ,274,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??0DiploWin@@QAE@XZ)(DiploWin* this)
-P3,221,0x00445080,??_GDiploWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GDiploWin@@UAEPAXI@Z)(DiploWin* this, unsigned int)"
 P3,20,0x004450B0,sub_4450b0,108,0,0,unrecovered,,,2,exact,exact,
-P3,0,0x00445120,??3DiploWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P2,9520,0x00445130,?energy_compute@@YAXHH@Z,771,9,5,unrecovered,,,2,exact,exact,
 P3,3021,0x00445440,?energy_limit@@YAHH@Z,6,3,0,unrecovered,,,2,exact,exact,int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
 P3,210,0x00445590,??__Eg_FX@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
@@ -551,9 +513,7 @@ P3,10,0x00448310,sub_448310,4,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00448320,sub_448320,4,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00448330,sub_448330,4,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00448340,sub_448340,15,0,0,unrecovered,,,1,exact,missing,
-P3,221,0x00448350,??_GEffect@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)"
 P3,10,0x00448380,sub_448380,10,0,0,unrecovered,,,1,exact,missing,
-P3,220,0x00448390,sub_448390,33,0,2,unrecovered,,,2,exact,exact,
 P3,210,0x004483D0,??__Eg_FAMEWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004483F0,??__Fg_FAMEWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,2421,0x00448400,?init@FameWin@@QAEHXZ,2421,1,14,unrecovered,,,2,exact,entry_range,int (__thiscall ?init@FameWin@@QAEHXZ)(FameWin* this)
@@ -570,10 +530,8 @@ P3,1020,0x0044AF70,sub_44af70,29,1,0,unrecovered,,,2,exact,exact,
 P3,210,0x0044AF90,sub_44af90,98,0,2,unrecovered,,,1,missing,exact,
 P3,300,0x0044B000,?hof_save@@YAHXZ,108,0,3,unrecovered,,,0,missing,missing,
 P3,300,0x0044B070,?hof_load@@YAHXZ,136,0,3,unrecovered,,,0,missing,missing,
-P3,1721,0x0044B100,??1FameWin@@QAE@XZ,405,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??1FameWin@@QAE@XZ)(FameWin* this)
+P0,1001721,0x0044B100,??1FameWin@@QAE@XZ,405,1,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1FameWin@@QAE@XZ)(FameWin* this)
 P3,1721,0x0044B200,??0FameWin@@QAE@XZ,385,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??0FameWin@@QAE@XZ)(FameWin* this)
-P3,220,0x0044B300,??_GFameWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,0,0x0044B330,??3FameWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,10,0x0044B340,sub_44b340,59,0,0,unrecovered,,,1,missing,exact,
 P3,1720,0x0044B380,?tech_heck@@YAXP6AXPAD@ZH@Z,1628,1,7,unrecovered,,,2,exact,exact,
 P3,3620,0x0044B9E0,?help_tech_info@@YAXP6AXPAD@ZHHH@Z,3561,3,6,unrecovered,,,2,exact,exact,
@@ -638,9 +596,7 @@ P3,1420,0x00455EB0,?load_sprites@@YAXXZ,94,1,4,unrecovered,,,2,exact,exact,
 P3,321,0x00455F10,??0FactionArt@@QAE@XZ,412,0,3,unrecovered,,,2,exact,entry_range,FactionArt* (__thiscall ??0FactionArt@@QAE@XZ)(FactionArt* this)
 P0,1000221,0x00456010,??1FactionArt@@QAE@XZ,397,0,2,original_dependency,ui_dependency,recover_faction_art_teardown,2,exact,entry_range,void (__thiscall ??1FactionArt@@QAE@XZ)(faction_art* this)
 P0,1000021,0x00456100,??1CaviarData@@QAE@XZ,5,0,0,original_dependency,ui_dependency,recover_caviar_element_teardown,2,exact,exact,void (__thiscall ??1CaviarData@@QAE@XZ)(CaviarData* this)
-P3,2021,0x00456110,??1Gamma@@QAE@XZ,533,1,10,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Gamma@@QAE@XZ)(Gamma* this)
-P3,221,0x00456280,??_GGamma@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GGamma@@UAEPAXI@Z)(Gamma* this, unsigned int)"
-P3,0,0x004562B0,??3Gamma@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1002021,0x00456110,??1Gamma@@QAE@XZ,533,1,10,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Gamma@@QAE@XZ)(Gamma* this)
 P3,210,0x004562C0,??__Eg_INFOWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004562E0,??__Fg_INFOWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,6121,0x00456300,?setup_text@InfoWin@@QAEXXZ,8333,4,21,unrecovered,,,2,exact,exact,void (__thiscall ?setup_text@InfoWin@@QAEXXZ)(InfoWin* this)
@@ -709,19 +665,15 @@ P2,14720,0x0045D440,?slide_show@@YAXPAUGraphicWin@@H@Z,1350,13,17,unrecovered,,,
 P2,15020,0x0045D970,?slide_hide@@YAXPAUGraphicWin@@H@Z,1371,13,20,unrecovered,,,2,exact,entry_range,
 P2,9720,0x0045DEA0,?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z,1728,8,17,unrecovered,,,2,exact,entry_range,
 P2,12520,0x0045E540,?scroll_hide@@YAXPAUGraphicWin@@PAUScroll@@@Z,1605,11,15,unrecovered,,,2,exact,entry_range,
-P3,2421,0x0045EB80,??1MainInterface@@QAE@XZ,1529,1,14,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MainInterface@@QAE@XZ)(MainInterface* this)
+P0,1002421,0x0045EB80,??1MainInterface@@QAE@XZ,1529,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1MainInterface@@QAE@XZ)(MainInterface* this)
 P3,1921,0x0045EF10,??0MainInterface@@QAE@XZ,1185,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ??0MainInterface@@QAE@XZ)(MainInterface* this)
-P3,220,0x0045F1C0,??_GMainInterface@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,0,0x0045F1F0,??3MainInterface@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,1221,0x0045F200,??0Interlude@@QAE@XZ,255,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Interlude@@QAE@XZ)(Interlude* this)
 P3,2421,0x0045F2E0,?exec@Interlude@@QAEXPAD@Z,736,1,14,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@Interlude@@QAEXPAD@Z)(Interlude* this, int8*)"
 P3,221,0x0045F5C0,?on_redraw@Interlude@@QAEHXZ,126,0,2,unrecovered,,,2,exact,exact,int (__thiscall ?on_redraw@Interlude@@QAEHXZ)(Interlude* this)
 P3,1221,0x0045F640,?close@Interlude@@QAEXXZ,165,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@Interlude@@QAEXXZ)(Interlude* this)
 P3,11,0x0045F6F0,?on_key_down@Interlude@@QAEXH@Z,16,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_key_down@Interlude@@QAEXH@Z)(Interlude* this, int)"
 P3,11,0x0045F700,?on_left_down@Interlude@@QAEXHH@Z,11,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@Interlude@@QAEXHH@Z)(Interlude* this, int, int)"
-P3,221,0x0045F710,??_GInterlude@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GInterlude@@UAEPAXI@Z)(Interlude* this, unsigned int)"
-P3,1521,0x0045F740,??1Interlude@@QAE@XZ,510,1,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Interlude@@QAE@XZ)(Interlude* this)
-P3,0,0x0045F910,??3Interlude@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001521,0x0045F740,??1Interlude@@QAE@XZ,510,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Interlude@@QAE@XZ)(Interlude* this)
 P3,2121,0x0045F950,_WinMain@16,459,1,11,unrecovered,,,2,exact,exact,"int (__stdcall _WinMain@16)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)"
 P3,2121,0x0045FB20,?menu_init@MainMenu@@QAEHXZ,4784,1,11,unrecovered,,,2,exact,exact,int (__thiscall ?menu_init@MainMenu@@QAEHXZ)(MainMenu* this)
 P2,16721,0x00460DD0,?check@MainMenu@@QAEXH@Z,4782,15,17,unrecovered,,,2,exact,exact,"void (__thiscall ?check@MainMenu@@QAEXH@Z)(MainMenu* this, int vehID)"
@@ -848,10 +800,8 @@ P3,1220,0x00477840,?mon_built_preserve@@YAXH@Z,254,1,2,unrecovered,,,2,exact,exa
 P3,1220,0x00477940,?mon_winning_unify@@YAXHH@Z,135,1,2,unrecovered,,,2,exact,exact,
 P3,1220,0x004779D0,?mon_winning_trans@@YAXHH@Z,135,1,2,unrecovered,,,2,exact,exact,
 P3,1220,0x00477A60,?mon_killed_faction@@YAXHH@Z,175,1,2,unrecovered,,,2,exact,exact,
-P3,1721,0x00477B10,??1MonuWin@@QAE@XZ,599,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MonuWin@@QAE@XZ)(MonuWin* this)
+P0,1001721,0x00477B10,??1MonuWin@@QAE@XZ,599,1,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1MonuWin@@QAE@XZ)(MonuWin* this)
 P3,1721,0x00477C80,??0MonuWin@@QAE@XZ,549,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??0MonuWin@@QAE@XZ)(MonuWin* this)
-P3,221,0x00477DD0,??_GMonuWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GMonuWin@@UAEPAXI@Z)(MonuWin* this, unsigned int)"
-P3,0,0x00477E00,??3MonuWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x00477E10,??__Eg_MULTIWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00477E30,??__Fg_MULTIWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,221,0x00477E70,?on_mouse_move@MultiWin@@QAEXHH@Z,107,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@MultiWin@@QAEXHH@Z)(MultiWin* this, int xCoord, int yCoord)"
@@ -868,12 +818,10 @@ P3,1,0x00479900,?UNK2@MultiWin@@QAEXXZ,100,0,0,unrecovered,,,0,missing,missing,v
 P3,5321,0x00479970,?show@MultiWin@@QAEXXZ,662,4,13,unrecovered,,,2,exact,entry_range,void (__thiscall ?show@MultiWin@@QAEXXZ)(MultiWin* this)
 P2,8721,0x00479C00,?hide@MultiWin@@QAEXXZ,931,7,17,unrecovered,,,2,exact,entry_range,void (__thiscall ?hide@MultiWin@@QAEXXZ)(MultiWin* this)
 P3,2521,0x00479F90,?init@MultiWin@@QAEXXZ,1198,1,15,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@MultiWin@@QAEXXZ)(MultiWin* this)
-P3,1821,0x0047A430,??1MultiWin@@QAE@XZ,568,1,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MultiWin@@QAE@XZ)(MultiWin* this)
+P0,1001821,0x0047A430,??1MultiWin@@QAE@XZ,568,1,8,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1MultiWin@@QAE@XZ)(MultiWin* this)
 P3,1821,0x0047A590,??0MultiWin@@QAE@XZ,503,1,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??0MultiWin@@QAE@XZ)(MultiWin* this)
-P3,221,0x0047A6C0,??_GMultiWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GMultiWin@@UAEPAXI@Z)(MultiWin* this, unsigned int)"
 P3,1121,0x0047A6F0,?UNK3@MultiWin@@QAEHHHPAURECT@@@Z,46,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z)(MultiWin* this, int, int, RECT*)"
 P3,1221,0x0047A720,?UNK4@MultiWin@@QAEHPADPAURECT@@@Z,50,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z)(MultiWin* this, LPSTR lpString, RECT*)"
-P3,0,0x0047A760,??3MultiWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x0047A770,??__Eg_NETMSG1@@YAXXZ,31,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x0047A790,??__Fg_NETMSG1@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,210,0x0047A7A0,??__Eg_NETMSG2@@YAXXZ,28,0,2,unrecovered,,,1,exact,missing,
@@ -882,9 +830,7 @@ P3,220,0x0047A800,?timer_daemon@NetMsg@@QAAXH@Z,95,0,2,unrecovered,,,2,exact,exa
 P3,221,0x0047A860,?on_button_clicked@NetMsg@@QAEXH@Z,45,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@NetMsg@@QAEXH@Z)(NetMsg* this, int)"
 P1,110921,0x0047A890,?pop@NetMsg@@QAEXPBDHHPBD@Z,1359,108,29,unrecovered,,,2,exact,entry_range,"void (__thiscall ?pop@NetMsg@@QAEXPBDHHPBD@Z)(NetMsg* this, int8*, int, int, int8*)"
 P3,2221,0x0047ACF0,??0NetMsg@@QAE@HHH@Z,144,2,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0NetMsg@@QAE@HHH@Z)(NetMsg* this, int, int, int)"
-P3,221,0x0047AD70,??_GNetMsg@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GNetMsg@@UAEPAXI@Z)(NetMsg* this, unsigned int)"
-P3,2521,0x0047ADA0,??1NetMsg@@QAE@XZ,801,1,15,unrecovered,,,2,exact,entry_range,void (__thiscall ??1NetMsg@@QAE@XZ)(NetMsg* this)
-P3,0,0x0047AFE0,??3NetMsg@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1002521,0x0047ADA0,??1NetMsg@@QAE@XZ,801,1,15,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1NetMsg@@QAE@XZ)(NetMsg* this)
 P3,210,0x0047AFF0,??__Eg_NETWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x0047B010,??__Fg_NETWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,2420,0x0047B020,?send_faction_data@@YAXH@Z,193,2,4,unrecovered,,,2,exact,exact,
@@ -927,11 +873,9 @@ P3,110,0x00483240,?modal_callback_daemon@NetWin@@QAAHXZ,143,0,1,unrecovered,,,1,
 P3,220,0x004832D0,?string_callback@NetWin@@QAAXHH@Z,50,0,2,unrecovered,,,2,exact,exact,
 P3,821,0x00483310,?on_key_down@NetWin@@QAEHH@Z,260,0,8,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_down@NetWin@@QAEHH@Z)(NetWin* this, int)"
 P3,1321,0x00483420,?new_chat@NetWin@@QAEXPADH@Z,165,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?new_chat@NetWin@@QAEXPADH@Z)(NetWin* this, int8*, int)"
-P3,2421,0x004834E0,??1NetWin@@QAE@XZ,963,1,14,unrecovered,,,2,exact,entry_range,void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this)
-P3,221,0x004837C0,??_GNetWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)"
+P0,1002421,0x004834E0,??1NetWin@@QAE@XZ,963,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this)
 P3,2321,0x004837F0,?UNK4@NetWin@@QAEXXZ,35,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this)
 P3,11,0x00483820,?UNK5@NetWin@@QAEXXZ,28,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
-P3,0,0x00483840,??3NetWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00483870,??__Fg_NEWTECHWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,110,0x004838B0,??__Fg_NEWTECHWIN_SPRITES@@YAXXZ,40,0,1,unrecovered,,,1,exact,missing,
@@ -941,10 +885,8 @@ P3,1521,0x00483950,?on_redraw@NewTechWin@@QAEXXZ,1327,0,15,unrecovered,,,2,exact
 P3,11,0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,11,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_button_clicked@NewTechWin@@QAEXH@Z)(NewTechWin* this, int)"
 P3,521,0x00483EB0,?on_group_clicked@NewTechWin@@QAEXHH@Z,220,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_group_clicked@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)"
 P3,3721,0x00483F90,?exec@NewTechWin@@QAEXHH@Z,2175,1,27,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)"
-P3,1821,0x00484810,??1NewTechWin@@QAE@XZ,630,1,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1NewTechWin@@QAE@XZ)(NewTechWin* this)
+P0,1001821,0x00484810,??1NewTechWin@@QAE@XZ,630,1,8,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1NewTechWin@@QAE@XZ)(NewTechWin* this)
 P3,1521,0x004849D0,??0NewTechWin@@QAE@XZ,254,1,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??0NewTechWin@@QAE@XZ)(NewTechWin* this)
-P3,221,0x00484A80,??_GNewTechWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)"
-P3,0,0x00484AB0,??3NewTechWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,1221,0x00484AC0,??0PickTech@@QAE@XZ,216,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0PickTech@@QAE@XZ)(PickTech* this)
 P3,1021,0x00484B60,?close@PickTech@@QAEXXZ,31,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this)
 P3,1321,0x00484B80,?UNK1@PickTech@@QAEXPAD@Z,221,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK1@PickTech@@QAEXPAD@Z)(PickTech* this, int8*)"
@@ -955,9 +897,7 @@ P3,221,0x00486110,?on_right_click@PickTech@@QAEXHH@Z,90,0,2,unrecovered,,,2,exac
 P3,421,0x00486170,?on_key_click@PickTech@@QAEHHH@Z,573,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@PickTech@@QAEHHH@Z)(PickTech* this, int, int)"
 P3,3321,0x004863F0,?draw_item@PickTech@@QAEHHH@Z,284,3,3,unrecovered,,,2,exact,exact,"int (__thiscall ?draw_item@PickTech@@QAEHHH@Z)(PickTech* this, int, int)"
 P3,5821,0x00486510,?pick@PickTech@@QAEHHHHPAD@Z,9911,1,48,unrecovered,,,2,exact,entry_range,"int (__thiscall ?pick@PickTech@@QAEHHHHPAD@Z)(PickTech* this, int factionID, int, int, int8* sectionID)"
-P3,221,0x00488660,??_GPickTech@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GPickTech@@UAEPAXI@Z)(PickTech* this, unsigned int)"
-P3,1321,0x00488690,??1PickTech@@QAE@XZ,249,1,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1PickTech@@QAE@XZ)(PickTech* this)
-P3,0,0x00488740,??3PickTech@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001321,0x00488690,??1PickTech@@QAE@XZ,249,1,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1PickTech@@QAE@XZ)(PickTech* this)
 P3,210,0x00488750,??__Eg_PICKWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00488770,??__Fg_PICKWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,120,0x00488780,?list_was_dblclicked@@YAXH@Z,29,0,1,unrecovered,,,2,exact,exact,
@@ -968,10 +908,8 @@ P3,5221,0x00489BA0,?on_button_clicked@PickWin@@QAEXH@Z,3644,1,42,unrecovered,,,2
 P3,21,0x0048A7C0,?on_key_click@PickWin@@QAEHHH@Z,77,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@PickWin@@QAEHHH@Z)(PickWin* this, int, int)"
 P3,1021,0x0048A810,?go_girl@PickWin@@QAEHXZ,44,1,0,unrecovered,,,2,exact,exact,int (__thiscall ?go_girl@PickWin@@QAEHXZ)(PickWin* this)
 P3,321,0x0048A840,?on_dialog_item_back_draw@PickWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z,147,0,3,unrecovered,,,2,exact,exact,"int (__thiscall ?on_dialog_item_back_draw@PickWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(PickWin* this, GraphicWin*, int, int, RECT*)"
-P3,2221,0x0048A8E0,??1PickWin@@QAE@XZ,1256,1,12,unrecovered,,,2,exact,entry_range,void (__thiscall ??1PickWin@@QAE@XZ)(PickWin* this)
+P0,1002221,0x0048A8E0,??1PickWin@@QAE@XZ,1256,1,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1PickWin@@QAE@XZ)(PickWin* this)
 P3,1821,0x0048AC10,??0PickWin@@QAE@XZ,731,1,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??0PickWin@@QAE@XZ)(PickWin* this)
-P3,221,0x0048ADC0,??_GPickWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GPickWin@@UAEPAXI@Z)(PickWin* this, unsigned int)"
-P3,0,0x0048ADF0,??3PickWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x0048AE00,??__Eg_PLANWIN@@YAXXZ,24,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x0048AE20,??__Fg_PLANWIN@@YAXXZ,20,0,1,unrecovered,,,1,exact,missing,
 P3,1021,0x0048AE40,?add_line@PlanWin@@QAEXHHHHH@Z,80,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?add_line@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int, int, int, int, int)"
@@ -986,7 +924,6 @@ P3,211,0x0048BB80,?draw_line@PlanWin@@QAEXHHHHH@Z,148,0,2,unrecovered,,,1,missin
 P3,3321,0x0048BC60,?init@PlanWin@@QAEXPAD@Z,101,3,3,unrecovered,,,2,exact,exact,"void (__thiscall ?init@PlanWin@@QAEXPAD@Z)(PlanWin* this, int8*)"
 P3,1321,0x0048BCD0,??0PlanWin@@QAE@H@Z,227,1,3,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)"
 P3,2521,0x0048BD80,??1PlanWin@@QAE@XZ,548,2,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
-P3,0,0x0048BF10,??3PlanWin@@SAXPAXI@Z,8,0,0,unrecovered,,,0,missing,missing,
 P0,1000311,0x0048BF20,??_GPlanWin@@UAEPAXI@Z,54,0,3,original_dependency,ui_dependency,recover_plan_win_scalar_delete,1,missing,exact,"void* (__thiscall ??_GPlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)"
 P2,5321,0x0048C060,?parse_it@@YAXPADPBD@Z,57,5,3,unrecovered,,,2,exact,exact,"void (__cdecl ?parse_it@@YAXPADPBD@Z)(int8* srcFileID, int8* sectionID)"
 P0,1067620,0x0048C0A0,?popp@@YAHPADPBDHPBDP6AHXZ@Z,726,66,16,original_dependency,game_service,recover_script_popup,2,exact,entry_range,
@@ -1042,10 +979,8 @@ P3,111,0x00491860,?redraw_volume@PrefWin@@QAEXXZ,90,0,1,unrecovered,,,1,missing,
 P3,4221,0x004918C0,?change_volume_button_text@PrefWin@@QAEXH@Z,285,4,2,unrecovered,,,2,exact,exact,"void (__thiscall ?change_volume_button_text@PrefWin@@QAEXH@Z)(PrefWin* this, int)"
 P3,1621,0x004919F0,?change_volume_button_state@PrefWin@@QAEXH@Z,505,1,6,unrecovered,,,2,exact,exact,"void (__thiscall ?change_volume_button_state@PrefWin@@QAEXH@Z)(PrefWin* this, int)"
 P3,321,0x00491C00,?on_redraw@PrefWin@@QAEXXZ,494,0,3,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@PrefWin@@QAEXXZ)(PrefWin* this)
-P3,1921,0x00491DF0,??1PrefWin@@QAE@XZ,1619,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ??1PrefWin@@QAE@XZ)(PrefWin* this)
+P0,1001921,0x00491DF0,??1PrefWin@@QAE@XZ,1619,1,9,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1PrefWin@@QAE@XZ)(PrefWin* this)
 P3,1421,0x004921E0,??0PrefWin@@QAE@XZ,902,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??0PrefWin@@QAE@XZ)(PrefWin* this)
-P3,221,0x004923E0,??_GPrefWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GPrefWin@@UAEPAXI@Z)(PrefWin* this, unsigned int)"
-P3,0,0x00492410,??3PrefWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,1721,0x00492420,??0ProdPicker@@QAE@XZ,806,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??0ProdPicker@@QAE@XZ)(ProdPicker* this)
 P3,421,0x004926C0,?show@ProdPicker@@QAEXH@Z,117,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?show@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)"
 P3,421,0x00492740,?hide@ProdPicker@@QAEXXZ,113,0,4,unrecovered,,,2,exact,exact,void (__thiscall ?hide@ProdPicker@@QAEXXZ)(ProdPicker* this)
@@ -1076,10 +1011,8 @@ P3,221,0x00496560,?on_button_clicked@QuayleWin@@QAEXH@Z,81,0,2,unrecovered,,,2,e
 P3,221,0x004965C0,?on_key_click@QuayleWin@@QAEHHH@Z,76,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@QuayleWin@@QAEHHH@Z)(QuayleWin* this, int, int)"
 P3,110,0x00496610,sub_496610,88,0,1,unrecovered,,,1,missing,exact,
 P3,2221,0x00496670,?quayle@@YAXH@Z,159,2,2,unrecovered,,,2,exact,exact,void (__cdecl ?quayle@@YAXH@Z)(int factionID)
-P3,1721,0x00496710,??1QuayleWin@@QAE@XZ,345,1,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??1QuayleWin@@QAE@XZ)(QuayleWin* this)
+P0,1001721,0x00496710,??1QuayleWin@@QAE@XZ,345,1,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1QuayleWin@@QAE@XZ)(QuayleWin* this)
 P3,1521,0x00496810,??0QuayleWin@@QAE@XZ,252,1,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??0QuayleWin@@QAE@XZ)(QuayleWin* this)
-P3,221,0x004968C0,??_GQuayleWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GQuayleWin@@UAEPAXI@Z)(QuayleWin* this, unsigned int)"
-P3,0,0x004968F0,??3QuayleWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x00496900,??__Eg_REPORTIF@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x00496920,??__Fg_REPORTIF@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,210,0x00496930,??__Eg_REPORTWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
@@ -1157,10 +1090,8 @@ P2,5120,0x004ACBD0,?report_intel@@YAXH@Z,89,5,1,unrecovered,,,2,exact,exact,
 P3,2221,0x004ACC30,?merge_sort@ReportIf@@QAEXHH@Z,360,2,2,unrecovered,,,2,exact,exact,"void (__thiscall ?merge_sort@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)"
 P3,821,0x004ACDA0,??1ReportIf@@QAE@XZ,1520,0,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1ReportIf@@QAE@XZ)(ReportIf* this)
 P3,1621,0x004AD170,??0ReportIf@@QAE@XZ,1006,1,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0ReportIf@@QAE@XZ)(ReportIf* this)
-P3,2421,0x004AD3B0,??1ReportWin@@QAE@XZ,1191,1,14,unrecovered,,,2,exact,entry_range,void (__thiscall ??1ReportWin@@QAE@XZ)(ReportWin* this)
+P0,1002421,0x004AD3B0,??1ReportWin@@QAE@XZ,1191,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1ReportWin@@QAE@XZ)(ReportWin* this)
 P3,2121,0x004AD6B0,??0ReportWin@@QAE@XZ,689,1,11,unrecovered,,,2,exact,entry_range,void (__thiscall ??0ReportWin@@QAE@XZ)(ReportWin* this)
-P3,221,0x004AD840,??_GReportWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GReportWin@@UAEPAXI@Z)(ReportWin* this, unsigned int)"
-P3,0,0x004AD870,??3ReportWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P2,5321,0x004AD880,??0SetupWin@@QAE@XZ,380,5,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??0SetupWin@@QAE@XZ)(SetupWin* this)
 P2,5221,0x004AD9C0,?close@SetupWin@@QAEXXZ,187,5,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@SetupWin@@QAEXXZ)(SetupWin* this)
 P3,11,0x004ADA80,?UNK1@SetupWin@@QAEHH@Z,29,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@SetupWin@@QAEHH@Z)(SetupWin* this, int)"
@@ -1172,9 +1103,7 @@ P3,121,0x004AE340,?on_left_click@SetupWin@@QAEXHH@Z,64,0,1,unrecovered,,,2,exact
 P3,321,0x004AE380,?on_mouse_move@SetupWin@@QAEHHH@Z,90,0,3,unrecovered,,,2,exact,exact,"int (__thiscall ?on_mouse_move@SetupWin@@QAEHHH@Z)(SetupWin* this, int xCoord, int yCoord)"
 P3,221,0x004AE3E0,?on_key_click@SetupWin@@QAEHHH@Z,189,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@SetupWin@@QAEHHH@Z)(SetupWin* this, int, int)"
 P3,4021,0x004AE4D0,?draw_item@SetupWin@@QAEHHH@Z,647,3,10,unrecovered,,,2,exact,exact,"int (__thiscall ?draw_item@SetupWin@@QAEHHH@Z)(SetupWin* this, int, int)"
-P3,221,0x004AE760,??_GSetupWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GSetupWin@@UAEPAXI@Z)(SetupWin* this, unsigned int)"
-P3,1621,0x004AE790,??1SetupWin@@QAE@XZ,611,1,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??1SetupWin@@QAE@XZ)(SetupWin* this)
-P3,0,0x004AE9A0,??3SetupWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001621,0x004AE790,??1SetupWin@@QAE@XZ,611,1,6,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1SetupWin@@QAE@XZ)(SetupWin* this)
 P3,210,0x004AE9B0,??__ESocialWinParent@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004AE9D0,??__FSocialWinParent@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,1621,0x004AE9E0,??0SocialWin@@QAE@XZ,881,1,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0SocialWin@@QAE@XZ)(SocialWin* this)
@@ -1215,12 +1144,8 @@ P3,1221,0x004B2690,?show@SocialWin@@QAEXH@Z,27,1,2,unrecovered,,,2,exact,exact,"
 P3,1221,0x004B26B0,?hide@SocialWin@@QAEXXZ,25,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@SocialWin@@QAEXXZ)(SocialWin* this)
 P3,2121,0x004B26D0,?close@SocialWin@@QAEXXZ,108,2,1,unrecovered,,,2,exact,exact,void (__thiscall ?close@SocialWin@@QAEXXZ)(SocialWin* this)
 P3,4621,0x004B2740,?init@SocialWin@@QAEXH@Z,5458,2,26,unrecovered,,,2,exact,entry_range,"void (__thiscall ?init@SocialWin@@QAEXH@Z)(SocialWin* this, int factionID)"
-P3,1521,0x004B3C80,??1SocialWin@@QAE@XZ,943,1,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??1SocialWin@@QAE@XZ)(SocialWin* this)
-P3,1221,0x004B3EC0,??1CheckButton@@QAE@XZ,106,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??1CheckButton@@QAE@XZ)(CheckButton* this)
-P3,221,0x004B3F20,??_GCheckButton@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GCheckButton@@UAEPAXI@Z)(CheckButton* this, unsigned int)"
-P3,220,0x004B3F50,??_GSocialWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
-P3,0,0x004B3F80,??3CheckButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x004B3F90,??3SocialWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001521,0x004B3C80,??1SocialWin@@QAE@XZ,943,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1SocialWin@@QAE@XZ)(SocialWin* this)
+P0,1001221,0x004B3EC0,??1CheckButton@@QAE@XZ,106,1,2,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1CheckButton@@QAE@XZ)(CheckButton* this)
 P3,210,0x004B3FA0,??__Eg_STATUSWIN@@YAXXZ,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x004B3FC0,??__Fg_STATUSWIN@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
 P3,2921,0x004B43E0,?say_orders@@YAXPADH@Z,1421,2,9,unrecovered,,,2,exact,exact,"void (__cdecl ?say_orders@@YAXPADH@Z)(int8*, int vehID)"
@@ -1274,9 +1199,7 @@ P3,121,0x004BDF70,?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,48,0,1,u
 P3,120,0x004BDFA0,?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,61,0,1,unrecovered,,,2,exact,exact,
 P2,14621,0x004BDFE0,?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z,1653,13,16,unrecovered,,,2,exact,entry_range,"int (__thiscall ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z)(TutWin* this, GraphicWin*, int8*, int, int, Sprite*, int, int, int)"
 P2,9321,0x004BE650,?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z,374,9,3,unrecovered,,,2,exact,exact,"int (__thiscall ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z)(TutWin* this, int8*, int xCoord, int yCoord, int, Sprite*, int, int, int)"
-P3,2421,0x004BE7D0,??1TutWin@@QAE@XZ,773,1,14,unrecovered,,,2,exact,entry_range,void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this)
-P3,221,0x004BE9F0,??_GTutWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)"
-P3,0,0x004BEA20,??3TutWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1002421,0x004BE7D0,??1TutWin@@QAE@XZ,773,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this)
 P3,1121,0x004BEA30,??0UV2Player@@QAE@XZ,28,1,1,unrecovered,,,2,exact,exact,void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
 P3,2821,0x004BEA50,?exec@UV2Player@@QAEHPADHHH@Z,869,1,18,unrecovered,,,2,exact,exact,"int (__thiscall ?exec@UV2Player@@QAEHPADHHH@Z)(UV2Player* this, LPSTR pszFileName, int, int, int)"
 P3,111,0x004BEDC0,?UNK1@UV2Player@@QAEHHHHH@Z,154,0,1,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@UV2Player@@QAEHHHHH@Z)(UV2Player* this, int, int, int, int)"
@@ -1325,10 +1248,8 @@ P3,111,0x004C4610,?focus@WorldWin@@QAEXHH@Z,19,0,1,unrecovered,,,1,missing,exact
 P3,1421,0x004C4630,?draw_box@WorldWin@@QAEXXZ,439,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?draw_box@WorldWin@@QAEXXZ)(WorldWin* this)
 P3,411,0x004C47F0,?UNK3@WorldWin@@QAEXXZ,428,0,4,unrecovered,,,1,missing,exact,void (__thiscall ?UNK3@WorldWin@@QAEXXZ)(WorldWin* this)
 P3,1321,0x004C49A0,?init@WorldWin@@QAEXH@Z,198,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?init@WorldWin@@QAEXH@Z)(WorldWin* this, int)"
-P3,1621,0x004C4A70,??1WorldWin@@QAE@XZ,608,1,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??1WorldWin@@QAE@XZ)(WorldWin* this)
+P0,1001621,0x004C4A70,??1WorldWin@@QAE@XZ,608,1,6,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1WorldWin@@QAE@XZ)(WorldWin* this)
 P3,1321,0x004C4BF0,??0WorldWin@@QAE@XZ,165,1,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??0WorldWin@@QAE@XZ)(WorldWin* this)
-P3,221,0x004C4C70,??_GWorldWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GWorldWin@@UAEPAXI@Z)(WorldWin* this, unsigned int)"
-P3,0,0x004C4CA0,??3WorldWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004C4CB0,sub_4c4cb0,81,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004C4D10,sub_4c4d10,92,0,0,unrecovered,,,0,missing,missing,
 P3,110,0x004C4D70,sub_4c4d70,54,0,1,unrecovered,,,1,missing,exact,
@@ -1449,7 +1370,7 @@ P2,7221,0x004C8460,??0Ambience@@QAE@XZ,230,7,2,unrecovered,,,2,entry_range,entry
 P3,421,0x004C8530,?load@Ambience@@QAEHPBD@Z,191,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?load@Ambience@@QAEHPBD@Z)(Ambience* this, int8*)"
 P3,21,0x004C85F0,?unload@Ambience@@QAEXXZ,44,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?unload@Ambience@@QAEXXZ)(Ambience* this)
 P3,1220,0x004C8620,sub_4c8620,194,1,2,unrecovered,,,2,entry_range,entry_range,
-P3,2120,0x004C86D0,sub_4c86d0,243,2,1,unrecovered,,,2,entry_range,entry_range,
+P0,1002120,0x004C86D0,sub_4c86d0,243,2,1,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,
 P3,20,0x004C87B0,sub_4c87b0,137,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x004C8840,sub_4c8840,72,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x004C8890,sub_4c8890,28,0,0,unrecovered,,,2,exact,exact,
@@ -1460,7 +1381,7 @@ P3,10,0x004C8910,sub_4c8910,15,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x004C8930,sub_4c8930,18,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x004C8950,sub_4c8950,3,0,0,unrecovered,,,1,exact,missing,
 P3,1421,0x004C8960,??0VoiceRx@@QAE@XZ,260,1,4,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0VoiceRx@@QAE@XZ)(VoiceRx* this)
-P3,1121,0x004C8A50,??1VoiceRx@@QAE@XZ,262,1,1,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??1VoiceRx@@QAE@XZ)(VoiceRx* this)
+P0,1001121,0x004C8A50,??1VoiceRx@@QAE@XZ,262,1,1,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??1VoiceRx@@QAE@XZ)(VoiceRx* this)
 P3,21,0x004C8B40,?init@VoiceRx@@QAEHKPAXK@Z,133,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@VoiceRx@@QAEHKPAXK@Z)(VoiceRx* this, unsigned int, void*, unsigned int)"
 P3,21,0x004C8BD0,?release@VoiceRx@@QAEHXZ,72,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?release@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,11,0x004C8C20,?start@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?start@VoiceRx@@QAEHXZ)(VoiceRx* this)
@@ -1469,7 +1390,7 @@ P3,11,0x004C8C50,?unload@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,in
 P3,21,0x004C8C70,?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z)(VoiceRx* this, _MMIOINFO*)"
 P3,11,0x004C8CA0,?get_buffer_size@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_buffer_size@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,1421,0x004C8CC0,??0VoiceTx@@QAE@XZ,272,1,4,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
-P3,4121,0x004C8DB0,??1VoiceTx@@QAE@XZ,273,4,1,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??1VoiceTx@@QAE@XZ)(VoiceTx* this)
+P0,1004121,0x004C8DB0,??1VoiceTx@@QAE@XZ,273,4,1,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??1VoiceTx@@QAE@XZ)(VoiceTx* this)
 P3,11,0x004C8EA0,?release@VoiceTx@@QAEXXZ,15,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
 P3,221,0x004C8EB0,?start@VoiceTx@@QAEHXZ,68,0,2,unrecovered,,,2,exact,exact,int (__thiscall ?start@VoiceTx@@QAEHXZ)(VoiceTx* this)
 P3,221,0x004C8F00,?stop@VoiceTx@@QAEHXZ,60,0,2,unrecovered,,,2,exact,exact,int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
@@ -1479,12 +1400,8 @@ P3,11,0x004C9010,?get_nbuffers@VoiceTx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,miss
 P3,11,0x004C9030,?get_next_buffer@VoiceTx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_next_buffer@VoiceTx@@QAEHXZ)(VoiceTx* this)
 P3,21,0x004C9050,?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)"
 P3,2620,0x004C9080,sub_4c9080,749,1,16,unrecovered,,,2,exact,entry_range,
-P3,221,0x004C9330,??_GAmbience@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)"
-P3,221,0x004C9360,??_GVideo@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)"
 P3,10,0x004C9390,sub_4c9390,18,0,0,unrecovered,,,1,exact,missing,
-P3,221,0x004C93B0,??_GVoiceRx@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GVoiceRx@@UAEPAXI@Z)(VoiceRx* this, unsigned int)"
 P3,10,0x004C93E0,sub_4c93e0,8,0,0,unrecovered,,,1,exact,missing,
-P3,221,0x004C93F0,??_GVoiceTx@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GVoiceTx@@UAEPAXI@Z)(VoiceTx* this, unsigned int)"
 P3,4521,0x004C96E0,?action_build@@YAHHPAD@Z,741,3,15,unrecovered,,,2,exact,exact,"int (__cdecl ?action_build@@YAHHPAD@Z)(int vehID, int8*)"
 P3,10,0x004C99D0,sub_4c99d0,115,0,0,unrecovered,,,1,missing,exact,
 P2,10721,0x004C9B00,?action_terraform@@YAHHHH@Z,3179,8,27,unrecovered,,,2,exact,exact,"int (__cdecl ?action_terraform@@YAHHHH@Z)(int vehID, int terraformID, BOOL tgl)"
@@ -1593,9 +1510,7 @@ P3,5621,0x004E14D0,?editor_natural@Console@@QAEXH@Z,2977,1,46,unrecovered,,,2,ex
 P3,1121,0x004E1F30,?editor_redo@Console@@QAEXXZ,9,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?editor_redo@Console@@QAEXXZ)(Console* this)
 P3,2321,0x004E1F70,?editor_lock2@Console@@QAEXXZ,134,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?editor_lock2@Console@@QAEXXZ)(Console* this)
 P3,3221,0x004E2000,?corner_the_market@Console@@QAEXXZ,565,2,12,unrecovered,,,2,exact,exact,void (__thiscall ?corner_the_market@Console@@QAEXXZ)(Console* this)
-P3,2721,0x004E2240,??1DipEdit@@QAE@XZ,534,2,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??1DipEdit@@QAE@XZ)(DipEdit* this)
-P3,221,0x004E23C0,??_GDipEdit@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)"
-P3,0,0x004E23F0,??3DipEdit@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1002721,0x004E2240,??1DipEdit@@QAE@XZ,534,2,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1DipEdit@@QAE@XZ)(DipEdit* this)
 P3,10,0x004E2400,sub_4e2400,68,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x004E2450,sub_4e2450,13,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x004E2460,sub_4e2460,47,0,0,unrecovered,,,1,exact,missing,
@@ -1769,12 +1684,10 @@ P3,1821,0x0051D890,?init@Console@@QAEXH@Z,319,1,8,unrecovered,,,2,exact,exact,"v
 P3,10,0x0051D9D0,nullsub_187,1,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0051D9E0,nullsub_188,1,0,0,unrecovered,,,1,exact,missing,
 P3,3021,0x0051D9F0,??1Console@@QAE@XZ,864,2,10,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Console@@QAE@XZ)(Console* this)
-P3,1421,0x0051DC10,??1AlphaMenu@@QAE@XZ,164,1,4,unrecovered,,,2,exact,entry_range,void (__thiscall ??1AlphaMenu@@QAE@XZ)(AlphaMenu* this)
-P3,221,0x0051DC90,??_GAlphaMenu@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GAlphaMenu@@UAEPAXI@Z)(AlphaMenu* this, unsigned int)"
+P0,1001421,0x0051DC10,??1AlphaMenu@@QAE@XZ,164,1,4,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1AlphaMenu@@QAE@XZ)(AlphaMenu* this)
 P3,1020,0x0051DCC0,sub_51dcc0,54,1,0,unrecovered,,,2,exact,exact,
 P3,1220,0x0051DD00,sub_51dd00,224,1,2,unrecovered,,,2,exact,exact,
 P0,1000311,0x0051DDF0,??_GConsole@@UAEPAXI@Z,54,0,3,original_dependency,ui_dependency,recover_console_scalar_delete,1,containing,exact,"void* (__thiscall ??_GConsole@@UAEPAXI@Z)(Console* this, unsigned int)"
-P3,0,0x0051DF70,??3AlphaMenu@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x0051DF80,sub_51df80,36,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x0051DFB0,sub_51dfb0,20,0,1,unrecovered,,,1,exact,missing,
 P3,0,0x0051DFD0,sub_51dfd0,41,0,0,unrecovered,,,0,missing,missing,
@@ -2156,9 +2069,7 @@ P3,1521,0x005AD9E0,?timer_callback@ReplayWin@@QAEXXZ,492,1,5,unrecovered,,,2,exa
 P3,120,0x005ADBD0,?timer_callback_daemon@ReplayWin@@QAAXH@Z,17,0,1,unrecovered,,,2,exact,exact,
 P3,6320,0x005ADBF0,?show_replay@@YAXXZ,951,4,23,unrecovered,,,2,exact,entry_range,
 P2,5220,0x005ADE80,?replay_base@@YAXHHHH@Z,131,5,2,unrecovered,,,2,exact,exact,
-P3,2021,0x005ADF10,??1ReplayWin@@QAE@XZ,667,1,10,unrecovered,,,2,exact,entry_range,void (__thiscall ??1ReplayWin@@QAE@XZ)(ReplayWin* this)
-P3,221,0x005AE0B0,??_GReplayWin@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GReplayWin@@UAEPAXI@Z)(ReplayWin* this, unsigned int)"
-P3,0,0x005AE0E0,??3ReplayWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1002021,0x005ADF10,??1ReplayWin@@QAE@XZ,667,1,10,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1ReplayWin@@QAE@XZ)(ReplayWin* this)
 P3,6120,0x005AE120,?crash_landing@@YAXH@Z,3800,1,51,unrecovered,,,2,exact,entry_range,
 P3,3720,0x005AEDE0,?time_warp@@YAXXZ,5682,1,27,unrecovered,,,2,exact,exact,
 P3,1620,0x005B0420,?balance@@YAXXZ,1548,1,6,unrecovered,,,2,exact,exact,
@@ -2245,9 +2156,7 @@ P3,1421,0x005C9860,?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z,123,1,4,unrecover
 P3,1,0x005C98F0,?timer_callback@MultiDebug@@QAEXXZ,8,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?timer_callback@MultiDebug@@QAEXXZ)(MultiDebug* this)
 P3,20,0x005C9900,?timer_callback_daemon@MultiDebug@@QAAXH@Z,20,0,0,unrecovered,,,2,exact,exact,
 P3,821,0x005C9920,?on_redraw@MultiDebug@@QAEXXZ,1241,0,8,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@MultiDebug@@QAEXXZ)(MultiDebug* this)
-P3,1321,0x005C9E00,??1MultiDebug@@QAE@XZ,151,1,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MultiDebug@@QAE@XZ)(MultiDebug* this)
-P3,221,0x005C9E80,??_GMultiDebug@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GMultiDebug@@UAEPAXI@Z)(MultiDebug* this, unsigned int)"
-P3,0,0x005C9EB0,??3MultiDebug@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
+P0,1001321,0x005C9E00,??1MultiDebug@@QAE@XZ,151,1,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1MultiDebug@@QAE@XZ)(MultiDebug* this)
 P3,3420,0x005C9EC0,sub_5c9ec0,876,3,4,unrecovered,,,2,exact,exact,
 P3,1020,0x005CA230,sub_5ca230,216,1,0,unrecovered,,,2,exact,exact,
 P3,1420,0x005CA310,sub_5ca310,940,1,4,unrecovered,,,2,exact,exact,
@@ -2377,8 +2286,6 @@ P3,1421,0x005D6AC0,?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z,1015,1,4,unrec
 P3,0,0x005D6EC0,sub_5d6ec0,139,0,0,unrecovered,,,0,missing,missing,
 P3,1021,0x005D6F50,?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ,210,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P3,3021,0x005D7030,?compute_min_size@GraphicWin@@QAEXXZ,272,3,0,unrecovered,,,2,exact,exact,void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
-P3,211,0x005D7140,??_GGraphicWin@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GGraphicWin@@UAEPAXI@Z)(GraphicWin* this, unsigned int)"
-P3,0,0x005D7160,??3GraphicWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x005D7170,sub_5d7170,36,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x005D71A0,sub_5d71a0,40,0,1,unrecovered,,,1,exact,missing,
 P3,10,0x005D71F0,??__Fg_BUFFER_SPRITE@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
@@ -2511,7 +2418,6 @@ P3,2221,0x005E32F3,?dotted_box@Buffer@@QAEHPAURECT@@H@Z,125,2,2,unrecovered,,,2,
 P2,9021,0x005E33F3,?get_data@Buffer@@QAEHHH@Z,170,9,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)"
 P3,10,0x005E35D0,sub_5e35d0,31,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x005E35F0,sub_5e35f0,29,0,0,unrecovered,,,1,exact,missing,
-P3,211,0x005E3610,??_GBuffer@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GBuffer@@UAEPAXI@Z)(Buffer* this, int8)"
 P3,2020,0x005E3630,sub_5e3630,20,2,0,unrecovered,,,2,exact,exact,
 P3,2020,0x005E3650,sub_5e3650,16,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005E3660,sub_5e3660,46,1,0,unrecovered,,,2,exact,exact,
@@ -2706,7 +2612,6 @@ P3,101,0x005F8570,?on_mousewheel_up_vert@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,mis
 P3,101,0x005F8590,?on_mousewheel_up_horz@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?on_mousewheel_up_horz@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85B0,?on_mousewheel_down@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85E0,?on_mousewheel_up@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)"
-P3,221,0x005F8610,??_GWin@@UAEPAXI@Z,30,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)"
 P3,1020,0x005F8670,sub_5f8670,43,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005F86A0,sub_5f86a0,31,1,0,unrecovered,,,2,exact,exact,
 P3,210,0x005F8770,sub_5f8770,134,0,2,unrecovered,,,1,missing,exact,
@@ -2729,10 +2634,8 @@ P3,1211,0x005F98B0,?on_redraw@PullDown@@QAEXXZ,1103,0,12,unrecovered,,,1,exact,m
 P3,2321,0x005F9D30,?compute_length@PullDown@@QAEHPAD@Z,516,2,3,unrecovered,,,2,exact,exact,"int (__thiscall ?compute_length@PullDown@@QAEHPAD@Z)(PullDown* this, int8*)"
 P3,3221,0x005F9F60,?pulldown_update@PullDown@@QAEXHH@Z,1867,2,12,unrecovered,,,2,exact,exact,"void (__thiscall ?pulldown_update@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
 P3,411,0x005FA6B0,?on_mouse_move@PullDown@@QAEXHH@Z,134,0,4,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
-P3,211,0x005FA770,??_GPullDown@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)"
-P3,0,0x005FA790,??3PullDown@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,1221,0x005FAC60,??0Menu@@QAE@XZ,168,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Menu@@QAE@XZ)(Menu* this)
-P3,3321,0x005FAD00,??1Menu@@QAE@XZ,225,3,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Menu@@QAE@XZ)(Menu* this)
+P0,1003321,0x005FAD00,??1Menu@@QAE@XZ,225,3,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Menu@@QAE@XZ)(Menu* this)
 P3,111,0x005FADD0,?init@Menu@@QAEHPAUWin@@@Z,153,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?init@Menu@@QAEHPAUWin@@@Z)(Menu* this, Win*)"
 P3,121,0x005FAE70,?UNK1@Menu@@QAEXXZ,104,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?UNK1@Menu@@QAEXXZ)(Menu* this)
 P3,1020,0x005FAEE0,?set_def_font@Menu@@QAAXPAUFont@@@Z,35,1,0,unrecovered,,,2,exact,entry_range,
@@ -2766,8 +2669,6 @@ P3,121,0x005FC5A0,?adjust@Menu@@QAEXXZ,123,0,1,unrecovered,,,2,exact,exact,void 
 P3,2221,0x005FC620,?hide_menus@Menu@@QAEXXZ,92,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide_menus@Menu@@QAEXXZ)(Menu* this)
 P3,1121,0x005FC680,?on_mouse_move@Menu@@QAEXHH@Z,18,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)"
 P3,11,0x005FC6C0,?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z,3,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z)(Menu* this, int*, int*)"
-P3,211,0x005FC6D0,??_GMenu@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GMenu@@UAEPAXI@Z)(Menu* this, unsigned int)"
-P3,0,0x005FC6F0,??3Menu@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P2,15420,0x005FC700,?wait_task@@YAXXZ,228,15,4,unrecovered,,,2,exact,exact,
 P3,4420,0x005FC7F0,?do_task@@YAHXZ,248,4,4,unrecovered,,,2,exact,exact,
 P3,2420,0x005FC8F0,?do_all_tasks@@YAXXZ,238,2,4,unrecovered,,,2,exact,exact,
@@ -2888,8 +2789,6 @@ P3,11,0x00607B00,?on_dialog_focus@BaseButton@@QAEXH@Z,11,0,0,unrecovered,,,1,exa
 P3,110,0x00607B10,?timer_callback_daemon@BaseButton@@QAAXHH@Z,19,0,1,unrecovered,,,1,exact,missing,
 P3,2421,0x00607B30,?timer_callback@BaseButton@@QAEXH@Z,249,2,4,unrecovered,,,2,exact,exact,"void (__thiscall ?timer_callback@BaseButton@@QAEXH@Z)(BaseButton* this, int)"
 P3,11,0x00607C30,?UNK2@BaseButton@@QAEXXZ,68,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?UNK2@BaseButton@@QAEXXZ)(BaseButton* this)
-P3,211,0x00607CC0,??_GBaseButton@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GBaseButton@@UAEPAXI@Z)(BaseButton* this, unsigned int)"
-P3,0,0x00607CE0,??3BaseButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P2,17121,0x00607CF0,??0FlatButton@@QAE@XZ,166,17,1,unrecovered,,,2,exact,exact,void (__thiscall ??0FlatButton@@QAE@XZ)(FlatButton* this)
 P3,1611,0x00607E50,?on_redraw@FlatButton@@QAEXXZ,1705,0,16,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@FlatButton@@QAEXXZ)(FlatButton* this)
 P3,611,0x00608500,?on_mouse_move@FlatButton@@QAEXHH@Z,343,0,6,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@FlatButton@@QAEXHH@Z)(FlatButton* this, int, int)"
@@ -3025,8 +2924,7 @@ P3,1721,0x00612150,?calculate_dimensions@EditGroup@@QAEHXZ,762,1,7,unrecovered,,
 P0,1000421,0x00612450,?on_redraw@EditGroup@@QAEXXZ,537,0,4,original_dependency,ui_dependency,recover_edit_group_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@EditGroup@@QAEXXZ)(EditGroup* this)
 P0,1001021,0x00612670,?on_dialog_focus@EditGroup@@QAEXH@Z,70,1,0,original_dependency,ui_dependency,recover_edit_group_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)"
 P0,1000011,0x006126C0,?pass_dialog_focus@EditGroup@@QAEXXZ,56,0,0,original_dependency,ui_dependency,recover_edit_group_pass_dialog_focus,1,missing,exact,void (__thiscall ?pass_dialog_focus@EditGroup@@QAEXXZ)(EditGroup* this)
-P3,0,0x00612700,sub_612700,8,0,0,unrecovered,,,0,missing,missing,
-P3,400,0x00612710,sub_612710,154,0,4,unrecovered,,,0,missing,missing,
+P0,1000400,0x00612710,sub_612710,154,0,4,original_dependency,ui_dependency,recover_owning_class,0,missing,missing,
 P3,0,0x006127E0,sub_6127e0,17,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x00612800,sub_612800,14,0,0,unrecovered,,,0,missing,missing,
 P3,1721,0x00612830,??0Dialogs@@QAE@H@Z,418,1,7,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)"
@@ -3194,13 +3092,11 @@ P3,4120,0x00625080,sub_625080,532,4,1,unrecovered,,,2,exact,exact,
 P3,1021,0x006252A0,??0TextureStore@@QAE@XZ,16,1,0,unrecovered,,,2,exact,exact,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
 P3,0,0x006252C0,sub_6252c0,30,0,0,unrecovered,,,0,missing,missing,
 P3,121,0x006252E0,??0ImageButton@@QAE@XZ,38,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
-P3,1021,0x00625310,??1ImageButton@@QAE@XZ,21,1,0,unrecovered,,,2,exact,exact,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
+P0,1001021,0x00625310,??1ImageButton@@QAE@XZ,21,1,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
 P3,11,0x00625330,?close@ImageButton@@QAEXXZ,15,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
 P3,101,0x00625340,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,58,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)"
 P3,100,0x00625380,sub_625380,70,0,1,unrecovered,,,0,missing,missing,
 P3,711,0x006253D0,?on_redraw@ImageButton@@QAEXXZ,764,0,7,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@ImageButton@@QAEXXZ)(ImageButton* this)
-P3,211,0x006256D0,??_GImageButton@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)"
-P3,0,0x006256F0,??3ImageButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P0,1023721,0x00625880,?parse_string@@YAHPADPAD@Z,1373,23,7,source_in_progress,source_fallback,finish_source_implementation,2,exact,exact,"int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)"
 P3,3020,0x00626470,sub_626470,208,3,0,unrecovered,,,2,exact,exact,
 P3,100,0x00626540,sub_626540,87,0,1,unrecovered,,,0,missing,missing,
@@ -3271,11 +3167,9 @@ P3,1321,0x0062B670,?decode_fli_copy_trans@Flic@@QAEXXZ,262,1,3,unrecovered,,,2,e
 P3,101,0x0062B780,?UNK9@Flic@@QAEXXZ,63,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?UNK9@Flic@@QAEXXZ)(Flic* this)
 P0,1005121,0x0062B8A0,?button_click@ButtonGroup@@QAEHH@Z,471,5,1,original_dependency,ui_dependency,recover_button_group_button_click,2,exact,exact,"int (__thiscall ?button_click@ButtonGroup@@QAEHH@Z)(ButtonGroup* this, int)"
 P3,3121,0x0062BF20,??0PushButton@@QAE@XZ,238,3,1,unrecovered,,,2,exact,exact,void (__thiscall ??0PushButton@@QAE@XZ)(PushButton* this)
-P2,7021,0x0062C010,??1PushButton@@QAE@XZ,21,7,0,unrecovered,,,2,exact,exact,void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this)
+P0,1007021,0x0062C010,??1PushButton@@QAE@XZ,21,7,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this)
 P3,121,0x0062C030,?close@PushButton@@QAEXXZ,220,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?close@PushButton@@QAEXXZ)(PushButton* this)
 P3,811,0x0062C110,?on_redraw@PushButton@@QAEXXZ,1821,0,8,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@PushButton@@QAEXXZ)(PushButton* this)
-P3,211,0x0062C830,??_GPushButton@@UAEPAXI@Z,30,0,2,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GPushButton@@UAEPAXI@Z)(PushButton* this, unsigned int)"
-P3,0,0x0062C850,??3PushButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,310,0x0062C860,Callback,119,0,3,unrecovered,,,1,exact,missing,
 P3,3810,0x0062C8E0,sub_62c8e0,1398,2,18,unrecovered,,,1,exact,missing,
 P3,10,0x0062CD10,sub_62cd10,56,0,0,unrecovered,,,1,exact,missing,
@@ -3344,12 +3238,9 @@ P3,1320,0x006327E0,?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z,1235,1,3,unre
 P3,2320,0x00632CC0,sub_632cc0,234,2,3,unrecovered,,,2,exact,exact,
 P2,7421,0x00632DB0,?handle_sys_msg@Net@@QAEXXZ,487,7,4,unrecovered,,,2,exact,exact,void (__thiscall ?handle_sys_msg@Net@@QAEXXZ)(Net* this)
 P3,1,0x00632FA0,?check_message@Net@@QAEHKK@Z,103,0,0,unrecovered,,,0,missing,missing,"int (__thiscall ?check_message@Net@@QAEHKK@Z)(Net* this, unsigned int, unsigned int)"
-P3,1820,0x00633010,sub_633010,449,1,8,unrecovered,,,2,exact,entry_range,
-P3,210,0x00633160,sub_633160,30,0,2,unrecovered,,,1,missing,exact,
+P0,1001820,0x00633010,sub_633010,449,1,8,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,
 P3,1520,0x00633180,sub_633180,1536,1,5,unrecovered,,,2,exact,entry_range,
-P3,220,0x006336D0,sub_6336d0,65,0,2,unrecovered,,,2,exact,exact,
-P3,0,0x00633730,sub_633730,8,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x00633740,sub_633740,11,0,0,unrecovered,,,0,missing,missing,
+P0,1000220,0x006336D0,sub_6336d0,65,0,2,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,
 P3,121,0x00633750,??0CheckButton@@QAE@XZ,77,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??0CheckButton@@QAE@XZ)(CheckButton* this)
 P3,1021,0x006337A0,?close@CheckButton@@QAEXXZ,54,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?close@CheckButton@@QAEXXZ)(CheckButton* this)
 P3,1121,0x006337E0,?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z,97,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z)(CheckButton* this, int, int, GraphicWin*, int)"
