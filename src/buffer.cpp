@@ -967,3 +967,230 @@ void Buffer::clear_links() {
 void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
     self->clear_links();
 }
+
+func_buffer_write_multi_font_raw_l *BufferWriteMultiFontRawL =
+    (func_buffer_write_multi_font_raw_l *)0x005DCAE0;
+
+/*
+Purpose: Draw at most `len` characters of a string at an explicit pen
+         position, clamping the count to the string's own length first.
+Original Offset: 005DCEA0
+Return Value: The raster writer's result; the incoming x for a null string or
+              an empty draw; unusable font (3, `mov eax, 3` at 0x005DCF2B)
+Status: Complete with a temporary raster-writer dependency
+
+The null-string and empty-draw exits return the incoming x rather than a
+status code, which is what makes this family chainable: the caller advances
+its pen by the return value, so a draw that emits nothing leaves the pen where
+it was. The font guard is the only path here that yields a status code.
+
+The original evaluates min(strlen(text), len) twice - once for the `< 0` test
+at 0x005DCEE8 and once for the value it forwards - because `min` was a macro;
+it calls strlen up to four times for the same reason. strlen is pure and `len`
+is untouched between them, so the single evaluation here is the same value in
+every role. The comparison is signed (`cmp eax, esi` / `jge`), so a negative
+`len` wins the min and takes the early exit.
+
+Verification note: `(measured < len)` and `(measured <= len)` select the same
+value when the two are equal, so a comparison mutant that only relaxes the
+strictness of this min is equivalent by construction and will survive.
+*/
+int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
+    if (!text) {
+        return x_coord;
+    }
+    if (!font1_ || !font1_->is_initialized()) {
+        return 3;
+    }
+    const int measured = static_cast<int>(strlen(text));
+    const int limit = (measured < len) ? measured : len;
+    if (limit <= 0) {
+        return x_coord;
+    }
+    return BufferWriteMultiFontRawL(this, text, x_coord, y_coord, limit);
+}
+
+int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
+                                       int x_coord, int y_coord, int len) {
+    return self->write_l(text, x_coord, y_coord, len);
+}
+
+/*
+Purpose: Draw at most `len` characters of a string flush against a
+         rectangle's left edge and vertically centred on the text font.
+Original Offset: 005DCF40
+Return Value: The raster writer's result; zero for every rejected input
+Status: Complete with a temporary raster-writer dependency
+
+Unlike its three siblings this body has a single failure exit - `xor eax, eax`
+at 0x005DD00D - so a null string, a null rectangle, an unusable font and an
+empty draw all return zero. It never returns the status code 3 and it never
+returns the pen position. The rectangle overload of write_cent_l deliberately
+does not share that convention: its font guard returns 3. That disagreement
+between the two rectangle overloads is why these four bodies are transcribed
+separately rather than sharing a guard helper.
+
+The vertical centre is `top + (bottom - height - top) / 2`, a signed halving
+that truncates toward zero (`cdq` / `sub eax, edx` / `sar eax, 1` at
+0x005DCFEB), computed on raw 32-bit values with no ordering or emptiness
+check, so a reversed or degenerate rectangle is centred as-is and the
+arithmetic wraps rather than saturating. The horizontal position is
+rect->left verbatim - nothing is measured, and text_width is never called.
+
+Verification note: the original re-tests font1_ at 0x005DCFCD and rebinds it
+from the process default at 0x009BB484 when null. That rebind cannot execute
+here - the guard at 0x005DCF69 already returned zero for a null font1_, and
+only pure strlen calls run in between - so it is not transcribed. The
+rectangle overload of write_cent_l carries the identical rebind and there it
+IS reachable, because the intervening text-width call can clear the field.
+
+Verification note: the original loads rect->right at 0x005DCFB8 and spills it
+at 0x005DCFC6 without ever reading it back; the dead store is not transcribed.
+*/
+int Buffer::write_l(LPSTR text, RECT *rect, int len) {
+    if (!text) {
+        return 0;
+    }
+    if (!rect) {
+        return 0;
+    }
+    if (!font1_ || !font1_->is_initialized()) {
+        return 0;
+    }
+    const int measured = static_cast<int>(strlen(text));
+    const int limit = (measured < len) ? measured : len;
+    if (limit <= 0) {
+        return 0;
+    }
+    const uint32_t left = edge_bits(rect->left);
+    const uint32_t top = edge_bits(rect->top);
+    const uint32_t bottom = edge_bits(rect->bottom);
+    const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
+    const int y_coord = edge_int(top + edge_bits(y_span / 2));
+    return BufferWriteMultiFontRawL(this, text, edge_int(left), y_coord,
+                                    limit);
+}
+
+int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
+                                            RECT *rect, int len) {
+    return self->write_l(text, rect, len);
+}
+
+/*
+Purpose: Draw at most `len` characters of a string horizontally centred in a
+         span of `width` pixels starting at an explicit pen position.
+Original Offset: 005DD020
+Return Value: The raster writer's result; the incoming x for a null string or
+              an empty draw; unusable font (3)
+Status: Complete with temporary raster-writer and text-width dependencies
+
+The centring offset is measured from the CLAMPED count: 0x005DD094 pushes the
+same esi that reaches the raster writer, so a draw truncated by `len` is
+centred on the truncated text. The rectangle overload below does the opposite
+and measures the whole string with a fresh strlen at 0x005DD1C4. That
+asymmetry is in the bytes and is the reason these two bodies are transcribed
+separately rather than sharing a centring helper.
+
+The offset is `x + (width - measured_width) / 2`, a signed halving that
+truncates toward zero on raw 32-bit values, so a text wider than the span
+produces a negative offset and the arithmetic wraps rather than saturating.
+Nothing on any path writes to the object.
+
+Verification note: as in write_l, the min is evaluated twice by the original
+and once here, and relaxing the min's comparison to `<=` is an equivalent
+mutant that will survive.
+*/
+int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
+                         int len) {
+    if (!text) {
+        return x_coord;
+    }
+    if (!font1_ || !font1_->is_initialized()) {
+        return 3;
+    }
+    const int measured = static_cast<int>(strlen(text));
+    const int limit = (measured < len) ? measured : len;
+    if (limit <= 0) {
+        return x_coord;
+    }
+    const int drawn =
+        BufferTextWidthMeasured(this, text, static_cast<size_t>(limit));
+    const int x_span = edge_int(edge_bits(width) - edge_bits(drawn));
+    const int centred = edge_int(edge_bits(x_coord) + edge_bits(x_span / 2));
+    return BufferWriteMultiFontRawL(this, text, centred, y_coord, limit);
+}
+
+int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
+                                            int x_coord, int y_coord,
+                                            int width, int len) {
+    return self->write_cent_l(text, x_coord, y_coord, width, len);
+}
+
+/*
+Purpose: Draw at most `len` characters of a string centred both horizontally
+         and vertically inside a rectangle.
+Original Offset: 005DD130
+Return Value: The raster writer's result; unusable font (3); zero for a null
+              string, a null rectangle or an empty draw
+Status: Complete with temporary raster-writer and text-width dependencies
+
+Three things separate this body from its three siblings, and none of them
+survives being folded into a shared helper:
+
+  - It returns 3 on the font guard (0x005DD232) but zero on every other
+    rejection (0x005DD241), where the other rectangle overload returns zero
+    uniformly.
+  - It measures the WHOLE string: text_width is handed a fresh strlen from
+    0x005DD1C4, not the clamped count the raster writer receives, so a draw
+    truncated by `len` is still centred as if it were complete.
+  - It re-reads font1_ after the text-width call and rebinds it from the
+    process default at 0x009BB484 when it comes back null. Here that rebind is
+    reachable, because the measured overload performs the identical rebind of
+    its own at 0x005DC7D3 and can leave the field clear; the guard is not
+    re-run, so the substituted font is used unchecked.
+
+All four rectangle fields are loaded up front, before any call is made, so a
+text-width callee that rewrites the rectangle cannot move either centre. Both
+centres are signed halvings truncating toward zero over raw 32-bit values,
+with no ordering or emptiness check, so reversed rectangles centre as-is and
+the arithmetic wraps.
+
+Verification note: the min is evaluated twice by the original and once here,
+and relaxing the min's comparison to `<=` is an equivalent mutant.
+*/
+int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
+    if (!text) {
+        return 0;
+    }
+    if (!rect) {
+        return 0;
+    }
+    const uint32_t left = edge_bits(rect->left);
+    const uint32_t top = edge_bits(rect->top);
+    const uint32_t right = edge_bits(rect->right);
+    const uint32_t bottom = edge_bits(rect->bottom);
+    if (!font1_ || !font1_->is_initialized()) {
+        return 3;
+    }
+    const int measured = static_cast<int>(strlen(text));
+    const int limit = (measured < len) ? measured : len;
+    if (limit <= 0) {
+        return 0;
+    }
+    const int drawn =
+        BufferTextWidthMeasured(this, text, static_cast<size_t>(measured));
+    const int x_span = edge_int(right - edge_bits(drawn) - left);
+    const int x_coord = edge_int(left + edge_bits(x_span / 2));
+    if (!font1_) {
+        font1_ = *FontDefaultPtr;
+    }
+    const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
+    const int y_coord = edge_int(top + edge_bits(y_span / 2));
+    return BufferWriteMultiFontRawL(this, text, x_coord, y_coord, limit);
+}
+
+int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
+                                                 LPSTR text, RECT *rect,
+                                                 int len) {
+    return self->write_cent_l(text, rect, len);
+}
