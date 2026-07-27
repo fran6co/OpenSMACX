@@ -791,6 +791,11 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_nullsub_thunks.py"
     )
 
+    add_test(NAME whole-image-lifter-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lift_whole_image.py"
+    )
+
     add_test(NAME deleting-thunk-generator-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_deleting_thunks.py"
