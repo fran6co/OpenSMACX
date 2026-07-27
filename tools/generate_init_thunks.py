@@ -122,6 +122,14 @@ INIT_DOMAINS = {
     "??1Buffer@@QAE@XZ":
         ("Buffer", "buffer.h", "BufferInitReset",
          "static_cast<Buffer *>(object)->destroy();"),
+    "??0FX@@QAE@XZ":
+        ("FX", "fx.h", "FXInitCtor", "new (object) FX();"),
+    # Ambience is spelled construct(), not a real constructor: three derived
+    # variants carry inline `{ ; }` constructors that a real base one would
+    # silently change. Same shape as Buffer above, not Wave's.
+    "??0Ambience@@QAE@XZ":
+        ("Ambience", "ambience.h", "AmbienceInitCtor",
+         "static_cast<Ambience *>(object)->construct();"),
 }
 
 # Per-element constructors for the vector-iterator arrays, keyed by catalogued

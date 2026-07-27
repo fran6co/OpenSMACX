@@ -20,10 +20,12 @@
 #include <new>
 #include "init_thunks.h"
 #include "atexit_thunks.h"
+#include "ambience.h"
 #include "buffer.h"
 #include "buttongroup.h"
 #include "caviar.h"
 #include "font.h"
+#include "fx.h"
 #include "sprite.h"
 #include "strings.h"
 #include "texture.h"
@@ -67,6 +69,9 @@ namespace {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
+void __thiscall ambienceinitctor_default(void *object) {
+    static_cast<Ambience *>(object)->construct();
+}
 void __thiscall bufferinitctor_default(void *object) {
     static_cast<Buffer *>(object)->construct();
 }
@@ -78,6 +83,9 @@ void __thiscall caviardatainitctor_default(void *object) {
 }
 void __thiscall caviarinitctor_default(void *object) {
     new (object) Caviar();
+}
+void __thiscall fxinitctor_default(void *object) {
+    new (object) FX();
 }
 void __thiscall fontinitctor_default(void *object) {
     new (object) Font();
@@ -106,10 +114,12 @@ void __thiscall waveinitctor_default(void *object) {
 
 }  // namespace
 
+func_thiscall_teardown *AmbienceInitCtor = &ambienceinitctor_default;
 func_thiscall_teardown *BufferInitCtor = &bufferinitctor_default;
 func_thiscall_teardown *ButtonGroupInitCtor = &buttongroupinitctor_default;
 func_thiscall_teardown *CaviarDataInitCtor = &caviardatainitctor_default;
 func_thiscall_teardown *CaviarInitCtor = &caviarinitctor_default;
+func_thiscall_teardown *FXInitCtor = &fxinitctor_default;
 func_thiscall_teardown *FontInitCtor = &fontinitctor_default;
 func_thiscall_teardown *SpriteInitCtor = &spriteinitctor_default;
 func_thiscall_teardown *StringsInitCtor = &stringsinitctor_default;
@@ -135,8 +145,6 @@ func_thiscall_teardown *DiploPopCtorTarget =
     (func_thiscall_teardown *)0x0043EFF0;
 func_thiscall_teardown *DiploWinCtorTarget =
     (func_thiscall_teardown *)0x00444FC0;
-func_thiscall_teardown *FXCtorTarget =
-    (func_thiscall_teardown *)0x004482A0;
 func_thiscall_teardown *FameWinCtorTarget =
     (func_thiscall_teardown *)0x0044B200;
 func_thiscall_teardown *FactionArtCtorTarget =
@@ -183,8 +191,6 @@ func_thiscall_teardown *Midi_DeviceCtorTarget =
     (func_thiscall_teardown *)0x004C5740;
 func_thiscall_teardown *Wave_In_DeviceCtorTarget =
     (func_thiscall_teardown *)0x004C5940;
-func_thiscall_teardown *AmbienceCtorTarget =
-    (func_thiscall_teardown *)0x004C8460;
 func_opaque_ctor_i *ConsoleCtorTarget =
     (func_opaque_ctor_i *)0x0050F460;
 func_thiscall_teardown *NetDaemonCtorTarget =
@@ -649,7 +655,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fx() {
-    FXCtorTarget(reinterpret_cast<void *>(0x00749CF8));
+    FXInitCtor(g_FX);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455B0));
 }
 
@@ -660,7 +666,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ambience() {
-    AmbienceCtorTarget(reinterpret_cast<void *>(0x0074DA40));
+    AmbienceInitCtor(g_AMBIENCE);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455E0));
 }
 
