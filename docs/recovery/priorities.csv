@@ -92,47 +92,12 @@ P3,20,0x00406B70,sub_406b70,44,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x00406BA0,sub_406ba0,44,0,0,unrecovered,,,2,exact,exact,
 P3,220,0x00406BD0,??_GPopup@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
 P2,7221,0x00406C00,??1Popup@@QAE@XZ,836,6,12,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
-P3,1,0x00406F50,??1thunk1_RadioButton@@QAE@H@Z,8,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)"
-P3,411,0x00406F60,??1RadioButton@@QAE@H@Z,130,0,4,unrecovered,,,1,missing,exact,"void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)"
-P3,11,0x00406FF0,?on_redraw@thunk1_RadioButton@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
-P3,11,0x00407000,?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,11,0x00407010,?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,11,0x00407020,?on_left_down@thunk1_RadioButton@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,11,0x00407030,?on_key_down@thunk1_RadioButton@@QAEHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_down@thunk1_RadioButton@@QAEHH@Z)(RadioButton* this, int)"
-P3,11,0x00407040,?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,11,0x00407050,?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)"
-P3,1,0x00407060,??1thunk2_RadioButton@@QAE@H@Z,17,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ??1thunk2_RadioButton@@QAE@H@Z)(RadioButton* this, int)"
-P3,1,0x00407080,??1thunk3_RadioButton@@QAE@H@Z,14,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ??1thunk3_RadioButton@@QAE@H@Z)(RadioButton* this, int)"
-P3,11,0x00407090,?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)"
-P3,11,0x004070A0,?on_redraw@thunk3_RadioButton@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_RadioButton@@QAEXXZ)(RadioButton* this)
+P0,1000411,0x00406F60,??1RadioButton@@QAE@H@Z,130,0,4,original_dependency,ui_dependency,recover_radio_button_dtor,1,missing,exact,"void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)"
 P3,0,0x004070B0,??3BasePop@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004070C0,??3Scroll@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004070D0,??3Popup@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x004070E0,??3FlatButton@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,1,0x004070F0,??_Gthunk1_Dialogs@@UAEPAXI@Z,8,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk1_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
-P3,11,0x00407150,?on_scroll_create@thunk1_Dialogs@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_scroll_create@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
-P3,11,0x00407160,?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z,8,0,0,unrecovered,,,1,entry_range,missing,"int (__thiscall ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)"
-P3,11,0x00407170,?on_redraw@thunk1_Dialogs@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_redraw@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
-P3,11,0x00407180,?on_mousewheel@thunk1_Dialogs@@QAEXH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)"
-P3,11,0x00407190,?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x004071A0,?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x004071B0,?on_left_click@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_left_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x004071C0,?on_left_down@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_left_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x004071D0,?on_left_up@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_left_up@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x004071E0,?on_right_click@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_right_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x004071F0,?on_right_down@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_right_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x00407200,?on_right_up@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_right_up@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x00407210,?on_key_down@thunk1_Dialogs@@QAEHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"int (__thiscall ?on_key_down@thunk1_Dialogs@@QAEHH@Z)(Dialogs* this, int)"
-P3,11,0x00407220,?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x00407230,?on_right_double_click@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_right_double_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x00407240,?on_scrolled@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_scrolled@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x00407250,?on_scrolling@thunk1_Dialogs@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_scrolling@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,11,0x00407260,?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)"
-P3,11,0x00407270,?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
-P3,1,0x00407280,??_Gthunk2_Dialogs@@UAEPAXI@Z,17,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk2_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
-P3,1,0x004072A0,??_Gthunk3_Dialogs@@UAEPAXI@Z,14,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk3_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
-P3,1,0x004072B0,?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,0,missing,missing,"int (__thiscall ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)"
-P3,1,0x004072C0,?on_redraw@thunk3_Dialogs@@QAEXXZ,14,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?on_redraw@thunk3_Dialogs@@QAEXXZ)(Dialogs* this)
+P0,1000411,0x00407100,??_GDialogs@@UAEPAXI@Z,65,0,4,source_complete,ui_dependency,recover_dialogs_scalar_delete,1,missing,exact,"void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)"
 P3,220,0x004072D0,?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z,120,0,2,unrecovered,,,2,exact,exact,
 P3,3621,0x00407350,??0AlphaSave@@QAE@XZ,304,3,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0AlphaSave@@QAE@XZ)(AlphaSave* this)
 P3,4121,0x00407410,?init@AlphaSave@@QAEXXZ,1291,3,11,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@AlphaSave@@QAEXXZ)(AlphaSave* this)
@@ -246,23 +211,7 @@ P3,2521,0x00421400,??1PopMenu@@QAE@XZ,803,1,15,unrecovered,,,2,exact,entry_range
 P3,220,0x00421640,??_GPopMenu@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,
 P3,3020,0x004216F0,sub_4216f0,284,3,0,unrecovered,,,2,exact,exact,
 P3,0,0x00421810,??3BaseWin@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
-P3,1,0x00421820,??_Gthunk1_MapWin@@UAEPAXI@Z,8,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk1_MapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)"
-P3,311,0x00421830,??_GMapWin@@UAEPAXI@Z,54,0,3,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GMapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)"
-P3,11,0x00421870,?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x00421880,?on_redraw@thunk1_MapWin@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_redraw@thunk1_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x00421890,?on_resize@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_resize@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x004218A0,?on_sys_close@thunk1_MapWin@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_sys_close@thunk1_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x004218B0,?on_mouse_move@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x004218C0,?on_left_click@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x004218D0,?on_left_down@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x004218E0,?on_left_up@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x004218F0,?on_right_click@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x00421900,?on_right_down@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x00421910,?on_left_double_click@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x00421920,?on_nc_left_down@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_left_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x00421930,?on_button_clicked@thunk1_MapWin@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_button_clicked@thunk1_MapWin@@QAEXH@Z)(MapWin* this, int)"
-P3,11,0x00421940,?on_nc_hittest@thunk1_MapWin@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_hittest@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,1,0x00421950,??_Gthunk2_MapWin@@UAEPAXI@Z,17,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk2_MapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)"
+P0,1000311,0x00421830,??_GMapWin@@UAEPAXI@Z,54,0,3,original_dependency,ui_dependency,recover_map_win_scalar_delete,1,missing,exact,"void* (__thiscall ??_GMapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)"
 P3,0,0x00421970,??3ProdPicker@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x00421980,PopMenu::delete1,11,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x00421990,PopMenu::delete2,11,0,0,unrecovered,,,0,missing,missing,
@@ -812,21 +761,26 @@ P0,1017120,0x0046AEF0,?draw_radius@@YAXHHHH@Z,72,17,1,original_dependency,game_s
 P2,7120,0x0046AF90,?draw_tile_fixup@@YAXHHHH@Z,161,7,1,unrecovered,,,2,exact,exact,
 P3,1120,0x0046B040,?draw_tile_fixup@@YAXHHHHHH@Z,242,1,1,unrecovered,,,2,exact,exact,
 P0,1068120,0x0046B190,?draw_map@@YAXH@Z,58,68,1,original_dependency,game_service,recover_map_render,2,exact,exact,
-P3,111,0x0046B1D0,?on_redraw@MapWin@@QAEXXZ,24,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
+P0,1000111,0x0046B1D0,?on_redraw@MapWin@@QAEXXZ,24,0,1,original_dependency,ui_dependency,recover_map_win_on_redraw,1,missing,exact,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
 P1,22521,0x0046B1F0,?set_center@MapWin@@QAEXHHH@Z,275,22,5,unrecovered,,,2,exact,exact,"void (__thiscall ?set_center@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"
 P2,9221,0x0046B310,?focus@MapWin@@QAEHHH@Z,508,9,2,unrecovered,,,2,exact,exact,"int (__thiscall ?focus@MapWin@@QAEHHH@Z)(MapWin* this, int, int)"
 P3,5221,0x0046B510,?editor@MapWin@@QAEXHHH@Z,2751,4,12,unrecovered,,,2,exact,exact,"void (__thiscall ?editor@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"
 P3,311,0x0046C020,?UNK4@MapWin@@QAEXHH@Z,169,0,3,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK4@MapWin@@QAEXHH@Z)(MapWin* this, int xCoord, int yCoord)"
 P3,6521,0x0046C0D0,?right_menu@MapWin@@QAEXHHHH@Z,5271,1,55,unrecovered,,,2,exact,entry_range,"void (__thiscall ?right_menu@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)"
 P0,1007921,0x0046D5D0,?click@MapWin@@QAEXHHH@Z,6865,2,59,original_dependency,ui_dependency,recover_map_win_click,2,exact,start_only,"void (__thiscall ?click@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)"
-P3,121,0x0046EC10,?on_right_down@MapWin@@QAEXHH@Z,273,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,921,0x0046ED30,?on_left_down@MapWin@@QAEXHH@Z,689,0,9,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,1921,0x0046F000,?on_mouse_move@MapWin@@QAEXHH@Z,1617,0,19,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,221,0x0046F660,?on_nc_hittest@MapWin@@QAEXHH@Z,153,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_nc_hittest@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,121,0x0046F700,?on_nc_left_down@MapWin@@QAEXHH@Z,384,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,211,0x0046F880,?on_sys_close@MapWin@@QAEXXZ,64,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?on_sys_close@MapWin@@QAEXXZ)(MapWin* this)
-P3,821,0x0046F8C0,?on_button_clicked@MapWin@@QAEXH@Z,294,0,8,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@MapWin@@QAEXH@Z)(MapWin* this, int)"
-P3,111,0x0046FA00,?on_resize@MapWin@@QAEXHH@Z,26,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000021,0x0046EB90,?on_lose_mouse_capture@MapWin@@QAEXXZ,5,0,0,original_dependency,ui_dependency,recover_map_win_on_lose_mouse_capture,2,exact,exact,void (__thiscall ?on_lose_mouse_capture@MapWin@@QAEXXZ)(MapWin* this)
+P0,1000121,0x0046EBA0,?on_left_click@MapWin@@QAEXHH@Z,37,0,1,source_complete,ui_dependency,recover_map_win_on_left_click,2,exact,exact,"void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000011,0x0046EBD0,?on_left_double_click@MapWin@@QAEXHH@Z,3,0,0,source_complete,ui_dependency,recover_map_win_on_left_double_click,1,exact,missing,"void (__thiscall ?on_left_double_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000121,0x0046EBE0,?on_right_click@MapWin@@QAEXHH@Z,37,0,1,source_complete,ui_dependency,recover_map_win_on_right_click,2,exact,exact,"void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000121,0x0046EC10,?on_right_down@MapWin@@QAEXHH@Z,273,0,1,original_dependency,ui_dependency,recover_map_win_on_right_down,2,exact,exact,"void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000921,0x0046ED30,?on_left_down@MapWin@@QAEXHH@Z,689,0,9,original_dependency,ui_dependency,recover_map_win_on_left_down,2,exact,exact,"void (__thiscall ?on_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000011,0x0046EFF0,?on_left_up@MapWin@@QAEXHH@Z,3,0,0,source_complete,ui_dependency,recover_map_win_on_left_up,1,exact,missing,"void (__thiscall ?on_left_up@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1001921,0x0046F000,?on_mouse_move@MapWin@@QAEXHH@Z,1617,0,19,original_dependency,ui_dependency,recover_map_win_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000221,0x0046F660,?on_nc_hittest@MapWin@@QAEXHH@Z,153,0,2,original_dependency,ui_dependency,recover_map_win_on_nc_hittest,2,exact,exact,"void (__thiscall ?on_nc_hittest@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000121,0x0046F700,?on_nc_left_down@MapWin@@QAEXHH@Z,384,0,1,original_dependency,ui_dependency,recover_map_win_on_nc_left_down,2,exact,exact,"void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000211,0x0046F880,?on_sys_close@MapWin@@QAEXXZ,64,0,2,original_dependency,ui_dependency,recover_map_win_on_sys_close,1,missing,exact,void (__thiscall ?on_sys_close@MapWin@@QAEXXZ)(MapWin* this)
+P0,1000821,0x0046F8C0,?on_button_clicked@MapWin@@QAEXH@Z,294,0,8,original_dependency,ui_dependency,recover_map_win_on_button_clicked,2,exact,exact,"void (__thiscall ?on_button_clicked@MapWin@@QAEXH@Z)(MapWin* this, int)"
+P0,1000111,0x0046FA00,?on_resize@MapWin@@QAEXHH@Z,26,0,1,original_dependency,ui_dependency,recover_map_win_on_resize,1,missing,exact,"void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P3,1021,0x0046FA20,?UNK5@MapWin@@QAEXH@Z,240,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK5@MapWin@@QAEXH@Z)(MapWin* this, int)"
 P3,311,0x0046FB20,?standard_caption@MapWin@@QAEXXZ,91,0,3,unrecovered,,,1,missing,exact,void (__thiscall ?standard_caption@MapWin@@QAEXXZ)(MapWin* this)
 P3,2021,0x0046FB90,?clear_alt@MapWin@@QAEXHHH@Z,153,2,0,unrecovered,,,2,exact,exact,"void (__thiscall ?clear_alt@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)"
@@ -1022,7 +976,7 @@ P3,210,0x0048AE00,??__Eg_PLANWIN@@YAXXZ,24,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x0048AE20,??__Fg_PLANWIN@@YAXXZ,20,0,1,unrecovered,,,1,exact,missing,
 P3,1021,0x0048AE40,?add_line@PlanWin@@QAEXHHHHH@Z,80,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?add_line@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int, int, int, int, int)"
 P3,4021,0x0048AE90,?add_line@PlanWin@@QAEXHHH@Z,132,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?add_line@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)"
-P2,6621,0x0048AF30,?on_redraw@PlanWin@@QAEXXZ,1159,6,6,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@PlanWin@@QAEXXZ)(PlanWin* this)
+P0,1006621,0x0048AF30,?on_redraw@PlanWin@@QAEXXZ,1159,6,6,original_dependency,ui_dependency,recover_plan_win_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@PlanWin@@QAEXXZ)(PlanWin* this)
 P3,4321,0x0048B3F0,?back_redraw@PlanWin@@QAEXXZ,85,4,3,unrecovered,,,2,exact,exact,void (__thiscall ?back_redraw@PlanWin@@QAEXXZ)(PlanWin* this)
 P3,1121,0x0048B450,?find_view@PlanWin@@QAEXHHHHHHHH@Z,473,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?find_view@PlanWin@@QAEXHHHHHHHH@Z)(PlanWin* this, int, int, int, int, int, int, int, int)"
 P3,1421,0x0048B630,?opticenter@PlanWin@@QAEXHHHHH@Z,678,1,4,unrecovered,,,2,exact,exact,"void (__thiscall ?opticenter@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int, int, int, int, int)"
@@ -1033,22 +987,7 @@ P3,3321,0x0048BC60,?init@PlanWin@@QAEXPAD@Z,101,3,3,unrecovered,,,2,exact,exact,
 P3,1321,0x0048BCD0,??0PlanWin@@QAE@H@Z,227,1,3,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)"
 P3,2521,0x0048BD80,??1PlanWin@@QAE@XZ,548,2,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
 P3,0,0x0048BF10,??3PlanWin@@SAXPAXI@Z,8,0,0,unrecovered,,,0,missing,missing,
-P3,311,0x0048BF20,??_GPlanWin@@UAEPAXI@Z,54,0,3,unrecovered,,,1,missing,exact,"void* (__thiscall ??_GPlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)"
-P3,11,0x0048BF60,?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x0048BF70,?on_redraw@thunk1_PlanWin@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk1_PlanWin@@QAEXXZ)(PlanWin* this)
-P3,11,0x0048BF80,?on_resize@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_resize@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048BF90,?on_sys_close@thunk5_MapWin@@QAEXXZ,14,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_sys_close@thunk5_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x0048BFA0,?on_mouse_move@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048BFB0,?on_left_click@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048BFC0,?on_left_down@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048BFD0,?on_left_up@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048BFE0,?on_right_click@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048BFF0,?on_right_down@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048C000,?on_left_double_click@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048C010,?on_nc_left_down@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_left_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0048C020,?on_button_clicked@thunk5_MapWin@@QAEXH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_button_clicked@thunk5_MapWin@@QAEXH@Z)(MapWin* this, int)"
-P3,11,0x0048C030,?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,1,0x0048C040,??_Gthunk2_PlanWin@@UAEPAXI@Z,17,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk2_PlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)"
+P0,1000311,0x0048BF20,??_GPlanWin@@UAEPAXI@Z,54,0,3,original_dependency,ui_dependency,recover_plan_win_scalar_delete,1,missing,exact,"void* (__thiscall ??_GPlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)"
 P2,5321,0x0048C060,?parse_it@@YAXPADPBD@Z,57,5,3,unrecovered,,,2,exact,exact,"void (__cdecl ?parse_it@@YAXPADPBD@Z)(int8* srcFileID, int8* sectionID)"
 P0,1067620,0x0048C0A0,?popp@@YAHPADPBDHPBDP6AHXZ@Z,726,66,16,original_dependency,game_service,recover_script_popup,2,exact,entry_range,
 P3,2320,0x0048C320,?popt@@YAHPADPBDHPADH@Z,51,2,3,unrecovered,,,2,exact,exact,
@@ -1759,11 +1698,11 @@ P3,1820,0x0050F170,?go_timer@@YAXH@Z,596,1,8,unrecovered,,,2,exact,exact,
 P3,1721,0x0050F460,??0Console@@QAE@H@Z,616,1,7,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)"
 P3,100,0x0050F630,sub_50f630,16,0,1,unrecovered,,,0,missing,missing,
 P3,10,0x0050F640,nullsub_185,16,0,0,unrecovered,,,1,start_only,missing,
-P3,121,0x0050F680,?on_nc_hittest@Console@@QAEXHH@Z,721,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,121,0x0050F960,?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z,424,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)"
-P3,321,0x0050FB10,?on_nc_left_down@Console@@QAEXHH@Z,857,0,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,221,0x0050FE70,?on_nc_left_up@Console@@QAEXHH@Z,666,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_nc_left_up@Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,421,0x00510110,?on_nc_mouse_move@Console@@QAEXHH@Z,751,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)"
+P0,1000121,0x0050F680,?on_nc_hittest@Console@@QAEXHH@Z,721,0,1,original_dependency,ui_dependency,recover_console_on_nc_hittest,2,exact,exact,"void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)"
+P0,1000121,0x0050F960,?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z,424,0,1,original_dependency,ui_dependency,recover_console_on_post_redraw_nc_buffer,2,exact,exact,"void (__thiscall ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)"
+P0,1000321,0x0050FB10,?on_nc_left_down@Console@@QAEXHH@Z,857,0,3,original_dependency,ui_dependency,recover_console_on_nc_left_down,2,exact,exact,"void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)"
+P0,1000221,0x0050FE70,?on_nc_left_up@Console@@QAEXHH@Z,666,0,2,original_dependency,ui_dependency,recover_console_on_nc_left_up,2,exact,exact,"void (__thiscall ?on_nc_left_up@Console@@QAEXHH@Z)(Console* this, int, int)"
+P0,1000421,0x00510110,?on_nc_mouse_move@Console@@QAEXHH@Z,751,0,4,original_dependency,ui_dependency,recover_console_on_nc_mouse_move,2,exact,exact,"void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)"
 P3,211,0x00510400,?cursor_on@Console@@QAEXH@Z,144,0,2,unrecovered,,,1,missing,start_only,"void (__thiscall ?cursor_on@Console@@QAEXH@Z)(Console* this, int)"
 P2,5221,0x00510490,?cursor_on@Console@@QAEXHH@Z,141,5,2,unrecovered,,,2,exact,exact,"void (__thiscall ?cursor_on@Console@@QAEXHH@Z)(Console* this, int, int)"
 P3,1321,0x00510520,?cursor_off@Console@@QAEXXZ,158,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?cursor_off@Console@@QAEXXZ)(Console* this)
@@ -1818,13 +1757,13 @@ P3,911,0x00516DA0,?governor_directives@Console@@QAEXXZ,659,0,9,unrecovered,,,1,m
 P3,3321,0x00517060,?use_time_bonus@Console@@QAEXXZ,275,3,3,unrecovered,,,2,exact,exact,void (__thiscall ?use_time_bonus@Console@@QAEXXZ)(Console* this)
 P3,201,0x00517180,?show_version@Console@@QAEXXZ,65,0,2,unrecovered,,,0,missing,missing,void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
 P3,3421,0x005171D0,?veh_key@Console@@QAEXHHH@Z,1466,1,24,unrecovered,,,2,exact,exact,"void (__thiscall ?veh_key@Console@@QAEXHHH@Z)(Console* this, int, int, int)"
-P3,19621,0x005178C0,?on_key_click@Console@@QAEHHH@Z,15809,2,176,unrecovered,,,2,exact,entry_range,"int (__thiscall ?on_key_click@Console@@QAEHHH@Z)(Console* this, int, int)"
+P0,1019621,0x005178C0,?on_key_click@Console@@QAEHHH@Z,15809,2,176,original_dependency,ui_dependency,recover_console_on_key_click,2,exact,entry_range,"int (__thiscall ?on_key_click@Console@@QAEHHH@Z)(Console* this, int, int)"
 P3,2921,0x0051BBA0,?load_proc@Console@@QAEXHH@Z,194,2,9,unrecovered,,,2,exact,exact,"void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)"
 P3,15821,0x0051BC70,?menu_proc@Console@@QAEXH@Z,5582,1,148,unrecovered,,,2,exact,exact,"void (__thiscall ?menu_proc@Console@@QAEXH@Z)(Console* this, int)"
 P3,120,0x0051D720,?menu_daemon@Console@@QAAXH@Z,19,0,1,unrecovered,,,2,exact,exact,
 P3,101,0x0051D740,?menu_update@Console@@QAEXXZ,19,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
 P3,0,0x0051D760,sub_51d760,85,0,0,unrecovered,,,0,missing,missing,
-P3,21,0x0051D7C0,?on_sys_close@Console@@QAEXXZ,11,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
+P0,1000021,0x0051D7C0,?on_sys_close@Console@@QAEXXZ,11,0,0,original_dependency,ui_dependency,recover_console_on_sys_close,2,exact,exact,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
 P3,3421,0x0051D7D0,?close@Console@@QAEXXZ,190,3,4,unrecovered,,,2,exact,exact,void (__thiscall ?close@Console@@QAEXXZ)(Console* this)
 P3,1821,0x0051D890,?init@Console@@QAEXH@Z,319,1,8,unrecovered,,,2,exact,exact,"void (__thiscall ?init@Console@@QAEXH@Z)(Console* this, int)"
 P3,10,0x0051D9D0,nullsub_187,1,0,0,unrecovered,,,1,exact,missing,
@@ -1834,27 +1773,7 @@ P3,1421,0x0051DC10,??1AlphaMenu@@QAE@XZ,164,1,4,unrecovered,,,2,exact,entry_rang
 P3,221,0x0051DC90,??_GAlphaMenu@@UAEPAXI@Z,33,0,2,unrecovered,,,2,exact,exact,"void* (__thiscall ??_GAlphaMenu@@UAEPAXI@Z)(AlphaMenu* this, unsigned int)"
 P3,1020,0x0051DCC0,sub_51dcc0,54,1,0,unrecovered,,,2,exact,exact,
 P3,1220,0x0051DD00,sub_51dd00,224,1,2,unrecovered,,,2,exact,exact,
-P3,11,0x0051DDE0,??_Gthunk1_Console@@UAEPAXI@Z,8,0,0,unrecovered,,,1,start_only,missing,"void* (__thiscall ??_Gthunk1_Console@@UAEPAXI@Z)(Console* this, unsigned int)"
-P3,311,0x0051DDF0,??_GConsole@@UAEPAXI@Z,54,0,3,unrecovered,,,1,containing,exact,"void* (__thiscall ??_GConsole@@UAEPAXI@Z)(Console* this, unsigned int)"
-P3,11,0x0051DE30,?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x0051DE40,?on_redraw@thunk4_MapWin@@QAEXXZ,14,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?on_redraw@thunk4_MapWin@@QAEXXZ)(MapWin* this)
-P3,11,0x0051DE50,?on_resize@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DE60,?on_sys_close@thunk1_Console@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_sys_close@thunk1_Console@@QAEXXZ)(Console* this)
-P3,11,0x0051DE70,?on_mouse_move@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DE80,?on_left_click@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DE90,?on_left_down@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DEA0,?on_left_up@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DEB0,?on_right_click@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DEC0,?on_right_down@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_down@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DED0,?on_key_click@thunk1_Console@@QAEHHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_click@thunk1_Console@@QAEHHH@Z)(Console* this, int, int)"
-P3,11,0x0051DEE0,?on_left_double_click@thunk4_MapWin@@QAEXHH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P3,11,0x0051DEF0,?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,11,0x0051DF00,?on_nc_left_down@thunk1_Console@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_left_down@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,11,0x0051DF10,?on_nc_left_up@thunk1_Console@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_left_up@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,11,0x0051DF20,?on_button_clicked@thunk4_MapWin@@QAEXH@Z,14,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_button_clicked@thunk4_MapWin@@QAEXH@Z)(MapWin* this, int)"
-P3,11,0x0051DF30,?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)"
-P3,11,0x0051DF40,?on_nc_hittest@thunk1_Console@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_hittest@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)"
-P3,1,0x0051DF50,??_Gthunk2_Console@@UAEPAXI@Z,17,0,0,unrecovered,,,0,missing,missing,"void* (__thiscall ??_Gthunk2_Console@@UAEPAXI@Z)(Console* this, unsigned int)"
+P0,1000311,0x0051DDF0,??_GConsole@@UAEPAXI@Z,54,0,3,original_dependency,ui_dependency,recover_console_scalar_delete,1,containing,exact,"void* (__thiscall ??_GConsole@@UAEPAXI@Z)(Console* this, unsigned int)"
 P3,0,0x0051DF70,??3AlphaMenu@@SAXPAXI@Z,11,0,0,unrecovered,,,0,missing,missing,
 P3,210,0x0051DF80,sub_51df80,36,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x0051DFB0,sub_51dfb0,20,0,1,unrecovered,,,1,exact,missing,
@@ -3002,62 +2921,49 @@ P2,11221,0x00609DB0,??0ListBox@@QAE@H@Z,299,11,2,unrecovered,,,2,exact,entry_ran
 P2,17121,0x00609FA0,?set_selected_id@ListBox@@QAEXH@Z,115,17,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P1,21421,0x0060A020,?set_selected_pos@ListBox@@QAEXHH@Z,445,21,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_pos@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
 P3,2621,0x0060A1E0,?calculate_dimensions@ListBox@@QAEHXZ,1163,2,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@ListBox@@QAEHXZ)(ListBox* this)
-P2,14221,0x0060A670,?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z,933,13,12,unrecovered,,,2,exact,exact,"int (__thiscall ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)"
-P3,11,0x0060AA20,?on_right_down@ListBox@@QAEXHH@Z,50,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?on_right_down@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,1321,0x0060AA60,?on_left_down@ListBox@@QAEXHH@Z,1316,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@ListBox@@QAEXHH@Z)(ListBox* this, int xCoord, int yCoord)"
-P3,1821,0x0060AF90,?on_key_down@ListBox@@QAEXH@Z,1349,1,8,unrecovered,,,2,exact,exact,"void (__thiscall ?on_key_down@ListBox@@QAEXH@Z)(ListBox* this, int)"
+P0,1014221,0x0060A670,?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z,933,13,12,original_dependency,ui_dependency,recover_list_box_attach,2,exact,exact,"int (__thiscall ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)"
+P0,1000011,0x0060AA20,?on_right_down@ListBox@@QAEXHH@Z,50,0,0,original_dependency,ui_dependency,recover_list_box_on_right_down,1,missing,exact,"void (__thiscall ?on_right_down@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1001321,0x0060AA60,?on_left_down@ListBox@@QAEXHH@Z,1316,1,3,original_dependency,ui_dependency,recover_list_box_on_left_down,2,exact,exact,"void (__thiscall ?on_left_down@ListBox@@QAEXHH@Z)(ListBox* this, int xCoord, int yCoord)"
+P0,1001821,0x0060AF90,?on_key_down@ListBox@@QAEXH@Z,1349,1,8,original_dependency,ui_dependency,recover_list_box_on_key_down,2,exact,exact,"void (__thiscall ?on_key_down@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P3,5721,0x0060B530,?draw_item@ListBox@@QAEXH@Z,3240,4,17,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_item@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P3,211,0x0060C1E0,?UNK1@ListBox@@QAEXH@Z,351,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?UNK1@ListBox@@QAEXH@Z)(ListBox* this, int)"
-P3,621,0x0060C350,?on_redraw@ListBox@@QAEXXZ,628,0,6,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@ListBox@@QAEXXZ)(ListBox* this)
-P0,1002321,0x0060C5D0,?on_scrolling@ListBox@@QAEXHH@Z,193,2,3,original_dependency,ui_dependency,recover_dialogslistboxonscrolling,2,exact,exact,"void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060C6A0,?on_scrolled@ListBox@@QAEXHH@Z,33,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?on_scrolled@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060C6D0,?on_right_double_click@ListBox@@QAEXHH@Z,50,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?on_right_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,1121,0x0060C710,?on_left_double_click@ListBox@@QAEXHH@Z,171,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1000621,0x0060C350,?on_redraw@ListBox@@QAEXXZ,628,0,6,original_dependency,ui_dependency,recover_list_box_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@ListBox@@QAEXXZ)(ListBox* this)
+P0,1002321,0x0060C5D0,?on_scrolling@ListBox@@QAEXHH@Z,193,2,3,original_dependency,ui_dependency,recover_dialogslistboxonscrolling;recover_list_box_on_scrolling,2,exact,exact,"void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1000011,0x0060C6A0,?on_scrolled@ListBox@@QAEXHH@Z,33,0,0,original_dependency,ui_dependency,recover_list_box_on_scrolled,1,missing,exact,"void (__thiscall ?on_scrolled@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1000011,0x0060C6D0,?on_right_double_click@ListBox@@QAEXHH@Z,50,0,0,original_dependency,ui_dependency,recover_list_box_on_right_double_click,1,missing,exact,"void (__thiscall ?on_right_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1001121,0x0060C710,?on_left_double_click@ListBox@@QAEXHH@Z,171,1,1,original_dependency,ui_dependency,recover_list_box_on_left_double_click,2,exact,exact,"void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1001021,0x0060C7C0,?on_dialog_focus@ListBox@@QAEXH@Z,3,1,0,source_complete,ui_dependency,recover_list_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P3,2221,0x0060C7D0,?UNK2@ListBox@@QAEHPAD@Z,336,2,2,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK2@ListBox@@QAEHPAD@Z)(ListBox* this, int8*)"
 P0,1032221,0x0060C920,?item@ListBox@@QAEHPADH@Z,137,32,2,original_dependency,ui_dependency,recover_list_box_item,2,exact,exact,"int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)"
 P2,11021,0x0060C9B0,?update_changes@ListBox@@QAEHXZ,435,10,10,unrecovered,,,2,exact,exact,int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
-P0,1001221,0x0060CB70,?on_mousewheel@ListBox@@QAEXH@Z,74,1,2,original_dependency,ui_dependency,recover_dialogslistboxonmousewheel,2,exact,exact,"void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)"
-P3,1321,0x0060CBC0,?on_mouse_move@ListBox@@QAEXHH@Z,587,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,1021,0x0060CE10,?on_mouse_leave@ListBox@@QAEXHH@Z,40,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1001221,0x0060CB70,?on_mousewheel@ListBox@@QAEXH@Z,74,1,2,original_dependency,ui_dependency,recover_dialogslistboxonmousewheel;recover_list_box_on_mousewheel,2,exact,exact,"void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)"
+P0,1001321,0x0060CBC0,?on_mouse_move@ListBox@@QAEXHH@Z,587,1,3,original_dependency,ui_dependency,recover_list_box_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1001021,0x0060CE10,?on_mouse_leave@ListBox@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_list_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
 P3,400,0x0060CE40,sub_60ce40,135,0,4,unrecovered,,,0,missing,missing,
 P3,10,0x0060CED0,sub_60ced0,49,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0060CF10,sub_60cf10,61,0,0,unrecovered,,,1,exact,missing,
-P3,11,0x0060CF50,?on_redraw@thunk1_ListBox@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk1_ListBox@@QAEXXZ)(ListBox* this)
-P3,11,0x0060CF60,?on_mousewheel@thunk1_ListBox@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mousewheel@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)"
-P3,11,0x0060CF70,?on_mouse_move@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CF80,?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CF90,?on_left_down@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CFA0,?on_right_down@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_right_down@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CFB0,?on_key_down@thunk1_ListBox@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_key_down@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)"
-P3,11,0x0060CFC0,?on_left_double_click@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CFD0,?on_right_double_click@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_right_double_click@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CFE0,?on_scrolled@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,entry_range,missing,"void (__thiscall ?on_scrolled@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060CFF0,?on_scrolling@thunk1_ListBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_scrolling@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P3,11,0x0060D000,?on_dialog_focus@thunk1_ListBox@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)"
 P3,400,0x0060D010,sub_60d010,144,0,4,unrecovered,,,0,missing,missing,
 P3,400,0x0060D030,sub_60d030,141,0,4,unrecovered,,,0,missing,missing,
-P3,11,0x0060D040,?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)"
-P3,11,0x0060D050,?on_redraw@thunk3_ListBox@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_ListBox@@QAEXXZ)(ListBox* this)
 P3,10,0x0060D080,??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0060D0C0,??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,1221,0x0060D0E0,??0RadioButton@@QAE@H@Z,230,1,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)"
-P3,2621,0x0060D1F0,?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z,391,2,6,unrecovered,,,2,exact,exact,"int (__thiscall ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)"
+P0,1002621,0x0060D1F0,?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z,391,2,6,original_dependency,ui_dependency,recover_radio_button_attach,2,exact,exact,"int (__thiscall ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)"
 P3,1621,0x0060D380,?calculate_dimensions@RadioButton@@QAEHXZ,965,1,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@RadioButton@@QAEHXZ)(RadioButton* this)
 P3,4321,0x0060D750,?draw_item@RadioButton@@QAEXHH@Z,1720,3,13,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_item@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,1421,0x0060DE10,?on_left_down@RadioButton@@QAEXHH@Z,523,1,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@RadioButton@@QAEXHH@Z)(RadioButton* this, int xCoord, int yCoord)"
-P3,1221,0x0060E020,?on_key_down@RadioButton@@QAEHH@Z,355,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_down@RadioButton@@QAEHH@Z)(RadioButton* this, int)"
-P3,1121,0x0060E1E0,?on_left_double_click@RadioButton@@QAEXHH@Z,55,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,321,0x0060E220,?on_redraw@RadioButton@@QAEXXZ,222,0,3,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@RadioButton@@QAEXXZ)(RadioButton* this)
-P3,1021,0x0060E300,?on_dialog_focus@RadioButton@@QAEXH@Z,23,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)"
-P3,1221,0x0060E320,?on_mouse_move@RadioButton@@QAEXHH@Z,372,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P3,1021,0x0060E4A0,?on_mouse_leave@RadioButton@@QAEXHH@Z,40,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
+P0,1001421,0x0060DE10,?on_left_down@RadioButton@@QAEXHH@Z,523,1,4,original_dependency,ui_dependency,recover_radio_button_on_left_down,2,exact,exact,"void (__thiscall ?on_left_down@RadioButton@@QAEXHH@Z)(RadioButton* this, int xCoord, int yCoord)"
+P0,1001221,0x0060E020,?on_key_down@RadioButton@@QAEHH@Z,355,1,2,original_dependency,ui_dependency,recover_radio_button_on_key_down,2,exact,exact,"int (__thiscall ?on_key_down@RadioButton@@QAEHH@Z)(RadioButton* this, int)"
+P0,1001121,0x0060E1E0,?on_left_double_click@RadioButton@@QAEXHH@Z,55,1,1,original_dependency,ui_dependency,recover_radio_button_on_left_double_click,2,exact,exact,"void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
+P0,1000321,0x0060E220,?on_redraw@RadioButton@@QAEXXZ,222,0,3,original_dependency,ui_dependency,recover_radio_button_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@RadioButton@@QAEXXZ)(RadioButton* this)
+P0,1001021,0x0060E300,?on_dialog_focus@RadioButton@@QAEXH@Z,23,1,0,original_dependency,ui_dependency,recover_radio_button_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)"
+P0,1001221,0x0060E320,?on_mouse_move@RadioButton@@QAEXHH@Z,372,1,2,original_dependency,ui_dependency,recover_radio_button_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
+P0,1001021,0x0060E4A0,?on_mouse_leave@RadioButton@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_radio_button_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
 P3,1520,0x0060E4D0,?init_class@RadioButton@@QAAHXZ,263,1,5,unrecovered,,,2,exact,entry_range,
 P3,1120,0x0060E5D0,?close_class@RadioButton@@QAAXXZ,20,1,1,unrecovered,,,2,exact,exact,
 P3,10,0x0060E610,??__Fg_CHECKBOX_SPRITE_1@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0060E650,??__Fg_CHECKBOX_SPRITE_2@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P3,4221,0x0060E670,??0CheckBox@@QAE@H@Z,233,4,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)"
 P0,1024221,0x0060E740,??1CheckBox@@QAE@XZ,128,24,2,original_dependency,ui_dependency,recover_check_box_destructor,2,exact,exact,void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
-P3,2621,0x0060E800,?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z,383,2,6,unrecovered,,,2,exact,exact,"int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
+P0,1002621,0x0060E800,?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z,383,2,6,original_dependency,ui_dependency,recover_check_box_attach,2,exact,exact,"int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
 P3,2121,0x0060E980,?item@CheckBox@@QAEHPADHH@Z,141,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)"
 P3,1021,0x0060EA10,?flip_state_id@CheckBox@@QAEXH@Z,312,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?flip_state_id@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
 P3,1,0x0060EB50,?UNK1@CheckBox@@QAEXH@Z,45,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?UNK1@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
@@ -3068,27 +2974,18 @@ P3,11,0x0060ECC0,?UNK2@CheckBox@@QAEHH@Z,32,0,0,unrecovered,,,1,exact,missing,"i
 P0,1001021,0x0060ECE0,?set_state_flag@CheckBox@@QAEXJ@Z,35,1,0,original_dependency,ui_dependency,recover_check_box_set_state_flag,2,exact,exact,"void (__thiscall ?set_state_flag@CheckBox@@QAEXJ@Z)(CheckBox* this, int)"
 P3,1621,0x0060ED10,?calculate_dimensions@CheckBox@@QAEHXZ,795,1,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@CheckBox@@QAEHXZ)(CheckBox* this)
 P3,4321,0x0060F030,?draw_item@CheckBox@@QAEXHHH@Z,1743,3,13,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_item@CheckBox@@QAEXHHH@Z)(CheckBox* this, int, int, int)"
-P3,1621,0x0060F700,?on_left_down@CheckBox@@QAEXHH@Z,432,1,6,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@CheckBox@@QAEXHH@Z)(CheckBox* this, int xCoord, int yCoord)"
-P3,1221,0x0060F8B0,?on_key_down@CheckBox@@QAEHH@Z,360,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_down@CheckBox@@QAEHH@Z)(CheckBox* this, int)"
-P3,1021,0x0060FA80,?on_left_double_click@CheckBox@@QAEXHH@Z,45,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_double_click@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,221,0x0060FAB0,?on_redraw@CheckBox@@QAEXXZ,221,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@CheckBox@@QAEXXZ)(CheckBox* this)
-P3,1021,0x0060FB90,?on_dialog_focus@CheckBox@@QAEXH@Z,23,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
-P3,1021,0x0060FBB0,?on_mouse_move@CheckBox@@QAEXHH@Z,123,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,1021,0x0060FC30,?on_mouse_leave@CheckBox@@QAEXHH@Z,40,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
+P0,1001621,0x0060F700,?on_left_down@CheckBox@@QAEXHH@Z,432,1,6,original_dependency,ui_dependency,recover_check_box_on_left_down,2,exact,exact,"void (__thiscall ?on_left_down@CheckBox@@QAEXHH@Z)(CheckBox* this, int xCoord, int yCoord)"
+P0,1001221,0x0060F8B0,?on_key_down@CheckBox@@QAEHH@Z,360,1,2,original_dependency,ui_dependency,recover_check_box_on_key_down,2,exact,exact,"int (__thiscall ?on_key_down@CheckBox@@QAEHH@Z)(CheckBox* this, int)"
+P0,1001021,0x0060FA80,?on_left_double_click@CheckBox@@QAEXHH@Z,45,1,0,original_dependency,ui_dependency,recover_check_box_on_left_double_click,2,exact,exact,"void (__thiscall ?on_left_double_click@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
+P0,1000221,0x0060FAB0,?on_redraw@CheckBox@@QAEXXZ,221,0,2,original_dependency,ui_dependency,recover_check_box_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@CheckBox@@QAEXXZ)(CheckBox* this)
+P0,1001021,0x0060FB90,?on_dialog_focus@CheckBox@@QAEXH@Z,23,1,0,original_dependency,ui_dependency,recover_check_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
+P0,1001021,0x0060FBB0,?on_mouse_move@CheckBox@@QAEXHH@Z,123,1,0,original_dependency,ui_dependency,recover_check_box_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
+P0,1001021,0x0060FC30,?on_mouse_leave@CheckBox@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_check_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
 P3,1520,0x0060FC60,?init_class@CheckBox@@QAAHXZ,263,1,5,unrecovered,,,2,exact,entry_range,
 P3,1120,0x0060FD60,?close_class@CheckBox@@QAAXXZ,20,1,1,unrecovered,,,2,exact,exact,
 P3,500,0x0060FD80,sub_60fd80,184,0,5,unrecovered,,,0,missing,missing,
-P3,11,0x0060FE40,?on_redraw@thunk1_CheckBox@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk1_CheckBox@@QAEXXZ)(CheckBox* this)
-P3,11,0x0060FE50,?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,11,0x0060FE60,?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,11,0x0060FE70,?on_left_down@thunk1_CheckBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,11,0x0060FE80,?on_key_down@thunk1_CheckBox@@QAEHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_down@thunk1_CheckBox@@QAEHH@Z)(CheckBox* this, int)"
-P3,11,0x0060FE90,?on_left_double_click@thunk1_CheckBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,11,0x0060FEA0,?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z)(CheckBox* this, int)"
 P3,500,0x0060FEB0,sub_60feb0,193,0,5,unrecovered,,,0,missing,missing,
 P3,500,0x0060FED0,sub_60fed0,190,0,5,unrecovered,,,0,missing,missing,
-P3,11,0x0060FEE0,?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
-P3,11,0x0060FEF0,?on_redraw@thunk3_CheckBox@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_CheckBox@@QAEXXZ)(CheckBox* this)
 P3,1821,0x0060FF00,??0SpriteBox@@QAE@H@Z,656,1,8,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)"
 P0,1023321,0x00610120,??1SpriteBox@@QAE@XZ,399,23,3,original_dependency,ui_dependency,recover_sprite_box_destructor,2,exact,entry_range,void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
 P2,8721,0x00610280,?close@SpriteBox@@QAEXXZ,406,8,7,unrecovered,,,2,exact,exact,void (__thiscall ?close@SpriteBox@@QAEXXZ)(SpriteBox* this)
@@ -3098,77 +2995,67 @@ P3,1221,0x00610480,?init@SpriteBox@@QAEHPAURECT@@H@Z,34,1,2,unrecovered,,,2,exac
 P3,1221,0x006104B0,?init@SpriteBox@@QAEHPAUHeap@@@Z,29,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)"
 P3,1221,0x006104D0,?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z,49,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)"
 P3,1221,0x00610510,?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z,34,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z)(SpriteBox* this, RECT*, Heap*)"
-P3,2921,0x00610540,?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z,917,2,9,unrecovered,,,2,exact,exact,"int (__thiscall ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)"
+P0,1002921,0x00610540,?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z,917,2,9,original_dependency,ui_dependency,recover_sprite_box_attach,2,exact,exact,"int (__thiscall ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)"
 P1,22221,0x006108E0,?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z,133,22,2,unrecovered,,,2,exact,exact,"int (__thiscall ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z)(SpriteBox* this, Sprite*, int8*, int)"
 P3,1621,0x00610970,?calculate_dimensions@SpriteBox@@QAEHXZ,730,1,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@SpriteBox@@QAEHXZ)(SpriteBox* this)
 P3,4021,0x00610C50,?draw_item@SpriteBox@@QAEXH@Z,1003,3,10,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_item@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
-P3,1221,0x00611060,?on_left_click@SpriteBox@@QAEXHH@Z,234,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P3,1121,0x00611150,?on_left_down@SpriteBox@@QAEXHH@Z,80,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P0,1001121,0x006111A0,?on_left_up@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonleftup,2,exact,exact,"void (__thiscall ?on_left_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P0,1001121,0x006111F0,?on_right_click@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightclick,2,exact,exact,"void (__thiscall ?on_right_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P0,1001121,0x00611240,?on_right_down@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightdown,2,exact,exact,"void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P0,1001121,0x00611290,?on_right_up@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightup,2,exact,exact,"void (__thiscall ?on_right_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P3,1121,0x006112E0,?on_left_double_click@SpriteBox@@QAEXHH@Z,80,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P0,1001121,0x00611330,?on_right_double_click@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,2,exact,exact,"void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
-P3,221,0x00611380,?on_redraw@SpriteBox@@QAEXXZ,121,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@SpriteBox@@QAEXXZ)(SpriteBox* this)
-P3,1121,0x00611400,?on_key_down@SpriteBox@@QAEHH@Z,384,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_down@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)"
-P3,1021,0x006115E0,?on_dialog_focus@SpriteBox@@QAEXH@Z,32,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
+P0,1001021,0x00611040,?on_mouse_move@SpriteBox@@QAEXHH@Z,3,1,0,source_complete,ui_dependency,recover_sprite_box_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
+P0,1001021,0x00611050,?on_mouse_leave@SpriteBox@@QAEXHH@Z,3,1,0,source_complete,ui_dependency,recover_sprite_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
+P0,1001221,0x00611060,?on_left_click@SpriteBox@@QAEXHH@Z,234,1,2,original_dependency,ui_dependency,recover_sprite_box_on_left_click,2,exact,exact,"void (__thiscall ?on_left_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x00611150,?on_left_down@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_sprite_box_on_left_down,2,exact,exact,"void (__thiscall ?on_left_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x006111A0,?on_left_up@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonleftup;recover_sprite_box_on_left_up,2,exact,exact,"void (__thiscall ?on_left_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x006111F0,?on_right_click@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightclick;recover_sprite_box_on_right_click,2,exact,exact,"void (__thiscall ?on_right_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x00611240,?on_right_down@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightdown;recover_sprite_box_on_right_down,2,exact,exact,"void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x00611290,?on_right_up@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightup;recover_sprite_box_on_right_up,2,exact,exact,"void (__thiscall ?on_right_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x006112E0,?on_left_double_click@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_sprite_box_on_left_double_click,2,exact,exact,"void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1001121,0x00611330,?on_right_double_click@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightdoubleclick;recover_sprite_box_on_right_double_click,2,exact,exact,"void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
+P0,1000221,0x00611380,?on_redraw@SpriteBox@@QAEXXZ,121,0,2,original_dependency,ui_dependency,recover_sprite_box_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@SpriteBox@@QAEXXZ)(SpriteBox* this)
+P0,1001121,0x00611400,?on_key_down@SpriteBox@@QAEHH@Z,384,1,1,original_dependency,ui_dependency,recover_sprite_box_on_key_down,2,exact,exact,"int (__thiscall ?on_key_down@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)"
+P0,1001021,0x006115E0,?on_dialog_focus@SpriteBox@@QAEXH@Z,32,1,0,original_dependency,ui_dependency,recover_sprite_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
 P3,11,0x00611600,?id_to_pos@SpriteBox@@QAEXH@Z,64,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
 P3,1121,0x00611640,?pos_to_id@SpriteBox@@QAEXH@Z,118,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
 P3,200,0x006116E0,sub_6116e0,72,0,2,unrecovered,,,0,missing,missing,
 P3,3020,0x00611730,sub_611730,147,3,0,unrecovered,,,2,exact,exact,
 P3,400,0x006117D0,sub_6117d0,70,0,4,unrecovered,,,0,missing,missing,
-P3,11,0x00611820,?on_redraw@thunk1_SpriteBox@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk1_SpriteBox@@QAEXXZ)(SpriteBox* this)
-P3,11,0x00611830,?on_mouse_move@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x00611840,?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x00611850,?on_left_click@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x00611860,?on_left_down@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x00611870,?on_left_up@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x00611880,?on_right_click@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x00611890,?on_right_down@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_down@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x006118A0,?on_right_up@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_up@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x006118B0,?on_key_down@thunk1_SpriteBox@@QAEHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_down@thunk1_SpriteBox@@QAEHH@Z)(SpriteBox* this, int)"
-P3,11,0x006118C0,?on_left_double_click@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_double_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x006118D0,?on_right_double_click@thunk1_SpriteBox@@QAEXHH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_double_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)"
-P3,11,0x006118E0,?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
 P3,400,0x006118F0,sub_6118f0,79,0,4,unrecovered,,,0,missing,missing,
 P3,400,0x00611910,sub_611910,76,0,4,unrecovered,,,0,missing,missing,
-P3,11,0x00611920,?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)"
-P3,11,0x00611930,?on_redraw@thunk3_SpriteBox@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_SpriteBox@@QAEXXZ)(SpriteBox* this)
 P3,1221,0x00611940,??0EditGroup@@QAE@H@Z,252,1,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0EditGroup@@QAE@H@Z)(EditGroup* this, int)"
 P0,1020121,0x00611A20,??1EditGroup@@QAE@XZ,104,20,1,original_dependency,ui_dependency,recover_edit_group_destructor,2,exact,exact,void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)
 P2,9221,0x00611A90,?close@EditGroup@@QAEXXZ,96,9,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@EditGroup@@QAEXXZ)(EditGroup* this)
-P3,3221,0x00611AF0,?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z,1182,2,12,unrecovered,,,2,exact,entry_range,"int (__thiscall ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z)(EditGroup* this, GraphicWin*, int, int, int)"
+P0,1003221,0x00611AF0,?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z,1182,2,12,original_dependency,ui_dependency,recover_edit_group_attach,2,exact,entry_range,"int (__thiscall ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z)(EditGroup* this, GraphicWin*, int, int, int)"
 P2,7521,0x00611F80,?edit@EditGroup@@QAEHPADPADH@Z,192,7,5,unrecovered,,,2,exact,exact,"int (__thiscall ?edit@EditGroup@@QAEHPADPADH@Z)(EditGroup* this, int8*, int8*, int)"
 P3,101,0x00612080,?append_text@EditGroup@@QAEXPADH@Z,42,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?append_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)"
 P3,1421,0x006120D0,?set_default@EditGroup@@QAEHPADH@Z,116,1,4,unrecovered,,,2,exact,exact,"int (__thiscall ?set_default@EditGroup@@QAEHPADH@Z)(EditGroup* this, int8*, int)"
 P3,1721,0x00612150,?calculate_dimensions@EditGroup@@QAEHXZ,762,1,7,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@EditGroup@@QAEHXZ)(EditGroup* this)
-P3,421,0x00612450,?on_redraw@EditGroup@@QAEXXZ,537,0,4,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@EditGroup@@QAEXXZ)(EditGroup* this)
-P3,1021,0x00612670,?on_dialog_focus@EditGroup@@QAEXH@Z,70,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)"
-P3,11,0x006126C0,?pass_dialog_focus@EditGroup@@QAEXXZ,56,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?pass_dialog_focus@EditGroup@@QAEXXZ)(EditGroup* this)
+P0,1000421,0x00612450,?on_redraw@EditGroup@@QAEXXZ,537,0,4,original_dependency,ui_dependency,recover_edit_group_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@EditGroup@@QAEXXZ)(EditGroup* this)
+P0,1001021,0x00612670,?on_dialog_focus@EditGroup@@QAEXH@Z,70,1,0,original_dependency,ui_dependency,recover_edit_group_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)"
+P0,1000011,0x006126C0,?pass_dialog_focus@EditGroup@@QAEXXZ,56,0,0,original_dependency,ui_dependency,recover_edit_group_pass_dialog_focus,1,missing,exact,void (__thiscall ?pass_dialog_focus@EditGroup@@QAEXXZ)(EditGroup* this)
 P3,0,0x00612700,sub_612700,8,0,0,unrecovered,,,0,missing,missing,
 P3,400,0x00612710,sub_612710,154,0,4,unrecovered,,,0,missing,missing,
-P3,11,0x006127B0,?on_redraw@thunk1_EditGroup@@QAEXXZ,8,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
-P3,11,0x006127C0,?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z,8,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z)(EditGroup* this, int)"
-P3,11,0x006127D0,?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ,8,0,0,unrecovered,,,1,entry_range,missing,void (__thiscall ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
 P3,0,0x006127E0,sub_6127e0,17,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x00612800,sub_612800,14,0,0,unrecovered,,,0,missing,missing,
-P3,11,0x00612810,?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z,8,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z)(EditGroup* this, GraphicWin*, int, int, int)"
-P3,11,0x00612820,?on_redraw@thunk3_EditGroup@@QAEXXZ,14,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@thunk3_EditGroup@@QAEXXZ)(EditGroup* this)
 P3,1721,0x00612830,??0Dialogs@@QAE@H@Z,418,1,7,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)"
 P3,1521,0x00612970,?attach@Dialogs@@QAEHHPAUGraphicWin@@HHH@Z,216,1,5,unrecovered,,,2,exact,exact,"int (__thiscall ?attach@Dialogs@@QAEHHPAUGraphicWin@@HHH@Z)(Dialogs* this, int, GraphicWin*, int, int, int)"
-P3,411,0x00612AE0,?on_mouse_leave@Dialogs@@QAEXHH@Z,120,0,4,unrecovered,,,1,missing,exact,"void (__thiscall ?on_mouse_leave@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,411,0x00612B80,?on_mouse_move@Dialogs@@QAEXHH@Z,120,0,4,unrecovered,,,1,missing,exact,"void (__thiscall ?on_mouse_move@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
-P3,411,0x00612C20,?on_left_down@Dialogs@@QAEXHH@Z,120,0,4,unrecovered,,,1,missing,exact,"void (__thiscall ?on_left_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
-P3,411,0x00612CC0,?on_key_down@Dialogs@@QAEHH@Z,105,0,4,unrecovered,,,1,missing,exact,"int (__thiscall ?on_key_down@Dialogs@@QAEHH@Z)(Dialogs* this, int)"
-P3,411,0x00612D60,?on_left_double_click@Dialogs@@QAEXHH@Z,120,0,4,unrecovered,,,1,missing,exact,"void (__thiscall ?on_left_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
-P3,11,0x00612E00,?on_redraw@Dialogs@@QAEXXZ,77,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?on_redraw@Dialogs@@QAEXXZ)(Dialogs* this)
-P3,111,0x00612E80,?on_left_click@Dialogs@@QAEXHH@Z,48,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
-P3,501,0x00612FE0,?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z,206,0,5,unrecovered,,,0,missing,missing,"int (__thiscall ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)"
-P3,511,0x006130E0,?on_dialog_focus@Dialogs@@QAEXH@Z,116,0,5,unrecovered,,,1,missing,exact,"void (__thiscall ?on_dialog_focus@Dialogs@@QAEXH@Z)(Dialogs* this, int)"
-P3,11,0x00613180,?pass_dialog_focus@Dialogs@@QAEXXZ,117,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?pass_dialog_focus@Dialogs@@QAEXXZ)(Dialogs* this)
-P3,11,0x00613220,?on_scroll_create@Dialogs@@QAEXXZ,52,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?on_scroll_create@Dialogs@@QAEXXZ)(Dialogs* this)
-P3,11,0x00613260,?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z,63,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)"
+P0,1000411,0x00612AE0,?on_mouse_leave@Dialogs@@QAEXHH@Z,120,0,4,original_dependency,ui_dependency,recover_dialogs_on_mouse_leave,1,missing,exact,"void (__thiscall ?on_mouse_leave@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
+P0,1000411,0x00612B80,?on_mouse_move@Dialogs@@QAEXHH@Z,120,0,4,original_dependency,ui_dependency,recover_dialogs_on_mouse_move,1,missing,exact,"void (__thiscall ?on_mouse_move@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
+P0,1000411,0x00612C20,?on_left_down@Dialogs@@QAEXHH@Z,120,0,4,original_dependency,ui_dependency,recover_dialogs_on_left_down,1,missing,exact,"void (__thiscall ?on_left_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000411,0x00612CC0,?on_key_down@Dialogs@@QAEHH@Z,105,0,4,original_dependency,ui_dependency,recover_dialogs_on_key_down,1,missing,exact,"int (__thiscall ?on_key_down@Dialogs@@QAEHH@Z)(Dialogs* this, int)"
+P0,1000411,0x00612D60,?on_left_double_click@Dialogs@@QAEXHH@Z,120,0,4,original_dependency,ui_dependency,recover_dialogs_on_left_double_click,1,missing,exact,"void (__thiscall ?on_left_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000011,0x00612E00,?on_redraw@Dialogs@@QAEXXZ,77,0,0,original_dependency,ui_dependency,recover_dialogs_on_redraw,1,missing,exact,void (__thiscall ?on_redraw@Dialogs@@QAEXXZ)(Dialogs* this)
+P0,1000111,0x00612E80,?on_left_click@Dialogs@@QAEXHH@Z,48,0,1,original_dependency,ui_dependency,recover_dialogs_on_left_click,1,missing,exact,"void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000111,0x00612ED0,?on_right_down@Dialogs@@QAEXHH@Z,30,0,1,source_complete,ui_dependency,recover_dialogs_on_right_down,1,missing,exact,"void (__thiscall ?on_right_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000111,0x00612EF0,?on_right_double_click@Dialogs@@QAEXHH@Z,30,0,1,source_complete,ui_dependency,recover_dialogs_on_right_double_click,1,missing,exact,"void (__thiscall ?on_right_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000111,0x00612F10,?on_left_up@Dialogs@@QAEXHH@Z,37,0,1,source_complete,ui_dependency,recover_dialogs_on_left_up,1,missing,exact,"void (__thiscall ?on_left_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000111,0x00612F40,?on_right_up@Dialogs@@QAEXHH@Z,30,0,1,source_complete,ui_dependency,recover_dialogs_on_right_up,1,missing,exact,"void (__thiscall ?on_right_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000111,0x00612F60,?on_right_click@Dialogs@@QAEXHH@Z,30,0,1,source_complete,ui_dependency,recover_dialogs_on_right_click,1,missing,exact,"void (__thiscall ?on_right_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)"
+P0,1000111,0x00612F80,?on_scrolled@Dialogs@@QAEXHH@Z,32,0,1,source_complete,ui_dependency,recover_dialogs_on_scrolled,1,missing,exact,"void (__thiscall ?on_scrolled@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
+P0,1000111,0x00612FA0,?on_scrolling@Dialogs@@QAEXHH@Z,32,0,1,source_complete,ui_dependency,recover_dialogs_on_scrolling,1,missing,exact,"void (__thiscall ?on_scrolling@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)"
+P0,1000111,0x00612FC0,?on_mousewheel@Dialogs@@QAEXH@Z,27,0,1,source_complete,ui_dependency,recover_dialogs_on_mousewheel,1,missing,exact,"void (__thiscall ?on_mousewheel@Dialogs@@QAEXH@Z)(Dialogs* this, int)"
+P0,1000501,0x00612FE0,?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z,206,0,5,original_dependency,ui_dependency,recover_dialogs_attach,0,missing,missing,"int (__thiscall ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)"
+P0,1000511,0x006130E0,?on_dialog_focus@Dialogs@@QAEXH@Z,116,0,5,original_dependency,ui_dependency,recover_dialogs_on_dialog_focus,1,missing,exact,"void (__thiscall ?on_dialog_focus@Dialogs@@QAEXH@Z)(Dialogs* this, int)"
+P0,1000011,0x00613180,?pass_dialog_focus@Dialogs@@QAEXXZ,117,0,0,original_dependency,ui_dependency,recover_dialogs_pass_dialog_focus,1,missing,exact,void (__thiscall ?pass_dialog_focus@Dialogs@@QAEXXZ)(Dialogs* this)
+P0,1000011,0x00613220,?on_scroll_create@Dialogs@@QAEXXZ,52,0,0,original_dependency,ui_dependency,recover_dialogs_on_scroll_create,1,missing,exact,void (__thiscall ?on_scroll_create@Dialogs@@QAEXXZ)(Dialogs* this)
+P0,1000011,0x00613260,?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z,63,0,0,original_dependency,ui_dependency,recover_dialogs_on_scroll_delete,1,missing,exact,"int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)"
 P3,1021,0x006132A0,?calculate_dimensions@Dialogs@@QAEHXZ,88,1,0,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@Dialogs@@QAEHXZ)(Dialogs* this)
 P3,611,0x00613320,?init@Dialogs@@QAEHHHHHH@Z,210,0,6,unrecovered,,,1,exact,missing,"int (__thiscall ?init@Dialogs@@QAEHHHHHH@Z)(Dialogs* this, int, int, int, int, int)"
 P3,621,0x00613400,?init@Dialogs@@QAEHPAURECT@@H@Z,145,0,6,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialogs@@QAEHPAURECT@@H@Z)(Dialogs* this, RECT*, int)"

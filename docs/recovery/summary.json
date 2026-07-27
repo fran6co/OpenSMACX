@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 98,
-      "source_complete": 1902,
+      "original_dependency": 169,
+      "source_complete": 2032,
       "source_in_progress": 5,
-      "thunk": 30,
-      "unrecovered": 3638
+      "thunk": 29,
+      "unrecovered": 3438
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,17 +1317,863 @@
     ]
   },
   "source_annotations": {
-    "annotations": 1848,
-    "matched_function_starts": 1848,
-    "unique_addresses": 1848,
+    "annotations": 1978,
+    "matched_function_starts": 1978,
+    "unique_addresses": 1978,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 142
+      "function": 236
     },
     "items": [
+      {
+        "address": "0x0060E800",
+        "function": "?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z",
+        "function_address": "0x0060E800",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:44",
+        "symbol": "CheckBoxAttachTarget",
+        "type": "func_adjustor_i_piii *"
+      },
+      {
+        "address": "0x0060FB90",
+        "function": "?on_dialog_focus@CheckBox@@QAEXH@Z",
+        "function_address": "0x0060FB90",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:46",
+        "symbol": "CheckBoxOnDialogFocusTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0060F8B0",
+        "function": "?on_key_down@CheckBox@@QAEHH@Z",
+        "function_address": "0x0060F8B0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:48",
+        "symbol": "CheckBoxOnKeyDownTarget",
+        "type": "func_adjustor_i_i *"
+      },
+      {
+        "address": "0x0060FA80",
+        "function": "?on_left_double_click@CheckBox@@QAEXHH@Z",
+        "function_address": "0x0060FA80",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:50",
+        "symbol": "CheckBoxOnLeftDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060F700",
+        "function": "?on_left_down@CheckBox@@QAEXHH@Z",
+        "function_address": "0x0060F700",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:52",
+        "symbol": "CheckBoxOnLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060FC30",
+        "function": "?on_mouse_leave@CheckBox@@QAEXHH@Z",
+        "function_address": "0x0060FC30",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:54",
+        "symbol": "CheckBoxOnMouseLeaveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060FBB0",
+        "function": "?on_mouse_move@CheckBox@@QAEXHH@Z",
+        "function_address": "0x0060FBB0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:56",
+        "symbol": "CheckBoxOnMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060FAB0",
+        "function": "?on_redraw@CheckBox@@QAEXXZ",
+        "function_address": "0x0060FAB0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:58",
+        "symbol": "CheckBoxOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x005178C0",
+        "function": "?on_key_click@Console@@QAEHHH@Z",
+        "function_address": "0x005178C0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:60",
+        "symbol": "ConsoleOnKeyClickTarget",
+        "type": "func_adjustor_i_ii *"
+      },
+      {
+        "address": "0x0050F680",
+        "function": "?on_nc_hittest@Console@@QAEXHH@Z",
+        "function_address": "0x0050F680",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:62",
+        "symbol": "ConsoleOnNcHittestTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0050FB10",
+        "function": "?on_nc_left_down@Console@@QAEXHH@Z",
+        "function_address": "0x0050FB10",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:64",
+        "symbol": "ConsoleOnNcLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0050FE70",
+        "function": "?on_nc_left_up@Console@@QAEXHH@Z",
+        "function_address": "0x0050FE70",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:66",
+        "symbol": "ConsoleOnNcLeftUpTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00510110",
+        "function": "?on_nc_mouse_move@Console@@QAEXHH@Z",
+        "function_address": "0x00510110",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:68",
+        "symbol": "ConsoleOnNcMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0050F960",
+        "function": "?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z",
+        "function_address": "0x0050F960",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:70",
+        "symbol": "ConsoleOnPostRedrawNcBufferTarget",
+        "type": "func_adjustor_v_pi *"
+      },
+      {
+        "address": "0x0051D7C0",
+        "function": "?on_sys_close@Console@@QAEXXZ",
+        "function_address": "0x0051D7C0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:72",
+        "symbol": "ConsoleOnSysCloseTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x0051DDF0",
+        "function": "??_GConsole@@UAEPAXI@Z",
+        "function_address": "0x0051DDF0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:74",
+        "symbol": "ConsoleScalarDeleteTarget",
+        "type": "func_adjustor_p_u *"
+      },
+      {
+        "address": "0x00612FE0",
+        "function": "?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z",
+        "function_address": "0x00612FE0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:76",
+        "symbol": "DialogsAttachTarget",
+        "type": "func_adjustor_i_piii *"
+      },
+      {
+        "address": "0x006130E0",
+        "function": "?on_dialog_focus@Dialogs@@QAEXH@Z",
+        "function_address": "0x006130E0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:78",
+        "symbol": "DialogsOnDialogFocusTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x00612CC0",
+        "function": "?on_key_down@Dialogs@@QAEHH@Z",
+        "function_address": "0x00612CC0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:80",
+        "symbol": "DialogsOnKeyDownTarget",
+        "type": "func_adjustor_i_i *"
+      },
+      {
+        "address": "0x00612E80",
+        "function": "?on_left_click@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612E80",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:82",
+        "symbol": "DialogsOnLeftClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612D60",
+        "function": "?on_left_double_click@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612D60",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:84",
+        "symbol": "DialogsOnLeftDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612C20",
+        "function": "?on_left_down@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612C20",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:86",
+        "symbol": "DialogsOnLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612F10",
+        "function": "?on_left_up@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612F10",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:88",
+        "symbol": "DialogsOnLeftUpTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612AE0",
+        "function": "?on_mouse_leave@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612AE0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:90",
+        "symbol": "DialogsOnMouseLeaveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612B80",
+        "function": "?on_mouse_move@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612B80",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:92",
+        "symbol": "DialogsOnMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612FC0",
+        "function": "?on_mousewheel@Dialogs@@QAEXH@Z",
+        "function_address": "0x00612FC0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:94",
+        "symbol": "DialogsOnMousewheelTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x00612E00",
+        "function": "?on_redraw@Dialogs@@QAEXXZ",
+        "function_address": "0x00612E00",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:96",
+        "symbol": "DialogsOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x00612F60",
+        "function": "?on_right_click@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612F60",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:98",
+        "symbol": "DialogsOnRightClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612EF0",
+        "function": "?on_right_double_click@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612EF0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:100",
+        "symbol": "DialogsOnRightDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612ED0",
+        "function": "?on_right_down@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612ED0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:102",
+        "symbol": "DialogsOnRightDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612F40",
+        "function": "?on_right_up@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612F40",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:104",
+        "symbol": "DialogsOnRightUpTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00613220",
+        "function": "?on_scroll_create@Dialogs@@QAEXXZ",
+        "function_address": "0x00613220",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:106",
+        "symbol": "DialogsOnScrollCreateTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x00613260",
+        "function": "?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z",
+        "function_address": "0x00613260",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:108",
+        "symbol": "DialogsOnScrollDeleteTarget",
+        "type": "func_adjustor_i_p *"
+      },
+      {
+        "address": "0x00612F80",
+        "function": "?on_scrolled@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612F80",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:110",
+        "symbol": "DialogsOnScrolledTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00612FA0",
+        "function": "?on_scrolling@Dialogs@@QAEXHH@Z",
+        "function_address": "0x00612FA0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:112",
+        "symbol": "DialogsOnScrollingTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00613180",
+        "function": "?pass_dialog_focus@Dialogs@@QAEXXZ",
+        "function_address": "0x00613180",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:114",
+        "symbol": "DialogsPassDialogFocusTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x00407100",
+        "function": "??_GDialogs@@UAEPAXI@Z",
+        "function_address": "0x00407100",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:116",
+        "symbol": "DialogsScalarDeleteTarget",
+        "type": "func_adjustor_p_u *"
+      },
+      {
+        "address": "0x00611AF0",
+        "function": "?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z",
+        "function_address": "0x00611AF0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:118",
+        "symbol": "EditGroupAttachTarget",
+        "type": "func_adjustor_i_piii *"
+      },
+      {
+        "address": "0x00612670",
+        "function": "?on_dialog_focus@EditGroup@@QAEXH@Z",
+        "function_address": "0x00612670",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:120",
+        "symbol": "EditGroupOnDialogFocusTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x00612450",
+        "function": "?on_redraw@EditGroup@@QAEXXZ",
+        "function_address": "0x00612450",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:122",
+        "symbol": "EditGroupOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x006126C0",
+        "function": "?pass_dialog_focus@EditGroup@@QAEXXZ",
+        "function_address": "0x006126C0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:124",
+        "symbol": "EditGroupPassDialogFocusTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x0060A670",
+        "function": "?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z",
+        "function_address": "0x0060A670",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:126",
+        "symbol": "ListBoxAttachTarget",
+        "type": "func_adjustor_i_piii *"
+      },
+      {
+        "address": "0x0060C7C0",
+        "function": "?on_dialog_focus@ListBox@@QAEXH@Z",
+        "function_address": "0x0060C7C0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:128",
+        "symbol": "ListBoxOnDialogFocusTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0060AF90",
+        "function": "?on_key_down@ListBox@@QAEXH@Z",
+        "function_address": "0x0060AF90",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:130",
+        "symbol": "ListBoxOnKeyDownTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0060C710",
+        "function": "?on_left_double_click@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060C710",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:132",
+        "symbol": "ListBoxOnLeftDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060AA60",
+        "function": "?on_left_down@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060AA60",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:134",
+        "symbol": "ListBoxOnLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060CE10",
+        "function": "?on_mouse_leave@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060CE10",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:136",
+        "symbol": "ListBoxOnMouseLeaveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060CBC0",
+        "function": "?on_mouse_move@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060CBC0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:138",
+        "symbol": "ListBoxOnMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060CB70",
+        "function": "?on_mousewheel@ListBox@@QAEXH@Z",
+        "function_address": "0x0060CB70",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:140",
+        "symbol": "ListBoxOnMousewheelTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0060C350",
+        "function": "?on_redraw@ListBox@@QAEXXZ",
+        "function_address": "0x0060C350",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:142",
+        "symbol": "ListBoxOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x0060C6D0",
+        "function": "?on_right_double_click@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060C6D0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:144",
+        "symbol": "ListBoxOnRightDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060AA20",
+        "function": "?on_right_down@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060AA20",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:146",
+        "symbol": "ListBoxOnRightDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060C6A0",
+        "function": "?on_scrolled@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060C6A0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:148",
+        "symbol": "ListBoxOnScrolledTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060C5D0",
+        "function": "?on_scrolling@ListBox@@QAEXHH@Z",
+        "function_address": "0x0060C5D0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:150",
+        "symbol": "ListBoxOnScrollingTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046F8C0",
+        "function": "?on_button_clicked@MapWin@@QAEXH@Z",
+        "function_address": "0x0046F8C0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:152",
+        "symbol": "MapWinOnButtonClickedTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0046EBA0",
+        "function": "?on_left_click@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046EBA0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:154",
+        "symbol": "MapWinOnLeftClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046EBD0",
+        "function": "?on_left_double_click@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046EBD0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:156",
+        "symbol": "MapWinOnLeftDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046ED30",
+        "function": "?on_left_down@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046ED30",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:158",
+        "symbol": "MapWinOnLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046EFF0",
+        "function": "?on_left_up@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046EFF0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:160",
+        "symbol": "MapWinOnLeftUpTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046EB90",
+        "function": "?on_lose_mouse_capture@MapWin@@QAEXXZ",
+        "function_address": "0x0046EB90",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:162",
+        "symbol": "MapWinOnLoseMouseCaptureTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x0046F000",
+        "function": "?on_mouse_move@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046F000",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:164",
+        "symbol": "MapWinOnMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046F660",
+        "function": "?on_nc_hittest@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046F660",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:166",
+        "symbol": "MapWinOnNcHittestTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046F700",
+        "function": "?on_nc_left_down@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046F700",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:168",
+        "symbol": "MapWinOnNcLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046B1D0",
+        "function": "?on_redraw@MapWin@@QAEXXZ",
+        "function_address": "0x0046B1D0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:170",
+        "symbol": "MapWinOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x0046FA00",
+        "function": "?on_resize@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046FA00",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:172",
+        "symbol": "MapWinOnResizeTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046EBE0",
+        "function": "?on_right_click@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046EBE0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:174",
+        "symbol": "MapWinOnRightClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046EC10",
+        "function": "?on_right_down@MapWin@@QAEXHH@Z",
+        "function_address": "0x0046EC10",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:176",
+        "symbol": "MapWinOnRightDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0046F880",
+        "function": "?on_sys_close@MapWin@@QAEXXZ",
+        "function_address": "0x0046F880",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:178",
+        "symbol": "MapWinOnSysCloseTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x00421830",
+        "function": "??_GMapWin@@UAEPAXI@Z",
+        "function_address": "0x00421830",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:180",
+        "symbol": "MapWinScalarDeleteTarget",
+        "type": "func_adjustor_p_u *"
+      },
+      {
+        "address": "0x0048AF30",
+        "function": "?on_redraw@PlanWin@@QAEXXZ",
+        "function_address": "0x0048AF30",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:182",
+        "symbol": "PlanWinOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x0048BF20",
+        "function": "??_GPlanWin@@UAEPAXI@Z",
+        "function_address": "0x0048BF20",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:184",
+        "symbol": "PlanWinScalarDeleteTarget",
+        "type": "func_adjustor_p_u *"
+      },
+      {
+        "address": "0x0060D1F0",
+        "function": "?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z",
+        "function_address": "0x0060D1F0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:186",
+        "symbol": "RadioButtonAttachTarget",
+        "type": "func_adjustor_i_piii *"
+      },
+      {
+        "address": "0x00406F60",
+        "function": "??1RadioButton@@QAE@H@Z",
+        "function_address": "0x00406F60",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:188",
+        "symbol": "RadioButtonDtorTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0060E300",
+        "function": "?on_dialog_focus@RadioButton@@QAEXH@Z",
+        "function_address": "0x0060E300",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:190",
+        "symbol": "RadioButtonOnDialogFocusTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x0060E020",
+        "function": "?on_key_down@RadioButton@@QAEHH@Z",
+        "function_address": "0x0060E020",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:192",
+        "symbol": "RadioButtonOnKeyDownTarget",
+        "type": "func_adjustor_i_i *"
+      },
+      {
+        "address": "0x0060E1E0",
+        "function": "?on_left_double_click@RadioButton@@QAEXHH@Z",
+        "function_address": "0x0060E1E0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:194",
+        "symbol": "RadioButtonOnLeftDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060DE10",
+        "function": "?on_left_down@RadioButton@@QAEXHH@Z",
+        "function_address": "0x0060DE10",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:196",
+        "symbol": "RadioButtonOnLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060E4A0",
+        "function": "?on_mouse_leave@RadioButton@@QAEXHH@Z",
+        "function_address": "0x0060E4A0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:198",
+        "symbol": "RadioButtonOnMouseLeaveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060E320",
+        "function": "?on_mouse_move@RadioButton@@QAEXHH@Z",
+        "function_address": "0x0060E320",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:200",
+        "symbol": "RadioButtonOnMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x0060E220",
+        "function": "?on_redraw@RadioButton@@QAEXXZ",
+        "function_address": "0x0060E220",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:202",
+        "symbol": "RadioButtonOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x00610540",
+        "function": "?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z",
+        "function_address": "0x00610540",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:204",
+        "symbol": "SpriteBoxAttachTarget",
+        "type": "func_adjustor_i_piii *"
+      },
+      {
+        "address": "0x006115E0",
+        "function": "?on_dialog_focus@SpriteBox@@QAEXH@Z",
+        "function_address": "0x006115E0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:206",
+        "symbol": "SpriteBoxOnDialogFocusTarget",
+        "type": "func_adjustor_v_i *"
+      },
+      {
+        "address": "0x00611400",
+        "function": "?on_key_down@SpriteBox@@QAEHH@Z",
+        "function_address": "0x00611400",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:208",
+        "symbol": "SpriteBoxOnKeyDownTarget",
+        "type": "func_adjustor_i_i *"
+      },
+      {
+        "address": "0x00611060",
+        "function": "?on_left_click@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611060",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:210",
+        "symbol": "SpriteBoxOnLeftClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x006112E0",
+        "function": "?on_left_double_click@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x006112E0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:212",
+        "symbol": "SpriteBoxOnLeftDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611150",
+        "function": "?on_left_down@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611150",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:214",
+        "symbol": "SpriteBoxOnLeftDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x006111A0",
+        "function": "?on_left_up@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x006111A0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:216",
+        "symbol": "SpriteBoxOnLeftUpTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611050",
+        "function": "?on_mouse_leave@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611050",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:218",
+        "symbol": "SpriteBoxOnMouseLeaveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611040",
+        "function": "?on_mouse_move@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611040",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:220",
+        "symbol": "SpriteBoxOnMouseMoveTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611380",
+        "function": "?on_redraw@SpriteBox@@QAEXXZ",
+        "function_address": "0x00611380",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:222",
+        "symbol": "SpriteBoxOnRedrawTarget",
+        "type": "func_adjustor_v *"
+      },
+      {
+        "address": "0x006111F0",
+        "function": "?on_right_click@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x006111F0",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:224",
+        "symbol": "SpriteBoxOnRightClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611330",
+        "function": "?on_right_double_click@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611330",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:226",
+        "symbol": "SpriteBoxOnRightDoubleClickTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611240",
+        "function": "?on_right_down@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611240",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:228",
+        "symbol": "SpriteBoxOnRightDownTarget",
+        "type": "func_adjustor_v_ii *"
+      },
+      {
+        "address": "0x00611290",
+        "function": "?on_right_up@SpriteBox@@QAEXHH@Z",
+        "function_address": "0x00611290",
+        "kind": "function",
+        "location": "src/adjustor_thunks.cpp:230",
+        "symbol": "SpriteBoxOnRightUpTarget",
+        "type": "func_adjustor_v_ii *"
+      },
       {
         "address": "0x00945D48",
         "function": "",
@@ -7593,7 +8439,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 142,
-    "total": 696
+    "matched_function_starts": 236,
+    "total": 790
   }
 }

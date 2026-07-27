@@ -35,6 +35,7 @@
 #include "../src/wave.h"
 #include "../src/atexit_thunks.h"
 #include "../src/init_thunks.h"
+#include "../src/adjustor_thunks.h"
 #include "../src/fx.h"
 #include "../src/battlewin.h"
 #include "../src/councwin.h"
@@ -23198,6 +23199,467 @@ void __stdcall observe_vector_ctor(void *array, unsigned int element_size,
 int g_init_dtor_sentinel;
 }  // namespace
 
+namespace {
+
+// The receiver sits inside a poisoned arena with room ahead of it
+// for the largest vtordisp displacement the family uses. Every
+// four-byte window in the arena holds a distinct value, so a body
+// that reads its vtordisp from the wrong displacement cannot
+// happen to read an equal one. The adjusted receiver is only ever
+// compared, never dereferenced, so it may land anywhere.
+constexpr size_t AdjustorArenaLead = 2048;
+constexpr size_t AdjustorArenaTail = 256;
+uint8_t g_adjustor_arena[AdjustorArenaLead + AdjustorArenaTail];
+uint8_t *adjustor_receiver() {
+    for (size_t index = 0; index < sizeof(g_adjustor_arena); ++index) {
+        g_adjustor_arena[index] = static_cast<uint8_t>(index * 7u + 1u);
+    }
+    return g_adjustor_arena + AdjustorArenaLead;
+}
+
+void *g_adjustor_seen;
+int g_adjustor_calls;
+int g_adjustor_args[4];
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+int __thiscall observe_adjustor_i_i(void *self, int arg0) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(arg0);
+    return 0x5A5A;
+}
+int __thiscall observe_adjustor_i_ii(void *self, int arg0, int arg1) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(arg0);
+    g_adjustor_args[1] = static_cast<int>(arg1);
+    return 0x5A5A;
+}
+int __thiscall observe_adjustor_i_p(void *self, void *arg0) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(reinterpret_cast<intptr_t>(arg0));
+    return 0x5A5A;
+}
+int __thiscall observe_adjustor_i_piii(void *self, void *arg0, int arg1,
+                                       int arg2, int arg3) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(reinterpret_cast<intptr_t>(arg0));
+    g_adjustor_args[1] = static_cast<int>(arg1);
+    g_adjustor_args[2] = static_cast<int>(arg2);
+    g_adjustor_args[3] = static_cast<int>(arg3);
+    return 0x5A5A;
+}
+void * __thiscall observe_adjustor_p_u(void *self, unsigned int arg0) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(arg0);
+    return &g_adjustor_calls;
+}
+void __thiscall observe_adjustor_v(void *self) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+}
+void __thiscall observe_adjustor_v_i(void *self, int arg0) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(arg0);
+}
+void __thiscall observe_adjustor_v_ii(void *self, int arg0, int arg1) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(arg0);
+    g_adjustor_args[1] = static_cast<int>(arg1);
+}
+void __thiscall observe_adjustor_v_pi(void *self, void *arg0, int arg1) {
+    g_adjustor_seen = self;
+    ++g_adjustor_calls;
+    g_adjustor_args[0] = static_cast<int>(reinterpret_cast<intptr_t>(arg0));
+    g_adjustor_args[1] = static_cast<int>(arg1);
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+struct AdjustorCase_i_i {
+    int (__fastcall *thunk)(void *, void *, int);
+    func_adjustor_i_i **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_i_i g_adjustor_cases_i_i[] = {
+    {&adjust_radio_button1_on_key_down, &RadioButtonOnKeyDownTarget, 4, 0},
+    {&adjust_dialogs1_on_key_down, &DialogsOnKeyDownTarget, 4, 0},
+    {&adjust_check_box1_on_key_down, &CheckBoxOnKeyDownTarget, 4, 0},
+    {&adjust_sprite_box1_on_key_down, &SpriteBoxOnKeyDownTarget, 4, 0},
+};
+
+struct AdjustorCase_i_ii {
+    int (__fastcall *thunk)(void *, void *, int, int);
+    func_adjustor_i_ii **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_i_ii g_adjustor_cases_i_ii[] = {
+    {&adjust_console1_on_key_click, &ConsoleOnKeyClickTarget, 4, 0},
+};
+
+struct AdjustorCase_i_p {
+    int (__fastcall *thunk)(void *, void *, void *);
+    func_adjustor_i_p **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_i_p g_adjustor_cases_i_p[] = {
+    {&adjust_dialogs1_on_scroll_delete, &DialogsOnScrollDeleteTarget, 4, 0},
+};
+
+struct AdjustorCase_i_piii {
+    int (__fastcall *thunk)(void *, void *, void *, int, int, int);
+    func_adjustor_i_piii **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_i_piii g_adjustor_cases_i_piii[] = {
+    {&adjust_radio_button1_attach, &RadioButtonAttachTarget, 4, 0},
+    {&adjust_dialogs1_attach, &DialogsAttachTarget, 4, 0},
+    {&adjust_list_box1_attach, &ListBoxAttachTarget, 4, 0},
+    {&adjust_check_box1_attach, &CheckBoxAttachTarget, 4, 0},
+    {&adjust_sprite_box1_attach, &SpriteBoxAttachTarget, 4, 0},
+    {&adjust_edit_group1_attach, &EditGroupAttachTarget, 4, 0},
+};
+
+struct AdjustorCase_p_u {
+    void * (__fastcall *thunk)(void *, void *, unsigned int);
+    func_adjustor_p_u **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_p_u g_adjustor_cases_p_u[] = {
+    {&adjust_dialogs1_scalar_delete, &DialogsScalarDeleteTarget, 4, 0},
+    {&adjust_dialogs2_scalar_delete, &DialogsScalarDeleteTarget, 1096, 1092},
+    {&adjust_dialogs3_scalar_delete, &DialogsScalarDeleteTarget, 4, 2584},
+    {&adjust_map_win1_scalar_delete, &MapWinScalarDeleteTarget, 4, 0},
+    {&adjust_map_win2_scalar_delete, &MapWinScalarDeleteTarget, 1096, 1092},
+    {&adjust_plan_win2_scalar_delete, &PlanWinScalarDeleteTarget, 1096, 1092},
+    {&adjust_console1_scalar_delete, &ConsoleScalarDeleteTarget, 4, 0},
+    {&adjust_console2_scalar_delete, &ConsoleScalarDeleteTarget, 1096, 1092},
+};
+
+struct AdjustorCase_v {
+    void (__fastcall *thunk)(void *, void *);
+    func_adjustor_v **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_v g_adjustor_cases_v[] = {
+    {&adjust_radio_button1_on_redraw, &RadioButtonOnRedrawTarget, 4, 0},
+    {&adjust_radio_button3_on_redraw, &RadioButtonOnRedrawTarget, 4, 2584},
+    {&adjust_dialogs1_on_scroll_create, &DialogsOnScrollCreateTarget, 4, 0},
+    {&adjust_dialogs1_on_redraw, &DialogsOnRedrawTarget, 4, 0},
+    {&adjust_dialogs1_pass_dialog_focus, &DialogsPassDialogFocusTarget, 4, 0},
+    {&adjust_dialogs3_on_redraw, &DialogsOnRedrawTarget, 4, 2584},
+    {&adjust_map_win1_on_lose_mouse_capture,
+     &MapWinOnLoseMouseCaptureTarget, 4, 0},
+    {&adjust_map_win1_on_redraw, &MapWinOnRedrawTarget, 4, 0},
+    {&adjust_map_win1_on_sys_close, &MapWinOnSysCloseTarget, 4, 0},
+    {&adjust_map_win5_on_lose_mouse_capture,
+     &MapWinOnLoseMouseCaptureTarget, 4, 1508},
+    {&adjust_plan_win1_on_redraw, &PlanWinOnRedrawTarget, 4, 0},
+    {&adjust_map_win5_on_sys_close, &MapWinOnSysCloseTarget, 4, 1508},
+    {&adjust_map_win4_on_lose_mouse_capture,
+     &MapWinOnLoseMouseCaptureTarget, 4, 9000},
+    {&adjust_map_win4_on_redraw, &MapWinOnRedrawTarget, 4, 9000},
+    {&adjust_console1_on_sys_close, &ConsoleOnSysCloseTarget, 4, 0},
+    {&adjust_list_box1_on_redraw, &ListBoxOnRedrawTarget, 4, 0},
+    {&adjust_list_box3_on_redraw, &ListBoxOnRedrawTarget, 4, 2584},
+    {&adjust_check_box1_on_redraw, &CheckBoxOnRedrawTarget, 4, 0},
+    {&adjust_check_box3_on_redraw, &CheckBoxOnRedrawTarget, 4, 2584},
+    {&adjust_sprite_box1_on_redraw, &SpriteBoxOnRedrawTarget, 4, 0},
+    {&adjust_sprite_box3_on_redraw, &SpriteBoxOnRedrawTarget, 4, 2584},
+    {&adjust_edit_group1_on_redraw, &EditGroupOnRedrawTarget, 4, 0},
+    {&adjust_edit_group1_pass_dialog_focus,
+     &EditGroupPassDialogFocusTarget, 4, 0},
+    {&adjust_edit_group3_on_redraw, &EditGroupOnRedrawTarget, 4, 2584},
+};
+
+struct AdjustorCase_v_i {
+    void (__fastcall *thunk)(void *, void *, int);
+    func_adjustor_v_i **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_v_i g_adjustor_cases_v_i[] = {
+    {&adjust_radio_button1_dtor, &RadioButtonDtorTarget, 4, 0},
+    {&adjust_radio_button1_on_dialog_focus,
+     &RadioButtonOnDialogFocusTarget, 4, 0},
+    {&adjust_radio_button2_dtor, &RadioButtonDtorTarget, 1096, 1092},
+    {&adjust_radio_button3_dtor, &RadioButtonDtorTarget, 4, 2584},
+    {&adjust_dialogs1_on_mousewheel, &DialogsOnMousewheelTarget, 4, 0},
+    {&adjust_dialogs1_on_dialog_focus, &DialogsOnDialogFocusTarget, 4, 0},
+    {&adjust_map_win1_on_button_clicked, &MapWinOnButtonClickedTarget, 4, 0},
+    {&adjust_map_win5_on_button_clicked,
+     &MapWinOnButtonClickedTarget, 4, 1508},
+    {&adjust_map_win4_on_button_clicked,
+     &MapWinOnButtonClickedTarget, 4, 9000},
+    {&adjust_list_box1_on_mousewheel, &ListBoxOnMousewheelTarget, 4, 0},
+    {&adjust_list_box1_on_key_down, &ListBoxOnKeyDownTarget, 4, 0},
+    {&adjust_list_box1_on_dialog_focus, &ListBoxOnDialogFocusTarget, 4, 0},
+    {&adjust_check_box1_on_dialog_focus, &CheckBoxOnDialogFocusTarget, 4, 0},
+    {&adjust_sprite_box1_on_dialog_focus, &SpriteBoxOnDialogFocusTarget, 4, 0},
+    {&adjust_edit_group1_on_dialog_focus, &EditGroupOnDialogFocusTarget, 4, 0},
+};
+
+struct AdjustorCase_v_ii {
+    void (__fastcall *thunk)(void *, void *, int, int);
+    func_adjustor_v_ii **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_v_ii g_adjustor_cases_v_ii[] = {
+    {&adjust_radio_button1_on_mouse_move, &RadioButtonOnMouseMoveTarget, 4, 0},
+    {&adjust_radio_button1_on_mouse_leave,
+     &RadioButtonOnMouseLeaveTarget, 4, 0},
+    {&adjust_radio_button1_on_left_down, &RadioButtonOnLeftDownTarget, 4, 0},
+    {&adjust_radio_button1_on_left_double_click,
+     &RadioButtonOnLeftDoubleClickTarget, 4, 0},
+    {&adjust_dialogs1_on_mouse_move, &DialogsOnMouseMoveTarget, 4, 0},
+    {&adjust_dialogs1_on_mouse_leave, &DialogsOnMouseLeaveTarget, 4, 0},
+    {&adjust_dialogs1_on_left_click, &DialogsOnLeftClickTarget, 4, 0},
+    {&adjust_dialogs1_on_left_down, &DialogsOnLeftDownTarget, 4, 0},
+    {&adjust_dialogs1_on_left_up, &DialogsOnLeftUpTarget, 4, 0},
+    {&adjust_dialogs1_on_right_click, &DialogsOnRightClickTarget, 4, 0},
+    {&adjust_dialogs1_on_right_down, &DialogsOnRightDownTarget, 4, 0},
+    {&adjust_dialogs1_on_right_up, &DialogsOnRightUpTarget, 4, 0},
+    {&adjust_dialogs1_on_left_double_click,
+     &DialogsOnLeftDoubleClickTarget, 4, 0},
+    {&adjust_dialogs1_on_right_double_click,
+     &DialogsOnRightDoubleClickTarget, 4, 0},
+    {&adjust_dialogs1_on_scrolled, &DialogsOnScrolledTarget, 4, 0},
+    {&adjust_dialogs1_on_scrolling, &DialogsOnScrollingTarget, 4, 0},
+    {&adjust_map_win1_on_resize, &MapWinOnResizeTarget, 4, 0},
+    {&adjust_map_win1_on_mouse_move, &MapWinOnMouseMoveTarget, 4, 0},
+    {&adjust_map_win1_on_left_click, &MapWinOnLeftClickTarget, 4, 0},
+    {&adjust_map_win1_on_left_down, &MapWinOnLeftDownTarget, 4, 0},
+    {&adjust_map_win1_on_left_up, &MapWinOnLeftUpTarget, 4, 0},
+    {&adjust_map_win1_on_right_click, &MapWinOnRightClickTarget, 4, 0},
+    {&adjust_map_win1_on_right_down, &MapWinOnRightDownTarget, 4, 0},
+    {&adjust_map_win1_on_left_double_click,
+     &MapWinOnLeftDoubleClickTarget, 4, 0},
+    {&adjust_map_win1_on_nc_left_down, &MapWinOnNcLeftDownTarget, 4, 0},
+    {&adjust_map_win1_on_nc_hittest, &MapWinOnNcHittestTarget, 4, 0},
+    {&adjust_map_win5_on_resize, &MapWinOnResizeTarget, 4, 1508},
+    {&adjust_map_win5_on_mouse_move, &MapWinOnMouseMoveTarget, 4, 1508},
+    {&adjust_map_win5_on_left_click, &MapWinOnLeftClickTarget, 4, 1508},
+    {&adjust_map_win5_on_left_down, &MapWinOnLeftDownTarget, 4, 1508},
+    {&adjust_map_win5_on_left_up, &MapWinOnLeftUpTarget, 4, 1508},
+    {&adjust_map_win5_on_right_click, &MapWinOnRightClickTarget, 4, 1508},
+    {&adjust_map_win5_on_right_down, &MapWinOnRightDownTarget, 4, 1508},
+    {&adjust_map_win5_on_left_double_click,
+     &MapWinOnLeftDoubleClickTarget, 4, 1508},
+    {&adjust_map_win5_on_nc_left_down, &MapWinOnNcLeftDownTarget, 4, 1508},
+    {&adjust_map_win5_on_nc_hittest, &MapWinOnNcHittestTarget, 4, 1508},
+    {&adjust_map_win4_on_resize, &MapWinOnResizeTarget, 4, 9000},
+    {&adjust_map_win4_on_mouse_move, &MapWinOnMouseMoveTarget, 4, 9000},
+    {&adjust_map_win4_on_left_click, &MapWinOnLeftClickTarget, 4, 9000},
+    {&adjust_map_win4_on_left_down, &MapWinOnLeftDownTarget, 4, 9000},
+    {&adjust_map_win4_on_left_up, &MapWinOnLeftUpTarget, 4, 9000},
+    {&adjust_map_win4_on_right_click, &MapWinOnRightClickTarget, 4, 9000},
+    {&adjust_map_win4_on_right_down, &MapWinOnRightDownTarget, 4, 9000},
+    {&adjust_map_win4_on_left_double_click,
+     &MapWinOnLeftDoubleClickTarget, 4, 9000},
+    {&adjust_console1_on_nc_mouse_move, &ConsoleOnNcMouseMoveTarget, 4, 0},
+    {&adjust_console1_on_nc_left_down, &ConsoleOnNcLeftDownTarget, 4, 0},
+    {&adjust_console1_on_nc_left_up, &ConsoleOnNcLeftUpTarget, 4, 0},
+    {&adjust_console1_on_nc_hittest, &ConsoleOnNcHittestTarget, 4, 0},
+    {&adjust_list_box1_on_mouse_move, &ListBoxOnMouseMoveTarget, 4, 0},
+    {&adjust_list_box1_on_mouse_leave, &ListBoxOnMouseLeaveTarget, 4, 0},
+    {&adjust_list_box1_on_left_down, &ListBoxOnLeftDownTarget, 4, 0},
+    {&adjust_list_box1_on_right_down, &ListBoxOnRightDownTarget, 4, 0},
+    {&adjust_list_box1_on_left_double_click,
+     &ListBoxOnLeftDoubleClickTarget, 4, 0},
+    {&adjust_list_box1_on_right_double_click,
+     &ListBoxOnRightDoubleClickTarget, 4, 0},
+    {&adjust_list_box1_on_scrolled, &ListBoxOnScrolledTarget, 4, 0},
+    {&adjust_list_box1_on_scrolling, &ListBoxOnScrollingTarget, 4, 0},
+    {&adjust_check_box1_on_mouse_move, &CheckBoxOnMouseMoveTarget, 4, 0},
+    {&adjust_check_box1_on_mouse_leave, &CheckBoxOnMouseLeaveTarget, 4, 0},
+    {&adjust_check_box1_on_left_down, &CheckBoxOnLeftDownTarget, 4, 0},
+    {&adjust_check_box1_on_left_double_click,
+     &CheckBoxOnLeftDoubleClickTarget, 4, 0},
+    {&adjust_sprite_box1_on_mouse_move, &SpriteBoxOnMouseMoveTarget, 4, 0},
+    {&adjust_sprite_box1_on_mouse_leave, &SpriteBoxOnMouseLeaveTarget, 4, 0},
+    {&adjust_sprite_box1_on_left_click, &SpriteBoxOnLeftClickTarget, 4, 0},
+    {&adjust_sprite_box1_on_left_down, &SpriteBoxOnLeftDownTarget, 4, 0},
+    {&adjust_sprite_box1_on_left_up, &SpriteBoxOnLeftUpTarget, 4, 0},
+    {&adjust_sprite_box1_on_right_click, &SpriteBoxOnRightClickTarget, 4, 0},
+    {&adjust_sprite_box1_on_right_down, &SpriteBoxOnRightDownTarget, 4, 0},
+    {&adjust_sprite_box1_on_right_up, &SpriteBoxOnRightUpTarget, 4, 0},
+    {&adjust_sprite_box1_on_left_double_click,
+     &SpriteBoxOnLeftDoubleClickTarget, 4, 0},
+    {&adjust_sprite_box1_on_right_double_click,
+     &SpriteBoxOnRightDoubleClickTarget, 4, 0},
+};
+
+struct AdjustorCase_v_pi {
+    void (__fastcall *thunk)(void *, void *, void *, int);
+    func_adjustor_v_pi **slot;
+    int displacement;
+    int adjust;
+};
+const AdjustorCase_v_pi g_adjustor_cases_v_pi[] = {
+    {&adjust_console1_on_post_redraw_nc_buffer,
+     &ConsoleOnPostRedrawNcBufferTarget, 4, 0},
+};
+
+}  // namespace
+
+void test_adjustor_thunks() {
+    for (const AdjustorCase_i_i &entry : g_adjustor_cases_i_i) {
+        func_adjustor_i_i *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_i_i;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        int const result = entry.thunk(self, nullptr, 0x1010);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(result == 0x5A5A);
+        expect(g_adjustor_args[0] == 0x1010);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_i_ii &entry : g_adjustor_cases_i_ii) {
+        func_adjustor_i_ii *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_i_ii;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        int const result = entry.thunk(self, nullptr, 0x1010, 0x1111);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(result == 0x5A5A);
+        expect(g_adjustor_args[0] == 0x1010);
+        expect(g_adjustor_args[1] == 0x1111);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_i_p &entry : g_adjustor_cases_i_p) {
+        func_adjustor_i_p *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_i_p;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        int const result = entry.thunk(self, nullptr,
+                                       reinterpret_cast<void *>(0x1010));
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(result == 0x5A5A);
+        expect(g_adjustor_args[0] == 0x1010);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_i_piii &entry : g_adjustor_cases_i_piii) {
+        func_adjustor_i_piii *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_i_piii;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        int const result = entry.thunk(self, nullptr,
+                                       reinterpret_cast<void *>(0x1010),
+                                       0x1111, 0x1212, 0x1313);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(result == 0x5A5A);
+        expect(g_adjustor_args[0] == 0x1010);
+        expect(g_adjustor_args[1] == 0x1111);
+        expect(g_adjustor_args[2] == 0x1212);
+        expect(g_adjustor_args[3] == 0x1313);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_p_u &entry : g_adjustor_cases_p_u) {
+        func_adjustor_p_u *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_p_u;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        void * const result = entry.thunk(self, nullptr, 0x1010);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(result == &g_adjustor_calls);
+        expect(g_adjustor_args[0] == 0x1010);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_v &entry : g_adjustor_cases_v) {
+        func_adjustor_v *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_v;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        entry.thunk(self, nullptr);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_v_i &entry : g_adjustor_cases_v_i) {
+        func_adjustor_v_i *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_v_i;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        entry.thunk(self, nullptr, 0x1010);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(g_adjustor_args[0] == 0x1010);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_v_ii &entry : g_adjustor_cases_v_ii) {
+        func_adjustor_v_ii *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_v_ii;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        entry.thunk(self, nullptr, 0x1010, 0x1111);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(g_adjustor_args[0] == 0x1010);
+        expect(g_adjustor_args[1] == 0x1111);
+        *entry.slot = saved;
+    }
+    for (const AdjustorCase_v_pi &entry : g_adjustor_cases_v_pi) {
+        func_adjustor_v_pi *const saved = *entry.slot;
+        *entry.slot = &observe_adjustor_v_pi;
+        uint8_t *const self = adjustor_receiver();
+        const int32_t vtordisp =
+            *reinterpret_cast<const int32_t *>(self - entry.displacement);
+        g_adjustor_calls = 0;
+        g_adjustor_seen = nullptr;
+        entry.thunk(self, nullptr, reinterpret_cast<void *>(0x1010), 0x1111);
+        expect(g_adjustor_calls == 1);
+        expect(g_adjustor_seen == self - vtordisp - entry.adjust);
+        expect(g_adjustor_args[0] == 0x1010);
+        expect(g_adjustor_args[1] == 0x1111);
+        *entry.slot = saved;
+    }
+}
+
 void test_init_thunks() {
     func_game_atexit *const saved_atexit = GameAtexit;
     GameAtexit = &observe_game_atexit;
@@ -23476,5 +23938,6 @@ int main() {
     test_ambience_dtor();
     test_console_update_data();
     test_init_thunks();
+    test_adjustor_thunks();
     return failures == 0 ? 0 : 1;
 }
