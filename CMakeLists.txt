@@ -119,6 +119,7 @@ set(OPENSMACX_SOURCES
     src/init_thunks.cpp
     src/adjustor_thunks.cpp
     src/deleting_thunks.cpp
+    src/delegation_thunks.cpp
     src/fx.cpp
     src/vector_teardown.cpp
     src/alphanet.cpp
@@ -410,6 +411,7 @@ if(BUILD_TESTING)
         src/init_thunks.cpp
         src/adjustor_thunks.cpp
         src/deleting_thunks.cpp
+        src/delegation_thunks.cpp
         src/fx.cpp
         src/vector_teardown.cpp
         src/alphanet.cpp
@@ -767,6 +769,36 @@ if(BUILD_TESTING)
     add_test(NAME delegate-analysis-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_analyze_delegates.py"
+    )
+
+    add_test(NAME delegation-thunk-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_delegation_thunks.py"
+    )
+
+    add_test(NAME deleting-thunk-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_deleting_thunks.py"
+    )
+
+    add_test(NAME adjustor-thunk-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_adjustor_thunks.py"
+    )
+
+    add_test(NAME atexit-thunk-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_atexit_thunks.py"
+    )
+
+    add_test(NAME init-thunk-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_init_thunks.py"
+    )
+
+    add_test(NAME redirect-signature-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
     )
 endif()
 

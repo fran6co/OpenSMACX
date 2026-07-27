@@ -86,6 +86,7 @@
 #include "scenario.h"
 #include "font.h"
 #include "atexit_thunks.h"
+#include "delegation_thunks.h"
 #include "deleting_thunks.h"
 #include "init_thunks.h"
 #include "adjustor_thunks.h"
@@ -112,7 +113,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1725;
+constexpr size_t RedirectCount = 1759;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -5958,6 +5959,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C5920,
         },
         {
+            0x004C5A80,
+            reinterpret_cast<uintptr_t>(&wave_in_device_set_codec_redirect),
+            OPENSMACX_SIGNATURE_004C5A80,
+        },
+        {
+            0x004C5AA0,
+            reinterpret_cast<uintptr_t>(&wave_in_device_set_vxw_key_redirect),
+            OPENSMACX_SIGNATURE_004C5AA0,
+        },
+        {
             0x004C5AC0,
             reinterpret_cast<uintptr_t>(&wave_in_device_get_ndevices_redirect),
             OPENSMACX_SIGNATURE_004C5AC0,
@@ -6373,9 +6384,169 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C7670,
         },
         {
+            0x004C7760,
+            reinterpret_cast<uintptr_t>(&midi_play_redirect),
+            OPENSMACX_SIGNATURE_004C7760,
+        },
+        {
+            0x004C77D0,
+            reinterpret_cast<uintptr_t>(&midi_set_switch_type_redirect),
+            OPENSMACX_SIGNATURE_004C77D0,
+        },
+        {
+            0x004C7800,
+            reinterpret_cast<uintptr_t>(&midi_add_switch_range_redirect),
+            OPENSMACX_SIGNATURE_004C7800,
+        },
+        {
+            0x004C7830,
+            reinterpret_cast<uintptr_t>(&midi_set_nswitch_threads_redirect),
+            OPENSMACX_SIGNATURE_004C7830,
+        },
+        {
+            0x004C7860,
+            reinterpret_cast<uintptr_t>(&midi_map_patch_3_redirect),
+            OPENSMACX_SIGNATURE_004C7860,
+        },
+        {
+            0x004C7890,
+            reinterpret_cast<uintptr_t>(&midi_map_patch_2_redirect),
+            OPENSMACX_SIGNATURE_004C7890,
+        },
+        {
+            0x004C78E0,
+            reinterpret_cast<uintptr_t>(&midi_clear_patch_redirect),
+            OPENSMACX_SIGNATURE_004C78E0,
+        },
+        {
+            0x004C7910,
+            reinterpret_cast<uintptr_t>(&midi_reset_redirect),
+            OPENSMACX_SIGNATURE_004C7910,
+        },
+        {
+            0x004C7930,
+            reinterpret_cast<uintptr_t>(&midi_set_track_redirect),
+            OPENSMACX_SIGNATURE_004C7930,
+        },
+        {
+            0x004C7960,
+            reinterpret_cast<uintptr_t>(&midi_mute_track_redirect),
+            OPENSMACX_SIGNATURE_004C7960,
+        },
+        {
+            0x004C7990,
+            reinterpret_cast<uintptr_t>(&midi_unmute_track_redirect),
+            OPENSMACX_SIGNATURE_004C7990,
+        },
+        {
+            0x004C79C0,
+            reinterpret_cast<uintptr_t>(&midi_set_active_tracks_2_redirect),
+            OPENSMACX_SIGNATURE_004C79C0,
+        },
+        {
+            0x004C79F0,
+            reinterpret_cast<uintptr_t>(&midi_set_active_tracks_1_redirect),
+            OPENSMACX_SIGNATURE_004C79F0,
+        },
+        {
+            0x004C7A20,
+            reinterpret_cast<uintptr_t>(&midi_play_trackset_redirect),
+            OPENSMACX_SIGNATURE_004C7A20,
+        },
+        {
+            0x004C7A50,
+            reinterpret_cast<uintptr_t>(&midi_xpose_trackset_redirect),
+            OPENSMACX_SIGNATURE_004C7A50,
+        },
+        {
+            0x004C7A80,
+            reinterpret_cast<uintptr_t>(&midi_stop_trackset_redirect),
+            OPENSMACX_SIGNATURE_004C7A80,
+        },
+        {
+            0x004C7B00,
+            reinterpret_cast<uintptr_t>(&midi_set_active_range_lo_redirect),
+            OPENSMACX_SIGNATURE_004C7B00,
+        },
+        {
+            0x004C7B30,
+            reinterpret_cast<uintptr_t>(&midi_set_active_range_hi_redirect),
+            OPENSMACX_SIGNATURE_004C7B30,
+        },
+        {
+            0x004C7B60,
+            reinterpret_cast<uintptr_t>(&midi_remove_active_trackset_redirect),
+            OPENSMACX_SIGNATURE_004C7B60,
+        },
+        {
+            0x004C7B90,
+            reinterpret_cast<uintptr_t>(&midi_get_trackset_redirect),
+            OPENSMACX_SIGNATURE_004C7B90,
+        },
+        {
+            0x004C7BB0,
+            reinterpret_cast<uintptr_t>(&midi_get_ntracks_redirect),
+            OPENSMACX_SIGNATURE_004C7BB0,
+        },
+        {
+            0x004C7BD0,
+            reinterpret_cast<uintptr_t>(&midi_load_patch_redirect),
+            OPENSMACX_SIGNATURE_004C7BD0,
+        },
+        {
+            0x004C7C00,
+            reinterpret_cast<uintptr_t>(&midi_unload_patch_redirect),
+            OPENSMACX_SIGNATURE_004C7C00,
+        },
+        {
+            0x004C7C30,
+            reinterpret_cast<uintptr_t>(&midi_set_patch_redirect),
+            OPENSMACX_SIGNATURE_004C7C30,
+        },
+        {
+            0x004C7D50,
+            reinterpret_cast<uintptr_t>(&midi_set_tempo_redirect),
+            OPENSMACX_SIGNATURE_004C7D50,
+        },
+        {
+            0x004C7E80,
+            reinterpret_cast<uintptr_t>(&midi_get_time_redirect),
+            OPENSMACX_SIGNATURE_004C7E80,
+        },
+        {
+            0x004C7EA0,
+            reinterpret_cast<uintptr_t>(&midi_get_control_track_redirect),
+            OPENSMACX_SIGNATURE_004C7EA0,
+        },
+        {
+            0x004C7EC0,
+            reinterpret_cast<uintptr_t>(&midi_get_total_track_ticks_redirect),
+            OPENSMACX_SIGNATURE_004C7EC0,
+        },
+        {
             0x004C8460,
             reinterpret_cast<uintptr_t>(&ambience_construct_redirect),
             OPENSMACX_SIGNATURE_004C8460,
+        },
+        {
+            0x004C8C50,
+            reinterpret_cast<uintptr_t>(&voice_rx_unload_redirect),
+            OPENSMACX_SIGNATURE_004C8C50,
+        },
+        {
+            0x004C8CA0,
+            reinterpret_cast<uintptr_t>(&voice_rx_get_buffer_size_redirect),
+            OPENSMACX_SIGNATURE_004C8CA0,
+        },
+        {
+            0x004C9010,
+            reinterpret_cast<uintptr_t>(&voice_tx_get_nbuffers_redirect),
+            OPENSMACX_SIGNATURE_004C9010,
+        },
+        {
+            0x004C9030,
+            reinterpret_cast<uintptr_t>(&voice_tx_get_next_buffer_redirect),
+            OPENSMACX_SIGNATURE_004C9030,
         },
         {
             0x004C92D0,

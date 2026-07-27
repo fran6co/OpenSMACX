@@ -1211,8 +1211,6 @@ P3,21,0x004C59A0,?create_device@Wave_In_Device@@QAEHK@Z,55,0,0,unrecovered,,,2,e
 P3,21,0x004C59E0,?delete_device@Wave_In_Device@@QAEHXZ,39,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?delete_device@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 P3,1021,0x004C5A10,?init@Wave_In_Device@@QAEHPAXK@Z,61,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned int)"
 P3,1021,0x004C5A50,?release@Wave_In_Device@@QAEXXZ,33,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?release@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
-P3,21,0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)"
-P3,21,0x004C5AA0,?set_vxw_key@Wave_In_Device@@QAEHPAC@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z)(Wave_In_Device* this, int8*)"
 P0,1000121,0x004C5B80,??1WaveControlGroup@@QAE@XZ,111,0,1,source_complete,ui_dependency,recover_wave_control_group,2,exact,exact,void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 P0,1001120,0x004C5BF0,sub_4c5bf0,90,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,
 P3,1420,0x004C5CE0,?init_sound@@YAHPAXK@Z,174,1,4,unrecovered,,,2,exact,exact,
@@ -1241,45 +1239,17 @@ P3,410,0x004C74B0,sub_4c74b0,64,0,4,unrecovered,,,1,missing,exact,
 P3,410,0x004C74F0,sub_4c74f0,176,0,4,unrecovered,,,1,missing,exact,
 P3,10,0x004C75A0,sub_4c75a0,7,0,0,unrecovered,,,1,exact,missing,
 P3,120,0x004C75B0,sub_4c75b0,214,0,1,unrecovered,,,2,entry_range,entry_range,
-P3,11,0x004C7760,?play@Midi@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?play@Midi@@QAEHXZ)(Midi* this)
 P3,21,0x004C7780,?set_volume@Midi@@QAEXH@Z,35,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_volume@Midi@@QAEXH@Z)(Midi* this, int)"
 P3,21,0x004C77B0,?switch_state@Midi@@QAEH_N@Z,26,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?switch_state@Midi@@QAEH_N@Z)(Midi* this, bool)"
-P3,21,0x004C77D0,?set_switch_type@Midi@@QAEHK@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_switch_type@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7800,?add_switch_range@Midi@@QAEHKK@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_switch_range@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)"
-P3,21,0x004C7830,?set_nswitch_threads@Midi@@QAEHK@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_nswitch_threads@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7860,?map_patch@Midi@@QAEHPADKK@Z,43,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?map_patch@Midi@@QAEHPADKK@Z)(Midi* this, int8*, unsigned int, unsigned int)"
-P3,21,0x004C7890,?map_patch@Midi@@QAEHPADK@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?map_patch@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)"
 P3,21,0x004C78C0,?set_base_path@Midi@@QAEHPBD@Z,26,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_base_path@Midi@@QAEHPBD@Z)(Midi* this, int8*)"
-P3,21,0x004C78E0,?clear_patch@Midi@@QAEHK@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?clear_patch@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
-P3,11,0x004C7910,?reset@Midi@@QAEHXZ,21,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?reset@Midi@@QAEHXZ)(Midi* this)
-P3,21,0x004C7930,?set_track@Midi@@QAEHPAEK@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_track@Midi@@QAEHPAEK@Z)(Midi* this, unsigned int8*, unsigned int)"
-P3,21,0x004C7960,?mute_track@Midi@@QAEHK@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?mute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7990,?unmute_track@Midi@@QAEHK@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?unmute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
-P3,21,0x004C79C0,?set_active_tracks@Midi@@QAEHKK@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_active_tracks@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)"
-P3,21,0x004C79F0,?set_active_tracks@Midi@@QAEHI@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_active_tracks@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7A20,?play_trackset@Midi@@QAEHI@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?play_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7A50,?xpose_trackset@Midi@@QAEHIH@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?xpose_trackset@Midi@@QAEHIH@Z)(Midi* this, unsigned int, int)"
-P3,21,0x004C7A80,?stop_trackset@Midi@@QAEHI@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?stop_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
 P3,1021,0x004C7AB0,?is_trackset_playing@Midi@@QAEHI@Z,32,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?is_trackset_playing@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
 P3,21,0x004C7AD0,?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z)(Midi* this, TrackSet*)"
-P3,21,0x004C7B00,?set_active_range_lo@Midi@@QAEHII@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_active_range_lo@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)"
-P3,21,0x004C7B30,?set_active_range_hi@Midi@@QAEHII@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_active_range_hi@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)"
-P3,21,0x004C7B60,?remove_active_trackset@Midi@@QAEHI@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?remove_active_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7B90,?get_trackset@Midi@@QAEHI@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,11,0x004C7BB0,?get_ntracks@Midi@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_ntracks@Midi@@QAEHXZ)(Midi* this)
-P3,21,0x004C7BD0,?load_patch@Midi@@QAEHI@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?load_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7C00,?unload_patch@Midi@@QAEHI@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?unload_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,21,0x004C7C30,?set_patch@Midi@@QAEHII@Z,39,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_patch@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)"
 P3,521,0x004C7C60,?init@Midi@@QAEHPADK@Z,85,0,5,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)"
 P3,2120,0x004C7CC0,sub_4c7cc0,42,2,1,unrecovered,,,2,exact,exact,
 P3,411,0x004C7CF0,?set_fname@Midi@@QAEHPBD@Z,82,0,4,unrecovered,,,1,missing,exact,"int (__thiscall ?set_fname@Midi@@QAEHPBD@Z)(Midi* this, int8*)"
-P3,21,0x004C7D50,?set_tempo@Midi@@QAEHK@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_tempo@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
 P3,121,0x004C7D80,?load@Midi@@QAEHPBD@Z,77,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?load@Midi@@QAEHPBD@Z)(Midi* this, int8*)"
 P3,121,0x004C7DD0,?load@Midi@@QAEHXZ,75,0,1,unrecovered,,,2,exact,exact,int (__thiscall ?load@Midi@@QAEHXZ)(Midi* this)
 P3,21,0x004C7E20,?unload@Midi@@QAEHXZ,89,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?unload@Midi@@QAEHXZ)(Midi* this)
-P3,21,0x004C7E80,?get_time@Midi@@QAEHK@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_time@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
-P3,11,0x004C7EA0,?get_control_track@Midi@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_control_track@Midi@@QAEHXZ)(Midi* this)
-P3,21,0x004C7EC0,?get_total_track_ticks@Midi@@QAEHK@Z,32,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_total_track_ticks@Midi@@QAEHK@Z)(Midi* this, unsigned int)"
 P3,21,0x004C7EE0,?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z)(Midi* this, ChannelCtrl*)"
 P3,21,0x004C7F10,?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z)(Midi* this, ProgramCtrl*)"
 P3,21,0x004C7F40,?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z)(Midi* this, TrackCtrl*)"
@@ -1323,9 +1293,7 @@ P3,21,0x004C8B40,?init@VoiceRx@@QAEHKPAXK@Z,133,0,0,unrecovered,,,2,exact,exact,
 P3,21,0x004C8BD0,?release@VoiceRx@@QAEHXZ,72,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?release@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,11,0x004C8C20,?start@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?start@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,11,0x004C8C40,?stop@VoiceRx@@QAEHXZ,15,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?stop@VoiceRx@@QAEHXZ)(VoiceRx* this)
-P3,11,0x004C8C50,?unload@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?unload@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,21,0x004C8C70,?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z)(VoiceRx* this, _MMIOINFO*)"
-P3,11,0x004C8CA0,?get_buffer_size@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_buffer_size@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,1421,0x004C8CC0,??0VoiceTx@@QAE@XZ,272,1,4,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
 P0,1004121,0x004C8DB0,??1VoiceTx@@QAE@XZ,273,4,1,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??1VoiceTx@@QAE@XZ)(VoiceTx* this)
 P3,11,0x004C8EA0,?release@VoiceTx@@QAEXXZ,15,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
@@ -1333,8 +1301,6 @@ P3,221,0x004C8EB0,?start@VoiceTx@@QAEHXZ,68,0,2,unrecovered,,,2,exact,exact,int 
 P3,221,0x004C8F00,?stop@VoiceTx@@QAEHXZ,60,0,2,unrecovered,,,2,exact,exact,int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
 P3,21,0x004C8F40,?unload@VoiceTx@@QAEXXZ,48,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?unload@VoiceTx@@QAEXXZ)(VoiceTx* this)
 P3,21,0x004C8F70,?init@VoiceTx@@QAEHKPAXK@Z,151,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@VoiceTx@@QAEHKPAXK@Z)(VoiceTx* this, unsigned int, void*, unsigned int)"
-P3,11,0x004C9010,?get_nbuffers@VoiceTx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_nbuffers@VoiceTx@@QAEHXZ)(VoiceTx* this)
-P3,11,0x004C9030,?get_next_buffer@VoiceTx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?get_next_buffer@VoiceTx@@QAEHXZ)(VoiceTx* this)
 P3,21,0x004C9050,?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z,35,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)"
 P3,2620,0x004C9080,sub_4c9080,749,1,16,unrecovered,,,2,exact,entry_range,
 P3,10,0x004C9390,sub_4c9390,18,0,0,unrecovered,,,1,exact,missing,
