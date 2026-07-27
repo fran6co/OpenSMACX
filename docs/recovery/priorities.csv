@@ -2178,7 +2178,6 @@ P3,1320,0x005D49D0,sub_5d49d0,471,1,3,unrecovered,,,2,exact,exact,
 P3,1020,0x005D4BB0,sub_5d4bb0,145,1,0,unrecovered,,,2,exact,exact,
 P3,420,0x005D4C50,sub_5d4c50,108,0,4,unrecovered,,,2,exact,exact,
 P3,120,0x005D4CC0,sub_5d4cc0,39,0,1,unrecovered,,,2,exact,exact,
-P1,47921,0x005D4EF0,?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,443,47,9,unrecovered,,,2,exact,entry_range,"int (__thiscall ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)"
 P2,7121,0x005D50A0,?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,72,7,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)"
 P3,610,0x005D50F0,sub_5d50f0,325,0,6,unrecovered,,,1,missing,exact,
 P3,10,0x005D5240,nullsub_224,1,0,0,unrecovered,,,1,exact,missing,
@@ -2210,13 +2209,13 @@ P3,1020,0x005D6A50,?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z,106,1,0,
 P0,1001421,0x005D6AC0,?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z,1015,1,4,original_dependency,ui_dependency,recover_graphic_win_overlay,2,exact,exact,"void (__thiscall ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)"
 P3,0,0x005D6EC0,sub_5d6ec0,139,0,0,unrecovered,,,0,missing,missing,
 P3,1021,0x005D6F50,?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ,210,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ)(GraphicWin* this)
-P3,3021,0x005D7030,?compute_min_size@GraphicWin@@QAEXXZ,272,3,0,unrecovered,,,2,exact,exact,void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
+P0,1003021,0x005D7030,?compute_min_size@GraphicWin@@QAEXXZ,272,3,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P3,210,0x005D7170,sub_5d7170,36,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x005D71A0,sub_5d71a0,40,0,1,unrecovered,,,1,exact,missing,
 P3,10,0x005D71F0,??__Fg_BUFFER_SPRITE@@YAXXZ,31,0,0,unrecovered,,,1,exact,missing,
 P0,1080221,0x005D7210,??0Buffer@@QAE@XZ,530,80,2,source_complete,ui_dependency,recover_buffer_element_ctor,2,exact,entry_range,void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
 P0,1087221,0x005D7410,??1Buffer@@QAE@XZ,107,87,2,source_complete,ui_dependency,recover_buffer_element_teardown,2,exact,entry_range,void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
-P1,42621,0x005D7670,?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z,847,42,6,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int width, int height, int, ExtDirectDraw*)"
+P0,1042621,0x005D7670,?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z,847,42,6,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int width, int height, int, ExtDirectDraw*)"
 P2,5121,0x005D79C0,?resize@Buffer@@QAEXHH@Z,69,5,1,unrecovered,,,2,exact,exact,"void (__thiscall ?resize@Buffer@@QAEXHH@Z)(Buffer* this, int width, int height)"
 P3,1010,0x005D7A10,sub_5d7a10,31,1,0,unrecovered,,,1,exact,missing,
 P3,1320,0x005D7A30,sub_5d7a30,188,1,3,unrecovered,,,2,exact,entry_range,
@@ -2385,7 +2384,7 @@ P3,210,0x005EB390,sub_5eb390,22,0,2,unrecovered,,,1,exact,missing,
 P3,10,0x005EB3B0,sub_5eb3b0,31,0,0,unrecovered,,,1,exact,missing,
 P0,1004621,0x005EB640,?close@Win@@QAEXXZ,1610,4,6,original_dependency,ui_dependency,recover_win_close,2,exact,exact,void (__thiscall ?close@Win@@QAEXXZ)(Win* this)
 P0,1002321,0x005EBC90,??1Win@@QAE@XZ,401,2,3,original_dependency,ui_dependency,recover_win_close,2,entry_range,entry_range,void (__thiscall ??1Win@@QAE@XZ)(Win* this)
-P3,3721,0x005EBD80,?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z,2285,2,17,unrecovered,,,2,exact,entry_range,"int (__thiscall ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)"
+P0,1003721,0x005EBD80,?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z,2285,2,17,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"int (__thiscall ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)"
 P3,101,0x005EC630,?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z,72,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)"
 P2,6121,0x005EC740,?set_cursor@Win@@QAEHPAVSprite@@HH@Z,51,6,1,unrecovered,,,2,exact,exact,"int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)"
 P3,101,0x005EC780,?set_cursor@Win@@QAEHPAUHCURSOR@@@Z,60,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z)(Win* this, HCURSOR* phCursor)"
@@ -2439,7 +2438,7 @@ P3,4121,0x005EEA90,?key_click_event@Win@@QAEHHH@Z,241,4,1,unrecovered,,,2,exact,
 P3,3221,0x005EEB90,?key_down_event@Win@@QAEHH@Z,553,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?key_down_event@Win@@QAEHH@Z)(Win* this, int)"
 P3,2121,0x005EEDC0,?key_up_event@Win@@QAEHH@Z,167,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?key_up_event@Win@@QAEHH@Z)(Win* this, int)"
 P3,3021,0x005EEE70,?client_to_nonclient@Win@@QAEXPAH0@Z,230,3,0,unrecovered,,,2,exact,exact,"void (__thiscall ?client_to_nonclient@Win@@QAEXPAH0@Z)(Win* this, int*, int*)"
-P3,4021,0x005EEF60,?nonclient_to_client@Win@@QAEXPAH0@Z,240,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?nonclient_to_client@Win@@QAEXPAH0@Z)(Win* this, int*, int*)"
+P0,1004021,0x005EEF60,?nonclient_to_client@Win@@QAEXPAH0@Z,240,4,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?nonclient_to_client@Win@@QAEXPAH0@Z)(Win* this, int*, int*)"
 P3,1021,0x005EF050,?client_to_nonclient@Win@@QAEXPAURECT@@@Z,189,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?client_to_nonclient@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
 P3,2021,0x005EF110,?nonclient_to_client@Win@@QAEXPAURECT@@@Z,193,2,0,unrecovered,,,2,exact,exact,"void (__thiscall ?nonclient_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
 P3,100,0x005EF1E0,sub_5ef1e0,304,0,1,unrecovered,,,0,missing,missing,

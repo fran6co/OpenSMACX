@@ -15,11 +15,11 @@
     },
     "by_recovery_state": {
       "external_library": 327,
-      "original_dependency": 268,
-      "source_complete": 2225,
+      "original_dependency": 272,
+      "source_complete": 2226,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 3147
+      "unrecovered": 3142
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2171,
-    "matched_function_starts": 2171,
-    "unique_addresses": 2171,
+    "annotations": 2172,
+    "matched_function_starts": 2172,
+    "unique_addresses": 2172,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 339
+      "function": 343
     },
     "items": [
       {
@@ -6949,7 +6949,7 @@
         "function": "??1Win@@QAE@XZ",
         "function_address": "0x005EBC90",
         "kind": "function",
-        "location": "src/graphicwin.cpp:46",
+        "location": "src/graphicwin.cpp:47",
         "symbol": "WinOriginalDestructor",
         "type": "func_subobject_destructor *"
       },
@@ -6958,7 +6958,7 @@
         "function": "?close@Win@@QAEXXZ",
         "function_address": "0x005EB640",
         "kind": "function",
-        "location": "src/graphicwin.cpp:49",
+        "location": "src/graphicwin.cpp:50",
         "symbol": "WinOriginalClose",
         "type": "func_subobject_close *"
       },
@@ -6967,7 +6967,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/graphicwin.cpp:50",
+        "location": "src/graphicwin.cpp:51",
         "symbol": "GraphicWinFieldA0CDefault",
         "type": "uint32_t *"
       },
@@ -6976,7 +6976,7 @@
         "function": "?fill@Buffer@@QAEHHHHHH@Z",
         "function_address": "0x005D8240",
         "kind": "function",
-        "location": "src/graphicwin.cpp:226",
+        "location": "src/graphicwin.cpp:227",
         "symbol": "BufferOriginalFill",
         "type": "func_buffer_fill *"
       },
@@ -6985,7 +6985,7 @@
         "function": "?fill@Buffer@@QAEHH@Z",
         "function_address": "0x005DFB50",
         "kind": "function",
-        "location": "src/graphicwin.cpp:252",
+        "location": "src/graphicwin.cpp:253",
         "symbol": "BufferOriginalFillColor",
         "type": "func_graphic_win_buffer_fill_color *"
       },
@@ -6994,7 +6994,7 @@
         "function": "?map_colors@Buffer@@QAEHHHHHPAE@Z",
         "function_address": "0x005DA330",
         "kind": "function",
-        "location": "src/graphicwin.cpp:254",
+        "location": "src/graphicwin.cpp:255",
         "symbol": "BufferOriginalMapColors",
         "type": "func_graphic_win_map_colors *"
       },
@@ -7003,9 +7003,45 @@
         "function": "?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z",
         "function_address": "0x005D6AC0",
         "kind": "function",
-        "location": "src/graphicwin.cpp:256",
+        "location": "src/graphicwin.cpp:257",
         "symbol": "GraphicWinOverlayNonclient",
         "type": "func_graphic_win_overlay_nonclient *"
+      },
+      {
+        "address": "0x005EBD80",
+        "function": "?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z",
+        "function_address": "0x005EBD80",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:403",
+        "symbol": "WinOriginalInit",
+        "type": "func_win_init *"
+      },
+      {
+        "address": "0x005D7030",
+        "function": "?compute_min_size@GraphicWin@@QAEXXZ",
+        "function_address": "0x005D7030",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:404",
+        "symbol": "GraphicWinOriginalComputeMinSize",
+        "type": "func_graphic_win_compute_min_size *"
+      },
+      {
+        "address": "0x005EEF60",
+        "function": "?nonclient_to_client@Win@@QAEXPAH0@Z",
+        "function_address": "0x005EEF60",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:406",
+        "symbol": "WinOriginalNonclientToClient",
+        "type": "func_win_nonclient_to_client *"
+      },
+      {
+        "address": "0x005D7670",
+        "function": "?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z",
+        "function_address": "0x005D7670",
+        "kind": "function",
+        "location": "src/graphicwin.cpp:408",
+        "symbol": "BufferOriginalInit",
+        "type": "func_buffer_init *"
       },
       {
         "address": "0x00459150",
@@ -8997,6 +9033,15 @@
         "type": "func_vector_ctor_iterator *"
       },
       {
+        "address": "0x0064558A",
+        "function": "??2@YAPAXI@Z",
+        "function_address": "0x0064558A",
+        "kind": "function",
+        "location": "src/vector_teardown.cpp:25",
+        "symbol": "WaveOperatorNew",
+        "type": "func_operator_new *"
+      },
+      {
         "address": "0x009AB868",
         "function": "",
         "function_address": "",
@@ -9213,20 +9258,11 @@
         "type": "LPSTR *"
       },
       {
-        "address": "0x0064558A",
-        "function": "??2@YAPAXI@Z",
-        "function_address": "0x0064558A",
-        "kind": "function",
-        "location": "src/wave.cpp:652",
-        "symbol": "WaveOperatorNew",
-        "type": "func_operator_new *"
-      },
-      {
         "address": "0x004C5460",
         "function": "?is_group_disabled@Wave_Device@@QAEHI@Z",
         "function_address": "0x004C5460",
         "kind": "function",
-        "location": "src/wave.cpp:654",
+        "location": "src/wave.cpp:653",
         "symbol": "WaveDeviceIsGroupDisabled",
         "type": "func_wave_device_is_group_disabled *"
       },
@@ -9235,7 +9271,7 @@
         "function": "?load@Wave@@QAEHXZ",
         "function_address": "0x004C6CE0",
         "kind": "function",
-        "location": "src/wave.cpp:655",
+        "location": "src/wave.cpp:654",
         "symbol": "WaveOriginalLoad",
         "type": "func_wave_original_load *"
       },
@@ -9244,7 +9280,7 @@
         "function": "?load@Sound@@QAEHPBD@Z",
         "function_address": "0x004C6280",
         "kind": "function",
-        "location": "src/wave.cpp:776",
+        "location": "src/wave.cpp:775",
         "symbol": "SoundOriginalLoad",
         "type": "func_sound_original_load *"
       },
@@ -9253,7 +9289,7 @@
         "function": "?set_type@Sound@@QAEXI@Z",
         "function_address": "0x004C61E0",
         "kind": "function",
-        "location": "src/wave.cpp:1038",
+        "location": "src/wave.cpp:1037",
         "symbol": "SoundSetType",
         "type": "func_sound_set_type *"
       },
@@ -9262,7 +9298,7 @@
         "function": "?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z",
         "function_address": "0x004C5280",
         "kind": "function",
-        "location": "src/wave.cpp:1202",
+        "location": "src/wave.cpp:1201",
         "symbol": "WaveDevicePullFromGroup",
         "type": "func_wave_device_pull_from_group *"
       },
@@ -9271,7 +9307,7 @@
         "function": "??3@YAXPAX@Z",
         "function_address": "0x0064557F",
         "kind": "function",
-        "location": "src/wave.cpp:1204",
+        "location": "src/wave.cpp:1203",
         "symbol": "WaveOperatorDelete",
         "type": "func_operator_delete *"
       },
@@ -9366,7 +9402,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 339,
-    "total": 893
+    "matched_function_starts": 343,
+    "total": 897
   }
 }
