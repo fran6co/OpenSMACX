@@ -341,3 +341,94 @@ Ambience::~Ambience() {
 void __fastcall ambience_dtor_redirect(Ambience *self, void *) {
     self->~Ambience();
 }
+
+/*
+Purpose: Build the ambience. The original constructs in four vtable stages -
+         0x0066E444 at 0x004C848A, 0x0066E3C0 at 0x004C84AC, 0x0066E538 at
+         0x004C84EF, then its own 0x0066E664 at 0x004C850F - but only CRT
+         memsets run between them, so the three intermediate installs are
+         unobservable and, like the registered SEH frame, are omitted, keeping
+         only the final Ambience publication. A device dispatch of the 0x3E8
+         default through slot 0 at 0x004C84DB is provably dead - the device
+         slot at 0x3C is zeroed at 0x004C84B8 and the memset in between covers
+         0x40..0x43 only, so the reload at 0x004C84D4 cannot see anything else
+         - and is omitted under the same policy. The net field state: full
+         volume, zeroed regions, a 1000ms default at 0x38, flag dword 8, flag
+         byte 1, and Sound::set_type run with type 5. Unlike Wave, whose 0x54
+         clear is four bytes wide, this one is a single byte, so 0x55..0x57
+         keep whatever the storage held - and nothing at or above 0x58 is
+         written at all, which is what pins the shared base's extent there.
+Original Offset: 004C8460
+Return Value: n/a (the redirect answers the object pointer, as the original
+              does in eax)
+Status: Complete
+Verification note: 0x0066E664 has exactly one writer in the whole image, this
+         constructor, and no reader on the teardown path, which is why the
+         already-recovered ~Ambience at 0x004C7670 starts its descent one
+         stage lower at 0x0066E538. That is not a missing stage: 0x0066E664
+         differs from 0x0066E538 in three slots only - the deleting destructor
+         at 0x08, load at 0x10 and unload at 0x14 - and 0x004C7670 is the
+         base-level destructor, reached from both slot 0x08 of 0x0066E664 and
+         the global's ??__F thunk at 0x004455E0 without a vtable store of its
+         own, MSVC having elided a store that 0x004C7670 overwrites on its
+         first instruction. The two bodies are consistent.
+Verification note: the sweep leaves exactly two survivors and both are
+         equivalent mutants that no assertion can separate, because the
+         original's own shape makes them so. Widening the 0x0C..0x2F loop by
+         one iteration lands on 0x30, which the very next statement stores
+         zero to anyway; and seeding the 0x54 byte with 1 instead of 0 washes
+         out under the `|= 1` two statements later. Both are transcribed the
+         way the bytes read - a memset then a separate store, and a memset
+         then a read-modify-write - rather than folded into whatever would
+         make the sweep look cleaner.
+Verification note: the base-level constructor at 0x004C75B0 is byte-identical
+         to this one through the 0x0066E538 publication and then stops - it
+         neither publishes 0x0066E664 nor calls set_type. Recovering it later
+         must duplicate this shape rather than share a helper with it, or a
+         mutation sweep of either loses its signal.
+*/
+void Ambience::construct() {
+    // The header holds the base as opaque bytes, so the fields are reached at
+    // their documented offsets.
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    volatile uint8_t *const bytes = reinterpret_cast<volatile uint8_t *>(this);
+    object[0x04 / 4] = 0x7F;
+    object[0x08 / 4] = 0;
+    // memset(this + 0x0C, 0, 0x24) at 0x004C849A. The region is dword aligned
+    // and 0x24 is a multiple of four, so a dword fill reaches the same bytes.
+    for (size_t offset = 0x0C; offset < 0x30; offset += 4) {
+        object[offset / 4] = 0;
+    }
+    object[0x30 / 4] = 0;
+    object[0x44 / 4] = 0;
+    object[0x48 / 4] = 0;
+    object[0x3C / 4] = 0;
+    object[0x4C / 4] = 0;
+    // memset to zero at 0x004C84BE, then the loaded bit cleared at 0x004C84C8
+    // - a no-op on the zero just stored - then bit 3 set below: net 8, where
+    // Wave nets 4.
+    object[0x40 / 4] = 0;
+    object[0x38 / 4] = 0x3E8;
+    object[0x50 / 4] = 0;
+    // memset(this + 0x54, 0, 1) at 0x004C84F5: one byte, not Wave's four. The
+    // original leaves 0x55..0x57 alone, so no defensive widening here.
+    bytes[0x54] = 0;
+    // Re-read, do NOT fold into the stores above: the original reloads the
+    // flag dword at 0x004C84FA and the flag byte at 0x004C84FC after their own
+    // zeroing, and stores them back at 0x004C8507 and 0x004C850D in that
+    // order.
+    object[0x40 / 4] |= 8;
+    bytes[0x54] |= 1;
+    object[0x00 / 4] = 0x0066E664;
+    SoundSetType(reinterpret_cast<Wave *>(this), 5);
+#if defined(__GNUC__) && defined(__i386__)
+    // The legacy constructor leaves the instance pointer in EAX.
+    __asm__ __volatile__("" : : "a"(this) : "memory");
+#endif
+}
+
+Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
+    self->construct();
+    return self;
+}

@@ -1230,6 +1230,7 @@ address,kind
 0x004C7220,jump
 0x004C7250,jump
 0x004C7670,jump
+0x004C8460,jump
 0x004C92D0,jump
 0x004C9300,jump
 0x004C9330,jump
