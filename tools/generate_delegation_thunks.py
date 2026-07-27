@@ -128,7 +128,7 @@ def decode(code: bytes, address: int) -> tuple[int, int, int, int, int]:
         constant = _constant_from(tail)
         if constant is None:
             raise Unsettled("absent-member path returns caller EAX residue")
-        return member, slot, forwarded, popped, constant
+        return member, slot, forwarded, popped, constant, False
 
     # The tail-call form: no frame, `jmp` through the slot, and the
     # absent-member path is whatever follows the jump.
@@ -140,7 +140,21 @@ def decode(code: bytes, address: int) -> tuple[int, int, int, int, int]:
         if constant is None:
             raise Unsettled("absent-member path returns caller EAX residue")
         return (_displacement(text[0]), _displacement(text[4]), 0, popped,
-                constant)
+                constant, False)
+
+    # Guarded, no frame, `call` rather than `jmp`, and the delegate's result
+    # DISCARDED: the je target is the same `xor eax, eax` the call falls into,
+    # so both paths answer 0 and the callee's EAX never survives.
+    if (len(text) == 7 and text[0].startswith("mov ecx, dword ptr [ecx +")
+            and text[1] == "test ecx, ecx" and text[2].startswith("je ")
+            and text[3] == "mov eax, dword ptr [ecx]"
+            and text[4].startswith("call dword ptr [eax +")
+            and text[5] == "xor eax, eax"):
+        target = _number(text[2].split()[1])
+        if target != instructions[5].address:
+            raise Unsettled("guard skips more than the call")
+        return (_displacement(text[0]), _displacement(text[4]), 0, popped, 0,
+                True)
 
     # The unguarded forms dispatch through the THUNK'S OWN vtable, so the
     # receiver is `this` and there is no absent-member path at all.
@@ -157,7 +171,7 @@ def decode(code: bytes, address: int) -> tuple[int, int, int, int, int]:
             constant = _constant_from(text[2:])
             if constant is None:
                 raise Unsettled("trailing tail not read")
-        return None, _displacement(text[1]), 0, popped, constant
+        return None, _displacement(text[1]), 0, popped, constant, False
 
     # Framed: the same dispatch, but the arguments ARE pushed, in reverse
     # order, before the call.
@@ -180,7 +194,7 @@ def decode(code: bytes, address: int) -> tuple[int, int, int, int, int]:
                         if re.match(r"mov e\w\w, dword ptr \[ebp \+", t))
         index = text.index(call)
         constant = _constant_from(text[index + 1:])
-        return None, _displacement(call), forwarded, popped, constant
+        return None, _displacement(call), forwarded, popped, constant, False
 
     raise Unsettled("not a guarded delegation")
 
@@ -247,7 +261,7 @@ def main() -> int:
             continue
         address = int(row["address"], 16)
         try:
-            member, slot, forwarded, popped, constant = decode(
+            member, slot, forwarded, popped, constant, discards = decode(
                 read_bytes(pe, address, size), address)
         except Unsettled as reason:
             if "not a guarded delegation" not in str(reason):
@@ -279,7 +293,7 @@ def main() -> int:
             skipped.append((row, str(reason)))
             continue
         accepted.append((row, class_name, method, member, slot, forwarded,
-                         popped, constant, declared // 4))
+                         popped, constant, declared // 4, discards))
 
     accepted.sort(key=lambda entry: int(entry[0]["address"], 16))
     # Midi::map_patch and Midi::set_active_tracks are each C++ OVERLOADS: two
@@ -302,7 +316,7 @@ def main() -> int:
 
     print(f"{len(accepted)} guarded delegation thunks")
     for symbol, (row, _, _, member, slot, forwarded, popped, constant,
-                 declared) in zip(symbols, accepted):
+                 declared, discards) in zip(symbols, accepted):
         where = "own vtable  " if member is None else f"member +0x{member:<4X}"
         answer = "-" if constant is None else f"{constant:#x}"
         print(f"  {row['address']}  {symbol:<34} "
@@ -402,7 +416,7 @@ def emit(symbols, accepted):
             "", banner]
     wire = []
     for symbol, (row, _, _, member, slot, forwarded, popped, constant,
-                 declared) in zip(symbols, accepted):
+                 declared, discards) in zip(symbols, accepted):
         # SIGNATURE takes every declared parameter - the redirect is
         # installed at the original address and must pop exactly what the
         # original's `ret N` popped. CALL passes only the forwarded ones.
@@ -417,7 +431,15 @@ def emit(symbols, accepted):
         signature_params = params
         returns = "void" if (member is None and constant is None) else "int"
         body.append("/*")
-        if member is None:
+        if member is not None and discards:
+            body.append(f"Purpose: {row['name']} - dispatch to slot "
+                        f"{slot:#x} of the object at")
+            body.append(f"         {member:#x} when it is present, and answer "
+                        f"{constant:#x} either way: both")
+            body.append("         paths land on the same zeroing, so the "
+                        "delegate's own result")
+            body.append("         never reaches the caller.")
+        elif member is None:
             body.append(f"Purpose: {row['name']} - dispatch to slot "
                         f"{slot:#x} of this object's OWN")
             if forwarded:
@@ -439,6 +461,9 @@ def emit(symbols, accepted):
         if member is None:
             body.append("Return Value: " + ("n/a" if constant is None
                                             else f"{constant:#x}, a constant"))
+        elif discards:
+            body.append(f"Return Value: {constant:#x}, whether the delegate "
+                        "ran or not")
         else:
             body.append("Return Value: the delegate's, or "
                         f"{constant:#x} when the member is null")
@@ -467,10 +492,15 @@ def emit(symbols, accepted):
             body.append("    }")
             body.append("    void **const vtable = "
                         "*reinterpret_cast<void ***>(member);")
-            body.append(f"    return reinterpret_cast<func_delegation_"
+            lead = "(void)" if discards else "return "
+            body.append(f"    {lead}reinterpret_cast<func_delegation_"
                         f"{forwarded} *>(")
             body.append(f"        vtable[{slot:#x} / sizeof(void *)])"
                         f"(member{forwarded_args});")
+            if discards:
+                # Both paths land on the same `xor eax, eax`, so the
+                # delegate's own answer never reaches the caller.
+                body.append(f"    return {constant:#x};")
             body.append("}")
         body.append("")
         wire.append(f"0x{address:08X} {symbol}_redirect")
@@ -487,6 +517,7 @@ def emit(symbols, accepted):
              "    size_t slot;",
              "    int forwarded;",
              "    int absent;",
+             "    bool discards;  // answers `absent` even when it dispatched",
              "};",
              "const DelegationCase g_delegation_cases[] = {"]
     plain = ["struct PlainDelegationCase {",
@@ -498,7 +529,7 @@ def emit(symbols, accepted):
              "};",
              "const PlainDelegationCase g_plain_delegation_cases[] = {"]
     for symbol, (row, _, _, member, slot, forwarded, popped, constant,
-                 declared) in zip(symbols, accepted):
+                 declared, discards) in zip(symbols, accepted):
         if member is None:
             answer = -1 if constant is None else constant
             plain.append(
@@ -507,7 +538,8 @@ def emit(symbols, accepted):
         else:
             cases.append(
                 f"    {{reinterpret_cast<void *>(&{symbol}_redirect), "
-                f"{member:#x}, {slot:#x}, {forwarded}, {constant:#x}}},")
+                f"{member:#x}, {slot:#x}, {forwarded}, {constant:#x}, "
+                f"{'true' if discards else 'false'}}},")
     cases.append("};")
     plain.append("};")
     cases += [""] + plain

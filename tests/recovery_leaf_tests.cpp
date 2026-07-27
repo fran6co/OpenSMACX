@@ -25483,48 +25483,52 @@ struct DelegationCase {
     size_t slot;
     int forwarded;
     int absent;
+    bool discards;  // answers `absent` even when it dispatched
 };
 const DelegationCase g_delegation_cases[] = {
-    {reinterpret_cast<void *>(&wave_in_device_set_codec_redirect), 0x14, 0x60, 1, 0x13},
-    {reinterpret_cast<void *>(&wave_in_device_set_vxw_key_redirect), 0x14, 0x64, 1, 0x13},
-    {reinterpret_cast<void *>(&midi_play_redirect), 0x3c, 0x1c, 0, 0x14},
-    {reinterpret_cast<void *>(&midi_set_switch_type_redirect), 0x3c, 0x100, 1, 0x13},
-    {reinterpret_cast<void *>(&midi_add_switch_range_redirect), 0x3c, 0x108, 2, 0x13},
-    {reinterpret_cast<void *>(&midi_set_nswitch_threads_redirect), 0x3c, 0x104, 1, 0x13},
-    {reinterpret_cast<void *>(&midi_map_patch_3_redirect), 0x3c, 0xdc, 3, 0x14},
-    {reinterpret_cast<void *>(&midi_map_patch_2_redirect), 0x3c, 0xd8, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_clear_patch_redirect), 0x3c, 0xe0, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_reset_redirect), 0x3c, 0xc8, 0, 0x14},
-    {reinterpret_cast<void *>(&midi_set_track_redirect), 0x3c, 0x84, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_mute_track_redirect), 0x3c, 0x8c, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_unmute_track_redirect), 0x3c, 0xac, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_set_active_tracks_2_redirect), 0x3c, 0x94, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_set_active_tracks_1_redirect), 0x3c, 0x90, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_play_trackset_redirect), 0x3c, 0x10c, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_xpose_trackset_redirect), 0x3c, 0x114, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_stop_trackset_redirect), 0x3c, 0x110, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_add_active_trackset_redirect), 0x3c, 0x98, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_set_active_range_lo_redirect), 0x3c, 0xa0, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_set_active_range_hi_redirect), 0x3c, 0xa4, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_remove_active_trackset_redirect), 0x3c, 0xa8, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_get_trackset_redirect), 0x3c, 0x9c, 1, 0x0},
-    {reinterpret_cast<void *>(&midi_get_ntracks_redirect), 0x3c, 0xc4, 0, 0x0},
-    {reinterpret_cast<void *>(&midi_load_patch_redirect), 0x3c, 0x120, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_unload_patch_redirect), 0x3c, 0x124, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_set_patch_redirect), 0x3c, 0x128, 2, 0x14},
-    {reinterpret_cast<void *>(&midi_set_tempo_redirect), 0x3c, 0x88, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_get_time_redirect), 0x3c, 0xd4, 1, 0x0},
-    {reinterpret_cast<void *>(&midi_get_control_track_redirect), 0x3c, 0xf4, 0, 0x0},
-    {reinterpret_cast<void *>(&midi_get_total_track_ticks_redirect), 0x3c, 0xf8, 1, 0x0},
-    {reinterpret_cast<void *>(&midi_set_channel_ctrl_redirect), 0x3c, 0xe4, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_set_program_ctrl_redirect), 0x3c, 0xe8, 1, 0x14},
-    {reinterpret_cast<void *>(&midi_set_track_ctrl_redirect), 0x3c, 0xc0, 1, 0x14},
-    {reinterpret_cast<void *>(&voice_rx_unload_redirect), 0x3c, 0x14, 0, 0x13},
-    {reinterpret_cast<void *>(&voice_rx_add_buffer_redirect), 0x3c, 0x8c, 1, 0x13},
-    {reinterpret_cast<void *>(&voice_rx_get_buffer_size_redirect), 0x3c, 0x90, 0, 0x0},
-    {reinterpret_cast<void *>(&voice_tx_get_nbuffers_redirect), 0x3c, 0x94, 0, 0x0},
-    {reinterpret_cast<void *>(&voice_tx_get_next_buffer_redirect), 0x3c, 0x88, 0, 0x0},
-    {reinterpret_cast<void *>(&voice_tx_return_buffer_redirect), 0x3c, 0x8c, 1, 0x13},
+    {reinterpret_cast<void *>(&wave_in_device_set_codec_redirect), 0x14, 0x60, 1, 0x13, false},
+    {reinterpret_cast<void *>(&wave_in_device_set_vxw_key_redirect), 0x14, 0x64, 1, 0x13, false},
+    {reinterpret_cast<void *>(&midi_play_redirect), 0x3c, 0x1c, 0, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_switch_type_redirect), 0x3c, 0x100, 1, 0x13, false},
+    {reinterpret_cast<void *>(&midi_add_switch_range_redirect), 0x3c, 0x108, 2, 0x13, false},
+    {reinterpret_cast<void *>(&midi_set_nswitch_threads_redirect), 0x3c, 0x104, 1, 0x13, false},
+    {reinterpret_cast<void *>(&midi_map_patch_3_redirect), 0x3c, 0xdc, 3, 0x14, false},
+    {reinterpret_cast<void *>(&midi_map_patch_2_redirect), 0x3c, 0xd8, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_clear_patch_redirect), 0x3c, 0xe0, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_reset_redirect), 0x3c, 0xc8, 0, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_track_redirect), 0x3c, 0x84, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_mute_track_redirect), 0x3c, 0x8c, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_unmute_track_redirect), 0x3c, 0xac, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_active_tracks_2_redirect), 0x3c, 0x94, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_active_tracks_1_redirect), 0x3c, 0x90, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_play_trackset_redirect), 0x3c, 0x10c, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_xpose_trackset_redirect), 0x3c, 0x114, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_stop_trackset_redirect), 0x3c, 0x110, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_add_active_trackset_redirect), 0x3c, 0x98, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_active_range_lo_redirect), 0x3c, 0xa0, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_active_range_hi_redirect), 0x3c, 0xa4, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_remove_active_trackset_redirect), 0x3c, 0xa8, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_get_trackset_redirect), 0x3c, 0x9c, 1, 0x0, false},
+    {reinterpret_cast<void *>(&midi_get_ntracks_redirect), 0x3c, 0xc4, 0, 0x0, false},
+    {reinterpret_cast<void *>(&midi_load_patch_redirect), 0x3c, 0x120, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_unload_patch_redirect), 0x3c, 0x124, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_patch_redirect), 0x3c, 0x128, 2, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_tempo_redirect), 0x3c, 0x88, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_get_time_redirect), 0x3c, 0xd4, 1, 0x0, false},
+    {reinterpret_cast<void *>(&midi_get_control_track_redirect), 0x3c, 0xf4, 0, 0x0, false},
+    {reinterpret_cast<void *>(&midi_get_total_track_ticks_redirect), 0x3c, 0xf8, 1, 0x0, false},
+    {reinterpret_cast<void *>(&midi_set_channel_ctrl_redirect), 0x3c, 0xe4, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_program_ctrl_redirect), 0x3c, 0xe8, 1, 0x14, false},
+    {reinterpret_cast<void *>(&midi_set_track_ctrl_redirect), 0x3c, 0xc0, 1, 0x14, false},
+    {reinterpret_cast<void *>(&voice_rx_start_redirect), 0x3c, 0x88, 0, 0x0, true},
+    {reinterpret_cast<void *>(&voice_rx_stop_redirect), 0x3c, 0x20, 0, 0x0, true},
+    {reinterpret_cast<void *>(&voice_rx_unload_redirect), 0x3c, 0x14, 0, 0x13, false},
+    {reinterpret_cast<void *>(&voice_rx_add_buffer_redirect), 0x3c, 0x8c, 1, 0x13, false},
+    {reinterpret_cast<void *>(&voice_rx_get_buffer_size_redirect), 0x3c, 0x90, 0, 0x0, false},
+    {reinterpret_cast<void *>(&voice_tx_release_redirect), 0x3c, 0x38, 0, 0x0, true},
+    {reinterpret_cast<void *>(&voice_tx_get_nbuffers_redirect), 0x3c, 0x94, 0, 0x0, false},
+    {reinterpret_cast<void *>(&voice_tx_get_next_buffer_redirect), 0x3c, 0x88, 0, 0x0, false},
+    {reinterpret_cast<void *>(&voice_tx_return_buffer_redirect), 0x3c, 0x8c, 1, 0x13, false},
 };
 
 struct PlainDelegationCase {
@@ -26130,7 +26134,11 @@ void test_delegation_thunks() {
                     sizeof(member_pointer));
         expected = object;
         g_delegation_probe = DelegationProbe{};
-        expect(call_delegation(entry, object.data(), args) == DelegationAnswer);
+        // Three of these DISCARD the delegate's answer - both their paths
+        // land on one  - so the dispatch still has to be
+        // observed through the probe rather than through the return value.
+        expect(call_delegation(entry, object.data(), args)
+               == (entry.discards ? entry.absent : DelegationAnswer));
         expect(g_delegation_probe.calls == 1);
         // The receiver is the MEMBER, not the thunk's own object - the whole
         // point of the shape, and the one thing a plausible-looking body gets

@@ -27,8 +27,9 @@ class DecodeTest(unittest.TestCase):
         code = (b"\x8b\x49\x3c\x85\xc9\x74\x07\x8b\x01"
                 b"\xff\xa0\x1c\x00\x00\x00"
                 b"\xb8\x14\x00\x00\x00\xc3")
-        member, slot, forwarded, popped, absent = generator.decode(
+        member, slot, forwarded, popped, absent, discards = generator.decode(
             code, 0x4C7760)
+        self.assertFalse(discards)
         self.assertEqual(0x3C, member)
         self.assertEqual(0x1C, slot)
         self.assertEqual(0, forwarded)
@@ -40,6 +41,30 @@ class DecodeTest(unittest.TestCase):
                 b"\xff\xa0\xc4\x00\x00\x00"
                 b"\x33\xc0\xc3")
         self.assertEqual(0, generator.decode(code, 0x4C7BB0)[4])
+
+    def test_reads_the_discarding_form(self):
+        # mov ecx,[ecx+0x3c]; test ecx,ecx; je +2; mov eax,[ecx];
+        # call [eax+0x20]; xor eax,eax; ret - VoiceRx::stop. Both paths land
+        # on the same zeroing, so the delegate's answer never escapes.
+        # `call [eax+0x20]` is the SHORT form, ff 50 20 - three bytes, not
+        # the six of a 32-bit displacement - so the guard's jump is +5.
+        code = (b"\x8b\x49\x3c\x85\xc9\x74\x05\x8b\x01"
+                b"\xff\x50\x20"
+                b"\x33\xc0\xc3")
+        member, slot, forwarded, popped, absent, discards = generator.decode(
+            code, 0x4C8C40)
+        self.assertEqual((0x3C, 0x20, 0, 0, 0), (member, slot, forwarded,
+                                                 popped, absent))
+        self.assertTrue(discards)
+
+    def test_refuses_a_discarding_form_whose_guard_skips_too_much(self):
+        # The je must land exactly on the zeroing. One that jumps past it is
+        # a different shape and must not be read as this one.
+        code = (b"\x8b\x49\x3c\x85\xc9\x74\x07\x8b\x01"
+                b"\xff\x50\x20"
+                b"\x33\xc0\xc3")
+        with self.assertRaises(generator.Unsettled):
+            generator.decode(code, 0x4C8C40)
 
     def test_refuses_a_tail_form_that_answers_caller_eax(self):
         # The absent-member path falls straight to the ret. No C++ body can

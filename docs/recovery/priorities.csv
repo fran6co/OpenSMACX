@@ -1203,11 +1203,8 @@ P3,1421,0x004C8960,??0VoiceRx@@QAE@XZ,260,1,4,unrecovered,,,2,entry_range,entry_
 P0,1001121,0x004C8A50,??1VoiceRx@@QAE@XZ,262,1,1,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??1VoiceRx@@QAE@XZ)(VoiceRx* this)
 P3,21,0x004C8B40,?init@VoiceRx@@QAEHKPAXK@Z,133,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@VoiceRx@@QAEHKPAXK@Z)(VoiceRx* this, unsigned int, void*, unsigned int)"
 P3,21,0x004C8BD0,?release@VoiceRx@@QAEHXZ,72,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?release@VoiceRx@@QAEHXZ)(VoiceRx* this)
-P3,11,0x004C8C20,?start@VoiceRx@@QAEHXZ,18,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?start@VoiceRx@@QAEHXZ)(VoiceRx* this)
-P3,11,0x004C8C40,?stop@VoiceRx@@QAEHXZ,15,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?stop@VoiceRx@@QAEHXZ)(VoiceRx* this)
 P3,1421,0x004C8CC0,??0VoiceTx@@QAE@XZ,272,1,4,unrecovered,,,2,entry_range,entry_range,void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
 P0,1004121,0x004C8DB0,??1VoiceTx@@QAE@XZ,273,4,1,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??1VoiceTx@@QAE@XZ)(VoiceTx* this)
-P3,11,0x004C8EA0,?release@VoiceTx@@QAEXXZ,15,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
 P3,221,0x004C8EB0,?start@VoiceTx@@QAEHXZ,68,0,2,unrecovered,,,2,exact,exact,int (__thiscall ?start@VoiceTx@@QAEHXZ)(VoiceTx* this)
 P3,221,0x004C8F00,?stop@VoiceTx@@QAEHXZ,60,0,2,unrecovered,,,2,exact,exact,int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
 P3,21,0x004C8F40,?unload@VoiceTx@@QAEXXZ,48,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?unload@VoiceTx@@QAEXXZ)(VoiceTx* this)
