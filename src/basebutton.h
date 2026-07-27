@@ -39,6 +39,8 @@ class DLLEXPORT BaseButton : GraphicWin {
 
   void construct();
   uint32_t close();
+  int init(LPCSTR name, int id, int x, int y, int width, int height,
+           Win *parent, int style_flag);
   BaseButton *destroy();
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);
@@ -91,6 +93,9 @@ extern uint32_t *BaseButtonDynamicDefaults;
 BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
 BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
+int __fastcall base_button_init_redirect(
+    BaseButton *self, void *, LPCSTR name, int id, int x, int y, int width,
+    int height, Win *parent, int style_flag);
 void __fastcall base_button_set_redirect(BaseButton *self, void *, int value);
 
 // The default setters are static, so their redirects take no instance and

@@ -6836,6 +6836,333 @@ void test_graphic_win_init() {
     BufferPalette = saved_buffer_palette;
 }
 
+namespace {
+
+// BaseButton::init's two vtable dispatches. Both are recorded, and the close
+// recorder can restage the table so the show's reload is observable.
+struct ButtonInitRecord {
+    int close_calls;
+    void *close_self;
+    int show_calls;
+    void *show_self;
+    int show_arg;
+    void **show_vtable_seen;
+    uint32_t sequence;
+};
+ButtonInitRecord g_button_rec;
+void **g_button_close_installs;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+uint32_t __thiscall button_stub_close(void *self) {
+    ++g_button_rec.close_calls;
+    g_button_rec.close_self = self;
+    g_button_rec.sequence = g_button_rec.sequence * 16 + 8;
+    // Restage the table if the case asked for it, so a body that reused the
+    // pointer it loaded before this call would dispatch the show through the
+    // OLD table and be caught.
+    if (g_button_close_installs) {
+        *reinterpret_cast<void ***>(self) = g_button_close_installs;
+    }
+    return 0;
+}
+void __thiscall button_stub_show(void *self, int arg) {
+    ++g_button_rec.show_calls;
+    g_button_rec.show_self = self;
+    g_button_rec.show_arg = arg;
+    g_button_rec.show_vtable_seen = *reinterpret_cast<void ***>(self);
+    g_button_rec.sequence = g_button_rec.sequence * 16 + 9;
+}
+void __thiscall button_stub_show_other(void *self, int arg) {
+    button_stub_show(self, arg);
+    // Distinguishable from the first table's entry by the recorded vtable.
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+}  // namespace
+
+void test_base_button_init() {
+    static_assert(sizeof(BaseButton) > 0xA80,
+                  "BaseButton init tests reach name_ at 0xA7C");
+    constexpr size_t kBuffer = 0x444;
+    constexpr size_t kCloseSlot = 0x168 / sizeof(void *);
+    constexpr size_t kShowSlot = 0x04 / sizeof(void *);
+
+    // GraphicWin::init runs for real here - it is source-owned - so every one
+    // of ITS seams has to be bound too. This is the same set
+    // test_graphic_win_init binds, and it reuses those recorders directly.
+    func_subobject_close *const saved_win_close = WinOriginalClose;
+    func_subobject_close *const saved_buffer_close = BufferSubobjectClose;
+    uint32_t *const saved_a0c_default = GraphicWinFieldA0CDefault;
+    func_win_init *const saved_base = WinOriginalInit;
+    func_graphic_win_compute_min_size *const saved_min =
+        GraphicWinOriginalComputeMinSize;
+    func_win_nonclient_to_client *const saved_nonclient =
+        WinOriginalNonclientToClient;
+    func_buffer_init *const saved_surface = BufferOriginalInit;
+    uint32_t *const saved_defaults = GraphicWinInitDefaults;
+    func_operator_new *const saved_alloc = WaveOperatorNew;
+    int *const saved_thickness = ScrollDefaultThickness;
+    Palette **const saved_win_palette = WinActivePalette;
+    uint32_t *const saved_reset_520 = BufferResetValue520;
+    Font **const saved_font_default = FontDefaultPtr;
+    Palette **const saved_buffer_palette = BufferPalette;
+    uint32_t *const saved_button_colors = BaseButtonDefaultTextColors;
+    Font **const saved_button_fonts = BaseButtonDefaultFonts;
+
+    WinOriginalClose = &init_stub_win_close;
+    BufferSubobjectClose = &init_stub_buffer_close;
+    WinOriginalInit = &init_stub_base;
+    GraphicWinOriginalComputeMinSize = &init_stub_min_size;
+    WinOriginalNonclientToClient = &init_stub_nonclient;
+    BufferOriginalInit = &init_stub_surface;
+    WaveOperatorNew = &init_stub_alloc;
+    uint32_t a0c_default = 0x11223344U;
+    GraphicWinFieldA0CDefault = &a0c_default;
+    uint32_t win_defaults[11] = {};
+    GraphicWinInitDefaults = win_defaults;
+    int thickness = 0;
+    ScrollDefaultThickness = &thickness;
+    uint32_t reset_520_slot = 0;
+    Font *font_default_slot = nullptr;
+    Palette *construct_palette_slot = nullptr;
+    BufferResetValue520 = &reset_520_slot;
+    FontDefaultPtr = &font_default_slot;
+    BufferPalette = &construct_palette_slot;
+    alignas(Palette) uint8_t palette_storage[sizeof(Palette)] = {};
+    Palette *win_palette_slot = reinterpret_cast<Palette *>(palette_storage);
+    WinActivePalette = &win_palette_slot;
+
+    // Twelve distinct sentinels: slot s tier t at index s * 3 + t. Anything
+    // less than twelve distinct values would let an index permutation pass.
+    uint32_t colors[12];
+    for (int index = 0; index < 12; ++index) {
+        colors[index] = 0xC0000000U + static_cast<uint32_t>(index);
+    }
+    BaseButtonDefaultTextColors = colors;
+    alignas(Font) uint8_t unready_font[sizeof(Font)] = {};
+    Font *fonts[3] = {reinterpret_cast<Font *>(unready_font),
+                      reinterpret_cast<Font *>(0x64000000),
+                      reinterpret_cast<Font *>(0x65000000)};
+    BaseButtonDefaultFonts = fonts;
+
+    std::vector<uint8_t> storage(sizeof(BaseButton) + 32);
+    std::vector<uint8_t> expected(storage.size());
+    auto *const button = reinterpret_cast<BaseButton *>(storage.data() + 16);
+    auto *const parent = reinterpret_cast<Win *>(0x71000000);
+
+    void *vtable[0x160] = {};
+    void *restaged[0x160] = {};
+    vtable[kCloseSlot] = reinterpret_cast<void *>(&button_stub_close);
+    vtable[kShowSlot] = reinterpret_cast<void *>(&button_stub_show);
+    restaged[kCloseSlot] = reinterpret_cast<void *>(&button_stub_close);
+    restaged[kShowSlot] = reinterpret_cast<void *>(&button_stub_show_other);
+
+    auto arrange = [&]() {
+        seed_storage(storage.data(), expected.data(), storage.size());
+        write_at(storage.data(), 16 + 0xA08, static_cast<void *>(nullptr));
+        write_at(storage.data(), 16, static_cast<void *>(vtable));
+        // GraphicWin::init ends in a real Buffer::sync_to_palette, which on a
+        // seeded buffer would take its republish arm and dispatch GetDC
+        // through a garbage surface vtable. Entering with no pixel storage
+        // stops it at its own first guard, writing nothing - what
+        // sync_to_palette does is test_buffer_sync_to_palette's business, and
+        // GraphicWin::init already pins that it is reached with the seam's
+        // palette.
+        write_at(storage.data(), 16 + kBuffer + 0x54,
+                 static_cast<LPVOID *>(nullptr));
+        std::memcpy(expected.data(), storage.data(), storage.size());
+        g_init_rec = InitRecord{};
+        g_init_base_result = 0;
+        g_init_surface_result = 0;
+        g_init_alloc_block = nullptr;
+        g_init_nonclient_out_width = 0;
+        g_init_nonclient_out_height = 0;
+        g_button_rec = ButtonInitRecord{};
+        g_button_close_installs = nullptr;
+    };
+    // GraphicWin::close's writes, which run inside GraphicWin::init.
+    auto apply_graphic_close = [&](uint8_t *image) {
+        const uint32_t zero = 0;
+        write_at(image, 16 + 0xA10, zero);
+        write_at(image, 16 + 0x134, zero);
+        write_at(image, 16 + 0x138, zero);
+        for (size_t offset = 0x9CC; offset <= 0xA04; offset += 4) {
+            write_at(image, 16 + offset, zero);
+        }
+        write_at(image, 16 + 0xA08, static_cast<void *>(nullptr));
+        write_at(image, 16 + 0xA0C, a0c_default);
+    };
+
+    // --- no parent: the close still runs, and nothing else does ---
+    // The close precedes every guard, so even a rejected init leaves the
+    // button torn down. Nothing is written because the virtual close is a
+    // stub and GraphicWin::init is never reached.
+    arrange();
+    expect(button->init(nullptr, 7, 1, 2, 3, 4, nullptr, 0) == 3);
+    expect(g_button_rec.close_calls == 1);
+    expect(g_button_rec.close_self == storage.data() + 16);
+    expect(g_init_rec.base_calls == 0);
+    expect(g_button_rec.show_calls == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+
+    // --- GraphicWin::init's code is passed straight through ---
+    // Nothing after it runs: no id, no colours, no fonts, no show.
+    arrange();
+    g_init_base_result = 0x5A5A5A5A;
+    apply_graphic_close(expected.data());
+    expect(button->init(nullptr, 7, 1, 2, 3, 4, parent, 0) == 0x5A5A5A5A);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    expect(g_button_rec.show_calls == 0);
+
+    // --- the style word, and the nine forwarded arguments ---
+    struct StyleCase { int flag; int style; };
+    const StyleCase style_cases[] = {
+        {0, 0x01000320}, {1, 0x01008320}, {-1, 0x01008320},
+        {INT_MIN, 0x01008320}, {0x8000, 0x01008320},
+    };
+    for (const StyleCase &test : style_cases) {
+        arrange();
+        g_init_base_result = 0x5A5A5A5A;
+        expect(button->init(nullptr, 7, 11, 22, 33, 44, parent, test.flag)
+               == 0x5A5A5A5A);
+        expect(g_init_rec.base_calls == 1);
+        // The four geometry values arrive as THIS function's arguments 3..6
+        // and land in GraphicWin::init's 1..4; the name is not forwarded at
+        // all and the caption, menu and border slots take literal nulls.
+        expect(g_init_rec.base_args[0] == 11);
+        expect(g_init_rec.base_args[1] == 22);
+        expect(g_init_rec.base_args[2] == 33);
+        expect(g_init_rec.base_args[3] == 44);
+        expect(g_init_rec.base_args[4] == 0);
+        expect(g_init_rec.base_args[5] == test.style);
+        expect(g_init_rec.base_args[6] ==
+               static_cast<int>(reinterpret_cast<intptr_t>(parent)));
+        expect(g_init_rec.base_args[7] == 0);
+        expect(g_init_rec.base_args[8] == 0);
+    }
+
+    // --- the private name copy ---
+    // The copy is a fresh allocation, not the caller's pointer, and it holds
+    // the caller's bytes. A null name leaves 0xA7C exactly as it was.
+    char name_source[] = "button-name";
+    arrange();
+    g_init_base_result = 0x5A5A5A5A;
+    const uintptr_t seeded_name =
+        graphic_win_field(storage.data() + 16, 0xA7C);
+    expect(button->init(nullptr, 7, 1, 2, 3, 4, parent, 0) == 0x5A5A5A5A);
+    expect(graphic_win_field(storage.data() + 16, 0xA7C) == seeded_name);
+
+    arrange();
+    g_init_base_result = 0x5A5A5A5A;
+    // Hand the allocator a dirty block of exactly the size the body will ask
+    // for, so that the body emptying it before the concatenation is
+    // observable. Without this the fresh block is usually already zero, the
+    // `allocated[0] = '\0'` store looks redundant, and both mutants of it
+    // survive. mem_get_old goes straight to malloc and is not a rebindable
+    // seam, so recycling a block is the only lever available here.
+    {
+        void *const dirty = std::malloc(sizeof(name_source));
+        std::memset(dirty, 'X', sizeof(name_source));
+        std::free(dirty);
+    }
+    expect(button->init(name_source, 7, 1, 2, 3, 4, parent, 0) == 0x5A5A5A5A);
+    LPSTR copied = nullptr;
+    std::memcpy(&copied, storage.data() + 16 + 0xA7C, sizeof(copied));
+    expect(copied != nullptr && copied != name_source);
+    expect(std::strcmp(copied, name_source) == 0);
+    std::free(copied);
+
+    // --- the success path ---
+    for (int restage = 0; restage < 2; ++restage) {
+        arrange();
+        if (restage) { g_button_close_installs = restaged; }
+        apply_graphic_close(expected.data());
+        write_at(expected.data(), 16 + 0x448,
+                 static_cast<void *>(button));
+        write_at(expected.data(), 16 + 0xA78, 0x1234U);
+        // Twelve sentinels at 0x53C + slot * 0x10 + tier * 4, tier-major in
+        // the table: index slot * 3 + tier.
+        for (size_t slot = 0; slot < 4; ++slot) {
+            for (size_t tier = 0; tier < 3; ++tier) {
+                write_at(expected.data(),
+                         16 + kBuffer + 0x53C + slot * 0x10 + tier * 4,
+                         colors[slot * 3 + tier]);
+            }
+        }
+        // set_font sees a primary that is present but not initialized, so it
+        // leaves font1_ alone and stores the rest - including the literal
+        // null fourth, which is not a fourth table entry.
+        write_at(expected.data(), 16 + kBuffer + 0x530, fonts[1]);
+        write_at(expected.data(), 16 + kBuffer + 0x534, fonts[2]);
+        write_at(expected.data(), 16 + kBuffer + 0x538,
+                 static_cast<Font *>(nullptr));
+        if (restage) {
+            write_at(expected.data(), 16, static_cast<void *>(restaged));
+        }
+        expect(button->init(nullptr, 0x1234, 1, 2, 3, 4, parent, 0) == 0);
+        expect_storage_bytes(storage.data(), expected.data(), storage.size());
+        expect(g_button_rec.show_calls == 1);
+        expect(g_button_rec.show_self == storage.data() + 16);
+        expect(g_button_rec.show_arg == 0);
+        // Close first, GraphicWin::init's own sequence, then the show last.
+        expect(g_button_rec.sequence == 0x89U);
+        // The show's vtable is RE-READ: when the close restaged the table the
+        // show must come from the new one, which a hoisted pointer would miss.
+        expect(g_button_rec.show_vtable_seen ==
+               (restage ? restaged : vtable));
+    }
+
+    // --- a null primary font short-circuits set_font, writing nothing ---
+    // This is what pins fonts[0] as the FIRST argument: were the order
+    // permuted, a non-null entry would reach the guard and the secondaries
+    // would land.
+    Font *null_first[3] = {nullptr, fonts[1], fonts[2]};
+    BaseButtonDefaultFonts = null_first;
+    arrange();
+    apply_graphic_close(expected.data());
+    write_at(expected.data(), 16 + 0x448, static_cast<void *>(button));
+    write_at(expected.data(), 16 + 0xA78, 0x1234U);
+    for (size_t slot = 0; slot < 4; ++slot) {
+        for (size_t tier = 0; tier < 3; ++tier) {
+            write_at(expected.data(),
+                     16 + kBuffer + 0x53C + slot * 0x10 + tier * 4,
+                     colors[slot * 3 + tier]);
+        }
+    }
+    expect(button->init(nullptr, 0x1234, 1, 2, 3, 4, parent, 0) == 0);
+    expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    BaseButtonDefaultFonts = fonts;
+
+    // --- through the redirect adapter ---
+    arrange();
+    g_init_base_result = 0x5A5A5A5A;
+    expect(base_button_init_redirect(button, nullptr, nullptr, 7, 11, 22, 33,
+                                     44, parent, 1) == 0x5A5A5A5A);
+    expect(g_init_rec.base_args[5] == 0x01008320);
+
+    WinOriginalClose = saved_win_close;
+    BufferSubobjectClose = saved_buffer_close;
+    GraphicWinFieldA0CDefault = saved_a0c_default;
+    WinOriginalInit = saved_base;
+    GraphicWinOriginalComputeMinSize = saved_min;
+    WinOriginalNonclientToClient = saved_nonclient;
+    BufferOriginalInit = saved_surface;
+    GraphicWinInitDefaults = saved_defaults;
+    WaveOperatorNew = saved_alloc;
+    ScrollDefaultThickness = saved_thickness;
+    WinActivePalette = saved_win_palette;
+    BufferResetValue520 = saved_reset_520;
+    FontDefaultPtr = saved_font_default;
+    BufferPalette = saved_buffer_palette;
+    BaseButtonDefaultTextColors = saved_button_colors;
+    BaseButtonDefaultFonts = saved_button_fonts;
+}
+
 void test_graphic_win_close() {
     static_assert(sizeof(GraphicWin) == 0xA14,
                   "GraphicWin close tests require the legacy layout");
@@ -25789,6 +26116,7 @@ int main() {
     test_graphic_win_destructor();
     test_graphic_win_close();
     test_graphic_win_init();
+    test_base_button_init();
     test_graphic_win_fill_color();
     test_graphic_win_redraw();
     test_base_button_and_flat_button_lifecycle();

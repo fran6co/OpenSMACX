@@ -2702,7 +2702,6 @@ P3,121,0x00606860,?on_resize@Scroll@@QAEXHH@Z,315,0,1,unrecovered,,,2,exact,exac
 P3,21,0x006069A0,?on_button_pressed@Scroll@@QAEXH@Z,372,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_pressed@Scroll@@QAEXH@Z)(Scroll* this, int)"
 P3,21,0x00606B20,?on_button_clicked@Scroll@@QAEXH@Z,291,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@Scroll@@QAEXH@Z)(Scroll* this, int)"
 P3,211,0x00607190,?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z,122,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z)(BaseButton* this, Font*, int8*, int, int, int, int, Win*, int)"
-P1,30821,0x00607210,?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z,322,30,8,unrecovered,,,2,exact,exact,"int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)"
 P3,211,0x006075C0,?on_left_down@BaseButton@@QAEXHH@Z,348,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
 P3,111,0x00607720,?on_left_up@BaseButton@@QAEXHH@Z,198,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
 P3,11,0x00607820,?on_mouse_leave@BaseButton@@QAEXHH@Z,45,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
