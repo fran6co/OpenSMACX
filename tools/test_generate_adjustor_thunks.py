@@ -113,6 +113,32 @@ class RawTemplateTest(unittest.TestCase):
             adjustor.decode_raw_template(b"\x2b\x49\xfc\xc3", 0x406FF0))
 
 
+class EntryExtentTest(unittest.TestCase):
+    """`size` sums a split body's spans; only the entry span is decodable.
+
+    416 catalogued functions are split. Decoding `size` bytes from the entry of
+    one reads past its real end, so a `ret` from the next function can be
+    picked up as this one's arity - the one wrong guess that corrupts a
+    caller's stack."""
+
+    def test_uses_the_entry_span_not_the_summed_size(self):
+        # ?on_key_click@Console@@QAEHHH@Z, whose body has an EH funclet parked
+        # at 0x0065D4D0. size is 0x3DC1; the entry span is only 0x3DAF.
+        row = {"address": "0x005178C0", "end_address": "0x0051B66F",
+               "size": "15809"}
+        self.assertEqual(0x3DAF, adjustor.entry_extent(row))
+
+    def test_agrees_with_size_for_an_unsplit_body(self):
+        row = {"address": "0x005ECE20", "end_address": "0x005ECE73",
+               "size": "83"}
+        self.assertEqual(83, adjustor.entry_extent(row))
+
+    def test_falls_back_to_size_when_the_end_is_unusable(self):
+        for end in ("", None, "0x005178C0"):
+            row = {"address": "0x005178C0", "end_address": end, "size": "8"}
+            self.assertEqual(8, adjustor.entry_extent(row))
+
+
 class CalleePopTest(unittest.TestCase):
     """Arity is the one wrong guess that would corrupt a caller's stack.
 
