@@ -442,10 +442,13 @@ Verification note: three stores in the original have no counterpart here
         original latched it into EDI at 0x005D4F0E, before the spill.
 Verification note: the emission order of the eleven default stores is
         transcribed but is not observable - eleven distinct fields from eleven
-        distinct table slots, so any permutation leaves the same final state
-        and those swap mutants are equivalent by construction. What IS
-        observable, and what the fixture pins with eleven distinct sentinels,
-        is the slot-to-field mapping, which is not the identity.
+        distinct table slots, so any permutation of the statements leaves the
+        same final state. Do not read the sweep's clean result as pinning that
+        order: it generates no swap mutants inside this block at all (only two
+        for the whole function, neither of them here), so the order is
+        untested rather than tested-and-equivalent. What IS observable, and
+        what the fixture pins with eleven distinct sentinels, is the
+        slot-to-field mapping, which is not the identity.
 Verification note: the original has no null check on title, parent, menu,
         border or on `this`, and none on the operator-new result beyond
         skipping the constructor. Their absence is deliberate.
