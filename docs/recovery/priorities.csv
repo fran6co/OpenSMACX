@@ -1305,7 +1305,7 @@ P3,0,0x004C8350,sub_4c8350,70,0,0,unrecovered,,,0,missing,missing,
 P3,410,0x004C83A0,sub_4c83a0,75,0,4,unrecovered,,,1,missing,exact,
 P3,0,0x004C83F0,sub_4c83f0,31,0,0,unrecovered,,,0,missing,missing,
 P3,111,0x004C8410,??0Patch@@QAE@XZ,50,0,1,unrecovered,,,1,missing,exact,void (__thiscall ??0Patch@@QAE@XZ)(Patch* this)
-P0,1007221,0x004C8460,??0Ambience@@QAE@XZ,230,7,2,original_dependency,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
+P0,1007221,0x004C8460,??0Ambience@@QAE@XZ,230,7,2,source_complete,ui_dependency,recover_owning_class,2,entry_range,entry_range,void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
 P3,421,0x004C8530,?load@Ambience@@QAEHPBD@Z,191,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?load@Ambience@@QAEHPBD@Z)(Ambience* this, int8*)"
 P3,21,0x004C85F0,?unload@Ambience@@QAEXXZ,44,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?unload@Ambience@@QAEXXZ)(Ambience* this)
 P3,1220,0x004C8620,sub_4c8620,194,1,2,unrecovered,,,2,entry_range,entry_range,

@@ -15908,6 +15908,76 @@ void test_sound_set_type_and_load() {
     WaveDeviceReleaseGuard = saved_guard;
 }
 
+void test_ambience_construct() {
+    // Same shape as test_wave_ctor above and deliberately checked against it:
+    // Ambience differs from Wave in the final vtable, the flag dword's net
+    // value, the WIDTH of the 0x54 clear, and the set_type argument. The
+    // storage runs past the class so the "nothing at or above 0x58" claim -
+    // which is what pins the shared base's extent - has somewhere to fail.
+    std::vector<uint8_t> storage(sizeof(Ambience) + 32, 0);
+    std::vector<uint8_t> expected(storage.size());
+    uint8_t *const obj = storage.data() + 16;
+    auto *ambience = reinterpret_cast<Ambience *>(obj);
+
+    auto *const saved_stype = SoundSetType;
+    SoundSetType = &observe_wave_set_type;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        seed_storage(storage.data(), expected.data(), storage.size());
+        uint32_t pre_tail;
+        std::memcpy(&pre_tail, obj + 0x54, 4);
+        std::memcpy(expected.data(), storage.data(), storage.size());
+        g_wave_stype_calls = 0;
+        if (use_adapter) {
+            expect(ambience_construct_redirect(ambience, nullptr) == ambience);
+        } else {
+            ambience->construct();
+        }
+        expect(g_wave_stype_calls == 1);
+        expect(g_wave_stype_wave == reinterpret_cast<Wave *>(ambience));
+        // 5, where Wave passes 1.
+        expect(g_wave_stype_type == 5);
+        // At set_type time the final vtable is already up and both flags have
+        // been read back, or-ed and stored - the call is the last thing the
+        // body does, so nothing follows it to disturb them.
+        expect(g_wave_stype_seen_vtable == 0x0066E664u);
+        // 8, where Wave nets 4.
+        expect(g_wave_stype_seen_f40 == 8);
+        expect(g_wave_stype_seen_f54 == 1);
+        // The dword at 0x58 still holds its seed: this constructor writes
+        // nothing at or above it.
+        expect(g_wave_stype_seen_pitch ==
+               *reinterpret_cast<const uint32_t *>(
+                   expected.data() + 16 + 0x58));
+
+        uint8_t *const eobj = expected.data() + 16;
+        auto e32 = [&](size_t off, uint32_t v) { std::memcpy(eobj + off, &v, 4); };
+        e32(0x00, 0x0066E664u);
+        e32(0x04, 0x7F);
+        e32(0x08, 0);
+        std::memset(eobj + 0x0C, 0, 0x24);
+        e32(0x30, 0);
+        // 0x34 is never written and keeps its seed, exactly as in Wave.
+        e32(0x38, 0x3E8);
+        e32(0x3C, 0);
+        e32(0x40, 8);
+        e32(0x44, 0);
+        e32(0x48, 0);
+        e32(0x4C, 0);
+        e32(0x50, 0);
+        // ONE byte at 0x54. The three bytes above it keep their seed, which a
+        // widened clear - Wave's four-byte shape - would destroy.
+        eobj[0x54] = 1;
+        expect_storage_bytes(storage.data(), expected.data(), storage.size());
+        // Restated as its own assertion so the reason is not buried in the
+        // byte compare: 0x55..0x57 are untouched.
+        expect((pre_tail >> 8) ==
+               (*reinterpret_cast<const uint32_t *>(obj + 0x54) >> 8));
+    }
+
+    SoundSetType = saved_stype;
+}
+
 void test_wave_ctor() {
     std::vector<uint8_t> storage(sizeof(Wave) + 32, 0);
     std::vector<uint8_t> expected(storage.size());
@@ -25888,6 +25958,7 @@ int main() {
     test_wave_volume_fname_play();
     test_wave_load_empty();
     test_wave_ctor();
+    test_ambience_construct();
     test_wave_init();
     test_sound_set_type_and_load();
     test_wave_device_groups();

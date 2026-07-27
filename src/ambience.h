@@ -34,12 +34,17 @@
   */
 class DLLEXPORT Ambience {
  public:
+  // Spelled as a method rather than a real constructor on purpose: the three
+  // derived variants below all carry inline `{ ; }` constructors, and giving
+  // the base a real one would silently change every one of them.
+  void construct();
   ~Ambience();
 
  protected:
   uint8_t base_storage_[0x58];
 };
 
+Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *);
 void __fastcall ambience_dtor_redirect(Ambience *self, void *);
 
 class DLLEXPORT FactionAmbience : Ambience {

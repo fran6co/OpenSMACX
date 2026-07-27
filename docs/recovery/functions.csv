@@ -2533,7 +2533,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C83A0,0x004C83EB,75,.text,sub_4c83a0,,0x004C83A0-0x004C83EB,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,0
 0x004C83F0,0x004C840F,31,.text,sub_4c83f0,,0x004C83F0-0x004C840F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C8410,0x004C8442,50,.text,??0Patch@@QAE@XZ,void (__thiscall ??0Patch@@QAE@XZ)(Patch* this),0x004C8410-0x004C8442,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x004C8460,0x004C852D,230,.text,??0Ambience@@QAE@XZ,void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this),0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E,game,frame;sp_ready;purged_ok,,,,AmbienceCtorTarget,original_dependency,,,,2,7
+0x004C8460,0x004C852D,230,.text,??0Ambience@@QAE@XZ,void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this),0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E,game,frame;sp_ready;purged_ok,src/ambience.cpp:361,Complete,,AmbienceCtorTarget,source_complete,,,,2,7
 0x004C8530,0x004C85EF,191,.text,?load@Ambience@@QAEHPBD@Z,"int (__thiscall ?load@Ambience@@QAEHPBD@Z)(Ambience* this, int8*)",0x004C8530-0x004C85EF,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,0
 0x004C85F0,0x004C861C,44,.text,?unload@Ambience@@QAEXXZ,void (__thiscall ?unload@Ambience@@QAEXXZ)(Ambience* this),0x004C85F0-0x004C861C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C8620,0x004C86C9,194,.text,sub_4c8620,,0x004C8620-0x004C86C9;0x004C8450-0x004C8457;0x00659F5E-0x00659F70,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
