@@ -7,6 +7,7 @@ address,kind
 0x00402970,jump
 0x00402F10,jump
 0x00402F30,jump
+0x00403610,jump
 0x00404220,jump
 0x00404240,jump
 0x00404250,jump
@@ -273,6 +274,7 @@ address,kind
 0x00443E40,jump
 0x00445080,jump
 0x00445120,jump
+0x00445440,jump
 0x00445450,jump
 0x00445480,jump
 0x004454A0,jump
@@ -1075,6 +1077,7 @@ address,kind
 0x004BDDD0,jump
 0x004BE9F0,jump
 0x004BEA20,jump
+0x004BF380,jump
 0x004BF6E0,jump
 0x004BF700,jump
 0x004BF710,jump

@@ -198,6 +198,8 @@ set(OPENSMACX_SOURCES
     src/console.cpp
     src/replaywin.cpp
     src/reportif.cpp
+    src/alphamenu.cpp
+    src/uv2player.cpp
     src/dipedit.cpp
     src/sound.cpp
     src/wave_device.cpp
@@ -491,6 +493,8 @@ if(BUILD_TESTING)
         src/console.cpp
         src/replaywin.cpp
         src/reportif.cpp
+        src/alphamenu.cpp
+        src/uv2player.cpp
         src/dipedit.cpp
         src/sound.cpp
         src/wave_device.cpp
