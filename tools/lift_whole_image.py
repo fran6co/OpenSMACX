@@ -97,6 +97,39 @@ def image_span(pe: pefile.PE) -> tuple[int, int]:
     return base, ((end - base) + 0xFFF) & ~0xFFF
 
 
+def body_spans(row: dict) -> list[tuple[int, int]]:
+    """The half-open [start, end) ranges a function's code actually occupies.
+
+    `size` is the SUM of these spans, not `end_address - address`, and reading
+    that many bytes from the entry point is wrong for every function MSVC
+    outlined. 402 of the 5,673 game functions (7.1%) carry a second span in the
+    0x0065xxxx-0x0066xxxx cold region, and for all 402 a contiguous read runs
+    past the first span into the NEXT function - by up to 2,102 bytes. The
+    functions it hits hardest are the largest in the game: probe (28,292 B),
+    base_production (16,430 B), tech_trade, terraform, upgrade.
+
+    In skeleton mode that error only inflated an instruction count. Under real
+    lowering it would translate a neighbour's bytes as part of this body, so
+    the spans are authoritative here and `size` is used only to cross-check
+    them. The same confusion was fixed once already for adjustor thunks in
+    commit 5e4c362.
+    """
+    spans = []
+    for part in (row.get("body_ranges") or "").split(";"):
+        if "-" not in part:
+            continue
+        low, high = part.split("-", 1)
+        try:
+            spans.append((int(low, 16), int(high, 16)))
+        except ValueError:
+            continue
+    if not spans:
+        address = int(row["address"], 16)
+        spans = [(address, address + int(row["size"] or 0))]
+    spans.sort()
+    return spans
+
+
 def load_functions(pe: pefile.PE, functions_csv: Path) -> list[dict]:
     with functions_csv.open() as handle:
         rows = list(csv.DictReader(handle))
@@ -110,9 +143,12 @@ def load_functions(pe: pefile.PE, functions_csv: Path) -> list[dict]:
         if not size:
             continue
         address = int(row["address"], 16)
+        spans = body_spans(row)
         functions.append({
             "address": address,
             "size": size,
+            "spans": spans,
+            "span_bytes": sum(high - low for low, high in spans),
             "name": row["name"],
             "section": section_of(pe, address),
             "state": row["recovery_state"],
@@ -124,17 +160,19 @@ def load_functions(pe: pefile.PE, functions_csv: Path) -> list[dict]:
 def count_instructions(pe: pefile.PE, functions: list[dict]) -> None:
     md = Cs(CS_ARCH_X86, CS_MODE_32)
     for function in functions:
-        code = read_bytes(pe, function["address"], function["size"])
-        instructions = list(md.disasm(code, function["address"]))
-        function["instructions"] = len(instructions)
+        total = 0
+        covered = 0
+        for low, high in function["spans"]:
+            instructions = list(md.disasm(read_bytes(pe, low, high - low), low))
+            total += len(instructions)
+            covered += sum(one.size for one in instructions)
+        function["instructions"] = total
         # Capstone stopping early means the range holds data, or an encoding it
         # does not know. Either way the byte count is the honest denominator,
         # so fall back to it rather than silently under-budgeting the shard.
-        covered = sum(one.size for one in instructions)
-        function["fully_decoded"] = covered >= function["size"] * 0.95
+        function["fully_decoded"] = covered >= function["span_bytes"] * 0.95
         if not function["fully_decoded"]:
-            function["instructions"] = max(function["instructions"],
-                                           function["size"] // 3)
+            function["instructions"] = max(total, function["span_bytes"] // 3)
 
 
 def symbol_for(function: dict) -> str:
@@ -244,9 +282,11 @@ def write_shards(out: Path, functions: list[dict], shards: int) -> list[Path]:
         parts = ["#include \"lifted_runtime.h\"\n\n"]
         for function in bucket:
             symbol = symbol_for(function)
+            ranges = ";".join(f"{low:#010x}-{high:#010x}"
+                              for low, high in function["spans"])
             parts.append(
                 f"// {function['name'][:70]}\n"
-                f"// {function['address']:#010x}  {function['size']} bytes, "
+                f"// {ranges}  {function['span_bytes']} bytes, "
                 f"{function['instructions']} instructions\n"
                 f"void {symbol}(OpensmacxStaticRecompileState &state) {{\n")
             if function["section"] in UNLIFTABLE_SECTIONS:
@@ -376,12 +416,15 @@ def main() -> int:
         1 for function in functions if not function["fully_decoded"])
     unliftable = sum(1 for function in functions
                      if function["section"] in UNLIFTABLE_SECTIONS)
+    outlined = sum(1 for function in functions if len(function["spans"]) > 1)
 
     manifest = {
         "mode": args.mode,
         "image_base": f"{base:#010x}",
         "image_size": size,
         "functions": len(functions),
+        "outlined_functions": outlined,
+        "code_bytes": sum(function["span_bytes"] for function in functions),
         "instructions": instructions,
         "statements_per_instruction": STATEMENTS_PER_INSTRUCTION,
         "generated_lines": lines,
