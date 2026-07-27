@@ -23,9 +23,17 @@ and the cheapest one to falsify. Emitting correct code first and discovering
 at 5 million lines that the toolchain will not link it is the expensive
 ordering.
 
-`--mode lower` is the real translation and is not implemented yet; the
-skeleton's statement budget is deliberately generous so that a real lowering
-landing inside it is a fact already measured rather than a hope.
+`--mode lower` is the real translation and is the default. Every decoded
+instruction goes through `x86_lower.lower`; an instruction the lowerer refuses
+becomes ONE `opensmacx_trap` naming it, and the rest of the function is lowered
+around it. Abandoning a body at its first refusal would be the easier rule and
+a much worse one: a function that is 99% translated with a single trap in it
+still runs until it reaches that trap, and the trap says what to build next,
+while a stub says only that something was missing. The refusals are counted by
+mnemonic and that histogram, printed and stored in the manifest, is phase 4's
+work queue - so it is a measurement, not a summary, and it comes from calling
+the lowerer rather than from any table of what the lowerer is believed to
+support.
 
 Nothing here is distributable. Output is mechanically derived from the user's
 own executable and lands under build/, which is ignored, exactly as
@@ -39,12 +47,16 @@ import csv
 import json
 import sys
 import time
+from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
+from capstone.x86 import X86_OP_IMM  # noqa: E402
+
+import x86_lower  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -271,15 +283,115 @@ def body_statements(function: dict) -> list[str]:
     return lines
 
 
-def write_shards(out: Path, functions: list[dict], shards: int) -> list[Path]:
+def decode_body(pe: pefile.PE, function: dict, md: Cs) -> list[tuple]:
+    """The function's body as ('code', instruction) and ('data', span) items.
+
+    Capstone stopping short of the end of a span is not an error to swallow:
+    the remaining bytes are either data the catalogue included in the body or
+    an encoding capstone does not know, and both need to be visible. They are
+    carried through as a 'data' item so the emitter can trap on them in
+    position rather than dropping them and producing a body that silently
+    skips a stretch of the original.
+    """
+    items: list[tuple] = []
+    for low, high in function["spans"]:
+        data = read_bytes(pe, low, high - low)
+        consumed = 0
+        for one in md.disasm(data, low):
+            items.append(("code", one))
+            consumed += one.size
+        if consumed < len(data):
+            items.append(("data", (low + consumed, len(data) - consumed)))
+    return items
+
+
+def branch_targets(items: list[tuple]) -> set[int]:
+    """Addresses this function branches to from inside itself.
+
+    Only these get labels. A branch to anything else leaves the function and
+    has to become a dispatch, which is why the set is computed from the
+    function's own instruction starts rather than from every branch target:
+    `goto` cannot cross a function boundary, and a tail call must not become
+    one. CALL is excluded even when it targets this same function - a
+    self-recursive call is still a call, and lowering it as a jump would skip
+    the pushed return address.
+    """
+    starts = {item[1].address for item in items if item[0] == "code"}
+    targets = set()
+    for kind, payload in items:
+        if kind != "code" or not payload.mnemonic.startswith("j"):
+            continue
+        operands = payload.operands
+        if (len(operands) == 1 and operands[0].type == X86_OP_IMM
+                and operands[0].imm in starts):
+            targets.add(operands[0].imm)
+    return targets
+
+
+def lower_body(items: list[tuple]) -> tuple[list[str], Counter]:
+    """(emitted lines, refusals by mnemonic) for one function.
+
+    One refusal is one trap and the surrounding instructions are still
+    lowered. The trap is reachable code, so the function runs correctly right
+    up to the missing instruction and then names it - which is both a more
+    useful artifact than a whole-body stub and the only way the histogram
+    below reflects what is actually missing rather than what is missing in the
+    first function that happens to contain it.
+    """
+    targets = branch_targets(items)
+
+    def label_for(address: int):
+        return f"L_{address:08x}" if address in targets else None
+
+    lines: list[str] = []
+    refused: Counter = Counter()
+    for kind, payload in items:
+        if kind == "data":
+            address, length = payload
+            refused["(undecodable)"] += 1
+            lines.append(f"    opensmacx_trap({address:#010x}U,"
+                         f" \"{length} undecodable bytes\");")
+            continue
+        instruction = payload
+        if instruction.address in targets:
+            # The trailing `;` is not cosmetic: in C++17 a label must be
+            # followed by a statement, and the next lowering is legally empty
+            # (a NOP emits nothing) or absent (the label is the last thing in
+            # the body).
+            lines.append(f"L_{instruction.address:08x}: ;")
+        try:
+            statements = x86_lower.lower(instruction, label_for)
+        except x86_lower.Unsupported:
+            refused[instruction.mnemonic] += 1
+            lines.append(f"    opensmacx_trap({instruction.address:#010x}U,"
+                         f" \"{instruction.mnemonic}\");")
+            continue
+        lines.extend("    " + statement for statement in statements)
+    return lines, refused
+
+
+def write_shards(out: Path, functions: list[dict], shards: int,
+                 mode: str = "skeleton", pe: pefile.PE | None = None
+                 ) -> list[Path]:
     buckets: list[list[dict]] = [[] for _ in range(shards)]
     for index, function in enumerate(functions):
         buckets[index % shards].append(function)
 
+    # The lowerer needs operand detail, which the counting pass deliberately
+    # does without: detail costs roughly double, and only this mode reads it.
+    decoder = None
+    if mode == "lower":
+        decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+        decoder.detail = True
+    # `s` is what the lowerer's emitted expressions name; skeleton bodies were
+    # written against `state` and are left alone.
+    parameter = "s" if mode == "lower" else "state"
+    header = ("lifted_x86.h" if mode == "lower" else "lifted_runtime.h")
+
     paths = []
     for number, bucket in enumerate(buckets):
         path = out / f"lifted_{number:03d}.cpp"
-        parts = ["#include \"lifted_runtime.h\"\n\n"]
+        parts = [f"#include \"{header}\"\n\n"]
         for function in bucket:
             symbol = symbol_for(function)
             ranges = ";".join(f"{low:#010x}-{high:#010x}"
@@ -288,12 +400,28 @@ def write_shards(out: Path, functions: list[dict], shards: int) -> list[Path]:
                 f"// {function['name'][:70]}\n"
                 f"// {ranges}  {function['span_bytes']} bytes, "
                 f"{function['instructions']} instructions\n"
-                f"void {symbol}(OpensmacxStaticRecompileState &state) {{\n")
+                f"void {symbol}(OpensmacxStaticRecompileState &{parameter}) {{\n")
             if function["section"] in UNLIFTABLE_SECTIONS:
+                function["refused"] = Counter()
+                function["lowered"] = False
                 parts.append(
-                    "    (void)state;\n"
+                    f"    (void){parameter};\n"
                     f"    opensmacx_trap({function['address']:#010x}U,"
                     " \"self-modifying section\");\n}\n\n")
+                continue
+            if mode == "lower":
+                lines, refused = lower_body(
+                    decode_body(pe, function, decoder))
+                function["refused"] = refused
+                function["lowered"] = True
+                parts.append("\n".join(lines))
+                # Falling off the end of a body means the catalogued extent
+                # ended before the control flow did. Unreachable after a RET,
+                # so the compiler drops it in the ordinary case and keeps it
+                # exactly where it is a real answer.
+                parts.append(
+                    f"\n    opensmacx_trap({function['address']:#010x}U,"
+                    " \"fell off the end of the body\");\n}\n\n")
                 continue
             parts.append("\n".join(body_statements(function)))
             parts.append(
@@ -386,15 +514,10 @@ def main() -> int:
     parser.add_argument("--out", type=Path,
                         default=REPO_ROOT / "build" / "lifted")
     parser.add_argument("--mode", choices=("skeleton", "lower"),
-                        default="skeleton")
+                        default="lower")
     parser.add_argument("--shards", type=int, default=64,
                         help="translation units, so the build parallelises")
     args = parser.parse_args()
-
-    if args.mode == "lower":
-        print("--mode lower is phase 2; run --mode skeleton first and read "
-              "the numbers it prints.", file=sys.stderr)
-        return 2
 
     started = time.time()
     pe = pefile.PE(str(args.exe), fast_load=True)
@@ -407,7 +530,7 @@ def main() -> int:
     write_image(args.out, pe, base, size)
     write_dispatch(args.out, functions)
     write_main(args.out, functions)
-    shards = write_shards(args.out, functions, args.shards)
+    shards = write_shards(args.out, functions, args.shards, args.mode, pe)
 
     lines = sum(
         len(path.read_text(encoding="utf-8").splitlines()) for path in shards)
@@ -418,6 +541,26 @@ def main() -> int:
                      if function["section"] in UNLIFTABLE_SECTIONS)
     outlined = sum(1 for function in functions if len(function["spans"]) > 1)
 
+    # Coverage is MEASURED, by counting what the lowerer refused, not inferred
+    # from a table of mnemonics it is believed to handle: `mov` is handled and
+    # `mov eax, fs:[0]` is not, and only calling the lowerer knows the
+    # difference. The histogram is ordered by frequency because that ordering
+    # is the phase-4 work queue.
+    refusals: Counter = Counter()
+    fully = partial = 0
+    for function in functions:
+        counted = function.get("refused")
+        if counted is None or not function.get("lowered"):
+            continue
+        refusals += counted
+        if counted:
+            partial += 1
+        else:
+            fully += 1
+    traps = sum(refusals.values())
+    histogram = dict(sorted(refusals.items(),
+                            key=lambda item: (-item[1], item[0])))
+
     manifest = {
         "mode": args.mode,
         "image_base": f"{base:#010x}",
@@ -426,11 +569,19 @@ def main() -> int:
         "outlined_functions": outlined,
         "code_bytes": sum(function["span_bytes"] for function in functions),
         "instructions": instructions,
-        "statements_per_instruction": STATEMENTS_PER_INSTRUCTION,
+        # A budget in skeleton mode and a measurement in lower mode: the
+        # skeleton picks the density, the lowering has one.
+        "statements_per_instruction": (
+            STATEMENTS_PER_INSTRUCTION if args.mode == "skeleton"
+            else round(lines / instructions, 2) if instructions else 0),
         "generated_lines": lines,
         "shards": len(shards),
         "not_fully_decoded": undecoded,
         "unliftable_section_functions": unliftable,
+        "fully_lowered_functions": fully,
+        "partially_lowered_functions": partial,
+        "traps": traps,
+        "unsupported_mnemonics": histogram,
         "seconds": round(time.time() - started, 1),
     }
     (args.out / "manifest.json").write_text(
@@ -442,6 +593,18 @@ def main() -> int:
     print(f"image span           {base:#010x} + {size} bytes")
     print(f"not fully decoded    {undecoded}")
     print(f"unliftable section   {unliftable}")
+    if args.mode == "lower":
+        lowerable = fully + partial
+        share = 100.0 * fully / lowerable if lowerable else 0.0
+        print(f"fully lowered        {fully} of {lowerable} ({share:.1f}%)")
+        print(f"partially lowered    {partial}")
+        print(f"traps                {traps}")
+        if histogram:
+            print("\nunsupported mnemonics (the phase 4 queue)")
+            for mnemonic, count in list(histogram.items())[:25]:
+                print(f"  {count:>7}  {mnemonic}")
+            if len(histogram) > 25:
+                print(f"  ... {len(histogram) - 25} more, all in manifest.json")
     print(f"generation seconds   {manifest['seconds']}")
     print(f"\nwrote {args.out}")
     return 0
