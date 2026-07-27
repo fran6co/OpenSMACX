@@ -113,7 +113,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1765;
+constexpr size_t RedirectCount = 1769;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -552,6 +552,11 @@ bool install_redirects() {
             0x00404900,
             reinterpret_cast<uintptr_t>(&popup_close_redirect),
             OPENSMACX_SIGNATURE_00404900,
+        },
+        {
+            0x00404F80,
+            reinterpret_cast<uintptr_t>(&popup_on_redraw_nc_redirect),
+            OPENSMACX_SIGNATURE_00404F80,
         },
         {
             0x00405B10,
@@ -1107,6 +1112,11 @@ bool install_redirects() {
             0x00426F80,
             reinterpret_cast<uintptr_t>(&counc_win_on_button_passover_redirect),
             OPENSMACX_SIGNATURE_00426F80,
+        },
+        {
+            0x00426F90,
+            reinterpret_cast<uintptr_t>(&counc_win_on_button_text_draw_redirect),
+            OPENSMACX_SIGNATURE_00426F90,
         },
         {
             0x00427060,
@@ -5319,6 +5329,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00493E90,
         },
         {
+            0x004945C0,
+            reinterpret_cast<uintptr_t>(&prod_picker_on_redraw_nc_redirect),
+            OPENSMACX_SIGNATURE_004945C0,
+        },
+        {
             0x00495160,
             reinterpret_cast<uintptr_t>(&prod_picker_unk3_redirect),
             OPENSMACX_SIGNATURE_00495160,
@@ -5407,6 +5422,11 @@ bool install_redirects() {
             0x004A6040,
             reinterpret_cast<uintptr_t>(&report_if_on_iface_mouse_leave_redirect),
             OPENSMACX_SIGNATURE_004A6040,
+        },
+        {
+            0x004A6320,
+            reinterpret_cast<uintptr_t>(&report_if_on_iface_dialog_item_back_draw_redirect),
+            OPENSMACX_SIGNATURE_004A6320,
         },
         {
             0x004A6D60,

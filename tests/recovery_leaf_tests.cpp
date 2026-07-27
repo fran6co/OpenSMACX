@@ -11576,6 +11576,9 @@ void test_constant_return_stubs() {
     counc_win_on_iface_button_toggled_redirect(counc_win_k, nullptr, -1, 2147483647);
     counc_win_k->on_iface_group_clicked(-1, 2147483647, -2147483648);
     counc_win_on_iface_group_clicked_redirect(counc_win_k, nullptr, -1, 2147483647, -2147483648);
+    expect(counc_win_k->on_button_text_draw(-1, 2147483647, -2147483648) == 0);
+    expect(counc_win_on_button_text_draw_redirect(
+               counc_win_k, nullptr, -1, 2147483647, -2147483648) == 0);
     expect_storage_bytes(counc_win_k_storage.data(), counc_win_k_expected.data(),
                          counc_win_k_storage.size());
     std::vector<uint8_t> credits_k_storage(sizeof(Credits) + 32);
@@ -18788,6 +18791,9 @@ void test_bulk_generated_stubs() {
     report_if_on_iface_button_toggled_redirect(report_if_b, nullptr, -1, -2);
     report_if_b->close_score();
     report_if_close_score_redirect(report_if_b, nullptr);
+    expect(report_if_b->on_iface_dialog_item_back_draw(1, 2, 3, 4) == 1);
+    expect(report_if_on_iface_dialog_item_back_draw_redirect(
+               report_if_b, nullptr, -1, -2, -3, -4) == 1);
     expect_storage_bytes(report_if_b_storage.data(), report_if_b_expected.data(),
                          report_if_b_storage.size());
     std::vector<uint8_t> dip_edit_b_storage(sizeof(DipEdit) + 32);
@@ -25590,6 +25596,36 @@ void test_delegation_thunks() {
     }
 }
 
+void test_constant_return_stubs_wave4() {
+    // Two more constant returns, checked the way every other one in this file
+    // is: a seeded object, the method and its redirect both entered with
+    // different arguments, and a byte compare proving neither wrote anything.
+    std::vector<uint8_t> popup_storage(sizeof(Popup) + 32);
+    std::vector<uint8_t> popup_expected(popup_storage.size());
+    auto *popup_stub = reinterpret_cast<Popup *>(popup_storage.data() + 16);
+    seed_storage(popup_storage.data(), popup_expected.data(),
+                 popup_storage.size());
+    std::memcpy(popup_expected.data(), popup_storage.data(),
+                popup_storage.size());
+    popup_stub->on_redraw_nc(1, 2);
+    popup_on_redraw_nc_redirect(popup_stub, nullptr, -1, -2);
+    expect_storage_bytes(popup_storage.data(), popup_expected.data(),
+                         popup_storage.size());
+
+    std::vector<uint8_t> picker_storage(sizeof(ProdPicker) + 32);
+    std::vector<uint8_t> picker_expected(picker_storage.size());
+    auto *picker_stub =
+        reinterpret_cast<ProdPicker *>(picker_storage.data() + 16);
+    seed_storage(picker_storage.data(), picker_expected.data(),
+                 picker_storage.size());
+    std::memcpy(picker_expected.data(), picker_storage.data(),
+                picker_storage.size());
+    picker_stub->on_redraw_nc(1, 2);
+    prod_picker_on_redraw_nc_redirect(picker_stub, nullptr, -1, -2);
+    expect_storage_bytes(picker_storage.data(), picker_expected.data(),
+                         picker_storage.size());
+}
+
 void test_deleting_thunks() {
     func_operator_delete *const saved_free = ScrollOperatorDelete;
     ScrollOperatorDelete = &observe_deleting_free;
@@ -26784,6 +26820,7 @@ int main() {
     test_console_focus();
     test_init_thunks();
     test_adjustor_thunks();
+    test_constant_return_stubs_wave4();
     test_deleting_thunks();
     test_delegation_thunks();
     return failures == 0 ? 0 : 1;

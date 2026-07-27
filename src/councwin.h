@@ -47,6 +47,7 @@ class DLLEXPORT CouncWin : GraphicWin {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
+  int on_button_text_draw(int, int, int);
 };
 
 void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int a1, int a2);
@@ -62,3 +63,5 @@ void __fastcall counc_win_on_iface_left_double_click_redirect(CouncWin *self, vo
 void __fastcall counc_win_on_iface_right_double_click_redirect(CouncWin *self, void *, int a1, int a2);
 void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void *, int a1, int a2);
 void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *, int a1, int a2, int a3);
+int __fastcall counc_win_on_button_text_draw_redirect(
+    CouncWin *self, void *, int a1, int a2, int a3);

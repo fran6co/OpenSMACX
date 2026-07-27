@@ -38,6 +38,7 @@ class DLLEXPORT ReportIf {
   void on_iface_mouse_leave(int, int);
   void on_iface_button_toggled(int, int);
   void close_score();
+  int on_iface_dialog_item_back_draw(int, int, int, int);
 
  private:
   uint8_t unmapped_[0x202F0];
@@ -52,3 +53,5 @@ void __fastcall report_if_on_iface_mouse_move_redirect(ReportIf *self, void *, i
 void __fastcall report_if_on_iface_mouse_leave_redirect(ReportIf *self, void *, int a1, int a2);
 void __fastcall report_if_on_iface_button_toggled_redirect(ReportIf *self, void *, int a1, int a2);
 void __fastcall report_if_close_score_redirect(ReportIf *self, void *);
+int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
+    ReportIf *self, void *, int a1, int a2, int a3, int a4);

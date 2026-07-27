@@ -186,3 +186,18 @@ void CouncWin::on_iface_group_clicked(int, int, int) {
 void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *, int a1, int a2, int a3) {
     self->on_iface_group_clicked(a1, a2, a3);
 }
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns 0.
+Original Offset: 00426F90
+Return Value: 0
+Status: Complete
+*/
+int CouncWin::on_button_text_draw(int, int, int) {
+    return 0;
+}
+
+int __fastcall counc_win_on_button_text_draw_redirect(
+        CouncWin *self, void *, int a1, int a2, int a3) {
+    return self->on_button_text_draw(a1, a2, a3);
+}

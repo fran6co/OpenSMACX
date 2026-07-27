@@ -74,3 +74,17 @@ void ProdPicker::close() {
 void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
     self->close();
 }
+
+/*
+Purpose: Unknown; the legacy implementation is a constant return that returns.
+Original Offset: 004945C0
+Return Value: n/a
+Status: Complete
+*/
+void ProdPicker::on_redraw_nc(int, int) {
+}
+
+void __fastcall prod_picker_on_redraw_nc_redirect(
+        ProdPicker *self, void *, int a1, int a2) {
+    self->on_redraw_nc(a1, a2);
+}
