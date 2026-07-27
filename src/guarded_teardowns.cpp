@@ -41,18 +41,7 @@ uint8_t *TeardownFlags009B8F58 = reinterpret_cast<uint8_t *>(0x009B8F58);
 uint8_t *TeardownFlags009B9014 = reinterpret_cast<uint8_t *>(0x009B9014);
 uint8_t *TeardownFlags009B9104 = reinterpret_cast<uint8_t *>(0x009B9104);
 uint8_t *TeardownFlags009BEAE0 = reinterpret_cast<uint8_t *>(0x009BEAE0);
-void *TeardownObject009B3A50 = reinterpret_cast<void *>(0x009B3A50);
-void *TeardownObject009B6F08 = reinterpret_cast<void *>(0x009B6F08);
 void *TeardownObject009B7490 = reinterpret_cast<void *>(0x009B7490);
-void *TeardownObject009B8EF8 = reinterpret_cast<void *>(0x009B8EF8);
-void *TeardownObject009B8F28 = reinterpret_cast<void *>(0x009B8F28);
-void *TeardownObject009B8F60 = reinterpret_cast<void *>(0x009B8F60);
-void *TeardownObject009B8F90 = reinterpret_cast<void *>(0x009B8F90);
-void *TeardownObject009B9018 = reinterpret_cast<void *>(0x009B9018);
-void *TeardownObject009B9048 = reinterpret_cast<void *>(0x009B9048);
-void *TeardownObject009B9078 = reinterpret_cast<void *>(0x009B9078);
-void *TeardownObject009B9108 = reinterpret_cast<void *>(0x009B9108);
-void *TeardownObject009B96B0 = reinterpret_cast<void *>(0x009B96B0);
 void *TeardownObject009BEAE8 = reinterpret_cast<void *>(0x009BEAE8);
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -82,7 +71,7 @@ void __cdecl teardown_g_buffer_sprite() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B37CC = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(TeardownObject009B3A50);
+    TeardownTarget005E3820(g_BUFFER_SPRITE);
 }
 
 /*
@@ -101,7 +90,7 @@ void __cdecl teardown_g_win_buffer() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 1);
-    BufferElementTeardown(TeardownObject009B6F08);
+    BufferElementTeardown(g_WIN_BUFFER);
 }
 
 /*
@@ -139,7 +128,7 @@ void __cdecl teardown_g_radiobutton_sprite_1() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(TeardownObject009B8EF8);
+    TeardownTarget005E3820(g_RADIOBUTTON_SPRITE_1);
 }
 
 /*
@@ -158,7 +147,7 @@ void __cdecl teardown_g_radiobutton_sprite_2() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(TeardownObject009B8F28);
+    TeardownTarget005E3820(g_RADIOBUTTON_SPRITE_2);
 }
 
 /*
@@ -177,7 +166,7 @@ void __cdecl teardown_g_checkbox_sprite_1() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(TeardownObject009B8F60);
+    TeardownTarget005E3820(g_CHECKBOX_SPRITE_1);
 }
 
 /*
@@ -196,7 +185,7 @@ void __cdecl teardown_g_checkbox_sprite_2() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(TeardownObject009B8F90);
+    TeardownTarget005E3820(g_CHECKBOX_SPRITE_2);
 }
 
 /*
@@ -215,7 +204,7 @@ void __cdecl teardown_g_filewin_sprite_1() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(TeardownObject009B9048);
+    TeardownTarget005E3820(g_FILEWIN_SPRITE_1);
 }
 
 /*
@@ -234,7 +223,7 @@ void __cdecl teardown_g_filewin_sprite_2() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(TeardownObject009B9018);
+    TeardownTarget005E3820(g_FILEWIN_SPRITE_2);
 }
 
 /*
@@ -253,7 +242,7 @@ void __cdecl teardown_g_filewin_sprite_3() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 4);
-    TeardownTarget005E3820(TeardownObject009B9078);
+    TeardownTarget005E3820(g_FILEWIN_SPRITE_3);
 }
 
 /*
@@ -272,7 +261,7 @@ void __cdecl teardown_g_caviar_buffer_1() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 1);
-    BufferElementTeardown(TeardownObject009B9108);
+    BufferElementTeardown(g_CAVIAR_BUFFER_1);
 }
 
 /*
@@ -291,7 +280,7 @@ void __cdecl teardown_g_caviar_buffer_2() {
     // Set BEFORE the teardown, not after: the original
     // stores at the instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 2);
-    BufferElementTeardown(TeardownObject009B96B0);
+    BufferElementTeardown(g_CAVIAR_BUFFER_2);
 }
 
 /*
