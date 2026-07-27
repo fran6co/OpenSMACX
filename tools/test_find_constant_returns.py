@@ -49,8 +49,28 @@ class DeclaredArityTest(unittest.TestCase):
         self.assertEqual(("stdcall", 4),
                          finder.declared_arity("?handler@X@@QAGXH@Z"))
 
+    def test_reads_a_free_function(self):
+        # A free name is `Y` then the calling convention, with no access or
+        # near/far byte before it. Reading the member layout off one lands on
+        # the return type instead and rejects the function outright, which is
+        # how every `@@YA...` constant return stayed invisible to this scan.
+        self.assertEqual(("cdecl", 4),
+                         finder.declared_arity("?energy_limit@@YAHH@Z"))
+
+    def test_reads_a_free_function_with_no_parameters(self):
+        self.assertEqual(("cdecl", 0),
+                         finder.declared_arity("?flush_input@@YAXXZ"))
+
+    def test_reads_a_free_stdcall(self):
+        self.assertEqual(("stdcall", 8),
+                         finder.declared_arity("?handler@@YGXHH@Z"))
+
     def test_declines_a_name_it_cannot_read(self):
         self.assertIsNone(finder.declared_arity("sub_628220"))
+
+    def test_declines_a_free_name_with_an_unreadable_convention(self):
+        # `Z` is not a calling convention; nothing should be guessed from it.
+        self.assertIsNone(finder.declared_arity("?odd@@YZHH@Z"))
 
 
 class ConstantBodyTest(unittest.TestCase):
