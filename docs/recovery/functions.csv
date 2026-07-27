@@ -805,10 +805,10 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00447DB0,0x00447DC6,22,.text,?begin@AAmbience@@QAEXXZ,void (__thiscall ?begin@AAmbience@@QAEXXZ)(AAmbience* this),0x00447DB0-0x00447DC6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00447DD0,0x00448273,1187,.text,?general@AAmbience@@QAEXXZ,void (__thiscall ?general@AAmbience@@QAEXXZ)(AAmbience* this),0x00447DD0-0x00448273,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00448280,0x00448284,4,.text,?tech@AAmbience@@QAEXXZ,void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this),0x00448280-0x00448284,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x00448290,0x004482A0,16,.text,??1FX@@QAE@XZ,void (__thiscall ??1FX@@QAE@XZ)(FX* this),0x00448290-0x004482A0,game,sp_ready;purged_ok,src/fx.cpp:28,Complete,,,source_complete,,,,1,0
-0x004482A0,0x004482BB,27,.text,??0FX@@QAE@XZ,void (__thiscall ??0FX@@QAE@XZ)(FX* this),0x004482A0-0x004482BB,game,sp_ready;purged_ok,,,,FXCtorTarget,original_dependency,,,,1,1
+0x00448290,0x004482A0,16,.text,??1FX@@QAE@XZ,void (__thiscall ??1FX@@QAE@XZ)(FX* this),0x00448290-0x004482A0,game,sp_ready;purged_ok,src/fx.cpp:55,Complete,,,source_complete,,,,1,0
+0x004482A0,0x004482BB,27,.text,??0FX@@QAE@XZ,void (__thiscall ??0FX@@QAE@XZ)(FX* this),0x004482A0-0x004482BB,game,sp_ready;purged_ok,src/fx.cpp:37,Complete,,FXCtorTarget,source_complete,,,,1,1
 0x004482C0,0x004482C5,5,.text,??1Effect@@QAE@XZ,void (__thiscall ??1Effect@@QAE@XZ)(Effect* this),0x004482C0-0x004482C5,thunk,hidden;thunk;sp_ready;purged_ok,,,,EffectElementTeardown,original_dependency,,,,0,1
-0x004482D0,0x004482E2,18,.text,??0Effect@@QAE@XZ,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this),0x004482D0-0x004482E2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
+0x004482D0,0x004482E2,18,.text,??0Effect@@QAE@XZ,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this),0x004482D0-0x004482E2,game,hidden;sp_ready;purged_ok,,,,EffectElementCtor,original_dependency,,,,1,0
 0x004482F0,0x0044830C,28,.text,sub_4482f0,,0x004482F0-0x0044830C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00448310,0x00448314,4,.text,sub_448310,,0x00448310-0x00448314,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00448320,0x00448324,4,.text,sub_448320,,0x00448320-0x00448324,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0

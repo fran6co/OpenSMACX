@@ -21,6 +21,33 @@
 func_thiscall_teardown *EffectElementTeardown =
     (func_thiscall_teardown *)0x004482C0;
 
+func_thiscall_teardown *EffectElementCtor =
+    (func_thiscall_teardown *)0x004482D0;
+
+/*
+Purpose: Build the effect bank: the mirror image of the destructor below, one
+         call handing the whole 0x61-element walk to the CRT vector
+         constructor iterator with the bank itself as the array base. The
+         destructor argument rides along for exception unwind, which cannot
+         happen here but is passed faithfully. The 0x6C stride and 0x61 count
+         are the same pair the destructor uses, read off the two `push`
+         immediates at 0x004482AD and 0x004482AF - note the original pushes
+         them count-then-size, so they arrive at the callee in the opposite
+         order from the way they are written here.
+Original Offset: 004482A0
+Return Value: n/a (the redirect answers the object pointer, as the original
+              does in eax)
+Status: Complete
+*/
+FX::FX() {
+    VectorCtorIterator(this, 0x6C, 0x61, EffectElementCtor,
+                       EffectElementTeardown);
+}
+
+FX *__fastcall fx_ctor_redirect(FX *self, void *) {
+    return new (self) FX;
+}
+
 /*
 Purpose: Destroy the effect bank: hand the whole 0x61-element walk to the CRT
          vector iterator with the bank itself as the array base. Everything

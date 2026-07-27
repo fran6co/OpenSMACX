@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 268,
-      "source_complete": 2223,
+      "source_complete": 2224,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 3149
+      "unrecovered": 3148
     },
     "total": 6000,
     "with_comments": 17,
@@ -1317,15 +1317,15 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2169,
-    "matched_function_starts": 2169,
-    "unique_addresses": 2169,
+    "annotations": 2170,
+    "matched_function_starts": 2170,
+    "unique_addresses": 2170,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
       "data": 554,
-      "function": 338
+      "function": 339
     },
     "items": [
       {
@@ -6693,6 +6693,15 @@
         "type": "func_thiscall_teardown *"
       },
       {
+        "address": "0x004482D0",
+        "function": "??0Effect@@QAE@XZ",
+        "function_address": "0x004482D0",
+        "kind": "function",
+        "location": "src/fx.cpp:24",
+        "symbol": "EffectElementCtor",
+        "type": "func_thiscall_teardown *"
+      },
+      {
         "address": "0x009A6488",
         "function": "",
         "function_address": "",
@@ -9357,7 +9366,7 @@
         "type": "char *"
       }
     ],
-    "matched_function_starts": 338,
-    "total": 892
+    "matched_function_starts": 339,
+    "total": 893
   }
 }

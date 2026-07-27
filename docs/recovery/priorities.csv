@@ -490,9 +490,9 @@ P3,10,0x00447D20,sub_447d20,133,0,0,unrecovered,,,1,missing,exact,
 P3,21,0x00447DB0,?begin@AAmbience@@QAEXXZ,22,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?begin@AAmbience@@QAEXXZ)(AAmbience* this)
 P3,11,0x00447DD0,?general@AAmbience@@QAEXXZ,1187,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?general@AAmbience@@QAEXXZ)(AAmbience* this)
 P3,11,0x00448280,?tech@AAmbience@@QAEXXZ,4,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
-P0,1001121,0x004482A0,??0FX@@QAE@XZ,27,1,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0FX@@QAE@XZ)(FX* this)
+P0,1001121,0x004482A0,??0FX@@QAE@XZ,27,1,1,source_complete,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0FX@@QAE@XZ)(FX* this)
 P0,1001021,0x004482C0,??1Effect@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
-P3,121,0x004482D0,??0Effect@@QAE@XZ,18,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this)
+P0,1000121,0x004482D0,??0Effect@@QAE@XZ,18,0,1,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this)
 P3,20,0x004482F0,sub_4482f0,28,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00448310,sub_448310,4,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00448320,sub_448320,4,0,0,unrecovered,,,1,exact,missing,

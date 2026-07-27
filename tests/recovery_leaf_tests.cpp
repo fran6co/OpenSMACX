@@ -23137,6 +23137,19 @@ void __stdcall observe_vector_dtor(void *array, unsigned int element_size,
     ++g_vector_calls;
 }
 int g_vector_sentinel;
+func_thiscall_teardown *g_vector_ctor_seen;
+void __stdcall observe_vector_ctor_iterator(void *array,
+                                            unsigned int element_size,
+                                            int count,
+                                            func_thiscall_teardown *ctor,
+                                            func_thiscall_teardown *dtor) {
+    g_vector_array_seen = array;
+    g_vector_size_seen = element_size;
+    g_vector_count_seen = count;
+    g_vector_ctor_seen = ctor;
+    g_vector_teardown_seen = dtor;
+    ++g_vector_calls;
+}
 void *g_atexit_opaque_seen;
 int g_atexit_opaque_calls;
 void __thiscall observe_opaque_teardown(void *object) {
@@ -23405,6 +23418,35 @@ void test_fx_and_font_queue_dtors() {
     alignas(4) uint8_t fx_storage[sizeof(FX)];
     auto *fx = reinterpret_cast<FX *>(fx_storage);
     func_thiscall_teardown *const saved_effect = EffectElementTeardown;
+
+    // The construction side first, through the same bank storage. Both
+    // element seams are rebound to DISTINCT sentinels: the original pushes
+    // the destructor before the constructor, so the one way to get this
+    // function silently wrong is to hand the iterator the pair transposed,
+    // and identical sentinels would not see it. Same for the stride/count
+    // pair, which the original also pushes in the reverse of written order.
+    auto *const saved_ctor_iterator = VectorCtorIterator;
+    VectorCtorIterator = &observe_vector_ctor_iterator;
+    func_thiscall_teardown *const saved_effect_ctor = EffectElementCtor;
+    EffectElementCtor =
+        reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel);
+    EffectElementTeardown =
+        reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel) + 1;
+    g_vector_calls = 0;
+    g_vector_ctor_seen = nullptr;
+    g_vector_teardown_seen = nullptr;
+    expect(fx_ctor_redirect(fx, nullptr) == fx);
+    expect(g_vector_calls == 1);
+    expect(g_vector_array_seen == fx_storage);
+    expect(g_vector_size_seen == 0x6C);
+    expect(g_vector_count_seen == 0x61);
+    expect(g_vector_ctor_seen ==
+           reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel));
+    expect(g_vector_teardown_seen ==
+           reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel) + 1);
+    EffectElementCtor = saved_effect_ctor;
+    VectorCtorIterator = saved_ctor_iterator;
+
     EffectElementTeardown =
         reinterpret_cast<func_thiscall_teardown *>(&g_vector_sentinel);
     g_vector_calls = 0;
