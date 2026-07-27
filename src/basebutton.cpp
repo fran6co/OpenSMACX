@@ -466,3 +466,134 @@ void __fastcall base_button_on_key_up_redirect(
         BaseButton *self, void *, int a) {
     self->on_key_up(a);
 }
+
+namespace {
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+typedef uint32_t(__thiscall func_button_init_close_slot)(void *);
+typedef void(__thiscall func_button_init_show_slot)(void *, int);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+// Both dispatches read the live vtable of whatever object is actually there
+// rather than going through a C++ virtual call, so a FlatButton entering this
+// body closes and shows through its own overrides. In the BaseButton table
+// slot 0x168 holds BaseButton::close and slot 0x04 holds Win::show, which
+// takes one int.
+constexpr size_t BaseButtonInitCloseSlot = 0x168;
+constexpr size_t BaseButtonInitShowSlot = 0x04;
+
+}  // namespace
+
+/*
+Purpose: Reinitialise a button - close whatever it currently holds, take a
+         private copy of its name, build the GraphicWin base with the button
+         style word, publish the shared default colours and fonts into the
+         window buffer, then show it.
+Original Offset: 00607210
+Return Value: No parent (3); name allocation failed (4); otherwise
+              GraphicWin::init's own code, which is zero on success
+Status: Complete
+Verification note: the `return 4` arm is unreachable through the recovered
+         mem_get_old, which pops a message box and calls exit(4) rather than
+         answering null, exactly as the original 0x005D4510 does. The
+         store-then-test order is transcribed from the bytes - 0x00607248
+         stores, 0x0060724E tests - but no leaf fixture can drive that arm
+         without replacing mem_get_old itself, so it is unobserved by
+         construction rather than by omission.
+Verification note: mutating BaseButtonInitShowSlot from 0x04 to 0x05 folds to
+         the same `/ sizeof(void *)` index, so that mutant is equivalent by
+         construction - the same known-noise class as WinValueChangedSlot.
+Verification note: the eight arguments do NOT map straight through to
+         GraphicWin::init. The name is not forwarded at all - a literal null
+         goes into the caption slot at 0x00607296, and the Menu and
+         BorderSizing slots take literal nulls at 0x00607282 and 0x0060727E -
+         while the four geometry arguments arrive as arguments 3 to 6 of this
+         function, not 1 to 4.
+*/
+int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
+                     Win *parent, int style_flag) {
+    // The close runs before every guard, so even a rejected init leaves the
+    // button torn down. The original dispatches straight through `this` and
+    // its vtable at 0x00607215 with no null check on either; none is added.
+    void **const close_vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_button_init_close_slot *>(
+        close_vtable[BaseButtonInitCloseSlot / sizeof(void *)])(this);
+
+    // Both remaining arguments are read after the close, not cached across it.
+    if (!parent) {
+        return 3;
+    }
+
+    if (name) {
+        const size_t len = strlen(name) + 1;
+        // name_ is overwritten without being freed first. The slot-0x168 close
+        // above is what released and zeroed the previous string, and the
+        // original relies on that instead of repeating set_name's guard.
+        LPSTR const allocated = static_cast<LPSTR>(mem_get_old(len));
+        name_ = allocated;
+        if (!allocated) {
+            return 4;
+        }
+        // The original empties the buffer and concatenates rather than
+        // copying, the same shape set_name above uses. The emptying goes
+        // through the allocation register at 0x0060725D, but the
+        // concatenation destination is RE-READ from 0xA7C at 0x00607260 - do
+        // not collapse the two into one local.
+        allocated[0] = '\0';
+        strcat_s(name_, len, name);
+    }
+
+    // neg/sbb/and/or at 0x00607278-0x0060728B: `neg edx` sets the carry from
+    // style_flag != 0 and `sbb edx, edx` broadcasts it, so any nonzero flag
+    // contributes 0x8000 and nothing else - the value is normalised to one
+    // bit rather than masked in.
+    const int style = 0x01000320 | (style_flag ? 0x8000 : 0);
+    const int status = GraphicWin::init(
+        x, y, width, height, nullptr, style, parent, nullptr, nullptr);
+    if (status) {
+        return status;
+    }
+
+    field_A78_ = static_cast<uint32_t>(id);
+
+    // Slot s tier t of the shared default table lives at
+    // 0x00697060 + s * 0xC + t * 4, so tier 0 reads 0x00697060, 0x0069706C,
+    // 0x00697078 and 0x00697084. The table is read here rather than cached at
+    // construction, so a set_def_text_color issued between construct and init
+    // is the one that lands.
+    volatile const uint32_t *const colors = BaseButtonDefaultTextColors;
+    buffer_.set_text_color(
+        static_cast<int>(colors[0]), static_cast<int>(colors[3]),
+        static_cast<int>(colors[6]), static_cast<int>(colors[9]));
+    buffer_.set_text_color2(
+        static_cast<int>(colors[1]), static_cast<int>(colors[4]),
+        static_cast<int>(colors[7]), static_cast<int>(colors[10]));
+    buffer_.set_text_color3(
+        static_cast<int>(colors[2]), static_cast<int>(colors[5]),
+        static_cast<int>(colors[8]), static_cast<int>(colors[11]));
+
+    // The fourth font slot is a literal null pushed at 0x00607335, not a
+    // fourth default. set_font's result is discarded, so an uninitialised
+    // primary font - its code 3 - does not fail init.
+    Font **const fonts = BaseButtonDefaultFonts;
+    buffer_.set_font(fonts[0], fonts[1], fonts[2], nullptr);
+
+    // Re-read, do NOT hoist onto the close dispatch above: the original
+    // reloads the vtable pointer at 0x00607341, so a GraphicWin::init or a
+    // Buffer setter that restaged the table is seen by the show.
+    void **const show_vtable = *reinterpret_cast<void ***>(this);
+    reinterpret_cast<func_button_init_show_slot *>(
+        show_vtable[BaseButtonInitShowSlot / sizeof(void *)])(this, 0);
+    return 0;
+}
+
+int __fastcall base_button_init_redirect(
+        BaseButton *self, void *, LPCSTR name, int id, int x, int y,
+        int width, int height, Win *parent, int style_flag) {
+    return self->init(name, id, x, y, width, height, parent, style_flag);
+}
