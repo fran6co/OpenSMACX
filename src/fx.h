@@ -29,7 +29,7 @@
   */
 class DLLEXPORT FX {
  public:
-  FX() { ; }
+  FX();
   ~FX();
 
  private:
@@ -41,4 +41,10 @@ class DLLEXPORT FX {
 // dependency so the bank teardown retires with the Wave work.
 extern func_thiscall_teardown *EffectElementTeardown;
 
+// Its construction-side twin, ??0Effect@@QAE@XZ at 0x004482D0. Still original;
+// the constructor passes it and the teardown above to the same CRT iterator,
+// so both retire together with the Wave work.
+extern func_thiscall_teardown *EffectElementCtor;
+
+FX *__fastcall fx_ctor_redirect(FX *self, void *);
 void __fastcall fx_dtor_redirect(FX *self, void *);

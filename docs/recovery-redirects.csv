@@ -307,6 +307,7 @@ address,kind
 0x00447CB0,jump
 0x00447CC0,jump
 0x00448290,jump
+0x004482A0,jump
 0x00448350,jump
 0x00448390,jump
 0x004483D0,jump
