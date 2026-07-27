@@ -826,3 +826,52 @@ int Win::UNK3(int value) {
 int __fastcall win_unk3_redirect(Win *self, void *, int value) {
     return self->UNK3(value);
 }
+
+/*
+Purpose: Report whether a window is anywhere below this one in the child
+         tree, searching depth first. A direct child counts, and so does any
+         descendant of one.
+Original Offset: 005ECE20
+Return Value: 1 when the candidate is a descendant, 0 otherwise
+Status: Complete
+Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
+         and will survive the sweep. The original reloads it every iteration,
+         so this transcription does too, but the whole call tree here is
+         read-only - nothing reachable from is_descendant writes to any
+         object - so no execution can observe the reload. It is kept because
+         it is what the bytes do, not because a test pins it. If this function
+         ever gains a seam, that changes and the reload becomes testable.
+         The absent null check on children_[index] is likewise faithful: the
+         original dereferences the slot unconditionally at 0x005ECE2E, so a
+         null slot faults in both.
+*/
+int Win::is_descendant(Win *candidate) {
+    if (!candidate) {
+        return 0;
+    }
+    int count = child_count_;
+    if (count <= 0) {
+        return 0;
+    }
+    for (int index = 0; ; ++index) {
+        Win *const child = children_[index];
+        if (child == candidate) {
+            return 1;
+        }
+        if (child->is_descendant(candidate)) {
+            return 1;
+        }
+        // Re-read, do NOT hoist. The original reloads the count at 0x005ECE50
+        // after every recursive call returns, so a recursion that adds or
+        // removes children is seen by the very next iteration. A loop-invariant
+        // count is the obvious tidy-up and it changes behaviour.
+        count = child_count_;
+        if (index + 1 >= count) {
+            return 0;
+        }
+    }
+}
+
+int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate) {
+    return self->is_descendant(candidate);
+}
