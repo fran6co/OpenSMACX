@@ -89,7 +89,9 @@
 #include "../src/temp.h"
 #include "../src/time.h"
 #include "../src/vector.h"
+#include "../src/alphamenu.h"
 #include "../src/delegation_thunks.h"
+#include "../src/uv2player.h"
 #include "../src/win.h"
 
 #include <array>
@@ -25624,6 +25626,37 @@ void test_constant_return_stubs_wave4() {
     prod_picker_on_redraw_nc_redirect(picker_stub, nullptr, -1, -2);
     expect_storage_bytes(picker_storage.data(), picker_expected.data(),
                          picker_storage.size());
+
+    // AlphaMenu and UV2Player carry no fields at all - nothing pins their
+    // layout - so the storage here is just an arena to prove the bodies read
+    // and write nothing through it.
+    std::vector<uint8_t> menu_storage(64);
+    std::vector<uint8_t> menu_expected(menu_storage.size());
+    auto *menu = reinterpret_cast<AlphaMenu *>(menu_storage.data() + 16);
+    seed_storage(menu_storage.data(), menu_expected.data(),
+                 menu_storage.size());
+    std::memcpy(menu_expected.data(), menu_storage.data(), menu_storage.size());
+    expect(menu->requested_height() == 0);
+    expect(alpha_menu_requested_height_redirect(menu, nullptr) == 0);
+    expect_storage_bytes(menu_storage.data(), menu_expected.data(),
+                         menu_storage.size());
+
+    std::vector<uint8_t> player_storage(64);
+    std::vector<uint8_t> player_expected(player_storage.size());
+    auto *player = reinterpret_cast<UV2Player *>(player_storage.data() + 16);
+    seed_storage(player_storage.data(), player_expected.data(),
+                 player_storage.size());
+    std::memcpy(player_expected.data(), player_storage.data(),
+                player_storage.size());
+    expect(player->UNK4() == 0);
+    expect(u_v2_player_unk4_redirect(player, nullptr) == 0);
+    expect_storage_bytes(player_storage.data(), player_expected.data(),
+                         player_storage.size());
+
+    // energy_limit ignores its argument entirely; every value must answer 10.
+    for (const int faction : {0, 1, -1, INT_MAX, INT_MIN}) {
+        expect(energy_limit(faction) == 10);
+    }
 }
 
 void test_deleting_thunks() {

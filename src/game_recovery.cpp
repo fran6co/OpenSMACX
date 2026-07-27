@@ -19,7 +19,8 @@
 #include "game.h"
 
 /*
- * Game-state bindings that recovered code outside game.cpp needs.
+ * Game-scoped bindings and small recovered bodies that code outside
+ * game.cpp needs.
  *
  * Same split, and for the same reason, as font_recovery.cpp: game.cpp reaches
  * Players, parse_set and parse_says, so any target that links it drags the
@@ -34,3 +35,14 @@
 // same address as NetDaemonLocalFaction; that duplicate predates this file and
 // is left alone rather than churned, but new callers should reach for this one.
 int *LocalFaction = (int *)0x00939284;
+
+/*
+Purpose: The ceiling on a single energy allocation slider. The legacy
+         implementation is a constant return.
+Original Offset: 00445440
+Return Value: 10
+Status: Complete
+*/
+int __cdecl energy_limit(int) {
+    return 10;
+}

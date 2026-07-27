@@ -33,7 +33,6 @@ P3,221,0x004031A0,?compute@AlphaMenu@@QAEXXZ,242,0,2,unrecovered,,,2,exact,exact
 P3,121,0x004032A0,?adjust@AlphaMenu@@QAEXXZ,149,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?adjust@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
 P3,721,0x00403340,?on_redraw@AlphaMenu@@QAEXXZ,516,0,7,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
 P3,221,0x00403550,?on_mouse_move@AlphaMenu@@QAEXHH@Z,191,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@AlphaMenu@@QAEXHH@Z)(AlphaMenu* this, int xCoord, int yCoord)"
-P3,11,0x00403610,?requested_height@AlphaMenu@@QAEHXZ,3,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?requested_height@AlphaMenu@@QAEHXZ)(AlphaMenu* this)
 P3,21,0x00403620,?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z,87,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z)(AlphaMenu* this, int*, int*)"
 P3,3821,0x00403680,?show@AlphaMenu@@QAEXXZ,431,3,8,unrecovered,,,2,exact,exact,void (__thiscall ?show@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
 P2,9221,0x00403830,?hide@AlphaMenu@@QAEXXZ,693,8,12,unrecovered,,,2,exact,exact,void (__thiscall ?hide@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
@@ -428,7 +427,6 @@ P0,1002221,0x00444DB0,??1DiploWin@@QAE@XZ,722,1,12,original_dependency,ui_depend
 P0,1001721,0x00444FC0,??0DiploWin@@QAE@XZ,274,1,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0DiploWin@@QAE@XZ)(DiploWin* this)
 P3,20,0x004450B0,sub_4450b0,108,0,0,unrecovered,,,2,exact,exact,
 P2,9520,0x00445130,?energy_compute@@YAXHH@Z,771,9,5,unrecovered,,,2,exact,exact,
-P3,3021,0x00445440,?energy_limit@@YAHH@Z,6,3,0,unrecovered,,,2,exact,exact,int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
 P0,1007320,0x004455F0,?wave_it@@YAXH@Z,93,7,3,original_dependency,game_service,recover_audio_event,2,exact,exact,
 P3,1220,0x00445650,?ok_callback@@YAXXZ,77,1,2,unrecovered,,,2,exact,exact,
 P3,10,0x004456A0,?passover_callback@@YAXXZ,10,0,0,unrecovered,,,1,exact,missing,
@@ -1146,7 +1144,6 @@ P3,2821,0x004BEA50,?exec@UV2Player@@QAEHPADHHH@Z,869,1,18,unrecovered,,,2,exact,
 P3,111,0x004BEDC0,?UNK1@UV2Player@@QAEHHHHH@Z,154,0,1,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@UV2Player@@QAEHHHHH@Z)(UV2Player* this, int, int, int, int)"
 P3,120,0x004BEE60,?UNK2@UV2Player@@QAAHHHHH@Z,157,0,1,unrecovered,,,2,exact,exact,
 P3,3221,0x004BEF00,?UNK3@UV2Player@@QAEXXZ,1237,1,22,unrecovered,,,2,exact,entry_range,void (__thiscall ?UNK3@UV2Player@@QAEXXZ)(UV2Player* this)
-P3,11,0x004BF380,?UNK4@UV2Player@@QAEHXZ,3,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?UNK4@UV2Player@@QAEHXZ)(UV2Player* this)
 P3,20,0x004BF390,?on_key@UV2Player@@QAAHXZ,110,0,0,unrecovered,,,2,exact,exact,
 P3,4221,0x004BF400,?close@UV2Player@@QAEXXZ,162,4,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@UV2Player@@QAEXXZ)(UV2Player* this)
 P3,1521,0x004BF4B0,?play@UV2Player@@QAEHHH@Z,545,1,5,unrecovered,,,2,exact,exact,"int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)"

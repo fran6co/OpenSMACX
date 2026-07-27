@@ -69,7 +69,9 @@
 #include "netdaemon.h"
 #include "console.h"
 #include "replaywin.h"
+#include "alphamenu.h"
 #include "reportif.h"
+#include "uv2player.h"
 #include "dipedit.h"
 #include "sound.h"
 #include "wave_device.h"
@@ -113,7 +115,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1769;
+constexpr size_t RedirectCount = 1772;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -277,6 +279,11 @@ bool install_redirects() {
             0x00402F30,
             reinterpret_cast<uintptr_t>(&destroy_alphamenu_wave),
             OPENSMACX_SIGNATURE_00402F30,
+        },
+        {
+            0x00403610,
+            reinterpret_cast<uintptr_t>(&alpha_menu_requested_height_redirect),
+            OPENSMACX_SIGNATURE_00403610,
         },
         {
             0x00404220,
@@ -1597,6 +1604,11 @@ bool install_redirects() {
             0x00445120,
             reinterpret_cast<uintptr_t>(&adjust_this_diplo_win),
             OPENSMACX_SIGNATURE_00445120,
+        },
+        {
+            0x00445440,
+            reinterpret_cast<uintptr_t>(&energy_limit),
+            OPENSMACX_SIGNATURE_00445440,
         },
         {
             0x00445450,
@@ -5597,6 +5609,11 @@ bool install_redirects() {
             0x004BEA20,
             reinterpret_cast<uintptr_t>(&adjust_this_tut_win),
             OPENSMACX_SIGNATURE_004BEA20,
+        },
+        {
+            0x004BF380,
+            reinterpret_cast<uintptr_t>(&u_v2_player_unk4_redirect),
+            OPENSMACX_SIGNATURE_004BF380,
         },
         {
             0x004BF6E0,
