@@ -4252,7 +4252,7 @@ address,end_address,size,body_ranges,name,binary_kind,recovery_state,ida9_relati
 0x005F05D0,0x005F060D,61,0x005F05D0-0x005F060D,?set_border_thickness@Win@@QAEXH@Z,game,unrecovered,exact,0x005F05D0,0x005F060D,61,0x005F05D0-0x005F060D,sub_5F05D0,exact,0x005F05D0,0x005F060D,61,0x005F05D0-0x005F060D,FUN_005f05d0
 0x005F0610,0x005F064D,61,0x005F0610-0x005F064D,?set_bottom_border_thickness@Win@@QAEXH@Z,game,unrecovered,exact,0x005F0610,0x005F064D,61,0x005F0610-0x005F064D,sub_5F0610,exact,0x005F0610,0x005F064D,61,0x005F0610-0x005F064D,FUN_005f0610
 0x005F0650,0x005F0E27,2007,0x005F0650-0x005F0E27,?window_proc@Win@@QAGJPAXIIJ@Z,game,unrecovered,exact,0x005F0650,0x005F0E27,2007,0x005F0650-0x005F0E27,PrevWndFunc,missing,,,,,
-0x005F1060,0x005F106F,15,0x005F1060-0x005F106F,?on_query_new_palette@Win@@QAEHXZ,game,unrecovered,exact,0x005F1060,0x005F106F,15,0x005F1060-0x005F106F,sub_5F1060,missing,,,,,
+0x005F1060,0x005F106F,15,0x005F1060-0x005F106F,?on_query_new_palette@Win@@QAEHXZ,game,source_complete,exact,0x005F1060,0x005F106F,15,0x005F1060-0x005F106F,sub_5F1060,missing,,,,,
 0x005F1070,0x005F1141,209,0x005F1070-0x005F1141,?OnQueryNewPalette@Win@@QAAHPAX@Z,game,unrecovered,missing,,,,,,missing,,,,,
 0x005F1150,0x005F122B,219,0x005F1150-0x005F122B,?OnPaletteChanged@Win@@QAAHPAXPAX@Z,game,unrecovered,missing,,,,,,missing,,,,,
 0x005F1230,0x005F127F,79,0x005F1230-0x005F127F,sub_5f1230,game,unrecovered,missing,,,,,,missing,,,,,

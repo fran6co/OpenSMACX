@@ -2290,7 +2290,6 @@ P3,10,0x005F05C0,sub_5f05c0,13,0,0,unrecovered,,,1,exact,missing,
 P3,1021,0x005F05D0,?set_border_thickness@Win@@QAEXH@Z,61,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)"
 P3,1021,0x005F0610,?set_bottom_border_thickness@Win@@QAEXH@Z,61,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_bottom_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)"
 P3,1110,0x005F0650,?window_proc@Win@@QAGJPAXIIJ@Z,2007,0,11,unrecovered,,,1,exact,missing,
-P3,111,0x005F1060,?on_query_new_palette@Win@@QAEHXZ,15,0,1,unrecovered,,,1,exact,missing,int (__thiscall ?on_query_new_palette@Win@@QAEHXZ)(Win* this)
 P3,1,0x005F1070,?OnQueryNewPalette@Win@@QAAHPAX@Z,209,0,0,unrecovered,,,0,missing,missing,int (__cdecl ?OnQueryNewPalette@Win@@QAAHPAX@Z)(HWND hWnd)
 P3,1,0x005F1150,?OnPaletteChanged@Win@@QAAHPAXPAX@Z,219,0,0,unrecovered,,,0,missing,missing,"int (__cdecl ?OnPaletteChanged@Win@@QAAHPAXPAX@Z)(HWND hWnd, LPARAM lParam)"
 P3,0,0x005F1230,sub_5f1230,79,0,0,unrecovered,,,0,missing,missing,

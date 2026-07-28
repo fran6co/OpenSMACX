@@ -2360,6 +2360,28 @@ void test_win_move() {
     }
 }
 
+void test_win_query_new_palette() {
+    // Returns 1 and touches nothing. What this fixture CANNOT establish is the
+    // call it makes: Palette::set_active_window is a recovered empty body with
+    // no seam to record through, so a version that dropped the call entirely
+    // would pass here and is behaviourally identical TODAY. The call is kept
+    // because it is what the original encodes, and this note is here so the
+    // gap is a stated limit rather than an assumed cover - if
+    // set_active_window ever gains a body, this fixture needs a seam.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(Win) uint8_t storage[sizeof(Win) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        std::memcpy(expected, storage, sizeof(storage));
+        auto *window = reinterpret_cast<Win *>(storage + 16);
+        const int got = use_adapter
+            ? win_on_query_new_palette_redirect(window, nullptr)
+            : window->on_query_new_palette();
+        expect(got == 1);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+}
+
 void test_base_pop_flag_setters() {
     // UNK3 and UNK4 edit bit 0 and bit 1 of the word at +0x20. What this
     // separates is WHICH BIT, WHICH DIRECTION, and that no other byte of the
@@ -28076,6 +28098,7 @@ int main() {
     test_base_pop_key_gates();
     test_menu_adjust_pulldown_pos();
     test_base_pop_flag_setters();
+    test_win_query_new_palette();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

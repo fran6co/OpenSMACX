@@ -212,6 +212,36 @@ void Win::client_to_screen(int *x, int *y) {
 }
 
 /*
+Purpose: Announce this window as the one the palette should follow, then report
+         that the message was handled.
+
+             push ecx / call Palette::set_active_window / add esp, 4
+             mov eax, 1 / ret
+
+         `this` is passed as the only argument and the caller cleans it, which
+         is the cdecl convention the callee's mangled name declares.
+Original Offset: 005F1060
+Return Value: 1, always
+Status: Complete
+Verification note: the call to Palette::set_active_window is NOT observed by
+         any suite, and tools/mutate_and_verify.py reports dropping it as a
+         surviving mutant. That is accurate rather than a coverage failure to
+         chase: set_active_window is a recovered EMPTY body with no rebindable
+         seam, so removing the call is behaviourally identical today and no
+         fixture can distinguish them. The call is kept because it is what the
+         original encodes. If set_active_window ever gains a body, this
+         function needs a seam and a fixture that counts the call.
+*/
+int Win::on_query_new_palette() {
+    Palette::set_active_window(this);
+    return 1;
+}
+
+int __fastcall win_on_query_new_palette_redirect(Win *self, void *) {
+    return self->on_query_new_palette();
+}
+
+/*
 Purpose: Read the vertical scroll bar's current position.
 Original Offset: 005EE050
 Return Value: The scroll's position, or 0 when the window has no vertical
