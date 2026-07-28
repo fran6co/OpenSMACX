@@ -89,13 +89,19 @@ const OracleVerdict P = OraclePass;
 const OracleVerdict F = OracleFail;                       // divergence, stops
 const OracleVerdict LF = OracleFailLiftedFault;           // lifted invented an access
 const OracleVerdict ST = OracleSkipTrap;                  // never lowered
+const OracleVerdict SRB = OracleSkipReachedBlocked;       // reached an import etc.
 const OracleVerdict IF = OracleInconclusiveFault;         // ORIGINAL faulted
 const OracleVerdict IB = OracleInconclusiveBudget;        // ORIGINAL ran away
 const OracleVerdict ILB = OracleInconclusiveLiftedBudget; // LIFTED ran away
 const OracleVerdict IOS = OracleInconclusiveOutOfSpan;    // LIFTED left the span
 const OracleVerdict ITP = OracleInconclusiveTopPage;      // ORIGINAL read 0xffffxxxx
+// NOT a per-case verdict and deliberately absent from all_verdicts below: no
+// run produces it. It is what oracle_qualify_verdict turns a whole function's
+// PASS into when the static plan says that function has a path to something
+// the lift cannot run. Tested in test_qualify_verdict, not through the fold.
+const OracleVerdict PPT = OraclePassPathsTaken;
 
-const OracleVerdict all_verdicts[] = {U, P, F, LF, ST, IF, IB, ILB, IOS, ITP};
+const OracleVerdict all_verdicts[] = {U, P, F, LF, ST, SRB, IF, IB, ILB, IOS, ITP};
 const int all_verdicts_count = int(sizeof all_verdicts / sizeof all_verdicts[0]);
 
 // For failure messages only. Deliberately NOT oracle_verdict_name, which lives
@@ -105,6 +111,8 @@ const char *label(OracleVerdict v) {
     switch (v) {
         case OracleUnrun: return "UNRUN";
         case OraclePass: return "PASS";
+        case OraclePassPathsTaken: return "PASS-paths-taken";
+        case OracleSkipReachedBlocked: return "SKIP-reached-blocked";
         case OracleFail: return "FAIL";
         case OracleFailLiftedFault: return "FAIL-lifted-fault";
         case OracleSkipTrap: return "SKIP-trap";
@@ -170,6 +178,30 @@ const FoldRow rows[] = {
     {"the all-trap sequence stops on the first one and reports SKIP-trap once",
      {ST, ST, ST, ST, ST, ST, ST, ST, ST, ST, ST, ST, ST, ST, ST, ST}, 16,
      ST, 0, 0, 1, 0, 0},
+
+    // ---- SKIP-reached-blocked behaves exactly like SKIP-trap -------------
+    // Same stopping rule, different meaning, and the two must not be merged:
+    // one is a mnemonic waiting to be lowered, the other is the RUNTIME proof
+    // that a static blocking flag described a path this program takes. The
+    // measured cohort had 79 of these against 0 SKIP-trap, so a fold that
+    // collapsed them would have reported 79 phase-4 work items that do not
+    // exist.
+    {"reaching a blocked construct stops the loop and reports itself, not "
+     "SKIP-trap",
+     {SRB, F}, 2, SRB, 0, 0, 1, 0, 0},
+    {"a seed that reaches a blocked construct overrides earlier PASSes: the "
+     "question is whether ANY seed takes that path, and one has",
+     {P, P, SRB, P}, 4, SRB, 0, 2, 3, 2, 2},
+    {"...and this is the exact shape measured at 0x004015b0, where six seeds "
+     "were compared before case 9 reached 0x00644f3a",
+     {P, P, P, P, P, P, SRB}, 7, SRB, 0, 6, 7, 6, 6},
+    {"a FAIL still beats it by stopping first - a compared divergence is the "
+     "stronger statement",
+     {F, SRB}, 2, F, 0, 1, 1, 0, 0},
+    {"the two skips do not merge: whichever is seen first names the row",
+     {SRB, ST}, 2, SRB, 0, 0, 1, 0, 0},
+    {"and in the other order",
+     {ST, SRB}, 2, ST, 0, 0, 1, 0, 0},
 
     // ---- a later PASS upgrades the ORIGINAL-side inconclusives ------------
     {"a later PASS upgrades UNRUN",
@@ -313,7 +345,8 @@ void check_invariants(const OracleVerdict *v, int count) {
     // A divergence stops the loop where it is found. If the break is dropped,
     // a FAIL at index 0 of a three-case sequence keeps running and this fires.
     for (int i = 0; i <= last; ++i) {
-        if (v[i] == F || v[i] == LF || v[i] == ST) expect(i == last);
+        if (v[i] == F || v[i] == LF || v[i] == ST || v[i] == SRB)
+            expect(i == last);
     }
 
     // The fold cannot manufacture a verdict out of nothing.
@@ -321,7 +354,12 @@ void check_invariants(const OracleVerdict *v, int count) {
     if (got.verdict == F) expect(contains(v, last, F));
     if (got.verdict == LF) expect(contains(v, last, LF));
     if (got.verdict == ST) expect(contains(v, last, ST));
+    if (got.verdict == SRB) expect(contains(v, last, SRB));
     if (got.verdict == ITP) expect(contains(v, last, ITP));
+    // And it never invents the qualified pass: that is not a case verdict, it
+    // is what oracle_qualify_verdict makes of a whole function's PASS. A fold
+    // that produced it would be deciding on evidence it does not have.
+    expect(got.verdict != PPT);
 
     // A lifted-side finding on the first seed is never talked out of. The only
     // things that may replace it are the two failures and the trap, all of
@@ -329,13 +367,14 @@ void check_invariants(const OracleVerdict *v, int count) {
     if (v[0] == ILB || v[0] == IOS) {
         expect(got.verdict != P);
         expect(got.verdict == v[0] || got.verdict == F || got.verdict == LF ||
-               got.verdict == ST);
+               got.verdict == ST || got.verdict == SRB);
     }
 
     // Two timeouts stop, wherever they are.
     int timeouts = 0, stop_expected = -1;
     for (int i = 0; i < count && stop_expected < 0; ++i) {
-        if (v[i] == F || v[i] == LF || v[i] == ST) break;   // a stronger stop
+        // a stronger stop
+        if (v[i] == F || v[i] == LF || v[i] == ST || v[i] == SRB) break;
         if (v[i] == IB || v[i] == ILB)
             if (++timeouts >= 2) stop_expected = i;
     }
@@ -354,7 +393,8 @@ void check_invariants(const OracleVerdict *v, int count) {
         if (got.winning_case >= 0) expect(v[got.winning_case] == got.verdict);
     }
     // A stop is always described by the case that caused it.
-    if (got.verdict == F || got.verdict == LF || got.verdict == ST)
+    if (got.verdict == F || got.verdict == LF || got.verdict == ST ||
+        got.verdict == SRB)
         expect_int(got.winning_case, last);
     // PASS is the exception, and the exception is worth stating rather than
     // stepping around: the upgrade to PASS does NOT move the slot. So either
@@ -620,6 +660,137 @@ void test_pass_caveat() {
     current_case = "";
 }
 
+// ---------------------------------------------------------------------------
+// Telling a phase-4 work item from a wall the lift will never climb.
+//
+// Every trap arrives as one string. `bt` means "lower this mnemonic and the
+// function becomes testable"; "call to an address with no lifted body" means
+// the run walked into one of the constructs the static plan flags, and that is
+// the entire evidence for whether a flagged path is a path the program takes.
+// Measured on the 470 extcall-only functions: 79 SKIP-reached-blocked and 0
+// SKIP-trap, so a classifier stuck at `false` would have reported 79 phase-4
+// items that do not exist, and one stuck at `true` would have reported the
+// image's 92 un-lowered instructions as unreachable walls.
+//
+// The strings are matched, so the risk is that one is edited at its source and
+// this list silently stops recognising it. tools/test_lifted_oracle_trap_
+// reasons.py pins each pattern against the file that emits it; this test pins
+// the BEHAVIOUR, including the near misses that a sloppier match would accept.
+// ---------------------------------------------------------------------------
+void test_trap_classification() {
+    current_case = "the four blocked constructs are recognised";
+    // tools/lift_whole_image.py, write_dispatch(). This is the one that fired
+    // 79 times, at 0x00644f3a among others.
+    expect(oracle_trap_is_blocked_construct(
+        "call to an address with no lifted body"));
+    // tools/lifted_tls.h, opensmacx_tib_at().
+    expect(oracle_trap_is_blocked_construct(
+        "fs: displacement outside the modelled TIB"));
+    // tools/generate_imports.py's shim for an import with no body.
+    expect(oracle_trap_is_blocked_construct(
+        "unimplemented import ADVAPI32.dll!RegQueryValueExA"));
+    expect(oracle_trap_is_blocked_construct(
+        "unimplemented import KERNEL32.dll!ExitProcess"));
+    // tools/lifted_imports.h's marshalling refusals, all four of them.
+    expect(oracle_trap_is_blocked_construct(
+        "import argument is not an object of that size inside the image"));
+    expect(oracle_trap_is_blocked_construct(
+        "import array argument is larger than the whole image"));
+    expect(oracle_trap_is_blocked_construct(
+        "import string argument has no terminator before the end of the "
+        "image"));
+    expect(oracle_trap_is_blocked_construct(
+        "import returned host memory the guest cannot address; the image "
+        "needs its canonical base (see opensmacx_guest)"));
+    // tools/generate_imports.py, opensmacx_import_dispatch().
+    expect(oracle_trap_is_blocked_construct(
+        "synthetic import address with no import"));
+
+    current_case = "a mnemonic the lowerer refused is NOT a blocked construct";
+    // Every reason the shards emit is the bare mnemonic. These eight are the
+    // ones the committed report actually contains, plus the three whole-body
+    // reasons lift_whole_image.py writes.
+    static const char *const lowering_refusals[] = {
+        "bt", "loop", "pushal", "pushfd", "popf", "int3", "cpuid", "out",
+        "self-modifying section", "fell off the end of the body",
+        "not lowered",
+    };
+    for (const char *reason : lowering_refusals)
+        expect(!oracle_trap_is_blocked_construct(reason));
+
+    current_case = "near misses are rejected, so the match cannot drift wide";
+    // A prefix of the exact-match string.
+    expect(!oracle_trap_is_blocked_construct("call to an address with no"));
+    // The exact-match string with something appended.
+    expect(!oracle_trap_is_blocked_construct(
+        "call to an address with no lifted bodies"));
+    // The old wording, which is what a half-finished rename would leave
+    // behind. It must NOT be recognised, or this test would pass against a
+    // generator that no longer emits what the list claims.
+    expect(!oracle_trap_is_blocked_construct(
+        "indirect call to an address with no function"));
+    // "import" as a word inside something longer, with no following space:
+    // the prefix test requires the space precisely so this is not a match.
+    expect(!oracle_trap_is_blocked_construct("importance sampling"));
+    expect(!oracle_trap_is_blocked_construct("imports"));
+    // And a bare "fs" is a mnemonic-shaped string, not the TIB message.
+    expect(!oracle_trap_is_blocked_construct("fs"));
+
+    current_case = "no reason at all is not a blocked construct";
+    // g_trap_reason is null until a trap sets it, and the driver prints "?"
+    // for it. Classifying null as blocked would turn every trap with a lost
+    // reason into a wall.
+    expect(!oracle_trap_is_blocked_construct(nullptr));
+    expect(!oracle_trap_is_blocked_construct(""));
+    current_case = "";
+}
+
+// ---------------------------------------------------------------------------
+// A PASS on a statically flagged function is not a PASS.
+//
+// This is the one rule that stops the whole change from being a way to inflate
+// the coverage headline. 55 of the 470 extcall-only functions agreed with the
+// original on every seed that could be judged - real evidence, and NOT the
+// same evidence as a clean PASS, because the path to the callee the lift has
+// no body for was never taken by any of the sixteen seeds. If this function
+// returned its argument unchanged, those 55 would be added to PASSED and the
+// project's headline would move by 19,876 bytes on weaker evidence than the
+// number claims.
+// ---------------------------------------------------------------------------
+void test_qualify_verdict() {
+    current_case = "a PASS on a flagged function is downgraded, and named";
+    expect(oracle_qualify_verdict(P, true) == PPT);
+    expect(oracle_qualify_verdict(P, true) != P);
+
+    current_case = "a PASS on a clean function is untouched";
+    expect(oracle_qualify_verdict(P, false) == P);
+
+    current_case = "nothing but a PASS is qualified";
+    // A FAIL is a divergence on a path that WAS taken and the static flag adds
+    // nothing to it; softening one would be the same mistake in the other
+    // direction. A SKIP or an INCONCLUSIVE was never a claim about agreement.
+    for (int i = 0; i < all_verdicts_count; ++i) {
+        const OracleVerdict v = all_verdicts[i];
+        if (v == P) continue;
+        expect(oracle_qualify_verdict(v, true) == v);
+        expect(oracle_qualify_verdict(v, false) == v);
+    }
+
+    current_case = "the qualified pass is reachable ONLY through a flag";
+    // If any verdict/flag pair other than (PASS, blocked) produced it, the
+    // report could print PASS-paths-taken for a function whose paths were
+    // never in question.
+    for (int i = 0; i < all_verdicts_count; ++i) {
+        for (int b = 0; b < 2; ++b) {
+            const bool blocked = b != 0;
+            const bool qualified =
+                oracle_qualify_verdict(all_verdicts[i], blocked) == PPT;
+            expect(qualified == (all_verdicts[i] == P && blocked));
+        }
+    }
+    current_case = "";
+}
+
 }  // namespace
 
 int main() {
@@ -629,6 +800,8 @@ int main() {
     test_the_regression_that_reached_the_headline();
     test_row_counts();
     test_pass_caveat();
+    test_trap_classification();
+    test_qualify_verdict();
     std::printf("lifted-oracle-fold: %d table rows, %d sequences, %d failure(s)\n",
                 int(sizeof rows / sizeof rows[0]), sequences_checked, failures);
     return failures == 0 ? 0 : 1;

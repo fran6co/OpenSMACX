@@ -202,9 +202,24 @@ constexpr int OracleCasesPerFunction = 16;
 enum OracleVerdict {
     OracleUnrun = 0,
     OraclePass,               // both ran, registers + flags + memory agree
+    // Every seed that could be judged agreed - but the STATIC plan says this
+    // function can reach a construct the lift cannot run (an import, a callee
+    // with no lifted body, the SEH chain), and no seed took that path. That is
+    // weaker evidence than OraclePass and it gets its own name rather than
+    // being folded into the coverage headline, because "agrees on the paths
+    // sixteen seeds took" and "agrees on every path" are different claims and
+    // only one of them has been tested.
+    OraclePassPathsTaken,
     OracleFail,               // both ran, something disagrees
     OracleFailLiftedFault,    // original completed, lifted faulted
     OracleSkipTrap,           // lifted hit opensmacx_trap: not lowered yet
+    // The lifted side ACTUALLY REACHED one of the constructs the static plan
+    // flags: a call to an address with no lifted body, an import shim, an fs:
+    // displacement outside the modelled TIB. Distinct from OracleSkipTrap,
+    // which is an instruction the lowerer has not translated yet: this one
+    // will not be fixed by lowering another mnemonic, and it is the evidence
+    // that the static flag was describing a path the program really takes.
+    OracleSkipReachedBlocked,
     OracleInconclusiveFault,  // the original itself faulted
     OracleInconclusiveBudget, // the original blew the instruction budget
     OracleInconclusiveLiftedBudget,

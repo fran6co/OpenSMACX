@@ -9,18 +9,28 @@
 #   0x00400000, so leaving this off puts the harness on top of the thing it is
 #   testing.
 #
-#   The weakened opensmacx_trap. lifted_dispatch.cpp.o defines it as abort();
-#   the oracle needs a trap to unwind into "SKIP, this body was never lowered"
-#   instead of killing the process. objcopy --weaken-symbol on a COPY of that
-#   object (under build/, never in the tree) lets the oracle's strong
-#   definition win, for both the shards' calls and the dispatcher's own.
+#   opensmacx_trap_hook. lifted_dispatch.cpp.o defines opensmacx_trap as
+#   abort(); the oracle needs a trap to unwind into a SKIP verdict instead of
+#   killing the process, so it installs a hook that the generated trap calls
+#   before it prints anything.
+#
+#   This USED to be `objcopy --weaken-symbol` on a copy of that object, so that
+#   the oracle's own strong definition of opensmacx_trap would win. It won for
+#   the SHARDS, whose calls carry a relocation, and it silently did NOT win for
+#   opensmacx_dispatch, which defines and calls the trap in one translation
+#   unit: -O2 inlined the fprintf and the abort straight into the dispatcher,
+#   leaving no symbol to redirect. The consequence was invisible until someone
+#   asked for it - every lifted body reaching a callee the lift has no body for
+#   ABORTED the harness rather than being recorded, so the "run it and see
+#   whether the blocked path is actually taken" measurement could not be made
+#   at all. Measured before the fix: --run-anyway over the extcall cohort
+#   printed one `opensmacx: trap at 0x00644f3a` and wrote zero report rows.
 #
 # -static is inherited from build.sh's reasoning: without it the image dies at
 # load with c0000135, naming no symbol.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CXX="${CXX:-/opt/homebrew/bin/i686-w64-mingw32-g++}"
-OBJCOPY="${OBJCOPY:-/opt/homebrew/bin/i686-w64-mingw32-objcopy}"
 LIFTED="${LIFTED:-$ROOT/build/lifted}"
 OUT="${OUT:-$ROOT/build/oracle}"
 mkdir -p "$OUT"
@@ -30,8 +40,13 @@ if [ ! -f "$LIFTED/lifted_dispatch.cpp.o" ]; then
     exit 1
 fi
 
-"$OBJCOPY" --weaken-symbol=__Z14opensmacx_trapjPKc \
-    "$LIFTED/lifted_dispatch.cpp.o" "$OUT/dispatch_weak.o"
+# The dispatch object is COMPILED HERE rather than taken from $LIFTED, because
+# it is the one object whose source has to match this harness: the hook it
+# calls is declared in lifted_runtime.h, and a stale $LIFTED/lifted_dispatch.
+# cpp.o built before the hook existed links fine and traps by aborting. Cheap -
+# one file - and it removes the class of failure entirely.
+"$CXX" -std=c++17 -O2 -c -I"$LIFTED" -I"$ROOT/tools" \
+    "$LIFTED/lifted_dispatch.cpp" -o "$OUT/lifted_dispatch.o"
 
 # EXTRA_CXXFLAGS exists for exactly one job: the host-layout control.
 #
@@ -51,7 +66,7 @@ for source in lifted_oracle.cpp lifted_oracle_main.cpp; do
 done
 
 # Everything the lift produced except its own main() and its dispatch object,
-# which the weakened copy replaces.
+# which the freshly compiled copy above replaces.
 SHARDS=""
 for object in "$LIFTED"/lifted_*.cpp.o; do
     case "$object" in
@@ -64,7 +79,7 @@ done
 "$CXX" -std=c++17 -O2 -static -Wl,--image-base,0x10000000 \
     -o "$OUT/lifted_oracle.exe" \
     "$OUT/lifted_oracle.o" "$OUT/lifted_oracle_main.o" \
-    "$OUT/dispatch_weak.o" $SHARDS \
+    "$OUT/lifted_dispatch.o" $SHARDS \
     -lgdi32 -luser32 -lkernel32 -ladvapi32 -lshell32 -lole32 -loleaut32 \
     -lcomdlg32 -lwinmm -lversion -lwsock32 -limm32 -luuid
 echo "built $OUT/lifted_oracle.exe"

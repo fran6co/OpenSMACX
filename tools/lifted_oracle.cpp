@@ -2,6 +2,7 @@
 // The design, and the three dead ends that shaped it, are in lifted_oracle.h.
 
 #include "lifted_oracle.h"
+#include "lifted_oracle_fold.h"   // oracle_trap_is_blocked_construct
 
 #include <windows.h>
 
@@ -51,6 +52,33 @@ uint32_t oracle_fault_data = 0;
 // "this exception has no address", and the second was being read as the first.
 uint32_t oracle_fault_has_address = 0;
 uint32_t oracle_saved_fs0 = 0;
+// The value the guest's fs:[0] is SEEDED with, taken from the same constant the
+// lift's own thread block starts at so the two cannot drift apart.
+//
+// WHY SEEDING IT MATTERS. fs:[0] is the head of the SEH registration chain and
+// it is the entire fs: surface of this image: all 1,632 segment-prefixed
+// operands in the lift scope are a 32-bit `mov` to or from a bare fs:[0], with
+// no other displacement, base or index anywhere. 393 function prologues do
+//
+//     mov eax, fs:[0]  /  push eax  /  mov fs:[0], esp
+//
+// so the FIRST thing such a prologue does is copy fs:[0] ONTO THE GUEST STACK,
+// where the whole-image memory comparison sees it. The lifted side reads its
+// own thread block, which starts at OpensmacxSehEndOfChain; the original used
+// to read whatever Wine's real thread block happened to hold, a host address in
+// the 0xb6xxxxxx range. Every one of those functions therefore reported a
+// memory divergence at [esp-4] that was a property of the harness, and the plan
+// skipped 2,288 functions (extcall+fs+iat and extcall+fs) rather than report
+// it. One store makes the two sides read the same value.
+//
+// It is safe HERE and would not be in the guest image. The concern with fs:[0]
+// is the kernel walking a bogus chain, and it cannot happen inside a case: the
+// vectored handler is installed before any of this runs and resolves every
+// exception on the running side with CONTINUE_EXECUTION, so no SEH chain walk
+// is ever reached. The guest ALREADY overwrites fs:[0] with `mov fs:[0], esp`
+// today - that is why oracle_saved_fs0 exists - so this changes the value the
+// guest READS, not whether the real chain head is disturbed.
+uint32_t oracle_seed_fs0 = OpensmacxSehEndOfChain;
 uint32_t oracle_steps = 0;
 uint32_t oracle_budget = 0;
 uint16_t oracle_x87_cw = OpensmacxX87DefaultControl;
@@ -103,6 +131,12 @@ asm(
 "  movl $0, _oracle_steps\n"
 "  movl %fs:0, %eax\n"
 "  movl %eax, _oracle_saved_fs0\n"
+// Seed the guest's view of the SEH chain head. See oracle_seed_fs0 above: 389
+// prologues push this word onto the guest stack, so without it every one of
+// them diverges from the lift by construction. Restored at oracle_abort_point,
+// which every exit passes through.
+"  movl _oracle_seed_fs0, %eax\n"
+"  movl %eax, %fs:0\n"
 "  fninit\n"
 "  fldcw _oracle_x87_cw\n"
 "  movl _oracle_in+0,  %eax\n"
@@ -203,11 +237,19 @@ bool oracle_lifted_trapped = false;
 static const char *g_trap_reason = nullptr;
 static uint32_t g_trap_address = 0;
 
-// Replaces the generated runtime's trap. The build weakens the definition in
-// lifted_dispatch.cpp.o so this one wins; a trap is a body meeting an
-// instruction the lift never lowered, which is a SKIP with a named reason and
-// emphatically not a comparison failure.
-[[noreturn]] void opensmacx_trap(uint32_t address, const char *reason) {
+// Takes over the generated runtime's trap through opensmacx_trap_hook, which
+// the generated opensmacx_trap calls before it prints or aborts. A trap is the
+// lifted side meeting something the lift cannot run - an instruction that was
+// never lowered, or a callee it has no body for - which is a SKIP with a named
+// reason and emphatically not a comparison failure.
+//
+// This is a HOOK and not a strong definition of opensmacx_trap on purpose. The
+// definition-overriding version worked for the shards and silently did not
+// work for opensmacx_dispatch, whose trap -O2 inlines; see the comment beside
+// opensmacx_trap_hook in tools/lift_whole_image.py. Returning normally from
+// here (which happens only outside a case) lets the generated trap do exactly
+// what it always did.
+static void oracle_trap_hook(uint32_t address, const char *reason) {
     oracle_lifted_trapped = true;
     g_trap_reason = reason;
     g_trap_address = address;
@@ -216,7 +258,6 @@ static uint32_t g_trap_address = 0;
     }
     std::fprintf(stderr, "oracle: trap outside a case at %#010x: %s\n",
                  static_cast<unsigned>(address), reason);
-    std::abort();
 }
 
 // ---------------------------------------------------------------------------
@@ -1096,6 +1137,10 @@ void oracle_arm(uint32_t budget, uint32_t watchdog_ms) {
     g_lifted_timeout_ms = watchdog_ms ? watchdog_ms : 2000;
     if (armed) return;
     armed = true;
+    // Before anything can run a lifted body. Without this the generated trap
+    // aborts the process, and every SKIP-trap and SKIP-reached-blocked verdict
+    // below is unreachable code.
+    opensmacx_trap_hook = oracle_trap_hook;
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     SetUnhandledExceptionFilter(oracle_last_resort);
     AddVectoredExceptionHandler(1, oracle_veh);
@@ -1513,7 +1558,14 @@ static int oracle_run_lifted_side(uint32_t address,
     oracle_cost.lifted_seconds += now_seconds() - g_lifted_t0;
     if (escaped != 0) {
         if (escaped == 2) {
-            result.verdict = OracleSkipTrap;
+            // A trap the lowerer will eventually remove, or one it never can:
+            // see oracle_trap_is_blocked_construct. Keeping them apart is the
+            // whole point of attempting statically flagged functions - a
+            // SKIP-reached-blocked row is the runtime PROOF that the flag
+            // described a path this program takes, and a plan row that never
+            // produces one is a path that merely exists.
+            result.verdict = oracle_trap_is_blocked_construct(g_trap_reason)
+                                 ? OracleSkipReachedBlocked : OracleSkipTrap;
             result.trap_reason = g_trap_reason;
             result.fault_address = g_trap_address;
             return 1;
@@ -1966,9 +2018,11 @@ uint32_t oracle_blame(uint32_t address, int case_index, uint32_t watch_address,
 const char *oracle_verdict_name(OracleVerdict verdict) {
     switch (verdict) {
         case OraclePass: return "PASS";
+        case OraclePassPathsTaken: return "PASS-paths-taken";
         case OracleFail: return "FAIL";
         case OracleFailLiftedFault: return "FAIL-lifted-fault";
         case OracleSkipTrap: return "SKIP-trap";
+        case OracleSkipReachedBlocked: return "SKIP-reached-blocked";
         case OracleInconclusiveFault: return "INCONCLUSIVE-original-fault";
         // One verdict, two very different causes, and the name only ever said
         // the first: a sweep run with budget 0 cannot produce a single budget

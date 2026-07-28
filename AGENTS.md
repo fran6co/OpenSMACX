@@ -529,7 +529,15 @@ parallel-agent targets (see "Parallel recovery" above):
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
-- `docs/recovery/summary.json`: canonical recovery-state counts.
+- `docs/recovery/summary.json`: canonical recovery-state counts, and the byte-weighted
+  `functions.bytes` block that leads them. Counts flatter every coverage claim this project makes -
+  40% of the functions is 8% of the bytes - so the block carries the lift-scope denominator (5,673
+  functions, 2,410,317 bytes), the `external_library` exclusion that produces it from the 6,000
+  catalogued rows, and `machine_carried`, the recovery debt, which is the one published number that
+  must go DOWN.
+- `tools/recovery_metrics.py`: the only place that decides which rows are in scope, how a row is
+  priced, and which way a number moves. Both the full exporter and the reused-export refresh path
+  compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
 - `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
 - `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.

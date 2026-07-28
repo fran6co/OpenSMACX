@@ -247,6 +247,29 @@ OpensmacxLiftedFunction opensmacx_dispatch(uint32_t address);
 // naming exactly one address, which is the whole debugging loop for phase 5.
 [[noreturn]] void opensmacx_trap(uint32_t address, const char *reason);
 
+// Called FIRST by opensmacx_trap, before the message and the abort, so that a
+// harness can take the trap over and unwind instead of dying. Null by default,
+// which is exactly the old behaviour.
+//
+// THIS EXISTS BECAUSE OVERRIDING THE SYMBOL DOES NOT WORK, and the way it
+// failed is worth writing down. tools/lifted_oracle_build.sh used to run
+// `objcopy --weaken-symbol` on lifted_dispatch.cpp.o so that the oracle's own
+// strong opensmacx_trap would win. It won for the SHARDS, whose calls carry a
+// relocation - and it could not win for opensmacx_dispatch, because the trap
+// is defined in the same translation unit and -O2 INLINES it: the emitted
+// dispatcher contains the fprintf and the abort with no relocation and no
+// symbol left to redirect. So every lifted body that reached a callee with no
+// lifted body killed the whole harness instead of being recorded, which is
+// precisely the case a runtime "did this path actually execute" test needs.
+// Measured before the fix: `--run-anyway` over the extcall cohort printed
+// `opensmacx: trap at 0x00644f3a: indirect call to an address with no
+// function` and wrote zero report rows.
+//
+// A hook is immune to inlining because it is a load and an indirect call that
+// survive into the inlined copy. It also replaces the objcopy step rather than
+// joining it: one mechanism, and it is visible in the source.
+extern void (*opensmacx_trap_hook)(uint32_t address, const char *reason);
+
 #endif
 """
 
@@ -519,21 +542,31 @@ OpensmacxLiftedFunction opensmacx_dispatch(uint32_t address) {{
         Table, end, address,
         [](const Entry &entry, uint32_t key) {{ return entry.address < key; }});
     if (found == end || found->address != address) {{
-        // An indirect call landing between catalogued functions means the
-        // catalogue is wrong or the target is computed in a way not yet
-        // modelled. Failing loudly here is the point.
-        opensmacx_trap(address, "indirect call to an address with no function");
+        // Two different origins land here and the reason names both, because a
+        // consumer has to be able to tell this apart from an instruction the
+        // lowerer refused. A DIRECT call or jmp to an address that is not a
+        // catalogued entry - a CRT routine, an import thunk, the middle of a
+        // neighbour - lowers to a dispatch on a constant and arrives here just
+        // as an indirect call through a computed value does. Either way the
+        // lift has no body to run, and saying so is the point.
+        opensmacx_trap(address, "call to an address with no lifted body");
     }}
     return found->function;
 }}
 
-// NOT __attribute__((weak)), though the oracle would like it to be so that it
-// could override this with a trap that records and unwinds. On this PE target
-// a weak DEFINITION with no strong alternate is simply dropped, and the whole
-// image then fails to link with "undefined reference to opensmacx_trap" from
-// every division site. The oracle weakens the symbol with objcopy on its own
-// copy of the object instead; see tools/lifted_oracle_build.sh.
+// NOT __attribute__((weak)), and no longer overridden by symbol games either.
+// On this PE target a weak DEFINITION with no strong alternate is simply
+// dropped, and the whole image then fails to link with "undefined reference to
+// opensmacx_trap" from every division site. The oracle used to weaken this
+// symbol with objcopy on its own copy of the object; that worked for the
+// shards and silently did NOT work for opensmacx_dispatch above, whose call is
+// inlined at -O2 into a copy with no symbol left to redirect. The hook is the
+// replacement, and it is checked before anything is printed so a harness can
+// unwind out of a trap that would otherwise abort the process.
+void (*opensmacx_trap_hook)(uint32_t address, const char *reason) = nullptr;
+
 void opensmacx_trap(uint32_t address, const char *reason) {{
+    if (opensmacx_trap_hook) opensmacx_trap_hook(address, reason);
     std::fprintf(stderr, "opensmacx: trap at %#010x: %s\\n",
                  static_cast<unsigned>(address), reason);
     std::abort();

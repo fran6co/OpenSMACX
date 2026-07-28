@@ -16,6 +16,8 @@ import idb
 import idb.analysis
 from idb.idapython import IDAPython
 
+import recovery_metrics
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_IDB = (
@@ -480,6 +482,12 @@ def export_inventory(args):
                 "overrides": repo_path(args.overrides),
             },
             "functions": {
+                # These five are COUNTS, and a count of functions flatters
+                # every coverage claim this project has ever made: 40% of the
+                # functions is 8% of the bytes. They are kept because tools
+                # and history read them, but `bytes` below is the block that
+                # leads, and it carries the denominator and the exclusion with
+                # it so no percentage in this file is over an unnamed total.
                 "total": len(functions),
                 "by_binary_kind": dict(sorted(kind_counts.items())),
                 "by_recovery_state": dict(sorted(state_counts.items())),
@@ -487,6 +495,7 @@ def export_inventory(args):
                                        for function in functions),
                 "with_comments": sum(bool(function["comments"])
                                      for function in functions),
+                "bytes": recovery_metrics.bytes_block(functions),
             },
             "source_annotations": {
                 "annotations": sum(len(items) for items in source_annotations.values()),

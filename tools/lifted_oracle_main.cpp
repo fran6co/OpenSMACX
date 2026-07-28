@@ -15,6 +15,52 @@
 //
 // Every function the driver refuses to run is reported as SKIPPED with the
 // reason, never as passed. That count is as important as the pass count.
+//
+// ---------------------------------------------------------------------------
+// THE PLAN'S FLAGS ARE A SCHEDULING HINT. THEY DO NOT CERTIFY ANYTHING.
+// ---------------------------------------------------------------------------
+//
+// They are computed STATICALLY and propagated along every call edge to a
+// fixpoint with no reachability filter, so `iat` means "some path COULD reach
+// an import", not "a run DID". That is the right way to compute a hint and the
+// wrong way to decide a verdict, and the difference is 88% of the image by
+// byte: 2,031 functions carry extcall+fs+iat, and a large share of the `fs`
+// among them is the `jmp ___CxxFrameHandler` stub that only the kernel ever
+// enters.
+//
+// So by default this driver ATTEMPTS a statically flagged function and lets
+// the RUN decide. Three outcomes are then possible and all three are named:
+//
+//   SKIP-reached-blocked  a seed really did reach the construct. The static
+//                         flag described a path this program takes.
+//   PASS-paths-taken      every judged seed agreed and none reached it. Real
+//                         evidence, WEAKER than PASS, and never counted as it.
+//   FAIL                  a divergence on a path that was taken, which is the
+//                         same finding it has always been.
+//
+// `--refuse-blocked` restores the old behaviour: refuse on the flag alone. It
+// is much faster and is the right thing when the run is a scheduling pass; it
+// cannot produce any of the three verdicts above, so it can only ever
+// under-count coverage, never over-count it.
+//
+// WHAT THE FLIPPED DEFAULT COSTS, MEASURED. The default was validated on the
+// `extcall`-only cohort (470 functions, 3.09% of bytes) and on `extcall+fs`
+// (0.42%). It now also attempts the 2,983 `iat`-bearing functions - 84% of the
+// scope by byte - that had never been executed at all, and on THIS host some
+// of them do not merely fail:
+//
+//     rosetta error: unsupported privilege level: 0
+//
+// Rosetta 2 refuses the instruction and the process is gone; no guard runs, no
+// report row is written. Over the first 40 `iat`-flagged functions, 5 die that
+// way - 0x00421b20, 0x00421b40, 0x00422ed0, 0x00447360 and 0x0045c180 - each
+// reproducible on its own with `--only`. The other 35 came back 30
+// PASS-paths-taken and 5 INCONCLUSIVE-original-fault, so the yield is real;
+// the cost is that every death burns a full watchdog period and a process
+// restart in `lifted_oracle_sweep.sh`. That script now writes those rows as
+// KILLED-host-refused rather than HANG, because the watchdog never observed
+// anything. Pass `--refuse-blocked` for a scheduling pass, or when the sweep's
+// wall-clock matters more than the extra evidence.
 
 #include "lifted_oracle.h"
 #include "lifted_oracle_fold.h"
@@ -64,6 +110,15 @@ static uint32_t undefined_exit_flags(const std::string &flags) {
     return 0;
 }
 
+// Does the STATIC plan say this function can reach something the lift cannot
+// run? Exactly the set skip_reason() below refuses on, named separately
+// because the two uses are different: one decides whether to attempt the
+// function, the other decides whether a PASS may be called a PASS.
+static bool statically_blocked(const std::string &flags) {
+    return has_flag(flags, "selfmod") || has_flag(flags, "iat")
+        || has_flag(flags, "fs") || has_flag(flags, "extcall");
+}
+
 static const char *skip_reason(const std::string &flags) {
     if (has_flag(flags, "selfmod")) return "self-modifying section";
     if (has_flag(flags, "iat")) return "reaches an import";
@@ -79,6 +134,15 @@ static const char *skip_reason(const std::string &flags) {
 struct Tally {
     long passed = 0, failed = 0, lifted_fault = 0, skipped = 0;
     long inconclusive = 0, trap = 0, out_of_span = 0, top_page = 0;
+    // Deliberately NOT added to `passed` anywhere. Every seed agreed, on a
+    // function the static plan says has a path to something the lift cannot
+    // run; no seed took that path. Folding it into the headline would be the
+    // exact move the project's standard forbids - turning an honest SKIP into
+    // a flattering PASS by weakening the conditions and reusing the name.
+    long passed_paths_taken = 0;
+    // Cases where a seed really did reach the blocked construct. This is the
+    // number that says which static flags describe live paths.
+    long reached_blocked = 0;
     // Counted apart because it is a different KIND of finding: every one seen
     // so far is a flag the manuals leave undefined after imul or idiv, where
     // the lift leaves the flag alone and the silicon does not.
@@ -136,7 +200,7 @@ int main(int argc, char **argv) {
     int cases = OracleCasesPerFunction;
     uint32_t budget = 0;
     uint32_t watchdog = 4000;
-    bool run_anyway = false, verbose = false, selftest = false, blame = true;
+    bool refuse_blocked = false, verbose = false, selftest = false, blame = true;
     bool selfcheck = false;
     int dump_seed = -1;
     uint32_t selfcheck_address = 0x00401000U;
@@ -154,7 +218,7 @@ int main(int argc, char **argv) {
         else if (!std::strcmp(a, "--cases")) cases = int(std::strtol(next(), nullptr, 0));
         else if (!std::strcmp(a, "--budget")) budget = uint32_t(std::strtoul(next(), nullptr, 0));
         else if (!std::strcmp(a, "--watchdog")) watchdog = uint32_t(std::strtoul(next(), nullptr, 0));
-        else if (!std::strcmp(a, "--run-anyway")) run_anyway = true;
+        else if (!std::strcmp(a, "--refuse-blocked")) refuse_blocked = true;
         else if (!std::strcmp(a, "--verbose")) verbose = true;
         else if (!std::strcmp(a, "--no-blame")) blame = false;
         else if (!std::strcmp(a, "--selftest")) selftest = true;
@@ -357,11 +421,14 @@ int main(int argc, char **argv) {
 
     std::vector<PlanEntry> plan;
     if (only) {
-        // The synthetic entry says "ok" so that --only keeps overriding every
-        // skip, as it always has. It must still carry this function's `undef=`
-        // token, or the one-function reproduction of a whole-plan FAIL would
-        // compare a flag the plan run does not, and the two would disagree for
-        // a reason that is in the harness.
+        // --only keeps overriding every refusal, as it always has, so the
+        // refusal is switched off rather than the flags being faked. The whole
+        // flag string is then taken from the plan verbatim, because BOTH the
+        // `undef=` token and the blocking flags change what the run reports: a
+        // faked "ok" would compare a flag the plan run masks (the two would
+        // then disagree for a reason that is in the harness) and would print
+        // PASS where the plan run prints PASS-paths-taken.
+        refuse_blocked = false;
         std::string flags = "ok";
         if (list_path) {
             if (FILE *f = std::fopen(list_path, "r")) {
@@ -374,11 +441,7 @@ int main(int argc, char **argv) {
                     if (uint32_t(std::strtoul(line, nullptr, 0)) != only) continue;
                     char *tab2 = std::strchr(tab1 + 1, '\t');
                     if (tab2) *tab2 = 0;
-                    if (uint32_t mask = undefined_exit_flags(tab1 + 1)) {
-                        char token[32];
-                        std::snprintf(token, sizeof token, ",undef=%x", unsigned(mask));
-                        flags += token;
-                    }
+                    flags = tab1 + 1;
                     break;
                 }
                 std::fclose(f);
@@ -426,7 +489,8 @@ int main(int argc, char **argv) {
         "self-modifying section", "reaches an import",
         "uses fs: (SEH chain is not in the image)",
         "calls a body the lift does not have", "not in the dispatch table",
-        "lifted body traps (instruction never lowered)", "", ""};
+        "lifted body traps (instruction never lowered)",
+        "a seed REACHED a blocked construct", ""};
     long x87_tested = 0, indirect_tested = 0;
     long failures_printed = 0;
     double started = double(GetTickCount());
@@ -434,7 +498,8 @@ int main(int argc, char **argv) {
     for (size_t index = 0; index < plan.size(); ++index) {
         const PlanEntry &entry = plan[index];
         oracle_undefined_exit_flags = undefined_exit_flags(entry.flags);
-        const char *reason = run_anyway ? nullptr : skip_reason(entry.flags);
+        const bool blocked = statically_blocked(entry.flags);
+        const char *reason = refuse_blocked ? skip_reason(entry.flags) : nullptr;
         if (reason) {
             tally.skipped++;
             for (int k = 0; k < 5; ++k)
@@ -467,7 +532,10 @@ int main(int argc, char **argv) {
             if (fold.winning_case != previous_winner) worst = r;
             if (!keep_going) break;
         }
-        const OracleVerdict best = fold.verdict;
+        // A PASS on a statically flagged function is downgraded HERE, by the
+        // same unit-tested header the rules live in, so that nothing between
+        // the fold and the report can call it a PASS.
+        const OracleVerdict best = oracle_qualify_verdict(fold.verdict, blocked);
         // The two count columns and the PASS caveat come out of the same
         // unit-tested header as the rules. They used to be bare reads off
         // `fold` here, which is how `compared` could quietly become `ran` and
@@ -476,13 +544,16 @@ int main(int argc, char **argv) {
         const int ran = counts.cases;
         const int compared = counts.compared;
 
-        if (has_flag(entry.flags, "x87") && best == OraclePass) x87_tested++;
-        if (has_flag(entry.flags, "indirect") && best == OraclePass) indirect_tested++;
+        const bool agreed = best == OraclePass || best == OraclePassPathsTaken;
+        if (has_flag(entry.flags, "x87") && agreed) x87_tested++;
+        if (has_flag(entry.flags, "indirect") && agreed) indirect_tested++;
 
         char detail[512] = "";
         switch (best) {
             case OraclePass:
-                tally.passed++;
+            case OraclePassPathsTaken:
+                if (best == OraclePass) tally.passed++;
+                else tally.passed_paths_taken++;
                 // One call decides both the caveat text and the tally, so the
                 // printed row and the printed total cannot disagree.
                 if (oracle_pass_caveat(fold, detail, sizeof detail))
@@ -491,6 +562,13 @@ int main(int argc, char **argv) {
             case OracleSkipTrap:
                 tally.trap++; tally.skipped++; skip_counts[5]++;
                 std::snprintf(detail, sizeof detail, "trap at %#010x: %s",
+                              unsigned(worst.fault_address),
+                              worst.trap_reason ? worst.trap_reason : "?");
+                break;
+            case OracleSkipReachedBlocked:
+                tally.reached_blocked++; tally.skipped++; skip_counts[6]++;
+                std::snprintf(detail, sizeof detail,
+                              "case %d reached %#010x: %s", worst.case_index,
                               unsigned(worst.fault_address),
                               worst.trap_reason ? worst.trap_reason : "?");
                 break;
@@ -633,12 +711,17 @@ int main(int argc, char **argv) {
     std::printf("\n=== differential oracle: lifted vs original machine code ===\n");
     std::printf("functions in plan            %zu\n", plan.size());
     std::printf("PASSED                       %ld\n", tally.passed);
+    std::printf("PASS-paths-taken             %ld   (every judged seed agreed, "
+                "on a function the static plan says has a path to something\n"
+                "                                  the lift cannot run - and "
+                "no seed took it. NOT counted in PASSED above)\n",
+                tally.passed_paths_taken);
     std::printf("FAILED (compare)             %ld\n", tally.failed);
     std::printf("    of those, flags only     %ld\n", tally.failed_flags_only);
     std::printf("    of those, x87 only       %ld\n", tally.failed_x87_only);
     std::printf("FAILED (lifted faulted)      %ld\n", tally.lifted_fault);
     std::printf("SKIPPED                      %ld\n", tally.skipped);
-    for (int k = 0; k < 6; ++k)
+    for (int k = 0; k < 7; ++k)
         if (skip_counts[k])
             std::printf("    %-24s %ld\n", skip_names[k], skip_counts[k]);
     std::printf("INCONCLUSIVE                 %ld\n", tally.inconclusive);

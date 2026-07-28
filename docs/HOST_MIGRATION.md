@@ -99,9 +99,13 @@ Do not trust a number from the new host until these pass. The doctor prints
 them too.
 
 1. **The old PASSes reproduce.** Sweep, then
-   `python3 tools/lifted_oracle_summary.py build/oracle/report.tsv` and compare
-   against the report you brought. A different PASS set means the move changed
-   behaviour, and that needs explaining before anything else.
+   `python3 tools/lifted_oracle_summary.py build/oracle/report.tsv --json new.json`
+   and diff `new.json` against the record you brought. Compare the BYTE
+   figures, not the counts, and compare `agreed_full_strength` as well as
+   `agreed`: a move that trades large single-seed PASSes for small
+   full-strength ones changes the byte totals in opposite directions while the
+   function count barely moves. `must_go_down` is the block to watch - if any
+   of those three rises, the move cost something.
 
 2. **The undefined-flag masks become droppable.** Regenerate the plan with the
    `undef=` token suppressed and re-sweep. On native silicon this should cost

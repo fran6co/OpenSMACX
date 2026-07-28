@@ -12,22 +12,28 @@
 // of this was designed. The result is the narrowest distribution in the whole
 // lift:
 //
-//     1,330 fs:-prefixed operands, in 389 of the 5,673 functions
-//       displacement    fs:[0]      1,330  (100%)
-//       operand width   32-bit      1,330  (100%)
-//       mnemonic        mov         1,330  (100%)
-//       base/index      none        1,330  (100%)  - the displacement is
+//     1,632 fs:-prefixed operands, in 393 of the 5,673 functions
+//       displacement    fs:[0]      1,632  (100%)
+//       operand width   32-bit      1,632  (100%)
+//       mnemonic        mov         1,632  (100%)
+//       base/index      none        1,632  (100%)  - the displacement is
 //                                                    the entire address
 //
-//     Three distinct operand shapes account for all 1,330:
-//         552  mov dword ptr fs:[0], ecx     restore previous handler
-//         389  mov eax, dword ptr fs:[0]     read current handler
-//         389  mov dword ptr fs:[0], esp     install new handler
+//     Three distinct operand shapes account for all 1,632:
+//         575  mov dword ptr fs:[0], ecx     restore previous handler
+//         539  mov eax, dword ptr fs:[0]     read current handler
+//         518  mov dword ptr fs:[0], esp     install new handler
 //
-//     Per function: 284 functions use three, 65 use four, 28 use five, 10 use
-//     six, one uses seven, one - Console::destroy - uses eleven.
+//     Per function: 185 use three, 85 use five, 56 use four, 43 use six, 10
+//     use seven, and a tail of 21 use between one and thirteen.
 //
-// 305 further operands carry an `es:` prefix, but all 305 are the implicit
+//     This table read 1,330 over 389 functions until it was re-derived by
+//     disassembling every catalogued body in the lift scope. The 100% column
+//     is the load-bearing part - it is why a single branch can cover the whole
+//     segment surface - and it survived the correction unchanged; the totals
+//     did not. Do not hand-count this again.
+//
+// 315 further operands carry an `es:` prefix, but all 315 are the implicit
 // destination of a string instruction (`rep stosd`, `rep movsd`, `rep movsb`,
 // `repne scasb`). Those have no displacement of their own and belong to the
 // string-instruction lowering, not here.
@@ -56,14 +62,14 @@
 //
 //   * Treat the displacement as a flat address. `opensmacx_mem32(0)` evaluates
 //     `opensmacx_image + (0 - 0x00400000)`, i.e. four megabytes BEFORE the
-//     array. That is undefined behaviour on every one of the 1,330 sites, and
-//     941 of them are STORES, so it is a four-megabyte-wild write executed in
-//     the prologue and epilogue of 389 functions.
+//     array. That is undefined behaviour on every one of the 1,632 sites, and
+//     1,093 of them are STORES, so it is a four-megabyte-wild write executed in
+//     the prologue and epilogue of 393 functions.
 //
 //   * "Fix" that by rebasing the displacement onto the image, e.g.
 //     `opensmacx_mem32(OpensmacxImageBase + disp)`. Now fs:[0] aliases
 //     0x00400000 exactly - the PE `MZ` signature in the DOS header - and the
-//     389 `mov fs:[0], esp` sites each overwrite the first four bytes of the
+//     518 `mov fs:[0], esp` sites each overwrite the first four bytes of the
 //     mapped executable with a stack pointer. Any code that later reads the
 //     header, or any data placed near the image base, silently changes value
 //     depending on how deep the call stack was.
@@ -81,7 +87,7 @@
 //
 // READ THIS BEFORE CONCLUDING THAT SEH WORKS.
 //
-// What the 1,330 instructions do is maintain a singly linked list whose head
+// What the 1,632 instructions do is maintain a singly linked list whose head
 // lives at fs:[0] and whose nodes live on the guest stack:
 //
 //     push  offset __handler          ; node.handler
@@ -99,7 +105,7 @@
 // ordinary address, so it lifts like any other function through the same
 // dispatch table, and it only ever runs when a fault occurs. A CORRECT lift
 // does not fault. So the chain has to be maintained (otherwise the prologue
-// and epilogue of 389 functions are wrong, and the epilogue's store is
+// and epilogue of 393 functions are wrong, and the epilogue's store is
 // load-bearing for the stack pointer bookkeeping around it), while dispatch
 // has no caller until something is already broken.
 //
@@ -178,7 +184,7 @@ constexpr uint32_t OpensmacxTibSize = 0x100U;
 // Named displacements, for readers of the lifted output. Only the first is
 // exercised by terranx.exe; the rest document what the numbers mean when they
 // eventually appear.
-constexpr uint32_t OpensmacxTibSehChainHead = 0x00U;  // used, 1,330 times
+constexpr uint32_t OpensmacxTibSehChainHead = 0x00U;  // used, 1,632 times
 constexpr uint32_t OpensmacxTibStackBase = 0x04U;     // unused by this image
 constexpr uint32_t OpensmacxTibStackLimit = 0x08U;    // unused by this image
 constexpr uint32_t OpensmacxTibSelfPointer = 0x18U;   // unused by this image
@@ -217,7 +223,7 @@ struct OpensmacxThreadBlock {
 // per-thread on the real machine - two threads in the same lifted image are in
 // different call stacks with different registration records - so sharing one
 // block would make thread B's epilogue restore thread A's handler. The cost is
-// a TLS base lookup at 1,330 static sites, every one of them already in a
+// a TLS base lookup at 1,632 static sites, every one of them already in a
 // function prologue or epilogue next to a stack adjustment, which is not a hot
 // path in any sense that matters.
 inline thread_local OpensmacxThreadBlock opensmacx_tib;

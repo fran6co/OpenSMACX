@@ -34,9 +34,12 @@
 //    is a finding; running eleven more seeds cannot retract it, and the seed
 //    that produced it is the one worth reporting.
 //
-//  * OracleSkipTrap stops and wins. The lifted body reached an instruction that
-//    was never lowered, so no seed can be judged - and this is a SKIP, not a
-//    pass and not a failure.
+//  * OracleSkipTrap and OracleSkipReachedBlocked stop and win. The lifted body
+//    reached an instruction that was never lowered, or a construct the lift
+//    does not model, so no seed can be judged - and this is a SKIP, not a pass
+//    and not a failure. They stop even when earlier seeds passed, and that is
+//    deliberate: the question a runtime blocked-construct check asks is "does
+//    any seed take that path", and once one has, later seeds cannot unmake it.
 //
 //  * A later OraclePass upgrades the verdicts that say the ORIGINAL side could
 //    not be run on that seed: OracleUnrun, OracleInconclusiveFault,
@@ -66,8 +69,73 @@
 // pinned by a test rather than left to be discovered from a headline.
 
 #include <cstdio>
+#include <cstring>
 
 #include "lifted_oracle.h"
+
+// ---------------------------------------------------------------------------
+// WHICH TRAPS MEAN "THE PROGRAM WENT SOMEWHERE THE LIFT CANNOT FOLLOW"
+// ---------------------------------------------------------------------------
+//
+// Every trap arrives as one string, and two very different things produce one:
+//
+//   * a mnemonic the lowerer refused - "bt", "pushal", "loop". A phase-4 work
+//     item: lower it and the function becomes testable.
+//   * a construct the lift does not model at all - a callee it has no body
+//     for, an import, an fs: displacement past the modelled TIB. Lowering
+//     another mnemonic will never fix these, and reaching one is the RUNTIME
+//     evidence that the static plan's flag described a path the program really
+//     takes rather than a path that merely exists.
+//
+// The two must not share a verdict, because the second is the whole reason the
+// harness attempts statically flagged functions at all. The strings are
+// matched, not the addresses: a trap carries a guest address whose meaning
+// differs between the two cases (a callee for one, an instruction for the
+// other) and nothing in the address tells them apart.
+//
+// EACH PATTERN NAMES ITS SOURCE. If one of these strings is edited there, this
+// list is wrong and the verdict silently degrades to SKIP-trap - so
+// tools/test_lifted_oracle_fold.cpp pins every one of them against the real
+// text, and damaging either side fails the test.
+inline bool oracle_trap_is_blocked_construct(const char *reason) {
+    if (!reason) return false;
+    // tools/lift_whole_image.py, write_dispatch(): a direct call or jmp to an
+    // address that is not a catalogued entry, and an indirect call that lands
+    // on one, both arrive here.
+    if (std::strcmp(reason, "call to an address with no lifted body") == 0)
+        return true;
+    // tools/lifted_tls.h, opensmacx_tib_at(): a real TEB field past the block
+    // the lift models.
+    if (std::strcmp(reason, "fs: displacement outside the modelled TIB") == 0)
+        return true;
+    // tools/generate_imports.py, opensmacx_import_dispatch(): a synthetic
+    // import address the guest computed rather than loaded.
+    if (std::strcmp(reason, "synthetic import address with no import") == 0)
+        return true;
+    // tools/generate_imports.py's shims for the imports with no body, and the
+    // marshalling refusals in tools/lifted_imports.h. Both begin with the same
+    // two words; every other trap reason in the tree is a bare mnemonic or a
+    // sentence that does not. The trailing SPACE in each prefix is what stops
+    // "imports" or "importance" from matching.
+    if (std::strncmp(reason, "unimplemented import ", 21) == 0) return true;
+    if (std::strncmp(reason, "import ", 7) == 0) return true;
+    return false;
+}
+
+// A PASS on a function the static plan says CAN reach one of those constructs
+// is not the same evidence as a PASS on a function that cannot: sixteen seeds
+// agreed on the paths they took, and a path they did not take was never
+// compared. It gets its own verdict rather than a footnote, so that no total
+// anywhere can quietly absorb it.
+//
+// Only PASS is qualified. A FAIL is a divergence on a path that WAS taken and
+// the static flag adds nothing to it; a SKIP or an INCONCLUSIVE was not a
+// claim about agreement in the first place.
+inline OracleVerdict oracle_qualify_verdict(OracleVerdict verdict,
+                                            bool statically_blocked) {
+    if (verdict == OraclePass && statically_blocked) return OraclePassPathsTaken;
+    return verdict;
+}
 
 // The running state of the fold. The driver keeps one of these per function and
 // feeds it one verdict at a time, so that OracleFail can still stop the loop
@@ -87,6 +155,13 @@ struct OracleFoldState {
     int stopped_at;         // index of the last case examined, -1 when none
     bool done;              // the loop has been told to stop
 };
+
+// The two verdicts that say "the lifted side could not be run to the end on
+// this seed, and no further seed changes that". Named once so the stepper's
+// two arms cannot drift apart.
+inline bool oracle_verdict_is_skip(OracleVerdict verdict) {
+    return verdict == OracleSkipTrap || verdict == OracleSkipReachedBlocked;
+}
 
 inline void oracle_fold_reset(OracleFoldState *state) {
     state->verdict = OracleUnrun;
@@ -116,7 +191,7 @@ inline bool oracle_fold_step(OracleFoldState *state, OracleVerdict verdict,
         state->done = true;
         return false;
     }
-    if (verdict == OraclePass && state->verdict != OracleSkipTrap) {
+    if (verdict == OraclePass && !oracle_verdict_is_skip(state->verdict)) {
         // A later PASS upgrades away the verdicts that describe the ORIGINAL
         // side being unrunnable on that seed. It must NOT upgrade away the two
         // that describe the LIFTED side misbehaving while the original was
@@ -128,8 +203,8 @@ inline bool oracle_fold_step(OracleFoldState *state, OracleVerdict verdict,
             state->verdict == OracleInconclusiveTopPage) {
             state->verdict = OraclePass;
         }
-    } else if (verdict == OracleSkipTrap) {
-        state->verdict = OracleSkipTrap;
+    } else if (oracle_verdict_is_skip(verdict)) {
+        state->verdict = verdict;
         state->winning_case = case_index;
         state->done = true;
         return false;
