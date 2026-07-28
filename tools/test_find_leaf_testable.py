@@ -131,6 +131,24 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual([], reasons)
 
 
+class ArityTests(unittest.TestCase):
+    """The declaration must clean what the body cleans."""
+
+    def test_no_parameters_and_a_ret_8_disagree(self):
+        # ?on_redraw@Win@@QAEHXZ: no parameters declared, eight bytes cleaned.
+        # A recovered body popping the declared zero corrupts its caller.
+        convention, total = scanner.declared_arity("?on_redraw@Win@@QAEHXZ")
+        self.assertEqual(0, total)
+
+    def test_two_ints_declare_eight_bytes(self):
+        _, total = scanner.declared_arity("?on_mouse_leave@BaseWin@@QAEXHH@Z")
+        self.assertEqual(8, total)
+
+    def test_one_int_declares_four_bytes(self):
+        _, total = scanner.declared_arity("?UNK3@BasePop@@QAEXH@Z")
+        self.assertEqual(4, total)
+
+
 class BindingTests(unittest.TestCase):
     """An address used as a VALUE is testable but must be declared."""
 
