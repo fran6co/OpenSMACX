@@ -44,6 +44,7 @@ class DLLEXPORT MapWin {
  public:
   MapWin() { ; }
   ~MapWin() { ; }
+  int UNK1();
   void UNK3();
   void do_image_buttons();
   void main_caption();
@@ -66,6 +67,7 @@ class DLLEXPORT MapWin {
 
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");
 
+int __fastcall map_win_unk1_redirect(MapWin *self, void *);
 void __fastcall map_win_unk3_redirect(MapWin *self, void *);
 void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *);
 
