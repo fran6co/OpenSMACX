@@ -2395,6 +2395,66 @@ void __thiscall probe_player_lock_unlock(void *entry, int slot) {
     }
 }
 
+void test_popup_button_width_and_diplo_clear() {
+    // Popup::on_adjust_button_width: 0x30AC / 10000 compared against 1000, and
+    // 20 stored at 0x30D0 only when they differ. The values below straddle the
+    // threshold exactly - 10000000 scales to 1000 and is the ONLY case that
+    // must leave the field alone - so a body comparing before dividing, or
+    // using the wrong constant, is caught.
+    const int scales[] = {
+        0, 1, 9999, 10000, 9999999, 10000000, 10000001, 10009999, 10010000,
+        -10000000, 2147483647, -2147483647 - 1,
+    };
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int scale : scales) {
+            std::vector<uint8_t> storage(0x3100 + 32);
+            std::vector<uint8_t> expected(storage.size());
+            for (size_t i = 0; i < storage.size(); ++i) {
+                storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+            }
+            std::memcpy(storage.data() + 16 + 0x30AC, &scale, sizeof(scale));
+            std::memcpy(expected.data(), storage.data(), storage.size());
+            const int32_t quotient = scale / 10000;
+            if (quotient != 1000) {
+                const int32_t twenty = 20;
+                std::memcpy(expected.data() + 16 + 0x30D0, &twenty, sizeof(twenty));
+            }
+            auto *popup = reinterpret_cast<Popup *>(storage.data() + 16);
+            if (use_adapter) {
+                popup_on_adjust_button_width_redirect(popup, nullptr);
+            } else {
+                popup->on_adjust_button_width();
+            }
+            expect_storage_bytes(storage.data(), expected.data(), storage.size());
+        }
+    }
+
+    // DiploWin::UNK3: clear one indexed entry at 0xA1C, then the pair at 0xA24
+    // and 0xA28. Indices 2 and 3 alias the pair, which the exact-byte
+    // comparison covers without needing a special case.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int index : {0, 1, 2, 3, 4, 7}) {
+            std::vector<uint8_t> storage(0xA80 + 32);
+            std::vector<uint8_t> expected(storage.size());
+            for (size_t i = 0; i < storage.size(); ++i) {
+                storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+            }
+            std::memcpy(expected.data(), storage.data(), storage.size());
+            const int32_t zero = 0;
+            std::memcpy(expected.data() + 16 + 0xA1C + index * 4, &zero, sizeof(zero));
+            std::memcpy(expected.data() + 16 + 0xA24, &zero, sizeof(zero));
+            std::memcpy(expected.data() + 16 + 0xA28, &zero, sizeof(zero));
+            auto *diplo = reinterpret_cast<DiploWin *>(storage.data() + 16);
+            if (use_adapter) {
+                diplo_win_unk3_redirect(diplo, nullptr, index);
+            } else {
+                diplo->UNK3(index);
+            }
+            expect_storage_bytes(storage.data(), expected.data(), storage.size());
+        }
+    }
+}
+
 void test_player_lock() {
     func_square_lock_lock *const saved_lock = LockSquareLock;
     func_square_lock_unlock *const saved_unlock = LockSquareUnlock;
@@ -28367,6 +28427,7 @@ int main() {
     test_check_box_state_word();
     test_setup_win_scaling_and_datalink_combine();
     test_player_lock();
+    test_popup_button_width_and_diplo_clear();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

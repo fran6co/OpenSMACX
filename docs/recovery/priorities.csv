@@ -58,7 +58,6 @@ P3,321,0x00404B10,?calculate_dimensions@Popup@@QAEHXZ,991,0,3,unrecovered,,,2,ex
 P3,321,0x00404EF0,?on_post_window_init@Popup@@QAEXXZ,138,0,3,unrecovered,,,2,exact,exact,void (__thiscall ?on_post_window_init@Popup@@QAEXXZ)(Popup* this)
 P3,121,0x00404F90,?on_nc_hittest@Popup@@QAEHHH@Z,20,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_nc_hittest@Popup@@QAEHHH@Z)(Popup* this, int, int)"
 P3,420,0x00404FB0,?alloc@Popup@@QAAHXZ,137,0,4,unrecovered,,,2,exact,entry_range,
-P3,11,0x00405020,?on_adjust_button_width@Popup@@QAEXXZ,42,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?on_adjust_button_width@Popup@@QAEXXZ)(Popup* this)
 P3,21,0x00405050,?on_adjust_button_placement@Popup@@QAEXPAH00@Z,67,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_adjust_button_placement@Popup@@QAEXPAH00@Z)(Popup* this, int*, int*, int*)"
 P3,321,0x004050A0,?on_link_clicked@Popup@@QAEHHPAD@Z,145,0,3,unrecovered,,,2,exact,exact,"int (__thiscall ?on_link_clicked@Popup@@QAEHHPAD@Z)(Popup* this, int, int8*)"
 P3,5820,0x00405140,?POP2@@YAHPBDPBDH@Z,1285,4,18,unrecovered,,,2,exact,entry_range,
@@ -389,7 +388,6 @@ P3,1020,0x00441250,?clear_all_offers@@YAXXZ,70,1,0,unrecovered,,,2,exact,exact,
 P3,120,0x004412A0,?string_callback@DiploWin@@QAAXHH@Z,48,0,1,unrecovered,,,2,exact,exact,
 P3,211,0x004412D0,?UNK1@DiploWin@@QAEXXZ,29,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?UNK1@DiploWin@@QAEXXZ)(DiploWin* this)
 P3,1221,0x004412F0,?new_chat@DiploWin@@QAEXPADH@Z,183,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?new_chat@DiploWin@@QAEXPADH@Z)(DiploWin* this, int8*, int)"
-P3,11,0x004413C0,?UNK3@DiploWin@@QAEXH@Z,34,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK3@DiploWin@@QAEXH@Z)(DiploWin* this, int)"
 P3,3121,0x004413F0,?kill_offer@DiploWin@@QAEXHH@Z,156,3,1,unrecovered,,,2,exact,exact,"void (__thiscall ?kill_offer@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)"
 P3,3221,0x00441490,?add_offer@DiploWin@@QAEXHHH@Z,297,3,2,unrecovered,,,2,exact,exact,"void (__thiscall ?add_offer@DiploWin@@QAEXHHH@Z)(DiploWin* this, int, int, int)"
 P3,4121,0x004415C0,?on_button_clicked@DiploWin@@QAEXH@Z,4512,0,41,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_button_clicked@DiploWin@@QAEXH@Z)(DiploWin* this, int)"

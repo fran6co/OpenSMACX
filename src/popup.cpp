@@ -520,3 +520,36 @@ void __fastcall popup_on_redraw_nc_redirect(
         Popup *self, void *, int a1, int a2) {
     self->on_redraw_nc(a1, a2);
 }
+
+/*
+Purpose: Reset the button width to 20 unless the field at 0x30AC scales to
+         exactly 1000.
+
+             mov edx,[ecx+0x30AC] / mov eax,0x68DB8BAD / imul edx
+             sar edx,0xC / mov eax,edx / shr eax,0x1F / add edx,eax
+             cmp edx,0x3E8 / je done
+             mov dword [ecx+0x30D0],0x14
+
+         The magic multiply is a signed divide by 10000 - the same idiom
+         Datalink::UNK1 encodes in the other direction - checked against C++
+         truncating division over 200,000 random dividends and the boundaries.
+         0x3E8 is 1000 and 0x14 is 20.
+
+         Popup models fields only as far as its Scroll member, so both offsets
+         are reached through documented raw offsets, as BasePop::UNK3 does.
+Original Offset: 00405020
+Return Value: n/a
+Status: Complete
+*/
+void Popup::on_adjust_button_width() {
+    auto *const self = reinterpret_cast<uint8_t *>(this);
+    const int32_t scaled =
+        *reinterpret_cast<const int32_t *>(self + 0x30AC) / 10000;
+    if (scaled != 1000) {
+        *reinterpret_cast<int32_t *>(self + 0x30D0) = 20;
+    }
+}
+
+void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
+    self->on_adjust_button_width();
+}

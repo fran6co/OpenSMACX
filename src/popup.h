@@ -33,6 +33,7 @@ class DLLEXPORT Popup : BasePop {
   Popup() { ; }
   ~Popup() { ; }
   void close();
+  void on_adjust_button_width();
   void start(char *a1, const char *a2, int a3, char *a4, int a5);
   void start(const char *label);
   void start(const char *label, int value);
@@ -43,6 +44,7 @@ class DLLEXPORT Popup : BasePop {
   Scroll scroll_;
 };
 
+void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *);
 void __fastcall popup_on_redraw_nc_redirect(
     Popup *self, void *, int a1, int a2);
 
