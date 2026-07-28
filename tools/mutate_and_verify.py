@@ -242,6 +242,38 @@ def changes_subscript_value(line: str, start: int, end: int,
     return original_index != mutated_index
 
 
+DECLARATION = re.compile(
+    r"^\s*(?:const\s+|static\s+|volatile\s+|constexpr\s+|auto\s+)*"
+    r"[A-Za-z_][\w:<>,\s\*&]*?\b([A-Za-z_]\w*)\s*(?:=|\{|\()")
+
+
+def declares_name_used_later(lines: list[str], index: int, end: int) -> bool:
+    """True when this line declares a local that a later line still reads.
+
+    Dropping or reordering such a line cannot compile - the use precedes the
+    declaration - so the mutant is guaranteed to be reported as `no compile`
+    after a full rebuild and a Wine run that proved nothing. The house
+    transcription style leans on `const` locals, which makes that the common
+    case rather than the rare one: on the TutWin do_* batch 72 of 128 mutants
+    (56%) never compiled, and across all of src/ this predicate flags 2,080 of
+    9,782 drop/swap mutants (21%).
+
+    The wasted builds are the smaller cost. The real one is that the summary
+    prints `killed 56/56  survived 0`, which reads as full coverage when in
+    fact every statement-order mutant failed to compile and the emission order
+    was never tested at all. That exact misreading had to be corrected once
+    already, on GraphicWin::init in commit 2aa199f. Suppressing these here, and
+    reporting per operator below, makes the untested case show up as a zero
+    instead of hiding inside the no-compile total.
+    """
+    match = DECLARATION.match(lines[index])
+    if not match:
+        return False
+    name = match.group(1)
+    pattern = re.compile(rf"\b{re.escape(name)}\b")
+    return any(pattern.search(lines[later]) for later in range(index + 1, end))
+
+
 def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
     """Derive mechanical perturbations of one function body."""
     mutants: list[Mutant] = []
@@ -259,8 +291,13 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
             # a build spent proving a comment doesn't execute.
             continue
 
+        # A line declaring something later lines use cannot be dropped or
+        # reordered and still compile, so neither operator below can learn
+        # anything from it. See declares_name_used_later.
+        structural = declares_name_used_later(lines, index, function.end)
+
         # 1. Drop a store. Catches assertions that never read the field.
-        if is_simple_statement(line):
+        if is_simple_statement(line) and not structural:
             emit(index + 1, "drop-statement", f"drop `{stripped}`",
                  lines[:index] + lines[index + 1:])
 
@@ -299,6 +336,8 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
         # 4. Swap adjacent stores. Catches unverified write ordering, but only
         #    where the two statements actually interact (see statements_interact).
         if (index + 1 < function.end and is_simple_statement(line)
+                and not structural
+                and not declares_name_used_later(lines, index + 1, function.end)
                 and is_simple_statement(lines[index + 1])
                 and statements_interact(line, lines[index + 1])):
             emit(index + 1, "swap-adjacent", f"swap `{stripped}` with next",
@@ -483,6 +522,24 @@ def main() -> int:
     print(f"killed      {len(result.killed)}/{valid}")
     print(f"survived    {len(result.survived)}")
     print(f"no compile  {len(result.uncompilable)} (proves nothing)")
+    # Per operator, because the totals hide the case that matters most: an
+    # operator that generated no compilable mutant at all tested NOTHING, and
+    # summed into `killed n/n` that is indistinguishable from having tested
+    # everything. GraphicWin::init read as fully covered on exactly that
+    # confusion until the swap operator was re-run alone (commit 2aa199f).
+    operators = sorted({mutant.operator for mutant in mutants})
+    if operators:
+        print("-" * 72)
+        for operator in operators:
+            counted = lambda bucket: sum(
+                1 for mutant in bucket if mutant.operator == operator)
+            killed, survived = counted(result.killed), counted(result.survived)
+            note = ""
+            if killed + survived == 0:
+                note = ("   <- generated no compilable mutant: this property "
+                        "is UNTESTED,\n" + " " * 8 + "not tested-and-equivalent")
+            print(f"  {operator:<16} killed {killed:<5} survived {survived:<5} "
+                  f"no compile {counted(result.uncompilable)}{note}")
     if result.hung:
         print(f"  of the killed, {len(result.hung)} hung rather than failed an assertion")
     if result.survived:
