@@ -62,6 +62,50 @@ class AcceptedShapeTests(unittest.TestCase):
         self.assertEqual(1, detail["value"])
 
 
+class StoreSequenceTests(unittest.TestCase):
+    """A run of constant stores to `this`, tracked symbolically."""
+
+    def test_zeroing_two_fields_and_returning_this(self):
+        # mov eax,ecx / xor ecx,ecx / mov [eax],ecx / mov [eax+4],ecx / ret
+        kind, detail = generator.classify(decode("89c831c98908894804c3"))
+        self.assertEqual("stores", kind)
+        self.assertEqual([(0, 0), (4, 0)], detail["stores"])
+        self.assertTrue(detail["returns_this"], "EAX still aliases this")
+
+    def test_a_single_dword_store_is_a_one_element_sequence(self):
+        # mov dword ptr [ecx+0x200],0 / ret. This reached the single-`mov`
+        # branch first, which used to `return None` before the sequence check
+        # ever saw it.
+        kind, detail = generator.classify(decode("c78100020000 00000000 c3".replace(" ", "")))
+        self.assertEqual("stores", kind)
+        self.assertEqual([(0x200, 0)], detail["stores"])
+        self.assertFalse(detail["returns_this"])
+
+    def test_a_constant_held_in_a_register_is_followed(self):
+        # mov edx,0x3f800000 / mov [ecx],edx / ret - the stored value is set up
+        # earlier, so it has to be tracked rather than read off the store.
+        kind, detail = generator.classify(decode("ba0000803f8911c3"))
+        self.assertEqual("stores", kind)
+        self.assertEqual([(0, 0x3F800000)], detail["stores"])
+
+    def test_storing_an_untracked_register_is_refused(self):
+        # mov [ecx],esi / ret - ESI holds something this tool cannot describe.
+        self.assertIsNone(generator.classify(decode("8931c3")))
+
+    def test_loading_a_register_from_memory_is_refused(self):
+        # mov eax,[ecx] / mov [ecx],ecx / ret. The load is refused where it is
+        # READ - a register may only be set from an immediate or a this-alias -
+        # which is also why no separate "EAX is undescribable" guard exists:
+        # it could never fire.
+        self.assertIsNone(generator.classify(decode("8b0189 09c3".replace(" ", ""))))
+
+    def test_a_body_that_never_touches_eax_makes_no_residue_claim(self):
+        kind, detail = generator.classify(decode("c70100000000c3"))
+        self.assertEqual("stores", kind)
+        self.assertFalse(detail["returns_this"])
+        self.assertIsNone(detail["eax"])
+
+
 class RefusalTests(unittest.TestCase):
     """What it declines, which is the part that keeps it honest."""
 

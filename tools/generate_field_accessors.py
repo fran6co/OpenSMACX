@@ -23,6 +23,9 @@ WHAT IS ACCEPTED, and nothing else:
     inc dword [ecx+N] / ret          increment a field
     mov eax,IMM / ret                return a constant
     mov byte [ecx+N],IMM / ret       store a byte
+    a SEQUENCE of stores of constants to [this+N], optionally preceded by
+    `mov eax,ecx` and register loads of constants, ending in `ret` - the shape
+    every one of these small constructors has
 
 Each is one expression whose meaning is fully determined by the instruction,
 which is the entire reason this can be generated rather than read. Anything
@@ -113,13 +116,15 @@ def classify(instructions) -> tuple[str, dict] | None:
                 and body[0].op_str.startswith("byte")):
             return "store_byte", {"offset": offset, "value": source.imm,
                                   "cleanup": cleanup}
-        return None
+        # Deliberately NOT `return None` here: a single dword store to
+        # [this+N] is a one-element store sequence, and returning early meant
+        # the sequence check below never saw it. `mov dword [ecx+0x200],0 /
+        # ret` was refused for that reason alone.
 
     if len(body) == 1 and body[0].mnemonic == "inc":
         offset = this_offset(body[0].operands[0])
         if offset is not None:
             return "increment", {"offset": offset, "cleanup": cleanup}
-        return None
 
     if (len(body) == 2 and body[0].mnemonic == "mov"
             and body[1].mnemonic == "and"):
@@ -131,7 +136,88 @@ def classify(instructions) -> tuple[str, dict] | None:
                 and mask.type == X86_OP_IMM):
             return "masked", {"offset": offset, "mask": mask.imm,
                               "cleanup": cleanup}
+
+    sequence = store_sequence(instructions)
+    if sequence is not None:
+        sequence["cleanup"] = cleanup
+        sequence["count"] = len(sequence["stores"])
+        return "stores", sequence
     return None
+
+
+def store_sequence(instructions) -> dict | None:
+    """A run of stores of CONSTANTS to `[this+N]`, and nothing else.
+
+    Tracked symbolically rather than pattern matched, because the register a
+    store reads is set up earlier and by no fixed instruction: these bodies
+    open `mov eax,ecx` to alias `this` (which is also the EAX = this residue),
+    then `xor ecx,ecx` or `mov edx,IMM` to hold the value, then store it to a
+    series of offsets. Only three facts are ever needed - which registers alias
+    `this`, which hold a known constant, and what EAX ends up as - so anything
+    that would make one of them unknown is refused rather than guessed.
+    """
+    aliases = {X86_REG_ECX}          # `this` on entry
+    constants: dict[int, int] = {}
+    stores: list[tuple[int, int]] = []
+
+    for one in instructions[:-1]:
+        operands = one.operands
+        if one.mnemonic == "xor" and len(operands) == 2:
+            if (operands[0].type != X86_OP_REG or operands[1].type != X86_OP_REG
+                    or operands[0].reg != operands[1].reg):
+                return None
+            constants[operands[0].reg] = 0
+            aliases.discard(operands[0].reg)
+            continue
+        if one.mnemonic != "mov" or len(operands) != 2:
+            return None
+        destination, source = operands
+        if destination.type == X86_OP_REG:
+            if source.type == X86_OP_IMM:
+                constants[destination.reg] = source.imm
+                aliases.discard(destination.reg)
+            elif source.type == X86_OP_REG and source.reg in aliases:
+                aliases.add(destination.reg)
+                constants.pop(destination.reg, None)
+            else:
+                return None
+            continue
+        if destination.type != X86_OP_MEM or destination.mem.index != 0:
+            return None
+        if destination.mem.base not in aliases:
+            return None
+        width = 4 if one.op_str.startswith("dword") else None
+        if width is None:
+            return None                      # only dword stores, for now
+        if source.type == X86_OP_IMM:
+            stores.append((destination.mem.disp, source.imm))
+        elif source.type == X86_OP_REG and source.reg in constants:
+            stores.append((destination.mem.disp, constants[source.reg]))
+        else:
+            return None                      # storing something unknown
+    if not stores:
+        return None
+    # No separate "EAX holds something undescribable" guard, and that is on
+    # purpose. Every write to EAX above is already either an immediate, a
+    # this-alias, or `xor eax,eax`; anything else returned None at the point it
+    # was read. So such a guard could never fire, and disabling it failed no
+    # test - the same dead-mechanism the stack-read check turned out to be.
+    # One mechanism, one test.
+    returns_this = X86_REG_EAX in aliases
+    return {"stores": stores, "returns_this": returns_this,
+            "eax": None if returns_this else constants.get(X86_REG_EAX)}
+
+
+def render_stores(detail: dict) -> str:
+    lines = ["    uint8_t *const bytes = static_cast<uint8_t *>(self);"]
+    for offset, value in detail["stores"]:
+        lines.append(f"    *reinterpret_cast<uint32_t *>(bytes + {offset:#x})"
+                     f" = {value:#x}U;")
+    if detail["returns_this"]:
+        lines.append("    return self;")
+    elif detail["eax"]:
+        lines.append(f"    return {detail['eax']:#x}U;")
+    return "\n".join(lines)
 
 
 BODIES = {
@@ -145,6 +231,7 @@ BODIES = {
                             f"        static_cast<uint8_t *>(self) + {d['offset']:#x});"),
     "store_byte": lambda d: (f"    *(static_cast<uint8_t *>(self) + {d['offset']:#x})"
                              f" = {d['value']:#x};"),
+    "stores": render_stores,
 }
 RETURNS = {"read": "uint32_t", "masked": "uint32_t", "constant": "uint32_t",
            "increment": "void", "store_byte": "void"}
@@ -152,13 +239,14 @@ RETURNS = {"read": "uint32_t", "masked": "uint32_t", "constant": "uint32_t",
 # unused one - and this tree builds with -Wall -Wextra, where that is an error
 # rather than a note. The name is emitted only where the body uses it.
 USES_SELF = {"read": True, "masked": True, "constant": False,
-             "increment": True, "store_byte": True}
+             "increment": True, "store_byte": True, "stores": True}
 PURPOSE = {
     "read": "Read the dword field at {offset:#x}.",
     "masked": "Read the dword field at {offset:#x}, masked to {mask:#x}.",
     "constant": "Return the constant {value:#x}.",
     "increment": "Increment the dword field at {offset:#x}.",
     "store_byte": "Store {value:#x} in the byte at {offset:#x}.",
+    "stores": "Set {count} field(s) to constants.",
 }
 
 
@@ -166,7 +254,10 @@ def emit(accepted: list[tuple]) -> tuple[str, str, str]:
     declarations, definitions, wires = [], [], []
     for address, kind, detail, text in accepted:
         name = f"field_accessor_{address:08x}_redirect"
-        result = RETURNS[kind]
+        result = RETURNS.get(kind)
+        if result is None:      # a store sequence: void, or the residue
+            result = "void *" if detail["returns_this"] else (
+                "uint32_t" if detail.get("eax") else "void")
         declarations.append(
             f"{result} __fastcall {name}(void *, void *);")
         parameter = "void *self" if USES_SELF[kind] else "void *"
@@ -229,7 +320,7 @@ def main() -> int:
         if wanted is not None and address not in wanted:
             continue
         size = int(row["size"] or 0)
-        if not size or size > 32:
+        if not size or size > 64:
             continue
         data = read_bytes(pe, address, size)
         instructions = list(decoder.disasm(data, address))

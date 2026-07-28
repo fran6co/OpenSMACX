@@ -330,3 +330,327 @@ uint32_t __fastcall field_accessor_006363f0_redirect(void *self, void *) {
         static_cast<const uint8_t *>(self) + 0x4ac)
         & 0x8000U;
 }
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], 0xffffffff / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 004C8090
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_004c8090_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0xffffffffU;
+    return self;
+}
+
+/*
+Purpose: Set 2 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 004C8100
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_004c8100_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    return self;
+}
+
+/*
+Purpose: Set 1 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov dword ptr [ecx + 0x200], 0 / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 00590D60
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_00590d60_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x200) = 0x0U;
+}
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], ecx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], ecx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 005E35D0
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_005e35d0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x0U;
+    return self;
+}
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             xor eax, eax / mov dword ptr [ecx], eax / mov dword ptr [ecx + 4], eax / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 0xc], eax / mov dword ptr [ecx + 0x10], eax / mov dword ptr [ecx + 0x14], eax / mov dword ptr [ecx + 0x18], eax / mov dword ptr [ecx + 0x1c], eax / mov dword ptr [ecx + 0x20], eax / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 005E35F0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_005e35f0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x0U;
+}
+
+/*
+Purpose: Set 3 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 00616B20
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_00616b20_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    return self;
+}
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / mov edx, 0x3f800000 / xor ecx, ecx / mov dword ptr [eax], edx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], edx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], edx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 006346C0
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_006346c0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x3f800000U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x3f800000U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x3f800000U;
+    return self;
+}
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov edx, 0x3f800000 / xor eax, eax / mov dword ptr [ecx], edx / mov dword ptr [ecx + 4], eax / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 0xc], eax / mov dword ptr [ecx + 0x10], edx / mov dword ptr [ecx + 0x14], eax / mov dword ptr [ecx + 0x18], eax / mov dword ptr [ecx + 0x1c], eax / mov dword ptr [ecx + 0x20], edx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 006346F0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_006346f0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x3f800000U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x3f800000U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x3f800000U;
+}
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / mov edx, 0x3f800000 / xor ecx, ecx / mov dword ptr [eax], edx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], edx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], edx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 00634B70
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_00634b70_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x3f800000U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x3f800000U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x3f800000U;
+    return self;
+}
+
+/*
+Purpose: Set 4 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 4], ecx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 00634FB0
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_00634fb0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    return self;
+}
+
+/*
+Purpose: Set 7 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 006354D0
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_006354d0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
+    return self;
+}
+
+/*
+Purpose: Set 4 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], 0xffffffff / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter cleans 0 argument bytes, taken from the
+         body's own `ret`, which is the only statement of its arity that
+         exists.
+Original Offset: 0063E520
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_0063e520_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0xffffffffU;
+    return self;
+}
