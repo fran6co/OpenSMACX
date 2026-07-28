@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2427,
+      "source_complete": 2429,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2933
+      "unrecovered": 2931
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,8 +67,8 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 192711,
-          "functions": 2427,
+          "bytes": 192751,
+          "functions": 2429,
           "percent_of_lift_scope_bytes": 8.0
         },
         "source_in_progress": {
@@ -82,8 +82,8 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2016326,
-          "functions": 2933,
+          "bytes": 2016286,
+          "functions": 2931,
           "percent_of_lift_scope_bytes": 83.65
         }
       },
@@ -103,15 +103,15 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2217606,
+        "bytes": 2217566,
         "direction": "must go down",
-        "functions": 3246,
+        "functions": 3244,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
         "percent_of_lift_scope_bytes": 92.0
       },
       "recovered": {
-        "bytes": 192711,
-        "functions": 2427,
+        "bytes": 192751,
+        "functions": 2429,
         "percent_of_lift_scope_bytes": 8.0
       }
     },
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2373,
-    "matched_function_starts": 2373,
-    "unique_addresses": 2373,
+    "annotations": 2375,
+    "matched_function_starts": 2375,
+    "unique_addresses": 2375,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -9509,7 +9509,7 @@
         "function": "?update_cursor@Win@@QAAHPAUWin@@H@Z",
         "function_address": "0x005F1820",
         "kind": "function",
-        "location": "src/win.cpp:480",
+        "location": "src/win.cpp:514",
         "symbol": "WinUpdateCursorOriginal",
         "type": "func_win_update_cursor *"
       },
@@ -9518,7 +9518,7 @@
         "function": "?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z",
         "function_address": "0x005F7320",
         "kind": "function",
-        "location": "src/win.cpp:513",
+        "location": "src/win.cpp:547",
         "symbol": "WinUpdateScreenOriginal",
         "type": "func_win_update_screen *"
       },
@@ -9527,7 +9527,7 @@
         "function": "?flip@Win@@QAAXPAURECT@@@Z",
         "function_address": "0x005EFD20",
         "kind": "function",
-        "location": "src/win.cpp:515",
+        "location": "src/win.cpp:549",
         "symbol": "WinFlipOriginal",
         "type": "func_win_flip *"
       },

@@ -212,6 +212,40 @@ void Win::client_to_screen(int *x, int *y) {
 }
 
 /*
+Purpose: Read the vertical scroll bar's current position.
+Original Offset: 005EE050
+Return Value: The scroll's position, or 0 when the window has no vertical
+              scroll bar. The null check is the original's, not a guard added
+              here: it loads the pointer, tests it, and branches to `xor eax,
+              eax` rather than dereferencing.
+Status: Complete
+*/
+int Win::get_vert_pos() {
+    return scroll_vert_ ? scroll_vert_->position_ : 0;
+}
+
+int __fastcall win_get_vert_pos_redirect(Win *self, void *) {
+    return self->get_vert_pos();
+}
+
+/*
+Purpose: Read the horizontal scroll bar's current position.
+Original Offset: 005EE090
+Return Value: The scroll's position, or 0 when the window has no horizontal
+              scroll bar. Identical to get_vert_pos above but reading the
+              other pointer; the two differ only in which member they load,
+              which is exactly what the fixtures have to separate.
+Status: Complete
+*/
+int Win::get_horz_pos() {
+    return scroll_horz_ ? scroll_horz_->position_ : 0;
+}
+
+int __fastcall win_get_horz_pos_redirect(Win *self, void *) {
+    return self->get_horz_pos();
+}
+
+/*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
 Original Offset: 005EE0F0
 Status: Complete

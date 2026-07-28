@@ -2258,8 +2258,6 @@ P3,1021,0x005EDEB0,?minimize@Win@@QAEHXZ,72,1,0,unrecovered,,,2,exact,exact,int 
 P3,1,0x005EDF00,?show_maximize@Win@@QAEHXZ,72,0,0,unrecovered,,,0,missing,missing,int (__thiscall ?show_maximize@Win@@QAEHXZ)(Win* this)
 P2,6521,0x005EDF50,?set_caption@Win@@QAEXPAD@Z,133,6,5,unrecovered,,,2,exact,exact,"void (__thiscall ?set_caption@Win@@QAEXPAD@Z)(Win* this, int8*)"
 P3,11,0x005EDFF0,?UNK7@Win@@QAEXHHHH@Z,45,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?UNK7@Win@@QAEXHHHH@Z)(Win* this, int xLeft, int yTop, int, int)"
-P3,1,0x005EE050,?get_vert_pos@Win@@QAEHXZ,20,0,0,unrecovered,,,0,missing,missing,int (__thiscall ?get_vert_pos@Win@@QAEHXZ)(Win* this)
-P3,1,0x005EE090,?get_horz_pos@Win@@QAEHXZ,20,0,0,unrecovered,,,0,missing,missing,int (__thiscall ?get_horz_pos@Win@@QAEHXZ)(Win* this)
 P3,1221,0x005EE190,?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z,235,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z)(Win* this, int, int (__cdecl *)(), Win*)"
 P2,5021,0x005EE280,?release_modal@Win@@QAEXXZ,167,5,0,unrecovered,,,2,exact,exact,void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
 P3,3221,0x005EE330,?resize_event@Win@@QAEHHH@Z,292,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?resize_event@Win@@QAEHHH@Z)(Win* this, int, int)"

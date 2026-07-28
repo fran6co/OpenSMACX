@@ -2360,6 +2360,93 @@ void test_win_move() {
     }
 }
 
+void test_win_scroll_positions() {
+    // get_vert_pos / get_horz_pos are the same five instructions reading two
+    // adjacent pointers, so the ONLY thing a fixture has to establish is which
+    // one each reads. Seeding both scrolls with the same position would pass
+    // for an implementation that read the wrong member, so the two carry
+    // deliberately different values and every case checks the one it asked
+    // for.
+    //
+    // The null case is the original's own branch, not a guard invented here:
+    // the body tests the pointer and falls to `xor eax, eax` rather than
+    // dereferencing. It is exercised per side, because a version that null
+    // checked the wrong pointer would still return the right answer whenever
+    // both happened to be set.
+    const uint32_t values[] = {
+        0U, 1U, 0xFFFFFFFFU, 0x80000000U, 0x7FFFFFFFU, 0xA55AA55AU,
+    };
+    for (int vertical = 0; vertical < 2; ++vertical) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            for (int null_scroll = 0; null_scroll < 2; ++null_scroll) {
+                for (uint32_t bits : values) {
+                    alignas(Win) uint8_t win_storage[sizeof(Win) + 32];
+                    alignas(Scroll) uint8_t vertical_storage[sizeof(Scroll) + 32];
+                    alignas(Scroll) uint8_t horizontal_storage[sizeof(Scroll) + 32];
+                    uint8_t win_expected[sizeof(win_storage)];
+                    uint8_t vertical_expected[sizeof(vertical_storage)];
+                    uint8_t horizontal_expected[sizeof(horizontal_storage)];
+                    seed_storage(win_storage, win_expected, sizeof(win_storage));
+                    seed_storage(vertical_storage, vertical_expected,
+                                 sizeof(vertical_storage));
+                    seed_storage(horizontal_storage, horizontal_expected,
+                                 sizeof(horizontal_storage));
+                    auto *vertical_scroll = reinterpret_cast<Scroll *>(
+                        vertical_storage + 16);
+                    auto *horizontal_scroll = reinterpret_cast<Scroll *>(
+                        horizontal_storage + 16);
+
+                    // The side under test may be null; the OTHER side is
+                    // always populated, so a body reading the wrong pointer
+                    // returns a value instead of zero and is caught.
+                    Scroll *const vertical_field =
+                        (vertical && null_scroll) ? nullptr : vertical_scroll;
+                    Scroll *const horizontal_field =
+                        (!vertical && null_scroll) ? nullptr : horizontal_scroll;
+                    write_at(win_storage, 16 + 0x43C, vertical_field);
+                    write_at(win_storage, 16 + 0x440, horizontal_field);
+
+                    // Distinct positions, so reading the wrong scroll is a
+                    // wrong ANSWER rather than an accidentally equal one.
+                    const uint32_t other = bits ^ 0x5A5A5A5AU;
+                    write_at(vertical_storage, 16 + 0xA2C,
+                             vertical ? bits : other);
+                    write_at(horizontal_storage, 16 + 0xA2C,
+                             vertical ? other : bits);
+
+                    std::memcpy(win_expected, win_storage, sizeof(win_storage));
+                    std::memcpy(vertical_expected, vertical_storage,
+                                sizeof(vertical_storage));
+                    std::memcpy(horizontal_expected, horizontal_storage,
+                                sizeof(horizontal_storage));
+
+                    auto *window = reinterpret_cast<Win *>(win_storage + 16);
+                    const int wanted = null_scroll ? 0 : int_from_bits(bits);
+                    int got;
+                    if (vertical) {
+                        got = use_adapter
+                            ? win_get_vert_pos_redirect(window, nullptr)
+                            : window->get_vert_pos();
+                    } else {
+                        got = use_adapter
+                            ? win_get_horz_pos_redirect(window, nullptr)
+                            : window->get_horz_pos();
+                    }
+                    expect(got == wanted);
+
+                    // A getter writes nothing - not the window, not either
+                    // scroll, not the canaries around any of them.
+                    expect_storage_bytes(win_storage, win_expected, sizeof(win_storage));
+                    expect_storage_bytes(vertical_storage, vertical_expected,
+                                         sizeof(vertical_storage));
+                    expect_storage_bytes(horizontal_storage, horizontal_expected,
+                                         sizeof(horizontal_storage));
+                }
+            }
+        }
+    }
+}
+
 void test_win_paging() {
     const uint32_t values[] = {
         0U, 1U, 0xFFFFFFFFU, 0x80000000U, 0x7FFFFFFFU, 0xA55AA55AU,
@@ -27737,6 +27824,7 @@ int main() {
     test_find_font();
     test_buffer_text_line_height();
     test_win_paging();
+    test_win_scroll_positions();
     test_scroll_close();
     test_scroll_destructor();
     test_list_box_teardown();

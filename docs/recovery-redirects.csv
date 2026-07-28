@@ -1605,7 +1605,9 @@ address,kind
 0x005EDFE0,jump
 0x005EE020,jump
 0x005EE030,jump
+0x005EE050,jump
 0x005EE070,jump
+0x005EE090,jump
 0x005EE0B0,jump
 0x005EE0D0,jump
 0x005EE0F0,jump
