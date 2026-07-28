@@ -2408,6 +2408,43 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_base_pop_read_check() {
+    // The word CheckBox::UNK1/UNK2/set_state_pos edit, read whole, through the
+    // CheckBox embedded at 0x2228. The Dialog displacement comes from THAT
+    // subobject's own vbtable, so the fixture drives both tables the CheckBox
+    // family is tested under - a body that hardcoded 0xA34 is right under the
+    // first and wrong under the second.
+    const int32_t own[3] = {0, 0x1C, 0xA34};
+    const int32_t embedded[3] = {0, 0x40, 0xA70};
+    const int32_t *const tables[2] = {own, embedded};
+
+    for (int table_index = 0; table_index < 2; ++table_index) {
+        const int32_t *const table = tables[table_index];
+        const size_t word = 0x2228 + static_cast<size_t>(table[2]) + 0xEC;
+        for (uint32_t seed : {0x00000000U, 0xFFFFFFFFU, 0xA55AA55AU, 0x00004000U}) {
+            for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                std::vector<uint8_t> storage(word + 0x100 + 32);
+                std::vector<uint8_t> expected(storage.size());
+                for (size_t i = 0; i < storage.size(); ++i) {
+                    storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+                }
+                const int32_t *pointer = table;
+                std::memcpy(storage.data() + 16 + 0x2228, &pointer, sizeof(pointer));
+                std::memcpy(storage.data() + 16 + word, &seed, sizeof(seed));
+                std::memcpy(expected.data(), storage.data(), storage.size());
+
+                auto *pop = reinterpret_cast<BasePop *>(storage.data() + 16);
+                const uint32_t got = use_adapter
+                    ? base_pop_read_check_redirect(pop, nullptr)
+                    : pop->read_check();
+                expect(got == seed);
+                // A reader writes nothing.
+                expect_storage_bytes(storage.data(), expected.data(), storage.size());
+            }
+        }
+    }
+}
+
 void test_sprite_box_id_to_pos() {
     // A list walk over four raw fields. Four behaviours have to be separated,
     // and three of them are edge cases the middle of the walk never reaches:
@@ -28857,6 +28894,7 @@ int main() {
     test_base_pop_item();
     test_map_win_is_console();
     test_sprite_box_id_to_pos();
+    test_base_pop_read_check();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();

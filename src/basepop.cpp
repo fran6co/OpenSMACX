@@ -557,3 +557,38 @@ int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text,
                                       int index) {
     return self->item(text, index);
 }
+
+/*
+Purpose: Read the state word of the CheckBox embedded at 0x2228.
+
+             mov eax,[ecx+0x2228] / mov edx,[eax+8] / mov eax,[edx+ecx+0x2314]
+
+         The compiler folded the subobject offset into the displacement:
+         0x2228 + 0xEC is 0x2314, so `this + vbtable[2] + 0x2314` is the
+         subobject at 0x2228 plus `vbtable[2] + 0xEC` - exactly the address
+         CheckBox::UNK1, UNK2 and set_state_pos compute, and the vbtable it
+         reads is that subobject's own.
+
+         So this returns the whole word those three edit bit by bit, and the
+         same rule applies: the Dialog displacement comes from the object's
+         vbtable at run time, never from where a CheckBox sits when it is
+         most-derived.
+
+         Declared uint32_t although the mangled name says void, as
+         SpriteBox::id_to_pos and Dialogs::destroy are: the body ends by
+         loading the word into EAX and a void body cannot promise that. The
+         return type does not change the thiscall cleanup.
+Original Offset: 00601BD0
+Return Value: the embedded CheckBox's state word
+Status: Complete
+*/
+uint32_t BasePop::read_check() {
+    auto *const check = reinterpret_cast<uint8_t *>(this) + 0x2228;
+    const int32_t *const vbtable =
+        *reinterpret_cast<const int32_t *const *>(check);
+    return *reinterpret_cast<const uint32_t *>(check + vbtable[2] + 0xEC);
+}
+
+uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *) {
+    return self->read_check();
+}

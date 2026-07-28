@@ -2472,7 +2472,6 @@ P2,5121,0x00601980,?string@BasePop@@QAEHPAD@Z,110,5,1,unrecovered,,,2,exact,exac
 P3,4121,0x006019F0,?button@BasePop@@QAEHPAD@Z,75,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?button@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)"
 P3,411,0x00601A40,?UNK1@BasePop@@QAEHPAD@Z,113,0,4,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)"
 P3,1,0x00601AC0,?set_height@BasePop@@QAEXH@Z,87,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?set_height@BasePop@@QAEXH@Z)(BasePop* this, int)"
-P3,1021,0x00601BD0,?read_check@BasePop@@QAEXXZ,17,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?read_check@BasePop@@QAEXXZ)(BasePop* this)
 P2,15421,0x00601BF0,?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z,2569,13,24,unrecovered,,,2,exact,exact,"int (__thiscall ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z)(BasePop* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)"
 P0,1089421,0x00602600,?exec@BasePop@@QAEHHP6AHXZ@Z,4618,87,24,original_dependency,ui_dependency,recover_base_pop_exec,2,exact,entry_range,"int (__thiscall ?exec@BasePop@@QAEHHP6AHXZ@Z)(BasePop* this, int, int (__cdecl *)())"
 P3,2621,0x00603800,?calculate_dimensions@BasePop@@QAEHXZ,2770,1,16,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@BasePop@@QAEHXZ)(BasePop* this)
