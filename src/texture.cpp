@@ -110,3 +110,26 @@ void __fastcall texture_dtor_redirect(Texture *self, void *) {
 void __fastcall texture_store_dtor_redirect(TextureStore *self, void *) {
     self->~TextureStore();
 }
+
+/*
+Purpose: Set the store's two fields to 3 and 0.
+
+             mov eax,ecx / mov [eax],3 / mov [eax+4],0 / ret
+
+         `mov eax,ecx` first is the legacy EAX = this residue, carried by the
+         redirect. The 3 is a constant the original writes and is reproduced as
+         one; nothing here says what it means.
+Original Offset: 006252A0
+Return Value: this
+Status: Complete
+*/
+void TextureStore::construct() {
+    field_0_ = 3;
+    field_4_ = 0;
+}
+
+TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self,
+                                                          void *) {
+    self->construct();
+    return self;
+}

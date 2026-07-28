@@ -5108,7 +5108,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00624D80,0x00624EA9,297,.text,?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z,,0x00624D80-0x00624EA9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,9
 0x00624EB0,0x00625075,453,.text,sub_624eb0,,0x00624EB0-0x00625075,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x00625080,0x00625294,532,.text,sub_625080,,0x00625080-0x00625294,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4
-0x006252A0,0x006252B0,16,.text,??0TextureStore@@QAE@XZ,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this),0x006252A0-0x006252B0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
+0x006252A0,0x006252B0,16,.text,??0TextureStore@@QAE@XZ,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this),0x006252A0-0x006252B0,game,hidden;sp_ready;purged_ok,src/texture.cpp:122,Complete,,,source_complete,,,,0,1
 0x006252B0,0x006252BE,14,.text,??1TextureStore@@QAE@XZ,void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this),0x006252B0-0x006252BE,game,hidden;sp_ready;purged_ok,src/texture.cpp:82,Complete,,,source_complete,,,,0,6
 0x006252C0,0x006252DE,30,.text,sub_6252c0,,0x006252C0-0x006252DE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x006252E0,0x00625306,38,.text,??0ImageButton@@QAE@XZ,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this),0x006252E0-0x00625306,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0

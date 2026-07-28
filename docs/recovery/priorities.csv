@@ -2791,7 +2791,6 @@ P3,100,0x00624D40,sub_624d40,50,0,1,unrecovered,,,0,missing,missing,
 P2,9120,0x00624D80,?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z,297,9,1,unrecovered,,,2,exact,exact,
 P3,1120,0x00624EB0,sub_624eb0,453,1,1,unrecovered,,,2,exact,exact,
 P3,4120,0x00625080,sub_625080,532,4,1,unrecovered,,,2,exact,exact,
-P3,1021,0x006252A0,??0TextureStore@@QAE@XZ,16,1,0,unrecovered,,,2,exact,exact,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
 P3,0,0x006252C0,sub_6252c0,30,0,0,unrecovered,,,0,missing,missing,
 P3,121,0x006252E0,??0ImageButton@@QAE@XZ,38,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
 P0,1001021,0x00625310,??1ImageButton@@QAE@XZ,21,1,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)

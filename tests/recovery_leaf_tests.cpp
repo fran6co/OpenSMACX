@@ -2408,6 +2408,28 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_texture_store_construct() {
+    // Two fields, 3 and 0, and the object returned. The 3 is the point: a
+    // constructor that zeroed both - the shape every other one here has -
+    // would pass a fixture that only checked field_4_.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(TextureStore) uint8_t storage[sizeof(TextureStore) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        std::memcpy(expected, storage, sizeof(storage));
+        const uint32_t three = 3, zero = 0;
+        std::memcpy(expected + 16 + 0, &three, sizeof(three));
+        std::memcpy(expected + 16 + 4, &zero, sizeof(zero));
+        auto *store = reinterpret_cast<TextureStore *>(storage + 16);
+        if (use_adapter) {
+            expect(texture_store_construct_redirect(store, nullptr) == store);
+        } else {
+            store->construct();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+}
+
 void test_cursor_construct() {
     // Four fields cleared and the object returned. The fixture checks the
     // exact bytes - all four zero, every other byte and both canaries
@@ -29035,6 +29057,7 @@ int main() {
     test_net_win_unk5();
     test_g_ambience_basewin_show();
     test_cursor_construct();
+    test_texture_store_construct();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();
