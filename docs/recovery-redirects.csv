@@ -214,6 +214,7 @@ address,kind
 0x00428F90,jump
 0x00428FB0,jump
 0x0042A020,jump
+0x0042A040,jump
 0x0042BD20,jump
 0x0042BEA0,jump
 0x0042BF00,jump
