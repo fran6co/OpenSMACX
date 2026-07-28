@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "basepop.h"
+#include "dialogs.h"
 #include <cstring>
 
 /*
@@ -527,4 +528,32 @@ void BasePop::UNK4(int a1) {
 
 void __fastcall base_pop_unk4_redirect(BasePop *self, void *, int a1) {
     self->UNK4(a1);
+}
+
+/*
+Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
+
+             mov eax,[ebp+0xC] / mov edx,[ebp+8] / push eax / push edx
+             add ecx,0x21D0 / call Dialogs::item / ret 8
+
+         A plain delegation: `add ecx, 0x21D0` selects the subobject and the
+         two arguments are forwarded unchanged. BasePop models no field there,
+         so the offset is documented and raw, as its neighbours here already
+         are.
+
+         Dialogs::item takes the Dialog's address from the EMBEDDING object's
+         own vbtable rather than from where a Dialogs sits when it is
+         most-derived, which is why this can hand it a subobject at all.
+Original Offset: 00558FE0
+Return Value: whatever Dialogs::item returns
+Status: Complete
+*/
+int BasePop::item(char *text, int index) {
+    return reinterpret_cast<Dialogs *>(
+        reinterpret_cast<uint8_t *>(this) + 0x21D0)->item(text, index);
+}
+
+int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text,
+                                      int index) {
+    return self->item(text, index);
 }
