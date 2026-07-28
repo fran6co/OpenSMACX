@@ -60,6 +60,29 @@ int __fastcall alpha_movie_unk4_redirect(AlphaMovie *self, void *, int a1, int a
 }
 
 /*
+Purpose: Unknown; the legacy implementation returns its argument unchanged.
+         Unlike the rest of this family it is not a constant return - it builds
+         a frame, loads the parameter and returns it:
+
+             push ebp / mov ebp, esp / mov eax, [ebp+8] / pop ebp / ret 4
+
+         so the returned value is the caller's own argument, at full 32-bit
+         width and with no truncation or re-extension. It touches no field,
+         which is why it can be replaced ahead of the class layout like its
+         neighbours.
+Original Offset: 00404230
+Return Value: the argument, unchanged
+Status: Complete
+*/
+int AlphaMovie::UNK3(int a1) {
+    return a1;
+}
+
+int __fastcall alpha_movie_unk3_redirect(AlphaMovie *self, void *, int a1) {
+    return self->UNK3(a1);
+}
+
+/*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 Original Offset: 00404250
 Return Value: 0, always

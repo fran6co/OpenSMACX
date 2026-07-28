@@ -39,6 +39,7 @@ class DLLEXPORT AlphaMovie : GraphicWin {
   void UNK7();
   int UNK2(int a1, int a2, int a3);
   int UNK4(int a1, int a2, int a3, int a4);
+  int UNK3(int a1);
   int UNK5(int a1);
   void UNK6(int a1, int a2);
   void UNK6(int a1);
@@ -48,6 +49,7 @@ class DLLEXPORT AlphaMovie : GraphicWin {
 void __fastcall alpha_movie_unk7_redirect(AlphaMovie *self, void *);
 int __fastcall alpha_movie_unk2_redirect(AlphaMovie *self, void *, int a1, int a2, int a3);
 int __fastcall alpha_movie_unk4_redirect(AlphaMovie *self, void *, int a1, int a2, int a3, int a4);
+int __fastcall alpha_movie_unk3_redirect(AlphaMovie *self, void *, int a1);
 int __fastcall alpha_movie_unk5_redirect(AlphaMovie *self, void *, int a1);
 void __fastcall alpha_movie_unk6_00404260_redirect(AlphaMovie *self, void *, int a1, int a2);
 void __fastcall alpha_movie_unk6_00404270_redirect(AlphaMovie *self, void *, int a1);

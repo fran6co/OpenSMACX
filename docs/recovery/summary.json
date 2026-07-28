@@ -16,52 +16,50 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2426,
+      "source_complete": 2427,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2934
+      "unrecovered": 2933
     },
     "bytes": {
-      "denominator": {
-        "name": "lift_scope",
-        "bytes": 2410317,
-        "functions": 5673,
-        "note": "every percent_of_lift_scope_bytes in this file is over these bytes",
-        "exclusion": "excludes recovery_state == external_library: CRT and Windows library code that the lift calls and never translates (tools/lift_whole_image.py drops these rows by written policy)"
-      },
-      "catalogued": {
-        "bytes": 2455472,
-        "functions": 6000
-      },
-      "excluded": {
-        "bytes": 45155,
-        "functions": 327
-      },
-      "recovered": {
-        "bytes": 192701,
-        "functions": 2426,
-        "percent_of_lift_scope_bytes": 7.99
-      },
-      "machine_carried": {
-        "bytes": 2217616,
-        "functions": 3247,
-        "percent_of_lift_scope_bytes": 92.01,
-        "direction": "must go down",
-        "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source"
+      "by_binary_kind": {
+        "game": {
+          "bytes": 2409598,
+          "functions": 5627,
+          "percent_of_lift_scope_bytes": 99.97
+        },
+        "library": {
+          "bytes": 45686,
+          "excluded": {
+            "bytes": 45155,
+            "functions": 327
+          },
+          "functions": 338,
+          "in_scope": {
+            "bytes": 531,
+            "functions": 11
+          },
+          "percent_of_lift_scope_bytes": 0.02
+        },
+        "thunk": {
+          "bytes": 188,
+          "functions": 35,
+          "percent_of_lift_scope_bytes": 0.01
+        }
       },
       "by_recovery_state": {
         "external_library": {
           "bytes": 45155,
+          "excluded": {
+            "bytes": 45155,
+            "functions": 327
+          },
           "functions": 327,
-          "percent_of_lift_scope_bytes": 0.0,
           "in_scope": {
             "bytes": 0,
             "functions": 0
           },
-          "excluded": {
-            "bytes": 45155,
-            "functions": 327
-          }
+          "percent_of_lift_scope_bytes": 0.0
         },
         "original_dependency": {
           "bytes": 188044,
@@ -69,9 +67,9 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 192701,
-          "functions": 2426,
-          "percent_of_lift_scope_bytes": 7.99
+          "bytes": 192711,
+          "functions": 2427,
+          "percent_of_lift_scope_bytes": 8.0
         },
         "source_in_progress": {
           "bytes": 13083,
@@ -84,35 +82,37 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2016336,
-          "functions": 2934,
+          "bytes": 2016326,
+          "functions": 2933,
           "percent_of_lift_scope_bytes": 83.65
         }
       },
-      "by_binary_kind": {
-        "game": {
-          "bytes": 2409598,
-          "functions": 5627,
-          "percent_of_lift_scope_bytes": 99.97
-        },
-        "library": {
-          "bytes": 45686,
-          "functions": 338,
-          "percent_of_lift_scope_bytes": 0.02,
-          "in_scope": {
-            "bytes": 531,
-            "functions": 11
-          },
-          "excluded": {
-            "bytes": 45155,
-            "functions": 327
-          }
-        },
-        "thunk": {
-          "bytes": 188,
-          "functions": 35,
-          "percent_of_lift_scope_bytes": 0.01
-        }
+      "catalogued": {
+        "bytes": 2455472,
+        "functions": 6000
+      },
+      "denominator": {
+        "bytes": 2410317,
+        "exclusion": "excludes recovery_state == external_library: CRT and Windows library code that the lift calls and never translates (tools/lift_whole_image.py drops these rows by written policy)",
+        "functions": 5673,
+        "name": "lift_scope",
+        "note": "every percent_of_lift_scope_bytes in this file is over these bytes"
+      },
+      "excluded": {
+        "bytes": 45155,
+        "functions": 327
+      },
+      "machine_carried": {
+        "bytes": 2217606,
+        "direction": "must go down",
+        "functions": 3246,
+        "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
+        "percent_of_lift_scope_bytes": 92.0
+      },
+      "recovered": {
+        "bytes": 192711,
+        "functions": 2427,
+        "percent_of_lift_scope_bytes": 8.0
       }
     },
     "total": 6000,
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2372,
-    "matched_function_starts": 2372,
-    "unique_addresses": 2372,
+    "annotations": 2373,
+    "matched_function_starts": 2373,
+    "unique_addresses": 2373,
     "unmatched_addresses": []
   },
   "source_bindings": {

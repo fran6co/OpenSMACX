@@ -11865,6 +11865,22 @@ void test_constant_return_stubs() {
     expect(alpha_movie_unk4_redirect(alpha_movie_c, nullptr, -1, 2147483647, -2147483648, 3) == 0);
     expect(alpha_movie_c->UNK5(-1) == 0);
     expect(alpha_movie_unk5_redirect(alpha_movie_c, nullptr, -1) == 0);
+    // UNK3 is the one member of this family that is NOT a constant return: it
+    // builds a frame and returns its own argument. UNK5 beside it has the
+    // identical signature and returns zero, so a fixture passing 0 or -1 only
+    // would pass for both bodies and prove nothing about which one was
+    // written. These values are chosen to separate them - and to separate
+    // "returns the argument" from "returns the argument truncated or
+    // sign-extended", which is why both signed extremes appear.
+    expect(alpha_movie_c->UNK3(-1) == -1);
+    expect(alpha_movie_unk3_redirect(alpha_movie_c, nullptr, -1) == -1);
+    expect(alpha_movie_c->UNK3(2147483647) == 2147483647);
+    expect(alpha_movie_unk3_redirect(alpha_movie_c, nullptr, 2147483647) == 2147483647);
+    expect(alpha_movie_c->UNK3(-2147483647 - 1) == -2147483647 - 1);
+    expect(alpha_movie_unk3_redirect(alpha_movie_c, nullptr, -2147483647 - 1)
+           == -2147483647 - 1);
+    expect(alpha_movie_c->UNK3(0) == 0);
+    expect(alpha_movie_unk3_redirect(alpha_movie_c, nullptr, 0) == 0);
     alpha_movie_c->UNK6(-1, 2147483647);
     alpha_movie_unk6_00404260_redirect(alpha_movie_c, nullptr, -1, 2147483647);
     alpha_movie_c->UNK6(-1);

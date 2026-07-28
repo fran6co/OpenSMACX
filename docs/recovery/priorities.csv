@@ -45,7 +45,6 @@ P3,1921,0x00404070,?exec@AlphaMovie@@QAEHPAD@Z,335,1,9,unrecovered,,,2,exact,exa
 P3,111,0x004041C0,?on_modal@AlphaMovie@@QAE_NXZ,18,0,1,unrecovered,,,1,exact,missing,bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this)
 P3,211,0x004041E0,?close@AlphaMovie@@QAEXXZ,23,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 P3,1,0x00404200,?UNK1@AlphaMovie@@QAEXXZ,8,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?UNK1@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
-P3,21,0x00404230,?UNK3@AlphaMovie@@QAEHH@Z,10,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK3@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)"
 P3,111,0x00404290,?update@AlphaMovie@@QAEXXZ,8,0,1,unrecovered,,,1,exact,missing,void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 P0,1000010,0x004042B0,sub_4042b0,3,0,0,original_dependency,ui_dependency,recover_owning_class,1,exact,missing,
 P3,1221,0x004042C0,??1MCIVideo@@QAE@XZ,94,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MCIVideo@@QAE@XZ)(MCIVideo* this)
