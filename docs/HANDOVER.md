@@ -329,6 +329,75 @@ dynamic initialisers** (#41 records 232; attempting blocked functions surfaces
 391). The globals they touch are uninitialised in a pristine image, so the
 ORIGINAL faults before the lifted side runs. **That is #32's case, in bytes.**
 
+## The recovery gate works here now, and did not before
+
+`cmake --build --preset mingw-i686-release` stopped at **12 of 284 targets**
+until `src/stdafx.h` was corrected to `<sdkddkver.h>`: the Windows SDK ships
+that header capitalised, mingw-w64 does not, and only Linux cares. Every target
+including `stdafx.h` - the DLL and all three test executables - failed, so the
+only workflow that can move a function to `source_complete` could not be run at
+all, and nothing said so. Third case-sensitivity defect the move has exposed.
+
+Two of the gate's own checks then failed, correctly, and neither was relaxed:
+
+* **1,081 `.eh_frame` sections** in `autosound.cpp.obj`. `-fno-exceptions` does
+  not remove unwind tables and never did; g++ 13 defaults to emitting them.
+  Fixed by not emitting them (`-fno-asynchronous-unwind-tables`,
+  `-fno-unwind-tables`), because MSVC 6 emitted none and the check exists to
+  say so.
+* **Palette RGBQUAD order.** g++ 13 emits a third codegen shape. Read against
+  the disassembly the alias-sensitive order is intact, so a third pattern was
+  added - written pair by pair, and verified to REJECT three permutations
+  (byte-swap dropped, reads exchanged, reserved written first). A looser regex
+  would pass the exact defect the check exists to catch.
+
+**Two operational facts, both required:**
+
+```
+cmake --preset mingw-i686-release -DOPENSMACX_PYTHON=$PWD/.opensmacx/venv/bin/python
+ctest            # SERIALLY. Not -j.
+```
+
+Without the venv, 24 of 38 fail on a system `python3` that deliberately has no
+capstone. Under `-j 4`, `recovery-gameplay-tests` fails and passes alone: the
+Wine prefix is a single-instance shared resource, as this file already says,
+and the tests do not declare that to ctest. `recovery-oracle` additionally
+needs its opt-in `recovery-oracle-tests` target built first.
+
+**Now 38 of 38.**
+
+### The next recovery, already scouted
+
+`?stop_timer@BattleWin@@QAEXXZ` at **0x00421b40**, 8 bytes:
+
+```
+add ecx, 8
+jmp ?stop@Time@@QAEXXZ        ; 0x00616730
+```
+
+It is the cleanest target in the image because its only dependency is already
+source-owned - `Time::stop` is `source_complete` at `src/time.cpp:199` - so it
+needs no new entry in `docs/recovery-binding-classifications.csv`. The work
+that remains is the part worth doing carefully: confirming from the constructor
+that a `Time` really is the member at offset 8, because the whole body is that
+one assumption.
+
+Rejected while scouting, with the reasons, so they are not re-picked:
+
+* `?on_redraw@Win@@QAEHXZ` (0x005ed9c0) - `xor eax,eax; ret 8`. The mangled
+  name declares no parameters and the body cleans eight bytes.
+  `tools/find_constant_returns.py` rejects it for exactly this and is right to.
+* `Gamma::on_scrolled`, `FileWin::on_double_clicked`,
+  `DesignWin::select_special_1/2` - all thin wrappers whose callee is still
+  unrecovered, so each would add an original dependency rather than remove one.
+* `MCIVideo::is_playing` (0x00600320) - `mov eax,[ecx]; and eax,1`, a perfect
+  leaf, but no `MCIVideo` source exists at all, so it needs a whole verified
+  class layout for a six-byte function.
+
+`tools/find_constant_returns.py` now reports **0 candidates**: that shape is
+exhausted. 153 unrecovered methods of 4-40 bytes remain on classes that already
+have a `src/` file, which is the queue to work from.
+
 ## The checklist, for the next host
 
 `python3 tools/host_doctor.py` prints these too.
