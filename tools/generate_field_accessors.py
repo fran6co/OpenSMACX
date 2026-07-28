@@ -23,6 +23,7 @@ WHAT IS ACCEPTED, and nothing else:
     inc dword [ecx+N] / ret          increment a field
     mov eax,IMM / ret                return a constant
     mov byte [ecx+N],IMM / ret       store a byte
+    mov [ecx+N],[ebp+8] / ret 4      copy an argument into a field
     xor eax,eax / ret                return zero
     ret                              a body that does nothing at all
     a SEQUENCE of stores of constants to [this+N], optionally preceded by
@@ -58,7 +59,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pefile  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 from capstone.x86 import (X86_OP_IMM, X86_OP_MEM,  # noqa: E402
-                          X86_OP_REG, X86_REG_EAX, X86_REG_ECX)
+                          X86_OP_REG, X86_REG_EAX, X86_REG_EBP,
+                          X86_REG_ECX, X86_REG_ESP)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -113,6 +115,86 @@ def strip_padding(instructions):
     return instructions[:end]
 
 
+def argument_slot(operand, framed: bool) -> int | None:
+    """Which incoming dword `[ebp+8+4k]` or `[esp+4+4k]` names, else None.
+
+    The counterpart to this_offset, and deliberately just as narrow. A slot is
+    only nameable when the frame it is measured from is one this tool set up
+    the arithmetic for: with a standard `push ebp / mov ebp,esp` prologue the
+    first argument is at [ebp+8] (past the saved EBP and the return address),
+    and without one it is at [esp+4] (past the return address alone) - which
+    holds only as long as nothing else has been pushed, which is why the
+    caller refuses bodies containing a stray push.
+    """
+    if operand.type != X86_OP_MEM or operand.mem.index != 0:
+        return None
+    if framed:
+        if operand.mem.base != X86_REG_EBP:
+            return None
+        first = 8
+    else:
+        if operand.mem.base != X86_REG_ESP:
+            return None
+        first = 4
+    distance = operand.mem.disp - first
+    if distance < 0 or distance % 4:
+        return None
+    return distance // 4
+
+
+def classify_param_stores(body, cleanup):
+    """`this->field = argument`, one or more times.
+
+    Unlike the other shapes here this one has parameters, and the ONLY thing
+    that says how many is the `ret N` - there is no mangled name to ask. So
+    the count comes from the cleanup, and any body reading a slot the cleanup
+    does not cover is refused rather than described: reading [ebp+0x10] out of
+    a `ret 4` would mean either the arity or the read is misunderstood, and
+    neither is a thing to guess at.
+
+    No type is claimed for the arguments. A dword copied from a stack slot
+    into a field is a dword copy whatever C++ would call it, so `int` here is
+    a width, not an assertion about meaning.
+    """
+    framed = False
+    if (len(body) >= 3 and body[0].mnemonic == "push" and body[0].op_str == "ebp"
+            and body[1].mnemonic == "mov" and body[1].op_str == "ebp, esp"
+            and body[-1].mnemonic == "pop" and body[-1].op_str == "ebp"):
+        framed = True
+        body = body[2:-1]
+    if any(one.mnemonic in ("push", "pop") for one in body):
+        return None             # a stack the slot arithmetic cannot follow
+
+    if cleanup % 4 or not cleanup:
+        return None             # nothing callee-cleaned means no arguments here
+    count = cleanup // 4
+
+    held: dict[int, int] = {}   # register -> which argument it currently holds
+    stores: list[tuple[int, int]] = []
+    for one in body:
+        if one.mnemonic != "mov" or len(one.operands) != 2:
+            return None
+        destination, source = one.operands
+        slot = argument_slot(source, framed)
+        if destination.type == X86_OP_REG and slot is not None:
+            if slot >= count:
+                return None     # reads an argument its `ret` does not clean
+            if destination.size != 4 or source.size != 4:
+                return None     # a partial-width read is not a dword copy
+            held[destination.reg] = slot
+            continue
+        offset = this_offset(destination)
+        if (offset is not None and destination.size == 4
+                and source.type == X86_OP_REG and source.reg in held):
+            stores.append((offset, held[source.reg]))
+            continue
+        return None
+    if not stores:
+        return None
+    return "param_stores", {"stores": stores, "cleanup": cleanup,
+                            "count": count}
+
+
 def classify(instructions) -> tuple[str, dict] | None:
     """(kind, detail) for a shape this generator will emit, else None."""
     instructions = strip_padding(instructions)
@@ -135,6 +217,10 @@ def classify(instructions) -> tuple[str, dict] | None:
             and body[0].operands[0].reg == body[0].operands[1].reg
             and body[0].operands[0].reg == X86_REG_EAX):
         return "constant", {"value": 0, "cleanup": cleanup}
+
+    stored = classify_param_stores(body, cleanup)
+    if stored is not None:
+        return stored
 
     if len(body) == 1 and body[0].mnemonic == "mov":
         destination, source = body[0].operands
@@ -254,6 +340,14 @@ def render_stores(detail: dict) -> str:
     return "\n".join(lines)
 
 
+def render_param_stores(detail: dict) -> str:
+    lines = ["    uint8_t *const bytes = static_cast<uint8_t *>(self);"]
+    for offset, index in detail["stores"]:
+        lines.append(f"    *reinterpret_cast<uint32_t *>(bytes + {offset:#x})"
+                     f" = static_cast<uint32_t>(stack{index});")
+    return "\n".join(lines)
+
+
 BODIES = {
     "read": lambda d: (f"    return *reinterpret_cast<const uint32_t *>(\n"
                        f"        static_cast<const uint8_t *>(self) + {d['offset']:#x});"),
@@ -267,15 +361,17 @@ BODIES = {
                              f" = {d['value']:#x};"),
     "stores": render_stores,
     "nothing": lambda d: "",
+    "param_stores": render_param_stores,
 }
 RETURNS = {"read": "uint32_t", "masked": "uint32_t", "constant": "uint32_t",
-           "increment": "void", "store_byte": "void", "nothing": "void"}
+           "increment": "void", "store_byte": "void", "nothing": "void",
+           "param_stores": "void"}
 # A constant return never reads `this`, so naming the parameter would be an
 # unused one - and this tree builds with -Wall -Wextra, where that is an error
 # rather than a note. The name is emitted only where the body uses it.
 USES_SELF = {"read": True, "masked": True, "constant": False,
              "increment": True, "store_byte": True, "stores": True,
-             "nothing": False}
+             "nothing": False, "param_stores": True}
 PURPOSE = {
     "read": "Read the dword field at {offset:#x}.",
     "masked": "Read the dword field at {offset:#x}, masked to {mask:#x}.",
@@ -284,6 +380,7 @@ PURPOSE = {
     "store_byte": "Store {value:#x} in the byte at {offset:#x}.",
     "stores": "Set {count} field(s) to constants.",
     "nothing": "Do nothing; the original body is only its `ret`.",
+    "param_stores": "Copy {count} argument(s) into field(s) of `this`.",
 }
 
 

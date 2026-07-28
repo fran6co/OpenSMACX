@@ -160,6 +160,62 @@ class StoreSequenceTests(unittest.TestCase):
         self.assertIsNone(detail["eax"])
 
 
+class ParameterStoreTests(unittest.TestCase):
+    """`this->field = argument`, where the `ret N` is the only arity there is."""
+
+    def test_an_unframed_store_reads_esp(self):
+        # sub_5f05c0: mov eax,[esp+4] / mov [ecx+0x128],eax / ret 4
+        kind, detail = generator.classify(decode("8b442404898128010000c20400"))
+        self.assertEqual("param_stores", kind)
+        self.assertEqual([(0x128, 0)], detail["stores"])
+        self.assertEqual(4, detail["cleanup"])
+
+    def test_a_framed_store_reads_ebp(self):
+        # sub_589750: push ebp / mov ebp,esp / mov eax,[ebp+8] /
+        #             mov [ecx+0xa34],eax / pop ebp / ret 4
+        kind, detail = generator.classify(
+            decode("5589e58b45088981340a00005dc20400"))
+        self.assertEqual("param_stores", kind)
+        self.assertEqual([(0xA34, 0)], detail["stores"])
+
+    def test_two_arguments_land_in_slot_order(self):
+        # sub_590cb0: the second argument is at [ebp+0xc], not [ebp+8]. Getting
+        # the base wrong here would swap the two fields silently.
+        kind, detail = generator.classify(
+            decode("5589e58b45088b550c89018951045dc20800"))
+        self.assertEqual([(0, 0), (4, 1)], detail["stores"])
+        self.assertEqual(8, detail["cleanup"])
+
+    def test_reading_past_what_the_ret_cleans_is_refused(self):
+        # mov eax,[ebp+0x10] with `ret 4`: that slot is the caller's, and one
+        # of the two - the arity or the read - is misunderstood.
+        self.assertIsNone(generator.classify(
+            decode("5589e58b451089015dc20400")))
+
+    def test_a_cdecl_body_is_refused(self):
+        # sub_57dee0 reads [ebp+8] and cleans nothing, so its caller cleans:
+        # a different convention, and emitting __fastcall for it would leave
+        # the argument on the stack twice over.
+        self.assertIsNone(generator.classify(
+            decode("5589e58b450889015dc3")))
+
+    def test_a_stray_push_is_refused(self):
+        # push esi moves ESP, so [esp+4] no longer names the first argument
+        # and the slot arithmetic would silently name the wrong one.
+        self.assertIsNone(generator.classify(
+            decode("568b44240489015ec20400")))
+
+    def test_storing_a_register_that_holds_no_argument_is_refused(self):
+        # mov [ecx],esi / ret 4 - ESI was never loaded from a slot.
+        self.assertIsNone(generator.classify(decode("8931c20400")))
+
+    def test_a_byte_wide_argument_read_is_refused(self):
+        # mov al,[ebp+8] is not a dword copy, and describing it as one would
+        # write three bytes of whatever EAX happened to hold.
+        self.assertIsNone(generator.classify(
+            decode("5589e58a450889015dc20400")))
+
+
 class RefusalTests(unittest.TestCase):
     """What it declines, which is the part that keeps it honest."""
 

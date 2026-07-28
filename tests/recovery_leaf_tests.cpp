@@ -2415,7 +2415,10 @@ void test_field_accessors() {
     // require the exact value AND that the object moved only where the shape
     // says it should. The seed pattern is non-uniform, so a body reading the
     // wrong offset returns a different dword rather than an equal one.
-    uint8_t storage[0x600 + 32];
+    // 0xB00, not 0x600: sub_589750 writes the dword at 0xa34, which the
+    // old size did not even contain - the store would have run past the end
+    // of this array rather than being checked by it.
+    uint8_t storage[0xB00 + 32];
     uint8_t expected[sizeof(storage)];
     auto seed = [&]() {
         // The `0x35 + i * 17` pattern used elsewhere here REPEATS every 512
@@ -2589,6 +2592,34 @@ void test_field_accessors() {
     field_accessor_0050f640_redirect(self, nullptr, 0);                // ret 0x4
     expect(field_accessor_00616d80_redirect(self, nullptr, 0, 0, 0) == 0);
     expect_storage_bytes(storage, expected, sizeof(storage));
+
+    // --- parameter stores: the argument reaches the right field, in order ---
+    //
+    // Two DISTINCT values, because the order is the part that can go wrong
+    // silently: sub_590cb0 reads [ebp+8] and [ebp+0xc], and a generator that
+    // mixed up which slot is which would still write two plausible dwords into
+    // two real fields, and every other check in this fixture would agree.
+    {
+        const uint32_t first = 0x11223344U;
+        const uint32_t second = 0x55667788U;
+
+        seed();
+        std::memcpy(expected + 16 + 0xa34, &first, sizeof(first));
+        field_accessor_00589750_redirect(self, nullptr, static_cast<int>(first));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        seed();
+        std::memcpy(expected + 16 + 0x128, &first, sizeof(first));
+        field_accessor_005f05c0_redirect(self, nullptr, static_cast<int>(first));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        seed();
+        std::memcpy(expected + 16 + 0x0, &first, sizeof(first));
+        std::memcpy(expected + 16 + 0x4, &second, sizeof(second));
+        field_accessor_00590cb0_redirect(self, nullptr, static_cast<int>(first),
+                                         static_cast<int>(second));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
 
     // --- byte store: one BYTE moves, which the neighbours prove ---
     seed();

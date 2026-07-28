@@ -820,3 +820,73 @@ Status: Complete
 void __fastcall field_accessor_0050f640_redirect(void *, void *, int stack0) {
 
 }
+
+/*
+Purpose: Copy 1 argument(s) into field(s) of `this`.
+         Emitted by tools/generate_field_accessors.py from
+
+             push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov dword ptr [ecx + 0xa34], eax / pop ebp / ret 4
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 00589750
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_00589750_redirect(void *self, void *, int stack0) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0xa34) = static_cast<uint32_t>(stack0);
+}
+
+/*
+Purpose: Copy 2 argument(s) into field(s) of `this`.
+         Emitted by tools/generate_field_accessors.py from
+
+             push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov edx, dword ptr [ebp + 0xc] / mov dword ptr [ecx], eax / mov dword ptr [ecx + 4], edx / pop ebp / ret 8
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 2 stack dword(s) so it
+         cleans 8 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 00590CB0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_00590cb0_redirect(void *self, void *, int stack0, int stack1) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = static_cast<uint32_t>(stack0);
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = static_cast<uint32_t>(stack1);
+}
+
+/*
+Purpose: Copy 1 argument(s) into field(s) of `this`.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, dword ptr [esp + 4] / mov dword ptr [ecx + 0x128], eax / ret 4
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 005F05C0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_005f05c0_redirect(void *self, void *, int stack0) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x128) = static_cast<uint32_t>(stack0);
+}

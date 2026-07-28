@@ -1693,7 +1693,6 @@ P3,1820,0x00588AA0,?config_popups@@YAXXZ,1262,1,8,unrecovered,,,2,exact,exact,
 P3,1420,0x00588F90,?alien_start@@YAXXZ,492,1,4,unrecovered,,,2,exact,exact,
 P3,3520,0x00589330,?time_controls_dialog@@YAXPAUPopup@@@Z,538,3,5,unrecovered,,,2,exact,exact,
 P3,1010,0x00589560,sub_589560,488,0,10,unrecovered,,,1,missing,exact,
-P3,10,0x00589750,sub_589750,16,0,0,unrecovered,,,1,missing,exact,
 P3,420,0x00589760,sub_589760,287,0,4,unrecovered,,,2,exact,entry_range,
 P3,210,0x00589870,sub_589870,22,0,2,unrecovered,,,1,exact,missing,
 P3,2020,0x005898A0,?thumb_routine@@YAXH@Z,388,1,10,unrecovered,,,2,exact,exact,
@@ -1740,7 +1739,6 @@ P3,220,0x00590A10,?say_society@@YAXPAXHH@Z,131,0,2,unrecovered,,,2,exact,exact,
 P3,220,0x00590AA0,?say_ability@@YAXPAXHH@Z,130,0,2,unrecovered,,,2,exact,exact,
 P3,320,0x00590B30,?say_techs@@YAXPAXHH@Z,106,0,3,unrecovered,,,2,exact,exact,
 P3,220,0x00590BA0,?say_vehicles@@YAXPAXHH@Z,116,0,2,unrecovered,,,2,exact,exact,
-P3,10,0x00590CB0,sub_590cb0,18,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x00590CD0,sub_590cd0,22,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x00590CF0,sub_590cf0,31,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x00590D10,sub_590d10,45,0,0,unrecovered,,,1,missing,exact,
@@ -2252,7 +2250,6 @@ P3,1720,0x005F01F0,?init_class@Win@@QAAHPAD@Z,761,1,7,unrecovered,,,2,exact,entr
 P3,1120,0x005F04E0,?close_class@Win@@QAAXXZ,64,1,1,unrecovered,,,2,exact,exact,
 P3,11,0x005F0540,?adjust_menus@Win@@QAGHPAX@Z,57,0,0,unrecovered,,,1,exact,missing,int (__stdcall ?adjust_menus@Win@@QAGHPAX@Z)(HWND hWnd)
 P3,1021,0x005F0580,?set_caption_height@Win@@QAEXH@Z,61,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_caption_height@Win@@QAEXH@Z)(Win* this, int)"
-P3,10,0x005F05C0,sub_5f05c0,13,0,0,unrecovered,,,1,exact,missing,
 P3,1021,0x005F05D0,?set_border_thickness@Win@@QAEXH@Z,61,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)"
 P3,1021,0x005F0610,?set_bottom_border_thickness@Win@@QAEXH@Z,61,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_bottom_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)"
 P3,1110,0x005F0650,?window_proc@Win@@QAGJPAXIIJ@Z,2007,0,11,unrecovered,,,1,exact,missing,
