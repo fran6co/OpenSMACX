@@ -22,10 +22,20 @@ that is easy to forget:
   1. its own body touches no absolute global inside the image, and makes no
      call this tool cannot account for;
   2. every function it calls is already `source_complete`;
-  3. every function it calls is COMPILED INTO `recovery-leaf-tests`.
+  3. every function it calls has its RECOVERED IMPLEMENTATION in a translation
+     unit compiled into `recovery-leaf-tests`.
 
-(3) is read out of THE BUILD - the target's own object directory - rather than
-out of CMakeLists.txt. Parsing the source list from CMake was the first
+(3) is answered by finding where each callee's implementation actually LIVES -
+the `Original Offset:` comment that tools/mutate_and_verify.py already uses to
+locate function bodies - and asking whether that file is compiled into the
+target. The first version guessed the file from the mangled name, mapping
+`?f@Class@@` to `src/class.cpp`, which worked only for class methods and
+excluded every free function in the image: 349 of the 657 rejected candidates
+under 64 bytes carried "no class in the mangled name", the largest single
+reason, and none of them was rejected for a property of the code.
+
+The file list is read out of THE BUILD - the target's own object directory -
+rather than out of CMakeLists.txt. Parsing the source list from CMake was the first
 attempt and it silently over-matched, collecting 122 sources where the target
 has 100; the one false entry was `src/time.cpp`, which made this tool accept
 BattleWin::stop_timer, the very function whose failure to link is why the tool
@@ -93,6 +103,27 @@ def leaf_test_sources(build_dir: Path) -> set[str]:
         "build a preset first - this tool reads the target's real source list "
         "from the build rather than parsing CMakeLists.txt, because a parse "
         "that over-matches silently accepts functions that cannot link")
+
+
+ORIGINAL_OFFSET = re.compile(r"Original Offset:\s*([0-9A-Fa-f]{6,8})")
+
+
+def implementation_files(source_dir: Path) -> dict[int, str]:
+    """address -> the stem of the .cpp its recovered body lives in.
+
+    Read from the `Original Offset:` comments the recovery convention already
+    requires, which is the same anchor tools/mutate_and_verify.py locates
+    bodies by. This replaces guessing a filename from the mangled name: it is
+    correct for free functions, correct for classes whose file is not named
+    after them - Time's recovered half lives in time_recovery.cpp - and it
+    cannot drift, because a body that moved took its comment with it.
+    """
+    found: dict[int, str] = {}
+    for path in sorted(source_dir.glob("*.cpp")):
+        for match in ORIGINAL_OFFSET.finditer(path.read_text(encoding="utf-8",
+                                                             errors="replace")):
+            found[int(match.group(1), 16)] = path.stem
+    return found
 
 
 def load_rows(functions_csv: Path) -> list[dict]:
@@ -213,9 +244,7 @@ def main(argv=None) -> int:
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     decoder.detail = True
 
-    def source_for(name: str) -> str | None:
-        match = re.match(r"\?\w+@(\w+)@@", name)
-        return match.group(1).lower() if match else None
+    homes = implementation_files(REPO_ROOT / "src")
 
     accepted, rejected = [], []
     for row in rows:
@@ -225,12 +254,10 @@ def main(argv=None) -> int:
         if not size or size > args.max_size:
             continue
         address = int(row["address"], 16)
-        owner = source_for(row["name"])
         why: list[str] = []
-        if owner is None:
-            why.append("no class in the mangled name")
-        elif owner not in sources:
-            why.append(f"class {owner} is not in recovery-leaf-tests")
+        # No requirement on the CANDIDATE's own home: it has none yet, and its
+        # implementation can be written into any translation unit the target
+        # already compiles. The constraint is on its CALLEES, below.
 
         data = body_bytes(pe, address, size)
         if len(data) < size:
@@ -282,11 +309,18 @@ def main(argv=None) -> int:
                 why.append(f"callee {callee:#010x} is "
                            f"{state.get(callee, 'uncatalogued')}")
                 continue
-            callee_owner = source_for(names.get(callee, ""))
-            if callee_owner is None or callee_owner not in sources:
-                # Condition (3), and the one BattleWin::stop_timer failed.
-                why.append(f"callee {names.get(callee, hex(callee))} is not "
-                           f"linked into recovery-leaf-tests")
+            home = homes.get(callee)
+            if home is None:
+                why.append(f"callee {names.get(callee, hex(callee))} is "
+                           f"source_complete but no Original Offset comment "
+                           f"says where it lives")
+            elif home not in sources:
+                # Condition (3), and the one BattleWin::stop_timer failed:
+                # Time::stop's body is in time.cpp, which the target does not
+                # compile, even though time_recovery.cpp is.
+                why.append(f"callee {names.get(callee, hex(callee))} lives in "
+                           f"src/{home}.cpp, not compiled into "
+                           f"recovery-leaf-tests")
 
         if why:
             rejected.append((address, row["name"], why))
