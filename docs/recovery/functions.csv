@@ -2076,7 +2076,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004ABE70,0x004AC127,695,.text,?draw_score@ReportIf@@QAEXXZ,void (__thiscall ?draw_score@ReportIf@@QAEXXZ)(ReportIf* this),0x004ABE70-0x004AC127,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,4
 0x004AC130,0x004AC131,1,.text,?close_score@ReportIf@@QAEXXZ,void (__thiscall ?close_score@ReportIf@@QAEXXZ)(ReportIf* this),0x004AC130-0x004AC131,game,hidden;sp_ready;purged_ok,src/reportif.cpp:95,Complete,,,source_complete,,,,0,0
 0x004AC140,0x004AC977,2103,.text,?draw_intel@ReportIf@@QAEXXZ,void (__thiscall ?draw_intel@ReportIf@@QAEXXZ)(ReportIf* this),0x004AC140-0x004AC977,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,24,4
-0x004AC980,0x004AC99B,27,.text,?close_intel@ReportIf@@QAEXXZ,void (__thiscall ?close_intel@ReportIf@@QAEXXZ)(ReportIf* this),0x004AC980-0x004AC99B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
+0x004AC980,0x004AC99B,27,.text,?close_intel@ReportIf@@QAEXXZ,void (__thiscall ?close_intel@ReportIf@@QAEXXZ)(ReportIf* this),0x004AC980-0x004AC99B,game,hidden;sp_ready;purged_ok,src/reportif.cpp:166,Complete,,,source_complete,,,,1,0
 0x004AC9A0,0x004AC9EC,76,.text,?report_labs@@YAXXZ,,0x004AC9A0-0x004AC9EC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x004AC9F0,0x004ACA3C,76,.text,?report_energy@@YAXXZ,,0x004AC9F0-0x004ACA3C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x004ACA40,0x004ACA8C,76,.text,?report_ops@@YAXXZ,,0x004ACA40-0x004ACA8C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2

@@ -944,7 +944,6 @@ P2,6421,0x004AB600,?draw_security@ReportIf@@QAEXXZ,2084,5,14,unrecovered,,,2,exa
 P3,11,0x004ABE30,?close_security@ReportIf@@QAEXXZ,50,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?close_security@ReportIf@@QAEXXZ)(ReportIf* this)
 P3,4921,0x004ABE70,?draw_score@ReportIf@@QAEXXZ,695,4,9,unrecovered,,,2,exact,exact,void (__thiscall ?draw_score@ReportIf@@QAEXXZ)(ReportIf* this)
 P3,6421,0x004AC140,?draw_intel@ReportIf@@QAEXXZ,2103,4,24,unrecovered,,,2,exact,exact,void (__thiscall ?draw_intel@ReportIf@@QAEXXZ)(ReportIf* this)
-P3,111,0x004AC980,?close_intel@ReportIf@@QAEXXZ,27,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?close_intel@ReportIf@@QAEXXZ)(ReportIf* this)
 P3,2120,0x004AC9A0,?report_labs@@YAXXZ,76,2,1,unrecovered,,,2,exact,exact,
 P3,2120,0x004AC9F0,?report_energy@@YAXXZ,76,2,1,unrecovered,,,2,exact,exact,
 P3,2120,0x004ACA40,?report_ops@@YAXXZ,76,2,1,unrecovered,,,2,exact,exact,

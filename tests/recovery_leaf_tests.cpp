@@ -9011,6 +9011,83 @@ ScrollDtorEvent scroll_dtor_events[24];
 int scroll_dtor_event_count = 0;
 uint8_t *scroll_dtor_base = nullptr;
 
+void test_report_if_close_intel() {
+    // Two ListBox subobjects at 0xA2D0 and 0xAE24, closed in that order.
+    // ListBox::close is already covered by test_list_box_teardown, so what
+    // this establishes is the two OFFSETS and their ORDER - the dialog-close
+    // seam fires once per ListBox, and each firing carries the Dialog address
+    // that ListBox resolved from its own vbtable, which identifies which
+    // subobject it was.
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_a0c = GraphicWinFieldA0CDefault;
+    func_dialog_close *const saved_dialog = ListBoxOriginalDialogClose;
+    uint32_t *const saved_static = ListBoxCloseStaticDefaults;
+    uint32_t *const saved_dynamic = ListBoxCloseDynamicDefault;
+
+    WinOriginalClose = list_box_win_close_probe;
+    BufferSubobjectClose = list_box_buffer_close_probe;
+    GraphicWinFieldA0CDefault = &list_box_graphic_a0c_default;
+    ListBoxOriginalDialogClose = list_box_dialog_close_probe;
+    ListBoxCloseStaticDefaults = list_box_static_defaults;
+    ListBoxCloseDynamicDefault = &list_box_dynamic_default;
+
+    const int32_t graphic = 0x48;
+    const int32_t dialog = 0xA60;
+    static int32_t vbtable[3];
+    vbtable[0] = 0; vbtable[1] = graphic; vbtable[2] = dialog;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        std::vector<uint8_t> storage(0xAE24 + 0xC40 + 32);
+        for (size_t i = 0; i < storage.size(); ++i) {
+            storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+        }
+        uint8_t *const object = storage.data() + 16;
+        const int32_t offsets[2] = {0x0A2D0, 0x0AE24};
+        for (int which = 0; which < 2; ++which) {
+            uint8_t *const box = object + offsets[which];
+            int32_t *pointer = vbtable;
+            std::memcpy(box, &pointer, sizeof(pointer));
+            // Keep GraphicWin::close on its no-release path.
+            const uint32_t zero = 0;
+            std::memcpy(box + graphic + 0xA08, &zero, sizeof(zero));
+        }
+
+        // list_box_record samples through these; point them at the FIRST box
+        // so the sampling stays in bounds.
+        list_box_obj = object + offsets[0];
+        list_box_graphic_disp = graphic;
+        list_box_dialog_disp = dialog;
+        list_box_event_count = 0;
+
+        auto *const self = reinterpret_cast<ReportIf *>(object);
+        if (use_adapter) {
+            report_if_close_intel_redirect(self, nullptr);
+        } else {
+            self->close_intel();
+        }
+
+        // Exactly two dialog closes, in subobject order.
+        const void *dialogs[2] = {nullptr, nullptr};
+        int seen = 0;
+        for (int i = 0; i < list_box_event_count && i < 8; ++i) {
+            if (list_box_events[i].kind == 3 && seen < 2) {
+                dialogs[seen++] = list_box_events[i].target;
+            }
+        }
+        expect(seen == 2);
+        expect(dialogs[0] == object + offsets[0] + dialog);
+        expect(dialogs[1] == object + offsets[1] + dialog);
+    }
+
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_a0c;
+    ListBoxOriginalDialogClose = saved_dialog;
+    ListBoxCloseStaticDefaults = saved_static;
+    ListBoxCloseDynamicDefault = saved_dynamic;
+}
+
 void scroll_dtor_record(int kind, const void *target) {
     const int index = scroll_dtor_event_count++;
     if (index >= static_cast<int>(ARRAYSIZE(scroll_dtor_events))) {
@@ -28574,6 +28651,7 @@ int main() {
     test_popup_button_width_and_diplo_clear();
     test_base_pop_button_font_and_caviar_readback();
     test_base_pop_item();
+    test_report_if_close_intel();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "listbox.h"
 
  /*
   * ReportIf class
@@ -29,6 +30,7 @@ class DLLEXPORT ReportIf {
  public:
   ReportIf() { ; }
   ~ReportIf() { ; }
+  void close_intel();
   void on_iface_right_click(int, int);
   void on_iface_left_double_click(int, int);
   void on_iface_right_double_click(int, int);
@@ -44,6 +46,7 @@ class DLLEXPORT ReportIf {
   uint8_t unmapped_[0x202F0];
 };
 
+void __fastcall report_if_close_intel_redirect(ReportIf *self, void *);
 void __fastcall report_if_on_iface_right_click_redirect(ReportIf *self, void *, int a1, int a2);
 void __fastcall report_if_on_iface_left_double_click_redirect(ReportIf *self, void *, int a1, int a2);
 void __fastcall report_if_on_iface_right_double_click_redirect(ReportIf *self, void *, int a1, int a2);
