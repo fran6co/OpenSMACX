@@ -1819,7 +1819,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004834E0,0x004837B4,963,.text,??1NetWin@@QAE@XZ,void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this),0x004834E0-0x004837B4;0x00656650-0x0065673F,game,frame;hidden;sp_ready;purged_ok,,,,NetWinDtorTarget,original_dependency,,,,14,1
 0x004837C0,0x004837E1,33,.text,??_GNetWin@@UAEPAXI@Z,"void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)",0x004837C0-0x004837E1,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:973,Complete,,,source_complete,,,,2,0
 0x004837F0,0x00483813,35,.text,?UNK4@NetWin@@QAEXXZ,void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this),0x004837F0-0x00483813,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,2
-0x00483820,0x0048383C,28,.text,?UNK5@NetWin@@QAEXXZ,void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this),0x00483820-0x0048383C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00483820,0x0048383C,28,.text,?UNK5@NetWin@@QAEXXZ,void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this),0x00483820-0x0048383C,game,hidden;sp_ready;purged_ok,src/netwin.cpp:122,Complete,,,source_complete,,,,0,0
 0x00483840,0x0048384B,11,.text,??3NetWin@@SAXPAXI@Z,,0x00483840-0x0048384B,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:988,Complete,,,source_complete,,,,0,0
 0x00483850,0x00483866,22,.text,??__Eg_NEWTECHWIN@@YAXXZ,,0x00483850-0x00483866,game,hidden;sp_ready;purged_ok,src/init_thunks.cpp:3998,Complete,,,source_complete,,,,2,0
 0x00483870,0x0048387A,10,.text,??__Fg_NEWTECHWIN@@YAXXZ,,0x00483870-0x0048387A,game,hidden;sp_ready;purged_ok,src/atexit_thunks.cpp:3845,Complete,,,source_complete,,,,0,0

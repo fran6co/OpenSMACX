@@ -781,7 +781,6 @@ P3,821,0x00483310,?on_key_down@NetWin@@QAEHH@Z,260,0,8,unrecovered,,,2,exact,exa
 P3,1321,0x00483420,?new_chat@NetWin@@QAEXPADH@Z,165,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?new_chat@NetWin@@QAEXPADH@Z)(NetWin* this, int8*, int)"
 P0,1002421,0x004834E0,??1NetWin@@QAE@XZ,963,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this)
 P3,2321,0x004837F0,?UNK4@NetWin@@QAEXXZ,35,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this)
-P3,11,0x00483820,?UNK5@NetWin@@QAEXXZ,28,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
 P3,110,0x004838B0,??__Fg_NEWTECHWIN_SPRITES@@YAXXZ,40,0,1,unrecovered,,,1,exact,missing,
 P3,121,0x004838E0,?on_link_clicked@NewTechWin@@QAEHHPAD@Z,63,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_link_clicked@NewTechWin@@QAEHHPAD@Z)(NewTechWin* this, int, int8*)"
 P3,120,0x00483920,?info@NewTechWin@@QAAXPAD@Z,48,0,1,unrecovered,,,2,exact,exact,

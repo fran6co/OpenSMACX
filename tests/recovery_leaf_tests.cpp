@@ -2408,6 +2408,41 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_net_win_unk5() {
+    // Five bytes at the start of the object plus a cleared dword at 0x178, and
+    // nothing else. The fixture establishes the resulting BYTES and that
+    // nothing else in the object moves.
+    //
+    // What it does NOT establish, and cannot: the first four stores could be a
+    // single dword write of 0xFF0000FF and no test could tell, because
+    // little-endian that IS the same four bytes. A dword mutant was tried here
+    // and survived, correctly. The byte form is kept because it is what the
+    // original encodes, not because this fixture can distinguish it.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        std::vector<uint8_t> storage(0x200 + 32);
+        std::vector<uint8_t> expected(storage.size());
+        for (size_t i = 0; i < storage.size(); ++i) {
+            storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+        }
+        std::memcpy(expected.data(), storage.data(), storage.size());
+        const uint32_t zero = 0;
+        std::memcpy(expected.data() + 16 + 0x178, &zero, sizeof(zero));
+        expected[16 + 0] = 0xFF;
+        expected[16 + 1] = 0x00;
+        expected[16 + 2] = 0x00;
+        expected[16 + 3] = 0xFF;
+        expected[16 + 4] = 0x02;
+
+        auto *win = reinterpret_cast<NetWin *>(storage.data() + 16);
+        if (use_adapter) {
+            net_win_unk5_redirect(win, nullptr);
+        } else {
+            win->UNK5();
+        }
+        expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    }
+}
+
 void test_datalink_parse_id() {
     // The inverse of Datalink::UNK1. The pairs below are chosen so truncation
     // DIRECTION is observable: for a negative id that is not a multiple of
@@ -28939,6 +28974,7 @@ int main() {
     test_sprite_box_id_to_pos();
     test_base_pop_read_check();
     test_datalink_parse_id();
+    test_net_win_unk5();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();
