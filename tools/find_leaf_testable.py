@@ -52,7 +52,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
-from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
+from capstone import (CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP,  # noqa: E402
+                      CS_MODE_32, Cs)
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -152,8 +153,16 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
                 reasons.append(f"absolute global {operand.mem.disp:#010x}")
             # An address used as a VALUE, not dereferenced. Testable, but it is
             # a fixed data binding and has to be declared as one.
-            if (operand.type == X86_OP_IMM and one.mnemonic != "call"
-                    and one.mnemonic != "jmp"
+            #
+            # Control-flow targets are excluded by GROUP rather than by
+            # mnemonic. Excluding just "call" and "jmp" by name left every
+            # conditional branch in: `je 0x405049` inside a function starting
+            # at 0x405020 was reported as a fixed-address binding, which is a
+            # label. Four of eighteen queue entries carried that noise, and a
+            # flag that cries wolf is worse than no flag.
+            if (operand.type == X86_OP_IMM
+                    and not one.group(CS_GRP_JUMP)
+                    and not one.group(CS_GRP_CALL)
                     and low <= operand.imm < high):
                 bindings.append(operand.imm)
         if mnemonic == "call":

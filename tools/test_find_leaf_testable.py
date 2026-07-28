@@ -144,6 +144,16 @@ class BindingTests(unittest.TestCase):
     def test_an_ordinary_constant_is_not_a_binding(self):
         self.assertEqual([], self.bindings("83f841"))   # cmp eax, 0x41
 
+    def test_a_conditional_branch_target_is_not_a_binding(self):
+        # je 0x00401010 from 0x00401000 - a label inside the body. Excluding
+        # only "call" and "jmp" by name left these in, and four queue entries
+        # were flagged as carrying fixed-address bindings that were branch
+        # targets. Exclusion is by capstone GROUP so every branch form counts.
+        self.assertEqual([], self.bindings("0f840a000000"))
+
+    def test_a_short_conditional_branch_is_not_a_binding(self):
+        self.assertEqual([], self.bindings("740a"))
+
     def test_a_call_target_is_not_counted_as_a_binding(self):
         # It is a callee, handled by conditions (2) and (3); counting it here
         # would flag every function that calls anything.
