@@ -88,6 +88,34 @@ class TrivialBodyTests(unittest.TestCase):
         self.assertNotEqual("constant", kind[0] if kind else None)
 
 
+class PaddingTests(unittest.TestCase):
+    """IDA sizes a function to its whole slot; the slack is not code."""
+
+    def test_trailing_nops_are_padding(self):
+        # nullsub_185: `ret 4` followed by fifteen nops. Reading those as body
+        # made it fail the "last instruction is a ret" check and sat in the
+        # queue as if it were something to understand.
+        kind, detail = generator.classify(decode("c20400" + "90" * 13))
+        self.assertEqual("nothing", kind)
+        self.assertEqual(4, detail["cleanup"])
+
+    def test_only_trailing_nops_are_stripped(self):
+        # nop / mov eax,[ecx+0x48] / ret. Stripping every nop would turn this
+        # into a shape the generator recognises and emit a body for it; the
+        # leading nop must survive so the whole thing is refused instead.
+        kept = generator.strip_padding(decode("908b4148c3"))
+        self.assertEqual(["nop", "mov", "ret"], [one.mnemonic for one in kept])
+        self.assertIsNone(generator.classify(decode("908b4148c3")))
+
+    def test_padding_after_a_real_body_is_stripped(self):
+        kept = generator.strip_padding(decode("8b4148c39090"))
+        self.assertEqual(["mov", "ret"], [one.mnemonic for one in kept])
+
+    def test_padding_alone_is_still_refused(self):
+        # All nops and no ret is not a function this tool can describe.
+        self.assertIsNone(generator.classify(decode("90909090")))
+
+
 class StoreSequenceTests(unittest.TestCase):
     """A run of constant stores to `this`, tracked symbolically."""
 

@@ -798,3 +798,25 @@ Status: Complete
 void __fastcall field_accessor_00634c20_redirect(void *, void *) {
 
 }
+
+/*
+Purpose: Do nothing; the original body is only its `ret`.
+         Emitted by tools/generate_field_accessors.py from
+
+             ret 4 / nop / nop / nop / nop / nop / nop / nop / nop / nop / nop / nop / nop / nop
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 0050F640
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_0050f640_redirect(void *, void *, int stack0) {
+
+}
