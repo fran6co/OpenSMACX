@@ -10,9 +10,11 @@ Purpose: Return the constant 0x1.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00406840
 Return Value: the value described above
 Status: Complete
@@ -30,9 +32,11 @@ Purpose: Increment the dword field at 0x58.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 004476E0
 Return Value: n/a
 Status: Complete
@@ -51,9 +55,11 @@ Purpose: Store 0x1 in the byte at 0x6d.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00447AB0
 Return Value: n/a
 Status: Complete
@@ -71,9 +77,11 @@ Purpose: Increment the dword field at 0x58.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00448280
 Return Value: n/a
 Status: Complete
@@ -92,9 +100,11 @@ Purpose: Read the dword field at 0x48.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00448310
 Return Value: the value described above
 Status: Complete
@@ -113,9 +123,11 @@ Purpose: Read the dword field at 0x44.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00448320
 Return Value: the value described above
 Status: Complete
@@ -134,9 +146,11 @@ Purpose: Read the dword field at 0x50.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00448330
 Return Value: the value described above
 Status: Complete
@@ -155,9 +169,11 @@ Purpose: Read the dword field at 0x200.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 004C75A0
 Return Value: the value described above
 Status: Complete
@@ -165,170 +181,6 @@ Status: Complete
 uint32_t __fastcall field_accessor_004c75a0_redirect(void *self, void *) {
     return *reinterpret_cast<const uint32_t *>(
         static_cast<const uint8_t *>(self) + 0x200);
-}
-
-/*
-Purpose: Return the constant 0xb.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 0xb / ret 4
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 4 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 004C93E0
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_004c93e0_redirect(void *, void *) {
-    return 0xbU;
-}
-
-/*
-Purpose: Return the constant 0x8.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 8 / ret 0xc
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 12 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 005DA6A0
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_005da6a0_redirect(void *, void *) {
-    return 0x8U;
-}
-
-/*
-Purpose: Return the constant 0x8.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 8 / ret 0x10
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 16 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 005DA6B0
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_005da6b0_redirect(void *, void *) {
-    return 0x8U;
-}
-
-/*
-Purpose: Return the constant 0x8.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 8 / ret 0x14
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 20 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 005E2460
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_005e2460_redirect(void *, void *) {
-    return 0x8U;
-}
-
-/*
-Purpose: Return the constant 0x8.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 8 / ret 0x14
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 20 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 005E2470
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_005e2470_redirect(void *, void *) {
-    return 0x8U;
-}
-
-/*
-Purpose: Read the dword field at 0x0, masked to 0x1.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, dword ptr [ecx] / and eax, 1 / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 00600320
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_00600320_redirect(void *self, void *) {
-    return *reinterpret_cast<const uint32_t *>(
-        static_cast<const uint8_t *>(self) + 0x0)
-        & 0x1U;
-}
-
-/*
-Purpose: Return the constant 0x1.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 1 / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 0062D390
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_0062d390_redirect(void *, void *) {
-    return 0x1U;
-}
-
-/*
-Purpose: Read the dword field at 0x4ac, masked to 0x8000.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, dword ptr [ecx + 0x4ac] / and eax, 0x8000 / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
-Original Offset: 006363F0
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_006363f0_redirect(void *self, void *) {
-    return *reinterpret_cast<const uint32_t *>(
-        static_cast<const uint8_t *>(self) + 0x4ac)
-        & 0x8000U;
 }
 
 /*
@@ -340,9 +192,11 @@ Purpose: Set 9 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 004C8090
 Return Value: the value described above
 Status: Complete
@@ -370,9 +224,11 @@ Purpose: Set 2 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 004C8100
 Return Value: the value described above
 Status: Complete
@@ -385,6 +241,28 @@ void * __fastcall field_accessor_004c8100_redirect(void *self, void *) {
 }
 
 /*
+Purpose: Return the constant 0xb.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, 0xb / ret 4
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 004C93E0
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_004c93e0_redirect(void *, void *, int stack0) {
+    return 0xbU;
+}
+
+/*
 Purpose: Set 1 field(s) to constants.
          Emitted by tools/generate_field_accessors.py from
 
@@ -393,9 +271,11 @@ Purpose: Set 1 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00590D60
 Return Value: n/a
 Status: Complete
@@ -403,6 +283,94 @@ Status: Complete
 void __fastcall field_accessor_00590d60_redirect(void *self, void *) {
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     *reinterpret_cast<uint32_t *>(bytes + 0x200) = 0x0U;
+}
+
+/*
+Purpose: Return the constant 0x8.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, 8 / ret 0xc
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 3 stack dword(s) so it
+         cleans 12 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 005DA6A0
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_005da6a0_redirect(void *, void *, int stack0, int stack1, int stack2) {
+    return 0x8U;
+}
+
+/*
+Purpose: Return the constant 0x8.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, 8 / ret 0x10
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 4 stack dword(s) so it
+         cleans 16 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 005DA6B0
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_005da6b0_redirect(void *, void *, int stack0, int stack1, int stack2, int stack3) {
+    return 0x8U;
+}
+
+/*
+Purpose: Return the constant 0x8.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, 8 / ret 0x14
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 5 stack dword(s) so it
+         cleans 20 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 005E2460
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_005e2460_redirect(void *, void *, int stack0, int stack1, int stack2, int stack3, int stack4) {
+    return 0x8U;
+}
+
+/*
+Purpose: Return the constant 0x8.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, 8 / ret 0x14
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 5 stack dword(s) so it
+         cleans 20 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 005E2470
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_005e2470_redirect(void *, void *, int stack0, int stack1, int stack2, int stack3, int stack4) {
+    return 0x8U;
 }
 
 /*
@@ -414,9 +382,11 @@ Purpose: Set 9 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 005E35D0
 Return Value: the value described above
 Status: Complete
@@ -444,9 +414,11 @@ Purpose: Set 9 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 005E35F0
 Return Value: n/a
 Status: Complete
@@ -465,6 +437,30 @@ void __fastcall field_accessor_005e35f0_redirect(void *self, void *) {
 }
 
 /*
+Purpose: Read the dword field at 0x0, masked to 0x1.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, dword ptr [ecx] / and eax, 1 / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 00600320
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_00600320_redirect(void *self, void *) {
+    return *reinterpret_cast<const uint32_t *>(
+        static_cast<const uint8_t *>(self) + 0x0)
+        & 0x1U;
+}
+
+/*
 Purpose: Set 3 field(s) to constants.
          Emitted by tools/generate_field_accessors.py from
 
@@ -473,9 +469,11 @@ Purpose: Set 3 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00616B20
 Return Value: the value described above
 Status: Complete
@@ -489,6 +487,28 @@ void * __fastcall field_accessor_00616b20_redirect(void *self, void *) {
 }
 
 /*
+Purpose: Return the constant 0x1.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, 1 / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 0062D390
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_0062d390_redirect(void *, void *) {
+    return 0x1U;
+}
+
+/*
 Purpose: Set 9 field(s) to constants.
          Emitted by tools/generate_field_accessors.py from
 
@@ -497,9 +517,11 @@ Purpose: Set 9 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 006346C0
 Return Value: the value described above
 Status: Complete
@@ -527,9 +549,11 @@ Purpose: Set 9 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 006346F0
 Return Value: n/a
 Status: Complete
@@ -556,9 +580,11 @@ Purpose: Set 9 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00634B70
 Return Value: the value described above
 Status: Complete
@@ -586,9 +612,11 @@ Purpose: Set 4 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 00634FB0
 Return Value: the value described above
 Status: Complete
@@ -611,9 +639,11 @@ Purpose: Set 7 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 006354D0
 Return Value: the value described above
 Status: Complete
@@ -631,6 +661,30 @@ void * __fastcall field_accessor_006354d0_redirect(void *self, void *) {
 }
 
 /*
+Purpose: Read the dword field at 0x4ac, masked to 0x8000.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, dword ptr [ecx + 0x4ac] / and eax, 0x8000 / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 006363F0
+Return Value: the value described above
+Status: Complete
+*/
+uint32_t __fastcall field_accessor_006363f0_redirect(void *self, void *) {
+    return *reinterpret_cast<const uint32_t *>(
+        static_cast<const uint8_t *>(self) + 0x4ac)
+        & 0x8000U;
+}
+
+/*
 Purpose: Set 4 field(s) to constants.
          Emitted by tools/generate_field_accessors.py from
 
@@ -639,9 +693,11 @@ Purpose: Set 4 field(s) to constants.
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans 0 argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: 0063E520
 Return Value: the value described above
 Status: Complete
