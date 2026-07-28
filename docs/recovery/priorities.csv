@@ -1750,9 +1750,7 @@ P2,5220,0x0058FC50,?get_him_her@@YAPADHH@Z,139,5,2,unrecovered,,,2,exact,exact,
 P2,6220,0x0058FCE0,?get_he_she@@YAPADHH@Z,139,6,2,unrecovered,,,2,exact,exact,
 P0,1004121,0x0058FD90,?unlock@SquareLock@@QAEXH@Z,231,4,1,source_complete,ui_dependency,recover_square_lock_unlock,2,exact,exact,"void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)"
 P0,1004121,0x0058FE80,?lock@SquareLock@@QAEHHHHH@Z,232,4,1,source_complete,ui_dependency,recover_square_lock_lock,2,exact,exact,"BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)"
-P3,111,0x0058FFC0,?unlock@PlayerLock@@QAEXH@Z,50,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?unlock@PlayerLock@@QAEXH@Z)(PlayerLock* this, int)"
 P3,211,0x00590000,?lock@PlayerLock@@QAEHHHHHHHH@Z,147,0,2,unrecovered,,,1,missing,exact,"int (__thiscall ?lock@PlayerLock@@QAEHHHHHHHH@Z)(PlayerLock* this, int, int, int, int, int, int, int)"
-P3,111,0x005900A0,?add_lock@PlayerLock@@QAEHHHHH@Z,33,0,1,unrecovered,,,1,missing,exact,"int (__thiscall ?add_lock@PlayerLock@@QAEHHHHH@Z)(PlayerLock* this, int, int, int, int)"
 P3,10,0x00590500,sub_590500,153,0,0,unrecovered,,,1,exact,missing,
 P3,320,0x00590510,?say_reactor@@YAXPAXHH@Z,165,0,3,unrecovered,,,2,exact,exact,
 P3,320,0x005905C0,?say_weapon@@YAXPAXHH@Z,300,0,3,unrecovered,,,2,exact,exact,

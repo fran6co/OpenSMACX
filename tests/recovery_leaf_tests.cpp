@@ -2360,6 +2360,99 @@ void test_win_move() {
     }
 }
 
+struct PlayerLockProbe {
+    int lock_calls;
+    void *lock_entry;
+    int lock_faction, lock_flags, lock_x, lock_y;
+    int unlock_calls;
+    void *unlock_entries[4];
+    int unlock_faction;
+    int active_during_last_unlock;
+};
+PlayerLockProbe g_player_lock_probe = {};
+uint8_t *g_player_lock_object = nullptr;
+
+int __thiscall probe_player_lock_lock(void *entry, int a1, int a2, int a3, int a4) {
+    ++g_player_lock_probe.lock_calls;
+    g_player_lock_probe.lock_entry = entry;
+    g_player_lock_probe.lock_faction = a1;
+    g_player_lock_probe.lock_flags = a2;
+    g_player_lock_probe.lock_x = a3;
+    g_player_lock_probe.lock_y = a4;
+    return 0x1234ABCD;
+}
+
+void __thiscall probe_player_lock_unlock(void *entry, int slot) {
+    if (g_player_lock_probe.unlock_calls < 4) {
+        g_player_lock_probe.unlock_entries[g_player_lock_probe.unlock_calls] = entry;
+    }
+    ++g_player_lock_probe.unlock_calls;
+    g_player_lock_probe.unlock_faction = slot;
+    // The active byte must still be SET while the entries are being released;
+    // the original clears it after the loop.
+    if (g_player_lock_object) {
+        g_player_lock_probe.active_during_last_unlock = *g_player_lock_object;
+    }
+}
+
+void test_player_lock() {
+    func_square_lock_lock *const saved_lock = LockSquareLock;
+    func_square_lock_unlock *const saved_unlock = LockSquareUnlock;
+    LockSquareLock = &probe_player_lock_lock;
+    LockSquareUnlock = &probe_player_lock_unlock;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        // add_lock: entries_[1] at +0x10, and bit 4 forced on regardless of
+        // what the caller passed.
+        for (int flags : {0, 1, 0x10, 0x2F, -1, 0x7FFFFFFF}) {
+            alignas(PlayerLock) uint8_t storage[sizeof(PlayerLock) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            std::memcpy(expected, storage, sizeof(storage));
+            auto *lock = reinterpret_cast<PlayerLock *>(storage + 16);
+            g_player_lock_probe = PlayerLockProbe{};
+            const int got = use_adapter
+                ? player_lock_add_lock_redirect(lock, nullptr, 7, flags, 11, 13)
+                : lock->add_lock(7, flags, 11, 13);
+            expect(got == 0x1234ABCD);
+            expect(g_player_lock_probe.lock_calls == 1);
+            expect(g_player_lock_probe.lock_entry == storage + 16 + 0x10);
+            expect(g_player_lock_probe.lock_faction == 7);
+            expect(g_player_lock_probe.lock_flags == (flags | 0x10));
+            expect(g_player_lock_probe.lock_x == 11);
+            expect(g_player_lock_probe.lock_y == 13);
+            // add_lock writes nothing itself.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+
+        // unlock: both entries in order, then the active byte cleared LAST.
+        alignas(PlayerLock) uint8_t storage[sizeof(PlayerLock) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        storage[16] = 1;                       // active_
+        std::memcpy(expected, storage, sizeof(storage));
+        expected[16] = 0;
+        auto *lock = reinterpret_cast<PlayerLock *>(storage + 16);
+        g_player_lock_probe = PlayerLockProbe{};
+        g_player_lock_object = storage + 16;
+        if (use_adapter) {
+            player_lock_unlock_redirect(lock, nullptr, 5);
+        } else {
+            lock->unlock(5);
+        }
+        g_player_lock_object = nullptr;
+        expect(g_player_lock_probe.unlock_calls == 2);
+        expect(g_player_lock_probe.unlock_entries[0] == storage + 16 + 4);
+        expect(g_player_lock_probe.unlock_entries[1] == storage + 16 + 0x10);
+        expect(g_player_lock_probe.unlock_faction == 5);
+        expect(g_player_lock_probe.active_during_last_unlock == 1);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    LockSquareLock = saved_lock;
+    LockSquareUnlock = saved_unlock;
+}
+
 void test_setup_win_scaling_and_datalink_combine() {
     // SetupWin::UNK1 and UNK2 are signed divisions by 1024 and 768 written as
     // MSVC idioms - a biased arithmetic shift and a magic-number multiply. The
@@ -28273,6 +28366,7 @@ int main() {
     test_win_query_new_palette();
     test_check_box_state_word();
     test_setup_win_scaling_and_datalink_combine();
+    test_player_lock();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();
