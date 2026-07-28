@@ -358,6 +358,15 @@ int main(int argc, char **argv) {
                                      "page it fills\n");
                 return 3;
             }
+        } else {
+            // Said out loud, because it is the whole reason for moving to a
+            // native x86-64 host and because "the arbitration did not run" and
+            // "the arbitration ran and found nothing" are indistinguishable in
+            // a report that does not print this line.
+            std::printf("selftest: guest 0xffff0000 is NOT accessible on this "
+                        "host - it faults, so the three-fill top-page "
+                        "arbitration is inert and every case that would have "
+                        "needed it now faults into INCONCLUSIVE instead\n");
         }
     }
 
