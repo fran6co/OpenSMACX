@@ -1297,17 +1297,45 @@ constexpr size_t OracleTopPageSize = 0x10000U;
 static bool g_top_page_writable = false;
 
 void oracle_probe_top_page() {
-    volatile uint32_t *const probe =
-        reinterpret_cast<volatile uint32_t *>(OracleTopPageBase + OracleTopPageSize - 4);
-    // The VEH is armed by oracle_arm and treats a fault outside a running side
-    // as fatal, so this must not be attempted before it is safe. It is called
-    // from oracle_arm itself, where g_side is idle and a fault would be a
-    // genuine crash - which is why the probe is a plain read-back rather than
-    // something that has to survive an exception.
-    const uint32_t saved = *probe;
-    *probe = 0x5A5AA5A5U;
-    g_top_page_writable = (*probe == 0x5A5AA5A5U);
-    *probe = saved;
+    void *const probe =
+        reinterpret_cast<void *>(OracleTopPageBase + OracleTopPageSize - 4);
+    // This USED to be a plain dereference, and that was a statement about the
+    // host rather than a choice: on arm64 macOS the top 64 KiB is committed
+    // memory that VirtualQuery refuses to describe and a plain read returns
+    // zero from, so nothing here could fault. On native x86-64 Linux the same
+    // address is above the 32-bit TASK_SIZE and simply faults - and since
+    // oracle_arm calls this AFTER arming the VEH but with g_side idle, the
+    // fault was correctly classified as a harness crash and killed the run
+    // before a single case executed. The probe cannot be the one thing that
+    // assumes the answer it exists to measure.
+    //
+    // ReadProcessMemory/WriteProcessMemory on our OWN process is the way to
+    // ask without an exception at all: they return FALSE and set
+    // ERROR_PARTIAL_COPY for an inaccessible address instead of raising. That
+    // keeps the arm64 answer identical - the page is writable there, so the
+    // arbitration stays armed - while letting this host answer "it faults",
+    // which is the answer that makes the whole three-fill arbitration inert.
+    // Every consumer below already guards on g_top_page_writable, so nothing
+    // else has to change for it to retire itself.
+    HANDLE self = GetCurrentProcess();
+    uint32_t saved = 0;
+    SIZE_T moved = 0;
+    if (!ReadProcessMemory(self, probe, &saved, sizeof saved, &moved)
+        || moved != sizeof saved) {
+        g_top_page_writable = false;
+        return;
+    }
+    const uint32_t pattern = 0x5A5AA5A5U;
+    if (!WriteProcessMemory(self, probe, &pattern, sizeof pattern, &moved)
+        || moved != sizeof pattern) {
+        g_top_page_writable = false;
+        return;
+    }
+    uint32_t seen = 0;
+    g_top_page_writable =
+        ReadProcessMemory(self, probe, &seen, sizeof seen, &moved)
+        && moved == sizeof seen && seen == pattern;
+    WriteProcessMemory(self, probe, &saved, sizeof saved, &moved);
 }
 
 // Written with an explicit loop, and that is not style.
