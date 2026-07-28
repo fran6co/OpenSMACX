@@ -2408,6 +2408,88 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_sprite_box_id_to_pos() {
+    // A list walk over four raw fields. Four behaviours have to be separated,
+    // and three of them are edge cases the middle of the walk never reaches:
+    //   * a NULL head returns the existing position and writes NOTHING;
+    //   * a non-null head with count <= 0 still zeroes position and parks the
+    //     cursor, because both stores precede the count check;
+    //   * a match stops WITHOUT counting that entry;
+    //   * no match stops after `count` entries, not at the end of the list.
+    struct Entry { uint32_t pad0; int32_t id; uint32_t pad8; uint32_t next; };
+    static Entry entries[4];
+    for (int i = 0; i < 4; ++i) {
+        entries[i].pad0 = 0xAAAA0000U + static_cast<uint32_t>(i);
+        entries[i].id = 100 + i;
+        entries[i].pad8 = 0xBBBB0000U + static_cast<uint32_t>(i);
+        entries[i].next = (i < 3)
+            ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&entries[i + 1]))
+            : 0;
+    }
+
+    struct Case { uint32_t head; int32_t count; int id; uint32_t seed_pos;
+                  uint32_t want_pos; int want_cursor; bool writes; };
+    const uint32_t first = static_cast<uint32_t>(
+        reinterpret_cast<uintptr_t>(&entries[0]));
+    const Case cases[] = {
+        // null head: nothing written, the seeded position comes back
+        {0,     4, 100, 0x1234U, 0x1234U, -1, false},
+        {0,     0, 999, 0x4321U, 0x4321U, -1, false},
+        // headed but empty: position zeroed, cursor parked at head
+        {first, 0, 100, 0x9999U, 0,        0, true},
+        {first, -1, 100, 0x9999U, 0,       0, true},
+        // match at each position
+        {first, 4, 100, 0x9999U, 0,        0, true},
+        {first, 4, 101, 0x9999U, 1,        1, true},
+        {first, 4, 103, 0x9999U, 3,        3, true},
+        // no match: stops after `count` entries
+        {first, 4, 555, 0x9999U, 4,       -2, true},
+        {first, 2, 555, 0x9999U, 2,       -2, true},
+        // count <= 0 with a NON-matching first entry. Both cases above used a
+        // matching one, so `<= 0` and `< 0` returned the same answer and the
+        // sweep survived a mutant that walks when it must not. Here the walk
+        // is observable: `<= 0` leaves position 0 and the cursor at the head,
+        // while entering the loop would advance both.
+        {first, 0, 555, 0x9999U, 0,        0, true},
+        // count == 1, which separates `<= 0` from `<= 1`: one entry IS
+        // examined, so position lands on 1 and the cursor on the successor.
+        {first, 1, 555, 0x9999U, 1,        1, true},
+    };
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (const Case &one : cases) {
+            alignas(SpriteBox) uint8_t storage[sizeof(SpriteBox) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x2C, one.head);
+            write_at(storage, 16 + 0x34, one.count);
+            write_at(storage, 16 + 0x38, one.seed_pos);
+            const uint32_t parked = 0xCCCCCCCCU;
+            write_at(storage, 16 + 0x30, parked);
+            std::memcpy(expected, storage, sizeof(storage));
+            if (one.writes) {
+                write_at(expected, 16 + 0x38, one.want_pos);
+                uint32_t cursor;
+                if (one.want_cursor >= 0) {
+                    cursor = static_cast<uint32_t>(
+                        reinterpret_cast<uintptr_t>(&entries[one.want_cursor]));
+                } else {
+                    // walked off: cursor is whatever the last `next` gave
+                    cursor = entries[one.count - 1].next;
+                }
+                write_at(expected, 16 + 0x30, cursor);
+            }
+
+            auto *box = reinterpret_cast<SpriteBox *>(storage + 16);
+            const uint32_t got = use_adapter
+                ? sprite_box_id_to_pos_redirect(box, nullptr, one.id)
+                : box->id_to_pos(one.id);
+            expect(got == one.want_pos);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 void test_map_win_is_console() {
     // `cmp ecx, 0x9156B0 / sete al`: an identity test against the process-wide
     // Console, normalised to 0 or 1. Nothing is dereferenced, so the fixture
@@ -28774,6 +28856,7 @@ int main() {
     test_base_pop_button_font_and_caviar_readback();
     test_base_pop_item();
     test_map_win_is_console();
+    test_sprite_box_id_to_pos();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();

@@ -4836,7 +4836,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00611380,0x006113F9,121,.text,?on_redraw@SpriteBox@@QAEXXZ,void (__thiscall ?on_redraw@SpriteBox@@QAEXXZ)(SpriteBox* this),0x00611380-0x006113F9,game,hidden;sp_ready;purged_ok,,,,SpriteBoxOnRedrawTarget,original_dependency,,,,2,0
 0x00611400,0x00611580,384,.text,?on_key_down@SpriteBox@@QAEHH@Z,"int (__thiscall ?on_key_down@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)",0x00611400-0x00611580,game,hidden;sp_ready;purged_ok,,,,SpriteBoxOnKeyDownTarget,original_dependency,,,,1,1
 0x006115E0,0x00611600,32,.text,?on_dialog_focus@SpriteBox@@QAEXH@Z,"void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)",0x006115E0-0x00611600,game,hidden;sp_ready;purged_ok,,,,SpriteBoxOnDialogFocusTarget,original_dependency,,,,0,1
-0x00611600,0x00611640,64,.text,?id_to_pos@SpriteBox@@QAEXH@Z,"void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)",0x00611600-0x00611640,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00611600,0x00611640,64,.text,?id_to_pos@SpriteBox@@QAEXH@Z,"void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)",0x00611600-0x00611640,game,hidden;sp_ready;purged_ok,src/spritebox.cpp:72,Complete,,,source_complete,,,,0,0
 0x00611640,0x006116B6,118,.text,?pos_to_id@SpriteBox@@QAEXH@Z,"void (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)",0x00611640-0x006116B6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x006116E0,0x00611728,72,.text,sub_6116e0,,0x006116E0-0x00611728,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00611730,0x006117C3,147,.text,sub_611730,,0x00611730-0x006117C3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
