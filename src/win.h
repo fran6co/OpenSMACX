@@ -70,6 +70,7 @@ class DLLEXPORT Win {
   static HDC get_hdc();
   static void release_hdc();
   void client_to_screen(int *x, int *y);
+  int on_query_new_palette();
   int get_vert_pos();
   int get_horz_pos();
   void set_vert_paging(int paging);
@@ -183,6 +184,7 @@ int __fastcall win_move_redirect(Win *self, void *, int x, int y);
 int __fastcall win_is_visible_redirect(Win *self, void *);
 void __fastcall win_client_to_screen_redirect(
     Win *self, void *, int *x, int *y);
+int __fastcall win_on_query_new_palette_redirect(Win *self, void *);
 int __fastcall win_get_vert_pos_redirect(Win *self, void *);
 int __fastcall win_get_horz_pos_redirect(Win *self, void *);
 void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging);
