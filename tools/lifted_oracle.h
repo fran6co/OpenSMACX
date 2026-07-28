@@ -350,6 +350,16 @@ void oracle_dump_seed(uint32_t address, int case_index);
 // to it is observable there too - and a comparison that only wakes up on the
 // 58 x87-using functions could not be proved live on the address the selfcheck
 // runs.
+// OracleFlagBit set that the ARCHITECTURE leaves undefined on every path
+// reaching the current function's RET, so it is excluded from the flag
+// comparison. Set from the plan's `undef=<hex>` token before each function;
+// zero means "compare every flag", which is what a run with no plan gets.
+//
+// This exists because the original side is not silicon: it is the host's x86
+// layer, and it answers three different ways for one IDIV. See the block
+// comment in lifted_oracle_plan.py for the measurements.
+extern uint32_t oracle_undefined_exit_flags;
+
 extern int oracle_perturb;
 constexpr int OraclePerturbNone = 0;
 constexpr int OraclePerturbRegisterFirst = 1;   // .. 8
@@ -379,6 +389,20 @@ uint32_t oracle_seal_address_space();
 // block comment in the .cpp; `oracle_arm` calls the probe.
 void oracle_probe_top_page();
 bool oracle_top_page_writable();
+
+// Where the lifted image sits in the HOST's address space. Printed with every
+// run because it is the only number that says whether a FAIL could be a
+// host-layout artifact: see ORACLE_LAYOUT_SHIM in lifted_oracle.cpp.
+const void *oracle_lifted_image_host_address();
+
+// Does the top-page fill reach the END of the page? The first version of the
+// arbitration used memset, which stops early there because the end pointer is
+// 0x100000000 - and a detector that fills only the start silently reports "the
+// original did not read the top page" for a case whose blamed instruction
+// reads 0xFFFFFF88. Restoring memset leaves --selfcheck at 20/20 and drops
+// top-page detections from 20 to 4, so the defect had no test at all. This is
+// that test: --selftest fills the page and reads the last word back.
+bool oracle_top_page_fill_reaches_end();
 
 // The description depends on the ADDRESS as well as the case, because every
 // case from OracleLegacyCases up draws its shape from the pair. Returns a

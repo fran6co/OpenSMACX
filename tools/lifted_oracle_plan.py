@@ -51,12 +51,154 @@ sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 import pefile  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
+from capstone import x86 as cs_x86  # noqa: E402
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_REG_INVALID  # noqa: E402
 
 import lift_whole_image as lift  # noqa: E402
 
 X87_PREFIXES = ("f",)   # every x87 mnemonic starts with f; see X87_EXCEPT below
 X87_EXCEPT = {"fs"}     # nothing else in the decoder starts with f but is not x87
+
+# ---------------------------------------------------------------------------
+# Flags the ORIGINAL is allowed to disagree about
+#
+# IDIV, DIV, MUL and IMUL leave some flags architecturally UNDEFINED.
+# `lifted_muldiv.h` and `lifted_x86.h` write a deterministic value there on
+# purpose; the silicon - or, on this host, the x86-on-ARM layer Wine runs the
+# original through - writes a different one. Measured on this host with the
+# oracle's own seeds and entry flags 0x202:
+#
+#   ?fixed_div@@YAHJJ@Z    the whole `sar/shl/idiv` body comes back with the
+#                          ENTRY flags: the emulator's IDIV discards the
+#                          pending flag update from the shifts.
+#   ?speed_proto@@YAHH@Z   `imul eax,esi` comes back with SF ZF PF AF all
+#                          CLEAR whatever the product is - including for a
+#                          NEGATIVE product, which is why SF is undefined too.
+#   ?guard_check@@YAHHH@Z  the same IDIV comes back with CF SET, where the
+#                          same instruction on the same operands in a
+#                          standalone probe leaves CF clear.
+#
+# Three different answers from one instruction class is what "undefined"
+# means, and no lowering can be written that matches all three. So a flag that
+# is undefined on every path reaching a RET is not compared. Everything else
+# still is - including CF and OF after IMUL, which ARE defined, and every flag
+# after the shifts, whose OF was measured to agree with lifted_x86.h's uniform
+# rule in 651 of 651 cases.
+#
+# The mask is computed per function and travels in the plan as `undef=<hex>`,
+# in the oracle's own OracleFlagBit numbering.
+ORACLE_FLAG_BITS = {
+    "CF": 1 << 0, "PF": 1 << 1, "AF": 1 << 2, "ZF": 1 << 3,
+    "SF": 1 << 4, "OF": 1 << 5, "DF": 1 << 6,
+}
+
+# capstone reports each flag three ways: MODIFY/RESET/SET write a DEFINED
+# value, UNDEFINED writes an undefined one. TEST and PRIOR are reads.
+_CS_DEFINES: dict[int, int] = {}
+_CS_UNDEFINES: dict[int, int] = {}
+for _name, _bit in ORACLE_FLAG_BITS.items():
+    for _kind in ("MODIFY", "RESET", "SET"):
+        _value = getattr(cs_x86, f"X86_EFLAGS_{_kind}_{_name}", 0)
+        if _value:
+            _CS_DEFINES[_value] = _CS_DEFINES.get(_value, 0) | _bit
+    _value = getattr(cs_x86, f"X86_EFLAGS_UNDEFINED_{_name}", 0)
+    if _value:
+        _CS_UNDEFINES[_value] = _CS_UNDEFINES.get(_value, 0) | _bit
+
+# capstone is WRONG about one flag, and it is one this image depends on. For
+# IMUL in every form the SDM says "the SF, ZF, AF, and PF flags are undefined";
+# capstone reports MODIFY_SF. Measured on this host: `imul` of -5 * 7 = -35 and
+# of -1 * 1 = -1 both come back with SF CLEAR, so SF is not the sign of the
+# product there and the manual is right. Believing capstone left sub_559210 -
+# `cdq / idiv ecx / imul eax,ecx` - reported as a lowering defect in SF. MUL is
+# already correct in capstone; it is listed anyway so the two multiplies cannot
+# drift apart.
+MULTIPLY_UNDEFINED = (ORACLE_FLAG_BITS["SF"] | ORACLE_FLAG_BITS["ZF"]
+                      | ORACLE_FLAG_BITS["AF"] | ORACLE_FLAG_BITS["PF"])
+
+
+def instruction_flag_effect(one) -> tuple[int, int]:
+    """(defined, undefined) masks in OracleFlagBit numbering."""
+    eflags = one.eflags
+    defined = undefined = 0
+    if one.mnemonic in ("imul", "mul"):
+        undefined |= MULTIPLY_UNDEFINED
+    for value, bit in _CS_DEFINES.items():
+        if eflags & value:
+            defined |= bit
+    for value, bit in _CS_UNDEFINES.items():
+        if eflags & value:
+            undefined |= bit
+    # A flag cannot be both; capstone never says so, but a decoder change that
+    # did would silently widen the mask, so undefined loses.
+    return defined & ~undefined, undefined
+
+
+def undefined_exit_flags(instructions: dict, spans: list) -> int:
+    """Flags that are undefined on SOME path reaching a return.
+
+    A forward, union-merge dataflow over the function's own instructions.
+    Entry state is "nothing undefined": the seeded entry flags are a defined
+    input both sides receive. `call` resets the state, because the flags after
+    a call belong to the callee - a callee whose own exit flags are undefined
+    is that callee's plan row, not this one's. An indirect or out-of-function
+    transfer is treated as a return, which masks more rather than less.
+
+    The result is a union over every RET, because the oracle cannot know which
+    one a case took. A function that reaches one RET after a divide and another
+    after a compare therefore masks the flag at both.
+    """
+    if not instructions:
+        return 0
+    inside = set()
+    for low, high in spans:
+        inside.update(range(low, high))
+    entry = min(instructions)
+    state = {entry: 0}
+    work = [entry]
+    exits = 0
+    while work:
+        address = work.pop()
+        one = instructions.get(address)
+        if one is None:
+            continue
+        incoming = state[address]
+        defined, undefined = instruction_flag_effect(one)
+        outgoing = (incoming & ~defined) | undefined
+        mnemonic = one.mnemonic
+        if mnemonic.startswith("ret") or mnemonic in ("iret", "iretd", "hlt"):
+            exits |= incoming          # RET itself writes no flag
+            continue
+        if mnemonic == "call":
+            outgoing = 0               # the callee decides the flags
+            successors = [address + one.size]
+        elif mnemonic == "jmp":
+            operand = one.operands[0]
+            if operand.type == X86_OP_IMM and operand.imm in inside:
+                successors = [operand.imm]
+            else:
+                exits |= outgoing      # tail call or switch: treat as a return
+                continue
+        elif mnemonic.startswith("j") or mnemonic.startswith("loop"):
+            successors = [address + one.size]
+            operand = one.operands[0]
+            if operand.type == X86_OP_IMM:
+                if operand.imm in inside:
+                    successors.append(operand.imm)
+                else:
+                    exits |= outgoing
+        else:
+            successors = [address + one.size]
+        for successor in successors:
+            if successor not in instructions:
+                exits |= outgoing
+                continue
+            merged = state.get(successor, 0) | outgoing
+            if successor not in state or merged != state[successor]:
+                state[successor] = merged
+                work.append(successor)
+    return exits
+
 
 
 def iat_slots(pe: pefile.PE) -> set[int]:
@@ -97,9 +239,11 @@ def scan(pe: pefile.PE, functions: list[dict], slots: set[int]) -> None:
             inside.update(range(low, high))
         if function["section"] in lift.UNLIFTABLE_SECTIONS:
             local.add("selfmod")
+        decoded: dict[int, object] = {}
         for low, high in function["spans"]:
             data = lift.read_bytes(pe, low, high - low)
             for one in md.disasm(data, low):
+                decoded[one.address] = one
                 mnemonic = one.mnemonic
                 if mnemonic.startswith("f") and mnemonic not in X87_EXCEPT:
                     local.add("x87")
@@ -138,6 +282,7 @@ def scan(pe: pefile.PE, functions: list[dict], slots: set[int]) -> None:
                         local.add("indirect")
         function["local"] = local
         function["edges"] = edges
+        function["undef"] = undefined_exit_flags(decoded, function["spans"])
 
 
 def close_over_calls(functions: list[dict]) -> None:
@@ -196,7 +341,15 @@ def main() -> int:
                 histogram["testable"] += 1
             for flag in flags:
                 histogram[flag] += 1
-            text = ",".join(sorted(flags)) if flags else "ok"
+            undef = function.get("undef", 0)
+            printed = set(flags)
+            if undef:
+                printed.add(f"undef={undef:x}")
+                histogram["undef"] += 1
+                for name, bit in ORACLE_FLAG_BITS.items():
+                    if undef & bit:
+                        histogram[f"undef-{name}"] += 1
+            text = ",".join(sorted(printed)) if printed else "ok"
             handle.write(f"{function['address']:#010x}\t{text}\t{function['name']}\n")
 
     print(f"functions              {len(functions)}")
