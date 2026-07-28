@@ -664,6 +664,56 @@ if(BUILD_TESTING)
         add_test(NAME recovery-gameplay-tests COMMAND recovery-gameplay-tests)
     endif()
 
+    # The differential oracle's per-function verdict state machine.
+    #
+    # This is the one piece of the oracle that decides every number the project
+    # reports: sixteen per-case verdicts fold into the single row the report
+    # prints and the headline counts. It used to be inline in the driver's case
+    # loop, so exercising it meant running the whole harness under Wine against
+    # the user's own terranx.exe - and a false PASS lived there long enough to
+    # reach committed numbers. tools/lifted_oracle_fold.h is the extraction; it
+    # is pure, so this target links nothing but the test file itself and needs
+    # no image, no Wine prefix and no lifted objects to be meaningful.
+    add_executable(lifted-oracle-fold-tests
+        tests/lifted_oracle_fold_tests.cpp
+    )
+    target_compile_features(lifted-oracle-fold-tests PRIVATE cxx_std_11)
+    set_target_properties(lifted-oracle-fold-tests PROPERTIES
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+    if(MINGW)
+        target_compile_options(lifted-oracle-fold-tests PRIVATE
+            -pedantic
+            -Wall
+            -Wextra
+            -Wshadow
+            $<$<CONFIG:Debug>:-Og>
+            $<$<CONFIG:Release>:-O2>
+        )
+        target_link_options(lifted-oracle-fold-tests PRIVATE -static)
+    endif()
+
+    if(CMAKE_CROSSCOMPILING)
+        set(OPENSMACX_FOLD_TEST_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:lifted-oracle-fold-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+        )
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_FOLD_TEST_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_test(NAME lifted-oracle-fold-tests
+            COMMAND ${OPENSMACX_FOLD_TEST_COMMAND}
+        )
+    else()
+        add_test(NAME lifted-oracle-fold-tests
+            COMMAND lifted-oracle-fold-tests)
+    endif()
+
     if(MINGW)
         add_test(NAME recovery-abi
             COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
@@ -799,6 +849,44 @@ if(BUILD_TESTING)
     add_test(NAME x86-lowerer-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_x86_lower.py"
+    )
+
+    # The mutation runner is the only evidence that an oracle PASS means
+    # anything, so its own bugs turn into confident wrong numbers everywhere
+    # else. Two of its three known defects were classification, not plumbing:
+    # the two kinds of INCONCLUSIVE mean opposite things and were scored the
+    # same, and a mutation whose regex matched nothing vanished from the run
+    # instead of being reported as an untested property.
+    add_test(NAME oracle-mutation-runner-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_mutate.py"
+    )
+
+    # The whole-image summary: every headline number the project publishes.
+    # The byte-weighted verdict table, "compared and agreed", the
+    # percent-of-image figure and the seed histogram are all computed here and
+    # nowhere else, so an arithmetic slip is not caught downstream - it is
+    # printed and believed. Byte weighting in particular has already been got
+    # wrong once in this project, by reading a field that is a SUM of body
+    # spans as if it were a contiguous address extent. The fixtures are
+    # synthetic reports in a temp dir; nothing here reads build/oracle.
+    add_test(NAME lifted-oracle-summary-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_summary.py"
+    )
+
+    # The plan decides what the oracle is allowed to compare, so every mistake
+    # in it can only LOSE coverage - and losing coverage is silent: the
+    # function stops failing instead of starting to. The `undef=<hex>` mask is
+    # the sharpest case, because a mask one bit too wide stops comparing a flag
+    # that is perfectly well defined and nothing downstream can tell that from
+    # agreement. The tests assemble instruction bodies as bytes and pin the
+    # mask in both directions, per flag, including the redefinition rule that
+    # is the whole risk and the second body span this repo has read wrong
+    # before.
+    add_test(NAME lifted-oracle-plan-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_plan.py"
     )
 
     # The import boundary's derivation: which import lives at which IAT slot,

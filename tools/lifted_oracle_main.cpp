@@ -17,6 +17,7 @@
 // reason, never as passed. That count is as important as the pass count.
 
 #include "lifted_oracle.h"
+#include "lifted_oracle_fold.h"
 
 #include <windows.h>
 
@@ -446,64 +447,34 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        OracleVerdict best = OracleUnrun;
+        // The rules live in oracle_fold_cases / oracle_fold_step, in
+        // lifted_oracle_fold.h, and are unit-tested there. They are NOT
+        // restated here: this loop's only job is to run cases, hand each
+        // verdict to the state machine, and keep the OracleResult of whichever
+        // case the state machine says the report should describe. A second
+        // copy of the rules in this file would make the unit tests describe a
+        // program that is not the one the sweep runs.
+        OracleFoldState fold;
+        oracle_fold_reset(&fold);
         OracleResult worst;
         std::memset(&worst, 0, sizeof worst);
-        int ran = 0;
-        // Cases ATTEMPTED is not cases COMPARED. A function whose original
-        // side faults on three of four seeds is reported PASS on the strength
-        // of one, and the column said "4" either way - so 141 of the 1,366
-        // passes rested on a single seed with nothing in the report to say so.
-        int compared = 0;
-        // A function whose ORIGINAL loops forever costs one watchdog period per
-        // case, and the case count went from four to sixteen. At the 4 s
-        // default that is 64 seconds for one function, which is both wasted -
-        // the seventh timeout tells you nothing the second did not - and
-        // actively harmful: the supervising sweep decides a run has hung by
-        // watching the report stop growing, so a function that legitimately
-        // takes a minute is killed and recorded as a HANG. Three of those
-        // appeared in the first sixteen-case sweep. Two timeouts is the answer;
-        // the verdict is the same either way.
-        int timeouts = 0;
-        // Cases the top-page arbitration threw out. Survives the function-level
-        // upgrade to PASS so the report can say the seed never got a verdict.
-        int arbitrated = 0;
         for (int c = 0; c < cases; ++c) {
             if (verbose) std::printf("stage: case %#010x/%d\n", unsigned(entry.address), c);
             OracleResult r = oracle_run_case(entry.address, c);
             if (verbose) std::printf("stage:   -> %s\n", oracle_verdict_name(r.verdict));
-            ran++;
-            if (r.verdict == OraclePass || r.verdict == OracleFail) compared++;
-            if (r.verdict == OracleInconclusiveTopPage) arbitrated++;
-            if (r.verdict == OracleFail || r.verdict == OracleFailLiftedFault) {
-                best = r.verdict;
-                worst = r;
-                break;
-            }
-            if (r.verdict == OraclePass && best != OracleSkipTrap) {
-                // A later PASS upgrades away the verdicts that describe the
-                // ORIGINAL side being unrunnable on that seed. It must NOT
-                // upgrade away the two that describe the LIFTED side
-                // misbehaving while the original was healthy - those are
-                // findings, and one good seed does not retract them.
-                if (best == OracleUnrun || best == OracleInconclusiveFault ||
-                    best == OracleInconclusiveBudget ||
-                    best == OracleInconclusiveTopPage) {
-                    best = OraclePass;
-                }
-            } else if (r.verdict == OracleSkipTrap) {
-                best = OracleSkipTrap;
-                worst = r;
-                break;
-            } else if (best == OracleUnrun) {
-                best = r.verdict;
-                worst = r;
-            }
-            if (r.verdict == OracleInconclusiveBudget ||
-                r.verdict == OracleInconclusiveLiftedBudget) {
-                if (++timeouts >= 2) break;
-            }
+            const int previous_winner = fold.winning_case;
+            const bool keep_going = oracle_fold_step(&fold, r.verdict, c);
+            if (fold.winning_case != previous_winner) worst = r;
+            if (!keep_going) break;
         }
+        const OracleVerdict best = fold.verdict;
+        // The two count columns and the PASS caveat come out of the same
+        // unit-tested header as the rules. They used to be bare reads off
+        // `fold` here, which is how `compared` could quietly become `ran` and
+        // `arbitrated` could quietly become 0 with every test green.
+        const OracleRowCounts counts = oracle_row_counts(fold);
+        const int ran = counts.cases;
+        const int compared = counts.compared;
 
         if (has_flag(entry.flags, "x87") && best == OraclePass) x87_tested++;
         if (has_flag(entry.flags, "indirect") && best == OraclePass) indirect_tested++;
@@ -512,14 +483,10 @@ int main(int argc, char **argv) {
         switch (best) {
             case OraclePass:
                 tally.passed++;
-                if (arbitrated) {
+                // One call decides both the caveat text and the tally, so the
+                // printed row and the printed total cannot disagree.
+                if (oracle_pass_caveat(fold, detail, sizeof detail))
                     tally.passed_with_arbitration++;
-                    std::snprintf(detail, sizeof detail,
-                                  "passed on the seeds that could be judged; "
-                                  "%d case(s) thrown out - the original read "
-                                  "the unmodellable top 64 KiB",
-                                  arbitrated);
-                }
                 break;
             case OracleSkipTrap:
                 tally.trap++; tally.skipped++; skip_counts[5]++;
