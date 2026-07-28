@@ -85,11 +85,23 @@ class GameplayScenarioToolTests(unittest.TestCase):
         self.assertTrue(command_runs_scenario_executable(
             f"Z:\\game\\{alias.name} ", alias))
         with tempfile.TemporaryDirectory() as directory:
+            # The uppercase directory name is the point. The matcher stats this
+            # path, so if it stats a casefolded copy of it the lookup fails on
+            # every case-sensitive filesystem - which is to say on Linux, where
+            # the harness is meant to run. macOS hid this for as long as the
+            # project only ever ran there.
             launcher = Path(directory) / "Wine App" / "wine"
             launcher.parent.mkdir()
             launcher.touch()
             self.assertTrue(command_runs_scenario_executable(
                 f"{launcher} {alias}", alias))
+            # Wine itself is sometimes installed as `Wine` or `WINE`; the
+            # basename test must stay case-insensitive even though the
+            # directory lookup is not.
+            shouty = Path(directory) / "Wine App" / "WINE"
+            shouty.touch()
+            self.assertTrue(command_runs_scenario_executable(
+                f"{shouty} {alias}", alias))
         self.assertFalse(command_runs_scenario_executable(
             f"python inspect.py {alias}", alias))
         self.assertFalse(command_runs_scenario_executable(
