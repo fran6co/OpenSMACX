@@ -1787,6 +1787,9 @@ address,kind
 0x0060E630,jump
 0x0060E650,jump
 0x0060E7C0,jump
+0x0060EB50,jump
+0x0060EC80,jump
+0x0060ECC0,jump
 0x0060FD60,jump
 0x0060FE40,jump
 0x0060FE50,jump

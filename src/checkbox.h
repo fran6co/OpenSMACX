@@ -42,6 +42,9 @@ class DLLEXPORT CheckBox {
   CheckBox() { ; }
   ~CheckBox() { ; }
   void close();
+  void UNK1(int pos);
+  int UNK2(int pos);
+  void set_state_pos(int pos, int state);
 
  private:
   uint32_t vbtable_pointer_;
@@ -64,3 +67,6 @@ extern uint32_t *CheckBoxDefault1;
 extern uint32_t *CheckBoxDefault2;
 
 void __fastcall check_box_close_redirect(CheckBox *self, void *);
+void __fastcall check_box_unk1_redirect(CheckBox *self, void *, int pos);
+int __fastcall check_box_unk2_redirect(CheckBox *self, void *, int pos);
+void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *, int pos, int state);
