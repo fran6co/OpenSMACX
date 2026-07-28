@@ -52,6 +52,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
+from find_constant_returns import declared_arity  # noqa: E402
 from capstone import (CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP,  # noqa: E402
                       CS_MODE_32, Cs)
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM  # noqa: E402
@@ -241,6 +242,33 @@ def main(argv=None) -> int:
             why.append("does not fully decode")
         callees, reasons, bindings = classify(instructions, address, size, span)
         why.extend(reasons)
+
+        # THE ARITY MUST AGREE WITH THE STACK CLEANUP, and this is the check
+        # find_constant_returns.py already applies for the same reason.
+        #
+        # A recovered body replaces the original through a jump patch, so a
+        # declaration that pops a different number of bytes than the original
+        # corrupts its CALLER - the failure the working rules call the worst in
+        # this project, because the crash lands somewhere unrelated.
+        #
+        # ?on_redraw@Win@@QAEHXZ is the case: the name declares no parameters
+        # and the body is `xor eax,eax / ret 8`. Every other on_redraw in the
+        # image is QAEXXZ, and InfoWin's is a one-byte `ret` popping nothing,
+        # so it cannot even share a vtable slot with this one. There are no
+        # direct callers to settle it from - it is reached only virtually - so
+        # either the catalogued name or the body is wrong and nothing here can
+        # say which. Declaring it either way is a guess that a passing test
+        # would hide.
+        arity = declared_arity(row["name"])
+        if arity is not None and instructions:
+            last = instructions[-1]
+            if last.mnemonic == "ret":
+                popped = (last.operands[0].imm
+                          if last.operands and last.operands[0].type == X86_OP_IMM
+                          else 0)
+                if popped != arity[1]:
+                    why.append(f"declares {arity[1]} bytes of arguments and "
+                               f"cleans {popped}")
 
         # The patch slack rule: a five-byte jump has to fit.
         position = ordered.index(address) if address in state else -1
