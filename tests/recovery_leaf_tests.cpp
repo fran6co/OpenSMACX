@@ -2395,6 +2395,72 @@ void __thiscall probe_player_lock_unlock(void *entry, int slot) {
     }
 }
 
+Dialog *g_base_pop_item_dialog = nullptr;
+char *g_base_pop_item_text = nullptr;
+int g_base_pop_item_index = 0;
+int g_base_pop_item_calls = 0;
+
+int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
+    ++g_base_pop_item_calls;
+    g_base_pop_item_dialog = dialog;
+    g_base_pop_item_text = text;
+    g_base_pop_item_index = index;
+    return 0x5A5A1234;
+}
+
+void test_base_pop_item() {
+    // A delegation to the Dialogs at 0x21D0. The offset is the whole content,
+    // so the fixture seeds a Dialogs THERE and nowhere else: a body using a
+    // different offset reads an unseeded kind_, falls outside one-to-sixteen,
+    // and returns 0 instead of the probe's value.
+    func_dialog_item *const saved = DialogOriginalItem;
+    DialogOriginalItem = &probe_base_pop_item;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int kind : {1, 4, 0, 17}) {
+            std::vector<uint8_t> storage(0x21D0 + 0xC00 + 32);
+            std::vector<uint8_t> expected(storage.size());
+            for (size_t i = 0; i < storage.size(); ++i) {
+                storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+            }
+            uint8_t *const dialogs = storage.data() + 16 + 0x21D0;
+            // Its own vbtable: {0, 0x188, 0xBA0}, so the Dialog is at 0xBA0.
+            static const int32_t vbtable[3] = {0, 0x188, 0xBA0};
+            const int32_t *pointer = vbtable;
+            std::memcpy(dialogs, &pointer, sizeof(pointer));
+            const int32_t kind_value = kind;
+            std::memcpy(dialogs + 0x180, &kind_value, sizeof(kind_value));
+            std::memcpy(expected.data(), storage.data(), storage.size());
+
+            char text[8] = "abc";
+            g_base_pop_item_calls = 0;
+            g_base_pop_item_dialog = nullptr;
+            auto *pop = reinterpret_cast<BasePop *>(storage.data() + 16);
+            const int got = use_adapter
+                ? base_pop_item_redirect(pop, nullptr, text, 7)
+                : pop->item(text, 7);
+
+            const bool in_range = (kind >= 1 && kind <= 16);
+            if (in_range) {
+                expect(got == 0x5A5A1234);
+                expect(g_base_pop_item_calls == 1);
+                // Dialog taken from the EMBEDDED object's own vbtable.
+                expect(reinterpret_cast<uint8_t *>(g_base_pop_item_dialog)
+                       == dialogs + 0xBA0);
+                expect(g_base_pop_item_text == text);
+                expect(g_base_pop_item_index == 7);
+            } else {
+                expect(got == 0);
+                expect(g_base_pop_item_calls == 0);
+            }
+            // A delegation writes nothing of its own.
+            expect_storage_bytes(storage.data(), expected.data(), storage.size());
+        }
+    }
+
+    DialogOriginalItem = saved;
+}
+
 void test_base_pop_button_font_and_caviar_readback() {
     // BasePop::set_button_font distinguishes THREE outcomes that the return
     // code alone does not: a null primary refuses and stores nothing; an
@@ -28507,6 +28573,7 @@ int main() {
     test_player_lock();
     test_popup_button_width_and_diplo_clear();
     test_base_pop_button_font_and_caviar_readback();
+    test_base_pop_item();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

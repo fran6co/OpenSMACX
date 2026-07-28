@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2451,
+      "source_complete": 2452,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2909
+      "unrecovered": 2908
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,8 +67,8 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 193385,
-          "functions": 2451,
+          "bytes": 193411,
+          "functions": 2452,
           "percent_of_lift_scope_bytes": 8.02
         },
         "source_in_progress": {
@@ -82,9 +82,9 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2015652,
-          "functions": 2909,
-          "percent_of_lift_scope_bytes": 83.63
+          "bytes": 2015626,
+          "functions": 2908,
+          "percent_of_lift_scope_bytes": 83.62
         }
       },
       "catalogued": {
@@ -103,15 +103,15 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2216932,
+        "bytes": 2216906,
         "direction": "must go down",
-        "functions": 3222,
+        "functions": 3221,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
         "percent_of_lift_scope_bytes": 91.98
       },
       "recovered": {
-        "bytes": 193385,
-        "functions": 2451,
+        "bytes": 193411,
+        "functions": 2452,
         "percent_of_lift_scope_bytes": 8.02
       }
     },
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2397,
-    "matched_function_starts": 2397,
-    "unique_addresses": 2397,
+    "annotations": 2398,
+    "matched_function_starts": 2398,
+    "unique_addresses": 2398,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -5792,7 +5792,7 @@
         "function": "?set_state_flag@CheckBox@@QAEXJ@Z",
         "function_address": "0x0060ECE0",
         "kind": "function",
-        "location": "src/basepop.cpp:358",
+        "location": "src/basepop.cpp:359",
         "symbol": "CheckBoxOriginalSetStateFlag",
         "type": "func_set_state_flag *"
       },
@@ -5801,7 +5801,7 @@
         "function": "?exec@BasePop@@QAEHHP6AHXZ@Z",
         "function_address": "0x00602600",
         "kind": "function",
-        "location": "src/basepop.cpp:406",
+        "location": "src/basepop.cpp:407",
         "symbol": "BasePopExec",
         "type": "func_base_pop_exec *"
       },

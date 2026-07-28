@@ -1453,6 +1453,7 @@ address,kind
 0x00530320,jump
 0x005310F0,jump
 0x00558FC0,jump
+0x00558FE0,jump
 0x00559040,jump
 0x00559230,jump
 0x00559250,jump

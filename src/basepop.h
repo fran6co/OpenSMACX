@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "graphicwin.h"
+#include "dialogs.h"
 #include "flatbutton.h"
 
  /*
@@ -47,6 +48,7 @@ class DLLEXPORT BasePop : GraphicWin {
   // they take no instance.
   static int set_def_string_font(Font *font1, Font *font2, Font *font3,
                                  Font *font4);
+  int item(char *text, int index);
   int set_button_font(Font *font1, Font *font2, Font *font3);
   static int set_def_button_font(Font *font1, Font *font2, Font *font3);
   BasePop() { ; }
@@ -424,6 +426,7 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 extern uint32_t *BasePopDefaultStringColors;
 extern uint32_t *BasePopDefaultButtonColors;
 
+int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text, int index);
 int __fastcall base_pop_set_button_font_redirect(BasePop *self, void *, Font *font1, Font *font2, Font *font3);
 void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1);
 void __fastcall base_pop_unk4_redirect(BasePop *self, void *, int a1);

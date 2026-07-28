@@ -1630,7 +1630,6 @@ P3,5120,0x0054F420,?make_a_proposal@@YAXHHH@Z,3451,1,41,unrecovered,,,2,exact,en
 P2,16021,0x0054FFD0,?communicate@@YAXHHH@Z,35269,5,110,unrecovered,,,2,exact,entry_range,"void (__cdecl ?communicate@@YAXHHH@Z)(int factionID, int, int)"
 P3,3620,0x005589E0,?commlink_attempter@@YAHHH@Z,629,3,6,unrecovered,,,2,exact,exact,
 P3,4320,0x00558C60,?commlink_attempt@@YAXH@Z,852,3,13,unrecovered,,,2,exact,exact,
-P3,2121,0x00558FE0,?item@BasePop@@QAEHPADH@Z,26,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)"
 P3,1120,0x00559000,sub_559000,58,1,1,unrecovered,,,2,exact,exact,
 P3,2021,0x00559060,?get_name@@YAPADH@Z,50,2,0,unrecovered,,,2,exact,exact,int8* (__cdecl ?get_name@@YAPADH@Z)(int factionID)
 P3,2021,0x005590A0,?get_title@@YAPADH@Z,50,2,0,unrecovered,,,2,exact,exact,int8* (__cdecl ?get_title@@YAPADH@Z)(int factionID)
