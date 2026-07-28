@@ -259,8 +259,31 @@ def emit(accepted: list[tuple]) -> tuple[str, str, str]:
             result = "void *" if detail["returns_this"] else (
                 "uint32_t" if detail.get("eax") else "void")
         declarations.append(
-            f"{result} __fastcall {name}(void *, void *);")
+            f"{result} __fastcall {name}(void *, void *"
+            + "".join(", int" for _ in range(detail["cleanup"] // 4)) + ");")
         parameter = "void *self" if USES_SELF[kind] else "void *"
+        # THE STACK ARGUMENTS MUST BE DECLARED, or the adapter cleans nothing.
+        #
+        # __fastcall passes the first two integer parameters in ECX and EDX and
+        # leaves the CALLEE to clean the rest off the stack. An adapter
+        # declaring only (void *, void *) therefore compiles to a bare `ret`,
+        # and replacing a body whose original ends `ret 0x14` then leaves
+        # twenty bytes on the caller's stack every call. That is the failure
+        # the working rules call the worst in this project, because the crash
+        # lands in an unrelated function later.
+        #
+        # This was shipped once: five of the first sixteen accessors carried
+        # `ret 4`, `ret 12`, `ret 16` and `ret 20`, and the comment below
+        # claimed the cleanup was "taken from the body's own ret" while the
+        # signature ignored it. The fix is to declare that many dwords, which
+        # is how every hand-written redirect in this tree spells the same
+        # thing.
+        extra = "".join(f", int stack{index}"
+                        for index in range(detail["cleanup"] // 4))
+        if detail["cleanup"] % 4:
+            raise SystemExit(
+                f"{address:#010x} cleans {detail['cleanup']} bytes, which is "
+                f"not a whole number of dwords; refusing to guess a signature")
         definitions.append(f"""/*
 Purpose: {PURPOSE[kind].format(**detail)}
          Emitted by tools/generate_field_accessors.py from
@@ -270,14 +293,16 @@ Purpose: {PURPOSE[kind].format(**detail)}
          The name is the ADDRESS, not an invention, and `self` is a void
          pointer because this body needs `this` to be nothing more than a
          pointer and an offset - the class it belongs to is not established.
-         The adapter cleans {detail['cleanup']} argument bytes, taken from the
-         body's own `ret`, which is the only statement of its arity that
-         exists.
+         The adapter declares {detail['cleanup'] // 4} stack dword(s) so it
+         cleans {detail['cleanup']} bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
 Original Offset: {address:08X}
 Return Value: {'n/a' if result == 'void' else 'the value described above'}
 Status: Complete
 */
-{result} __fastcall {name}({parameter}, void *) {{
+{result} __fastcall {name}({parameter}, void *{extra}) {{
 {BODIES[kind](detail)}
 }}
 """)

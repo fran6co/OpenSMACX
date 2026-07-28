@@ -2488,17 +2488,28 @@ void test_field_accessors() {
     const Constant constants[] = {
         {&field_accessor_00406840_redirect, 1},
         {&field_accessor_0062d390_redirect, 1},
-        {&field_accessor_004c93e0_redirect, 0xB},
-        {&field_accessor_005da6a0_redirect, 8},
-        {&field_accessor_005da6b0_redirect, 8},
-        {&field_accessor_005e2460_redirect, 8},
-        {&field_accessor_005e2470_redirect, 8},
     };
     for (const Constant &one : constants) {
         seed();
         expect(one.fn(self, nullptr) == one.value);
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
+
+    // The five whose originals CLEAN STACK ARGUMENTS are called with that many
+    // dwords, and cannot share the table above: their signatures differ, and
+    // that is the point. __fastcall leaves the callee to clean everything past
+    // the two register parameters, so an adapter declaring only (void *,
+    // void *) compiles to a bare `ret` and would leave 4, 12, 16 or 20 bytes
+    // on the caller's stack at every call - which is what the first version of
+    // these emitted. The compiler refusing to put them in one table is the
+    // check that the arities really do differ.
+    seed();
+    expect(field_accessor_004c93e0_redirect(self, nullptr, 0) == 0xB);
+    expect(field_accessor_005da6a0_redirect(self, nullptr, 0, 0, 0) == 8);
+    expect(field_accessor_005da6b0_redirect(self, nullptr, 0, 0, 0, 0) == 8);
+    expect(field_accessor_005e2460_redirect(self, nullptr, 0, 0, 0, 0, 0) == 8);
+    expect(field_accessor_005e2470_redirect(self, nullptr, 0, 0, 0, 0, 0) == 8);
+    expect_storage_bytes(storage, expected, sizeof(storage));
 
     // --- increments: exactly one dword moves, by exactly one ---
     for (auto *fn : {&field_accessor_004476e0_redirect,
