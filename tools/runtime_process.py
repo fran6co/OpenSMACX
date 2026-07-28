@@ -22,19 +22,29 @@ def stage_scenario_executable(executable, token):
 
 
 def command_runs_scenario_executable(command, executable):
-    command = command.strip().casefold()
+    # Matching is case-insensitive because the Windows-side path comes back
+    # from Wine with arbitrary case. But the LAUNCHER prefix is then stat'ed on
+    # the host, so it has to be sliced out of the original string, not the
+    # casefolded one: on a case-sensitive filesystem `/opt/Wine/bin/wine`
+    # casefolds to a path that does not exist, is_file() says no, and the
+    # process goes unrecognised. That difference is invisible on macOS, whose
+    # filesystem is case-insensitive by default, and it surfaced the moment
+    # this ran on Linux.
+    command = command.strip()
+    folded = command.casefold()
     native_path = str(executable).casefold()
     windows_path = ("z:" + str(executable).replace("/", "\\")).casefold()
     for marker in (native_path, windows_path):
-        if command == marker or command.startswith(marker + " "):
+        if folded == marker or folded.startswith(marker + " "):
             return True
-        index = command.find(marker)
-        if index < 0 or (index + len(marker) < len(command)
-                         and not command[index + len(marker)].isspace()):
+        index = folded.find(marker)
+        if index < 0 or (index + len(marker) < len(folded)
+                         and not folded[index + len(marker)].isspace()):
             continue
         launcher = Path(command[:index].strip())
         if (launcher.is_absolute() and launcher.is_file()
-                and launcher.name in ("wine", "wine64", "wine-preloader")):
+                and launcher.name.casefold() in ("wine", "wine64",
+                                                 "wine-preloader")):
             return True
     return False
 
