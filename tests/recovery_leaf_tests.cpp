@@ -2360,6 +2360,36 @@ void test_win_move() {
     }
 }
 
+void test_menu_adjust_pulldown_pos() {
+    // A `ret 8` and nothing else. The only things a fixture can establish are
+    // that it dereferences neither pointer and touches no field, so it is
+    // handed pointers to sentinels that must come back unchanged - a body that
+    // wrote through either would be caught - and the object plus both canaries
+    // are compared byte for byte.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int null_arguments = 0; null_arguments < 2; ++null_arguments) {
+            alignas(Menu) uint8_t storage[sizeof(Menu) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            std::memcpy(expected, storage, sizeof(storage));
+            int first = 0x11111111;
+            int second = 0x22222222;
+            int *const a1 = null_arguments ? nullptr : &first;
+            int *const a2 = null_arguments ? nullptr : &second;
+
+            auto *menu = reinterpret_cast<Menu *>(storage + 16);
+            if (use_adapter) {
+                menu_on_adjust_pulldown_pos_redirect(menu, nullptr, a1, a2);
+            } else {
+                menu->on_adjust_pulldown_pos(a1, a2);
+            }
+            expect(first == 0x11111111);
+            expect(second == 0x22222222);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 void test_base_pop_key_gates() {
     // Both bodies are bit 14 of field_30A8_, INVERTED. Three things can go
     // wrong and the fixture has to separate all of them: the wrong bit, a
@@ -27983,6 +28013,7 @@ int main() {
     test_win_paging();
     test_win_scroll_positions();
     test_base_pop_key_gates();
+    test_menu_adjust_pulldown_pos();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

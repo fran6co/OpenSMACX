@@ -2414,7 +2414,6 @@ P3,1111,0x005FC290,?on_redraw@Menu@@QAEXXZ,772,0,11,unrecovered,,,1,exact,missin
 P3,121,0x005FC5A0,?adjust@Menu@@QAEXXZ,123,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?adjust@Menu@@QAEXXZ)(Menu* this)
 P3,2221,0x005FC620,?hide_menus@Menu@@QAEXXZ,92,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide_menus@Menu@@QAEXXZ)(Menu* this)
 P3,1121,0x005FC680,?on_mouse_move@Menu@@QAEXHH@Z,18,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)"
-P3,11,0x005FC6C0,?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z,3,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z)(Menu* this, int*, int*)"
 P2,15420,0x005FC700,?wait_task@@YAXXZ,228,15,4,unrecovered,,,2,exact,exact,
 P3,4420,0x005FC7F0,?do_task@@YAHXZ,248,4,4,unrecovered,,,2,exact,exact,
 P3,2420,0x005FC8F0,?do_all_tasks@@YAXXZ,238,2,4,unrecovered,,,2,exact,exact,
