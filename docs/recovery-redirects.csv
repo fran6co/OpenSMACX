@@ -982,6 +982,7 @@ address,kind
 0x0045F940,jump
 0x00462080,jump
 0x004620A0,jump
+0x00462960,jump
 0x00462970,jump
 0x00467960,jump
 0x0046AF40,jump

@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "mapwin.h"
+#include "console.h"
 #include <cstring>
 
 /*
@@ -276,3 +277,28 @@ void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
 // this + 0x48), so DllMain points 0x0046AF40 and 0x0046B140 straight at the
 // recovered functions - the same shape as spying (0x0055BC00) and find_font
 // (0x005882F0).
+
+/*
+Purpose: Report whether this object IS the process-wide Console.
+
+             xor eax,eax / cmp ecx,0x9156B0 / sete al / ret
+
+         An identity comparison against a fixed address, normalised to 0 or 1
+         by `sete`. It dereferences nothing, so there is no memory access to
+         model - only the address itself.
+
+         0x009156B0 is already bound and named: ConsoleGlobal in console.h. So
+         this adds no NEW fixed-address binding, it reuses the one the Console
+         recovery already declared, and the comparison is written against the
+         name rather than the literal.
+Original Offset: 00462960
+Return Value: 1 when this is ConsoleGlobal, 0 otherwise
+Status: Complete
+*/
+int MapWin::UNK1() {
+    return this == reinterpret_cast<MapWin *>(ConsoleGlobal) ? 1 : 0;
+}
+
+int __fastcall map_win_unk1_redirect(MapWin *self, void *) {
+    return self->UNK1();
+}

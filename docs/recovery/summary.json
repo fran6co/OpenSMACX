@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2453,
+      "source_complete": 2454,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2907
+      "unrecovered": 2906
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,8 +67,8 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 193438,
-          "functions": 2453,
+          "bytes": 193450,
+          "functions": 2454,
           "percent_of_lift_scope_bytes": 8.03
         },
         "source_in_progress": {
@@ -82,8 +82,8 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2015599,
-          "functions": 2907,
+          "bytes": 2015587,
+          "functions": 2906,
           "percent_of_lift_scope_bytes": 83.62
         }
       },
@@ -103,15 +103,15 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2216879,
+        "bytes": 2216867,
         "direction": "must go down",
-        "functions": 3220,
+        "functions": 3219,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
         "percent_of_lift_scope_bytes": 91.97
       },
       "recovered": {
-        "bytes": 193438,
-        "functions": 2453,
+        "bytes": 193450,
+        "functions": 2454,
         "percent_of_lift_scope_bytes": 8.03
       }
     },
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2399,
-    "matched_function_starts": 2399,
-    "unique_addresses": 2399,
+    "annotations": 2400,
+    "matched_function_starts": 2400,
+    "unique_addresses": 2400,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -8132,7 +8132,7 @@
         "function": "?set_date@MainInterface@@QAEXPAD@Z",
         "function_address": "0x0045BE80",
         "kind": "function",
-        "location": "src/mapwin.cpp:49",
+        "location": "src/mapwin.cpp:50",
         "symbol": "MainInterfaceOriginalSetDate",
         "type": "func_set_date *"
       },
@@ -8141,7 +8141,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/mapwin.cpp:50",
+        "location": "src/mapwin.cpp:51",
         "symbol": "MainInterfaceGlobal",
         "type": "void *"
       },
@@ -8150,7 +8150,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/mapwin.cpp:51",
+        "location": "src/mapwin.cpp:52",
         "symbol": "MapWinMainCaption",
         "type": "char *"
       },
@@ -8159,7 +8159,7 @@
         "function": "_free",
         "function_address": "0x00644EF2",
         "kind": "function",
-        "location": "src/mapwin.cpp:69",
+        "location": "src/mapwin.cpp:70",
         "symbol": "MapWinFree",
         "type": "func_map_win_free *"
       },
@@ -8168,7 +8168,7 @@
         "function": "?click@MapWin@@QAEXHHH@Z",
         "function_address": "0x0046D5D0",
         "kind": "function",
-        "location": "src/mapwin.cpp:94",
+        "location": "src/mapwin.cpp:95",
         "symbol": "MapWinClick",
         "type": "func_map_win_click *"
       },
@@ -8177,7 +8177,7 @@
         "function": "?draw_radius@MapWin@@QAEXHHHH@Z",
         "function_address": "0x0046A2A0",
         "kind": "function",
-        "location": "src/mapwin.cpp:179",
+        "location": "src/mapwin.cpp:180",
         "symbol": "MapWinOriginalDrawRadius",
         "type": "func_map_win_draw_radius *"
       },

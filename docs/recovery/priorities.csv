@@ -607,7 +607,6 @@ P3,10,0x004620C0,sub_4620c0,196,0,0,unrecovered,,,1,missing,exact,
 P3,1020,0x00462190,?alt_get_ocean_detail@@YAHHHHH@Z,1289,1,0,unrecovered,,,2,exact,exact,
 P0,1007621,0x004626E0,??0MapWin@@QAE@H@Z,584,7,6,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, BOOL)"
 P2,12121,0x00462870,?clear@MapWin@@QAEXH@Z,233,12,1,unrecovered,,,2,exact,exact,"void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)"
-P3,1,0x00462960,?UNK1@MapWin@@QAEHXZ,12,0,0,unrecovered,,,0,missing,missing,int (__thiscall ?UNK1@MapWin@@QAEHXZ)(MapWin* this)
 P3,3121,0x00462980,?calculate_dimensions@MapWin@@QAEXXZ,1402,3,1,unrecovered,,,2,exact,exact,void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
 P2,18121,0x00462F00,?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z,316,18,1,unrecovered,,,2,exact,exact,"void (__thiscall ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z)(MapWin* this, int xCoord, int yCoord, int*, int*)"
 P2,7121,0x00463040,?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z,652,7,1,unrecovered,,,2,exact,exact,"int (__thiscall ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z)(MapWin* this, int, int, int*, int*)"

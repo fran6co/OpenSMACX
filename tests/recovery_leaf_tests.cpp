@@ -2408,6 +2408,39 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_map_win_is_console() {
+    // `cmp ecx, 0x9156B0 / sete al`: an identity test against the process-wide
+    // Console, normalised to 0 or 1. Nothing is dereferenced, so the fixture
+    // repoints ConsoleGlobal at storage it owns rather than touching
+    // 0x009156B0, and checks both answers plus the normalisation - a body
+    // returning the raw comparison would still be non-zero for "yes" and pass
+    // a weaker assertion.
+    void *const saved = ConsoleGlobal;
+
+    alignas(MapWin) uint8_t storage[sizeof(MapWin) + 32];
+    alignas(MapWin) uint8_t other[sizeof(MapWin) + 32];
+    uint8_t expected[sizeof(storage)];
+    seed_storage(storage, expected, sizeof(storage));
+    std::memcpy(expected, storage, sizeof(storage));
+    auto *win = reinterpret_cast<MapWin *>(storage + 16);
+    auto *not_console = reinterpret_cast<MapWin *>(other + 16);
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        ConsoleGlobal = win;
+        expect((use_adapter ? map_win_unk1_redirect(win, nullptr) : win->UNK1()) == 1);
+        expect((use_adapter ? map_win_unk1_redirect(not_console, nullptr)
+                            : not_console->UNK1()) == 0);
+        ConsoleGlobal = not_console;
+        expect((use_adapter ? map_win_unk1_redirect(win, nullptr) : win->UNK1()) == 0);
+        ConsoleGlobal = nullptr;
+        expect((use_adapter ? map_win_unk1_redirect(win, nullptr) : win->UNK1()) == 0);
+        // A pure comparison writes nothing.
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    ConsoleGlobal = saved;
+}
+
 void test_base_pop_item() {
     // A delegation to the Dialogs at 0x21D0. The offset is the whole content,
     // so the fixture seeds a Dialogs THERE and nowhere else: a body using a
@@ -28651,6 +28684,7 @@ int main() {
     test_popup_button_width_and_diplo_clear();
     test_base_pop_button_font_and_caviar_readback();
     test_base_pop_item();
+    test_map_win_is_console();
     test_report_if_close_intel();
     test_bubble_dismiss_handlers();
     test_scroll_close();
