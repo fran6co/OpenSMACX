@@ -44,6 +44,25 @@ static bool has_flag(const std::string &flags, const char *flag) {
     return false;
 }
 
+// `undef=<hex>` in the plan's flag set: the OracleFlagBit values that are
+// architecturally undefined on every path to this function's RET. Absent means
+// zero, which is "compare every flag" - so a plan generated before this token
+// existed behaves exactly as it did.
+static uint32_t undefined_exit_flags(const std::string &flags) {
+    static const char *const key = "undef=";
+    const size_t n = std::strlen(key);
+    for (size_t i = 0; i <= flags.size();) {
+        size_t j = flags.find(',', i);
+        if (j == std::string::npos) j = flags.size();
+        if (j - i > n && flags.compare(i, n, key) == 0)
+            return uint32_t(std::strtoul(flags.substr(i + n, j - i - n).c_str(),
+                                         nullptr, 16));
+        i = j + 1;
+        if (j == flags.size()) break;
+    }
+    return 0;
+}
+
 static const char *skip_reason(const std::string &flags) {
     if (has_flag(flags, "selfmod")) return "self-modifying section";
     if (has_flag(flags, "iat")) return "reaches an import";
@@ -68,6 +87,15 @@ struct Tally {
     // finding this oracle could not previously make, and folding it into the
     // total would hide how much of the delta the new comparison accounts for.
     long failed_x87_only = 0;
+    // Functions where at least one case was thrown out by the top-page
+    // arbitration but a LATER case passed, so the function is counted in
+    // `passed`. The arbitration was described as one-sided ("it can turn a
+    // false FAIL into an INCONCLUSIVE and cannot turn a false PASS into
+    // anything"), and per CASE that is true - but the function-level upgrade
+    // below turns the same case into a PASS row, and the whole-image report
+    // then printed "INCONCLUSIVE top-page 0" while nineteen functions had been
+    // arbitrated. So the count is kept, and the report row says so.
+    long passed_with_arbitration = 0;
 };
 
 // Used only by --selftest, to find out whether this host really enforces
@@ -249,6 +277,23 @@ int main(int argc, char **argv) {
                 return 3;
             }
         }
+
+        // Does the top-page fill reach the END of the page? See
+        // oracle_top_page_fill_reaches_end: with std::memset in its place the
+        // arbitration is blind to exactly the addresses it exists for, and no
+        // test noticed.
+        oracle_probe_top_page();
+        if (oracle_top_page_writable()) {
+            const bool reaches = oracle_top_page_fill_reaches_end();
+            std::printf("selftest: top-page fill reaches 0xffffff88 and the "
+                        "last word: %s\n", reaches ? "yes" : "NO");
+            if (!reaches) {
+                std::fprintf(stderr, "oracle: SELFTEST FAILED - the top-page "
+                                     "arbitration cannot see the end of the "
+                                     "page it fills\n");
+                return 3;
+            }
+        }
     }
 
     // Sealed BEFORE the selfcheck, not after it. The selfcheck has to run under
@@ -256,6 +301,10 @@ int main(int argc, char **argv) {
     // different harness from the one that produces the report.
     std::printf("sealed %u MiB of free address space\n",
                 unsigned(oracle_seal_address_space()));
+    // Printed on every run, because a FAIL whose detail changes when this
+    // number changes is the harness reading its own memory, not a lowering
+    // divergence. Rebuild with -DORACLE_LAYOUT_SHIM=0x51000 to move it.
+    std::printf("lifted image at host %p\n", oracle_lifted_image_host_address());
 
     if (dump_seed >= 0) {
         oracle_dump_seed(only, dump_seed);
@@ -307,7 +356,34 @@ int main(int argc, char **argv) {
 
     std::vector<PlanEntry> plan;
     if (only) {
-        plan.push_back({only, "ok", "--only"});
+        // The synthetic entry says "ok" so that --only keeps overriding every
+        // skip, as it always has. It must still carry this function's `undef=`
+        // token, or the one-function reproduction of a whole-plan FAIL would
+        // compare a flag the plan run does not, and the two would disagree for
+        // a reason that is in the harness.
+        std::string flags = "ok";
+        if (list_path) {
+            if (FILE *f = std::fopen(list_path, "r")) {
+                char line[1024];
+                while (std::fgets(line, sizeof line, f)) {
+                    if (line[0] == '#' || line[0] == '\n') continue;
+                    char *tab1 = std::strchr(line, '\t');
+                    if (!tab1) continue;
+                    *tab1 = 0;
+                    if (uint32_t(std::strtoul(line, nullptr, 0)) != only) continue;
+                    char *tab2 = std::strchr(tab1 + 1, '\t');
+                    if (tab2) *tab2 = 0;
+                    if (uint32_t mask = undefined_exit_flags(tab1 + 1)) {
+                        char token[32];
+                        std::snprintf(token, sizeof token, ",undef=%x", unsigned(mask));
+                        flags += token;
+                    }
+                    break;
+                }
+                std::fclose(f);
+            }
+        }
+        plan.push_back({only, flags, "--only"});
     } else if (list_path) {
         FILE *f = std::fopen(list_path, "r");
         if (!f) { std::fprintf(stderr, "oracle: cannot open %s\n", list_path); return 2; }
@@ -356,6 +432,7 @@ int main(int argc, char **argv) {
 
     for (size_t index = 0; index < plan.size(); ++index) {
         const PlanEntry &entry = plan[index];
+        oracle_undefined_exit_flags = undefined_exit_flags(entry.flags);
         const char *reason = run_anyway ? nullptr : skip_reason(entry.flags);
         if (reason) {
             tally.skipped++;
@@ -388,12 +465,16 @@ int main(int argc, char **argv) {
         // appeared in the first sixteen-case sweep. Two timeouts is the answer;
         // the verdict is the same either way.
         int timeouts = 0;
+        // Cases the top-page arbitration threw out. Survives the function-level
+        // upgrade to PASS so the report can say the seed never got a verdict.
+        int arbitrated = 0;
         for (int c = 0; c < cases; ++c) {
             if (verbose) std::printf("stage: case %#010x/%d\n", unsigned(entry.address), c);
             OracleResult r = oracle_run_case(entry.address, c);
             if (verbose) std::printf("stage:   -> %s\n", oracle_verdict_name(r.verdict));
             ran++;
             if (r.verdict == OraclePass || r.verdict == OracleFail) compared++;
+            if (r.verdict == OracleInconclusiveTopPage) arbitrated++;
             if (r.verdict == OracleFail || r.verdict == OracleFailLiftedFault) {
                 best = r.verdict;
                 worst = r;
@@ -429,7 +510,17 @@ int main(int argc, char **argv) {
 
         char detail[512] = "";
         switch (best) {
-            case OraclePass: tally.passed++; break;
+            case OraclePass:
+                tally.passed++;
+                if (arbitrated) {
+                    tally.passed_with_arbitration++;
+                    std::snprintf(detail, sizeof detail,
+                                  "passed on the seeds that could be judged; "
+                                  "%d case(s) thrown out - the original read "
+                                  "the unmodellable top 64 KiB",
+                                  arbitrated);
+                }
+                break;
             case OracleSkipTrap:
                 tally.trap++; tally.skipped++; skip_counts[5]++;
                 std::snprintf(detail, sizeof detail, "trap at %#010x: %s",
@@ -591,6 +682,9 @@ int main(int argc, char **argv) {
                 "one range\n                                  neither the wall "
                 "nor the seal covers, so the two sides were not running the "
                 "same program)\n", tally.top_page);
+    std::printf("PASSED with a case arbitrated %ld   (counted in PASSED above: "
+                "a later seed was judged, an earlier one could not be)\n",
+                tally.passed_with_arbitration);
     std::printf("top 64 KiB is %s, so the arbitration above %s\n",
                 oracle_top_page_writable() ? "writable" : "NOT writable",
                 oracle_top_page_writable() ? "is armed"

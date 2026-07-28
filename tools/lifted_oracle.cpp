@@ -223,6 +223,34 @@ static uint32_t g_trap_address = 0;
 // Memory
 // ---------------------------------------------------------------------------
 
+// THE CONTROL FOR HOST-LAYOUT ARTIFACTS.
+//
+// `opensmacx_at` is a subtraction with no bounds check, so a lifted-side access
+// to a guest address outside the modelled span reads the host address
+// `opensmacx_image + (guest - 0x400000)` wrapped to 32 bits, which for some
+// guest addresses is the harness's own code or data. The comparison then
+// reports host bytes as a divergence, and the report LOOKS like a lowering
+// finding: 0x00500150 was reported that way, its `mov cl,[edx+eax*4]` reaching
+// guest 0x001600DC.
+//
+// Relinking at a different --image-base does NOT expose this: it moves the
+// wrapped target and opensmacx_image by the same amount, so every such
+// artifact is invariant under it by construction. What exposes it is moving
+// opensmacx_image RELATIVE to the rest of the harness, which is what this
+// array does - one .bss object linked ahead of the image pushes it up by its
+// own size. Build with -DORACLE_LAYOUT_SHIM=0x51000, re-run the failing
+// addresses, and any whose detail moves was reading host memory, not the
+// program. Measured: 0x00500150, 0x004c99d0, 0x00628290, 0x006347f0 and
+// 0x00634980 all moved.
+#ifndef ORACLE_LAYOUT_SHIM
+#define ORACLE_LAYOUT_SHIM 0
+#endif
+#if ORACLE_LAYOUT_SHIM
+unsigned char oracle_layout_shim[ORACLE_LAYOUT_SHIM];
+#endif
+
+const void *oracle_lifted_image_host_address() { return opensmacx_image; }
+
 static unsigned char *g_pristine = nullptr;
 static unsigned char *const g_side_a =
     reinterpret_cast<unsigned char *>(static_cast<uintptr_t>(OracleImageBase));
@@ -1113,7 +1141,18 @@ void oracle_arm(uint32_t budget, uint32_t watchdog_ms) {
 // out-of-span access on the original side takes an access violation instead.
 // (The top 64 KiB cannot be sealed: VirtualQuery refuses those addresses with
 // ERROR_INVALID_PARAMETER while a plain read of them still succeeds and
-// returns zero. The seed avoids producing pointers up there instead.)
+// returns zero. The drawn seeds do NOT avoid producing pointers up there -
+// -1, -2 and 0xFFFFFF80 are exactly the values a sign-extension defect needs -
+// so that range is handled after the fact, by the arbitration below.)
+//
+// This wall is not complete and saying so is the point: the map from a guest
+// address to a host one is a bijection, so out-of-span guest addresses cover
+// the whole of the rest of the host address space, INCLUDING the harness's own
+// code and data, which obviously cannot be sealed. A lifted-side read that
+// lands there does not fault, and the comparison then reports host bytes as a
+// lowering divergence. Only a bounds check inside `opensmacx_at` closes that,
+// and `opensmacx_at` is compiled once into objects this harness shares with the
+// game build. See the report for the addresses currently in that class.
 // ---------------------------------------------------------------------------
 
 uint32_t oracle_seal_address_space() {
@@ -1244,6 +1283,22 @@ static void restore_top_page() {
 }
 
 bool oracle_top_page_writable() { return g_top_page_writable; }
+
+bool oracle_top_page_fill_reaches_end() {
+    if (!g_top_page_writable) return false;
+    save_top_page();
+    poison_top_page(0xA5);
+    // 0xFFFFFF88 is the address the memset version was measured to leave at
+    // zero while 0xFFFF0004 held the fill, so it is the address the test asks
+    // about. The last word of the page is checked too, because a fill that
+    // stops one word short would pass a test that only looked at 0xFFFFFF88.
+    uint32_t late = 0, last = 0;
+    std::memcpy(&late, reinterpret_cast<const void *>(uintptr_t(0xFFFFFF88U)), 4);
+    std::memcpy(&last, reinterpret_cast<const void *>(
+                           uintptr_t(OracleTopPageBase + OracleTopPageSize - 4)), 4);
+    restore_top_page();
+    return late == 0xA5A5A5A5U && last == 0xA5A5A5A5U;
+}
 
 // ---------------------------------------------------------------------------
 // Flags
@@ -1494,6 +1549,7 @@ static int oracle_run_lifted_side(uint32_t address,
 }
 
 int oracle_perturb = OraclePerturbNone;
+uint32_t oracle_undefined_exit_flags = 0;
 
 const char *oracle_perturb_name(int which) {
     static const char *const registers[8] = {
@@ -1595,7 +1651,21 @@ static void oracle_collect_lifted(const OpensmacxStaticRecompileState &state,
     for (int i = 0; i < 8; ++i) {
         if (a[i] != b[i]) result.register_mask |= 1U << i;
     }
+    // A flag the ARCHITECTURE leaves undefined on every path to this
+    // function's RET is not evidence about the lowering, and comparing it
+    // measures the host's x86 emulation instead. `oracle_undefined_exit_flags`
+    // is that set, computed by lifted_oracle_plan.py from capstone's own
+    // MODIFY/RESET/SET/UNDEFINED tables and carried in the plan as
+    // `undef=<hex>`; it is zero for 3410 of the 5673 functions and names a
+    // flag other than AF in exactly 14.
+    //
+    // It is NOT applied while a perturbation is armed: --selfcheck damages one
+    // flag bit at a time and requires the verdict to become FAIL, and a mask
+    // that could swallow that damage would make the liveness proof vacuous -
+    // which is the exact failure mode this harness was built to avoid.
     result.flag_mask = result.original.eflags ^ result.lifted.eflags;
+    if (oracle_perturb == OraclePerturbNone)
+        result.flag_mask &= ~oracle_undefined_exit_flags;
     result.x87_mask = x87_difference(result.original_x87, result.lifted_x87);
 
     trace("compare");
@@ -1679,18 +1749,44 @@ static OracleOriginalRun run_original_once(uint32_t address, int case_index,
     return run;
 }
 
-// Two runs, two fills. Registers, flags, whether it faulted, and every byte it
-// wrote are compared; if any of them moved, the original was reading the top
-// page and this case cannot be judged.
+// Three runs, three fills. Registers, flags, whether it faulted, and every byte
+// it wrote are compared against the first fill; if any of them moved, the
+// original was reading the top page and this case cannot be judged.
+//
+// WHY THREE, and why THESE three. Two fills can agree by accident, and each of
+// the values is here to cover a way that happens:
+//
+//   0x00  the only fill that discriminates a ZERO test, and this image is full
+//         of `cmp reg,0` / `test reg,reg` / `jne`. Removing it - the first
+//         version of this fix proposed 0x3F and 0xBE - turned ?attach@Sound@@
+//         (0x004c6370, `mov eax,[ecx+0x48] / cmp eax,edx / jne` with this in
+//         the top page) and 0x005d4bb0 into reproducible FAILs, because both
+//         replacements took the same branch. Measured 3/3 and 5/5.
+//   0xA5  a wide, sign-set, non-zero integer.
+//   0xBE  0xBEBEBEBE is -0.3725f and -1.4e-7 as a double, both NORMAL. Fills
+//         whose float reading is zero or denormal cannot move a float answer:
+//         0x00000000 is +0.0 and 0xA5A5A5A5 is -2.87e-16, and multiplied by
+//         the arena's small integers - denormals when read as floats - both
+//         underflow to zero. sub_628290 case 3 and 0x00634980 blame an
+//         `fstp dword ptr [edx]` and gave IDENTICAL checksums under 0x00 and
+//         0xA5 while plainly reading the page; 0xBE separates them.
+//
+// A uniform BYTE fill reads the same at every alignment, so what the detector
+// sees does not depend on where the guest's pointer happened to land.
 static bool original_depends_on_top_page(uint32_t address, int case_index,
                                          uint32_t return_address) {
     if (!g_top_page_writable) return false;
+    static const uint8_t fills[] = {0x00, 0xA5, 0xBE};
     const OracleOriginalRun a =
-        run_original_once(address, case_index, return_address, 0x00);
-    const OracleOriginalRun b =
-        run_original_once(address, case_index, return_address, 0xA5);
-    return a.fault != b.fault || a.checksum != b.checksum ||
-           std::memcmp(a.out, b.out, sizeof a.out) != 0;
+        run_original_once(address, case_index, return_address, fills[0]);
+    for (size_t i = 1; i < sizeof fills; ++i) {
+        const OracleOriginalRun b =
+            run_original_once(address, case_index, return_address, fills[i]);
+        if (a.fault != b.fault || a.checksum != b.checksum ||
+            std::memcmp(a.out, b.out, sizeof a.out) != 0)
+            return true;
+    }
+    return false;
 }
 
 void oracle_dump_seed(uint32_t address, int case_index) {

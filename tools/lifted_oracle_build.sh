@@ -33,8 +33,20 @@ fi
 "$OBJCOPY" --weaken-symbol=__Z14opensmacx_trapjPKc \
     "$LIFTED/lifted_dispatch.cpp.o" "$OUT/dispatch_weak.o"
 
+# EXTRA_CXXFLAGS exists for exactly one job: the host-layout control.
+#
+#   OUT=$ROOT/build/oracle-shim EXTRA_CXXFLAGS=-DORACLE_LAYOUT_SHIM=0x51000 \
+#       tools/lifted_oracle_build.sh
+#
+# builds a second oracle whose opensmacx_image sits at a different HOST
+# address. Any FAIL whose detail differs between the two was reading the
+# harness's own memory through an out-of-span guest address, not the program.
+# Relinking at a different --image-base does NOT do this - it moves the wrapped
+# read target and opensmacx_image together - which is why it is a separate knob
+# and not a different value of the one that already exists.
 for source in lifted_oracle.cpp lifted_oracle_main.cpp; do
-    "$CXX" -std=c++17 -O2 -c -I"$LIFTED" -I"$ROOT/tools" \
+    # shellcheck disable=SC2086
+    "$CXX" -std=c++17 -O2 $EXTRA_CXXFLAGS -c -I"$LIFTED" -I"$ROOT/tools" \
         "$ROOT/tools/$source" -o "$OUT/${source%.cpp}.o"
 done
 
