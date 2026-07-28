@@ -96,3 +96,43 @@ void NetWin::on_mouse_leave(int, int) {
 void __fastcall net_win_on_mouse_leave_redirect(NetWin *self, void *, int a1, int a2) {
     self->on_mouse_leave(a1, a2);
 }
+
+/*
+Purpose: Clear the dword at 0x178 and write a five-byte pattern over the start
+         of the object.
+
+             mov [eax+0x178],ecx   ; ecx is zero
+             mov byte [eax],0xFF   / [eax+1],0 / [eax+2],0
+             mov byte [eax+3],0xFF / [eax+4],2
+
+         THE FIRST FIVE BYTES ARE INSIDE THE GraphicWin BASE, and that was
+         checked rather than assumed. ??0NetWin@@QAE@XZ does `mov esi,ecx` then
+         calls GraphicWin's constructor with ecx UNADJUSTED, which by the
+         base-versus-member rule in AGENTS.md makes GraphicWin a base at offset
+         zero - its Spot and StringBox members follow at 0xD34 and 0xD40, on
+         `this` plus an offset. The modelled inheritance is right.
+
+         So this really does write over the object's first five bytes, which
+         the model attributes to Win's leading AutoSound. 0xFF,00,00,0xFF then
+         2 reads like a colour and a mode rather than a pointer, and that
+         appearance is what made this look like a modelling error; it is not.
+         The behaviour is transcribed as the original has it, byte for byte and
+         in the original's order - 0x178 first - rather than corrected to what
+         it seems like it ought to be.
+Original Offset: 00483820
+Return Value: n/a
+Status: Complete
+*/
+void NetWin::UNK5() {
+    auto *const self = reinterpret_cast<uint8_t *>(this);
+    *reinterpret_cast<uint32_t *>(self + 0x178) = 0;
+    self[0] = 0xFF;
+    self[1] = 0;
+    self[2] = 0;
+    self[3] = 0xFF;
+    self[4] = 2;
+}
+
+void __fastcall net_win_unk5_redirect(NetWin *self, void *) {
+    self->UNK5();
+}
