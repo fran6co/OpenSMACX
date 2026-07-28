@@ -29,6 +29,7 @@ class DLLEXPORT SpriteBox {
  public:
   SpriteBox() { ; }
   ~SpriteBox() { ; }
+  uint32_t id_to_pos(int id);
   void on_mouse_move(int, int);
   void on_mouse_leave(int, int);
 
@@ -36,5 +37,6 @@ class DLLEXPORT SpriteBox {
   uint8_t unmapped_[0x460];
 };
 
+uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id);
 void __fastcall sprite_box_on_mouse_move_redirect(SpriteBox *self, void *, int a1, int a2);
 void __fastcall sprite_box_on_mouse_leave_redirect(SpriteBox *self, void *, int a1, int a2);
