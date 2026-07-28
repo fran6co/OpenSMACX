@@ -149,3 +149,30 @@ int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
         ReportIf *self, void *, int a1, int a2, int a3, int a4) {
     return self->on_iface_dialog_item_back_draw(a1, a2, a3, a4);
 }
+
+/*
+Purpose: Close the two intel list boxes.
+
+             mov esi,ecx / lea ecx,[esi+0xA2D0] / call ListBox::close
+                           lea ecx,[esi+0xAE24] / call ListBox::close
+
+         Two subobjects, in that order, and nothing else. ReportIf models no
+         fields, so both offsets are documented and raw.
+
+         ListBox::close resolves its own bases through the object's vbtable at
+         run time, so each of these has to be a real ListBox carrying a table
+         of its own; reaching them by offset is what the original does and is
+         what keeps the two independent.
+Original Offset: 004AC980
+Return Value: n/a
+Status: Complete
+*/
+void ReportIf::close_intel() {
+    auto *const self = reinterpret_cast<uint8_t *>(this);
+    reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
+    reinterpret_cast<ListBox *>(self + 0xAE24)->close();
+}
+
+void __fastcall report_if_close_intel_redirect(ReportIf *self, void *) {
+    self->close_intel();
+}
