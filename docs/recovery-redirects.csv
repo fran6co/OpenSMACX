@@ -1703,6 +1703,8 @@ address,kind
 0x00604A20,jump
 0x00604A50,jump
 0x00604A90,jump
+0x00605180,jump
+0x006051A0,jump
 0x00605370,jump
 0x006054D0,dependency
 0x00605840,jump
