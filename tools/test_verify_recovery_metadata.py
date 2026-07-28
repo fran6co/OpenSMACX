@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import recovery_metrics
 import verify_recovery_metadata
 
 
@@ -116,11 +117,15 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
         self.assertNotIn("docs/recovery/functions.csv", labels)
 
     def write_export_outputs(self, verify_dir, caller_count="3"):
+        # `size` is here because the byte-weighted block is derived from it.
+        # Without it every figure in that block is zero, and a refresh that
+        # recomputed the block from the wrong rows would still produce zeroes
+        # and still compare equal.
         (verify_dir / "functions.csv").write_text(
-            "address,name,binary_kind,source_locations,source_statuses,"
+            "address,size,name,binary_kind,source_locations,source_statuses,"
             "redirect_exports,original_dependencies,recovery_state,priority,"
             "notes,caller_count\n"
-            f"0x00401000,first,game,,,,,unrecovered,,,{caller_count}\n",
+            f"0x00401000,300,first,game,,,,,unrecovered,,,{caller_count}\n",
             encoding="utf-8")
         (verify_dir / "callgraph.json").write_text(
             json.dumps({
@@ -247,6 +252,21 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
         self.assertEqual(
             summary["functions"]["by_recovery_state"],
             {"source_complete": 1})
+        # The byte-weighted block must be recomputed here, not carried over.
+        # This is the path most runs take - the checkpoint is reused and the
+        # IDB is never reopened - and `recovery_state` has just changed under
+        # it, so a stale block would publish a debt describing the tree as it
+        # was before the recovery landed. The row is 300 bytes and is now
+        # source_complete, so the debt is zero and the scope is not.
+        block = summary["functions"]["bytes"]
+        self.assertEqual(block["denominator"]["bytes"], 300)
+        self.assertEqual(block["machine_carried"]["bytes"], 0)
+        self.assertEqual(block["recovered"]["bytes"], 300)
+        self.assertEqual(
+            block,
+            recovery_metrics.bytes_block([{
+                "size": "300", "recovery_state": "source_complete",
+                "binary_kind": "game"}]))
         self.assertEqual(summary["source_annotations"], {
             "annotations": 1,
             "matched_function_starts": 1,

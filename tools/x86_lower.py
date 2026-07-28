@@ -170,13 +170,21 @@ def segment_displacement(mem):
     the flat image, so it does not go through `memory_address` at all - see
     `tools/lifted_tls.h` for what conflating the two corrupts.
 
-    Measured over terranx.exe: 1,330 segment-prefixed operands, every one of
-    them `mov`, 32-bit, and a bare `fs:[0]` with no base or index - the SEH
-    registration chain head - spread over 389 functions. (305 further operands
-    carry an `es:` prefix, but all 305 are the implicit destination of a string
+    Measured over the LIFT SCOPE of terranx.exe - the 5,673 catalogued rows the
+    lift plans, `external_library` excluded - by disassembling every body:
+    1,632 fs:-prefixed operands in 393 functions, and the shape is unanimous.
+    Every one is a `mov`, 32-bit, a bare `fs:[0]` with displacement 0 and no
+    base or index: the SEH registration chain head. (315 further operands carry
+    an `es:` prefix, but all 315 are the implicit destination of a string
     instruction and have no displacement of their own.) So the shape below is
     the whole segment surface of this image, and every other shape still
     refuses rather than guessing.
+
+    The count used to read 1,330 over 389 functions. The SHAPE claim - which is
+    the load-bearing half, because it is why one branch can cover the surface -
+    was right, but the tally was not, and it had been copied into
+    lifted_oracle_plan.py and lifted_oracle.cpp as "the entire fs: surface".
+    Re-derive it with a disassembly of the catalogued bodies, not by hand.
     """
     if mem.segment == x86.X86_REG_INVALID:
         return None

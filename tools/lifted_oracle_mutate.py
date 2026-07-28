@@ -185,9 +185,26 @@ class UnknownVerdict(Exception):
 #               same mistake as the summary scrape, one layer up.
 VERDICT_MEANING = {
     "PASS": "undetected",
+    # The oracle looked and agreed, on a function whose static flags say a path
+    # exists that no seed took. UNDETECTED, exactly like PASS, and the reason
+    # is worth stating because "paths-taken" reads like a qualification and a
+    # qualification reads like an excuse: the mutant was compared against the
+    # original on every seed that could be judged and nothing noticed it. The
+    # weaker evidence is about which PATHS were exercised, and that weakness is
+    # already priced in - `unreached` below is the same statement for a line
+    # rather than a path.
+    "PASS-paths-taken": "undetected",
     "FAIL": "detected",
     "FAIL-lifted-fault": "detected",
     "SKIP-trap": "detected",
+    # DETECTED for the same reason SKIP-trap is, and it rests on the same fact:
+    # `candidates` draws only from rows the unmutated sweep called PASS, so the
+    # baseline demonstrably ran to a comparison without reaching any blocked
+    # construct. A mutant that now walks into one is control flow the mutation
+    # created, and the oracle refusing to call that agreement is a detection.
+    # If candidates are ever widened to PASS-paths-taken rows this stays true -
+    # such a row is one where no seed reached the construct either.
+    "SKIP-reached-blocked": "detected",
     "INCONCLUSIVE-lifted-budget": "detected",
     "INCONCLUSIVE-lifted-out-of-span": "detected",
     "INCONCLUSIVE-original-fault": "no-evidence",
@@ -200,6 +217,23 @@ VERDICT_MEANING = {
     # the table because raising on it would abort a run over a row that only
     # says "not looked at".
     "SKIP": "no-evidence",
+    # Written by neither of the above: `lifted_oracle_sweep.sh` is a THIRD
+    # writer of the verdict column. When the watchdog kills a stalled run the
+    # shell appends the row itself, and `build/oracle/report.tsv` carries 15 of
+    # them today - yet `classify("HANG", ...)` raised UnknownVerdict, which
+    # aborts a whole mutation run over a row that says nothing. No evidence: a
+    # supervisor kill tells us nothing about whether the mutant was noticed.
+    "HANG": "no-evidence",
+    # Same writer, and the reason it is not folded into HANG. On this host the
+    # oracle sometimes dies with `rosetta error: unsupported privilege level:
+    # 0` - the x86-on-arm64 translator refusing an instruction outright. That
+    # is not the guest faulting and not the run stalling; nothing in the
+    # process can catch it and no report row is written. Measured on the first
+    # 40 `iat` functions with the blocking flags treated as a hint: 5 of 40 die
+    # this way (0x00421b20, 0x00421b40, 0x00422ed0, 0x00447360, 0x0045c180),
+    # every one of them reproducible on its own. Calling that a HANG would
+    # claim the harness watched something it never got to watch.
+    "KILLED-host-refused": "no-evidence",
     # Not oracle verdicts - this script's own two ways of coming back empty.
     "DID-NOT-COMPILE": "no-evidence",
     "NO-VERDICT": "no-evidence",

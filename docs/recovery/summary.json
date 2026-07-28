@@ -21,6 +21,100 @@
       "thunk": 28,
       "unrecovered": 2934
     },
+    "bytes": {
+      "denominator": {
+        "name": "lift_scope",
+        "bytes": 2410317,
+        "functions": 5673,
+        "note": "every percent_of_lift_scope_bytes in this file is over these bytes",
+        "exclusion": "excludes recovery_state == external_library: CRT and Windows library code that the lift calls and never translates (tools/lift_whole_image.py drops these rows by written policy)"
+      },
+      "catalogued": {
+        "bytes": 2455472,
+        "functions": 6000
+      },
+      "excluded": {
+        "bytes": 45155,
+        "functions": 327
+      },
+      "recovered": {
+        "bytes": 192701,
+        "functions": 2426,
+        "percent_of_lift_scope_bytes": 7.99
+      },
+      "machine_carried": {
+        "bytes": 2217616,
+        "functions": 3247,
+        "percent_of_lift_scope_bytes": 92.01,
+        "direction": "must go down",
+        "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source"
+      },
+      "by_recovery_state": {
+        "external_library": {
+          "bytes": 45155,
+          "functions": 327,
+          "percent_of_lift_scope_bytes": 0.0,
+          "in_scope": {
+            "bytes": 0,
+            "functions": 0
+          },
+          "excluded": {
+            "bytes": 45155,
+            "functions": 327
+          }
+        },
+        "original_dependency": {
+          "bytes": 188044,
+          "functions": 280,
+          "percent_of_lift_scope_bytes": 7.8
+        },
+        "source_complete": {
+          "bytes": 192701,
+          "functions": 2426,
+          "percent_of_lift_scope_bytes": 7.99
+        },
+        "source_in_progress": {
+          "bytes": 13083,
+          "functions": 5,
+          "percent_of_lift_scope_bytes": 0.54
+        },
+        "thunk": {
+          "bytes": 153,
+          "functions": 28,
+          "percent_of_lift_scope_bytes": 0.01
+        },
+        "unrecovered": {
+          "bytes": 2016336,
+          "functions": 2934,
+          "percent_of_lift_scope_bytes": 83.65
+        }
+      },
+      "by_binary_kind": {
+        "game": {
+          "bytes": 2409598,
+          "functions": 5627,
+          "percent_of_lift_scope_bytes": 99.97
+        },
+        "library": {
+          "bytes": 45686,
+          "functions": 338,
+          "percent_of_lift_scope_bytes": 0.02,
+          "in_scope": {
+            "bytes": 531,
+            "functions": 11
+          },
+          "excluded": {
+            "bytes": 45155,
+            "functions": 327
+          }
+        },
+        "thunk": {
+          "bytes": 188,
+          "functions": 35,
+          "percent_of_lift_scope_bytes": 0.01
+        }
+      }
+    },
     "total": 6000,
     "with_comments": 17,
     "with_prototypes": 3262

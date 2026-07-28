@@ -9,11 +9,21 @@ makes some functions untestable:
   * IMPORTS. A call that reaches the IAT leaves the image. On the original side
     it enters the real DDRAW/USER32/KERNEL32; on the lifted side there is
     nothing there. Comparing the two would be comparing a real DirectDraw call
-    against a stub, and running it could pop a window, open a file or exit the
-    process. Reachability is TRANSITIVE: a function three calls away from
+    against a stub. Reachability is TRANSITIVE: a function three calls away from
     `ExitProcess` is exactly as untestable as one that calls it directly.
 
-  * fs:. The 1,330 fs:[0] sites maintain the SEH chain, and the lift keeps that
+    THESE FLAGS ARE NO LONGER A REFUSAL BY DEFAULT. `lifted_oracle_main.cpp`
+    attempts a flagged function and lets the run decide; `--refuse-blocked`
+    restores the refusal. This entry used to justify itself with "running it
+    could pop a window, open a file or exit the process", and that is not what
+    happens: `oracle_load_image` never processes the import directory, so an
+    IAT slot still holds its file-image value and the call lands in the walled
+    low 118 MiB and faults. The hazard is contained - but it was contained by
+    accident rather than by statement, so it is stated here now. What DOES
+    escape containment is the host: on arm64 Rosetta refuses some of these
+    outright and kills the process (see lifted_oracle_sweep.sh).
+
+  * fs:. The 1,632 fs:[0] sites maintain the SEH chain, and the lift keeps that
     chain in a thread-local block that is deliberately NOT in the image. The
     original pushes the real chain head onto the guest stack, the lifted side
     pushes 0xFFFFFFFF, and the memory comparison then reports a difference that

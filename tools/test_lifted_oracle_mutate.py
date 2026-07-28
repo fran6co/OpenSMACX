@@ -212,6 +212,38 @@ def report_verdict_literals():
     return literals
 
 
+SWEEP_SOURCE = Path(__file__).resolve().parent / "lifted_oracle_sweep.sh"
+
+
+def sweep_verdict_literals():
+    """Verdict strings the SWEEP SCRIPT writes into a report row.
+
+    The third writer, and the one that was invisible. When the watchdog kills a
+    stalled child the shell appends the row itself - the C++ never runs again -
+    so neither of the two extractors above sees it. `build/oracle/report.tsv`
+    carries 15 such rows today and `classify("HANG", ...)` raised
+    UnknownVerdict on every one of them, which aborts a whole mutation run over
+    a row that says nothing either way.
+
+    The shell writes the row through a `printf` whose format is
+    `%s<TAB>...<TAB>...`, with the verdict either inline in the format or held
+    in a shell variable assigned just above. Both forms are read: an inline
+    literal from the format string, and a `verdict="NAME"` assignment.
+    """
+    text = SWEEP_SOURCE.read_text(encoding="utf-8", errors="replace")
+    literals = set(re.findall(r'^\s*verdict="([A-Z][A-Za-z-]*)"', text,
+                              re.MULTILINE))
+    for fmt in re.findall(r"printf\s+'([^']+)'", text):
+        fields = fmt.split("\\t")
+        if len(fields) >= 2 and fields[0] == "%s" and "%" not in fields[1]:
+            literals.add(fields[1])
+    if not literals:
+        raise AssertionError(
+            f"found no verdict strings in {SWEEP_SOURCE}; this test has lost "
+            f"track of the sweep's report writer")
+    return literals
+
+
 class VerdictClassificationTests(unittest.TestCase):
     """Every verdict the oracle can utter maps to exactly one answer."""
 
@@ -239,6 +271,53 @@ class VerdictClassificationTests(unittest.TestCase):
         self.assertEqual(set(), missing,
                          "the driver writes these verdict strings and the "
                          "mutation runner would raise UnknownVerdict on them")
+
+    def test_every_verdict_the_sweep_script_writes_is_in_the_table_too(self):
+        """The third writer: the shell supervisor.
+
+        A killed child never returns to the C++, so the row for the function it
+        died on is appended by `lifted_oracle_sweep.sh`. Both extractors above
+        read C++ and neither reads shell, so HANG - fifteen rows in the current
+        report - sat outside the table and raised UnknownVerdict.
+        """
+        literals = sweep_verdict_literals()
+        self.assertIn("HANG", literals,
+                      "the sweep no longer writes a HANG row; if the row shape "
+                      "changed, update the extractor")
+        missing = literals - set(mutate.VERDICT_MEANING)
+        self.assertEqual(set(), missing,
+                         "the sweep writes these verdict strings and the "
+                         "mutation runner would raise UnknownVerdict on them")
+
+    def test_a_supervisor_kill_is_no_evidence_about_the_mutant(self):
+        """HANG and KILLED-host-refused say nothing in either direction.
+
+        Both are the run dying with nothing compared. Scoring either as
+        `detected` would credit the mutation harness with a catch it did not
+        make; scoring either as `undetected` would count a dead process as
+        agreement.
+        """
+        for verdict in ("HANG", "KILLED-host-refused"):
+            with self.subTest(verdict=verdict):
+                self.assertEqual("unusable", mutate.classify(verdict, True))
+                self.assertEqual("unusable", mutate.classify(verdict, None))
+                self.assertNotIn(verdict, mutate.CAUGHT)
+
+    def test_a_host_refusal_is_not_folded_into_hang(self):
+        """They are different events and the sweep tells them apart.
+
+        A HANG is the watchdog seeing no progress. `rosetta error: unsupported
+        privilege level: 0` is the x86-on-arm64 translator refusing an
+        instruction: the process is gone before any guard runs. Measured on the
+        first 40 `iat` functions, 5 die that way. Naming both HANG would report
+        five watchdog observations that never happened.
+        """
+        self.assertIn("KILLED-host-refused", sweep_verdict_literals())
+        self.assertNotEqual(mutate.VERDICT_MEANING["HANG"], "detected")
+        sweep = SWEEP_SOURCE.read_text(encoding="utf-8")
+        self.assertIn("rosetta error", sweep,
+                      "the sweep no longer looks for the host-refusal message, "
+                      "so every such death is recorded as a HANG again")
 
     def test_a_skipped_function_is_no_evidence_about_the_mutant(self):
         # The oracle never ran the function, so the mutant was never judged.
@@ -326,12 +405,63 @@ class VerdictClassificationTests(unittest.TestCase):
              if meaning == "detected"},
             mutate.CAUGHT)
 
-    def test_pass_is_the_only_verdict_that_can_ever_be_a_miss(self):
-        for verdict in mutate.VERDICT_MEANING:
-            if verdict == "PASS":
+    def test_only_reported_agreement_can_ever_be_a_miss(self):
+        # This used to read "PASS is the only verdict that can ever be a miss",
+        # which was the same statement while PASS was the only verdict meaning
+        # "the oracle looked and agreed". PASS-paths-taken is a second one: the
+        # comparison ran on every seed that could be judged and noticed
+        # nothing, on a function whose static flags say some other path reaches
+        # a construct the lift cannot run.
+        #
+        # The PROPERTY has not moved, and it is the one that matters - a mutant
+        # may be scored MISSED only when the oracle actually reported
+        # agreement, never when it reported a skip, a fault or an inconclusive.
+        # So the exemption is derived from the table, exactly as CAUGHT is
+        # above, rather than being a second hand-maintained list.
+        for verdict, meaning in mutate.VERDICT_MEANING.items():
+            if meaning == "undetected":
                 continue
             with self.subTest(verdict=verdict):
                 self.assertNotEqual("missed", mutate.classify(verdict, True))
+
+    def test_the_agreeing_verdicts_are_exactly_these_two(self):
+        # ...and because the exemption above is now derived, the set it is
+        # derived from has to be pinned, or a verdict added to the table as
+        # "undetected" would silently widen what may be scored MISSED and
+        # nothing would notice. These two are the oracle's only ways of saying
+        # the lifted side and the original agreed; see oracle_verdict_name in
+        # tools/lifted_oracle.cpp.
+        self.assertEqual(
+            {name for name, meaning in mutate.VERDICT_MEANING.items()
+             if meaning == "undetected"},
+            {"PASS", "PASS-paths-taken"})
+        # Both must really be classifiable as a miss, or the mutation score
+        # cannot report a hole in the comparison at all.
+        self.assertEqual("missed", mutate.classify("PASS", True))
+        self.assertEqual("missed", mutate.classify("PASS-paths-taken", True))
+
+    def test_the_detected_set_is_pinned_by_membership_too(self):
+        # test_the_caught_set_is_derived_from_the_table above proves CAUGHT and
+        # the table agree; it cannot notice the table itself changing, because
+        # both sides move together. Measured: reclassifying SKIP-reached-blocked
+        # from "detected" to "no-evidence" left the entire suite green while
+        # every mutant that walked into a blocked construct stopped counting as
+        # a detection - scored `unusable` instead of `caught`, which is the
+        # safe direction and still a silently wrong number.
+        self.assertEqual(mutate.CAUGHT, {
+            "FAIL",
+            "FAIL-lifted-fault",
+            "SKIP-trap",
+            "SKIP-reached-blocked",
+            "INCONCLUSIVE-lifted-budget",
+            "INCONCLUSIVE-lifted-out-of-span",
+        })
+        # The two SKIPs are detections for the same reason and it is worth
+        # asserting rather than reading off the set: `candidates` draws only
+        # from rows the unmutated sweep called PASS, so a baseline that reaches
+        # neither construct is a precondition of the mutant existing at all.
+        self.assertEqual("caught", mutate.classify("SKIP-trap", True))
+        self.assertEqual("caught", mutate.classify("SKIP-reached-blocked", True))
 
 
 class ReportReadingTests(unittest.TestCase):

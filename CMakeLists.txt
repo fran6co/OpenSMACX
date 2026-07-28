@@ -870,17 +870,45 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_mutate.py"
     )
 
+    # The one module that decides what every published number MEANS: which
+    # rows are in scope (5,673 of 6,000 - external_library is excluded by
+    # written policy and the exclusion is published with the figure), how a row
+    # is priced (the sum of body spans, never the address extent), and which
+    # direction a number moves. Two callers compute the same block from
+    # different row shapes - the exporter's in-memory dicts and the reused
+    # export's CSV strings - so a difference between them would publish two
+    # numbers for one tree.
+    add_test(NAME recovery-metrics-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_recovery_metrics.py"
+    )
+
     # The whole-image summary: every headline number the project publishes.
-    # The byte-weighted verdict table, "compared and agreed", the
-    # percent-of-image figure and the seed histogram are all computed here and
-    # nowhere else, so an arithmetic slip is not caught downstream - it is
-    # printed and believed. Byte weighting in particular has already been got
-    # wrong once in this project, by reading a field that is a SUM of body
-    # spans as if it were a contiguous address extent. The fixtures are
-    # synthetic reports in a temp dir; nothing here reads build/oracle.
+    # The byte-weighted verdict table, "compared and agreed", the evidence
+    # tiers under it, the three numbers that must go DOWN and the seed
+    # histogram are all computed here and nowhere else, so an arithmetic slip
+    # is not caught downstream - it is printed and believed. Byte weighting in
+    # particular has already been got wrong once in this project, by reading a
+    # field that is a SUM of body spans as if it were a contiguous address
+    # extent. The fixtures are synthetic reports in a temp dir; nothing here
+    # reads build/oracle.
     add_test(NAME lifted-oracle-summary-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_summary.py"
+    )
+
+    # The only place in this repository where a function's ABI is written down
+    # mechanically rather than guessed: the 4,821 MSVC-mangled names. The parse
+    # has one trap that reads as correct - on an INSTANCE member the character
+    # after the kind char is the `this` cv-qualifier, not the calling
+    # convention, and reading it as the convention reports 2,905 of 4,026
+    # functions as __cdecl and looks entirely plausible. So the tests pin the
+    # parse against undname per row, pin the argument layout, and pin the
+    # body-versus-name arbitration that decides where `this` really arrives.
+    # This file was delivered without a registration and ctest never ran it.
+    add_test(NAME calling-convention-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_recover_conventions.py"
     )
 
     # The plan decides what the oracle is allowed to compare, so every mistake
@@ -895,6 +923,23 @@ if(BUILD_TESTING)
     add_test(NAME lifted-oracle-plan-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_plan.py"
+    )
+
+    # The join between the oracle's trap CLASSIFIER and the four files that
+    # write the trap reasons it matches. The classifier decides whether a trap
+    # is a mnemonic waiting to be lowered (SKIP-trap, a phase-4 work item) or a
+    # construct the lift cannot model (SKIP-reached-blocked, the runtime proof
+    # that a static blocking flag describes a path the program takes). Measured
+    # over the 470 extcall-only functions that split was 79 to 0.
+    #
+    # It matches STRINGS, and the strings live in lift_whole_image.py,
+    # generate_imports.py, lifted_tls.h and lifted_imports.h. Reword one and
+    # everything still compiles, every C++ test stays green, and the verdict
+    # silently degrades - the two halves only ever meet at runtime under Wine
+    # against the user's own executable. This test is where they meet instead.
+    add_test(NAME lifted-oracle-trap-reason-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_trap_reasons.py"
     )
 
     # The import boundary's derivation: which import lives at which IAT slot,

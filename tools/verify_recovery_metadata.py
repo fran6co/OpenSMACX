@@ -32,6 +32,7 @@ import sys
 import tempfile
 
 from local_artifact import require_local_artifact_path
+import recovery_metrics
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -363,6 +364,13 @@ def refresh_export_metadata(verify_dir):
     })
     summary["functions"]["by_recovery_state"] = dict(sorted(
         Counter(row["recovery_state"] for row in rows).items()))
+    # The byte-weighted block is recomputed here for the same reason the count
+    # above is: `recovery_state` has just changed, and every figure in the
+    # block is derived from it - the lift-scope denominator, the exclusion, and
+    # the machine-carried debt. Leaving it stale would publish a byte total
+    # that disagreed with the counts printed beside it, and the reused-export
+    # path is the path most runs take.
+    summary["functions"]["bytes"] = recovery_metrics.bytes_block(rows)
     unresolved_annotations = sorted(set(source_annotations) - known_starts)
     summary["source_annotations"] = {
         "annotations": sum(len(items) for items in source_annotations.values()),
