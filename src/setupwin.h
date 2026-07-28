@@ -34,9 +34,13 @@ class DLLEXPORT SetupWin : GraphicWin {
  public:
   SetupWin() { ; }
   ~SetupWin() { ; }
+  int UNK1(int a1);
+  int UNK2(int a1);
   int UNK3(int a1);
   int UNK4(int a1);
 };
 
+int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1);
+int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1);
 int __fastcall setup_win_unk3_redirect(SetupWin *self, void *, int a1);
 int __fastcall setup_win_unk4_redirect(SetupWin *self, void *, int a1);

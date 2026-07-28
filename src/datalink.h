@@ -36,6 +36,7 @@ class DLLEXPORT Datalink : GraphicWin {
  public:
   Datalink() { ; }
   ~Datalink() { ; }
+  int UNK1(int a1, int a2);
   void UNK6();
   void UNK8();
   void UNK9();
@@ -66,6 +67,7 @@ class DLLEXPORT Datalink : GraphicWin {
   int32_t field_2A38_;
 };
 
+int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2);
 void __fastcall datalink_unk6_redirect(Datalink *self, void *);
 void __fastcall datalink_unk8_redirect(Datalink *self, void *);
 void __fastcall datalink_unk9_redirect(Datalink *self, void *);

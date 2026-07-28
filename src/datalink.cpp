@@ -360,3 +360,29 @@ Status: Complete
 void __cdecl help_topic(unsigned int topic, int index) {
     DatalinkExec(DatalinkMain, topic, index);
 }
+
+/*
+Purpose: Combine two values as `a1 * 10000 + a2`.
+
+             lea eax,[eax+eax*4]  x4   -> a1 * 625
+             shl eax,4                 -> a1 * 10000
+             add eax,ecx
+
+         The four `lea` steps multiply by five each time and the shift by
+         sixteen, which is 625 * 16 = 10000. Written as the constant, because
+         the shift-and-add chain is the compiler's encoding of it and not a
+         behaviour of its own - it wraps identically at 32 bits either way.
+
+         Touches no field; both operands are arguments.
+Original Offset: 0042A020
+Return Value: a1 * 10000 + a2, wrapping at 32 bits
+Status: Complete
+*/
+int Datalink::UNK1(int a1, int a2) {
+    return static_cast<int32_t>(static_cast<uint32_t>(a1) * 10000U
+                                + static_cast<uint32_t>(a2));
+}
+
+int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2) {
+    return self->UNK1(a1, a2);
+}

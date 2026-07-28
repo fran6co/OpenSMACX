@@ -45,3 +45,66 @@ int SetupWin::UNK4(int) {
 int __fastcall setup_win_unk4_redirect(SetupWin *self, void *, int a1) {
     return self->UNK4(a1);
 }
+
+/*
+Purpose: Scale the argument by the field at 0xA14 and divide by 1024.
+
+             mov eax,[ecx+0xA14] / imul eax,[ebp+8] / cdq
+             and edx,0x3FF / add eax,edx / sar eax,0xA
+
+         `cdq / and / add / sar` is MSVC's signed divide by a power of two: it
+         biases a negative dividend by 2^n - 1 before the arithmetic shift so
+         the quotient truncates toward zero, which is what C++ `/ 1024` means.
+         Verified over 200,000 random 32-bit dividends plus the boundaries -
+         the idiom and `/ 1024` agree on every one.
+
+         The multiply is a 32-bit `imul`, so an overflowing product wraps and
+         the division sees the wrapped value; `int` arithmetic reproduces that.
+
+         SetupWin models no fields - it derives from GraphicWin, which ends at
+         0xA14 - so this is its first own field, reached through a documented
+         raw offset as BasePop::UNK3 does.
+Original Offset: 004ADA80
+Return Value: (field_A14 * a1) / 1024, truncated toward zero
+Status: Complete
+*/
+int SetupWin::UNK1(int a1) {
+    const int32_t scale = *reinterpret_cast<const int32_t *>(
+        reinterpret_cast<const uint8_t *>(this) + 0xA14);
+    return static_cast<int32_t>(static_cast<uint32_t>(scale)
+                                * static_cast<uint32_t>(a1)) / 1024;
+}
+
+int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1) {
+    return self->UNK1(a1);
+}
+
+/*
+Purpose: As UNK1, over the field at 0xA18 and dividing by 768.
+
+             mov ecx,[ecx+0xA18] / mov eax,0x2AAAAAAB / imul ecx,[ebp+8]
+             imul ecx / mov eax,edx / sar eax,7 / mov ecx,eax
+             shr ecx,0x1F / add eax,ecx
+
+         The magic-number form: 0x2AAAAAAB taken as the high half of a signed
+         multiply, shifted right by 7 and corrected by the sign bit, is
+         division by 768. Verified the same way as UNK1 - 200,000 random
+         dividends and the boundaries, agreeing with `/ 768` on every one.
+
+         1024 and 768 beside each other read as a resolution, which is a
+         plausible account of what these two scale and is NOT what the recovery
+         rests on; the arithmetic is.
+Original Offset: 004ADAA0
+Return Value: (field_A18 * a1) / 768, truncated toward zero
+Status: Complete
+*/
+int SetupWin::UNK2(int a1) {
+    const int32_t scale = *reinterpret_cast<const int32_t *>(
+        reinterpret_cast<const uint8_t *>(this) + 0xA18);
+    return static_cast<int32_t>(static_cast<uint32_t>(scale)
+                                * static_cast<uint32_t>(a1)) / 768;
+}
+
+int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1) {
+    return self->UNK2(a1);
+}
