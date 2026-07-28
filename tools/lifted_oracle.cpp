@@ -359,8 +359,35 @@ int oracle_bootstrap(int argc, char **argv, int *exit_code) {
         pi.hProcess, reinterpret_cast<void *>(static_cast<uintptr_t>(OracleImageBase)),
         OracleSpanReservation, MEM_RESERVE, PAGE_READWRITE);
     if (!reserved) {
-        std::fprintf(stderr, "oracle: reserving %#x in the child failed, error %lu\n",
-                     OracleImageBase, static_cast<unsigned long>(GetLastError()));
+        // Say WHAT IS IN THE WAY, not just that something is. This failed once
+        // for a reason no error code names: Wine on Linux places the child's
+        // initial thread stack bottom-up at 0x00220000, and with mingw's
+        // default 2 MiB reserve it runs through 0x00400000. The fix is in
+        // lifted_oracle_build.sh (--stack), but the error said only "487", and
+        // finding that out took writing a separate program to walk the child's
+        // map. It walks it here instead, so the next such move reports itself.
+        const unsigned long failure = static_cast<unsigned long>(GetLastError());
+        std::fprintf(stderr, "oracle: reserving %#x + %#x in the child failed, error %lu\n",
+                     OracleImageBase, OracleSpanReservation, failure);
+        std::fprintf(stderr, "oracle: the child already has this in the way:\n");
+        const uintptr_t span_end = uintptr_t(OracleImageBase) + OracleSpanReservation;
+        for (uintptr_t address = OracleImageBase; address < span_end;) {
+            MEMORY_BASIC_INFORMATION mbi;
+            if (!VirtualQueryEx(pi.hProcess, reinterpret_cast<void *>(address), &mbi,
+                                sizeof mbi))
+                break;
+            if (mbi.State != MEM_FREE) {
+                char mapped[MAX_PATH];
+                mapped[0] = '\0';
+                std::fprintf(stderr, "oracle:   %#010lx + %#010lx  state %#lx  %s\n",
+                             static_cast<unsigned long>(uintptr_t(mbi.BaseAddress)),
+                             static_cast<unsigned long>(mbi.RegionSize),
+                             static_cast<unsigned long>(mbi.State), mapped);
+            }
+            uintptr_t next = uintptr_t(mbi.BaseAddress) + mbi.RegionSize;
+            if (next <= address) break;
+            address = next;
+        }
         TerminateProcess(pi.hProcess, 3);
         return 2;
     }
