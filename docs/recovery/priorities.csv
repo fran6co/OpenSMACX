@@ -3060,7 +3060,6 @@ P3,20,0x0063B072,sub_63b072,170,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x0063B11C,sub_63b11c,163,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x0063B1BF,sub_63b1bf,130,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x0063B241,sub_63b241,138,0,0,unrecovered,,,2,exact,exact,
-P3,11,0x0063B2D0,??0Cursor@@QAE@XZ,16,0,0,unrecovered,,,1,exact,missing,Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this)
 P3,1511,0x0063B2E0,?init@Cursor@@QAEXPAUSprite@@HH@Z,1560,0,15,unrecovered,,,1,exact,missing,"void (__thiscall ?init@Cursor@@QAEXPAUSprite@@HH@Z)(Cursor* this, Sprite*, int, int)"
 P3,221,0x0063B8D0,??1Cursor@@QAE@XZ,58,0,2,unrecovered,,,2,exact,exact,void (__thiscall ??1Cursor@@QAE@XZ)(Cursor* this)
 P3,1020,0x0063B910,?init_cursor_class@Cursor@@QAAXXZ,29,1,0,unrecovered,,,2,exact,exact,

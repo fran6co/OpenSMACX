@@ -2408,6 +2408,30 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_cursor_construct() {
+    // Four fields cleared and the object returned. The fixture checks the
+    // exact bytes - all four zero, every other byte and both canaries
+    // untouched - and that the adapter hands back `this`, which is the legacy
+    // EAX residue.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        alignas(Cursor) uint8_t storage[sizeof(Cursor) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        std::memcpy(expected, storage, sizeof(storage));
+        const uint32_t zero = 0;
+        for (size_t offset : {0x0, 0x4, 0x8, 0xC}) {
+            std::memcpy(expected + 16 + offset, &zero, sizeof(zero));
+        }
+        auto *cursor = reinterpret_cast<Cursor *>(storage + 16);
+        if (use_adapter) {
+            expect(cursor_construct_redirect(cursor, nullptr) == cursor);
+        } else {
+            cursor->construct();
+        }
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+}
+
 void test_g_ambience_basewin_show() {
     // Raises the flag byte only when it is CLEAR. The seeds 0x02 and 0x5A are
     // the whole point: an unconditional `field_6C_ = 1`, which is what the
@@ -29010,6 +29034,7 @@ int main() {
     test_datalink_parse_id();
     test_net_win_unk5();
     test_g_ambience_basewin_show();
+    test_cursor_construct();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();

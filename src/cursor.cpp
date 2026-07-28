@@ -30,3 +30,34 @@ void Cursor::close_cursor_class() {
 void __cdecl cursor_close_cursor_class_redirect() {
     Cursor::close_cursor_class();
 }
+
+/*
+Purpose: Clear all four fields.
+
+             mov eax,ecx / xor ecx,ecx
+             mov [eax],ecx / mov [eax+8],ecx / mov [eax+0xC],ecx
+             mov [eax+4],ecx / ret
+
+         `mov eax,ecx` first is the legacy EAX = this return every recovered
+         constructor here preserves; the redirect carries it.
+
+         The original stores 0, 8, 0xC then 4 - not in address order - and that
+         ordering is NOT reproduced deliberately, because it cannot be
+         observed: four independent stores of the same constant to distinct
+         fields leave the same object whatever order they run in, and nothing
+         interleaves. Saying so beats implying the sequence was matched.
+Original Offset: 0063B2D0
+Return Value: this
+Status: Complete
+*/
+void Cursor::construct() {
+    field_0_ = 0;
+    field_4_ = 0;
+    field_8_ = 0;
+    field_C_ = 0;
+}
+
+Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *) {
+    self->construct();
+    return self;
+}

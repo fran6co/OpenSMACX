@@ -5494,7 +5494,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0063B11C,0x0063B1BF,163,.text,sub_63b11c,,0x0063B11C-0x0063B1BF,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0063B1BF,0x0063B241,130,.text,sub_63b1bf,,0x0063B1BF-0x0063B241,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0063B241,0x0063B2CB,138,.text,sub_63b241,,0x0063B241-0x0063B2CB,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0063B2D0,0x0063B2E0,16,.text,??0Cursor@@QAE@XZ,Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this),0x0063B2D0-0x0063B2E0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0063B2D0,0x0063B2E0,16,.text,??0Cursor@@QAE@XZ,Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this),0x0063B2D0-0x0063B2E0,game,hidden;sp_ready;purged_ok,src/cursor.cpp:49,Complete,,,source_complete,,,,0,0
 0x0063B2E0,0x0063B8CA,1560,.text,?init@Cursor@@QAEXPAUSprite@@HH@Z,"void (__thiscall ?init@Cursor@@QAEXPAUSprite@@HH@Z)(Cursor* this, Sprite*, int, int)",0x0063B2E0-0x0063B8CA;0x00663910-0x0066393E,game,sp_ready;purged_ok,,,,,unrecovered,,,,15,0
 0x0063B8D0,0x0063B90A,58,.text,??1Cursor@@QAE@XZ,void (__thiscall ??1Cursor@@QAE@XZ)(Cursor* this),0x0063B8D0-0x0063B90A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0063B910,0x0063B92D,29,.text,?init_cursor_class@Cursor@@QAAXXZ,,0x0063B910-0x0063B92D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
