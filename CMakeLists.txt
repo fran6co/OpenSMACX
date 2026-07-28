@@ -286,6 +286,22 @@ if(MINGW)
         # operator new returns null rather than raising, so no recovered body
         # may introduce an exception the original could not have produced.
         -fno-exceptions
+        # -fno-exceptions ALONE DOES NOT REMOVE THE UNWIND TABLES, and on this
+        # toolchain it never did - it just was not visible before. i686-w64-
+        # mingw32 g++ 13 defaults to asynchronous unwind tables, so
+        # autosound.cpp.obj carried 1,081 .eh_frame sections - one per
+        # std::ctype instantiation reached through <sstream> and <string> in
+        # stdafx.h, plus a 0x6d4-byte .eh_frame of its own - and
+        # verify-recovery-abi failed exactly as it is designed to.
+        #
+        # The check is right and stays as it is. What was missing is the rest
+        # of the flag: an object with no exceptions and full unwind tables
+        # still carries the machinery the original does not have, and MSVC 6
+        # emitted none of it. Removing the tables is what makes the object
+        # match the claim; relaxing the check would only have stopped it being
+        # reported.
+        -fno-asynchronous-unwind-tables
+        -fno-unwind-tables
         $<$<CONFIG:Debug>:-Og>
         $<$<CONFIG:Release>:-O2>
         $<$<CONFIG:Release>:-fno-delete-null-pointer-checks>
