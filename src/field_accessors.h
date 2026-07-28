@@ -29,3 +29,7 @@ void * __fastcall field_accessor_00634fb0_redirect(void *, void *);
 void * __fastcall field_accessor_006354d0_redirect(void *, void *);
 uint32_t __fastcall field_accessor_006363f0_redirect(void *, void *);
 void * __fastcall field_accessor_0063e520_redirect(void *, void *);
+void __fastcall field_accessor_00406b20_redirect(void *, void *, int, int, int);
+uint32_t __fastcall field_accessor_00616d80_redirect(void *, void *, int, int, int);
+void __fastcall field_accessor_0061f785_redirect(void *, void *, int, int, int, int, int, int, int);
+void __fastcall field_accessor_00634c20_redirect(void *, void *);

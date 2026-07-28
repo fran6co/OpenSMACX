@@ -23,6 +23,8 @@ WHAT IS ACCEPTED, and nothing else:
     inc dword [ecx+N] / ret          increment a field
     mov eax,IMM / ret                return a constant
     mov byte [ecx+N],IMM / ret       store a byte
+    xor eax,eax / ret                return zero
+    ret                              a body that does nothing at all
     a SEQUENCE of stores of constants to [this+N], optionally preceded by
     `mov eax,ecx` and register loads of constants, ending in `ret` - the shape
     every one of these small constructors has
@@ -101,6 +103,19 @@ def classify(instructions) -> tuple[str, dict] | None:
     cleanup = (tail.operands[0].imm
                if tail.operands and tail.operands[0].type == X86_OP_IMM else 0)
     body = instructions[:-1]
+
+    if not body:
+        # A body that is only its `ret`. It does nothing and returns nothing,
+        # and the ONLY thing there is to get wrong is the cleanup - which is
+        # why it is emitted rather than dismissed as trivial.
+        return "nothing", {"cleanup": cleanup}
+
+    if (len(body) == 1 and body[0].mnemonic == "xor"
+            and len(body[0].operands) == 2
+            and all(operand.type == X86_OP_REG for operand in body[0].operands)
+            and body[0].operands[0].reg == body[0].operands[1].reg
+            and body[0].operands[0].reg == X86_REG_EAX):
+        return "constant", {"value": 0, "cleanup": cleanup}
 
     if len(body) == 1 and body[0].mnemonic == "mov":
         destination, source = body[0].operands
@@ -232,14 +247,16 @@ BODIES = {
     "store_byte": lambda d: (f"    *(static_cast<uint8_t *>(self) + {d['offset']:#x})"
                              f" = {d['value']:#x};"),
     "stores": render_stores,
+    "nothing": lambda d: "",
 }
 RETURNS = {"read": "uint32_t", "masked": "uint32_t", "constant": "uint32_t",
-           "increment": "void", "store_byte": "void"}
+           "increment": "void", "store_byte": "void", "nothing": "void"}
 # A constant return never reads `this`, so naming the parameter would be an
 # unused one - and this tree builds with -Wall -Wextra, where that is an error
 # rather than a note. The name is emitted only where the body uses it.
 USES_SELF = {"read": True, "masked": True, "constant": False,
-             "increment": True, "store_byte": True, "stores": True}
+             "increment": True, "store_byte": True, "stores": True,
+             "nothing": False}
 PURPOSE = {
     "read": "Read the dword field at {offset:#x}.",
     "masked": "Read the dword field at {offset:#x}, masked to {mask:#x}.",
@@ -247,6 +264,7 @@ PURPOSE = {
     "increment": "Increment the dword field at {offset:#x}.",
     "store_byte": "Store {value:#x} in the byte at {offset:#x}.",
     "stores": "Set {count} field(s) to constants.",
+    "nothing": "Do nothing; the original body is only its `ret`.",
 }
 
 
