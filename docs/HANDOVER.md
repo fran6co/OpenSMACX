@@ -236,17 +236,35 @@ measurements that motivated the mask. Every divergence is in a bit the SDM
 declares **architecturally undefined** - SF/ZF/AF/PF after IMUL, OF after a
 shift of count != 1 - and each sits inside its own function's mask.
 
-**So the mask's justification has changed, and it is now a tractable one.** It
-was "the host gives three different answers, so no lowering can match all
-three". It is now "the host gives ONE answer and it is not the lift's". Real
-silicon is self-consistent, which is what the move was betting on; being
+**The mask's justification has changed, and the new one is permanent.** It was
+"the host gives three different answers, so no lowering can match all three".
+Real silicon is self-consistent - that part of the bet paid - but
 self-consistent is not the same as agreeing with `lifted_x86.h`'s arbitrary
-deterministic choice. Note `fixed_div` blames a **SHL, not the IDIV** - the
-plan comment's claim that shift OF "was measured to agree with lifted_x86.h's
-uniform rule in 651 of 651 cases" was measured under Rosetta and does not hold
-here. Deriving those three lowerings from real behaviour would let the mask be
-dropped and add those flags to every comparison; that is now a bounded task
-rather than an impossible one.
+choice. Note `fixed_div` blames a **SHL, not the IDIV**: the plan comment's
+claim that shift OF "was measured to agree with lifted_x86.h's uniform rule in
+651 of 651 cases" was measured under Rosetta and does not hold here.
+
+Both bits were then measured directly on this silicon (i9-11980HK), which is
+the step that turns "the answers differ" into a decision:
+
+* **IMUL ZF is ALWAYS CLEAR.** 400,000 random cases, 166,234 of them with a
+  zero result, ZF set in **zero** of them, regardless of entry flags. The lift
+  writes ZF from the truncated result, so the two differ on exactly the zero
+  products - which is precisely `speed_proto` and `sub_559210`. SF and PF agree
+  everywhere; ZF is the whole disagreement.
+* **SHL OF for count != 1 is deterministic but is none of the obvious rules.**
+  200,000 vectors: 0 unrepeatable, 0 dependent on the entry value of OF, and 0
+  consistent with "left unmodified". It is a genuine function of (value, count)
+  belonging to this microarchitecture.
+
+**So do not "fix" the lowerings to match.** It is tempting because the IMUL rule
+is one line, and it would be overfitting: these bits are undefined precisely so
+that implementations may differ, this image shipped for Pentium II/III, and a
+lift tuned to a 2021 Intel part would be wrong on the hardware the program was
+written for - and unverifiable on an AMD one. There is no host-independent
+answer to match, which is why the mask is not a workaround for a bad host but
+the correct treatment of an undefined bit. Keep it, and keep `--no-undef` as
+the experiment that re-checks that reasoning on any future host.
 
 ### 3. The top page cannot exist here, so the arbitration is retired
 
