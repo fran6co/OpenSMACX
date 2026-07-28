@@ -376,6 +376,8 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
+**Queue as of 2026-07-29: 61 candidates, 2,232 bytes.**
+
 It has been tightened five times, each after it offered something unsafe:
 
 | fix | what it was about to allow |
@@ -400,6 +402,48 @@ fragment and a wire list, and verifying itself by simulation. Follow that
 shape for the remaining families rather than writing 71 names by hand; the
 same pattern is already used by the nullsub, atexit, init, adjustor, deleting
 and delegation thunk generators.
+
+### What `generate_field_accessors.py` now understands, and what it will not
+
+Nine shapes, each accepted only when the instruction fully determines the
+meaning. The three added most recently are worth naming because of what they
+taught:
+
+| shape | why it was worth adding |
+| --- | --- |
+| `ret` / `ret N` alone | its ONLY content is the cleanup, which is exactly what I had already shipped wrong once |
+| trailing `nop` stripping | IDA sizes a function to its whole 16-byte slot, so `nullsub_185` read as "16 bytes ending in a nop" and was refused as un-understood |
+| `this->field = argN` | the first shape with parameters, so the first that has to say WHICH argument goes WHERE |
+
+The refusals matter more than the acceptances. `sub_57dee0` reads `[ebp+8]`
+and cleans nothing, so it is `__cdecl`; emitting `__fastcall` for it would
+account for its argument twice. A body containing a stray `push` is refused
+because that moves ESP and the `[esp+4]` slot arithmetic would then name the
+wrong argument while still looking reasonable.
+
+**A do-nothing body has no statements, so the mutation sweep says nothing
+about it.** 254/254 killed is not evidence for those; the evidence is objdump
+on the emitted `ret N` against the original, plus a manual poison. Say which.
+
+### Nothing checked that a redirect's jump fits until 2026-07-29
+
+`install_redirect` in `src/dllmain.cpp` does an unconditional
+`memcpy(original, patch, PatchSize)` with a five-byte `E9 rel32` and never
+looks at the length of the function it is replacing. **280 of the wired
+redirects are shorter than five bytes**; the shortest are a single `ret`. They
+are safe only because MSVC pads every function into a sixteen-byte slot, so
+the overrun lands in padding - a property of this image, not of the mechanism.
+
+`tools/verify_redirect_patch_fit.py` now checks it (ctest: `redirect-patch-fit`),
+reading `PatchSize` from dllmain.cpp so widening the patch re-checks every
+entry instead of silently invalidating the check. Current measurement: 1,994
+redirects, 0 overruns, minimum room 11 bytes.
+
+This is the same defect shape as the stack-cleanup bug it followed: a
+mechanism with no guard, correct today by luck of the surrounding data. When
+adding a redirect for a function under ~16 bytes, that check is the thing
+standing between you and four silently rewritten bytes of an unrelated
+function.
 
 ### The mutation harness is blind to two shapes, and that is not a pass
 
