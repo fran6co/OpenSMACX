@@ -34,3 +34,6 @@ uint32_t __fastcall field_accessor_00616d80_redirect(void *, void *, int, int, i
 void __fastcall field_accessor_0061f785_redirect(void *, void *, int, int, int, int, int, int, int);
 void __fastcall field_accessor_00634c20_redirect(void *, void *);
 void __fastcall field_accessor_0050f640_redirect(void *, void *, int);
+void __fastcall field_accessor_00589750_redirect(void *, void *, int);
+void __fastcall field_accessor_00590cb0_redirect(void *, void *, int, int);
+void __fastcall field_accessor_005f05c0_redirect(void *, void *, int);
