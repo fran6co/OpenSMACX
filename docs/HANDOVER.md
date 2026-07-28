@@ -366,6 +366,41 @@ needs its opt-in `recovery-oracle-tests` target built first.
 
 **Now 38 of 38.**
 
+### The leaf-testable closure, and how its tail should be cleared
+
+`tools/find_leaf_testable.py` reports the queue: unrecovered functions that
+touch no absolute global, whose callees are all `source_complete` AND compiled
+into `recovery-leaf-tests`, whose declared arity matches their stack cleanup,
+and which are not EH unwind funclets. `--show-rejected` gives the reason for
+everything it refuses. **The count is the progress metric.** It moves in both
+directions: recovering a callee unblocks its callers, and tightening the filter
+removes candidates that were never recoverable.
+
+It has been tightened five times, each after it offered something unsafe:
+
+| fix | what it was about to allow |
+| --- | --- |
+| read the target's object dir, not CMakeLists | `BattleWin::stop_timer`, which cannot link where it is tested |
+| indexed absolute addresses count as globals | `Dialog::set_def_dialog_text_color`, which writes global arrays |
+| declared arity must match the `ret` | `Win::on_redraw`, which would corrupt its callers |
+| exclude branch targets from binding flags | four false "needs classification" reports |
+| reject bodies that read EBP with no prologue | 13 EH unwind funclets, which are not callable at all |
+
+**The tail is not more of the same, and should not be ground out by hand.**
+Of the 97 remaining, only about 5 have a class that already exists; ~21 need a
+class declared first, and **~71 are unnamed `sub_xxx` bodies**, mostly in a few
+identical shapes - a `mov [ecx+N]` field getter accounts for 13 on its own.
+
+The convention for those already exists and it is GENERATION, not hand
+recovery. `src/global_arith.cpp` holds 26 unnamed absolute-operand leaves
+emitted by `tools/generate_global_arith.py`, named `global_arith_<address>_
+redirect(void *, void *)` after the address rather than invented, grouped in
+one family file, with the generator emitting the header, the source, a test
+fragment and a wire list, and verifying itself by simulation. Follow that
+shape for the remaining families rather than writing 71 names by hand; the
+same pattern is already used by the nullsub, atexit, init, adjustor, deleting
+and delegation thunk generators.
+
 ### The mutation harness is blind to two shapes, and that is not a pass
 
 `tools/mutate_and_verify.py` reports `0 mutants` - or refuses the function
