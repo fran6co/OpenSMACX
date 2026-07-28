@@ -131,6 +131,45 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual([], reasons)
 
 
+class ImplementationHomeTests(unittest.TestCase):
+    """Where a recovered body LIVES, which is condition (3)'s real input."""
+
+    def homes(self, files: dict):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            for name, text in files.items():
+                (source / name).write_text(text)
+            return scanner.implementation_files(source)
+
+    def test_an_original_offset_comment_names_the_file(self):
+        found = self.homes({"win.cpp": "/*\nOriginal Offset: 005EE050\n*/\n"})
+        self.assertEqual({0x005EE050: "win"}, found)
+
+    def test_a_class_whose_file_is_not_named_after_it_is_found(self):
+        # The case the old name-guessing got wrong: Time's recovered half lives
+        # in time_recovery.cpp, and BattleWin::stop_timer's callee Time::stop
+        # lives in time.cpp. Guessing "time" from the class found neither
+        # reliably.
+        found = self.homes({"time_recovery.cpp": "Original Offset: 00616200\n",
+                            "time.cpp": "Original Offset: 00616730\n"})
+        self.assertEqual("time_recovery", found[0x00616200])
+        self.assertEqual("time", found[0x00616730])
+
+    def test_a_free_function_is_found_like_any_other(self):
+        # Free functions have no class to guess a filename from, which excluded
+        # 349 of 657 rejected candidates under 64 bytes - the largest single
+        # reason, and not a property of the code.
+        found = self.homes({"alpha.cpp": "Original Offset: 0042A020\n"})
+        self.assertEqual({0x0042A020: "alpha"}, found)
+
+    def test_lower_case_offsets_are_read_too(self):
+        found = self.homes({"a.cpp": "Original Offset: 0042a020\n"})
+        self.assertIn(0x0042A020, found)
+
+    def test_a_file_with_no_offsets_contributes_nothing(self):
+        self.assertEqual({}, self.homes({"b.cpp": "int f() { return 0; }\n"}))
+
+
 class ArityTests(unittest.TestCase):
     """The declaration must clean what the body cleans."""
 
