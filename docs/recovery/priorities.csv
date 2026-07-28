@@ -2590,11 +2590,8 @@ P0,1024221,0x0060E740,??1CheckBox@@QAE@XZ,128,24,2,original_dependency,ui_depend
 P0,1002621,0x0060E800,?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z,383,2,6,original_dependency,ui_dependency,recover_check_box_attach,2,exact,exact,"int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)"
 P3,2121,0x0060E980,?item@CheckBox@@QAEHPADHH@Z,141,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)"
 P3,1021,0x0060EA10,?flip_state_id@CheckBox@@QAEXH@Z,312,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?flip_state_id@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
-P3,1,0x0060EB50,?UNK1@CheckBox@@QAEXH@Z,45,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?UNK1@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
 P3,3021,0x0060EB80,?set_state_id@CheckBox@@QAEXHH@Z,139,3,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_state_id@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
 P2,6021,0x0060EC10,?get_state_id@CheckBox@@QAEHH@Z,105,6,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)"
-P3,1,0x0060EC80,?set_state_pos@CheckBox@@QAEXHH@Z,49,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?set_state_pos@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P3,11,0x0060ECC0,?UNK2@CheckBox@@QAEHH@Z,32,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK2@CheckBox@@QAEHH@Z)(CheckBox* this, int)"
 P0,1001021,0x0060ECE0,?set_state_flag@CheckBox@@QAEXJ@Z,35,1,0,original_dependency,ui_dependency,recover_check_box_set_state_flag,2,exact,exact,"void (__thiscall ?set_state_flag@CheckBox@@QAEXJ@Z)(CheckBox* this, int)"
 P3,1621,0x0060ED10,?calculate_dimensions@CheckBox@@QAEHXZ,795,1,6,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@CheckBox@@QAEHXZ)(CheckBox* this)
 P3,4321,0x0060F030,?draw_item@CheckBox@@QAEXHHH@Z,1743,3,13,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_item@CheckBox@@QAEXHHH@Z)(CheckBox* this, int, int, int)"

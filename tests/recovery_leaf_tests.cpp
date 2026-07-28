@@ -2360,6 +2360,96 @@ void test_win_move() {
     }
 }
 
+void test_check_box_state_word() {
+    // UNK1, UNK2 and set_state_pos all reach one word at
+    // `this + vbtable[2] + 0xEC`. The offset comes from the OBJECT'S OWN
+    // vbtable at run time, so the fixture drives each function under TWO
+    // different tables - the most-derived {0, 0x1C, 0xA34} and an embedded
+    // {0, 0x40, 0xA70} - because a body that hardcoded this class's own 0xA34
+    // is correct under the first and silently wrong under the second. That is
+    // the defect that passed every suite here once and crashed the game.
+    const int32_t own[3] = {0, 0x1C, 0xA34};
+    const int32_t embedded[3] = {0, 0x40, 0xA70};
+    const int32_t *const tables[2] = {own, embedded};
+
+    for (int table_index = 0; table_index < 2; ++table_index) {
+        const int32_t *const table = tables[table_index];
+        const size_t word = static_cast<size_t>(table[2]) + 0xEC;
+        std::vector<uint8_t> storage(word + 0x100 + 32);
+        std::vector<uint8_t> expected(storage.size());
+
+        auto point_at = [&]() {
+            for (size_t i = 0; i < storage.size(); ++i) {
+                storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+            }
+            const int32_t *pointer = table;
+            std::memcpy(storage.data() + 16, &pointer, sizeof(pointer));
+        };
+        auto *check = reinterpret_cast<CheckBox *>(storage.data() + 16);
+        auto flags_at = [&](std::vector<uint8_t> &buffer) -> uint32_t & {
+            return *reinterpret_cast<uint32_t *>(buffer.data() + 16 + word);
+        };
+
+        for (int pos : {0, 1, 7, 15, 30, 31}) {
+            const uint32_t mask = 1U << pos;
+            for (uint32_t seed : {0x00000000U, 0xFFFFFFFFU, 0xA55AA55AU}) {
+                for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                    // UNK2 reads and returns the MASKED WORD, not 0/1.
+                    point_at();
+                    flags_at(storage) = seed;
+                    std::memcpy(expected.data(), storage.data(), storage.size());
+                    const int got = use_adapter
+                        ? check_box_unk2_redirect(check, nullptr, pos)
+                        : check->UNK2(pos);
+                    expect(static_cast<uint32_t>(got) == (seed & mask));
+                    expect_storage_bytes(storage.data(), expected.data(),
+                                         storage.size());
+
+                    // set_state_pos, both directions.
+                    for (int state = 0; state < 2; ++state) {
+                        point_at();
+                        flags_at(storage) = seed;
+                        std::memcpy(expected.data(), storage.data(), storage.size());
+                        flags_at(expected) = state ? (seed | mask) : (seed & ~mask);
+                        if (use_adapter) {
+                            check_box_set_state_pos_redirect(check, nullptr, pos,
+                                                             state ? -1 : 0);
+                        } else {
+                            check->set_state_pos(pos, state ? -1 : 0);
+                        }
+                        expect_storage_bytes(storage.data(), expected.data(),
+                                             storage.size());
+                    }
+
+                    // UNK1 toggles: set becomes clear, clear becomes set.
+                    point_at();
+                    flags_at(storage) = seed;
+                    std::memcpy(expected.data(), storage.data(), storage.size());
+                    flags_at(expected) = (seed & mask) ? (seed & ~mask)
+                                                       : (seed | mask);
+                    if (use_adapter) {
+                        check_box_unk1_redirect(check, nullptr, pos);
+                    } else {
+                        check->UNK1(pos);
+                    }
+                    expect_storage_bytes(storage.data(), expected.data(),
+                                         storage.size());
+                }
+            }
+        }
+
+        // The shift count is masked to five bits by the hardware, so bit 33 is
+        // bit 1. A body shifting by the raw value is undefined in C++ and in
+        // practice would touch the wrong bit or none.
+        point_at();
+        flags_at(storage) = 0;
+        std::memcpy(expected.data(), storage.data(), storage.size());
+        flags_at(expected) = 2U;
+        check->set_state_pos(33, 1);
+        expect_storage_bytes(storage.data(), expected.data(), storage.size());
+    }
+}
+
 void test_win_query_new_palette() {
     // Returns 1 and touches nothing. What this fixture CANNOT establish is the
     // call it makes: Palette::set_active_window is a recovered empty body with
@@ -28099,6 +28189,7 @@ int main() {
     test_menu_adjust_pulldown_pos();
     test_base_pop_flag_setters();
     test_win_query_new_palette();
+    test_check_box_state_word();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();
