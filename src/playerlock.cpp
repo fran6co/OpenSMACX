@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "playerlock.h"
+#include "lock.h"
 
 /*
 Purpose: Reset both lock entries to their unset sentinels and mark the lock
@@ -58,4 +59,56 @@ int PlayerLock::active() {
 
 int __fastcall player_lock_active_redirect(PlayerLock *self, void *) {
     return self->active();
+}
+
+/*
+Purpose: Lock the second square entry for a faction, forcing the 0x10 flag on.
+
+             mov edx,[ebp+8] / or al,0x10 / add ecx,0x10
+             push .. x4 / call SquareLock::lock / ret 0x10
+
+         `add ecx, 0x10` selects entries_[1] - the entries start at 4 and are
+         twelve bytes each - and `or al, 0x10` sets bit 4 of the flags. AL is
+         the low byte of the flags register, and bit 4 lives there, so setting
+         it on the whole word is the same edit.
+
+         Called through the LockSquareLock seam, exactly as Lock::add_lock does
+         for the identical shape: PlayerLock::Entry and SquareLock are the same
+         three-int triple, and routing through the seam is what lets a fixture
+         observe the call rather than the map it would otherwise walk.
+Original Offset: 005900A0
+Return Value: whatever SquareLock::lock returns
+Status: Complete
+*/
+int PlayerLock::add_lock(int factionID, int flags, int x, int y) {
+    return LockSquareLock(&entries_[1], factionID, flags | 0x10, x, y);
+}
+
+int __fastcall player_lock_add_lock_redirect(PlayerLock *self, void *,
+                                             int factionID, int flags,
+                                             int x, int y) {
+    return self->add_lock(factionID, flags, x, y);
+}
+
+/*
+Purpose: Release both square entries for a faction and clear the active byte.
+
+         The original walks the two entries with a counted loop from `this+4`
+         in steps of twelve, then stores zero at `this+0` AFTER the loop - the
+         byte write is the last thing it does, which is the ordering a fixture
+         has to hold it to.
+Original Offset: 0058FFC0
+Return Value: n/a
+Status: Complete
+*/
+void PlayerLock::unlock(int factionID) {
+    for (int entry = 0; entry < 2; ++entry) {
+        LockSquareUnlock(&entries_[entry], factionID);
+    }
+    active_ = 0;
+}
+
+void __fastcall player_lock_unlock_redirect(PlayerLock *self, void *,
+                                            int factionID) {
+    self->unlock(factionID);
 }
