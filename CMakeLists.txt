@@ -1000,6 +1000,21 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
     )
+
+    add_test(NAME redirect-patch-fit-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_verify_redirect_patch_fit.py"
+    )
+
+    # The check itself, against the real table: `install_redirect` writes five
+    # bytes with no regard for how long the function it replaces is, and 280 of
+    # the wired redirects are shorter than that.
+    add_test(NAME redirect-patch-fit
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_redirect_patch_fit.py"
+            --dllmain "${CMAKE_CURRENT_SOURCE_DIR}/src/dllmain.cpp"
+            --functions "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
+    )
 endif()
 
 install(TARGETS OpenSMACX
