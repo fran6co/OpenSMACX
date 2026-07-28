@@ -400,6 +400,36 @@ def branch_targets(items: list[tuple]) -> set[int]:
     return targets
 
 
+def internal_call_targets(items: list[tuple], entries: set) -> list[int]:
+    """Addresses this function CALLS inside its own body.
+
+    `branch_targets` deliberately excludes CALL - a call is a call even when it
+    lands in the same function, and lowering it as a `goto` would skip the
+    pushed return address - so these lower to `opensmacx_dispatch(target)`. The
+    dispatch table holds catalogued function ENTRIES only, so a target that is
+    merely an address inside a body has no entry and traps at run time.
+
+    MSVC does this for the EH vector iterators, which CALL an unwind funclet
+    embedded in their own body. Measured over the whole image: exactly TWO such
+    sites, in `??_L` (0x006457c2) and `??_M` (0x006456e4). Both are on the boot
+    path, because the C++ dynamic initialisers construct arrays.
+
+    Returning them lets write_shards emit each as an additional entry point, so
+    the dispatch is total for these as well.
+    """
+    starts = {item[1].address for item in items if item[0] == "code"}
+    found = set()
+    for kind, payload in items:
+        if kind != "code" or payload.mnemonic != "call":
+            continue
+        operands = payload.operands
+        if (len(operands) == 1 and operands[0].type == X86_OP_IMM
+                and operands[0].imm in starts
+                and operands[0].imm not in entries):
+            found.add(operands[0].imm)
+    return sorted(found)
+
+
 def lower_body(items: list[tuple], tables: dict | None = None
                ) -> tuple[list[str], Counter]:
     """(emitted lines, refusals by mnemonic) for one function.
@@ -459,6 +489,7 @@ def write_shards(out: Path, functions: list[dict], shards: int,
     buckets: list[list[dict]] = [[] for _ in range(shards)]
     for index, function in enumerate(functions):
         buckets[index % shards].append(function)
+    entry_addresses = {function["address"] for function in functions}
 
     # The lowerer needs operand detail, which the counting pass deliberately
     # does without: detail costs roughly double, and only this mode reads it.
@@ -509,6 +540,27 @@ def write_shards(out: Path, functions: list[dict], shards: int,
                 parts.append(
                     f"\n    opensmacx_trap({function['address']:#010x}U,"
                     " \"fell off the end of the body\");\n}\n\n")
+                # An embedded funclet this body CALLS. Emitted as its own
+                # entry point by lowering the suffix of the same items, which
+                # duplicates those instructions in two translation units'
+                # worth of code and is the honest trade: the alternative is a
+                # goto into the middle of another C++ function, which does not
+                # exist. The funclet ends in RET, so the suffix terminates.
+                for extra in internal_call_targets(items, entry_addresses):
+                    suffix = [item for item in items
+                              if (item[1].address if item[0] == "code"
+                                  else item[1][0]) >= extra]
+                    extra_lines, _ = lower_body(suffix, tables)
+                    function.setdefault("extra_entries", []).append(extra)
+                    parts.append(
+                        f"// embedded funclet of {function['name'][:50]}, "
+                        f"called from inside it\n"
+                        f"void lifted_{extra:08x}"
+                        f"(OpensmacxStaticRecompileState &{parameter}) {{\n")
+                    parts.append("\n".join(extra_lines))
+                    parts.append(
+                        f"\n    opensmacx_trap({extra:#010x}U,"
+                        " \"fell off the end of the funclet\");\n}\n\n")
                 continue
             parts.append("\n".join(body_statements(function)))
             parts.append(
@@ -590,12 +642,19 @@ inline constexpr unsigned OpensmacxCrtTableSize =
 
 
 def write_dispatch(out: Path, functions: list[dict]) -> None:
+    # Catalogued entries, plus the embedded funclets write_shards emitted as
+    # extra entry points. Sorted together, because the table is binary-searched.
+    rows = [(function["address"], symbol_for(function))
+            for function in functions]
+    for function in functions:
+        for extra in function.get("extra_entries", ()):
+            rows.append((extra, f"lifted_{extra:08x}"))
+    rows.sort()
     declarations = "\n".join(
-        f"void {symbol_for(function)}(OpensmacxStaticRecompileState &);"
-        for function in functions)
-    entries = "\n".join(
-        f"    {{{function['address']:#010x}U, &{symbol_for(function)}}},"
-        for function in functions)
+        f"void {symbol}(OpensmacxStaticRecompileState &);"
+        for _, symbol in rows)
+    entries = "\n".join(f"    {{{address:#010x}U, &{symbol}}},"
+                         for address, symbol in rows)
     (out / "lifted_dispatch.cpp").write_text(
         f"""#include "lifted_runtime.h"
 #include "lifted_imports.h"
@@ -804,12 +863,15 @@ def main() -> int:
     write_image(args.out, pe, base, size)
     write_crt_table(args.out, load_external_library(args.functions))
     write_crt_init(args.out, functions)
-    write_dispatch(args.out, functions)
     write_main(args.out, functions)
     write_loader(args.out, Path(__file__).resolve().parent)
     write_crt_source(args.out, Path(__file__).resolve().parent)
     write_build_script(args.out, Path(__file__).resolve().parent)
+    # BEFORE write_dispatch, and that order is load-bearing: lowering is what
+    # discovers the embedded funclets that need their own entry points, and the
+    # dispatch table has to contain them.
     shards = write_shards(args.out, functions, args.shards, args.mode, pe)
+    write_dispatch(args.out, functions)
 
     lines = sum(
         len(path.read_text(encoding="utf-8").splitlines()) for path in shards)
