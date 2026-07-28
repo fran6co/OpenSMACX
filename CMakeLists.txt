@@ -796,6 +796,14 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_mutate_and_verify.py"
     )
 
+    # Runs on the stock interpreter on purpose. The doctor's job is to diagnose
+    # a machine that has none of the dependencies yet, so a test that needed
+    # them would not be testing the thing that matters.
+    add_test(NAME host-doctor-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_host_doctor.py"
+    )
+
     add_test(NAME shape-classifier-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_classify_recovery_shapes.py"
