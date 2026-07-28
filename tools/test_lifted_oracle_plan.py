@@ -635,7 +635,7 @@ class PlanRowTests(unittest.TestCase):
            "0x00401010,6,clean,unrecovered,0x00401010-0x00401016\n"
            "0x00401020,5,divides_with_x87,unrecovered,0x00401020-0x00401025\n")
 
-    def rows(self) -> dict:
+    def rows(self, *extra: str) -> dict:
         pe = FakePE()
         pe.place(0x00401000, "f7f9" "c3")            # idiv ecx / ret
         pe.place(0x00401010, "89c8" "83c001" "c3")   # mov / add / ret
@@ -645,7 +645,7 @@ class PlanRowTests(unittest.TestCase):
             (root / "functions.csv").write_text(self.CSV)
             argv = ["lifted_oracle_plan.py", "--exe", str(root / "unused.exe"),
                     "--functions", str(root / "functions.csv"),
-                    "--out", str(root / "plan.tsv")]
+                    "--out", str(root / "plan.tsv"), *extra]
             original_pe, original_argv = plan.pefile.PE, sys.argv
             plan.pefile.PE = lambda *args, **kwargs: pe
             sys.argv = argv
@@ -685,6 +685,86 @@ class PlanRowTests(unittest.TestCase):
         flags = self.rows()["divides_with_x87"]
         self.assertEqual(["undef=3f", "x87"], flags.split(","))
         self.assertEqual(ARITHMETIC, parse_undef_token(flags))
+
+
+class SuppressedMaskTests(PlanRowTests):
+    """`--no-undef`: the native-x86 experiment, on the same three bodies.
+
+    The mask exists because a TRANSLATED host answered inconsistently for
+    architecturally-undefined flags. Suppressing the token makes the oracle
+    compare those bits instead of ignoring them, which is strictly stricter -
+    it can only turn a PASS into a FAIL. Inheriting PlanRowTests is deliberate:
+    every assertion above re-runs unchanged here, so a flag that quietly
+    changed anything ELSE about the row would fail those inherited tests
+    rather than these.
+    """
+
+    def rows(self, *extra: str) -> dict:
+        return super().rows("--no-undef", *extra)
+
+    def test_a_masked_function_carries_the_token_the_oracle_can_read_back(self):
+        # Inverted: with the mask suppressed the divider looks like any other
+        # clean function, which is the entire point of the flag.
+        flags = self.rows()["divides"]
+        self.assertEqual("ok", flags)
+        self.assertNotIn("undef", flags)
+        self.assertEqual(0, parse_undef_token(flags))
+
+    def test_the_token_shares_the_field_with_the_other_flags(self):
+        # The OTHER flags must survive. Suppressing the mask that shared this
+        # field must not take x87 - a scheduling flag the C++ side reads from
+        # the same string - with it.
+        flags = self.rows()["divides_with_x87"]
+        self.assertEqual(["x87"], flags.split(","))
+        self.assertEqual(0, parse_undef_token(flags))
+
+    def test_the_mask_is_still_computed_only_not_printed(self):
+        # Suppression is a REPORTING choice. If it had been implemented by
+        # skipping undefined_exit_flags, the histogram's other undef- lines
+        # would be the only evidence and this tool would have two analyses.
+        pe = FakePE()
+        pe.place(0x00401000, "f7f9" "c3")
+        functions = [{"address": 0x00401000, "name": "divides",
+                      "spans": [(0x00401000, 0x00401003)], "section": ".text"}]
+        plan.scan(pe, functions, set())
+        self.assertEqual(ARITHMETIC, functions[0]["undef"])
+
+
+class SuppressedMaskHistogramTests(unittest.TestCase):
+    """The printed histogram has to agree with the file, or the run lies."""
+
+    CSV = PlanRowTests.CSV
+
+    def stdout(self, *extra: str) -> str:
+        pe = FakePE()
+        pe.place(0x00401000, "f7f9" "c3")
+        pe.place(0x00401010, "89c8" "83c001" "c3")
+        pe.place(0x00401020, "d900" "f7f9" "c3")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "functions.csv").write_text(self.CSV)
+            argv = ["lifted_oracle_plan.py", "--exe", str(root / "unused.exe"),
+                    "--functions", str(root / "functions.csv"),
+                    "--out", str(root / "plan.tsv"), *extra]
+            original_pe, original_argv = plan.pefile.PE, sys.argv
+            plan.pefile.PE = lambda *args, **kwargs: pe
+            sys.argv = argv
+            captured = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(captured):
+                    self.assertEqual(0, plan.main())
+            finally:
+                plan.pefile.PE, sys.argv = original_pe, original_argv
+        return captured.getvalue()
+
+    def test_the_default_run_reports_the_masked_functions(self):
+        self.assertIn("undef", self.stdout())
+
+    def test_a_suppressed_run_reports_no_undef_line_at_all(self):
+        # Including the per-flag `undef-cf` style lines: a histogram still
+        # counting masks while the file carries none would be the dashboard
+        # error this project already made once.
+        self.assertNotIn("undef", self.stdout("--no-undef"))
 
 
 class CallGraphTests(unittest.TestCase):
