@@ -92,6 +92,11 @@ SHIFT = {"shl": "opensmacx_shl", "sal": "opensmacx_shl",
          "shr": "opensmacx_shr", "sar": "opensmacx_sar",
          "rol": "opensmacx_rol", "ror": "opensmacx_ror"}
 
+# The double shifts, which have no 8-bit form and a third operand. They keep
+# their own table because they share nothing with SHIFT above but the word
+# "shift": the helper takes a second VALUE, not just a count.
+DOUBLE_SHIFT = {"shld": "opensmacx_shld", "shrd": "opensmacx_shrd"}
+
 # The one-byte string opcodes: MOVS, CMPS, STOS, LODS and SCAS, at both widths.
 # The OPCODE decides membership, never the mnemonic - `movsd` is also the SSE
 # scalar double move and `movsx` is not a string operation at all, so a
@@ -534,6 +539,23 @@ def _lower(instruction, label_for, case_targets=None) -> list[str]:
         return [write_operand(
             operands[0], f"{helper}{width}(s, {read_operand(operands[0])})")]
 
+    if mnemonic in DOUBLE_SHIFT and len(operands) == 3:
+        # SHLD/SHRD. Capstone reports them in Intel order - (destination,
+        # source, count) - with the count either an imm8 or CL, and it is the
+        # FIRST operand that is read AND written, which is what separates them
+        # from the other three-operand instruction here, the IMUL below, whose
+        # destination is write-only. Reading operand 1 as the destination
+        # would shift the wrong register by the right amount.
+        helper = DOUBLE_SHIFT[mnemonic]
+        if width not in (16, 32):
+            # There is no 8-bit double shift on x86, so any other width is a
+            # decode this rule was not written against.
+            raise Unsupported(f"{width}-bit double shift")
+        return [write_operand(
+            operands[0],
+            f"{helper}{width}(s, {read_operand(operands[0])},"
+            f" {read_operand(operands[1])}, {read_operand(operands[2])})")]
+
     if mnemonic in SHIFT and len(operands) == 2:
         helper = SHIFT[mnemonic]
         return [write_operand(operands[0],
@@ -735,7 +757,7 @@ def candidate_mnemonics() -> set[str]:
              "lea", "push", "pop", "inc", "dec", "neg", "not", "imul", "mul",
              "div", "idiv", "cdq",
              "cwde", "jmp", "call", "ret", "leave", "xchg"}
-    names |= set(ARITH) | set(SHIFT)
+    names |= set(ARITH) | set(SHIFT) | set(DOUBLE_SHIFT)
     names |= {"cld", "std"}
     names |= {f"{repeat}{base}{suffix}"
               for repeat in ("", "rep ", "repe ", "repne ")
