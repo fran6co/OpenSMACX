@@ -52,6 +52,9 @@ class DLLEXPORT Texture {
 class DLLEXPORT TextureStore {
  public:
   TextureStore() { ; }
+  // A method rather than a real constructor, as Cursor::construct is: the
+  // inline TextureStore() above is relied on elsewhere.
+  void construct();
   ~TextureStore();
 
  private:
@@ -61,6 +64,9 @@ class DLLEXPORT TextureStore {
 
 // close releases the pixels through the executable's CRT free, as the other
 // classes that own heap blocks do, until that ownership boundary moves.
+// Returns the object, preserving the legacy EAX = this residue.
+TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self, void *);
+
 typedef void *func_texture_free(void *);
 extern func_texture_free *TextureFree;
 

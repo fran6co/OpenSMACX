@@ -1892,6 +1892,7 @@ address,kind
 0x00619650,jump
 0x00619660,jump
 0x00619690,jump
+0x006252A0,jump
 0x006252B0,jump
 0x006256D0,jump
 0x006256F0,jump
