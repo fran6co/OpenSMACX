@@ -2360,6 +2360,48 @@ void test_win_move() {
     }
 }
 
+void test_base_pop_key_gates() {
+    // Both bodies are bit 14 of field_30A8_, INVERTED. Three things can go
+    // wrong and the fixture has to separate all of them: the wrong bit, a
+    // missing inversion, and reading the wrong offset. So the seeds are chosen
+    // so that bit 14 disagrees with its neighbours and with the low bit - a
+    // body reading bit 13, bit 15 or bit 0 returns the opposite answer on at
+    // least one of them - and every case also checks that nothing was written.
+    struct Case { uint32_t field; int wanted; };
+    const Case cases[] = {
+        {0x00000000U, 1},  // bit 14 clear -> 1
+        {0xFFFFFFFFU, 0},  // bit 14 set   -> 0
+        {0x00004000U, 0},  // exactly bit 14
+        {0xFFFFBFFFU, 1},  // everything BUT bit 14
+        {0x00002000U, 1},  // bit 13 only: a body reading 13 would say 0
+        {0x00008000U, 1},  // bit 15 only: a body reading 15 would say 0
+        {0x00000001U, 1},  // bit 0 only:  a body reading 0 would say 0
+        {0xA55AA55AU, 1},  // bit 14 clear inside a hostile pattern
+        {0xA55AE55AU, 0},  // same pattern with bit 14 set
+    };
+    for (const Case &one : cases) {
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            alignas(BasePop) uint8_t storage[sizeof(BasePop) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            write_at(storage, 16 + 0x30A8, one.field);
+            std::memcpy(expected, storage, sizeof(storage));
+
+            auto *pop = reinterpret_cast<BasePop *>(storage + 16);
+            const int click = use_adapter
+                ? base_pop_on_key_click_redirect(pop, nullptr, -1, 2147483647)
+                : pop->on_key_click(-1, 2147483647);
+            const int up = use_adapter
+                ? base_pop_on_key_up_redirect(pop, nullptr, -1)
+                : pop->on_key_up(-1);
+            expect(click == one.wanted);
+            expect(up == one.wanted);
+            // Neither reads its arguments and neither writes anything.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 void test_win_scroll_positions() {
     // get_vert_pos / get_horz_pos are the same five instructions reading two
     // adjacent pointers, so the ONLY thing a fixture has to establish is which
@@ -27825,6 +27867,7 @@ int main() {
     test_buffer_text_line_height();
     test_win_paging();
     test_win_scroll_positions();
+    test_base_pop_key_gates();
     test_scroll_close();
     test_scroll_destructor();
     test_list_box_teardown();

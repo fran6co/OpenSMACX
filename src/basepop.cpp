@@ -433,3 +433,41 @@ int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,
                                                int (__cdecl *callback)()) {
     return self->exec(callback);
 }
+
+/*
+Purpose: Report whether the popup will accept a key click. Both this and
+         on_key_up below are the same four instructions over one field:
+
+             mov eax, [ecx+0x30A8] / not eax / shr eax, 0xE / and eax, 1
+
+         so the answer is bit 14 of field_30A8_ INVERTED - one when the bit is
+         clear. The arguments are ignored; the two differ only in how many they
+         clean off the stack.
+Original Offset: 00604490
+Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
+Status: Complete
+*/
+int BasePop::on_key_click(int, int) {
+    return static_cast<int>((~field_30A8_ >> 14) & 1U);
+}
+
+int __fastcall base_pop_on_key_click_redirect(BasePop *self, void *, int a1, int a2) {
+    return self->on_key_click(a1, a2);
+}
+
+/*
+Purpose: As on_key_click above, over the same field and the same bit. Kept as
+         its own body rather than delegating, because the original is a
+         separate function with a different stack cleanup and a delegation
+         would change the instruction the caller returns to.
+Original Offset: 006044B0
+Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
+Status: Complete
+*/
+int BasePop::on_key_up(int) {
+    return static_cast<int>((~field_30A8_ >> 14) & 1U);
+}
+
+int __fastcall base_pop_on_key_up_redirect(BasePop *self, void *, int a1) {
+    return self->on_key_up(a1);
+}

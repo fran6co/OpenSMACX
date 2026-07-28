@@ -2496,8 +2496,6 @@ P3,2621,0x00603800,?calculate_dimensions@BasePop@@QAEHXZ,2770,1,16,unrecovered,,
 P3,221,0x00604300,?on_button_clicked@BasePop@@QAEXH@Z,202,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@BasePop@@QAEXH@Z)(BasePop* this, int)"
 P3,1220,0x006043D0,?set_def_file@BasePop@@QAAHPAD@Z,55,1,2,unrecovered,,,2,exact,exact,
 P3,121,0x00604410,?on_key_down@BasePop@@QAEHH@Z,126,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_down@BasePop@@QAEHH@Z)(BasePop* this, int)"
-P3,11,0x00604490,?on_key_click@BasePop@@QAEHHH@Z,17,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)"
-P3,11,0x006044B0,?on_key_up@BasePop@@QAEHH@Z,17,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)"
 P3,111,0x006044D0,?double_click@BasePop@@QAEXH@Z,177,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)"
 P3,1420,0x00604590,?init_class@BasePop@@QAAHXZ,234,1,4,unrecovered,,,2,exact,exact,
 P3,1120,0x00604680,?close_class@BasePop@@QAAXXZ,109,1,1,unrecovered,,,2,exact,exact,

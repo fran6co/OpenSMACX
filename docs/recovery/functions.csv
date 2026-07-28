@@ -4577,8 +4577,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00604300,0x006043CA,202,.text,?on_button_clicked@BasePop@@QAEXH@Z,"void (__thiscall ?on_button_clicked@BasePop@@QAEXH@Z)(BasePop* this, int)",0x00604300-0x006043CA,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x006043D0,0x00604407,55,.text,?set_def_file@BasePop@@QAAHPAD@Z,,0x006043D0-0x00604407,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x00604410,0x0060448E,126,.text,?on_key_down@BasePop@@QAEHH@Z,"int (__thiscall ?on_key_down@BasePop@@QAEHH@Z)(BasePop* this, int)",0x00604410-0x0060448E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x00604490,0x006044A1,17,.text,?on_key_click@BasePop@@QAEHHH@Z,"int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)",0x00604490-0x006044A1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x006044B0,0x006044C1,17,.text,?on_key_up@BasePop@@QAEHH@Z,"int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)",0x006044B0-0x006044C1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00604490,0x006044A1,17,.text,?on_key_click@BasePop@@QAEHHH@Z,"int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)",0x00604490-0x006044A1,game,hidden;sp_ready;purged_ok,src/basepop.cpp:446,Complete,,,source_complete,,,,0,0
+0x006044B0,0x006044C1,17,.text,?on_key_up@BasePop@@QAEHH@Z,"int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)",0x006044B0-0x006044C1,game,hidden;sp_ready;purged_ok,src/basepop.cpp:463,Complete,,,source_complete,,,,0,0
 0x006044D0,0x00604581,177,.text,?double_click@BasePop@@QAEXH@Z,"void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)",0x006044D0-0x00604581,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00604590,0x0060467A,234,.text,?init_class@BasePop@@QAAHXZ,,0x00604590-0x0060467A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x00604680,0x006046ED,109,.text,?close_class@BasePop@@QAAXXZ,,0x00604680-0x006046ED,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
