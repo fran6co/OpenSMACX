@@ -147,8 +147,14 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
         # recovered body reaching one is a fixed-address binding, which is the
         # thing that puts a function in the hybrid oracle rather than here.
         for operand in operands:
+            # No BASE register and a displacement inside the image is an
+            # absolute address, whether or not an index is scaled onto it.
+            # Requiring index == 0 as well missed exactly the shape that
+            # matters most: Dialog::set_def_dialog_text_color writes four
+            # global arrays as `[eax*4 + 0x6970ac]`, and the scanner offered it
+            # as leaf-testable. A fixture would have written through an
+            # unmapped address rather than failing an assertion.
             if (operand.type == X86_OP_MEM and operand.mem.base == 0
-                    and operand.mem.index == 0
                     and low <= operand.mem.disp < high):
                 reasons.append(f"absolute global {operand.mem.disp:#010x}")
             # An address used as a VALUE, not dereferenced. Testable, but it is

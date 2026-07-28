@@ -95,6 +95,14 @@ class ClassifyTests(unittest.TestCase):
         self.assertTrue(any("absolute global" in one for one in reasons),
                         reasons)
 
+    def test_an_indexed_global_array_is_a_global(self):
+        # mov [eax*4 + 0x6970ac], ecx - a global ARRAY. Requiring index == 0
+        # let this through, and Dialog::set_def_dialog_text_color writes four
+        # of them; a leaf fixture would have stored to an unmapped address.
+        _, reasons = self.classify("890c85ac706900")
+        self.assertTrue(any("absolute global" in one for one in reasons),
+                        reasons)
+
     def test_an_indirect_call_cannot_be_accounted_for(self):
         _, reasons = self.classify("ffd0")                  # call eax
         self.assertIn("indirect call", reasons)
