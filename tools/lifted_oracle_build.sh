@@ -30,7 +30,8 @@
 # load with c0000135, naming no symbol.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CXX="${CXX:-/opt/homebrew/bin/i686-w64-mingw32-g++}"
+CXX="${CXX:-$(command -v i686-w64-mingw32-g++ \
+    || echo /opt/homebrew/bin/i686-w64-mingw32-g++)}"
 LIFTED="${LIFTED:-$ROOT/build/lifted}"
 OUT="${OUT:-$ROOT/build/oracle}"
 mkdir -p "$OUT"

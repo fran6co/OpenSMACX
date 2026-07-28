@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 from collections import Counter
@@ -55,9 +56,44 @@ import pefile  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 DEFAULT_OUT = REPO_ROOT / "build" / "lifted"
-DEFAULT_NM = Path("/opt/homebrew/bin/i686-w64-mingw32-nm")
-DEFAULT_LIBS = Path(
-    "/opt/homebrew/opt/mingw-w64/toolchain-i686/i686-w64-mingw32/lib")
+# PATH first, then Homebrew. An absolute default that exists on exactly one
+# host is not a default; it is a failure that names the wrong cause.
+DEFAULT_NM = Path(
+    shutil.which("i686-w64-mingw32-nm")
+    or "/opt/homebrew/bin/i686-w64-mingw32-nm")
+
+
+def _default_libs() -> Path:
+    """The toolchain's own import libraries - the authority for every @N.
+
+    Located by asking the compiler rather than by hardcoding a layout: Debian
+    puts these in /usr/i686-w64-mingw32/lib and Homebrew several directories
+    deep under its own prefix, and `-print-search-dirs` is the one answer that
+    is right on both and stays right when either moves. libkernel32.a is the
+    probe because every Windows toolchain has it; a directory that lacks it is
+    not the import-library directory whatever else it holds.
+    """
+    compiler = shutil.which("i686-w64-mingw32-g++")
+    if compiler:
+        try:
+            printed = subprocess.run(
+                [compiler, "-print-search-dirs"],
+                capture_output=True, text=True, check=True).stdout
+        except (OSError, subprocess.CalledProcessError):
+            printed = ""
+        for line in printed.splitlines():
+            if not line.startswith("libraries:"):
+                continue
+            _, _, value = line.partition(":")
+            for entry in value.replace("=", "", 1).split(":"):
+                candidate = Path(entry.strip())
+                if (candidate / "libkernel32.a").is_file():
+                    return candidate.resolve()
+    return Path(
+        "/opt/homebrew/opt/mingw-w64/toolchain-i686/i686-w64-mingw32/lib")
+
+
+DEFAULT_LIBS = _default_libs()
 
 # Must match tools/lifted_imports.h. Duplicated here rather than parsed out of
 # the header because the generator has to emit the addresses as literals and a

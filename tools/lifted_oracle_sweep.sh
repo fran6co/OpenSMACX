@@ -30,7 +30,8 @@
 # tools/lifted_oracle_mutate.py.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WINE="${WINE:-/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine}"
+WINE="${WINE:-$(command -v wine \
+    || echo '/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine')}"
 EXE="${EXE:-$ROOT/.opensmacx/game/terranx_original.exe}"
 PLAN="${PLAN:-$ROOT/build/oracle/plan.tsv}"
 REPORT="${REPORT:-$ROOT/build/oracle/report.tsv}"

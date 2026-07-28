@@ -586,7 +586,12 @@ BUILD_SCRIPT = """\
 # thread_local TIB in lifted_tls.h reaches libwinpthread-1.dll.
 # -static-libgcc alone covers only the first and still dies on the second.
 set -e
-CXX="${CXX:-/opt/homebrew/bin/i686-w64-mingw32-g++}"
+# $CXX, then whatever is on PATH, then the Homebrew location as a last resort.
+# That ordering matters and the old one - Homebrew path as the DEFAULT - is why
+# this needed an explicit $CXX on every non-macOS host: an absolute path that
+# does not exist is not a fallback, it is a failure with a confusing message.
+CXX="${CXX:-$(command -v i686-w64-mingw32-g++ \\
+    || echo /opt/homebrew/bin/i686-w64-mingw32-g++)}"
 JOBS="${JOBS:-8}"
 cd "$(dirname "$0")"
 rm -f ./*.o lifted_probe.exe
