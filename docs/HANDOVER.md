@@ -366,6 +366,26 @@ needs its opt-in `recovery-oracle-tests` target built first.
 
 **Now 38 of 38.**
 
+### The mutation harness is blind to two shapes, and that is not a pass
+
+`tools/mutate_and_verify.py` reports `0 mutants` - or refuses the function
+entirely with "no recovered functions matched" - for a body it cannot perturb:
+
+* a bare `return a1;` or `return 0;`, which carries no literal, no comparison
+  and no droppable store (`AlphaMovie::UNK3`);
+* an empty body, which has no statements at all
+  (`Menu::on_adjust_pulldown_pos`).
+
+This file already records the same hole for a bare null-pointer guard. Zero
+mutants is **no signal**, not a clean sweep, and the working rules are explicit
+that a compile failure or an absent mutant "proves nothing". For those
+functions the evidence is a MANUAL poison - change the body to a plausible
+wrong one, watch the suite fail, revert - and the failure text belongs in the
+commit message so the absence of a sweep is not mistaken for the absence of a
+problem.
+
+Two of the ten functions recovered on this host were in that class.
+
 ### The next recovery, already scouted
 
 `?stop_timer@BattleWin@@QAEXXZ` at **0x00421b40**, 8 bytes:
