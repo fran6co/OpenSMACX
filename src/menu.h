@@ -64,6 +64,7 @@ class DLLEXPORT Menu : GraphicWin {
   Menu() { ; }
   ~Menu() { ; }
 
+  void on_adjust_pulldown_pos(int *a1, int *a2);
   void set_menu_proc(MenuProc proc);
   int id_to_index(int id);
   int UNK3(int menu_id, int item_id);
@@ -118,3 +119,4 @@ int __fastcall menu_requested_height_redirect(Menu *self, void *);
 
 // The menu's own font, falling back to the process default when unset.
 extern Font **MenuFont;
+void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1, int *a2);

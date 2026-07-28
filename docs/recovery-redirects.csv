@@ -1667,6 +1667,7 @@ address,kind
 0x005FB820,jump
 0x005FB990,jump
 0x005FC6A0,jump
+0x005FC6C0,jump
 0x005FC6D0,jump
 0x005FC6F0,jump
 0x005FC9E0,jump

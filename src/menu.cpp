@@ -548,3 +548,26 @@ int __fastcall menu_unk9_redirect(
         Menu *self, void *, int menu_id) {
     return self->UNK9(menu_id);
 }
+
+/*
+Purpose: Legacy hook for adjusting a pull-down's position. The original body is
+         a single `ret 8`: it accepts two pointers, reads neither, writes
+         neither, and returns. Recovered as an empty body rather than left
+         unrecovered, because "does nothing" is a behaviour the catalogue can
+         own and a trap cannot.
+
+         The mangled name and the stack cleanup AGREE here, which is why this
+         one is safe where ?on_redraw@Win@@QAEHXZ beside it in the queue is
+         not: on_redraw declares no parameters and still cleans eight bytes, so
+         its arity is unresolved and it stays unrecovered until that is
+         settled.
+Original Offset: 005FC6C0
+Return Value: n/a
+Status: Complete
+*/
+void Menu::on_adjust_pulldown_pos(int *, int *) {
+}
+
+void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1, int *a2) {
+    self->on_adjust_pulldown_pos(a1, a2);
+}
