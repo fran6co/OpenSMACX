@@ -24,3 +24,40 @@ int __fastcall base_pop_set_string_font_redirect(
         BasePop *self, void *, Font *font1, Font *font2, Font *font3, Font *font4) {
     return self->set_string_font(font1, font2, font3, font4);
 }
+
+/*
+Purpose: Install the three button fonts, refusing a null primary.
+
+             mov eax,[esp+4] / test eax,eax / jne have
+             mov eax,3 / ret 0xC
+             have: mov edx,[eax+8] / test edx,edx / je skip
+             mov [ecx+0x316C],eax
+             skip: .. store 0x3170 and 0x3174 .. / xor eax,eax / ret 0xC
+
+         Exactly the shape set_string_font above has, with three fonts instead
+         of four: a null primary is refused with 3 and NOTHING is stored, while
+         an uninitialised primary - `[eax+8]` zero, which is Font::
+         is_initialized - is silently skipped while the other two are still
+         installed. Those are different failures and the return code does not
+         distinguish them, which is the original's behaviour and not an
+         oversight here.
+Original Offset: 006047F0
+Return Value: 3 when the primary font is null, otherwise 0
+Status: Complete
+*/
+int BasePop::set_button_font(Font *font1, Font *font2, Font *font3) {
+    if (!font1) {
+        return 3;
+    }
+    if (font1->is_initialized()) {
+        button_font1_ = font1;
+    }
+    button_font2_ = font2;
+    button_font3_ = font3;
+    return 0;
+}
+
+int __fastcall base_pop_set_button_font_redirect(
+        BasePop *self, void *, Font *font1, Font *font2, Font *font3) {
+    return self->set_button_font(font1, font2, font3);
+}

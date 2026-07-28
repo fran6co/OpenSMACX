@@ -2395,6 +2395,84 @@ void __thiscall probe_player_lock_unlock(void *entry, int slot) {
     }
 }
 
+void test_base_pop_button_font_and_caviar_readback() {
+    // BasePop::set_button_font distinguishes THREE outcomes that the return
+    // code alone does not: a null primary refuses and stores nothing; an
+    // uninitialised primary (Font's object pointer at +8 null) is skipped
+    // while the other two are still installed; an initialised primary is
+    // stored. A body that treated "uninitialised" as "refuse" returns the same
+    // 0 and leaves different memory, so the fields are what separate them.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int primary_state = 0; primary_state < 3; ++primary_state) {
+            std::vector<uint8_t> storage(0x3200 + 32);
+            std::vector<uint8_t> expected(storage.size());
+            for (size_t i = 0; i < storage.size(); ++i) {
+                storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+            }
+            alignas(Font) uint8_t font_one[sizeof(Font)] = {};
+            alignas(Font) uint8_t font_two[sizeof(Font)] = {};
+            alignas(Font) uint8_t font_three[sizeof(Font)] = {};
+            // Font::is_initialized() reads the object pointer at +8.
+            const uint32_t live = 0xDEADBEEFU;
+            if (primary_state == 2) {
+                std::memcpy(font_one + 8, &live, sizeof(live));
+            }
+            auto *one = primary_state == 0
+                ? nullptr : reinterpret_cast<Font *>(font_one);
+            auto *two = reinterpret_cast<Font *>(font_two);
+            auto *three = reinterpret_cast<Font *>(font_three);
+
+            std::memcpy(expected.data(), storage.data(), storage.size());
+            if (primary_state != 0) {
+                if (primary_state == 2) {
+                    std::memcpy(expected.data() + 16 + 0x316C, &one, sizeof(one));
+                }
+                std::memcpy(expected.data() + 16 + 0x3170, &two, sizeof(two));
+                std::memcpy(expected.data() + 16 + 0x3174, &three, sizeof(three));
+            }
+
+            auto *pop = reinterpret_cast<BasePop *>(storage.data() + 16);
+            const int got = use_adapter
+                ? base_pop_set_button_font_redirect(pop, nullptr, one, two, three)
+                : pop->set_button_font(one, two, three);
+            expect(got == (primary_state == 0 ? 3 : 0));
+            expect_storage_bytes(storage.data(), expected.data(), storage.size());
+        }
+    }
+
+    // Caviar::UNK11 reads three fields into three outputs, each null check
+    // guarding only ITS OWN store. All eight null combinations are driven,
+    // because a single guard around all three passes whenever they agree.
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int mask = 0; mask < 8; ++mask) {
+            alignas(Caviar) uint8_t storage[sizeof(Caviar) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            const int32_t v1 = 0x11112222, v2 = 0x33334444, v3 = 0x55556666;
+            write_at(storage, 16 + 0x2C, v1);
+            write_at(storage, 16 + 0x30, v2);
+            write_at(storage, 16 + 0x34, v3);
+            std::memcpy(expected, storage, sizeof(storage));
+
+            int out1 = -1, out2 = -1, out3 = -1;
+            int *p1 = (mask & 1) ? &out1 : nullptr;
+            int *p2 = (mask & 2) ? &out2 : nullptr;
+            int *p3 = (mask & 4) ? &out3 : nullptr;
+            auto *caviar = reinterpret_cast<Caviar *>(storage + 16);
+            if (use_adapter) {
+                caviar_unk11_redirect(caviar, nullptr, p1, p2, p3);
+            } else {
+                caviar->UNK11(p1, p2, p3);
+            }
+            expect(out1 == ((mask & 1) ? v1 : -1));
+            expect(out2 == ((mask & 2) ? v2 : -1));
+            expect(out3 == ((mask & 4) ? v3 : -1));
+            // A reader writes nothing to the object.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 void test_popup_button_width_and_diplo_clear() {
     // Popup::on_adjust_button_width: 0x30AC / 10000 compared against 1000, and
     // 20 stored at 0x30D0 only when they differ. The values below straddle the
@@ -28428,6 +28506,7 @@ int main() {
     test_setup_win_scaling_and_datalink_combine();
     test_player_lock();
     test_popup_button_width_and_diplo_clear();
+    test_base_pop_button_font_and_caviar_readback();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

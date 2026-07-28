@@ -2486,7 +2486,6 @@ P3,121,0x00604410,?on_key_down@BasePop@@QAEHH@Z,126,0,1,unrecovered,,,2,exact,ex
 P3,111,0x006044D0,?double_click@BasePop@@QAEXH@Z,177,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)"
 P3,1420,0x00604590,?init_class@BasePop@@QAAHXZ,234,1,4,unrecovered,,,2,exact,exact,
 P3,1120,0x00604680,?close_class@BasePop@@QAAXXZ,109,1,1,unrecovered,,,2,exact,exact,
-P3,1,0x006047F0,?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,54,0,0,unrecovered,,,0,missing,missing,"int (__thiscall ?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*)"
 P3,10,0x00604A80,?on_modal@BasePop@@QAAHXZ,14,0,0,unrecovered,,,1,exact,missing,
 P3,1211,0x00604AB0,?on_redraw@BasePop@@QAEXXZ,897,0,12,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
 P3,321,0x00604E40,?basepop_alloc@BasePop@@QAEHXZ,111,0,3,unrecovered,,,2,exact,entry_range,int (__thiscall ?basepop_alloc@BasePop@@QAEHXZ)(BasePop* this)
@@ -2734,7 +2733,6 @@ P3,11,0x00617DB0,?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z,36
 P2,10021,0x00617F20,?add_object@Caviar@@QAEHPAUCaviarData@@H@Z,345,10,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, int)"
 P3,3021,0x00618080,?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z,336,3,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z)(Caviar* this, CaviarData*, LPBYTE, int)"
 P3,221,0x006181D0,?set_shadow_vector@Caviar@@QAEXMM@Z,123,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?set_shadow_vector@Caviar@@QAEXMM@Z)(Caviar* this, float, float)"
-P3,1,0x00618340,?UNK11@Caviar@@QAEXHHH@Z,42,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?UNK11@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)"
 P3,1,0x006183D0,?set_buffer@Caviar@@QAEHPAUBuffer@@@Z,86,0,0,unrecovered,,,0,missing,missing,"int (__thiscall ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z)(Caviar* this, Buffer*)"
 P3,4121,0x00618430,?set_shadow_table@Caviar@@QAEHPAE@Z,56,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, LPBYTE)"
 P2,8321,0x00618470,?clear_buffers@Caviar@@QAEXH@Z,173,8,3,unrecovered,,,2,exact,exact,"void (__thiscall ?clear_buffers@Caviar@@QAEXH@Z)(Caviar* this, int)"

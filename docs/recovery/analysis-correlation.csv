@@ -4587,7 +4587,7 @@ address,end_address,size,body_ranges,name,binary_kind,recovery_state,ida9_relati
 0x00604760,0x0060478B,43,0x00604760-0x0060478B,?set_string_color2@BasePop@@QAEXHHHH@Z,game,source_complete,exact,0x00604760,0x0060478B,43,0x00604760-0x0060478B,sub_604760,missing,,,,,
 0x00604790,0x006047BB,43,0x00604790-0x006047BB,?set_string_color3@BasePop@@QAEXHHHH@Z,game,source_complete,exact,0x00604790,0x006047BB,43,0x00604790-0x006047BB,sub_604790,missing,,,,,
 0x006047C0,0x006047EB,43,0x006047C0-0x006047EB,?set_string_color_hyper@BasePop@@QAEXHHHH@Z,game,source_complete,exact,0x006047C0,0x006047EB,43,0x006047C0-0x006047EB,sub_6047C0,missing,,,,,
-0x006047F0,0x00604826,54,0x006047F0-0x00604826,?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,game,unrecovered,missing,,,,,,missing,,,,,
+0x006047F0,0x00604826,54,0x006047F0-0x00604826,?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,game,source_complete,missing,,,,,,missing,,,,,
 0x00604830,0x0060485B,43,0x00604830-0x0060485B,?set_button_color@BasePop@@QAEXDHHH@Z,game,source_complete,exact,0x00604830,0x0060485B,43,0x00604830-0x0060485B,sub_604830,missing,,,,,
 0x00604860,0x0060488B,43,0x00604860-0x0060488B,?set_button_color2@BasePop@@QAEXDHHH@Z,game,source_complete,exact,0x00604860,0x0060488B,43,0x00604860-0x0060488B,sub_604860,missing,,,,,
 0x00604890,0x006048BB,43,0x00604890-0x006048BB,?set_button_color3@BasePop@@QAEXDHHH@Z,game,source_complete,exact,0x00604890,0x006048BB,43,0x00604890-0x006048BB,sub_604890,missing,,,,,
@@ -5025,7 +5025,7 @@ address,end_address,size,body_ranges,name,binary_kind,recovery_state,ida9_relati
 0x00618290,0x00618293,3,0x00618290-0x00618293,?UNK9@Caviar@@QAEXHHH@Z,game,source_complete,exact,0x00618290,0x00618293,3,0x00618290-0x00618293,nullsub_242,missing,,,,,
 0x006182A0,0x0061831F,127,0x006182A0-0x0061831F,?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z,game,source_complete,exact,0x006182A0,0x0061831F,127,0x006182A0-0x0061831F,sub_6182A0,exact,0x006182A0,0x0061831F,127,0x006182A0-0x0061831F,FUN_006182a0
 0x00618320,0x00618338,24,0x00618320-0x00618338,?UNK10@Caviar@@QAEXHHH@Z,game,source_complete,exact,0x00618320,0x00618338,24,0x00618320-0x00618338,sub_618320,missing,,,,,
-0x00618340,0x0061836A,42,0x00618340-0x0061836A,?UNK11@Caviar@@QAEXHHH@Z,game,unrecovered,missing,,,,,,missing,,,,,
+0x00618340,0x0061836A,42,0x00618340-0x0061836A,?UNK11@Caviar@@QAEXHHH@Z,game,source_complete,missing,,,,,,missing,,,,,
 0x00618370,0x0061839F,47,0x00618370-0x0061839F,?set_scene_rotation@Caviar@@QAEXMMM@Z,game,source_complete,exact,0x00618370,0x0061839F,47,0x00618370-0x0061839F,sub_618370,exact,0x00618370,0x0061839F,47,0x00618370-0x0061839F,FUN_00618370
 0x006183A0,0x006183A3,3,0x006183A0-0x006183A3,?UNK12@Caviar@@QAEXHHH@Z,game,source_complete,exact,0x006183A0,0x006183A3,3,0x006183A0-0x006183A3,nullsub_243,missing,,,,,
 0x006183B0,0x006183BD,13,0x006183B0-0x006183BD,?set_scaling@Caviar@@QAEXM@Z,game,source_complete,exact,0x006183B0,0x006183BD,13,0x006183B0-0x006183BD,sub_6183B0,exact,0x006183B0,0x006183BD,13,0x006183B0-0x006183BD,FUN_006183b0
