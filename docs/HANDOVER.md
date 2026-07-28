@@ -375,12 +375,43 @@ add ecx, 8
 jmp ?stop@Time@@QAEXXZ        ; 0x00616730
 ```
 
-It is the cleanest target in the image because its only dependency is already
-source-owned - `Time::stop` is `source_complete` at `src/time.cpp:199` - so it
-needs no new entry in `docs/recovery-binding-classifications.csv`. The work
-that remains is the part worth doing carefully: confirming from the constructor
-that a `Time` really is the member at offset 8, because the whole body is that
-one assumption.
+The offset needs no deriving: `BattleWin::~BattleWin` is already recovered and
+already does `(uint8_t *)this + 8` as a `Time`, so `stop_timer` adds no layout
+assumption that is not already relied on. The body is one line.
+
+**It was attempted and reverted, and the reason is the useful part.** It does
+not link into `recovery-leaf-tests`:
+
+```
+undefined reference to `Time::stop()'
+```
+
+`Time` is split. `src/time_recovery.cpp` holds the recovered lifecycle - the
+constructor, destructor, `set_modal`, `release_modal` - and that is the file
+the leaf tests link. `Time::stop` is in `src/time.cpp` with `init`, `start`,
+`pulse` and `close`, which reach **fixed-address bindings into the original
+executable**: `HandleMain` at `0x009B7B28` and `MsgStatus` at `0x009B7B9C`
+(`src/temp.cpp`). Pulling that TU into a standalone test executable puts
+unmapped absolute addresses one wrong fixture away.
+
+Which is what the working rule at the top of `AGENTS.md` already says: a
+function with calls, absolute globals, relocations or process state "must be
+exercised at their original address inside the verified hybrid process". So
+`stop_timer` belongs in the in-process runtime oracle under the hybrid smoke
+gate, not in `recovery-leaf-tests`, and verifying it costs a staged hybrid run
+rather than a one-line fixture.
+
+**So the scouting criterion needs a third condition, and this is it.** Checking
+that a callee is `source_complete` is not enough; it must also be reachable
+from the target that will TEST the caller. Both of the first two conditions
+held here and the recovery was still not cheap:
+
+1. the callee is `source_complete`  ✔
+2. it adds no new original dependency  ✔
+3. **the callee links into the test target that covers the caller**  ✘
+
+Anything failing (3) is not a bad target - it is a hybrid-oracle target, which
+is a different and much larger unit of work than its byte count suggests.
 
 Rejected while scouting, with the reasons, so they are not re-picked:
 
