@@ -74,12 +74,14 @@ UNLIFTABLE_SECTIONS = {"_selfmod"}
 # The headers a lowered shard needs. They are listed rather than chained
 # through a single umbrella include so that each one stays a separate,
 # separately testable piece of the runtime: lifted_x86.h is the integer core,
-# and the other four are the parts of the machine that do not fit its operand
-# model - the multiply/divide register pairs, the fs:-relative thread block,
-# the string operations' implicit ESI/EDI/ECX, and the x87 stack. Every one is
-# self-contained, so the order here is presentation only.
-LOWER_HEADERS = ("lifted_x86.h", "lifted_muldiv.h", "lifted_tls.h",
-                 "lifted_string.h", "lifted_x87.h")
+# and the other five are separately verified pieces beside it - the double
+# shifts, the multiply/divide register pairs, the fs:-relative thread block,
+# the string operations' implicit ESI/EDI/ECX, and the x87 stack. Only the
+# double shifts fit the integer core's operand model; the rest are there
+# because they do not. Every one is self-contained, so the order here is
+# presentation only.
+LOWER_HEADERS = ("lifted_x86.h", "lifted_dblshift.h", "lifted_muldiv.h",
+                 "lifted_tls.h", "lifted_string.h", "lifted_x87.h")
 
 # Statements emitted per decoded instruction in skeleton mode. A real lowering
 # of a mid-range instruction - operand fetch, the operation, flag updates,
@@ -264,11 +266,24 @@ def write_image(out: Path, pe: pefile.PE, base: int, size: int) -> None:
     """
     source = out / "lifted_image.cpp"
     source.write_text(
-        "#include \"lifted_runtime.h\"\n\n"
-        f"// {size} bytes spanning {base:#010x}..{base + size:#010x}.\n"
+        "#include \"lifted_loader.h\"\n\n"
+        f"// {size} bytes of image spanning {base:#010x}..{base + size:#010x},\n"
+        "// with the guest stack and its guard band in the same allocation\n"
+        "// directly above, so opensmacx_at() stays one subtraction.\n"
         "// Zero-filled on purpose: the bytes are loaded at startup from the\n"
         "// user's own executable so no original content enters this tree.\n"
-        "unsigned char opensmacx_image[OpensmacxImageSize];\n",
+        "unsigned char opensmacx_image[OpensmacxImageSize + OpensmacxStackSpanSize];\n"
+        "\n"
+        "// The stack geometry in lifted_loader.h is derived from\n"
+        "// OpensmacxImageSize, not from this array, so the two could drift\n"
+        "// apart silently: lifted_runtime.h declares opensmacx_image as an\n"
+        "// incomplete type, which means a translation unit that only sees the\n"
+        "// declaration can address the stack without any diagnostic. This is\n"
+        "// the one place that sees the definition, so it is the only place\n"
+        "// that can tie them together.\n"
+        "static_assert(sizeof(opensmacx_image) == OpensmacxSpanSize,\n"
+        "              \"opensmacx_image must cover the image AND the guest \"\n"
+        "              \"stack span the loader hands out\");\n",
         encoding="utf-8")
 
 
@@ -467,6 +482,7 @@ def write_dispatch(out: Path, functions: list[dict]) -> None:
         for function in functions)
     (out / "lifted_dispatch.cpp").write_text(
         f"""#include "lifted_runtime.h"
+#include "lifted_imports.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -490,6 +506,14 @@ const Entry Table[] = {{
 }}  // namespace
 
 OpensmacxLiftedFunction opensmacx_dispatch(uint32_t address) {{
+    // The PE imports live in a reserved synthetic range far above the image,
+    // so one compare separates them from every lifted address and the shim is
+    // found by indexing rather than searching. The range is a fixed size, not
+    // derived from the import count, so this test never changes when the
+    // import table does.
+    if (opensmacx_is_import(address)) {{
+        return opensmacx_import_dispatch(address);
+    }}
     const Entry *const end = Table + (sizeof(Table) / sizeof(Table[0]));
     const Entry *const found = std::lower_bound(
         Table, end, address,
@@ -503,6 +527,12 @@ OpensmacxLiftedFunction opensmacx_dispatch(uint32_t address) {{
     return found->function;
 }}
 
+// NOT __attribute__((weak)), though the oracle would like it to be so that it
+// could override this with a trap that records and unwinds. On this PE target
+// a weak DEFINITION with no strong alternate is simply dropped, and the whole
+// image then fails to link with "undefined reference to opensmacx_trap" from
+// every division site. The oracle weakens the symbol with objcopy on its own
+// copy of the object instead; see tools/lifted_oracle_build.sh.
 void opensmacx_trap(uint32_t address, const char *reason) {{
     std::fprintf(stderr, "opensmacx: trap at %#010x: %s\\n",
                  static_cast<unsigned>(address), reason);
@@ -529,9 +559,25 @@ cd "$(dirname "$0")"
 rm -f ./*.o lifted_probe.exe
 ls lifted_*.cpp | xargs -P "$JOBS" -I{} \\
     "$CXX" -std=c++17 -O2 -c -I. -I%(tools)s {} -o {}.o
-"$CXX" -std=c++17 -O2 -static -o lifted_probe.exe ./*.o
+# -lgdi32 and -lwinmm are both required by the import shims and neither is in
+# the default specs; without them the link fails naming _imp__GdiFlush@0 and
+# _imp__timeGetTime@0 respectively. user32, advapi32 and kernel32 arrive
+# through the default specs.
+"$CXX" -std=c++17 -O2 -static -o lifted_probe.exe ./*.o -lgdi32 -lwinmm
 echo "built lifted_probe.exe"
 """
+
+
+def write_loader(out: Path, tools: Path) -> None:
+    """Copy the image loader in so build.sh's lifted_*.cpp glob compiles it.
+
+    Only the translation unit has to live in the build tree; lifted_loader.h
+    stays in tools/ and is reached through build.sh's -I, exactly like
+    lifted_x86.h and the other semantics headers.
+    """
+    (out / "lifted_loader.cpp").write_text(
+        (tools / "lifted_loader.cpp").read_text(encoding="utf-8"),
+        encoding="utf-8")
 
 
 def write_build_script(out: Path, tools: Path) -> None:
@@ -547,15 +593,32 @@ def write_main(out: Path, functions: list[dict]) -> None:
         for function in functions[:64])
     (out / "lifted_main.cpp").write_text(
         f"""#include "lifted_runtime.h"
+#include "lifted_loader.h"
+#include "lifted_imports.h"
 
 #include <cstdio>
 
 int main() {{
+    // Order is load-bearing. The loader writes the file's own IAT contents
+    // over the import slots, so binding must come after it; and every IAT slot
+    // holds zero until binding runs, so the first call through an import would
+    // dispatch to address 0 if any lifted code ran before it.
+    opensmacx_load_image_or_die();
+    opensmacx_bind_imports();
+
+    OpensmacxStaticRecompileState state{{}};
+    opensmacx_init_stack(state);
+
     int resolved = 0;
 {probes}
     std::printf("resolved %d of 64 probes across %u bytes of image\\n",
                 resolved, static_cast<unsigned>(OpensmacxImageSize));
-    return resolved == 64 ? 0 : 1;
+    std::printf("image sha256 %s, entry %#010x, esp %#010x, guard %s\\n",
+                opensmacx_image_sha256(),
+                static_cast<unsigned>(opensmacx_entry_point()),
+                static_cast<unsigned>(state.esp),
+                opensmacx_stack_guard_intact() ? "intact" : "BREACHED");
+    return (resolved == 64 && opensmacx_stack_guard_intact()) ? 0 : 1;
 }}
 """, encoding="utf-8")
 
@@ -585,6 +648,7 @@ def main() -> int:
     write_image(args.out, pe, base, size)
     write_dispatch(args.out, functions)
     write_main(args.out, functions)
+    write_loader(args.out, Path(__file__).resolve().parent)
     write_build_script(args.out, Path(__file__).resolve().parent)
     shards = write_shards(args.out, functions, args.shards, args.mode, pe)
 

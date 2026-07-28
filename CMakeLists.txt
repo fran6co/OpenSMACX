@@ -801,6 +801,17 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_x86_lower.py"
     )
 
+    # The import boundary's derivation: which import lives at which IAT slot,
+    # and how many bytes of argument each one pops. Both are recovered rather
+    # than written down, and a wrong slot binds every call in the image to a
+    # neighbouring function while every ABI check still passes - so the
+    # derivation is cross-checked here against arithmetic on the PE's own
+    # FirstThunk, independent of the pefile attribute the generator reads.
+    add_test(NAME import-shim-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_imports.py"
+    )
+
     add_test(NAME jump-table-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_jump_tables.py"

@@ -319,9 +319,25 @@ class EmissionTests(unittest.TestCase):
             out = Path(raw)
             lifter.write_image(out, build_pe(), 0x00400000, 0x1000)
             text = (out / "lifted_image.cpp").read_text(encoding="utf-8")
-        self.assertIn("unsigned char opensmacx_image[OpensmacxImageSize];",
-                      text)
+        self.assertIn(
+            "unsigned char opensmacx_image["
+            "OpensmacxImageSize + OpensmacxStackSpanSize];",
+            text)
         self.assertNotIn("0x90,", text)
+
+    def test_image_source_ties_its_size_to_the_stack_geometry(self):
+        # lifted_loader.h derives the stack's address range from
+        # OpensmacxImageSize and hands out a megabyte above the image. Nothing
+        # in the type system connects that to the array's real size, because
+        # lifted_runtime.h declares opensmacx_image[] incomplete. The
+        # definition is the only place the two can be checked against each
+        # other, so the check has to be emitted here or it exists nowhere.
+        with tempfile.TemporaryDirectory() as raw:
+            out = Path(raw)
+            lifter.write_image(out, build_pe(), 0x00400000, 0x1000)
+            text = (out / "lifted_image.cpp").read_text(encoding="utf-8")
+        self.assertIn("static_assert(sizeof(opensmacx_image) == "
+                      "OpensmacxSpanSize,", text)
 
     def test_dispatch_table_holds_every_function(self):
         with tempfile.TemporaryDirectory() as raw:
