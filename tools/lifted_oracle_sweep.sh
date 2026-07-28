@@ -50,6 +50,7 @@ rm -f "$REPORT"
 resume=""
 append=""
 hangs=0
+deaths=0
 while : ; do
     # Where this segment of the log starts, so the host-refusal check below
     # reads only what THIS child printed. The log is appended to across
@@ -63,6 +64,10 @@ while : ; do
     child=$!
     last=0
     stalled=0
+    # Set only where the watchdog actually kills the child. This, and not a
+    # string in the log, is what separates the two ways a run dies - see the
+    # verdict choice below.
+    watchdog_killed=0
     while kill -0 "$child" 2>/dev/null; do
         sleep 5
         now=$(wc -l < "$REPORT" 2>/dev/null || echo 0)
@@ -78,11 +83,12 @@ while : ; do
             # `pkill -f lifted_oracle.exe` killed that too. The dots match
             # either slash, because the process shows a Windows path.
             pkill -f 'build.oracle.lifted_oracle.exe' || true
+            watchdog_killed=1
             hangs=$((hangs + 1))
             break
         fi
     done
-    wait "$child" 2>/dev/null || true
+    if wait "$child" 2>/dev/null; then child_status=0; else child_status=$?; fi
 
     done_count=$(wc -l < "$REPORT" 2>/dev/null || echo 0)
     planned=$(grep -c '^0x' "$PLAN")
@@ -96,12 +102,38 @@ while : ; do
     hung_address=$(printf '%s' "$hung" | cut -f1)
     hung_name=$(printf '%s' "$hung" | cut -f3)
     [ -n "$hung_address" ] || break
-    if tail -n "+$((log_mark + 1))" "$LOG" 2>/dev/null | grep -q 'rosetta error'; then
-        verdict="KILLED-host-refused"
-        detail="rosetta refused to emulate an instruction; the process died before any guard ran"
-    else
+    # WHICH OF THE TWO DEATHS WAS IT, and the answer comes from what this
+    # script OBSERVED rather than from a string it went looking for.
+    #
+    # This used to ask "does the log segment contain `rosetta error`", which is
+    # true only on an arm64 Mac. On Linux the process simply exits - silently,
+    # no diagnostic of any kind - and every one of those was being recorded as
+    # HANG. Measured on the first native sweep: eight rows said "the run
+    # stopped making progress here" while the run's own closing line said
+    # "finished, 0 hang(s)", because the watchdog had not fired once. A report
+    # that contradicts its own summary is the shape of a verdict assigned by
+    # something other than evidence.
+    #
+    # The watchdog flag is the honest discriminator and it needs no host
+    # knowledge at all: if this script killed the child, it watched the report
+    # stop growing for $STALL seconds and HANG is exactly what it saw. If the
+    # child went away on its own, nothing was watched - the process was gone
+    # before any guard ran - and that is KILLED-host-refused, which is in no
+    # evidence set anywhere and is classified `no-evidence` by
+    # tools/lifted_oracle_mutate.py. The Rosetta string still refines the
+    # DETAIL where it appears, because naming the cause is worth doing; it just
+    # no longer decides the verdict.
+    if [ "$watchdog_killed" -eq 1 ]; then
         verdict="HANG"
-        detail="the run stopped making progress here"
+        detail="the run stopped making progress here for ${STALL}s and the watchdog killed it"
+    else
+        verdict="KILLED-host-refused"
+        deaths=$((deaths + 1))
+        if tail -n "+$((log_mark + 1))" "$LOG" 2>/dev/null | grep -q 'rosetta error'; then
+            detail="rosetta refused to emulate an instruction; the process died before any guard ran"
+        else
+            detail="the harness process exited (status $child_status) without writing a row; no guard ran"
+        fi
     fi
     printf '%s\t%s\t0\t0\t%s\t%s\n' \
         "$hung_address" "$verdict" "$detail" "$hung_name" >> "$REPORT"
@@ -109,4 +141,4 @@ while : ; do
     resume="--resume-after $hung_address"
     append="--append"
 done
-echo "sweep: finished, $hangs hang(s)" | tee -a "$LOG"
+echo "sweep: finished, $hangs hang(s) and $deaths host death(s)" | tee -a "$LOG"
