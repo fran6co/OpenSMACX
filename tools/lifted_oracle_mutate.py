@@ -60,6 +60,25 @@ MUTATIONS = [
      re.compile(r"opensmacx_sar32"), "opensmacx_shr32"),
     ("drop a flag update",
      re.compile(r"^(\s*)\(void\)opensmacx_sub32\(", re.M), r"\1if (false) (void)opensmacx_sub32("),
+    # The x87 file was not compared at all until the register-file comparison
+    # landed, so these three had nowhere to show up. They are the three shapes
+    # an x87 lowering gets wrong: the wrong operation, a push that never
+    # happens (the stack then drifts and every later ST index is off by one),
+    # and a store to the wrong slot.
+    ("turn an x87 multiply into an add",
+     re.compile(r"opensmacx_x87_binary_st0\(OpensmacxX87Mul,"),
+     "opensmacx_x87_binary_st0(OpensmacxX87Add,"),
+    ("drop an x87 load",
+     re.compile(r"^(\s*)opensmacx_x87_fld32\(", re.M),
+     r"\1if (false) opensmacx_x87_fld32("),
+    ("shift an x87 store by four",
+     re.compile(r"opensmacx_x87_fst32\(s\.ebp \+ 0xfffffff4U"),
+     "opensmacx_x87_fst32(s.ebp + 0xfffffff0U"),
+    # A width mistake: reading a byte where the original reads a word. Invisible
+    # unless some byte in the operand's neighbourhood is non-zero, which is what
+    # the drawn seeds put there.
+    ("widen a byte read to a word",
+     re.compile(r"opensmacx_mem8\("), "opensmacx_mem16("),
 ]
 
 
@@ -103,22 +122,43 @@ def body_span(text: str, address: int) -> tuple[int, int] | None:
     return (start, end) if end > 0 else None
 
 
+CASES = 16
+
+
 def run_oracle(address: int) -> str:
-    result = subprocess.run(
+    """The oracle's own verdict string for this function, read from the report.
+
+    Scraping the end-of-run summary could not tell the two kinds of
+    INCONCLUSIVE apart, and they mean opposite things here. A mutant that makes
+    the LIFTED side loop forever has been detected - the oracle is saying the
+    lifted body no longer terminates - while a case whose ORIGINAL faulted says
+    nothing about the mutant at all. Both printed as `INCONCLUSIVE 1`, and the
+    first flipped-branch mutant of the new run was scored MISSED because of it.
+    """
+    report = ORACLE / "mutate_one.tsv"
+    report.unlink(missing_ok=True)
+    subprocess.run(
         [WINE, str(ORACLE / "lifted_oracle.exe"),
          "--exe", windows_path(EXE), "--only", f"{address:#010x}",
-         "--cases", "3", "--no-blame"],
+         "--report", windows_path(report),
+         # All sixteen cases, not three. Cases 0..3 are the legacy seeds and
+         # 4..15 are the drawn ones; running three of them tested only the old
+         # generator, which is the thing being replaced. A mutant that only the
+         # drawn seeds reach would have been scored UNREACHED.
+         "--cases", str(CASES), "--no-blame"],
         capture_output=True, text=True, timeout=300)
-    for line in result.stdout.splitlines():
-        if line.startswith("PASSED") and line.split()[-1] == "1":
-            return "PASS"
-        if line.startswith("FAILED") and line.split()[-1] != "0":
-            return "FAIL"
-        if line.startswith("INCONCLUSIVE") and line.split()[-1] != "0":
-            return "INCONCLUSIVE"
-        if line.startswith("SKIPPED") and line.split()[-1] != "0":
-            return "SKIPPED"
-    return "NO-VERDICT"
+    if not report.exists():
+        return "NO-VERDICT"
+    rows = [r for r in report.read_text().splitlines() if r.startswith("0x")]
+    return rows[0].split("\t")[1] if rows else "NO-VERDICT"
+
+
+# Verdicts that mean the oracle noticed the lifted side misbehaving. A lifted
+# fault, a lifted body that stops terminating, and a lifted body that reaches an
+# instruction the lift never lowered are all detections, and all of them were
+# previously scored as misses or as nothing.
+CAUGHT = {"FAIL", "FAIL-lifted-fault", "INCONCLUSIVE-lifted-budget",
+          "INCONCLUSIVE-lifted-out-of-span", "SKIP-trap"}
 
 
 def rebuild(shard: Path) -> bool:
@@ -139,6 +179,10 @@ def main() -> int:
     parser.add_argument("--count", type=int, default=8)
     parser.add_argument("--seed", type=int, default=20260728,
                         help="shuffle seed for drawing mutation targets")
+    parser.add_argument("--cases", type=int, default=16,
+                        help="cases per function. 4 runs ONLY the legacy seeds, "
+                             "which makes this an A/B against the old input "
+                             "generator on the identical mutants")
     parser.add_argument("--min-size", type=int, default=0,
                         help="only mutate functions whose lowered body has at "
                              "least this many statements; the median passing "
@@ -146,6 +190,8 @@ def main() -> int:
                              "dominated by bodies too small to exercise "
                              "memory or the callee-saved registers")
     args = parser.parse_args()
+    global CASES
+    CASES = args.cases
 
     if not REPORT.exists():
         print(f"no {REPORT}; run the oracle first", file=sys.stderr)
@@ -153,7 +199,8 @@ def main() -> int:
 
     candidates = passing_functions(args.seed)
     print(f"{len(candidates)} functions currently PASS; mutating up to "
-          f"{args.count} (seed {args.seed})")
+          f"{args.count} (seed {args.seed}, {CASES} cases per function"
+          f"{' - LEGACY SEEDS ONLY' if CASES <= 4 else ''})")
 
     caught = missed = unusable = unreached = 0
     spent: set[int] = set()
@@ -206,7 +253,7 @@ def main() -> int:
             shard.write_text(head + canary + tail, encoding="utf-8")
             reached = None
             if rebuild(shard):
-                reached = run_oracle(address) in ("SKIPPED", "FAIL")
+                reached = run_oracle(address) in CAUGHT
 
             shard.write_text(head + mutated + tail, encoding="utf-8")
             built = rebuild(shard)
@@ -217,7 +264,7 @@ def main() -> int:
             if verdict == "DID-NOT-COMPILE":
                 unusable += 1
                 mark = "unusable"
-            elif verdict == "FAIL":
+            elif verdict in CAUGHT:
                 caught += 1
                 mark = "caught"
             elif reached is False:
@@ -226,7 +273,7 @@ def main() -> int:
             else:
                 missed += 1
                 mark = "MISSED"
-            print(f"  {address:#010x} {name:<42} -> {verdict:<14} {mark}   {symbol}")
+            print(f"  {address:#010x} {name:<42} -> {verdict:<32} {mark}   {symbol}")
             # One function per mutation kind, AND never the same function
             # twice: six of eight mutants landing on ?base_making@@YAHHH@Z is a
             # measurement of that one function, not of the oracle.

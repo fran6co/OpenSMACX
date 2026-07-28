@@ -15,6 +15,7 @@ toolchain.
 
 from __future__ import annotations
 
+import re
 import sys
 import tempfile
 import textwrap
@@ -129,6 +130,84 @@ class TestImplementedImports(unittest.TestCase):
         self.assertGreater(checked, 60)
 
 
+class TestOracleSafety(unittest.TestCase):
+    """The classification that keeps "works" apart from "can be compared"."""
+
+    def parse(self, text: str) -> dict:
+        with tempfile.TemporaryDirectory() as raw:
+            header = Path(raw) / "lifted_imports.h"
+            header.write_text(textwrap.dedent(text), encoding="utf-8")
+            return gen.oracle_safety(header)
+
+    def test_reads_both_verdicts(self):
+        found = self.parse("""\
+            #define OPENSMACX_ORACLE_USER32_SetRect safe  // arithmetic
+            #define OPENSMACX_ORACLE_KERNEL32_GetTickCount unsafe  // advances
+            """)
+        self.assertEqual(found, {"USER32_SetRect": True,
+                                 "KERNEL32_GetTickCount": False})
+
+    def test_a_word_that_is_neither_verdict_is_not_a_verdict(self):
+        # "probably", "mostly", "TODO" must not read as safe. The grammar is
+        # two words and nothing else, because the whole value of the field is
+        # that it was answered rather than gestured at.
+        self.assertEqual(self.parse(
+            "#define OPENSMACX_ORACLE_USER32_SetRect probably\n"), {})
+
+    def test_every_implemented_shim_in_the_real_header_is_classified(self):
+        header = Path(gen.__file__).resolve().parent / "lifted_imports.h"
+        declared = set(gen.implemented_imports(header))
+        classified = set(gen.oracle_safety(header))
+        self.assertEqual(declared - classified, set(),
+                         "implemented but unclassified")
+        self.assertEqual(classified - declared, set(),
+                         "classified but not implemented")
+
+    def test_safe_is_a_strict_subset_in_the_real_header(self):
+        # If these were ever equal the field would have collapsed into a
+        # synonym for "implemented" and the oracle would start comparing
+        # GetTickCount against itself.
+        header = Path(gen.__file__).resolve().parent / "lifted_imports.h"
+        safety = gen.oracle_safety(header)
+        safe = sum(1 for value in safety.values() if value)
+        self.assertGreater(safe, 0)
+        self.assertLess(safe, len(safety))
+
+    def test_the_ones_that_cannot_agree_with_themselves_are_marked_unsafe(self):
+        # Named individually rather than counted, because the count would stay
+        # right while any single one of these flipped.
+        header = Path(gen.__file__).resolve().parent / "lifted_imports.h"
+        safety = gen.oracle_safety(header)
+        for key in ("KERNEL32_GetTickCount", "KERNEL32_GetSystemTime",
+                    "WINMM_timeGetTime", "KERNEL32_HeapAlloc",
+                    "KERNEL32_TlsAlloc", "KERNEL32_ReadFile",
+                    "KERNEL32_CreateFileA", "USER32_GetAsyncKeyState",
+                    "GDI32_CreateSolidBrush", "KERNEL32_Sleep"):
+            self.assertFalse(safety[key], f"{key} must not be oracle-safe")
+
+    def test_collect_refuses_a_shim_that_states_no_verdict(self):
+        with tempfile.TemporaryDirectory() as raw:
+            header = Path(raw) / "lifted_imports.h"
+            header.write_text(
+                "#define OPENSMACX_ARGS_KERNEL32_ReadFile 5\n",
+                encoding="utf-8")
+            with self.assertRaises(SystemExit) as caught:
+                gen.collect(gen.DEFAULT_EXE, gen.DEFAULT_NM, gen.DEFAULT_LIBS,
+                            header)
+            self.assertIn("KERNEL32_ReadFile", str(caught.exception))
+
+    def test_collect_refuses_a_verdict_with_no_shim(self):
+        with tempfile.TemporaryDirectory() as raw:
+            header = Path(raw) / "lifted_imports.h"
+            header.write_text(
+                "#define OPENSMACX_ORACLE_KERNEL32_Invented safe\n",
+                encoding="utf-8")
+            with self.assertRaises(SystemExit) as caught:
+                gen.collect(gen.DEFAULT_EXE, gen.DEFAULT_NM, gen.DEFAULT_LIBS,
+                            header)
+            self.assertIn("KERNEL32_Invented", str(caught.exception))
+
+
 class TestRender(unittest.TestCase):
     def entry(self, **overrides) -> dict:
         base = {"dll": "KERNEL32.dll", "name": "ReadFile",
@@ -136,7 +215,9 @@ class TestRender(unittest.TestCase):
                 "convention": "stdcall", "argument_bytes": 20,
                 "unresolved_reason": "", "declared_arguments": 5,
                 "implemented": True, "index": 0,
-                "synthetic": gen.IMPORT_BASE}
+                "synthetic": gen.IMPORT_BASE,
+                "export_name": "ReadFile", "ordinal": 0,
+                "oracle_safe": False}
         base.update(overrides)
         return base
 
@@ -174,6 +255,42 @@ class TestRender(unittest.TestCase):
         first = text.index("&opensmacx_import_000,")
         second = text.index("&opensmacx_import_001,")
         self.assertLess(first, second)
+
+    def test_the_slot_carries_its_oracle_verdict(self):
+        self.assertIn(" false},", gen.render([self.entry()], Path("x")))
+        self.assertIn(" true},",
+                      gen.render([self.entry(oracle_safe=True)], Path("x")))
+
+    def test_an_unimplemented_import_is_never_oracle_safe_in_the_table(self):
+        # render() only prints what collect() decided, so this is the check
+        # that collect() cannot mark a trapping import safe.
+        entries = gen.collect(gen.DEFAULT_EXE, gen.DEFAULT_NM, gen.DEFAULT_LIBS,
+                              Path(gen.__file__).resolve().parent
+                              / "lifted_imports.h")
+        wrong = [one for one in entries
+                 if one["oracle_safe"] and not one["implemented"]]
+        self.assertEqual(wrong, [])
+
+    def test_the_binder_asks_for_an_ordinal_import_by_ordinal(self):
+        # An ordinal import has no name, so GetProcAddress must be given the
+        # ordinal. Emitting "nullptr" as the name is what makes that possible;
+        # emitting the display name "ORD_2" would ask for an export that does
+        # not exist and leave the slot unbound.
+        text = gen.render(
+            [self.entry(name="ORD_2", export_name=None, ordinal=2,
+                        implemented=False)], Path("x"))
+        self.assertIn("nullptr, 2U,", text)
+
+    def test_the_iat_span_covers_the_lowest_and_highest_slot(self):
+        entries = [self.entry(index=0, iat=0x00669100),
+                   self.entry(index=1, iat=0x00669200,
+                              synthetic=gen.IMPORT_BASE + gen.IMPORT_STRIDE)]
+        text = gen.render(entries, Path("x"))
+        self.assertIn("iat_low() { return 0x00669100U; }", text)
+        # Half-open: the last slot is four bytes wide, so the high bound is
+        # one word PAST it. An inclusive bound would leave the final import's
+        # slot inside the compared region and every function would report it.
+        self.assertIn("iat_high() { return 0x00669204U; }", text)
 
     def test_it_asserts_the_range_constants_match_the_header(self):
         text = gen.render([self.entry()], Path("x"))
@@ -273,7 +390,18 @@ class TestAgainstTheRealImage(unittest.TestCase):
                               gen.DEFAULT_LIBS, header)
         text = gen.render(entries, gen.DEFAULT_EXE)
         self.assertNotIn("\\x", text)
-        self.assertNotIn("unsigned char", text)
+        # `unsigned char` used to stand in for "a byte array of image
+        # content", and stopped meaning that when the real-import binder
+        # arrived taking `unsigned char *image`. A type name was always a
+        # proxy; the actual policy is that no BYTE VALUE from the image is
+        # present, so test for the shapes a byte dump takes: a brace-enclosed
+        # list of small hex literals, or any 0xNN literal at all. Addresses
+        # and argument counts are structure and are unaffected by this.
+        self.assertNotIn("unsigned char opensmacx", text)
+        byte_literals = re.findall(r"\b0[xX][0-9a-fA-F]{1,2}\b", text)
+        self.assertEqual(byte_literals, [],
+                         f"byte-sized literals in generated output: "
+                         f"{byte_literals[:8]}")
 
 
 if __name__ == "__main__":
