@@ -74,7 +74,6 @@ P0,1001020,0x00406850,??1Sprite@@QAE@XZ,5,1,0,original_dependency,ui_dependency,
 P3,11,0x00406860,?hide@BaseButton@@QAEXXZ,25,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)
 P2,9120,0x00406A90,sub_406a90,83,9,1,unrecovered,,,2,exact,exact,
 P2,9320,0x00406AF0,sub_406af0,38,9,3,unrecovered,,,2,exact,exact,
-P3,10,0x00406B20,nullsub_27,3,0,0,unrecovered,,,1,exact,missing,
 P3,20,0x00406B70,sub_406b70,44,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x00406BA0,sub_406ba0,44,0,0,unrecovered,,,2,exact,exact,
 P0,1007221,0x00406C00,??1Popup@@QAE@XZ,836,6,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
@@ -2687,7 +2686,6 @@ P0,1082021,0x00616BC0,??0CaviarData@@QAE@XZ,13,82,0,source_complete,ui_dependenc
 P3,1421,0x00616BD0,?init@CaviarData@@QAEHPAD@Z,133,1,4,unrecovered,,,2,exact,exact,"int (__thiscall ?init@CaviarData@@QAEHPAD@Z)(CaviarData* this, int8*)"
 P3,110,0x00616C80,sub_616c80,179,0,1,unrecovered,,,1,exact,missing,
 P3,110,0x00616D40,sub_616d40,38,0,1,unrecovered,,,1,missing,exact,
-P3,10,0x00616D80,sub_616d80,5,0,0,unrecovered,,,1,exact,missing,
 P2,7521,0x00616DE0,?init@Caviar@@QAEXXZ,563,7,5,unrecovered,,,2,exact,exact,void (__thiscall ?init@Caviar@@QAEXXZ)(Caviar* this)
 P0,1011121,0x00617020,?close@Caviar@@QAEXXZ,95,11,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?close@Caviar@@QAEXXZ)(Caviar* this)
 P3,211,0x00617080,?UNK1@Caviar@@QAEHHH@Z,286,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@Caviar@@QAEHHH@Z)(Caviar* this, int, int)"
@@ -2740,7 +2738,6 @@ P3,1320,0x0061DF60,sub_61df60,1496,1,3,unrecovered,,,2,exact,exact,
 P3,1321,0x0061E540,?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z,1422,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z)(Texture* this, Buffer*, Vert*, unsigned int8*, unsigned int8*, int, Vert*)"
 P3,1321,0x0061EAD0,?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z,1526,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z)(Texture* this, Buffer*, Vert*, int*, Texture*, unsigned int8*, int, Vert*)"
 P3,410,0x0061F0D0,sub_61f0d0,1717,0,4,unrecovered,,,1,missing,start_only,
-P3,0,0x0061F785,nullsub_259,3,0,0,unrecovered,,,0,missing,containing,
 P3,100,0x0061F790,sub_61f790,109,0,1,unrecovered,,,0,missing,missing,
 P3,10,0x0061F800,sub_61f800,1158,0,0,unrecovered,,,1,missing,start_only,
 P2,16120,0x0061FC90,?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z,346,16,1,unrecovered,,,2,exact,exact,
@@ -2952,7 +2949,6 @@ P3,10,0x00634980,sub_634980,208,0,0,unrecovered,,,1,exact,missing,
 P3,20,0x00634A50,sub_634a50,121,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00634AD0,sub_634ad0,151,0,0,unrecovered,,,1,exact,missing,
 P3,4021,0x00634BE0,??0FileBox@@QAE@XZ,51,4,0,unrecovered,,,2,exact,exact,void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this)
-P3,4021,0x00634C20,??1FileBox@@QAE@XZ,1,4,0,unrecovered,,,2,exact,exact,void (__thiscall ??1FileBox@@QAE@XZ)(FileBox* this)
 P3,2221,0x00634C30,?save@FileBox@@QAEXXZ,190,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?save@FileBox@@QAEXXZ)(FileBox* this)
 P3,1221,0x00634CF0,?load@FileBox@@QAEXXZ,190,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?load@FileBox@@QAEXXZ)(FileBox* this)
 P3,3221,0x00634DB0,?add_filter@FileBox@@QAEHPADPAD@Z,195,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?add_filter@FileBox@@QAEHPADPAD@Z)(FileBox* this, int8*, int8*)"

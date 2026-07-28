@@ -2575,6 +2575,20 @@ void test_field_accessors() {
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
 
+    // --- do-nothing bodies, and a constant zero ---
+    //
+    // Their ONLY content is the stack cleanup, which is invisible from inside
+    // the function and only wrong for the caller - so these are called with
+    // exactly the argument counts their originals clean, and the compiler
+    // checking each call against a declaration derived from `ret N` is the
+    // real assertion here.
+    seed();
+    field_accessor_00406b20_redirect(self, nullptr, 0, 0, 0);          // ret 0xc
+    field_accessor_0061f785_redirect(self, nullptr, 0, 0, 0, 0, 0, 0, 0);  // ret 0x1c
+    field_accessor_00634c20_redirect(self, nullptr);                   // ret
+    expect(field_accessor_00616d80_redirect(self, nullptr, 0, 0, 0) == 0);
+    expect_storage_bytes(storage, expected, sizeof(storage));
+
     // --- byte store: one BYTE moves, which the neighbours prove ---
     seed();
     expected[16 + 0x6D] = 1;

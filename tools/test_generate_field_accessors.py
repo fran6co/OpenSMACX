@@ -62,6 +62,32 @@ class AcceptedShapeTests(unittest.TestCase):
         self.assertEqual(1, detail["value"])
 
 
+class TrivialBodyTests(unittest.TestCase):
+    def test_a_bare_ret_is_a_do_nothing_body(self):
+        kind, detail = generator.classify(decode("c3"))
+        self.assertEqual("nothing", kind)
+        self.assertEqual(0, detail["cleanup"])
+
+    def test_a_do_nothing_body_keeps_its_cleanup(self):
+        # ret 0xc. The cleanup is the ONLY thing such a body can get wrong,
+        # and getting it wrong corrupts the caller rather than this function.
+        kind, detail = generator.classify(decode("c20c00"))
+        self.assertEqual("nothing", kind)
+        self.assertEqual(0xC, detail["cleanup"])
+
+    def test_zeroing_eax_is_a_constant_zero(self):
+        # xor eax,eax / ret 0xc
+        kind, detail = generator.classify(decode("31c0c20c00"))
+        self.assertEqual("constant", kind)
+        self.assertEqual(0, detail["value"])
+        self.assertEqual(0xC, detail["cleanup"])
+
+    def test_zeroing_another_register_is_not_a_constant_return(self):
+        # xor ecx,ecx / ret - says nothing about EAX.
+        kind = generator.classify(decode("31c9c3"))
+        self.assertNotEqual("constant", kind[0] if kind else None)
+
+
 class StoreSequenceTests(unittest.TestCase):
     """A run of constant stores to `this`, tracked symbolically."""
 
