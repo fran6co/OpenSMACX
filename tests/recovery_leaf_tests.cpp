@@ -2360,6 +2360,88 @@ void test_win_move() {
     }
 }
 
+void test_setup_win_scaling_and_datalink_combine() {
+    // SetupWin::UNK1 and UNK2 are signed divisions by 1024 and 768 written as
+    // MSVC idioms - a biased arithmetic shift and a magic-number multiply. The
+    // values below are chosen so truncation DIRECTION is observable: a
+    // negative dividend that is not a multiple of the divisor distinguishes
+    // truncation toward zero from an arithmetic shift, and the two differ by
+    // one there. A body using `>> 10` instead of `/ 1024` passes for every
+    // non-negative input and fails these.
+    const int scales[] = {0, 1, -1, 7, -7, 1024, 768, 100000, -100000,
+                          2147483647, -2147483647 - 1};
+    const int args[] = {0, 1, -1, 3, -3, 1023, -1023, 65536, -65536};
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int scale : scales) {
+            for (int argument : args) {
+                alignas(SetupWin) uint8_t storage[sizeof(SetupWin) + 0xA20 + 32];
+                uint8_t expected[sizeof(storage)];
+                seed_storage(storage, expected, sizeof(storage));
+                write_at(storage, 16 + 0xA14, scale);
+                write_at(storage, 16 + 0xA18, scale);
+                std::memcpy(expected, storage, sizeof(storage));
+
+                const int32_t product = static_cast<int32_t>(
+                    static_cast<uint32_t>(scale) * static_cast<uint32_t>(argument));
+                auto *setup = reinterpret_cast<SetupWin *>(storage + 16);
+                const int one = use_adapter
+                    ? setup_win_unk1_redirect(setup, nullptr, argument)
+                    : setup->UNK1(argument);
+                const int two = use_adapter
+                    ? setup_win_unk2_redirect(setup, nullptr, argument)
+                    : setup->UNK2(argument);
+                expect(one == product / 1024);
+                expect(two == product / 768);
+                // Both are readers.
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+
+    // UNK1 and UNK2 must read DIFFERENT fields: 0xA14 and 0xA18. Seeding them
+    // apart is what catches a body that read the other one.
+    {
+        alignas(SetupWin) uint8_t storage[sizeof(SetupWin) + 0xA20 + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16 + 0xA14, 4096);
+        write_at(storage, 16 + 0xA18, 7680);
+        std::memcpy(expected, storage, sizeof(storage));
+        auto *setup = reinterpret_cast<SetupWin *>(storage + 16);
+        expect(setup->UNK1(1) == 4);      // 4096 / 1024, not 7680 / 1024
+        expect(setup->UNK2(1) == 10);     // 7680 / 768,  not 4096 / 768
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    // Datalink::UNK1 is a1 * 10000 + a2, wrapping at 32 bits. The wrapping
+    // cases are the point: 300000 * 10000 overflows, and the original's
+    // shift-and-add chain wraps exactly as the multiply does.
+    {
+        alignas(Datalink) uint8_t storage[sizeof(Datalink) + 32];
+        uint8_t expected[sizeof(storage)];
+        auto *link = reinterpret_cast<Datalink *>(storage + 16);
+        const int pairs[][2] = {
+            {0, 0}, {1, 0}, {0, 1}, {1, 1}, {-1, 0}, {0, -1}, {-1, -1},
+            {7, 42}, {300000, 5}, {-300000, -5}, {214748, 3647},
+            {2147483647, 1}, {-2147483647 - 1, -1},
+        };
+        for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+            for (const auto &pair : pairs) {
+                seed_storage(storage, expected, sizeof(storage));
+                std::memcpy(expected, storage, sizeof(storage));
+                const int32_t wanted = static_cast<int32_t>(
+                    static_cast<uint32_t>(pair[0]) * 10000U
+                    + static_cast<uint32_t>(pair[1]));
+                const int got = use_adapter
+                    ? datalink_unk1_redirect(link, nullptr, pair[0], pair[1])
+                    : link->UNK1(pair[0], pair[1]);
+                expect(got == wanted);
+                expect_storage_bytes(storage, expected, sizeof(storage));
+            }
+        }
+    }
+}
+
 void test_check_box_state_word() {
     // UNK1, UNK2 and set_state_pos all reach one word at
     // `this + vbtable[2] + 0xEC`. The offset comes from the OBJECT'S OWN
@@ -28190,6 +28272,7 @@ int main() {
     test_base_pop_flag_setters();
     test_win_query_new_palette();
     test_check_box_state_word();
+    test_setup_win_scaling_and_datalink_combine();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();

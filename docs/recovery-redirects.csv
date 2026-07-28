@@ -212,6 +212,7 @@ address,kind
 0x00428F80,jump
 0x00428F90,jump
 0x00428FB0,jump
+0x0042A020,jump
 0x0042BD20,jump
 0x0042BEA0,jump
 0x0042BF00,jump
@@ -1122,6 +1123,8 @@ address,kind
 0x004AC130,jump
 0x004AD840,jump
 0x004AD870,jump
+0x004ADA80,jump
+0x004ADAA0,jump
 0x004ADAD0,jump
 0x004ADAE0,jump
 0x004AE760,jump

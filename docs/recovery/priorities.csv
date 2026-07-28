@@ -231,7 +231,6 @@ P0,1001821,0x00428E90,??1Credits@@QAE@XZ,322,1,8,original_dependency,ui_dependen
 P0,1001921,0x00428FC0,??0Datalink@@QAE@XZ,737,1,9,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0Datalink@@QAE@XZ)(Datalink* this)
 P0,1018821,0x00429180,?exec@Datalink@@QAEXIH@Z,380,18,8,original_dependency,ui_dependency,recover_datalink_exec,2,exact,exact,"void (__thiscall ?exec@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID datalinkID, int)"
 P3,4421,0x00429300,?init@Datalink@@QAEXXZ,3367,2,24,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@Datalink@@QAEXXZ)(Datalink* this)
-P3,11,0x0042A020,?UNK1@Datalink@@QAEHHH@Z,30,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@Datalink@@QAEHHH@Z)(Datalink* this, int, int)"
 P3,1021,0x0042A040,?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z,54,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z)(Datalink* this, int, DatalinkID*, int*)"
 P3,2121,0x0042A080,?construct_id@Datalink@@QAEXPADIH@Z,45,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?construct_id@Datalink@@QAEXPADIH@Z)(Datalink* this, int8*, DatalinkID, int)"
 P3,111,0x0042A0B0,?UNK2@Datalink@@QAEXPADPAHPAH@Z,65,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK2@Datalink@@QAEXPADPAHPAH@Z)(Datalink* this, int8*, int*, int*)"
@@ -963,8 +962,6 @@ P0,1002421,0x004AD3B0,??1ReportWin@@QAE@XZ,1191,1,14,original_dependency,ui_depe
 P0,1002121,0x004AD6B0,??0ReportWin@@QAE@XZ,689,1,11,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0ReportWin@@QAE@XZ)(ReportWin* this)
 P2,5321,0x004AD880,??0SetupWin@@QAE@XZ,380,5,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??0SetupWin@@QAE@XZ)(SetupWin* this)
 P2,5221,0x004AD9C0,?close@SetupWin@@QAEXXZ,187,5,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@SetupWin@@QAEXXZ)(SetupWin* this)
-P3,11,0x004ADA80,?UNK1@SetupWin@@QAEHH@Z,29,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@SetupWin@@QAEHH@Z)(SetupWin* this, int)"
-P3,11,0x004ADAA0,?UNK2@SetupWin@@QAEHH@Z,36,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK2@SetupWin@@QAEHH@Z)(SetupWin* this, int)"
 P3,1121,0x004ADAF0,?do_menu@SetupWin@@QAEHPADHH@Z,33,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?do_menu@SetupWin@@QAEHPADHH@Z)(SetupWin* this, int8*, int, int)"
 P2,5121,0x004ADB20,?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z,70,5,1,unrecovered,,,2,exact,exact,"int (__thiscall ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z)(SetupWin* this, Popup*, int, int)"
 P3,6021,0x004ADB70,?do_menu_rightside@SetupWin@@QAEHPADH@Z,2129,2,40,unrecovered,,,2,exact,entry_range,"int (__thiscall ?do_menu_rightside@SetupWin@@QAEHPADH@Z)(SetupWin* this, int8*, int)"

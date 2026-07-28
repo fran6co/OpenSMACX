@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2442,
+      "source_complete": 2445,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2918
+      "unrecovered": 2915
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,8 +67,8 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 193035,
-          "functions": 2442,
+          "bytes": 193130,
+          "functions": 2445,
           "percent_of_lift_scope_bytes": 8.01
         },
         "source_in_progress": {
@@ -82,8 +82,8 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2016002,
-          "functions": 2918,
+          "bytes": 2015907,
+          "functions": 2915,
           "percent_of_lift_scope_bytes": 83.64
         }
       },
@@ -103,15 +103,15 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2217282,
+        "bytes": 2217187,
         "direction": "must go down",
-        "functions": 3231,
+        "functions": 3228,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
         "percent_of_lift_scope_bytes": 91.99
       },
       "recovered": {
-        "bytes": 193035,
-        "functions": 2442,
+        "bytes": 193130,
+        "functions": 2445,
         "percent_of_lift_scope_bytes": 8.01
       }
     },
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2388,
-    "matched_function_starts": 2388,
-    "unique_addresses": 2388,
+    "annotations": 2391,
+    "matched_function_starts": 2391,
+    "unique_addresses": 2391,
     "unmatched_addresses": []
   },
   "source_bindings": {
