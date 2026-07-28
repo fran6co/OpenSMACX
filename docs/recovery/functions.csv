@@ -2879,7 +2879,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0050F440,0x0050F45E,30,.text,?stop_timers@@YAXXZ,,0x0050F440-0x0050F45E,game,sp_ready;purged_ok,src/time.cpp:285,Complete,?stop_timers@@YAXXZ,,source_complete,,,,1,6
 0x0050F460,0x0050F629,616,.text,??0Console@@QAE@H@Z,"void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)",0x0050F460-0x0050F629;0x0065D250-0x0065D2EF,game,frame;sp_ready;purged_ok,,,,ConsoleCtorTarget,original_dependency,,,,7,1
 0x0050F630,0x0050F640,16,.text,sub_50f630,,0x0050F630-0x0050F640,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x0050F640,0x0050F650,16,.text,nullsub_185,,0x0050F640-0x0050F650,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0050F640,0x0050F650,16,.text,nullsub_185,,0x0050F640-0x0050F650,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:816,Complete,,,source_complete,,,,0,0
 0x0050F650,0x0050F67B,43,.text,?clear_group@Console@@QAEXXZ,void (__thiscall ?clear_group@Console@@QAEXXZ)(Console* this),0x0050F650-0x0050F67B,game,sp_ready;purged_ok,src/console.cpp:108,Complete,,,source_complete,,,,0,1
 0x0050F680,0x0050F951,721,.text,?on_nc_hittest@Console@@QAEXHH@Z,"void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)",0x0050F680-0x0050F951,game,frame;hidden;sp_ready;purged_ok,,,,ConsoleOnNcHittestTarget,original_dependency,,,,1,0
 0x0050F960,0x0050FB08,424,.text,?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z,"void (__thiscall ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)",0x0050F960-0x0050FB08,game,frame;hidden;sp_ready;purged_ok,,,,ConsoleOnPostRedrawNcBufferTarget,original_dependency,,,,1,0

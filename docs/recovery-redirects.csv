@@ -1424,6 +1424,7 @@ address,kind
 0x0050E870,jump
 0x0050E980,jump
 0x0050E9A0,jump
+0x0050F640,jump
 0x0050F650,jump
 0x005108A0,jump
 0x00514189,jump

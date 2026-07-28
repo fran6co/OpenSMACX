@@ -95,8 +95,27 @@ def this_offset(operand) -> int | None:
     return operand.mem.disp
 
 
+def strip_padding(instructions):
+    """Drop the alignment `nop`s that follow a function's `ret`.
+
+    IDA sizes a function to its whole sixteen-byte slot, so `nullsub_185` is
+    "16 bytes" of which the first is `ret 4` and the rest is padding. Those
+    bytes are unreachable - control left at the `ret` - so removing them
+    changes nothing about what the function does.
+
+    Only TRAILING nops go. A nop in the middle of a body is inside a branch
+    target's alignment and the instructions after it are reachable, so a body
+    like that still has to be understood rather than trimmed.
+    """
+    end = len(instructions)
+    while end and instructions[end - 1].mnemonic == "nop":
+        end -= 1
+    return instructions[:end]
+
+
 def classify(instructions) -> tuple[str, dict] | None:
     """(kind, detail) for a shape this generator will emit, else None."""
+    instructions = strip_padding(instructions)
     if not instructions or instructions[-1].mnemonic != "ret":
         return None
     tail = instructions[-1]

@@ -1376,7 +1376,6 @@ P2,7420,0x0050EF50,?go_reset@@YAXXZ,534,7,4,unrecovered,,,2,exact,exact,
 P3,1820,0x0050F170,?go_timer@@YAXH@Z,596,1,8,unrecovered,,,2,exact,exact,
 P0,1001721,0x0050F460,??0Console@@QAE@H@Z,616,1,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)"
 P3,100,0x0050F630,sub_50f630,16,0,1,unrecovered,,,0,missing,missing,
-P3,10,0x0050F640,nullsub_185,16,0,0,unrecovered,,,1,start_only,missing,
 P0,1000121,0x0050F680,?on_nc_hittest@Console@@QAEXHH@Z,721,0,1,original_dependency,ui_dependency,recover_console_on_nc_hittest,2,exact,exact,"void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)"
 P0,1000121,0x0050F960,?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z,424,0,1,original_dependency,ui_dependency,recover_console_on_post_redraw_nc_buffer,2,exact,exact,"void (__thiscall ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)"
 P0,1000321,0x0050FB10,?on_nc_left_down@Console@@QAEXHH@Z,857,0,3,original_dependency,ui_dependency,recover_console_on_nc_left_down,2,exact,exact,"void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)"

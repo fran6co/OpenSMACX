@@ -2586,6 +2586,7 @@ void test_field_accessors() {
     field_accessor_00406b20_redirect(self, nullptr, 0, 0, 0);          // ret 0xc
     field_accessor_0061f785_redirect(self, nullptr, 0, 0, 0, 0, 0, 0, 0);  // ret 0x1c
     field_accessor_00634c20_redirect(self, nullptr);                   // ret
+    field_accessor_0050f640_redirect(self, nullptr, 0);                // ret 0x4
     expect(field_accessor_00616d80_redirect(self, nullptr, 0, 0, 0) == 0);
     expect_storage_bytes(storage, expected, sizeof(storage));
 
