@@ -1956,6 +1956,7 @@ address,kind
 0x00634670,jump
 0x00637190,jump
 0x00639380,jump
+0x0063B2D0,jump
 0x0063B930,jump
 0x0063BB00,jump
 0x0063C500,jump

@@ -31,6 +31,10 @@ class DLLEXPORT Cursor {
  public:
   Cursor() { ; }
   ~Cursor() { ; }
+  // Spelled as a method rather than a real constructor, as Ambience's is:
+  // the inline `Cursor() { ; }` above is relied on elsewhere and giving
+  // the class a real one would silently change every use of it.
+  void construct();
   static void close_cursor_class();
 
  private:
@@ -40,4 +44,6 @@ class DLLEXPORT Cursor {
   uint32_t field_C_;
 };
 
+// Returns the object, preserving the legacy EAX = this residue.
+Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *);
 void __cdecl cursor_close_cursor_class_redirect();
