@@ -199,6 +199,67 @@ class BuildMutantsTest(unittest.TestCase):
         dropped = [m.description for m in mutants if m.operator == "drop-statement"]
         self.assertFalse([d for d in dropped if "return" in d])
 
+    def test_declaration_used_later_yields_no_drop_or_swap_mutant(self):
+        # These two operators can only produce a `no compile` on such a line:
+        # the use would precede the declaration. Each still costs a full
+        # rebuild and a Wine run, and - worse - the wasted mutants sum into a
+        # `no compile` total that lets `killed n/n` read as full coverage when
+        # statement order was never tested at all.
+        source = SOURCE.replace(
+            "    ordered[0] = 0;\n",
+            "    const uint32_t width = ordered[1];\n"
+            "    const uint32_t height = ordered[2];\n"
+            "    ordered[0] = width + height;\n")
+        lines = source.splitlines(keepends=True)
+        function = next(f for f in mutate_and_verify.parse_functions(lines)
+                        if f.address == "006343D0")
+        mutants = mutate_and_verify.build_mutants(lines, function)
+        structural = [m for m in mutants
+                      if m.operator in ("drop-statement", "swap-adjacent")
+                      and ("const uint32_t width" in m.description
+                           or "const uint32_t height" in m.description)]
+        self.assertEqual(
+            [], [m.description for m in structural],
+            "a declaration whose name is used later cannot be dropped or "
+            "swapped and still compile")
+        # The `constant` operator is unaffected and SHOULD still mutate the
+        # literal inside that same declaration: `ordered[1]` -> `ordered[0]`
+        # compiles and is a real perturbation. Suppressing by line rather than
+        # by operator would throw that away.
+        self.assertTrue(
+            any(m.operator == "constant" and "const uint32_t width" in m.description
+                for m in mutants))
+
+    def test_declaration_not_used_later_is_still_droppable(self):
+        # The predicate must key on the name actually being READ later, not on
+        # the line looking like a declaration - otherwise it would suppress
+        # genuine coverage holes, which is the opposite failure.
+        source = SOURCE.replace(
+            "    ordered[0] = 0;\n",
+            "    const uint32_t unused = 7;\n    ordered[0] = 0;\n")
+        lines = source.splitlines(keepends=True)
+        function = next(f for f in mutate_and_verify.parse_functions(lines)
+                        if f.address == "006343D0")
+        mutants = mutate_and_verify.build_mutants(lines, function)
+        self.assertTrue(
+            any("unused" in m.description and m.operator == "drop-statement"
+                for m in mutants),
+            "an unread declaration is a real, compilable coverage probe")
+
+    def test_declares_name_used_later_matches_the_house_style(self):
+        lines = [
+            "    const uint32_t left = rect->left;\n",
+            "    int x = 0;\n",
+            "    x = left + 1;\n",
+        ]
+        self.assertTrue(
+            mutate_and_verify.declares_name_used_later(lines, 0, len(lines)))
+        self.assertTrue(
+            mutate_and_verify.declares_name_used_later(lines, 1, len(lines)))
+        # A plain store declares nothing.
+        self.assertFalse(
+            mutate_and_verify.declares_name_used_later(lines, 2, len(lines)))
+
     def test_skips_equivalent_and_invalid_divided_index_mutants(self):
         source = SOURCE.replace(
             "ordered[0] = 0;",
