@@ -58,11 +58,16 @@ static const char *skip_reason(const std::string &flags) {
 
 struct Tally {
     long passed = 0, failed = 0, lifted_fault = 0, skipped = 0;
-    long inconclusive = 0, trap = 0, out_of_span = 0;
+    long inconclusive = 0, trap = 0, out_of_span = 0, top_page = 0;
     // Counted apart because it is a different KIND of finding: every one seen
     // so far is a flag the manuals leave undefined after imul or idiv, where
     // the lift leaves the flag alone and the silicon does not.
     long failed_flags_only = 0;
+    // Counted apart for the opposite reason: the x87 file was not compared at
+    // all until now, so a failure that ONLY the x87 comparison sees is a
+    // finding this oracle could not previously make, and folding it into the
+    // total would hide how much of the delta the new comparison accounts for.
+    long failed_x87_only = 0;
 };
 
 // Used only by --selftest, to find out whether this host really enforces
@@ -104,6 +109,7 @@ int main(int argc, char **argv) {
     uint32_t watchdog = 4000;
     bool run_anyway = false, verbose = false, selftest = false, blame = true;
     bool selfcheck = false;
+    int dump_seed = -1;
     uint32_t selfcheck_address = 0x00401000U;
     bool append = false;
     uint32_t resume_after = 0;
@@ -124,6 +130,8 @@ int main(int argc, char **argv) {
         else if (!std::strcmp(a, "--no-blame")) blame = false;
         else if (!std::strcmp(a, "--selftest")) selftest = true;
         else if (!std::strcmp(a, "--selfcheck")) selfcheck = true;
+        else if (!std::strcmp(a, "--dump-seed"))
+            dump_seed = int(std::strtol(next(), nullptr, 0));
         else if (!std::strcmp(a, "--selfcheck-at"))
             selfcheck_address = uint32_t(std::strtoul(next(), nullptr, 0));
         else if (!std::strcmp(a, "--trace")) oracle_trace = true;
@@ -214,6 +222,44 @@ int main(int argc, char **argv) {
                                  "does not hold on this host\n");
             return 3;
         }
+
+        // Does FSAVE write the register file in STACK order (ST(0) first) or in
+        // PHYSICAL order (R0 first)? The whole x87 comparison is wrong by one
+        // rotation if this is assumed and the assumption is wrong, and the
+        // symptom would be "every x87 function disagrees", which reads like a
+        // finding about the lift. Three distinct values are pushed, and the
+        // slot at offset 28 must hold the LAST of them.
+        {
+            alignas(16) unsigned char image[108];
+            std::memset(image, 0xAA, sizeof image);
+            asm volatile("fninit\n\tfldz\n\tfld1\n\tfldpi\n\tfnsave %0"
+                         : "=m"(image) :: "memory");
+            long double first = 0;
+            std::memcpy(&first, image + 28, 10);
+            const bool stack_order = first > 3.14L && first < 3.15L;
+            std::printf("selftest: fnsave stores %s (slot 0 = %.10Lg, "
+                        "expected pi in stack order)\n",
+                        stack_order ? "ST(0) FIRST - stack order, as assumed"
+                                    : "SOMETHING ELSE",
+                        first);
+            if (!stack_order) {
+                std::fprintf(stderr, "oracle: SELFTEST FAILED - the x87 "
+                                     "comparison reads the fnsave image in the "
+                                     "wrong order on this host\n");
+                return 3;
+            }
+        }
+    }
+
+    // Sealed BEFORE the selfcheck, not after it. The selfcheck has to run under
+    // the same address space the sweep runs under, or it is checking a
+    // different harness from the one that produces the report.
+    std::printf("sealed %u MiB of free address space\n",
+                unsigned(oracle_seal_address_space()));
+
+    if (dump_seed >= 0) {
+        oracle_dump_seed(only, dump_seed);
+        return 0;
     }
 
     if (selfcheck) {
@@ -297,9 +343,6 @@ int main(int argc, char **argv) {
         std::fprintf(report,
                      "address\tverdict\tcases\tcompared\tdetail\tname\n");
 
-    std::printf("sealed %u MiB of free address space\n",
-                unsigned(oracle_seal_address_space()));
-
     Tally tally;
     long skip_counts[8] = {};
     static const char *skip_names[8] = {
@@ -335,6 +378,16 @@ int main(int argc, char **argv) {
         // of one, and the column said "4" either way - so 141 of the 1,366
         // passes rested on a single seed with nothing in the report to say so.
         int compared = 0;
+        // A function whose ORIGINAL loops forever costs one watchdog period per
+        // case, and the case count went from four to sixteen. At the 4 s
+        // default that is 64 seconds for one function, which is both wasted -
+        // the seventh timeout tells you nothing the second did not - and
+        // actively harmful: the supervising sweep decides a run has hung by
+        // watching the report stop growing, so a function that legitimately
+        // takes a minute is killed and recorded as a HANG. Three of those
+        // appeared in the first sixteen-case sweep. Two timeouts is the answer;
+        // the verdict is the same either way.
+        int timeouts = 0;
         for (int c = 0; c < cases; ++c) {
             if (verbose) std::printf("stage: case %#010x/%d\n", unsigned(entry.address), c);
             OracleResult r = oracle_run_case(entry.address, c);
@@ -353,7 +406,8 @@ int main(int argc, char **argv) {
                 // misbehaving while the original was healthy - those are
                 // findings, and one good seed does not retract them.
                 if (best == OracleUnrun || best == OracleInconclusiveFault ||
-                    best == OracleInconclusiveBudget) {
+                    best == OracleInconclusiveBudget ||
+                    best == OracleInconclusiveTopPage) {
                     best = OraclePass;
                 }
             } else if (r.verdict == OracleSkipTrap) {
@@ -363,6 +417,10 @@ int main(int argc, char **argv) {
             } else if (best == OracleUnrun) {
                 best = r.verdict;
                 worst = r;
+            }
+            if (r.verdict == OracleInconclusiveBudget ||
+                r.verdict == OracleInconclusiveLiftedBudget) {
+                if (++timeouts >= 2) break;
             }
         }
 
@@ -382,8 +440,12 @@ int main(int argc, char **argv) {
             case OracleFailLiftedFault: {
                 if (best == OracleFail) {
                     tally.failed++;
-                    if (!worst.register_mask && !worst.memory_diffs)
+                    if (!worst.register_mask && !worst.memory_diffs &&
+                        !worst.x87_mask)
                         tally.failed_flags_only++;
+                    if (!worst.register_mask && !worst.memory_diffs &&
+                        !worst.flag_mask && worst.x87_mask)
+                        tally.failed_x87_only++;
                 } else {
                     tally.lifted_fault++;
                 }
@@ -413,6 +475,35 @@ int main(int argc, char **argv) {
                                        (worst.flag_mask & OracleFlagOF) ? " OF" : "",
                                        (worst.flag_mask & OracleFlagDF) ? " DF" : "");
                 }
+                if (worst.x87_mask) {
+                    n += std::snprintf(detail + n, sizeof detail - n,
+                                       "x87");
+                    if (worst.x87_mask & 1U)
+                        n += std::snprintf(detail + n, sizeof detail - n,
+                                           " depth original=%u lifted=%u",
+                                           unsigned(worst.original_x87.depth),
+                                           unsigned(worst.lifted_x87.depth));
+                    if (worst.x87_mask & 2U)
+                        n += std::snprintf(detail + n, sizeof detail - n,
+                                           " control original=%#06x lifted=%#06x",
+                                           unsigned(worst.original_x87.control),
+                                           unsigned(worst.lifted_x87.control));
+                    if (worst.x87_mask & 4U)
+                        n += std::snprintf(detail + n, sizeof detail - n,
+                                           " codes original=%#06x lifted=%#06x",
+                                           unsigned(worst.original_x87.condition_codes),
+                                           unsigned(worst.lifted_x87.condition_codes));
+                    for (int i = 0; i < 8; ++i) {
+                        if (!(worst.x87_mask & (1U << (8 + i)))) continue;
+                        long double a = 0, b = 0;
+                        std::memcpy(&a, worst.original_x87.st[i], 10);
+                        std::memcpy(&b, worst.lifted_x87.st[i], 10);
+                        n += std::snprintf(detail + n, sizeof detail - n,
+                                           " st%d original=%.19Lg lifted=%.19Lg",
+                                           i, a, b);
+                    }
+                    n += std::snprintf(detail + n, sizeof detail - n, "; ");
+                }
                 if (worst.memory_diffs) {
                     n += std::snprintf(detail + n, sizeof detail - n,
                                        "%u words of memory differ, first at %#010x "
@@ -437,12 +528,20 @@ int main(int argc, char **argv) {
                 if (failures_printed++ < 40) {
                     std::printf("FAIL %#010x case %d (%s)  %s\n       %s\n",
                                 unsigned(entry.address), worst.case_index,
-                                oracle_seed_description(worst.case_index),
+                                oracle_seed_description(entry.address,
+                                                        worst.case_index),
                                 entry.name.c_str(), detail);
                     std::fflush(stdout);
                 }
                 break;
             }
+            case OracleInconclusiveTopPage:
+                tally.top_page++;
+                std::snprintf(detail, sizeof detail,
+                              "%s: case %d made the original read 0xffff0000.."
+                              "0xffffffff, which the lift cannot address",
+                              oracle_verdict_name(best), worst.case_index);
+                break;
             default:
                 if (best == OracleInconclusiveOutOfSpan) tally.out_of_span++;
                 else tally.inconclusive++;
@@ -478,6 +577,7 @@ int main(int argc, char **argv) {
     std::printf("PASSED                       %ld\n", tally.passed);
     std::printf("FAILED (compare)             %ld\n", tally.failed);
     std::printf("    of those, flags only     %ld\n", tally.failed_flags_only);
+    std::printf("    of those, x87 only       %ld\n", tally.failed_x87_only);
     std::printf("FAILED (lifted faulted)      %ld\n", tally.lifted_fault);
     std::printf("SKIPPED                      %ld\n", tally.skipped);
     for (int k = 0; k < 6; ++k)
@@ -486,6 +586,16 @@ int main(int argc, char **argv) {
     std::printf("INCONCLUSIVE                 %ld\n", tally.inconclusive);
     std::printf("INCONCLUSIVE out-of-span     %ld   (lifted read outside the "
                 "modelled 6.3 MB; may hide address bugs)\n", tally.out_of_span);
+    std::printf("INCONCLUSIVE top-page        %ld   (the original's answer "
+                "moved when 0xffff0000..0xffffffff was refilled: it read the "
+                "one range\n                                  neither the wall "
+                "nor the seal covers, so the two sides were not running the "
+                "same program)\n", tally.top_page);
+    std::printf("top 64 KiB is %s, so the arbitration above %s\n",
+                oracle_top_page_writable() ? "writable" : "NOT writable",
+                oracle_top_page_writable() ? "is armed"
+                                           : "CANNOT RUN - failures may be "
+                                             "unmodellable memory, not lowering bugs");
     std::printf("  of the passes, %ld use the x87 and %ld contain an indirect call\n",
                 x87_tested, indirect_tested);
     std::printf("cases compared               %llu\n",

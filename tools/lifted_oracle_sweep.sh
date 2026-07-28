@@ -18,7 +18,13 @@ EXE="${EXE:-$ROOT/.opensmacx/game/terranx_original.exe}"
 PLAN="${PLAN:-$ROOT/build/oracle/plan.tsv}"
 REPORT="${REPORT:-$ROOT/build/oracle/report.tsv}"
 LOG="${LOG:-$ROOT/build/oracle/sweep.log}"
-STALL="${STALL:-45}"     # seconds without a new report line before a kill
+# Seconds without a new report line before a kill. 45 was enough when a
+# function was four cases; at sixteen, a function whose original loops forever
+# costs sixteen watchdog periods, and 45 turned slow-but-healthy functions into
+# false HANG rows. The harness now gives up on a function after two timeouts
+# (see lifted_oracle_main.cpp), which bounds the honest worst case well inside
+# this.
+STALL="${STALL:-120}"
 win() { printf 'Z:%s' "$(printf '%s' "$1" | tr '/' '\\')"; }
 
 : > "$LOG"
@@ -44,7 +50,11 @@ while : ; do
             last=$now
         fi
         if [ "$stalled" -ge "$STALL" ]; then
-            pkill -f lifted_oracle.exe || true
+            # Matched on the PATH, not the basename. A sibling agent runs its
+            # own copy of this executable out of a scratch directory, and
+            # `pkill -f lifted_oracle.exe` killed that too. The dots match
+            # either slash, because the process shows a Windows path.
+            pkill -f 'build.oracle.lifted_oracle.exe' || true
             hangs=$((hangs + 1))
             break
         fi

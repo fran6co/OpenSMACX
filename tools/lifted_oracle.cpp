@@ -54,6 +54,17 @@ uint32_t oracle_saved_fs0 = 0;
 uint32_t oracle_steps = 0;
 uint32_t oracle_budget = 0;
 uint16_t oracle_x87_cw = OpensmacxX87DefaultControl;
+// The 108-byte 32-bit protected-mode FSAVE image of the ORIGINAL's FPU, filled
+// on the way out of a completed run. It lives in HOST memory, not on the guest
+// stack: 108 bytes written where the whole-image memcmp can see them would be
+// a memory divergence manufactured by the measurement.
+//
+// Verified on this host rather than assumed: FSAVE writes ST(0) at offset 28
+// and ST(7) at 98 - stack order, not physical-register order - so ST(i) is at
+// 28 + 10*i and needs no TOP adjustment. `--selftest` re-checks it every run,
+// because the whole x87 comparison is wrong by exactly one rotation if it is
+// ever untrue.
+alignas(16) uint8_t oracle_x87_save[108] = {};
 }
 
 extern "C" void oracle_run_original(void);
@@ -128,6 +139,11 @@ asm(
 "  movl _oracle_host_esp, %esp\n"
 "  pushfl\n"
 "  popl _oracle_out+36\n"
+// The x87 register file. 58 of the passing functions use the FPU and none of
+// them compared a single bit of it, so a divergence confined to ST(0) - or a
+// push that never happened - passed. fnsave leaves the FPU initialised, which
+// is what the abort path was going to do anyway.
+"  fnsave _oracle_x87_save\n"
 ".globl _oracle_abort_point\n"
 "_oracle_abort_point:\n"
 "  cld\n"
@@ -421,16 +437,6 @@ static uint32_t mix(uint32_t x) {
     return x ^ (x >> 15);
 }
 
-const char *oracle_seed_description(int case_index) {
-    switch (case_index) {
-        case 0: return "zeroed registers, ebp=0, this=arena, pointers on even arena words";
-        case 1: return "small-integer registers and arguments, frame ebp, pointers on odd words";
-        case 2: return "arena pointers in registers, frame ebp, DF SET on entry";
-        case 3: return "wide/negative registers (top byte set), frame ebp";
-        default: return "unknown";
-    }
-}
-
 const char *oracle_register_name(int index) {
     static const char *names[9] = {"eax", "ecx", "edx", "ebx",
                                    "esp", "ebp", "esi", "edi", "eflags"};
@@ -439,8 +445,8 @@ const char *oracle_register_name(int index) {
 
 // Fills the scratch window (arena + stack) of one memory image. Applied
 // identically to both sides.
-static void seed_scratch(unsigned char *image, uint32_t address, int case_index,
-                         uint32_t return_address) {
+static void seed_scratch_legacy(unsigned char *image, uint32_t address, int case_index,
+                                uint32_t return_address) {
     uint32_t h = mix(address ^ (uint32_t(case_index) * 0x85EBCA6BU));
     unsigned char *arena = image + (OracleArenaBase - OracleImageBase);
     // The arena is an object graph, and it has to be one: a word that is a
@@ -523,7 +529,7 @@ static void seed_scratch(unsigned char *image, uint32_t address, int case_index,
     }
 }
 
-static void seed_registers(uint32_t address, int case_index, OracleRegisters *r) {
+static void seed_registers_legacy(uint32_t address, int case_index, OracleRegisters *r) {
     uint32_t h = mix(address ^ (uint32_t(case_index) * 0x85EBCA6BU));
     uint32_t this_pointer = OracleArenaBase + ((h % 0x400U) & ~0xFU);
     switch (case_index) {
@@ -582,6 +588,319 @@ static void seed_registers(uint32_t address, int case_index, OracleRegisters *r)
     // one that clears it on the way past, differs from the original only when
     // something arrives with it set.
     r->eflags = (case_index == 2) ? 0x00000602U : 0x00000202U;
+}
+
+// ---------------------------------------------------------------------------
+// DRAWN SEEDS - cases OracleLegacyCases and up.
+//
+// The four legacy cases above are four points. Every value they can produce has
+// a top byte of 0x00, 0x9D or 0xFF; every arena non-pointer word is a
+// four-aligned integer in 0..124; no argument is ever a boundary value; DF is
+// set in exactly one of them and no other flag is ever set on entry. Two
+// consequences were measured rather than guessed:
+//
+//   * turning `sar` into `shr` in lifted_00404ef0 was NOT caught, because the
+//     value shifted comes from an arena word and no arena word is ever
+//     negative;
+//   * drawing the mutation targets at random rather than in address order
+//     turned a 7-of-8 score into 3 caught / 4 missed / 1 unreached, and 4 of
+//     the 4 missed sat on lines that DO execute - so they were reached with
+//     values that could not tell the mutant from the original.
+//
+// What follows is not "more random numbers". Each knob below exists because a
+// FIXED choice of it hides a class of defect:
+//
+//   pointer_period    the density of pointers in the arena. Fixed density
+//                     makes a two-step dereference either always work or
+//                     always fault.
+//   leaf half         a pointer that lands in the leaf half terminates in a
+//                     value, which is what a vbtable displacement read needs.
+//   value class       tiny / small-signed / boundary / wide. Sign extension,
+//                     partial-register writes and shift kind are invisible
+//                     without negatives and without values that straddle a
+//                     width boundary.
+//   below_this_mask   whether [this-4], [this-8], ... are displacements (the
+//                     130 `sub ecx,[ecx-4]` thunks need small ones) or
+//                     pointers (a vbtable read needs a pointer). Both are
+//                     required and they are mutually exclusive per draw.
+//   entry flags       all seven modelled flags, not just DF.
+//
+// Everything is still a pure function of (address, case_index): `--only
+// <address>` replays any of it exactly.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// A deterministic stream so a draw can consume as many values as it needs
+// without inventing a fresh constant for each one.
+struct SeedStream {
+    uint32_t state;
+    explicit SeedStream(uint32_t seed) : state(seed) {}
+    uint32_t next() { state = mix(state ^ 0x9E3779B9U); return state; }
+    uint32_t below(uint32_t n) { return n ? (next() % n) : 0U; }
+    bool chance(uint32_t numerator, uint32_t denominator) {
+        return below(denominator) < numerator;
+    }
+};
+
+// The values at which lowerings break. Width boundaries in both signs (a
+// missing movsx shows up at 0x80/0x8000, a missing movzx at 0xFF/0xFFFF), the
+// two extremes of each width, and a handful of float and double bit patterns so
+// that a value loaded with `fld` is a number rather than a denormal.
+const uint32_t kBoundaryValues[] = {
+    0x00000000U, 0x00000001U, 0x00000002U, 0xFFFFFFFFU, 0xFFFFFFFEU,
+    0x7FFFFFFFU, 0x80000000U, 0x80000001U,
+    0x0000007FU, 0x00000080U, 0x000000FFU, 0x00000100U,
+    0xFFFFFF7FU, 0xFFFFFF80U, 0xFFFFFF00U,
+    0x00007FFFU, 0x00008000U, 0x0000FFFFU, 0x00010000U,
+    0xFFFF7FFFU, 0xFFFF8000U, 0xFFFF0000U,
+    0x007FFFFFU, 0x00800000U, 0x00FFFFFFU, 0x01000000U,
+    0xCCCCCCCCU, 0x55555555U, 0xAAAAAAAAU, 0x0000000AU, 0xFFFFFFF6U,
+    0x3F800000U, 0xBF800000U, 0x40490FDBU, 0x7F7FFFFFU, 0x00000009U,
+    0x3FF00000U, 0xC0000000U, 0x41200000U, 0xFFFFFFF0U,
+};
+constexpr uint32_t kBoundaryCount = sizeof kBoundaryValues / sizeof kBoundaryValues[0];
+
+enum ValueClass {
+    ValueTiny = 0,        // four-aligned 0..124: safe as a displacement
+    ValueSmallSigned,     // -127..127
+    ValueBoundary,        // from the table above
+    ValueWide,            // uniform over the whole word
+    ValueClassCount
+};
+
+uint32_t draw_value(SeedStream &s, int value_class) {
+    switch (value_class) {
+        case ValueTiny: return (s.next() & 0x1FU) * 4U;
+        case ValueSmallSigned: {
+            const uint32_t magnitude = s.next() & 0x7FU;
+            return (s.next() & 1U) ? (0U - magnitude) : magnitude;
+        }
+        case ValueBoundary: return kBoundaryValues[s.below(kBoundaryCount)];
+        default: return s.next();
+    }
+}
+
+// Pointers are kept clear of the last 256 bytes of their half so that a small
+// positive displacement added to one still lands in the same half.
+uint32_t draw_node_pointer(SeedStream &s) {
+    return OracleArenaNodeBase + (s.below(OracleArenaNodeSize - 256U) & ~3U);
+}
+uint32_t draw_leaf_pointer(SeedStream &s) {
+    return OracleArenaLeafBase + (s.below(OracleArenaLeafSize - 256U) & ~3U);
+}
+uint32_t draw_stack_pointer(SeedStream &s) {
+    return OracleStackLow + (s.below(OracleStackTop - OracleStackLow - 256U) & ~3U);
+}
+
+struct SeedProfile {
+    uint32_t h = 0;
+    uint32_t this_pointer = 0;
+    // arena
+    uint32_t pointer_period = 2;   // 0 = no pointers at all
+    uint32_t pointer_phase = 0;
+    uint32_t leaf_bias = 4;        // out of 8, how often a pointer aims at the leaf
+    int node_value_class = ValueTiny;
+    int leaf_value_class = ValueTiny;
+    // the sixteen words below `this`
+    uint32_t below_this_mask = 0;  // bit b set: [this - 4*(b+1)] is a leaf pointer
+    // the stack below ESP
+    int stack_class = 0;           // 0 legacy pattern, 1 tiny, 2 pointers, 3 values
+    // registers and stack arguments
+    uint32_t register_pointer_weight = 4;   // out of 16
+    int register_value_class = ValueSmallSigned;
+    uint32_t argument_pointer_weight = 8;   // out of 16
+    int argument_value_class = ValueSmallSigned;
+    bool ecx_is_this = true;
+    uint32_t entry_flags = 0x00000202U;
+};
+
+SeedProfile make_profile(uint32_t address, int case_index) {
+    SeedProfile p;
+    p.h = mix(address ^ (uint32_t(case_index) * 0x85EBCA6BU));
+    SeedStream s(p.h ^ 0x1B873593U);
+
+    // `this` sits far enough into the node half that sixteen words below it are
+    // still arena. The legacy cases put it in the first kilobyte, so [this-0x18]
+    // read real image bytes rather than anything the seed controlled.
+    p.this_pointer = OracleArenaNodeBase + 0x400U + (s.below(0x2000U) & ~0xFU);
+
+    static const uint32_t periods[] = {1, 2, 2, 3, 4, 4, 8, 16, 0};
+    p.pointer_period = periods[s.below(sizeof periods / sizeof periods[0])];
+    p.pointer_phase = s.below(p.pointer_period ? p.pointer_period : 1U);
+    p.leaf_bias = s.below(9);
+    p.node_value_class = int(s.below(ValueClassCount));
+    // The leaf half is biased towards TINY, because that is the class that lets
+    // a chained dereference produce a usable displacement. Left uniform, three
+    // draws in four end the chain in a value that faults when it is added to a
+    // pointer, and the whole point of the split is lost.
+    p.leaf_value_class = s.chance(1, 2) ? ValueTiny : int(s.below(ValueClassCount));
+
+    // Two thirds of the draws leave the first two words below `this` as
+    // displacements, because those are the ones the adjustor thunks read and a
+    // pointer there is a nine-megabyte adjustment.
+    p.below_this_mask = s.next();
+    if (s.chance(2, 3)) p.below_this_mask &= ~3U;
+
+    p.stack_class = int(s.below(4));
+    p.register_pointer_weight = s.below(17);
+    p.register_value_class = int(s.below(ValueClassCount));
+    p.argument_pointer_weight = s.below(17);
+    p.argument_value_class = int(s.below(ValueClassCount));
+    // ECX is `this` most of the time - the image is C++ and thiscall - but not
+    // always, because a cdecl function's ECX is scratch and seeding it with a
+    // valid pointer in every case is one more value that is never wide.
+    p.ecx_is_this = s.chance(3, 4);
+
+    // Every modelled flag, not just DF. A `sbb eax,eax` or an `adc` on the
+    // entry path reads CF, and no seed before this one ever set it. TF is
+    // never set here: it belongs to the budget, and setting it by accident
+    // single-steps the whole original run.
+    uint32_t flags = 0x00000202U;
+    static const uint32_t settable[] = {0x001U, 0x004U, 0x010U, 0x040U,
+                                        0x080U, 0x800U};
+    for (uint32_t i = 0; i < sizeof settable / sizeof settable[0]; ++i)
+        if (s.chance(1, 3)) flags |= settable[i];
+    // DF gets its own, higher, rate: 305 string sites read it and it is the one
+    // entry flag with a documented effect on memory.
+    if (s.chance(1, 3)) flags |= 0x400U;
+    p.entry_flags = flags;
+    return p;
+}
+
+}  // namespace
+
+static void seed_scratch_drawn(unsigned char *image, const SeedProfile &p,
+                               uint32_t return_address) {
+    SeedStream s(p.h ^ 0x0A2E4A00U);
+    unsigned char *arena = image + (OracleArenaBase - OracleImageBase);
+    const uint32_t leaf_index = (OracleArenaLeafBase - OracleArenaBase) / 4U;
+    for (uint32_t i = 0; i < OracleArenaSize / 4; ++i) {
+        uint32_t word;
+        if (i >= leaf_index) {
+            word = draw_value(s, p.leaf_value_class);
+        } else if (p.pointer_period &&
+                   ((i + p.pointer_phase) % p.pointer_period) == 0) {
+            word = s.below(8) < p.leaf_bias ? draw_leaf_pointer(s)
+                                            : draw_node_pointer(s);
+        } else {
+            word = draw_value(s, p.node_value_class);
+        }
+        std::memcpy(arena + i * 4, &word, 4);
+    }
+
+    for (uint32_t back = 1; back <= 16; ++back) {
+        const uint32_t word = ((p.below_this_mask >> (back - 1)) & 1U)
+                                  ? draw_leaf_pointer(s)
+                                  : (s.next() & 0x1FU) * 4U;
+        std::memcpy(image + (p.this_pointer - back * 4 - OracleImageBase), &word, 4);
+    }
+
+    std::memset(image + (OracleStackTop - OracleImageBase), 0,
+                OracleScratchEnd - OracleStackTop);
+    for (uint32_t offset = OracleStackLow; offset < OracleStackTop; offset += 4) {
+        uint32_t word;
+        switch (p.stack_class) {
+            case 0: word = 0x100U | (s.next() & 0xFFU); break;
+            case 1: word = (s.next() & 0x1FU) * 4U; break;
+            case 2: word = s.chance(1, 2) ? draw_leaf_pointer(s) : draw_node_pointer(s); break;
+            default: word = draw_value(s, ValueBoundary); break;
+        }
+        std::memcpy(image + (offset - OracleImageBase), &word, 4);
+    }
+    std::memcpy(image + (OracleStackTop - OracleImageBase), &return_address, 4);
+
+    for (uint32_t i = 0; i < OracleSeedArgWords; ++i) {
+        uint32_t word;
+        if (s.below(16) < p.argument_pointer_weight) {
+            const uint32_t kind = s.below(8);
+            word = kind < 4 ? draw_node_pointer(s)
+                 : kind < 7 ? draw_leaf_pointer(s)
+                            : draw_stack_pointer(s);
+        } else {
+            word = draw_value(s, p.argument_value_class);
+        }
+        std::memcpy(image + (OracleStackTop + 4 + i * 4 - OracleImageBase), &word, 4);
+    }
+}
+
+static void seed_registers_drawn(const SeedProfile &p, OracleRegisters *r) {
+    SeedStream s(p.h ^ 0x27D4EB2FU);
+    auto draw_register = [&]() -> uint32_t {
+        if (s.below(16) < p.register_pointer_weight) {
+            const uint32_t kind = s.below(8);
+            return kind < 4 ? draw_node_pointer(s)
+                 : kind < 7 ? draw_leaf_pointer(s)
+                            : draw_stack_pointer(s);
+        }
+        return draw_value(s, p.register_value_class);
+    };
+    r->eax = draw_register();
+    r->edx = draw_register();
+    r->ebx = draw_register();
+    r->esi = draw_register();
+    r->edi = draw_register();
+    r->ecx = p.ecx_is_this ? p.this_pointer : draw_register();
+    // EBP is a frame pointer somewhere in the stack window, never zero and
+    // never wild: a function that unwinds through it must find something it can
+    // walk, and a wild EBP measures the wall rather than the lowering.
+    r->ebp = OracleStackTop - 4U * (1U + s.below(0x60U));
+    r->esp = OracleStackTop;
+    r->eflags = p.entry_flags;
+}
+
+// The two dispatchers. Cases below OracleLegacyCases are the originals,
+// unchanged, so every failure the first whole-image sweep found still
+// reproduces at the same case index.
+static void seed_scratch(unsigned char *image, uint32_t address, int case_index,
+                         uint32_t return_address) {
+    if (case_index < OracleLegacyCases) {
+        seed_scratch_legacy(image, address, case_index, return_address);
+        return;
+    }
+    seed_scratch_drawn(image, make_profile(address, case_index), return_address);
+}
+
+static void seed_registers(uint32_t address, int case_index, OracleRegisters *r) {
+    if (case_index < OracleLegacyCases) {
+        seed_registers_legacy(address, case_index, r);
+        return;
+    }
+    seed_registers_drawn(make_profile(address, case_index), r);
+}
+
+const char *oracle_seed_description(uint32_t address, int case_index) {
+    static char text[256];
+    switch (case_index) {
+        case 0:
+            return "legacy 0: zeroed registers, ebp=0, this=arena, pointers on even arena words";
+        case 1:
+            return "legacy 1: small-integer registers and arguments, frame ebp, pointers on odd words";
+        case 2:
+            return "legacy 2: arena pointers in registers, frame ebp, DF SET on entry";
+        case 3:
+            return "legacy 3: wide/negative registers (top byte set), frame ebp";
+        default: break;
+    }
+    static const char *const class_names[ValueClassCount] = {
+        "tiny", "small-signed", "boundary", "wide"};
+    const SeedProfile p = make_profile(address, case_index);
+    std::snprintf(text, sizeof text,
+                  "drawn %d: arena 1-in-%u pointers (leaf bias %u/8), node %s, "
+                  "leaf %s, below-this %#06x, stack %d, regs %s w%u, args %s w%u, "
+                  "ecx=%s, flags %#05x%s",
+                  case_index, unsigned(p.pointer_period),
+                  unsigned(p.leaf_bias), class_names[p.node_value_class],
+                  class_names[p.leaf_value_class],
+                  unsigned(p.below_this_mask & 0xFFFFU), p.stack_class,
+                  class_names[p.register_value_class],
+                  unsigned(p.register_pointer_weight),
+                  class_names[p.argument_value_class],
+                  unsigned(p.argument_pointer_weight),
+                  p.ecx_is_this ? "this" : "drawn",
+                  unsigned(p.entry_flags),
+                  (p.entry_flags & 0x400U) ? " DF" : "");
+    return text;
 }
 
 // ---------------------------------------------------------------------------
@@ -757,6 +1076,7 @@ void oracle_arm(uint32_t budget, uint32_t watchdog_ms) {
     if (watchdog_ms) {
         CreateThread(nullptr, 0, oracle_watchdog, nullptr, 0, nullptr);
     }
+    oracle_probe_top_page();
 }
 
 // ---------------------------------------------------------------------------
@@ -819,6 +1139,113 @@ uint32_t oracle_seal_address_space() {
 }
 
 // ---------------------------------------------------------------------------
+// THE LAST 64 KiB: the one hole the wall and the seal cannot close, and the
+// arbitration that stops it manufacturing failures.
+//
+// The loop above walks with VirtualQuery, and VirtualQuery REFUSES the top
+// 64 KiB on this host - 0 with ERROR_INVALID_PARAMETER - so 0xFFFF0000 and up
+// is neither walled nor sealed. Measured here: it is ordinary committed
+// read/write memory. A read of 0xFFFFFFFC returns 0, a write to it sticks, and
+// a re-read returns what was written; 0xFFFEFFFC and everything below it up to
+// 0x80000000 faults, so the hole is exactly one 64 KiB page.
+//
+// That page is where every small negative number points. `mov eax,[eax+8]`
+// with eax = -10 reads 0xFFFFFFFE: the ORIGINAL reads the top page, the LIFTED
+// side computes `opensmacx_image + 0xFFBFFFFE`, which wraps to
+// `opensmacx_image - 0x400002` - inside the harness's own code. Two different
+// answers, neither of them the program.
+//
+// The legacy seeds landed there occasionally (case 3 is 0xFFFFFF00|x). The
+// drawn seeds put -1, -2 and 0xFFFFFF80 in registers and arena words on
+// purpose, so the rate went from rare to routine, and the first run of the new
+// generator produced six "failures" that were all this.
+//
+// WHAT DOES NOT WORK, measured rather than assumed:
+//   * VirtualProtect(0xFFFF0000, 0x10000, PAGE_NOACCESS) SUCCEEDS - it does
+//     not refuse the address the way VirtualQuery does, it returns the old
+//     protection, and a read afterwards duly faults. And then the harness dies
+//     before the first case completes: Wine needs that page. So the range can
+//     be made to fault, and doing so kills the process that would report it.
+//
+// WHAT WORKS: poison it and ask whether the answer moved. The original is run
+// with the page filled with a byte; if a case fails, the original is run twice
+// more with two DIFFERENT fills and the two results compared. If they differ,
+// the original's answer depended on memory outside the modelled image, the
+// seed is invalid for this function, and the verdict is INCONCLUSIVE - never
+// FAIL. If they agree, the original never read the page and the failure stands.
+//
+// This is one-sided: it can turn a false FAIL into an INCONCLUSIVE, and it
+// cannot turn a false PASS into anything, because it only runs on failures.
+// A PASS would have to survive the lifted side reading harness memory that
+// happened to agree with the original's zero, which is possible and is a
+// caveat, not a claim.
+// ---------------------------------------------------------------------------
+
+constexpr uintptr_t OracleTopPageBase = 0xFFFF0000U;
+constexpr size_t OracleTopPageSize = 0x10000U;
+static bool g_top_page_writable = false;
+
+void oracle_probe_top_page() {
+    volatile uint32_t *const probe =
+        reinterpret_cast<volatile uint32_t *>(OracleTopPageBase + OracleTopPageSize - 4);
+    // The VEH is armed by oracle_arm and treats a fault outside a running side
+    // as fatal, so this must not be attempted before it is safe. It is called
+    // from oracle_arm itself, where g_side is idle and a fault would be a
+    // genuine crash - which is why the probe is a plain read-back rather than
+    // something that has to survive an exception.
+    const uint32_t saved = *probe;
+    *probe = 0x5A5AA5A5U;
+    g_top_page_writable = (*probe == 0x5A5AA5A5U);
+    *probe = saved;
+}
+
+// Written with an explicit loop, and that is not style.
+//
+// `memset(0xFFFF0000, 0xA5, 0x10000)` fills the START of the page and silently
+// stops: measured here, 0xFFFF0004 became 0xA5A5A5A5 and 0xFFFFFF88 stayed
+// zero, while a dword loop over the same range wrote and read back all 65,536
+// bytes. The end pointer is 0x100000000, which is 0 in 32 bits, and the CRT's
+// memset does not survive that.
+//
+// The first version of this arbitration used memset and reported "the original
+// does not depend on the top page" for a case whose blamed instruction reads
+// 0xFFFFFF88 - a false negative produced by the detector, on exactly the
+// addresses the detector exists for.
+// Saved and put back around every poisoned run. Leaving the page filled kills
+// the process: with the whole 64 KiB left holding 0xA5 the harness died before
+// the first case finished, every time. Something in Wine reads it. Writing it,
+// running the original, and putting the previous contents straight back is
+// survivable - measured over the whole plan - and it is all the arbitration
+// needs, because only the original's own reads have to see the fill.
+static uint8_t g_top_page_saved[OracleTopPageSize];
+
+static void poison_top_page(uint8_t fill) {
+    if (!g_top_page_writable) return;
+    const uint32_t word = 0x01010101U * uint32_t(fill);
+    volatile uint32_t *const page =
+        reinterpret_cast<volatile uint32_t *>(OracleTopPageBase);
+    for (uint32_t i = 0; i < OracleTopPageSize / 4; ++i) page[i] = word;
+}
+
+static void save_top_page() {
+    if (!g_top_page_writable) return;
+    const volatile uint32_t *const page =
+        reinterpret_cast<const volatile uint32_t *>(OracleTopPageBase);
+    uint32_t *const out = reinterpret_cast<uint32_t *>(g_top_page_saved);
+    for (uint32_t i = 0; i < OracleTopPageSize / 4; ++i) out[i] = page[i];
+}
+
+static void restore_top_page() {
+    if (!g_top_page_writable) return;
+    volatile uint32_t *const page =
+        reinterpret_cast<volatile uint32_t *>(OracleTopPageBase);
+    const uint32_t *const in = reinterpret_cast<const uint32_t *>(g_top_page_saved);
+    for (uint32_t i = 0; i < OracleTopPageSize / 4; ++i) page[i] = in[i];
+}
+
+bool oracle_top_page_writable() { return g_top_page_writable; }
+
+// ---------------------------------------------------------------------------
 // Flags
 // ---------------------------------------------------------------------------
 
@@ -839,6 +1266,64 @@ static uint32_t flags_from_lahf(uint32_t raw) {
     if (ah & 0x80U) bits |= OracleFlagSF;
     if (raw & 1U) bits |= OracleFlagOF;
     return bits;
+}
+
+// ---------------------------------------------------------------------------
+// The x87 register file, reduced to what both sides define.
+// ---------------------------------------------------------------------------
+
+// C3 C2 C1 C0 of the status word. TOP and the exception bits are excluded:
+// TOP is already carried by `depth` and by which register is ST(0), and the
+// exception bits (IE/DE/ZE/OE/UE/PE) are not modelled by the lift at all -
+// lifted_x87.h says so and says why, and comparing a field one side does not
+// model produces a divergence about the model, not about the code.
+constexpr uint16_t OracleX87ConditionCodes = 0x4700U;
+
+static OracleX87 x87_from_fsave(const uint8_t *image) {
+    OracleX87 x{};
+    uint16_t control = 0, status = 0, tags = 0;
+    std::memcpy(&control, image + 0, 2);
+    std::memcpy(&status, image + 4, 2);
+    std::memcpy(&tags, image + 8, 2);
+    x.control = control;
+    x.condition_codes = uint16_t(status & OracleX87ConditionCodes);
+    const uint32_t top = (status >> 11) & 7U;
+    for (uint32_t i = 0; i < 8; ++i) {
+        const uint32_t physical = (top + i) & 7U;
+        if (((tags >> (2U * physical)) & 3U) != 3U) x.depth++;
+        // Stack order, verified above: ST(i) at 28 + 10*i.
+        std::memcpy(x.st[i], image + 28 + 10 * i, 10);
+    }
+    return x;
+}
+
+static OracleX87 x87_from_lift(const OpensmacxX87State &state) {
+    OracleX87 x{};
+    x.control = state.control;
+    x.condition_codes = uint16_t(state.status & OracleX87ConditionCodes);
+    for (uint32_t i = 0; i < 8; ++i) {
+        const uint32_t physical = (state.top + i) & 7U;
+        if (!state.empty[physical]) x.depth++;
+        // mingw's `long double` is the 80-bit x87 type in a 12-byte slot; only
+        // the first ten bytes are the register.
+        std::memcpy(x.st[i], &state.reg[physical], 10);
+    }
+    return x;
+}
+
+// bit 0 depth, bit 1 control, bit 2 condition codes, bits 8+i ST(i).
+static uint32_t x87_difference(const OracleX87 &a, const OracleX87 &b) {
+    uint32_t mask = 0;
+    if (a.depth != b.depth) mask |= 1U;
+    if (a.control != b.control) mask |= 2U;
+    if (a.condition_codes != b.condition_codes) mask |= 4U;
+    // Only the LIVE registers. An empty slot holds whatever the last value to
+    // occupy it left there, and no part of the lift promises to reproduce that;
+    // comparing all eight would fail every function that pops.
+    const uint32_t live = a.depth < b.depth ? a.depth : b.depth;
+    for (uint32_t i = 0; i < live && i < 8; ++i)
+        if (std::memcmp(a.st[i], b.st[i], 10) != 0) mask |= 1U << (8 + i);
+    return mask;
 }
 
 static uint32_t flags_from_eflags(uint32_t eflags) {
@@ -1018,7 +1503,14 @@ const char *oracle_perturb_name(int which) {
     if (which == OraclePerturbNone) return "nothing";
     if (which <= 8) return registers[which - 1];
     if (which <= 15) return flags[which - 9];
-    return "one byte of guest memory";
+    switch (which) {
+        case OraclePerturbMemory: return "one byte of guest memory";
+        case OraclePerturbX87Depth: return "the x87 stack depth";
+        case OraclePerturbX87Value: return "the value in x87 ST(0)";
+        case OraclePerturbX87Control: return "the x87 control word";
+        case OraclePerturbX87Codes: return "the x87 condition codes";
+        default: return "?";
+    }
 }
 
 // Damage exactly one thing the comparison is supposed to look at. Applied to a
@@ -1041,9 +1533,49 @@ static void apply_perturbation(OpensmacxStaticRecompileState &state) {
         state.eflags ^= bits[oracle_perturb - 9];
         return;
     }
-    // A byte in the arena: inside the span, never in code, and a place the
-    // whole-image memcmp is the ONLY check that can see.
-    opensmacx_image[OracleArenaBase - OracleImageBase + 0x40U] ^= 0xFFU;
+    if (oracle_perturb == OraclePerturbMemory) {
+        // A byte in the arena: inside the span, never in code, and a place the
+        // whole-image memcmp is the ONLY check that can see.
+        opensmacx_image[OracleArenaBase - OracleImageBase + 0x40U] ^= 0xFFU;
+    }
+    // The x87 perturbations are not here: see apply_x87_perturbation.
+}
+
+// The x87 file is damaged in the COLLECTED RECORD rather than in
+// opensmacx_x87, and the reason is the ST(i) comparison specifically.
+//
+// The selfcheck runs on a function that PASSES, and the addresses that pass are
+// overwhelmingly ones that never touch the FPU - both sides finish with an
+// EMPTY stack. `x87_difference` only compares ST(i) for i below the smaller of
+// the two depths, which is zero there, so no amount of damage to the lifted
+// registers can reach that loop: pushing a value to make it reachable changes
+// the depth, and then the DEPTH bit is what fires, proving nothing about the
+// value comparison.
+//
+// So for the value case both recorded depths are raised together, which is
+// exactly the state a real x87 function ends in, and one byte of the lifted
+// ST(0) is flipped. This checks the comparison, which is what a selfcheck is
+// for; the model is checked by the sweep.
+static void apply_x87_perturbation(OracleResult &result) {
+    switch (oracle_perturb) {
+        case OraclePerturbX87Depth:
+            result.lifted_x87.depth ^= 1U;
+            break;
+        case OraclePerturbX87Value:
+            if (result.original_x87.depth == 0) {
+                result.original_x87.depth = 1;
+                result.lifted_x87.depth = 1;
+            }
+            result.lifted_x87.st[0][0] ^= 0xFFU;
+            break;
+        case OraclePerturbX87Control:
+            result.lifted_x87.control ^= 0x0300U;   // precision control
+            break;
+        case OraclePerturbX87Codes:
+            result.lifted_x87.condition_codes ^= 0x4000U;   // C3
+            break;
+        default: break;
+    }
 }
 
 static void oracle_collect_lifted(const OpensmacxStaticRecompileState &state,
@@ -1053,6 +1585,8 @@ static void oracle_collect_lifted(const OpensmacxStaticRecompileState &state,
     result.lifted.esp = state.esp; result.lifted.ebp = state.ebp;
     result.lifted.esi = state.esi; result.lifted.edi = state.edi;
     result.lifted.eflags = flags_from_eflags(state.eflags);
+    result.lifted_x87 = x87_from_lift(opensmacx_x87);
+    apply_x87_perturbation(result);
 
     // --- compare -----------------------------------------------------------
     const double t0 = now_seconds();
@@ -1062,6 +1596,7 @@ static void oracle_collect_lifted(const OpensmacxStaticRecompileState &state,
         if (a[i] != b[i]) result.register_mask |= 1U << i;
     }
     result.flag_mask = result.original.eflags ^ result.lifted.eflags;
+    result.x87_mask = x87_difference(result.original_x87, result.lifted_x87);
 
     trace("compare");
     if (std::memcmp(g_side_a, opensmacx_image, OracleImageSize) != 0) {
@@ -1082,7 +1617,8 @@ static void oracle_collect_lifted(const OpensmacxStaticRecompileState &state,
     oracle_cost.compare_seconds += now_seconds() - t0;
     oracle_cost.cases++;
 
-    result.verdict = (result.register_mask || result.flag_mask || result.memory_diffs)
+    result.verdict = (result.register_mask || result.flag_mask ||
+                      result.memory_diffs || result.x87_mask)
                          ? OracleFail : OraclePass;
 }
 
@@ -1094,6 +1630,98 @@ static void oracle_collect_lifted(const OpensmacxStaticRecompileState &state,
 // and a local the compiler had parked in a register would come back holding
 // whatever it held when setjmp ran.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Top-page arbitration. See the block comment beside poison_top_page.
+// ---------------------------------------------------------------------------
+
+struct OracleOriginalRun {
+    uint32_t out[10];
+    uint32_t fault;
+    uint32_t checksum;   // FNV-1a over the whole of side A after the run
+};
+
+static OracleOriginalRun run_original_once(uint32_t address, int case_index,
+                                           uint32_t return_address, uint8_t fill) {
+    restore_from_pristine(g_side_a);
+    seed_scratch(g_side_a, address, case_index, return_address);
+    OracleRegisters before;
+    seed_registers(address, case_index, &before);
+    oracle_in[0] = before.eax; oracle_in[1] = before.ecx;
+    oracle_in[2] = before.edx; oracle_in[3] = before.ebx;
+    oracle_in[4] = before.esp; oracle_in[5] = before.ebp;
+    oracle_in[6] = before.esi; oracle_in[7] = before.edi;
+    oracle_in[8] = before.eflags | (oracle_budget ? 0x100U : 0U);
+    oracle_target = address;
+    std::memset(oracle_out, 0, sizeof oracle_out);
+    save_top_page();
+    poison_top_page(fill);
+
+    g_original_thread_id = GetCurrentThreadId();
+    g_side = OracleSideOriginal;
+    g_run_started_tick = LONG(GetTickCount());
+    g_run_active = 1;
+    oracle_run_original();
+    g_run_active = 0;
+    g_side = OracleSideIdle;
+    restore_top_page();
+
+    OracleOriginalRun run{};
+    std::memcpy(run.out, oracle_out, sizeof run.out);
+    run.fault = oracle_fault;
+    uint32_t hash = 2166136261U;
+    const uint32_t *words = reinterpret_cast<const uint32_t *>(g_side_a);
+    for (uint32_t i = 0; i < OracleImageSize / 4; ++i) {
+        hash ^= words[i];
+        hash *= 16777619U;
+    }
+    run.checksum = hash;
+    return run;
+}
+
+// Two runs, two fills. Registers, flags, whether it faulted, and every byte it
+// wrote are compared; if any of them moved, the original was reading the top
+// page and this case cannot be judged.
+static bool original_depends_on_top_page(uint32_t address, int case_index,
+                                         uint32_t return_address) {
+    if (!g_top_page_writable) return false;
+    const OracleOriginalRun a =
+        run_original_once(address, case_index, return_address, 0x00);
+    const OracleOriginalRun b =
+        run_original_once(address, case_index, return_address, 0xA5);
+    return a.fault != b.fault || a.checksum != b.checksum ||
+           std::memcmp(a.out, b.out, sizeof a.out) != 0;
+}
+
+void oracle_dump_seed(uint32_t address, int case_index) {
+    if (!g_image_loaded) return;
+    const uint32_t return_address = uint32_t(uintptr_t(&oracle_return_point));
+    reset_both(address, case_index, return_address);
+    OracleRegisters r;
+    seed_registers(address, case_index, &r);
+    std::printf("seed %#010x case %d: %s\n", unsigned(address), case_index,
+                oracle_seed_description(address, case_index));
+    std::printf("  eax %08x ecx %08x edx %08x ebx %08x\n"
+                "  esp %08x ebp %08x esi %08x edi %08x eflags %08x\n",
+                unsigned(r.eax), unsigned(r.ecx), unsigned(r.edx), unsigned(r.ebx),
+                unsigned(r.esp), unsigned(r.ebp), unsigned(r.esi), unsigned(r.edi),
+                unsigned(r.eflags));
+    const uint32_t centre = r.ecx;
+    for (int32_t offset = -32; offset <= 64; offset += 4) {
+        const uint32_t guest = centre + uint32_t(offset);
+        if (guest < OracleImageBase || guest >= OracleImageBase + OracleImageSize)
+            continue;
+        uint32_t word = 0;
+        std::memcpy(&word, g_side_a + (guest - OracleImageBase), 4);
+        std::printf("  [ecx%+d] %#010x = %08x\n", int(offset), unsigned(guest),
+                    unsigned(word));
+    }
+    for (uint32_t i = 0; i < OracleSeedArgWords; ++i) {
+        uint32_t word = 0;
+        std::memcpy(&word, g_side_a + (OracleStackTop + 4 + i * 4 - OracleImageBase), 4);
+        std::printf("  arg %u = %08x\n", unsigned(i), unsigned(word));
+    }
+}
 
 static OracleResult g_result;
 
@@ -1147,6 +1775,7 @@ OracleResult oracle_run_case(uint32_t address, int case_index) {
     result.original.esi = oracle_out[6]; result.original.edi = oracle_out[7];
     result.original.eflags = flags_from_lahf(oracle_out[8])
                           | flags_from_pushfl(oracle_out[9]);
+    result.original_x87 = x87_from_fsave(oracle_x87_save);
 
     // --- the lifted side ---------------------------------------------------
     static OpensmacxStaticRecompileState state;
@@ -1173,6 +1802,15 @@ OracleResult oracle_run_case(uint32_t address, int case_index) {
 
     apply_perturbation(state);
     oracle_collect_lifted(state, result);
+    // Arbitrate a failure against the one range the harness cannot model.
+    // Skipped while perturbing, because the selfcheck's failures are
+    // manufactured on purpose and paying two extra original runs for each of
+    // twenty of them is waste, not caution.
+    if (result.verdict == OracleFail && oracle_perturb == OraclePerturbNone &&
+        original_depends_on_top_page(address, case_index, return_address)) {
+        result.verdict = OracleInconclusiveTopPage;
+        result.trap_reason = "the original read the unmodellable top 64 KiB";
+    }
     return result;
 }
 
@@ -1245,6 +1883,7 @@ const char *oracle_verdict_name(OracleVerdict verdict) {
         case OracleInconclusiveBudget: return "INCONCLUSIVE-original-timeout";
         case OracleInconclusiveLiftedBudget: return "INCONCLUSIVE-lifted-budget";
         case OracleInconclusiveOutOfSpan: return "INCONCLUSIVE-lifted-out-of-span";
+        case OracleInconclusiveTopPage: return "INCONCLUSIVE-original-top-page";
         default: return "UNRUN";
     }
 }

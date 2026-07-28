@@ -102,14 +102,19 @@ def main() -> int:
           f"({100.0 * byte_counts['PASS'] / total_bytes:.2f}% of image bytes)")
 
     if compared_histogram:
-        print("\nseeds that actually compared, among the PASSes:")
+        # The denominator is read from the data, not hard-coded. It said "of 4"
+        # for a whole sweep after the case count became 16, so every line of it
+        # was wrong by a factor of four.
+        attempted = max(compared_histogram) if compared_histogram else 0
+        print(f"\nseeds that actually compared, among the PASSes "
+              f"(out of {attempted} attempted):")
         for seeds in sorted(compared_histogram):
             count = compared_histogram[seeds]
-            print(f"  {seeds} of 4 seeds: {count:5d} "
+            print(f"  {seeds:2d} seeds compared: {count:5d} "
                   f"({100.0 * count / max(counts['PASS'], 1):.1f}%)")
         one = compared_histogram.get(1, 0)
         print(f"  -> {one} PASSes rest on a single seed; the original side "
-              f"could not be run on the other three.")
+              f"could not be run on any other.")
 
     if failures:
         print(f"\n{len(failures)} FAILING functions "

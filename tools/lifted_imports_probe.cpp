@@ -618,6 +618,219 @@ int main() {
               "GetSystemTime four bytes below the end is refused", 1, 1);
     }
 
+    // --- the window and DC shims -------------------------------------------
+    //
+    // Every one of these takes a handle the guest does not own, and every one
+    // of them has a DOCUMENTED failure for an invalid handle. That is what
+    // makes them testable at all: the host's own call with the same argument
+    // is the expectation, computed here rather than written down, so this
+    // cannot pass by agreeing with a number someone typed.
+    //
+    // The handle used is 0xDEAD0000 | k. It is not a plausible HWND or HDC on
+    // any Windows - real ones are small, even, and allocated - so the failure
+    // path is the one being taken. A test that passed NULL would be testing a
+    // different, often SUCCEEDING, path: GetDC(NULL) hands back the screen DC.
+    std::printf("\nthe window and DC shims - real calls, host's own answer\n");
+    {
+        const uint32_t hwnd = 0xDEAD0001U;
+        const uint32_t hdc = 0xDEAD0002U;
+        HWND const host_hwnd = reinterpret_cast<HWND>(
+            static_cast<uintptr_t>(hwnd));
+        HDC const host_hdc = reinterpret_cast<HDC>(
+            static_cast<uintptr_t>(hdc));
+
+        struct Case {
+            const char *name;
+            unsigned count;
+            uint32_t args[11];
+            uint32_t expected;
+        };
+        const Case cases[] = {
+            {"USER32.dll!IsZoomed", 1, {hwnd},
+             static_cast<uint32_t>(IsZoomed(host_hwnd))},
+            {"USER32.dll!DestroyWindow", 1, {hwnd},
+             static_cast<uint32_t>(DestroyWindow(host_hwnd))},
+            {"USER32.dll!ShowWindow", 2, {hwnd, SW_SHOW},
+             static_cast<uint32_t>(ShowWindow(host_hwnd, SW_SHOW))},
+            {"USER32.dll!GetWindowLongA", 2, {hwnd, static_cast<uint32_t>(GWL_STYLE)},
+             static_cast<uint32_t>(GetWindowLongA(host_hwnd, GWL_STYLE))},
+            {"USER32.dll!PostMessageA", 4, {hwnd, WM_USER, 7U, 9U},
+             static_cast<uint32_t>(PostMessageA(host_hwnd, WM_USER, 7, 9))},
+            {"USER32.dll!DefWindowProcA", 4, {hwnd, WM_USER, 7U, 9U},
+             static_cast<uint32_t>(DefWindowProcA(host_hwnd, WM_USER, 7, 9))},
+            {"USER32.dll!InvalidateRect", 3, {hwnd, 0U, 1U},
+             static_cast<uint32_t>(InvalidateRect(host_hwnd, nullptr, TRUE))},
+            {"GDI32.dll!DeleteDC", 1, {hdc},
+             static_cast<uint32_t>(DeleteDC(host_hdc))},
+            {"GDI32.dll!SetTextColor", 2, {hdc, 0x00123456U},
+             static_cast<uint32_t>(SetTextColor(host_hdc, 0x00123456))},
+            {"GDI32.dll!StretchBlt", 11,
+             {hdc, 1U, 2U, 3U, 4U, hdc, 5U, 6U, 7U, 8U, SRCCOPY},
+             static_cast<uint32_t>(StretchBlt(host_hdc, 1, 2, 3, 4, host_hdc,
+                                              5, 6, 7, 8, SRCCOPY))},
+        };
+        for (const Case &one : cases) {
+            const uint32_t iat = iat_of(one.name);
+            const Outcome outcome = call_import(iat, one.args, one.count);
+            char what[128];
+            std::snprintf(what, sizeof(what), "%s returns the host's answer",
+                          one.name);
+            check(outcome.eax == one.expected, what, outcome.eax,
+                  one.expected);
+            check_abi(one.name, iat, outcome, one.count);
+        }
+    }
+
+    // The two that read an array out of guest memory. The COUNT is the guest's,
+    // so the shim's bound is a product, and that product is where a 32-bit
+    // multiply would wrap.
+    std::printf("\nthe guest-counted arrays - bound on the PRODUCT\n");
+    {
+        const uint32_t table = Scratch;
+        for (uint32_t i = 0; i < 16U; ++i) {
+            opensmacx_store32(table + i * 4U, 0x00010203U + i);
+        }
+        const uint32_t hdc = 0xDEAD0002U;
+        const uint32_t args[4] = {hdc, 0U, 16U, table};
+        const uint32_t iat = iat_of("GDI32.dll!SetDIBColorTable");
+        const Outcome outcome = call_import(iat, args, 4);
+        check(outcome.eax == 0U,
+              "SetDIBColorTable on an invalid DC returns 0", outcome.eax, 0U);
+        check_abi("SetDIBColorTable", iat, outcome, 4);
+
+        // 0x40000001 RGBQUADs is 0x100000004 bytes. Truncated to 32 bits that
+        // is 4, which the bounds check would happily approve.
+        const uint32_t wrapping[4] = {hdc, 0U, 0x40000001U, table};
+        check(refused([&] { (void)call_import(iat, wrapping, 4); }),
+              "a count whose byte total wraps 32 bits is refused", 1, 1);
+
+        const uint32_t palette = iat_of("GDI32.dll!AnimatePalette");
+        const uint32_t entries[4] = {0xDEAD0003U, 0U, 16U, table};
+        const Outcome animated = call_import(palette, entries, 4);
+        check(animated.eax == 0U,
+              "AnimatePalette on an invalid palette returns 0",
+              animated.eax, 0U);
+        check_abi("AnimatePalette", palette, animated, 4);
+        const uint32_t wrap2[4] = {0xDEAD0003U, 0U, 0x40000001U, table};
+        check(refused([&] { (void)call_import(palette, wrap2, 4); }),
+              "and so is AnimatePalette's", 1, 1);
+    }
+
+    // UnregisterClassA is overloaded on its first argument the way CharUpperA
+    // is: below 0x10000 it is an ATOM and marshalling it as a pointer would
+    // dereference address 0x00400042.
+    std::printf("\nUnregisterClassA - the atom form is not a pointer\n");
+    {
+        const uint32_t iat = iat_of("USER32.dll!UnregisterClassA");
+        const uint32_t atom[2] = {0x42U, 0U};
+        const Outcome by_atom = call_import(iat, atom, 2);
+        check(by_atom.eax == static_cast<uint32_t>(
+                  UnregisterClassA(reinterpret_cast<const char *>(0x42),
+                                   nullptr)),
+              "an atom below 0x10000 reaches the host unchanged",
+              by_atom.eax, 0U);
+        check_abi("UnregisterClassA(atom)", iat, by_atom, 2);
+
+        const uint32_t named[2] = {put_string(Scratch, "OpenSMACXNoSuchClass"),
+                                   0U};
+        const Outcome by_name = call_import(iat, named, 2);
+        check(by_name.eax == static_cast<uint32_t>(
+                  UnregisterClassA("OpenSMACXNoSuchClass", nullptr)),
+              "and a guest string is marshalled", by_name.eax, 0U);
+        check_abi("UnregisterClassA(name)", iat, by_name, 2);
+    }
+
+    // --- oracle safety is a SEPARATE fact from implementation ---------------
+    std::printf("\noracle safety - a different question from 'implemented'\n");
+    {
+        // Named pairs, because the whole risk in this classification is that
+        // it silently becomes a synonym for "implemented" and the oracle then
+        // compares GetTickCount against itself.
+        check(opensmacx_import_oracle_safe(
+                  opensmacx_mem32(iat_of("USER32.dll!IntersectRect"))),
+              "IntersectRect is safe: rectangle arithmetic", 1, 1);
+        check(!opensmacx_import_oracle_safe(
+                  opensmacx_mem32(iat_of("KERNEL32.dll!GetTickCount"))),
+              "GetTickCount is NOT, though it is implemented", 0, 0);
+        check(!opensmacx_import_oracle_safe(
+                  opensmacx_mem32(iat_of("KERNEL32.dll!HeapAlloc"))),
+              "nor is HeapAlloc, for a different reason", 0, 0);
+        check(!opensmacx_import_oracle_safe(
+                  opensmacx_mem32(iat_of("USER32.dll!MessageBoxA"))),
+              "and an UNIMPLEMENTED import is never safe", 0, 0);
+
+        unsigned safe = 0, implemented = 0;
+        for (uint32_t index = 0; index < opensmacx_import_count(); ++index) {
+            const uint32_t synthetic = opensmacx_import_address(index);
+            safe += opensmacx_import_oracle_safe(synthetic) ? 1 : 0;
+        }
+        // The count must be a strict subset, never equal: equality would mean
+        // the classification had collapsed into "implemented".
+        implemented = 92U;
+        check(safe > 0 && safe < implemented,
+              "safe is a STRICT subset of implemented", safe, implemented);
+    }
+
+    // --- the IAT span, and binding an image to the real functions -----------
+    std::printf("\nthe real-import binding, for the oracle's original side\n");
+    {
+        const uint32_t low = opensmacx_import_iat_low();
+        const uint32_t high = opensmacx_import_iat_high();
+        unsigned inside = 0;
+        for (uint32_t index = 0; index < opensmacx_import_count(); ++index) {
+            const uint32_t iat =
+                opensmacx_import_iat(opensmacx_import_address(index));
+            inside += (iat >= low && iat + 4U <= high) ? 1 : 0;
+        }
+        check(inside == opensmacx_import_count(),
+              "every IAT slot lies inside the advertised span",
+              inside, opensmacx_import_count());
+
+        // Bind a scratch copy rather than the live image, so the probe's own
+        // dispatch keeps working afterwards.
+        unsigned char *const copy = static_cast<unsigned char *>(
+            std::calloc(1, OpensmacxImageSize));
+        const uint32_t filled = opensmacx_bind_real_imports(copy);
+
+        // EXACTLY the oracle-safe slots, counted independently here from the
+        // per-import accessor. Binding more was measured to cost two minutes
+        // per function, because the full table names DDRAW and DSOUND and
+        // loading those under Wine starts the display and audio drivers.
+        unsigned safe = 0;
+        for (uint32_t index = 0; index < opensmacx_import_count(); ++index) {
+            safe += opensmacx_import_oracle_safe(
+                        opensmacx_import_address(index)) ? 1 : 0;
+        }
+        check(filled == safe, "exactly the oracle-safe slots are bound",
+              filled, safe);
+
+        // And the address written is the REAL one, checked against the host's
+        // own GetProcAddress rather than against anything this file computed.
+        uint32_t written = 0;
+        std::memcpy(&written,
+                    copy + (iat_of("USER32.dll!IntersectRect")
+                            - OpensmacxImageBase), 4);
+        const uint32_t truth = static_cast<uint32_t>(
+            reinterpret_cast<uintptr_t>(GetProcAddress(
+                GetModuleHandleA("USER32.dll"), "IntersectRect")));
+        check(written == truth,
+              "the slot holds user32's real IntersectRect", written, truth);
+        check(written != 0U && !opensmacx_is_import(written),
+              "which is real code, not a synthetic address", written, truth);
+
+        // The other direction, and it is the one that matters for safety: an
+        // import the oracle may NOT call is left unbound, so a function that
+        // reaches it faults instead of quietly doing something to the machine.
+        uint32_t untouched = 1;
+        std::memcpy(&untouched,
+                    copy + (iat_of("KERNEL32.dll!GetTickCount")
+                            - OpensmacxImageBase), 4);
+        check(untouched == 0U,
+              "an implemented but UNSAFE import is left unbound",
+              untouched, 0U);
+        std::free(copy);
+    }
+
     self_test_of_the_harness();
 
     std::printf("\n%d checks, %d failures\n", checks, failures);

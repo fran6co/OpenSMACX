@@ -109,6 +109,24 @@ uint32_t opensmacx_import_arg_bytes(uint32_t address);
 // slot looks identical to a correct one. With it the pairing can be checked
 // against the PE import directory itself.
 uint32_t opensmacx_import_iat(uint32_t address);
+// Whether the differential oracle may call this import on both sides and
+// expect the two answers to agree. NOT the same question as "implemented":
+// GetTickCount works perfectly and can never agree with itself. False for
+// every unimplemented import, whose shim traps.
+bool opensmacx_import_oracle_safe(uint32_t address);
+// The half-open span of the image occupied by the IAT. The oracle's two sides
+// bind their IATs to different things on purpose, so a whole-image comparison
+// has to exclude exactly this range and no more.
+uint32_t opensmacx_import_iat_low();
+uint32_t opensmacx_import_iat_high();
+// Fill the ORACLE-SAFE part of an image's IAT with the addresses of the REAL
+// Windows functions, for a side that will be executed by the CPU rather than
+// dispatched. `image` is the host address of guest byte OpensmacxImageBase.
+// Returns the number of slots filled, so an unresolvable import is a number
+// the caller can check rather than a fault later. Deliberately NOT every
+// slot - see the generated definition for why binding DDRAW would cost two
+// minutes a function.
+uint32_t opensmacx_bind_real_imports(unsigned char *image);
 
 // ---------------------------------------------------------------------------
 // Reading the guest stack.
@@ -179,6 +197,27 @@ inline T *opensmacx_host_as(uint32_t guest) {
 // dangerous ones.
 inline void *opensmacx_host_buffer(uint32_t guest, uint32_t bytes) {
     return opensmacx_host(guest, bytes);
+}
+
+// An array of COUNT elements where the guest chose the count.
+//
+// The multiplication is the whole reason this exists. opensmacx_host() takes a
+// uint32_t, so a shim that writes `count * sizeof(T)` computes the product in
+// 32 bits and a guest count of 0x40000001 with a four-byte element wraps to 4:
+// the bounds check then approves four bytes and AnimatePalette writes a
+// gigabyte. Done in 64 bits here, once, so no call site can get it wrong. Any
+// product larger than the image is refused before it is narrowed - it could
+// not have been a legal object anyway, since the image is the whole address
+// space the guest has.
+template <typename T>
+inline T *opensmacx_host_array(uint32_t guest, uint32_t count) {
+    const uint64_t bytes = static_cast<uint64_t>(count) * sizeof(T);
+    if (bytes > OpensmacxImageSize) {
+        opensmacx_trap(guest,
+                       "import array argument is larger than the whole image");
+    }
+    return static_cast<T *>(
+        opensmacx_host(guest, static_cast<uint32_t>(bytes)));
 }
 
 // A NUL-terminated string. Its length is not known up front, so the bound is
@@ -269,6 +308,36 @@ inline uint32_t opensmacx_from_handle(void *value) {
 // An import with no pair here gets a shim that traps naming itself. That is
 // deliberate for this phase - a named trap is a work item, a wrong shim is a
 // bug hunt.
+//
+// THE THIRD FACT: WHETHER IT MAY BE CALLED TWICE
+//
+//   #define OPENSMACX_ORACLE_<DLL>_<Name>   safe | unsafe   // why
+//
+// The differential oracle runs the ORIGINAL machine code and the LIFTED code
+// separately and compares everything either one wrote. When both reach the same
+// import, that is TWO calls to the real Windows function, and the comparison is
+// only meaningful if the second call can agree with the first. Most cannot:
+// GetTickCount has advanced, HeapAlloc returns a different pointer, TlsAlloc
+// has consumed a slot, CreateFileA has made a file that was not there. Every
+// one of those imports is implemented and correct; none of them can be
+// compared. Marking them "works, therefore testable" would manufacture
+// failures that look exactly like lowering bugs, in the direction that makes
+// the harness look productive - the failure mode this project has already been
+// bitten by three times.
+//
+// So implementation and comparability are stated separately, and
+// generate_imports.py refuses to run if a shim states only the first. The
+// planner reads the answer out of the generated manifest, so it never carries
+// its own opinion about which imports work.
+//
+// The reasons that make an import safe are worth naming, because they are
+// narrower than they look:
+//   * pure computation on the arguments (the rectangle family, CharUpperA);
+//   * a property of the machine or the process that nothing here changes
+//     (GetSystemMetrics, GetACP, GetModuleFileNameA);
+//   * a DEFINED failure on a handle the guest does not own, with no side
+//     effect - which is what makes the whole window and DC family testable
+//     even though no window exists.
 // ---------------------------------------------------------------------------
 
 #define OPENSMACX_IMPORT_WINDOWS_HEADERS 1
@@ -278,24 +347,28 @@ inline uint32_t opensmacx_from_handle(void *value) {
 // --- kernel32: time, identity, error state ---------------------------------
 
 #define OPENSMACX_ARGS_KERNEL32_GetTickCount 0
+#define OPENSMACX_ORACLE_KERNEL32_GetTickCount unsafe  // the counter advances between the two sides
 inline uint32_t opensmacx_shim_KERNEL32_GetTickCount(
         OpensmacxStaticRecompileState &) {
     return GetTickCount();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetVersion 0
+#define OPENSMACX_ORACLE_KERNEL32_GetVersion safe  // constant for the life of the process
 inline uint32_t opensmacx_shim_KERNEL32_GetVersion(
         OpensmacxStaticRecompileState &) {
     return GetVersion();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetLastError 0
+#define OPENSMACX_ORACLE_KERNEL32_GetLastError safe  // the TEB is not part of the compared image
 inline uint32_t opensmacx_shim_KERNEL32_GetLastError(
         OpensmacxStaticRecompileState &) {
     return GetLastError();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_SetLastError 1
+#define OPENSMACX_ORACLE_KERNEL32_SetLastError safe  // the TEB is not part of the compared image
 inline uint32_t opensmacx_shim_KERNEL32_SetLastError(
         OpensmacxStaticRecompileState &s) {
     SetLastError(opensmacx_arg(s, 0));
@@ -303,24 +376,28 @@ inline uint32_t opensmacx_shim_KERNEL32_SetLastError(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetCurrentThreadId 0
+#define OPENSMACX_ORACLE_KERNEL32_GetCurrentThreadId safe  // constant within one thread
 inline uint32_t opensmacx_shim_KERNEL32_GetCurrentThreadId(
         OpensmacxStaticRecompileState &) {
     return GetCurrentThreadId();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetCurrentThread 0
+#define OPENSMACX_ORACLE_KERNEL32_GetCurrentThread safe  // a constant pseudo-handle
 inline uint32_t opensmacx_shim_KERNEL32_GetCurrentThread(
         OpensmacxStaticRecompileState &) {
     return opensmacx_from_handle(GetCurrentThread());
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetCurrentProcess 0
+#define OPENSMACX_ORACLE_KERNEL32_GetCurrentProcess safe  // a constant pseudo-handle
 inline uint32_t opensmacx_shim_KERNEL32_GetCurrentProcess(
         OpensmacxStaticRecompileState &) {
     return opensmacx_from_handle(GetCurrentProcess());
 }
 
 #define OPENSMACX_ARGS_KERNEL32_Sleep 1
+#define OPENSMACX_ORACLE_KERNEL32_Sleep unsafe  // the guest chooses the duration and it is unbounded
 inline uint32_t opensmacx_shim_KERNEL32_Sleep(
         OpensmacxStaticRecompileState &s) {
     Sleep(opensmacx_arg(s, 0));
@@ -328,6 +405,7 @@ inline uint32_t opensmacx_shim_KERNEL32_Sleep(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetSystemTime 1
+#define OPENSMACX_ORACLE_KERNEL32_GetSystemTime unsafe  // the clock advances between the two sides
 inline uint32_t opensmacx_shim_KERNEL32_GetSystemTime(
         OpensmacxStaticRecompileState &s) {
     // SYSTEMTIME is eight WORDs and holds no pointers, so it can be written
@@ -337,6 +415,7 @@ inline uint32_t opensmacx_shim_KERNEL32_GetSystemTime(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_OutputDebugStringA 1
+#define OPENSMACX_ORACLE_KERNEL32_OutputDebugStringA safe  // output only; no result and no memory effect
 inline uint32_t opensmacx_shim_KERNEL32_OutputDebugStringA(
         OpensmacxStaticRecompileState &s) {
     OutputDebugStringA(opensmacx_host_str(opensmacx_arg(s, 0)));
@@ -344,6 +423,7 @@ inline uint32_t opensmacx_shim_KERNEL32_OutputDebugStringA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_ExitProcess 1
+#define OPENSMACX_ORACLE_KERNEL32_ExitProcess unsafe  // ends the run
 inline uint32_t opensmacx_shim_KERNEL32_ExitProcess(
         OpensmacxStaticRecompileState &s) {
     ExitProcess(opensmacx_arg(s, 0));
@@ -353,18 +433,21 @@ inline uint32_t opensmacx_shim_KERNEL32_ExitProcess(
 // --- kernel32: code page and locale ----------------------------------------
 
 #define OPENSMACX_ARGS_KERNEL32_GetACP 0
+#define OPENSMACX_ORACLE_KERNEL32_GetACP safe  // constant for the life of the process
 inline uint32_t opensmacx_shim_KERNEL32_GetACP(
         OpensmacxStaticRecompileState &) {
     return GetACP();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetOEMCP 0
+#define OPENSMACX_ORACLE_KERNEL32_GetOEMCP safe  // constant for the life of the process
 inline uint32_t opensmacx_shim_KERNEL32_GetOEMCP(
         OpensmacxStaticRecompileState &) {
     return GetOEMCP();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetCPInfo 2
+#define OPENSMACX_ORACLE_KERNEL32_GetCPInfo safe  // a fixed table for a fixed code page
 inline uint32_t opensmacx_shim_KERNEL32_GetCPInfo(
         OpensmacxStaticRecompileState &s) {
     // CPINFO is a DWORD and two byte arrays - no pointers.
@@ -375,6 +458,7 @@ inline uint32_t opensmacx_shim_KERNEL32_GetCPInfo(
 // --- kernel32: interlocked -------------------------------------------------
 
 #define OPENSMACX_ARGS_KERNEL32_InterlockedIncrement 1
+#define OPENSMACX_ORACLE_KERNEL32_InterlockedIncrement safe  // arithmetic on guest memory
 inline uint32_t opensmacx_shim_KERNEL32_InterlockedIncrement(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(InterlockedIncrement(
@@ -382,6 +466,7 @@ inline uint32_t opensmacx_shim_KERNEL32_InterlockedIncrement(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_InterlockedDecrement 1
+#define OPENSMACX_ORACLE_KERNEL32_InterlockedDecrement safe  // arithmetic on guest memory
 inline uint32_t opensmacx_shim_KERNEL32_InterlockedDecrement(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(InterlockedDecrement(
@@ -389,6 +474,7 @@ inline uint32_t opensmacx_shim_KERNEL32_InterlockedDecrement(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_InterlockedExchange 2
+#define OPENSMACX_ORACLE_KERNEL32_InterlockedExchange safe  // arithmetic on guest memory
 inline uint32_t opensmacx_shim_KERNEL32_InterlockedExchange(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(InterlockedExchange(
@@ -406,6 +492,7 @@ inline uint32_t opensmacx_shim_KERNEL32_InterlockedExchange(
 // walks may not.
 
 #define OPENSMACX_ARGS_KERNEL32_InitializeCriticalSection 1
+#define OPENSMACX_ORACLE_KERNEL32_InitializeCriticalSection unsafe  // writes a host DebugInfo pointer into guest memory
 inline uint32_t opensmacx_shim_KERNEL32_InitializeCriticalSection(
         OpensmacxStaticRecompileState &s) {
     InitializeCriticalSection(opensmacx_host_as<CRITICAL_SECTION>(opensmacx_arg(s, 0)));
@@ -413,6 +500,7 @@ inline uint32_t opensmacx_shim_KERNEL32_InitializeCriticalSection(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_DeleteCriticalSection 1
+#define OPENSMACX_ORACLE_KERNEL32_DeleteCriticalSection unsafe  // pairs with a section only one side initialised
 inline uint32_t opensmacx_shim_KERNEL32_DeleteCriticalSection(
         OpensmacxStaticRecompileState &s) {
     DeleteCriticalSection(opensmacx_host_as<CRITICAL_SECTION>(opensmacx_arg(s, 0)));
@@ -420,6 +508,7 @@ inline uint32_t opensmacx_shim_KERNEL32_DeleteCriticalSection(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_EnterCriticalSection 1
+#define OPENSMACX_ORACLE_KERNEL32_EnterCriticalSection unsafe  // pairs with a section only one side initialised
 inline uint32_t opensmacx_shim_KERNEL32_EnterCriticalSection(
         OpensmacxStaticRecompileState &s) {
     EnterCriticalSection(opensmacx_host_as<CRITICAL_SECTION>(opensmacx_arg(s, 0)));
@@ -427,6 +516,7 @@ inline uint32_t opensmacx_shim_KERNEL32_EnterCriticalSection(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_LeaveCriticalSection 1
+#define OPENSMACX_ORACLE_KERNEL32_LeaveCriticalSection unsafe  // pairs with a section only one side initialised
 inline uint32_t opensmacx_shim_KERNEL32_LeaveCriticalSection(
         OpensmacxStaticRecompileState &s) {
     LeaveCriticalSection(opensmacx_host_as<CRITICAL_SECTION>(opensmacx_arg(s, 0)));
@@ -441,6 +531,7 @@ inline uint32_t opensmacx_shim_KERNEL32_LeaveCriticalSection(
 // question with a coincidentally similar answer.
 
 #define OPENSMACX_ARGS_KERNEL32_IsBadReadPtr 2
+#define OPENSMACX_ORACLE_KERNEL32_IsBadReadPtr safe  // a probe; changes nothing
 inline uint32_t opensmacx_shim_KERNEL32_IsBadReadPtr(
         OpensmacxStaticRecompileState &s) {
     const uint32_t base = opensmacx_arg(s, 0);
@@ -455,6 +546,7 @@ inline uint32_t opensmacx_shim_KERNEL32_IsBadReadPtr(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_IsBadWritePtr 2
+#define OPENSMACX_ORACLE_KERNEL32_IsBadWritePtr safe  // a probe; changes nothing
 inline uint32_t opensmacx_shim_KERNEL32_IsBadWritePtr(
         OpensmacxStaticRecompileState &s) {
     // The guest image is one flat writable array, so readable implies
@@ -464,6 +556,7 @@ inline uint32_t opensmacx_shim_KERNEL32_IsBadWritePtr(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_IsBadCodePtr 1
+#define OPENSMACX_ORACLE_KERNEL32_IsBadCodePtr safe  // a probe; changes nothing
 inline uint32_t opensmacx_shim_KERNEL32_IsBadCodePtr(
         OpensmacxStaticRecompileState &s) {
     const uint32_t address = opensmacx_arg(s, 0);
@@ -474,6 +567,7 @@ inline uint32_t opensmacx_shim_KERNEL32_IsBadCodePtr(
 // --- kernel32: files -------------------------------------------------------
 
 #define OPENSMACX_ARGS_KERNEL32_CreateFileA 7
+#define OPENSMACX_ORACLE_KERNEL32_CreateFileA unsafe  // a fresh handle each call, and it can create a file
 inline uint32_t opensmacx_shim_KERNEL32_CreateFileA(
         OpensmacxStaticRecompileState &s) {
     return opensmacx_from_handle(CreateFileA(
@@ -487,12 +581,14 @@ inline uint32_t opensmacx_shim_KERNEL32_CreateFileA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_CloseHandle 1
+#define OPENSMACX_ORACLE_KERNEL32_CloseHandle unsafe  // the result depends on what the other side already closed
 inline uint32_t opensmacx_shim_KERNEL32_CloseHandle(
         OpensmacxStaticRecompileState &s) {
     return CloseHandle(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_ReadFile 5
+#define OPENSMACX_ORACLE_KERNEL32_ReadFile unsafe  // moves a shared file pointer
 inline uint32_t opensmacx_shim_KERNEL32_ReadFile(
         OpensmacxStaticRecompileState &s) {
     // The buffer's length is the guest's own third argument, so it is
@@ -508,6 +604,7 @@ inline uint32_t opensmacx_shim_KERNEL32_ReadFile(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_WriteFile 5
+#define OPENSMACX_ORACLE_KERNEL32_WriteFile unsafe  // writes a file
 inline uint32_t opensmacx_shim_KERNEL32_WriteFile(
         OpensmacxStaticRecompileState &s) {
     return WriteFile(opensmacx_handle(opensmacx_arg(s, 0)),
@@ -519,6 +616,7 @@ inline uint32_t opensmacx_shim_KERNEL32_WriteFile(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetFileSize 2
+#define OPENSMACX_ORACLE_KERNEL32_GetFileSize unsafe  // the size depends on the writes the other side made
 inline uint32_t opensmacx_shim_KERNEL32_GetFileSize(
         OpensmacxStaticRecompileState &s) {
     return GetFileSize(opensmacx_handle(opensmacx_arg(s, 0)),
@@ -526,6 +624,7 @@ inline uint32_t opensmacx_shim_KERNEL32_GetFileSize(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_SetFilePointer 4
+#define OPENSMACX_ORACLE_KERNEL32_SetFilePointer unsafe  // moves a shared file pointer
 inline uint32_t opensmacx_shim_KERNEL32_SetFilePointer(
         OpensmacxStaticRecompileState &s) {
     return SetFilePointer(opensmacx_handle(opensmacx_arg(s, 0)),
@@ -535,42 +634,49 @@ inline uint32_t opensmacx_shim_KERNEL32_SetFilePointer(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_SetEndOfFile 1
+#define OPENSMACX_ORACLE_KERNEL32_SetEndOfFile unsafe  // truncates a file
 inline uint32_t opensmacx_shim_KERNEL32_SetEndOfFile(
         OpensmacxStaticRecompileState &s) {
     return SetEndOfFile(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_FlushFileBuffers 1
+#define OPENSMACX_ORACLE_KERNEL32_FlushFileBuffers unsafe  // writes a file
 inline uint32_t opensmacx_shim_KERNEL32_FlushFileBuffers(
         OpensmacxStaticRecompileState &s) {
     return FlushFileBuffers(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetFileType 1
+#define OPENSMACX_ORACLE_KERNEL32_GetFileType safe  // a property of a handle, not of time
 inline uint32_t opensmacx_shim_KERNEL32_GetFileType(
         OpensmacxStaticRecompileState &s) {
     return GetFileType(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetStdHandle 1
+#define OPENSMACX_ORACLE_KERNEL32_GetStdHandle safe  // the same three handles all run
 inline uint32_t opensmacx_shim_KERNEL32_GetStdHandle(
         OpensmacxStaticRecompileState &s) {
     return opensmacx_from_handle(GetStdHandle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_SetHandleCount 1
+#define OPENSMACX_ORACLE_KERNEL32_SetHandleCount safe  // a no-op on NT that returns its argument
 inline uint32_t opensmacx_shim_KERNEL32_SetHandleCount(
         OpensmacxStaticRecompileState &s) {
     return SetHandleCount(opensmacx_arg(s, 0));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_DeleteFileA 1
+#define OPENSMACX_ORACLE_KERNEL32_DeleteFileA unsafe  // deletes a file; the second call finds it gone
 inline uint32_t opensmacx_shim_KERNEL32_DeleteFileA(
         OpensmacxStaticRecompileState &s) {
     return DeleteFileA(opensmacx_host_str(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_MoveFileA 2
+#define OPENSMACX_ORACLE_KERNEL32_MoveFileA unsafe  // renames a file; the second call finds it gone
 inline uint32_t opensmacx_shim_KERNEL32_MoveFileA(
         OpensmacxStaticRecompileState &s) {
     return MoveFileA(opensmacx_host_str(opensmacx_arg(s, 0)),
@@ -578,6 +684,7 @@ inline uint32_t opensmacx_shim_KERNEL32_MoveFileA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_CreateDirectoryA 2
+#define OPENSMACX_ORACLE_KERNEL32_CreateDirectoryA unsafe  // creates a directory; the second call finds it there
 inline uint32_t opensmacx_shim_KERNEL32_CreateDirectoryA(
         OpensmacxStaticRecompileState &s) {
     return CreateDirectoryA(
@@ -586,12 +693,14 @@ inline uint32_t opensmacx_shim_KERNEL32_CreateDirectoryA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_SetCurrentDirectoryA 1
+#define OPENSMACX_ORACLE_KERNEL32_SetCurrentDirectoryA unsafe  // changes process state the other side then sees
 inline uint32_t opensmacx_shim_KERNEL32_SetCurrentDirectoryA(
         OpensmacxStaticRecompileState &s) {
     return SetCurrentDirectoryA(opensmacx_host_str(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetCurrentDirectoryA 2
+#define OPENSMACX_ORACLE_KERNEL32_GetCurrentDirectoryA safe  // reads process state nothing here changes
 inline uint32_t opensmacx_shim_KERNEL32_GetCurrentDirectoryA(
         OpensmacxStaticRecompileState &s) {
     return GetCurrentDirectoryA(
@@ -601,12 +710,14 @@ inline uint32_t opensmacx_shim_KERNEL32_GetCurrentDirectoryA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetDriveTypeA 1
+#define OPENSMACX_ORACLE_KERNEL32_GetDriveTypeA safe  // a property of the machine
 inline uint32_t opensmacx_shim_KERNEL32_GetDriveTypeA(
         OpensmacxStaticRecompileState &s) {
     return GetDriveTypeA(opensmacx_host_str(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_FindFirstFileA 2
+#define OPENSMACX_ORACLE_KERNEL32_FindFirstFileA unsafe  // a fresh handle each call
 inline uint32_t opensmacx_shim_KERNEL32_FindFirstFileA(
         OpensmacxStaticRecompileState &s) {
     // WIN32_FIND_DATAA is DWORDs, FILETIMEs and two char arrays - no
@@ -617,6 +728,7 @@ inline uint32_t opensmacx_shim_KERNEL32_FindFirstFileA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_FindNextFileA 2
+#define OPENSMACX_ORACLE_KERNEL32_FindNextFileA unsafe  // advances a shared enumeration
 inline uint32_t opensmacx_shim_KERNEL32_FindNextFileA(
         OpensmacxStaticRecompileState &s) {
     return FindNextFileA(
@@ -625,12 +737,14 @@ inline uint32_t opensmacx_shim_KERNEL32_FindNextFileA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_FindClose 1
+#define OPENSMACX_ORACLE_KERNEL32_FindClose unsafe  // the result depends on what the other side already closed
 inline uint32_t opensmacx_shim_KERNEL32_FindClose(
         OpensmacxStaticRecompileState &s) {
     return FindClose(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetModuleFileNameA 3
+#define OPENSMACX_ORACLE_KERNEL32_GetModuleFileNameA safe  // constant for the life of the process
 inline uint32_t opensmacx_shim_KERNEL32_GetModuleFileNameA(
         OpensmacxStaticRecompileState &s) {
     return GetModuleFileNameA(
@@ -643,6 +757,7 @@ inline uint32_t opensmacx_shim_KERNEL32_GetModuleFileNameA(
 // --- kernel32: profile (.ini) files ----------------------------------------
 
 #define OPENSMACX_ARGS_KERNEL32_GetPrivateProfileIntA 4
+#define OPENSMACX_ORACLE_KERNEL32_GetPrivateProfileIntA safe  // reads a file it does not write
 inline uint32_t opensmacx_shim_KERNEL32_GetPrivateProfileIntA(
         OpensmacxStaticRecompileState &s) {
     return GetPrivateProfileIntA(opensmacx_host_str(opensmacx_arg(s, 0)),
@@ -652,6 +767,7 @@ inline uint32_t opensmacx_shim_KERNEL32_GetPrivateProfileIntA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_GetPrivateProfileStringA 6
+#define OPENSMACX_ORACLE_KERNEL32_GetPrivateProfileStringA safe  // reads a file it does not write
 inline uint32_t opensmacx_shim_KERNEL32_GetPrivateProfileStringA(
         OpensmacxStaticRecompileState &s) {
     return GetPrivateProfileStringA(
@@ -665,6 +781,7 @@ inline uint32_t opensmacx_shim_KERNEL32_GetPrivateProfileStringA(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_WritePrivateProfileStringA 4
+#define OPENSMACX_ORACLE_KERNEL32_WritePrivateProfileStringA unsafe  // writes a file
 inline uint32_t opensmacx_shim_KERNEL32_WritePrivateProfileStringA(
         OpensmacxStaticRecompileState &s) {
     return WritePrivateProfileStringA(
@@ -685,6 +802,7 @@ inline uint32_t opensmacx_shim_KERNEL32_WritePrivateProfileStringA(
 // and these four become correct with no edit.
 
 #define OPENSMACX_ARGS_KERNEL32_HeapCreate 3
+#define OPENSMACX_ORACLE_KERNEL32_HeapCreate unsafe  // a fresh handle each call
 inline uint32_t opensmacx_shim_KERNEL32_HeapCreate(
         OpensmacxStaticRecompileState &s) {
     return opensmacx_from_handle(HeapCreate(opensmacx_arg(s, 0),
@@ -693,12 +811,14 @@ inline uint32_t opensmacx_shim_KERNEL32_HeapCreate(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_HeapDestroy 1
+#define OPENSMACX_ORACLE_KERNEL32_HeapDestroy unsafe  // the result depends on what the other side already destroyed
 inline uint32_t opensmacx_shim_KERNEL32_HeapDestroy(
         OpensmacxStaticRecompileState &s) {
     return HeapDestroy(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_HeapAlloc 3
+#define OPENSMACX_ORACLE_KERNEL32_HeapAlloc unsafe  // a fresh host pointer each call
 inline uint32_t opensmacx_shim_KERNEL32_HeapAlloc(
         OpensmacxStaticRecompileState &s) {
     return opensmacx_guest(HeapAlloc(opensmacx_handle(opensmacx_arg(s, 0)),
@@ -707,6 +827,7 @@ inline uint32_t opensmacx_shim_KERNEL32_HeapAlloc(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_HeapFree 3
+#define OPENSMACX_ORACLE_KERNEL32_HeapFree unsafe  // the result depends on what the other side already freed
 inline uint32_t opensmacx_shim_KERNEL32_HeapFree(
         OpensmacxStaticRecompileState &s) {
     return HeapFree(opensmacx_handle(opensmacx_arg(s, 0)),
@@ -719,6 +840,7 @@ inline uint32_t opensmacx_shim_KERNEL32_HeapFree(
 }
 
 #define OPENSMACX_ARGS_KERNEL32_HeapSize 3
+#define OPENSMACX_ORACLE_KERNEL32_HeapSize unsafe  // asks about a block only one side allocated
 inline uint32_t opensmacx_shim_KERNEL32_HeapSize(
         OpensmacxStaticRecompileState &s) {
     return HeapSize(opensmacx_handle(opensmacx_arg(s, 0)),
@@ -736,18 +858,21 @@ inline uint32_t opensmacx_shim_KERNEL32_HeapSize(
 // translation. The slot INDEX is host-allocated and opaque.
 
 #define OPENSMACX_ARGS_KERNEL32_TlsAlloc 0
+#define OPENSMACX_ORACLE_KERNEL32_TlsAlloc unsafe  // consumes a slot, so the second call gets a different index
 inline uint32_t opensmacx_shim_KERNEL32_TlsAlloc(
         OpensmacxStaticRecompileState &) {
     return TlsAlloc();
 }
 
 #define OPENSMACX_ARGS_KERNEL32_TlsGetValue 1
+#define OPENSMACX_ORACLE_KERNEL32_TlsGetValue unsafe  // reads a slot the other side wrote
 inline uint32_t opensmacx_shim_KERNEL32_TlsGetValue(
         OpensmacxStaticRecompileState &s) {
     return reinterpret_cast<uintptr_t>(TlsGetValue(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_KERNEL32_TlsSetValue 2
+#define OPENSMACX_ORACLE_KERNEL32_TlsSetValue unsafe  // writes a slot the other side then reads
 inline uint32_t opensmacx_shim_KERNEL32_TlsSetValue(
         OpensmacxStaticRecompileState &s) {
     return TlsSetValue(opensmacx_arg(s, 0),
@@ -757,6 +882,7 @@ inline uint32_t opensmacx_shim_KERNEL32_TlsSetValue(
 // --- winmm -----------------------------------------------------------------
 
 #define OPENSMACX_ARGS_WINMM_timeGetTime 0
+#define OPENSMACX_ORACLE_WINMM_timeGetTime unsafe  // the counter advances between the two sides
 inline uint32_t opensmacx_shim_WINMM_timeGetTime(
         OpensmacxStaticRecompileState &) {
     return timeGetTime();
@@ -768,6 +894,7 @@ inline uint32_t opensmacx_shim_WINMM_timeGetTime(
 // needs RegisterClassA with a guest WndProc, which is the callback problem.
 
 #define OPENSMACX_ARGS_USER32_GetSystemMetrics 1
+#define OPENSMACX_ORACLE_USER32_GetSystemMetrics safe  // a property of the desktop
 inline uint32_t opensmacx_shim_USER32_GetSystemMetrics(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(GetSystemMetrics(
@@ -775,6 +902,7 @@ inline uint32_t opensmacx_shim_USER32_GetSystemMetrics(
 }
 
 #define OPENSMACX_ARGS_USER32_SetRect 5
+#define OPENSMACX_ORACLE_USER32_SetRect safe  // rectangle arithmetic
 inline uint32_t opensmacx_shim_USER32_SetRect(
         OpensmacxStaticRecompileState &s) {
     return SetRect(opensmacx_host_as<RECT>(opensmacx_arg(s, 0)),
@@ -785,6 +913,7 @@ inline uint32_t opensmacx_shim_USER32_SetRect(
 }
 
 #define OPENSMACX_ARGS_USER32_PtInRect 3
+#define OPENSMACX_ORACLE_USER32_PtInRect safe  // rectangle arithmetic
 inline uint32_t opensmacx_shim_USER32_PtInRect(
         OpensmacxStaticRecompileState &s) {
     // POINT is passed BY VALUE, so it occupies two stack slots rather than
@@ -800,6 +929,7 @@ inline uint32_t opensmacx_shim_USER32_PtInRect(
 }
 
 #define OPENSMACX_ARGS_USER32_IntersectRect 3
+#define OPENSMACX_ORACLE_USER32_IntersectRect safe  // rectangle arithmetic
 inline uint32_t opensmacx_shim_USER32_IntersectRect(
         OpensmacxStaticRecompileState &s) {
     return IntersectRect(
@@ -809,6 +939,7 @@ inline uint32_t opensmacx_shim_USER32_IntersectRect(
 }
 
 #define OPENSMACX_ARGS_USER32_UnionRect 3
+#define OPENSMACX_ORACLE_USER32_UnionRect safe  // rectangle arithmetic
 inline uint32_t opensmacx_shim_USER32_UnionRect(
         OpensmacxStaticRecompileState &s) {
     return UnionRect(
@@ -818,6 +949,7 @@ inline uint32_t opensmacx_shim_USER32_UnionRect(
 }
 
 #define OPENSMACX_ARGS_USER32_EqualRect 2
+#define OPENSMACX_ORACLE_USER32_EqualRect safe  // rectangle arithmetic
 inline uint32_t opensmacx_shim_USER32_EqualRect(
         OpensmacxStaticRecompileState &s) {
     return EqualRect(
@@ -826,6 +958,7 @@ inline uint32_t opensmacx_shim_USER32_EqualRect(
 }
 
 #define OPENSMACX_ARGS_USER32_IsRectEmpty 1
+#define OPENSMACX_ORACLE_USER32_IsRectEmpty safe  // rectangle arithmetic
 inline uint32_t opensmacx_shim_USER32_IsRectEmpty(
         OpensmacxStaticRecompileState &s) {
     return IsRectEmpty(
@@ -833,6 +966,7 @@ inline uint32_t opensmacx_shim_USER32_IsRectEmpty(
 }
 
 #define OPENSMACX_ARGS_USER32_CharUpperA 1
+#define OPENSMACX_ORACLE_USER32_CharUpperA safe  // a fixed case table for a fixed locale
 inline uint32_t opensmacx_shim_USER32_CharUpperA(
         OpensmacxStaticRecompileState &s) {
     // CharUpperA is overloaded on its argument: a value below 0x10000 is a
@@ -849,6 +983,7 @@ inline uint32_t opensmacx_shim_USER32_CharUpperA(
 }
 
 #define OPENSMACX_ARGS_USER32_CharLowerA 1
+#define OPENSMACX_ORACLE_USER32_CharLowerA safe  // a fixed case table for a fixed locale
 inline uint32_t opensmacx_shim_USER32_CharLowerA(
         OpensmacxStaticRecompileState &s) {
     const uint32_t argument = opensmacx_arg(s, 0);
@@ -861,12 +996,14 @@ inline uint32_t opensmacx_shim_USER32_CharLowerA(
 }
 
 #define OPENSMACX_ARGS_USER32_MessageBeep 1
+#define OPENSMACX_ORACLE_USER32_MessageBeep safe  // sound only; no result difference and no memory effect
 inline uint32_t opensmacx_shim_USER32_MessageBeep(
         OpensmacxStaticRecompileState &s) {
     return MessageBeep(opensmacx_arg(s, 0));
 }
 
 #define OPENSMACX_ARGS_USER32_GetKeyState 1
+#define OPENSMACX_ORACLE_USER32_GetKeyState unsafe  // reads the real keyboard at the instant of the call
 inline uint32_t opensmacx_shim_USER32_GetKeyState(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(static_cast<int32_t>(
@@ -874,6 +1011,7 @@ inline uint32_t opensmacx_shim_USER32_GetKeyState(
 }
 
 #define OPENSMACX_ARGS_USER32_GetAsyncKeyState 1
+#define OPENSMACX_ORACLE_USER32_GetAsyncKeyState unsafe  // clears the since-last-call bit, so the second call differs
 inline uint32_t opensmacx_shim_USER32_GetAsyncKeyState(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(static_cast<int32_t>(
@@ -881,12 +1019,14 @@ inline uint32_t opensmacx_shim_USER32_GetAsyncKeyState(
 }
 
 #define OPENSMACX_ARGS_USER32_MapVirtualKeyA 2
+#define OPENSMACX_ORACLE_USER32_MapVirtualKeyA safe  // a property of the keyboard layout
 inline uint32_t opensmacx_shim_USER32_MapVirtualKeyA(
         OpensmacxStaticRecompileState &s) {
     return MapVirtualKeyA(opensmacx_arg(s, 0), opensmacx_arg(s, 1));
 }
 
 #define OPENSMACX_ARGS_USER32_GetCursorPos 1
+#define OPENSMACX_ORACLE_USER32_GetCursorPos unsafe  // reads the real pointer at the instant of the call
 inline uint32_t opensmacx_shim_USER32_GetCursorPos(
         OpensmacxStaticRecompileState &s) {
     return GetCursorPos(
@@ -894,6 +1034,7 @@ inline uint32_t opensmacx_shim_USER32_GetCursorPos(
 }
 
 #define OPENSMACX_ARGS_USER32_SetCursorPos 2
+#define OPENSMACX_ORACLE_USER32_SetCursorPos unsafe  // moves the real pointer
 inline uint32_t opensmacx_shim_USER32_SetCursorPos(
         OpensmacxStaticRecompileState &s) {
     return SetCursorPos(static_cast<int>(opensmacx_arg(s, 0)),
@@ -901,14 +1042,131 @@ inline uint32_t opensmacx_shim_USER32_SetCursorPos(
 }
 
 #define OPENSMACX_ARGS_USER32_ShowCursor 1
+#define OPENSMACX_ORACLE_USER32_ShowCursor unsafe  // increments a global display counter
 inline uint32_t opensmacx_shim_USER32_ShowCursor(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(ShowCursor(opensmacx_arg(s, 0) != 0U));
 }
 
+// --- user32: the window functions ------------------------------------------
+//
+// These take an HWND the guest never legitimately owns yet, because creating a
+// window needs RegisterClassA with a guest WndProc and that is the callback
+// problem. They are implemented anyway, and the reason is the interesting one:
+// an HWND is OPAQUE, so nothing here has to marshal it, and Win32's documented
+// behaviour for an invalid window handle is a DEFINED failure - FALSE, 0, or
+// CLR_INVALID - with SetLastError(ERROR_INVALID_WINDOW_HANDLE) and no side
+// effect. So calling the real function with the guest's real argument is both
+// faithful and repeatable, which is exactly what the differential oracle needs:
+// the original and the lifted side make the same call and get the same
+// defined failure. That is why they are marked `safe` below while
+// CreateSolidBrush - which succeeds, and succeeds DIFFERENTLY each time - is
+// not. Nothing here fabricates a result; if a real window ever exists these
+// keep working unchanged.
+
+#define OPENSMACX_ARGS_USER32_PostMessageA 4
+#define OPENSMACX_ORACLE_USER32_PostMessageA safe  // no image memory changes
+inline uint32_t opensmacx_shim_USER32_PostMessageA(
+        OpensmacxStaticRecompileState &s) {
+    return PostMessageA(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))),
+        opensmacx_arg(s, 1),
+        static_cast<WPARAM>(opensmacx_arg(s, 2)),
+        static_cast<LPARAM>(opensmacx_arg(s, 3)));
+}
+
+#define OPENSMACX_ARGS_USER32_GetWindowLongA 2
+#define OPENSMACX_ORACLE_USER32_GetWindowLongA safe  // reads window state only
+inline uint32_t opensmacx_shim_USER32_GetWindowLongA(
+        OpensmacxStaticRecompileState &s) {
+    return static_cast<uint32_t>(GetWindowLongA(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))),
+        static_cast<int>(opensmacx_arg(s, 1))));
+}
+
+#define OPENSMACX_ARGS_USER32_IsZoomed 1
+#define OPENSMACX_ORACLE_USER32_IsZoomed safe  // reads window state only
+inline uint32_t opensmacx_shim_USER32_IsZoomed(
+        OpensmacxStaticRecompileState &s) {
+    return IsZoomed(static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))));
+}
+
+#define OPENSMACX_ARGS_USER32_ShowWindow 2
+#define OPENSMACX_ORACLE_USER32_ShowWindow safe  // no image memory changes
+inline uint32_t opensmacx_shim_USER32_ShowWindow(
+        OpensmacxStaticRecompileState &s) {
+    return ShowWindow(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))),
+        static_cast<int>(opensmacx_arg(s, 1)));
+}
+
+#define OPENSMACX_ARGS_USER32_DestroyWindow 1
+#define OPENSMACX_ORACLE_USER32_DestroyWindow safe  // no image memory changes
+inline uint32_t opensmacx_shim_USER32_DestroyWindow(
+        OpensmacxStaticRecompileState &s) {
+    return DestroyWindow(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))));
+}
+
+#define OPENSMACX_ARGS_USER32_GetWindowRect 2
+#define OPENSMACX_ORACLE_USER32_GetWindowRect safe  // reads window state only
+inline uint32_t opensmacx_shim_USER32_GetWindowRect(
+        OpensmacxStaticRecompileState &s) {
+    return GetWindowRect(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))),
+        opensmacx_host_as<RECT>(opensmacx_arg(s, 1)));
+}
+
+#define OPENSMACX_ARGS_USER32_InvalidateRect 3
+#define OPENSMACX_ORACLE_USER32_InvalidateRect safe  // no image memory changes
+inline uint32_t opensmacx_shim_USER32_InvalidateRect(
+        OpensmacxStaticRecompileState &s) {
+    // The RECT is optional - NULL means the whole client area - so it goes
+    // through opensmacx_host_as, which maps guest 0 to nullptr rather than to
+    // the image base.
+    return InvalidateRect(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))),
+        opensmacx_host_as<const RECT>(opensmacx_arg(s, 1)),
+        opensmacx_arg(s, 2) != 0);
+}
+
+#define OPENSMACX_ARGS_USER32_DefWindowProcA 4
+#define OPENSMACX_ORACLE_USER32_DefWindowProcA safe  // no image memory changes
+inline uint32_t opensmacx_shim_USER32_DefWindowProcA(
+        OpensmacxStaticRecompileState &s) {
+    // The LPARAM of several messages is a pointer, and it is NOT translated
+    // here: with no real window the message is rejected before the parameter
+    // is read. If a real window ever backs this, every pointer-carrying
+    // message needs its own marshalling and this comment is the work item.
+    return static_cast<uint32_t>(DefWindowProcA(
+        static_cast<HWND>(opensmacx_handle(opensmacx_arg(s, 0))),
+        opensmacx_arg(s, 1),
+        static_cast<WPARAM>(opensmacx_arg(s, 2)),
+        static_cast<LPARAM>(opensmacx_arg(s, 3))));
+}
+
+#define OPENSMACX_ARGS_USER32_UnregisterClassA 2
+#define OPENSMACX_ORACLE_USER32_UnregisterClassA safe  // no image memory changes
+inline uint32_t opensmacx_shim_USER32_UnregisterClassA(
+        OpensmacxStaticRecompileState &s) {
+    // Overloaded on its first argument exactly as CharUpperA is: a value below
+    // 0x10000 is an ATOM, not a pointer, and must not be marshalled. MAKEINTATOM
+    // is what the caller used to build it.
+    const uint32_t name = opensmacx_arg(s, 0);
+    const HINSTANCE instance =
+        static_cast<HINSTANCE>(opensmacx_handle(opensmacx_arg(s, 1)));
+    if (name < 0x10000U) {
+        return UnregisterClassA(
+            reinterpret_cast<const char *>(static_cast<uintptr_t>(name)),
+            instance);
+    }
+    return UnregisterClassA(opensmacx_host_str(name), instance);
+}
+
 // --- gdi32 -----------------------------------------------------------------
 
 #define OPENSMACX_ARGS_GDI32_GetStockObject 1
+#define OPENSMACX_ORACLE_GDI32_GetStockObject safe  // the stock handles are the same every call
 inline uint32_t opensmacx_shim_GDI32_GetStockObject(
         OpensmacxStaticRecompileState &s) {
     return opensmacx_from_handle(GetStockObject(
@@ -916,12 +1174,14 @@ inline uint32_t opensmacx_shim_GDI32_GetStockObject(
 }
 
 #define OPENSMACX_ARGS_GDI32_DeleteObject 1
+#define OPENSMACX_ORACLE_GDI32_DeleteObject unsafe  // the result depends on what the other side already deleted
 inline uint32_t opensmacx_shim_GDI32_DeleteObject(
         OpensmacxStaticRecompileState &s) {
     return DeleteObject(opensmacx_handle(opensmacx_arg(s, 0)));
 }
 
 #define OPENSMACX_ARGS_GDI32_GetDeviceCaps 2
+#define OPENSMACX_ORACLE_GDI32_GetDeviceCaps safe  // a property of a device; changes nothing
 inline uint32_t opensmacx_shim_GDI32_GetDeviceCaps(
         OpensmacxStaticRecompileState &s) {
     return static_cast<uint32_t>(GetDeviceCaps(
@@ -930,15 +1190,80 @@ inline uint32_t opensmacx_shim_GDI32_GetDeviceCaps(
 }
 
 #define OPENSMACX_ARGS_GDI32_GdiFlush 0
+#define OPENSMACX_ORACLE_GDI32_GdiFlush safe  // flushes a batch this process never fills
 inline uint32_t opensmacx_shim_GDI32_GdiFlush(
         OpensmacxStaticRecompileState &) {
     return GdiFlush();
 }
 
 #define OPENSMACX_ARGS_GDI32_CreateSolidBrush 1
+#define OPENSMACX_ORACLE_GDI32_CreateSolidBrush unsafe  // a fresh handle each call
 inline uint32_t opensmacx_shim_GDI32_CreateSolidBrush(
         OpensmacxStaticRecompileState &s) {
     return opensmacx_from_handle(CreateSolidBrush(opensmacx_arg(s, 0)));
+}
+
+// The same argument as for the window functions: an HDC the guest does not own
+// is opaque, and every one of these has a DEFINED failure for an invalid one -
+// FALSE, 0, or CLR_INVALID - with nothing written. The guest's real argument
+// goes to the real function.
+
+#define OPENSMACX_ARGS_GDI32_DeleteDC 1
+#define OPENSMACX_ORACLE_GDI32_DeleteDC safe  // no image memory changes
+inline uint32_t opensmacx_shim_GDI32_DeleteDC(
+        OpensmacxStaticRecompileState &s) {
+    return DeleteDC(static_cast<HDC>(opensmacx_handle(opensmacx_arg(s, 0))));
+}
+
+#define OPENSMACX_ARGS_GDI32_SetTextColor 2
+#define OPENSMACX_ORACLE_GDI32_SetTextColor safe  // no image memory changes
+inline uint32_t opensmacx_shim_GDI32_SetTextColor(
+        OpensmacxStaticRecompileState &s) {
+    return SetTextColor(
+        static_cast<HDC>(opensmacx_handle(opensmacx_arg(s, 0))),
+        static_cast<COLORREF>(opensmacx_arg(s, 1)));
+}
+
+#define OPENSMACX_ARGS_GDI32_StretchBlt 11
+#define OPENSMACX_ORACLE_GDI32_StretchBlt safe  // no image memory changes
+inline uint32_t opensmacx_shim_GDI32_StretchBlt(
+        OpensmacxStaticRecompileState &s) {
+    return StretchBlt(
+        static_cast<HDC>(opensmacx_handle(opensmacx_arg(s, 0))),
+        static_cast<int>(opensmacx_arg(s, 1)),
+        static_cast<int>(opensmacx_arg(s, 2)),
+        static_cast<int>(opensmacx_arg(s, 3)),
+        static_cast<int>(opensmacx_arg(s, 4)),
+        static_cast<HDC>(opensmacx_handle(opensmacx_arg(s, 5))),
+        static_cast<int>(opensmacx_arg(s, 6)),
+        static_cast<int>(opensmacx_arg(s, 7)),
+        static_cast<int>(opensmacx_arg(s, 8)),
+        static_cast<int>(opensmacx_arg(s, 9)),
+        static_cast<DWORD>(opensmacx_arg(s, 10)));
+}
+
+#define OPENSMACX_ARGS_GDI32_SetDIBColorTable 4
+#define OPENSMACX_ORACLE_GDI32_SetDIBColorTable safe  // no image memory changes
+inline uint32_t opensmacx_shim_GDI32_SetDIBColorTable(
+        OpensmacxStaticRecompileState &s) {
+    // The colour table is `entries` RGBQUADs chosen by the guest, so the bound
+    // is the PRODUCT and it is computed in 64 bits - see opensmacx_host_array.
+    const uint32_t entries = opensmacx_arg(s, 2);
+    return SetDIBColorTable(
+        static_cast<HDC>(opensmacx_handle(opensmacx_arg(s, 0))),
+        opensmacx_arg(s, 1), entries,
+        opensmacx_host_array<const RGBQUAD>(opensmacx_arg(s, 3), entries));
+}
+
+#define OPENSMACX_ARGS_GDI32_AnimatePalette 4
+#define OPENSMACX_ORACLE_GDI32_AnimatePalette safe  // no image memory changes
+inline uint32_t opensmacx_shim_GDI32_AnimatePalette(
+        OpensmacxStaticRecompileState &s) {
+    const uint32_t entries = opensmacx_arg(s, 2);
+    return AnimatePalette(
+        static_cast<HPALETTE>(opensmacx_handle(opensmacx_arg(s, 0))),
+        opensmacx_arg(s, 1), entries,
+        opensmacx_host_array<const PALETTEENTRY>(opensmacx_arg(s, 3), entries));
 }
 
 #endif  // OPENSMACX_LIFTED_IMPORTS_H

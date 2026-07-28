@@ -69,8 +69,18 @@
 //
 // Every input is a pure function of (function address, case index), so a
 // failure is reproducible from its address alone: `--only 0x004042a0` replays
-// it exactly. See `oracle_seed_case` in the .cpp for the rule, and
-// `oracle_seed_description` for the one-line summary the report prints.
+// it exactly. `--dump-seed <case>` prints the actual registers and the arena
+// around `this`, which is what an argument about a failure needs; the
+// generator's one-line description of a case is a summary, not evidence.
+//
+// Cases 0..3 are the four seeds the first whole-image sweep used, byte for
+// byte. Cases 4..15 are DRAWN: pointer density, value class, the words below
+// `this`, the stack fill, the register and argument mixes and all seven entry
+// flags are each chosen from the same (address, case) hash. The four fixed
+// seeds were the diagnosed weakness - they never produced a negative arena
+// word, never set a flag other than DF, and never put a boundary value
+// anywhere - so a mutation drawn at random from the PASS set was missed as
+// often as it was caught.
 //
 // The stack and the scratch arena both live in the guest's .reloc section
 // (0x009d0000..0x00a0c000). Relocations are dead weight in a module loaded at
@@ -96,29 +106,43 @@
 // KNOWN GAPS, measured rather than guessed
 // ---------------------------------------------------------------------------
 //
-// 1. THE ARENA HOLDS NO NEGATIVE VALUES. Its words are arena pointers or small
-//    positive integers. tools/lifted_oracle_mutate.py turned `sar` into `shr`
-//    in lifted_00404ef0 and the oracle passed it, because the value shifted
-//    comes from an object field and every seed makes that field non-negative,
-//    where the two shifts agree. The fix is one line - a case whose arena
-//    non-pointer words are negative - and it is deliberately NOT applied here
-//    because it changes every number in the report and those numbers were
-//    measured with this seed. It is the first thing to do next.
+// 1. CLOSED. The arena held no negative values, and `sar` -> `shr` in
+//    lifted_00404ef0 survived because of it. Cases 4 and up now draw arena
+//    words from four value classes, one of which is small-signed and one of
+//    which is a boundary table containing -1, INT_MIN and both signs of every
+//    width boundary.
 //
 // 2. GLOBALS ARE NEVER VARIED. Both sides start from the PE's .data as loaded,
 //    so a lowering that only misbehaves on a value the game computes at
-//    runtime is invisible.
+//    runtime is invisible. This one is still open.
 //
-// 3. THE FPU IS RESET BUT NOT COMPARED. A divergence confined to ST(0), with
-//    nothing written to memory, would pass. The count of x87-using functions
-//    among the passes is printed for exactly that reason.
+// 3. CLOSED. The x87 register file is compared: stack depth, the control word,
+//    the four condition codes, and the 80-bit encoding of every LIVE ST(i).
+//    Empty slots are excluded because nothing defines them. `--selfcheck`
+//    proves all four of those comparisons fail when damaged.
 //
-// 4. NEGATIVE ARGUMENTS AND POINTER ARGUMENTS ARE THE SAME SLOT. Case 3 puts
-//    negative values in half the argument words, and this image passes
-//    pointers in those words, so some of its failures are wild reads rather
-//    than lowering bugs. Cases 0 to 2 keep every argument in range; a failure
-//    that reproduces there is worth much more than one that only appears in
-//    case 3.
+// 4. NEGATIVE ARGUMENTS AND POINTER ARGUMENTS ARE THE SAME SLOT. Still true,
+//    and now deliberate: a draw chooses a pointer weight per case, so some
+//    cases pass structures and others pass numbers into the same slots. What
+//    changed is that the harness no longer MISREADS the result - see gap 5.
+//
+// 5. THE TOP 64 KiB IS UNMODELLABLE, and it is where every small negative
+//    pointer lands. 0xFFFF0000..0xFFFFFFFF is committed read/write memory on
+//    this host; VirtualQuery refuses the address, so the seal cannot cover it,
+//    and PAGE_NOACCESS makes it fault and then kills the process. The original
+//    reads it for real; the lifted side computes `opensmacx_image + 0xFFBFxxxx`
+//    and wraps onto the harness. A failing case is therefore arbitrated: the
+//    original is re-run twice with two different fills of that page, and if
+//    its answer moves the verdict is INCONCLUSIVE-original-top-page, never
+//    FAIL. The arbitration is one-sided - it cannot rescue a PASS that was
+//    reached the same way, and that remains a caveat on every PASS.
+//
+// 6. OUT-OF-SPAN READS THAT DO NOT FAULT ARE STILL POSSIBLE ABOVE 128 MiB.
+//    The wall covers the low 128 MiB and the seal covers every FREE region
+//    above it, but Wine's own mappings are neither. A guest pointer landing in
+//    one of those reads real memory on the original side and harness memory on
+//    the lifted side. No case of this has been isolated, and the arbitration
+//    in gap 5 does not cover it.
 
 #include <cstdint>
 #include <cstddef>
@@ -147,7 +171,29 @@ constexpr uint32_t OracleStackTop = 0x009fe000U;   // initial ESP
 constexpr uint32_t OracleScratchEnd = 0x00a0b000U;
 constexpr uint32_t OracleSeedArgWords = 12;        // args written above ESP
 
-constexpr int OracleCasesPerFunction = 4;
+// The arena is split in two halves, and the split is what makes a two-step
+// dereference survivable.
+//
+// A vbtable read is `mov eax,[this-N]; mov edx,[eax+K]`, and it needs the FIRST
+// word to be a pointer and the SECOND to be a small displacement. A uniformly
+// seeded arena cannot deliver both: whatever density makes step one a pointer
+// makes step two one too, and `edx + this` is then nine megabytes away and
+// faults. That single pattern is the largest identified family among the 522
+// INCONCLUSIVE-original-fault rows - 0x00401060 dies on it at instruction four.
+//
+// NODE words are a mixture of pointers and values; LEAF words are never
+// pointers. A pointer that aims at the leaf half therefore terminates the
+// chain in a value, so `p->q` reaches something a displacement can be made of.
+constexpr uint32_t OracleArenaNodeBase = OracleArenaBase;
+constexpr uint32_t OracleArenaNodeSize = 0x00010000U;
+constexpr uint32_t OracleArenaLeafBase = OracleArenaBase + 0x00010000U;
+constexpr uint32_t OracleArenaLeafSize = 0x00010000U;
+
+// Cases 0..3 are the four the first whole-image sweep used, byte for byte, so
+// that every failure it found still reproduces and the delta is purely
+// additive. Cases 4 and up are DRAWN: see `make_profile` in the .cpp.
+constexpr int OracleLegacyCases = 4;
+constexpr int OracleCasesPerFunction = 16;
 
 // --------------------------------------------------------------------------
 // Verdicts
@@ -173,6 +219,12 @@ enum OracleVerdict {
     // because it can also hide a real bug: a lowering that computes the wrong
     // address lands here too, and this harness cannot tell the two apart.
     OracleInconclusiveOutOfSpan,
+    // The ORIGINAL's answer changed when the unmodellable top 64 KiB was
+    // filled with a different byte, so it read memory the lift cannot model
+    // and the two sides were never looking at the same program. Established by
+    // re-running the original twice with different fills, only on cases that
+    // would otherwise be reported FAIL.
+    OracleInconclusiveTopPage,
 };
 
 const char *oracle_verdict_name(OracleVerdict verdict);
@@ -185,6 +237,19 @@ struct OracleRegisters {
     uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi, eflags;
 };
 
+// The x87 state, reduced to the part that is defined on both sides.
+//
+// `depth` and the ST values are compared, the eight physical slots are NOT: a
+// slot marked empty holds whatever the last value to occupy it left behind on
+// real silicon, and nothing in the lift's model promises to reproduce that.
+// Comparing all eight would report a divergence for every function that pops.
+struct OracleX87 {
+    uint32_t depth;            // live registers, ST(0)..ST(depth-1)
+    uint16_t control;
+    uint16_t condition_codes;  // C3 C2 C1 C0, masked out of the status word
+    uint8_t st[8][10];         // ST(0) first, 80-bit encodings
+};
+
 struct OracleResult {
     OracleVerdict verdict;
     uint32_t address;
@@ -192,8 +257,12 @@ struct OracleResult {
     OracleRegisters before;
     OracleRegisters original;
     OracleRegisters lifted;
+    OracleX87 original_x87;
+    OracleX87 lifted_x87;
     uint32_t register_mask;    // bit i set: register i disagrees (index order)
     uint32_t flag_mask;        // OracleFlag* bits that disagree
+    // bit 0 depth, bit 1 control word, bit 2 condition codes, bits 8+i ST(i).
+    uint32_t x87_mask;
     uint32_t memory_diffs;     // number of differing 4-byte words
     uint32_t first_diff;       // guest address of the first differing word
     uint32_t first_diff_original;
@@ -250,6 +319,12 @@ void oracle_arm(uint32_t budget, uint32_t watchdog_ms);
 // Runs one case. Deterministic in (address, case_index).
 OracleResult oracle_run_case(uint32_t address, int case_index);
 
+// Prints the entry registers and a window of the seeded arena for one case, so
+// that a failure can be reasoned about from the actual input rather than from
+// the generator's description of it. Reporting an input class is not the same
+// as reporting the input.
+void oracle_dump_seed(uint32_t address, int case_index);
+
 // --------------------------------------------------------------------------
 // Proving the comparison itself is live.
 //
@@ -267,13 +342,24 @@ OracleResult oracle_run_case(uint32_t address, int case_index);
 //
 // `oracle_perturb` selects what to damage between the lifted body returning
 // and the comparison running: 0 none, 1..8 a register, 9..15 a flag bit,
-// 16 one byte of guest memory.
+// 16 one byte of guest memory, 17 the x87 stack depth, 18 the value in ST(0),
+// 19 the x87 control word, 20 the x87 condition codes.
+//
+// The four x87 perturbations are applied on a function that does not use the
+// FPU on purpose. Both sides start from a defined, EMPTY x87 state, so damage
+// to it is observable there too - and a comparison that only wakes up on the
+// 58 x87-using functions could not be proved live on the address the selfcheck
+// runs.
 extern int oracle_perturb;
 constexpr int OraclePerturbNone = 0;
 constexpr int OraclePerturbRegisterFirst = 1;   // .. 8
 constexpr int OraclePerturbFlagFirst = 9;       // .. 15
 constexpr int OraclePerturbMemory = 16;
-constexpr int OraclePerturbLast = 16;
+constexpr int OraclePerturbX87Depth = 17;
+constexpr int OraclePerturbX87Value = 18;
+constexpr int OraclePerturbX87Control = 19;
+constexpr int OraclePerturbX87Codes = 20;
+constexpr int OraclePerturbLast = 20;
 const char *oracle_perturb_name(int which);
 
 // Re-runs the original single-stepped to find the instruction that last wrote
@@ -287,7 +373,17 @@ uint32_t oracle_blame(uint32_t address, int case_index,
 // Call it after all of the harness's own allocation is done.
 uint32_t oracle_seal_address_space();
 
-const char *oracle_seed_description(int case_index);
+// The top 64 KiB is the one range neither the wall nor the seal can cover:
+// VirtualQuery refuses the address, and making it fault with VirtualProtect
+// kills the process. It is where every small negative pointer lands. See the
+// block comment in the .cpp; `oracle_arm` calls the probe.
+void oracle_probe_top_page();
+bool oracle_top_page_writable();
+
+// The description depends on the ADDRESS as well as the case, because every
+// case from OracleLegacyCases up draws its shape from the pair. Returns a
+// pointer to a static buffer, valid until the next call.
+const char *oracle_seed_description(uint32_t address, int case_index);
 const char *oracle_register_name(int index);
 
 // Statistics the caller reports so the cost of the design is a measurement.
