@@ -226,8 +226,31 @@ def main():
             r"-0x2\(%e[a-z]{2}\).*?-0x4\([^\n]+\).*?"
             r"-0x1\([^\n]+\)"
         )
+        # g++ 13 for i686-w64-mingw32 emits a THIRD shape with the same
+        # semantics: it advances the source by four before the SECOND read
+        # rather than before the first write, and keeps a separate destination
+        # register, so the destination displacements are positive and the
+        # source displacements are the -3/-2 of an already-advanced pointer.
+        #
+        #   movzbl (%eax),%ecx      -> mov %cl,0x2(%edx)   read red,   write blue
+        #   movzbl -0x3(%eax),%ecx  -> mov %cl,0x1(%edx)   read green, write green
+        #   movzbl -0x2(%eax),%ecx  -> mov %cl,(%edx)      read blue,  write red
+        #   movb   $0x0,0x3(%edx)                          write reserved
+        #
+        # Written out pair by pair rather than as a looser pattern, because the
+        # property being checked is an ORDER: a regex permissive enough to
+        # match a permutation of these would pass the exact defect the check
+        # exists to catch, and this is the third shape to arrive - there will
+        # be a fourth.
+        advanced_source_access_order = (
+            r"movzbl\s+\(%e[a-z]{2}\),.*?mov\s+%[a-z]l,0x2\(%e[a-z]{2}\).*?"
+            r"movzbl\s+-0x3\(%e[a-z]{2}\),.*?mov\s+%[a-z]l,0x1\(%e[a-z]{2}\).*?"
+            r"movzbl\s+-0x2\(%e[a-z]{2}\),.*?mov\s+%[a-z]l,\(%e[a-z]{2}\).*?"
+            r"movb\s+\$0x0,0x3\(%e[a-z]{2}\)"
+        )
         if not (re.search(direct_access_order, body, re.DOTALL)
-                or re.search(rebased_access_order, body, re.DOTALL)):
+                or re.search(rebased_access_order, body, re.DOTALL)
+                or re.search(advanced_source_access_order, body, re.DOTALL)):
             fail("Palette RGBQUAD conversion lost its alias-sensitive access order")
 
     if args.buffer_object:
