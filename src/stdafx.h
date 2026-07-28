@@ -28,7 +28,14 @@
 #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers
 #define DLLEXPORT __declspec(dllexport)
 
-#include <SDKDDKVer.h>
+// Lower case, and that is not a style choice. The Windows SDK ships this as
+// SDKDDKVer.h and mingw-w64 ships it as sdkddkver.h; both spellings resolve on
+// Windows and on a case-insensitive macOS filesystem, and only the lower-case
+// one resolves on Linux. With the upper-case spelling every target that pulls
+// in this header - the DLL, recovery-leaf-tests, the oracle tests - fails to
+// compile here, which is the whole recovery gate. Same class of defect as the
+// path casefolding in bb95bb5, and invisible for the same reason.
+#include <sdkddkver.h>
 #include <random>
 #include <sstream>
 #include <stdio.h>
