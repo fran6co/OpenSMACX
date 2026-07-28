@@ -70,7 +70,6 @@ P3,221,0x00406330,?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z,76,0,2,unre
 P0,1084421,0x00406380,?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z,332,84,4,original_dependency,ui_dependency,recover_popup_start_full,2,exact,exact,"void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)"
 P0,1076121,0x004064D0,??1BasePop@@QAE@XZ,583,75,11,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
 P3,220,0x00406670,sub_406670,75,0,2,unrecovered,,,2,exact,exact,
-P3,10,0x00406840,sub_406840,6,0,0,unrecovered,,,1,exact,missing,
 P0,1001020,0x00406850,??1Sprite@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_sprite_element_teardown,2,exact,exact,
 P3,11,0x00406860,?hide@BaseButton@@QAEXXZ,25,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)
 P2,9120,0x00406A90,sub_406a90,83,9,1,unrecovered,,,2,exact,exact,
@@ -439,7 +438,6 @@ P3,21,0x00447530,?basewin_show@UAmbience@@QAEXXZ,26,0,0,unrecovered,,,2,exact,ex
 P3,21,0x00447550,?basewin_hide@UAmbience@@QAEXXZ,19,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?basewin_hide@UAmbience@@QAEXXZ)(UAmbience* this)
 P3,21,0x00447570,?general@UAmbience@@QAEXXZ,276,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?general@UAmbience@@QAEXXZ)(UAmbience* this)
 P3,21,0x004476C0,?begin@SAmbience@@QAEXXZ,22,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?begin@SAmbience@@QAEXXZ)(SAmbience* this)
-P3,11,0x004476E0,?tech@SAmbience@@QAEXXZ,4,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?tech@SAmbience@@QAEXXZ)(SAmbience* this)
 P3,21,0x004476F0,?general@SAmbience@@QAEXXZ,185,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?general@SAmbience@@QAEXXZ)(SAmbience* this)
 P3,21,0x004477B0,?hostility@SAmbience@@QAEXXZ,129,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?hostility@SAmbience@@QAEXXZ)(SAmbience* this)
 P3,11,0x00447840,?production@SAmbience@@QAEXXZ,11,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?production@SAmbience@@QAEXXZ)(SAmbience* this)
@@ -448,7 +446,6 @@ P3,21,0x00447880,?base_liberated@SAmbience@@QAEXXZ,67,0,0,unrecovered,,,2,exact,
 P3,111,0x004478D0,??0BAmbience@@QAE@XZ,65,0,1,unrecovered,,,1,missing,exact,void (__thiscall ??0BAmbience@@QAE@XZ)(BAmbience* this)
 P3,21,0x00447920,?begin@BAmbience@@QAEXXZ,22,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?begin@BAmbience@@QAEXXZ)(BAmbience* this)
 P3,121,0x00447940,?general@BAmbience@@QAEXXZ,361,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?general@BAmbience@@QAEXXZ)(BAmbience* this)
-P3,11,0x00447AB0,?design_window_show@BAmbience@@QAEXXZ,5,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?design_window_show@BAmbience@@QAEXXZ)(BAmbience* this)
 P3,21,0x00447AC0,?design_window_hide@BAmbience@@QAEXXZ,43,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?design_window_hide@BAmbience@@QAEXXZ)(BAmbience* this)
 P3,11,0x00447AF0,?hostility@BAmbience@@QAEXXZ,61,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hostility@BAmbience@@QAEXXZ)(BAmbience* this)
 P3,21,0x00447B30,?new_base@BAmbience@@QAEXXZ,40,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?new_base@BAmbience@@QAEXXZ)(BAmbience* this)
@@ -461,13 +458,9 @@ P3,21,0x00447CD0,?new_base@GAmbience@@QAEXXZ,55,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00447D20,sub_447d20,133,0,0,unrecovered,,,1,missing,exact,
 P3,21,0x00447DB0,?begin@AAmbience@@QAEXXZ,22,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?begin@AAmbience@@QAEXXZ)(AAmbience* this)
 P3,11,0x00447DD0,?general@AAmbience@@QAEXXZ,1187,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?general@AAmbience@@QAEXXZ)(AAmbience* this)
-P3,11,0x00448280,?tech@AAmbience@@QAEXXZ,4,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
 P0,1001021,0x004482C0,??1Effect@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
 P0,1000121,0x004482D0,??0Effect@@QAE@XZ,18,0,1,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this)
 P3,20,0x004482F0,sub_4482f0,28,0,0,unrecovered,,,2,exact,exact,
-P3,10,0x00448310,sub_448310,4,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x00448320,sub_448320,4,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x00448330,sub_448330,4,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00448340,sub_448340,15,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00448380,sub_448380,10,0,0,unrecovered,,,1,exact,missing,
 P3,2421,0x00448400,?init@FameWin@@QAEHXZ,2421,1,14,unrecovered,,,2,exact,entry_range,int (__thiscall ?init@FameWin@@QAEHXZ)(FameWin* this)
@@ -1131,7 +1124,6 @@ P3,110,0x004C7380,sub_4c7380,51,0,1,unrecovered,,,1,missing,exact,
 P3,410,0x004C73C0,sub_4c73c0,228,0,4,unrecovered,,,1,missing,exact,
 P3,410,0x004C74B0,sub_4c74b0,64,0,4,unrecovered,,,1,missing,exact,
 P3,410,0x004C74F0,sub_4c74f0,176,0,4,unrecovered,,,1,missing,exact,
-P3,10,0x004C75A0,sub_4c75a0,7,0,0,unrecovered,,,1,exact,missing,
 P3,120,0x004C75B0,sub_4c75b0,214,0,1,unrecovered,,,2,entry_range,entry_range,
 P3,21,0x004C7780,?set_volume@Midi@@QAEXH@Z,35,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_volume@Midi@@QAEXH@Z)(Midi* this, int)"
 P3,21,0x004C77B0,?switch_state@Midi@@QAEH_N@Z,26,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?switch_state@Midi@@QAEH_N@Z)(Midi* this, bool)"
@@ -1187,7 +1179,6 @@ P3,21,0x004C8F40,?unload@VoiceTx@@QAEXXZ,48,0,0,unrecovered,,,2,exact,exact,void
 P3,21,0x004C8F70,?init@VoiceTx@@QAEHKPAXK@Z,151,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@VoiceTx@@QAEHKPAXK@Z)(VoiceTx* this, unsigned int, void*, unsigned int)"
 P3,2620,0x004C9080,sub_4c9080,749,1,16,unrecovered,,,2,exact,entry_range,
 P3,10,0x004C9390,sub_4c9390,18,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x004C93E0,sub_4c93e0,8,0,0,unrecovered,,,1,exact,missing,
 P3,4521,0x004C96E0,?action_build@@YAHHPAD@Z,741,3,15,unrecovered,,,2,exact,exact,"int (__cdecl ?action_build@@YAHHPAD@Z)(int vehID, int8*)"
 P3,10,0x004C99D0,sub_4c99d0,115,0,0,unrecovered,,,1,missing,exact,
 P2,10721,0x004C9B00,?action_terraform@@YAHHHH@Z,3179,8,27,unrecovered,,,2,exact,exact,"int (__cdecl ?action_terraform@@YAHHHH@Z)(int vehID, int terraformID, BOOL tgl)"
@@ -2079,8 +2070,6 @@ P3,810,0x005D9FB0,sub_5d9fb0,888,0,8,unrecovered,,,1,exact,missing,
 P0,1002021,0x005DA330,?map_colors@Buffer@@QAEHHHHHPAE@Z,401,2,0,original_dependency,ui_dependency,recover_buffer_map_colors,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHHHHHPAE@Z)(Buffer* this, int, int, int, int, unsigned int8*)"
 P3,2021,0x005DA4D0,?map_colors@Buffer@@QAEHPAURECT@@PAE@Z,429,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z)(Buffer* this, RECT*, unsigned int8*)"
 P3,1120,0x005DA680,?poly@Buffer@@QAEHPAUVert@@HH@Z,27,1,1,unrecovered,,,2,exact,exact,
-P3,10,0x005DA6A0,sub_5da6a0,8,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x005DA6B0,sub_5da6b0,8,0,0,unrecovered,,,1,exact,missing,
 P3,1221,0x005DA6C0,?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z,401,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)"
 P2,12221,0x005DA860,?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z,396,12,2,unrecovered,,,2,exact,exact,"int (__thiscall ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)"
 P2,13221,0x005DA9F0,?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z,410,13,2,unrecovered,,,2,exact,exact,"int (__thiscall ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z)(Buffer* this, Sprite*, int, int, int, int, int, int)"
@@ -2154,8 +2143,6 @@ P3,2021,0x005E1EF0,?dotted_vline@Buffer@@QAEXHHHH@Z,384,2,0,unrecovered,,,2,exac
 P3,2021,0x005E2070,?change_color@Buffer@@QAEHHHHHHH@Z,413,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?change_color@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)"
 P2,15021,0x005E2210,?get_pixel@Buffer@@QAEHHH@Z,286,15,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_pixel@Buffer@@QAEHHH@Z)(Buffer* this, int, int)"
 P3,1021,0x005E2330,?put_pixel@Buffer@@QAEHHHH@Z,295,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?put_pixel@Buffer@@QAEHHHH@Z)(Buffer* this, int, int, int)"
-P3,10,0x005E2460,sub_5e2460,8,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x005E2470,sub_5e2470,8,0,0,unrecovered,,,1,exact,missing,
 P2,13820,0x005E2480,?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z,549,13,8,unrecovered,,,2,exact,entry_range,
 P3,2721,0x005E2690,?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z,1127,2,7,unrecovered,,,2,exact,exact,"int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)"
 P3,2221,0x005E2B00,?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z,723,2,2,unrecovered,,,2,exact,exact,"int (__thiscall ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)"
@@ -2456,7 +2443,6 @@ P3,1321,0x005FFF90,?load@MCIVideo@@QAEHPADPAUWin@@HH@Z,578,1,3,unrecovered,,,2,e
 P3,1121,0x006001E0,?play@MCIVideo@@QAEXXZ,144,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?play@MCIVideo@@QAEXXZ)(MCIVideo* this)
 P3,1021,0x00600270,?stop@MCIVideo@@QAEXXZ,123,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?stop@MCIVideo@@QAEXXZ)(MCIVideo* this)
 P3,11,0x006002F0,?status@MCIVideo@@QAEHXZ,47,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?status@MCIVideo@@QAEHXZ)(MCIVideo* this)
-P3,1021,0x00600320,?is_playing@MCIVideo@@QAEHXZ,6,1,0,unrecovered,,,2,exact,exact,int (__thiscall ?is_playing@MCIVideo@@QAEHXZ)(MCIVideo* this)
 P3,210,0x00600330,sub_600330,99,0,2,unrecovered,,,1,missing,exact,
 P2,8721,0x00600860,??0BasePop@@QAE@XZ,1815,8,7,unrecovered,,,2,exact,entry_range,void (__thiscall ??0BasePop@@QAE@XZ)(BasePop* this)
 P0,1100921,0x00600F00,?close@BasePop@@QAEXXZ,1705,100,9,original_dependency,ui_dependency,recover_base_pop_close,2,exact,exact,void (__thiscall ?close@BasePop@@QAEXXZ)(BasePop* this)
@@ -2881,7 +2867,6 @@ P3,0,0x0062D160,sub_62d160,49,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x0062D1A0,sub_62d1a0,50,0,0,unrecovered,,,0,missing,missing,
 P3,10,0x0062D1E0,sub_62d1e0,209,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0062D2C0,sub_62d2c0,206,0,0,unrecovered,,,1,exact,missing,
-P3,1020,0x0062D390,sub_62d390,6,1,0,unrecovered,,,2,exact,exact,
 P3,2921,0x0062D3A0,?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z,342,1,19,unrecovered,,,2,exact,exact,"int (__cdecl ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z)(Palette* pPalEntries, Font* fontBuffer, int8* lpWindowName, int nDDTgl, int displayWidth, int displayHeight, int nCmdLineVal)"
 P3,2520,0x0062D500,?jackal_close@@YAXXZ,98,1,15,unrecovered,,,2,exact,exact,
 P0,1012020,0x0062D5B0,?do_net@@YAXXZ,25,12,0,original_dependency,platform_service,recover_network_pump,2,exact,exact,
@@ -3000,7 +2985,6 @@ P3,110,0x006357D0,sub_6357d0,101,0,1,unrecovered,,,1,exact,missing,
 P3,10,0x00635840,sub_635840,36,0,0,unrecovered,,,1,missing,exact,
 P3,1320,0x00635870,sub_635870,1691,1,3,unrecovered,,,2,exact,exact,
 P0,1016420,0x00636300,?do_video@@YAXXZ,238,16,4,original_dependency,platform_service,recover_video_pump,2,exact,exact,
-P3,10,0x006363F0,sub_6363f0,12,0,0,unrecovered,,,1,exact,missing,
 P3,621,0x00636400,??0Video@@QAE@XZ,359,0,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Video@@QAE@XZ)(Video* this)
 P3,521,0x00636530,??1Video@@QAE@XZ,175,0,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??1Video@@QAE@XZ)(Video* this)
 P3,4720,0x006365B0,Video_unk1,386,4,7,unrecovered,,,2,exact,exact,

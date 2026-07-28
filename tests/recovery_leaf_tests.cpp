@@ -2,6 +2,7 @@
 #include "../src/alphanet.h"
 #include "../src/autosound.h"
 #include "../src/basepop.h"
+#include "../src/field_accessors.h"
 #include "../src/basebutton.h"
 #include "../src/buttongroup.h"
 #include "../src/console.h"
@@ -2406,6 +2407,115 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     g_base_pop_item_text = text;
     g_base_pop_item_index = index;
     return 0x5A5A1234;
+}
+
+void test_field_accessors() {
+    // The sixteen bodies tools/generate_field_accessors.py emitted. Each is
+    // one expression, so the fixture is a table: seed the object, call, and
+    // require the exact value AND that the object moved only where the shape
+    // says it should. The seed pattern is non-uniform, so a body reading the
+    // wrong offset returns a different dword rather than an equal one.
+    uint8_t storage[0x600 + 32];
+    uint8_t expected[sizeof(storage)];
+    auto seed = [&]() {
+        // The `0x35 + i * 17` pattern used elsewhere here REPEATS every 512
+        // bytes - 512 * 17 is a multiple of 256 - so the dword at 0 and the
+        // dword at 0x200 are identical under it, and the reader at 0x200 could
+        // have its offset mutated to 0 without any assertion noticing. The
+        // sweep found exactly that. The extra per-page term breaks the period.
+        for (size_t i = 0; i < sizeof(storage); ++i) {
+            storage[i] = static_cast<uint8_t>(0x35 + i * 17 + (i >> 8) * 0x51);
+        }
+        std::memcpy(expected, storage, sizeof(storage));
+    };
+    auto at = [&](size_t offset) {
+        uint32_t value;
+        std::memcpy(&value, storage + 16 + offset, sizeof(value));
+        return value;
+    };
+    void *const self = storage + 16;
+
+    // --- readers: return the dword at an offset, write nothing ---
+    struct Reader { uint32_t (__fastcall *fn)(void *, void *); size_t offset; };
+    const Reader readers[] = {
+        {&field_accessor_00448310_redirect, 0x48},
+        {&field_accessor_00448320_redirect, 0x44},
+        {&field_accessor_00448330_redirect, 0x50},
+        {&field_accessor_004c75a0_redirect, 0x200},
+    };
+    for (const Reader &one : readers) {
+        seed();
+        expect(one.fn(self, nullptr) == at(one.offset));
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    // --- masked readers ---
+    //
+    // The mask is only observable when the seeded word HAS the bit, and only
+    // the offset is observable when the other candidate word does not. A
+    // uniform seed gave neither: bit 15 happened to be clear at 0x4AC, so
+    // both `& 0x8000 -> & 0` and `0x4AC -> 0` survived the sweep. These write
+    // the two words explicitly and in opposition.
+    struct Masked {
+        uint32_t (__fastcall *fn)(void *, void *);
+        size_t offset; uint32_t mask;
+    };
+    const Masked masked[] = {
+        {&field_accessor_00600320_redirect, 0x000, 1U},
+        {&field_accessor_006363f0_redirect, 0x4AC, 0x8000U},
+    };
+    for (const Masked &one : masked) {
+        for (int bit_set = 0; bit_set < 2; ++bit_set) {
+            seed();
+            // The word under test carries the bit or not; every other word the
+            // mutation could reach instead carries the OPPOSITE, so reading
+            // the wrong offset gives the wrong answer.
+            const uint32_t here = bit_set ? one.mask : 0U;
+            const uint32_t elsewhere = bit_set ? 0U : one.mask;
+            for (const Masked &other : masked) {
+                const uint32_t value = (other.offset == one.offset)
+                    ? here : elsewhere;
+                std::memcpy(storage + 16 + other.offset, &value, sizeof(value));
+                std::memcpy(expected + 16 + other.offset, &value, sizeof(value));
+            }
+            expect(one.fn(self, nullptr) == here);
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+
+    // --- constants: same answer whatever the object holds ---
+    struct Constant { uint32_t (__fastcall *fn)(void *, void *); uint32_t value; };
+    const Constant constants[] = {
+        {&field_accessor_00406840_redirect, 1},
+        {&field_accessor_0062d390_redirect, 1},
+        {&field_accessor_004c93e0_redirect, 0xB},
+        {&field_accessor_005da6a0_redirect, 8},
+        {&field_accessor_005da6b0_redirect, 8},
+        {&field_accessor_005e2460_redirect, 8},
+        {&field_accessor_005e2470_redirect, 8},
+    };
+    for (const Constant &one : constants) {
+        seed();
+        expect(one.fn(self, nullptr) == one.value);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    // --- increments: exactly one dword moves, by exactly one ---
+    for (auto *fn : {&field_accessor_004476e0_redirect,
+                     &field_accessor_00448280_redirect}) {
+        seed();
+        const uint32_t before = at(0x58);
+        const uint32_t after = before + 1;
+        std::memcpy(expected + 16 + 0x58, &after, sizeof(after));
+        (*fn)(self, nullptr);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
+    // --- byte store: one BYTE moves, which the neighbours prove ---
+    seed();
+    expected[16 + 0x6D] = 1;
+    field_accessor_00447ab0_redirect(self, nullptr);
+    expect_storage_bytes(storage, expected, sizeof(storage));
 }
 
 void test_texture_store_construct() {
@@ -29058,6 +29168,7 @@ int main() {
     test_g_ambience_basewin_show();
     test_cursor_construct();
     test_texture_store_construct();
+    test_field_accessors();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();

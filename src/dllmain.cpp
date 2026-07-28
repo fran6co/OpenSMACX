@@ -89,6 +89,7 @@
 #include "font.h"
 #include "atexit_thunks.h"
 #include "delegation_thunks.h"
+#include "field_accessors.h"
 #include "global_arith.h"
 #include "guarded_teardowns.h"
 #include "nullsub_thunks.h"
@@ -118,7 +119,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 1958;
+constexpr size_t RedirectCount = 1974;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -592,6 +593,11 @@ bool install_redirects() {
             0x00406820,
             reinterpret_cast<uintptr_t>(&string_list_destructor_redirect),
             OPENSMACX_SIGNATURE_00406820,
+        },
+        {
+            0x00406840,
+            reinterpret_cast<uintptr_t>(&field_accessor_00406840_redirect),
+            OPENSMACX_SIGNATURE_00406840,
         },
         {
             0x004068E0,
@@ -1879,6 +1885,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004476B0,
         },
         {
+            0x004476E0,
+            reinterpret_cast<uintptr_t>(&field_accessor_004476e0_redirect),
+            OPENSMACX_SIGNATURE_004476E0,
+        },
+        {
+            0x00447AB0,
+            reinterpret_cast<uintptr_t>(&field_accessor_00447ab0_redirect),
+            OPENSMACX_SIGNATURE_00447AB0,
+        },
+        {
             0x00447BE0,
             reinterpret_cast<uintptr_t>(&g_ambience_basewin_show_redirect),
             OPENSMACX_SIGNATURE_00447BE0,
@@ -1909,6 +1925,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00447CC0,
         },
         {
+            0x00448280,
+            reinterpret_cast<uintptr_t>(&field_accessor_00448280_redirect),
+            OPENSMACX_SIGNATURE_00448280,
+        },
+        {
             0x00448290,
             reinterpret_cast<uintptr_t>(&fx_dtor_redirect),
             OPENSMACX_SIGNATURE_00448290,
@@ -1917,6 +1938,21 @@ bool install_redirects() {
             0x004482A0,
             reinterpret_cast<uintptr_t>(&fx_ctor_redirect),
             OPENSMACX_SIGNATURE_004482A0,
+        },
+        {
+            0x00448310,
+            reinterpret_cast<uintptr_t>(&field_accessor_00448310_redirect),
+            OPENSMACX_SIGNATURE_00448310,
+        },
+        {
+            0x00448320,
+            reinterpret_cast<uintptr_t>(&field_accessor_00448320_redirect),
+            OPENSMACX_SIGNATURE_00448320,
+        },
+        {
+            0x00448330,
+            reinterpret_cast<uintptr_t>(&field_accessor_00448330_redirect),
+            OPENSMACX_SIGNATURE_00448330,
         },
         {
             0x00448350,
@@ -6914,6 +6950,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_004C7250,
         },
         {
+            0x004C75A0,
+            reinterpret_cast<uintptr_t>(&field_accessor_004c75a0_redirect),
+            OPENSMACX_SIGNATURE_004C75A0,
+        },
+        {
             0x004C7670,
             reinterpret_cast<uintptr_t>(&ambience_dtor_redirect),
             OPENSMACX_SIGNATURE_004C7670,
@@ -7162,6 +7203,11 @@ bool install_redirects() {
             0x004C93B0,
             reinterpret_cast<uintptr_t>(&scalar_delete_voice_rx),
             OPENSMACX_SIGNATURE_004C93B0,
+        },
+        {
+            0x004C93E0,
+            reinterpret_cast<uintptr_t>(&field_accessor_004c93e0_redirect),
+            OPENSMACX_SIGNATURE_004C93E0,
         },
         {
             0x004C93F0,
@@ -7999,6 +8045,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_005D95E0,
         },
         {
+            0x005DA6A0,
+            reinterpret_cast<uintptr_t>(&field_accessor_005da6a0_redirect),
+            OPENSMACX_SIGNATURE_005DA6A0,
+        },
+        {
+            0x005DA6B0,
+            reinterpret_cast<uintptr_t>(&field_accessor_005da6b0_redirect),
+            OPENSMACX_SIGNATURE_005DA6B0,
+        },
+        {
             0x005DCEA0,
             reinterpret_cast<uintptr_t>(&buffer_write_l_redirect),
             OPENSMACX_SIGNATURE_005DCEA0,
@@ -8022,6 +8078,16 @@ bool install_redirects() {
             0x005DEF90,
             reinterpret_cast<uintptr_t>(&buffer_clear_links_redirect),
             OPENSMACX_SIGNATURE_005DEF90,
+        },
+        {
+            0x005E2460,
+            reinterpret_cast<uintptr_t>(&field_accessor_005e2460_redirect),
+            OPENSMACX_SIGNATURE_005E2460,
+        },
+        {
+            0x005E2470,
+            reinterpret_cast<uintptr_t>(&field_accessor_005e2470_redirect),
+            OPENSMACX_SIGNATURE_005E2470,
         },
         {
             0x005E3203,
@@ -8367,6 +8433,11 @@ bool install_redirects() {
             0x005FED10,
             reinterpret_cast<uintptr_t>(&palette_get_pos_redirect),
             OPENSMACX_SIGNATURE_005FED10,
+        },
+        {
+            0x00600320,
+            reinterpret_cast<uintptr_t>(&field_accessor_00600320_redirect),
+            OPENSMACX_SIGNATURE_00600320,
         },
         {
             0x00601B20,
@@ -9936,6 +10007,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_0062D150,
         },
         {
+            0x0062D390,
+            reinterpret_cast<uintptr_t>(&field_accessor_0062d390_redirect),
+            OPENSMACX_SIGNATURE_0062D390,
+        },
+        {
             0x0062ED30,
             reinterpret_cast<uintptr_t>(&net_poll_players_redirect),
             OPENSMACX_SIGNATURE_0062ED30,
@@ -10024,6 +10100,11 @@ bool install_redirects() {
             0x00525AF4,
             reinterpret_cast<uintptr_t>(&scenario_turn_advance_trampoline),
             OPENSMACX_SIGNATURE_00525AF4,
+        },
+        {
+            0x006363F0,
+            reinterpret_cast<uintptr_t>(&field_accessor_006363f0_redirect),
+            OPENSMACX_SIGNATURE_006363F0,
         },
         {
             0x00637190,
