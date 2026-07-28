@@ -2511,6 +2511,59 @@ void test_field_accessors() {
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
 
+    // --- store sequences: set N fields to constants ---
+    //
+    // Transcribed from the emitted bodies, so this catches a body that DRIFTS
+    // from what was generated - a wrong offset, a dropped store, a changed
+    // constant, a lost residue. It cannot catch the generator and the emitted
+    // code sharing a misreading of the original, because both come from the
+    // same decode; that is what the mutation sweep and the differential oracle
+    // are for, and saying so beats implying otherwise.
+    //
+    // Split by return type rather than casting one function-pointer type to
+    // the other: some of these carry the EAX = this residue and some do not,
+    // and calling through the wrong prototype would be undefined even where it
+    // happens to work.
+    struct Store { size_t offset; uint32_t value; };
+    struct ReturnsSelf { void *(__fastcall *fn)(void *, void *);
+                         Store stores[16]; int count; };
+    struct ReturnsVoid { void (__fastcall *fn)(void *, void *);
+                         Store stores[16]; int count; };
+    const ReturnsSelf returning_self[] = {
+        {&field_accessor_004c8090_redirect, {{0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x0U}, {0x0, 0x0U}, {0x14, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}, {0x20, 0xffffffffU}}, 9},
+        {&field_accessor_004c8100_redirect, {{0x4, 0x0U}, {0x8, 0x0U}}, 2},
+        {&field_accessor_005e35d0_redirect, {{0x0, 0x0U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x0U}, {0x14, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}, {0x20, 0x0U}}, 9},
+        {&field_accessor_00616b20_redirect, {{0x0, 0x0U}, {0x4, 0x0U}, {0x8, 0x0U}}, 3},
+        {&field_accessor_006346c0_redirect, {{0x0, 0x3f800000U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x3f800000U}, {0x14, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}, {0x20, 0x3f800000U}}, 9},
+        {&field_accessor_00634b70_redirect, {{0x0, 0x3f800000U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x3f800000U}, {0x14, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}, {0x20, 0x3f800000U}}, 9},
+        {&field_accessor_00634fb0_redirect, {{0x0, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x4, 0x0U}}, 4},
+        {&field_accessor_006354d0_redirect, {{0x0, 0x0U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}}, 7},
+        {&field_accessor_0063e520_redirect, {{0x0, 0x0U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0xffffffffU}}, 4},
+    };
+    const ReturnsVoid returning_void[] = {
+        {&field_accessor_00590d60_redirect, {{0x200, 0x0U}}, 1},
+        {&field_accessor_005e35f0_redirect, {{0x0, 0x0U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x0U}, {0x14, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}, {0x20, 0x0U}}, 9},
+        {&field_accessor_006346f0_redirect, {{0x0, 0x3f800000U}, {0x4, 0x0U}, {0x8, 0x0U}, {0xc, 0x0U}, {0x10, 0x3f800000U}, {0x14, 0x0U}, {0x18, 0x0U}, {0x1c, 0x0U}, {0x20, 0x3f800000U}}, 9},
+    };
+    for (const ReturnsSelf &one : returning_self) {
+        seed();
+        for (int i = 0; i < one.count; ++i) {
+            std::memcpy(expected + 16 + one.stores[i].offset,
+                        &one.stores[i].value, sizeof(uint32_t));
+        }
+        expect(one.fn(self, nullptr) == self);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+    for (const ReturnsVoid &one : returning_void) {
+        seed();
+        for (int i = 0; i < one.count; ++i) {
+            std::memcpy(expected + 16 + one.stores[i].offset,
+                        &one.stores[i].value, sizeof(uint32_t));
+        }
+        one.fn(self, nullptr);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
     // --- byte store: one BYTE moves, which the neighbours prove ---
     seed();
     expected[16 + 0x6D] = 1;

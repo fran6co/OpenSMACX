@@ -1142,10 +1142,8 @@ P3,20,0x004C7FF0,sub_4c7ff0,39,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x004C8020,sub_4c8020,35,0,0,unrecovered,,,2,exact,exact,
 P3,21,0x004C8050,?set_play_type@Midi@@QAEHI@Z,26,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_play_type@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
 P3,10,0x004C8070,sub_4c8070,25,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x004C8090,sub_4c8090,35,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x004C80C0,sub_4c80c0,23,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x004C80E0,sub_4c80e0,23,0,0,unrecovered,,,1,missing,exact,
-P3,10,0x004C8100,sub_4c8100,11,0,0,unrecovered,,,1,exact,missing,
 P3,110,0x004C8110,sub_4c8110,43,0,1,unrecovered,,,1,missing,exact,
 P3,110,0x004C8150,sub_4c8150,56,0,1,unrecovered,,,1,missing,exact,
 P3,110,0x004C8190,sub_4c8190,37,0,1,unrecovered,,,1,missing,exact,
@@ -1749,7 +1747,6 @@ P3,10,0x00590CD0,sub_590cd0,22,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x00590CF0,sub_590cf0,31,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x00590D10,sub_590d10,45,0,0,unrecovered,,,1,missing,exact,
 P3,0,0x00590D40,sub_590d40,28,0,0,unrecovered,,,0,missing,missing,
-P3,10,0x00590D60,sub_590d60,11,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00590D70,sub_590d70,67,0,0,unrecovered,,,1,missing,exact,
 P3,310,0x00590DC0,sub_590dc0,208,0,3,unrecovered,,,1,missing,exact,
 P0,1004521,0x00591290,?alt_set@@YAXHHH@Z,1540,3,15,original_dependency,game_service,recover_map_mutation,2,exact,exact,"void (__cdecl ?alt_set@@YAXHHH@Z)(int xCoord, int yCoord, int)"
@@ -2151,8 +2148,6 @@ P3,1221,0x005E3193,?box@Buffer@@QAEHHHHHHH@Z,105,1,2,unrecovered,,,2,exact,exact
 P3,211,0x005E3283,?dotted_box@Buffer@@QAEHHHHHH@Z,97,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?dotted_box@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)"
 P3,2221,0x005E32F3,?dotted_box@Buffer@@QAEHPAURECT@@H@Z,125,2,2,unrecovered,,,2,exact,exact,"int (__thiscall ?dotted_box@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT*, int)"
 P2,9021,0x005E33F3,?get_data@Buffer@@QAEHHH@Z,170,9,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)"
-P3,10,0x005E35D0,sub_5e35d0,31,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x005E35F0,sub_5e35f0,29,0,0,unrecovered,,,1,exact,missing,
 P3,2020,0x005E3630,sub_5e3630,20,2,0,unrecovered,,,2,exact,exact,
 P3,2020,0x005E3650,sub_5e3650,16,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005E3660,sub_5e3660,46,1,0,unrecovered,,,2,exact,exact,
@@ -2687,7 +2682,6 @@ P3,11,0x00616140,?pass_dialog_focus@EditBox@@QAEXXZ,86,0,0,unrecovered,,,1,exact
 P3,111,0x006161A0,?UNK2@EditBox@@QAEXXZ,42,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
 P0,1030121,0x00616200,??1Time@@QAE@XZ,96,30,1,source_complete,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1Time@@QAE@XZ)(Time* this)
 P0,1000011,0x006169C0,??1Strings@@QAE@XZ,5,0,0,source_complete,ui_dependency,recover_owning_class,1,exact,missing,void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)
-P3,10,0x00616B20,sub_616b20,13,0,0,unrecovered,,,1,exact,missing,
 P3,100,0x00616B40,sub_616b40,118,0,1,unrecovered,,,0,missing,missing,
 P0,1082021,0x00616BC0,??0CaviarData@@QAE@XZ,13,82,0,source_complete,ui_dependency,recover_caviardata_element_ctor,2,exact,exact,void (__thiscall ??0CaviarData@@QAE@XZ)(CaviarData* this)
 P3,1421,0x00616BD0,?init@CaviarData@@QAEHPAD@Z,133,1,4,unrecovered,,,2,exact,exact,"int (__thiscall ?init@CaviarData@@QAEHPAD@Z)(CaviarData* this, int8*)"
@@ -2948,8 +2942,6 @@ P3,0,0x006344E0,sub_6344e0,51,0,0,unrecovered,,,0,missing,missing,
 P3,110,0x00634520,sub_634520,189,0,1,unrecovered,,,1,exact,missing,
 P3,10,0x006345E0,sub_6345e0,97,0,0,unrecovered,,,1,exact,missing,
 P3,0,0x00634650,sub_634650,27,0,0,unrecovered,,,0,missing,missing,
-P3,10,0x006346C0,sub_6346c0,36,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x006346F0,sub_6346f0,34,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00634720,sub_634720,158,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x006347C0,sub_6347c0,48,0,0,unrecovered,,,1,exact,missing,
 P3,20,0x006347F0,sub_6347f0,204,0,0,unrecovered,,,2,exact,exact,
@@ -2959,7 +2951,6 @@ P3,10,0x00634920,sub_634920,85,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00634980,sub_634980,208,0,0,unrecovered,,,1,exact,missing,
 P3,20,0x00634A50,sub_634a50,121,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00634AD0,sub_634ad0,151,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x00634B70,sub_634b70,36,0,0,unrecovered,,,1,exact,missing,
 P3,4021,0x00634BE0,??0FileBox@@QAE@XZ,51,4,0,unrecovered,,,2,exact,exact,void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this)
 P3,4021,0x00634C20,??1FileBox@@QAE@XZ,1,4,0,unrecovered,,,2,exact,exact,void (__thiscall ??1FileBox@@QAE@XZ)(FileBox* this)
 P3,2221,0x00634C30,?save@FileBox@@QAEXXZ,190,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?save@FileBox@@QAEXXZ)(FileBox* this)
@@ -2969,7 +2960,6 @@ P3,3221,0x00634E80,?set_def_ext@FileBox@@QAEHPAD@Z,76,3,2,unrecovered,,,2,exact,
 P3,3221,0x00634ED0,?set_def_name@FileBox@@QAEHPAD@Z,78,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?set_def_name@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)"
 P3,211,0x00634F20,?UNK1@FileBox@@QAEHPAD@Z,78,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)"
 P3,11,0x00634F70,?UNK2@FileBox@@QAEXXZ,49,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this)
-P3,11,0x00634FB0,??0TexHeap@@QAE@XZ,16,0,0,unrecovered,,,1,exact,missing,TexHeap* (__thiscall ??0TexHeap@@QAE@XZ)(TexHeap* this)
 P3,101,0x00634FC0,?UNK1@TexHeap@@QAEHH@Z,19,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?UNK1@TexHeap@@QAEHH@Z)(TexHeap* this, int)"
 P3,121,0x00634FE0,?shutdown@TexHeap@@QAEXXZ,102,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this)
 P3,1221,0x00635050,?UNK2@TexHeap@@QAEHH@Z,800,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK2@TexHeap@@QAEHH@Z)(TexHeap* this, int)"
@@ -2977,7 +2967,6 @@ P3,1121,0x00635370,?get_tex_mem@TexHeap@@QAEHH@Z,77,1,1,unrecovered,,,2,exact,ex
 P3,1121,0x006353C0,?get_mem@TexHeap@@QAEHH@Z,66,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)"
 P3,110,0x00635410,sub_635410,49,0,1,unrecovered,,,1,exact,missing,
 P3,110,0x00635450,sub_635450,122,0,1,unrecovered,,,1,exact,missing,
-P3,10,0x006354D0,sub_6354d0,25,0,0,unrecovered,,,1,exact,missing,
 P3,100,0x006354F0,sub_6354f0,19,0,1,unrecovered,,,0,missing,missing,
 P3,3020,0x00635510,sub_635510,587,2,10,unrecovered,,,2,exact,entry_range,
 P3,1120,0x00635750,sub_635750,113,1,1,unrecovered,,,2,exact,exact,
@@ -3086,7 +3075,6 @@ P3,2120,0x0063DF90,sub_63df90,77,2,1,unrecovered,,,2,exact,exact,
 P3,1320,0x0063DFE0,sub_63dfe0,270,1,3,unrecovered,,,2,exact,exact,
 P3,1120,0x0063E0F0,sub_63e0f0,26,1,1,unrecovered,,,2,exact,exact,
 P3,1220,0x0063E110,inflate,984,1,2,unrecovered,,,2,exact,exact,
-P3,1020,0x0063E520,sub_63e520,20,1,0,unrecovered,,,2,exact,exact,
 P3,3120,0x0063E540,sub_63e540,79,3,1,unrecovered,,,2,exact,exact,
 P3,3120,0x0063E590,sub_63e590,79,3,1,unrecovered,,,2,exact,exact,
 P3,310,0x0063E5E0,sub_63e5e0,253,0,3,unrecovered,,,1,missing,exact,
