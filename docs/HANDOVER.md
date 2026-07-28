@@ -133,10 +133,15 @@ observable behaviour (task #32)**. No seed count reaches it.
    under weakened conditions it gets its own verdict name
    (`PASS-paths-taken`, `AGREED-STUBBED`) and stays out of the headline.
 5. **Frequency is not set cover.** See the import measurement above.
-6. **Undefined flags after IDIV/DIV/MUL/IMUL** are excluded per function via a
-   `undef=<hex>` mask, because this host translates x86 and gives three
-   different answers for one instruction class. On native silicon that mask
-   should become droppable — see below.
+6. **Undefined flags after IDIV/DIV/MUL/IMUL — and after any shift of count
+   != 1 — are excluded per function via a `undef=<hex>` mask.** The original
+   reason was that an arm64 host translating x86 gave three different answers
+   for one instruction class. **That reason is now obsolete and the mask is
+   still required**: measured on native silicon, dropping it costs 3 FAILs in
+   bits the SDM declares undefined, because one consistent hardware answer is
+   still not `lifted_x86.h`'s arbitrary one. `--no-undef` runs the experiment.
+   See the migration results below; do not assume the shift rule is safe,
+   `fixed_div` blames a `shl`.
 
 ## Open work, in priority order
 
@@ -189,9 +194,126 @@ docs/HOST_MIGRATION.md         moving the harness between machines
 `uv run --with-requirements tools/requirements.txt python3 <path>` — the system
 `python3` deliberately lacks capstone and pefile.
 
-## First moves on a native x86-64 host
+## The move to native x86-64 has been made, and here is what it bought
 
-This is the payoff of the move. `python3 tools/host_doctor.py` prints these too.
+Done. The four checks below were run; this section is the result, and the
+checklist that follows is kept only because it is what a *third* host would
+run. Reports live at `build/oracle/report-{ctl,noundef,masked}.tsv`;
+`baseline-arm64/report.tsv` is the old host's, unchanged.
+
+**Compare with `tools/lifted_oracle_compare.py BEFORE.tsv AFTER.tsv`.** Two
+summaries side by side cannot answer "same result?" - the totals agree while
+the set does not - so it diffs per-function verdict transitions and states
+`better`/`worse` per figure rather than printing a signed delta.
+
+**The baseline was swept with `--refuse-blocked` and nothing said so.** Its
+3,732 `SKIP` rows are exactly the plan's 3,732 blocked functions. A default
+sweep here attempts them and produces no plain `SKIP` at all, so comparing the
+two directly attributes a harness setting to the host. Sweep with
+`--refuse-blocked` for anything compared against `baseline-arm64/`.
+
+### 1. The old PASSes reproduce, and then some
+
+`agreed` 178,248 -> 180,308 B. **10 of the 15 arm64 HANGs now PASS**, and
+**5 of the 13 arm64 FAILs now PASS** - `sub_6282e0`, `sub_634920`,
+`sub_628290`, `?get_title@@YAPADH@Z`, `?alt_at@@YAHHH@Z`, every one an x87-code
+or flags divergence that was a Rosetta artifact rather than a lowering bug.
+No host refusals: the 5 `KILLED-host-refused` deaths are gone.
+
+### 2. The masks are NOT droppable, and that is the finding
+
+Dropping `undef=` cost **3 FAILs, 431 bytes**, all flag-only, all surviving the
+`-DORACLE_LAYOUT_SHIM=0x51000` control with byte-identical detail strings:
+
+| function | blamed instruction | flag | mask |
+| --- | --- | --- | --- |
+| `?speed_proto@@YAHH@Z` | `imul eax, esi` | ZF | `1e` |
+| `?fixed_div@@YAHJJ@Z` | `shl eax, 0x10` | OF | `3f` |
+| `sub_559210` | `imul eax, ecx` | ZF | `1e` |
+
+These are the very functions this file and `lifted_oracle_plan.py` name as the
+measurements that motivated the mask. Every divergence is in a bit the SDM
+declares **architecturally undefined** - SF/ZF/AF/PF after IMUL, OF after a
+shift of count != 1 - and each sits inside its own function's mask.
+
+**So the mask's justification has changed, and it is now a tractable one.** It
+was "the host gives three different answers, so no lowering can match all
+three". It is now "the host gives ONE answer and it is not the lift's". Real
+silicon is self-consistent, which is what the move was betting on; being
+self-consistent is not the same as agreeing with `lifted_x86.h`'s arbitrary
+deterministic choice. Note `fixed_div` blames a **SHL, not the IDIV** - the
+plan comment's claim that shift OF "was measured to agree with lifted_x86.h's
+uniform rule in 651 of 651 cases" was measured under Rosetta and does not hold
+here. Deriving those three lowerings from real behaviour would let the mask be
+dropped and add those flags to every comparison; that is now a bounded task
+rather than an impossible one.
+
+### 3. The top page cannot exist here, so the arbitration is retired
+
+`0xFFFF0000` faults, and it is not merely unmapped: Wine gives a 32-bit process
+`lpMaximumApplicationAddress = 0x7ffeffff`, and `VirtualAlloc` there fails with
+ERROR_INVALID_PARAMETER. The three-fill arbitration is permanently inert - the
+`arbitrated` tier went 13,191 B -> **0** - and every consumer already guards on
+`g_top_page_writable`, so nothing else had to change.
+
+It is not free. All 50 arbitrated functions became `seeds-incomplete`, and
+**20 functions lost 26 comparable cases** that arm64 had compared against a
+page the lift does not model. That is stricter and more honest, and it costs.
+
+### 4. Full strength did NOT rise, and the reason is structural
+
+**41,944 -> 42,024 B after fixing a self-inflicted regression, against the
+arm64 42,236.** The gap reconciles exactly, to the byte:
+
+* `?tech_recurse@@YAHHH@Z` -80 B, recursive, `FAIL-lifted-fault 0xc00000fd`
+  STATUS_STACK_OVERFLOW - caused by shrinking the image's stack reserve to keep
+  the child's stack off the guest image. Fixed by giving the lifted worker its
+  own reservation; now 16/16, full strength.
+* `?immune@SocialWin@@QAEHHHH@Z` -212 B, 16/16 on arm64 and 16/15 here. Its
+  sixteenth seed reads the top page, which arm64 served as stable zeros and
+  this host refuses.
+
+42,236 - 212 = **42,024**. Like for like, the two hosts are identical, and the
+arm64 figure was 212 B of comparison against unmodellable memory.
+
+**Full strength is gated by the ORIGINAL side surviving all sixteen seeds,
+which is a guest-state property and not a host property.** The host fixed
+divergences and stability; neither converts a seed the original cannot run.
+Do not expect a faster or more honest host to move this number.
+
+The lever, measured: **99 functions / 11,843 B are exactly one seed short**,
+led by `?wants_prop@@YAHHH@Z` at 3,970 B - which alone would clear 42,236. 69
+more are two short. Same root cause as #32 below.
+
+### What the sweep says the real wall is
+
+Attempting the blocked functions instead of modelling them settles the import
+question empirically, and it is not close:
+
+| outcome | bytes | % scope |
+| --- | --- | --- |
+| `INCONCLUSIVE-original-fault` | 1,641,560 | 68.11% |
+| `PASS-paths-taken` (weakened; never counted as agreement) | 500,295 | 20.76% |
+| `PASS` | 180,528 | 7.49% |
+| `SKIP-reached-blocked` - **the import wall's whole measured cost** | 48,932 | 2.03% |
+
+33:1. Sharper still: the `iat`-only cohort is 238 functions and 44,742 bytes,
+and the amount that actually walked into a blocked construct across 16 seeds is
+**65 bytes**. Making every import deterministic converts nothing there, because
+those functions never reach the imports. This is the same conclusion as the
+set-cover measurement under "settled decisions", now with the paths *taken*
+rather than the paths that exist.
+
+The faults concentrate hard: 977 distinct sites, but **23 cover half the
+faulting bytes**, and the largest cluster is `ListBox` - ~446 KB across 776
+functions. `0x0060a8a1` alone accounts for 555 functions, **391 of them `??__E`
+dynamic initialisers** (#41 records 232; attempting blocked functions surfaces
+391). The globals they touch are uninitialised in a pristine image, so the
+ORIGINAL faults before the lifted side runs. **That is #32's case, in bytes.**
+
+## The checklist, for the next host
+
+`python3 tools/host_doctor.py` prints these too.
 
 1. **Confirm the old PASSes reproduce.** Sweep, then compare byte figures — and
    compare `agreed_full_strength` as well as `agreed`, because a move that
