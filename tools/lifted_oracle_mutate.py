@@ -125,8 +125,8 @@ def body_span(text: str, address: int) -> tuple[int, int] | None:
 CASES = 16
 
 
-def run_oracle(address: int) -> str:
-    """The oracle's own verdict string for this function, read from the report.
+def verdict_from_report(report: Path) -> str:
+    """The oracle's own verdict string for one function, read from its report.
 
     Scraping the end-of-run summary could not tell the two kinds of
     INCONCLUSIVE apart, and they mean opposite things here. A mutant that makes
@@ -134,7 +134,17 @@ def run_oracle(address: int) -> str:
     lifted body no longer terminates - while a case whose ORIGINAL faulted says
     nothing about the mutant at all. Both printed as `INCONCLUSIVE 1`, and the
     first flipped-branch mutant of the new run was scored MISSED because of it.
+
+    So the verdict comes from the machine-readable row and from nothing else:
+    the summary text is not consulted even when it is sitting in the same file.
     """
+    if not report.exists():
+        return "NO-VERDICT"
+    rows = [r for r in report.read_text().splitlines() if r.startswith("0x")]
+    return rows[0].split("\t")[1] if rows else "NO-VERDICT"
+
+
+def run_oracle(address: int) -> str:
     report = ORACLE / "mutate_one.tsv"
     report.unlink(missing_ok=True)
     subprocess.run(
@@ -147,18 +157,170 @@ def run_oracle(address: int) -> str:
          # drawn seeds reach would have been scored UNREACHED.
          "--cases", str(CASES), "--no-blame"],
         capture_output=True, text=True, timeout=300)
-    if not report.exists():
-        return "NO-VERDICT"
-    rows = [r for r in report.read_text().splitlines() if r.startswith("0x")]
-    return rows[0].split("\t")[1] if rows else "NO-VERDICT"
+    return verdict_from_report(report)
 
 
-# Verdicts that mean the oracle noticed the lifted side misbehaving. A lifted
-# fault, a lifted body that stops terminating, and a lifted body that reaches an
-# instruction the lift never lowered are all detections, and all of them were
-# previously scored as misses or as nothing.
-CAUGHT = {"FAIL", "FAIL-lifted-fault", "INCONCLUSIVE-lifted-budget",
-          "INCONCLUSIVE-lifted-out-of-span", "SKIP-trap"}
+class UnknownVerdict(Exception):
+    """The oracle said something this script has never been taught to read.
+
+    Loud on purpose. The alternative - `verdict not in CAUGHT` therefore MISSED -
+    turns every future verdict string into an accusation against the oracle, and
+    a new verdict is exactly the moment the accusation is least likely to be
+    checked.
+    """
+
+
+# What each verdict string says ABOUT THE MUTANT. Three answers, and the split
+# that matters is inside INCONCLUSIVE:
+#
+#   detected  - the oracle noticed the lifted side misbehaving. A lifted fault,
+#               a lifted body that stops terminating, a lifted body that walks
+#               out of its own span, and a lifted body that reaches an
+#               un-lowered instruction are all detections.
+#   undetected- the oracle looked and reported agreement. Only PASS.
+#   no-evidence - the case never became a comparison, so it says nothing in
+#               either direction. Every ORIGINAL-side inconclusive lives here:
+#               the original faulted, or timed out, or its answer depended on
+#               memory the lift cannot model. Scoring those as MISSED is the
+#               same mistake as the summary scrape, one layer up.
+VERDICT_MEANING = {
+    "PASS": "undetected",
+    "FAIL": "detected",
+    "FAIL-lifted-fault": "detected",
+    "SKIP-trap": "detected",
+    "INCONCLUSIVE-lifted-budget": "detected",
+    "INCONCLUSIVE-lifted-out-of-span": "detected",
+    "INCONCLUSIVE-original-fault": "no-evidence",
+    "INCONCLUSIVE-original-timeout": "no-evidence",
+    "INCONCLUSIVE-original-top-page": "no-evidence",
+    "UNRUN": "no-evidence",
+    # Written by the DRIVER, not by oracle_verdict_name: every function the
+    # plan disqualifies gets a bare SKIP row. The function was never run, so
+    # the mutant was never judged - no evidence, exactly like UNRUN. It is in
+    # the table because raising on it would abort a run over a row that only
+    # says "not looked at".
+    "SKIP": "no-evidence",
+    # Not oracle verdicts - this script's own two ways of coming back empty.
+    "DID-NOT-COMPILE": "no-evidence",
+    "NO-VERDICT": "no-evidence",
+}
+
+CAUGHT = {name for name, meaning in VERDICT_MEANING.items()
+          if meaning == "detected"}
+
+
+def classify(verdict: str, reached: bool | None) -> str:
+    """One of caught / missed / unreached / unusable.
+
+    `reached` is the canary's answer: True if the trap planted on the same
+    line fired, False if it did not, None if the canary build never ran. It is
+    consulted only when the oracle reported agreement, because that is the only
+    verdict with two explanations - a hole in the comparison, or a line no seed
+    executes.
+    """
+    meaning = VERDICT_MEANING.get(verdict)
+    if meaning is None:
+        raise UnknownVerdict(
+            f"{verdict!r} is not in VERDICT_MEANING; classify it deliberately "
+            f"rather than letting it default to MISSED")
+    if meaning == "detected":
+        return "caught"
+    if meaning == "no-evidence":
+        return "unusable"
+    return "unreached" if reached is False else "missed"
+
+
+# THE CANARY, and it is the difference between this script meaning something
+# and meaning nothing.
+#
+# A mutant that comes back PASS has two completely different explanations: the
+# oracle failed to notice a divergence, or the mutated statement never executed
+# under any of the seeds. The first is a hole in the oracle; the second is a
+# statement about INPUT COVERAGE and says nothing about the comparison at all.
+# Scoring them the same way is what let a 7-of-8 result look like evidence.
+#
+# So the same site is first replaced by a trap. If the oracle reports the trap,
+# the statement is reached and a subsequent PASS is a genuine MISS. If it does
+# not, the mutant is UNREACHED and is not counted either way.
+CANARY = 'opensmacx_trap(0x0CA4A8E0U, "reachability canary"); '
+
+
+def mutate_body(pattern: re.Pattern, replacement: str,
+                body: str) -> tuple[str, str] | None:
+    """(mutated body, canary body), or None if this mutation does not apply.
+
+    None means the mutation kind is UNTESTED on this body, and the two ways of
+    being untested are the same fact: the regex matched nothing, or it matched
+    and the replacement put the identical text back. The second is the nastier
+    one - the mutant then compiles to the byte-identical function, the oracle
+    correctly reports PASS, and the run scores a MISS against an oracle that
+    was never given anything to find.
+    """
+    mutated, count = pattern.subn(replacement, body, count=1)
+    if count == 0 or mutated == body:
+        return None
+    canary = pattern.sub(lambda m: CANARY + m.group(0), body, count=1)
+    return mutated, canary
+
+
+class Target:
+    """One function chosen to carry one mutation."""
+
+    def __init__(self, address, symbol, shard, head, body, tail,
+                 mutated, canary):
+        self.address = address
+        self.symbol = symbol
+        self.shard = shard
+        self.head = head
+        self.body = body
+        self.tail = tail
+        self.mutated = mutated
+        self.canary = canary
+
+    def text(self, variant: str) -> str:
+        return self.head + variant + self.tail
+
+
+def find_target(pattern: re.Pattern, replacement: str,
+                candidates: list[tuple[int, str]], spent: set[int],
+                min_size: int, locate=None) -> Target | None:
+    """The first unspent candidate this mutation can actually be applied to.
+
+    None is not "nothing went wrong": it means no function in the whole
+    candidate list carries the construct, so the mutation kind was never
+    tested. The caller must say so rather than counting a clean run.
+    """
+    locate = locate or shard_of
+    for address, symbol in candidates:
+        if address in spent:
+            continue
+        shard = locate(address)
+        if shard is None:
+            continue
+        text = shard.read_text(encoding="utf-8")
+        span = body_span(text, address)
+        if span is None:
+            continue
+        head, body, tail = text[:span[0]], text[span[0]:span[1]], text[span[1]:]
+        if body.count(";") < min_size:
+            continue
+        applied = mutate_body(pattern, replacement, body)
+        if applied is None:
+            continue
+        return Target(address, symbol, shard, head, body, tail, *applied)
+    return None
+
+
+def exit_code(caught: int, missed: int, untested: int) -> int:
+    """0 only when every mutation that was attempted produced evidence.
+
+    `untested` is in here because a mutation kind that matched nothing used to
+    vanish: the run printed a clean score and returned 0 while the property it
+    names had never been put to the oracle at all.
+    """
+    if missed or untested:
+        return 1
+    return 0 if caught > 0 else 1
 
 
 def rebuild(shard: Path) -> bool:
@@ -202,92 +364,68 @@ def main() -> int:
           f"{args.count} (seed {args.seed}, {CASES} cases per function"
           f"{' - LEGACY SEEDS ONLY' if CASES <= 4 else ''})")
 
-    caught = missed = unusable = unreached = 0
+    tally = {"caught": 0, "missed": 0, "unreached": 0, "unusable": 0}
+    marks = {"caught": "caught", "missed": "MISSED",
+             "unreached": "UNREACHED (no seed runs that line)",
+             "unusable": "unusable (no evidence either way)"}
     spent: set[int] = set()
     used_shards: dict[Path, bytes] = {}
+    untested: list[str] = []
     attempts = 0
+    unattempted = 0
     for name, pattern, replacement in MUTATIONS:
         if attempts >= args.count:
-            break
-        for address, symbol in candidates:
-            if address in spent:
-                continue
-            shard = shard_of(address)
-            if shard is None:
-                continue
-            text = shard.read_text(encoding="utf-8")
-            span = body_span(text, address)
-            if span is None:
-                continue
-            head, body, tail = text[:span[0]], text[span[0]:span[1]], text[span[1]:]
-            if body.count(";") < args.min_size:
-                continue
-            mutated, count = pattern.subn(replacement, body, count=1)
-            if count == 0:
-                continue
+            unattempted += 1
+            continue
+        target = find_target(pattern, replacement, candidates, spent,
+                             args.min_size)
+        if target is None:
+            untested.append(f"{name}  /{pattern.pattern}/")
+            continue
 
-            # THE CANARY, and it is the difference between this script meaning
-            # something and meaning nothing.
-            #
-            # A mutant that comes back PASS has two completely different
-            # explanations: the oracle failed to notice a divergence, or the
-            # mutated statement never executed under any of the four seeds. The
-            # first is a hole in the oracle; the second is a statement about
-            # INPUT COVERAGE and says nothing about the comparison at all.
-            # Scoring them the same way is what let a 7-of-8 result look like
-            # evidence.
-            #
-            # So the same site is first replaced by a trap. If the oracle
-            # reports the trap, the statement is reached and a subsequent PASS
-            # is a genuine MISS. If it does not, the mutant is UNREACHED and is
-            # not counted either way.
-            canary = pattern.sub(
-                lambda m: 'opensmacx_trap(0x0CA4A8E0U, "reachability canary"); '
-                          + m.group(0),
-                body, count=1)
+        attempts += 1
+        if target.shard not in used_shards:
+            used_shards[target.shard] = target.shard.read_bytes()
 
-            attempts += 1
-            if shard not in used_shards:
-                used_shards[shard] = shard.read_bytes()
+        target.shard.write_text(target.text(target.canary), encoding="utf-8")
+        reached = None
+        if rebuild(target.shard):
+            reached = run_oracle(target.address) in CAUGHT
 
-            shard.write_text(head + canary + tail, encoding="utf-8")
-            reached = None
-            if rebuild(shard):
-                reached = run_oracle(address) in CAUGHT
+        target.shard.write_text(target.text(target.mutated), encoding="utf-8")
+        built = rebuild(target.shard)
+        verdict = run_oracle(target.address) if built else "DID-NOT-COMPILE"
+        target.shard.write_bytes(used_shards[target.shard])
+        rebuild(target.shard)
 
-            shard.write_text(head + mutated + tail, encoding="utf-8")
-            built = rebuild(shard)
-            verdict = run_oracle(address) if built else "DID-NOT-COMPILE"
-            shard.write_bytes(used_shards[shard])
-            rebuild(shard)
+        outcome = classify(verdict, reached)
+        tally[outcome] += 1
+        print(f"  {target.address:#010x} {name:<42} -> {verdict:<32} "
+              f"{marks[outcome]}   {target.symbol}")
+        # One function per mutation kind, AND never the same function twice:
+        # six of eight mutants landing on ?base_making@@YAHHH@Z is a
+        # measurement of that one function, not of the oracle.
+        spent.add(target.address)
 
-            if verdict == "DID-NOT-COMPILE":
-                unusable += 1
-                mark = "unusable"
-            elif verdict in CAUGHT:
-                caught += 1
-                mark = "caught"
-            elif reached is False:
-                unreached += 1
-                mark = "UNREACHED (no seed runs that line)"
-            else:
-                missed += 1
-                mark = "MISSED"
-            print(f"  {address:#010x} {name:<42} -> {verdict:<32} {mark}   {symbol}")
-            # One function per mutation kind, AND never the same function
-            # twice: six of eight mutants landing on ?base_making@@YAHHH@Z is a
-            # measurement of that one function, not of the oracle.
-            spent.add(address)
-            break
-
-    print(f"\nmutants {attempts}: caught {caught}, missed {missed}, "
-          f"unreached {unreached}, unusable {unusable}")
-    if unreached:
-        print(f"  {unreached} mutant(s) sat on a line no seed executes. That is "
-              f"a coverage figure,\n  not an oracle figure: four seeds do not "
-              f"reach every path of a large function.\n  A PASS from this "
-              f"oracle means 'agreed on the paths the seeds reached'.")
-    return 0 if missed == 0 and caught > 0 else 1
+    print(f"\nmutants {attempts}: caught {tally['caught']}, "
+          f"missed {tally['missed']}, unreached {tally['unreached']}, "
+          f"unusable {tally['unusable']}")
+    if tally["unreached"]:
+        print(f"  {tally['unreached']} mutant(s) sat on a line no seed "
+              f"executes. That is a coverage figure,\n  not an oracle figure: "
+              f"the seeds do not reach every path of a large function.\n  A "
+              f"PASS from this oracle means 'agreed on the paths the seeds "
+              f"reached'.")
+    if untested:
+        print(f"  {len(untested)} mutation kind(s) matched NO function in the "
+              f"candidate list, so the\n  property each one names was never "
+              f"put to the oracle. This is not a pass:")
+        for kind in untested:
+            print(f"    UNTESTED  {kind}")
+    if unattempted:
+        print(f"  {unattempted} further mutation kind(s) not attempted: "
+              f"--count {args.count} ran out first.")
+    return exit_code(tally["caught"], tally["missed"], len(untested))
 
 
 if __name__ == "__main__":
