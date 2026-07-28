@@ -30,6 +30,7 @@ class DLLEXPORT ReportIf {
  public:
   ReportIf() { ; }
   ~ReportIf() { ; }
+  void close_energy();
   void close_intel();
   void on_iface_right_click(int, int);
   void on_iface_left_double_click(int, int);
@@ -46,6 +47,13 @@ class DLLEXPORT ReportIf {
   uint8_t unmapped_[0x202F0];
 };
 
+// The energy report's third list box is a PROCESS-WIDE object at a fixed
+// address, not a subobject: close_energy closes it alongside the two this
+// object owns. Named here so the address appears once, the way
+// ConsoleGlobal does for 0x009156B0, and so a fixture can repoint it.
+extern ListBox *ReportIfEnergyListBox;  // 0x0087BE84
+
+void __fastcall report_if_close_energy_redirect(ReportIf *self, void *);
 void __fastcall report_if_close_intel_redirect(ReportIf *self, void *);
 void __fastcall report_if_on_iface_right_click_redirect(ReportIf *self, void *, int a1, int a2);
 void __fastcall report_if_on_iface_left_double_click_redirect(ReportIf *self, void *, int a1, int a2);

@@ -8832,7 +8832,12 @@ struct ListBoxEvent {
     uint32_t dialog_vptr;   // observed [obj + dialog_disp] at call time
 };
 
-ListBoxEvent list_box_events[8];
+// Sixteen, not eight: test_report_if_close_energy drives THREE ListBox::close
+// calls and each emits a win close, a buffer close and a dialog close, so
+// eight slots silently dropped the last one and the third dialog close was
+// simply never recorded. list_box_record bounds-checks with ARRAYSIZE, so
+// the drop was invisible rather than an overrun.
+ListBoxEvent list_box_events[16];
 int list_box_event_count = 0;
 uint8_t *list_box_obj = nullptr;
 int32_t list_box_graphic_disp = 0;
@@ -9044,6 +9049,89 @@ ScrollDtorEvent scroll_dtor_events[24];
 int scroll_dtor_event_count = 0;
 uint8_t *scroll_dtor_base = nullptr;
 
+void test_report_if_close_energy() {
+    // close_intel's two subobjects, plus a PROCESS-WIDE ListBox that goes
+    // FIRST. The global is repointed at storage this fixture owns rather than
+    // touching 0x0087BE84, exactly as the MapWin fixture does for
+    // ConsoleGlobal, so the ordering can be observed without the real object.
+    func_subobject_close *const saved_win = WinOriginalClose;
+    func_subobject_close *const saved_buffer = BufferSubobjectClose;
+    uint32_t *const saved_a0c = GraphicWinFieldA0CDefault;
+    func_dialog_close *const saved_dialog = ListBoxOriginalDialogClose;
+    uint32_t *const saved_static = ListBoxCloseStaticDefaults;
+    uint32_t *const saved_dynamic = ListBoxCloseDynamicDefault;
+    ListBox *const saved_energy = ReportIfEnergyListBox;
+
+    WinOriginalClose = list_box_win_close_probe;
+    BufferSubobjectClose = list_box_buffer_close_probe;
+    GraphicWinFieldA0CDefault = &list_box_graphic_a0c_default;
+    ListBoxOriginalDialogClose = list_box_dialog_close_probe;
+    ListBoxCloseStaticDefaults = list_box_static_defaults;
+    ListBoxCloseDynamicDefault = &list_box_dynamic_default;
+
+    const int32_t graphic = 0x48;
+    const int32_t dialog = 0xA60;
+    static int32_t vbtable[3];
+    vbtable[0] = 0; vbtable[1] = graphic; vbtable[2] = dialog;
+
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        std::vector<uint8_t> storage(0xAE24 + 0xC40 + 32);
+        std::vector<uint8_t> global(0xC40);
+        for (size_t i = 0; i < storage.size(); ++i) {
+            storage[i] = static_cast<uint8_t>(0x35 + i * 17);
+        }
+        for (size_t i = 0; i < global.size(); ++i) {
+            global[i] = static_cast<uint8_t>(0x77 + i * 13);
+        }
+        uint8_t *const object = storage.data() + 16;
+        const int32_t offsets[2] = {0x0A2D0, 0x0AE24};
+        int32_t *pointer = vbtable;
+        const uint32_t zero = 0;
+        for (int which = 0; which < 2; ++which) {
+            uint8_t *const box = object + offsets[which];
+            std::memcpy(box, &pointer, sizeof(pointer));
+            std::memcpy(box + graphic + 0xA08, &zero, sizeof(zero));
+        }
+        std::memcpy(global.data(), &pointer, sizeof(pointer));
+        std::memcpy(global.data() + graphic + 0xA08, &zero, sizeof(zero));
+        ReportIfEnergyListBox = reinterpret_cast<ListBox *>(global.data());
+
+        list_box_obj = object + offsets[0];
+        list_box_graphic_disp = graphic;
+        list_box_dialog_disp = dialog;
+        list_box_event_count = 0;
+
+        auto *const self = reinterpret_cast<ReportIf *>(object);
+        if (use_adapter) {
+            report_if_close_energy_redirect(self, nullptr);
+        } else {
+            self->close_energy();
+        }
+
+        const void *dialogs[3] = {nullptr, nullptr, nullptr};
+        int seen = 0;
+        for (int i = 0; i < list_box_event_count &&
+                 i < static_cast<int>(ARRAYSIZE(list_box_events)); ++i) {
+            if (list_box_events[i].kind == 3 && seen < 3) {
+                dialogs[seen++] = list_box_events[i].target;
+            }
+        }
+        // Three closes, and the GLOBAL one is first.
+        expect(seen == 3);
+        expect(dialogs[0] == global.data() + dialog);
+        expect(dialogs[1] == object + offsets[0] + dialog);
+        expect(dialogs[2] == object + offsets[1] + dialog);
+    }
+
+    ReportIfEnergyListBox = saved_energy;
+    WinOriginalClose = saved_win;
+    BufferSubobjectClose = saved_buffer;
+    GraphicWinFieldA0CDefault = saved_a0c;
+    ListBoxOriginalDialogClose = saved_dialog;
+    ListBoxCloseStaticDefaults = saved_static;
+    ListBoxCloseDynamicDefault = saved_dynamic;
+}
+
 void test_report_if_close_intel() {
     // Two ListBox subobjects at 0xA2D0 and 0xAE24, closed in that order.
     // ListBox::close is already covered by test_list_box_teardown, so what
@@ -9103,7 +9191,8 @@ void test_report_if_close_intel() {
         // Exactly two dialog closes, in subobject order.
         const void *dialogs[2] = {nullptr, nullptr};
         int seen = 0;
-        for (int i = 0; i < list_box_event_count && i < 8; ++i) {
+        for (int i = 0; i < list_box_event_count &&
+                 i < static_cast<int>(ARRAYSIZE(list_box_events)); ++i) {
             if (list_box_events[i].kind == 3 && seen < 2) {
                 dialogs[seen++] = list_box_events[i].target;
             }
@@ -28686,6 +28775,7 @@ int main() {
     test_base_pop_item();
     test_map_win_is_console();
     test_report_if_close_intel();
+    test_report_if_close_energy();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();
