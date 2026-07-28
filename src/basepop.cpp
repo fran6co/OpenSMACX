@@ -471,3 +471,60 @@ int BasePop::on_key_up(int) {
 int __fastcall base_pop_on_key_up_redirect(BasePop *self, void *, int a1) {
     return self->on_key_up(a1);
 }
+
+/*
+Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
+         argument is non-zero, cleared when it is zero.
+
+             mov eax, [esp+4] / test eax, eax / mov eax, [ecx+0x20]
+             je clear / or al, 1 / mov [ecx+0x20], eax / ret 4
+             clear: and al, 0xFE / mov [ecx+0x20], eax / ret 4
+
+         The original reads the whole dword, edits only AL and writes the whole
+         dword back, so the upper three bytes are preserved - which is why this
+         is a read-modify-write of the dword and not a byte store.
+
+         Written through a documented raw offset, as ~BattleWin does for its
+         Time member. 0x20 falls inside Win::auto_sound_ - at AutoSound::val_8_,
+         measured - and that modelling is an approximation of a class whose own
+         header says its layout is not established. Reaching through it by name
+         would state a relationship this function does not need and cannot
+         confirm; the offset is the thing the original encodes.
+Original Offset: 00605180
+Return Value: n/a
+Status: Complete
+*/
+void BasePop::UNK3(int a1) {
+    uint32_t *const flags =
+        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x20);
+    if (a1) {
+        *flags |= 1U;
+    } else {
+        *flags &= ~1U;
+    }
+}
+
+void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1) {
+    self->UNK3(a1);
+}
+
+/*
+Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
+         `and al, 0xFD`).
+Original Offset: 006051A0
+Return Value: n/a
+Status: Complete
+*/
+void BasePop::UNK4(int a1) {
+    uint32_t *const flags =
+        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x20);
+    if (a1) {
+        *flags |= 2U;
+    } else {
+        *flags &= ~2U;
+    }
+}
+
+void __fastcall base_pop_unk4_redirect(BasePop *self, void *, int a1) {
+    self->UNK4(a1);
+}

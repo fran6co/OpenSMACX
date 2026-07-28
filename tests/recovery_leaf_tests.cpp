@@ -2360,6 +2360,67 @@ void test_win_move() {
     }
 }
 
+void test_base_pop_flag_setters() {
+    // UNK3 and UNK4 edit bit 0 and bit 1 of the word at +0x20. What this
+    // separates is WHICH BIT, WHICH DIRECTION, and that no other byte of the
+    // object moves.
+    //
+    // What it does NOT separate, and cannot: the original reads the dword,
+    // edits AL and writes the dword back, which for bits 0 and 1 is
+    // indistinguishable from a byte store - the upper three bytes are
+    // reloaded unchanged either way, and nothing can observe the difference in
+    // a single-threaded body. A byte-store mutant was tried here and survived,
+    // correctly. The dword form is kept because it is what the original
+    // encodes, not because this fixture can tell.
+    const uint32_t seeds[] = {
+        0x00000000U, 0xFFFFFFFFU, 0xA55AA55AU, 0x00000003U, 0xFFFFFFFCU,
+    };
+    for (uint32_t seed : seeds) {
+        for (int which = 0; which < 2; ++which) {       // UNK3 / UNK4
+            for (int set = 0; set < 2; ++set) {
+                for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+                    alignas(BasePop) uint8_t storage[sizeof(BasePop) + 32];
+                    uint8_t expected[sizeof(storage)];
+                    seed_storage(storage, expected, sizeof(storage));
+                    write_at(storage, 16 + 0x20, seed);
+                    std::memcpy(expected, storage, sizeof(storage));
+
+                    const uint32_t bit = which ? 2U : 1U;
+                    const uint32_t after = set ? (seed | bit) : (seed & ~bit);
+                    write_at(expected, 16 + 0x20, after);
+
+                    auto *pop = reinterpret_cast<BasePop *>(storage + 16);
+                    const int argument = set ? -1 : 0;
+                    if (which == 0) {
+                        if (use_adapter) base_pop_unk3_redirect(pop, nullptr, argument);
+                        else pop->UNK3(argument);
+                    } else {
+                        if (use_adapter) base_pop_unk4_redirect(pop, nullptr, argument);
+                        else pop->UNK4(argument);
+                    }
+                    // Exact bytes: the edited word AND every other byte of the
+                    // object and both canaries.
+                    expect_storage_bytes(storage, expected, sizeof(storage));
+                }
+            }
+        }
+    }
+
+    // Any non-zero argument sets, not just -1: the original tests the whole
+    // dword, so a body checking only the low byte would mishandle 0x100.
+    for (int value : {1, 0x100, 0x10000, 2147483647, -2147483647 - 1}) {
+        alignas(BasePop) uint8_t storage[sizeof(BasePop) + 32];
+        uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        write_at(storage, 16 + 0x20, 0U);
+        std::memcpy(expected, storage, sizeof(storage));
+        write_at(expected, 16 + 0x20, 1U);
+        auto *pop = reinterpret_cast<BasePop *>(storage + 16);
+        pop->UNK3(value);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+}
+
 void test_menu_adjust_pulldown_pos() {
     // A `ret 8` and nothing else. The only things a fixture can establish are
     // that it dereferences neither pointer and touches no field, so it is
@@ -28014,6 +28075,7 @@ int main() {
     test_win_scroll_positions();
     test_base_pop_key_gates();
     test_menu_adjust_pulldown_pos();
+    test_base_pop_flag_setters();
     test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();
