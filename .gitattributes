@@ -66,3 +66,12 @@
 # fix language statistics, some headers identified as C
 ###############################################################################
 *.h linguist-language=cpp
+
+# The arm64 oracle reports are a RECORDED MEASUREMENT, written under Wine with
+# CRLF line endings. `* text=auto` would rewrite them to LF on the next
+# checkout, which changes the bytes of the control every later result is
+# compared against. They are only ever read by lifted_oracle_summary.read_report,
+# which opens in text mode and handles either ending, so nothing needs the
+# normalisation - and a baseline that is not byte-for-byte what the old host
+# emitted is not a baseline.
+baseline-arm64/*.tsv -text
