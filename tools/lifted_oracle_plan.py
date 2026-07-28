@@ -330,6 +330,19 @@ def main() -> int:
     parser.add_argument("--functions", type=Path, default=lift.FUNCTIONS_CSV)
     parser.add_argument("--out", type=Path,
                         default=REPO_ROOT / "build" / "oracle" / "plan.tsv")
+    # The `undef=` mask exists because a TRANSLATED host gave three different
+    # answers for one instruction class's architecturally-undefined flags, so
+    # those flags could not be compared against anything. On native silicon
+    # there is one answer, and suppressing the token compares them instead.
+    #
+    # This direction is always safe to try: dropping the mask makes the oracle
+    # STRICTER - it compares bits it was previously ignoring - so it can only
+    # turn a PASS into a FAIL, never the reverse. That is why it is a real
+    # experiment. A new FAIL here is not a regression in the lift; it is a
+    # lowering bug the mask was hiding, and it is the more valuable finding.
+    parser.add_argument(
+        "--no-undef", action="store_true",
+        help="do not emit undef= masks; compare the undefined flags too")
     args = parser.parse_args()
 
     pe = pefile.PE(str(args.exe), fast_load=True)
@@ -351,7 +364,7 @@ def main() -> int:
                 histogram["testable"] += 1
             for flag in flags:
                 histogram[flag] += 1
-            undef = function.get("undef", 0)
+            undef = 0 if args.no_undef else function.get("undef", 0)
             printed = set(flags)
             if undef:
                 printed.add(f"undef={undef:x}")
