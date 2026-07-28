@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "reportif.h"
 
+ListBox *ReportIfEnergyListBox = reinterpret_cast<ListBox *>(0x0087BE84);
+
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 Original Offset: 004A5FE0
@@ -175,4 +177,35 @@ void ReportIf::close_intel() {
 
 void __fastcall report_if_close_intel_redirect(ReportIf *self, void *) {
     self->close_intel();
+}
+
+/*
+Purpose: Close the energy report's three list boxes.
+
+             mov ecx,0x87BE84     / call ListBox::close
+             lea ecx,[esi+0xA2D0] / call ListBox::close
+             lea ecx,[esi+0xAE24] / call ListBox::close
+
+         The last two are the same subobjects close_intel closes, in the same
+         order. The FIRST is not a subobject at all - it is a process-wide
+         ListBox at a fixed address, and it goes first.
+
+         0x0087BE84 is a new fixed-address DATA binding, named
+         ReportIfEnergyListBox in the header so the literal appears once. It
+         needs no row in recovery-binding-classifications.csv: that file
+         classifies original FUNCTION bindings, and ConsoleGlobal - the same
+         shape, a named pointer to a process object - carries none either.
+Original Offset: 004A9020
+Return Value: n/a
+Status: Complete
+*/
+void ReportIf::close_energy() {
+    auto *const self = reinterpret_cast<uint8_t *>(this);
+    ReportIfEnergyListBox->close();
+    reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
+    reinterpret_cast<ListBox *>(self + 0xAE24)->close();
+}
+
+void __fastcall report_if_close_energy_redirect(ReportIf *self, void *) {
+    self->close_energy();
 }

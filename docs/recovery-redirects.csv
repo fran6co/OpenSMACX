@@ -1123,6 +1123,7 @@ address,kind
 0x004A6040,jump
 0x004A6320,jump
 0x004A6D60,jump
+0x004A9020,jump
 0x004AC130,jump
 0x004AC980,jump
 0x004AD840,jump
