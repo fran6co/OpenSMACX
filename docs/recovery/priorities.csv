@@ -156,7 +156,6 @@ P2,6621,0x0041AE40,?soft_zoom@BaseWin@@QAEXH@Z,210,6,6,unrecovered,,,2,exact,exa
 P3,121,0x0041AF50,?on_key_click@BaseWin@@QAEXHH@Z,25,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_key_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,421,0x0041AFD0,?on_left_up@BaseWin@@QAEXHH@Z,317,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,321,0x0041B110,?on_left_down@BaseWin@@QAEXHH@Z,201,0,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)"
-P3,111,0x0041B1E0,?on_mouse_leave@BaseWin@@QAEXHH@Z,13,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,1121,0x0041B1F0,?on_mouse_move@BaseWin@@QAEXHH@Z,673,0,11,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@BaseWin@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)"
 P3,121,0x0041B4A0,?on_scrolled@BaseWin@@QAEXHH@Z,29,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,2021,0x0041B4F0,?staple_the_bastards@BaseWin@@QAEXXZ,669,1,10,unrecovered,,,2,exact,exact,void (__thiscall ?staple_the_bastards@BaseWin@@QAEXXZ)(BaseWin* this)
@@ -316,7 +315,6 @@ P2,7121,0x00435DE0,?draw_special_2@DesignWin@@QAEXH@Z,673,6,11,unrecovered,,,2,e
 P2,11121,0x00436090,?draw_vehicle@DesignWin@@QAEXH@Z,6409,8,31,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_vehicle@DesignWin@@QAEXH@Z)(DesignWin* this, int)"
 P3,2021,0x004379A0,?on_redraw@DesignWin@@QAEXXZ,501,0,20,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@DesignWin@@QAEXXZ)(DesignWin* this)
 P3,221,0x00437BA0,?on_mouse_move@DesignWin@@QAEXHH@Z,53,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)"
-P3,111,0x00437BE0,?on_mouse_leave@DesignWin@@QAEXHH@Z,13,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)"
 P3,2721,0x00437BF0,?design_it@DesignWin@@QAEHXZ,2149,1,17,unrecovered,,,2,exact,exact,int (__thiscall ?design_it@DesignWin@@QAEHXZ)(DesignWin* this)
 P3,4621,0x00438460,?on_button_clicked@DesignWin@@QAEXH@Z,4973,0,46,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_button_clicked@DesignWin@@QAEXH@Z)(DesignWin* this, int)"
 P3,211,0x00439670,?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z,64,0,2,unrecovered,,,1,missing,exact,"void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)"
@@ -1006,8 +1004,6 @@ P3,1121,0x004B1FF0,?allocate_energy@SocialWin@@QAEXHH@Z,300,1,1,unrecovered,,,2,
 P3,621,0x004B2120,?on_status@SocialWin@@QAEXH@Z,228,0,6,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@SocialWin@@QAEXH@Z)(SocialWin* this, int)"
 P3,111,0x004B2210,?on_iface_left_click@SocialWin@@QAEHHH@Z,13,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?on_iface_left_click@SocialWin@@QAEHHH@Z)(SocialWin* this, int, int)"
 P3,521,0x004B2220,?on_iface_right_click@SocialWin@@QAEXHH@Z,474,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_right_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)"
-P3,111,0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,13,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_iface_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)"
-P3,111,0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,13,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_iface_mouse_leave@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)"
 P3,621,0x004B2470,?on_iface_button_clicked@SocialWin@@QAEXH@Z,478,0,6,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_button_clicked@SocialWin@@QAEXH@Z)(SocialWin* this, int)"
 P3,1221,0x004B2690,?show@SocialWin@@QAEXH@Z,27,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?show@SocialWin@@QAEXH@Z)(SocialWin* this, int)"
 P3,1221,0x004B26B0,?hide@SocialWin@@QAEXXZ,25,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@SocialWin@@QAEXXZ)(SocialWin* this)

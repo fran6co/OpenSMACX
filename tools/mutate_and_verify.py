@@ -199,6 +199,20 @@ def statements_interact(first: str, second: str) -> bool:
     is not. Only genuine write-after-write or read-after-write pairs are worth
     spending a build on.
     """
+    # Swapping a statement with a TEXTUALLY IDENTICAL one reproduces the
+    # original file exactly, so the mutant is the program itself and no suite
+    # can ever kill it. This is not a heuristic about side effects - it is the
+    # observation that the two orderings are the same bytes.
+    #
+    # The `not first_target` branch below keeps opaque calls on the grounds
+    # that they may have side effects, which is right in general and wrong
+    # here: two consecutive `Win::clear_bubble_text();` calls are exactly the
+    # shape four recovered bubble-dismiss handlers have, and every one of them
+    # reported a permanent coverage hole that could not be closed. Reporting
+    # those "trains you to ignore the output", which is this file's own stated
+    # reason for filtering equivalent swaps at all.
+    if first.strip() == second.strip():
+        return False
     first_target, first_base, first_rhs = split_assignment(first)
     second_target, second_base, second_rhs = split_assignment(second)
     if not first_target or not second_target:

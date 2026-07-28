@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "socialwin.h"
+#include "win.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -133,4 +134,48 @@ void SocialWin::on_iface_group_clicked(int, int, int) {
 
 void __fastcall social_win_on_iface_group_clicked_redirect(SocialWin *self, void *, int a1, int a2, int a3) {
     self->on_iface_group_clicked(a1, a2, a3);
+}
+
+/*
+Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
+         consecutive calls to the static Win::clear_bubble_text and nothing
+         else; the arguments are ignored.
+
+         The SECOND call is not a transcription error. The original issues it,
+         and the two are observationally identical unless something re-arms the
+         bubble between them - which is why the fixture re-arms it rather than
+         asserting a single refresh and calling that agreement.
+Original Offset: 004B2420
+Return Value: n/a
+Status: Complete
+*/
+void SocialWin::on_iface_mouse_move(int, int) {
+    ::Win::clear_bubble_text();
+    ::Win::clear_bubble_text();
+}
+
+void __fastcall social_win_on_iface_mouse_move_redirect(SocialWin *self, void *, int a1, int a2) {
+    self->on_iface_mouse_move(a1, a2);
+}
+
+/*
+Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
+         consecutive calls to the static Win::clear_bubble_text and nothing
+         else; the arguments are ignored.
+
+         The SECOND call is not a transcription error. The original issues it,
+         and the two are observationally identical unless something re-arms the
+         bubble between them - which is why the fixture re-arms it rather than
+         asserting a single refresh and calling that agreement.
+Original Offset: 004B2430
+Return Value: n/a
+Status: Complete
+*/
+void SocialWin::on_iface_mouse_leave(int, int) {
+    ::Win::clear_bubble_text();
+    ::Win::clear_bubble_text();
+}
+
+void __fastcall social_win_on_iface_mouse_leave_redirect(SocialWin *self, void *, int a1, int a2) {
+    self->on_iface_mouse_leave(a1, a2);
 }

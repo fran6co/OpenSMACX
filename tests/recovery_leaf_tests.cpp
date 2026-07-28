@@ -11486,6 +11486,121 @@ void test_alpha_net_close() {
     NetCloseOriginal = saved;
 }
 
+// Re-arms the bubble after each refresh, so a SECOND call to
+// clear_bubble_text does observable work instead of early-returning. Without
+// this the duplicate call in the four handlers below is invisible: the first
+// call clears the flag and every later one returns immediately, so one call
+// and two calls produce identical probe counts and the fixture would agree
+// with a body that had dropped one of them.
+int *g_rearm_active = nullptr;
+int __cdecl rearming_probe_update_screen(RECT *rect, Win *window) {
+    const int result = teardown_probe_update_screen(rect, window);
+    if (g_rearm_active) {
+        *g_rearm_active = 1;
+    }
+    return result;
+}
+
+void test_bubble_dismiss_handlers() {
+    // Four handlers across three classes with byte-identical bodies:
+    //     call Win::clear_bubble_text / call Win::clear_bubble_text / ret 8
+    // They ignore both arguments and touch no field, so what has to be
+    // established is the CALL COUNT and that nothing else moves.
+    int active = 0;
+    int companion = 0;
+    RECT rect = {1, 2, 3, 4};
+    int *const saved_active = WinBubbleActive;
+    int *const saved_companion = WinBubbleCompanion;
+    RECT *const saved_rect = WinBubbleRect;
+    func_win_update_screen *const saved_update = WinUpdateScreenOriginal;
+    func_win_flip *const saved_flip = WinFlipOriginal;
+    WinBubbleActive = &active;
+    WinBubbleCompanion = &companion;
+    WinBubbleRect = &rect;
+    WinUpdateScreenOriginal = &rearming_probe_update_screen;
+    WinFlipOriginal = &teardown_probe_flip;
+    g_rearm_active = &active;
+
+    alignas(BaseWin) uint8_t base_storage[sizeof(BaseWin) + 32];
+    alignas(DesignWin) uint8_t design_storage[sizeof(DesignWin) + 32];
+    alignas(SocialWin) uint8_t social_storage[sizeof(SocialWin) + 32];
+    uint8_t base_expected[sizeof(base_storage)];
+    uint8_t design_expected[sizeof(design_storage)];
+    uint8_t social_expected[sizeof(social_storage)];
+
+    for (int which = 0; which < 4; ++which) {
+        for (int adapter = 0; adapter < 2; ++adapter) {
+            seed_storage(base_storage, base_expected, sizeof(base_storage));
+            seed_storage(design_storage, design_expected, sizeof(design_storage));
+            seed_storage(social_storage, social_expected, sizeof(social_storage));
+            auto *base = reinterpret_cast<BaseWin *>(base_storage + 16);
+            auto *design = reinterpret_cast<DesignWin *>(design_storage + 16);
+            auto *social = reinterpret_cast<SocialWin *>(social_storage + 16);
+
+            active = 1;
+            companion = 0x5A5A5A5A;
+            teardown_probe = TeardownProbe{};
+            switch (which) {
+            case 0:
+                if (adapter) base_win_on_mouse_leave_redirect(base, nullptr, -1, 2147483647);
+                else base->on_mouse_leave(-1, 2147483647);
+                break;
+            case 1:
+                if (adapter) design_win_on_mouse_leave_redirect(design, nullptr, -1, 2147483647);
+                else design->on_mouse_leave(-1, 2147483647);
+                break;
+            case 2:
+                if (adapter) social_win_on_iface_mouse_move_redirect(social, nullptr, -1, 2147483647);
+                else social->on_iface_mouse_move(-1, 2147483647);
+                break;
+            default:
+                if (adapter) social_win_on_iface_mouse_leave_redirect(social, nullptr, -1, 2147483647);
+                else social->on_iface_mouse_leave(-1, 2147483647);
+                break;
+            }
+
+            // TWO dismissals, because the probe re-armed the bubble after the
+            // first. A body with one call reports one.
+            expect(teardown_probe.update_calls == 2);
+            expect(teardown_probe.flip_calls == 2);
+            expect(teardown_probe.update_rect == &rect);
+            expect(teardown_probe.flip_rect == &rect);
+            expect(teardown_probe.update_window == nullptr);
+            // The flags are always clear when the refresh observes them.
+            expect(teardown_probe.active_during_update == 0);
+            expect(teardown_probe.companion_during_update == 0);
+            // No object is touched - not the one called, not the others.
+            expect_storage_bytes(base_storage, base_expected, sizeof(base_storage));
+            expect_storage_bytes(design_storage, design_expected, sizeof(design_storage));
+            expect_storage_bytes(social_storage, social_expected, sizeof(social_storage));
+        }
+    }
+
+    // With no bubble pending, none of the four does anything at all.
+    for (int which = 0; which < 4; ++which) {
+        active = 0;
+        companion = 0x5A5A5A5A;
+        teardown_probe = TeardownProbe{};
+        auto *base = reinterpret_cast<BaseWin *>(base_storage + 16);
+        auto *design = reinterpret_cast<DesignWin *>(design_storage + 16);
+        auto *social = reinterpret_cast<SocialWin *>(social_storage + 16);
+        if (which == 0) base->on_mouse_leave(0, 0);
+        else if (which == 1) design->on_mouse_leave(0, 0);
+        else if (which == 2) social->on_iface_mouse_move(0, 0);
+        else social->on_iface_mouse_leave(0, 0);
+        expect(teardown_probe.update_calls == 0);
+        expect(teardown_probe.flip_calls == 0);
+        expect(companion == 0x5A5A5A5A);
+    }
+
+    g_rearm_active = nullptr;
+    WinBubbleActive = saved_active;
+    WinBubbleCompanion = saved_companion;
+    WinBubbleRect = saved_rect;
+    WinUpdateScreenOriginal = saved_update;
+    WinFlipOriginal = saved_flip;
+}
+
 void test_win_clear_bubble_text() {
     int active = 0;
     int companion = 0;
@@ -27868,6 +27983,7 @@ int main() {
     test_win_paging();
     test_win_scroll_positions();
     test_base_pop_key_gates();
+    test_bubble_dismiss_handlers();
     test_scroll_close();
     test_scroll_destructor();
     test_list_box_teardown();

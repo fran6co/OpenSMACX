@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2431,
+      "source_complete": 2435,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2929
+      "unrecovered": 2925
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,8 +67,8 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 192785,
-          "functions": 2431,
+          "bytes": 192837,
+          "functions": 2435,
           "percent_of_lift_scope_bytes": 8.0
         },
         "source_in_progress": {
@@ -82,8 +82,8 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2016252,
-          "functions": 2929,
+          "bytes": 2016200,
+          "functions": 2925,
           "percent_of_lift_scope_bytes": 83.65
         }
       },
@@ -103,15 +103,15 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2217532,
+        "bytes": 2217480,
         "direction": "must go down",
-        "functions": 3242,
+        "functions": 3238,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
         "percent_of_lift_scope_bytes": 92.0
       },
       "recovered": {
-        "bytes": 192785,
-        "functions": 2431,
+        "bytes": 192837,
+        "functions": 2435,
         "percent_of_lift_scope_bytes": 8.0
       }
     },
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2377,
-    "matched_function_starts": 2377,
-    "unique_addresses": 2377,
+    "annotations": 2381,
+    "matched_function_starts": 2381,
+    "unique_addresses": 2381,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -5810,7 +5810,7 @@
         "function": "?iface_click@BaseWin@@QAEXHHHH@Z",
         "function_address": "0x004160F0",
         "kind": "function",
-        "location": "src/basewin.cpp:127",
+        "location": "src/basewin.cpp:128",
         "symbol": "BaseWinIfaceClick",
         "type": "func_base_win_iface_click *"
       },
@@ -5819,7 +5819,7 @@
         "function": "?draw_supported@BaseWin@@QAEXH@Z",
         "function_address": "0x0040C850",
         "kind": "function",
-        "location": "src/basewin.cpp:198",
+        "location": "src/basewin.cpp:199",
         "symbol": "BaseWinDrawSupported",
         "type": "func_base_win_draw_supported *"
       },
@@ -5828,7 +5828,7 @@
         "function": "?click@BaseWin@@QAEXHHHH@Z",
         "function_address": "0x004165D0",
         "kind": "function",
-        "location": "src/basewin.cpp:224",
+        "location": "src/basewin.cpp:225",
         "symbol": "BaseWinClick",
         "type": "func_base_win_click *"
       },

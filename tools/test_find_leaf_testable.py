@@ -77,7 +77,7 @@ class ClassifyTests(unittest.TestCase):
         instructions = decode(encoded)
         return scanner.classify(instructions, 0x00401000,
                                 size if size is not None else len(encoded) // 2,
-                                SPAN)
+                                SPAN)[:2]
 
     def test_a_plain_return_is_clean(self):
         callees, reasons = self.classify("31c0c3")          # xor eax,eax; ret
@@ -121,6 +121,33 @@ class ClassifyTests(unittest.TestCase):
         callees, reasons = self.classify("ebfe", size=0x40)
         self.assertEqual(set(), callees)
         self.assertEqual([], reasons)
+
+
+class BindingTests(unittest.TestCase):
+    """An address used as a VALUE is testable but must be declared."""
+
+    def bindings(self, encoded: str):
+        instructions = decode(encoded)
+        return scanner.classify(instructions, 0x00401000,
+                                len(encoded) // 2, SPAN)[2]
+
+    def test_an_absolute_immediate_is_flagged_not_rejected(self):
+        # cmp ecx, 0x9156b0 - MapWin::UNK1 compares `this` against a global
+        # object's address. Nothing is dereferenced, so it can be leaf-tested;
+        # writing it hardcodes an image address, so it is a fixed data binding.
+        instructions = decode("81f9b0569100")
+        callees, reasons, bindings = scanner.classify(
+            instructions, 0x00401000, 6, SPAN)
+        self.assertEqual([], reasons, "must not be rejected")
+        self.assertEqual([0x009156B0], bindings)
+
+    def test_an_ordinary_constant_is_not_a_binding(self):
+        self.assertEqual([], self.bindings("83f841"))   # cmp eax, 0x41
+
+    def test_a_call_target_is_not_counted_as_a_binding(self):
+        # It is a callee, handled by conditions (2) and (3); counting it here
+        # would flag every function that calls anything.
+        self.assertEqual([], self.bindings("e8fb0f0000"))
 
 
 if __name__ == "__main__":
