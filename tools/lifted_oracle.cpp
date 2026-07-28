@@ -1571,12 +1571,45 @@ static DWORD WINAPI oracle_lifted_worker(LPVOID) {
     }
 }
 
+// The lifted side's recursion depth, and it is NOT the initial thread's stack.
+//
+// Those two were the same number by accident and it cost a PASS. CreateThread's
+// dwStackSize is the initial COMMIT unless STACK_SIZE_PARAM_IS_A_RESERVATION
+// says otherwise; the RESERVE comes from the PE header. So when
+// lifted_oracle_build.sh reduced the header's reserve - which it must, to keep
+// the initial thread's stack off the guest image at 0x00400000 - it also, and
+// invisibly, reduced the depth available to every lifted body.
+// ?tech_recurse@@YAHHH@Z at 0x005b9f90 is recursive, had agreed on the previous
+// host, and came back FAIL-lifted-fault 0xc00000fd - STATUS_STACK_OVERFLOW.
+//
+// Making it a reservation decouples them. The initial thread stays small
+// because of where it is placed; this stack is allocated at run time, wherever
+// there is room, and can be larger than the header ever was. 4 MiB is twice the
+// mingw default the previous host ran with, so this is not a restoration of the
+// old limit but a widening of it.
+constexpr SIZE_T OracleWorkerStackReserve = 4u << 20;
+
 static void start_worker() {
     if (!g_worker_start) {
         g_worker_start = CreateEventA(nullptr, FALSE, FALSE, nullptr);
         g_worker_done = CreateEventA(nullptr, FALSE, FALSE, nullptr);
     }
-    g_worker = CreateThread(nullptr, 1 << 20, oracle_lifted_worker, nullptr, 0, nullptr);
+    g_worker = CreateThread(nullptr, OracleWorkerStackReserve,
+                            oracle_lifted_worker, nullptr,
+                            STACK_SIZE_PARAM_IS_A_RESERVATION, nullptr);
+    if (!g_worker) {
+        // The address space is sealed by the time the first case runs, so a
+        // large reservation is the one that can plausibly fail. Falling back
+        // keeps the harness running rather than losing every remaining case to
+        // a stack size; a lifted body deep enough to need the 4 MiB will then
+        // fault, and a fault is a recorded verdict rather than a dead run.
+        std::fprintf(stderr, "oracle: worker stack reservation of %#zx failed "
+                             "(error %lu); falling back to the image default\n",
+                     size_t(OracleWorkerStackReserve),
+                     static_cast<unsigned long>(GetLastError()));
+        g_worker = CreateThread(nullptr, 1 << 20, oracle_lifted_worker, nullptr,
+                                0, nullptr);
+    }
 }
 
 // Returns 0 when the body returned, 1 or 2 for the two escapes, -1 on timeout.
