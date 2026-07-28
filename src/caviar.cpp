@@ -283,3 +283,38 @@ void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,
                                                    float x, float y, float z) {
     self->set_scene_rotation(x, y, z);
 }
+
+/*
+Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
+         whose pointer is null.
+
+             test eax,eax / je next / mov edx,[ecx+0x2C] / mov [eax],edx
+
+         repeated per output. Each null check guards only its OWN store, so a
+         caller passing the middle pointer null still receives the other two -
+         which is what the three independent branches encode and what a single
+         guard around all three would get wrong.
+
+         The mangled name declares three ints; they are used as pointers, and
+         the parameters are typed that way here because that is what the body
+         does with them.
+Original Offset: 00618340
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::UNK11(int *out1, int *out2, int *out3) {
+    if (out1) {
+        *out1 = field_2C_;
+    }
+    if (out2) {
+        *out2 = field_30_;
+    }
+    if (out3) {
+        *out3 = field_34_;
+    }
+}
+
+void __fastcall caviar_unk11_redirect(Caviar *self, void *, int *out1,
+                                      int *out2, int *out3) {
+    self->UNK11(out1, out2, out3);
+}

@@ -30,6 +30,7 @@ class DLLEXPORT CaviarData {
 
 class DLLEXPORT Caviar {
  public:
+  void UNK11(int *out1, int *out2, int *out3);
   Caviar();
   void set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix);
   void set_scaling(float scaling);
@@ -66,6 +67,7 @@ static_assert(sizeof(Caviar) == 0x13D0,
               "Caviar layout must match the original executable");
 
 CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *);
+void __fastcall caviar_unk11_redirect(Caviar *self, void *, int *out1, int *out2, int *out3);
 void __fastcall caviar_data_close_redirect(CaviarData *self, void *);
 
 // The 413-byte helper that walks the record and frees its members is not yet
