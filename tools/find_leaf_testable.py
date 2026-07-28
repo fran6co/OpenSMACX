@@ -19,8 +19,9 @@ hybrid run.
 So a candidate here must satisfy THREE conditions, and the third is the one
 that is easy to forget:
 
-  1. its own body touches no absolute global inside the image, and makes no
-     call this tool cannot account for;
+  1. its own body touches no absolute global inside the image, makes no call
+     this tool cannot account for, and is a FUNCTION rather than an unwind
+     funclet;
   2. every function it calls is already `source_complete`;
   3. every function it calls has its RECOVERED IMPLEMENTATION in a translation
      unit compiled into `recovery-leaf-tests`.
@@ -65,7 +66,8 @@ import pefile  # noqa: E402
 from find_constant_returns import declared_arity  # noqa: E402
 from capstone import (CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP,  # noqa: E402
                       CS_MODE_32, Cs)
-from capstone.x86 import X86_OP_IMM, X86_OP_MEM  # noqa: E402
+from capstone.x86 import (X86_OP_IMM, X86_OP_MEM,  # noqa: E402
+                          X86_REG_EBP)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -149,6 +151,31 @@ def image_span(pe: pefile.PE) -> tuple[int, int]:
         end = max(end, base + section.VirtualAddress
                   + max(section.Misc_VirtualSize, section.SizeOfRawData))
     return base, end
+
+
+def inherits_a_frame(instructions) -> bool:
+    """True when the body reads EBP without establishing its own frame.
+
+    MSVC emits EH unwind funclets into the cold 0x0065xxxx region as bodies
+    that begin `mov ecx,[ebp-0x10]` and tail-jump into a destructor. They have
+    no prologue: EBP belongs to the frame being unwound, and the funclet is
+    entered by the runtime with that frame still live. They are not callable on
+    their own, so recovering one produces a function that reads whatever
+    happens to be below the caller's EBP.
+
+    The catalogue lists them as ordinary functions and they pass every other
+    condition here - no globals, one direct tail call to a source_complete
+    destructor - so nothing else rejects them. Fifteen were in the first forty
+    candidates of the enlarged closure.
+    """
+    for one in instructions:
+        if one.mnemonic == "push" and one.op_str == "ebp":
+            return False            # establishes its own frame
+        for operand in one.operands:
+            if (operand.type == X86_OP_MEM
+                    and operand.mem.base == X86_REG_EBP):
+                return True         # reads a frame it never set up
+    return False
 
 
 def classify(instructions, address: int, size: int, span: tuple[int, int]):
@@ -269,6 +296,9 @@ def main(argv=None) -> int:
             why.append("does not fully decode")
         callees, reasons, bindings = classify(instructions, address, size, span)
         why.extend(reasons)
+        if inherits_a_frame(instructions):
+            why.append("reads EBP without a prologue - an unwind funclet, not "
+                       "an independently callable function")
 
         # THE ARITY MUST AGREE WITH THE STACK CLEANUP, and this is the check
         # find_constant_returns.py already applies for the same reason.

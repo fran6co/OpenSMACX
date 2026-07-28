@@ -131,6 +131,22 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual([], reasons)
 
 
+class UnwindFuncletTests(unittest.TestCase):
+    """A body that reads EBP without setting it up is not callable."""
+
+    def test_reading_ebp_without_a_prologue_is_a_funclet(self):
+        # mov ecx,[ebp-0x10] - the shape MSVC emits into 0x0065xxxx for EH
+        # unwind. EBP belongs to the frame being unwound.
+        self.assertTrue(scanner.inherits_a_frame(decode("8b4df0")))
+
+    def test_establishing_a_frame_first_is_an_ordinary_function(self):
+        # push ebp / mov ebp,esp / mov eax,[ebp+8]
+        self.assertFalse(scanner.inherits_a_frame(decode("5589e58b4508")))
+
+    def test_a_body_that_never_touches_ebp_is_fine(self):
+        self.assertFalse(scanner.inherits_a_frame(decode("8b4104c3")))
+
+
 class ImplementationHomeTests(unittest.TestCase):
     """Where a recovered body LIVES, which is condition (3)'s real input."""
 
