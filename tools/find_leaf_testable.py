@@ -119,10 +119,25 @@ def image_span(pe: pefile.PE) -> tuple[int, int]:
 
 
 def classify(instructions, address: int, size: int, span: tuple[int, int]):
-    """(callees, reasons) - direct call/tail-jump targets, and disqualifiers."""
+    """(callees, reasons, bindings) for one body.
+
+    `bindings` is separate from `reasons` on purpose. An absolute IMMEDIATE -
+    `cmp ecx, 0x9156b0`, comparing `this` against a known global object - does
+    not disqualify a function from being leaf-tested, because nothing is
+    dereferenced and nothing can fault. But recovering it hardcodes an address
+    of the original image, which is a fixed data binding, and the release rule
+    requires zero of those. So it stays in the queue and is FLAGGED: it needs a
+    row in docs/recovery-binding-classifications.csv, and whoever picks it up
+    should know that before writing it rather than at the gate.
+
+    An absolute memory operand is different and is a rejection: it is a read or
+    write through an address that is simply not mapped in a standalone test
+    executable.
+    """
     low, high = span
     callees: set[int] = set()
     reasons: list[str] = []
+    bindings: list[int] = []
     inside = range(address, address + size)
     for one in instructions:
         mnemonic = one.mnemonic
@@ -135,6 +150,12 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
                     and operand.mem.index == 0
                     and low <= operand.mem.disp < high):
                 reasons.append(f"absolute global {operand.mem.disp:#010x}")
+            # An address used as a VALUE, not dereferenced. Testable, but it is
+            # a fixed data binding and has to be declared as one.
+            if (operand.type == X86_OP_IMM and one.mnemonic != "call"
+                    and one.mnemonic != "jmp"
+                    and low <= operand.imm < high):
+                bindings.append(operand.imm)
         if mnemonic == "call":
             if len(operands) == 1 and operands[0].type == X86_OP_IMM:
                 callees.add(operands[0].imm)
@@ -148,7 +169,7 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
                 # `jmp [eax+0xE8]` is a virtual dispatch: the callee is not
                 # knowable statically, so condition (2) cannot be decided.
                 reasons.append("indirect jump")
-    return callees, reasons
+    return callees, reasons, bindings
 
 
 def main(argv=None) -> int:
@@ -203,7 +224,7 @@ def main(argv=None) -> int:
         instructions = list(decoder.disasm(data, address))
         if sum(one.size for one in instructions) < size:
             why.append("does not fully decode")
-        callees, reasons = classify(instructions, address, size, span)
+        callees, reasons, bindings = classify(instructions, address, size, span)
         why.extend(reasons)
 
         # The patch slack rule: a five-byte jump has to fit.
@@ -227,13 +248,18 @@ def main(argv=None) -> int:
         if why:
             rejected.append((address, row["name"], why))
         else:
-            accepted.append((size, address, row["name"]))
+            accepted.append((size, address, row["name"], bindings))
 
     accepted.sort()
     print(f"{len(accepted)} leaf-testable candidates "
-          f"({sum(size for size, _, _ in accepted)} bytes)\n")
-    for size, address, name in accepted:
-        print(f"  {address:#010x} {size:4d} B  {name}")
+          f"({sum(size for size, _, _, _ in accepted)} bytes)\n")
+    for size, address, name, bindings in accepted:
+        note = ""
+        if bindings:
+            note = ("   [fixed-address binding: "
+                    + ", ".join(f"{one:#010x}" for one in sorted(set(bindings)))
+                    + " - needs classification]")
+        print(f"  {address:#010x} {size:4d} B  {name}{note}")
     if args.show_rejected:
         print(f"\n{len(rejected)} rejected:")
         for address, name, why in sorted(rejected):

@@ -404,5 +404,31 @@ class HarnessClassificationTest(unittest.TestCase):
         self.assertEqual(SOURCE, restored)
 
 
+class IdenticalStatementSwapTests(unittest.TestCase):
+    """Swapping a statement with its identical neighbour is the program."""
+
+    def test_two_identical_calls_do_not_interact(self):
+        # Four recovered bubble-dismiss handlers are literally
+        #     Win::clear_bubble_text(); Win::clear_bubble_text();
+        # and each reported a swap survivor that no fixture could ever close,
+        # because the swapped file is byte-identical to the original.
+        self.assertFalse(mutate_and_verify.statements_interact(
+            "    ::Win::clear_bubble_text();",
+            "    ::Win::clear_bubble_text();"))
+
+    def test_indentation_alone_does_not_make_them_differ(self):
+        self.assertFalse(mutate_and_verify.statements_interact(
+            "  foo();", "        foo();"))
+
+    def test_two_different_calls_still_interact(self):
+        # The general rule is unchanged: an opaque call may have side effects,
+        # so a genuine pair is still worth a build.
+        self.assertTrue(mutate_and_verify.statements_interact("    foo();", "    bar();"))
+
+    def test_a_write_after_write_still_interacts(self):
+        self.assertTrue(mutate_and_verify.statements_interact(
+            "    x_ = 1;", "    x_ = 2;"))
+
+
 if __name__ == "__main__":
     unittest.main()

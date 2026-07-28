@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "basewin.h"
+#include "win.h"
 #include <cstdint>
 #include <cstring>
 
@@ -280,4 +281,26 @@ void BaseWin::timer_callback(int, int) {
 
 void __cdecl base_win_timer_callback_redirect(int a1, int a2) {
     BaseWin::timer_callback(a1, a2);
+}
+
+/*
+Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
+         consecutive calls to the static Win::clear_bubble_text and nothing
+         else; the arguments are ignored.
+
+         The SECOND call is not a transcription error. The original issues it,
+         and the two are observationally identical unless something re-arms the
+         bubble between them - which is why the fixture re-arms it rather than
+         asserting a single refresh and calling that agreement.
+Original Offset: 0041B1E0
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_mouse_leave(int, int) {
+    ::Win::clear_bubble_text();
+    ::Win::clear_bubble_text();
+}
+
+void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, int a2) {
+    self->on_mouse_leave(a1, a2);
 }
