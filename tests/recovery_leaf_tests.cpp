@@ -2408,6 +2408,49 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_datalink_parse_id() {
+    // The inverse of Datalink::UNK1. The pairs below are chosen so truncation
+    // DIRECTION is observable: for a negative id that is not a multiple of
+    // 10000, C++ division truncates toward zero and the remainder carries the
+    // dividend's sign, where an arithmetic shift would floor and give a
+    // different pair. UNK1 is then applied to the two halves and must rebuild
+    // the original id, which is the property the two functions share.
+    const int ids[] = {
+        0, 1, 9999, 10000, 10001, 123456789,
+        -1, -9999, -10000, -10001, -123456789,
+        2147483647, -2147483647 - 1,
+    };
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (int id : ids) {
+            alignas(Datalink) uint8_t storage[sizeof(Datalink) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            std::memcpy(expected, storage, sizeof(storage));
+
+            int32_t quotient = 0x11111111;
+            int32_t remainder = 0x22222222;
+            auto *link = reinterpret_cast<Datalink *>(storage + 16);
+            if (use_adapter) {
+                datalink_parse_id_redirect(
+                    link, nullptr, id,
+                    reinterpret_cast<DatalinkID *>(&quotient), &remainder);
+            } else {
+                link->parse_id(id, reinterpret_cast<DatalinkID *>(&quotient),
+                               &remainder);
+            }
+            expect(quotient == id / 10000);
+            expect(remainder == id % 10000);
+            // Round trip through the inverse, except where the product
+            // overflows and the identity cannot hold.
+            if (id != 2147483647 && id != -2147483647 - 1) {
+                expect(link->UNK1(quotient, remainder) == id);
+            }
+            // parse_id touches no field of its own.
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 void test_base_pop_read_check() {
     // The word CheckBox::UNK1/UNK2/set_state_pos edit, read whole, through the
     // CheckBox embedded at 0x2228. The Dialog displacement comes from THAT
@@ -28895,6 +28938,7 @@ int main() {
     test_map_win_is_console();
     test_sprite_box_id_to_pos();
     test_base_pop_read_check();
+    test_datalink_parse_id();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();

@@ -32,11 +32,20 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
+// Declared and deliberately NOT defined. parse_id writes only its first four
+// bytes, and nothing available says how large it is or what follows: the type
+// exists in the original's mangled name and in no analysis output here. An
+// incomplete type expresses exactly that - the parameter is this type, and
+// this translation unit knows nothing else about it - where inventing a
+// one-int struct would state a size the evidence does not support.
+struct DatalinkID;
+
 class DLLEXPORT Datalink : GraphicWin {
  public:
   Datalink() { ; }
   ~Datalink() { ; }
   int UNK1(int a1, int a2);
+  void parse_id(int id, DatalinkID *out_id, int *out_remainder);
   void UNK6();
   void UNK8();
   void UNK9();
@@ -68,6 +77,7 @@ class DLLEXPORT Datalink : GraphicWin {
 };
 
 int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2);
+void __fastcall datalink_parse_id_redirect(Datalink *self, void *, int id, DatalinkID *out_id, int *out_remainder);
 void __fastcall datalink_unk6_redirect(Datalink *self, void *);
 void __fastcall datalink_unk8_redirect(Datalink *self, void *);
 void __fastcall datalink_unk9_redirect(Datalink *self, void *);

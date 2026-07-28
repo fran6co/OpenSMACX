@@ -230,7 +230,6 @@ P0,1001821,0x00428E90,??1Credits@@QAE@XZ,322,1,8,original_dependency,ui_dependen
 P0,1001921,0x00428FC0,??0Datalink@@QAE@XZ,737,1,9,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0Datalink@@QAE@XZ)(Datalink* this)
 P0,1018821,0x00429180,?exec@Datalink@@QAEXIH@Z,380,18,8,original_dependency,ui_dependency,recover_datalink_exec,2,exact,exact,"void (__thiscall ?exec@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID datalinkID, int)"
 P3,4421,0x00429300,?init@Datalink@@QAEXXZ,3367,2,24,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@Datalink@@QAEXXZ)(Datalink* this)
-P3,1021,0x0042A040,?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z,54,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z)(Datalink* this, int, DatalinkID*, int*)"
 P3,2121,0x0042A080,?construct_id@Datalink@@QAEXPADIH@Z,45,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?construct_id@Datalink@@QAEXPADIH@Z)(Datalink* this, int8*, DatalinkID, int)"
 P3,111,0x0042A0B0,?UNK2@Datalink@@QAEXPADPAHPAH@Z,65,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK2@Datalink@@QAEXPADPAHPAH@Z)(Datalink* this, int8*, int*, int*)"
 P3,121,0x0042A100,?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z,80,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z)(Datalink* this, GraphicWin*)"

@@ -386,3 +386,43 @@ int Datalink::UNK1(int a1, int a2) {
 int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2) {
     return self->UNK1(a1, a2);
 }
+
+/*
+Purpose: Split a combined id into its two halves - `id / 10000` into the first
+         output and `id % 10000` into the second.
+
+             mov eax,0x68DB8BAD / imul ecx / sar edx,0xC
+             mov eax,edx / shr eax,0x1F / add edx,eax   ; id / 10000
+             mov [eax],edx
+             lea .. x4 / shl edx,4 / sub ecx,edx        ; id - quotient*10000
+             mov [eax],ecx
+
+         The magic multiply is a signed divide by 10000, checked against C++
+         truncating division over 200,000 random dividends and the boundaries,
+         and the remainder is formed as `id - quotient * 10000` rather than by
+         a second divide - which is what C++ `%` means for truncating division,
+         verified the same way.
+
+         This is the exact INVERSE of UNK1 above, which builds `a1 * 10000 + a2`
+         from a shift-and-add chain. The two were decoded independently and
+         agree on the constant.
+
+         Neither output is null-checked, because the original checks neither.
+Original Offset: 0042A040
+Return Value: n/a
+Status: Complete
+*/
+void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
+    const int32_t quotient = id / 10000;
+    // Only the first four bytes of the DatalinkID are written; the type stays
+    // incomplete, so the store is expressed against its address.
+    *reinterpret_cast<int32_t *>(out_id) = quotient;
+    *out_remainder = static_cast<int32_t>(
+        static_cast<uint32_t>(id) - static_cast<uint32_t>(quotient) * 10000U);
+}
+
+void __fastcall datalink_parse_id_redirect(Datalink *self, void *, int id,
+                                           DatalinkID *out_id,
+                                           int *out_remainder) {
+    self->parse_id(id, out_id, out_remainder);
+}
