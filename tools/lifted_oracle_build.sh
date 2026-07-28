@@ -49,6 +49,13 @@ fi
 "$CXX" -std=c++17 -O2 -c -I"$LIFTED" -I"$ROOT/tools" \
     "$LIFTED/lifted_dispatch.cpp" -o "$OUT/lifted_dispatch.o"
 
+# lifted_dispatch.cpp now resolves the CRT the lift never translates before it
+# gives up, so its definition has to be here too. Compiled from tools/ rather
+# than taken from $LIFTED for the same reason as the dispatcher above: this
+# harness must match the source it was built from.
+"$CXX" -std=c++17 -O2 -c -I"$LIFTED" -I"$ROOT/tools" \
+    "$ROOT/tools/lifted_crt.cpp" -o "$OUT/lifted_crt.o"
+
 # EXTRA_CXXFLAGS exists for exactly one job: the host-layout control.
 #
 #   OUT=$ROOT/build/oracle-shim EXTRA_CXXFLAGS=-DORACLE_LAYOUT_SHIM=0x51000 \
@@ -107,7 +114,7 @@ done
     -Wl,--stack,0x180000 \
     -o "$OUT/lifted_oracle.exe" \
     "$OUT/lifted_oracle.o" "$OUT/lifted_oracle_main.o" \
-    "$OUT/lifted_dispatch.o" $SHARDS \
+    "$OUT/lifted_dispatch.o" "$OUT/lifted_crt.o" $SHARDS \
     -lgdi32 -luser32 -lkernel32 -ladvapi32 -lshell32 -lole32 -loleaut32 \
     -lcomdlg32 -lwinmm -lversion -lwsock32 -limm32 -luuid
 echo "built $OUT/lifted_oracle.exe"
