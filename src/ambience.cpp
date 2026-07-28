@@ -494,6 +494,30 @@ void __fastcall faction_ambience_design_window_hide_redirect(FactionAmbience *se
 }
 
 /*
+Purpose: GAmbience raises the flag byte only when it is CLEAR.
+
+             mov al,[ecx+0x6C] / test al,al / jne done
+             mov byte [ecx+0x6C],1 / done: ret
+
+         The guard is not redundant. Its sibling basewin_hide below stores
+         unconditionally, and an unconditional store here would agree for the
+         values 0 and 1 and differ for every other: a byte holding 5 keeps 5,
+         where `field_6C_ = 1` would overwrite it.
+Original Offset: 00447BE0
+Return Value: n/a
+Status: Complete
+*/
+void GAmbience::basewin_show() {
+    if (field_6C_ == 0) {
+        field_6C_ = 1;
+    }
+}
+
+void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *) {
+    self->basewin_show();
+}
+
+/*
 Purpose: GAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 Original Offset: 00447BF0

@@ -99,6 +99,7 @@ class DLLEXPORT GAmbience : Ambience {
   void production();
   void popup1();
   void eot();
+  void basewin_show();
   void basewin_hide();
 
  private:
@@ -139,4 +140,5 @@ void __fastcall faction_ambience_design_window_show_redirect(
     FactionAmbience *self, void *);
 void __fastcall faction_ambience_design_window_hide_redirect(
     FactionAmbience *self, void *);
+void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *);
 void __fastcall g_ambience_basewin_hide_redirect(GAmbience *self, void *);

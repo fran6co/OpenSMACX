@@ -2408,6 +2408,40 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+void test_g_ambience_basewin_show() {
+    // Raises the flag byte only when it is CLEAR. The seeds 0x02 and 0x5A are
+    // the whole point: an unconditional `field_6C_ = 1`, which is what the
+    // sibling basewin_hide does in the other direction, agrees for 0 and 1 and
+    // overwrites every other value. Byte-exact comparison also holds it to
+    // touching one byte - 0x6D beside it belongs to another event.
+    struct Case { uint8_t before, after; };
+    const Case cases[] = {
+        {0x00, 0x01},   // clear -> raised
+        {0x01, 0x01},   // already raised -> unchanged
+        {0x02, 0x02},   // NOT overwritten
+        {0x5A, 0x5A},
+        {0xFF, 0xFF},
+    };
+    for (int use_adapter = 0; use_adapter < 2; ++use_adapter) {
+        for (const Case &one : cases) {
+            alignas(GAmbience) uint8_t storage[sizeof(GAmbience) + 32];
+            uint8_t expected[sizeof(storage)];
+            seed_storage(storage, expected, sizeof(storage));
+            storage[16 + 0x6C] = one.before;
+            std::memcpy(expected, storage, sizeof(storage));
+            expected[16 + 0x6C] = one.after;
+
+            auto *ambience = reinterpret_cast<GAmbience *>(storage + 16);
+            if (use_adapter) {
+                g_ambience_basewin_show_redirect(ambience, nullptr);
+            } else {
+                ambience->basewin_show();
+            }
+            expect_storage_bytes(storage, expected, sizeof(storage));
+        }
+    }
+}
+
 void test_net_win_unk5() {
     // Five bytes at the start of the object plus a cleared dword at 0x178, and
     // nothing else. The fixture establishes the resulting BYTES and that
@@ -28975,6 +29009,7 @@ int main() {
     test_base_pop_read_check();
     test_datalink_parse_id();
     test_net_win_unk5();
+    test_g_ambience_basewin_show();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();
