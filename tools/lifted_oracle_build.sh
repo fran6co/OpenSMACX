@@ -76,8 +76,35 @@ for object in "$LIFTED"/lifted_*.cpp.o; do
     SHARDS="$SHARDS $object"
 done
 
+# --stack 0x180000 is LOAD-BEARING ON LINUX and it is not a tuning knob.
+#
+# Wine places a new process's allocations bottom-up, and the initial thread
+# stack is the big one. With mingw's default 2 MiB reserve the child's stack
+# lands at 0x00220000..0x00420000 - straight through 0x00400000, where the
+# GUEST image has to go - and apisetschema.dll is mapped immediately above it.
+# The parent's VirtualAllocEx of the guest span into the suspended child then
+# fails with error 487, ERROR_INVALID_ADDRESS, before a single case runs.
+#
+# Measured in the child at CREATE_SUSPENDED, by stack reserve:
+#
+#   2.0 MiB (default)  stack 0x220000..0x420000, apisetschema 0x420000  FAILS
+#   1.5 MiB (this)     stack 0x220000..0x3a0000, apisetschema 0x3a0000  works
+#   1.0 MiB            stack 0x220000..0x320000, apisetschema 0x320000  works
+#
+# Wine enforces a 1 MiB floor - asking for 0.5 MiB measured identically to
+# 1 MiB - so the usable window is [1.0, 1.81] MiB, the top of that range being
+# where the stack plus apisetschema would again touch 0x00400000. 1.5 MiB sits
+# inside it with ~316 KiB of headroom at the top and half a megabyte of stack
+# more than the floor.
+#
+# macOS Wine placed the stack elsewhere and never needed this, which is why it
+# is only being written down now. Nothing here is conditional on the platform:
+# a smaller reserve is correct on both, and the failure it prevents is loud
+# rather than silent, so a future Wine that moves things again says so at
+# startup instead of producing numbers.
 # shellcheck disable=SC2086
 "$CXX" -std=c++17 -O2 -static -Wl,--image-base,0x10000000 \
+    -Wl,--stack,0x180000 \
     -o "$OUT/lifted_oracle.exe" \
     "$OUT/lifted_oracle.o" "$OUT/lifted_oracle_main.o" \
     "$OUT/lifted_dispatch.o" $SHARDS \
