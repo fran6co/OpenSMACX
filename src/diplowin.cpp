@@ -228,3 +228,35 @@ void DiploWin::UNK2() {
 void __fastcall diplo_win_unk2_redirect(DiploWin *self, void *) {
     self->UNK2();
 }
+
+/*
+Purpose: Clear one entry of the array at 0xA1C, then clear the two words at
+         0xA24 and 0xA28.
+
+             mov dword [ecx+eax*4+0xA1C],0
+             lea eax,[ecx+0xA24] / xor ecx,ecx
+             mov [eax],ecx / mov [eax+4],ecx
+
+         The index is NOT bounds checked - the original stores through
+         `eax*4` whatever the caller passed - so this does not add a guard the
+         program does not have.
+
+         Note the array at 0xA1C overlaps the two words cleared afterwards:
+         index 2 IS the word at 0xA24, and index 3 the one at 0xA28. So calling
+         with 2 or 3 writes the same slot twice, which is visible only because
+         the fixture checks exact bytes rather than the cleared entry alone.
+Original Offset: 004413C0
+Return Value: n/a
+Status: Complete
+*/
+void DiploWin::UNK3(int a1) {
+    auto *const self = reinterpret_cast<uint8_t *>(this);
+    *reinterpret_cast<int32_t *>(self + 0xA1C + a1 * 4) = 0;
+    int32_t *const pair = reinterpret_cast<int32_t *>(self + 0xA24);
+    pair[0] = 0;
+    pair[1] = 0;
+}
+
+void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1) {
+    self->UNK3(a1);
+}

@@ -36,6 +36,7 @@ class DLLEXPORT DiploWin : GraphicWin {
  public:
   DiploWin() { ; }
   ~DiploWin() { ; }
+  void UNK3(int a1);
   void UNK5();
   void UNK2();
   void UNK4(int a1);
@@ -61,6 +62,7 @@ class DLLEXPORT DiploWin : GraphicWin {
   int32_t field_A28_;
 };
 
+void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1);
 void __fastcall diplo_win_unk5_redirect(DiploWin *self, void *);
 void __fastcall diplo_win_unk4_redirect(DiploWin *self, void *, int a1);
 void __fastcall diplo_win_on_iface_left_click_redirect(DiploWin *self, void *, int a1, int a2);
