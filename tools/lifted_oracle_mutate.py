@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import random
 import re
 import shutil
@@ -31,7 +32,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 LIFTED = REPO_ROOT / "build" / "lifted"
 ORACLE = REPO_ROOT / "build" / "oracle"
 REPORT = ORACLE / "report.tsv"
-WINE = "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine"
+# $WINE, then PATH, then the macOS bundle - the same order wine_runtime.
+# find_wine uses. Resolved to a plain string rather than through find_wine
+# itself because that raises when Wine is absent, and this is module scope:
+# a host without Wine would fail to IMPORT the module, taking all 80 of this
+# file's unit tests with it. They do not need Wine to run.
+WINE = (os.environ.get("WINE") or shutil.which("wine")
+        or "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine")
+CXX = (os.environ.get("CXX") or shutil.which("i686-w64-mingw32-g++")
+       or "/opt/homebrew/bin/i686-w64-mingw32-g++")
 EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 
 
@@ -359,7 +368,7 @@ def exit_code(caught: int, missed: int, untested: int) -> int:
 
 def rebuild(shard: Path) -> bool:
     compile_ok = subprocess.run(
-        ["/opt/homebrew/bin/i686-w64-mingw32-g++", "-std=c++17", "-O2", "-c",
+        [CXX, "-std=c++17", "-O2", "-c",
          f"-I{LIFTED}", f"-I{REPO_ROOT / 'tools'}", str(shard),
          "-o", str(shard) + ".o"], capture_output=True, text=True)
     if compile_ok.returncode != 0:
