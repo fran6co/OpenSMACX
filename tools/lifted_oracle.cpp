@@ -1335,6 +1335,44 @@ static LONG CALLBACK oracle_last_resort(EXCEPTION_POINTERS *ep) {
                  "oracle, not a finding about the lift)\n",
                  (unsigned long)ep->ExceptionRecord->ExceptionCode,
                  ep->ExceptionRecord->ExceptionAddress);
+    // A bare host address is not enough to act on, and four wrong hypotheses
+    // about one such fault is what it cost to learn that. The lift computes
+    // host = opensmacx_image + (guest - OracleImageBase), so a host address in
+    // the lifted image inverts to the GUEST address that produced it, and the
+    // register holding it is usually visible right here. Print both rather than
+    // making the next person do the arithmetic by hand from two log lines.
+    {
+        const CONTEXT *c = ep->ContextRecord;
+        const uint32_t regs[8] = {c->Eax, c->Ecx, c->Edx, c->Ebx,
+                                  c->Esp, c->Ebp, c->Esi, c->Edi};
+        static const char *names[8] = {"eax", "ecx", "edx", "ebx",
+                                       "esp", "ebp", "esi", "edi"};
+        std::fprintf(stderr, "  side %d, guest context:\n   ", int(g_side));
+        for (int i = 0; i < 8; ++i)
+            std::fprintf(stderr, " %s=%08x", names[i], unsigned(regs[i]));
+        const uint32_t host = uint32_t(uintptr_t(ep->ExceptionRecord->ExceptionAddress));
+        const uint32_t image = uint32_t(uintptr_t(opensmacx_image));
+        std::fprintf(stderr, "\n  faulting host %#010x -> guest %#010x"
+                     " (image at %#010x)\n",
+                     unsigned(host), unsigned(host - image + OracleImageBase),
+                     unsigned(image));
+        if (ep->ExceptionRecord->NumberParameters >= 2) {
+            const uint32_t data =
+                uint32_t(ep->ExceptionRecord->ExceptionInformation[1]);
+            std::fprintf(stderr, "  accessing host %#010x -> guest %#010x\n",
+                         unsigned(data),
+                         unsigned(data - image + OracleImageBase));
+        }
+        // Which register holds a value that would translate to this address is
+        // the question worth answering, so answer it.
+        for (int i = 0; i < 8; ++i) {
+            const uint32_t as_host = regs[i] - OracleImageBase + image;
+            if (as_host >= host - 0x1000U && as_host <= host + 0x1000U)
+                std::fprintf(stderr, "  %s=%08x translates to %#010x, within a "
+                             "page of the fault\n",
+                             names[i], unsigned(regs[i]), unsigned(as_host));
+        }
+    }
     std::fflush(nullptr);
     TerminateProcess(GetCurrentProcess(), 9);
     return EXCEPTION_EXECUTE_HANDLER;

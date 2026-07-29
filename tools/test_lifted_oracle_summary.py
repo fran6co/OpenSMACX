@@ -58,6 +58,7 @@ import json
 import re
 import sys
 import tempfile
+import pathlib
 import unittest
 from pathlib import Path
 
@@ -190,6 +191,39 @@ def tier_table(out):
                 and parts[3].isdigit()):
             table[parts[0]] = (int(parts[3]), int(parts[1]), parts[2])
     return table
+
+
+class DroppedRowTests(unittest.TestCase):
+    """A run that dies mid-case writes rows naming no function.
+
+    Dropping them is right - they price nothing. Dropping them SILENTLY made a
+    broken sweep print INCONCLUSIVE-original-fault at 15.85% of scope, which
+    reads exactly like the number this project is trying to push down.
+    """
+
+    def report(self, body):
+        directory = tempfile.mkdtemp()
+        path = pathlib.Path(directory) / "report.tsv"
+        path.write_text("address\tverdict\tcases\tcompared\tdetail\tname\n"
+                        + body)
+        return path
+
+    def test_a_row_naming_no_function_is_counted_and_announced(self):
+        path = self.report("0x00400000\tPASS\t16\t16\t\ta\n"
+                           "0000000000\tINCONCLUSIVE-original-fault\t0\t0\t\t(null)\n")
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            rows, _ = summary.read_report(path, {0x00400000: 10})
+        self.assertEqual(1, len(rows))
+        self.assertIn("1 report line(s) named no function", errors.getvalue())
+        self.assertIn("suspect the RUN", errors.getvalue())
+
+    def test_a_clean_report_says_nothing(self):
+        path = self.report("0x00400000\tPASS\t16\t16\t\ta\n")
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            summary.read_report(path, {0x00400000: 10})
+        self.assertEqual("", errors.getvalue())
 
 
 class ByteWeightingTests(unittest.TestCase):
