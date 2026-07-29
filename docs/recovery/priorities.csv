@@ -1661,7 +1661,6 @@ P3,110,0x00579FF0,sub_579ff0,82,0,1,unrecovered,,,1,missing,exact,
 P3,3721,0x0057A050,?monolith@@YAXH@Z,1545,2,17,unrecovered,,,2,exact,exact,void (__cdecl ?monolith@@YAXH@Z)(int vehID)
 P3,7421,0x0057A660,?goody_box@@YAHHH@Z,10118,2,54,unrecovered,,,2,exact,exact,"int (__cdecl ?goody_box@@YAHHH@Z)(int vehID, int type)"
 P3,3321,0x0057CFA0,?study_artifact@@YAHH@Z,584,2,13,unrecovered,,,2,exact,exact,int (__cdecl ?study_artifact@@YAHH@Z)(int vehID)
-P3,10,0x0057DEE0,sub_57dee0,28,0,0,unrecovered,,,1,missing,exact,
 P3,3020,0x0057DF00,?clear_bunglist@@YAXH@Z,47,3,0,unrecovered,,,2,exact,exact,
 P3,1020,0x0057DF30,sub_57df30,130,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x0057DFC0,?is_bunged@@YA_NHHHHHH@Z,119,1,0,unrecovered,,,2,exact,exact,
@@ -2754,7 +2753,6 @@ P3,100,0x00624D40,sub_624d40,50,0,1,unrecovered,,,0,missing,missing,
 P2,9120,0x00624D80,?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z,297,9,1,unrecovered,,,2,exact,exact,
 P3,1120,0x00624EB0,sub_624eb0,453,1,1,unrecovered,,,2,exact,exact,
 P3,4120,0x00625080,sub_625080,532,4,1,unrecovered,,,2,exact,exact,
-P3,0,0x006252C0,sub_6252c0,30,0,0,unrecovered,,,0,missing,missing,
 P3,121,0x006252E0,??0ImageButton@@QAE@XZ,38,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
 P0,1001021,0x00625310,??1ImageButton@@QAE@XZ,21,1,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
 P3,11,0x00625330,?close@ImageButton@@QAEXXZ,15,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
@@ -3013,8 +3011,6 @@ P3,100,0x0063BAC0,?cos@@YAHHH@Z,25,0,1,unrecovered,,,0,missing,missing,
 P3,210,0x0063BAE0,sub_63bae0,22,0,2,unrecovered,,,1,exact,missing,
 P3,1520,0x0063BB20,sub_63bb20,574,1,5,unrecovered,,,2,exact,entry_range,
 P3,2320,0x0063BD10,sub_63bd10,413,2,3,unrecovered,,,2,exact,exact,
-P3,0,0x0063BEB0,sub_63beb0,33,0,0,unrecovered,,,0,missing,missing,
-P3,0,0x0063BEE0,sub_63bee0,33,0,0,unrecovered,,,0,missing,missing,
 P3,910,0x0063BF10,sub_63bf10,1071,0,9,unrecovered,,,1,exact,missing,
 P3,210,0x0063C340,sub_63c340,79,0,2,unrecovered,,,1,missing,exact,
 P3,0,0x0063C390,sub_63c390,14,0,0,unrecovered,,,0,missing,missing,

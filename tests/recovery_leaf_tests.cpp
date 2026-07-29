@@ -2638,6 +2638,74 @@ void test_leaf_recoveries() {
         }
     }
 
+    // --- magic-number division, in the direction that distinguishes it ---
+    //
+    // The NEGATIVE cases carry the argument. Magic division without the
+    // `shr 31 / add` sign correction floors instead of truncating, so -1/600
+    // would be -1 rather than 0 - and every non-negative case would still
+    // agree. The exact quotients here come from running the original's own
+    // instruction sequence, not from reading the constants.
+    {
+        uint8_t object[0x3800] = {};
+        auto set = [&](size_t offset, int32_t value) {
+            std::memcpy(object + offset, &value, sizeof(value));
+        };
+
+        set(0x3798, 1);
+        expect(leaf_0063beb0_redirect(object, nullptr, 600) == 1);
+        expect(leaf_0063beb0_redirect(object, nullptr, 599) == 0);
+        expect(leaf_0063beb0_redirect(object, nullptr, 1200) == 2);
+        expect(leaf_0063beb0_redirect(object, nullptr, -1) == 0);   // not -1
+        expect(leaf_0063beb0_redirect(object, nullptr, -600) == -1);
+        expect(leaf_0063beb0_redirect(object, nullptr, -599) == 0); // not -1
+        set(0x3798, 7);
+        expect(leaf_0063beb0_redirect(object, nullptr, 100) == 1);  // 700/600
+        expect(leaf_0063beb0_redirect(object, nullptr, -100) == -1);
+
+        set(0x379c, 1);
+        expect(leaf_0063bee0_redirect(object, nullptr, 440) == 1);
+        expect(leaf_0063bee0_redirect(object, nullptr, 439) == 0);
+        expect(leaf_0063bee0_redirect(object, nullptr, -439) == 0); // not -1
+        expect(leaf_0063bee0_redirect(object, nullptr, -880) == -2);
+        set(0x379c, 3);
+        expect(leaf_0063bee0_redirect(object, nullptr, 300) == 2);  // 900/440
+
+        // The two read DIFFERENT fields; a body using one for both would pass
+        // everything above, because the fields were set to the same value.
+        set(0x3798, 1);
+        set(0x379c, 0);
+        expect(leaf_0063beb0_redirect(object, nullptr, 600) == 1);
+        expect(leaf_0063bee0_redirect(object, nullptr, 440) == 0);
+    }
+
+    // --- fill eight bytes, and only eight ---
+    {
+        uint8_t buffer[12];
+        std::memset(buffer, 0x11, sizeof(buffer));
+        leaf_0057dee0_redirect(buffer);
+        for (int index = 0; index < 8; ++index) {
+            expect(buffer[index] == 0xFF);
+        }
+        for (int index = 8; index < 12; ++index) {
+            expect(buffer[index] == 0x11);      // past the end, untouched
+        }
+    }
+
+    // --- ten 60-byte slots, wrapping ---
+    {
+        uint8_t pool[8 + 60 * 10] = {};
+        int32_t *const counter = reinterpret_cast<int32_t *>(pool + 4);
+        *counter = 0;
+        for (int step = 0; step < 10; ++step) {
+            // The slot returned is the one current ON ENTRY.
+            expect(leaf_006252c0_redirect(pool, nullptr) == pool + 8 + step * 60);
+        }
+        // The tenth call wrapped the counter, so the eleventh starts over.
+        expect(*counter == 0);
+        expect(leaf_006252c0_redirect(pool, nullptr) == pool + 8);
+        expect(*counter == 1);
+    }
+
     // --- round toward zero to a multiple ---
     //
     // The NEGATIVE cases are the assertion. `x / y * y` truncates toward zero,

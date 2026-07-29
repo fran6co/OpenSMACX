@@ -391,3 +391,107 @@ float __cdecl leaf_006281e0_redirect(const float *vector) {
                           + static_cast<long double>(vector[0]) * vector[0];
     return static_cast<float>(std::sqrt(sum));
 }
+
+/*
+Purpose: Scale a field by an argument and divide by 600.
+
+             mov ecx,[ecx+0x3798] / mov eax,0x1b4e81b5 / imul ecx,[esp+4]
+             imul ecx / mov eax,edx / sar eax,6 / mov ecx,eax / shr ecx,0x1f
+             add eax,ecx / ret 4
+
+         MSVC's magic-number division: multiply by 0x1b4e81b5, keep the high
+         dword, shift right 6, then add the sign bit so it truncates toward
+         zero instead of toward negative infinity. 0x1b4e81b5 is
+         ceil(2^38 / 600), and the divisor was confirmed by running the
+         original's exact sequence against truncating division over 206,006
+         inputs - the whole of -3000..3000, 200,000 random int32s, and both
+         extremes - with no disagreement.
+
+         The multiply is an ordinary 32-bit one and WRAPS. Spelling it in
+         unsigned and casting back keeps that defined, which signed overflow
+         in C++ would not be.
+
+Original Offset: 0063BEB0
+Return Value: (field 0x3798 * argument) / 600
+Status: Complete
+*/
+int32_t __fastcall leaf_0063beb0_redirect(void *self, void *, int factor) {
+    const int32_t field = *reinterpret_cast<const int32_t *>(
+        static_cast<const uint8_t *>(self) + 0x3798);
+    const int32_t product = static_cast<int32_t>(
+        static_cast<uint32_t>(field) * static_cast<uint32_t>(factor));
+    return product / 600;
+}
+
+/*
+Purpose: Scale a field by an argument and divide by 440.
+
+         The same shape as 0063BEB0 with a different field, magic and shift:
+         0x94f2095 is ceil(2^36 / 440). Confirmed the same way, over the same
+         206,006 inputs, with no disagreement.
+
+Original Offset: 0063BEE0
+Return Value: (field 0x379c * argument) / 440
+Status: Complete
+*/
+int32_t __fastcall leaf_0063bee0_redirect(void *self, void *, int factor) {
+    const int32_t field = *reinterpret_cast<const int32_t *>(
+        static_cast<const uint8_t *>(self) + 0x379c);
+    const int32_t product = static_cast<int32_t>(
+        static_cast<uint32_t>(field) * static_cast<uint32_t>(factor));
+    return product / 440;
+}
+
+/*
+Purpose: Fill the eight bytes at a pointer with 0xff.
+
+             push ebp / mov ebp,esp / mov eax,[ebp+8] / mov cl,0xff
+             mov dword [eax],0xffffffff / mov byte [eax+4],cl ... [eax+7],cl
+             pop ebp / ret
+
+         One argument and a bare `ret`, so __cdecl - the caller cleans, and
+         nothing here needs to know whether it passes more. The original
+         writes the first four bytes as a dword and the next four one at a
+         time; the result is eight 0xff bytes either way.
+
+Original Offset: 0057DEE0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl leaf_0057dee0_redirect(void *target) {
+    uint8_t *const bytes = static_cast<uint8_t *>(target);
+    for (int index = 0; index < 8; ++index) {
+        bytes[index] = 0xFF;
+    }
+}
+
+/*
+Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
+
+             mov edx,[ecx+4] / lea eax,[edx+edx*2] / inc edx / cmp edx,0xa
+             mov [ecx+4],edx / lea eax,[eax+eax*4] / lea eax,[ecx+eax*4+8]
+             jne end / mov dword [ecx+4],0 / end: ret
+
+         The two `lea`s multiply by 3 then by 5, and the third scales by 4:
+         60 bytes a slot, the array starting at offset 8.
+
+         The pointer handed back is the slot the counter held ON ENTRY, and
+         the counter is advanced afterwards - so the wrap to zero does not
+         affect what this call returns, only the next one. The `cmp` happens
+         before the store either way; writing the wrap first would return the
+         wrong slot on the tenth call and only then.
+
+Original Offset: 006252C0
+Return Value: a pointer to the slot that was current on entry
+Status: Complete
+*/
+void *__fastcall leaf_006252c0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    int32_t *const counter = reinterpret_cast<int32_t *>(bytes + 4);
+    const int32_t current = *counter;
+    *counter = current + 1;
+    if (*counter == 10) {
+        *counter = 0;
+    }
+    return bytes + 8 + current * 60;
+}

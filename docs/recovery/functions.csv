@@ -3287,7 +3287,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0057D7D0,0x0057D8D3,259,.text,?say_stats_3@@YAXPADH@Z,"void (__cdecl ?say_stats_3@@YAXPADH@Z)(int8*, int protoID)",0x0057D7D0-0x0057D8D3,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1292,Complete,,,source_complete,,,,5,13
 0x0057D8E0,0x0057DA94,436,.text,?say_stats_2@@YAXPADH@Z,"void (__cdecl ?say_stats_2@@YAXPADH@Z)(int8*, int protoID)",0x0057D8E0-0x0057DA94,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1332,Complete,,,source_complete,,,,6,4
 0x0057DAA0,0x0057DED8,1080,.text,?say_stats@@YAXPADHPAD@Z,"void (__cdecl ?say_stats@@YAXPADHPAD@Z)(int8*, int protoID, int8*)",0x0057DAA0-0x0057DED8,game,frame;sp_ready;purged_ok,src/veh.cpp:1371,Complete,,,source_complete,,,,6,2
-0x0057DEE0,0x0057DEFC,28,.text,sub_57dee0,,0x0057DEE0-0x0057DEFC,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0057DEE0,0x0057DEFC,28,.text,sub_57dee0,,0x0057DEE0-0x0057DEFC,game,frame;sp_ready;purged_ok,src/leaf_recoveries.cpp:457,Complete,,,source_complete,,,,0,0
 0x0057DF00,0x0057DF2F,47,.text,?clear_bunglist@@YAXH@Z,,0x0057DF00-0x0057DF2F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x0057DF30,0x0057DFB2,130,.text,sub_57df30,,0x0057DF30-0x0057DFB2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x0057DFC0,0x0057E037,119,.text,?is_bunged@@YA_NHHHHHH@Z,,0x0057DFC0-0x0057E037,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -5110,7 +5110,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00625080,0x00625294,532,.text,sub_625080,,0x00625080-0x00625294,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4
 0x006252A0,0x006252B0,16,.text,??0TextureStore@@QAE@XZ,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this),0x006252A0-0x006252B0,game,hidden;sp_ready;purged_ok,src/texture.cpp:122,Complete,,,source_complete,,,,0,1
 0x006252B0,0x006252BE,14,.text,??1TextureStore@@QAE@XZ,void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this),0x006252B0-0x006252BE,game,hidden;sp_ready;purged_ok,src/texture.cpp:82,Complete,,,source_complete,,,,0,6
-0x006252C0,0x006252DE,30,.text,sub_6252c0,,0x006252C0-0x006252DE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x006252C0,0x006252DE,30,.text,sub_6252c0,,0x006252C0-0x006252DE,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:484,Complete,,,source_complete,,,,0,0
 0x006252E0,0x00625306,38,.text,??0ImageButton@@QAE@XZ,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this),0x006252E0-0x00625306,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00625310,0x00625325,21,.text,??1ImageButton@@QAE@XZ,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this),0x00625310-0x00625325,game,hidden;sp_ready;purged_ok,,,,ImageButtonDtorTarget,original_dependency,,,,0,1
 0x00625330,0x0062533F,15,.text,?close@ImageButton@@QAEXXZ,void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this),0x00625330-0x0062533F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -5506,8 +5506,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0063BB00,0x0063BB1F,31,.text,sub_63bb00,,0x0063BB00-0x0063BB1F,game,hidden;sp_ready;purged_ok,src/guarded_teardowns.cpp:452,Complete,,,source_complete,,,,0,0
 0x0063BB20,0x0063BD06,574,.text,sub_63bb20,,0x0063BB20-0x0063BD06;0x00663940-0x00663998,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,1
 0x0063BD10,0x0063BEAD,413,.text,sub_63bd10,,0x0063BD10-0x0063BEAD,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,2
-0x0063BEB0,0x0063BED1,33,.text,sub_63beb0,,0x0063BEB0-0x0063BED1,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0063BEE0,0x0063BF01,33,.text,sub_63bee0,,0x0063BEE0-0x0063BF01,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x0063BEB0,0x0063BED1,33,.text,sub_63beb0,,0x0063BEB0-0x0063BED1,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:414,Complete,,,source_complete,,,,0,0
+0x0063BEE0,0x0063BF01,33,.text,sub_63bee0,,0x0063BEE0-0x0063BF01,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:433,Complete,,,source_complete,,,,0,0
 0x0063BF10,0x0063C33F,1071,.text,sub_63bf10,,0x0063BF10-0x0063C33F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,0
 0x0063C340,0x0063C38F,79,.text,sub_63c340,,0x0063C340-0x0063C38F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x0063C390,0x0063C39E,14,.text,sub_63c390,,0x0063C390-0x0063C39E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
