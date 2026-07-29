@@ -376,7 +376,7 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 50 candidates, 1,881 bytes.**
+**Queue as of 2026-07-29: 40 candidates, 1,505 bytes.**
 
 The first five tightenings were about whether a body can be TESTED in
 isolation. The sixth is about whether it can be WRITTEN at all - a
@@ -451,6 +451,19 @@ mechanism with no guard, correct today by luck of the surrounding data. When
 adding a redirect for a function under ~16 bytes, that check is the thing
 standing between you and four silently rewritten bytes of an unrelated
 function.
+
+### Checking generated code needs the REAL compile flags
+
+`leaf_006281e0_redirect` is a vector length: `sqrt((y*y + z*z) + x*x)`, summed
+and rooted entirely in x87 EXTENDED precision. Written the obvious way with
+float operands it compiles, under this tree's actual flags, to `fstps` and a
+tail call to `sqrtf` - the sum ROUNDED TO FLOAT32 before the root, which is a
+different function in the last bit. Spelled with `long double` it becomes an
+inline `fsqrt` on the extended sum, which is what the original does.
+
+A standalone `-O2` check produced the inline form and would have passed the
+wrong body. The flags that matter are in
+`build/<preset>/compile_commands.json`; use those, not a plausible subset.
 
 ### The mutation harness is blind to two shapes, and that is not a pass
 
