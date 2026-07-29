@@ -687,21 +687,52 @@ one worked on the maps parse and died on the read.
    something to change for a measurement. The in-process route - a dumper in
    `src/dllmain.cpp`, which is already injected - avoids this entirely.
 
-2. **The fatal one: the objects are not in the span.** The oracle's guest memory
-   is ONE flat region, 0x00400000..0x00A0C000, and the lifted lowering computes
-   host addresses as `opensmacx_image + (guest - 0x00400000)`. The image's
-   sections end at 0x009C21F8. The widget globals - `0x009BC074` and the rest -
-   live in `.data` and hold POINTERS; the Win and ListBox objects themselves are
-   heap-allocated, at addresses outside that span. A perfect snapshot of
-   0x00400000..0x009C2200 therefore captures the pointers and not one of the
-   objects they point at, which is precisely the ListBox chain that owns a third
-   of the wall.
+2. **How much of the object graph is inside the span is OPEN, and an earlier
+   version of this section asserted the pessimistic answer without checking.**
+   The oracle's guest memory is one flat region, 0x00400000..0x00A0C000, and
+   the lift computes host addresses as `opensmacx_image + (guest - 0x00400000)`;
+   the image's sections end at 0x009C21F8. If the widget objects are heap
+   allocations they fall outside it and a snapshot captures pointers to nothing.
+   But at least some are NOT: `0x005FE49A` is `mov ecx, 0x9b7490` - a static
+   object at a fixed `.bss` address passed as `this`, immediately below
+   `mov [0x9b8180], esi`. That one a snapshot would capture whole.
 
-So the snapshot is not a seeding change with a different source of values. It
-needs MULTI-REGION guest memory, which means changing the address translation
-the whole lift is built on. That is the real price of the next byte of this
-number, and it should be decided as a design change and not slipped in as a
-better seed.
+   Nobody has counted the split. Before building a dumper, disassemble the
+   `mov ecx,<imm>` sites that precede Win/ListBox calls and measure what
+   fraction of the reachable graph is static. If it is most of it, an
+   in-process dumper plus an `--state` overlay is a contained change. If it is
+   not, it needs multi-region guest memory, which changes the address
+   translation the whole lift is built on - and that is a design decision, not
+   a better seed.
+
+### One of the seeded globals was never a pointer
+
+`0x0087BE24` was seeded with the address of the staged ListBox on the strength
+of a scan for `mov ecx,[bss global]` near a Win/ListBox call. The image says it
+is an index:
+
+```
+0x004A423E  or eax, 0xffffffff
+0x004A4243  mov dword ptr [0x87be24], eax      ; reset to -1
+
+0x004A624A  mov eax, dword ptr [ebp + 8]
+0x004A624D  cmp eax, 0x400
+0x004A6252  jge 0x4a626f                        ; >= 1024 is refused
+0x004A6256  mov dword ptr [0x87be24], eax       ; so it is an index < 1024
+```
+
+Seeding it with `0x009eb000` puts a nine-megabyte value in a slot every
+consumer range-checks. That does not make a caller more realistic - it sends it
+down a branch a real run cannot take, and an unchecked consumer indexes an
+array with it and computes an address outside anything mapped. Zero at load is
+what `.bss` gives it and is a valid index, so the correct seed is no seed.
+
+**The rest of that list has not been re-checked.** It was built by pattern scan,
+and the pattern cannot tell an object pointer from a handle or an index. The
+same disassembly that settled this one settles each of the others in a minute.
+`0x009BC074` is the next to look at: at `0x00604650` it takes the return of an
+imported call and the code tests it for zero and returns error code 4, which
+reads like a Win32 handle rather than a `this`.
 
 ### The part still not understood
 
