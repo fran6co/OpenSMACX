@@ -7,6 +7,8 @@
 
 class Win;
 class Buffer;
+class Dialog;
+class GraphicWin;
 
 void __cdecl leaf_00628180_redirect(const float *, const float *, float *);
 void __cdecl leaf_006281b0_redirect(const float *, float, float *);
@@ -52,3 +54,15 @@ int __fastcall image_button_init_redirect(void *, void *, int, LPCSTR, int,
 extern char *DialogsItemText6900C4;
 int __fastcall leaf_0059d230_redirect(void *, void *);
 void __fastcall pick_tech_close_redirect(void *, void *);
+
+// Seams for the two destructor chains; see src/leaf_recoveries.cpp for why.
+// Each defaults to the corresponding recovered redirect.
+typedef uint32_t(__fastcall func_leaf_adjusted_dtor)(void *, void *);
+typedef void(__fastcall func_leaf_dialog_dtor)(Dialog *, void *);
+typedef GraphicWin *(__fastcall func_leaf_graphic_dtor)(GraphicWin *, void *);
+extern func_leaf_adjusted_dtor *LeafListBoxDestructor;
+extern func_leaf_adjusted_dtor *LeafDialogsDestructor;
+extern func_leaf_dialog_dtor *LeafDialogDestructor;
+extern func_leaf_graphic_dtor *LeafGraphicWinDestructor;
+void __fastcall leaf_004080b0_redirect(void *, void *);
+void __fastcall leaf_00406af0_redirect(void *, void *);

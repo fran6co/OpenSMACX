@@ -2416,6 +2416,35 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
 // function: a lambda will not convert to that calling convention.
 void __thiscall leaf_stub_sound_set_type(Wave *, uint32_t) { ; }
 
+// Recorders for the two destructor chains. The four callees are seams, so the
+// chain can be checked for what it IS - three calls, three pointers, one order
+// - without standing up three class teardown fixtures.
+struct LeafDtorCall { int which; const void *target; };
+LeafDtorCall g_leaf_dtor_calls[8];
+int g_leaf_dtor_count;
+void leaf_dtor_record(int which, const void *target) {
+    if (g_leaf_dtor_count < 8) {
+        g_leaf_dtor_calls[g_leaf_dtor_count].which = which;
+        g_leaf_dtor_calls[g_leaf_dtor_count].target = target;
+    }
+    ++g_leaf_dtor_count;
+}
+uint32_t __fastcall leaf_dtor_listbox(void *self, void *) {
+    leaf_dtor_record(1, self);
+    return 0;
+}
+uint32_t __fastcall leaf_dtor_dialogs(void *self, void *) {
+    leaf_dtor_record(2, self);
+    return 0;
+}
+void __fastcall leaf_dtor_dialog(Dialog *self, void *) {
+    leaf_dtor_record(3, self);
+}
+GraphicWin *__fastcall leaf_dtor_graphic(GraphicWin *self, void *) {
+    leaf_dtor_record(4, self);
+    return self;
+}
+
 // Recorders for the two destructor chains. Every destructor they reach funnels
 // through GraphicWin::close's two subobject seams, so logging the pointer each
 // one is handed is enough to say WHICH subobject each call got - which is the
@@ -2947,6 +2976,58 @@ void test_leaf_recoveries() {
         // Focus here, parent without it: no.
         focus(up, false); set_parent(up, nullptr);
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
+    }
+
+    // --- two destructor chains: three calls, three pointers, one order ---
+    {
+        func_leaf_adjusted_dtor *const saved_lb = LeafListBoxDestructor;
+        func_leaf_adjusted_dtor *const saved_ds = LeafDialogsDestructor;
+        func_leaf_dialog_dtor *const saved_dlg = LeafDialogDestructor;
+        func_leaf_graphic_dtor *const saved_gw = LeafGraphicWinDestructor;
+        LeafListBoxDestructor = &leaf_dtor_listbox;
+        LeafDialogsDestructor = &leaf_dtor_dialogs;
+        LeafDialogDestructor = &leaf_dtor_dialog;
+        LeafGraphicWinDestructor = &leaf_dtor_graphic;
+
+        static uint8_t object[0x2000];
+        std::memset(object, 0x11, sizeof(object));
+
+        // 004080B0: ListBox at 0x48, Dialog at 0xa60, GraphicWin at 0x48.
+        g_leaf_dtor_count = 0;
+        leaf_004080b0_redirect(object, nullptr);
+        expect(g_leaf_dtor_count == 3);
+        expect(g_leaf_dtor_calls[0].which == 1);            // ListBox first
+        expect(g_leaf_dtor_calls[0].target == object + 0x48);
+        expect(g_leaf_dtor_calls[1].which == 3);            // then the Dialog
+        expect(g_leaf_dtor_calls[1].target == object + 0xA60);
+        expect(g_leaf_dtor_calls[2].which == 4);            // then GraphicWin
+        // The SAME pointer the ListBox got: EDI is computed once, used twice.
+        expect(g_leaf_dtor_calls[2].target == object + 0x48);
+        expect(g_leaf_dtor_calls[2].target == g_leaf_dtor_calls[0].target);
+        // And never the outer object, which is what a body passing `this`
+        // straight to GraphicWin would show.
+        expect(g_leaf_dtor_calls[2].target != object);
+
+        // 00406AF0: Dialogs at 0x188, Dialog at 0xba0, GraphicWin at 0x188.
+        g_leaf_dtor_count = 0;
+        leaf_00406af0_redirect(object, nullptr);
+        expect(g_leaf_dtor_count == 3);
+        expect(g_leaf_dtor_calls[0].which == 2);            // Dialogs, not ListBox
+        expect(g_leaf_dtor_calls[0].target == object + 0x188);
+        expect(g_leaf_dtor_calls[1].which == 3);
+        expect(g_leaf_dtor_calls[1].target == object + 0xBA0);
+        expect(g_leaf_dtor_calls[2].which == 4);
+        expect(g_leaf_dtor_calls[2].target == object + 0x188);
+        expect(g_leaf_dtor_calls[2].target == g_leaf_dtor_calls[0].target);
+        expect(g_leaf_dtor_calls[2].target != object);
+        // Neither chain uses the other's offsets.
+        expect(g_leaf_dtor_calls[0].target != object + 0x48);
+        expect(g_leaf_dtor_calls[1].target != object + 0xA60);
+
+        LeafListBoxDestructor = saved_lb;
+        LeafDialogsDestructor = saved_ds;
+        LeafDialogDestructor = saved_dlg;
+        LeafGraphicWinDestructor = saved_gw;
     }
 
     // --- one fixed item into the Dialogs at 0x21d0 ---

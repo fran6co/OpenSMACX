@@ -1201,3 +1201,71 @@ void __fastcall pick_tech_close_redirect(void *self, void *) {
 
 
 
+
+// The two destructor chains below reach four recovered destructors. Running
+// those for real needs three class teardown fixtures composed, and three
+// attempts at that produced a fixture that faulted, then faulted further on,
+// and finally passed only one run in three - a green result that did not
+// reproduce.
+//
+// So the callees are SEAMS, which is this tree's established answer to exactly
+// this problem: WinOriginalClose, DialogOriginalClose and BufferFree are all
+// the same idea. Each defaults to the real redirect, so nothing about the
+// shipped behaviour changes; a fixture can bind them and check the one thing
+// these functions actually do, which is call three of them with three
+// particular pointers in a particular order.
+func_leaf_adjusted_dtor *LeafListBoxDestructor = &list_box_destructor_redirect;
+func_leaf_adjusted_dtor *LeafDialogsDestructor = &dialogs_destructor_redirect;
+func_leaf_dialog_dtor *LeafDialogDestructor = &dialog_destructor_redirect;
+func_leaf_graphic_dtor *LeafGraphicWinDestructor =
+    &graphic_win_destructor_redirect;
+
+/*
+Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
+         base the ListBox shares.
+
+             mov esi,ecx / lea edi,[esi+0x48] / mov ecx,edi
+             call ??1ListBox@@QAE@XZ / lea ecx,[esi+0xa60]
+             call ??1Dialog@@QAE@XZ / mov ecx,edi
+             call ??1GraphicWin@@QAE@XZ / ret
+
+         EDI is computed ONCE and used twice - for the ListBox and again for
+         the GraphicWin. They are the same subobject at 0x48, destroyed at two
+         levels, with an unrelated Dialog at 0xa60 in between. A body that gave
+         GraphicWin the outer object would be wrong only where 0x48 matters.
+
+         0x48 is ListBoxDestructorAdjustment, and list_box_destructor_redirect
+         takes exactly that already-adjusted pointer, so it is passed through
+         rather than recomputed.
+
+Original Offset: 004080B0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_004080b0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    uint8_t *const inner = bytes + ListBoxDestructorAdjustment;
+    LeafListBoxDestructor(inner, nullptr);
+    LeafDialogDestructor(reinterpret_cast<Dialog *>(bytes + 0xA60), nullptr);
+    LeafGraphicWinDestructor(reinterpret_cast<GraphicWin *>(inner), nullptr);
+}
+
+/*
+Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
+         base the Dialogs shares.
+
+         The same shape as 004080B0 with different offsets and a Dialogs in
+         place of the ListBox. 0x188 is DialogsDestructorAdjustment, and is
+         likewise computed once and used twice.
+
+Original Offset: 00406AF0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_00406af0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    uint8_t *const inner = bytes + DialogsDestructorAdjustment;
+    LeafDialogsDestructor(inner, nullptr);
+    LeafDialogDestructor(reinterpret_cast<Dialog *>(bytes + 0xBA0), nullptr);
+    LeafGraphicWinDestructor(reinterpret_cast<GraphicWin *>(inner), nullptr);
+}

@@ -376,7 +376,7 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 3 candidates, 108 bytes.**
+**Queue as of 2026-07-29: 1 candidate, 35 bytes.**
 
 The first five tightenings were about whether a body can be TESTED in
 isolation. The sixth is about whether it can be WRITTEN at all - a
@@ -453,57 +453,34 @@ adding a redirect for a function under ~16 bytes, that check is the thing
 standing between you and four silently rewritten bytes of an unrelated
 function.
 
-### The last three, and exactly what each still needs
+### When a fixture will not hold still, make the callee a seam
 
-The closure is down to three, and none of them is blocked on understanding the
-code - all three are read and their bodies are unambiguous. Each is blocked on
-a FIXTURE, and the shape of that fixture is known:
+`sub_4080b0` and `sub_406af0` each destroy three subobjects. Running those
+destructors for real needs three class teardown fixtures composed, and three
+attempts at that failed in a way worth remembering:
 
-| function | what it does | what a fixture needs |
-| --- | --- | --- |
-| `sub_4080b0` | destroys the ListBox at 0x48, the Dialog at 0xa60, then the GraphicWin base the ListBox shares | THREE fixtures composed - see below |
-| `sub_406af0` | the same with a Dialogs at 0x188 and a Dialog at 0xba0 | two vbtables at 0x00 and 0x44 and two staging blocks, per `test_dialogs_teardown` - `stage(obj, g, d, 0x669BE8, 0x669BE0, 0x669BD4, 0x188, 0xBA0)` and the same again at +0x44 |
-| `?load_deswin_sprites@@YAXXZ` | constructs a Buffer on its own stack and immediately destroys it | nothing observable from outside. Decide first whether Buffer's constructor or destructor touches any global; if neither does, this function's only content is that those two run, and saying so needs a seam inside one of them |
+1. a zeroed object faults on ListBox's own vbtable
+2. publishing it reveals `Dialog::~Dialog` executing the image's
+   `DialogOriginalClose`
+3. binding that reveals the destructor reading pointer fields out of a seeded
+   Dialog subobject
+4. giving the Dialog its own minimum reveals `BufferFree` at 0x00644ef2
+5. binding THAT made it non-deterministic - three consecutive runs of one
+   binary gave fail, fail, PASS
 
-**What `sub_4080b0`'s fixture actually needs, learned by hitting each wall in
-turn.** I attempted it twice. The seams have to be bound in this order of
-discovery, because each one only reveals the next:
+**A single run would have reported success at step 5, and did at attempt one.**
+Run any fixture of this kind at least three times before believing it.
 
-1. A zeroed object faults on a null vbtable - `ListBox::destroy` reads the
-   object's own vbtable before reaching any seam. Fixed by publishing
-   `int32_t vbtable[3] = {0, 0x48, 0xa60}` at offset 0 and nulling
-   `obj+0x48+0xA08`, exactly as `test_list_box_teardown` does.
-2. It then faults EXECUTING 0x00608f50 - `Dialog::~Dialog` reaches its own
-   close through `DialogOriginalClose`, which still points at the image.
-3. With that bound it faults READING 0x98877669 - a canary byte used as a
-   pointer. The Dialog subobject at 0xa60 is seeded, and its destructor reads
-   pointer fields out of it. Fixed by giving the Dialog at 0xa60 the same
-   minimum `test_dialog_destructor` gives it: Heap `base_` zero at +0x08, the
-   `0xFEEDF00D` sentinel at +0x10, a vbtable `{0xAAAAAAAA, 0x24}` at +0xC0, an
-   empty `head_` at +0xC4, `0x55` at +0xCC, `0x1234ABCD` at +0xE8 - plus
-   binding DialogOperatorDelete, DialogPublishedGlobal and the four
-   DialogList* vtables.
-4. Then it faults EXECUTING 0x00644ef2 - `BufferFree`. GraphicWin's destructor
-   tears down its Buffer, which frees whatever the owned-allocation table
-   holds, and in a seeded object that is canary bytes.
-5. With BufferFree bound too it became NON-DETERMINISTIC: three consecutive
-   runs of the same binary gave fail, fail, PASS. Something is still read
-   before it is written, and a single run would have reported success.
+The answer was not more setup. These functions ARE three calls with three
+pointers, so the four callees became SEAMS defaulting to the real redirects -
+the same mechanism `WinOriginalClose`, `DialogOriginalClose` and `BufferFree`
+already are. Nothing about the shipped behaviour changes, and the fixture
+checks the thing the function actually does. Baseline passes three runs out of
+three; all five poisons fail three out of three.
 
-**Run any fixture for these three at least three times before believing it.**
-Both attempts here produced a green run that did not reproduce.
-
-So the fixture is three class teardown fixtures composed, not one. That is the
-remaining work, and it is fixture work rather than recovery work: the body
-itself is three calls with three pointers and is not in doubt.
-
-I wrote the two destructor chains, built them, and TOOK THEM BACK OUT. Their
-first fixture - a zeroed object with the close seams bound to a recorder -
-passed once and then faulted on a null vbtable, so that pass was luck. Landing
-them on it would have marked them source_complete and removed them from the
-queue on evidence that does not hold. The bodies were straightforward; the
-fixture is the work, and it is per-class staging that already exists for each
-class in its own teardown test.
+Reach for this when a body's content is *which callee, which pointer, what
+order* and the callees are expensive to stand up. It is not a way to avoid
+testing a body that computes something - there, the state is the point.
 
 ### Checking generated code needs the REAL compile flags
 

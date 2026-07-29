@@ -72,7 +72,6 @@ P3,220,0x00406670,sub_406670,75,0,2,unrecovered,,,2,exact,exact,
 P0,1001020,0x00406850,??1Sprite@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_sprite_element_teardown,2,exact,exact,
 P3,11,0x00406860,?hide@BaseButton@@QAEXXZ,25,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)
 P2,9120,0x00406A90,sub_406a90,83,9,1,unrecovered,,,2,exact,exact,
-P2,9320,0x00406AF0,sub_406af0,38,9,3,unrecovered,,,2,exact,exact,
 P3,20,0x00406B70,sub_406b70,44,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x00406BA0,sub_406ba0,44,0,0,unrecovered,,,2,exact,exact,
 P0,1007221,0x00406C00,??1Popup@@QAE@XZ,836,6,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
@@ -93,7 +92,6 @@ P3,421,0x00407E80,?on_listbox_scroll_create@AlphaSave@@QAEHXZ,74,0,4,unrecovered
 P3,221,0x00407ED0,?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z,35,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z)(AlphaSave* this, Scroll*)"
 P3,2821,0x00407F00,??1FileWin@@QAE@XZ,363,2,8,unrecovered,,,2,exact,entry_range,void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
 P0,1002321,0x00408010,??1EditBox@@QAE@XZ,135,2,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1EditBox@@QAE@XZ)(EditBox* this)
-P3,3320,0x004080B0,sub_4080b0,35,3,3,unrecovered,,,2,exact,exact,
 P3,21,0x004080E0,?on_scrolling@AlphaSave@@QAEXHH@Z,44,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolling@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)"
 P3,21,0x00408110,?on_scrolled@AlphaSave@@QAEXHH@Z,44,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolled@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)"
 P0,1002221,0x00408170,??1AlphaSave@@QAE@XZ,803,1,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1AlphaSave@@QAE@XZ)(AlphaSave* this)

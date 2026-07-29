@@ -150,7 +150,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00406910,0x00406A74,590,.text,??1Dialogs@@QAE@XZ,void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this),0x00406910-0x00406A74;0x006509C0-0x00650AAA,game,frame;hidden;sp_ready;purged_ok,src/dialogs_recovery.cpp:342,"Complete with temporary EditGroup, SpriteBox and CheckBox destructor",,,source_complete,,,,6,72
 0x00406A80,0x00406A85,5,.text,sub_406a80,,0x00406A80-0x00406A85,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:40,Complete,,,source_complete,,,,0,0
 0x00406A90,0x00406AE3,83,.text,sub_406a90,,0x00406A90-0x00406AE3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,9
-0x00406AF0,0x00406B16,38,.text,sub_406af0,,0x00406AF0-0x00406B16,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,9
+0x00406AF0,0x00406B16,38,.text,sub_406af0,,0x00406AF0-0x00406B16,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:1261,Complete,,,source_complete,,,,3,9
 0x00406B20,0x00406B23,3,.text,nullsub_27,,0x00406B20-0x00406B23,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:728,Complete,,,source_complete,,,,0,0
 0x00406B30,0x00406B33,3,.text,sub_406b30,,0x00406B30-0x00406B33,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:51,Complete,,,source_complete,,,,0,0
 0x00406B40,0x00406B61,33,.text,??_GBasePop@@UAEPAXI@Z,,0x00406B40-0x00406B61,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:223,Complete,,,source_complete,,,,2,0
@@ -219,7 +219,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00407F00,0x00408003,363,.text,??1FileWin@@QAE@XZ,void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this),0x00407F00-0x00408003;0x00650C80-0x00650CE8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,2
 0x00408010,0x00408077,135,.text,??1EditBox@@QAE@XZ,void (__thiscall ??1EditBox@@QAE@XZ)(EditBox* this),0x00408010-0x00408077;0x00650CF0-0x00650D10,game,frame;hidden;sp_ready;purged_ok,,,,EditBoxDtorTarget,original_dependency,,,,3,2
 0x00408080,0x004080A1,33,.text,??_GEditBox@@UAEPAXI@Z,,0x00408080-0x004080A1,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:308,Complete,,,source_complete,,,,2,0
-0x004080B0,0x004080D3,35,.text,sub_4080b0,,0x004080B0-0x004080D3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,3
+0x004080B0,0x004080D3,35,.text,sub_4080b0,,0x004080B0-0x004080D3,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1241,Complete,,,source_complete,,,,3,3
 0x004080E0,0x0040810C,44,.text,?on_scrolling@AlphaSave@@QAEXHH@Z,"void (__thiscall ?on_scrolling@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)",0x004080E0-0x0040810C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00408110,0x0040813C,44,.text,?on_scrolled@AlphaSave@@QAEXHH@Z,"void (__thiscall ?on_scrolled@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)",0x00408110-0x0040813C,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00408140,0x00408161,33,.text,??_GAlphaSave@@UAEPAXI@Z,,0x00408140-0x00408161,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:326,Complete,,,source_complete,,,,2,0
