@@ -772,7 +772,6 @@ P3,3721,0x00483F90,?exec@NewTechWin@@QAEXHH@Z,2175,1,27,unrecovered,,,2,exact,ex
 P0,1001821,0x00484810,??1NewTechWin@@QAE@XZ,630,1,8,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1NewTechWin@@QAE@XZ)(NewTechWin* this)
 P0,1001521,0x004849D0,??0NewTechWin@@QAE@XZ,254,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0NewTechWin@@QAE@XZ)(NewTechWin* this)
 P3,1221,0x00484AC0,??0PickTech@@QAE@XZ,216,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0PickTech@@QAE@XZ)(PickTech* this)
-P3,1021,0x00484B60,?close@PickTech@@QAEXXZ,31,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this)
 P3,1321,0x00484B80,?UNK1@PickTech@@QAEXPAD@Z,221,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK1@PickTech@@QAEXPAD@Z)(PickTech* this, int8*)"
 P3,3521,0x00484C60,?draw_tech@PickTech@@QAEHHPAURECT@@H@Z,5009,1,25,unrecovered,,,2,exact,entry_range,"int (__thiscall ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z)(PickTech* this, int, RECT*, int)"
 P3,221,0x00485FC0,?on_mouse_move@PickTech@@QAEXHH@Z,230,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@PickTech@@QAEXHH@Z)(PickTech* this, int, int)"
@@ -1755,7 +1754,6 @@ P2,16121,0x005947C0,?order_veh@@YAHHHH@Z,23716,5,111,unrecovered,,,2,exact,entry
 P3,110,0x0059A1B0,??__EPaths@@YAXXZ,12,0,1,unrecovered,,,1,exact,missing,
 P3,110,0x0059A1C0,??__FPaths@@YAXXZ,85,0,1,unrecovered,,,1,exact,missing,
 P3,111,0x0059A320,??1Path@@QAE@XZ,72,0,1,unrecovered,,,1,missing,exact,void (__thiscall ??1Path@@QAE@XZ)(Path* this)
-P3,100,0x0059D230,sub_59d230,19,0,1,unrecovered,,,0,missing,missing,
 P2,16821,0x0059D250,?exec@PopMenu@@QAEXHHP6AHXZ@Z,322,16,8,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@PopMenu@@QAEXHHP6AHXZ@Z)(PopMenu* this, int, int, int (__cdecl *)())"
 P3,1820,0x0059D3B0,?popm@@YAHPADPADHHP6AHXZ@Z,968,0,18,unrecovered,,,2,exact,entry_range,
 P3,2820,0x0059D690,?popm@@YAHPADHHP6AHXZ@Z,969,1,18,unrecovered,,,2,exact,entry_range,

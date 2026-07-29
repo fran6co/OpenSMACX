@@ -30,6 +30,7 @@
 #include "buffer.h"
 #include "graphicwin.h"
 #include "basebutton.h"
+#include "dialogs.h"
 
 #include <cstring>
 
@@ -1141,4 +1142,57 @@ int __fastcall image_button_init_redirect(
     return base_button_init_redirect(
         reinterpret_cast<BaseButton *>(self), nullptr, name, id, x, y, width,
         height, parent, style_flag);
+}
+
+// The text sub_59d230 hands to Dialogs::item. It is a REBINDABLE pointer, not
+// a constant: the callee dereferences it, so a fixture that could not swap it
+// would fault on the original image's address rather than test anything.
+char *DialogsItemText6900C4 = reinterpret_cast<char *>(0x006900C4);
+
+/*
+Purpose: Add one fixed item to the Dialogs at 0x21d0.
+
+             push -2 / push 0x6900c4 / add ecx,0x21d0
+             call ?item@Dialogs@@QAEHPADH@Z / ret
+
+         A tail call in everything but name: the callee cleans its own two
+         arguments and this function cleans none, so its `ret` carries the
+         callee's result straight out.
+
+         -2 is the index. It is not a count or a flag, and it is negative,
+         which is the sort of thing that gets "tidied" to 2 or 0 by someone
+         reading quickly.
+
+Original Offset: 0059D230
+Return Value: whatever Dialogs::item returns
+Status: Complete
+*/
+int __fastcall leaf_0059d230_redirect(void *self, void *) {
+    Dialogs *const dialogs = reinterpret_cast<Dialogs *>(
+        static_cast<uint8_t *>(self) + 0x21D0);
+    return dialogs->item(DialogsItemText6900C4, -2);
+}
+
+/*
+Purpose: Clear four fields, then close as a GraphicWin.
+
+             xor eax,eax / mov [ecx+0xa24],eax / mov [ecx+0xa28],eax
+             mov [ecx+0xa38],eax / mov [ecx+0xa3c],eax
+             jmp ?close@GraphicWin@@QAEXXZ
+
+         Four fields in two PAIRS - 0xa24/0xa28 and 0xa38/0xa3c - with a gap
+         between them that is not written. The tail jump means GraphicWin's
+         return is this function's, and the mangled name says void, so nothing
+         reads it.
+
+Original Offset: 00484B60
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall pick_tech_close_redirect(void *self, void *) {
+    store32(self, 0xA24, 0);
+    store32(self, 0xA28, 0);
+    store32(self, 0xA38, 0);
+    store32(self, 0xA3C, 0);
+    graphic_win_close_redirect(reinterpret_cast<GraphicWin *>(self), nullptr);
 }

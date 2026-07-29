@@ -2416,6 +2416,20 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
 // function: a lambda will not convert to that calling convention.
 void __thiscall leaf_stub_sound_set_type(Wave *, uint32_t) { ; }
 
+// Recorder for sub_59d230's only call. Kept separate from the Dialogs::item
+// fixture's own recorders so this test stands on its own.
+Dialog *g_leaf_item_dialog;
+char *g_leaf_item_text;
+int g_leaf_item_index;
+int g_leaf_item_calls;
+int __thiscall leaf_stub_dialog_item(Dialog *dialog, char *text, int index) {
+    g_leaf_item_dialog = dialog;
+    g_leaf_item_text = text;
+    g_leaf_item_index = index;
+    ++g_leaf_item_calls;
+    return 0x1234ABCD;
+}
+
 void test_leaf_recoveries() {
     // --- float vector arithmetic ---
     //
@@ -2912,6 +2926,78 @@ void test_leaf_recoveries() {
         // Focus here, parent without it: no.
         focus(up, false); set_parent(up, nullptr);
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
+    }
+
+    // --- one fixed item into the Dialogs at 0x21d0 ---
+    {
+        func_dialog_item *const saved_item = DialogOriginalItem;
+        char *const saved_text = DialogsItemText6900C4;
+        char bound[] = "bound text";
+        DialogOriginalItem = &leaf_stub_dialog_item;
+        DialogsItemText6900C4 = bound;
+
+        static uint8_t outer[0x21D0 + 0x1000];
+        std::memset(outer, 0, sizeof(outer));
+        uint8_t *const dialogs = outer + 0x21D0;
+        const int32_t kind = 1;                 // routes to the Dialog arm
+        std::memcpy(dialogs + 0x180, &kind, sizeof(kind));
+        // Dialogs::item reaches its Dialog through the object's OWN vbtable -
+        // slot 2 holds the displacement - so the fixture has to publish one.
+        // A zeroed object faults reading [0+8] instead.
+        static const int32_t vbtable[3] = {0, 0, 0xC40};
+        const int32_t *const vbtable_ptr = vbtable;
+        std::memcpy(dialogs, &vbtable_ptr, sizeof(vbtable_ptr));
+
+        g_leaf_item_calls = 0;
+        expect(leaf_0059d230_redirect(outer, nullptr) == 0x1234ABCD);
+        expect(g_leaf_item_calls == 1);
+        // The Dialogs is at 0x21d0, so the Dialog it forwards to is
+        // 0x21d0 + 0xc40 from the outer object - not 0xc40.
+        expect(reinterpret_cast<uint8_t *>(g_leaf_item_dialog)
+               == outer + 0x21D0 + 0xC40);
+        // The text is the bound pointer, and the index is NEGATIVE TWO.
+        expect(g_leaf_item_text == bound);
+        expect(g_leaf_item_index == -2);
+
+        DialogOriginalItem = saved_item;
+        DialogsItemText6900C4 = saved_text;
+    }
+
+    // --- four field resets in two pairs, then close as a GraphicWin ---
+    {
+        func_subobject_close *const saved_win = WinOriginalClose;
+        func_subobject_close *const saved_sub = BufferSubobjectClose;
+        uint32_t *const saved_default = GraphicWinFieldA0CDefault;
+        uint32_t default_a0c = 0x0C0FFEE0U;
+        WinOriginalClose = nullptr;
+        BufferSubobjectClose = nullptr;
+        GraphicWinFieldA0CDefault = &default_a0c;
+
+        static uint8_t object[0xB00];
+        auto got = [&](size_t offset) {
+            uint32_t value;
+            std::memcpy(&value, object + offset, sizeof(value));
+            return value;
+        };
+        std::memset(object, 0x11, sizeof(object));
+        write_at(object, 0xA08, 0U);            // keep the release path out
+
+        pick_tech_close_redirect(object, nullptr);
+
+        expect(got(0xA24) == 0U);
+        expect(got(0xA28) == 0U);
+        expect(got(0xA38) == 0U);
+        expect(got(0xA3C) == 0U);
+        // The gap between the two pairs is NOT written.
+        expect(got(0xA2C) == 0x11111111U);
+        expect(got(0xA30) == 0x11111111U);
+        expect(got(0xA34) == 0x11111111U);
+        // GraphicWin::close ran: only it writes the 0xA0C default.
+        expect(got(0xA0C) == default_a0c);
+
+        WinOriginalClose = saved_win;
+        BufferSubobjectClose = saved_sub;
+        GraphicWinFieldA0CDefault = saved_default;
     }
 
     // --- big-endian 16-bit append with a two-step cursor ---

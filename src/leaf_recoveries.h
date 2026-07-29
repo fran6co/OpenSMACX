@@ -49,3 +49,6 @@ void *__fastcall image_button_construct_redirect(void *, void *);
 void __fastcall image_button_close_redirect(void *, void *);
 int __fastcall image_button_init_redirect(void *, void *, int, LPCSTR, int,
                                           int, int, int, int, Win *, int);
+extern char *DialogsItemText6900C4;
+int __fastcall leaf_0059d230_redirect(void *, void *);
+void __fastcall pick_tech_close_redirect(void *, void *);
