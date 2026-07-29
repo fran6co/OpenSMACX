@@ -3892,7 +3892,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005D4448,0x005D44FC,180,.text,sub_5d4448,,0x005D4448-0x005D44FC,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x005D44FC,0x005D4502,6,.text,DirectDrawCreate,"HRESULT (__stdcall DirectDrawCreate)(GUID* lpGUID, LPDIRECTDRAW* lplpDD, IUnknown* pUnkOuter)",0x005D44FC-0x005D4502,thunk,hidden;thunk;sp_ready;purged_ok,,,,,thunk,,,,0,3
 0x005D4510,0x005D453C,44,.text,?mem_get@@YAPAXH@Z,void* (__cdecl ?mem_get@@YAPAXH@Z)(size_t size),0x005D4510-0x005D453C,game,sp_ready;purged_ok,src/general.cpp:128,Complete with two versions of malloc to prevent crash. Incompatibility with newer SDK,,,source_complete,,,,2,88
-0x005D4540,0x005D4551,17,.text,Heap::Heap2,,0x005D4540-0x005D4551,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x005D4540,0x005D4551,17,.text,Heap::Heap2,,0x005D4540-0x005D4551,game,sp_ready;purged_ok,src/field_accessors.cpp:908,Complete,,,source_complete,,,,0,0
 0x005D4560,0x005D4573,19,.text,??0Heap@@QAE@XZ,void (__thiscall ??0Heap@@QAE@XZ)(Heap* this),0x005D4560-0x005D4573,game,hidden;sp_ready;purged_ok,,,??0Heap@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,0,6
 0x005D4580,0x005D45AA,42,.text,??1Heap@@QAE@XZ,void (__thiscall ??1Heap@@QAE@XZ)(Heap* this),0x005D4580-0x005D45AA,game,hidden;sp_ready;purged_ok,,,??1Heap@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,1,6
 0x005D45B0,0x005D45DA,42,.text,?shutdown@Heap@@QAEXXZ,void (__thiscall ?shutdown@Heap@@QAEXXZ)(Heap* this),0x005D45B0-0x005D45DA,game,hidden;sp_ready;purged_ok,src/heap.cpp:24,Complete,?shutdown@Heap@@QAEXXZ,,source_complete,,,,1,93
@@ -5407,7 +5407,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00634B70,0x00634B94,36,.text,sub_634b70,,0x00634B70-0x00634B94,game,sp_ready;purged_ok,src/field_accessors.cpp:588,Complete,,,source_complete,,,,0,0
 0x00634BA0,0x00634BA3,3,.text,??0Iostream_init@@QAE@XZ_1,void (__thiscall ??0Iostream_init@@QAE@XZ_1)(Iostream_init* this),0x00634BA0-0x00634BA3,library,lib;hidden;sp_ready;purged_ok,,,,,external_library,,,,0,0
 0x00634BB0,0x00634BD4,36,.text,?env_open@@YAHPADPAD@Z,,0x00634BB0-0x00634BD4,game,sp_ready;purged_ok,src/general.cpp:160,Complete with two versions of fopen to prevent a crash. Incompatibility with newer SDK,,,source_complete,,,,2,18
-0x00634BE0,0x00634C13,51,.text,??0FileBox@@QAE@XZ,void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this),0x00634BE0-0x00634C13,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,4
+0x00634BE0,0x00634C13,51,.text,??0FileBox@@QAE@XZ,void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this),0x00634BE0-0x00634C13,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:935,Complete,,,source_complete,,,,0,4
 0x00634C20,0x00634C21,1,.text,??1FileBox@@QAE@XZ,void (__thiscall ??1FileBox@@QAE@XZ)(FileBox* this),0x00634C20-0x00634C21,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:794,Complete,,,source_complete,,,,0,4
 0x00634C30,0x00634CEE,190,.text,?save@FileBox@@QAEXXZ,void (__thiscall ?save@FileBox@@QAEXXZ)(FileBox* this),0x00634C30-0x00634CEE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
 0x00634CF0,0x00634DAE,190,.text,?load@FileBox@@QAEXXZ,void (__thiscall ?load@FileBox@@QAEXXZ)(FileBox* this),0x00634CF0-0x00634DAE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
@@ -5415,7 +5415,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00634E80,0x00634ECC,76,.text,?set_def_ext@FileBox@@QAEHPAD@Z,"int (__thiscall ?set_def_ext@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)",0x00634E80-0x00634ECC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,3
 0x00634ED0,0x00634F1E,78,.text,?set_def_name@FileBox@@QAEHPAD@Z,"int (__thiscall ?set_def_name@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)",0x00634ED0-0x00634F1E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,3
 0x00634F20,0x00634F6E,78,.text,?UNK1@FileBox@@QAEHPAD@Z,"int (__thiscall ?UNK1@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)",0x00634F20-0x00634F6E,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,0
-0x00634F70,0x00634FA1,49,.text,?UNK2@FileBox@@QAEXXZ,void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this),0x00634F70-0x00634FA1,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00634F70,0x00634FA1,49,.text,?UNK2@FileBox@@QAEXXZ,void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this),0x00634F70-0x00634FA1,game,sp_ready;purged_ok,src/field_accessors.cpp:966,Complete,,,source_complete,,,,0,0
 0x00634FB0,0x00634FC0,16,.text,??0TexHeap@@QAE@XZ,TexHeap* (__thiscall ??0TexHeap@@QAE@XZ)(TexHeap* this),0x00634FB0-0x00634FC0,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:620,Complete,,,source_complete,,,,0,0
 0x00634FC0,0x00634FD3,19,.text,?UNK1@TexHeap@@QAEHH@Z,"int (__thiscall ?UNK1@TexHeap@@QAEHH@Z)(TexHeap* this, int)",0x00634FC0-0x00634FD3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00634FE0,0x00635046,102,.text,?shutdown@TexHeap@@QAEXXZ,void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this),0x00634FE0-0x00635046,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0

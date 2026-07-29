@@ -26,9 +26,13 @@ WHAT IS ACCEPTED, and nothing else:
     mov [ecx+N],[ebp+8] / ret 4      copy an argument into a field
     xor eax,eax / ret                return zero
     ret                              a body that does nothing at all
-    a SEQUENCE of stores of constants to [this+N], optionally preceded by
-    `mov eax,ecx` and register loads of constants, ending in `ret` - the shape
-    every one of these small constructors has
+    a SEQUENCE of byte and dword stores to [this+N], where the value is a
+    constant or a pointer to one of `this`'s own fields, optionally preceded by
+    `mov eax,ecx` and `lea` - the shape every one of these small constructors
+    has. Registers are tracked by OFFSET FROM `this`, not as a set of aliases:
+    `lea ecx,[eax+0x30c]` makes a later `mov byte [ecx],dl` write 0x30c, and
+    calling ECX "an alias of this" would have written offset 0 instead - a real
+    field, a plausible value, and wrong.
 
 Each is one expression whose meaning is fully determined by the instruction,
 which is the entire reason this can be generated rather than read. Anything
@@ -60,7 +64,10 @@ import pefile  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 from capstone.x86 import (X86_OP_IMM, X86_OP_MEM,  # noqa: E402
                           X86_OP_REG, X86_REG_EAX, X86_REG_EBP,
-                          X86_REG_ECX, X86_REG_ESP)
+                          X86_REG_AL, X86_REG_BL,
+                          X86_REG_CL, X86_REG_DL,
+                          X86_REG_EBX, X86_REG_ECX, X86_REG_EDX,
+                          X86_REG_ESP)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -265,6 +272,14 @@ def classify(instructions) -> tuple[str, dict] | None:
     return None
 
 
+# The low byte of each tracked register. `xor dl,dl` zeroes DL and says
+# NOTHING about the rest of EDX, so the two are tracked separately and writing
+# one forgets the other; a byte read falls back to the parent's constant only
+# when the parent itself is known.
+BYTE_PARENT = {X86_REG_AL: X86_REG_EAX, X86_REG_BL: X86_REG_EBX,
+               X86_REG_CL: X86_REG_ECX, X86_REG_DL: X86_REG_EDX}
+
+
 def store_sequence(instructions) -> dict | None:
     """A run of stores of CONSTANTS to `[this+N]`, and nothing else.
 
@@ -276,9 +291,26 @@ def store_sequence(instructions) -> dict | None:
     `this`, which hold a known constant, and what EAX ends up as - so anything
     that would make one of them unknown is refused rather than guessed.
     """
-    aliases = {X86_REG_ECX}          # `this` on entry
+    bases = {X86_REG_ECX: 0}         # register -> byte offset from `this`
     constants: dict[int, int] = {}
-    stores: list[tuple[int, int]] = []
+    stores: list[tuple] = []
+
+    def forget(register):
+        bases.pop(register, None)
+        constants.pop(register, None)
+        parent = BYTE_PARENT.get(register)
+        if parent is not None:       # writing DL says nothing about EDX's
+            bases.pop(parent, None)  # upper bytes, so EDX stops being known
+            constants.pop(parent, None)
+
+    def constant_in(register):
+        """What `register` holds, if that is a known constant."""
+        if register in constants:
+            return constants[register]
+        parent = BYTE_PARENT.get(register)
+        if parent is not None and parent in constants:
+            return constants[parent] & 0xFF
+        return None
 
     for one in instructions[:-1]:
         operands = one.operands
@@ -286,35 +318,60 @@ def store_sequence(instructions) -> dict | None:
             if (operands[0].type != X86_OP_REG or operands[1].type != X86_OP_REG
                     or operands[0].reg != operands[1].reg):
                 return None
+            forget(operands[0].reg)
             constants[operands[0].reg] = 0
-            aliases.discard(operands[0].reg)
+            continue
+        if one.mnemonic == "lea" and len(operands) == 2:
+            # `lea eax,[ecx+0x30c]` - a pointer to one of `this`'s own fields.
+            # It is tracked as an OFFSET rather than as another alias of
+            # `this`, because a later `mov byte [eax],dl` writes 0x30c and
+            # calling it "an alias" would have written offset 0.
+            destination, source = operands
+            if (destination.type != X86_OP_REG or source.type != X86_OP_MEM
+                    or source.mem.index != 0 or source.mem.base not in bases):
+                return None
+            offset = bases[source.mem.base] + source.mem.disp
+            forget(destination.reg)
+            bases[destination.reg] = offset
             continue
         if one.mnemonic != "mov" or len(operands) != 2:
             return None
         destination, source = operands
         if destination.type == X86_OP_REG:
             if source.type == X86_OP_IMM:
+                forget(destination.reg)
                 constants[destination.reg] = source.imm
-                aliases.discard(destination.reg)
-            elif source.type == X86_OP_REG and source.reg in aliases:
-                aliases.add(destination.reg)
-                constants.pop(destination.reg, None)
+            elif source.type == X86_OP_REG and source.reg in bases:
+                offset = bases[source.reg]
+                forget(destination.reg)
+                bases[destination.reg] = offset
             else:
                 return None
             continue
         if destination.type != X86_OP_MEM or destination.mem.index != 0:
             return None
-        if destination.mem.base not in aliases:
+        if destination.mem.base not in bases:
             return None
-        width = 4 if one.op_str.startswith("dword") else None
-        if width is None:
-            return None                      # only dword stores, for now
+        offset = bases[destination.mem.base] + destination.mem.disp
+        width = destination.size
+        if width not in (1, 4):
+            return None                      # a width with no template here
         if source.type == X86_OP_IMM:
-            stores.append((destination.mem.disp, source.imm))
-        elif source.type == X86_OP_REG and source.reg in constants:
-            stores.append((destination.mem.disp, constants[source.reg]))
-        else:
+            stores.append((offset, width, "const", source.imm))
+            continue
+        if source.type != X86_OP_REG:
+            return None
+        if width == 4 and source.reg in bases:
+            # Storing an interior pointer INTO a field: `this->[0x410] =
+            # this + 0x30c`. Not a constant - it depends on where the object
+            # lives - so it is recorded as what it is.
+            stores.append((offset, width, "self", bases[source.reg]))
+            continue
+        value = constant_in(source.reg)
+        if value is None:
             return None                      # storing something unknown
+        stores.append((offset, width, "const", value & (0xFF if width == 1
+                                                        else 0xFFFFFFFF)))
     if not stores:
         return None
     # No separate "EAX holds something undescribable" guard, and that is on
@@ -323,16 +380,22 @@ def store_sequence(instructions) -> dict | None:
     # was read. So such a guard could never fire, and disabling it failed no
     # test - the same dead-mechanism the stack-read check turned out to be.
     # One mechanism, one test.
-    returns_this = X86_REG_EAX in aliases
+    returns_this = bases.get(X86_REG_EAX) == 0
     return {"stores": stores, "returns_this": returns_this,
             "eax": None if returns_this else constants.get(X86_REG_EAX)}
 
 
 def render_stores(detail: dict) -> str:
     lines = ["    uint8_t *const bytes = static_cast<uint8_t *>(self);"]
-    for offset, value in detail["stores"]:
-        lines.append(f"    *reinterpret_cast<uint32_t *>(bytes + {offset:#x})"
-                     f" = {value:#x}U;")
+    for offset, width, kind, value in detail["stores"]:
+        if kind == "self":
+            lines.append(f"    *reinterpret_cast<uint8_t **>(bytes + {offset:#x})"
+                         f" = bytes + {value:#x};")
+        elif width == 1:
+            lines.append(f"    *(bytes + {offset:#x}) = {value:#x};")
+        else:
+            lines.append(f"    *reinterpret_cast<uint32_t *>(bytes + {offset:#x})"
+                         f" = {value:#x}U;")
     if detail["returns_this"]:
         lines.append("    return self;")
     elif detail["eax"]:

@@ -2621,6 +2621,48 @@ void test_field_accessors() {
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
 
+    // --- store sequences with byte writes and interior pointers ---
+    //
+    // ??0FileBox is the reason the tracker follows OFFSETS rather than a set
+    // of `this` aliases. It does `lea ecx,[eax+0x30c]` and then
+    // `mov byte [ecx],dl`, so that store lands at 0x30c - but ECX is where
+    // `this` arrives, and a tracker that just remembered "ECX aliases this"
+    // would have recorded offset 0. Both are real fields and both take a zero
+    // byte, so nothing but this assertion distinguishes them.
+    {
+        const size_t zero_bytes[] = {0x30d, 0x0, 0x30c, 0x104, 0x208,
+                                     0x414, 0x418};
+        uint8_t *const interior = static_cast<uint8_t *>(self) + 0x30c;
+
+        seed();
+        for (size_t offset : zero_bytes) {
+            expected[16 + offset] = 0;
+        }
+        std::memcpy(expected + 16 + 0x410, &interior, sizeof(interior));
+        expect(field_accessor_00634be0_redirect(self, nullptr) == self);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        seed();
+        for (size_t offset : zero_bytes) {
+            expected[16 + offset] = 0;
+        }
+        std::memcpy(expected + 16 + 0x410, &interior, sizeof(interior));
+        field_accessor_00634f70_redirect(self, nullptr);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        // Heap::Heap2: one byte at 0, then four dwords. The byte write is the
+        // point - `xor eax,eax / mov byte [ecx],al` sets ONE byte, and
+        // treating it as a dword would clear three the original leaves alone.
+        seed();
+        const uint32_t zero = 0;
+        expected[16 + 0x0] = 0;
+        for (size_t offset : {0x8, 0x4, 0x10, 0xc}) {
+            std::memcpy(expected + 16 + offset, &zero, sizeof(zero));
+        }
+        field_accessor_005d4540_redirect(self, nullptr);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
     // --- byte store: one BYTE moves, which the neighbours prove ---
     seed();
     expected[16 + 0x6D] = 1;

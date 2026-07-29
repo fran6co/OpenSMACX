@@ -1979,7 +1979,6 @@ P3,10,0x005D4240,sub_5d4240,60,0,0,unrecovered,,,1,missing,exact,
 P3,1020,0x005D427C,sub_5d427c,291,1,0,unrecovered,,,2,exact,start_only,
 P3,1020,0x005D439F,sub_5d439f,169,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005D4448,sub_5d4448,180,1,0,unrecovered,,,2,exact,start_only,
-P3,10,0x005D4540,Heap::Heap2,17,0,0,unrecovered,,,1,exact,missing,
 P3,400,0x005D47D0,sub_5d47d0,129,0,4,unrecovered,,,0,missing,containing,
 P3,120,0x005D4860,sub_5d4860,39,0,1,unrecovered,,,2,exact,exact,
 P3,410,0x005D4890,sub_5d4890,253,0,4,unrecovered,,,1,missing,exact,
@@ -2944,14 +2943,12 @@ P3,10,0x00634920,sub_634920,85,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x00634980,sub_634980,208,0,0,unrecovered,,,1,exact,missing,
 P3,20,0x00634A50,sub_634a50,121,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00634AD0,sub_634ad0,151,0,0,unrecovered,,,1,exact,missing,
-P3,4021,0x00634BE0,??0FileBox@@QAE@XZ,51,4,0,unrecovered,,,2,exact,exact,void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this)
 P3,2221,0x00634C30,?save@FileBox@@QAEXXZ,190,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?save@FileBox@@QAEXXZ)(FileBox* this)
 P3,1221,0x00634CF0,?load@FileBox@@QAEXXZ,190,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?load@FileBox@@QAEXXZ)(FileBox* this)
 P3,3221,0x00634DB0,?add_filter@FileBox@@QAEHPADPAD@Z,195,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?add_filter@FileBox@@QAEHPADPAD@Z)(FileBox* this, int8*, int8*)"
 P3,3221,0x00634E80,?set_def_ext@FileBox@@QAEHPAD@Z,76,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?set_def_ext@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)"
 P3,3221,0x00634ED0,?set_def_name@FileBox@@QAEHPAD@Z,78,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?set_def_name@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)"
 P3,211,0x00634F20,?UNK1@FileBox@@QAEHPAD@Z,78,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)"
-P3,11,0x00634F70,?UNK2@FileBox@@QAEXXZ,49,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this)
 P3,101,0x00634FC0,?UNK1@TexHeap@@QAEHH@Z,19,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?UNK1@TexHeap@@QAEHH@Z)(TexHeap* this, int)"
 P3,121,0x00634FE0,?shutdown@TexHeap@@QAEXXZ,102,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this)
 P3,1221,0x00635050,?UNK2@TexHeap@@QAEHH@Z,800,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK2@TexHeap@@QAEHH@Z)(TexHeap* this, int)"
