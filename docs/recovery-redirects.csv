@@ -2005,6 +2005,7 @@ address,kind
 0x0062EE80,jump
 0x0062EE90,jump
 0x00631A10,jump
+0x00631A20,jump
 0x00633160,jump
 0x00633730,jump
 0x00633740,jump
@@ -2040,6 +2041,7 @@ address,kind
 0x0063C500,jump
 0x0063C9C0,jump
 0x0063CEF0,jump
+0x0063D420,jump
 0x0063E520,jump
 0x0063E7F0,jump
 0x00642940,jump

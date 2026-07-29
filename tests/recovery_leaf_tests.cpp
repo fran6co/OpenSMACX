@@ -2914,6 +2914,94 @@ void test_leaf_recoveries() {
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
     }
 
+    // --- big-endian 16-bit append with a two-step cursor ---
+    {
+        static uint8_t descriptor[0x20];
+        static uint8_t buffer[16];
+        std::memset(descriptor, 0, sizeof(descriptor));
+        std::memset(buffer, 0x11, sizeof(buffer));
+        uint8_t *const base = buffer;
+        std::memcpy(descriptor + 0x8, &base, sizeof(base));
+        const uint32_t start = 0;
+        std::memcpy(descriptor + 0x10, &start, sizeof(start));
+
+        leaf_0063d420_redirect(descriptor, 0xABCD);
+        // HIGH byte first: a little-endian body would give CD then AB.
+        expect(buffer[0] == 0xAB);
+        expect(buffer[1] == 0xCD);
+        expect(buffer[2] == 0x11);              // and only two bytes
+        uint32_t cursor = 0;
+        std::memcpy(&cursor, descriptor + 0x10, sizeof(cursor));
+        expect(cursor == 2);                    // advanced twice
+
+        // Appending again continues where it left off rather than restarting.
+        leaf_0063d420_redirect(descriptor, 0x1234);
+        expect(buffer[2] == 0x12);
+        expect(buffer[3] == 0x34);
+        std::memcpy(&cursor, descriptor + 0x10, sizeof(cursor));
+        expect(cursor == 4);
+
+        // Only the low 16 bits are written.
+        leaf_0063d420_redirect(descriptor, 0xFFFF5678U);
+        expect(buffer[4] == 0x56);
+        expect(buffer[5] == 0x78);
+
+        // The cursor is stored BEFORE the second byte is written, and that
+        // order is only visible when the byte lands on the cursor itself.
+        // Point the stream at its own descriptor with the cursor at 0x0f: the
+        // first byte goes to 0x0f, the cursor advances to 0x10, and the
+        // second byte then overwrites the cursor's own low byte.
+        //
+        //   this order  -> cursor field becomes 0xcd, final cursor 0xce
+        //   swapped     -> the 0x10 store lands last, final cursor 0x11
+        std::memset(descriptor, 0, sizeof(descriptor));
+        uint8_t *const self_base = descriptor;
+        std::memcpy(descriptor + 0x8, &self_base, sizeof(self_base));
+        const uint32_t near_cursor = 0x0F;
+        std::memcpy(descriptor + 0x10, &near_cursor, sizeof(near_cursor));
+
+        leaf_0063d420_redirect(descriptor, 0xABCD);
+        expect(descriptor[0x0F] == 0xAB);
+        std::memcpy(&cursor, descriptor + 0x10, sizeof(cursor));
+        expect(cursor == 0xCE);
+    }
+
+    // --- find a player's name by key ---
+    {
+        static uint8_t net_object[0x780];
+        std::memset(net_object, 0, sizeof(net_object));
+        auto key_at = [&](uint32_t index, uint32_t key) {
+            std::memcpy(net_object + 0x154 + index * 0x58, &key, sizeof(key));
+        };
+        auto *const net = reinterpret_cast<Net *>(net_object);
+
+        // Nothing matches 7 yet.
+        expect(net_get_player_name_redirect(net, nullptr, 7) == nullptr);
+
+        // The name is 0x169, twenty-one bytes into the 0x58-byte entry - not
+        // at its head, which is where the key lives.
+        key_at(0, 7);
+        expect(net_get_player_name_redirect(net, nullptr, 7) ==
+               reinterpret_cast<char *>(net_object + 0x169));
+        key_at(0, 0);
+        key_at(3, 7);
+        expect(net_get_player_name_redirect(net, nullptr, 7) ==
+               reinterpret_cast<char *>(net_object + 0x169 + 3 * 0x58));
+        // The last entry is reachable, and the one past it is not.
+        key_at(3, 0);
+        key_at(0xF, 7);
+        expect(net_get_player_name_redirect(net, nullptr, 7) ==
+               reinterpret_cast<char *>(net_object + 0x169 + 0xF * 0x58));
+        key_at(0xF, 0);
+        std::memcpy(net_object + 0x154 + 0x10 * 0x58, "\x07\x00\x00\x00", 4);
+        expect(net_get_player_name_redirect(net, nullptr, 7) == nullptr);
+
+        // Key 0 is a real key, not a sentinel: every entry holds it now, and
+        // the first must win.
+        expect(net_get_player_name_redirect(net, nullptr, 0) ==
+               reinterpret_cast<char *>(net_object + 0x169));
+    }
+
     // --- the four Ambience constructors ---
     //
     // They share a shape and differ only in the vtable and in how far the

@@ -1013,3 +1013,49 @@ void __fastcall leaf_00432970_redirect(void *self, void *) {
         reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x406C),
         nullptr);
 }
+
+/*
+Purpose: Append a 16-bit value to a byte stream, most significant byte first.
+
+             mov esi,[eax+8] / mov edi,[eax+0x10] / mov edx,ecx / shr edx,8
+             mov byte [esi+edi],dl / mov edx,[eax+0x10] / mov esi,[eax+8]
+             inc edx / mov [eax+0x10],edx / mov byte [esi+edx],cl
+             mov ecx,[eax+0x10] / inc ecx / mov [eax+0x10],ecx / ret
+
+         BIG-endian: the high byte goes first. The cursor at 0x10 is advanced
+         between the two stores and again after the second, so it ends two
+         past where it started, and the second byte lands at the position the
+         FIRST advance produced.
+
+         Both the base at 0x8 and the cursor at 0x10 are RE-READ from the
+         stream between the stores rather than kept in registers, so a stream
+         that overlapped its own descriptor would see the updated values.
+         Preserved for the same reason as in 005CBBC0 - and reached through
+         load32/store32 so the compiler cannot cache what the original
+         re-reads.
+
+         The CURSOR re-read is pinned by a fixture that points the stream at
+         its own descriptor. The BASE re-read is not: separating it needs the
+         first byte store to land on the descriptor's own pointer field at
+         0x8, and what the corrupted pointer then addresses depends on the
+         arena's absolute address, so the outcome could not be asserted
+         portably. Two mutants of that line survive the sweep for that reason
+         and are left alone rather than papered over.
+
+Original Offset: 0063D420
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl leaf_0063d420_redirect(void *stream, uint32_t value) {
+    uint8_t *base = reinterpret_cast<uint8_t *>(load32(stream, 0x8));
+    uint32_t cursor = load32(stream, 0x10);
+    base[cursor] = static_cast<uint8_t>((value >> 8) & 0xFFU);
+
+    cursor = load32(stream, 0x10) + 1;
+    base = reinterpret_cast<uint8_t *>(load32(stream, 0x8));
+    store32(stream, 0x10, cursor);
+    base[cursor] = static_cast<uint8_t>(value & 0xFFU);
+
+    store32(stream, 0x10, load32(stream, 0x10) + 1);
+}
+
