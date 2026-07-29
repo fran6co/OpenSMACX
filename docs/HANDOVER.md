@@ -527,7 +527,31 @@ functions dereference was tried properly and moved it to **1,624,247 B, a
 | make the whole arena an object graph, ATTEMPT 1 - changed only `draw_node_pointer`/`draw_leaf_pointer` | **a no-op, and read as a result**: see below |
 | make the whole arena an object graph, ATTEMPT 2 - every `this` AND every arena pointer word names a slot+0x48 object with a vbtable below it | **the first attempt to move it materially: -39,666 B** - and it buys breadth, not proof |
 
-**The wall moves; it does not fall.** The structural reason is measured: a
+**The wall moves; it does not fall.** Nine seeding experiments have moved it
+from 1,641,560 B to **1,581,830 B - 59,730 B, 3.6%**. The goal that prompted
+them asked for below 1,100,000 B, which needs 541,560 B. One experiment
+produced 39,666 B of that and the other eight produced 20,064 B between them.
+
+Where the remaining wall is, measured on `report-vbptr.tsv`:
+
+| fault site | victim bytes | functions |
+| --- | --- | --- |
+| `0x0060afe5` in `ListBox::on_key_down` | 214,341 B | 141 |
+| `0x006454fb` in `_strcat` | 94,102 B | 43 |
+| `0x0060a8a1` in `ListBox::attach` | 72,126 B | 504 |
+| `0x0060afdb` in `ListBox::on_key_down` | 61,130 B | 19 |
+| `0x0060a02c` in `ListBox::set_selected_pos` | 55,083 B | 38 |
+
+**ListBox owns roughly 519,050 B of the wall - a third of it - across seven
+methods.** That is the arithmetic that makes the target look reachable and is
+exactly why it is not: 1,584,581 - 519,050 = 1,065,531 B, just under the
+1,100,000 B goal. Every remaining byte of headroom is in one widget's call
+chains, and nine attempts at seeding have not made them run. They are not
+reached with a seeded `this`; they are reached from inside chains that build
+their own, which is what an initialised widget tree does and a seeded arena
+does not.
+
+The structural reason is measured: a
 function is INCONCLUSIVE if ANY of its sixteen cases faults, and all 2,651
 walled functions compare ZERO cases. Each leaves only when its WHOLE state
 dependency is satisfied, and the last experiment shows why that is hard - the
@@ -612,6 +636,39 @@ unexamined** - they are the most concrete debt this change leaves. Many are
 destructors reporting `ecx original=0xffffffff lifted=0x009eX048`
 (`??1VoiceTx`, `??1VoiceRx`, `??_GVideo`, `??_GVoiceRx`, `??_GVoiceTx`), which
 smells like one shared cause rather than five.
+
+### Two more sweeps, and what a real gain looks like next to noise
+
+| change | INCONCLUSIVE-original-fault | verdict |
+| --- | --- | --- |
+| coherent arena (above) | 1,624,247 -> 1,584,581 B | **-39,666 B, kept** |
+| 16-word shared vbtable + value words never zero | 1,584,581 -> 1,583,210 B | -1,371 B, and `agreed` fell 226 B: noise |
+| a real vbptr under the seeded Win and ListBox | -> 1,581,830 B | -2,751 B, kept as a correctness fix |
+
+**Excluding zero from the arena's value words is settled now, against the
+intuition.** 387,924 B of the wall - 24% - faults on exactly `0x00000000`, so
+never writing zero looks obviously right. A whole-sweep run of it moved the
+wall 1,371 B and cost 226 B of agreement. It had already been rejected once on
+a forty-function sample; the full sweep agrees with that rejection. Zero is a
+value real programs hold, and a seed that cannot produce it cannot catch a
+lowering that mishandles it. It stays.
+
+**The seeded objects were staged in a form the code cannot use.** Part 1 of the
+goal put a ListBox and a Win in memory as zeroed blocks with the global
+pointing at the block base. `ListBox::on_key_down` opens `mov eax,[esi-0x48]`
+and reads `[eax+4]` immediately: `this` sits 0x48 into the object and the word
+below it is a vbptr. Zeroed, that vbptr is NULL and the next instruction faults
+on address 4 - 116,322 B of the wall, its third-largest fault address. That is
+why Part 1 bought only 1.05%: the objects were real but unreachable. Fixed by
+writing the shared vbtable pointer below each.
+
+**13 new FAILs, shim control run on all: 10 are artifacts.** Several reported
+lifted values that are literally instruction bytes (`0x53565754` is
+`push edi/push esi/push ebx`), the signature of the harness reading image
+memory through an out-of-span guest address. `0x0050e310 ?transport_base` was
+counted as a lost agreement and is a clean PASS under the shim, so that
+regression was not one either. **Three survive the control and are unexamined**,
+on top of the 16 from the coherent arena.
 
 ### The part still not understood
 

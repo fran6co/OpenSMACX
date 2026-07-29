@@ -570,7 +570,7 @@ const char *oracle_register_name(int index) {
 constexpr uint32_t OracleObjectSlot = 0x1000U;
 constexpr uint32_t OracleObjectThis = 0x48U;
 constexpr uint32_t OracleSharedVbtable =
-    OracleArenaBase + OracleArenaSize - 0x40U;
+    OracleArenaBase + OracleArenaSize - 0x80U;   // 16 words, with room to spare
 
 // `this` for slot n. Both seeders MUST agree with seed_registers, or ECX names
 // one object and the memory was prepared for another.
@@ -582,7 +582,23 @@ static uint32_t object_this(uint32_t slot_index) {
 
 // Runs AFTER the arena fill, which would otherwise overwrite the pointers.
 static void write_shared_vbtable(unsigned char *image) {
-    const uint32_t words[3] = {0U, 0x48U, 0xA60U};
+    // SIXTEEN words, not three. Three covers ListBox, whose table is
+    // {0, 0x48, 0xa60}, and nothing else: CheckBox reads {0, 0x188, 0xba0},
+    // Dialogs {0, 0, 0xc40}, MapWin {0, 0x40} - all recorded in
+    // tests/recovery_leaf_tests.cpp against real objects. A class indexing
+    // past word 2 used to read whatever the arena fill left there, and an
+    // arena word is either a nine-megabyte pointer or a small integer, so the
+    // displacement was garbage either way.
+    //
+    // Every entry is a real displacement observed in this image, and every one
+    // is under 0x1000 so `this + displacement + a field offset` stays inside
+    // the 4 KB slot. The tail repeats rather than growing: a table that keeps
+    // climbing would walk a deep index straight out of the object.
+    const uint32_t words[16] = {
+        0U,      0x48U,   0xA60U,  0xBA0U,
+        0xC40U,  0x188U,  0x40U,   0x48U,
+        0xA60U,  0xBA0U,  0xC40U,  0x188U,
+        0x40U,   0x48U,   0xA60U,  0xBA0U};
     std::memcpy(image + (OracleSharedVbtable - OracleImageBase), words,
                 sizeof words);
     for (uint32_t slot = OracleArenaBase;
@@ -626,6 +642,14 @@ static void seed_scratch_legacy(unsigned char *image, uint32_t address, int case
             // one with a vbtable below it like any other.
             word = object_this(i * 8 + 64 + (h >> 12));
         } else {
+            // Zero is KEPT, and that is now a measured decision rather than
+            // an unexamined one. 387,924 B of the fault wall - 24% - faults on
+            // exactly 0x00000000, so excluding zero here looks obviously
+            // right; a whole-sweep run of it moved the wall 1,371 B and cost
+            // 226 B of agreement. It was rejected once before on a
+            // forty-function sample, and the full sweep agrees with that
+            // rejection. Zero is a value real programs hold, and a seed that
+            // cannot produce it cannot catch a lowering that mishandles it.
             word = (mix(h + i) & 0x1FU) * 4U;   // 0..124, four-aligned
         }
         std::memcpy(arena + i * 4, &word, 4);
@@ -1628,6 +1652,15 @@ static void seed_globals(unsigned char *image) {
     // zero.
     std::memset(image + (OracleSeededObjectBase - OracleImageBase), 0,
                 3 * OracleSeededBlock);
+    // A ZEROED BLOCK IS NOT A REALISTIC ListBox, and the comment above was
+    // wrong to imply it was enough. ListBox::on_key_down opens
+    // `mov eax,[esi-0x48]` and immediately reads [eax+4] and [eax+8]: `this`
+    // sits 0x48 into the object and the word below it is a vbptr. Zeroed, that
+    // vbptr is NULL and the very next instruction faults on address 4 - which
+    // is 116,322 B of the wall, the third largest fault address there is.
+    // So the two objects that are passed as `this` get a real one.
+    put32(image, OracleSeededWin - 0x48U, OracleSharedVbtable);
+    put32(image, OracleSeededListBox - 0x48U, OracleSharedVbtable);
     // A short NUL-terminated string, so strcpy/strlen/strcat terminate.
     // _strcat owns 102,480 bytes of the fault wall on its own.
     static const char kSeedText[] = "seed";
