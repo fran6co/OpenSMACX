@@ -453,6 +453,26 @@ adding a redirect for a function under ~16 bytes, that check is the thing
 standing between you and four silently rewritten bytes of an unrelated
 function.
 
+### The last three, and exactly what each still needs
+
+The closure is down to three, and none of them is blocked on understanding the
+code - all three are read and their bodies are unambiguous. Each is blocked on
+a FIXTURE, and the shape of that fixture is known:
+
+| function | what it does | what a fixture needs |
+| --- | --- | --- |
+| `sub_4080b0` | destroys the ListBox at 0x48, the Dialog at 0xa60, then the GraphicWin base the ListBox shares | `list_box_apply_stages(obj, 0x48, 0xa60)` plus zeroing `obj+0x48+0xA08`; a zeroed object faults on a null vbtable |
+| `sub_406af0` | the same with a Dialogs at 0x188 and a Dialog at 0xba0 | two vbtables at 0x00 and 0x44 and two staging blocks, per `test_dialogs_teardown` - `stage(obj, g, d, 0x669BE8, 0x669BE0, 0x669BD4, 0x188, 0xBA0)` and the same again at +0x44 |
+| `?load_deswin_sprites@@YAXXZ` | constructs a Buffer on its own stack and immediately destroys it | nothing observable from outside. Decide first whether Buffer's constructor or destructor touches any global; if neither does, this function's only content is that those two run, and saying so needs a seam inside one of them |
+
+I wrote the two destructor chains, built them, and TOOK THEM BACK OUT. Their
+first fixture - a zeroed object with the close seams bound to a recorder -
+passed once and then faulted on a null vbtable, so that pass was luck. Landing
+them on it would have marked them source_complete and removed them from the
+queue on evidence that does not hold. The bodies were straightforward; the
+fixture is the work, and it is per-class staging that already exists for each
+class in its own teardown test.
+
 ### Checking generated code needs the REAL compile flags
 
 `leaf_006281e0_redirect` is a vector length: `sqrt((y*y + z*z) + x*x)`, summed

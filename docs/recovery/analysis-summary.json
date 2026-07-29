@@ -51,7 +51,7 @@
   "format_version": 1,
   "inputs": {
     "binding_classifications_sha256": "7185cd1b0d0d57baef47761ca8a4a61a8e4c402d1f8278402d856d396d041dca",
-    "canonical_inventory_sha256": "e214da17b652b76d78e36fc1567c8f83cfb886018518055edd0883ef4278fdd4",
+    "canonical_inventory_sha256": "0a9dfe243eec4c6982fe6c790a3b7c085b4819d6637ab4ba3420e058bda40336",
     "canonical_summary_sha256": "96774a3aca0848152ebf13dc6b3c1b426d3d17f4f105f871f83ed60ab06c0ff9"
   },
   "outputs": {
