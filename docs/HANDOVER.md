@@ -524,7 +524,8 @@ functions dereference was tried properly and moved it to **1,624,247 B, a
 | fill all 3.25 MB of .bss with a valid pointer | no better than six targeted globals |
 | widen from 6 to 45 object globals | **no gain, and one regression** |
 | seed a vbtable below `this` for ListBox::on_key_down | 2 of 8 moved; 6 unchanged |
-| make the whole arena an object graph - every drawn pointer lands at slot+0x48 of a slot whose base holds a vbtable | **nothing moved at all**: the same 6-at-0x60afe5 / 2-at-0x60affe split as before |
+| make the whole arena an object graph, ATTEMPT 1 - changed only `draw_node_pointer`/`draw_leaf_pointer` | **a no-op, and read as a result**: see below |
+| make the whole arena an object graph, ATTEMPT 2 - every `this` AND every arena pointer word names a slot+0x48 object with a vbtable below it | **the first attempt to move it materially: -39,666 B** - and it buys breadth, not proof |
 
 **The wall moves; it does not fall.** The structural reason is measured: a
 function is INCONCLUSIVE if ANY of its sixteen cases faults, and all 2,651
@@ -538,13 +539,89 @@ That is the difference between plausible state and COHERENT state: an object
 graph whose back-references agree with each other. The hybrid smoke gate has
 one because a real game built it; the isolated harness deliberately does not.
 
-The sixth attempt narrows it further and is the one to read before trying a
-seventh. Making EVERY arena pointer land on a well-formed object changed
-nothing for ListBox::on_key_down - the identical fault split, byte for byte.
-So the `this` that function receives is not an arena pointer at all. Seeding
-the arena cannot reach it, however coherent the arena is made, and neither can
-seeding the entry object. Find where that `ecx` comes from before seeding
-anything else.
+### A no-op that looked like a result, and how it was caught
+
+Attempt 1 changed `draw_node_pointer` and `draw_leaf_pointer` and nothing else,
+then reported "nothing moved at all - the identical fault split, byte for
+byte" and concluded the `this` was not an arena pointer. **That conclusion was
+wrong, and the byte-for-byte identity was the tell.** Those two helpers feed
+only the DRAWN cases; cases 0-3 are the LEGACY seeder, whose `this` is computed
+separately. Nothing the patch touched could have changed them. An experiment
+that cannot move its measurement will always agree with itself.
+
+The rule this earns: **when a change produces output identical to the
+baseline, suspect the change before believing the finding.** A real effect on a
+16-case seed almost never lands on zero-bit difference. Confirm the seed
+actually changed - `--dump-seed <case>` prints the registers and the window
+around ECX - before writing down what the non-change means.
+
+### What ListBox::on_key_down actually requires
+
+Its first six instructions state the contract, and no amount of guessing at
+globals substitutes for reading them:
+
+```
+0x0060AF96  mov esi, ecx                     ; esi = this
+0x0060AF99  mov eax, dword ptr [esi - 0x48]  ; vbptr: the object BASE is this-0x48
+0x0060AF9C  lea ebp, [esi - 0x48]
+0x0060AF9F  mov edx, dword ptr [eax + 4]     ; vbtable[1]
+0x0060AFA2  mov ecx, dword ptr [eax + 8]     ; vbtable[2]
+0x0060AFA5  mov eax, dword ptr [edx + esi + 0x7c]
+```
+
+`this` sits 0x48 into its object, `[this-0x48]` must point at a vbtable, and
+words 1 and 2 of that table are displacements added back to `this`. With the
+`{0, 0x48, 0xa60}` layout `tests/recovery_leaf_tests.cpp` stages for this
+class, those two loads land at slot+0x10c and slot+0xb2c - which is why the
+object slot is 4 KB and not smaller.
+
+Attempt 2 satisfies all of that for every object, entry or reached: both
+seeders' `this`, the arena fill's pointer words, and `draw_node_pointer` /
+`draw_leaf_pointer` all name slot+0x48 objects. The entry seed demonstrably
+changed - `--dump-seed 0` shows `ecx 009e3048` where it showed `009d02b0`.
+
+**The 20-function sample said it did nothing. The full sweep says otherwise,
+and the sample was the thing that was wrong.** Twenty functions around one
+call site cannot see a change spread across 5,673:
+
+| figure | 3-seed | coherent arena | delta |
+| --- | --- | --- | --- |
+| INCONCLUSIVE-original-fault | 1,624,247 B / 2,560 fn | 1,584,581 B / 2,351 fn | **-39,666 B, -209 fn** |
+| never_compared | 1,678,050 B | 1,640,428 B | -37,622 B (better) |
+| agreed | 184,167 B / 1,517 fn | 191,292 B / 1,615 fn | +7,125 B (better) |
+| agreed_full_strength | 42,170 B / 768 fn | 42,209 B / 768 fn | **+39 B, no new functions** |
+| agreed_only_on_paths_taken | 529,771 B | 558,803 B | +29,032 B (WORSE) |
+| agreed_under_weakened_conditions | 141,997 B | 149,083 B | +7,086 B (WORSE) |
+
+**Read the last three rows together or the first row lies.** Of the 37,622 B
+that left `never_compared`, 36,118 B arrive in the two weakened buckets, and
+full-strength agreement gains 39 bytes across ZERO new functions. A coherent
+arena lets far more bodies run to completion; it does not make the evidence
+stronger for a single one of them. Two of the five numbers that must go down
+went UP to buy it.
+
+It also cost 11 functions that used to PASS and now fault (2,586 B, mostly
+`CheckBox::*`), against 103 that moved fault -> PASS (9,543 B).
+
+**18 new FAILs, and the shim control was run on all of them.** Two moved and
+are therefore the harness reading its own memory, not the lowering:
+`0x00579840 ?is_known@@YAHHHH@Z` (FAIL -> INCONCLUSIVE under the shim) and
+`0x005a63d0 ?proto_sort_2@@YAXH@Z` ("134 words differ at 0x00945b44" ->
+"124 words at 0x00945b4c"). **The other 16 are stable across the shim and are
+unexamined** - they are the most concrete debt this change leaves. Many are
+destructors reporting `ecx original=0xffffffff lifted=0x009eX048`
+(`??1VoiceTx`, `??1VoiceRx`, `??_GVideo`, `??_GVoiceRx`, `??_GVoiceTx`), which
+smells like one shared cause rather than five.
+
+### The part still not understood
+
+Five cases still fault at `0x0060afe5` on `mov eax,[ebx+0xa4]` with `ebx`
+zero, while the `[ebx+0x10]` load eleven instructions earlier succeeded on the
+same path. Both cannot hold on a straight line, so control reaches that
+instruction some other way inside the 1,349-byte body. The switch at
+`0x0060B031` (`jmp dword ptr [ebx*4 + 0x60b4d8]`, byte index table at
+`0x60b4ec`) is bounds-checked by the `ja 0x60b353` above it, so it is not
+that. Nobody has read the rest of the function.
 
 **What the seeds cost.** They are kept, but the trade is not one-sided:
 

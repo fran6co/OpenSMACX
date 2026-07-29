@@ -541,6 +541,56 @@ const char *oracle_register_name(int index) {
 
 // Fills the scratch window (arena + stack) of one memory image. Applied
 // identically to both sides.
+// EXPERIMENT 6, DONE PROPERLY. The first attempt changed only the DRAWN
+// pointer helpers and left both seeders' `this` where it was, so cases 0-3 -
+// the legacy ones - kept an arbitrary arena word as `this` and could not have
+// behaved differently. They didn't: the fault split came back byte for byte,
+// which is what a no-op looks like when it is mistaken for a result.
+//
+// What ?on_key_down@ListBox@@QAEXH@Z actually needs is visible in its first
+// six instructions:
+//
+//     mov esi, ecx                       ; esi = this
+//     mov eax, dword ptr [esi - 0x48]    ; vbptr, so the object BASE is this-0x48
+//     lea ebp, [esi - 0x48]
+//     mov edx, dword ptr [eax + 4]       ; vbtable[1]
+//     mov ecx, dword ptr [eax + 8]       ; vbtable[2]
+//     mov eax, dword ptr [edx + esi + 0x7c]
+//
+// So `this` is 0x48 into its object and [this-0x48] must point at a table
+// whose words 1 and 2 are displacements that land back inside the object.
+// Placing every `this` at slot+0x48 of a 4 KB slot whose base holds that
+// pointer satisfies it for EVERY object a chain reaches, not just the entry
+// one - which is the difference from the fifth attempt.
+//
+// The three words are the ones tests/recovery_leaf_tests.cpp stages for this
+// class: {0, 0x48, 0xa60}. With them, edx=0x48 and ecx=0xa60, so the two loads
+// above land at slot+0x10c and slot+0xb2c - inside the slot, which is why the
+// slot is 4 KB and not smaller.
+constexpr uint32_t OracleObjectSlot = 0x1000U;
+constexpr uint32_t OracleObjectThis = 0x48U;
+constexpr uint32_t OracleSharedVbtable =
+    OracleArenaBase + OracleArenaSize - 0x40U;
+
+// `this` for slot n. Both seeders MUST agree with seed_registers, or ECX names
+// one object and the memory was prepared for another.
+static uint32_t object_this(uint32_t slot_index) {
+    return OracleArenaBase
+           + (slot_index % (OracleArenaSize / OracleObjectSlot)) * OracleObjectSlot
+           + OracleObjectThis;
+}
+
+// Runs AFTER the arena fill, which would otherwise overwrite the pointers.
+static void write_shared_vbtable(unsigned char *image) {
+    const uint32_t words[3] = {0U, 0x48U, 0xA60U};
+    std::memcpy(image + (OracleSharedVbtable - OracleImageBase), words,
+                sizeof words);
+    for (uint32_t slot = OracleArenaBase;
+         slot + OracleObjectSlot <= OracleArenaBase + OracleArenaSize;
+         slot += OracleObjectSlot)
+        std::memcpy(image + (slot - OracleImageBase), &OracleSharedVbtable, 4);
+}
+
 static void seed_scratch_legacy(unsigned char *image, uint32_t address, int case_index,
                                 uint32_t return_address) {
     uint32_t h = mix(address ^ (uint32_t(case_index) * 0x85EBCA6BU));
@@ -569,8 +619,12 @@ static void seed_scratch_legacy(unsigned char *image, uint32_t address, int case
         }
         uint32_t word;
         if (pointer) {
-            word = OracleArenaBase +
-                   (((i * 8 + 64 + (h >> 12)) % (OracleArenaSize - 64)) & ~3U);
+            // Every pointer word names a well-formed OBJECT, not an
+            // arbitrary arena address. A chain that loads a `this` out of the
+            // arena - which is how the ListBox::on_key_down victims reach it,
+            // and why a coherent ENTRY object did nothing for them - now gets
+            // one with a vbtable below it like any other.
+            word = object_this(i * 8 + 64 + (h >> 12));
         } else {
             word = (mix(h + i) & 0x1FU) * 4U;   // 0..124, four-aligned
         }
@@ -583,11 +637,12 @@ static void seed_scratch_legacy(unsigned char *image, uint32_t address, int case
     // begin with `sub ecx, [ecx-4]`. Seeding a pointer there is seeding a
     // displacement of nine megabytes, which is not a case anyone can learn
     // anything from.
-    const uint32_t this_pointer = OracleArenaBase + ((h % 0x400U) & ~0xFU);
+    const uint32_t this_pointer = object_this(h);
     for (uint32_t back = 1; back <= 4; ++back) {
         uint32_t word = (mix(h + 0x300U + back) & 0x1FU) * 4U;
         std::memcpy(image + (this_pointer - back * 4 - OracleImageBase), &word, 4);
     }
+    write_shared_vbtable(image);
     // The stack window below ESP is filled with a PATTERN, not zeroes, and the
     // reason is a mutant that got away: dropping the `push ebp` from a lifted
     // prologue was not detected, because EBP was seeded as zero and the slot it
@@ -627,7 +682,7 @@ static void seed_scratch_legacy(unsigned char *image, uint32_t address, int case
 
 static void seed_registers_legacy(uint32_t address, int case_index, OracleRegisters *r) {
     uint32_t h = mix(address ^ (uint32_t(case_index) * 0x85EBCA6BU));
-    uint32_t this_pointer = OracleArenaBase + ((h % 0x400U) & ~0xFU);
+    uint32_t this_pointer = object_this(h);
     switch (case_index) {
         case 0:
             r->eax = r->edx = r->ebx = r->ebp = r->esi = r->edi = 0;
@@ -779,11 +834,16 @@ uint32_t draw_value(SeedStream &s, int value_class) {
 
 // Pointers are kept clear of the last 256 bytes of their half so that a small
 // positive displacement added to one still lands in the same half.
+// Object-shaped for the same reason the legacy fill's pointer words are: a
+// drawn pointer that becomes a `this` further down a chain needs a vbtable
+// below it too. The node/leaf split is kept - it is what the value classes
+// select on - by taking slots from the low and high halves of the arena.
 uint32_t draw_node_pointer(SeedStream &s) {
-    return OracleArenaNodeBase + (s.below(OracleArenaNodeSize - 256U) & ~3U);
+    return object_this(s.below(OracleArenaNodeSize / OracleObjectSlot));
 }
 uint32_t draw_leaf_pointer(SeedStream &s) {
-    return OracleArenaLeafBase + (s.below(OracleArenaLeafSize - 256U) & ~3U);
+    return object_this(OracleArenaNodeSize / OracleObjectSlot
+                       + s.below(OracleArenaLeafSize / OracleObjectSlot));
 }
 uint32_t draw_stack_pointer(SeedStream &s) {
     return OracleStackLow + (s.below(OracleStackTop - OracleStackLow - 256U) & ~3U);
@@ -819,7 +879,7 @@ SeedProfile make_profile(uint32_t address, int case_index) {
     // `this` sits far enough into the node half that sixteen words below it are
     // still arena. The legacy cases put it in the first kilobyte, so [this-0x18]
     // read real image bytes rather than anything the seed controlled.
-    p.this_pointer = OracleArenaNodeBase + 0x400U + (s.below(0x2000U) & ~0xFU);
+    p.this_pointer = object_this(s.below(0x10000U));
 
     static const uint32_t periods[] = {1, 2, 2, 3, 4, 4, 8, 16, 0};
     p.pointer_period = periods[s.below(sizeof periods / sizeof periods[0])];
@@ -891,6 +951,7 @@ static void seed_scratch_drawn(unsigned char *image, const SeedProfile &p,
                                   : (s.next() & 0x1FU) * 4U;
         std::memcpy(image + (p.this_pointer - back * 4 - OracleImageBase), &word, 4);
     }
+    write_shared_vbtable(image);
 
     std::memset(image + (OracleStackTop - OracleImageBase), 0,
                 OracleScratchEnd - OracleStackTop);
