@@ -768,6 +768,57 @@ argument for the snapshot stated as a measurement rather than a hunch: real
 field values are exactly what nine seeds could not fabricate and a dump gets
 for free.
 
+### Proving the recovery: what the two mechanisms can actually reach
+
+`unproven_recovered` is 96.9% of recovered bytes - 2,501 functions declared
+complete and never executed against the original. Both proof mechanisms were
+sized rather than assumed, and both are much smaller than they look.
+
+**Legacy-leaf islands: 131 functions, 4,059 B - 2.1% of unproven bytes.** The
+extractor's default census reviews only the 2,808 UNRECOVERED functions, where
+islands stand in for code nobody has written; run against the unproven
+RECOVERED set instead (patch `select_rows`, pass no addresses so the
+"ineligible" raise stays quiet) it accepts 131. What rejects the rest:
+`non_exact_analysis` 1,529, `contains_relocation` 529, `contains_call` 280,
+`too_large` 17. Only the first is a gate on analysis quality rather than on the
+code itself, so that is where any growth would come from.
+
+**Generated hybrid-runtime oracles: 36 functions, 1,476 B.** The mechanism is in
+`tools/generate_signature_oracles.py` and it works; the ceiling is what the
+selection can reach. Three things had to be right, and each was wrong first:
+
+1. **The redirect table, not `redirect_exports`.** The proof calls one address
+   twice - `suspend_redirect_at` for the original, `resume_redirect_at` for the
+   recovery - so an address the hybrid never patched has no second body.
+   Selecting on the inventory column produced 39 oracles that ALL failed with
+   "cannot suspend redirect". The authority is the `specs[]` table in
+   `dllmain.cpp`: **2,048 addresses, of which 1,999 are unproven recovered
+   functions.** The pool is large; the signature filter is what shrinks it.
+2. **The DEFERRED phase, not phase one.** `run_runtime_oracles()` is called
+   BEFORE `InstalledSpecs` is populated, so nothing can suspend there - and
+   phase one gates DLL init, so a failing oracle stops the game booting.
+3. **`@Z` terminates a non-empty parameter list.** Only `(void)` is the bare
+   `XZ`. Missing that made every one-argument function invisible and produced a
+   measurement of zero where the answer was 36.
+
+**Why the markers are withheld.** The oracles run, but they cannot yet run to
+completion. The comparison restores `.data`/`.bss` between the two calls, which
+is right for a function whose effects live there and wrong for one that
+allocates or writes a file - `?load_deswin_sprites@@YAXXZ` and
+`?auto_save@@YAXXZ` do both. Three runs of three ended in an unhandled division
+by zero at `0x004991DD`, inside `?draw_labs@ReportWin@@QAEXXZ`, UNRECOVERED
+original code reading state the restore had made inconsistent. So the generator
+emits no `PROVEN-AGAINST-ORIGINAL:` marker unless `--claim-proofs` is passed,
+and the suite is built but NOT registered in `DeferredSuites`. It lowers
+nothing and it breaks nothing.
+
+**Where the next increment is.** Of the 1,999 redirected unproven functions,
+**815 are `@@Q` __thiscall members** (25,393 B) and 991 are other mangled forms.
+Members need a staged `this`; that is the single change that would take this
+from 36 functions to hundreds. The safety problem has to be solved first: a way
+to know which functions confine their effects to `.data`/`.bss`, or a harness
+whose process does not have to survive the oracle.
+
 ### Real state, measured: it is WORSE than the synthetic seeds
 
 Every seeding failure in this document ends by pointing at the hybrid, which has
