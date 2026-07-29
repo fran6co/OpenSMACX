@@ -327,6 +327,9 @@ int oracle_bootstrap(int argc, char **argv, int *exit_code);
 // Returns an error string, or nullptr on success. Nothing from the executable
 // is ever written back out.
 const char *oracle_load_image(const char *path);
+// Overlay real .data/.bss from a hybrid dump. NEVER touches .text - see the
+// definition for why that restriction is load-bearing.
+const char *oracle_overlay_state(const char *path);
 
 // Arms the vectored handler and the budget. `budget` of 0 disables the
 // trap-flag instruction budget (much faster, no runaway protection beyond the
