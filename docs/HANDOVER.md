@@ -850,6 +850,45 @@ want it before trusting any argument about real state, and it costs nothing when
 unused. **It has no unit test** - it was validated by use, cross-checking its
 own live-word count against the Python dumper's - and that is a debt.
 
+### Real object CONTENTS in the arena crash the harness
+
+The obvious next move after the remap is to stop pointing remapped pointers at
+generic slots and give each slot the contents of a REAL object from the dump -
+copied from `object - 0x48` so a slot's `this` at `slot+0x48` lines up, keeping
+the object's own vbptr, which points at a real vbtable in `.rdata` inside the
+span. Tried twice. **It does not work, and the failure is in the harness, not
+the lift:**
+
+```
+oracle: HARNESS FAULT 0xc0000005 at 10001b08
+  (this is a bug in the oracle, not a finding about the lift)
+```
+
+60% of functions came back `KILLED-host-refused` - 1,356 of 2,242 before the
+sweep was killed. A report that full of kills is a broken instrument, not a
+measurement.
+
+Two hypotheses, one ruled out and one standing:
+
+* **Back-word ordering: ruled out.** The first attempt ran the slot fill AFTER
+  the four words below `this` were seeded, overwriting them - and those must
+  stay small, because 130-odd functions open `sub ecx,[ecx-4]` and an arbitrary
+  value there yields a pointer near 4 GiB whose lifted-side translation reads
+  the harness's own memory. That is exactly the documented failure mode, so it
+  looked certain. Reordering the fill to run FIRST did not fix it. **A
+  mechanism that explains a symptom perfectly is not thereby the cause.**
+* **The arena's value discipline is load-bearing, and copies violate it.** With
+  `--state` the crash is reliable; without it, the same build runs clean. The
+  only difference is arbitrary real 32-bit words - packed fields, floats,
+  handles - sitting in the arena. The arena is deliberately built from small
+  four-aligned integers and in-arena pointers, and the header says why: it
+  keeps every derived address inside the scratch window. Object interiors do
+  not obey that contract, and the remap cannot impose it, because it rewrites
+  out-of-span ADDRESSES and leaves everything else alone by design.
+
+So this needs the arena contract extended to cover copied contents - deciding
+what a real word may be before it is allowed in - not another try at the copy.
+
 ### One of the seeded globals was never a pointer
 
 `0x0087BE24` was seeded with the address of the staged ListBox on the strength
