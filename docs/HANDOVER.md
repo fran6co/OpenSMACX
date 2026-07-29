@@ -376,7 +376,7 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 29 candidates, 1,141 bytes.**
+**Queue as of 2026-07-29: 25 candidates, 938 bytes.**
 
 The first five tightenings were about whether a body can be TESTED in
 isolation. The sixth is about whether it can be WRITTEN at all - a
@@ -486,13 +486,31 @@ Every disputed entry was then checked two other ways, and all of them die:
 Only the 005E3660 pair is a genuine equivalence, and that one is proved rather
 than assumed - mutating the clamp VALUE on the same line IS killed.
 
-**So a full-file "N/N killed" is weaker evidence than it looks, and the
-"sweep N/N" figures in this session's earlier commits came from full-file
+I first suspected my own concurrent edits - the harness rebuilds from the
+working tree, so anything touching it mid-run would corrupt the result. That
+is NOT the explanation. Two more runs with nothing else touching the tree
+still disagreed:
+
+| clean run | survivors |
+| --- | --- |
+| 1 | 005E3660 x2, 005CBBC0:889 |
+| 2 | 005E3660 x2, 005CBBC0:889, **0063E7F0:722** |
+
+The three-survivor core is stable and understood. The extra one is not real:
+applying `!=` -> `==` at 0063E7F0:722 by hand FAILS the fixture.
+
+**A likely mechanism, not yet confirmed.** Both clean runs report exactly one
+mutant that "hung rather than failed an assertion". The suite runs under Wine.
+A hung mutant leaves a Wine process holding `recovery-leaf-tests.exe`, so the
+NEXT mutant's link cannot replace the binary - and if that build still exits
+zero, the harness tests the PREVIOUS mutant's executable and records a false
+survivor. That fits the one-off, position-dependent nature of the extra
+entries. Confirming it means checking the binary's mtime actually advanced
+after `build()`, which is the fix as well as the diagnosis.
+
+**Until then a full-file "N/N killed" is weaker evidence than it looks, and
+the "sweep N/N" figures in this session's earlier commits came from full-file
 runs.** The reliable forms are a targeted `--address` run and a hand poison.
-The cause is not yet found: the loop writes, builds, and tests one mutant at a
-time, `build()` only reports success on a zero exit, and the filesystem has
-nanosecond mtimes, so the obvious stale-binary explanation does not fit.
-Worth fixing before the sweep is quoted as a gate again.
 
 ### The mutation harness is blind to two shapes, and that is not a pass
 

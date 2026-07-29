@@ -2818,6 +2818,10 @@ void test_leaf_recoveries() {
 
         uint8_t *pointer = nullptr;
         std::memcpy(holder, &pointer, sizeof(pointer));
+        // The bytes just past the slot are NOT zero, so the guard's read
+        // offset is pinned: reading at 1 instead of 0 would see them, decide
+        // the node is present, and walk off it.
+        holder[4] = 0x5A; holder[5] = 0x5A; holder[6] = 0x5A; holder[7] = 0x5A;
         expect(leaf_0063e7f0_redirect(holder, nullptr, nullptr, nullptr) == 0);
 
         pointer = node;
@@ -2864,6 +2868,236 @@ void test_leaf_recoveries() {
         expect(remainder == -1);
         expect(leaf_00532a50_redirect(-8, &quotient, &remainder, 2) == -4);
         expect(remainder == 0);
+    }
+
+    // --- focus held by this window AND its parent ---
+    {
+        alignas(Win) uint8_t self_storage[sizeof(Win) + 32] = {};
+        alignas(Win) uint8_t parent_storage[sizeof(Win) + 32] = {};
+        uint8_t *const me = self_storage + 16;
+        uint8_t *const up = parent_storage + 16;
+        auto focus = [&](uint8_t *where, bool held) {
+            // Bit 12 of field_98_ short-circuits Win::is_dialog_focus to 1
+            // before it ever consults a parent, which keeps this fixture
+            // about THIS function rather than about the focus list.
+            const uint32_t flags = held ? 0x1000U : 0U;
+            std::memcpy(where + 0x98, &flags, sizeof(flags));
+        };
+        auto set_parent = [&](uint8_t *where, void *parent) {
+            std::memcpy(where + 0xC4, &parent, sizeof(parent));
+        };
+
+        // No focus here: the parent is never consulted.
+        focus(me, false); set_parent(me, nullptr);
+        expect(leaf_006161a0_redirect(me, nullptr) == 0);
+        focus(up, true); set_parent(up, nullptr);
+        set_parent(me, up);
+        expect(leaf_006161a0_redirect(me, nullptr) == 0);
+
+        // Focus here and no parent: yes. A null parent must not read as a
+        // failure, which is the easiest thing to get backwards.
+        focus(me, true); set_parent(me, nullptr);
+        expect(leaf_006161a0_redirect(me, nullptr) == 1);
+
+        // Focus here and a parent that also holds it: yes.
+        focus(me, true); set_parent(me, up); focus(up, true);
+        set_parent(up, nullptr);
+        expect(leaf_006161a0_redirect(me, nullptr) == 1);
+
+        // Focus here, parent without it: no.
+        focus(up, false); set_parent(up, nullptr);
+        expect(leaf_006161a0_redirect(me, nullptr) == 0);
+    }
+
+    // --- point in an inclusive rectangle, arguments in the odd order ---
+    {
+        // x, y, left, top, right, bottom.
+        expect(leaf_00592db0_redirect(5, 5, 0, 0, 10, 10) == 1);
+        // Every edge is INSIDE.
+        expect(leaf_00592db0_redirect(0, 5, 0, 0, 10, 10) == 1);
+        expect(leaf_00592db0_redirect(10, 5, 0, 0, 10, 10) == 1);
+        expect(leaf_00592db0_redirect(5, 0, 0, 0, 10, 10) == 1);
+        expect(leaf_00592db0_redirect(5, 10, 0, 0, 10, 10) == 1);
+        // One step past each edge, so a swapped bound would show.
+        expect(leaf_00592db0_redirect(-1, 5, 0, 0, 10, 10) == 0);
+        expect(leaf_00592db0_redirect(11, 5, 0, 0, 10, 10) == 0);
+        expect(leaf_00592db0_redirect(5, -1, 0, 0, 10, 10) == 0);
+        expect(leaf_00592db0_redirect(5, 11, 0, 0, 10, 10) == 0);
+        // A rectangle that is not square, so x and y cannot be interchanged.
+        expect(leaf_00592db0_redirect(7, 2, 0, 0, 10, 3) == 1);
+        expect(leaf_00592db0_redirect(2, 7, 0, 0, 10, 3) == 0);
+        // Signed: negative bounds work, and a big positive is not "negative".
+        expect(leaf_00592db0_redirect(-5, -5, -10, -10, -1, -1) == 1);
+    }
+
+    // --- the 512-entry table: search, set, and the odd return values ---
+    {
+        static uint8_t pool[0xA20 + 0x200 * 12 + 32];
+        std::memset(pool, 0x11, sizeof(pool));
+        leaf_005ad450_redirect(pool, nullptr);           // fill with -1
+        int32_t *const table = reinterpret_cast<int32_t *>(pool + 0xA20);
+
+        // A miss returns 512, which looks like an index and is not one.
+        expect(leaf_005ad4c0_redirect(pool, nullptr, 7, 9, 42) == 0x200);
+
+        // Plant a key in entry 3 and find it: the answer is 3 * 3, not 3.
+        table[3 * 3] = 7;
+        table[3 * 3 + 1] = 9;
+        expect(leaf_005ad4c0_redirect(pool, nullptr, 7, 9, 42) == 9);
+        expect(table[3 * 3 + 2] == 42);                  // word 2 written
+        expect(table[3 * 3] == 7);                       // words 0,1 untouched
+        expect(table[3 * 3 + 1] == 9);
+
+        // BOTH keys must match, not just the first.
+        table[5 * 3] = 7;
+        table[5 * 3 + 1] = 99;
+        expect(leaf_005ad4c0_redirect(pool, nullptr, 7, 100, 1) == 0x200);
+
+        // The first match wins, and entry 0 returns 0 - not the miss value.
+        table[0] = 1; table[1] = 2;
+        table[6 * 3] = 1; table[6 * 3 + 1] = 2;
+        expect(leaf_005ad4c0_redirect(pool, nullptr, 1, 2, 55) == 0);
+        expect(table[2] == 55);
+        expect(table[6 * 3 + 2] == -1);                  // the later one is not
+
+        // The last entry is reachable.
+        table[0x1FF * 3] = 31; table[0x1FF * 3 + 1] = 41;
+        expect(leaf_005ad4c0_redirect(pool, nullptr, 31, 41, 3) == 0x1FF * 3);
+
+        // And the one PAST the last is not. `index < 0x200` written as `<=`
+        // searches 513 entries and reads two words beyond the table; planting
+        // a key there and requiring a MISS is what separates the two.
+        table[0x200 * 3] = 61;
+        table[0x200 * 3 + 1] = 71;
+        const int32_t beyond = table[0x200 * 3 + 2];
+        expect(leaf_005ad4c0_redirect(pool, nullptr, 61, 71, 9) == 0x200);
+        expect(table[0x200 * 3 + 2] == beyond);   // nothing written past it
+    }
+
+    // --- two independent swaps, with guards on two different objects ---
+    {
+        uint8_t holder[8] = {};
+        uint8_t node[0x60] = {};
+        uint8_t *pointer = node;
+        std::memcpy(holder, &pointer, sizeof(pointer));
+        auto put = [&](uint8_t *where, size_t offset, uint32_t value) {
+            std::memcpy(where + offset, &value, sizeof(value));
+        };
+        auto got = [&](const uint8_t *where, size_t offset) {
+            uint32_t value;
+            std::memcpy(&value, where + offset, sizeof(value));
+            return value;
+        };
+
+        // First swap: needs node[0x20] non-zero AND holder[0x4c] == 1. The
+        // second condition is on the OUTER object, so a body reading it from
+        // the node would take the branch when it should not.
+        auto reset = [&]() {
+            std::memset(node, 0, sizeof(node));
+            std::memset(holder + 4, 0, 4);
+            put(node, 0x1C, 0xAAAA); put(node, 0x20, 0xBBBB);
+            put(node, 0x4C, 0xCCCC); put(node, 0x50, 0xDDDD);
+        };
+
+        reset();                                   // gate clear -> no swap
+        leaf_005cbbc0_redirect(holder, nullptr);
+        expect(got(node, 0x1C) == 0xAAAA);
+        expect(got(node, 0x20) == 0xBBBB);
+
+        reset();
+        uint8_t outer[0x60] = {};
+        std::memcpy(outer, &pointer, sizeof(pointer));
+        put(outer, 0x4C, 1);                       // gate set -> swap
+        leaf_005cbbc0_redirect(outer, nullptr);
+        expect(got(node, 0x1C) == 0xBBBB);
+        expect(got(node, 0x20) == 0xAAAA);
+
+        reset();
+        std::memcpy(outer, &pointer, sizeof(pointer));
+        put(outer, 0x4C, 1);
+        put(node, 0x20, 0);                        // zero -> no swap
+        leaf_005cbbc0_redirect(outer, nullptr);
+        expect(got(node, 0x1C) == 0xAAAA);
+
+        // Second swap: bit 11 of node[4], which is what `test dh,8` reads.
+        reset();
+        std::memcpy(outer, &pointer, sizeof(pointer));
+        put(node, 0x4, 0x800);
+        leaf_005cbbc0_redirect(outer, nullptr);
+        expect(got(node, 0x4C) == 0xDDDD);
+        expect(got(node, 0x50) == 0xCCCC);
+
+        // The node pointer is RE-READ between the halves of each swap. That
+        // only matters when a store lands on the slot itself, so here it is
+        // arranged to: the node is placed 0x1c bytes below the holder, which
+        // puts node+0x1c exactly on the slot. The first swap then rewrites
+        // the slot, and the second half must use the NEW node.
+        {
+            static uint8_t arena[0x200] = {};
+            uint8_t *const outer_alias = arena + 0x40;
+            uint8_t *const first_node = outer_alias - 0x1C;   // node+0x1c == slot
+            uint8_t *const second_node = arena + 0x140;
+
+            std::memset(arena, 0, sizeof(arena));
+            // slot (== node+0x1c) holds the first node.
+            std::memcpy(outer_alias, &first_node, sizeof(first_node));
+            // node[0x20] names the second node, so the swap moves it in.
+            std::memcpy(first_node + 0x20, &second_node, sizeof(second_node));
+            const uint32_t one = 1;
+            std::memcpy(outer_alias + 0x4C, &one, sizeof(one));
+
+            leaf_005cbbc0_redirect(outer_alias, nullptr);
+
+            // The slot now names the second node...
+            uint8_t *after = nullptr;
+            std::memcpy(&after, outer_alias, sizeof(after));
+            expect(after == second_node);
+            // ...and the write-back went to the SECOND node, because the
+            // pointer was re-read. Without the re-read it would have landed
+            // on first_node+0x20, which is the slot's neighbour.
+            uint8_t *written = nullptr;
+            std::memcpy(&written, second_node + 0x20, sizeof(written));
+            expect(written == first_node);
+        }
+
+        // The SECOND swap re-reads the node too, and needs its own aliasing
+        // case: this time the store to node+0x50 must land on the slot, so
+        // the node sits 0x50 bytes below it.
+        {
+            static uint8_t arena2[0x300] = {};
+            uint8_t *const outer2 = arena2 + 0x100;
+            uint8_t *const low_node = outer2 - 0x50;      // node+0x50 == slot
+            uint8_t *const other = arena2 + 0x200;
+
+            std::memset(arena2, 0, sizeof(arena2));
+            std::memcpy(outer2, &low_node, sizeof(low_node));  // slot -> low_node
+            const uint32_t flag = 0x800;
+            std::memcpy(low_node + 0x4, &flag, sizeof(flag));  // arm swap two
+            // node[0x20] is zero, so the FIRST swap stays out of the way.
+            std::memcpy(low_node + 0x4C, &other, sizeof(other));
+
+            leaf_005cbbc0_redirect(outer2, nullptr);
+
+            // The store to node+0x50 rewrote the slot to `other`...
+            uint8_t *moved_to = nullptr;
+            std::memcpy(&moved_to, outer2, sizeof(moved_to));
+            expect(moved_to == other);
+            // ...and the write-back landed on `other`, not on low_node,
+            // because the pointer was re-read.
+            uint8_t *back = nullptr;
+            std::memcpy(&back, other + 0x4C, sizeof(back));
+            expect(back == low_node);
+        }
+
+        // Neighbouring bits must NOT trigger it.
+        for (uint32_t bit : {0x400U, 0x1000U, 0x8U, 0x80U}) {
+            reset();
+            std::memcpy(outer, &pointer, sizeof(pointer));
+            put(node, 0x4, bit);
+            leaf_005cbbc0_redirect(outer, nullptr);
+            expect(got(node, 0x4C) == 0xCCCC);
+            expect(got(node, 0x50) == 0xDDDD);
+        }
     }
 
     // --- round toward zero to a multiple ---

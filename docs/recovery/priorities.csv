@@ -1747,7 +1747,6 @@ P3,2020,0x00592AF0,?clear_dirty@@YAXXZ,76,2,0,unrecovered,,,2,exact,exact,
 P3,410,0x00592B40,sub_592b40,559,0,4,unrecovered,,,1,missing,exact,
 P3,10,0x00592D70,sub_592d70,24,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x00592D90,sub_592d90,26,0,0,unrecovered,,,1,missing,exact,
-P3,10,0x00592DB0,sub_592db0,44,0,0,unrecovered,,,1,missing,exact,
 P3,110,0x00592DE0,sub_592de0,46,0,1,unrecovered,,,1,missing,exact,
 P2,12121,0x00592E10,?message_veh@@YAXHHHH@Z,96,12,1,unrecovered,,,2,exact,exact,"void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int vehID, int xCoord, int yCoord)"
 P3,2220,0x00592E70,?message_base@@YAXHHPADH@Z,106,2,2,unrecovered,,,2,exact,exact,
@@ -1793,7 +1792,6 @@ P3,2120,0x005AC5A0,?most_objectives@@YAHPAHPAH@Z,143,2,1,unrecovered,,,2,exact,e
 P3,3720,0x005AC690,?rankings@@YAXH@Z,1350,3,7,unrecovered,,,2,exact,exact,
 P3,4621,0x005ACBE0,?compute_score@@YAXHPAHPAHH@Z,1997,4,6,unrecovered,,,2,exact,exact,"void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)"
 P3,10,0x005AD470,sub_5ad470,80,0,0,unrecovered,,,1,missing,start_only,
-P3,10,0x005AD4C0,sub_5ad4c0,64,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x005AD500,sub_5ad500,96,0,0,unrecovered,,,1,missing,start_only,
 P3,2321,0x005AD560,?make_bases@ReplayWin@@QAEXXZ,167,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?make_bases@ReplayWin@@QAEXXZ)(ReplayWin* this)
 P3,721,0x005AD610,?on_redraw@ReplayWin@@QAEXXZ,271,0,7,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@ReplayWin@@QAEXXZ)(ReplayWin* this)
@@ -1898,7 +1896,6 @@ P3,1020,0x005CB610,sub_5cb610,66,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005CB660,sub_5cb660,95,1,0,unrecovered,,,2,exact,exact,
 P3,2220,0x005CB6C0,sub_5cb6c0,1041,2,2,unrecovered,,,2,exact,exact,
 P3,2020,0x005CBAE0,sub_5cbae0,214,2,0,unrecovered,,,2,exact,exact,
-P3,2020,0x005CBBC0,sub_5cbbc0,53,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x005CBC00,sub_5cbc00,554,1,0,unrecovered,,,2,exact,exact,
 P3,1520,0x005CBE30,sub_5cbe30,794,1,5,unrecovered,,,2,exact,exact,
 P3,1120,0x005CC150,sub_5cc150,345,1,1,unrecovered,,,2,exact,exact,
@@ -2657,7 +2654,6 @@ P3,121,0x00615F10,?on_mouse_move@EditBox@@QAEXHH@Z,62,0,1,unrecovered,,,2,exact,
 P3,2221,0x00615F50,?text_fits@EditBox@@QAEHXZ,217,2,2,unrecovered,,,2,exact,exact,int (__thiscall ?text_fits@EditBox@@QAEHXZ)(EditBox* this)
 P3,3321,0x00616030,?text_position@EditBox@@QAEXH@Z,261,3,3,unrecovered,,,2,exact,exact,"void (__thiscall ?text_position@EditBox@@QAEXH@Z)(EditBox* this, int)"
 P3,11,0x00616140,?pass_dialog_focus@EditBox@@QAEXXZ,86,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?pass_dialog_focus@EditBox@@QAEXXZ)(EditBox* this)
-P3,111,0x006161A0,?UNK2@EditBox@@QAEXXZ,42,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
 P0,1030121,0x00616200,??1Time@@QAE@XZ,96,30,1,source_complete,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1Time@@QAE@XZ)(Time* this)
 P0,1000011,0x006169C0,??1Strings@@QAE@XZ,5,0,0,source_complete,ui_dependency,recover_owning_class,1,exact,missing,void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)
 P3,100,0x00616B40,sub_616b40,118,0,1,unrecovered,,,0,missing,missing,

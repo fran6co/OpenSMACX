@@ -25,6 +25,36 @@
 
 #include <cmath>
 #include "leaf_recoveries.h"
+#include "win.h"
+
+#include <cstring>
+
+namespace {
+
+// Every field access below goes through these rather than through a typed
+// pointer, and that is load-bearing rather than fussiness.
+//
+// The first version of leaf_005cbbc0_redirect held the node in
+// `uint8_t *const *`, read it, stored through a `uint32_t *`, and read it
+// again - expecting the second read to see the store, exactly as the original
+// re-reads `[ecx]`. It did not: the pointee is const and the two accesses have
+// unrelated types, so the compiler is entitled to cache the first read and
+// did. The re-read was in the source and absent from the object.
+//
+// `memcpy` has no such licence: it aliases everything, and gcc still lowers
+// these to a single `mov`.
+uint32_t load32(const void *base, size_t offset) {
+    uint32_t value;
+    std::memcpy(&value, static_cast<const uint8_t *>(base) + offset,
+                sizeof(value));
+    return value;
+}
+
+void store32(void *base, size_t offset, uint32_t value) {
+    std::memcpy(static_cast<uint8_t *>(base) + offset, &value, sizeof(value));
+}
+
+}  // namespace
 
 /*
 Purpose: Subtract two three-component float vectors into a third.
@@ -683,17 +713,16 @@ Status: Complete
 */
 uint32_t __fastcall leaf_0063e7f0_redirect(void *self, void *,
                                            uint32_t *first, uint32_t *second) {
-    uint8_t *const *const slot = reinterpret_cast<uint8_t *const *>(self);
-    if (*slot == nullptr) {
+    if (load32(self, 0) == 0) {
         return 0;
     }
     if (second != nullptr) {
-        *second = *reinterpret_cast<const uint32_t *>(*slot + 4);
+        store32(second, 0, load32(reinterpret_cast<void *>(load32(self, 0)), 4));
     }
     if (first != nullptr) {
-        *first = *reinterpret_cast<const uint32_t *>(*slot);
+        store32(first, 0, load32(reinterpret_cast<void *>(load32(self, 0)), 0));
     }
-    return *reinterpret_cast<const uint32_t *>(*slot + 8);
+    return load32(reinterpret_cast<void *>(load32(self, 0)), 8);
 }
 
 /*
@@ -725,4 +754,144 @@ int __stdcall leaf_00532a50_redirect(int value, int *quotient_out,
     const int rounded = remainder == 0 ? quotient : quotient + 1;
     *quotient_out = rounded;
     return rounded;
+}
+
+/*
+Purpose: Is a point inside an inclusive rectangle?
+
+             mov eax,[ebp+8] / mov ecx,[ebp+0x10] / cmp eax,ecx / jl no
+             cmp eax,[ebp+0x18] / jg no / mov eax,[ebp+0xc]
+             mov ecx,[ebp+0x14] / cmp eax,ecx / jl no / cmp eax,[ebp+0x1c]
+             jg no / mov eax,1 / ret     no: xor eax,eax / ret
+
+         Six arguments in the order x, y, left, top, right, bottom - the two
+         coordinates first and the bounds interleaved after, which is not the
+         (left, top, right, bottom, x, y) an eye expects.
+
+         `jl` and `jg` are SIGNED, and both bounds are INCLUSIVE: a point
+         exactly on an edge is inside.
+
+Original Offset: 00592DB0
+Return Value: 1 when inside, 0 otherwise
+Status: Complete
+*/
+int __cdecl leaf_00592db0_redirect(int x, int y, int left, int top,
+                                   int right, int bottom) {
+    if (x < left || x > right) {
+        return 0;
+    }
+    if (y < top || y > bottom) {
+        return 0;
+    }
+    return 1;
+}
+
+/*
+Purpose: Does this window hold the dialog focus, and its partner too?
+
+             mov esi,ecx / call Win::is_dialog_focus / test eax,eax / je no
+             mov ecx,[esi+0xc4] / test ecx,ecx / je yes
+             call Win::is_dialog_focus / test eax,eax / je no
+             yes: mov eax,1 / ret        no: xor eax,eax / ret
+
+         The second call is made on the window at field 0xc4 - which
+         src/win.h names `win_parent_` - not on `this` again; ECX is reloaded
+         from it just before. A NULL parent is not a failure: the answer is
+         yes.
+
+Original Offset: 006161A0
+Return Value: 1 when both hold focus, 0 otherwise
+Status: Complete
+*/
+int __fastcall leaf_006161a0_redirect(void *self, void *) {
+    if (win_is_dialog_focus_redirect(reinterpret_cast<Win *>(self),
+                                     nullptr) == 0) {
+        return 0;
+    }
+    Win *const parent = *reinterpret_cast<Win *const *>(
+        static_cast<uint8_t *>(self) + 0xC4);
+    if (parent != nullptr
+            && win_is_dialog_focus_redirect(parent, nullptr) == 0) {
+        return 0;
+    }
+    return 1;
+}
+
+/*
+Purpose: Find the table entry matching two keys and set its third word.
+
+             lea edx,[ecx+0xa24] / cmp [edx-4],edi / jne next / cmp [edx],esi
+             je found / next: inc eax / add edx,0xc / cmp eax,0x200 / jl
+             ret 0xc      found: mov edx,[ebp+0x10] / lea eax,[eax+eax*2]
+                                 mov [ecx+eax*4+0xa28],edx / ret 0xc
+
+         The same 512 three-word entries at 0xa20 that 005AD450 fills with -1.
+         The cursor is again offset by four, so `[edx-4]` is word 0 and `[edx]`
+         is word 1.
+
+         TWO THINGS THE RETURN VALUE GETS WRONG IF TIDIED. On a hit it is
+         `3 * index`, not the index - the `lea eax,[eax+eax*2]` that scales for
+         the store is the SAME register that is returned. On a miss it is 512,
+         the loop counter's final value, which is a valid-looking index and not
+         -1.
+
+Original Offset: 005AD4C0
+Return Value: 3 * index on a hit, 512 on a miss
+Status: Complete
+*/
+int __fastcall leaf_005ad4c0_redirect(void *self, void *, int first_key,
+                                      int second_key, int value) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    int32_t *const table = reinterpret_cast<int32_t *>(bytes + 0xA20);
+    for (int index = 0; index < 0x200; ++index) {
+        if (table[index * 3] == first_key
+                && table[index * 3 + 1] == second_key) {
+            table[index * 3 + 2] = value;
+            return index * 3;
+        }
+    }
+    return 0x200;
+}
+
+/*
+Purpose: Swap two pairs of fields in the object this one points at.
+
+             mov eax,[ecx] / mov edx,[eax+0x20] / test edx,edx / je second
+             cmp [ecx+0x4c],1 / jne second
+             mov esi,[eax+0x1c] / mov [eax+0x1c],edx / mov eax,[ecx]
+             mov [eax+0x20],esi
+     second: mov eax,[ecx] / mov edx,[eax+4] / test dh,8 / je end
+             mov esi,[eax+0x4c] / mov edx,[eax+0x50] / mov [eax+0x50],esi
+             mov ecx,[ecx] / mov [ecx+0x4c],edx / ret
+
+         Two independent swaps on the NODE at `this->[0]`, each with its own
+         guard - and the guards read different objects. The first tests the
+         node's 0x20 for non-zero AND **`this`**'s 0x4c against 1; the second
+         tests bit 11 of the node's field 4, which is what `test dh,8` means.
+
+         The node pointer is re-read from `[ecx]` between the two halves of
+         each swap, exactly as the original does, so a swap that wrote over
+         `[ecx]` would be seen.
+
+Original Offset: 005CBBC0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_005cbbc0_redirect(void *self, void *) {
+    void *node = reinterpret_cast<void *>(load32(self, 0));
+    const uint32_t moved = load32(node, 0x20);
+    if (moved != 0 && load32(self, 0x4C) == 1) {
+        const uint32_t previous = load32(node, 0x1C);
+        store32(node, 0x1C, moved);
+        node = reinterpret_cast<void *>(load32(self, 0));   // re-read
+        store32(node, 0x20, previous);
+    }
+    node = reinterpret_cast<void *>(load32(self, 0));
+    if ((load32(node, 0x4) & 0x800U) != 0) {
+        const uint32_t low = load32(node, 0x4C);
+        const uint32_t high = load32(node, 0x50);
+        store32(node, 0x50, low);
+        node = reinterpret_cast<void *>(load32(self, 0));   // re-read
+        store32(node, 0x4C, high);
+    }
 }
