@@ -976,7 +976,22 @@ so this looked right. The longest line in `plan.tsv` is **123 bytes**. It also
 predicts nulls scattered wherever the long names are, and the observed nulls are
 CONTIGUOUS from row 1747 to the end.
 
-**LEADING HYPOTHESIS, NOT VERIFIED: the guest corrupted the plan in memory.**
+**HYPOTHESIS BELOW IS NOW RULED OUT. Kept because being wrong five times in
+one area is the finding.** `lifted_oracle_main.cpp` compares every plan entry
+against a snapshot taken at startup, before each function, and aborts the run
+if one moved. Positive control run: poisoning `plan[5].address` makes it fire,
+restoring it makes it silent. Re-running the object-contents reproducer under
+that check produced **no corruption report, no harness fault and no null rows**
+- it simply stopped at 1,745 functions, which is a TIMEOUT: the reproducer
+memcpys 4 MB per function and a fifty-minute cap is not enough for 2,000 of
+them.
+
+So the plan is not being rewritten, and the null rows come from somewhere in
+the sweep's own kill-and-resume path, which is where the next person should
+look. The integrity check stays: it is cheap, it has a positive control, and it
+now rules this out for every future run rather than for one experiment.
+
+~~LEADING HYPOTHESIS, NOT VERIFIED: the guest corrupted the plan in memory.~~
 The evidence is circumstantial and stated as such:
 
 * the nulls are contiguous from a point onward, which is what a single
