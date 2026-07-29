@@ -33,6 +33,15 @@ Verification is a differential oracle: the original function runs *for real* at
 its canonical address under Wine, beside the lifted version on a separate copy
 of the same flat 6.3 MB guest memory, 16 seeded states per function.
 
+**The block below is the arm64 BASELINE, not this host.** It reproduces
+line-for-line from `baseline-arm64/report.tsv`, which is committed precisely so
+the comparison survives; every current-host report lives under gitignored
+`build/oracle/` and is therefore never in the repository. On x86-64 the same
+control arm measures `PASS 180,308 B / 1,472 fn` (180,528 / 1,476 in the
+default sweep) against the 178,248 / 1,465 printed here. Regenerate with
+`tools/lifted_oracle_sweep.sh` and diff with `tools/lifted_oracle_compare.py`
+rather than reading these figures as current.
+
 ```
 denominator: lift scope 2,410,317 bytes across 5,673 functions
   (excludes recovery_state == external_library: CRT and Windows library code
@@ -189,7 +198,7 @@ tools/host_doctor.py           run this FIRST on a new machine
 docs/HOST_MIGRATION.md         moving the harness between machines
 ```
 
-**1,008 Python tests across 35 files, 38 ctest targets.** Python tests are
+**1,158 Python tests across 40 files, 40 ctest targets.** Python tests are
 `unittest`, standalone, no pytest. Run them with
 `uv run --with-requirements tools/requirements.txt python3 <path>` — the system
 `python3` deliberately lacks capstone and pefile.
