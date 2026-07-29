@@ -20,6 +20,9 @@ WINE="${WINE:-$(command -v wine \
     || echo '/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine')}"
 EXE="${EXE:-$ROOT/.opensmacx/game/terranx_original.exe}"
 PLAN="${PLAN:-$ROOT/build/oracle/plan.tsv}"
+# Captured BEFORE the default is applied: afterwards REPORT is always set and
+# the short-run guard below could never fire.
+REPORT_EXPLICIT="${REPORT+yes}"
 REPORT="${REPORT:-$ROOT/build/oracle/report.tsv}"
 win() { printf 'Z:%s' "$(printf '%s' "$1" | tr '/' '\\')"; }
 case " $* " in
@@ -32,5 +35,23 @@ case " $* " in
         exit 2
         ;;
 esac
+# A SHORT RUN MUST NOT WRITE THE CANONICAL REPORT. The driver truncates its
+# report, so `--only 0x004031a0` with the default path replaces a 5,674-row
+# whole-image sweep with two lines. That happened: three diagnostic probes cost
+# the default arm's report, which then had to be re-swept.
+#
+# So a short run gets probe-report.tsv unless REPORT was set explicitly. The
+# whole-plan path is unaffected - it is refused above and sweep.sh sets REPORT
+# itself.
+case " $* " in
+    *" --only "*|*" --limit "*)
+        if [ -z "$REPORT_EXPLICIT" ]; then
+            REPORT="$ROOT/build/oracle/probe-report.tsv"
+            echo "lifted_oracle_run.sh: short run -> $REPORT" >&2
+            echo "  (set REPORT= explicitly to write somewhere else)" >&2
+        fi
+        ;;
+esac
+
 exec "$WINE" "$ROOT/build/oracle/lifted_oracle.exe" \
     --exe "$(win "$EXE")" --list "$(win "$PLAN")" --report "$(win "$REPORT")" "$@"
