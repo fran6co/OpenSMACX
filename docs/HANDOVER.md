@@ -966,10 +966,31 @@ only reason this was caught at all.** Had the driver printed a parseable
 figures as real results.
 
 `lifted_oracle_main.cpp` now refuses to write a report row for an entry with no
-address and names the entry on stderr. What CREATES such an entry is still
-unknown - the image base is 0x00400000, so zero is never a function, and the
-plan is either built wrong or grown with defaults somewhere. The guard is a net,
-not a diagnosis.
+address and names the entry on stderr. The guard is a net; below is how far the
+diagnosis got.
+
+**RULED OUT: the plan parser.** It reads with `char line[1024]` and `fgets`, so
+a line over 1023 bytes would be split and the continuation parsed as a fresh
+entry whose `strtoul` finds no hex - address zero. Mangled C++ names get long,
+so this looked right. The longest line in `plan.tsv` is **123 bytes**. It also
+predicts nulls scattered wherever the long names are, and the observed nulls are
+CONTIGUOUS from row 1747 to the end.
+
+**LEADING HYPOTHESIS, NOT VERIFIED: the guest corrupted the plan in memory.**
+The evidence is circumstantial and stated as such:
+
+* the nulls are contiguous from a point onward, which is what a single
+  corrupting write looks like and not what a parse bug looks like;
+* the one HARNESS FAULT in that run had `esp=0x0039f7a0`, a HOST stack;
+* it happens only with `--state` object contents in the arena, never with
+  synthetic seeds.
+
+`lifted_oracle_run.sh` already documents this hazard - "a seeded pointer can
+land on the HOST's stack and overwrite the registers the runner saved there" -
+and a plan vector is no better protected than a saved register. **Do not act on
+this without confirming it**; four mechanisms were asserted confidently in this
+area and all four were wrong. Putting the plan behind a guard page would confirm
+it in one run.
 
 So the run really covered 1,745 of 5,673 functions and the rest are
 placeholders, and `lifted_oracle_sweep.sh` reported success. Its supervision
