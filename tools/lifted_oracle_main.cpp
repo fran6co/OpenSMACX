@@ -730,6 +730,27 @@ int main(int argc, char **argv) {
                                   unsigned(worst.original_steps));
                 break;
         }
+        // A PLAN ENTRY WITH NO ADDRESS MUST NOT BECOME A REPORT ROW. The image
+        // base is 0x00400000, so address zero is never a function; an entry
+        // holding one means the plan was built wrong or grown with defaults.
+        //
+        // Writing it anyway is not a cosmetic problem. `%#010x` emits "0x" only
+        // for a NONZERO value, so a zero address renders "0000000000", which
+        // lifted_oracle_summary.py cannot parse and therefore drops. A sweep
+        // that emitted 3,928 such rows still reported "finished, 0 hang(s) and
+        // 0 host death(s)", and the headline figure - computed over the 1,745
+        // real rows that remained - printed INCONCLUSIVE-original-fault at
+        // 15.85% of scope. That is the number this project is trying to push
+        // down, produced by a run that covered 31% of the plan.
+        //
+        // The unparseable format is the only reason it was caught. That is
+        // luck, not a design, so refuse at the source and say so.
+        if (entry.address == 0) {
+            std::fprintf(stderr, "oracle: plan entry %u has no address; "
+                         "refusing to write a report row for it\n",
+                         unsigned(&entry - plan.data()));
+            continue;
+        }
         if (report) {
             std::fprintf(report, "%#010x\t%s\t%d\t%d\t%s\t%s\n", unsigned(entry.address),
                          oracle_verdict_name(best), ran, compared, detail,
