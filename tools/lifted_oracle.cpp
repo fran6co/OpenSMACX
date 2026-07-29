@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 #include "lifted_runtime.h"   // opensmacx_image, opensmacx_dispatch
 #include "lifted_tls.h"       // opensmacx_tib_reset
@@ -443,6 +444,54 @@ int oracle_bootstrap(int argc, char **argv, int *exit_code) {
 // written into the tree.
 // ---------------------------------------------------------------------------
 
+// Overlay REAL state, dumped out of a running hybrid, onto the loaded image.
+//
+// .data AND .bss ONLY - 0x00682000..0x009C21F8 - and the restriction is the
+// whole safety argument, not tidiness. The hybrid runs with recovered code
+// patched over the original's function bodies, so the .text in any dump taken
+// from it is NOT the original's .text. Overlaying it would have the oracle
+// execute recovered code and call the result "the original", which is the one
+// mistake this harness exists to make impossible. .rdata is excluded for the
+// same reason at one remove: it holds the IAT, whose entries the hybrid's
+// loader has resolved to ITS process's module addresses, meaningless here.
+//
+// What this cannot fix, and what a caller must expect: a dumped global that
+// holds a HEAP pointer points outside the flat span, so following it still
+// faults. 572 of the objects the program uses as `this` are static and land
+// inside; the heap-held ones do not.
+static const char *overlay_state(const char *path, unsigned char *image) {
+    constexpr uint32_t kLow = 0x00682000U, kHigh = 0x009C21F8U;
+    std::FILE *file = std::fopen(path, "rb");
+    if (!file) return "cannot open --state file";
+    std::fseek(file, 0, SEEK_END);
+    const long size = std::ftell(file);
+    std::fseek(file, 0, SEEK_SET);
+    // The dump spans the same window the harness images, starting at
+    // OracleImageBase, so a short or long file means a different layout and
+    // silently overlaying part of it would be worse than refusing.
+    if (size != long(0x009C2200U - OracleImageBase)) {
+        std::fclose(file);
+        return "--state file is not a dump of 0x00400000..0x009C2200";
+    }
+    std::vector<unsigned char> dump(size_t(size), 0);   // braces would
+                                                        // pick the init-list ctor
+    const size_t read = std::fread(dump.data(), 1, dump.size(), file);
+    std::fclose(file);
+    if (read != dump.size()) return "--state file is short";
+    std::memcpy(image + (kLow - OracleImageBase),
+                dump.data() + (kLow - OracleImageBase), kHigh - kLow);
+    uint32_t live = 0;
+    for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
+        uint32_t w;
+        std::memcpy(&w, image + (a - OracleImageBase), 4);
+        if (w) ++live;
+    }
+    std::printf("state overlay: %u of %u words live (%.1f%%)\n",
+                unsigned(live), unsigned((kHigh - kLow) / 4),
+                100.0 * live / ((kHigh - kLow) / 4));
+    return nullptr;
+}
+
 const char *oracle_load_image(const char *path) {
     FILE *file = std::fopen(path, "rb");
     if (!file) return "cannot open the original executable";
@@ -516,6 +565,15 @@ const char *oracle_load_image(const char *path) {
 
     g_image_loaded = true;
     return nullptr;
+}
+
+const char *oracle_overlay_state(const char *path) {
+    if (!g_image_loaded) return "--state needs the image loaded first";
+    // Applied to the PRISTINE master, not to a side. restore_from_pristine()
+    // runs before every case on both sides, so anything written to a side here
+    // would be erased by the first reset; and both sides must start from
+    // identical memory or every comparison is meaningless.
+    return overlay_state(path, g_pristine);
 }
 
 // ---------------------------------------------------------------------------

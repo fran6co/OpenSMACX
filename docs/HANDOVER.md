@@ -563,6 +563,10 @@ That is the difference between plausible state and COHERENT state: an object
 graph whose back-references agree with each other. The hybrid smoke gate has
 one because a real game built it; the isolated harness deliberately does not.
 
+**That hypothesis has now been tested against a real game, and it is WRONG as
+stated.** See "Real state, measured" below before acting on any of the
+paragraph above.
+
 ### A no-op that looked like a result, and how it was caught
 
 Attempt 1 changed `draw_node_pointer` and `draw_leaf_pointer` and nothing else,
@@ -763,6 +767,58 @@ its CONTENTS, and every function still on the wall needs contents. That is the
 argument for the snapshot stated as a measurement rather than a hunch: real
 field values are exactly what nine seeds could not fabricate and a dump gets
 for free.
+
+### Real state, measured: it is WORSE than the synthetic seeds
+
+Every seeding failure in this document ends by pointing at the hybrid, which has
+a real object graph. That is now testable: `--state <dump>` overlays real
+`.data`/`.bss` captured out of a running hybrid onto the pristine image, and
+`tools/` grew nothing, because the capture needs no dumper - the reader just has
+to be an ANCESTOR of the game, which `ptrace_scope=1` permits.
+
+Both dumps were taken from a game running on a real display; a human clicked
+through to a live map for the second. They differ from each other in 40,383
+words, 10,620 of which are zero at the menu, so the in-game one is genuinely
+in-game.
+
+| | INCONCLUSIVE-original-fault | agreed | full-strength |
+| --- | --- | --- | --- |
+| synthetic seeds | **1,585,768 B / 2,355 fn** | **191,292 B** | **42,209 B / 768 fn** |
+| real menu state | 1,600,347 B / 2,660 fn | 186,256 B | 33,210 B / 651 fn |
+| real in-game state | 1,612,851 B / 2,684 fn | 189,503 B | 34,602 B / 653 fn |
+
+Real state costs 27,083 B on the wall and **115 full-strength functions**, and
+the more real it gets the worse it scores. That is not a subtle effect and it is
+the opposite of what nine seeding experiments predicted.
+
+**Why, and it was predicted before the second sweep ran and then confirmed by
+it.** Count the address-shaped words in the dump - excluding float bit patterns,
+which is why the first count of "88% outside" was too crude to quote:
+
+| | land inside the flat span | low heap < 0x400000 | above the span |
+| --- | --- | --- | --- |
+| menu | 14,896 (26.4%) | 7,793 | 33,742 |
+| in-game | 24,832 (30.0%) | 14,862 | 43,184 |
+
+**Roughly 70% of what real state points at is not in the harness.** The oracle
+holds one flat region, 0x00400000..0x00A0C000; the game's heap is below and
+above it. A synthetic seed pointed every word into the arena and every
+dereference landed somewhere; a real pointer to a real heap object lands on
+nothing and faults on the first step. In-game state has MORE heap pointers -
+82,878 address-shaped words against 56,431 - so it faults more. The prediction
+was written down before that sweep and the sweep matched it.
+
+So coherent state is still what the wall needs, and **a dump cannot deliver it
+through a single flat span.** The requirement really is multi-region guest
+memory: this document asserted that two commits before this one on no evidence,
+retracted it on finding 572 static objects inside the span, and it is now
+established by measurement. The 572 are real; they are just a minority of what
+the graph actually references.
+
+`--state` is kept. It is the instrument that settled this, the next person will
+want it before trusting any argument about real state, and it costs nothing when
+unused. **It has no unit test** - it was validated by use, cross-checking its
+own live-word count against the Python dumper's - and that is a debt.
 
 ### One of the seeded globals was never a pointer
 

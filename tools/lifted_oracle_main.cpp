@@ -203,6 +203,7 @@ int main(int argc, char **argv) {
     bool refuse_blocked = false, verbose = false, selftest = false, blame = true;
     bool selfcheck = false;
     int dump_seed = -1;
+    const char *state_path = nullptr;
     uint32_t selfcheck_address = 0x00401000U;
     bool append = false;
     uint32_t resume_after = 0;
@@ -211,6 +212,7 @@ int main(int argc, char **argv) {
         const char *a = argv[i];
         auto next = [&]() { return (i + 1 < argc) ? argv[++i] : ""; };
         if (!std::strcmp(a, "--exe")) exe_path = next();
+        else if (!std::strcmp(a, "--state")) state_path = next();
         else if (!std::strcmp(a, "--list")) list_path = next();
         else if (!std::strcmp(a, "--report")) report_path = next();
         else if (!std::strcmp(a, "--only")) only = uint32_t(std::strtoul(next(), nullptr, 0));
@@ -243,6 +245,14 @@ int main(int argc, char **argv) {
     if (const char *error = oracle_load_image(exe_path)) {
         std::fprintf(stderr, "oracle: %s (%s)\n", error, exe_path);
         return 2;
+    }
+    // AFTER the image, BEFORE anything runs: the overlay rewrites the pristine
+    // master that every case is restored from.
+    if (state_path) {
+        if (const char *error = oracle_overlay_state(state_path)) {
+            std::fprintf(stderr, "oracle: --state: %s\n", error);
+            return 2;
+        }
     }
     std::printf("stage: image loaded\n");
     oracle_arm(budget, watchdog);
