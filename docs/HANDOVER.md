@@ -943,11 +943,26 @@ INCONCLUSIVE-original-fault    382072   15.85%   1050      <- the target, smashe
 never compared by the oracle  2296255   95.27%   4981      <- and here is why
 ```
 
-3,928 of 5,673 report rows have address `0000000000` and name `(null)`: the
-harness still dies mid-case, now inside a Wine DLL rather than in the copy loop.
-Those rows name no function, `read_report` drops them - correctly - and the
-headline figure is then computed over the 1,745 that remain. **A run that
-collapsed reads exactly like the number collapsing.**
+3,928 of 5,673 report rows have address `0000000000` and name `(null)`. Those
+rows name no function, `read_report` drops them - correctly - and the headline
+is computed over the 1,745 that remain. **A run that collapsed reads exactly
+like the number collapsing.**
+
+**AND THE SWEEP SAID IT WAS FINE.** Observed, without a mechanism attached,
+because four wrong mechanisms in one day is enough:
+
+* `sweep: finished, 0 hang(s) and 0 host death(s)`
+* exactly ONE `HARNESS FAULT` in the whole log, and ZERO resumes
+* the null rows are CONTIGUOUS, row 1747 to the end
+* no other report in this project - `report-state-remap`, `-vbptr`,
+  `-coherent` - contains a single null row
+
+So the run really covered 1,745 of 5,673 functions and the rest are
+placeholders, and `lifted_oracle_sweep.sh` reported success. Its supervision
+watches for a stalled report and for a process that dies without writing a row;
+this was neither. **"finished, 0 hang(s) and 0 host death(s)" is not evidence
+that the plan was covered.** Check the row count and the new dropped-line
+warning before believing any sweep, including a green one.
 
 `never compared` at 95% gives it away instantly, which is why that figure is
 published beside the headline and must never be dropped from a report. But
