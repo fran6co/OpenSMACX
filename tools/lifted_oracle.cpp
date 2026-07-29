@@ -1517,6 +1517,46 @@ static void restore_from_pristine(unsigned char *side) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// SEEDED GLOBALS
+// ---------------------------------------------------------------------------
+//
+// The image is loaded exactly as the PE has it, so every .bss global is ZERO -
+// this is known gap 2 in the header, "GLOBALS ARE NEVER VARIED", and it is by
+// far the largest single cause of the fault wall.
+//
+// 68% of the lift scope is INCONCLUSIVE-original-fault, all 2,651 of those
+// functions compare ZERO of their sixteen cases, and 75% of a 40-function
+// sample faults on the null page at 0x0, 0x4 or 0x8. Those are field offsets
+// off a null POINTER, and the pointer comes from a global. Traced end to end:
+//
+//     0x00627C30  mov ecx, dword ptr [0x9bc074]   ; a Win*, zero at load
+//     0x00627C3A  call ?is_visible@Win@@QAEHXZ    ; first instruction is
+//                                                 ; test [ecx+0x9c],1 -> fault
+//
+// 82 functions fault at exactly that first instruction. Giving the global a
+// real object is what the seed is for.
+//
+// The objects live at the top of the arena and are written AFTER the scratch
+// fill, which would otherwise overwrite them. Both sides get the identical
+// bytes, so this varies the input to the comparison without ever varying the
+// two sides against each other.
+constexpr uint32_t OracleSeededObjectBase =
+    OracleArenaBase + OracleArenaSize - 0x2000U;
+constexpr uint32_t OracleSeededWin = OracleSeededObjectBase;
+
+static void put32(unsigned char *image, uint32_t va, uint32_t value) {
+    std::memcpy(image + (va - OracleImageBase), &value, 4);
+}
+
+static void seed_globals(unsigned char *image) {
+    // A zeroed Win is a REAL Win, not a hole: Win::is_visible reads the flag
+    // byte at 0x9c and answers "not visible", which is a defined answer the
+    // lift must reproduce. What it must not be is address zero.
+    std::memset(image + (OracleSeededWin - OracleImageBase), 0, 0x400);
+    put32(image, 0x009BC074U, OracleSeededWin);
+}
+
 static void reset_both(uint32_t address, int case_index, uint32_t return_address) {
     double t0 = now_seconds();
     trace("  restore A");
@@ -1527,6 +1567,9 @@ static void reset_both(uint32_t address, int case_index, uint32_t return_address
     seed_scratch(g_side_a, address, case_index, return_address);
     trace("  seed B");
     seed_scratch(opensmacx_image, address, case_index, return_address);
+    trace("  seed globals");
+    seed_globals(g_side_a);
+    seed_globals(opensmacx_image);
     trace("  reset done");
     oracle_cost.reset_seconds += now_seconds() - t0;
 }
