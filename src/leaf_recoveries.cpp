@@ -29,6 +29,7 @@
 #include "field_accessors.h"
 #include "buffer.h"
 #include "graphicwin.h"
+#include "basebutton.h"
 
 #include <cstring>
 
@@ -1059,3 +1060,85 @@ void __cdecl leaf_0063d420_redirect(void *stream, uint32_t value) {
     store32(stream, 0x10, load32(stream, 0x10) + 1);
 }
 
+
+// ImageButton's two vtables, named so the image addresses live in one place -
+// the same treatment BufferVtable and BaseButtonBufferVtable already get, and
+// the reason the two candidates carrying them stayed in the queue when the
+// seven that DEREFERENCE image addresses left it.
+const uint32_t ImageButtonPrimaryVtable = 0x00670A94;
+const uint32_t ImageButtonBufferVtable = 0x00670A8C;
+
+/*
+Purpose: Construct the BaseButton base, publish ImageButton's vtables, clear
+         one field.
+
+             mov esi,ecx / call ??0BaseButton / mov [esi],0x670a94
+             mov [esi+0x444],0x670a8c / mov [esi+0xab8],0 / mov eax,esi / ret
+
+         Two vtables, at 0 and at 0x444 - the primary and the Buffer
+         subobject's, the same pair GraphicWin and BaseButton each publish.
+         Both are written AFTER the base constructor and overwrite what it
+         left.
+
+         No ImageButton class is declared for these three. Deriving one from
+         BaseButton and giving it a field at 0xab8 would assert that
+         sizeof(BaseButton) is exactly 0xab8, and nothing here evidences that;
+         raw offsets claim only what the instructions show, which is the same
+         rule src/net_class.h states for Net.
+
+Original Offset: 006252E0
+Return Value: `this`
+Status: Complete
+*/
+void *__fastcall image_button_construct_redirect(void *self, void *) {
+    base_button_construct_redirect(reinterpret_cast<BaseButton *>(self),
+                                   nullptr);
+    store32(self, 0x0, ImageButtonPrimaryVtable);
+    store32(self, 0x444, ImageButtonBufferVtable);
+    store32(self, 0xAB8, 0);
+    return self;
+}
+
+/*
+Purpose: Clear the field, then close as a BaseButton.
+
+             mov dword [ecx+0xab8],0 / jmp ?close@BaseButton@@QAEXXZ
+
+         A TAIL jump, so BaseButton::close's return value is this function's -
+         but the mangled name says `X`, void, so nothing reads it. Declared
+         void to match the name, and the value is discarded rather than
+         quietly re-typed.
+
+Original Offset: 00625330
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall image_button_close_redirect(void *self, void *) {
+    store32(self, 0xAB8, 0);
+    base_button_close_redirect(reinterpret_cast<BaseButton *>(self), nullptr);
+}
+
+/*
+Purpose: Keep the first argument, hand the other eight to BaseButton::init.
+
+             mov eax,[esp+4] / mov edx,[esp+0x24] / mov [ecx+0xab8],eax
+             ...eight interleaved reads and pushes... / call BaseButton::init
+             ret 0x24
+
+         The reads and pushes alternate because each `[esp+0x20]` is taken
+         AFTER a push has moved ESP - so they walk backwards through the
+         arguments and re-push them in order. Nine arguments in (`ret 0x24`),
+         the first kept at 0xab8 and the remaining eight passed straight on.
+
+Original Offset: 00625340
+Return Value: whatever BaseButton::init returns
+Status: Complete
+*/
+int __fastcall image_button_init_redirect(
+        void *self, void *, int image, LPCSTR name, int id, int x, int y,
+        int width, int height, Win *parent, int style_flag) {
+    store32(self, 0xAB8, static_cast<uint32_t>(image));
+    return base_button_init_redirect(
+        reinterpret_cast<BaseButton *>(self), nullptr, name, id, x, y, width,
+        height, parent, style_flag);
+}

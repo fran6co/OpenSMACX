@@ -1951,6 +1951,9 @@ address,kind
 0x006252A0,jump
 0x006252B0,jump
 0x006252C0,jump
+0x006252E0,jump
+0x00625330,jump
+0x00625340,jump
 0x006256D0,jump
 0x006256F0,jump
 0x00627130,jump

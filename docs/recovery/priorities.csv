@@ -2735,10 +2735,7 @@ P3,100,0x00624D40,sub_624d40,50,0,1,unrecovered,,,0,missing,missing,
 P2,9120,0x00624D80,?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z,297,9,1,unrecovered,,,2,exact,exact,
 P3,1120,0x00624EB0,sub_624eb0,453,1,1,unrecovered,,,2,exact,exact,
 P3,4120,0x00625080,sub_625080,532,4,1,unrecovered,,,2,exact,exact,
-P3,121,0x006252E0,??0ImageButton@@QAE@XZ,38,0,1,unrecovered,,,2,exact,exact,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
 P0,1001021,0x00625310,??1ImageButton@@QAE@XZ,21,1,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
-P3,11,0x00625330,?close@ImageButton@@QAEXXZ,15,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
-P3,101,0x00625340,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,58,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)"
 P3,100,0x00625380,sub_625380,70,0,1,unrecovered,,,0,missing,missing,
 P3,711,0x006253D0,?on_redraw@ImageButton@@QAEXXZ,764,0,7,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@ImageButton@@QAEXXZ)(ImageButton* this)
 P0,1023721,0x00625880,?parse_string@@YAHPADPAD@Z,1373,23,7,source_in_progress,source_fallback,finish_source_implementation,2,exact,exact,"int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)"

@@ -10038,6 +10038,65 @@ void test_base_button_init() {
                                      44, parent, 1) == 0x5A5A5A5A);
     expect(g_init_rec.base_args[5] == 0x01008320);
 
+    // --- ImageButton::init, which wraps this one ---
+    //
+    // It keeps its FIRST argument at 0xab8 and forwards the other eight
+    // unchanged. Reusing the arrangement above is the point: everything
+    // BaseButton::init needs is already standing, so this fixture is about
+    // the wrapper and nothing else.
+    arrange();
+    g_init_base_result = 0x3C3C3C3C;
+    expect(image_button_init_redirect(button, nullptr, 0x0BADCAFE, nullptr, 7,
+                                      11, 22, 33, 44, parent, 1)
+           == 0x3C3C3C3C);
+    {
+        uint32_t kept;
+        std::memcpy(&kept,
+                    reinterpret_cast<uint8_t *>(button) + 0xAB8, sizeof(kept));
+        expect(kept == 0x0BADCAFEU);
+    }
+    // The eight forwarded arguments arrive exactly as the direct call's did.
+    // They are checked INDIVIDUALLY and with distinct values: base_args[5]
+    // alone is a composite that survives an x/y swap, which is exactly the
+    // mistake a nine-argument forwarder is likely to make.
+    expect(g_init_rec.base_args[0] == 11);      // x
+    expect(g_init_rec.base_args[1] == 22);      // y
+    expect(g_init_rec.base_args[2] == 33);      // width
+    expect(g_init_rec.base_args[3] == 44);      // height
+    expect(g_init_rec.base_args[5] == 0x01008320);
+
+    // --- ImageButton::construct and ::close ---
+    arrange();
+    expect(image_button_construct_redirect(button, nullptr) == button);
+    {
+        uint32_t primary, buffer, field;
+        auto *const bytes = reinterpret_cast<uint8_t *>(button);
+        std::memcpy(&primary, bytes + 0x0, sizeof(primary));
+        std::memcpy(&buffer, bytes + 0x444, sizeof(buffer));
+        std::memcpy(&field, bytes + 0xAB8, sizeof(field));
+        // Both vtables, and they are NOT the same address - a body publishing
+        // one of them twice would pass a test that only checked offset 0.
+        expect(primary == ImageButtonPrimaryVtable);
+        expect(buffer == ImageButtonBufferVtable);
+        expect(ImageButtonPrimaryVtable != ImageButtonBufferVtable);
+        // Published AFTER the base constructor, so they are not BaseButton's.
+        expect(primary != BaseButtonPrimaryVtable);
+        expect(buffer != BaseButtonBufferVtable);
+        expect(field == 0U);
+
+        // close clears the field again, having been given something to clear
+        // - AND delegates. Without the second assertion, dropping the
+        // BaseButton::close call entirely passes: clearing 0xab8 is the only
+        // thing this function does on its own.
+        const uint32_t marker = 0x5EED5EEDU;
+        std::memcpy(bytes + 0xAB8, &marker, sizeof(marker));
+        const int closes_before = g_init_rec.close_win_calls;
+        image_button_close_redirect(button, nullptr);
+        std::memcpy(&field, bytes + 0xAB8, sizeof(field));
+        expect(field == 0U);
+        expect(g_init_rec.close_win_calls > closes_before);
+    }
+
     WinOriginalClose = saved_win_close;
     BufferSubobjectClose = saved_buffer_close;
     GraphicWinFieldA0CDefault = saved_a0c_default;
