@@ -2663,6 +2663,64 @@ void test_field_accessors() {
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
 
+    // --- clamps: BOTH sides of the branch, or the test proves half a body ---
+    //
+    // The jump SKIPS the guarded store, so the store runs on the negation of
+    // the jump condition. Getting that backwards inverts the clamp and still
+    // compiles - and a fixture that only ever exercised the taken path would
+    // agree with the inverted version. So each of these is called twice, once
+    // either side of the field it compares against.
+    {
+        auto poke = [&](size_t offset, uint32_t value) {
+            std::memcpy(storage + 16 + offset, &value, sizeof(value));
+            std::memcpy(expected + 16 + offset, &value, sizeof(value));
+        };
+        auto expect_field = [&](size_t offset, uint32_t value) {
+            std::memcpy(expected + 16 + offset, &value, sizeof(value));
+        };
+
+        // sub_4c80c0: if (this->[0xc] < arg) this->[0xc] = arg;
+        //             this->[0x8] = arg;
+        seed(); poke(0xc, 100);
+        expect_field(0xc, 200); expect_field(0x8, 200);
+        field_accessor_004c80c0_redirect(self, nullptr, 200);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        seed(); poke(0xc, 300);
+        expect_field(0x8, 200);              // 0xc must NOT move
+        field_accessor_004c80c0_redirect(self, nullptr, 200);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        // sub_4c80e0: if (this->[0x8] > arg) this->[0x8] = arg;
+        //             this->[0xc] = arg;
+        seed(); poke(0x8, 300);
+        expect_field(0x8, 200); expect_field(0xc, 200);
+        field_accessor_004c80e0_redirect(self, nullptr, 200);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        seed(); poke(0x8, 100);
+        expect_field(0xc, 200);              // 0x8 must NOT move
+        field_accessor_004c80e0_redirect(self, nullptr, 200);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        // The EQUALITY case. It is exercised for completeness, but it cannot
+        // distinguish `<` from `<=` (or `>` from `>=`) and no test can: the
+        // guarded store writes the very field being compared, with the very
+        // value it is compared against. At equality the store is a no-op, so
+        // both readings leave identical state. The mutation sweep reports
+        // those two mutants as unobserved, and they are EQUIVALENT rather than
+        // uncovered - which is why they are not chased.
+        seed(); poke(0xc, 200);
+        expect_field(0x8, 200);
+        field_accessor_004c80c0_redirect(self, nullptr, 200);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        seed(); poke(0x8, 200);
+        expect_field(0xc, 200);
+        field_accessor_004c80e0_redirect(self, nullptr, 200);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
     // --- byte store: one BYTE moves, which the neighbours prove ---
     seed();
     expected[16 + 0x6D] = 1;

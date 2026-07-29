@@ -269,6 +269,76 @@ class ByteWidthTests(unittest.TestCase):
             decode("ba0000803f30d28911c3")))
 
 
+class ConditionalStoreTests(unittest.TestCase):
+    """One store guarded by a comparison. The SENSE is the whole risk."""
+
+    def clamp(self, encoded, address=0x004C80C0):
+        decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+        decoder.detail = True
+        return generator.classify(list(decoder.disasm(bytes.fromhex(encoded),
+                                                      address)))
+
+    def test_jae_guards_a_less_than(self):
+        # sub_4c80c0: cmp edx,eax / jae skip / mov [ecx+0xc],eax
+        # The jump SKIPS the store, so the store runs on the NEGATION: the
+        # field is written when it is BELOW the argument. Reading the jump
+        # condition straight off the mnemonic inverts the clamp, and the
+        # inverted version compiles and looks entirely reasonable.
+        kind, detail = self.clamp("5589e58b45088b510c39c2730389410c8941085dc20400")
+        self.assertEqual("conditional_store", kind)
+        self.assertEqual("<", detail["relation"])
+        self.assertFalse(detail["signed"])
+        self.assertEqual(0xC, detail["field"])
+        self.assertEqual([(0xC, 0)], detail["guarded"])
+        self.assertEqual([(0x8, 0)], detail["always"])
+
+    def test_jbe_guards_a_greater_than(self):
+        # sub_4c80e0, the mirror image of the above.
+        kind, detail = self.clamp(
+            "5589e58b45088b510839c2760389410889410c5dc20400", 0x004C80E0)
+        self.assertEqual(">", detail["relation"])
+        self.assertEqual(0x8, detail["field"])
+        self.assertEqual([(0x8, 0)], detail["guarded"])
+        self.assertEqual([(0xC, 0)], detail["always"])
+
+    def test_every_guard_is_the_negation_of_its_jump(self):
+        # The table is the mechanism, so it is checked as a whole rather than
+        # one entry at a time: a jump and its opposite must not agree.
+        opposites = [("jae", "jb"), ("jbe", "ja"), ("jge", "jl"), ("jle", "jg")]
+        for taken, not_taken in opposites:
+            first = generator.GUARD_RUNS_WHEN[taken]
+            second = generator.GUARD_RUNS_WHEN[not_taken]
+            self.assertNotEqual(first[0], second[0], f"{taken} vs {not_taken}")
+            self.assertEqual(first[1], second[1], "signedness must agree")
+
+    def test_signed_and_unsigned_jumps_are_distinguished(self):
+        self.assertFalse(generator.GUARD_RUNS_WHEN["jae"][1])
+        self.assertTrue(generator.GUARD_RUNS_WHEN["jge"][1])
+
+    def test_a_signed_guard_emits_a_signed_comparison(self):
+        body = generator.render_conditional_store(
+            {"field": 0xC, "argument": 0, "relation": "<", "signed": True,
+             "guarded": [(0xC, 0)], "always": []})
+        self.assertIn("int32_t", body)
+        self.assertNotIn("uint32_t *>(bytes + 0xc)\n", body)
+
+    def test_two_conditional_jumps_are_refused(self):
+        # More than one branch is more than this shape, and picking the first
+        # would describe only some of the paths.
+        self.assertIsNone(self.clamp(
+            "5589e58b45088b510c39c2730273 0089410c5dc20400".replace(" ", "")))
+
+    def test_a_backward_jump_is_refused(self):
+        # A loop, not a guard.
+        self.assertIsNone(self.clamp("8b510c39c273fc89410cc20400"))
+
+    def test_a_guard_comparing_two_fields_is_refused(self):
+        # cmp edx,esi where ESI is not a known argument: the relation would be
+        # against something this tool cannot name.
+        self.assertIsNone(self.clamp(
+            "5589e58b510c39f2730389410c8941085dc20400"))
+
+
 class RefusalTests(unittest.TestCase):
     """What it declines, which is the part that keeps it honest."""
 

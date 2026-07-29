@@ -40,3 +40,5 @@ void __fastcall field_accessor_005f05c0_redirect(void *, void *, int);
 void __fastcall field_accessor_005d4540_redirect(void *, void *);
 void * __fastcall field_accessor_00634be0_redirect(void *, void *);
 void __fastcall field_accessor_00634f70_redirect(void *, void *);
+void __fastcall field_accessor_004c80c0_redirect(void *, void *, int);
+void __fastcall field_accessor_004c80e0_redirect(void *, void *, int);

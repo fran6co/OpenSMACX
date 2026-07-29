@@ -24,6 +24,7 @@ WHAT IS ACCEPTED, and nothing else:
     mov eax,IMM / ret                return a constant
     mov byte [ecx+N],IMM / ret       store a byte
     mov [ecx+N],[ebp+8] / ret 4      copy an argument into a field
+    cmp [ecx+N],arg / jae / store    one store guarded by a comparison
     xor eax,eax / ret                return zero
     ret                              a body that does nothing at all
     a SEQUENCE of byte and dword stores to [this+N], where the value is a
@@ -149,6 +150,113 @@ def argument_slot(operand, framed: bool) -> int | None:
     return distance // 4
 
 
+# What has to be TRUE for the guarded block to run - the negation of the jump,
+# since the jump SKIPS it - and whether the comparison is signed. Getting the
+# sense backwards inverts a clamp into its opposite while still compiling, so
+# every entry here is pinned by a test.
+GUARD_RUNS_WHEN = {
+    "jae": ("<", False), "jb": (">=", False),
+    "jbe": (">", False), "ja": ("<=", False),
+    "jge": ("<", True), "jl": (">=", True),
+    "jle": (">", True), "jg": ("<=", True),
+}
+
+
+def classify_conditional_store(body, cleanup):
+    """One store guarded by a comparison, then unconditional stores.
+
+    The clamp shape: `if (this->F <relation> arg) this->F = arg; this->G = arg;`
+    Exactly one forward conditional jump is allowed, and its target must be an
+    instruction boundary inside this body - a jump anywhere else means the
+    function has a path this tool cannot see, and describing only the paths it
+    can see would be a body that is right about some inputs.
+    """
+    framed = False
+    if (len(body) >= 3 and body[0].mnemonic == "push" and body[0].op_str == "ebp"
+            and body[1].mnemonic == "mov" and body[1].op_str == "ebp, esp"
+            and body[-1].mnemonic == "pop" and body[-1].op_str == "ebp"):
+        framed = True
+        body = body[2:-1]
+    if any(one.mnemonic in ("push", "pop") for one in body):
+        return None
+    if cleanup % 4 or not cleanup:
+        return None
+    count = cleanup // 4
+
+    jumps = [index for index, one in enumerate(body)
+             if one.mnemonic in GUARD_RUNS_WHEN]
+    if len(jumps) != 1:
+        return None                 # zero is another shape; two is not this one
+    at = jumps[0]
+    if any(one.mnemonic.startswith("j") for index, one in enumerate(body)
+           if index != at):
+        return None                 # an unconditional jump is a tail call
+
+    target = body[at].operands[0]
+    if target.type != X86_OP_IMM:
+        return None
+    rejoin = next((index for index, one in enumerate(body)
+                   if one.address == target.imm), None)
+    if rejoin is None or rejoin <= at:
+        return None                 # not a forward jump to a boundary here
+
+    held: dict[int, int] = {}       # register -> argument index
+    fields: dict[int, int] = {}     # register -> field offset it was read from
+
+    def stores_in(chunk):
+        found = []
+        for one in chunk:
+            if one.mnemonic != "mov" or len(one.operands) != 2:
+                return None
+            destination, source = one.operands
+            offset = this_offset(destination)
+            if (offset is None or destination.size != 4
+                    or source.type != X86_OP_REG or source.reg not in held):
+                return None
+            found.append((offset, held[source.reg]))
+        return found
+
+    for one in body[:at]:
+        if one.mnemonic == "cmp":
+            continue                # read below, from body[at - 1]
+        if one.mnemonic != "mov" or len(one.operands) != 2:
+            return None
+        destination, source = one.operands
+        if destination.type != X86_OP_REG or destination.size != 4:
+            return None
+        slot = argument_slot(source, framed)
+        if slot is not None:
+            if slot >= count:
+                return None
+            held[destination.reg] = slot
+            continue
+        offset = this_offset(source)
+        if offset is not None and source.size == 4:
+            fields[destination.reg] = offset
+            continue
+        return None
+
+    compare = body[at - 1]
+    if compare.mnemonic != "cmp" or len(compare.operands) != 2:
+        return None
+    left, right = compare.operands
+    if (left.type != X86_OP_REG or right.type != X86_OP_REG
+            or left.reg not in fields or right.reg not in held):
+        return None
+
+    guarded = stores_in(body[at + 1:rejoin])
+    always = stores_in(body[rejoin:])
+    if guarded is None or always is None or not guarded:
+        return None
+
+    relation, signed = GUARD_RUNS_WHEN[body[at].mnemonic]
+    return "conditional_store", {
+        "field": fields[left.reg], "argument": held[right.reg],
+        "relation": relation, "signed": signed,
+        "guarded": guarded, "always": always, "cleanup": cleanup,
+        "count": count}
+
+
 def classify_param_stores(body, cleanup):
     """`this->field = argument`, one or more times.
 
@@ -224,6 +332,10 @@ def classify(instructions) -> tuple[str, dict] | None:
             and body[0].operands[0].reg == body[0].operands[1].reg
             and body[0].operands[0].reg == X86_REG_EAX):
         return "constant", {"value": 0, "cleanup": cleanup}
+
+    guarded = classify_conditional_store(body, cleanup)
+    if guarded is not None:
+        return guarded
 
     stored = classify_param_stores(body, cleanup)
     if stored is not None:
@@ -403,6 +515,23 @@ def render_stores(detail: dict) -> str:
     return "\n".join(lines)
 
 
+def render_conditional_store(detail: dict) -> str:
+    kind = "int32_t" if detail["signed"] else "uint32_t"
+    lines = ["    uint8_t *const bytes = static_cast<uint8_t *>(self);"]
+    lines.append(f"    if (*reinterpret_cast<{kind} *>(bytes + "
+                 f"{detail['field']:#x})")
+    lines.append(f"            {detail['relation']} static_cast<{kind}>"
+                 f"(stack{detail['argument']})) {{")
+    for offset, index in detail["guarded"]:
+        lines.append(f"        *reinterpret_cast<uint32_t *>(bytes + "
+                     f"{offset:#x}) = static_cast<uint32_t>(stack{index});")
+    lines.append("    }")
+    for offset, index in detail["always"]:
+        lines.append(f"    *reinterpret_cast<uint32_t *>(bytes + {offset:#x})"
+                     f" = static_cast<uint32_t>(stack{index});")
+    return "\n".join(lines)
+
+
 def render_param_stores(detail: dict) -> str:
     lines = ["    uint8_t *const bytes = static_cast<uint8_t *>(self);"]
     for offset, index in detail["stores"]:
@@ -425,16 +554,18 @@ BODIES = {
     "stores": render_stores,
     "nothing": lambda d: "",
     "param_stores": render_param_stores,
+    "conditional_store": render_conditional_store,
 }
 RETURNS = {"read": "uint32_t", "masked": "uint32_t", "constant": "uint32_t",
            "increment": "void", "store_byte": "void", "nothing": "void",
-           "param_stores": "void"}
+           "param_stores": "void", "conditional_store": "void"}
 # A constant return never reads `this`, so naming the parameter would be an
 # unused one - and this tree builds with -Wall -Wextra, where that is an error
 # rather than a note. The name is emitted only where the body uses it.
 USES_SELF = {"read": True, "masked": True, "constant": False,
              "increment": True, "store_byte": True, "stores": True,
-             "nothing": False, "param_stores": True}
+             "nothing": False, "param_stores": True,
+             "conditional_store": True}
 PURPOSE = {
     "read": "Read the dword field at {offset:#x}.",
     "masked": "Read the dword field at {offset:#x}, masked to {mask:#x}.",
@@ -444,6 +575,8 @@ PURPOSE = {
     "stores": "Set {count} field(s) to constants.",
     "nothing": "Do nothing; the original body is only its `ret`.",
     "param_stores": "Copy {count} argument(s) into field(s) of `this`.",
+    "conditional_store": "Clamp field {field:#x} against an argument,"
+                         " then store unconditionally.",
 }
 
 

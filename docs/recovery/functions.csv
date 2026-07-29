@@ -2520,8 +2520,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004C8050,0x004C806A,26,.text,?set_play_type@Midi@@QAEHI@Z,"int (__thiscall ?set_play_type@Midi@@QAEHI@Z)(Midi* this, unsigned int)",0x004C8050-0x004C806A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C8070,0x004C8089,25,.text,sub_4c8070,,0x004C8070-0x004C8089,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x004C8090,0x004C80B3,35,.text,sub_4c8090,,0x004C8090-0x004C80B3,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:200,Complete,,,source_complete,,,,0,0
-0x004C80C0,0x004C80D7,23,.text,sub_4c80c0,,0x004C80C0-0x004C80D7,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x004C80E0,0x004C80F7,23,.text,sub_4c80e0,,0x004C80E0-0x004C80F7,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x004C80C0,0x004C80D7,23,.text,sub_4c80c0,,0x004C80C0-0x004C80D7,game,frame;hidden;sp_ready;purged_ok,src/field_accessors.cpp:996,Complete,,,source_complete,,,,0,0
+0x004C80E0,0x004C80F7,23,.text,sub_4c80e0,,0x004C80E0-0x004C80F7,game,frame;hidden;sp_ready;purged_ok,src/field_accessors.cpp:1023,Complete,,,source_complete,,,,0,0
 0x004C8100,0x004C810B,11,.text,sub_4c8100,,0x004C8100-0x004C810B,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:232,Complete,,,source_complete,,,,0,0
 0x004C8110,0x004C813B,43,.text,sub_4c8110,,0x004C8110-0x004C813B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x004C8140,0x004C8141,1,.text,nullsub_223,,0x004C8140-0x004C8141,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:344,Complete,,,source_complete,,,,0,0

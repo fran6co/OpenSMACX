@@ -1380,6 +1380,8 @@ address,kind
 0x004C7F10,jump
 0x004C7F40,jump
 0x004C8090,jump
+0x004C80C0,jump
+0x004C80E0,jump
 0x004C8100,jump
 0x004C8140,jump
 0x004C8460,jump
