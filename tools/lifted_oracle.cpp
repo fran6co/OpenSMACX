@@ -1675,7 +1675,16 @@ static void seed_globals(unsigned char *image) {
     static const uint32_t kWinGlobals[] = {
         0x009BC074U, 0x007F685CU, 0x009156B0U, 0x009B8180U, 0x009B7B2CU};
     for (uint32_t g : kWinGlobals) put32(image, g, OracleSeededWin);
-    put32(image, 0x0087BE24U, OracleSeededListBox);
+    // 0x0087BE24 IS NOT A ListBox POINTER and used to be seeded as one. The
+    // image settles it: 0x004A423E `or eax,0xffffffff` / `mov [0x87be24],eax`
+    // resets it to -1, and 0x004A624A takes an argument, `cmp eax,0x400`,
+    // `jge` past the store - so it is an index bounded by 1024 with a -1
+    // "none" sentinel. Seeding it with 0x009eb000 put a nine-megabyte value in
+    // a slot every consumer range-checks, which does not make a caller more
+    // realistic; it sends it down a branch that cannot be taken in a real run,
+    // and any consumer that indexes with it unchecked computes an address far
+    // outside anything mapped. Zero at load is what .bss gives it and is a
+    // valid index, so the correct seed is no seed.
 }
 
 static void reset_both(uint32_t address, int case_index, uint32_t return_address) {
