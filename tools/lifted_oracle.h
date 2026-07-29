@@ -287,6 +287,9 @@ struct OracleResult {
     uint32_t fault_code;
     uint32_t fault_address;
     uint32_t fault_data;      // the address the faulting access named
+    uint32_t fault_has_data;  // whether the record carried one at all: a null
+                              // dereference names address 0, and without this
+                              // that is indistinguishable from "no address"
     uint32_t blamed_eip;       // instruction that produced the divergence
     const char *trap_reason;
 };

@@ -1666,6 +1666,7 @@ static int oracle_run_lifted_side(uint32_t address,
         result.fault_code = oracle_fault;
         result.fault_address = oracle_fault_addr;
         result.fault_data = oracle_fault_data;
+        result.fault_has_data = oracle_fault_has_address;
         // "Out of span" is a statement about a faulting ADDRESS, so it may
         // only be made when there is one. Any other exception - an illegal
         // instruction, a divide by zero, __builtin_trap() - carries
@@ -1999,6 +2000,7 @@ OracleResult oracle_run_case(uint32_t address, int case_index) {
         result.fault_code = oracle_fault;
         result.fault_address = oracle_fault_addr;
         result.fault_data = oracle_fault_data;
+        result.fault_has_data = oracle_fault_has_address;
         result.verdict = (oracle_fault == OracleFaultBudget ||
                           oracle_fault == OracleFaultWatchdog)
                              ? OracleInconclusiveBudget
