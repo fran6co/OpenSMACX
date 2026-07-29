@@ -178,6 +178,16 @@ def inherits_a_frame(instructions) -> bool:
     return False
 
 
+# Instructions a recovered body could not contain. Privileged or
+# machine-state-only: there is no C++ that means them, and inline assembly
+# would fault in user mode rather than work.
+INEXPRESSIBLE = frozenset({
+    "out", "outsb", "outsw", "outsd", "in", "insb", "insw", "insd",
+    "cli", "sti", "hlt", "iret", "iretd", "clts", "invd", "wbinvd",
+    "lgdt", "lidt", "lldt", "ltr", "lmsw", "rdmsr", "wrmsr", "arpl",
+})
+
+
 def classify(instructions, address: int, size: int, span: tuple[int, int]):
     """(callees, reasons, bindings) for one body.
 
@@ -202,6 +212,18 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
     for one in instructions:
         mnemonic = one.mnemonic
         operands = one.operands
+        if mnemonic in INEXPRESSIBLE:
+            # Nothing recovers this. `?set_palette@...` at 0x005d4240 uploads a
+            # VGA palette with `cli`, a loop of `out dx,al` to ports 0x3c8 and
+            # 0x3c9, then `sti` - privileged port I/O with no C++ expression at
+            # all, which would fault in user mode even if one were written.
+            #
+            # The other three conditions are about whether a body can be TESTED
+            # in isolation; this one is about whether it can be WRITTEN. A
+            # candidate that cannot be is not work, and leaving it in the queue
+            # makes the count a target that can never reach zero.
+            reasons.append(f"no C++ expression for `{mnemonic}`")
+            continue
         # An absolute memory operand is a global. `opensmacx_at` aside, a
         # recovered body reaching one is a fixed-address binding, which is the
         # thing that puts a function in the hybrid oracle rather than here.

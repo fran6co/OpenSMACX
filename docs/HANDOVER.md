@@ -376,9 +376,15 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 61 candidates, 2,232 bytes.**
+**Queue as of 2026-07-29: 50 candidates, 1,881 bytes.**
 
-It has been tightened five times, each after it offered something unsafe:
+The first five tightenings were about whether a body can be TESTED in
+isolation. The sixth is about whether it can be WRITTEN at all - a
+distinction the other conditions never ask, and one that matters because a
+candidate nothing could ever recover makes the count a target that cannot
+reach zero.
+
+It has been tightened six times, each after it offered something unsafe:
 
 | fix | what it was about to allow |
 | --- | --- |
@@ -387,6 +393,7 @@ It has been tightened five times, each after it offered something unsafe:
 | declared arity must match the `ret` | `Win::on_redraw`, which would corrupt its callers |
 | exclude branch targets from binding flags | four false "needs classification" reports |
 | reject bodies that read EBP with no prologue | 13 EH unwind funclets, which are not callable at all |
+| reject instructions with no C++ expression | `set_palette` at 0x005d4240, which uploads a VGA palette with `cli` / `out dx,al` / `sti` |
 
 **The tail is not more of the same, and should not be ground out by hand.**
 Of the 97 remaining, only about 5 have a class that already exists; ~21 need a
