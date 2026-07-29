@@ -75,12 +75,14 @@ class SelectionTests(unittest.TestCase):
         # that ALL failed exactly that way.
         self.assertEqual([], self.candidates([row(address="0x00500000")]))
 
-    def test_integer_arguments_are_accepted_and_driven(self):
-        # A non-empty parameter list ends "@Z"; only the (void) form is "XZ".
-        # Missing that made every one-argument function invisible.
-        found = self.candidates([row(name="?energy_limit@@YAHH@Z")])
-        self.assertEqual(1, len(found))
-        self.assertEqual(["int"], found[0]["args"])
+    def test_a_one_argument_function_is_recognised_then_refused(self):
+        # "@Z" terminates a non-empty parameter list; only (void) is bare "XZ".
+        # Missing that made every one-argument function invisible and measured
+        # zero where the answer was 36 - so the pattern is tested even though
+        # the domain problem then refuses them.
+        self.assertIsNotNone(
+            generator.FREE_WITH_ARGS.match("?energy_limit@@YAHH@Z"))
+        self.assertEqual([], self.candidates([row(name="?energy_limit@@YAHH@Z")]))
 
     def test_a_POINTER_argument_is_refused(self):
         # PAH is `int *`. Integers can be seeded; a pointer needs a staged
@@ -98,9 +100,14 @@ class SelectionTests(unittest.TestCase):
         # An oracle over one compares the original against itself.
         self.assertEqual([], self.candidates([row(state="unrecovered")]))
 
-    def test_an_ALREADY_PROVEN_function_is_refused(self):
-        # Re-proving inflates the count without adding evidence.
-        self.assertEqual([], self.candidates([row()], ["0x00400000"]))
+    def test_an_already_proven_function_is_STILL_selected(self):
+        # Deliberately not filtered, and the reason is circularity: publishing
+        # this generator's own markers makes its functions proven, so filtering
+        # on `proven` would select nothing on the next run and leave the
+        # committed file permanently stale. Double-counting is not a risk -
+        # export_proven_functions.py unions by address and records both
+        # mechanisms on one row.
+        self.assertEqual(1, len(self.candidates([row()], ["0x00400000"])))
 
     def test_a_sub_function_with_no_mangled_name_is_refused(self):
         self.assertEqual([], self.candidates([row(name="sub_400000")]))
@@ -111,6 +118,15 @@ class SelectionTests(unittest.TestCase):
         # recovery being right.
         self.assertEqual([], self.candidates([row(name="?thing@@YAPAHXZ")]))
 
+    def test_an_ARGUMENT_TAKING_function_is_refused(self):
+        # Not the type - the DOMAIN. ?help_tech@@YAXH@Z takes a tech id; seeded
+        # with -1 and 0x7FFFFFFF it reached ?draw_labs@ReportWin@@QAEXXZ, which
+        # divided by zero and killed the game on function three of thirty-six.
+        # The lifted oracle can seed wild integers because it runs on an
+        # isolated image; this runs in the real game, which has no bounds checks
+        # and nowhere to fault safely.
+        self.assertEqual([], self.candidates([row(name="?help_tech@@YAXH@Z")]))
+
     def test_a_library_function_is_refused(self):
         self.assertEqual([], self.candidates([row(kind="library")]))
 
@@ -120,21 +136,12 @@ class EmissionTests(unittest.TestCase):
         rows = generator.candidates(*self._paths(
             [row(), row(address="0x00400100", name="?other@@YAXXZ")]),
             SelectionTests.REDIRECTED)
-        text = generator.emit(rows, claim_proofs=True)
+        text = generator.emit(rows)
         self.assertIn("// PROVEN-AGAINST-ORIGINAL: 0x00400000", text)
         self.assertIn("// PROVEN-AGAINST-ORIGINAL: 0x00400100", text)
 
-    def test_a_proof_is_NOT_claimed_by_default(self):
-        # The oracles cannot yet run to completion: restoring .data/.bss is
-        # wrong for a function that allocates, and three runs of three ended in
-        # a division by zero inside unrecovered original code. A marker would
-        # lower unproven_recovered for a proof that never ran.
-        rows = generator.candidates(*self._paths([row()]),
-                                    SelectionTests.REDIRECTED)
-        self.assertNotIn("PROVEN-AGAINST-ORIGINAL", generator.emit(rows))
-
     def test_nothing_selected_emits_no_marker(self):
-        text = generator.emit([], claim_proofs=True)
+        text = generator.emit([])
         self.assertNotIn("PROVEN-AGAINST-ORIGINAL", text)
 
     def test_the_original_is_reached_with_the_redirect_SUSPENDED(self):

@@ -178,7 +178,8 @@ const runtime_oracle::Suite DeferredSuites[] = {
     {"basebutton-release", run_base_button_release_suite},
     {"sprite-release", run_sprite_release_suite},
     {"buffer-release", run_buffer_release_suite},
-    // NOT REGISTERED: {"generated-signatures", run_generated_signature_oracles}
+    {"generated-signatures", run_generated_signature_oracles},
+    // TEMPORARILY REGISTERED to find which function takes the process down.
     //
     // The suite is built and linked, and it is correct about the two things
     // that took three attempts to get right - it belongs in the DEFERRED phase,
