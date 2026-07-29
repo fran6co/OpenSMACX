@@ -130,3 +130,133 @@ Status: Complete
 int __cdecl leaf_00559210_redirect(int value, int step) {
     return value / step * step;
 }
+
+/*
+Purpose: Follow a two-link chain, or return zero when the first link is unset.
+
+             mov eax, [ecx+8] / test eax,eax / je zero
+             mov eax, [ecx+0xc] / mov eax, [eax+8] / mov eax, [eax+4] / ret
+       zero: xor eax,eax / ret
+
+         The guard reads field 8 but the chase starts from field 0xc - two
+         DIFFERENT fields, which is easy to lose when transcribing and produces
+         a body that works whenever the two happen to agree.
+
+Original Offset: 005E3630
+Return Value: the dword two links away, or 0
+Status: Complete
+*/
+uint32_t __fastcall leaf_005e3630_redirect(void *self, void *) {
+    const uint8_t *const bytes = static_cast<const uint8_t *>(self);
+    if (*reinterpret_cast<const uint32_t *>(bytes + 0x8) == 0) {
+        return 0;
+    }
+    const uint8_t *const first = *reinterpret_cast<const uint8_t *const *>(
+        bytes + 0xc);
+    const uint8_t *const second = *reinterpret_cast<const uint8_t *const *>(
+        first + 0x8);
+    return *reinterpret_cast<const uint32_t *>(second + 0x4);
+}
+
+/*
+Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
+
+             mov edx,[ecx] / test edx,edx / jl other
+             mov eax,[ecx+0x10] / add eax,edx / ret
+      other: mov eax,[ecx+0xc] / ret
+
+         `jl` is the SIGNED test, so the negative branch is taken on the sign
+         bit rather than on a large unsigned value - the difference shows up
+         for any field with the top bit set.
+
+Original Offset: 005E3650
+Return Value: field 0x10 + field 0, or field 0xc
+Status: Complete
+*/
+uint32_t __fastcall leaf_005e3650_redirect(void *self, void *) {
+    const uint8_t *const bytes = static_cast<const uint8_t *>(self);
+    const int32_t index = *reinterpret_cast<const int32_t *>(bytes + 0x0);
+    if (index < 0) {
+        return *reinterpret_cast<const uint32_t *>(bytes + 0xc);
+    }
+    return *reinterpret_cast<const uint32_t *>(bytes + 0x10)
+           + static_cast<uint32_t>(index);
+}
+
+/*
+Purpose: Store an argument into three fields, clamping anything outside 0..3
+         to zero, and clear a fourth.
+
+             mov eax,[esp+4] / test eax,eax / jl zero / cmp eax,3 / jle keep
+       zero: xor eax,eax
+       keep: mov [ecx+0x510],eax / mov [ecx+0x518],eax / mov [ecx+0x514],eax
+             mov dword [ecx+0x51c],0 / ret 4
+
+         Both bounds are SIGNED (`jl`, `jle`) and the upper one is inclusive:
+         3 is kept, 4 is not. Two mutants of the LOWER bound survive the
+         sweep and are equivalent rather than untested: at 0 the clamp target
+         and the value coincide, so `< 0`, `< 1` and `<= 0` all store 0. The
+         clamp VALUE is a different matter and is covered - changing it to 1
+         fails the fixture. The three destinations are 0x510, 0x518 and
+         0x514 - written in that order, which is not ascending, and a
+         transcription that tidied it would still be correct only because the
+         value stored is the same for all three.
+
+Original Offset: 005E3660
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_005e3660_redirect(void *self, void *, int requested) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    const int32_t value = (requested < 0 || requested > 3) ? 0 : requested;
+    *reinterpret_cast<int32_t *>(bytes + 0x510) = value;
+    *reinterpret_cast<int32_t *>(bytes + 0x518) = value;
+    *reinterpret_cast<int32_t *>(bytes + 0x514) = value;
+    *reinterpret_cast<uint32_t *>(bytes + 0x51c) = 0;
+}
+
+/*
+Purpose: Store a non-zero argument into field 0x38, or refuse with code 10.
+
+             push ebp / mov ebp,esp / mov eax,[ebp+8] / test eax,eax / jne set
+             mov eax,0xa / pop ebp / ret 4
+        set: mov [ecx+0x38],eax / xor eax,eax / pop ebp / ret 4
+
+         Zero is the failure case and it stores NOTHING - the field keeps
+         whatever it held. Returning 10 without that being true of the object
+         would be a different function.
+
+Original Offset: 004482F0
+Return Value: 0 on success, 10 when the argument is zero
+Status: Complete
+*/
+uint32_t __fastcall leaf_004482f0_redirect(void *self, void *, int value) {
+    if (value == 0) {
+        return 0xA;
+    }
+    *reinterpret_cast<int32_t *>(static_cast<uint8_t *>(self) + 0x38) = value;
+    return 0;
+}
+
+/*
+Purpose: Clear field 4, set the low bit of field 8, put 0x24 in field 0.
+
+             mov eax,ecx / mov ecx,[eax+8] / mov dword [eax+4],0
+             or ecx,1 / mov dword [eax],0x24 / mov [eax+8],ecx / ret
+
+         Field 8 is READ before field 4 is written and written back afterwards,
+         but the three fields are distinct, so the interleaving cannot change
+         the result. EAX still holds `this` at the `ret` - the residue this
+         tree treats as a return value.
+
+Original Offset: 004C8070
+Return Value: `this`
+Status: Complete
+*/
+void *__fastcall leaf_004c8070_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) |= 1;
+    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x24;
+    return self;
+}

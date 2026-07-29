@@ -459,7 +459,6 @@ P3,21,0x00447DB0,?begin@AAmbience@@QAEXXZ,22,0,0,unrecovered,,,2,exact,exact,voi
 P3,11,0x00447DD0,?general@AAmbience@@QAEXXZ,1187,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?general@AAmbience@@QAEXXZ)(AAmbience* this)
 P0,1001021,0x004482C0,??1Effect@@QAE@XZ,5,1,0,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
 P0,1000121,0x004482D0,??0Effect@@QAE@XZ,18,0,1,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this)
-P3,20,0x004482F0,sub_4482f0,28,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00448340,sub_448340,15,0,0,unrecovered,,,1,exact,missing,
 P3,2421,0x00448400,?init@FameWin@@QAEHXZ,2421,1,14,unrecovered,,,2,exact,entry_range,int (__thiscall ?init@FameWin@@QAEHXZ)(FameWin* this)
 P3,211,0x00448D60,?close@FameWin@@QAEXXZ,33,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@FameWin@@QAEXXZ)(FameWin* this)
@@ -1139,7 +1138,6 @@ P3,20,0x004C7FC0,sub_4c7fc0,39,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x004C7FF0,sub_4c7ff0,39,0,0,unrecovered,,,2,exact,exact,
 P3,20,0x004C8020,sub_4c8020,35,0,0,unrecovered,,,2,exact,exact,
 P3,21,0x004C8050,?set_play_type@Midi@@QAEHI@Z,26,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?set_play_type@Midi@@QAEHI@Z)(Midi* this, unsigned int)"
-P3,10,0x004C8070,sub_4c8070,25,0,0,unrecovered,,,1,exact,missing,
 P3,110,0x004C8110,sub_4c8110,43,0,1,unrecovered,,,1,missing,exact,
 P3,110,0x004C8150,sub_4c8150,56,0,1,unrecovered,,,1,missing,exact,
 P3,110,0x004C8190,sub_4c8190,37,0,1,unrecovered,,,1,missing,exact,
@@ -2139,9 +2137,6 @@ P3,1221,0x005E3193,?box@Buffer@@QAEHHHHHHH@Z,105,1,2,unrecovered,,,2,exact,exact
 P3,211,0x005E3283,?dotted_box@Buffer@@QAEHHHHHH@Z,97,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?dotted_box@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)"
 P3,2221,0x005E32F3,?dotted_box@Buffer@@QAEHPAURECT@@H@Z,125,2,2,unrecovered,,,2,exact,exact,"int (__thiscall ?dotted_box@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT*, int)"
 P2,9021,0x005E33F3,?get_data@Buffer@@QAEHHH@Z,170,9,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)"
-P3,2020,0x005E3630,sub_5e3630,20,2,0,unrecovered,,,2,exact,exact,
-P3,2020,0x005E3650,sub_5e3650,16,2,0,unrecovered,,,2,exact,exact,
-P3,1020,0x005E3660,sub_5e3660,46,1,0,unrecovered,,,2,exact,exact,
 P3,1221,0x005E3690,sub_5e3690,154,1,2,unrecovered,,,2,exact,exact,"int (__stdcall sub_5E3690)(LPCSTR lpString, int x, int y)"
 P3,1221,0x005E3730,sub_5e3730,59,1,2,unrecovered,,,2,exact,exact,"int (__stdcall sub_5E3730)(LPCSTR lpString, int, int y, int)"
 P3,1221,0x005E3770,sub_5e3770,57,1,2,unrecovered,,,2,exact,exact,"int (__stdcall sub_5E3770)(LPCSTR lpString, int)"

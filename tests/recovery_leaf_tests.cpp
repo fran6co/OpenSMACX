@@ -2474,6 +2474,85 @@ void test_leaf_recoveries() {
                                       spread) == 1.0f);
     }
 
+    // --- two-link chain, and the zero guard on a DIFFERENT field ---
+    {
+        uint8_t object[0x600 + 32] = {};
+        uint8_t middle[16] = {};
+        uint8_t leaf[16] = {};
+        void *const self = object + 16;
+        auto put = [&](uint8_t *where, size_t offset, uint32_t value) {
+            std::memcpy(where + offset, &value, sizeof(value));
+        };
+        auto put_ptr = [&](uint8_t *where, size_t offset, const void *value) {
+            std::memcpy(where + offset, &value, sizeof(value));
+        };
+
+        put(object + 16, 0x8, 0);                 // guard clear -> 0
+        put_ptr(object + 16, 0xc, middle);
+        put_ptr(middle, 0x8, leaf);
+        put(leaf, 0x4, 0xDEADBEEF);
+        expect(leaf_005e3630_redirect(self, nullptr) == 0);
+
+        // The guard is field 8; the chase starts at field 0xc. Setting only
+        // the guard must make it follow the chain that was already there.
+        put(object + 16, 0x8, 1);
+        expect(leaf_005e3630_redirect(self, nullptr) == 0xDEADBEEF);
+
+        // --- field 0 as an index, with a SIGNED test ---
+        put(object + 16, 0x0, 5);
+        put(object + 16, 0xc, 111);
+        put(object + 16, 0x10, 1000);
+        expect(leaf_005e3650_redirect(self, nullptr) == 1005);
+
+        put(object + 16, 0x0, 0);
+        expect(leaf_005e3650_redirect(self, nullptr) == 1000);
+
+        // 0x80000000 is negative signed and huge unsigned: an unsigned test
+        // would take the other branch and return 1000 + 0x80000000.
+        put(object + 16, 0x0, 0x80000000U);
+        expect(leaf_005e3650_redirect(self, nullptr) == 111);
+        put(object + 16, 0x0, 0xFFFFFFFFU);       // -1
+        expect(leaf_005e3650_redirect(self, nullptr) == 111);
+
+        // --- clamp to 0..3, inclusive at BOTH ends ---
+        auto stored = [&](size_t offset) {
+            uint32_t value;
+            std::memcpy(&value, object + 16 + offset, sizeof(value));
+            return value;
+        };
+        for (int probe : {0, 1, 3}) {             // kept
+            put(object + 16, 0x51c, 0x5A5A5A5AU);
+            leaf_005e3660_redirect(self, nullptr, probe);
+            expect(stored(0x510) == static_cast<uint32_t>(probe));
+            expect(stored(0x514) == static_cast<uint32_t>(probe));
+            expect(stored(0x518) == static_cast<uint32_t>(probe));
+            expect(stored(0x51c) == 0);
+        }
+        for (int probe : {-1, 4, 100}) {          // clamped to zero
+            leaf_005e3660_redirect(self, nullptr, 7);
+            leaf_005e3660_redirect(self, nullptr, probe);
+            expect(stored(0x510) == 0);
+            expect(stored(0x514) == 0);
+            expect(stored(0x518) == 0);
+        }
+
+        // --- store, or refuse with 10 and touch nothing ---
+        put(object + 16, 0x38, 0x11223344U);
+        expect(leaf_004482f0_redirect(self, nullptr, 0) == 0xA);
+        expect(stored(0x38) == 0x11223344U);      // the refusal stores NOTHING
+        expect(leaf_004482f0_redirect(self, nullptr, 77) == 0);
+        expect(stored(0x38) == 77);
+
+        // --- clear one field, set a bit in another, constant in a third ---
+        put(object + 16, 0x0, 0xFFFFFFFFU);
+        put(object + 16, 0x4, 0xFFFFFFFFU);
+        put(object + 16, 0x8, 0xF0F0F0F0U);       // low bit clear
+        expect(leaf_004c8070_redirect(self, nullptr) == self);
+        expect(stored(0x0) == 0x24);
+        expect(stored(0x4) == 0);
+        expect(stored(0x8) == 0xF0F0F0F1U);       // ORed, not overwritten
+    }
+
     // --- round toward zero to a multiple ---
     //
     // The NEGATIVE cases are the assertion. `x / y * y` truncates toward zero,
