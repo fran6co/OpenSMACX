@@ -109,10 +109,25 @@
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
         "percent_of_lift_scope_bytes": 91.86
       },
+      "proven_recovered": {
+        "bytes": 6022,
+        "denominator": "recovered",
+        "functions": 49,
+        "meaning": "recovered bytes an oracle has executed against the original and found to agree",
+        "percent_of_recovered_bytes": 3.07
+      },
       "recovered": {
         "bytes": 196123,
         "functions": 2552,
         "percent_of_lift_scope_bytes": 8.14
+      },
+      "unproven_recovered": {
+        "bytes": 190101,
+        "denominator": "recovered",
+        "direction": "must go down",
+        "functions": 2503,
+        "meaning": "recovered bytes never executed against the original: declared complete, never demonstrated equivalent",
+        "percent_of_recovered_bytes": 96.93
       }
     },
     "total": 6000,

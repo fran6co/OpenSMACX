@@ -4,6 +4,20 @@
 #include "runtime_oracle.h"
 #include "scroll.h"
 
+// What this oracle PROVES: each function below is executed here in its
+// ORIGINAL form, at its canonical address inside the hybrid process, and
+// compared against the recovered implementation. These markers are the
+// input to `unproven_recovered` in docs/recovery/summary.json; see
+// tools/export_proven_functions.py for what does and does not count.
+//
+// PROVEN-AGAINST-ORIGINAL: 0x00605370  ?close@Scroll@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x006059B0  ?set_range@Scroll@@QAEXHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00605A50  ?set_bevel_thickness@Scroll@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00605A90  ?set_bevel_upper@Scroll@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00605AD0  ?set_bevel_lower@Scroll@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00606EA0  ?set_thumb_rect@Scroll@@QAEXXZ
+
+
 namespace {
 
 constexpr size_t VtableEntries = 0xFC / sizeof(uintptr_t);

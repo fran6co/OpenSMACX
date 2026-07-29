@@ -19,6 +19,29 @@ from idb.idapython import IDAPython
 import recovery_metrics
 
 
+PROVEN_FUNCTIONS_CSV = (
+    Path(__file__).resolve().parent.parent / "docs" / "recovery" / "proven.csv")
+
+
+def load_proven_addresses(path=None) -> set:
+    """Which recovered functions an oracle has run against the original.
+
+    A COMMITTED catalogue, not a build artefact: `recovery_metrics` is
+    arithmetic over the repository and must stay runnable without Wine, an IDB
+    or the game. `tools/export_proven_functions.py` regenerates it and
+    `tools/test_export_proven_functions.py` fails when it is stale.
+
+    A missing file yields an empty set, so the published figure reads 100%
+    UNPROVEN rather than 100% proven. The safe default for an unknown is "not
+    demonstrated".
+    """
+    path = PROVEN_FUNCTIONS_CSV if path is None else path
+    if not path.is_file():
+        return set()
+    with path.open(newline="") as handle:
+        return {int(row["address"], 16) for row in csv.DictReader(handle)}
+
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_IDB = (
     REPO_ROOT / ".opensmacx" / "analysis" /
@@ -495,7 +518,8 @@ def export_inventory(args):
                                        for function in functions),
                 "with_comments": sum(bool(function["comments"])
                                      for function in functions),
-                "bytes": recovery_metrics.bytes_block(functions),
+                "bytes": recovery_metrics.bytes_block(
+                    functions, load_proven_addresses()),
             },
             "source_annotations": {
                 "annotations": sum(len(items) for items in source_annotations.values()),

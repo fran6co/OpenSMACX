@@ -13,6 +13,15 @@
 #include "graphicwin.h"
 #include "runtime_oracle.h"
 
+// What this oracle PROVES: each function below is executed here in its
+// ORIGINAL form, at its canonical address inside the hybrid process, and
+// compared against the recovered implementation. These markers are the
+// input to `unproven_recovered` in docs/recovery/summary.json; see
+// tools/export_proven_functions.py for what does and does not count.
+//
+// PROVEN-AGAINST-ORIGINAL: 0x005D4E40  ?close@GraphicWin@@QAEXXZ
+
+
 namespace {
 
 using GraphicWinFixture = runtime_oracle::Fixture<GraphicWin>;
