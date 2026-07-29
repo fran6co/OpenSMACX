@@ -73,12 +73,19 @@ for source in lifted_oracle.cpp lifted_oracle_main.cpp; do
         "$ROOT/tools/$source" -o "$OUT/${source%.cpp}.o"
 done
 
-# Everything the lift produced except its own main() and its dispatch object,
-# which the freshly compiled copy above replaces.
+# Everything the lift produced except its own main(), its dispatch object and
+# its CRT object - all three are compiled fresh above and linked explicitly
+# below, so leaving them in the shard list defines each of them twice.
+#
+# lifted_crt.cpp.o was missing from this list. It only breaks once the lifted
+# image has been built with a CRT object present, which is why the script
+# worked for a long time and then stopped: "multiple definition of
+# opensmacx_crt_dispatch" with the second definition pointing at the file the
+# script itself had just compiled.
 SHARDS=""
 for object in "$LIFTED"/lifted_*.cpp.o; do
     case "$object" in
-        *lifted_main.cpp.o|*lifted_dispatch.cpp.o) continue ;;
+        *lifted_main.cpp.o|*lifted_dispatch.cpp.o|*lifted_crt.cpp.o) continue ;;
     esac
     SHARDS="$SHARDS $object"
 done

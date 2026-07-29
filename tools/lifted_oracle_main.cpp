@@ -690,9 +690,34 @@ int main(int argc, char **argv) {
             default:
                 if (best == OracleInconclusiveOutOfSpan) tally.out_of_span++;
                 else tally.inconclusive++;
-                std::snprintf(detail, sizeof detail, "%s code %#lx at %#010x after %u steps",
-                              oracle_verdict_name(best), (unsigned long)worst.fault_code,
-                              unsigned(worst.fault_address), unsigned(worst.original_steps));
+                // The DATA address is reported beside the faulting EIP.
+                // Without it, an access violation says only where execution
+                // was, and "the original jumped somewhere wild" and "the
+                // original dereferenced a seeded pointer" are the same line -
+                // which are opposite problems with opposite fixes. Seeding
+                // work needs to know WHICH pointer to make valid, and that is
+                // the address named here.
+                //
+                // Gated on fault_has_data, NOT on fault_data != 0. A null
+                // dereference names address 0, and 0x004031a0 - which faults
+                // reading 0x5c, a field off a null object - would otherwise
+                // print as though the record carried no address at all.
+                if (worst.fault_has_data)
+                    std::snprintf(detail, sizeof detail,
+                                  "%s code %#lx at %#010x accessing 0x%08x "
+                                  "after %u steps",
+                                  oracle_verdict_name(best),
+                                  (unsigned long)worst.fault_code,
+                                  unsigned(worst.fault_address),
+                                  unsigned(worst.fault_data),
+                                  unsigned(worst.original_steps));
+                else
+                    std::snprintf(detail, sizeof detail,
+                                  "%s code %#lx at %#010x after %u steps",
+                                  oracle_verdict_name(best),
+                                  (unsigned long)worst.fault_code,
+                                  unsigned(worst.fault_address),
+                                  unsigned(worst.original_steps));
                 break;
         }
         if (report) {
