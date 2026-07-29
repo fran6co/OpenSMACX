@@ -1,4 +1,5 @@
 #include "../src/stdafx.h"
+#include <limits>
 #include "../src/alphanet.h"
 #include "../src/autosound.h"
 #include "../src/basepop.h"
@@ -2551,6 +2552,90 @@ void test_leaf_recoveries() {
         expect(stored(0x0) == 0x24);
         expect(stored(0x4) == 0);
         expect(stored(0x8) == 0xF0F0F0F1U);       // ORed, not overwritten
+    }
+
+    // --- 3x3 matrix arithmetic: NINE elements, not three ---
+    //
+    // The nested loops in the originals never reset their pointer, so they
+    // walk nine consecutive floats. A body that did three would leave the
+    // last six untouched, which is why every element here is distinct and
+    // the elements past the ninth are checked to be UNTOUCHED.
+    {
+        float matrix[12];
+        float other[12];
+        for (int i = 0; i < 12; ++i) {
+            matrix[i] = static_cast<float>(i + 1);          // 1..12
+            other[i] = static_cast<float>((i + 1) * 16);    // 16..192
+        }
+        leaf_006347c0_redirect(matrix, nullptr, other);
+        for (int i = 0; i < 9; ++i) {
+            expect(matrix[i] == static_cast<float>((i + 1) + (i + 1) * 16));
+        }
+        for (int i = 9; i < 12; ++i) {
+            expect(matrix[i] == static_cast<float>(i + 1));  // past the end
+        }
+
+        for (int i = 0; i < 12; ++i) { matrix[i] = static_cast<float>(i + 1); }
+        leaf_006348f0_redirect(matrix, nullptr, other);
+        for (int i = 0; i < 9; ++i) {
+            // this - other, which is negative here: the other order would
+            // give the same magnitude and the wrong sign.
+            expect(matrix[i] == static_cast<float>((i + 1) - (i + 1) * 16));
+        }
+        for (int i = 9; i < 12; ++i) {
+            expect(matrix[i] == static_cast<float>(i + 1));
+        }
+
+        for (int i = 0; i < 12; ++i) { matrix[i] = static_cast<float>(i + 1); }
+        leaf_006348c0_redirect(matrix, nullptr, 0.5f);
+        for (int i = 0; i < 9; ++i) {
+            expect(matrix[i] == static_cast<float>(i + 1) * 0.5f);
+        }
+        for (int i = 9; i < 12; ++i) {
+            expect(matrix[i] == static_cast<float>(i + 1));
+        }
+    }
+
+    // --- vector equality, including the NaN the x87 flags call equal ---
+    {
+        float mine[3] = {1.0f, 2.0f, 3.0f};
+        float same[3] = {1.0f, 2.0f, 3.0f};
+        expect(leaf_006344e0_redirect(mine, nullptr, same));
+
+        // Each component in turn, so a body checking only the first would
+        // pass the case above and fail here.
+        for (int index = 0; index < 3; ++index) {
+            float differs[3] = {1.0f, 2.0f, 3.0f};
+            differs[index] = 99.0f;
+            expect(!leaf_006344e0_redirect(mine, nullptr, differs));
+        }
+
+        // `test ah,0x40` reads C3, which x87 sets for equal OR UNORDERED, so
+        // the original answers TRUE here. `a == b` in C++ answers false, and
+        // that is the whole reason the body is written as "neither below nor
+        // above" instead.
+        const float quiet_nan = std::numeric_limits<float>::quiet_NaN();
+        float with_nan[3] = {quiet_nan, 2.0f, 3.0f};
+        expect(leaf_006344e0_redirect(mine, nullptr, with_nan));
+        expect(leaf_006344e0_redirect(with_nan, nullptr, mine));
+    }
+
+    // --- vector length ---
+    {
+        const float unit[3] = {3.0f, 0.0f, 4.0f};       // 9 + 16 = 25
+        expect(leaf_006281e0_redirect(unit) == 5.0f);
+        const float zero[3] = {0.0f, 0.0f, 0.0f};
+        expect(leaf_006281e0_redirect(zero) == 0.0f);
+        // Negative components must square away, not cancel.
+        const float signs[3] = {-3.0f, 0.0f, -4.0f};
+        expect(leaf_006281e0_redirect(signs) == 5.0f);
+        // The components are NOT interchangeable in a body that dropped one:
+        // each of these has a single non-zero axis.
+        for (int axis = 0; axis < 3; ++axis) {
+            float single[3] = {0.0f, 0.0f, 0.0f};
+            single[axis] = 6.0f;
+            expect(leaf_006281e0_redirect(single) == 6.0f);
+        }
     }
 
     // --- round toward zero to a multiple ---

@@ -22,6 +22,8 @@
  */
 
 #include "stdafx.h"
+
+#include <cmath>
 #include "leaf_recoveries.h"
 
 /*
@@ -259,4 +261,133 @@ void *__fastcall leaf_004c8070_redirect(void *self, void *) {
     *reinterpret_cast<uint32_t *>(bytes + 0x8) |= 1;
     *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x24;
     return self;
+}
+
+/*
+Purpose: Add another 3x3 float matrix into this one, element by element.
+
+             mov edx,eax / mov ebx,3 / mov esi,ecx / mov edi,3 / sub esi,eax
+             fld [esi+edx] / fadd [edx] / add edx,4 / dec edi
+             fstp [edx-4] / jne inner / dec ebx / jne outer / ret 4
+
+         ESI is the BYTE DELTA between the two matrices, computed once, and
+         EDX walks forward without being reset between outer iterations - so
+         the two nested threes are nine consecutive floats, not three rows of
+         three restarted each time.
+
+Original Offset: 006347C0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_006347c0_redirect(void *self, void *, const float *other) {
+    float *const mine = static_cast<float *>(self);
+    for (int index = 0; index < 9; ++index) {
+        mine[index] = other[index] + mine[index];
+    }
+}
+
+/*
+Purpose: Subtract another 3x3 float matrix from this one.
+
+             fld [edx] / fsub [esi+edx] / ... / ret 4
+
+         The same nine-element walk as 006347C0, but loading THIS first: the
+         result is this - other, and subtraction does not commute.
+
+Original Offset: 006348F0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_006348f0_redirect(void *self, void *, const float *other) {
+    float *const mine = static_cast<float *>(self);
+    for (int index = 0; index < 9; ++index) {
+        mine[index] = mine[index] - other[index];
+    }
+}
+
+/*
+Purpose: Scale a 3x3 float matrix by a scalar.
+
+             mov edi,3 / mov esi,3 / fld [esp+0xc] / fmul [edx] / add edx,4
+             dec esi / fstp [edx-4] / jne inner / dec edi / jne outer / ret 4
+
+         The scalar sits at [esp+0xc] because ESI and EDI were pushed first;
+         before those pushes it is the single argument at [esp+4]. It is
+         re-loaded inside the inner loop, which changes nothing - it is the
+         same float32 every time.
+
+Original Offset: 006348C0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_006348c0_redirect(void *self, void *, float scale) {
+    float *const mine = static_cast<float *>(self);
+    for (int index = 0; index < 9; ++index) {
+        mine[index] = scale * mine[index];
+    }
+}
+
+/*
+Purpose: Are two three-component float vectors equal?
+
+             fld [ecx] / fcomp [edx] / fnstsw ax / test ah,0x40 / je unequal
+             ... x3 ... / mov al,1 / ret 4     unequal: xor al,al / ret 4
+
+         `test ah,0x40` reads C3, and x87 sets C3 for EQUAL **or UNORDERED**.
+         So a NaN in either vector makes this report equal, which `a == b`
+         in C++ does not. The condition written out is "neither below nor
+         above", which is false for an ordered mismatch and true for NaN -
+         exactly what the flags say.
+
+         The original sets AL alone and leaves the rest of EAX untouched;
+         returning `bool` matches, because a caller of a byte-returning
+         function reads AL.
+
+Original Offset: 006344E0
+Return Value: true when every component matches, or is unordered
+Status: Complete
+*/
+bool __fastcall leaf_006344e0_redirect(void *self, void *, const float *other) {
+    const float *const mine = static_cast<const float *>(self);
+    for (int index = 0; index < 3; ++index) {
+        if (mine[index] < other[index] || mine[index] > other[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
+Purpose: Length of a three-component float vector.
+
+             fld [eax] / ... / fmul / fmul / fmul / faddp st(2) / faddp st(1)
+             fsqrt / fstp st(1) / ret
+
+         The sum is (y*y + z*z) + x*x - components 1 and 2 first, then 0 - and
+         it stays in x87 EXTENDED precision all the way into the `fsqrt`. That
+         is not a detail: rounding the sum to float before taking the root
+         would be a different function. The C++ below compiles to the same
+         association with an inline `fsqrt`, checked with objdump.
+
+         The original also writes the caller's argument slot as scratch. That
+         is its business - __cdecl, the caller owns and re-pushes it - and
+         reproducing it would be copying an implementation detail, not the
+         function.
+
+Original Offset: 006281E0
+Return Value: the length, in ST(0)
+Status: Complete
+*/
+float __cdecl leaf_006281e0_redirect(const float *vector) {
+    // `long double` here is not decoration. Written with float operands this
+    // compiles, UNDER THIS TREE'S FLAGS, to `fstps` and a tail call to
+    // `sqrtf` - the sum rounded to float32 BEFORE the root, which is a
+    // different function in the last bit. In long double it becomes an inline
+    // `fsqrt` on the extended sum, which is what the original does. Checked
+    // with objdump under the real compile command: a plain `-O2` on its own
+    // produces the inline form and would have hidden the difference.
+    const long double sum = static_cast<long double>(vector[1]) * vector[1]
+                          + static_cast<long double>(vector[2]) * vector[2]
+                          + static_cast<long double>(vector[0]) * vector[0];
+    return static_cast<float>(std::sqrt(sum));
 }
