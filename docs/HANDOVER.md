@@ -808,8 +808,38 @@ nothing and faults on the first step. In-game state has MORE heap pointers -
 82,878 address-shaped words against 56,431 - so it faults more. The prediction
 was written down before that sweep and the sweep matched it.
 
-So coherent state is still what the wall needs, and **a dump cannot deliver it
-through a single flat span.** The requirement really is multi-region guest
+**Then separate the two properties, and it works.** A dump supplies real
+CONTENTS; the arena supplies REACHABILITY; nothing requires taking them from
+the same place. `--state` now rewrites only the words that cannot work - those
+naming Wine's low heap, or anything above the span - onto arena objects, and
+leaves real integers, real floats and real in-span pointers alone. 58,046 words
+in the in-game dump qualify, exactly the 14,862 + 43,184 the table above
+predicts.
+
+| | INCONCLUSIVE-original-fault | agreed | full-strength |
+| --- | --- | --- | --- |
+| synthetic seeds | 1,585,768 B / 2,355 fn | 191,292 B | 42,209 B / 768 fn |
+| real in-game state | 1,612,851 B / 2,684 fn | 189,503 B | 34,602 B / 653 fn |
+| **real contents + remapped pointers** | **1,457,178 B / 2,552 fn** | **206,334 B** | 40,191 B / 674 fn |
+
+**-128,590 B, three times the coherent arena and the largest single move in
+this document**, with `agreed` up 15,042 B. It costs 94 full-strength functions,
+which is the honest price: they move to `seeds-incomplete`, still agreeing on
+fewer cases, rather than losing evidence. Regressions are 1,656 B across 92
+functions against that.
+
+The `0x20000000` upper bound on the remap is load-bearing. `0x3F800000` is
+`1.0f` and the common float patterns sit above it; rewriting those would corrupt
+the very contents the dump exists to supply.
+
+One property to know about: a remapped word that was a FUNCTION pointer sends
+control into the arena, which shows up as `at 0x009df048 accessing 0x009df048` -
+EIP equal to the fault address. Those were DLL addresses that would have faulted
+unmapped anyway, so it is a wash, but a fault whose EIP is an arena address
+means this and not a lowering bug.
+
+So coherent state is still what the wall needs, and **a dump alone cannot
+deliver it through a single flat span.** The requirement really is multi-region guest
 memory: this document asserted that two commits before this one on no evidence,
 retracted it on finding 572 static objects inside the span, and it is now
 established by measurement. The 572 are real; they are just a minority of what

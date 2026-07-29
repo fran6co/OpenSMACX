@@ -444,6 +444,10 @@ int oracle_bootstrap(int argc, char **argv, int *exit_code) {
 // written into the tree.
 // ---------------------------------------------------------------------------
 
+static uint32_t mix(uint32_t x);   // defined with the seeders below
+constexpr uint32_t OracleObjectSlot = 0x1000U;
+constexpr uint32_t OracleObjectThis = 0x48U;
+
 // Overlay REAL state, dumped out of a running hybrid, onto the loaded image.
 //
 // .data AND .bss ONLY - 0x00682000..0x009C21F8 - and the restriction is the
@@ -480,6 +484,44 @@ static const char *overlay_state(const char *path, unsigned char *image) {
     if (read != dump.size()) return "--state file is short";
     std::memcpy(image + (kLow - OracleImageBase),
                 dump.data() + (kLow - OracleImageBase), kHigh - kLow);
+    // REMAP THE POINTERS THAT LEAVE THE SPAN, and keep everything else.
+    //
+    // Real state scored WORSE than synthetic seeds, and the reason was
+    // measured: only 26-30% of the address-shaped words in a dump land inside
+    // 0x00400000..0x00A0C000. The rest name heap this harness does not have, so
+    // every one of them faults on the first dereference - where a synthetic
+    // seed pointed into the arena and at least landed somewhere.
+    //
+    // The two properties are separable. A dump supplies real CONTENTS, which
+    // nine synthetic seeds could not fabricate; the arena supplies
+    // REACHABILITY. So take the dump and rewrite only the words that cannot
+    // work: those naming Wine's low heap, or anything above the span. Real
+    // integers, real floats and real in-span pointers are all left alone.
+    //
+    // The upper bound is 0x20000000 and it is doing real work: 0x3F800000 is
+    // 1.0f, and the classic float bit patterns live above it. Rewriting those
+    // would corrupt exactly the real contents this is meant to preserve. It is
+    // also why the first measurement of this, which counted anything
+    // pointer-shaped, said 88% and was too crude to quote.
+    constexpr uint32_t kHeapLow = 0x00010000U, kHeapHigh = 0x20000000U;
+    uint32_t remapped = 0;
+    for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
+        uint32_t w;
+        std::memcpy(&w, image + (a - OracleImageBase), 4);
+        const bool below = w >= kHeapLow && w < OracleImageBase;
+        const bool above = w >= OracleImageBase + OracleImageSize && w < kHeapHigh;
+        if (!below && !above) continue;
+        // Spread them over the arena's objects rather than collapsing every
+        // heap pointer onto one, so two globals that named different objects
+        // still name different objects.
+        const uint32_t slot = mix(w) % (OracleArenaSize / OracleObjectSlot);
+        const uint32_t object = OracleArenaBase + slot * OracleObjectSlot + 0x48U;
+        std::memcpy(image + (a - OracleImageBase), &object, 4);
+        ++remapped;
+    }
+    std::printf("state overlay: remapped %u out-of-span pointers\n",
+                unsigned(remapped));
+
     uint32_t live = 0;
     for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
         uint32_t w;
@@ -625,8 +667,6 @@ const char *oracle_register_name(int index) {
 // class: {0, 0x48, 0xa60}. With them, edx=0x48 and ecx=0xa60, so the two loads
 // above land at slot+0x10c and slot+0xb2c - inside the slot, which is why the
 // slot is 4 KB and not smaller.
-constexpr uint32_t OracleObjectSlot = 0x1000U;
-constexpr uint32_t OracleObjectThis = 0x48U;
 constexpr uint32_t OracleSharedVbtable =
     OracleArenaBase + OracleArenaSize - 0x80U;   // 16 words, with room to spare
 
