@@ -31,6 +31,8 @@
 #include "graphicwin.h"
 #include "basebutton.h"
 #include "dialogs.h"
+#include "listbox.h"
+#include "dialog.h"
 
 #include <cstring>
 
@@ -1196,3 +1198,4 @@ void __fastcall pick_tech_close_redirect(void *self, void *) {
     store32(self, 0xA3C, 0);
     graphic_win_close_redirect(reinterpret_cast<GraphicWin *>(self), nullptr);
 }
+

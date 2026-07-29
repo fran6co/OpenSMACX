@@ -2416,6 +2416,27 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
 // function: a lambda will not convert to that calling convention.
 void __thiscall leaf_stub_sound_set_type(Wave *, uint32_t) { ; }
 
+// Recorders for the two destructor chains. Every destructor they reach funnels
+// through GraphicWin::close's two subobject seams, so logging the pointer each
+// one is handed is enough to say WHICH subobject each call got - which is the
+// entire content of those two functions.
+void *g_chain_targets[16];
+int g_chain_count;
+void __thiscall leaf_chain_record(void *target) {
+    if (g_chain_count < 16) {
+        g_chain_targets[g_chain_count] = target;
+    }
+    ++g_chain_count;
+}
+bool leaf_chain_saw(const void *target) {
+    for (int index = 0; index < g_chain_count && index < 16; ++index) {
+        if (g_chain_targets[index] == target) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Recorder for sub_59d230's only call. Kept separate from the Dialogs::item
 // fixture's own recorders so this test stands on its own.
 Dialog *g_leaf_item_dialog;
