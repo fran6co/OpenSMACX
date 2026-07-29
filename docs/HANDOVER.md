@@ -376,7 +376,7 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 21 candidates, 796 bytes.**
+**Queue as of 2026-07-29: 17 candidates, 620 bytes.**
 
 The first five tightenings were about whether a body can be TESTED in
 isolation. The sixth is about whether it can be WRITTEN at all - a

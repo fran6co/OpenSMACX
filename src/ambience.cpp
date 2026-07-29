@@ -531,3 +531,127 @@ void GAmbience::basewin_hide() {
 void __fastcall g_ambience_basewin_hide_redirect(GAmbience *self, void *) {
     self->basewin_hide();
 }
+
+const uint32_t FactionAmbienceVtable = 0x0066C0F8;
+const uint32_t MAmbienceVtable = 0x0066BE28;
+const uint32_t SAmbienceVtable = 0x0066BB58;
+const uint32_t GAmbienceVtable = 0x0066BF90;
+
+/*
+Purpose: Run the shared Ambience constructor, publish this variant's vtable,
+         and zero the fields this variant owns.
+
+             push esi / mov esi,ecx / call ??0Ambience / xor eax,eax
+             mov [esi],0x66c0f8 / mov [esi+0x58],eax ... [esi+0x64],eax
+             mov byte [esi+0x6c],al / mov byte [esi+0x6d],al
+             mov [esi+0x68],eax / mov eax,esi / pop esi / ret
+
+         The four variants share this shape and differ only in the vtable and
+         in how far the tail runs: FactionAmbience stops at 0x68, MAmbience and
+         GAmbience add 0x70, SAmbience adds 0x70 and 0x74. That tail is what
+         evidences each variant's extent, and it is why the four bodies are
+         written out rather than routed through one helper - sharing a body
+         would lose the mutation signal that keeps them distinct, exactly as
+         the note on 0x004C75B0 in this file already warns.
+
+         The base constructor runs FIRST and publishes the base vtable; the
+         store at [this] then overwrites it. Ordering them the other way would
+         leave the base's vtable in place.
+
+         0x6c and 0x6d are BYTES. 0x6e and 0x6f are not written, so whatever
+         the storage held survives there.
+
+Original Offset: 004471F0
+Return Value: `this`
+Status: Complete
+*/
+void FactionAmbience::construct() {
+    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+    *reinterpret_cast<volatile uint32_t *>(this) = FactionAmbienceVtable;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_6C_ = 0;
+    field_6D_ = 0;
+    field_68_ = 0;
+}
+
+FactionAmbience *__fastcall faction_ambience_construct_redirect(
+        FactionAmbience *self, void *) {
+    self->construct();
+    return self;
+}
+
+/*
+Purpose: As 004471F0, with the MAmbience vtable and one more field.
+Original Offset: 00447310
+Return Value: `this`
+Status: Complete
+*/
+void MAmbience::construct() {
+    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+    *reinterpret_cast<volatile uint32_t *>(this) = MAmbienceVtable;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_6C_ = 0;
+    field_6D_ = 0;
+    field_68_ = 0;
+    field_70_ = 0;
+}
+
+MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
+    self->construct();
+    return self;
+}
+
+/*
+Purpose: As 004471F0, with the SAmbience vtable and two more fields.
+Original Offset: 00447850
+Return Value: `this`
+Status: Complete
+*/
+void SAmbience::construct() {
+    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+    *reinterpret_cast<volatile uint32_t *>(this) = SAmbienceVtable;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_6C_ = 0;
+    field_6D_ = 0;
+    field_68_ = 0;
+    field_70_ = 0;
+    field_74_ = 0;
+}
+
+SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
+    self->construct();
+    return self;
+}
+
+/*
+Purpose: As 004471F0, with the GAmbience vtable and one more field.
+Original Offset: 00447B90
+Return Value: `this`
+Status: Complete
+*/
+void GAmbience::construct() {
+    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+    *reinterpret_cast<volatile uint32_t *>(this) = GAmbienceVtable;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_6C_ = 0;
+    field_6D_ = 0;
+    field_68_ = 0;
+    field_70_ = 0;
+}
+
+GAmbience *__fastcall g_ambience_construct_redirect(GAmbience *self, void *) {
+    self->construct();
+    return self;
+}
