@@ -514,7 +514,39 @@ int main(int argc, char **argv) {
     long failures_printed = 0;
     double started = double(GetTickCount());
 
+    // THE PLAN IS CHECKED FOR CORRUPTION AFTER EVERY FUNCTION.
+    //
+    // A sweep once emitted 3,928 rows whose address was zero, contiguously from
+    // one point to the end, and reported "finished, 0 hang(s) and 0 host
+    // death(s)". The parser was ruled out - the longest plan line is 123 bytes
+    // against a 1024-byte buffer, and a parse bug would scatter the damage
+    // rather than run it to the end of the file. What is left is that the GUEST
+    // wrote over the plan: lifted_oracle_run.sh already warns that a seeded
+    // pointer can land on the host's stack and overwrite the registers the
+    // runner saved there, and a std::vector's heap buffer is no better
+    // protected than a saved register.
+    //
+    // That hypothesis was never confirmed, so this confirms or kills it, and
+    // does it for every future run rather than one experiment. If the harness's
+    // own memory can be rewritten by the code under test, then EVERY figure
+    // this tool has ever published is suspect, which is worth one comparison
+    // per function to rule out.
+    std::vector<uint32_t> plan_addresses;
+    plan_addresses.reserve(plan.size());
+    for (const PlanEntry &e : plan) plan_addresses.push_back(e.address);
+
     for (size_t index = 0; index < plan.size(); ++index) {
+        if (plan[index].address != plan_addresses[index]) {
+            std::fprintf(stderr,
+                         "oracle: PLAN CORRUPTED at entry %zu: address was "
+                         "%#010x, now %#010x. The harness's own memory has been "
+                         "written by something else - every figure from this "
+                         "run is void.\n",
+                         index, unsigned(plan_addresses[index]),
+                         unsigned(plan[index].address));
+            std::fflush(nullptr);
+            return 3;
+        }
         const PlanEntry &entry = plan[index];
         oracle_undefined_exit_flags = undefined_exit_flags(entry.flags);
         const bool blocked = statically_blocked(entry.flags);
