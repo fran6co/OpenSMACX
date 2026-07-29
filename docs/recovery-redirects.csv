@@ -315,6 +315,7 @@ address,kind
 0x004455E0,jump
 0x004456A0,jump
 0x004456B0,jump
+0x004471F0,jump
 0x00447220,jump
 0x00447230,jump
 0x00447240,jump
@@ -330,11 +331,14 @@ address,kind
 0x004472E0,jump
 0x004472F0,jump
 0x00447300,jump
+0x00447310,jump
 0x00447690,jump
 0x004476A0,jump
 0x004476B0,jump
 0x004476E0,jump
+0x00447850,jump
 0x00447AB0,jump
+0x00447B90,jump
 0x00447BE0,jump
 0x00447BF0,jump
 0x00447C60,jump

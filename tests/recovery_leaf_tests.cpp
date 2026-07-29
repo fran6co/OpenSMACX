@@ -2411,6 +2411,11 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     return 0x5A5A1234;
 }
 
+// Ambience::construct reaches Sound::set_type through a seam that still
+// points into the original image. A __thiscall no-op has to be a real
+// function: a lambda will not convert to that calling convention.
+void __thiscall leaf_stub_sound_set_type(Wave *, uint32_t) { ; }
+
 void test_leaf_recoveries() {
     // --- float vector arithmetic ---
     //
@@ -2907,6 +2912,103 @@ void test_leaf_recoveries() {
         // Focus here, parent without it: no.
         focus(up, false); set_parent(up, nullptr);
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
+    }
+
+    // --- the four Ambience constructors ---
+    //
+    // They share a shape and differ only in the vtable and in how far the
+    // tail runs, so they are checked against each other as much as against
+    // themselves: each is seeded identically, and the assertions name the
+    // exact last field it writes and the first it does NOT.
+    {
+        struct Variant {
+            void *(*run)(void *);
+            uint32_t vtable;
+            size_t last_written;   // inclusive, dword offsets past 0x68
+        };
+        // Ambience::construct reaches Sound::set_type through a rebindable
+        // seam that still points at the original image, which is not mapped
+        // here - so it is bound to a no-op for the duration. Without this the
+        // suite faults executing 0x004c61e0 rather than failing an assertion.
+        func_sound_set_type *const saved_set_type = SoundSetType;
+        SoundSetType = &leaf_stub_sound_set_type;
+
+        // 0 means "the tail stops at 0x68".
+        const Variant variants[] = {
+            {[](void *o) -> void * {
+                 return faction_ambience_construct_redirect(
+                     reinterpret_cast<FactionAmbience *>(o), nullptr); },
+             FactionAmbienceVtable, 0},
+            {[](void *o) -> void * {
+                 return m_ambience_construct_redirect(
+                     reinterpret_cast<MAmbience *>(o), nullptr); },
+             MAmbienceVtable, 0x70},
+            {[](void *o) -> void * {
+                 return s_ambience_construct_redirect(
+                     reinterpret_cast<SAmbience *>(o), nullptr); },
+             SAmbienceVtable, 0x74},
+            {[](void *o) -> void * {
+                 return g_ambience_construct_redirect(
+                     reinterpret_cast<GAmbience *>(o), nullptr); },
+             GAmbienceVtable, 0x70},
+        };
+        for (const Variant &variant : variants) {
+            static uint8_t object[0x100];
+            // The base region is ZEROED and only the derived fields seeded:
+            // Ambience::construct runs real work over [0, 0x58) and is not
+            // safe on garbage, while its own documentation establishes it
+            // writes nothing at or above 0x58 - which is exactly the boundary
+            // these four constructors start at.
+            std::memset(object, 0, 0x58);
+            std::memset(object + 0x58, 0x11, sizeof(object) - 0x58);
+            auto got = [&](size_t offset) {
+                uint32_t value;
+                std::memcpy(&value, object + offset, sizeof(value));
+                return value;
+            };
+
+            expect(variant.run(object) == object);
+
+            // The variant's own vtable, published AFTER the base constructor
+            // and therefore overwriting whatever it left.
+            expect(got(0x0) == variant.vtable);
+            // The base constructor ran. Its vtable is gone - overwritten just
+            // above - so it is pinned by the 1000ms default it puts at 0x38
+            // instead. Without this, dropping the base call entirely passes:
+            // everything else asserted here lives at 0x58 and beyond, which
+            // the base never touches.
+            expect(got(0x38) == 0x3E8U);
+            expect(got(0x58) == 0U);
+            expect(got(0x5C) == 0U);
+            expect(got(0x60) == 0U);
+            expect(got(0x64) == 0U);
+            expect(got(0x68) == 0U);
+            // 0x6c and 0x6d are BYTES; 0x6e and 0x6f keep the seed, which a
+            // dword store at 0x6c would have wiped.
+            expect(object[0x6C] == 0x00);
+            expect(object[0x6D] == 0x00);
+            expect(object[0x6E] == 0x11);
+            expect(object[0x6F] == 0x11);
+            // The tail, and the first dword past it.
+            if (variant.last_written >= 0x70) {
+                expect(got(0x70) == 0U);
+            } else {
+                expect(got(0x70) == 0x11111111U);
+            }
+            if (variant.last_written >= 0x74) {
+                expect(got(0x74) == 0U);
+            } else {
+                expect(got(0x74) == 0x11111111U);
+            }
+            expect(got(0x78) == 0x11111111U);
+        }
+        SoundSetType = saved_set_type;
+
+        // All four vtables differ; a copy-paste between them would show here.
+        expect(FactionAmbienceVtable != MAmbienceVtable);
+        expect(MAmbienceVtable != SAmbienceVtable);
+        expect(SAmbienceVtable != GAmbienceVtable);
+        expect(FactionAmbienceVtable != GAmbienceVtable);
     }
 
     // --- six field resets, then GraphicWin::close and Buffer::close ---

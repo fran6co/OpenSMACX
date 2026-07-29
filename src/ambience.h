@@ -47,6 +47,14 @@ class DLLEXPORT Ambience {
 Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *);
 void __fastcall ambience_dtor_redirect(Ambience *self, void *);
 
+// The four derived vtables. They are named constants rather than literals in
+// the bodies so the image addresses live in one place each, which is what
+// docs/recovery-binding-classifications.csv records them against.
+extern const uint32_t FactionAmbienceVtable;
+extern const uint32_t MAmbienceVtable;
+extern const uint32_t SAmbienceVtable;
+extern const uint32_t GAmbienceVtable;
+
 class DLLEXPORT FactionAmbience : Ambience {
  public:
   FactionAmbience() { ; }
@@ -68,6 +76,7 @@ class DLLEXPORT FactionAmbience : Ambience {
   void basewin_hide();
   void design_window_show();
   void design_window_hide();
+  void construct();
 
  private:
   uint32_t field_58_;
@@ -91,10 +100,53 @@ class DLLEXPORT UAmbience : Ambience {
   // siblings nothing evidences fields of its own.
 };
 
+// MAmbience and SAmbience are evidenced the same way FactionAmbience and
+// GAmbience are: by what their constructors write. Neither has any other
+// recovered method, so these fields and nothing beyond them are what the image
+// establishes - the same rule the file header sets out, applied to two more
+// variants rather than relaxed for them.
+class DLLEXPORT MAmbience : Ambience {
+ public:
+  MAmbience() { ; }
+  ~MAmbience() { ; }
+  void construct();
+
+ private:
+  uint32_t field_58_;
+  uint32_t field_5C_;
+  uint32_t field_60_;
+  uint32_t field_64_;
+  uint32_t field_68_;
+  uint8_t field_6C_;
+  uint8_t field_6D_;
+  uint8_t pad_6E_[2];
+  uint32_t field_70_;
+};
+
+class DLLEXPORT SAmbience : Ambience {
+ public:
+  SAmbience() { ; }
+  ~SAmbience() { ; }
+  void construct();
+
+ private:
+  uint32_t field_58_;
+  uint32_t field_5C_;
+  uint32_t field_60_;
+  uint32_t field_64_;
+  uint32_t field_68_;
+  uint8_t field_6C_;
+  uint8_t field_6D_;
+  uint8_t pad_6E_[2];
+  uint32_t field_70_;
+  uint32_t field_74_;
+};
+
 class DLLEXPORT GAmbience : Ambience {
  public:
   GAmbience() { ; }
   ~GAmbience() { ; }
+  void construct();
   void tech();
   void production();
   void popup1();
@@ -114,6 +166,11 @@ class DLLEXPORT GAmbience : Ambience {
   uint32_t field_70_;
 };
 
+FactionAmbience *__fastcall faction_ambience_construct_redirect(
+    FactionAmbience *self, void *);
+MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *);
+SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *);
+GAmbience *__fastcall g_ambience_construct_redirect(GAmbience *self, void *);
 void __fastcall faction_ambience_begin_redirect(FactionAmbience *self, void *);
 void __fastcall faction_ambience_tech_redirect(FactionAmbience *self, void *);
 void __fastcall faction_ambience_terraform_redirect(FactionAmbience *self, void *);
