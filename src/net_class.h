@@ -30,9 +30,12 @@ class DLLEXPORT Net {
   Net() { ; }
   ~Net() { ; }
   int poll_players(int);
+  char *get_player_name(uint32_t key);
 
  private:
   uint8_t unmapped_[0x780];
 };
 
 int __fastcall net_poll_players_redirect(Net *self, void *, int a1);
+char *__fastcall net_get_player_name_redirect(
+    Net *self, void *, uint32_t key);
