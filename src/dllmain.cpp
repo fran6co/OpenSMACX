@@ -90,6 +90,7 @@
 #include "atexit_thunks.h"
 #include "delegation_thunks.h"
 #include "field_accessors.h"
+#include "leaf_recoveries.h"
 #include "global_arith.h"
 #include "guarded_teardowns.h"
 #include "nullsub_thunks.h"
@@ -119,7 +120,7 @@ namespace {
 constexpr size_t PatchSize = 5;
 constexpr size_t SignatureSize = 16;
 constexpr size_t SignatureExtensionSize = 6;
-constexpr size_t RedirectCount = 2000;
+constexpr size_t RedirectCount = 2004;
 constexpr size_t CallRedirectCount = 2;
 
 struct RedirectState {
@@ -7565,6 +7566,11 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00559040,
         },
         {
+            0x00559210,
+            reinterpret_cast<uintptr_t>(&leaf_00559210_redirect),
+            OPENSMACX_SIGNATURE_00559210,
+        },
+        {
             0x00559230,
             reinterpret_cast<uintptr_t>(&construct_fontqueue_val2),
             OPENSMACX_SIGNATURE_00559230,
@@ -9385,6 +9391,16 @@ bool install_redirects() {
             OPENSMACX_SIGNATURE_00627670,
         },
         {
+            0x00628180,
+            reinterpret_cast<uintptr_t>(&leaf_00628180_redirect),
+            OPENSMACX_SIGNATURE_00628180,
+        },
+        {
+            0x006281B0,
+            reinterpret_cast<uintptr_t>(&leaf_006281b0_redirect),
+            OPENSMACX_SIGNATURE_006281B0,
+        },
+        {
             0x00629710,
             reinterpret_cast<uintptr_t>(&string_box_add_redirect),
             OPENSMACX_SIGNATURE_00629710,
@@ -10170,6 +10186,11 @@ bool install_redirects() {
             0x00628150,
             reinterpret_cast<uintptr_t>(&vector_add),
             OPENSMACX_SIGNATURE_00628150,
+        },
+        {
+            0x00634650,
+            reinterpret_cast<uintptr_t>(&leaf_00634650_redirect),
+            OPENSMACX_SIGNATURE_00634650,
         },
         {
             0x00634670,

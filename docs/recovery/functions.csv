@@ -3192,7 +3192,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005591A0,0x005591BA,26,.text,?say_tech@@YAXHH@Z,,0x005591A0-0x005591BA,game,frame;hidden;sp_ready;purged_ok,src/technology.cpp:40,Complete,?say_tech@@YAXHH@Z,,source_complete,,,,1,2
 0x005591C0,0x005591DD,29,.text,?bad_reg@@YAHH@Z,,0x005591C0-0x005591DD,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:397,Complete,?bad_reg@@YAHH@Z,,source_complete,,,,0,1
 0x005591E0,0x00559209,41,.text,?has_agenda@@YAHHHH@Z,"int (__cdecl ?has_agenda@@YAHHHH@Z)(int factionID, int factionIDWith, int agenda)",0x005591E0-0x00559209,game,frame;sp_ready;purged_ok,src/faction.cpp:418,Complete,,,source_complete,,,,0,1
-0x00559210,0x00559221,17,.text,sub_559210,,0x00559210-0x00559221,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
+0x00559210,0x00559221,17,.text,sub_559210,,0x00559210-0x00559221,game,frame;sp_ready;purged_ok,src/leaf_recoveries.cpp:126,Complete,,,source_complete,,,,0,1
 0x00559230,0x00559246,22,.text,??__Eg_FONTQUEUE_VAL2@@YAXXZ,,0x00559230-0x00559246,game,sp_ready;purged_ok,src/init_thunks.cpp:4240,Complete,,,source_complete,,,,2,0
 0x00559250,0x0055925A,10,.text,??__Fg_FONTQUEUE_VAL2@@YAXXZ,,0x00559250-0x0055925A,game,sp_ready;purged_ok,src/atexit_thunks.cpp:4035,Complete,,,source_complete,,,,0,0
 0x00559260,0x00559276,22,.text,??__Eg_FONTQUEUE_VAL1@@YAXXZ,,0x00559260-0x00559276,game,sp_ready;purged_ok,src/init_thunks.cpp:4251,Complete,,,source_complete,,,,2,0
@@ -5202,8 +5202,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00627F50,0x006280DF,399,.text,sub_627f50,,0x00627F50-0x006280DF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,6
 0x006280E0,0x0062814B,107,.text,sub_6280e0,,0x006280E0-0x0062814B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,14
 0x00628150,0x00628175,37,.text,sub_628150,,0x00628150-0x00628175,game,hidden;sp_ready;purged_ok,src/vector.cpp:217,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,17
-0x00628180,0x006281A5,37,.text,sub_628180,,0x00628180-0x006281A5,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
-0x006281B0,0x006281D5,37,.text,sub_6281b0,,0x006281B0-0x006281D5,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
+0x00628180,0x006281A5,37,.text,sub_628180,,0x00628180-0x006281A5,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:47,Complete,,,source_complete,,,,0,3
+0x006281B0,0x006281D5,37,.text,sub_6281b0,,0x006281B0-0x006281D5,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:73,Complete,,,source_complete,,,,0,5
 0x006281E0,0x00628217,55,.text,sub_6281e0,,0x006281E0-0x00628217,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00628220,0x0062828B,107,.text,sub_628220,,0x00628220-0x0062828B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,10
 0x00628290,0x006282D1,65,.text,sub_628290,,0x00628290-0x006282D1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -5391,7 +5391,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x006344E0,0x00634513,51,.text,sub_6344e0,,0x006344E0-0x00634513,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00634520,0x006345DD,189,.text,sub_634520,,0x00634520-0x006345DD,game,sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x006345E0,0x00634641,97,.text,sub_6345e0,,0x006345E0-0x00634641,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x00634650,0x0063466B,27,.text,sub_634650,,0x00634650-0x0063466B,game,sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00634650,0x0063466B,27,.text,sub_634650,,0x00634650-0x0063466B,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:101,Complete,,,source_complete,,,,0,0
 0x00634670,0x006346B1,65,.text,?scale@Vector@@QAEXAAVVector@@M@Z,"void (__thiscall ?scale@Vector@@QAEXAAVVector@@M@Z)(Vector* this, Vector*, float)",0x00634670-0x006346B1,game,hidden;sp_ready;purged_ok,src/vector.cpp:149,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,1
 0x006346C0,0x006346E4,36,.text,sub_6346c0,,0x006346C0-0x006346E4,game,sp_ready;purged_ok,src/field_accessors.cpp:525,Complete,,,source_complete,,,,0,0
 0x006346F0,0x00634712,34,.text,sub_6346f0,,0x006346F0-0x00634712,game,sp_ready;purged_ok,src/field_accessors.cpp:557,Complete,,,source_complete,,,,0,0

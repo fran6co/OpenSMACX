@@ -3,6 +3,7 @@
 #include "../src/autosound.h"
 #include "../src/basepop.h"
 #include "../src/field_accessors.h"
+#include "../src/leaf_recoveries.h"
 #include "../src/basebutton.h"
 #include "../src/buttongroup.h"
 #include "../src/console.h"
@@ -2407,6 +2408,84 @@ int __thiscall probe_base_pop_item(Dialog *dialog, char *text, int index) {
     g_base_pop_item_text = text;
     g_base_pop_item_index = index;
     return 0x5A5A1234;
+}
+
+void test_leaf_recoveries() {
+    // --- float vector arithmetic ---
+    //
+    // Values chosen so the results are EXACT in float: sums and products of
+    // small dyadic rationals, so `==` is the right comparison and says the
+    // arithmetic is right rather than approximately right.
+    {
+        const float left[3] = {1.5f, -2.25f, 8.0f};
+        const float right[3] = {0.5f, 0.25f, -4.0f};
+        float result[3] = {99.0f, 99.0f, 99.0f};
+
+        leaf_00628180_redirect(left, right, result);
+        expect(result[0] == 1.0f);
+        expect(result[1] == -2.5f);
+        expect(result[2] == 12.0f);
+
+        // The operand ORDER matters: subtraction does not commute, so a body
+        // computing right - left would pass any test using symmetric inputs.
+        leaf_00628180_redirect(right, left, result);
+        expect(result[0] == -1.0f);
+        expect(result[1] == 2.5f);
+        expect(result[2] == -12.0f);
+
+        // Distinct scale factors per component would go unnoticed if every
+        // component held the same value, so they differ.
+        leaf_006281b0_redirect(left, 4.0f, result);
+        expect(result[0] == 6.0f);
+        expect(result[1] == -9.0f);
+        expect(result[2] == 32.0f);
+
+        leaf_006281b0_redirect(left, 0.0f, result);
+        expect(result[0] == 0.0f);
+        expect(result[1] == 0.0f);
+        expect(result[2] == 0.0f);
+
+        // Dot product:
+        //   0.5*1.5 + 0.25*-2.25 + -4*8 = 0.75 - 0.5625 - 32 = -31.8125
+        expect(leaf_00634650_redirect(const_cast<float *>(left), nullptr,
+                                      right) == -31.8125f);
+
+        // A vector against itself: 1.5^2 + 2.25^2 + 8^2 = 2.25+5.0625+64
+        expect(leaf_00634650_redirect(const_cast<float *>(left), nullptr,
+                                      left) == 71.3125f);
+
+        // THE SUMMATION ORDER, which the two cases above do not pin.
+        //
+        // The original adds component 2 first, then 1, then 0, and floating-
+        // point addition is not associative - but x87 keeps intermediates in
+        // 64-bit EXTENDED precision, so ordinary magnitudes give the same
+        // answer either way. I checked that rather than assumed it: reversing
+        // the order in the body left every assertion above passing.
+        //
+        // Distinguishing it needs terms whose magnitudes differ by more than
+        // the extended mantissa. With products 1, 2^100 and -2^100:
+        //     (p2 + p1) + p0 = (-2^100 + 2^100) + 1 = 1     <- the original
+        //     (p0 + p1) + p2 = (1 + 2^100) - 2^100 = 0      <- reversed,
+        //                                                      1 is below the
+        //                                                      ulp of 2^100
+        const float ones[3] = {1.0f, 1.0f, 1.0f};
+        const float spread[3] = {1.0f, 0x1p100f, -0x1p100f};
+        expect(leaf_00634650_redirect(const_cast<float *>(ones), nullptr,
+                                      spread) == 1.0f);
+    }
+
+    // --- round toward zero to a multiple ---
+    //
+    // The NEGATIVE cases are the assertion. `x / y * y` truncates toward zero,
+    // so -7 rounded to a multiple of 3 is -6; a body using floor division -
+    // which is what the same idea looks like written naively - gives -9.
+    expect(leaf_00559210_redirect(7, 3) == 6);
+    expect(leaf_00559210_redirect(-7, 3) == -6);
+    expect(leaf_00559210_redirect(7, -3) == 6);
+    expect(leaf_00559210_redirect(-7, -3) == -6);
+    expect(leaf_00559210_redirect(9, 3) == 9);
+    expect(leaf_00559210_redirect(0, 5) == 0);
+    expect(leaf_00559210_redirect(2, 5) == 0);
 }
 
 void test_field_accessors() {
@@ -29400,6 +29479,7 @@ int main() {
     test_cursor_construct();
     test_texture_store_construct();
     test_field_accessors();
+    test_leaf_recoveries();
     test_report_if_close_intel();
     test_report_if_close_energy();
     test_bubble_dismiss_handlers();

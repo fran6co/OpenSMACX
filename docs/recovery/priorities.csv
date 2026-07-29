@@ -1616,7 +1616,6 @@ P3,1021,0x00559100,?get_adjective_insult_leader@@YAPADH@Z,26,1,0,unrecovered,,,2
 P3,1021,0x00559120,?get_adjective_faction@@YAPADH@Z,26,1,0,unrecovered,,,2,exact,exact,int8* (__cdecl ?get_adjective_faction@@YAPADH@Z)(int factionID)
 P3,1021,0x00559140,?get_adjective_insult_faction@@YAPADH@Z,26,1,0,unrecovered,,,2,exact,exact,int8* (__cdecl ?get_adjective_insult_faction@@YAPADH@Z)(int factionID)
 P3,1021,0x00559160,?get_insult_leader@@YAPADH@Z,50,1,0,unrecovered,,,2,exact,exact,int8* (__cdecl ?get_insult_leader@@YAPADH@Z)(int factionID)
-P3,1020,0x00559210,sub_559210,17,1,0,unrecovered,,,2,exact,exact,
 P0,1002121,0x00559290,??0FontQueue@@QAE@XZ,61,2,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0FontQueue@@QAE@XZ)(FontQueue* this)
 P3,2121,0x005592D0,?get_zoom@FontQueue@@QAEHHHHH@Z,265,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?get_zoom@FontQueue@@QAEHHHHH@Z)(FontQueue* this, int, int, int, int)"
 P2,5021,0x005593E0,?pick_top_veh@@YAHH@Z,267,5,0,unrecovered,,,2,exact,exact,int (__cdecl ?pick_top_veh@@YAHH@Z)(int vehID)
@@ -2796,8 +2795,6 @@ P0,1008020,0x00627D00,sub_627d00,281,8,0,original_dependency,ui_dependency,recov
 P2,5020,0x00627E20,sub_627e20,303,5,0,unrecovered,,,2,exact,exact,
 P2,6020,0x00627F50,sub_627f50,399,6,0,unrecovered,,,2,exact,exact,
 P2,14020,0x006280E0,sub_6280e0,107,14,0,unrecovered,,,2,exact,exact,
-P3,3020,0x00628180,sub_628180,37,3,0,unrecovered,,,2,exact,exact,
-P2,5020,0x006281B0,sub_6281b0,37,5,0,unrecovered,,,2,exact,exact,
 P3,1020,0x006281E0,sub_6281e0,55,1,0,unrecovered,,,2,exact,exact,
 P2,10020,0x00628220,sub_628220,107,10,0,unrecovered,,,2,exact,exact,
 P3,1020,0x00628290,sub_628290,65,1,0,unrecovered,,,2,exact,exact,
@@ -2930,7 +2927,6 @@ P3,10,0x006343E0,sub_6343e0,75,0,0,unrecovered,,,1,exact,missing,
 P3,0,0x006344E0,sub_6344e0,51,0,0,unrecovered,,,0,missing,missing,
 P3,110,0x00634520,sub_634520,189,0,1,unrecovered,,,1,exact,missing,
 P3,10,0x006345E0,sub_6345e0,97,0,0,unrecovered,,,1,exact,missing,
-P3,0,0x00634650,sub_634650,27,0,0,unrecovered,,,0,missing,missing,
 P3,10,0x00634720,sub_634720,158,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x006347C0,sub_6347c0,48,0,0,unrecovered,,,1,exact,missing,
 P3,20,0x006347F0,sub_6347f0,204,0,0,unrecovered,,,2,exact,exact,
