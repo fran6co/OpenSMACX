@@ -81,8 +81,9 @@ full-strength share looks like 52.4%; by bytes it is 23.70%, because the functio
 side could not be run on most seeds are the large ones.
 
 `docs/recovery/summary.json` carries the same denominator and the same exclusion in its
-`functions.bytes` block, together with `machine_carried` - the recovery debt, currently 2,217,616
-bytes, 92.01% of the scope, which falls only when a function becomes `source_complete`.
+`functions.bytes` block, together with `machine_carried` - the recovery debt, 2,214,194 bytes /
+91.86% of the scope on 2026-07-29, which falls only when a function becomes `source_complete`.
+That pair drifts as recovery lands; the JSON is the generated source of truth, not this sentence.
 
 ## History: the abandoned one-function pilot
 

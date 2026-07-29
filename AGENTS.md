@@ -128,11 +128,17 @@ The working split that respects those constraints:
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery state (regenerated): 1,541 `source_complete`, 90
-  `original_dependency`, 5 `source_in_progress`, 328 `external_library`, 30
-  `thunk`, 4,006 `unrecovered`; 4,117 ranked recovery candidates.
-- Current local legacy-island count: 114, reduced from 174.
-- `DllMain` install-time redirects: 1,037 (the `RedirectCount` a `static_assert` checks against the table in `src/dllmain.cpp`), overwhelmingly source recoveries plus two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured. `docs/recovery-redirects.csv` is the authoritative address/kind catalog; `tools/add_redirect.py` keeps the CSV, `src/redirect_signatures.h`, the dllmain table, and the count in sync.
+- Current recovery state: 2,552 `source_complete`, 280 `original_dependency`,
+  5 `source_in_progress`, 327 `external_library`, 28 `thunk`, 2,808
+  `unrecovered`; 3,136 ranked recovery candidates. **These counts drift.
+  `docs/recovery/summary.json` is the generated source of truth and
+  `verify-recovery-metadata` checks it; every figure on this line was wrong
+  until 2026-07-29, five of them by more than 60%.** Read the JSON rather than
+  this line when the number matters.
+- Local legacy-island count: `candidate_count` in the manifest that
+  `extract-legacy-leaves` writes (124 at the default `--max-size 512`). It
+  moves with the size cap, so it is not restated here.
+- `DllMain` install-time redirects: 2,048 (the `RedirectCount` a `static_assert` checks against the table in `src/dllmain.cpp`), overwhelmingly source recoveries plus two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured. `docs/recovery-redirects.csv` is the authoritative address/kind catalog; `tools/add_redirect.py` keeps the CSV, `src/redirect_signatures.h`, the dllmain table, and the count in sync.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
