@@ -461,9 +461,28 @@ a FIXTURE, and the shape of that fixture is known:
 
 | function | what it does | what a fixture needs |
 | --- | --- | --- |
-| `sub_4080b0` | destroys the ListBox at 0x48, the Dialog at 0xa60, then the GraphicWin base the ListBox shares | `list_box_apply_stages(obj, 0x48, 0xa60)` plus zeroing `obj+0x48+0xA08`; a zeroed object faults on a null vbtable |
+| `sub_4080b0` | destroys the ListBox at 0x48, the Dialog at 0xa60, then the GraphicWin base the ListBox shares | THREE fixtures composed - see below |
 | `sub_406af0` | the same with a Dialogs at 0x188 and a Dialog at 0xba0 | two vbtables at 0x00 and 0x44 and two staging blocks, per `test_dialogs_teardown` - `stage(obj, g, d, 0x669BE8, 0x669BE0, 0x669BD4, 0x188, 0xBA0)` and the same again at +0x44 |
 | `?load_deswin_sprites@@YAXXZ` | constructs a Buffer on its own stack and immediately destroys it | nothing observable from outside. Decide first whether Buffer's constructor or destructor touches any global; if neither does, this function's only content is that those two run, and saying so needs a seam inside one of them |
+
+**What `sub_4080b0`'s fixture actually needs, learned by hitting each wall in
+turn.** I attempted it twice. The seams have to be bound in this order of
+discovery, because each one only reveals the next:
+
+1. A zeroed object faults on a null vbtable - `ListBox::destroy` reads the
+   object's own vbtable before reaching any seam. Fixed by publishing
+   `int32_t vbtable[3] = {0, 0x48, 0xa60}` at offset 0 and nulling
+   `obj+0x48+0xA08`, exactly as `test_list_box_teardown` does.
+2. It then faults EXECUTING 0x00608f50 - `Dialog::~Dialog` reaches its own
+   close through `DialogOriginalClose`, which still points at the image.
+3. With that bound it faults READING 0x98877669 - a canary byte used as a
+   pointer. The Dialog subobject at 0xa60 is seeded, and its destructor reads
+   pointer fields out of it. That needs Dialog's own teardown setup, not
+   ListBox's.
+
+So the fixture is three class teardown fixtures composed, not one. That is the
+remaining work, and it is fixture work rather than recovery work: the body
+itself is three calls with three pointers and is not in doubt.
 
 I wrote the two destructor chains, built them, and TOOK THEM BACK OUT. Their
 first fixture - a zeroed object with the close seams bound to a recorder -

@@ -1199,3 +1199,4 @@ void __fastcall pick_tech_close_redirect(void *self, void *) {
     graphic_win_close_redirect(reinterpret_cast<GraphicWin *>(self), nullptr);
 }
 
+
