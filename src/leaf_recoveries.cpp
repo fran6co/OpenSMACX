@@ -26,6 +26,7 @@
 #include <cmath>
 #include "leaf_recoveries.h"
 #include "win.h"
+#include "field_accessors.h"
 
 #include <cstring>
 
@@ -894,4 +895,63 @@ void __fastcall leaf_005cbbc0_redirect(void *self, void *) {
         node = reinterpret_cast<void *>(load32(self, 0));   // re-read
         store32(node, 0x4C, high);
     }
+}
+
+/*
+Purpose: Initialise 24 sixty-byte slots and the count that follows them.
+
+             mov eax,ecx / xor ecx,ecx / mov edx,eax / mov [eax+0x5a0],ecx
+             mov esi,0x18 / mov byte [edx],0xff / mov word [edx+8],cx
+             add edx,0x3c / dec esi / jne / ret
+
+         Three widths in six instructions: a DWORD at 0x5a0, then per slot a
+         BYTE at +0 and a WORD at +8. Widening either of the last two would
+         clear bytes the original leaves alone - 0x5a0 is exactly 24 * 60, so
+         the dword sits immediately past the table and there is no slack to
+         absorb a mistake.
+
+         EAX still holds `this` at the `ret`.
+
+Original Offset: 0052DCA0
+Return Value: `this`
+Status: Complete
+*/
+void *__fastcall leaf_0052dca0_redirect(void *self, void *) {
+    store32(self, 0x5A0, 0);
+    uint8_t *slot = static_cast<uint8_t *>(self);
+    for (int index = 0; index < 0x18; ++index) {
+        slot[0] = 0xFF;
+        const uint16_t zero = 0;
+        std::memcpy(slot + 8, &zero, sizeof(zero));
+        slot += 0x3C;
+    }
+    return self;
+}
+
+/*
+Purpose: Is the movie still playing?
+
+             add ecx,0xa14 / call MCIVideo::is_playing
+             neg eax / sbb eax,eax / neg eax / ret
+
+         `neg / sbb eax,eax / neg` is the idiom for "normalise to 0 or 1":
+         the first pair gives 0 or -1, the second `neg` flips -1 to 1.
+
+         It is kept because the original does it, NOT because it changes
+         anything here - the recovered MCIVideo::is_playing masks with 1 and
+         so already returns 0 or 1. Dropping the normalisation passes the
+         fixture; that mutant is equivalent through this callee, and would
+         stop being so if is_playing were ever recovered as returning some
+         other non-zero value.
+
+         MCIVideo sits at 0xa14, and its is_playing is the bit-0 read
+         recovered as field_accessor_00600320_redirect.
+
+Original Offset: 004041C0
+Return Value: 1 when playing, 0 otherwise
+Status: Complete
+*/
+int __fastcall leaf_004041c0_redirect(void *self, void *) {
+    return field_accessor_00600320_redirect(
+               static_cast<uint8_t *>(self) + 0xA14, nullptr) != 0 ? 1 : 0;
 }

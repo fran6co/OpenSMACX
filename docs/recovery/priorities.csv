@@ -42,7 +42,6 @@ P3,2420,0x00403BA0,?amovie_project@@YAXH@Z,63,2,4,unrecovered,,,2,exact,exact,
 P2,6620,0x00403BE0,?amovie_project@@YAXPAD@Z,1321,5,16,unrecovered,,,2,exact,entry_range,
 P3,221,0x00404010,??0AlphaMovie@@QAE@XZ,105,0,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 P3,1921,0x00404070,?exec@AlphaMovie@@QAEHPAD@Z,335,1,9,unrecovered,,,2,exact,exact,"int (__thiscall ?exec@AlphaMovie@@QAEHPAD@Z)(AlphaMovie* this, int8* lpszPath)"
-P3,111,0x004041C0,?on_modal@AlphaMovie@@QAE_NXZ,18,0,1,unrecovered,,,1,exact,missing,bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this)
 P3,211,0x004041E0,?close@AlphaMovie@@QAEXXZ,23,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 P3,1,0x00404200,?UNK1@AlphaMovie@@QAEXXZ,8,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?UNK1@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 P3,111,0x00404290,?update@AlphaMovie@@QAEXXZ,8,0,1,unrecovered,,,1,exact,missing,void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
@@ -1497,7 +1496,6 @@ P3,10,0x0052DB40,sub_52db40,39,0,0,unrecovered,,,1,exact,missing,
 P3,0,0x0052DB70,sub_52db70,44,0,0,unrecovered,,,0,missing,missing,
 P0,1003020,0x0052DBA0,?current_server@@YAHXZ,70,3,0,original_dependency,ui_dependency,recover_current_server,2,exact,exact,
 P3,2120,0x0052DBF0,?next_player_turn@@YAHXZ,120,2,1,unrecovered,,,2,exact,exact,
-P3,1,0x0052DCA0,??0DeletionList@@QAE@XZ,33,0,0,unrecovered,,,0,missing,missing,void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this)
 P3,11,0x0052DCF0,?UNK1@DeletionList@@QAEHXZ,32,0,0,unrecovered,,,1,missing,exact,int (__thiscall ?UNK1@DeletionList@@QAEHXZ)(DeletionList* this)
 P3,11,0x0052DD10,?UNK2@DeletionList@@QAEHH@Z,59,0,0,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK2@DeletionList@@QAEHH@Z)(DeletionList* this, int)"
 P3,11,0x0052DD50,?ack@DeletionList@@QAEXHH@Z,101,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?ack@DeletionList@@QAEXHH@Z)(DeletionList* this, int, int)"

@@ -2909,6 +2909,65 @@ void test_leaf_recoveries() {
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
     }
 
+    // --- 24 slots of 60 bytes, in three different widths ---
+    {
+        static uint8_t object[0x5A0 + 4 + 32];
+        std::memset(object, 0x11, sizeof(object));
+        expect(leaf_0052dca0_redirect(object, nullptr) == object);
+
+        for (int index = 0; index < 0x18; ++index) {
+            uint8_t *const slot = object + index * 0x3C;
+            expect(slot[0] == 0xFF);
+            // ONE byte at +0: the next three are untouched, which is what
+            // separates a byte store from a dword one.
+            expect(slot[1] == 0x11);
+            expect(slot[2] == 0x11);
+            expect(slot[3] == 0x11);
+            // TWO bytes at +8, not four.
+            expect(slot[8] == 0x00);
+            expect(slot[9] == 0x00);
+            expect(slot[10] == 0x11);
+            expect(slot[11] == 0x11);
+        }
+        // The dword immediately past the table.
+        uint32_t tail = 0xFFFFFFFFU;
+        std::memcpy(&tail, object + 0x5A0, sizeof(tail));
+        expect(tail == 0);
+        // And nothing beyond it.
+        for (size_t offset = 0x5A0 + 4; offset < sizeof(object); ++offset) {
+            expect(object[offset] == 0x11);
+        }
+        // 24 slots exactly: the 25th would start at 0x5a0, which is the
+        // count, so a miscounted loop would have overwritten it with 0xff.
+    }
+
+    // --- movie playing, normalised to 0 or 1 ---
+    {
+        static uint8_t player[0xA20];
+        std::memset(player, 0, sizeof(player));
+        auto set = [&](uint32_t value) {
+            std::memcpy(player + 0xA14, &value, sizeof(value));
+        };
+        set(0);
+        expect(leaf_004041c0_redirect(player, nullptr) == 0);
+        set(1);
+        expect(leaf_004041c0_redirect(player, nullptr) == 1);
+        // Only bit 0 counts. The original ALSO normalises with
+        // `neg / sbb / neg`, and that step is not observable here: the
+        // recovered MCIVideo::is_playing already masks with 1, so it can only
+        // return 0 or 1 and there is nothing left to normalise. Dropping the
+        // normalisation passes this fixture, which is how I know rather than
+        // assume.
+        set(2);
+        expect(leaf_004041c0_redirect(player, nullptr) == 0);
+        set(3);
+        expect(leaf_004041c0_redirect(player, nullptr) == 1);
+        set(0xFFFFFFFFU);
+        expect(leaf_004041c0_redirect(player, nullptr) == 1);
+        set(0xFFFFFFFEU);
+        expect(leaf_004041c0_redirect(player, nullptr) == 0);
+    }
+
     // --- point in an inclusive rectangle, arguments in the odd order ---
     {
         // x, y, left, top, right, bottom.
