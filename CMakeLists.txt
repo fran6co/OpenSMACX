@@ -155,6 +155,7 @@ set(OPENSMACX_SOURCES
     src/game_recovery.cpp
     src/general.cpp
     src/graphicwin.cpp
+    src/generated_signature_oracle.cpp
     src/graphicwin_oracle.cpp
     src/heap.cpp
     src/log.cpp
@@ -1014,6 +1015,14 @@ if(BUILD_TESTING)
     add_test(NAME proven-functions-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_export_proven_functions.py"
+    )
+
+    # The generator that emits those proofs. Same dangerous failure, one step
+    # earlier: an oracle for a function the hybrid cannot execute both forms of
+    # would carry a marker that lowers the metric while proving nothing.
+    add_test(NAME signature-oracle-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_signature_oracles.py"
     )
 
     # The check itself, against the real table: `install_redirect` writes five

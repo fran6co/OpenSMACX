@@ -14,6 +14,7 @@
 #include "buffer_oracle.h"
 #include "constructor_oracle.h"
 #include "graphicwin_oracle.h"
+#include "generated_signature_oracle.h"
 #include "scroll_oracle.h"
 #include "stringstruct_oracle.h"
 #include "sprite_oracle.h"
@@ -177,6 +178,23 @@ const runtime_oracle::Suite DeferredSuites[] = {
     {"basebutton-release", run_base_button_release_suite},
     {"sprite-release", run_sprite_release_suite},
     {"buffer-release", run_buffer_release_suite},
+    // NOT REGISTERED: {"generated-signatures", run_generated_signature_oracles}
+    //
+    // The suite is built and linked, and it is correct about the two things
+    // that took three attempts to get right - it belongs in the DEFERRED phase,
+    // because run_runtime_oracles() runs before InstalledSpecs is populated and
+    // suspend_redirect_at can match nothing there; and it must select from the
+    // redirect table in dllmain.cpp, not the inventory's redirect_exports
+    // column, which does not agree with it.
+    //
+    // It is left out because running it kills the game. The comparison restores
+    // .data/.bss between the two calls, which is right for a function whose
+    // effects live there and wrong for one that allocates or writes a file -
+    // and ?load_deswin_sprites@@YAXXZ and ?auto_save@@YAXXZ do both. Three runs
+    // out of three ended in an unhandled division by zero at 0x004991DD, inside
+    // UNRECOVERED original code reading state the restore had made
+    // inconsistent. Re-register it once the oracles have somewhere to run that
+    // does not have to survive them.
 };
 
 bool DeferredCompleted = false;
