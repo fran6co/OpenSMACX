@@ -978,3 +978,57 @@ void __fastcall field_accessor_00634f70_redirect(void *self, void *) {
     *(bytes + 0x414) = 0x0;
     *(bytes + 0x418) = 0x0;
 }
+
+/*
+Purpose: Clamp field 0xc against an argument, then store unconditionally.
+         Emitted by tools/generate_field_accessors.py from
+
+             push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov edx, dword ptr [ecx + 0xc] / cmp edx, eax / jae 0x4c80d0 / mov dword ptr [ecx + 0xc], eax / mov dword ptr [ecx + 8], eax / pop ebp / ret 4
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 004C80C0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_004c80c0_redirect(void *self, void *, int stack0) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    if (*reinterpret_cast<uint32_t *>(bytes + 0xc)
+            < static_cast<uint32_t>(stack0)) {
+        *reinterpret_cast<uint32_t *>(bytes + 0xc) = static_cast<uint32_t>(stack0);
+    }
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = static_cast<uint32_t>(stack0);
+}
+
+/*
+Purpose: Clamp field 0x8 against an argument, then store unconditionally.
+         Emitted by tools/generate_field_accessors.py from
+
+             push ebp / mov ebp, esp / mov eax, dword ptr [ebp + 8] / mov edx, dword ptr [ecx + 8] / cmp edx, eax / jbe 0x4c80f0 / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 0xc], eax / pop ebp / ret 4
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 1 stack dword(s) so it
+         cleans 4 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 004C80E0
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_004c80e0_redirect(void *self, void *, int stack0) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    if (*reinterpret_cast<uint32_t *>(bytes + 0x8)
+            > static_cast<uint32_t>(stack0)) {
+        *reinterpret_cast<uint32_t *>(bytes + 0x8) = static_cast<uint32_t>(stack0);
+    }
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = static_cast<uint32_t>(stack0);
+}
