@@ -66,7 +66,7 @@ import pefile  # noqa: E402
 from find_constant_returns import declared_arity  # noqa: E402
 from capstone import (CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP,  # noqa: E402
                       CS_MODE_32, Cs)
-from capstone.x86 import (X86_OP_IMM, X86_OP_MEM,  # noqa: E402
+from capstone.x86 import (X86_OP_IMM, X86_OP_MEM, X86_OP_REG,  # noqa: E402
                           X86_REG_EBP)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -188,6 +188,38 @@ INEXPRESSIBLE = frozenset({
 })
 
 
+def propagate_image_taint(one, tainted, low, high) -> None:
+    """Track which registers currently hold an address inside the image.
+
+    Deliberately small. An image address enters a register as an immediate and
+    spreads only by being copied or offset: `mov edx,0x94cea0 / lea
+    eax,[edx-0x488]` is how ?clear_monuments@@YAXXZ reaches its table, so `lea`
+    has to carry it. Anything else that writes a register CLEARS it - this
+    would rather stop tracking than guess, since a false taint rejects a
+    recoverable function.
+    """
+    operands = one.operands
+    if not operands or operands[0].type != X86_OP_REG:
+        return
+    destination = operands[0].reg
+    if one.mnemonic in ("mov", "lea", "add") and len(operands) == 2:
+        source = operands[1]
+        if source.type == X86_OP_IMM and low <= source.imm < high:
+            tainted.add(destination)
+            return
+        if source.type == X86_OP_REG and source.reg in tainted:
+            tainted.add(destination)
+            return
+        if (source.type == X86_OP_MEM
+                and (source.mem.base in tainted
+                     or source.mem.index in tainted)):
+            tainted.add(destination)
+            return
+        if one.mnemonic == "add" and destination in tainted:
+            return          # offsetting an image address keeps it one
+    tainted.discard(destination)
+
+
 def classify(instructions, address: int, size: int, span: tuple[int, int]):
     """(callees, reasons, bindings) for one body.
 
@@ -209,6 +241,13 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
     reasons: list[str] = []
     bindings: list[int] = []
     inside = range(address, address + size)
+    # Registers currently holding an address INSIDE the image. An absolute
+    # address does not have to appear as a memory operand's displacement to be
+    # an absolute global: `mov edi,0x90db24 / rep stosd [edi]` writes eleven
+    # dwords to one, and the displacement check never sees it because the
+    # operand has a base register. Seven candidates reached image memory that
+    # way and were being reported as merely "needs classification".
+    tainted: set[int] = set()
     for one in instructions:
         mnemonic = one.mnemonic
         operands = one.operands
@@ -227,6 +266,17 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
         # An absolute memory operand is a global. `opensmacx_at` aside, a
         # recovered body reaching one is a fixed-address binding, which is the
         # thing that puts a function in the hybrid oracle rather than here.
+        # A memory operand reached through a tainted register is an absolute
+        # global, whatever its displacement says.
+        for operand in operands:
+            if operand.type != X86_OP_MEM:
+                continue
+            for register in (operand.mem.base, operand.mem.index):
+                if register and register in tainted:
+                    reasons.append(
+                        "absolute global reached through a register")
+                    break
+
         for operand in operands:
             # No BASE register and a displacement inside the image is an
             # absolute address, whether or not an index is scaled onto it.
@@ -265,6 +315,7 @@ def classify(instructions, address: int, size: int, span: tuple[int, int]):
                 # `jmp [eax+0xE8]` is a virtual dispatch: the callee is not
                 # knowable statically, so condition (2) cannot be decided.
                 reasons.append("indirect jump")
+        propagate_image_taint(one, tainted, low, high)
     return callees, reasons, bindings
 
 

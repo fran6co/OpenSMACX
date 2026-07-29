@@ -161,6 +161,61 @@ class InexpressibleTests(unittest.TestCase):
         self.assertEqual([], self.classify("0faf4104c3"))   # imul eax,[ecx+4]
 
 
+class ImageAddressInARegisterTests(unittest.TestCase):
+    """An absolute global does not have to be a displacement."""
+
+    def classify(self, encoded: str):
+        instructions = decode(encoded)
+        return scanner.classify(instructions, 0x00401000,
+                                len(encoded) // 2, SPAN)[1]
+
+    def test_writing_through_a_register_holding_an_image_address(self):
+        # mov edi,0x90db24 / rep stosd - eleven dwords into a global. The
+        # displacement check never sees it, because the operand has a base.
+        reasons = self.classify("bf24db9000f3ab")
+        self.assertTrue(any("through a register" in one for one in reasons),
+                        reasons)
+
+    def test_the_taint_survives_a_lea(self):
+        # ?clear_monuments@@YAXXZ: mov edx,0x94cea0 / lea eax,[edx-0x488] /
+        # mov dword [eax],0 - the store is two steps from the immediate.
+        reasons = self.classify("ba a0ce9400 8d8278fbffff c70000000000".replace(" ", ""))
+        self.assertTrue(any("through a register" in one for one in reasons),
+                        reasons)
+
+    def test_an_image_address_that_is_only_PUSHED_is_still_just_a_binding(self):
+        # sub_59d230 pushes 0x6900c4 as an argument and never dereferences it.
+        # That is a fixed data binding, which is a different and lesser thing.
+        reasons = self.classify("68c400690068feffffff")
+        self.assertFalse(any("through a register" in one for one in reasons),
+                         reasons)
+
+    def test_storing_an_image_address_as_a_VALUE_is_not_a_dereference(self):
+        # ??0ImageButton publishes two vtable addresses into its own object:
+        # mov dword [ecx],0x670a94. The address is written, not read through.
+        reasons = self.classify("c701940a6700")
+        self.assertFalse(any("through a register" in one for one in reasons),
+                         reasons)
+
+    def test_an_ordinary_this_dereference_is_untouched(self):
+        self.assertEqual([], self.classify("8b4148c3"))
+
+    def test_an_address_outside_the_image_does_not_taint(self):
+        # mov edi,0x1000 / mov [edi],eax - not an image address, so this rule
+        # has nothing to say about it.
+        reasons = self.classify("bf00100000 8907".replace(" ", ""))
+        self.assertFalse(any("through a register" in one for one in reasons),
+                         reasons)
+
+    def test_overwriting_a_tainted_register_clears_it(self):
+        # mov edi,0x90db24 / mov edi,ecx / mov [edi],eax - EDI no longer holds
+        # the image address, and a tracker that never forgot would reject a
+        # recoverable body.
+        reasons = self.classify("bf24db9000 89cf 8907".replace(" ", ""))
+        self.assertFalse(any("through a register" in one for one in reasons),
+                         reasons)
+
+
 class UnwindFuncletTests(unittest.TestCase):
     """A body that reads EBP without setting it up is not callable."""
 
