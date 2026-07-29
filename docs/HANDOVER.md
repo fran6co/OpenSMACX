@@ -950,7 +950,27 @@ reads like a Win32 handle rather than a `this`.
 
 Five cases still fault at `0x0060afe5` on `mov eax,[ebx+0xa4]` with `ebx`
 zero, while the `[ebx+0x10]` load eleven instructions earlier succeeded on the
-same path. Both cannot hold on a straight line, so control reaches that
+same path. **Three explanations have been tested and eliminated - do not spend
+the afternoon on them again:**
+
+* **"after 0 steps" does not mean it faulted immediately.** `oracle_steps` only
+  increments on single-step exceptions, and TF is set only while blaming, so 0
+  is what every ordinary run reports. `at <eip>` is `ExceptionAddress` and the
+  accessed address is `ExceptionInformation[1]`; both are exactly what they say.
+* **It is not a loop.** The only branch anywhere in that range is the forward
+  `jge 0x60afdb` at `0x0060AFD4`. Nothing jumps backwards into the block, so
+  `ebx` cannot have been reloaded by `mov ebx,[esp+0x28]` at `0x0060B001` and
+  then re-entered.
+* **It is not the switch.** `xor ebx,ebx / mov bl,[eax+0x60b4ec]` makes `ebx` a
+  small index, which would give exactly a fault on `0xa4` - but the table at
+  `0x0060B4D8` holds five targets, `0x0060b126`, `0x0060b038`, `0x0060b170`,
+  `0x0060b08a`, `0x0060b34f`, and none is inside the faulting block. (Entries
+  5-7 read as `0x03020100` and `0x04040404`: that is the byte-index table at
+  `0x0060B4EC` overlapping, not more targets.)
+
+So the contradiction is real and unresolved: on a straight-line path
+`[ebx+0x10]` cannot succeed while `[ebx+0xa4]` faults with `ebx` zero, `esi` is
+never reassigned, and nothing writes `ebx` between the two. Both cannot hold on a straight line, so control reaches that
 instruction some other way inside the 1,349-byte body. The switch at
 `0x0060B031` (`jmp dword ptr [ebx*4 + 0x60b4d8]`, byte index table at
 `0x60b4ec`) is bounds-checked by the `ja 0x60b353` above it, so it is not
