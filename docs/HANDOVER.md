@@ -510,6 +510,50 @@ A standalone `-O2` check produced the inline form and would have passed the
 wrong body. The flags that matter are in
 `build/<preset>/compile_commands.json`; use those, not a plausible subset.
 
+### The fault wall does not come down by seeding globals
+
+`INCONCLUSIVE-original-fault` is the largest bucket in the measurement -
+1,641,560 B, 68.11% of scope, 2,651 functions. Seeding the objects those
+functions dereference was tried properly and moved it to **1,624,247 B, a
+1.05% reduction**. Five experiments, each measured, all say the same thing:
+
+| attempt | result |
+| --- | --- |
+| exclude zero from arena value words | no verdict changed in 40 functions |
+| seed the Win global at 0x9bc074 | 7 of 8 sampled victims got PAST `Win::is_visible` - and faulted in `ListBox::attach` instead |
+| fill all 3.25 MB of .bss with a valid pointer | no better than six targeted globals |
+| widen from 6 to 45 object globals | **no gain, and one regression** |
+| seed a vbtable below `this` for ListBox::on_key_down | 2 of 8 moved; 6 unchanged |
+
+**The wall moves; it does not fall.** The structural reason is measured: a
+function is INCONCLUSIVE if ANY of its sixteen cases faults, and all 2,651
+walled functions compare ZERO cases. Each leaves only when its WHOLE state
+dependency is satisfied, and the last experiment shows why that is hard - the
+vbtable can be seeded below the ENTRY `this`, but `ListBox::on_key_down` is
+reached deep in a chain holding a different `this` taken from an arbitrary
+arena word.
+
+That is the difference between plausible state and COHERENT state: an object
+graph whose back-references agree with each other. The hybrid smoke gate has
+one because a real game built it; the isolated harness deliberately does not.
+
+**What the seeds cost.** They are kept, but the trade is not one-sided:
+
+| figure | delta | direction |
+| --- | --- | --- |
+| never_compared | -47,138 B | better (must go down) |
+| INCONCLUSIVE-original-fault | -17,313 B | better |
+| agreed | +3,639 B | better |
+| agreed_only_on_paths_taken | **+29,476 B** | **worse (must go down)** |
+| agreed_under_weakened_conditions | **+3,413 B** | **worse (must go down)** |
+| LOST AGREEMENT | **646 B across 8 fn** | **regression** |
+
+Seeding changes the input to EVERY function, so it moves agreement onto weaker
+evidence and can break functions that already agreed. A 25-function spot check
+of previously-passing functions found no regression; the full sweep found
+eight. **Sample a regression check at 25 of 1,476 and it cannot see a 0.5%
+rate.** Run the sweep.
+
 ### A FULL-FILE mutation sweep reports survivors that are not real
 
 Running `tools/mutate_and_verify.py` over the whole of
