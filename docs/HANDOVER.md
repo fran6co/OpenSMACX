@@ -477,8 +477,21 @@ discovery, because each one only reveals the next:
    close through `DialogOriginalClose`, which still points at the image.
 3. With that bound it faults READING 0x98877669 - a canary byte used as a
    pointer. The Dialog subobject at 0xa60 is seeded, and its destructor reads
-   pointer fields out of it. That needs Dialog's own teardown setup, not
-   ListBox's.
+   pointer fields out of it. Fixed by giving the Dialog at 0xa60 the same
+   minimum `test_dialog_destructor` gives it: Heap `base_` zero at +0x08, the
+   `0xFEEDF00D` sentinel at +0x10, a vbtable `{0xAAAAAAAA, 0x24}` at +0xC0, an
+   empty `head_` at +0xC4, `0x55` at +0xCC, `0x1234ABCD` at +0xE8 - plus
+   binding DialogOperatorDelete, DialogPublishedGlobal and the four
+   DialogList* vtables.
+4. Then it faults EXECUTING 0x00644ef2 - `BufferFree`. GraphicWin's destructor
+   tears down its Buffer, which frees whatever the owned-allocation table
+   holds, and in a seeded object that is canary bytes.
+5. With BufferFree bound too it became NON-DETERMINISTIC: three consecutive
+   runs of the same binary gave fail, fail, PASS. Something is still read
+   before it is written, and a single run would have reported success.
+
+**Run any fixture for these three at least three times before believing it.**
+Both attempts here produced a green run that did not reproduce.
 
 So the fixture is three class teardown fixtures composed, not one. That is the
 remaining work, and it is fixture work rather than recovery work: the body

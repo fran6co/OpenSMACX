@@ -12220,6 +12220,8 @@ void test_dialog_destructor() {
     DialogListVirtualBaseVtable = saved_list_vb;
 }
 
+
+
 // Event log for the Dialogs destructor chain. kind: 1 EditGroup dtor,
 // 2 SpriteBox dtor, 3 CheckBox dtor, 4 RadioButton's Dialog close, 5 Win
 // close, 6 Buffer close, 7 ListBox's Dialog close, 8 Dialog close (scalar

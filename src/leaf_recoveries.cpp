@@ -1200,3 +1200,4 @@ void __fastcall pick_tech_close_redirect(void *self, void *) {
 }
 
 
+
