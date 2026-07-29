@@ -1477,6 +1477,7 @@ address,kind
 0x0052DCD0,jump
 0x00530320,jump
 0x005310F0,jump
+0x00532A50,jump
 0x00558FC0,jump
 0x00558FE0,jump
 0x00559040,jump
@@ -1589,6 +1590,7 @@ address,kind
 0x005D5240,jump
 0x005D5250,jump
 0x005D5440,jump
+0x005D5470,jump
 0x005D5A70,jump
 0x005D7140,jump
 0x005D7160,jump
@@ -2027,3 +2029,5 @@ address,kind
 0x0063C9C0,jump
 0x0063CEF0,jump
 0x0063E520,jump
+0x0063E7F0,jump
+0x00642940,jump

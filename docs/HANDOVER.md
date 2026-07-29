@@ -376,7 +376,7 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 33 candidates, 1,299 bytes.**
+**Queue as of 2026-07-29: 29 candidates, 1,141 bytes.**
 
 The first five tightenings were about whether a body can be TESTED in
 isolation. The sixth is about whether it can be WRITTEN at all - a
@@ -464,6 +464,35 @@ inline `fsqrt` on the extended sum, which is what the original does.
 A standalone `-O2` check produced the inline form and would have passed the
 wrong body. The flags that matter are in
 `build/<preset>/compile_commands.json`; use those, not a plausible subset.
+
+### A FULL-FILE mutation sweep reports survivors that are not real
+
+Running `tools/mutate_and_verify.py` over the whole of
+`src/leaf_recoveries.cpp` gives DIFFERENT answers on identical input. Two
+consecutive runs, same tree, nothing else changed:
+
+| run | reported coverage holes |
+| --- | --- |
+| A | 005E3660 x2, 0063BEE0, 00408470, 0063E7F0 |
+| B | 005E3630, 005E3660 x2 |
+
+Every disputed entry was then checked two other ways, and all of them die:
+
+* targeted `--address` runs: 0063E7F0 8/8 killed, 0063BEE0 2/2, 00408470 3/3,
+  00532A50 5/5, 00642940 14/14, all with zero survivors
+* hand poisons: the 0063E7F0 null-guard inversion and the 005E3630 chase
+  offset both FAIL the fixture and revert to passing
+
+Only the 005E3660 pair is a genuine equivalence, and that one is proved rather
+than assumed - mutating the clamp VALUE on the same line IS killed.
+
+**So a full-file "N/N killed" is weaker evidence than it looks, and the
+"sweep N/N" figures in this session's earlier commits came from full-file
+runs.** The reliable forms are a targeted `--address` run and a hand poison.
+The cause is not yet found: the loop writes, builds, and tests one mutant at a
+time, `build()` only reports success on a zero exit, and the filesystem has
+nanosecond mtimes, so the obvious stale-binary explanation does not fit.
+Worth fixing before the sweep is quoted as a gate again.
 
 ### The mutation harness is blind to two shapes, and that is not a pass
 

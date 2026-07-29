@@ -27,3 +27,7 @@ int __cdecl leaf_00408470_redirect(const void *, int);
 void __fastcall leaf_005ad450_redirect(void *, void *);
 int __fastcall leaf_005cc430_redirect(uint32_t);
 int __stdcall leaf_005d7a10_redirect(const void *, int, int, int);
+int __fastcall leaf_005d5470_redirect(void *, void *, const void *, int, int, int);
+uint32_t __cdecl leaf_00642940_redirect(uint32_t, int);
+uint32_t __fastcall leaf_0063e7f0_redirect(void *, void *, uint32_t *, uint32_t *);
+int __stdcall leaf_00532a50_redirect(int, int *, int *, int);
