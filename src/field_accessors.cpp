@@ -890,3 +890,91 @@ void __fastcall field_accessor_005f05c0_redirect(void *self, void *, int stack0)
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     *reinterpret_cast<uint32_t *>(bytes + 0x128) = static_cast<uint32_t>(stack0);
 }
+
+/*
+Purpose: Set 5 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             xor eax, eax / mov byte ptr [ecx], al / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 4], eax / mov dword ptr [ecx + 0x10], eax / mov dword ptr [ecx + 0xc], eax / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 005D4540
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_005d4540_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *(bytes + 0x0) = 0x0;
+    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
+    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
+}
+
+/*
+Purpose: Set 8 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor dl, dl / lea ecx, [eax + 0x30c] / mov byte ptr [eax + 0x30d], dl / mov dword ptr [eax + 0x410], ecx / mov byte ptr [eax], dl / mov byte ptr [ecx], dl / mov byte ptr [eax + 0x104], dl / mov byte ptr [eax + 0x208], dl / mov byte ptr [eax + 0x414], dl / mov byte ptr [eax + 0x418], dl / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 00634BE0
+Return Value: the value described above
+Status: Complete
+*/
+void * __fastcall field_accessor_00634be0_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *(bytes + 0x30d) = 0x0;
+    *reinterpret_cast<uint8_t **>(bytes + 0x410) = bytes + 0x30c;
+    *(bytes + 0x0) = 0x0;
+    *(bytes + 0x30c) = 0x0;
+    *(bytes + 0x104) = 0x0;
+    *(bytes + 0x208) = 0x0;
+    *(bytes + 0x414) = 0x0;
+    *(bytes + 0x418) = 0x0;
+    return self;
+}
+
+/*
+Purpose: Set 8 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             lea eax, [ecx + 0x30c] / xor dl, dl / mov dword ptr [ecx + 0x410], eax / mov byte ptr [ecx + 0x30d], dl / mov byte ptr [eax], dl / mov byte ptr [ecx], dl / mov byte ptr [ecx + 0x104], dl / mov byte ptr [ecx + 0x208], dl / mov byte ptr [ecx + 0x414], dl / mov byte ptr [ecx + 0x418], dl / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+Original Offset: 00634F70
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall field_accessor_00634f70_redirect(void *self, void *) {
+    uint8_t *const bytes = static_cast<uint8_t *>(self);
+    *reinterpret_cast<uint8_t **>(bytes + 0x410) = bytes + 0x30c;
+    *(bytes + 0x30d) = 0x0;
+    *(bytes + 0x30c) = 0x0;
+    *(bytes + 0x0) = 0x0;
+    *(bytes + 0x104) = 0x0;
+    *(bytes + 0x208) = 0x0;
+    *(bytes + 0x414) = 0x0;
+    *(bytes + 0x418) = 0x0;
+}

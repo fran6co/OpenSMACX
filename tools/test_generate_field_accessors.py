@@ -123,7 +123,7 @@ class StoreSequenceTests(unittest.TestCase):
         # mov eax,ecx / xor ecx,ecx / mov [eax],ecx / mov [eax+4],ecx / ret
         kind, detail = generator.classify(decode("89c831c98908894804c3"))
         self.assertEqual("stores", kind)
-        self.assertEqual([(0, 0), (4, 0)], detail["stores"])
+        self.assertEqual([(0, 4, "const", 0), (4, 4, "const", 0)], detail["stores"])
         self.assertTrue(detail["returns_this"], "EAX still aliases this")
 
     def test_a_single_dword_store_is_a_one_element_sequence(self):
@@ -132,7 +132,7 @@ class StoreSequenceTests(unittest.TestCase):
         # ever saw it.
         kind, detail = generator.classify(decode("c78100020000 00000000 c3".replace(" ", "")))
         self.assertEqual("stores", kind)
-        self.assertEqual([(0x200, 0)], detail["stores"])
+        self.assertEqual([(0x200, 4, "const", 0)], detail["stores"])
         self.assertFalse(detail["returns_this"])
 
     def test_a_constant_held_in_a_register_is_followed(self):
@@ -140,7 +140,7 @@ class StoreSequenceTests(unittest.TestCase):
         # earlier, so it has to be tracked rather than read off the store.
         kind, detail = generator.classify(decode("ba0000803f8911c3"))
         self.assertEqual("stores", kind)
-        self.assertEqual([(0, 0x3F800000)], detail["stores"])
+        self.assertEqual([(0, 4, "const", 0x3F800000)], detail["stores"])
 
     def test_storing_an_untracked_register_is_refused(self):
         # mov [ecx],esi / ret - ESI holds something this tool cannot describe.
@@ -214,6 +214,59 @@ class ParameterStoreTests(unittest.TestCase):
         # write three bytes of whatever EAX happened to hold.
         self.assertIsNone(generator.classify(
             decode("5589e58a450889015dc20400")))
+
+
+class InteriorPointerTests(unittest.TestCase):
+    """`lea` makes a register point INTO the object, not at it."""
+
+    def test_a_lea_target_is_tracked_by_offset_not_as_an_alias(self):
+        # ??0FileBox: mov eax,ecx / xor dl,dl / lea ecx,[eax+0x30c] /
+        #             mov byte [ecx],dl / ret
+        # ECX no longer holds `this` after the lea. Treating it as just another
+        # alias would record this store at offset 0 - a real field, a plausible
+        # value, and wrong.
+        kind, detail = generator.classify(
+            decode("89c830d28d880c0300008811c3"))
+        self.assertEqual("stores", kind)
+        self.assertEqual([(0x30C, 1, "const", 0)], detail["stores"])
+
+    def test_an_interior_pointer_stored_into_a_field_is_not_a_constant(self):
+        # lea eax,[ecx+0x30c] / mov [ecx+0x410],eax / ret - the value depends
+        # on where the object lives, so it cannot be emitted as a number.
+        kind, detail = generator.classify(
+            decode("8d810c0300008981100400 00c3".replace(" ", "")))
+        self.assertEqual([(0x410, 4, "self", 0x30C)], detail["stores"])
+
+    def test_a_lea_from_an_untracked_register_is_refused(self):
+        # lea eax,[esi+8] - ESI is not known to point anywhere in this object.
+        self.assertIsNone(generator.classify(decode("8d4608890 1c3".replace(" ", ""))))
+
+
+class ByteWidthTests(unittest.TestCase):
+    """A byte register is not its parent, in either direction."""
+
+    def test_zeroing_eax_also_zeroes_al(self):
+        # Heap::Heap2: xor eax,eax / mov byte [ecx],al / mov [ecx+8],eax / ret
+        kind, detail = generator.classify(decode("31c0880189410 8c3".replace(" ", "")))
+        self.assertEqual("stores", kind)
+        self.assertEqual([(0, 1, "const", 0), (8, 4, "const", 0)],
+                         detail["stores"])
+
+    def test_zeroing_dl_does_not_make_edx_known(self):
+        # xor dl,dl / mov [ecx],edx / ret. Only the low byte was set; the other
+        # three are whatever the caller left, so this dword store is not a
+        # store of zero and must be refused rather than described as one.
+        self.assertIsNone(generator.classify(decode("30d28911c3")))
+
+    def test_a_byte_store_from_a_zeroed_byte_register_is_kept(self):
+        kind, detail = generator.classify(decode("30d28811c3"))
+        self.assertEqual([(0, 1, "const", 0)], detail["stores"])
+
+    def test_writing_a_byte_register_forgets_its_parent(self):
+        # mov edx,0x3f800000 / xor dl,dl / mov [ecx],edx / ret - EDX is no
+        # longer 0x3f800000, and emitting that value would be a lie.
+        self.assertIsNone(generator.classify(
+            decode("ba0000803f30d28911c3")))
 
 
 class RefusalTests(unittest.TestCase):
