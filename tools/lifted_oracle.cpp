@@ -1541,9 +1541,17 @@ static void restore_from_pristine(unsigned char *side) {
 // fill, which would otherwise overwrite them. Both sides get the identical
 // bytes, so this varies the input to the comparison without ever varying the
 // two sides against each other.
+// Each object sits in the MIDDLE of a padded block. ListBox::attach does
+// `lea edi,[esi-0xa60]` and reads there, so an object placed at the start of
+// its block would send a virtual-base-adjusted read off the front of it.
 constexpr uint32_t OracleSeededObjectBase =
-    OracleArenaBase + OracleArenaSize - 0x2000U;
-constexpr uint32_t OracleSeededWin = OracleSeededObjectBase;
+    OracleArenaBase + OracleArenaSize - 0x8000U;
+constexpr uint32_t OracleSeededBlock = 0x2000U;
+constexpr uint32_t OracleSeededWin = OracleSeededObjectBase + 0x1000U;
+constexpr uint32_t OracleSeededListBox =
+    OracleSeededObjectBase + OracleSeededBlock + 0x1000U;
+constexpr uint32_t OracleSeededString =
+    OracleSeededObjectBase + 2 * OracleSeededBlock + 0x1000U;
 
 static void put32(unsigned char *image, uint32_t va, uint32_t value) {
     std::memcpy(image + (va - OracleImageBase), &value, 4);
@@ -1553,8 +1561,27 @@ static void seed_globals(unsigned char *image) {
     // A zeroed Win is a REAL Win, not a hole: Win::is_visible reads the flag
     // byte at 0x9c and answers "not visible", which is a defined answer the
     // lift must reproduce. What it must not be is address zero.
-    std::memset(image + (OracleSeededWin - OracleImageBase), 0, 0x400);
-    put32(image, 0x009BC074U, OracleSeededWin);
+    // Three padded blocks, zeroed. A zeroed object is a REAL object: Win's
+    // is_visible reads its flag byte and answers "not visible", which is a
+    // defined answer the lift must reproduce. What it must not be is address
+    // zero.
+    std::memset(image + (OracleSeededObjectBase - OracleImageBase), 0,
+                3 * OracleSeededBlock);
+    // A short NUL-terminated string, so strcpy/strlen/strcat terminate.
+    // _strcat owns 102,480 bytes of the fault wall on its own.
+    static const char kSeedText[] = "seed";
+    std::memcpy(image + (OracleSeededString - OracleImageBase),
+                kSeedText, sizeof kSeedText);
+
+    // The globals that are passed as `this` to a Win or ListBox method and are
+    // zero at load. Found by disassembling every catalogued function and
+    // looking for `mov ecx,[bss global]` within three instructions of such a
+    // call - a linear sweep of .text desynchronises on data and found none of
+    // them.
+    static const uint32_t kWinGlobals[] = {
+        0x009BC074U, 0x007F685CU, 0x009156B0U, 0x009B8180U, 0x009B7B2CU};
+    for (uint32_t g : kWinGlobals) put32(image, g, OracleSeededWin);
+    put32(image, 0x0087BE24U, OracleSeededListBox);
 }
 
 static void reset_both(uint32_t address, int case_index, uint32_t return_address) {
