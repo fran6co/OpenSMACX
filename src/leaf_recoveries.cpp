@@ -27,6 +27,8 @@
 #include "leaf_recoveries.h"
 #include "win.h"
 #include "field_accessors.h"
+#include "buffer.h"
+#include "graphicwin.h"
 
 #include <cstring>
 
@@ -954,4 +956,60 @@ Status: Complete
 int __fastcall leaf_004041c0_redirect(void *self, void *) {
     return field_accessor_00600320_redirect(
                static_cast<uint8_t *>(self) + 0xA14, nullptr) != 0 ? 1 : 0;
+}
+
+/*
+Purpose: Construct the Buffer subobject, then clear one field.
+
+             mov esi,ecx / lea ecx,[esi+0x8dc] / call ??0Buffer
+             mov dword [esi+0x10c],0 / mov eax,esi / ret
+
+         The Buffer lives at 0x8dc and the cleared field at 0x10c - which is
+         BELOW the Buffer, so the store is in this object's own space and not
+         inside the subobject. It happens after the constructor, which is the
+         order that would matter if the constructor ever reached that far back.
+
+Original Offset: 004BEA30
+Return Value: `this`
+Status: Complete
+*/
+void *__fastcall leaf_004bea30_redirect(void *self, void *) {
+    buffer_construct_redirect(
+        reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x8DC),
+        nullptr);
+    store32(self, 0x10C, 0);
+    return self;
+}
+
+/*
+Purpose: Reset six fields, then close the window and its Buffer.
+
+             xor eax,eax / mov [esi+0x2b60],eax / mov [esi+0x2b6c],eax
+             mov [esi+0x2b70],eax / mov [esi+0x2b80],eax
+             mov [esi+0x2b68],0xffffffff / mov [esi+0x4648],eax
+             call GraphicWin::close / lea ecx,[esi+0x406c]
+             call Buffer::close / ret
+
+         Five of the six are cleared and ONE - 0x2b68 - is set to -1. It is
+         written FIFTH, between 0x2b80 and 0x4648, so the write order is not
+         ascending and the odd value is not at the end either.
+
+         GraphicWin::close is called on `this` itself; Buffer::close on the
+         subobject at 0x406c.
+
+Original Offset: 00432970
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_00432970_redirect(void *self, void *) {
+    store32(self, 0x2B60, 0);
+    store32(self, 0x2B6C, 0);
+    store32(self, 0x2B70, 0);
+    store32(self, 0x2B80, 0);
+    store32(self, 0x2B68, 0xFFFFFFFFU);
+    store32(self, 0x4648, 0);
+    graphic_win_close_redirect(reinterpret_cast<GraphicWin *>(self), nullptr);
+    buffer_close_redirect(
+        reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x406C),
+        nullptr);
 }

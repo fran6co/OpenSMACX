@@ -2909,6 +2909,123 @@ void test_leaf_recoveries() {
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
     }
 
+    // --- six field resets, then GraphicWin::close and Buffer::close ---
+    //
+    // The callees are made harmless rather than mocked away: GraphicWin's two
+    // subobject-close seams are null-checked, so nulling them takes those
+    // paths out, and a zeroed release target makes it return before the
+    // virtual call. Buffer::close is left to run for real.
+    //
+    // This does NOT compare the object byte for byte. Buffer::close writes
+    // some forty fields unconditionally, and restating them here would just be
+    // the recovery written twice. Instead each callee is pinned by one value
+    // only it produces, AT THE ADDRESS IT SHOULD HAVE BEEN GIVEN.
+    {
+        func_subobject_close *const saved_win = WinOriginalClose;
+        func_subobject_close *const saved_sub = BufferSubobjectClose;
+        uint32_t *const saved_default = GraphicWinFieldA0CDefault;
+        uint32_t *const saved_reset = BufferResetValue520;
+        Font **const saved_font = FontDefaultPtr;
+        uint32_t default_a0c = 0x0BADF00DU;
+        uint32_t reset_520 = 0x71234567U;
+        Font *default_font = reinterpret_cast<Font *>(0x76543210U);
+        WinOriginalClose = nullptr;
+        BufferSubobjectClose = nullptr;
+        GraphicWinFieldA0CDefault = &default_a0c;
+        BufferResetValue520 = &reset_520;
+        FontDefaultPtr = &default_font;
+
+        static uint8_t object[0x4700];
+        auto got = [&](size_t offset) {
+            uint32_t value;
+            std::memcpy(&value, object + offset, sizeof(value));
+            return value;
+        };
+
+        std::memset(object, 0, sizeof(object));
+        leaf_00432970_redirect(object, nullptr);
+
+        // The six stores, one of which is -1 and is written fifth.
+        expect(got(0x2B60) == 0U);
+        expect(got(0x2B6C) == 0U);
+        expect(got(0x2B70) == 0U);
+        expect(got(0x2B80) == 0U);
+        expect(got(0x2B68) == 0xFFFFFFFFU);
+        expect(got(0x4648) == 0U);
+
+        // GraphicWin::close ran on `this`: only it writes the 0xA0C default.
+        expect(got(0xA0C) == default_a0c);
+        // Buffer::close ran AT 0x406c: only it writes -1 at its own 0x50c and
+        // the reset value at its 0x520.
+        expect(got(0x406C + 0x50C) == 0xFFFFFFFFU);
+        expect(got(0x406C + 0x520) == reset_520);
+        // ...and NOT on `this`, which is what a body passing the wrong
+        // pointer would show. `this + 0x50c` is untouched by everything else.
+        expect(got(0x50C) == 0U);
+        expect(got(0x520) == 0U);
+
+        // Seeded non-zero, so the five cleared fields must actually be
+        // cleared rather than merely left alone.
+        std::memset(object, 0x11, sizeof(object));
+        std::memset(object + 0x406C, 0, 0x600);   // keep Buffer::close tame
+        write_at(object, 0xA08, 0U);              // and its release path out
+        // 0x4648 falls INSIDE the region just zeroed, so it has to be dirtied
+        // again - otherwise "cleared" and "never written" look identical and
+        // dropping that store passes.
+        write_at(object, 0x4648, 0x11111111U);
+        leaf_00432970_redirect(object, nullptr);
+        expect(got(0x2B60) == 0U);
+        expect(got(0x2B6C) == 0U);
+        expect(got(0x2B70) == 0U);
+        expect(got(0x2B80) == 0U);
+        expect(got(0x2B68) == 0xFFFFFFFFU);
+        expect(got(0x4648) == 0U);
+
+        WinOriginalClose = saved_win;
+        BufferSubobjectClose = saved_sub;
+        GraphicWinFieldA0CDefault = saved_default;
+        BufferResetValue520 = saved_reset;
+        FontDefaultPtr = saved_font;
+    }
+
+    // --- construct a Buffer subobject at 0x8dc, then clear 0x10c ---
+    //
+    // Reuses the Buffer-constructor globals and the expected-bytes helper the
+    // Buffer test already stands up, so this checks the WHOLE object byte for
+    // byte: that the constructor ran at 0x8dc and nowhere else, that 0x10c was
+    // cleared, and that nothing between them moved.
+    {
+        uint32_t reset_520 = 0x71234567U;
+        Font *default_font = reinterpret_cast<Font *>(0x76543210U);
+        Palette *palette_value = nullptr;
+        int palette_state = 0;
+        uint32_t *const saved_reset = BufferResetValue520;
+        Font **const saved_font = FontDefaultPtr;
+        Palette **const saved_palette = BufferPalette;
+        int *const saved_initialized = PaletteInitialized;
+        BufferResetValue520 = &reset_520;
+        FontDefaultPtr = &default_font;
+        BufferPalette = &palette_value;
+        PaletteInitialized = &palette_state;
+
+        static uint8_t storage[0x8DC + 0x600 + 32];
+        static uint8_t expected[sizeof(storage)];
+        seed_storage(storage, expected, sizeof(storage));
+        write_buffer_construct_expected(
+            expected, 16 + 0x8DC, reset_520,
+            reinterpret_cast<uintptr_t>(default_font), nullptr, 0);
+        write_at(expected, 16 + 0x10C, 0U);
+
+        void *const self = storage + 16;
+        expect(leaf_004bea30_redirect(self, nullptr) == self);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+
+        BufferResetValue520 = saved_reset;
+        FontDefaultPtr = saved_font;
+        BufferPalette = saved_palette;
+        PaletteInitialized = saved_initialized;
+    }
+
     // --- 24 slots of 60 bytes, in three different widths ---
     {
         static uint8_t object[0x5A0 + 4 + 32];

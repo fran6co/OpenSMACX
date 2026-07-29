@@ -283,7 +283,6 @@ P0,1001621,0x004325C0,??1StringBox@@QAE@XZ,448,1,6,original_dependency,ui_depend
 P3,21,0x00432720,?on_link_clicked@StringBox@@QAEXHPAD@Z,65,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_link_clicked@StringBox@@QAEXHPAD@Z)(StringBox* this, int, int8*)"
 P0,1000321,0x004327A0,??1Flic@@QAE@XZ,123,0,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Flic@@QAE@XZ)(Flic* this)
 P3,4521,0x004328B0,??0SelectPartWin@@QAE@XZ,251,4,5,unrecovered,,,2,exact,entry_range,void (__thiscall ??0SelectPartWin@@QAE@XZ)(SelectPartWin* this)
-P3,211,0x00432970,?close@SelectPartWin@@QAEXXZ,63,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
 P3,2420,0x004329B0,?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z,769,1,14,unrecovered,,,2,exact,exact,
 P3,2620,0x00432CC0,?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z,1191,1,16,unrecovered,,,2,exact,exact,
 P3,2520,0x00433170,?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z,940,1,15,unrecovered,,,2,exact,exact,
@@ -1030,7 +1029,6 @@ P3,120,0x004BDFA0,?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,61,0,1,
 P0,1014621,0x004BDFE0,?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z,1653,13,16,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"int (__thiscall ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z)(TutWin* this, GraphicWin*, int8*, int, int, Sprite*, int, int, int)"
 P2,9321,0x004BE650,?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z,374,9,3,unrecovered,,,2,exact,exact,"int (__thiscall ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z)(TutWin* this, int8*, int xCoord, int yCoord, int, Sprite*, int, int, int)"
 P0,1002421,0x004BE7D0,??1TutWin@@QAE@XZ,773,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this)
-P3,1121,0x004BEA30,??0UV2Player@@QAE@XZ,28,1,1,unrecovered,,,2,exact,exact,void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
 P3,2821,0x004BEA50,?exec@UV2Player@@QAEHPADHHH@Z,869,1,18,unrecovered,,,2,exact,exact,"int (__thiscall ?exec@UV2Player@@QAEHPADHHH@Z)(UV2Player* this, LPSTR pszFileName, int, int, int)"
 P3,111,0x004BEDC0,?UNK1@UV2Player@@QAEHHHHH@Z,154,0,1,unrecovered,,,1,missing,exact,"int (__thiscall ?UNK1@UV2Player@@QAEHHHHH@Z)(UV2Player* this, int, int, int, int)"
 P3,120,0x004BEE60,?UNK2@UV2Player@@QAAHHHHH@Z,157,0,1,unrecovered,,,2,exact,exact,
