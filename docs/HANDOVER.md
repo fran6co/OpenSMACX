@@ -709,6 +709,34 @@ one worked on the maps parse and died on the read.
    the flat span and the address translation untouched. That is the single
    best-founded next step in this document.
 
+   **It is blocked on a display, and that is the only thing blocking it.** The
+   two obstacles that looked structural are not:
+
+   * `--oracle-result` must be under `.opensmacx/` or `build/`; the smoke tool
+     refuses any other path so proprietary artefacts cannot leave the ignored
+     directories. Point it there and it launches.
+   * `ptrace_scope` is 1, which permits an ANCESTOR to read a descendant. A
+     reader that launches the smoke itself can read every wine process below
+     it, so `/proc/<pid>/mem` needs no `dllmain` change and no privilege - the
+     first attempt failed only because the reader was a SIBLING of the game.
+
+   What actually stops it is that this host is headless:
+
+   ```
+   err:winediag:nodrv_CreateWindow Application tried to create a window, but
+   no driver could be loaded.
+   ```
+
+   The game dies at window creation, so it never reaches an initialised state
+   worth dumping. The runtime oracles all still pass, because they run inside
+   the DLL before that point - `runtime_oracles` being green in
+   `hybrid-smoke-result.json` does NOT mean the game ran.
+
+   Neither fix is the harness's call to make. `Xvfb` is not installed, and
+   installing it is a system change; `/tmp/.X11-unix/X1` exists, so display
+   `:1` is live, but pointing the game at it puts a fullscreen window on
+   somebody's desktop. Ask before doing either.
+
 ### Giving all 572 static objects a vbptr: rejected, and it says why
 
 The obvious follow-up to that count is to stop inventing objects and seed the
