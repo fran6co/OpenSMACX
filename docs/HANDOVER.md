@@ -905,6 +905,21 @@ which is the case the back-word seeding exists to prevent. Whatever produces it
 is not the four words below any `this`, because seeding those for all 32 slots
 changed nothing. Start there with a debugger attached, not with a fifth theory.
 
+**SOLVED, and it was mine.** `scan_static_this` filtered candidates with
+`imm + 0x1000U >= kDataHigh`. For an `imm` near 2^32 that addition WRAPS:
+`mov ecx,0xfffffe84` - a negative constant, not an object - computed
+`0x00000e84`, passed the bound, and the slot filler copied 4 KB from
+`0xfffffe84 - 0x48 - 0x400000`. An out-of-bounds read in the harness's own C++.
+It looked like a harness bug because it was one.
+
+What found it was instrumenting the fault instead of theorising about it. The
+handler now prints the guest context on a HARNESS FAULT, and the first dump
+named the culprit: `esp=0x0039f648` was a HOST stack, `ecx`/`ebx` were a slot
+and the next slot, the faulting access was exactly `esi` - the source pointer -
+and `eax=0xfffffe84` was the bad object in plain sight. **Four hypotheses about
+guest semantics, and the bug was arithmetic in a filter.** Keep that
+instrumentation; it costs nothing and it is what ends this kind of hunt.
+
 **Four confident hypotheses, four wrong.** Back-word ordering; then the
 `0x3F800000`-style float above the remap ceiling; then the value contract in
 general; then the invariant applied per slot. Each explained the symptom completely and none was the cause. The one
@@ -916,6 +931,37 @@ oracle process, not another hypothesis.
 What is solid: `--state` crashes and the same build without it runs clean, so
 the trigger is real object contents in the arena. What that costs is bounded -
 the remap already banks -128,590 B without copying any contents at all.
+
+### Real object contents in slots: still broken, and it printed 15.85%
+
+With the overflow fixed, all 14 previously killed probes return rows and a whole
+sweep runs to completion. **The result is still not usable, and the way it fails
+is the point:**
+
+```
+INCONCLUSIVE-original-fault    382072   15.85%   1050      <- the target, smashed
+never compared by the oracle  2296255   95.27%   4981      <- and here is why
+```
+
+3,928 of 5,673 report rows have address `0000000000` and name `(null)`: the
+harness still dies mid-case, now inside a Wine DLL rather than in the copy loop.
+Those rows name no function, `read_report` drops them - correctly - and the
+headline figure is then computed over the 1,745 that remain. **A run that
+collapsed reads exactly like the number collapsing.**
+
+`never compared` at 95% gives it away instantly, which is why that figure is
+published beside the headline and must never be dropped from a report. But
+nothing SAID 3,928 lines had been discarded, so `lifted_oracle_summary.py` now
+prints:
+
+```
+WARNING: 3928 report line(s) named no function and were dropped. A figure
+computed from the rest describes only 1745 of 5673 rows - suspect the RUN,
+not the lift.
+```
+
+Two tests cover it, and the positive control was run: disabling the counter
+makes them fail.
 
 ### One of the seeded globals was never a pointer
 

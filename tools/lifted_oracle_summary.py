@@ -167,9 +167,21 @@ def read_report(path: Path, sizes: dict[int, int]):
     with path.open() as handle:
         header = handle.readline().rstrip("\n").split("\t")
         has_compared = "compared" in header
+        dropped = 0
         for line in handle:
             parts = line.rstrip("\n").split("\t")
             if len(parts) < 4 or not parts[0].startswith("0x"):
+                # SAY SO. A harness that dies mid-case can write rows whose
+                # address is "0000000000" and whose name is "(null)", and this
+                # test silently drops them - correctly, since they name no
+                # function. But dropping 3,928 of 5,673 rows in silence made a
+                # broken run print INCONCLUSIVE-original-fault at 15.85% of
+                # scope, which reads like the headline figure collapsing when
+                # it is the report collapsing. `never compared` at 95% gave it
+                # away; a reader who checked only the one line would not have
+                # looked. Count them and print it.
+                if line.strip():
+                    dropped += 1
                 continue
             address = int(parts[0], 16)
             if address in seen:
@@ -187,6 +199,11 @@ def read_report(path: Path, sizes: dict[int, int]):
                 name=parts[-1],
                 size=sizes.get(address, 0),
                 priced=address in sizes))
+    if dropped:
+        print(f"WARNING: {dropped} report line(s) named no function and were "
+              f"dropped. A figure computed from the rest describes only "
+              f"{len(rows)} of {dropped + len(rows)} rows - suspect the RUN, "
+              f"not the lift.", file=sys.stderr)
     return rows, has_compared
 
 
