@@ -600,3 +600,129 @@ int __stdcall leaf_005d7a10_redirect(const void *source, int, int, int) {
         static_cast<const uint8_t *>(source) + 0xC);
     return flag != 0 ? 0 : 7;
 }
+
+/*
+Purpose: Forward all four arguments to 005D7A10.
+
+             mov eax,[esp+0x10] / mov edx,[esp+0xc] / push eax
+             mov eax,[esp+0xc] / push edx / mov edx,[esp+0xc]
+             push eax / push edx / add ecx,0x444 / call 005D7A10 / ret 0x10
+
+         The interleaved reads and pushes look like a shuffle and are not: each
+         `[esp+0xc]` is read AFTER a push has moved ESP, so they walk backwards
+         through the arguments and re-push them in the same order.
+
+         `add ecx,0x444` computes a subobject pointer that 005D7A10 never
+         reads - it takes everything from the stack. The adjustment is
+         therefore unobservable, and reproducing it would be copying a leftover
+         rather than the function. That is a claim about the callee, and it is
+         checked: see its recovery above, which reads `[esp+4]` and nothing
+         else.
+
+Original Offset: 005D5470
+Return Value: whatever 005D7A10 returns
+Status: Complete
+*/
+int __fastcall leaf_005d5470_redirect(void *, void *, const void *source,
+                                      int second, int third, int fourth) {
+    return leaf_005d7a10_redirect(source, second, third, fourth);
+}
+
+/*
+Purpose: Reverse the low `count` bits of a value.
+
+             xor eax,eax / loop: mov esi,ecx / and esi,1 / or eax,esi
+             shr ecx,1 / shl eax,1 / dec edx / test edx,edx / jg loop
+             shr eax,1 / ret
+
+         The loop is a DO-WHILE: the body runs once before the counter is
+         tested, so a count of zero or a negative one still moves one bit
+         through and the answer is bit 0 rather than nothing. Writing it as a
+         `for` would return 0 for those, which is a different function.
+
+         The trailing `shr eax,1` undoes the last of the `shl`s, which is why
+         the shift happens after the OR rather than before it.
+
+Original Offset: 00642940
+Return Value: the low `count` bits, reversed
+Status: Complete
+*/
+uint32_t __cdecl leaf_00642940_redirect(uint32_t value, int count) {
+    uint32_t result = 0;
+    int remaining = count;
+    do {
+        result |= value & 1U;
+        value >>= 1;
+        result <<= 1;
+        --remaining;
+    } while (remaining > 0);
+    return result >> 1;
+}
+
+/*
+Purpose: Report a node's neighbours through two optional out-parameters.
+
+             mov eax,[ecx] / test eax,eax / jne have / ret 8
+       have: mov edx,[esp+8] / test edx,edx / je skip1
+             mov eax,[eax+4] / mov [edx],eax
+      skip1: mov eax,[esp+4] / test eax,eax / je skip0
+             mov edx,[ecx] / mov edx,[edx] / mov [eax],edx
+      skip0: mov eax,[ecx] / mov eax,[eax+8] / ret 8
+
+         With no node it returns whatever EAX held, which the `test` has just
+         established is zero.
+
+         The original RE-READS `[ecx]` after each store instead of keeping the
+         node in a register. That is preserved here rather than tidied: if an
+         out-parameter points at `[ecx]` itself, the second read sees the value
+         just written, and a cached version would not.
+
+Original Offset: 0063E7F0
+Return Value: node->[8]
+Status: Complete
+*/
+uint32_t __fastcall leaf_0063e7f0_redirect(void *self, void *,
+                                           uint32_t *first, uint32_t *second) {
+    uint8_t *const *const slot = reinterpret_cast<uint8_t *const *>(self);
+    if (*slot == nullptr) {
+        return 0;
+    }
+    if (second != nullptr) {
+        *second = *reinterpret_cast<const uint32_t *>(*slot + 4);
+    }
+    if (first != nullptr) {
+        *first = *reinterpret_cast<const uint32_t *>(*slot);
+    }
+    return *reinterpret_cast<const uint32_t *>(*slot + 8);
+}
+
+/*
+Purpose: Divide, rounding the quotient AWAY from zero when there is a
+         remainder, and report both.
+
+             mov eax,ecx / cdq / idiv esi / mov edx,eax / imul edx,esi
+             sub ecx,edx / mov [edx],ecx / je zero / inc eax / mov [ecx],eax
+             ret 0x10   zero: mov [edx],eax / ret 0x10
+
+         The `je` is three instructions after the `sub` that sets it, with two
+         `mov`s and a `pop` in between - none of which touch flags. It tests
+         whether the REMAINDER was zero, not anything nearer to it.
+
+         `idiv` truncates toward zero, so the +1 rounds away from zero rather
+         than up: -7 by 2 gives a remainder of -1 and a quotient of -3, which
+         becomes -2. Both traps of the original are kept, because both
+         spellings go through one division: a zero divisor and INT_MIN / -1.
+
+Original Offset: 00532A50
+Return Value: the quotient that was stored
+Status: Complete
+*/
+int __stdcall leaf_00532a50_redirect(int value, int *quotient_out,
+                                     int *remainder_out, int divisor) {
+    const int quotient = value / divisor;
+    const int remainder = value - quotient * divisor;
+    *remainder_out = remainder;
+    const int rounded = remainder == 0 ? quotient : quotient + 1;
+    *quotient_out = rounded;
+    return rounded;
+}

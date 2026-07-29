@@ -1532,7 +1532,6 @@ P3,3521,0x00532140,?veh_drop@NetDaemon@@QAEHHHH@Z,1059,2,15,unrecovered,,,2,exac
 P3,4421,0x00532570,?action@NetDaemon@@QAEHHH@Z,842,3,14,unrecovered,,,2,exact,exact,"int (__thiscall ?action@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int vehID, int)"
 P3,211,0x005328C0,?end_of_event@NetDaemon@@QAEHHH@Z,116,0,2,unrecovered,,,1,missing,exact,"int (__thiscall ?end_of_event@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)"
 P2,12221,0x00532940,?send_message@NetDaemon@@QAEXPADKH@Z,260,12,2,unrecovered,,,2,exact,exact,"void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)"
-P3,10,0x00532A50,sub_532a50,49,0,0,unrecovered,,,1,missing,exact,
 P3,1320,0x00532C30,?synch_display@@YAXHHHH@Z,370,1,3,unrecovered,,,2,exact,exact,
 P0,1026321,0x00532E00,?synch@NetDaemon@@QAEXFHHHPADHF@Z,4905,24,23,original_dependency,ui_dependency,recover_net_daemon_synch,2,exact,exact,"void (__thiscall ?synch@NetDaemon@@QAEXFHHHPADHF@Z)(NetDaemon* this, int16, int id, int, int, int8*, int uDelay, int16)"
 P3,1121,0x00534330,?fixup_message@NetDaemon@@QAEHPAD@Z,204,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?fixup_message@NetDaemon@@QAEHPAD@Z)(NetDaemon* this, int8*)"
@@ -1981,7 +1980,6 @@ P0,1185221,0x005D4DD0,??1GraphicWin@@QAE@XZ,121,185,2,source_complete,ui_depende
 P2,7121,0x005D50A0,?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,72,7,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)"
 P3,610,0x005D50F0,sub_5d50f0,325,0,6,unrecovered,,,1,missing,exact,
 P2,18321,0x005D5350,?fill@GraphicWin@@QAEHPAURECT@@H@Z,238,18,3,unrecovered,,,2,exact,exact,"int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)"
-P3,100,0x005D5470,sub_5d5470,34,0,1,unrecovered,,,0,missing,missing,
 P3,100,0x005D54A0,sub_5d54a0,34,0,1,unrecovered,,,0,missing,missing,
 P3,100,0x005D54D0,sub_5d54d0,34,0,1,unrecovered,,,0,missing,missing,
 P3,2121,0x005D5500,?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z,54,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)"
@@ -3043,7 +3041,6 @@ P3,3120,0x0063E540,sub_63e540,79,3,1,unrecovered,,,2,exact,exact,
 P3,3120,0x0063E590,sub_63e590,79,3,1,unrecovered,,,2,exact,exact,
 P3,310,0x0063E5E0,sub_63e5e0,253,0,3,unrecovered,,,1,missing,exact,
 P3,1220,0x0063E6E0,sub_63e6e0,270,1,2,unrecovered,,,2,exact,exact,
-P3,2020,0x0063E7F0,sub_63e7f0,44,2,0,unrecovered,,,2,exact,exact,
 P3,2120,0x0063E820,sub_63e820,59,2,1,unrecovered,,,2,exact,exact,
 P3,1020,0x0063E860,sub_63e860,238,1,0,unrecovered,,,2,exact,exact,
 P3,1820,0x0063E950,sub_63e950,1711,1,8,unrecovered,,,2,exact,exact,
@@ -3076,7 +3073,6 @@ P3,1020,0x00641DD0,_send_tree,1397,1,0,unrecovered,,,2,exact,exact,
 P3,2020,0x00642350,sub_642350,295,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x00642480,_compress_block,1083,1,0,unrecovered,,,2,exact,exact,
 P3,1020,0x006428C0,sub_6428c0,116,1,0,unrecovered,,,2,exact,exact,
-P3,2020,0x00642940,sub_642940,31,2,0,unrecovered,,,2,exact,exact,
 P3,1020,0x00642960,sub_642960,139,1,0,unrecovered,,,2,exact,exact,
 P3,2020,0x006429F0,sub_6429f0,124,2,0,unrecovered,,,2,exact,exact,
 P3,1120,0x00642A70,sub_642a70,151,1,1,unrecovered,,,2,exact,exact,

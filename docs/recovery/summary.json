@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2526,
+      "source_complete": 2530,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2834
+      "unrecovered": 2830
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,9 +67,9 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 195075,
-          "functions": 2526,
-          "percent_of_lift_scope_bytes": 8.09
+          "bytes": 195233,
+          "functions": 2530,
+          "percent_of_lift_scope_bytes": 8.1
         },
         "source_in_progress": {
           "bytes": 13083,
@@ -82,9 +82,9 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 2013962,
-          "functions": 2834,
-          "percent_of_lift_scope_bytes": 83.56
+          "bytes": 2013804,
+          "functions": 2830,
+          "percent_of_lift_scope_bytes": 83.55
         }
       },
       "catalogued": {
@@ -103,16 +103,16 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2215242,
+        "bytes": 2215084,
         "direction": "must go down",
-        "functions": 3147,
+        "functions": 3143,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
-        "percent_of_lift_scope_bytes": 91.91
+        "percent_of_lift_scope_bytes": 91.9
       },
       "recovered": {
-        "bytes": 195075,
-        "functions": 2526,
-        "percent_of_lift_scope_bytes": 8.09
+        "bytes": 195233,
+        "functions": 2530,
+        "percent_of_lift_scope_bytes": 8.1
       }
     },
     "total": 6000,
@@ -1411,9 +1411,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2472,
-    "matched_function_starts": 2472,
-    "unique_addresses": 2472,
+    "annotations": 2476,
+    "matched_function_starts": 2476,
+    "unique_addresses": 2476,
     "unmatched_addresses": []
   },
   "source_bindings": {

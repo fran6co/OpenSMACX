@@ -3086,7 +3086,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00532570,0x005328BA,842,.text,?action@NetDaemon@@QAEHHH@Z,"int (__thiscall ?action@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int vehID, int)",0x00532570-0x005328BA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,14,3
 0x005328C0,0x00532934,116,.text,?end_of_event@NetDaemon@@QAEHHH@Z,"int (__thiscall ?end_of_event@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)",0x005328C0-0x00532934,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00532940,0x00532A44,260,.text,?send_message@NetDaemon@@QAEXPADKH@Z,"void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)",0x00532940-0x00532A44,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,12
-0x00532A50,0x00532A81,49,.text,sub_532a50,,0x00532A50-0x00532A81,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00532A50,0x00532A81,49,.text,sub_532a50,,0x00532A50-0x00532A81,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:716,Complete,,,source_complete,,,,0,0
 0x00532A90,0x00532B63,211,.text,?rebuild_vehicle_bits@@YAXXZ,,0x00532A90-0x00532B63,game,frame;sp_ready;purged_ok,src/map.cpp:1100,Complete,?rebuild_vehicle_bits@@YAXXZ,,source_complete,,,,0,3
 0x00532B70,0x00532C2B,187,.text,?rebuild_base_bits@@YAXXZ,,0x00532B70-0x00532C2B,game,frame;sp_ready;purged_ok,src/map.cpp:1123,Complete,?rebuild_base_bits@@YAXXZ,,source_complete,,,,0,3
 0x00532C30,0x00532DA2,370,.text,?synch_display@@YAXHHHH@Z,,0x00532C30-0x00532DA2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
@@ -3917,7 +3917,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005D5250,0x005D5346,246,.text,?fill@GraphicWin@@QAEXH@Z,"void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)",0x005D5250-0x005D5346,game,hidden;sp_ready;purged_ok,src/graphicwin.cpp:267,Complete,,,source_complete,,,,3,58
 0x005D5350,0x005D543E,238,.text,?fill@GraphicWin@@QAEHPAURECT@@H@Z,"int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)",0x005D5350-0x005D543E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,18
 0x005D5440,0x005D5467,39,.text,?fill@GraphicWin@@QAEHHHHHH@Z,"int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)",0x005D5440-0x005D5467,game,hidden;sp_ready;purged_ok,src/graphicwin.cpp:223,Complete,,,source_complete,,,,1,6
-0x005D5470,0x005D5492,34,.text,sub_5d5470,,0x005D5470-0x005D5492,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
+0x005D5470,0x005D5492,34,.text,sub_5d5470,,0x005D5470-0x005D5492,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:622,Complete,,,source_complete,,,,1,0
 0x005D54A0,0x005D54C2,34,.text,sub_5d54a0,,0x005D54A0-0x005D54C2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005D54D0,0x005D54F2,34,.text,sub_5d54d0,,0x005D54D0-0x005D54F2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005D5500,0x005D5536,54,.text,?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z,"int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)",0x005D5500-0x005D5536,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
@@ -5548,7 +5548,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0063E590,0x0063E5DF,79,.text,sub_63e590,,0x0063E590-0x0063E5DF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,3
 0x0063E5E0,0x0063E6DD,253,.text,sub_63e5e0,,0x0063E5E0-0x0063E6DD,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x0063E6E0,0x0063E7EE,270,.text,sub_63e6e0,,0x0063E6E0-0x0063E7EE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
-0x0063E7F0,0x0063E81C,44,.text,sub_63e7f0,,0x0063E7F0-0x0063E81C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
+0x0063E7F0,0x0063E81C,44,.text,sub_63e7f0,,0x0063E7F0-0x0063E81C,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:680,Complete,,,source_complete,,,,0,2
 0x0063E820,0x0063E85B,59,.text,sub_63e820,,0x0063E820-0x0063E85B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x0063E860,0x0063E94E,238,.text,sub_63e860,,0x0063E860-0x0063E94E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x0063E950,0x0063EFFF,1711,.text,sub_63e950,,0x0063E950-0x0063EFFF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,1
@@ -5581,7 +5581,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00642350,0x00642477,295,.text,sub_642350,,0x00642350-0x00642477,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x00642480,0x006428BB,1083,.text,_compress_block,,0x00642480-0x006428BB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006428C0,0x00642934,116,.text,sub_6428c0,,0x006428C0-0x00642934,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x00642940,0x0064295F,31,.text,sub_642940,,0x00642940-0x0064295F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
+0x00642940,0x0064295F,31,.text,sub_642940,,0x00642940-0x0064295F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:646,Complete,,,source_complete,,,,0,2
 0x00642960,0x006429EB,139,.text,sub_642960,,0x00642960-0x006429EB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006429F0,0x00642A6C,124,.text,sub_6429f0,,0x006429F0-0x00642A6C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x00642A70,0x00642B07,151,.text,sub_642a70,,0x00642A70-0x00642B07,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1

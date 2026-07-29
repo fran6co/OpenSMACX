@@ -2770,6 +2770,102 @@ void test_leaf_recoveries() {
         }
     }
 
+    // --- forwarding all four arguments, unshuffled ---
+    {
+        uint8_t source[0x20] = {};
+        uint8_t object[0x500] = {};
+        const uint32_t set = 1;
+        std::memcpy(source + 0xC, &set, sizeof(set));
+        // The first argument must arrive as the first argument: 005D7A10
+        // answers 3 for null, 0 for a set flag and 7 for a clear one, so a
+        // forwarder that rotated them would answer 3 here.
+        expect(leaf_005d5470_redirect(object, nullptr, source, 0, 0, 0) == 0);
+        const uint32_t clear = 0;
+        std::memcpy(source + 0xC, &clear, sizeof(clear));
+        expect(leaf_005d5470_redirect(object, nullptr, source, 0, 0, 0) == 7);
+        expect(leaf_005d5470_redirect(object, nullptr, nullptr, 1, 2, 3) == 3);
+    }
+
+    // --- reverse the low N bits, with a DO-WHILE that runs at least once ---
+    {
+        expect(leaf_00642940_redirect(0x1U, 3) == 0x4U);      // 001 -> 100
+        expect(leaf_00642940_redirect(0x4U, 3) == 0x1U);      // 100 -> 001
+        expect(leaf_00642940_redirect(0x3U, 3) == 0x6U);      // 011 -> 110
+        expect(leaf_00642940_redirect(0x5U, 3) == 0x5U);      // palindrome
+        expect(leaf_00642940_redirect(0xFFU, 8) == 0xFFU);
+        expect(leaf_00642940_redirect(0x80U, 8) == 0x1U);
+        expect(leaf_00642940_redirect(0x1U, 8) == 0x80U);
+        // Bits above the count are ignored entirely.
+        expect(leaf_00642940_redirect(0xFFFFFF01U, 3) == 0x4U);
+        // The loop body runs before the counter is tested, so zero and
+        // negative counts return BIT 0, not nothing.
+        expect(leaf_00642940_redirect(0x1U, 0) == 0x1U);
+        expect(leaf_00642940_redirect(0x2U, 0) == 0x0U);
+        expect(leaf_00642940_redirect(0x1U, -5) == 0x1U);
+        expect(leaf_00642940_redirect(0x1U, 1) == 0x1U);
+    }
+
+    // --- neighbours through two optional out-parameters ---
+    {
+        uint8_t holder[8] = {};
+        uint8_t node[16] = {};
+        const uint32_t previous = 0xAAAAAAAAU;
+        const uint32_t next = 0xBBBBBBBBU;
+        const uint32_t payload = 0xCCCCCCCCU;
+        std::memcpy(node + 0, &previous, sizeof(previous));
+        std::memcpy(node + 4, &next, sizeof(next));
+        std::memcpy(node + 8, &payload, sizeof(payload));
+
+        uint8_t *pointer = nullptr;
+        std::memcpy(holder, &pointer, sizeof(pointer));
+        expect(leaf_0063e7f0_redirect(holder, nullptr, nullptr, nullptr) == 0);
+
+        pointer = node;
+        std::memcpy(holder, &pointer, sizeof(pointer));
+        uint32_t got_first = 0;
+        uint32_t got_second = 0;
+        expect(leaf_0063e7f0_redirect(holder, nullptr, &got_first,
+                                      &got_second) == payload);
+        // first gets node->[0], second gets node->[4] - not the other way.
+        expect(got_first == previous);
+        expect(got_second == next);
+
+        // Either out-parameter may be null, independently.
+        got_first = 0; got_second = 0;
+        expect(leaf_0063e7f0_redirect(holder, nullptr, &got_first,
+                                      nullptr) == payload);
+        expect(got_first == previous);
+        expect(got_second == 0);
+        got_first = 0;
+        expect(leaf_0063e7f0_redirect(holder, nullptr, nullptr,
+                                      &got_second) == payload);
+        expect(got_first == 0);
+        expect(got_second == next);
+    }
+
+    // --- divide, rounding away from zero when there is a remainder ---
+    {
+        int quotient = 0;
+        int remainder = 0;
+        expect(leaf_00532a50_redirect(10, &quotient, &remainder, 5) == 2);
+        expect(quotient == 2);
+        expect(remainder == 0);          // exact: no rounding
+        expect(leaf_00532a50_redirect(11, &quotient, &remainder, 5) == 3);
+        expect(quotient == 3);           // 2 rounded up
+        expect(remainder == 1);
+        expect(leaf_00532a50_redirect(0, &quotient, &remainder, 5) == 0);
+        expect(quotient == 0);
+        expect(remainder == 0);
+        // Negative: idiv truncates, so -7/2 is -3 remainder -1, and the +1
+        // takes it to -2 - away from zero in magnitude terms, and the
+        // remainder keeps the DIVIDEND's sign.
+        expect(leaf_00532a50_redirect(-7, &quotient, &remainder, 2) == -2);
+        expect(quotient == -2);
+        expect(remainder == -1);
+        expect(leaf_00532a50_redirect(-8, &quotient, &remainder, 2) == -4);
+        expect(remainder == 0);
+    }
+
     // --- round toward zero to a multiple ---
     //
     // The NEGATIVE cases are the assertion. `x / y * y` truncates toward zero,
