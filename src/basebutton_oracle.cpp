@@ -15,6 +15,16 @@
 #include "runtime_oracle.h"
 #include "temp.h"
 
+// What this oracle PROVES: each function below is executed here in its
+// ORIGINAL form, at its canonical address inside the hybrid process, and
+// compared against the recovered implementation. These markers are the
+// input to `unproven_recovered` in docs/recovery/summary.json; see
+// tools/export_proven_functions.py for what does and does not count.
+//
+// PROVEN-AGAINST-ORIGINAL: 0x006070C0  ?close@BaseButton@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x00607DA0  ?close@FlatButton@@QAEXXZ
+
+
 namespace {
 
 using BaseButtonFixture = runtime_oracle::Fixture<BaseButton>;

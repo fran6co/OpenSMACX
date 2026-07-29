@@ -13,6 +13,16 @@
 #include "runtime_oracle.h"
 #include "win.h"
 
+// What this oracle PROVES: each function below is executed here in its
+// ORIGINAL form, at its canonical address inside the hybrid process, and
+// compared against the recovered implementation. These markers are the
+// input to `unproven_recovered` in docs/recovery/summary.json; see
+// tools/export_proven_functions.py for what does and does not count.
+//
+// PROVEN-AGAINST-ORIGINAL: 0x005ED240  ?client_to_screen@Win@@QAEXPAH0@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F7E90  ?is_visible@Win@@QAEHXZ
+
+
 namespace {
 
 using WinFixture = runtime_oracle::Fixture<Win>;

@@ -1008,6 +1008,14 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_verify_redirect_patch_fit.py"
     )
 
+    # The inventory behind `unproven_recovered`. Its dangerous failure is
+    # publishing a proof that is not one, so it is gated like the metric it
+    # feeds.
+    add_test(NAME proven-functions-tool-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_export_proven_functions.py"
+    )
+
     # The check itself, against the real table: `install_redirect` writes five
     # bytes with no regard for how long the function it replaces is, and 280 of
     # the wired redirects are shorter than that.

@@ -97,13 +97,20 @@ class Tally:
             return 0.0
         return round(100.0 * self.byte_count / denominator.byte_count, 2)
 
-    def as_dict(self, denominator: "Tally" | None = None) -> dict:
+    def as_dict(self, denominator: "Tally" | None = None,
+                percent_key: str = "percent_of_lift_scope_bytes") -> dict:
         """The published shape. `bytes` is listed first deliberately: this is
-        the field that leads, and `functions` is the qualifier beside it."""
+        the field that leads, and `functions` is the qualifier beside it.
+
+        `percent_key` exists because not every published percentage is over
+        the lift scope. `unproven_recovered` is a share of RECOVERED bytes, and
+        emitting it as `percent_of_lift_scope_bytes` would repeat this file's
+        founding error in a new place: a percentage whose name states a
+        denominator it was not computed over. The caller names the denominator
+        it used, and the key says so."""
         payload = {"bytes": self.byte_count, "functions": self.functions}
         if denominator is not None:
-            payload["percent_of_lift_scope_bytes"] = self.percent_of(
-                denominator)
+            payload[percent_key] = self.percent_of(denominator)
         return payload
 
 
@@ -170,6 +177,64 @@ def machine_carried(rows) -> Tally:
         EXCLUDED_RECOVERY_STATE, RECOVERED_RECOVERY_STATE))
 
 
+def row_address(row: dict) -> int | None:
+    """The canonical start of a catalogue row, or None when it has none.
+
+    Tolerant in the same two directions `row_size` is, and for the same reason:
+    this module is called both with rows straight from `csv.DictReader` (every
+    field a string, `address` written `0x004BA830`) and with rows built in
+    memory by tests and by `export_recovery_inventory`, where it may already be
+    an int. A row with no readable address is not proven - it simply cannot be
+    matched against the proven catalogue - so it returns None rather than
+    raising and taking the whole summary down with it.
+    """
+    value = row.get("address")
+    if value is None:
+        # `export_recovery_inventory` names it `start` and holds it as an int;
+        # the CSV names it `address` and holds it as `0x004BA830`. This module
+        # is called with both, which its own header says, and looking for only
+        # one key made every row from the inventory unmatchable - publishing
+        # 100% unproven while the same arithmetic over the CSV said 32
+        # functions.
+        value = row.get("start")
+    if isinstance(value, int):
+        return value
+    try:
+        return int(value, 16)
+    except (TypeError, ValueError):
+        return None
+
+
+def proven_recovered(rows, proven: set[int]) -> Tally:
+    """Recovered bytes that have been RUN against the original and agreed.
+
+    `recovered` counts a declaration: `Status: Complete` in a source annotation,
+    which `export_recovery_inventory` promotes to `source_complete` on the
+    annotation alone. Nothing checked that the body it annotates behaves like
+    the function it replaces, so a wrong recovery counted exactly as much as a
+    right one and no published number could tell them apart.
+
+    `proven` comes from `docs/recovery/proven.csv`, which lists the functions an
+    oracle actually executes against the original. It is a COMMITTED catalogue
+    rather than a build artefact on purpose: this module is arithmetic over the
+    repository and must stay runnable without Wine, an IDB, or the game.
+    """
+    return tally(rows, lambda row: (row_state(row) == RECOVERED_RECOVERY_STATE
+                                    and row_address(row) in proven))
+
+
+def unproven_recovered(rows, proven: set[int]) -> Tally:
+    """MUST GO DOWN. Recovered bytes never executed against the original.
+
+    The second number in this file that falls when the project succeeds, and
+    the only one that can catch a recovery that is complete and WRONG.
+    `machine_carried` cannot: it goes down the moment a function is declared
+    recovered, whether or not the declaration is true.
+    """
+    return tally(rows, lambda row: (row_state(row) == RECOVERED_RECOVERY_STATE
+                                    and row_address(row) not in proven))
+
+
 def grouped(rows, column: str, denominator: Tally) -> dict:
     """{value: {bytes, functions, percent}} over one catalogue column.
 
@@ -211,7 +276,7 @@ def grouped(rows, column: str, denominator: Tally) -> dict:
     return out
 
 
-def bytes_block(rows) -> dict:
+def bytes_block(rows, proven: set[int] | None = None) -> dict:
     """The byte-weighted block published inside `summary.json`.
 
     Self-describing on purpose. A reader who finds a percentage in this file
@@ -219,6 +284,8 @@ def bytes_block(rows) -> dict:
     denominator leaves out, and why.
     """
     scope = lift_scope(rows)
+    proven = set() if proven is None else proven
+    recovered_tally = recovered(rows)
     return {
         "denominator": {
             "name": "lift_scope",
@@ -236,6 +303,21 @@ def bytes_block(rows) -> dict:
             "direction": "must go down",
             "meaning": ("in-scope bytes whose behaviour is still supplied by "
                         "machine-derived code rather than recovered source"),
+        },
+        "proven_recovered": {
+            **proven_recovered(rows, proven).as_dict(
+                recovered_tally, "percent_of_recovered_bytes"),
+            "denominator": "recovered",
+            "meaning": ("recovered bytes an oracle has executed against the "
+                        "original and found to agree"),
+        },
+        "unproven_recovered": {
+            **unproven_recovered(rows, proven).as_dict(
+                recovered_tally, "percent_of_recovered_bytes"),
+            "denominator": "recovered",
+            "direction": "must go down",
+            "meaning": ("recovered bytes never executed against the original: "
+                        "declared complete, never demonstrated equivalent"),
         },
         "by_recovery_state": grouped(rows, "recovery_state", scope),
         "by_binary_kind": grouped(rows, "binary_kind", scope),

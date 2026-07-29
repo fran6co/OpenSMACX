@@ -389,6 +389,91 @@ class ScopeSizesTests(unittest.TestCase):
         self.assertNotIn(0x00403000, sizes)
 
 
+class ProvenTests(unittest.TestCase):
+    """`unproven_recovered`: the number that catches a WRONG recovery.
+
+    `machine_carried` cannot. It falls the moment a function is declared
+    recovered, whether or not the declaration is true, so a body that compiles
+    and is wrong improves every published figure. These tests pin the one that
+    does not.
+    """
+
+    def rows(self):
+        return [
+            {"address": "0x00400000", "size": "100",
+             "recovery_state": "source_complete"},
+            {"address": "0x00400100", "size": "200",
+             "recovery_state": "source_complete"},
+            {"address": "0x00400200", "size": "400",
+             "recovery_state": "unrecovered"},
+            {"address": "0x00400300", "size": "800",
+             "recovery_state": "external_library"},
+        ]
+
+    def test_proven_and_unproven_split_the_recovered_bytes(self):
+        proven = {0x00400000}
+        self.assertEqual(100, metrics.proven_recovered(self.rows(), proven).byte_count)
+        self.assertEqual(200, metrics.unproven_recovered(self.rows(), proven).byte_count)
+        # They partition `recovered` exactly - no byte in both, none in neither.
+        self.assertEqual(metrics.recovered(self.rows()).byte_count,
+                         metrics.proven_recovered(self.rows(), proven).byte_count
+                         + metrics.unproven_recovered(self.rows(), proven).byte_count)
+
+    def test_proving_an_unrecovered_function_counts_for_nothing(self):
+        # An oracle may cover a function that is NOT recovered - most of the
+        # legacy-leaf islands do, since their whole purpose is to stand in for
+        # code nobody has written yet. Counting those would inflate the metric
+        # with the opposite of progress.
+        proven = {0x00400200, 0x00400300}
+        self.assertEqual(0, metrics.proven_recovered(self.rows(), proven).byte_count)
+        self.assertEqual(300, metrics.unproven_recovered(self.rows(), proven).byte_count)
+
+    def test_an_empty_proven_set_leaves_everything_unproven(self):
+        self.assertEqual(0, metrics.proven_recovered(self.rows(), set()).byte_count)
+        self.assertEqual(300, metrics.unproven_recovered(self.rows(), set()).byte_count)
+
+    def test_the_percentage_names_the_denominator_it_used(self):
+        # The founding error of this module was a percentage whose name stated
+        # a denominator it was not computed over. These are shares of RECOVERED
+        # bytes, not of the lift scope, and 100/300 is 33.33 either way only by
+        # coincidence of this fixture - so the KEY is what is asserted.
+        block = metrics.bytes_block(self.rows(), {0x00400000})
+        self.assertIn("percent_of_recovered_bytes", block["unproven_recovered"])
+        self.assertNotIn("percent_of_lift_scope_bytes", block["unproven_recovered"])
+        self.assertEqual("recovered", block["unproven_recovered"]["denominator"])
+        self.assertEqual(66.67, block["unproven_recovered"]["percent_of_recovered_bytes"])
+
+    def test_it_is_declared_a_number_that_must_go_down(self):
+        block = metrics.bytes_block(self.rows(), set())
+        self.assertEqual("must go down", block["unproven_recovered"]["direction"])
+        # And its sibling is not, because proving more is progress upward.
+        self.assertNotIn("direction", block["proven_recovered"])
+
+    def test_omitting_the_proven_set_does_not_silently_claim_coverage(self):
+        # A caller that forgets to pass it must get 100% unproven, never 100%
+        # proven: the safe default for an unknown is "not demonstrated".
+        block = metrics.bytes_block(self.rows())
+        self.assertEqual(0, block["proven_recovered"]["bytes"])
+        self.assertEqual(300, block["unproven_recovered"]["bytes"])
+
+    def test_the_inventory_row_shape_matches_too(self):
+        # export_recovery_inventory builds rows with an int `start`; the CSV
+        # has a hex-string `address`. Reading only one key published 100%
+        # unproven from the inventory while the CSV said 32 functions, and
+        # nothing failed - both are "valid" answers to a caller.
+        rows = [{"start": 0x00400000, "size": 100,
+                 "recovery_state": "source_complete"},
+                {"start": 0x00400100, "size": 200,
+                 "recovery_state": "source_complete"}]
+        self.assertEqual(100, metrics.proven_recovered(rows, {0x00400000}).byte_count)
+        self.assertEqual(200, metrics.unproven_recovered(rows, {0x00400000}).byte_count)
+
+    def test_an_unreadable_address_is_unproven_rather_than_fatal(self):
+        rows = self.rows() + [{"address": None, "size": "50",
+                               "recovery_state": "source_complete"}]
+        self.assertEqual(250, metrics.unproven_recovered(rows, {0x00400000}).byte_count)
+
+
 class PublishedFileTests(unittest.TestCase):
     """The committed summary.json must describe the committed functions.csv.
 
@@ -410,10 +495,41 @@ class PublishedFileTests(unittest.TestCase):
             "docs/recovery/summary.json has no byte-weighted block; "
             "regenerate it with verify-recovery-metadata")
         rows = metrics.load_catalogue(self.FUNCTIONS)
+        # The proven set has to be passed. Calling bytes_block without it
+        # computes 100% unproven, and a summary.json that ALSO said 100%
+        # agreed with it - two wrong numbers matching, which is the one
+        # outcome a comparison test must not accept.
+        proven = self.load_proven()
         self.assertEqual(
-            published, metrics.bytes_block(rows),
+            published, metrics.bytes_block(rows, proven),
             "docs/recovery/summary.json disagrees with functions.csv; "
             "one of them was regenerated without the other")
+
+    def load_proven(self) -> set[int]:
+        path = self.FUNCTIONS.parent / "proven.csv"
+        if not path.is_file():
+            return set()
+        with path.open(newline="") as handle:
+            return {int(row["address"], 16) for row in csv.DictReader(handle)}
+
+    def test_the_published_proven_figure_is_not_trivially_zero(self):
+        """A guard on the guard.
+
+        `unproven_recovered` starting at 100% is a legitimate value, so a bug
+        that silently produced 100% forever would look exactly like an honest
+        starting point. This asserts the pipeline is wired: some function is
+        proven, and the two halves add up to `recovered`.
+        """
+        if not (self.FUNCTIONS.is_file() and self.SUMMARY.is_file()):
+            self.skipTest("committed recovery catalogue not present")
+        block = json.loads(self.SUMMARY.read_text(encoding="utf-8"))
+        block = block["functions"]["bytes"]
+        self.assertGreater(block["proven_recovered"]["bytes"], 0,
+                           "no recovered function is proven; the proven.csv "
+                           "pipeline is not wired to summary.json")
+        self.assertEqual(block["recovered"]["bytes"],
+                         block["proven_recovered"]["bytes"]
+                         + block["unproven_recovered"]["bytes"])
 
     def test_the_published_counts_agree_with_the_published_bytes(self):
         """The old count block and the new byte block describe one catalogue.

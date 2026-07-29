@@ -19,6 +19,19 @@
 #include "runtime_oracle.h"
 #include "win.h"
 
+// What this oracle PROVES: each function below is executed here in its
+// ORIGINAL form, at its canonical address inside the hybrid process, and
+// compared against the recovered implementation. These markers are the
+// input to `unproven_recovered` in docs/recovery/summary.json; see
+// tools/export_proven_functions.py for what does and does not count.
+//
+// PROVEN-AGAINST-ORIGINAL: 0x005D4CF0  ??0GraphicWin@@QAE@XZ
+// PROVEN-AGAINST-ORIGINAL: 0x005D7210  ??0Buffer@@QAE@XZ
+// PROVEN-AGAINST-ORIGINAL: 0x005EB3D0  ??0Win@@QAE@XZ
+// PROVEN-AGAINST-ORIGINAL: 0x00606F30  ??0BaseButton@@QAE@XZ
+// PROVEN-AGAINST-ORIGINAL: 0x0062BA80  ??0AutoSound@@QAE@XZ
+
+
 namespace {
 
 #if defined(__GNUC__)
