@@ -501,7 +501,6 @@ P3,2520,0x00454FC0,?load_cursors@@YAXXZ,1075,2,5,unrecovered,,,2,exact,exact,
 P3,520,0x00455400,?load_cycling@@YAXXZ,192,0,5,unrecovered,,,2,exact,exact,
 P3,720,0x004554C0,?def_caption_draw@@YAHPAUGraphicWin@@PADPAUBuffer@@@Z,326,0,7,unrecovered,,,2,exact,exact,
 P3,1920,0x00455610,?load_interface@@YAXH@Z,2097,1,9,unrecovered,,,2,exact,exact,
-P3,1220,0x00455E50,?load_deswin_sprites@@YAXXZ,35,1,2,unrecovered,,,2,exact,exact,
 P3,1620,0x00455E80,?load_fixed_sprites@@YAXXZ,40,1,6,unrecovered,,,2,exact,exact,
 P3,1420,0x00455EB0,?load_sprites@@YAXXZ,94,1,4,unrecovered,,,2,exact,exact,
 P0,1000321,0x00455F10,??0FactionArt@@QAE@XZ,412,0,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,FactionArt* (__thiscall ??0FactionArt@@QAE@XZ)(FactionArt* this)

@@ -1481,7 +1481,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00455400,0x004554C0,192,.text,?load_cycling@@YAXXZ,,0x00455400-0x004554C0,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,0
 0x004554C0,0x00455606,326,.text,?def_caption_draw@@YAHPAUGraphicWin@@PADPAUBuffer@@@Z,,0x004554C0-0x00455606,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
 0x00455610,0x00455E41,2097,.text,?load_interface@@YAXH@Z,,0x00455610-0x00455E41,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,9,1
-0x00455E50,0x00455E73,35,.text,?load_deswin_sprites@@YAXXZ,,0x00455E50-0x00455E73,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
+0x00455E50,0x00455E73,35,.text,?load_deswin_sprites@@YAXXZ,,0x00455E50-0x00455E73,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1297,Complete,,,source_complete,,,,2,1
 0x00455E80,0x00455EA8,40,.text,?load_fixed_sprites@@YAXXZ,,0x00455E80-0x00455EA8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
 0x00455EB0,0x00455F0E,94,.text,?load_sprites@@YAXXZ,,0x00455EB0-0x00455F0E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x00455F10,0x0045600B,412,.text,??0FactionArt@@QAE@XZ,FactionArt* (__thiscall ??0FactionArt@@QAE@XZ)(FactionArt* this),0x00455F10-0x0045600B;0x00654ED0-0x00654F71,game,frame;sp_ready;purged_ok,,,,FactionArtCtorTarget,original_dependency,,,,3,0

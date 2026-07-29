@@ -970,6 +970,7 @@ address,kind
 0x00450D80,jump
 0x00450D90,jump
 0x00450DC0,jump
+0x00455E50,jump
 0x00456280,jump
 0x004562B0,jump
 0x004562C0,jump

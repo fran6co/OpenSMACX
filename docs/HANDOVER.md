@@ -376,7 +376,13 @@ everything it refuses. **The count is the progress metric.** It moves in both
 directions: recovering a callee unblocks its callers, and tightening the filter
 removes candidates that were never recoverable.
 
-**Queue as of 2026-07-29: 1 candidate, 35 bytes.**
+**Queue as of 2026-07-29: 0 candidates. The closure is exhausted.**
+
+That is not the same as "there is nothing left to recover" - it is the
+scanner's closure, and it grows again every time a recovery unblocks a caller
+or a condition is loosened. Re-run `tools/find_leaf_testable.py` after any
+batch; it went 69 -> 0 over one session but rose twice along the way when a
+recovered callee made its callers eligible.
 
 The first five tightenings were about whether a body can be TESTED in
 isolation. The sixth is about whether it can be WRITTEN at all - a

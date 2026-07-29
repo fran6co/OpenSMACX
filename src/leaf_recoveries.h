@@ -66,3 +66,8 @@ extern func_leaf_dialog_dtor *LeafDialogDestructor;
 extern func_leaf_graphic_dtor *LeafGraphicWinDestructor;
 void __fastcall leaf_004080b0_redirect(void *, void *);
 void __fastcall leaf_00406af0_redirect(void *, void *);
+typedef Buffer *(__fastcall func_leaf_buffer_ctor)(Buffer *, void *);
+typedef void(__fastcall func_leaf_buffer_dtor)(Buffer *, void *);
+extern func_leaf_buffer_ctor *LeafBufferConstruct;
+extern func_leaf_buffer_dtor *LeafBufferDestruct;
+void __cdecl leaf_00455e50_redirect();

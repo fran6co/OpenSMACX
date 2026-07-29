@@ -2440,6 +2440,13 @@ uint32_t __fastcall leaf_dtor_dialogs(void *self, void *) {
 void __fastcall leaf_dtor_dialog(Dialog *self, void *) {
     leaf_dtor_record(3, self);
 }
+Buffer *__fastcall leaf_buffer_ctor_probe(Buffer *self, void *) {
+    leaf_dtor_record(5, self);
+    return self;
+}
+void __fastcall leaf_buffer_dtor_probe(Buffer *self, void *) {
+    leaf_dtor_record(6, self);
+}
 GraphicWin *__fastcall leaf_dtor_graphic(GraphicWin *self, void *) {
     leaf_dtor_record(4, self);
     return self;
@@ -2976,6 +2983,31 @@ void test_leaf_recoveries() {
         // Focus here, parent without it: no.
         focus(up, false); set_parent(up, nullptr);
         expect(leaf_006161a0_redirect(me, nullptr) == 0);
+    }
+
+    // --- a Buffer built and destroyed on one piece of storage ---
+    //
+    // Nothing this function does is observable from outside its own stack
+    // frame, so the assertion is the only thing there is to assert: both
+    // calls happened, on the SAME pointer, constructor first. The `lea` is
+    // issued twice for one address in the original, and two different buffers
+    // would read just as naturally.
+    {
+        func_leaf_buffer_ctor *const saved_ctor = LeafBufferConstruct;
+        func_leaf_buffer_dtor *const saved_dtor = LeafBufferDestruct;
+        LeafBufferConstruct = &leaf_buffer_ctor_probe;
+        LeafBufferDestruct = &leaf_buffer_dtor_probe;
+
+        g_leaf_dtor_count = 0;
+        leaf_00455e50_redirect();
+        expect(g_leaf_dtor_count == 2);
+        expect(g_leaf_dtor_calls[0].which == 5);     // construct first
+        expect(g_leaf_dtor_calls[1].which == 6);     // then destroy
+        expect(g_leaf_dtor_calls[0].target == g_leaf_dtor_calls[1].target);
+        expect(g_leaf_dtor_calls[0].target != nullptr);
+
+        LeafBufferConstruct = saved_ctor;
+        LeafBufferDestruct = saved_dtor;
     }
 
     // --- two destructor chains: three calls, three pointers, one order ---

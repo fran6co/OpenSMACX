@@ -1269,3 +1269,45 @@ void __fastcall leaf_00406af0_redirect(void *self, void *) {
     LeafDialogDestructor(reinterpret_cast<Dialog *>(bytes + 0xBA0), nullptr);
     LeafGraphicWinDestructor(reinterpret_cast<GraphicWin *>(inner), nullptr);
 }
+
+// load_deswin_sprites' two callees, seams for the same reason the destructor
+// chains' are: what the function does is call these two, on one piece of
+// storage, in this order. Defaults are the real redirects.
+func_leaf_buffer_ctor *LeafBufferConstruct = &buffer_construct_redirect;
+func_leaf_buffer_dtor *LeafBufferDestruct = &buffer_destructor_redirect;
+
+/*
+Purpose: Construct a Buffer on the stack and immediately destroy it.
+
+             push ebp / mov ebp,esp / sub esp,0x588
+             lea ecx,[ebp-0x588] / call ??0Buffer@@QAE@XZ
+             lea ecx,[ebp-0x588] / call ??1Buffer@@QAE@XZ
+             mov esp,ebp / pop ebp / ret
+
+         That is the whole function, and nothing it does is observable from
+         outside its own stack frame - which is why it was the last one left.
+         Its content is not a value: it is that these two run, on the SAME
+         storage, in this order. The `lea` is issued twice for the same address
+         rather than kept in a register, so a transcription that used two
+         different buffers would look just as reasonable.
+
+         0x588 is not initialised before the constructor sees it, so this uses
+         raw storage rather than a value-initialised object.
+
+         TWO MUTANTS SURVIVE AND BOTH CONCERN THE STORAGE - its size and its
+         alignment. Neither is exercised, because the seams the fixture binds
+         never touch the buffer; what they pin is which call got which pointer.
+         The 0x588 comes straight from `sub esp,0x588` in the original, and
+         the alignment from the fact that a Buffer lives there. Saying so
+         beats an assertion that would only appear to cover them.
+
+Original Offset: 00455E50
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl leaf_00455e50_redirect() {
+    alignas(8) uint8_t storage[0x588];
+    Buffer *const scratch = reinterpret_cast<Buffer *>(storage);
+    LeafBufferConstruct(scratch, nullptr);
+    LeafBufferDestruct(scratch, nullptr);
+}
