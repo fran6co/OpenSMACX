@@ -461,7 +461,6 @@ P0,1001021,0x004482C0,??1Effect@@QAE@XZ,5,1,0,original_dependency,ui_dependency,
 P0,1000121,0x004482D0,??0Effect@@QAE@XZ,18,0,1,original_dependency,ui_dependency,recover_wave_destructor,2,exact,exact,void (__thiscall ??0Effect@@QAE@XZ)(Effect* this)
 P3,20,0x004482F0,sub_4482f0,28,0,0,unrecovered,,,2,exact,exact,
 P3,10,0x00448340,sub_448340,15,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x00448380,sub_448380,10,0,0,unrecovered,,,1,exact,missing,
 P3,2421,0x00448400,?init@FameWin@@QAEHXZ,2421,1,14,unrecovered,,,2,exact,entry_range,int (__thiscall ?init@FameWin@@QAEHXZ)(FameWin* this)
 P3,211,0x00448D60,?close@FameWin@@QAEXXZ,33,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@FameWin@@QAEXXZ)(FameWin* this)
 P3,2221,0x00448D90,?on_redraw@FameWin@@QAEXXZ,5938,0,22,unrecovered,,,2,exact,entry_range,void (__thiscall ?on_redraw@FameWin@@QAEXXZ)(FameWin* this)

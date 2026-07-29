@@ -815,7 +815,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00448330,0x00448334,4,.text,sub_448330,,0x00448330-0x00448334,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:154,Complete,,,source_complete,,,,0,0
 0x00448340,0x0044834F,15,.text,sub_448340,,0x00448340-0x0044834F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00448350,0x00448371,33,.text,??_GEffect@@UAEPAXI@Z,"void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)",0x00448350-0x00448371,game,sp_ready;purged_ok,src/deleting_thunks.cpp:729,Complete,,,source_complete,,,,2,0
-0x00448380,0x0044838A,10,.text,sub_448380,,0x00448380-0x0044838A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
+0x00448380,0x0044838A,10,.text,sub_448380,,0x00448380-0x0044838A,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:1050,Complete,,,source_complete,,,,0,0
 0x00448390,0x004483B1,33,.text,sub_448390,,0x00448390-0x004483B1,game,sp_ready;purged_ok,src/deleting_thunks.cpp:745,Complete,,,source_complete,,,,2,0
 0x004483C0,0x004483C5,5,.text,j_??1Ambience@@QAE@XZ,void (__thiscall j_??1Ambience@@QAE@XZ)(Ambience* this),0x004483C0-0x004483C5,thunk,hidden;thunk;sp_ready;purged_ok,,,,,thunk,,,,0,1
 0x004483D0,0x004483E6,22,.text,??__Eg_FAMEWIN@@YAXXZ,,0x004483D0-0x004483E6,game,hidden;sp_ready;purged_ok,src/init_thunks.cpp:675,Complete,,,source_complete,,,,2,0

@@ -339,6 +339,38 @@ class ConditionalStoreTests(unittest.TestCase):
             "5589e58b510c39f2730389410c8941085dc20400"))
 
 
+class SignBitTests(unittest.TestCase):
+    """`shl 31 / sar 31` is bit 0 smeared across the word."""
+
+    def test_a_thirty_one_shift_pair_is_bit_zero(self):
+        # sub_448380: mov eax,[ecx+0x40] / shl eax,0x1f / sar eax,0x1f / ret
+        kind, detail = generator.classify(decode("8b4140c1e01fc1f81fc3"))
+        self.assertEqual("sign_bit", kind)
+        self.assertEqual(0x40, detail["offset"])
+
+    def test_the_emitted_form_avoids_shifting_into_the_sign_bit(self):
+        # `(int32_t)(x << 31) >> 31` relies on two implementation-defined
+        # behaviours; `0U - (x & 1U)` is the same two values in fully defined
+        # unsigned arithmetic.
+        _, source, _ = generator.emit(
+            [(0x448380, "sign_bit", {"offset": 0x40, "cleanup": 0}, "x")])
+        self.assertIn("0U - (", source)
+        self.assertNotIn("<< 31", source)
+
+    def test_a_shorter_shift_pair_is_refused(self):
+        # shl 24 / sar 24 sign-extends a BYTE, not a bit, and needs a
+        # different expression. There is no instance of it, so it is refused
+        # rather than guessed at.
+        self.assertIsNone(generator.classify(decode("8b4140c1e018c1f818c3")))
+
+    def test_mismatched_shifts_are_refused(self):
+        self.assertIsNone(generator.classify(decode("8b4140c1e01fc1f818c3")))
+
+    def test_a_logical_right_shift_is_not_a_sign_extension(self):
+        # shr, not sar: that is `bit 0` as 0 or 1, a different function.
+        self.assertIsNone(generator.classify(decode("8b4140c1e01fc1e81fc3")))
+
+
 class RefusalTests(unittest.TestCase):
     """What it declines, which is the part that keeps it honest."""
 

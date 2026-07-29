@@ -26,6 +26,7 @@ WHAT IS ACCEPTED, and nothing else:
     mov [ecx+N],[ebp+8] / ret 4      copy an argument into a field
     cmp [ecx+N],arg / jae / store    one store guarded by a comparison
     xor eax,eax / ret                return zero
+    mov eax,[ecx+N] / shl 31 / sar 31  bit 0 as a 0/-1 mask
     ret                              a body that does nothing at all
     a SEQUENCE of byte and dword stores to [this+N], where the value is a
     constant or a pointer to one of `this`'s own fields, optionally preceded by
@@ -341,6 +342,24 @@ def classify(instructions) -> tuple[str, dict] | None:
     if stored is not None:
         return stored
 
+    if (len(body) == 3 and body[0].mnemonic == "mov"
+            and body[1].mnemonic == "shl" and body[2].mnemonic == "sar"):
+        # `shl eax,31 / sar eax,31` sign-extends bit 0 across the whole word:
+        # 0 or -1, the mask form of a boolean. Only 31 is accepted - a smaller
+        # shift extends a wider bitfield and would need a different expression,
+        # and there is exactly one instance of this in the image.
+        destination, source = body[0].operands
+        offset = this_offset(source)
+        shifts = [one.operands[1] for one in body[1:]]
+        if (destination.type == X86_OP_REG and destination.reg == X86_REG_EAX
+                and offset is not None
+                and all(one.type == X86_OP_IMM and one.imm == 31
+                        for one in shifts)
+                and all(one.operands[0].type == X86_OP_REG
+                        and one.operands[0].reg == X86_REG_EAX
+                        for one in body[1:])):
+            return "sign_bit", {"offset": offset, "cleanup": cleanup}
+
     if len(body) == 1 and body[0].mnemonic == "mov":
         destination, source = body[0].operands
         offset = this_offset(source)
@@ -553,18 +572,22 @@ BODIES = {
                              f" = {d['value']:#x};"),
     "stores": render_stores,
     "nothing": lambda d: "",
+    # 0 - (bit) is 0 or 0xffffffff in fully defined unsigned
+    # arithmetic, which `(int32_t)(x << 31) >> 31` is not.
+    "sign_bit": lambda d: (f"    return 0U - (*reinterpret_cast<const uint32_t *>(\n"
+                           f"        static_cast<const uint8_t *>(self) + {d['offset']:#x}) & 1U);"),
     "param_stores": render_param_stores,
     "conditional_store": render_conditional_store,
 }
 RETURNS = {"read": "uint32_t", "masked": "uint32_t", "constant": "uint32_t",
-           "increment": "void", "store_byte": "void", "nothing": "void",
+           "increment": "void", "store_byte": "void", "nothing": "void", "sign_bit": "uint32_t",
            "param_stores": "void", "conditional_store": "void"}
 # A constant return never reads `this`, so naming the parameter would be an
 # unused one - and this tree builds with -Wall -Wextra, where that is an error
 # rather than a note. The name is emitted only where the body uses it.
 USES_SELF = {"read": True, "masked": True, "constant": False,
              "increment": True, "store_byte": True, "stores": True,
-             "nothing": False, "param_stores": True,
+             "nothing": False, "param_stores": True, "sign_bit": True,
              "conditional_store": True}
 PURPOSE = {
     "read": "Read the dword field at {offset:#x}.",
@@ -574,6 +597,7 @@ PURPOSE = {
     "store_byte": "Store {value:#x} in the byte at {offset:#x}.",
     "stores": "Set {count} field(s) to constants.",
     "nothing": "Do nothing; the original body is only its `ret`.",
+    "sign_bit": "Sign-extend bit 0 of field {offset:#x}: 0 or -1.",
     "param_stores": "Copy {count} argument(s) into field(s) of `this`.",
     "conditional_store": "Clamp field {field:#x} against an argument,"
                          " then store unconditionally.",

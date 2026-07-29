@@ -2721,6 +2721,27 @@ void test_field_accessors() {
         expect_storage_bytes(storage, expected, sizeof(storage));
     }
 
+    // --- bit 0 smeared across the word: 0 or 0xffffffff ---
+    //
+    // Both parities, and a value whose OTHER bits are set: `shl 31 / sar 31`
+    // discards everything except bit 0, so a body that masked with 0xff or
+    // returned the field itself would agree on 0 and 1 and disagree here.
+    {
+        auto poke = [&](size_t offset, uint32_t value) {
+            std::memcpy(storage + 16 + offset, &value, sizeof(value));
+            std::memcpy(expected + 16 + offset, &value, sizeof(value));
+        };
+        seed(); poke(0x40, 0);
+        expect(field_accessor_00448380_redirect(self, nullptr) == 0U);
+        seed(); poke(0x40, 1);
+        expect(field_accessor_00448380_redirect(self, nullptr) == 0xFFFFFFFFU);
+        seed(); poke(0x40, 0xFFFFFFFEU);          // every bit but bit 0
+        expect(field_accessor_00448380_redirect(self, nullptr) == 0U);
+        seed(); poke(0x40, 0x12345679U);          // odd, with high bits set
+        expect(field_accessor_00448380_redirect(self, nullptr) == 0xFFFFFFFFU);
+        expect_storage_bytes(storage, expected, sizeof(storage));
+    }
+
     // --- byte store: one BYTE moves, which the neighbours prove ---
     seed();
     expected[16 + 0x6D] = 1;
