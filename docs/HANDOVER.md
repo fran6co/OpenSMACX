@@ -892,9 +892,22 @@ mapped span, and anything else - float, handle, packed field - becomes an arena
 object, exactly as the remap treats an out-of-span pointer. All 14 previously
 killed probes still return no row.
 
-**Three confident hypotheses, three wrong.** Back-word ordering; then the
+A fourth attempt applied the below-`this` invariant to EVERY slot rather than
+only the entry object, which the fault address appeared to name outright. It
+failed too, and it failed with a byte-identical fault address across a code
+change - the same no-op signature recorded earlier in this file.
+
+**THE ONE CLUE WORTH INHERITING.** Decode the fault rather than guessing at it.
+The lift computes `host = opensmacx_image + (guest - 0x00400000)`, and the run
+prints `opensmacx_image` on every start. With it at `0x10fe8520`, a HARNESS
+FAULT at `0x10001630` inverts to **guest `0xFF419110`** - a pointer near 4 GiB,
+which is the case the back-word seeding exists to prevent. Whatever produces it
+is not the four words below any `this`, because seeding those for all 32 slots
+changed nothing. Start there with a debugger attached, not with a fifth theory.
+
+**Four confident hypotheses, four wrong.** Back-word ordering; then the
 `0x3F800000`-style float above the remap ceiling; then the value contract in
-general. Each explained the symptom completely and none was the cause. The one
+general; then the invariant applied per slot. Each explained the symptom completely and none was the cause. The one
 piece of real evidence about where it lives: the fault address MOVES with the
 build - `0x10001b08`, then `0x10001630` - which puts it in the harness's own
 code, not in anything the seeding writes. That is a debugger's job on the
