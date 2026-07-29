@@ -801,7 +801,35 @@ selection can reach. Three things had to be right, and each was wrong first:
    `XZ`. Missing that made every one-argument function invisible and produced a
    measurement of zero where the answer was 36.
 
-**Why the markers are withheld.** The oracles run, but they cannot yet run to
+**What actually runs, and it is five functions.** The suite is registered in
+`DeferredSuites`, reports `generated-signatures passed`, and the game survives -
+three runs out of three, plus the final verification. `unproven_recovered` moved
+190,101 -> 190,008 B and 2,503 -> 2,498 functions. Small, and real.
+
+**Why only five: arguments cannot be seeded in a LIVE process.** Not the type -
+the DOMAIN. `?help_tech@@YAXH@Z` takes a tech id; driven with -1 and
+0x7FFFFFFF it reached `?draw_labs@ReportWin@@QAEXXZ`, which divided by zero and
+took the game down on the third function of thirty-six. The lifted oracle drives
+wild integers safely because it runs against an isolated memory image where a
+bad value can only fault the harness; this runs inside the real game, which has
+no bounds checks and nowhere safe to fault. Nothing in a mangled name states a
+function's domain. So the generator refuses every function that takes an
+argument, and 31 of the 36 go with it.
+
+**The diagnostic that found it**, because the failure mode hides itself:
+`run_deferred_oracles` writes its report only after every suite returns, so a
+function that kills the process takes the evidence with it - the log lists what
+PASSED and says nothing about what died. Printing the name before each call, and
+flushing, turned "the game crashes" into "the game crashes on `help_tech`" in
+one run.
+
+**A circularity worth not repeating.** The generator does NOT filter out
+already-proven functions. It did, and publishing its own markers then made its
+five functions proven, so the next run selected none and the committed file read
+stale. `export_proven_functions.py` unions by address and records both
+mechanisms on one row, so a function proven twice is not double-counted.
+
+**The old note, kept because the constraint is still real.** The oracles run, but they cannot yet run to
 completion. The comparison restores `.data`/`.bss` between the two calls, which
 is right for a function whose effects live there and wrong for one that
 allocates or writes a file - `?load_deswin_sprites@@YAXXZ` and

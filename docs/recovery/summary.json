@@ -110,11 +110,11 @@
         "percent_of_lift_scope_bytes": 91.86
       },
       "proven_recovered": {
-        "bytes": 6022,
+        "bytes": 6115,
         "denominator": "recovered",
-        "functions": 49,
+        "functions": 54,
         "meaning": "recovered bytes an oracle has executed against the original and found to agree",
-        "percent_of_recovered_bytes": 3.07
+        "percent_of_recovered_bytes": 3.12
       },
       "recovered": {
         "bytes": 196123,
@@ -122,12 +122,12 @@
         "percent_of_lift_scope_bytes": 8.14
       },
       "unproven_recovered": {
-        "bytes": 190101,
+        "bytes": 190008,
         "denominator": "recovered",
         "direction": "must go down",
-        "functions": 2503,
+        "functions": 2498,
         "meaning": "recovered bytes never executed against the original: declared complete, never demonstrated equivalent",
-        "percent_of_recovered_bytes": 96.93
+        "percent_of_recovered_bytes": 96.88
       }
     },
     "total": 6000,

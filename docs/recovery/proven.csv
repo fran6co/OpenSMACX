@@ -1,8 +1,12 @@
 address,name,size,mechanism,evidence
+0x004456A0,?passover_callback@@YAXXZ,10,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00455E50,?load_deswin_sprites@@YAXXZ,35,hybrid_runtime,src/generated_signature_oracle.cpp
 0x004BA830,?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z,51,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E2610,?pid_2_who@AlphaNet@@QAEHK@Z,67,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E2660,?who_2_pid@AlphaNet@@QAEHH@Z,72,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E26B0,?who_2_idx@AlphaNet@@QAEXH@Z,44,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x0052DC70,?not_my_turn@@YAHXZ,44,hybrid_runtime,src/generated_signature_oracle.cpp
+0x0058EE50,?desktop_update@@YAXXZ,1,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005D4CF0,??0GraphicWin@@QAE@XZ,230,hybrid_runtime,src/constructor_oracle.cpp
 0x005D4E40,?close@GraphicWin@@QAEXXZ,166,hybrid_runtime,src/graphicwin_oracle.cpp
 0x005D7210,??0Buffer@@QAE@XZ,530,hybrid_runtime,src/constructor_oracle.cpp
@@ -24,6 +28,7 @@ address,name,size,mechanism,evidence
 0x005FA7A0,?in_box@@YAHHHHHHH@Z,59,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x005FB820,?set_menu_proc@Menu@@QAEXP6AXH@Z@Z,13,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x005FB990,?id_to_index@Menu@@QAEHH@Z,40,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x005FD2B0,?do_sound@@YAXXZ,3,hybrid_runtime,src/generated_signature_oracle.cpp
 0x00605370,?close@Scroll@@QAEXXZ,350,hybrid_runtime,src/scroll_oracle.cpp
 0x006059B0,?set_range@Scroll@@QAEXHH@Z,93,hybrid_runtime,src/scroll_oracle.cpp
 0x00605A50,?set_bevel_thickness@Scroll@@QAEXH@Z,61,hybrid_runtime,src/scroll_oracle.cpp
