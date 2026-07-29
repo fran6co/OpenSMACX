@@ -957,6 +957,20 @@ because four wrong mechanisms in one day is enough:
 * no other report in this project - `report-state-remap`, `-vbptr`,
   `-coherent` - contains a single null row
 
+**The mechanism, found afterwards and fixed at the source.** Those rows are
+plan entries whose `address` is ZERO, and `%#010x` emits the `0x` prefix only
+for a NONZERO value - so a zero address renders `0000000000`, which
+`read_report` cannot parse and therefore drops. **The unparseable format is the
+only reason this was caught at all.** Had the driver printed a parseable
+`0x00000000`, 3,928 rows priced at zero bytes would have been folded into the
+figures as real results.
+
+`lifted_oracle_main.cpp` now refuses to write a report row for an entry with no
+address and names the entry on stderr. What CREATES such an entry is still
+unknown - the image base is 0x00400000, so zero is never a function, and the
+plan is either built wrong or grown with defaults somewhere. The guard is a net,
+not a diagnosis.
+
 So the run really covered 1,745 of 5,673 functions and the rest are
 placeholders, and `lifted_oracle_sweep.sh` reported success. Its supervision
 watches for a stalled report and for a process that dies without writing a row;
