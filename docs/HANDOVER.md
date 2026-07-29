@@ -670,6 +670,39 @@ counted as a lost agreement and is a clean PASS under the shim, so that
 regression was not one either. **Three survive the control and are unexamined**,
 on top of the 16 from the coherent arena.
 
+### Snapshotting real state out of the hybrid: two barriers, one fatal
+
+The recommendation that follows nine failed seeds is "take the state from the
+hybrid runtime, which has a real object graph". It was tried far enough to cost
+it properly, and it is harder than it sounds.
+
+Wine maps the PE at its preferred base inside an ordinary Linux process, so
+guest addresses ARE offsets in `/proc/<pid>/mem` and a snapshot needs no
+injection and no write to the game. `tools/` has no such tool now; the throwaway
+one worked on the maps parse and died on the read.
+
+1. **`/proc/sys/kernel/yama/ptrace_scope` is 1 on this host**, so
+   `/proc/<pid>/mem` is unreadable even for a process this session launched.
+   Lowering it needs root, which is a system-wide security setting and not
+   something to change for a measurement. The in-process route - a dumper in
+   `src/dllmain.cpp`, which is already injected - avoids this entirely.
+
+2. **The fatal one: the objects are not in the span.** The oracle's guest memory
+   is ONE flat region, 0x00400000..0x00A0C000, and the lifted lowering computes
+   host addresses as `opensmacx_image + (guest - 0x00400000)`. The image's
+   sections end at 0x009C21F8. The widget globals - `0x009BC074` and the rest -
+   live in `.data` and hold POINTERS; the Win and ListBox objects themselves are
+   heap-allocated, at addresses outside that span. A perfect snapshot of
+   0x00400000..0x009C2200 therefore captures the pointers and not one of the
+   objects they point at, which is precisely the ListBox chain that owns a third
+   of the wall.
+
+So the snapshot is not a seeding change with a different source of values. It
+needs MULTI-REGION guest memory, which means changing the address translation
+the whole lift is built on. That is the real price of the next byte of this
+number, and it should be decided as a design change and not slipped in as a
+better seed.
+
 ### The part still not understood
 
 Five cases still fault at `0x0060afe5` on `mov eax,[ebx+0xa4]` with `ebx`
