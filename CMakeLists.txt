@@ -122,6 +122,7 @@ set(OPENSMACX_SOURCES
     src/delegation_thunks.cpp
     src/nullsub_thunks.cpp
     src/field_accessors.cpp
+    src/leaf_recoveries.cpp
     src/global_arith.cpp
     src/guarded_teardowns.cpp
     src/fx.cpp
@@ -436,6 +437,7 @@ if(BUILD_TESTING)
         src/delegation_thunks.cpp
         src/nullsub_thunks.cpp
         src/field_accessors.cpp
+        src/leaf_recoveries.cpp
         src/global_arith.cpp
         src/guarded_teardowns.cpp
         src/fx.cpp
