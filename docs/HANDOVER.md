@@ -886,8 +886,23 @@ Two hypotheses, one ruled out and one standing:
   not obey that contract, and the remap cannot impose it, because it rewrites
   out-of-span ADDRESSES and leaves everything else alone by design.
 
-So this needs the arena contract extended to cover copied contents - deciding
-what a real word may be before it is allowed in - not another try at the copy.
+That contract was then extended and it STILL crashes. `admit_word` was added:
+a copied word is kept only if it is a small integer or an address inside the
+mapped span, and anything else - float, handle, packed field - becomes an arena
+object, exactly as the remap treats an out-of-span pointer. All 14 previously
+killed probes still return no row.
+
+**Three confident hypotheses, three wrong.** Back-word ordering; then the
+`0x3F800000`-style float above the remap ceiling; then the value contract in
+general. Each explained the symptom completely and none was the cause. The one
+piece of real evidence about where it lives: the fault address MOVES with the
+build - `0x10001b08`, then `0x10001630` - which puts it in the harness's own
+code, not in anything the seeding writes. That is a debugger's job on the
+oracle process, not another hypothesis.
+
+What is solid: `--state` crashes and the same build without it runs clean, so
+the trigger is real object contents in the arena. What that costs is bounded -
+the remap already banks -128,590 B without copying any contents at all.
 
 ### One of the seeded globals was never a pointer
 
