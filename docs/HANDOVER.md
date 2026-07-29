@@ -697,13 +697,44 @@ one worked on the maps parse and died on the read.
    object at a fixed `.bss` address passed as `this`, immediately below
    `mov [0x9b8180], esi`. That one a snapshot would capture whole.
 
-   Nobody has counted the split. Before building a dumper, disassemble the
-   `mov ecx,<imm>` sites that precede Win/ListBox calls and measure what
-   fraction of the reachable graph is static. If it is most of it, an
-   in-process dumper plus an `--state` overlay is a contained change. If it is
-   not, it needs multi-region guest memory, which changes the address
-   translation the whole lift is built on - and that is a design decision, not
-   a better seed.
+   **That count has now been done, and the answer is the good one.** Scanning
+   `.text` for `mov ecx,<imm32>` where the immediate lands in `.data`/`.bss`
+   and a call follows within twelve bytes finds **6,098 sites naming 572
+   distinct static objects, and all 572 are inside the flat span.**
+   `0x009b90d8` alone is passed as `this` 1,426 times. This program keeps its
+   object graph in static storage, which is what a 1990s C++ game does.
+
+   So the snapshot route is a CONTAINED change, not a redesign: an in-process
+   dumper in `dllmain.cpp` plus a `--state` overlay on the loaded image, with
+   the flat span and the address translation untouched. That is the single
+   best-founded next step in this document.
+
+### Giving all 572 static objects a vbptr: rejected, and it says why
+
+The obvious follow-up to that count is to stop inventing objects and seed the
+572 real ones instead - each is zero at load, so `[this-0x48]` is NULL and a
+virtual-inheritance method faults on its second instruction. Implemented by
+scanning the loaded image at startup and caching, then writing the shared
+vbtable pointer below each. Full sweep:
+
+| figure | before | after | |
+| --- | --- | --- | --- |
+| INCONCLUSIVE-original-fault | 1,585,768 B / 2,355 fn | 1,582,708 B / 2,383 fn | -3,060 B but **+28 functions** |
+| agreed | 191,292 B / 1,615 fn | 190,607 B / 1,595 fn | **-685 B** |
+| agreed_full_strength | 42,209 B / **768 fn** | 41,893 B / **749 fn** | **-316 B, -19 functions** |
+
+**Reverted.** The headline byte count improved and the strongest evidence class
+lost nineteen functions. A number that must go down is not worth buying with
+the one number that means the most.
+
+And the reason it failed is the useful part: **a vbptr is not an object.** The
+572 are still zeroed, so a method reads its vbtable, computes a displacement,
+and dereferences a field that is zero - it faults one step later instead of
+immediately. Synthetic seeding can supply the SHAPE of state and cannot supply
+its CONTENTS, and every function still on the wall needs contents. That is the
+argument for the snapshot stated as a measurement rather than a hunch: real
+field values are exactly what nine seeds could not fabricate and a dump gets
+for free.
 
 ### One of the seeded globals was never a pointer
 
