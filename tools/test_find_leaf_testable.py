@@ -131,6 +131,36 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual([], reasons)
 
 
+class InexpressibleTests(unittest.TestCase):
+    """Some bodies cannot be WRITTEN, which the other conditions never ask."""
+
+    def classify(self, encoded: str):
+        instructions = decode(encoded)
+        return scanner.classify(instructions, 0x00401000,
+                                len(encoded) // 2, SPAN)[1]
+
+    def test_port_output_has_no_cxx_expression(self):
+        # out dx, al - the VGA palette upload at 0x005d4240. Privileged, and
+        # it would fault in user mode even written as inline assembly.
+        reasons = self.classify("ee")
+        self.assertTrue(any("no C++ expression" in one for one in reasons),
+                        reasons)
+
+    def test_disabling_interrupts_has_no_cxx_expression(self):
+        self.assertTrue(any("cli" in one for one in self.classify("fa")))
+
+    def test_port_input_has_no_cxx_expression(self):
+        self.assertTrue(any("no C++ expression" in one
+                            for one in self.classify("ec")))
+
+    def test_an_ordinary_body_is_unaffected(self):
+        # The guard must not catch anything a normal function does; `in` and
+        # `out` are short mnemonics and a sloppy substring test would match
+        # plenty of instructions that are perfectly recoverable.
+        self.assertEqual([], self.classify("8b4148c3"))
+        self.assertEqual([], self.classify("0faf4104c3"))   # imul eax,[ecx+4]
+
+
 class UnwindFuncletTests(unittest.TestCase):
     """A body that reads EBP without setting it up is not callable."""
 
