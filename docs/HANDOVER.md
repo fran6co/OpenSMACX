@@ -524,6 +524,7 @@ functions dereference was tried properly and moved it to **1,624,247 B, a
 | fill all 3.25 MB of .bss with a valid pointer | no better than six targeted globals |
 | widen from 6 to 45 object globals | **no gain, and one regression** |
 | seed a vbtable below `this` for ListBox::on_key_down | 2 of 8 moved; 6 unchanged |
+| make the whole arena an object graph - every drawn pointer lands at slot+0x48 of a slot whose base holds a vbtable | **nothing moved at all**: the same 6-at-0x60afe5 / 2-at-0x60affe split as before |
 
 **The wall moves; it does not fall.** The structural reason is measured: a
 function is INCONCLUSIVE if ANY of its sixteen cases faults, and all 2,651
@@ -536,6 +537,14 @@ arena word.
 That is the difference between plausible state and COHERENT state: an object
 graph whose back-references agree with each other. The hybrid smoke gate has
 one because a real game built it; the isolated harness deliberately does not.
+
+The sixth attempt narrows it further and is the one to read before trying a
+seventh. Making EVERY arena pointer land on a well-formed object changed
+nothing for ListBox::on_key_down - the identical fault split, byte for byte.
+So the `this` that function receives is not an arena pointer at all. Seeding
+the arena cannot reach it, however coherent the arena is made, and neither can
+seeding the entry object. Find where that `ecx` comes from before seeding
+anything else.
 
 **What the seeds cost.** They are kept, but the trade is not one-sided:
 
