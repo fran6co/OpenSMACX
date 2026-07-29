@@ -99,7 +99,6 @@ P3,21,0x004080E0,?on_scrolling@AlphaSave@@QAEXHH@Z,44,0,0,unrecovered,,,2,exact,
 P3,21,0x00408110,?on_scrolled@AlphaSave@@QAEXHH@Z,44,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolled@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)"
 P0,1002221,0x00408170,??1AlphaSave@@QAE@XZ,803,1,12,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1AlphaSave@@QAE@XZ)(AlphaSave* this)
 P3,500,0x00408410,?load_inverts@@YAXXZ,91,0,5,unrecovered,,,0,missing,missing,
-P3,10,0x00408470,sub_408470,26,0,0,unrecovered,,,1,missing,exact,
 P0,1002521,0x00408490,??0BaseWin@@QAE@XZ,1147,1,15,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0BaseWin@@QAE@XZ)(BaseWin* this)
 P3,1621,0x00408720,?psych_row@BaseWin@@QAEXHHHHHHH@Z,1037,1,6,unrecovered,,,2,exact,entry_range,"void (__thiscall ?psych_row@BaseWin@@QAEXHHHHHHH@Z)(BaseWin* this, int, int, int, int, int, int, int)"
 P3,2321,0x00408B20,?draw_psych@BaseWin@@QAEXXZ,901,1,13,unrecovered,,,2,exact,entry_range,void (__thiscall ?draw_psych@BaseWin@@QAEXXZ)(BaseWin* this)
@@ -1794,7 +1793,6 @@ P2,9521,0x005AC110,?num_objectives@@YAHHH@Z,1161,9,5,unrecovered,,,2,exact,exact
 P3,2120,0x005AC5A0,?most_objectives@@YAHPAHPAH@Z,143,2,1,unrecovered,,,2,exact,exact,
 P3,3720,0x005AC690,?rankings@@YAXH@Z,1350,3,7,unrecovered,,,2,exact,exact,
 P3,4621,0x005ACBE0,?compute_score@@YAXHPAHPAHH@Z,1997,4,6,unrecovered,,,2,exact,exact,"void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)"
-P3,0,0x005AD450,sub_5ad450,32,0,0,unrecovered,,,0,missing,missing,
 P3,10,0x005AD470,sub_5ad470,80,0,0,unrecovered,,,1,missing,start_only,
 P3,10,0x005AD4C0,sub_5ad4c0,64,0,0,unrecovered,,,1,missing,exact,
 P3,10,0x005AD500,sub_5ad500,96,0,0,unrecovered,,,1,missing,start_only,
@@ -1906,7 +1904,6 @@ P3,1020,0x005CBC00,sub_5cbc00,554,1,0,unrecovered,,,2,exact,exact,
 P3,1520,0x005CBE30,sub_5cbe30,794,1,5,unrecovered,,,2,exact,exact,
 P3,1120,0x005CC150,sub_5cc150,345,1,1,unrecovered,,,2,exact,exact,
 P3,1020,0x005CC2B0,sub_5cc2b0,380,1,0,unrecovered,,,2,exact,exact,
-P3,1020,0x005CC430,sub_5cc430,27,1,0,unrecovered,,,2,exact,exact,
 P3,1120,0x005CC450,sub_5cc450,701,1,1,unrecovered,,,2,exact,exact,
 P3,2220,0x005CC710,sub_5cc710,326,2,2,unrecovered,,,2,exact,exact,
 P3,1020,0x005CC860,sub_5cc860,213,1,0,unrecovered,,,2,exact,exact,
@@ -2018,7 +2015,6 @@ P0,1080221,0x005D7210,??0Buffer@@QAE@XZ,530,80,2,source_complete,ui_dependency,r
 P0,1087221,0x005D7410,??1Buffer@@QAE@XZ,107,87,2,source_complete,ui_dependency,recover_buffer_element_teardown,2,exact,entry_range,void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 P0,1042621,0x005D7670,?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z,847,42,6,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int width, int height, int, ExtDirectDraw*)"
 P2,5121,0x005D79C0,?resize@Buffer@@QAEXHH@Z,69,5,1,unrecovered,,,2,exact,exact,"void (__thiscall ?resize@Buffer@@QAEXHH@Z)(Buffer* this, int width, int height)"
-P3,1010,0x005D7A10,sub_5d7a10,31,1,0,unrecovered,,,1,exact,missing,
 P3,1320,0x005D7A30,sub_5d7a30,188,1,3,unrecovered,,,2,exact,entry_range,
 P3,1110,0x005D7AE0,sub_5d7ae0,61,1,1,unrecovered,,,1,exact,missing,
 P3,101,0x005D7B20,?load_tga@Buffer@@QAGHPBD@Z,22,0,1,unrecovered,,,0,missing,missing,"int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)"

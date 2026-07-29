@@ -495,3 +495,108 @@ void *__fastcall leaf_006252c0_redirect(void *self, void *) {
     }
     return bytes + 8 + current * 60;
 }
+
+/*
+Purpose: Half the sum of an argument and a span read out of a structure.
+
+             mov ecx,[ebp+8] / mov eax,[ecx+0x14] / mov edx,[ecx+0x10]
+             sub eax,edx / mov edx,[ebp+0xc] / add eax,edx
+             cdq / sub eax,edx / sar eax,1 / ret
+
+         `cdq / sub eax,edx / sar eax,1` is signed division by two that
+         truncates toward zero: the `sub` adds one first when the value is
+         negative, which is exactly what a bare `sar` would get wrong.
+
+Original Offset: 00408470
+Return Value: (a->[0x14] - a->[0x10] + b) / 2
+Status: Complete
+*/
+int __cdecl leaf_00408470_redirect(const void *source, int addend) {
+    const uint8_t *const bytes = static_cast<const uint8_t *>(source);
+    const uint32_t high = *reinterpret_cast<const uint32_t *>(bytes + 0x14);
+    const uint32_t low = *reinterpret_cast<const uint32_t *>(bytes + 0x10);
+    const int32_t total = static_cast<int32_t>(
+        high - low + static_cast<uint32_t>(addend));
+    return total / 2;
+}
+
+/*
+Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
+
+             lea eax,[ecx+0xa24] / mov ecx,0x200 / or edx,0xffffffff
+             mov [eax-4],edx / mov [eax],edx / mov [eax+4],edx
+             add eax,0xc / dec ecx / jne / ret
+
+         Three dwords per pass and 0x200 passes, so 1,536 in all - and the
+         cursor starts at 0xa24 while the first store is at [eax-4], so the
+         region actually begins at 0xa20 and runs to 0x261f. Reading the
+         `lea` as the start would put the whole thing four bytes too high.
+
+Original Offset: 005AD450
+Return Value: n/a
+Status: Complete
+*/
+void __fastcall leaf_005ad450_redirect(void *self, void *) {
+    uint32_t *const slots = reinterpret_cast<uint32_t *>(
+        static_cast<uint8_t *>(self) + 0xA20);
+    for (int index = 0; index < 0x200 * 3; ++index) {
+        slots[index] = 0xFFFFFFFFU;
+    }
+}
+
+/*
+Purpose: Count the set bits in the low THIRTY-ONE bits of ECX.
+
+             mov edx,ecx / xor eax,eax / xor ecx,ecx
+             mov esi,1 / shl esi,cl / test edx,esi / je / inc eax
+             inc ecx / cmp ecx,0x1f / jl / ret
+
+         `cmp ecx,0x1f / jl` runs the body for bit indices 0 through 30. BIT 31
+         IS NEVER TESTED, so this is not a population count - it agrees with
+         one on every value with the top bit clear, which is most of them.
+
+         ECX carries a VALUE here, not a `this` pointer, which is why this one
+         does not take the (void *, void *) shape the rest of these do.
+
+Original Offset: 005CC430
+Return Value: how many of bits 0..30 are set
+Status: Complete
+*/
+int __fastcall leaf_005cc430_redirect(uint32_t value) {
+    int count = 0;
+    for (int bit = 0; bit < 0x1F; ++bit) {
+        if (value & (1U << bit)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+/*
+Purpose: Three when there is no structure, otherwise zero or seven.
+
+             mov eax,[esp+4] / test eax,eax / jne have / mov eax,3 / ret 0x10
+       have: mov eax,[eax+0xc] / neg eax / sbb eax,eax / and al,0xf9
+             add eax,7 / ret 0x10
+
+         `neg / sbb eax,eax` is the idiom for "0 if the value was zero, -1
+         otherwise". Then `and al,0xf9` masks only AL - so -1 becomes
+         0xfffffff9, and adding 7 WRAPS to zero. Zero stays zero and becomes
+         7. The wrap is the mechanism, not an accident, and a body that masked
+         the whole register would give 7 in both cases.
+
+         `ret 0x10` cleans four dwords while only the first is read; the other
+         three are declared so the adapter cleans what the original cleans.
+
+Original Offset: 005D7A10
+Return Value: 3 with no structure, 0 when field 0xc is set, 7 when it is not
+Status: Complete
+*/
+int __stdcall leaf_005d7a10_redirect(const void *source, int, int, int) {
+    if (source == nullptr) {
+        return 3;
+    }
+    const uint32_t flag = *reinterpret_cast<const uint32_t *>(
+        static_cast<const uint8_t *>(source) + 0xC);
+    return flag != 0 ? 0 : 7;
+}

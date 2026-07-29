@@ -2706,6 +2706,70 @@ void test_leaf_recoveries() {
         expect(*counter == 1);
     }
 
+    // --- half a span plus an addend, truncating toward zero ---
+    {
+        uint8_t source[0x20] = {};
+        auto set = [&](size_t offset, int32_t value) {
+            std::memcpy(source + offset, &value, sizeof(value));
+        };
+        set(0x10, 100); set(0x14, 110);            // span 10
+        expect(leaf_00408470_redirect(source, 0) == 5);
+        expect(leaf_00408470_redirect(source, 1) == 5);   // 11/2 truncates
+        expect(leaf_00408470_redirect(source, 2) == 6);
+        // Negative: -11/2 is -5 truncating, -6 flooring. A bare `sar` floors.
+        expect(leaf_00408470_redirect(source, -21) == -5);
+        expect(leaf_00408470_redirect(source, -20) == -5);
+        expect(leaf_00408470_redirect(source, -22) == -6);
+        // The two fields are not interchangeable: swapping them flips the sign.
+        set(0x10, 110); set(0x14, 100);
+        expect(leaf_00408470_redirect(source, 0) == -5);
+    }
+
+    // --- fill 1,536 dwords starting at 0xa20, and nothing either side ---
+    {
+        static uint8_t region[0xA20 + 0x200 * 3 * 4 + 32];
+        std::memset(region, 0x11, sizeof(region));
+        leaf_005ad450_redirect(region, nullptr);
+        for (size_t offset = 0; offset < 0xA20; ++offset) {
+            expect(region[offset] == 0x11);        // before the region
+        }
+        const uint32_t *const slots =
+            reinterpret_cast<const uint32_t *>(region + 0xA20);
+        for (int index = 0; index < 0x200 * 3; ++index) {
+            expect(slots[index] == 0xFFFFFFFFU);
+        }
+        for (size_t offset = 0xA20 + 0x200 * 3 * 4; offset < sizeof(region);
+             ++offset) {
+            expect(region[offset] == 0x11);        // after it
+        }
+    }
+
+    // --- count bits 0..30, NOT 31 ---
+    {
+        expect(leaf_005cc430_redirect(0) == 0);
+        expect(leaf_005cc430_redirect(1) == 1);
+        expect(leaf_005cc430_redirect(3) == 2);
+        expect(leaf_005cc430_redirect(0x7FFFFFFFU) == 31);
+        // The top bit is never tested, so setting it changes nothing. A real
+        // population count would answer 1 and 32 here.
+        expect(leaf_005cc430_redirect(0x80000000U) == 0);
+        expect(leaf_005cc430_redirect(0xFFFFFFFFU) == 31);
+        expect(leaf_005cc430_redirect(0x40000000U) == 1);   // bit 30 counts
+    }
+
+    // --- 3, 0 or 7 ---
+    {
+        uint8_t source[0x20] = {};
+        expect(leaf_005d7a10_redirect(nullptr, 0, 0, 0) == 3);
+        const uint32_t zero = 0;
+        std::memcpy(source + 0xC, &zero, sizeof(zero));
+        expect(leaf_005d7a10_redirect(source, 0, 0, 0) == 7);
+        for (uint32_t probe : {1U, 0xFFFFFFFFU, 0x80000000U, 0x100U}) {
+            std::memcpy(source + 0xC, &probe, sizeof(probe));
+            expect(leaf_005d7a10_redirect(source, 0, 0, 0) == 0);
+        }
+    }
+
     // --- round toward zero to a multiple ---
     //
     // The NEGATIVE cases are the assertion. `x / y * y` truncates toward zero,
