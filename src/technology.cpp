@@ -20,7 +20,6 @@
 #include "technology.h"
 #include "alpha.h"
 #include "base.h"
-#include "council.h"
 #include "game.h"
 #include "general.h"
 #include "map.h"

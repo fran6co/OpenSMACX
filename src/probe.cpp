@@ -20,7 +20,6 @@
 #include "probe.h"
 #include "base.h"
 #include "game.h"
-#include "map.h"
 #include "veh.h"
 
 BOOL *ProbeHasAlgoEnhancement = (BOOL *)0x00945B30;

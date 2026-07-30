@@ -19,7 +19,6 @@
 #include "temp.h"
 #include "council.h"
 #include "base.h"
-#include "game.h"
 
 RulesProposal *Proposal = (RulesProposal *)0x009A6828;
 

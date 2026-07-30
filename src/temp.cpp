@@ -18,13 +18,10 @@
 #include "stdafx.h"
 #include "temp.h"
 #include "log.h"
-#include "game.h"
 #include "veh.h"
 #include "technology.h"
-#include "path.h"
 #include "map.h"
 #include "base.h"
-#include "alpha.h"
 
 // built-in functions > used to prevent crash from mixed alloc/free SDKs
 func1 *_malloc = (func1 *)0x006470A6;

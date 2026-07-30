@@ -22,7 +22,6 @@
 #include "popup.h"
 #include "init_thunks.h"
 #include "deleting_thunks.h"
-#include "atexit_thunks.h"
 #include "sprite.h"
 #include "atexit_thunks.h"
 
