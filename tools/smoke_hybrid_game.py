@@ -121,10 +121,29 @@ def validate_smoke(analysis, new_processes):
     return "surface_flip" if analysis["rendering_started"] else "process_survival"
 
 
-def validate_runtime_oracles(result_path):
+def validate_runtime_oracles(result_path, expected_suites=()):
+    """The suites that ran, or a refusal naming what did not.
+
+    `expected_suites` is what the DLL registers. Checking the terminator alone
+    was not enough and the tree proves it: the last green gate's result file
+    lists twelve suites and `all passed` while `generated-signatures` - 108
+    oracles - is absent, and the smoke log holds zero verdict lines. The suite
+    needs far longer than the smoke window, the process was killed mid-run, and
+    the gate reported success. A named-set check is what turns that into a
+    failure; the terminator cannot, because a truncated run's terminator is
+    indistinguishable from a complete one's.
+    """
     if not result_path.is_file():
         raise RuntimeError("runtime recovery oracles did not produce a result")
     lines = result_path.read_text(encoding="ascii").splitlines()
+    if lines and lines[-1] == "report-overflow":
+        raise RuntimeError(
+            "runtime oracle report overflowed its buffer; the run is truncated "
+            "and its verdicts are incomplete")
+    if lines and lines[-1] == "deferred pending":
+        raise RuntimeError(
+            "runtime recovery oracles stopped after the first phase: the "
+            "deferred suites never ran")
     if not lines or lines[-1] != "all passed":
         failed = [line.rsplit(" ", 1)[0] for line in lines
                   if line.endswith(" failed")]
@@ -141,7 +160,27 @@ def validate_runtime_oracles(result_path):
         suites[name] = status
     if not suites:
         raise RuntimeError("runtime recovery oracles reported no suites")
+    missing = [name for name in expected_suites if name not in suites]
+    if missing:
+        raise RuntimeError(
+            "runtime recovery oracle suites never reported: "
+            + ", ".join(missing))
     return suites
+
+
+def parse_generated_verdicts(text):
+    """{address: state} from the generated suite's machine-readable lines.
+
+    The verdict lines are the only record that the 108 generated oracles ran at
+    all: the suite writes one `GENERATED-ORACLE-VERDICT: 0xADDR STATE name` per
+    function through printf+fflush, so they survive a process that dies later.
+    """
+    verdicts = {}
+    for match in re.finditer(
+            r"^GENERATED-ORACLE-VERDICT: (0x[0-9A-Fa-f]{8}) (\S+)",
+            text, re.M):
+        verdicts[int(match.group(1), 16)] = match.group(2)
+    return verdicts
 
 
 def prepare_runtime_oracle_result_path(value):
@@ -241,6 +280,14 @@ def main():
     parser.add_argument("--log", required=True)
     parser.add_argument("--result", required=True)
     parser.add_argument("--oracle-result", required=True)
+    parser.add_argument("--expect-oracle-suite", action="append", default=[],
+                        metavar="NAME",
+                        help="a suite the DLL registers and must report; "
+                             "repeatable. Absent names fail the smoke.")
+    parser.add_argument("--expect-verdicts", type=int, default=0,
+                        metavar="N",
+                        help="minimum GENERATED-ORACLE-VERDICT lines the run "
+                             "must emit")
     parser.add_argument("--play-intro-movie", action="store_true",
                         help="Leave PRACX's configured movie player enabled")
     args = parser.parse_args()
@@ -297,7 +344,12 @@ def main():
         analysis = analyze_diagnostics(diagnostics, scenario_executable.name)
         after = matching_scenario_process_ids(scenario_executable)
         new_processes = sorted(after - before)
-        oracle_suites = validate_runtime_oracles(oracle_result_path)
+        oracle_suites = validate_runtime_oracles(
+            oracle_result_path, args.expect_oracle_suite)
+        verdicts = parse_generated_verdicts(diagnostics)
+        states = {}
+        for state in verdicts.values():
+            states[state] = states.get(state, 0) + 1
         report.update({
             **analysis,
             "executable": str(executable),
@@ -306,7 +358,13 @@ def main():
             "new_processes": new_processes,
             "preexisting_processes": sorted(before),
             "runtime_oracles": oracle_suites,
+            "generated_oracle_verdicts": len(verdicts),
+            "generated_oracle_verdict_states": dict(sorted(states.items())),
         })
+        if len(verdicts) < args.expect_verdicts:
+            raise RuntimeError(
+                f"the generated oracle suite produced {len(verdicts)} verdicts, "
+                f"expected at least {args.expect_verdicts}")
         report["runtime_evidence"] = validate_smoke(analysis, new_processes)
         report["status"] = "passed"
     except (OSError, subprocess.CalledProcessError, RuntimeError) as error:
