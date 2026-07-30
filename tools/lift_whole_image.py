@@ -561,7 +561,68 @@ def write_shards(out: Path, functions: list[dict], shards: int,
     return paths
 
 
-def write_crt_init(out: Path, functions: list[dict]) -> None:
+# __cinit states the bounds of both initialiser arrays as push immediates, so
+# they can be read rather than guessed:
+#
+#   push 0x6826e4 / push 0x6826d0 / call __initterm    ; .CRT$XI, FIRST
+#   push 0x6826cc / push 0x682000 / call __initterm    ; .CRT$XC, SECOND
+#
+# Order matters and it is not the order a name-based guess would pick. XI holds
+# the C initialisers - ___onexitinit, ___initstdio, ___initmbctable - and XC the
+# C++ ones. Nothing in XC can safely run before ___onexitinit has built the
+# atexit table those constructors register with, which is exactly why a boot
+# driven by the `??__E` name filter stops in __onexit.
+CINIT_ADDRESS = 0x00644DD2
+INITTERM_ADDRESS = 0x00644ED8
+# __cinit is external_library, so load_functions deliberately drops it and it
+# cannot be looked up in the lift's own function list. Its catalogued size is 45
+# bytes; 64 covers it and the decode stops at the second __initterm regardless.
+CINIT_EXTENT = 64
+
+
+def crt_init_bounds(pe) -> list[tuple[str, int, int]]:
+    """[(section, begin, end)] for the two arrays, decoded from `__cinit`.
+
+    Read from the image, not hardcoded and not inferred from names. A name
+    filter cannot do this job and the measurement says how badly: of the 434
+    live .CRT$XC entries, 42 are not named `??__E` - `sub_440f30`, a run of
+    twenty-eight `sub_48d5xx` - and NONE of the four .CRT$XI entries are.
+    """
+    code = read_bytes(pe, CINIT_ADDRESS, CINIT_EXTENT)
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    pushed: list[int] = []
+    bounds: list[tuple[str, int, int]] = []
+    for instruction in md.disasm(code, CINIT_ADDRESS):
+        if instruction.mnemonic == "push":
+            try:
+                pushed.append(int(instruction.op_str, 0))
+            except ValueError:
+                pushed.clear()
+        elif instruction.mnemonic == "call":
+            try:
+                target = int(instruction.op_str, 0)
+            except ValueError:
+                target = None
+            if target == INITTERM_ADDRESS and len(pushed) >= 2:
+                # cdecl pushes right to left, so the LAST push is the FIRST
+                # argument: __initterm(begin, end). Reading it the other way
+                # round yields a negative span, so the ordering is asserted
+                # rather than trusted - I got it backwards once.
+                begin, end = pushed[-1], pushed[-2]
+                if begin >= end:
+                    raise SystemExit(
+                        f"__initterm range {begin:#010x}..{end:#010x} is not "
+                        f"ascending; the push order was misread")
+                bounds.append(("XI" if not bounds else "XC", begin, end))
+            pushed.clear()
+    if len(bounds) != 2:
+        raise SystemExit(
+            f"__cinit at {CINIT_ADDRESS:#010x} did not yield two __initterm "
+            f"ranges; got {bounds}")
+    return bounds
+
+
+def write_crt_init(out: Path, functions: list[dict], pe=None) -> None:
     """The `??__E` C++ dynamic initialisers, so a boot can run them.
 
     `start` is external_library and cannot be lifted, so nothing runs the CRT
@@ -575,9 +636,13 @@ def write_crt_init(out: Path, functions: list[dict]) -> None:
     initialisation order - it is recovered at run time from the image's own
     pointer array, for which this set is the membership test.
     """
+    bounds = crt_init_bounds(pe) if pe is not None else []
     initialisers = sorted(function["address"] for function in functions
                           if function["name"].startswith("??__E"))
     entries = "\n".join(f"    {address:#010x}U," for address in initialisers)
+    ranges = "\n".join(
+        f'    {{"{name}", {begin:#010x}U, {end:#010x}U}},'
+        for name, begin, end in bounds)
     (out / "lifted_crt_init.h").write_text(
         f"""#ifndef OPENSMACX_LIFTED_CRT_INIT_H
 #define OPENSMACX_LIFTED_CRT_INIT_H
@@ -586,6 +651,26 @@ def write_crt_init(out: Path, functions: list[dict]) -> None:
 
 #include <cstdint>
 
+// The two arrays __cinit walks, in the order it walks them. XI first: it holds
+// ___onexitinit, which builds the atexit table every C++ initialiser in XC then
+// registers with, so running XC first stops in __onexit reading a table that
+// does not exist yet.
+struct OpensmacxCrtInitRange {{
+    const char *name;
+    uint32_t begin;
+    uint32_t end;
+}};
+
+inline const OpensmacxCrtInitRange OpensmacxCrtInitRanges[] = {{
+{ranges}
+}};
+
+inline constexpr unsigned OpensmacxCrtInitRangeCount =
+    sizeof(OpensmacxCrtInitRanges) / sizeof(OpensmacxCrtInitRanges[0]);
+
+// Cross-check only: the catalogued `??__E` addresses. NOT the membership test
+// for what to run - 42 live XC entries are not named `??__E` and none of the
+// four XI entries are - so a walk driven by this set runs the wrong subset.
 inline const uint32_t OpensmacxCrtInit[] = {{
 {entries}
 }};
@@ -852,7 +937,7 @@ def main() -> int:
     write_runtime(args.out, base, size)
     write_image(args.out, pe, base, size)
     write_crt_table(args.out, load_external_library(args.functions))
-    write_crt_init(args.out, functions)
+    write_crt_init(args.out, functions, pe)
     write_main(args.out, functions)
     write_loader(args.out, Path(__file__).resolve().parent)
     write_crt_source(args.out, Path(__file__).resolve().parent)
