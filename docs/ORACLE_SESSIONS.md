@@ -152,5 +152,6 @@ construction. That is how the current 2,499 accumulated.
   `init`/`atexit` bodies push the ORIGINAL address through a shared seam, so the
   recovered twin is not what runs. Measure that floor before treating the number
   as reducible to zero.
-* `tools/recovery_frontier.py` is the only script in `tools/` with no
-  `test_*.py`, and the census figures come out of it.
+* `tools/recovery_frontier.py` has no `test_*.py` (it is not alone in that —
+  about a dozen tools/ scripts lack an exact-name test counterpart), but it is
+  the untested one whose output matters: the census figures come out of it.

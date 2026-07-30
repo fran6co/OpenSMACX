@@ -136,8 +136,8 @@ The working split that respects those constraints:
   until 2026-07-29, five of them by more than 60%.** Read the JSON rather than
   this line when the number matters.
 - Local legacy-island count: `candidate_count` in the manifest that
-  `extract-legacy-leaves` writes (124 at the default `--max-size 512`). It
-  moves with the size cap, so it is not restated here.
+  `extract-legacy-leaves` writes. It moves with the size cap and with every
+  recovery batch, so it is not restated here.
 - `DllMain` install-time redirects: 2,048 (the `RedirectCount` a `static_assert` checks against the table in `src/dllmain.cpp`), overwhelmingly source recoveries plus two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured. `docs/recovery-redirects.csv` is the authoritative address/kind catalog; `tools/add_redirect.py` keeps the CSV, `src/redirect_signatures.h`, the dllmain table, and the count in sync.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
@@ -325,7 +325,7 @@ Other completed corrections and checks:
 - Explicit oracle extraction accepts recovered canonical addresses but restricts all proprietary outputs to ignored subdirectories of `.opensmacx/` or `build/`.
 - Lifecycle tests verify actual Heap, Strings, Spot, and Log deallocation; Filemap handle/view closure; Log initialization failure paths; and Random/Log exit callback registration.
 - The floating `Random::get` body is not eligible for a copied-byte oracle because it contains an absolute image reference; its source-level tests retain bit-pattern and x87-status coverage.
-- Regenerated state is 5,018 priorities, 616 source-complete functions, 33 original dependencies, 4,981 unrecovered functions, and 114 islands.
+- Regenerated state at the time of this batch was 5,018 priorities, 616 source-complete functions, 33 original dependencies, 4,981 unrecovered functions, and 114 islands; `docs/recovery/summary.json` and the island manifest carry the current counts.
 
 ### Hybrid Runtime Compatibility
 
@@ -334,7 +334,7 @@ Other completed corrections and checks:
 - Forcing the bundled native DDrawCompat proxy also fails fast on this Wine version.
 - Hybrid staging defaults to the hash-pinned PRACX executable at `.opensmacx/game/terranx.exe` and publishes all 460 expected import redirects.
 - The packer labels PRACX `hash_pinned_runtime_build`; all recovery body mappings are `not_analyzed` and unmapped rather than projected from canonical addresses.
-- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable and produces 114 islands.
+- Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable; the manifest's `candidate_count` carries the current island count.
 - Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
 - `tools/smoke_hybrid_game.py` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
@@ -497,7 +497,7 @@ parallel-agent targets (see "Parallel recovery" above):
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects (the `RedirectCount` table, currently 1,037) plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute. Never hand-edit the table; use `tools/add_redirect.py`.
+- `src/dllmain.cpp`: transactional signature-checked redirects (the `RedirectCount` table, pinned by its `static_assert`) plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute. Never hand-edit the table; use `tools/add_redirect.py`.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -517,7 +517,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `src/vector.h`, `src/vector.cpp`: verified `0xC` Vector layout, lifecycle, ordered x87 arithmetic, alias-sensitive scaling copies, and adapters.
 - `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
 - `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see `docs/RUNTIME_ORACLE.md` for suite authoring.
-- `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: Scroll suite of the runtime oracle covering fifteen original Scroll methods that are ineligible for copied-byte oracle execution.
+- `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: Scroll suite of the runtime oracle covering sixteen original Scroll methods that are ineligible for copied-byte oracle execution.
 - `src/stringstruct_oracle.h`, `src/stringstruct_oracle.cpp`: StringStruct runtime-oracle suite driving the list walk through stand-in entry and payload objects with recording destructors; entry addresses are side-specific, so payload clearing and head position are compared rather than raw pointers.
 - `src/buffer_oracle.h`, `src/buffer_oracle.cpp`: Buffer runtime-oracle suite driving the lock/release pair through a stand-in DirectDraw surface so no real video memory is touched.
 - `src/graphicwin.h`, `src/graphicwin.cpp`: verified `0xA14` GraphicWin layout, destructor vtable installation/subobject delegation, recovered close/reset/release behavior, source-owned Buffer teardown, and classified Win close/destructor dependencies.
@@ -531,7 +531,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
 - `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
-- `docs/recovery/priorities.csv`: currently regenerated to 5,018 candidates.
+- `docs/recovery/priorities.csv`: the regenerated ranked-candidate catalog; its row count drifts with every batch, so read the file rather than this line.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
 - `docs/recovery/analysis-summary.json`: analyzer identities and bound input hashes.
 - `docs/recovery/external-analysis-sources.json`: hash-pinned historical-analysis identities and local-only handling policy.
@@ -563,6 +563,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
 - `tools/add_redirect.py`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
+- `tools/generate_mingw_exports.py`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
 - `tools/classify_recovery_shapes.py`: sorts cached decompilations into recoverable shapes to find mechanical candidates; it errs toward reporting `complex`, and a shape match only means a generated implementation is worth attempting.
 - `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Its opt-in owned-prefix reuse avoids repeated Wine teardown and always finishes with the normal marker-protected cleanup path.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
@@ -574,7 +575,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `docs/STATIC_RECOMPILATION.md`: local-only provenance policy, commands, value gate, and stopped pilot outcome.
 - `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
-- `build/mingw-i686-release/legacy-leaves/manifest.json`: current ignored 114-island manifest.
+- `build/mingw-i686-release/legacy-leaves/manifest.json`: the current ignored legacy-island manifest; its `candidate_count` is the island count.
 - `build/mingw-i686-release/recovery-oracles/manifest.json`: ignored explicit 32-function AlphaNet/Random/Win/geometry/Vector/Scroll/Menu/PullDown oracle manifest.
 - `build/mingw-i686-release/legacy-leaves.obj`: ignored local i386 COFF object.
 - `.opensmacx/game/terranx.exe`: ignored hash-pinned PRACX runtime executable used by hybrid staging.
