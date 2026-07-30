@@ -460,6 +460,9 @@ def emit(rows: list, earned: set | None = None) -> str:
     w('#include "runtime_oracle.h"')
     w("")
     w('#include "globals_diff.h"')
+    w('#include "oracle_fault_guard.h"')
+    w("")
+    w("#include <setjmp.h>")
     w("")
     w("#include <cstdio>")
     w("#include <cstdint>")
@@ -611,13 +614,46 @@ def emit(rows: list, earned: set | None = None) -> str:
         w(f'{indent}    verdict({addr}U, "FAIL-no-redirect", "{row["name"]}");')
         w(f"{indent}    return false;")
         w(f"{indent}}}")
+        # GUARDED. A zero-filled receiver makes some bodies walk a chain their
+        # constructor guarantees and read [0+4]; unguarded, the first such body
+        # takes the process down and forfeits every remaining verdict. Measured:
+        # the suite reached function 18 of 108.
+        if ret != "void":
+            w(f"{indent}{ret} original_result = ({ret})0;")
+        w(f'{indent}oracle_fault_guard::begin({addr}U, "original");')
+        w(f"{indent}if (setjmp(*oracle_fault_guard::buffer()) == 0) {{")
         if ret == "void":
-            w(f"{indent}{call};")
+            w(f"{indent}    {call};")
         else:
-            w(f"{indent}const {ret} original_result = {call};")
-        w(f"{indent}snapshot(after_original);")
+            w(f"{indent}    original_result = {call};")
+        w(f"{indent}    snapshot(after_original);")
         if staged:
-            w(f"{indent}std::memcpy(staged_original, staged, ObjectSize);")
+            w(f"{indent}    std::memcpy(staged_original, staged, ObjectSize);")
+        w(f"{indent}    oracle_fault_guard::end();")
+        w(f"{indent}}} else {{")
+        w(f"{indent}    oracle_fault_guard::end();")
+        # The faulting body may have written globals before it died, so put them
+        # back before anything else runs.
+        w(f"{indent}    restore(before);")
+        # THE DANGEROUS ONE. The redirect is SUSPENDED at fault time. Escaping
+        # without resuming leaves the recovered body uninstalled for the rest of
+        # the process, so every later function's "recovered" call runs the
+        # original and PASSES trivially - a flattering pass for the whole
+        # remainder of the suite.
+        w(f"{indent}    if (!resume_redirect_at({addr}U)) {{")
+        w(f'{indent}        verdict({addr}U, "FAIL-no-redirect", "{row["name"]}");')
+        w(f"{indent}        return false;")
+        w(f"{indent}    }}")
+        # The seed is outside this body's domain. That does not indict the
+        # recovery, so it is INCONCLUSIVE rather than FAIL - and terminal for
+        # this function, because the fixture and globals are in a restored but
+        # unverified state and continuing would test something the verdict does
+        # not name. Never sets observed_effect.
+        w(f'{indent}    timing({addr}U, GetTickCount() - started_at, "{row["name"]}");')
+        w(f'{indent}    verdict({addr}U, "INCONCLUSIVE-original-faulted", '
+          f'"{row["name"]}");')
+        w(f"{indent}    return true;")
+        w(f"{indent}}}")
         w(f"{indent}restore(before);")
         if staged:
             # THE FIXTURE RESTORE. Without it the recovered call starts from
@@ -629,11 +665,30 @@ def emit(rows: list, earned: set | None = None) -> str:
         w(f'{indent}    verdict({addr}U, "FAIL-no-redirect", "{row["name"]}");')
         w(f"{indent}    return false;")
         w(f"{indent}}}")
+        # The recovered side is guarded too, and the asymmetry is deliberate: the
+        # ORIGINAL faulting says the seed is out of domain, while the RECOVERED
+        # body faulting where the original completed is a divergence, and the
+        # strongest kind there is. "Both faulted" cannot arise - the original-side
+        # escape returns above before this call is reached.
+        if ret != "void":
+            w(f"{indent}{ret} recovered_result = ({ret})0;")
+        w(f'{indent}oracle_fault_guard::begin({addr}U, "recovered");')
+        w(f"{indent}if (setjmp(*oracle_fault_guard::buffer()) == 0) {{")
         if ret == "void":
-            w(f"{indent}{call};")
+            w(f"{indent}    {call};")
         else:
-            w(f"{indent}const {ret} recovered_result = {call};")
-        w(f"{indent}snapshot(after_recovered);")
+            w(f"{indent}    recovered_result = {call};")
+        w(f"{indent}    snapshot(after_recovered);")
+        w(f"{indent}    oracle_fault_guard::end();")
+        w(f"{indent}}} else {{")
+        w(f"{indent}    oracle_fault_guard::end();")
+        w(f"{indent}    restore(before);")
+        w(f'{indent}    std::printf("  {row["name"]}: the RECOVERED body faulted '
+          f'where the original did not\\n");')
+        w(f'{indent}    timing({addr}U, GetTickCount() - started_at, "{row["name"]}");')
+        w(f'{indent}    verdict({addr}U, "FAIL-faulted", "{row["name"]}");')
+        w(f"{indent}    return false;")
+        w(f"{indent}}}")
         w(f"{indent}restore(before);   // leave the process as it was found")
         if ret != "void":
             w(f"{indent}if (original_result != recovered_result) {{")
@@ -647,8 +702,16 @@ def emit(rows: list, earned: set | None = None) -> str:
         w(f"{indent}    passed = false;")
         w(f"{indent}}}")
         if staged:
-            w(f"{indent}if (std::memcmp(staged_original, staged, ObjectSize) != 0) {{")
-            w(f'{indent}    std::printf("  {row["name"]}: staged object differs\\n");')
+            # Report WHICH field, for the same reason the globals comparison
+            # does: "staged object differs" names a function, and the offset
+            # names the field, which is what turns a FAIL into a work item.
+            w(f"{indent}size_t staged_at = 0;")
+            w(f"{indent}if (!globals_diff::equal(staged_original, staged,")
+            w(f"{indent}                         ObjectSize, &staged_at)) {{")
+            w(f'{indent}    std::printf("  {row["name"]}: staged object differs '
+              f'at +0x%X (original 0x%02X, recovered 0x%02X)\\n",')
+            w(f"{indent}                (unsigned)staged_at,")
+            w(f"{indent}                staged_original[staged_at], staged[staged_at]);")
             w(f"{indent}    passed = false;")
             w(f"{indent}}}")
         # EFFECT DETECTION. Did the ORIGINAL actually do anything observable
@@ -690,6 +753,11 @@ def emit(rows: list, earned: set | None = None) -> str:
         w("")
 
     w("bool run_generated_signature_oracles() {")
+    # Armed here, not in DllMain: this suite is reached only through
+    # run_deferred_oracles(), from the scenario_opening_movie call site, on the
+    # game's own thread and after the executable's CRT is up - not under the
+    # loader lock. The guard gates on the thread that armed it.
+    w("    oracle_fault_guard::arm();")
     w("    bool passed = true;")
     for row in rows:
         fn = f"verify_{row['symbol']}_{row['address']:08x}"

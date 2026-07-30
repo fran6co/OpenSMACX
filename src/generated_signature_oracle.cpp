@@ -13,11 +13,49 @@
 //
 // PROVEN-AGAINST-ORIGINAL: 0x0046FB10  ?main_caption@MapWin@@QAEXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x004E25E0  ?pid_2_idx@AlphaNet@@QAEHK@Z
-// PROVEN-AGAINST-ORIGINAL: 0x0052DC70  ?not_my_turn@@YAHXZ
-// PROVEN-AGAINST-ORIGINAL: 0x0058EE50  ?desktop_update@@YAXXZ
-// PROVEN-AGAINST-ORIGINAL: 0x005FD2B0  ?do_sound@@YAXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x005D5440  ?fill@GraphicWin@@QAEHHHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005DACB0  ?set_text_color@Buffer@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005DACE0  ?set_text_color2@Buffer@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005DAD10  ?set_text_color3@Buffer@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005DAD40  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005DCA80  ?text_height@Buffer@@QAEHXZ
+// PROVEN-AGAINST-ORIGINAL: 0x005DCAB0  ?text_line_height@Buffer@@QAEHXZ
+// PROVEN-AGAINST-ORIGINAL: 0x005E34A3  ?free_data@Buffer@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005E3503  ?get_hdc@Buffer@@QAEHXZ
+// PROVEN-AGAINST-ORIGINAL: 0x005E3563  ?release_hdc@Buffer@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005EC7C0  ?set_cursor@Win@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005ED7D0  ?move@Win@@QAEHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F2C60  ?sync_palette@Win@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x005F8CB0  ?hide_item@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F8D20  ?show_item@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F8D90  ?disable_item@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F8DF0  ?enable_item@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F9040  ?check_item@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F90A0  ?uncheck_item@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005F9D00  ?id_to_index@PullDown@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005FB1D0  ?UNK3@Menu@@QAEHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005FB990  ?id_to_index@Menu@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x005FC6A0  ?requested_height@Menu@@QAEHXZ
+// PROVEN-AGAINST-ORIGINAL: 0x005FED10  ?get_pos@Palette@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00601B80  ?set_loc@BasePop@@QAEXHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00604490  ?on_key_click@BasePop@@QAEHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x006044B0  ?on_key_up@BasePop@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00604730  ?set_string_color@BasePop@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00604760  ?set_string_color2@BasePop@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00604790  ?set_string_color3@BasePop@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x006047C0  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00605180  ?UNK3@BasePop@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x006051A0  ?UNK4@BasePop@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00605B10  ?set_border_color@Scroll@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00605B80  ?set_bar_thickness@Scroll@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00609B50  ?pos_to_id@Dialog@@QAEHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00609C90  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00609CC0  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00609CF0  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x00618320  ?UNK10@Caviar@@QAEXHHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x0062B870  ?set@ButtonGroup@@QAEHHH@Z
 //
-// 103 function(s) below carry NO marker: they have not run
+// 65 function(s) below carry NO marker: they have not run
 // yet, or they ran and reported INCONCLUSIVE-no-effect, which means
 // every seed bailed on a guard and the agreement proves nothing.
 
@@ -27,6 +65,9 @@
 #include "runtime_oracle.h"
 
 #include "globals_diff.h"
+#include "oracle_fault_guard.h"
+
+#include <setjmp.h>
 
 #include <cstdio>
 #include <cstdint>
@@ -130,9 +171,24 @@ static bool verify_StringStruct_seek_id_00401560() {
             verdict(0x00401560U, "FAIL-no-redirect", "?seek_id@StringStruct@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00401560U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00401560U)) {
+                verdict(0x00401560U, "FAIL-no-redirect", "?seek_id@StringStruct@@QAEHH@Z");
+                return false;
+            }
+            timing(0x00401560U, GetTickCount() - started_at, "?seek_id@StringStruct@@QAEHH@Z");
+            verdict(0x00401560U, "INCONCLUSIVE-original-faulted", "?seek_id@StringStruct@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00401560U)) {
@@ -140,8 +196,20 @@ static bool verify_StringStruct_seek_id_00401560() {
             verdict(0x00401560U, "FAIL-no-redirect", "?seek_id@StringStruct@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00401560U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00401560U, GetTickCount() - started_at, "?seek_id@StringStruct@@QAEHH@Z");
+            verdict(0x00401560U, "FAIL-faulted", "?seek_id@StringStruct@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?seek_id@StringStruct@@QAEHH@Z: return value differs\n");
@@ -153,8 +221,12 @@ static bool verify_StringStruct_seek_id_00401560() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -209,9 +281,24 @@ static bool verify_StringStruct_current_id_00401640() {
             verdict(0x00401640U, "FAIL-no-redirect", "?current_id@StringStruct@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00401640U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00401640U)) {
+                verdict(0x00401640U, "FAIL-no-redirect", "?current_id@StringStruct@@QAEHXZ");
+                return false;
+            }
+            timing(0x00401640U, GetTickCount() - started_at, "?current_id@StringStruct@@QAEHXZ");
+            verdict(0x00401640U, "INCONCLUSIVE-original-faulted", "?current_id@StringStruct@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00401640U)) {
@@ -219,8 +306,20 @@ static bool verify_StringStruct_current_id_00401640() {
             verdict(0x00401640U, "FAIL-no-redirect", "?current_id@StringStruct@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00401640U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00401640U, GetTickCount() - started_at, "?current_id@StringStruct@@QAEHXZ");
+            verdict(0x00401640U, "FAIL-faulted", "?current_id@StringStruct@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?current_id@StringStruct@@QAEHXZ: return value differs\n");
@@ -232,8 +331,12 @@ static bool verify_StringStruct_current_id_00401640() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?current_id@StringStruct@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -288,9 +391,24 @@ static bool verify_StringStruct_next_entry_00402500() {
             verdict(0x00402500U, "FAIL-no-redirect", "?next_entry@StringStruct@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00402500U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00402500U)) {
+                verdict(0x00402500U, "FAIL-no-redirect", "?next_entry@StringStruct@@QAEHXZ");
+                return false;
+            }
+            timing(0x00402500U, GetTickCount() - started_at, "?next_entry@StringStruct@@QAEHXZ");
+            verdict(0x00402500U, "INCONCLUSIVE-original-faulted", "?next_entry@StringStruct@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00402500U)) {
@@ -298,8 +416,20 @@ static bool verify_StringStruct_next_entry_00402500() {
             verdict(0x00402500U, "FAIL-no-redirect", "?next_entry@StringStruct@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00402500U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00402500U, GetTickCount() - started_at, "?next_entry@StringStruct@@QAEHXZ");
+            verdict(0x00402500U, "FAIL-faulted", "?next_entry@StringStruct@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?next_entry@StringStruct@@QAEHXZ: return value differs\n");
@@ -311,8 +441,12 @@ static bool verify_StringStruct_next_entry_00402500() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?next_entry@StringStruct@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -367,9 +501,24 @@ static bool verify_StringStruct_current_entry_00402530() {
             verdict(0x00402530U, "FAIL-no-redirect", "?current_entry@StringStruct@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00402530U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00402530U)) {
+                verdict(0x00402530U, "FAIL-no-redirect", "?current_entry@StringStruct@@QAEHXZ");
+                return false;
+            }
+            timing(0x00402530U, GetTickCount() - started_at, "?current_entry@StringStruct@@QAEHXZ");
+            verdict(0x00402530U, "INCONCLUSIVE-original-faulted", "?current_entry@StringStruct@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00402530U)) {
@@ -377,8 +526,20 @@ static bool verify_StringStruct_current_entry_00402530() {
             verdict(0x00402530U, "FAIL-no-redirect", "?current_entry@StringStruct@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00402530U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00402530U, GetTickCount() - started_at, "?current_entry@StringStruct@@QAEHXZ");
+            verdict(0x00402530U, "FAIL-faulted", "?current_entry@StringStruct@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?current_entry@StringStruct@@QAEHXZ: return value differs\n");
@@ -390,8 +551,12 @@ static bool verify_StringStruct_current_entry_00402530() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?current_entry@StringStruct@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -439,16 +604,41 @@ static bool verify_passover_callback_004456a0() {
             verdict(0x004456A0U, "FAIL-no-redirect", "?passover_callback@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_original);
+        oracle_fault_guard::begin(0x004456A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_original);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004456A0U)) {
+                verdict(0x004456A0U, "FAIL-no-redirect", "?passover_callback@@YAXXZ");
+                return false;
+            }
+            timing(0x004456A0U, GetTickCount() - started_at, "?passover_callback@@YAXXZ");
+            verdict(0x004456A0U, "INCONCLUSIVE-original-faulted", "?passover_callback@@YAXXZ");
+            return true;
+        }
         restore(before);
         if (!resume_redirect_at(0x004456A0U)) {
             std::printf("  ?passover_callback@@YAXXZ: cannot resume redirect\n");
             verdict(0x004456A0U, "FAIL-no-redirect", "?passover_callback@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x004456A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?passover_callback@@YAXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x004456A0U, GetTickCount() - started_at, "?passover_callback@@YAXXZ");
+            verdict(0x004456A0U, "FAIL-faulted", "?passover_callback@@YAXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -495,16 +685,41 @@ static bool verify_load_deswin_sprites_00455e50() {
             verdict(0x00455E50U, "FAIL-no-redirect", "?load_deswin_sprites@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_original);
+        oracle_fault_guard::begin(0x00455E50U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_original);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00455E50U)) {
+                verdict(0x00455E50U, "FAIL-no-redirect", "?load_deswin_sprites@@YAXXZ");
+                return false;
+            }
+            timing(0x00455E50U, GetTickCount() - started_at, "?load_deswin_sprites@@YAXXZ");
+            verdict(0x00455E50U, "INCONCLUSIVE-original-faulted", "?load_deswin_sprites@@YAXXZ");
+            return true;
+        }
         restore(before);
         if (!resume_redirect_at(0x00455E50U)) {
             std::printf("  ?load_deswin_sprites@@YAXXZ: cannot resume redirect\n");
             verdict(0x00455E50U, "FAIL-no-redirect", "?load_deswin_sprites@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00455E50U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?load_deswin_sprites@@YAXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00455E50U, GetTickCount() - started_at, "?load_deswin_sprites@@YAXXZ");
+            verdict(0x00455E50U, "FAIL-faulted", "?load_deswin_sprites@@YAXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -568,9 +783,23 @@ static bool verify_MapWin_on_left_click_0046eba0() {
             verdict(0x0046EBA0U, "FAIL-no-redirect", "?on_left_click@MapWin@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x0046EBA0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0046EBA0U)) {
+                verdict(0x0046EBA0U, "FAIL-no-redirect", "?on_left_click@MapWin@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x0046EBA0U, GetTickCount() - started_at, "?on_left_click@MapWin@@QAEXHH@Z");
+            verdict(0x0046EBA0U, "INCONCLUSIVE-original-faulted", "?on_left_click@MapWin@@QAEXHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x0046EBA0U)) {
@@ -578,8 +807,19 @@ static bool verify_MapWin_on_left_click_0046eba0() {
             verdict(0x0046EBA0U, "FAIL-no-redirect", "?on_left_click@MapWin@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x0046EBA0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x0046EBA0U, GetTickCount() - started_at, "?on_left_click@MapWin@@QAEXHH@Z");
+            verdict(0x0046EBA0U, "FAIL-faulted", "?on_left_click@MapWin@@QAEXHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -587,8 +827,12 @@ static bool verify_MapWin_on_left_click_0046eba0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -650,9 +894,23 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
             verdict(0x0046EBE0U, "FAIL-no-redirect", "?on_right_click@MapWin@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x0046EBE0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0046EBE0U)) {
+                verdict(0x0046EBE0U, "FAIL-no-redirect", "?on_right_click@MapWin@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x0046EBE0U, GetTickCount() - started_at, "?on_right_click@MapWin@@QAEXHH@Z");
+            verdict(0x0046EBE0U, "INCONCLUSIVE-original-faulted", "?on_right_click@MapWin@@QAEXHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x0046EBE0U)) {
@@ -660,8 +918,19 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
             verdict(0x0046EBE0U, "FAIL-no-redirect", "?on_right_click@MapWin@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x0046EBE0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x0046EBE0U, GetTickCount() - started_at, "?on_right_click@MapWin@@QAEXHH@Z");
+            verdict(0x0046EBE0U, "FAIL-faulted", "?on_right_click@MapWin@@QAEXHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -669,8 +938,12 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -722,9 +995,23 @@ static bool verify_MapWin_main_caption_0046fb10() {
             verdict(0x0046FB10U, "FAIL-no-redirect", "?main_caption@MapWin@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x0046FB10U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0046FB10U)) {
+                verdict(0x0046FB10U, "FAIL-no-redirect", "?main_caption@MapWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x0046FB10U, GetTickCount() - started_at, "?main_caption@MapWin@@QAEXXZ");
+            verdict(0x0046FB10U, "INCONCLUSIVE-original-faulted", "?main_caption@MapWin@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x0046FB10U)) {
@@ -732,8 +1019,19 @@ static bool verify_MapWin_main_caption_0046fb10() {
             verdict(0x0046FB10U, "FAIL-no-redirect", "?main_caption@MapWin@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x0046FB10U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x0046FB10U, GetTickCount() - started_at, "?main_caption@MapWin@@QAEXXZ");
+            verdict(0x0046FB10U, "FAIL-faulted", "?main_caption@MapWin@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -741,8 +1039,12 @@ static bool verify_MapWin_main_caption_0046fb10() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?main_caption@MapWin@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -794,9 +1096,23 @@ static bool verify_PlanWin_blink_0048bc20() {
             verdict(0x0048BC20U, "FAIL-no-redirect", "?blink@PlanWin@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x0048BC20U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0048BC20U)) {
+                verdict(0x0048BC20U, "FAIL-no-redirect", "?blink@PlanWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x0048BC20U, GetTickCount() - started_at, "?blink@PlanWin@@QAEXXZ");
+            verdict(0x0048BC20U, "INCONCLUSIVE-original-faulted", "?blink@PlanWin@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x0048BC20U)) {
@@ -804,8 +1120,19 @@ static bool verify_PlanWin_blink_0048bc20() {
             verdict(0x0048BC20U, "FAIL-no-redirect", "?blink@PlanWin@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x0048BC20U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?blink@PlanWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x0048BC20U, GetTickCount() - started_at, "?blink@PlanWin@@QAEXXZ");
+            verdict(0x0048BC20U, "FAIL-faulted", "?blink@PlanWin@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -813,8 +1140,12 @@ static bool verify_PlanWin_blink_0048bc20() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?blink@PlanWin@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?blink@PlanWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -866,9 +1197,24 @@ static bool verify_Console_edit_lock_004e1f40() {
             verdict(0x004E1F40U, "FAIL-no-redirect", "?edit_lock@Console@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x004E1F40U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004E1F40U)) {
+                verdict(0x004E1F40U, "FAIL-no-redirect", "?edit_lock@Console@@QAEHXZ");
+                return false;
+            }
+            timing(0x004E1F40U, GetTickCount() - started_at, "?edit_lock@Console@@QAEHXZ");
+            verdict(0x004E1F40U, "INCONCLUSIVE-original-faulted", "?edit_lock@Console@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x004E1F40U)) {
@@ -876,8 +1222,20 @@ static bool verify_Console_edit_lock_004e1f40() {
             verdict(0x004E1F40U, "FAIL-no-redirect", "?edit_lock@Console@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x004E1F40U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?edit_lock@Console@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x004E1F40U, GetTickCount() - started_at, "?edit_lock@Console@@QAEHXZ");
+            verdict(0x004E1F40U, "FAIL-faulted", "?edit_lock@Console@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?edit_lock@Console@@QAEHXZ: return value differs\n");
@@ -889,8 +1247,12 @@ static bool verify_Console_edit_lock_004e1f40() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?edit_lock@Console@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -955,9 +1317,24 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
             verdict(0x004E25E0U, "FAIL-no-redirect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
             return false;
         }
-        const int original_result = target(staged, (unsigned int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x004E25E0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (unsigned int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004E25E0U)) {
+                verdict(0x004E25E0U, "FAIL-no-redirect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+                return false;
+            }
+            timing(0x004E25E0U, GetTickCount() - started_at, "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            verdict(0x004E25E0U, "INCONCLUSIVE-original-faulted", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x004E25E0U)) {
@@ -965,8 +1342,20 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
             verdict(0x004E25E0U, "FAIL-no-redirect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
             return false;
         }
-        const int recovered_result = target(staged, (unsigned int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x004E25E0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (unsigned int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004E25E0U, GetTickCount() - started_at, "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            verdict(0x004E25E0U, "FAIL-faulted", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: return value differs\n");
@@ -978,8 +1367,12 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1044,9 +1437,24 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
             verdict(0x004E2610U, "FAIL-no-redirect", "?pid_2_who@AlphaNet@@QAEHK@Z");
             return false;
         }
-        const int original_result = target(staged, (unsigned int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x004E2610U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (unsigned int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004E2610U)) {
+                verdict(0x004E2610U, "FAIL-no-redirect", "?pid_2_who@AlphaNet@@QAEHK@Z");
+                return false;
+            }
+            timing(0x004E2610U, GetTickCount() - started_at, "?pid_2_who@AlphaNet@@QAEHK@Z");
+            verdict(0x004E2610U, "INCONCLUSIVE-original-faulted", "?pid_2_who@AlphaNet@@QAEHK@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x004E2610U)) {
@@ -1054,8 +1462,20 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
             verdict(0x004E2610U, "FAIL-no-redirect", "?pid_2_who@AlphaNet@@QAEHK@Z");
             return false;
         }
-        const int recovered_result = target(staged, (unsigned int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x004E2610U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (unsigned int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004E2610U, GetTickCount() - started_at, "?pid_2_who@AlphaNet@@QAEHK@Z");
+            verdict(0x004E2610U, "FAIL-faulted", "?pid_2_who@AlphaNet@@QAEHK@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: return value differs\n");
@@ -1067,8 +1487,12 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1133,9 +1557,24 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
             verdict(0x004E2660U, "FAIL-no-redirect", "?who_2_pid@AlphaNet@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x004E2660U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004E2660U)) {
+                verdict(0x004E2660U, "FAIL-no-redirect", "?who_2_pid@AlphaNet@@QAEHH@Z");
+                return false;
+            }
+            timing(0x004E2660U, GetTickCount() - started_at, "?who_2_pid@AlphaNet@@QAEHH@Z");
+            verdict(0x004E2660U, "INCONCLUSIVE-original-faulted", "?who_2_pid@AlphaNet@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x004E2660U)) {
@@ -1143,8 +1582,20 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
             verdict(0x004E2660U, "FAIL-no-redirect", "?who_2_pid@AlphaNet@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x004E2660U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004E2660U, GetTickCount() - started_at, "?who_2_pid@AlphaNet@@QAEHH@Z");
+            verdict(0x004E2660U, "FAIL-faulted", "?who_2_pid@AlphaNet@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: return value differs\n");
@@ -1156,8 +1607,12 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1222,9 +1677,23 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
             verdict(0x004E26B0U, "FAIL-no-redirect", "?who_2_idx@AlphaNet@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x004E26B0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004E26B0U)) {
+                verdict(0x004E26B0U, "FAIL-no-redirect", "?who_2_idx@AlphaNet@@QAEXH@Z");
+                return false;
+            }
+            timing(0x004E26B0U, GetTickCount() - started_at, "?who_2_idx@AlphaNet@@QAEXH@Z");
+            verdict(0x004E26B0U, "INCONCLUSIVE-original-faulted", "?who_2_idx@AlphaNet@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x004E26B0U)) {
@@ -1232,8 +1701,19 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
             verdict(0x004E26B0U, "FAIL-no-redirect", "?who_2_idx@AlphaNet@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x004E26B0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004E26B0U, GetTickCount() - started_at, "?who_2_idx@AlphaNet@@QAEXH@Z");
+            verdict(0x004E26B0U, "FAIL-faulted", "?who_2_idx@AlphaNet@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1241,8 +1721,12 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1294,9 +1778,23 @@ static bool verify_Console_clear_group_0050f650() {
             verdict(0x0050F650U, "FAIL-no-redirect", "?clear_group@Console@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x0050F650U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0050F650U)) {
+                verdict(0x0050F650U, "FAIL-no-redirect", "?clear_group@Console@@QAEXXZ");
+                return false;
+            }
+            timing(0x0050F650U, GetTickCount() - started_at, "?clear_group@Console@@QAEXXZ");
+            verdict(0x0050F650U, "INCONCLUSIVE-original-faulted", "?clear_group@Console@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x0050F650U)) {
@@ -1304,8 +1802,19 @@ static bool verify_Console_clear_group_0050f650() {
             verdict(0x0050F650U, "FAIL-no-redirect", "?clear_group@Console@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x0050F650U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?clear_group@Console@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x0050F650U, GetTickCount() - started_at, "?clear_group@Console@@QAEXXZ");
+            verdict(0x0050F650U, "FAIL-faulted", "?clear_group@Console@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1313,8 +1822,12 @@ static bool verify_Console_clear_group_0050f650() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?clear_group@Console@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?clear_group@Console@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1376,9 +1889,23 @@ static bool verify_Console_focus_005108a0() {
             verdict(0x005108A0U, "FAIL-no-redirect", "?focus@Console@@QAEXHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005108A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005108A0U)) {
+                verdict(0x005108A0U, "FAIL-no-redirect", "?focus@Console@@QAEXHHH@Z");
+                return false;
+            }
+            timing(0x005108A0U, GetTickCount() - started_at, "?focus@Console@@QAEXHHH@Z");
+            verdict(0x005108A0U, "INCONCLUSIVE-original-faulted", "?focus@Console@@QAEXHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005108A0U)) {
@@ -1386,8 +1913,19 @@ static bool verify_Console_focus_005108a0() {
             verdict(0x005108A0U, "FAIL-no-redirect", "?focus@Console@@QAEXHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005108A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?focus@Console@@QAEXHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005108A0U, GetTickCount() - started_at, "?focus@Console@@QAEXHHH@Z");
+            verdict(0x005108A0U, "FAIL-faulted", "?focus@Console@@QAEXHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1395,8 +1933,12 @@ static bool verify_Console_focus_005108a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?focus@Console@@QAEXHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?focus@Console@@QAEXHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1458,9 +2000,23 @@ static bool verify_Console_update_data_00514880() {
             verdict(0x00514880U, "FAIL-no-redirect", "?update_data@Console@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00514880U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00514880U)) {
+                verdict(0x00514880U, "FAIL-no-redirect", "?update_data@Console@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00514880U, GetTickCount() - started_at, "?update_data@Console@@QAEXH@Z");
+            verdict(0x00514880U, "INCONCLUSIVE-original-faulted", "?update_data@Console@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00514880U)) {
@@ -1468,8 +2024,19 @@ static bool verify_Console_update_data_00514880() {
             verdict(0x00514880U, "FAIL-no-redirect", "?update_data@Console@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00514880U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?update_data@Console@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00514880U, GetTickCount() - started_at, "?update_data@Console@@QAEXH@Z");
+            verdict(0x00514880U, "FAIL-faulted", "?update_data@Console@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1477,8 +2044,12 @@ static bool verify_Console_update_data_00514880() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?update_data@Console@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?update_data@Console@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1523,16 +2094,43 @@ static bool verify_not_my_turn_0052dc70() {
             verdict(0x0052DC70U, "FAIL-no-redirect", "?not_my_turn@@YAHXZ");
             return false;
         }
-        const int original_result = target();
-        snapshot(after_original);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x0052DC70U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target();
+            snapshot(after_original);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0052DC70U)) {
+                verdict(0x0052DC70U, "FAIL-no-redirect", "?not_my_turn@@YAHXZ");
+                return false;
+            }
+            timing(0x0052DC70U, GetTickCount() - started_at, "?not_my_turn@@YAHXZ");
+            verdict(0x0052DC70U, "INCONCLUSIVE-original-faulted", "?not_my_turn@@YAHXZ");
+            return true;
+        }
         restore(before);
         if (!resume_redirect_at(0x0052DC70U)) {
             std::printf("  ?not_my_turn@@YAHXZ: cannot resume redirect\n");
             verdict(0x0052DC70U, "FAIL-no-redirect", "?not_my_turn@@YAHXZ");
             return false;
         }
-        const int recovered_result = target();
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x0052DC70U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?not_my_turn@@YAHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x0052DC70U, GetTickCount() - started_at, "?not_my_turn@@YAHXZ");
+            verdict(0x0052DC70U, "FAIL-faulted", "?not_my_turn@@YAHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?not_my_turn@@YAHXZ: return value differs\n");
@@ -1586,16 +2184,41 @@ static bool verify_desktop_update_0058ee50() {
             verdict(0x0058EE50U, "FAIL-no-redirect", "?desktop_update@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_original);
+        oracle_fault_guard::begin(0x0058EE50U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_original);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0058EE50U)) {
+                verdict(0x0058EE50U, "FAIL-no-redirect", "?desktop_update@@YAXXZ");
+                return false;
+            }
+            timing(0x0058EE50U, GetTickCount() - started_at, "?desktop_update@@YAXXZ");
+            verdict(0x0058EE50U, "INCONCLUSIVE-original-faulted", "?desktop_update@@YAXXZ");
+            return true;
+        }
         restore(before);
         if (!resume_redirect_at(0x0058EE50U)) {
             std::printf("  ?desktop_update@@YAXXZ: cannot resume redirect\n");
             verdict(0x0058EE50U, "FAIL-no-redirect", "?desktop_update@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x0058EE50U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?desktop_update@@YAXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x0058EE50U, GetTickCount() - started_at, "?desktop_update@@YAXXZ");
+            verdict(0x0058EE50U, "FAIL-faulted", "?desktop_update@@YAXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1659,9 +2282,23 @@ static bool verify_GraphicWin_fill_005d5250() {
             verdict(0x005D5250U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005D5250U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005D5250U)) {
+                verdict(0x005D5250U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005D5250U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEXH@Z");
+            verdict(0x005D5250U, "INCONCLUSIVE-original-faulted", "?fill@GraphicWin@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005D5250U)) {
@@ -1669,8 +2306,19 @@ static bool verify_GraphicWin_fill_005d5250() {
             verdict(0x005D5250U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005D5250U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005D5250U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEXH@Z");
+            verdict(0x005D5250U, "FAIL-faulted", "?fill@GraphicWin@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1678,8 +2326,12 @@ static bool verify_GraphicWin_fill_005d5250() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?fill@GraphicWin@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1741,9 +2393,24 @@ static bool verify_GraphicWin_fill_005d5440() {
             verdict(0x005D5440U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEHHHHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005D5440U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005D5440U)) {
+                verdict(0x005D5440U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEHHHHHH@Z");
+                return false;
+            }
+            timing(0x005D5440U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEHHHHHH@Z");
+            verdict(0x005D5440U, "INCONCLUSIVE-original-faulted", "?fill@GraphicWin@@QAEHHHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005D5440U)) {
@@ -1751,8 +2418,20 @@ static bool verify_GraphicWin_fill_005d5440() {
             verdict(0x005D5440U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEHHHHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005D5440U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005D5440U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEHHHHHH@Z");
+            verdict(0x005D5440U, "FAIL-faulted", "?fill@GraphicWin@@QAEHHHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: return value differs\n");
@@ -1764,8 +2443,12 @@ static bool verify_GraphicWin_fill_005d5440() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1820,9 +2503,23 @@ static bool verify_GraphicWin_redraw_005d5a70() {
             verdict(0x005D5A70U, "FAIL-no-redirect", "?redraw@GraphicWin@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005D5A70U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005D5A70U)) {
+                verdict(0x005D5A70U, "FAIL-no-redirect", "?redraw@GraphicWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x005D5A70U, GetTickCount() - started_at, "?redraw@GraphicWin@@QAEXXZ");
+            verdict(0x005D5A70U, "INCONCLUSIVE-original-faulted", "?redraw@GraphicWin@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005D5A70U)) {
@@ -1830,8 +2527,19 @@ static bool verify_GraphicWin_redraw_005d5a70() {
             verdict(0x005D5A70U, "FAIL-no-redirect", "?redraw@GraphicWin@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005D5A70U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005D5A70U, GetTickCount() - started_at, "?redraw@GraphicWin@@QAEXXZ");
+            verdict(0x005D5A70U, "FAIL-faulted", "?redraw@GraphicWin@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1839,8 +2547,12 @@ static bool verify_GraphicWin_redraw_005d5a70() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?redraw@GraphicWin@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1902,9 +2614,23 @@ static bool verify_Buffer_set_text_color_005dacb0() {
             verdict(0x005DACB0U, "FAIL-no-redirect", "?set_text_color@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005DACB0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DACB0U)) {
+                verdict(0x005DACB0U, "FAIL-no-redirect", "?set_text_color@Buffer@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x005DACB0U, GetTickCount() - started_at, "?set_text_color@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DACB0U, "INCONCLUSIVE-original-faulted", "?set_text_color@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DACB0U)) {
@@ -1912,8 +2638,19 @@ static bool verify_Buffer_set_text_color_005dacb0() {
             verdict(0x005DACB0U, "FAIL-no-redirect", "?set_text_color@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005DACB0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DACB0U, GetTickCount() - started_at, "?set_text_color@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DACB0U, "FAIL-faulted", "?set_text_color@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -1921,8 +2658,12 @@ static bool verify_Buffer_set_text_color_005dacb0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -1984,9 +2725,23 @@ static bool verify_Buffer_set_text_color2_005dace0() {
             verdict(0x005DACE0U, "FAIL-no-redirect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005DACE0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DACE0U)) {
+                verdict(0x005DACE0U, "FAIL-no-redirect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x005DACE0U, GetTickCount() - started_at, "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DACE0U, "INCONCLUSIVE-original-faulted", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DACE0U)) {
@@ -1994,8 +2749,19 @@ static bool verify_Buffer_set_text_color2_005dace0() {
             verdict(0x005DACE0U, "FAIL-no-redirect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005DACE0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DACE0U, GetTickCount() - started_at, "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DACE0U, "FAIL-faulted", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -2003,8 +2769,12 @@ static bool verify_Buffer_set_text_color2_005dace0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2066,9 +2836,23 @@ static bool verify_Buffer_set_text_color3_005dad10() {
             verdict(0x005DAD10U, "FAIL-no-redirect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005DAD10U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DAD10U)) {
+                verdict(0x005DAD10U, "FAIL-no-redirect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x005DAD10U, GetTickCount() - started_at, "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DAD10U, "INCONCLUSIVE-original-faulted", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DAD10U)) {
@@ -2076,8 +2860,19 @@ static bool verify_Buffer_set_text_color3_005dad10() {
             verdict(0x005DAD10U, "FAIL-no-redirect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005DAD10U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DAD10U, GetTickCount() - started_at, "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DAD10U, "FAIL-faulted", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -2085,8 +2880,12 @@ static bool verify_Buffer_set_text_color3_005dad10() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2148,9 +2947,23 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
             verdict(0x005DAD40U, "FAIL-no-redirect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005DAD40U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DAD40U)) {
+                verdict(0x005DAD40U, "FAIL-no-redirect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x005DAD40U, GetTickCount() - started_at, "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DAD40U, "INCONCLUSIVE-original-faulted", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DAD40U)) {
@@ -2158,8 +2971,19 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
             verdict(0x005DAD40U, "FAIL-no-redirect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005DAD40U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DAD40U, GetTickCount() - started_at, "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DAD40U, "FAIL-faulted", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -2167,8 +2991,12 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2220,9 +3048,24 @@ static bool verify_Buffer_text_height_005dca80() {
             verdict(0x005DCA80U, "FAIL-no-redirect", "?text_height@Buffer@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005DCA80U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DCA80U)) {
+                verdict(0x005DCA80U, "FAIL-no-redirect", "?text_height@Buffer@@QAEHXZ");
+                return false;
+            }
+            timing(0x005DCA80U, GetTickCount() - started_at, "?text_height@Buffer@@QAEHXZ");
+            verdict(0x005DCA80U, "INCONCLUSIVE-original-faulted", "?text_height@Buffer@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DCA80U)) {
@@ -2230,8 +3073,20 @@ static bool verify_Buffer_text_height_005dca80() {
             verdict(0x005DCA80U, "FAIL-no-redirect", "?text_height@Buffer@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005DCA80U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?text_height@Buffer@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DCA80U, GetTickCount() - started_at, "?text_height@Buffer@@QAEHXZ");
+            verdict(0x005DCA80U, "FAIL-faulted", "?text_height@Buffer@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?text_height@Buffer@@QAEHXZ: return value differs\n");
@@ -2243,8 +3098,12 @@ static bool verify_Buffer_text_height_005dca80() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?text_height@Buffer@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2299,9 +3158,24 @@ static bool verify_Buffer_text_line_height_005dcab0() {
             verdict(0x005DCAB0U, "FAIL-no-redirect", "?text_line_height@Buffer@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005DCAB0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DCAB0U)) {
+                verdict(0x005DCAB0U, "FAIL-no-redirect", "?text_line_height@Buffer@@QAEHXZ");
+                return false;
+            }
+            timing(0x005DCAB0U, GetTickCount() - started_at, "?text_line_height@Buffer@@QAEHXZ");
+            verdict(0x005DCAB0U, "INCONCLUSIVE-original-faulted", "?text_line_height@Buffer@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DCAB0U)) {
@@ -2309,8 +3183,20 @@ static bool verify_Buffer_text_line_height_005dcab0() {
             verdict(0x005DCAB0U, "FAIL-no-redirect", "?text_line_height@Buffer@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005DCAB0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DCAB0U, GetTickCount() - started_at, "?text_line_height@Buffer@@QAEHXZ");
+            verdict(0x005DCAB0U, "FAIL-faulted", "?text_line_height@Buffer@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?text_line_height@Buffer@@QAEHXZ: return value differs\n");
@@ -2322,8 +3208,12 @@ static bool verify_Buffer_text_line_height_005dcab0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?text_line_height@Buffer@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2378,9 +3268,23 @@ static bool verify_Buffer_clear_links_005def90() {
             verdict(0x005DEF90U, "FAIL-no-redirect", "?clear_links@Buffer@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005DEF90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005DEF90U)) {
+                verdict(0x005DEF90U, "FAIL-no-redirect", "?clear_links@Buffer@@QAEXXZ");
+                return false;
+            }
+            timing(0x005DEF90U, GetTickCount() - started_at, "?clear_links@Buffer@@QAEXXZ");
+            verdict(0x005DEF90U, "INCONCLUSIVE-original-faulted", "?clear_links@Buffer@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005DEF90U)) {
@@ -2388,8 +3292,19 @@ static bool verify_Buffer_clear_links_005def90() {
             verdict(0x005DEF90U, "FAIL-no-redirect", "?clear_links@Buffer@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005DEF90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005DEF90U, GetTickCount() - started_at, "?clear_links@Buffer@@QAEXXZ");
+            verdict(0x005DEF90U, "FAIL-faulted", "?clear_links@Buffer@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -2397,8 +3312,12 @@ static bool verify_Buffer_clear_links_005def90() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?clear_links@Buffer@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2450,9 +3369,24 @@ static bool verify_Buffer_get_data_005e3373() {
             verdict(0x005E3373U, "FAIL-no-redirect", "?get_data@Buffer@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005E3373U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005E3373U)) {
+                verdict(0x005E3373U, "FAIL-no-redirect", "?get_data@Buffer@@QAEHXZ");
+                return false;
+            }
+            timing(0x005E3373U, GetTickCount() - started_at, "?get_data@Buffer@@QAEHXZ");
+            verdict(0x005E3373U, "INCONCLUSIVE-original-faulted", "?get_data@Buffer@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005E3373U)) {
@@ -2460,8 +3394,20 @@ static bool verify_Buffer_get_data_005e3373() {
             verdict(0x005E3373U, "FAIL-no-redirect", "?get_data@Buffer@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005E3373U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_data@Buffer@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005E3373U, GetTickCount() - started_at, "?get_data@Buffer@@QAEHXZ");
+            verdict(0x005E3373U, "FAIL-faulted", "?get_data@Buffer@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_data@Buffer@@QAEHXZ: return value differs\n");
@@ -2473,8 +3419,12 @@ static bool verify_Buffer_get_data_005e3373() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_data@Buffer@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2539,9 +3489,23 @@ static bool verify_Buffer_free_data_005e34a3() {
             verdict(0x005E34A3U, "FAIL-no-redirect", "?free_data@Buffer@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005E34A3U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005E34A3U)) {
+                verdict(0x005E34A3U, "FAIL-no-redirect", "?free_data@Buffer@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005E34A3U, GetTickCount() - started_at, "?free_data@Buffer@@QAEXH@Z");
+            verdict(0x005E34A3U, "INCONCLUSIVE-original-faulted", "?free_data@Buffer@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005E34A3U)) {
@@ -2549,8 +3513,19 @@ static bool verify_Buffer_free_data_005e34a3() {
             verdict(0x005E34A3U, "FAIL-no-redirect", "?free_data@Buffer@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005E34A3U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005E34A3U, GetTickCount() - started_at, "?free_data@Buffer@@QAEXH@Z");
+            verdict(0x005E34A3U, "FAIL-faulted", "?free_data@Buffer@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -2558,8 +3533,12 @@ static bool verify_Buffer_free_data_005e34a3() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?free_data@Buffer@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2611,9 +3590,24 @@ static bool verify_Buffer_get_hdc_005e3503() {
             verdict(0x005E3503U, "FAIL-no-redirect", "?get_hdc@Buffer@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005E3503U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005E3503U)) {
+                verdict(0x005E3503U, "FAIL-no-redirect", "?get_hdc@Buffer@@QAEHXZ");
+                return false;
+            }
+            timing(0x005E3503U, GetTickCount() - started_at, "?get_hdc@Buffer@@QAEHXZ");
+            verdict(0x005E3503U, "INCONCLUSIVE-original-faulted", "?get_hdc@Buffer@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005E3503U)) {
@@ -2621,8 +3615,20 @@ static bool verify_Buffer_get_hdc_005e3503() {
             verdict(0x005E3503U, "FAIL-no-redirect", "?get_hdc@Buffer@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005E3503U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005E3503U, GetTickCount() - started_at, "?get_hdc@Buffer@@QAEHXZ");
+            verdict(0x005E3503U, "FAIL-faulted", "?get_hdc@Buffer@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_hdc@Buffer@@QAEHXZ: return value differs\n");
@@ -2634,8 +3640,12 @@ static bool verify_Buffer_get_hdc_005e3503() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_hdc@Buffer@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2700,9 +3710,23 @@ static bool verify_Buffer_release_hdc_005e3563() {
             verdict(0x005E3563U, "FAIL-no-redirect", "?release_hdc@Buffer@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005E3563U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005E3563U)) {
+                verdict(0x005E3563U, "FAIL-no-redirect", "?release_hdc@Buffer@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005E3563U, GetTickCount() - started_at, "?release_hdc@Buffer@@QAEXH@Z");
+            verdict(0x005E3563U, "INCONCLUSIVE-original-faulted", "?release_hdc@Buffer@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005E3563U)) {
@@ -2710,8 +3734,19 @@ static bool verify_Buffer_release_hdc_005e3563() {
             verdict(0x005E3563U, "FAIL-no-redirect", "?release_hdc@Buffer@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005E3563U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005E3563U, GetTickCount() - started_at, "?release_hdc@Buffer@@QAEXH@Z");
+            verdict(0x005E3563U, "FAIL-faulted", "?release_hdc@Buffer@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -2719,8 +3754,12 @@ static bool verify_Buffer_release_hdc_005e3563() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2782,9 +3821,24 @@ static bool verify_Win_set_cursor_005ec7c0() {
             verdict(0x005EC7C0U, "FAIL-no-redirect", "?set_cursor@Win@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005EC7C0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EC7C0U)) {
+                verdict(0x005EC7C0U, "FAIL-no-redirect", "?set_cursor@Win@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005EC7C0U, GetTickCount() - started_at, "?set_cursor@Win@@QAEHH@Z");
+            verdict(0x005EC7C0U, "INCONCLUSIVE-original-faulted", "?set_cursor@Win@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EC7C0U)) {
@@ -2792,8 +3846,20 @@ static bool verify_Win_set_cursor_005ec7c0() {
             verdict(0x005EC7C0U, "FAIL-no-redirect", "?set_cursor@Win@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005EC7C0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EC7C0U, GetTickCount() - started_at, "?set_cursor@Win@@QAEHH@Z");
+            verdict(0x005EC7C0U, "FAIL-faulted", "?set_cursor@Win@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?set_cursor@Win@@QAEHH@Z: return value differs\n");
@@ -2805,8 +3871,12 @@ static bool verify_Win_set_cursor_005ec7c0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_cursor@Win@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2871,9 +3941,24 @@ static bool verify_Win_UNK3_005ece80() {
             verdict(0x005ECE80U, "FAIL-no-redirect", "?UNK3@Win@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005ECE80U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005ECE80U)) {
+                verdict(0x005ECE80U, "FAIL-no-redirect", "?UNK3@Win@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005ECE80U, GetTickCount() - started_at, "?UNK3@Win@@QAEHH@Z");
+            verdict(0x005ECE80U, "INCONCLUSIVE-original-faulted", "?UNK3@Win@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005ECE80U)) {
@@ -2881,8 +3966,20 @@ static bool verify_Win_UNK3_005ece80() {
             verdict(0x005ECE80U, "FAIL-no-redirect", "?UNK3@Win@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005ECE80U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK3@Win@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005ECE80U, GetTickCount() - started_at, "?UNK3@Win@@QAEHH@Z");
+            verdict(0x005ECE80U, "FAIL-faulted", "?UNK3@Win@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?UNK3@Win@@QAEHH@Z: return value differs\n");
@@ -2894,8 +3991,12 @@ static bool verify_Win_UNK3_005ece80() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK3@Win@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -2960,9 +4061,24 @@ static bool verify_Win_move_005ed7d0() {
             verdict(0x005ED7D0U, "FAIL-no-redirect", "?move@Win@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005ED7D0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005ED7D0U)) {
+                verdict(0x005ED7D0U, "FAIL-no-redirect", "?move@Win@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005ED7D0U, GetTickCount() - started_at, "?move@Win@@QAEHHH@Z");
+            verdict(0x005ED7D0U, "INCONCLUSIVE-original-faulted", "?move@Win@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005ED7D0U)) {
@@ -2970,8 +4086,20 @@ static bool verify_Win_move_005ed7d0() {
             verdict(0x005ED7D0U, "FAIL-no-redirect", "?move@Win@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005ED7D0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?move@Win@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005ED7D0U, GetTickCount() - started_at, "?move@Win@@QAEHHH@Z");
+            verdict(0x005ED7D0U, "FAIL-faulted", "?move@Win@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?move@Win@@QAEHHH@Z: return value differs\n");
@@ -2983,8 +4111,12 @@ static bool verify_Win_move_005ed7d0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?move@Win@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?move@Win@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3049,9 +4181,23 @@ static bool verify_Win_set_vert_pos_005ee030() {
             verdict(0x005EE030U, "FAIL-no-redirect", "?set_vert_pos@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE030U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE030U)) {
+                verdict(0x005EE030U, "FAIL-no-redirect", "?set_vert_pos@Win@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005EE030U, GetTickCount() - started_at, "?set_vert_pos@Win@@QAEXH@Z");
+            verdict(0x005EE030U, "INCONCLUSIVE-original-faulted", "?set_vert_pos@Win@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE030U)) {
@@ -3059,8 +4205,19 @@ static bool verify_Win_set_vert_pos_005ee030() {
             verdict(0x005EE030U, "FAIL-no-redirect", "?set_vert_pos@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE030U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE030U, GetTickCount() - started_at, "?set_vert_pos@Win@@QAEXH@Z");
+            verdict(0x005EE030U, "FAIL-faulted", "?set_vert_pos@Win@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3068,8 +4225,12 @@ static bool verify_Win_set_vert_pos_005ee030() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3121,9 +4282,24 @@ static bool verify_Win_get_vert_pos_005ee050() {
             verdict(0x005EE050U, "FAIL-no-redirect", "?get_vert_pos@Win@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005EE050U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE050U)) {
+                verdict(0x005EE050U, "FAIL-no-redirect", "?get_vert_pos@Win@@QAEHXZ");
+                return false;
+            }
+            timing(0x005EE050U, GetTickCount() - started_at, "?get_vert_pos@Win@@QAEHXZ");
+            verdict(0x005EE050U, "INCONCLUSIVE-original-faulted", "?get_vert_pos@Win@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE050U)) {
@@ -3131,8 +4307,20 @@ static bool verify_Win_get_vert_pos_005ee050() {
             verdict(0x005EE050U, "FAIL-no-redirect", "?get_vert_pos@Win@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005EE050U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE050U, GetTickCount() - started_at, "?get_vert_pos@Win@@QAEHXZ");
+            verdict(0x005EE050U, "FAIL-faulted", "?get_vert_pos@Win@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_vert_pos@Win@@QAEHXZ: return value differs\n");
@@ -3144,8 +4332,12 @@ static bool verify_Win_get_vert_pos_005ee050() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_vert_pos@Win@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3210,9 +4402,23 @@ static bool verify_Win_set_horz_pos_005ee070() {
             verdict(0x005EE070U, "FAIL-no-redirect", "?set_horz_pos@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE070U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE070U)) {
+                verdict(0x005EE070U, "FAIL-no-redirect", "?set_horz_pos@Win@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005EE070U, GetTickCount() - started_at, "?set_horz_pos@Win@@QAEXH@Z");
+            verdict(0x005EE070U, "INCONCLUSIVE-original-faulted", "?set_horz_pos@Win@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE070U)) {
@@ -3220,8 +4426,19 @@ static bool verify_Win_set_horz_pos_005ee070() {
             verdict(0x005EE070U, "FAIL-no-redirect", "?set_horz_pos@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE070U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE070U, GetTickCount() - started_at, "?set_horz_pos@Win@@QAEXH@Z");
+            verdict(0x005EE070U, "FAIL-faulted", "?set_horz_pos@Win@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3229,8 +4446,12 @@ static bool verify_Win_set_horz_pos_005ee070() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3282,9 +4503,24 @@ static bool verify_Win_get_horz_pos_005ee090() {
             verdict(0x005EE090U, "FAIL-no-redirect", "?get_horz_pos@Win@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005EE090U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE090U)) {
+                verdict(0x005EE090U, "FAIL-no-redirect", "?get_horz_pos@Win@@QAEHXZ");
+                return false;
+            }
+            timing(0x005EE090U, GetTickCount() - started_at, "?get_horz_pos@Win@@QAEHXZ");
+            verdict(0x005EE090U, "INCONCLUSIVE-original-faulted", "?get_horz_pos@Win@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE090U)) {
@@ -3292,8 +4528,20 @@ static bool verify_Win_get_horz_pos_005ee090() {
             verdict(0x005EE090U, "FAIL-no-redirect", "?get_horz_pos@Win@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005EE090U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE090U, GetTickCount() - started_at, "?get_horz_pos@Win@@QAEHXZ");
+            verdict(0x005EE090U, "FAIL-faulted", "?get_horz_pos@Win@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_horz_pos@Win@@QAEHXZ: return value differs\n");
@@ -3305,8 +4553,12 @@ static bool verify_Win_get_horz_pos_005ee090() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_horz_pos@Win@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3371,9 +4623,23 @@ static bool verify_Win_set_vert_range_005ee0b0() {
             verdict(0x005EE0B0U, "FAIL-no-redirect", "?set_vert_range@Win@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE0B0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE0B0U)) {
+                verdict(0x005EE0B0U, "FAIL-no-redirect", "?set_vert_range@Win@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x005EE0B0U, GetTickCount() - started_at, "?set_vert_range@Win@@QAEXHH@Z");
+            verdict(0x005EE0B0U, "INCONCLUSIVE-original-faulted", "?set_vert_range@Win@@QAEXHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE0B0U)) {
@@ -3381,8 +4647,19 @@ static bool verify_Win_set_vert_range_005ee0b0() {
             verdict(0x005EE0B0U, "FAIL-no-redirect", "?set_vert_range@Win@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE0B0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE0B0U, GetTickCount() - started_at, "?set_vert_range@Win@@QAEXHH@Z");
+            verdict(0x005EE0B0U, "FAIL-faulted", "?set_vert_range@Win@@QAEXHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3390,8 +4667,12 @@ static bool verify_Win_set_vert_range_005ee0b0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3453,9 +4734,23 @@ static bool verify_Win_set_horz_range_005ee0d0() {
             verdict(0x005EE0D0U, "FAIL-no-redirect", "?set_horz_range@Win@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE0D0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE0D0U)) {
+                verdict(0x005EE0D0U, "FAIL-no-redirect", "?set_horz_range@Win@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x005EE0D0U, GetTickCount() - started_at, "?set_horz_range@Win@@QAEXHH@Z");
+            verdict(0x005EE0D0U, "INCONCLUSIVE-original-faulted", "?set_horz_range@Win@@QAEXHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE0D0U)) {
@@ -3463,8 +4758,19 @@ static bool verify_Win_set_horz_range_005ee0d0() {
             verdict(0x005EE0D0U, "FAIL-no-redirect", "?set_horz_range@Win@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE0D0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE0D0U, GetTickCount() - started_at, "?set_horz_range@Win@@QAEXHH@Z");
+            verdict(0x005EE0D0U, "FAIL-faulted", "?set_horz_range@Win@@QAEXHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3472,8 +4778,12 @@ static bool verify_Win_set_horz_range_005ee0d0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3535,9 +4845,23 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
             verdict(0x005EE0F0U, "FAIL-no-redirect", "?set_vert_paging@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE0F0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE0F0U)) {
+                verdict(0x005EE0F0U, "FAIL-no-redirect", "?set_vert_paging@Win@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005EE0F0U, GetTickCount() - started_at, "?set_vert_paging@Win@@QAEXH@Z");
+            verdict(0x005EE0F0U, "INCONCLUSIVE-original-faulted", "?set_vert_paging@Win@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE0F0U)) {
@@ -3545,8 +4869,19 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
             verdict(0x005EE0F0U, "FAIL-no-redirect", "?set_vert_paging@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE0F0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE0F0U, GetTickCount() - started_at, "?set_vert_paging@Win@@QAEXH@Z");
+            verdict(0x005EE0F0U, "FAIL-faulted", "?set_vert_paging@Win@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3554,8 +4889,12 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3617,9 +4956,23 @@ static bool verify_Win_set_horz_paging_005ee110() {
             verdict(0x005EE110U, "FAIL-no-redirect", "?set_horz_paging@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE110U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE110U)) {
+                verdict(0x005EE110U, "FAIL-no-redirect", "?set_horz_paging@Win@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005EE110U, GetTickCount() - started_at, "?set_horz_paging@Win@@QAEXH@Z");
+            verdict(0x005EE110U, "INCONCLUSIVE-original-faulted", "?set_horz_paging@Win@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE110U)) {
@@ -3627,8 +4980,19 @@ static bool verify_Win_set_horz_paging_005ee110() {
             verdict(0x005EE110U, "FAIL-no-redirect", "?set_horz_paging@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE110U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE110U, GetTickCount() - started_at, "?set_horz_paging@Win@@QAEXH@Z");
+            verdict(0x005EE110U, "FAIL-faulted", "?set_horz_paging@Win@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3636,8 +5000,12 @@ static bool verify_Win_set_horz_paging_005ee110() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3699,9 +5067,23 @@ static bool verify_Win_UNK8_005ee130() {
             verdict(0x005EE130U, "FAIL-no-redirect", "?UNK8@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE130U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE130U)) {
+                verdict(0x005EE130U, "FAIL-no-redirect", "?UNK8@Win@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005EE130U, GetTickCount() - started_at, "?UNK8@Win@@QAEXH@Z");
+            verdict(0x005EE130U, "INCONCLUSIVE-original-faulted", "?UNK8@Win@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE130U)) {
@@ -3709,8 +5091,19 @@ static bool verify_Win_UNK8_005ee130() {
             verdict(0x005EE130U, "FAIL-no-redirect", "?UNK8@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE130U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK8@Win@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE130U, GetTickCount() - started_at, "?UNK8@Win@@QAEXH@Z");
+            verdict(0x005EE130U, "FAIL-faulted", "?UNK8@Win@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3718,8 +5111,12 @@ static bool verify_Win_UNK8_005ee130() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK8@Win@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK8@Win@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3781,9 +5178,23 @@ static bool verify_Win_UNK9_005ee160() {
             verdict(0x005EE160U, "FAIL-no-redirect", "?UNK9@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005EE160U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005EE160U)) {
+                verdict(0x005EE160U, "FAIL-no-redirect", "?UNK9@Win@@QAEXH@Z");
+                return false;
+            }
+            timing(0x005EE160U, GetTickCount() - started_at, "?UNK9@Win@@QAEXH@Z");
+            verdict(0x005EE160U, "INCONCLUSIVE-original-faulted", "?UNK9@Win@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005EE160U)) {
@@ -3791,8 +5202,19 @@ static bool verify_Win_UNK9_005ee160() {
             verdict(0x005EE160U, "FAIL-no-redirect", "?UNK9@Win@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005EE160U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK9@Win@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005EE160U, GetTickCount() - started_at, "?UNK9@Win@@QAEXH@Z");
+            verdict(0x005EE160U, "FAIL-faulted", "?UNK9@Win@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3800,8 +5222,12 @@ static bool verify_Win_UNK9_005ee160() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK9@Win@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK9@Win@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3853,9 +5279,23 @@ static bool verify_Win_sync_palette_005f2c60() {
             verdict(0x005F2C60U, "FAIL-no-redirect", "?sync_palette@Win@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x005F2C60U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F2C60U)) {
+                verdict(0x005F2C60U, "FAIL-no-redirect", "?sync_palette@Win@@QAEXXZ");
+                return false;
+            }
+            timing(0x005F2C60U, GetTickCount() - started_at, "?sync_palette@Win@@QAEXXZ");
+            verdict(0x005F2C60U, "INCONCLUSIVE-original-faulted", "?sync_palette@Win@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F2C60U)) {
@@ -3863,8 +5303,19 @@ static bool verify_Win_sync_palette_005f2c60() {
             verdict(0x005F2C60U, "FAIL-no-redirect", "?sync_palette@Win@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005F2C60U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?sync_palette@Win@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F2C60U, GetTickCount() - started_at, "?sync_palette@Win@@QAEXXZ");
+            verdict(0x005F2C60U, "FAIL-faulted", "?sync_palette@Win@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -3872,8 +5323,12 @@ static bool verify_Win_sync_palette_005f2c60() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?sync_palette@Win@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?sync_palette@Win@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -3925,9 +5380,24 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
             verdict(0x005F2CA0U, "FAIL-no-redirect", "?is_dialog_focus@Win@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F2CA0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F2CA0U)) {
+                verdict(0x005F2CA0U, "FAIL-no-redirect", "?is_dialog_focus@Win@@QAEHXZ");
+                return false;
+            }
+            timing(0x005F2CA0U, GetTickCount() - started_at, "?is_dialog_focus@Win@@QAEHXZ");
+            verdict(0x005F2CA0U, "INCONCLUSIVE-original-faulted", "?is_dialog_focus@Win@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F2CA0U)) {
@@ -3935,8 +5405,20 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
             verdict(0x005F2CA0U, "FAIL-no-redirect", "?is_dialog_focus@Win@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F2CA0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F2CA0U, GetTickCount() - started_at, "?is_dialog_focus@Win@@QAEHXZ");
+            verdict(0x005F2CA0U, "FAIL-faulted", "?is_dialog_focus@Win@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?is_dialog_focus@Win@@QAEHXZ: return value differs\n");
@@ -3948,8 +5430,12 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4004,9 +5490,24 @@ static bool verify_Win_is_visible_005f7e90() {
             verdict(0x005F7E90U, "FAIL-no-redirect", "?is_visible@Win@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F7E90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F7E90U)) {
+                verdict(0x005F7E90U, "FAIL-no-redirect", "?is_visible@Win@@QAEHXZ");
+                return false;
+            }
+            timing(0x005F7E90U, GetTickCount() - started_at, "?is_visible@Win@@QAEHXZ");
+            verdict(0x005F7E90U, "INCONCLUSIVE-original-faulted", "?is_visible@Win@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F7E90U)) {
@@ -4014,8 +5515,20 @@ static bool verify_Win_is_visible_005f7e90() {
             verdict(0x005F7E90U, "FAIL-no-redirect", "?is_visible@Win@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F7E90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?is_visible@Win@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F7E90U, GetTickCount() - started_at, "?is_visible@Win@@QAEHXZ");
+            verdict(0x005F7E90U, "FAIL-faulted", "?is_visible@Win@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?is_visible@Win@@QAEHXZ: return value differs\n");
@@ -4027,8 +5540,12 @@ static bool verify_Win_is_visible_005f7e90() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?is_visible@Win@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4093,9 +5610,24 @@ static bool verify_PullDown_hide_item_005f8cb0() {
             verdict(0x005F8CB0U, "FAIL-no-redirect", "?hide_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F8CB0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F8CB0U)) {
+                verdict(0x005F8CB0U, "FAIL-no-redirect", "?hide_item@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F8CB0U, GetTickCount() - started_at, "?hide_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8CB0U, "INCONCLUSIVE-original-faulted", "?hide_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F8CB0U)) {
@@ -4103,8 +5635,20 @@ static bool verify_PullDown_hide_item_005f8cb0() {
             verdict(0x005F8CB0U, "FAIL-no-redirect", "?hide_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F8CB0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F8CB0U, GetTickCount() - started_at, "?hide_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8CB0U, "FAIL-faulted", "?hide_item@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?hide_item@PullDown@@QAEHH@Z: return value differs\n");
@@ -4116,8 +5660,12 @@ static bool verify_PullDown_hide_item_005f8cb0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?hide_item@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4182,9 +5730,24 @@ static bool verify_PullDown_show_item_005f8d20() {
             verdict(0x005F8D20U, "FAIL-no-redirect", "?show_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F8D20U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F8D20U)) {
+                verdict(0x005F8D20U, "FAIL-no-redirect", "?show_item@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F8D20U, GetTickCount() - started_at, "?show_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8D20U, "INCONCLUSIVE-original-faulted", "?show_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F8D20U)) {
@@ -4192,8 +5755,20 @@ static bool verify_PullDown_show_item_005f8d20() {
             verdict(0x005F8D20U, "FAIL-no-redirect", "?show_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F8D20U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F8D20U, GetTickCount() - started_at, "?show_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8D20U, "FAIL-faulted", "?show_item@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?show_item@PullDown@@QAEHH@Z: return value differs\n");
@@ -4205,8 +5780,12 @@ static bool verify_PullDown_show_item_005f8d20() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?show_item@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4271,9 +5850,24 @@ static bool verify_PullDown_disable_item_005f8d90() {
             verdict(0x005F8D90U, "FAIL-no-redirect", "?disable_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F8D90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F8D90U)) {
+                verdict(0x005F8D90U, "FAIL-no-redirect", "?disable_item@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F8D90U, GetTickCount() - started_at, "?disable_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8D90U, "INCONCLUSIVE-original-faulted", "?disable_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F8D90U)) {
@@ -4281,8 +5875,20 @@ static bool verify_PullDown_disable_item_005f8d90() {
             verdict(0x005F8D90U, "FAIL-no-redirect", "?disable_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F8D90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F8D90U, GetTickCount() - started_at, "?disable_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8D90U, "FAIL-faulted", "?disable_item@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?disable_item@PullDown@@QAEHH@Z: return value differs\n");
@@ -4294,8 +5900,12 @@ static bool verify_PullDown_disable_item_005f8d90() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?disable_item@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4360,9 +5970,24 @@ static bool verify_PullDown_enable_item_005f8df0() {
             verdict(0x005F8DF0U, "FAIL-no-redirect", "?enable_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F8DF0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F8DF0U)) {
+                verdict(0x005F8DF0U, "FAIL-no-redirect", "?enable_item@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F8DF0U, GetTickCount() - started_at, "?enable_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8DF0U, "INCONCLUSIVE-original-faulted", "?enable_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F8DF0U)) {
@@ -4370,8 +5995,20 @@ static bool verify_PullDown_enable_item_005f8df0() {
             verdict(0x005F8DF0U, "FAIL-no-redirect", "?enable_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F8DF0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F8DF0U, GetTickCount() - started_at, "?enable_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8DF0U, "FAIL-faulted", "?enable_item@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?enable_item@PullDown@@QAEHH@Z: return value differs\n");
@@ -4383,8 +6020,12 @@ static bool verify_PullDown_enable_item_005f8df0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?enable_item@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4449,9 +6090,24 @@ static bool verify_PullDown_check_item_005f9040() {
             verdict(0x005F9040U, "FAIL-no-redirect", "?check_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F9040U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F9040U)) {
+                verdict(0x005F9040U, "FAIL-no-redirect", "?check_item@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F9040U, GetTickCount() - started_at, "?check_item@PullDown@@QAEHH@Z");
+            verdict(0x005F9040U, "INCONCLUSIVE-original-faulted", "?check_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F9040U)) {
@@ -4459,8 +6115,20 @@ static bool verify_PullDown_check_item_005f9040() {
             verdict(0x005F9040U, "FAIL-no-redirect", "?check_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F9040U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F9040U, GetTickCount() - started_at, "?check_item@PullDown@@QAEHH@Z");
+            verdict(0x005F9040U, "FAIL-faulted", "?check_item@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?check_item@PullDown@@QAEHH@Z: return value differs\n");
@@ -4472,8 +6140,12 @@ static bool verify_PullDown_check_item_005f9040() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?check_item@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4538,9 +6210,24 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
             verdict(0x005F90A0U, "FAIL-no-redirect", "?uncheck_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F90A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F90A0U)) {
+                verdict(0x005F90A0U, "FAIL-no-redirect", "?uncheck_item@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F90A0U, GetTickCount() - started_at, "?uncheck_item@PullDown@@QAEHH@Z");
+            verdict(0x005F90A0U, "INCONCLUSIVE-original-faulted", "?uncheck_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F90A0U)) {
@@ -4548,8 +6235,20 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
             verdict(0x005F90A0U, "FAIL-no-redirect", "?uncheck_item@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F90A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F90A0U, GetTickCount() - started_at, "?uncheck_item@PullDown@@QAEHH@Z");
+            verdict(0x005F90A0U, "FAIL-faulted", "?uncheck_item@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: return value differs\n");
@@ -4561,8 +6260,12 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4627,9 +6330,24 @@ static bool verify_PullDown_id_to_index_005f9d00() {
             verdict(0x005F9D00U, "FAIL-no-redirect", "?id_to_index@PullDown@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F9D00U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F9D00U)) {
+                verdict(0x005F9D00U, "FAIL-no-redirect", "?id_to_index@PullDown@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005F9D00U, GetTickCount() - started_at, "?id_to_index@PullDown@@QAEHH@Z");
+            verdict(0x005F9D00U, "INCONCLUSIVE-original-faulted", "?id_to_index@PullDown@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F9D00U)) {
@@ -4637,8 +6355,20 @@ static bool verify_PullDown_id_to_index_005f9d00() {
             verdict(0x005F9D00U, "FAIL-no-redirect", "?id_to_index@PullDown@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F9D00U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F9D00U, GetTickCount() - started_at, "?id_to_index@PullDown@@QAEHH@Z");
+            verdict(0x005F9D00U, "FAIL-faulted", "?id_to_index@PullDown@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?id_to_index@PullDown@@QAEHH@Z: return value differs\n");
@@ -4650,8 +6380,12 @@ static bool verify_PullDown_id_to_index_005f9d00() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4706,9 +6440,24 @@ static bool verify_PullDown_get_selected_005f9f40() {
             verdict(0x005F9F40U, "FAIL-no-redirect", "?get_selected@PullDown@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005F9F40U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005F9F40U)) {
+                verdict(0x005F9F40U, "FAIL-no-redirect", "?get_selected@PullDown@@QAEHXZ");
+                return false;
+            }
+            timing(0x005F9F40U, GetTickCount() - started_at, "?get_selected@PullDown@@QAEHXZ");
+            verdict(0x005F9F40U, "INCONCLUSIVE-original-faulted", "?get_selected@PullDown@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005F9F40U)) {
@@ -4716,8 +6465,20 @@ static bool verify_PullDown_get_selected_005f9f40() {
             verdict(0x005F9F40U, "FAIL-no-redirect", "?get_selected@PullDown@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005F9F40U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005F9F40U, GetTickCount() - started_at, "?get_selected@PullDown@@QAEHXZ");
+            verdict(0x005F9F40U, "FAIL-faulted", "?get_selected@PullDown@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_selected@PullDown@@QAEHXZ: return value differs\n");
@@ -4729,8 +6490,12 @@ static bool verify_PullDown_get_selected_005f9f40() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_selected@PullDown@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4795,9 +6560,24 @@ static bool verify_Menu_UNK3_005fb1d0() {
             verdict(0x005FB1D0U, "FAIL-no-redirect", "?UNK3@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB1D0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB1D0U)) {
+                verdict(0x005FB1D0U, "FAIL-no-redirect", "?UNK3@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB1D0U, GetTickCount() - started_at, "?UNK3@Menu@@QAEHHH@Z");
+            verdict(0x005FB1D0U, "INCONCLUSIVE-original-faulted", "?UNK3@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB1D0U)) {
@@ -4805,8 +6585,20 @@ static bool verify_Menu_UNK3_005fb1d0() {
             verdict(0x005FB1D0U, "FAIL-no-redirect", "?UNK3@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB1D0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB1D0U, GetTickCount() - started_at, "?UNK3@Menu@@QAEHHH@Z");
+            verdict(0x005FB1D0U, "FAIL-faulted", "?UNK3@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?UNK3@Menu@@QAEHHH@Z: return value differs\n");
@@ -4818,8 +6610,12 @@ static bool verify_Menu_UNK3_005fb1d0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK3@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4884,9 +6680,24 @@ static bool verify_Menu_UNK6_005fb2a0() {
             verdict(0x005FB2A0U, "FAIL-no-redirect", "?UNK6@Menu@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB2A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB2A0U)) {
+                verdict(0x005FB2A0U, "FAIL-no-redirect", "?UNK6@Menu@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005FB2A0U, GetTickCount() - started_at, "?UNK6@Menu@@QAEHH@Z");
+            verdict(0x005FB2A0U, "INCONCLUSIVE-original-faulted", "?UNK6@Menu@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB2A0U)) {
@@ -4894,8 +6705,20 @@ static bool verify_Menu_UNK6_005fb2a0() {
             verdict(0x005FB2A0U, "FAIL-no-redirect", "?UNK6@Menu@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB2A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB2A0U, GetTickCount() - started_at, "?UNK6@Menu@@QAEHH@Z");
+            verdict(0x005FB2A0U, "FAIL-faulted", "?UNK6@Menu@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?UNK6@Menu@@QAEHH@Z: return value differs\n");
@@ -4907,8 +6730,12 @@ static bool verify_Menu_UNK6_005fb2a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK6@Menu@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -4973,9 +6800,24 @@ static bool verify_Menu_hide_menu_item_005fb300() {
             verdict(0x005FB300U, "FAIL-no-redirect", "?hide_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB300U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB300U)) {
+                verdict(0x005FB300U, "FAIL-no-redirect", "?hide_menu_item@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB300U, GetTickCount() - started_at, "?hide_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB300U, "INCONCLUSIVE-original-faulted", "?hide_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB300U)) {
@@ -4983,8 +6825,20 @@ static bool verify_Menu_hide_menu_item_005fb300() {
             verdict(0x005FB300U, "FAIL-no-redirect", "?hide_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB300U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB300U, GetTickCount() - started_at, "?hide_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB300U, "FAIL-faulted", "?hide_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: return value differs\n");
@@ -4996,8 +6850,12 @@ static bool verify_Menu_hide_menu_item_005fb300() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5062,9 +6920,24 @@ static bool verify_Menu_UNK7_005fb360() {
             verdict(0x005FB360U, "FAIL-no-redirect", "?UNK7@Menu@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB360U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB360U)) {
+                verdict(0x005FB360U, "FAIL-no-redirect", "?UNK7@Menu@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005FB360U, GetTickCount() - started_at, "?UNK7@Menu@@QAEHH@Z");
+            verdict(0x005FB360U, "INCONCLUSIVE-original-faulted", "?UNK7@Menu@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB360U)) {
@@ -5072,8 +6945,20 @@ static bool verify_Menu_UNK7_005fb360() {
             verdict(0x005FB360U, "FAIL-no-redirect", "?UNK7@Menu@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB360U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB360U, GetTickCount() - started_at, "?UNK7@Menu@@QAEHH@Z");
+            verdict(0x005FB360U, "FAIL-faulted", "?UNK7@Menu@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?UNK7@Menu@@QAEHH@Z: return value differs\n");
@@ -5085,8 +6970,12 @@ static bool verify_Menu_UNK7_005fb360() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK7@Menu@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5151,9 +7040,24 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
             verdict(0x005FB3C0U, "FAIL-no-redirect", "?show_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB3C0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB3C0U)) {
+                verdict(0x005FB3C0U, "FAIL-no-redirect", "?show_menu_item@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB3C0U, GetTickCount() - started_at, "?show_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB3C0U, "INCONCLUSIVE-original-faulted", "?show_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB3C0U)) {
@@ -5161,8 +7065,20 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
             verdict(0x005FB3C0U, "FAIL-no-redirect", "?show_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB3C0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB3C0U, GetTickCount() - started_at, "?show_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB3C0U, "FAIL-faulted", "?show_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: return value differs\n");
@@ -5174,8 +7090,12 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5240,9 +7160,24 @@ static bool verify_Menu_UNK8_005fb420() {
             verdict(0x005FB420U, "FAIL-no-redirect", "?UNK8@Menu@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB420U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB420U)) {
+                verdict(0x005FB420U, "FAIL-no-redirect", "?UNK8@Menu@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005FB420U, GetTickCount() - started_at, "?UNK8@Menu@@QAEHH@Z");
+            verdict(0x005FB420U, "INCONCLUSIVE-original-faulted", "?UNK8@Menu@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB420U)) {
@@ -5250,8 +7185,20 @@ static bool verify_Menu_UNK8_005fb420() {
             verdict(0x005FB420U, "FAIL-no-redirect", "?UNK8@Menu@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB420U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB420U, GetTickCount() - started_at, "?UNK8@Menu@@QAEHH@Z");
+            verdict(0x005FB420U, "FAIL-faulted", "?UNK8@Menu@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?UNK8@Menu@@QAEHH@Z: return value differs\n");
@@ -5263,8 +7210,12 @@ static bool verify_Menu_UNK8_005fb420() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK8@Menu@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5329,9 +7280,24 @@ static bool verify_Menu_disable_menu_item_005fb480() {
             verdict(0x005FB480U, "FAIL-no-redirect", "?disable_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB480U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB480U)) {
+                verdict(0x005FB480U, "FAIL-no-redirect", "?disable_menu_item@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB480U, GetTickCount() - started_at, "?disable_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB480U, "INCONCLUSIVE-original-faulted", "?disable_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB480U)) {
@@ -5339,8 +7305,20 @@ static bool verify_Menu_disable_menu_item_005fb480() {
             verdict(0x005FB480U, "FAIL-no-redirect", "?disable_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB480U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB480U, GetTickCount() - started_at, "?disable_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB480U, "FAIL-faulted", "?disable_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: return value differs\n");
@@ -5352,8 +7330,12 @@ static bool verify_Menu_disable_menu_item_005fb480() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5418,9 +7400,24 @@ static bool verify_Menu_UNK9_005fb4e0() {
             verdict(0x005FB4E0U, "FAIL-no-redirect", "?UNK9@Menu@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB4E0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB4E0U)) {
+                verdict(0x005FB4E0U, "FAIL-no-redirect", "?UNK9@Menu@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005FB4E0U, GetTickCount() - started_at, "?UNK9@Menu@@QAEHH@Z");
+            verdict(0x005FB4E0U, "INCONCLUSIVE-original-faulted", "?UNK9@Menu@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB4E0U)) {
@@ -5428,8 +7425,20 @@ static bool verify_Menu_UNK9_005fb4e0() {
             verdict(0x005FB4E0U, "FAIL-no-redirect", "?UNK9@Menu@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB4E0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB4E0U, GetTickCount() - started_at, "?UNK9@Menu@@QAEHH@Z");
+            verdict(0x005FB4E0U, "FAIL-faulted", "?UNK9@Menu@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?UNK9@Menu@@QAEHH@Z: return value differs\n");
@@ -5441,8 +7450,12 @@ static bool verify_Menu_UNK9_005fb4e0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK9@Menu@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5507,9 +7520,24 @@ static bool verify_Menu_enable_menu_item_005fb540() {
             verdict(0x005FB540U, "FAIL-no-redirect", "?enable_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB540U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB540U)) {
+                verdict(0x005FB540U, "FAIL-no-redirect", "?enable_menu_item@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB540U, GetTickCount() - started_at, "?enable_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB540U, "INCONCLUSIVE-original-faulted", "?enable_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB540U)) {
@@ -5517,8 +7545,20 @@ static bool verify_Menu_enable_menu_item_005fb540() {
             verdict(0x005FB540U, "FAIL-no-redirect", "?enable_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB540U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB540U, GetTickCount() - started_at, "?enable_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB540U, "FAIL-faulted", "?enable_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: return value differs\n");
@@ -5530,8 +7570,12 @@ static bool verify_Menu_enable_menu_item_005fb540() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5596,9 +7640,24 @@ static bool verify_Menu_check_menu_item_005fb760() {
             verdict(0x005FB760U, "FAIL-no-redirect", "?check_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB760U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB760U)) {
+                verdict(0x005FB760U, "FAIL-no-redirect", "?check_menu_item@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB760U, GetTickCount() - started_at, "?check_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB760U, "INCONCLUSIVE-original-faulted", "?check_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB760U)) {
@@ -5606,8 +7665,20 @@ static bool verify_Menu_check_menu_item_005fb760() {
             verdict(0x005FB760U, "FAIL-no-redirect", "?check_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB760U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB760U, GetTickCount() - started_at, "?check_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB760U, "FAIL-faulted", "?check_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: return value differs\n");
@@ -5619,8 +7690,12 @@ static bool verify_Menu_check_menu_item_005fb760() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5685,9 +7760,24 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
             verdict(0x005FB7C0U, "FAIL-no-redirect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB7C0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB7C0U)) {
+                verdict(0x005FB7C0U, "FAIL-no-redirect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x005FB7C0U, GetTickCount() - started_at, "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB7C0U, "INCONCLUSIVE-original-faulted", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB7C0U)) {
@@ -5695,8 +7785,20 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
             verdict(0x005FB7C0U, "FAIL-no-redirect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB7C0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB7C0U, GetTickCount() - started_at, "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB7C0U, "FAIL-faulted", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: return value differs\n");
@@ -5708,8 +7810,12 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5774,9 +7880,24 @@ static bool verify_Menu_id_to_index_005fb990() {
             verdict(0x005FB990U, "FAIL-no-redirect", "?id_to_index@Menu@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FB990U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FB990U)) {
+                verdict(0x005FB990U, "FAIL-no-redirect", "?id_to_index@Menu@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005FB990U, GetTickCount() - started_at, "?id_to_index@Menu@@QAEHH@Z");
+            verdict(0x005FB990U, "INCONCLUSIVE-original-faulted", "?id_to_index@Menu@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FB990U)) {
@@ -5784,8 +7905,20 @@ static bool verify_Menu_id_to_index_005fb990() {
             verdict(0x005FB990U, "FAIL-no-redirect", "?id_to_index@Menu@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FB990U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FB990U, GetTickCount() - started_at, "?id_to_index@Menu@@QAEHH@Z");
+            verdict(0x005FB990U, "FAIL-faulted", "?id_to_index@Menu@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?id_to_index@Menu@@QAEHH@Z: return value differs\n");
@@ -5797,8 +7930,12 @@ static bool verify_Menu_id_to_index_005fb990() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?id_to_index@Menu@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5853,9 +7990,24 @@ static bool verify_Menu_requested_height_005fc6a0() {
             verdict(0x005FC6A0U, "FAIL-no-redirect", "?requested_height@Menu@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FC6A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FC6A0U)) {
+                verdict(0x005FC6A0U, "FAIL-no-redirect", "?requested_height@Menu@@QAEHXZ");
+                return false;
+            }
+            timing(0x005FC6A0U, GetTickCount() - started_at, "?requested_height@Menu@@QAEHXZ");
+            verdict(0x005FC6A0U, "INCONCLUSIVE-original-faulted", "?requested_height@Menu@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FC6A0U)) {
@@ -5863,8 +8015,20 @@ static bool verify_Menu_requested_height_005fc6a0() {
             verdict(0x005FC6A0U, "FAIL-no-redirect", "?requested_height@Menu@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FC6A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?requested_height@Menu@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FC6A0U, GetTickCount() - started_at, "?requested_height@Menu@@QAEHXZ");
+            verdict(0x005FC6A0U, "FAIL-faulted", "?requested_height@Menu@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?requested_height@Menu@@QAEHXZ: return value differs\n");
@@ -5876,8 +8040,12 @@ static bool verify_Menu_requested_height_005fc6a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?requested_height@Menu@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -5925,16 +8093,41 @@ static bool verify_do_sound_005fd2b0() {
             verdict(0x005FD2B0U, "FAIL-no-redirect", "?do_sound@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_original);
+        oracle_fault_guard::begin(0x005FD2B0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_original);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FD2B0U)) {
+                verdict(0x005FD2B0U, "FAIL-no-redirect", "?do_sound@@YAXXZ");
+                return false;
+            }
+            timing(0x005FD2B0U, GetTickCount() - started_at, "?do_sound@@YAXXZ");
+            verdict(0x005FD2B0U, "INCONCLUSIVE-original-faulted", "?do_sound@@YAXXZ");
+            return true;
+        }
         restore(before);
         if (!resume_redirect_at(0x005FD2B0U)) {
             std::printf("  ?do_sound@@YAXXZ: cannot resume redirect\n");
             verdict(0x005FD2B0U, "FAIL-no-redirect", "?do_sound@@YAXXZ");
             return false;
         }
-        target();
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x005FD2B0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?do_sound@@YAXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FD2B0U, GetTickCount() - started_at, "?do_sound@@YAXXZ");
+            verdict(0x005FD2B0U, "FAIL-faulted", "?do_sound@@YAXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -5998,9 +8191,24 @@ static bool verify_Palette_get_pos_005fed10() {
             verdict(0x005FED10U, "FAIL-no-redirect", "?get_pos@Palette@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005FED10U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005FED10U)) {
+                verdict(0x005FED10U, "FAIL-no-redirect", "?get_pos@Palette@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005FED10U, GetTickCount() - started_at, "?get_pos@Palette@@QAEHH@Z");
+            verdict(0x005FED10U, "INCONCLUSIVE-original-faulted", "?get_pos@Palette@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x005FED10U)) {
@@ -6008,8 +8216,20 @@ static bool verify_Palette_get_pos_005fed10() {
             verdict(0x005FED10U, "FAIL-no-redirect", "?get_pos@Palette@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005FED10U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005FED10U, GetTickCount() - started_at, "?get_pos@Palette@@QAEHH@Z");
+            verdict(0x005FED10U, "FAIL-faulted", "?get_pos@Palette@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_pos@Palette@@QAEHH@Z: return value differs\n");
@@ -6021,8 +8241,12 @@ static bool verify_Palette_get_pos_005fed10() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_pos@Palette@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6087,9 +8311,23 @@ static bool verify_BasePop_set_width_00601b20() {
             verdict(0x00601B20U, "FAIL-no-redirect", "?set_width@BasePop@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00601B20U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00601B20U)) {
+                verdict(0x00601B20U, "FAIL-no-redirect", "?set_width@BasePop@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00601B20U, GetTickCount() - started_at, "?set_width@BasePop@@QAEXH@Z");
+            verdict(0x00601B20U, "INCONCLUSIVE-original-faulted", "?set_width@BasePop@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00601B20U)) {
@@ -6097,8 +8335,19 @@ static bool verify_BasePop_set_width_00601b20() {
             verdict(0x00601B20U, "FAIL-no-redirect", "?set_width@BasePop@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00601B20U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00601B20U, GetTickCount() - started_at, "?set_width@BasePop@@QAEXH@Z");
+            verdict(0x00601B20U, "FAIL-faulted", "?set_width@BasePop@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6106,8 +8355,12 @@ static bool verify_BasePop_set_width_00601b20() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_width@BasePop@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6169,9 +8422,23 @@ static bool verify_BasePop_set_loc_00601b80() {
             verdict(0x00601B80U, "FAIL-no-redirect", "?set_loc@BasePop@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00601B80U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00601B80U)) {
+                verdict(0x00601B80U, "FAIL-no-redirect", "?set_loc@BasePop@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x00601B80U, GetTickCount() - started_at, "?set_loc@BasePop@@QAEXHH@Z");
+            verdict(0x00601B80U, "INCONCLUSIVE-original-faulted", "?set_loc@BasePop@@QAEXHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00601B80U)) {
@@ -6179,8 +8446,19 @@ static bool verify_BasePop_set_loc_00601b80() {
             verdict(0x00601B80U, "FAIL-no-redirect", "?set_loc@BasePop@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00601B80U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00601B80U, GetTickCount() - started_at, "?set_loc@BasePop@@QAEXHH@Z");
+            verdict(0x00601B80U, "FAIL-faulted", "?set_loc@BasePop@@QAEXHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6188,8 +8466,12 @@ static bool verify_BasePop_set_loc_00601b80() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6251,9 +8533,23 @@ static bool verify_BasePop_write_check_00601bb0() {
             verdict(0x00601BB0U, "FAIL-no-redirect", "?write_check@BasePop@@QAEXJ@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00601BB0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00601BB0U)) {
+                verdict(0x00601BB0U, "FAIL-no-redirect", "?write_check@BasePop@@QAEXJ@Z");
+                return false;
+            }
+            timing(0x00601BB0U, GetTickCount() - started_at, "?write_check@BasePop@@QAEXJ@Z");
+            verdict(0x00601BB0U, "INCONCLUSIVE-original-faulted", "?write_check@BasePop@@QAEXJ@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00601BB0U)) {
@@ -6261,8 +8557,19 @@ static bool verify_BasePop_write_check_00601bb0() {
             verdict(0x00601BB0U, "FAIL-no-redirect", "?write_check@BasePop@@QAEXJ@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00601BB0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00601BB0U, GetTickCount() - started_at, "?write_check@BasePop@@QAEXJ@Z");
+            verdict(0x00601BB0U, "FAIL-faulted", "?write_check@BasePop@@QAEXJ@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6270,8 +8577,12 @@ static bool verify_BasePop_write_check_00601bb0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?write_check@BasePop@@QAEXJ@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6323,9 +8634,23 @@ static bool verify_BasePop_read_check_00601bd0() {
             verdict(0x00601BD0U, "FAIL-no-redirect", "?read_check@BasePop@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00601BD0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00601BD0U)) {
+                verdict(0x00601BD0U, "FAIL-no-redirect", "?read_check@BasePop@@QAEXXZ");
+                return false;
+            }
+            timing(0x00601BD0U, GetTickCount() - started_at, "?read_check@BasePop@@QAEXXZ");
+            verdict(0x00601BD0U, "INCONCLUSIVE-original-faulted", "?read_check@BasePop@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00601BD0U)) {
@@ -6333,8 +8658,19 @@ static bool verify_BasePop_read_check_00601bd0() {
             verdict(0x00601BD0U, "FAIL-no-redirect", "?read_check@BasePop@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00601BD0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?read_check@BasePop@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00601BD0U, GetTickCount() - started_at, "?read_check@BasePop@@QAEXXZ");
+            verdict(0x00601BD0U, "FAIL-faulted", "?read_check@BasePop@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6342,8 +8678,12 @@ static bool verify_BasePop_read_check_00601bd0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?read_check@BasePop@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?read_check@BasePop@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6405,9 +8745,24 @@ static bool verify_BasePop_on_key_click_00604490() {
             verdict(0x00604490U, "FAIL-no-redirect", "?on_key_click@BasePop@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00604490U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00604490U)) {
+                verdict(0x00604490U, "FAIL-no-redirect", "?on_key_click@BasePop@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x00604490U, GetTickCount() - started_at, "?on_key_click@BasePop@@QAEHHH@Z");
+            verdict(0x00604490U, "INCONCLUSIVE-original-faulted", "?on_key_click@BasePop@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00604490U)) {
@@ -6415,8 +8770,20 @@ static bool verify_BasePop_on_key_click_00604490() {
             verdict(0x00604490U, "FAIL-no-redirect", "?on_key_click@BasePop@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00604490U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00604490U, GetTickCount() - started_at, "?on_key_click@BasePop@@QAEHHH@Z");
+            verdict(0x00604490U, "FAIL-faulted", "?on_key_click@BasePop@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: return value differs\n");
@@ -6428,8 +8795,12 @@ static bool verify_BasePop_on_key_click_00604490() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6494,9 +8865,24 @@ static bool verify_BasePop_on_key_up_006044b0() {
             verdict(0x006044B0U, "FAIL-no-redirect", "?on_key_up@BasePop@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x006044B0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006044B0U)) {
+                verdict(0x006044B0U, "FAIL-no-redirect", "?on_key_up@BasePop@@QAEHH@Z");
+                return false;
+            }
+            timing(0x006044B0U, GetTickCount() - started_at, "?on_key_up@BasePop@@QAEHH@Z");
+            verdict(0x006044B0U, "INCONCLUSIVE-original-faulted", "?on_key_up@BasePop@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006044B0U)) {
@@ -6504,8 +8890,20 @@ static bool verify_BasePop_on_key_up_006044b0() {
             verdict(0x006044B0U, "FAIL-no-redirect", "?on_key_up@BasePop@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x006044B0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006044B0U, GetTickCount() - started_at, "?on_key_up@BasePop@@QAEHH@Z");
+            verdict(0x006044B0U, "FAIL-faulted", "?on_key_up@BasePop@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?on_key_up@BasePop@@QAEHH@Z: return value differs\n");
@@ -6517,8 +8915,12 @@ static bool verify_BasePop_on_key_up_006044b0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6583,9 +8985,23 @@ static bool verify_BasePop_set_string_color_00604730() {
             verdict(0x00604730U, "FAIL-no-redirect", "?set_string_color@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00604730U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00604730U)) {
+                verdict(0x00604730U, "FAIL-no-redirect", "?set_string_color@BasePop@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00604730U, GetTickCount() - started_at, "?set_string_color@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604730U, "INCONCLUSIVE-original-faulted", "?set_string_color@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00604730U)) {
@@ -6593,8 +9009,19 @@ static bool verify_BasePop_set_string_color_00604730() {
             verdict(0x00604730U, "FAIL-no-redirect", "?set_string_color@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00604730U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00604730U, GetTickCount() - started_at, "?set_string_color@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604730U, "FAIL-faulted", "?set_string_color@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6602,8 +9029,12 @@ static bool verify_BasePop_set_string_color_00604730() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6665,9 +9096,23 @@ static bool verify_BasePop_set_string_color2_00604760() {
             verdict(0x00604760U, "FAIL-no-redirect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00604760U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00604760U)) {
+                verdict(0x00604760U, "FAIL-no-redirect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00604760U, GetTickCount() - started_at, "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604760U, "INCONCLUSIVE-original-faulted", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00604760U)) {
@@ -6675,8 +9120,19 @@ static bool verify_BasePop_set_string_color2_00604760() {
             verdict(0x00604760U, "FAIL-no-redirect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00604760U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00604760U, GetTickCount() - started_at, "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604760U, "FAIL-faulted", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6684,8 +9140,12 @@ static bool verify_BasePop_set_string_color2_00604760() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6747,9 +9207,23 @@ static bool verify_BasePop_set_string_color3_00604790() {
             verdict(0x00604790U, "FAIL-no-redirect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00604790U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00604790U)) {
+                verdict(0x00604790U, "FAIL-no-redirect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00604790U, GetTickCount() - started_at, "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604790U, "INCONCLUSIVE-original-faulted", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00604790U)) {
@@ -6757,8 +9231,19 @@ static bool verify_BasePop_set_string_color3_00604790() {
             verdict(0x00604790U, "FAIL-no-redirect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00604790U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00604790U, GetTickCount() - started_at, "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604790U, "FAIL-faulted", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6766,8 +9251,12 @@ static bool verify_BasePop_set_string_color3_00604790() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6829,9 +9318,23 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
             verdict(0x006047C0U, "FAIL-no-redirect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x006047C0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006047C0U)) {
+                verdict(0x006047C0U, "FAIL-no-redirect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x006047C0U, GetTickCount() - started_at, "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            verdict(0x006047C0U, "INCONCLUSIVE-original-faulted", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006047C0U)) {
@@ -6839,8 +9342,19 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
             verdict(0x006047C0U, "FAIL-no-redirect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x006047C0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006047C0U, GetTickCount() - started_at, "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            verdict(0x006047C0U, "FAIL-faulted", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6848,8 +9362,12 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6911,9 +9429,23 @@ static bool verify_BasePop_UNK3_00605180() {
             verdict(0x00605180U, "FAIL-no-redirect", "?UNK3@BasePop@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605180U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605180U)) {
+                verdict(0x00605180U, "FAIL-no-redirect", "?UNK3@BasePop@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605180U, GetTickCount() - started_at, "?UNK3@BasePop@@QAEXH@Z");
+            verdict(0x00605180U, "INCONCLUSIVE-original-faulted", "?UNK3@BasePop@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605180U)) {
@@ -6921,8 +9453,19 @@ static bool verify_BasePop_UNK3_00605180() {
             verdict(0x00605180U, "FAIL-no-redirect", "?UNK3@BasePop@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605180U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605180U, GetTickCount() - started_at, "?UNK3@BasePop@@QAEXH@Z");
+            verdict(0x00605180U, "FAIL-faulted", "?UNK3@BasePop@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -6930,8 +9473,12 @@ static bool verify_BasePop_UNK3_00605180() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK3@BasePop@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -6993,9 +9540,23 @@ static bool verify_BasePop_UNK4_006051a0() {
             verdict(0x006051A0U, "FAIL-no-redirect", "?UNK4@BasePop@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x006051A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006051A0U)) {
+                verdict(0x006051A0U, "FAIL-no-redirect", "?UNK4@BasePop@@QAEXH@Z");
+                return false;
+            }
+            timing(0x006051A0U, GetTickCount() - started_at, "?UNK4@BasePop@@QAEXH@Z");
+            verdict(0x006051A0U, "INCONCLUSIVE-original-faulted", "?UNK4@BasePop@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006051A0U)) {
@@ -7003,8 +9564,19 @@ static bool verify_BasePop_UNK4_006051a0() {
             verdict(0x006051A0U, "FAIL-no-redirect", "?UNK4@BasePop@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x006051A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006051A0U, GetTickCount() - started_at, "?UNK4@BasePop@@QAEXH@Z");
+            verdict(0x006051A0U, "FAIL-faulted", "?UNK4@BasePop@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7012,8 +9584,12 @@ static bool verify_BasePop_UNK4_006051a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK4@BasePop@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7075,9 +9651,23 @@ static bool verify_Scroll_set_range_006059b0() {
             verdict(0x006059B0U, "FAIL-no-redirect", "?set_range@Scroll@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x006059B0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006059B0U)) {
+                verdict(0x006059B0U, "FAIL-no-redirect", "?set_range@Scroll@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x006059B0U, GetTickCount() - started_at, "?set_range@Scroll@@QAEXHH@Z");
+            verdict(0x006059B0U, "INCONCLUSIVE-original-faulted", "?set_range@Scroll@@QAEXHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006059B0U)) {
@@ -7085,8 +9675,19 @@ static bool verify_Scroll_set_range_006059b0() {
             verdict(0x006059B0U, "FAIL-no-redirect", "?set_range@Scroll@@QAEXHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x006059B0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006059B0U, GetTickCount() - started_at, "?set_range@Scroll@@QAEXHH@Z");
+            verdict(0x006059B0U, "FAIL-faulted", "?set_range@Scroll@@QAEXHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7094,8 +9695,12 @@ static bool verify_Scroll_set_range_006059b0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_range@Scroll@@QAEXHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7157,9 +9762,23 @@ static bool verify_Scroll_set_button_color_00605a10() {
             verdict(0x00605A10U, "FAIL-no-redirect", "?set_button_color@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605A10U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605A10U)) {
+                verdict(0x00605A10U, "FAIL-no-redirect", "?set_button_color@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605A10U, GetTickCount() - started_at, "?set_button_color@Scroll@@QAEXH@Z");
+            verdict(0x00605A10U, "INCONCLUSIVE-original-faulted", "?set_button_color@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605A10U)) {
@@ -7167,8 +9786,19 @@ static bool verify_Scroll_set_button_color_00605a10() {
             verdict(0x00605A10U, "FAIL-no-redirect", "?set_button_color@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605A10U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605A10U, GetTickCount() - started_at, "?set_button_color@Scroll@@QAEXH@Z");
+            verdict(0x00605A10U, "FAIL-faulted", "?set_button_color@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7176,8 +9806,12 @@ static bool verify_Scroll_set_button_color_00605a10() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7239,9 +9873,23 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
             verdict(0x00605A50U, "FAIL-no-redirect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605A50U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605A50U)) {
+                verdict(0x00605A50U, "FAIL-no-redirect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605A50U, GetTickCount() - started_at, "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            verdict(0x00605A50U, "INCONCLUSIVE-original-faulted", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605A50U)) {
@@ -7249,8 +9897,19 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
             verdict(0x00605A50U, "FAIL-no-redirect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605A50U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605A50U, GetTickCount() - started_at, "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            verdict(0x00605A50U, "FAIL-faulted", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7258,8 +9917,12 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7321,9 +9984,23 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
             verdict(0x00605A90U, "FAIL-no-redirect", "?set_bevel_upper@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605A90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605A90U)) {
+                verdict(0x00605A90U, "FAIL-no-redirect", "?set_bevel_upper@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605A90U, GetTickCount() - started_at, "?set_bevel_upper@Scroll@@QAEXH@Z");
+            verdict(0x00605A90U, "INCONCLUSIVE-original-faulted", "?set_bevel_upper@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605A90U)) {
@@ -7331,8 +10008,19 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
             verdict(0x00605A90U, "FAIL-no-redirect", "?set_bevel_upper@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605A90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605A90U, GetTickCount() - started_at, "?set_bevel_upper@Scroll@@QAEXH@Z");
+            verdict(0x00605A90U, "FAIL-faulted", "?set_bevel_upper@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7340,8 +10028,12 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7403,9 +10095,23 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
             verdict(0x00605AD0U, "FAIL-no-redirect", "?set_bevel_lower@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605AD0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605AD0U)) {
+                verdict(0x00605AD0U, "FAIL-no-redirect", "?set_bevel_lower@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605AD0U, GetTickCount() - started_at, "?set_bevel_lower@Scroll@@QAEXH@Z");
+            verdict(0x00605AD0U, "INCONCLUSIVE-original-faulted", "?set_bevel_lower@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605AD0U)) {
@@ -7413,8 +10119,19 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
             verdict(0x00605AD0U, "FAIL-no-redirect", "?set_bevel_lower@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605AD0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605AD0U, GetTickCount() - started_at, "?set_bevel_lower@Scroll@@QAEXH@Z");
+            verdict(0x00605AD0U, "FAIL-faulted", "?set_bevel_lower@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7422,8 +10139,12 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7485,9 +10206,23 @@ static bool verify_Scroll_set_border_color_00605b10() {
             verdict(0x00605B10U, "FAIL-no-redirect", "?set_border_color@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605B10U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605B10U)) {
+                verdict(0x00605B10U, "FAIL-no-redirect", "?set_border_color@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605B10U, GetTickCount() - started_at, "?set_border_color@Scroll@@QAEXH@Z");
+            verdict(0x00605B10U, "INCONCLUSIVE-original-faulted", "?set_border_color@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605B10U)) {
@@ -7495,8 +10230,19 @@ static bool verify_Scroll_set_border_color_00605b10() {
             verdict(0x00605B10U, "FAIL-no-redirect", "?set_border_color@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605B10U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605B10U, GetTickCount() - started_at, "?set_border_color@Scroll@@QAEXH@Z");
+            verdict(0x00605B10U, "FAIL-faulted", "?set_border_color@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7504,8 +10250,12 @@ static bool verify_Scroll_set_border_color_00605b10() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7567,9 +10317,23 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
             verdict(0x00605B80U, "FAIL-no-redirect", "?set_bar_thickness@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605B80U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605B80U)) {
+                verdict(0x00605B80U, "FAIL-no-redirect", "?set_bar_thickness@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605B80U, GetTickCount() - started_at, "?set_bar_thickness@Scroll@@QAEXH@Z");
+            verdict(0x00605B80U, "INCONCLUSIVE-original-faulted", "?set_bar_thickness@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605B80U)) {
@@ -7577,8 +10341,19 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
             verdict(0x00605B80U, "FAIL-no-redirect", "?set_bar_thickness@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605B80U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605B80U, GetTickCount() - started_at, "?set_bar_thickness@Scroll@@QAEXH@Z");
+            verdict(0x00605B80U, "FAIL-faulted", "?set_bar_thickness@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7586,8 +10361,12 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7649,9 +10428,23 @@ static bool verify_Scroll_set_pos_00605d20() {
             verdict(0x00605D20U, "FAIL-no-redirect", "?set_pos@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00605D20U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00605D20U)) {
+                verdict(0x00605D20U, "FAIL-no-redirect", "?set_pos@Scroll@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00605D20U, GetTickCount() - started_at, "?set_pos@Scroll@@QAEXH@Z");
+            verdict(0x00605D20U, "INCONCLUSIVE-original-faulted", "?set_pos@Scroll@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00605D20U)) {
@@ -7659,8 +10452,19 @@ static bool verify_Scroll_set_pos_00605d20() {
             verdict(0x00605D20U, "FAIL-no-redirect", "?set_pos@Scroll@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00605D20U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00605D20U, GetTickCount() - started_at, "?set_pos@Scroll@@QAEXH@Z");
+            verdict(0x00605D20U, "FAIL-faulted", "?set_pos@Scroll@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7668,8 +10472,12 @@ static bool verify_Scroll_set_pos_00605d20() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_pos@Scroll@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7721,9 +10529,23 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
             verdict(0x00606EA0U, "FAIL-no-redirect", "?set_thumb_rect@Scroll@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00606EA0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00606EA0U)) {
+                verdict(0x00606EA0U, "FAIL-no-redirect", "?set_thumb_rect@Scroll@@QAEXXZ");
+                return false;
+            }
+            timing(0x00606EA0U, GetTickCount() - started_at, "?set_thumb_rect@Scroll@@QAEXXZ");
+            verdict(0x00606EA0U, "INCONCLUSIVE-original-faulted", "?set_thumb_rect@Scroll@@QAEXXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00606EA0U)) {
@@ -7731,8 +10553,19 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
             verdict(0x00606EA0U, "FAIL-no-redirect", "?set_thumb_rect@Scroll@@QAEXXZ");
             return false;
         }
-        target(staged);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00606EA0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00606EA0U, GetTickCount() - started_at, "?set_thumb_rect@Scroll@@QAEXXZ");
+            verdict(0x00606EA0U, "FAIL-faulted", "?set_thumb_rect@Scroll@@QAEXXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7740,8 +10573,12 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7803,9 +10640,23 @@ static bool verify_BaseButton_set_text_color_00607360() {
             verdict(0x00607360U, "FAIL-no-redirect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00607360U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00607360U)) {
+                verdict(0x00607360U, "FAIL-no-redirect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00607360U, GetTickCount() - started_at, "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            verdict(0x00607360U, "INCONCLUSIVE-original-faulted", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00607360U)) {
@@ -7813,8 +10664,19 @@ static bool verify_BaseButton_set_text_color_00607360() {
             verdict(0x00607360U, "FAIL-no-redirect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00607360U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00607360U, GetTickCount() - started_at, "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            verdict(0x00607360U, "FAIL-faulted", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7822,8 +10684,12 @@ static bool verify_BaseButton_set_text_color_00607360() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7885,9 +10751,23 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
             verdict(0x006073A0U, "FAIL-no-redirect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x006073A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006073A0U)) {
+                verdict(0x006073A0U, "FAIL-no-redirect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x006073A0U, GetTickCount() - started_at, "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            verdict(0x006073A0U, "INCONCLUSIVE-original-faulted", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006073A0U)) {
@@ -7895,8 +10775,19 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
             verdict(0x006073A0U, "FAIL-no-redirect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x006073A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006073A0U, GetTickCount() - started_at, "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            verdict(0x006073A0U, "FAIL-faulted", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7904,8 +10795,12 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -7967,9 +10862,23 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
             verdict(0x006073E0U, "FAIL-no-redirect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x006073E0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006073E0U)) {
+                verdict(0x006073E0U, "FAIL-no-redirect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x006073E0U, GetTickCount() - started_at, "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            verdict(0x006073E0U, "INCONCLUSIVE-original-faulted", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006073E0U)) {
@@ -7977,8 +10886,19 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
             verdict(0x006073E0U, "FAIL-no-redirect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x006073E0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006073E0U, GetTickCount() - started_at, "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            verdict(0x006073E0U, "FAIL-faulted", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -7986,8 +10906,12 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8049,9 +10973,23 @@ static bool verify_BaseButton_set_00607c80() {
             verdict(0x00607C80U, "FAIL-no-redirect", "?set@BaseButton@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00607C80U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00607C80U)) {
+                verdict(0x00607C80U, "FAIL-no-redirect", "?set@BaseButton@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00607C80U, GetTickCount() - started_at, "?set@BaseButton@@QAEXH@Z");
+            verdict(0x00607C80U, "INCONCLUSIVE-original-faulted", "?set@BaseButton@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00607C80U)) {
@@ -8059,8 +10997,19 @@ static bool verify_BaseButton_set_00607c80() {
             verdict(0x00607C80U, "FAIL-no-redirect", "?set@BaseButton@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00607C80U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set@BaseButton@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00607C80U, GetTickCount() - started_at, "?set@BaseButton@@QAEXH@Z");
+            verdict(0x00607C80U, "FAIL-faulted", "?set@BaseButton@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8068,8 +11017,12 @@ static bool verify_BaseButton_set_00607c80() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set@BaseButton@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set@BaseButton@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8131,9 +11084,23 @@ static bool verify_Dialog_set_selected_id_006099d0() {
             verdict(0x006099D0U, "FAIL-no-redirect", "?set_selected_id@Dialog@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x006099D0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x006099D0U)) {
+                verdict(0x006099D0U, "FAIL-no-redirect", "?set_selected_id@Dialog@@QAEXH@Z");
+                return false;
+            }
+            timing(0x006099D0U, GetTickCount() - started_at, "?set_selected_id@Dialog@@QAEXH@Z");
+            verdict(0x006099D0U, "INCONCLUSIVE-original-faulted", "?set_selected_id@Dialog@@QAEXH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x006099D0U)) {
@@ -8141,8 +11108,19 @@ static bool verify_Dialog_set_selected_id_006099d0() {
             verdict(0x006099D0U, "FAIL-no-redirect", "?set_selected_id@Dialog@@QAEXH@Z");
             return false;
         }
-        target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x006099D0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x006099D0U, GetTickCount() - started_at, "?set_selected_id@Dialog@@QAEXH@Z");
+            verdict(0x006099D0U, "FAIL-faulted", "?set_selected_id@Dialog@@QAEXH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8150,8 +11128,12 @@ static bool verify_Dialog_set_selected_id_006099d0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8203,9 +11185,24 @@ static bool verify_Dialog_get_selected_id_00609a50() {
             verdict(0x00609A50U, "FAIL-no-redirect", "?get_selected_id@Dialog@@QAEHXZ");
             return false;
         }
-        const int original_result = target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00609A50U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00609A50U)) {
+                verdict(0x00609A50U, "FAIL-no-redirect", "?get_selected_id@Dialog@@QAEHXZ");
+                return false;
+            }
+            timing(0x00609A50U, GetTickCount() - started_at, "?get_selected_id@Dialog@@QAEHXZ");
+            verdict(0x00609A50U, "INCONCLUSIVE-original-faulted", "?get_selected_id@Dialog@@QAEHXZ");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00609A50U)) {
@@ -8213,8 +11210,20 @@ static bool verify_Dialog_get_selected_id_00609a50() {
             verdict(0x00609A50U, "FAIL-no-redirect", "?get_selected_id@Dialog@@QAEHXZ");
             return false;
         }
-        const int recovered_result = target(staged);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00609A50U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00609A50U, GetTickCount() - started_at, "?get_selected_id@Dialog@@QAEHXZ");
+            verdict(0x00609A50U, "FAIL-faulted", "?get_selected_id@Dialog@@QAEHXZ");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?get_selected_id@Dialog@@QAEHXZ: return value differs\n");
@@ -8226,8 +11235,12 @@ static bool verify_Dialog_get_selected_id_00609a50() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8292,9 +11305,24 @@ static bool verify_Dialog_id_to_pos_00609af0() {
             verdict(0x00609AF0U, "FAIL-no-redirect", "?id_to_pos@Dialog@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00609AF0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00609AF0U)) {
+                verdict(0x00609AF0U, "FAIL-no-redirect", "?id_to_pos@Dialog@@QAEHH@Z");
+                return false;
+            }
+            timing(0x00609AF0U, GetTickCount() - started_at, "?id_to_pos@Dialog@@QAEHH@Z");
+            verdict(0x00609AF0U, "INCONCLUSIVE-original-faulted", "?id_to_pos@Dialog@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00609AF0U)) {
@@ -8302,8 +11330,20 @@ static bool verify_Dialog_id_to_pos_00609af0() {
             verdict(0x00609AF0U, "FAIL-no-redirect", "?id_to_pos@Dialog@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00609AF0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00609AF0U, GetTickCount() - started_at, "?id_to_pos@Dialog@@QAEHH@Z");
+            verdict(0x00609AF0U, "FAIL-faulted", "?id_to_pos@Dialog@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: return value differs\n");
@@ -8315,8 +11355,12 @@ static bool verify_Dialog_id_to_pos_00609af0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8381,9 +11425,24 @@ static bool verify_Dialog_pos_to_id_00609b50() {
             verdict(0x00609B50U, "FAIL-no-redirect", "?pos_to_id@Dialog@@QAEHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00609B50U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00609B50U)) {
+                verdict(0x00609B50U, "FAIL-no-redirect", "?pos_to_id@Dialog@@QAEHH@Z");
+                return false;
+            }
+            timing(0x00609B50U, GetTickCount() - started_at, "?pos_to_id@Dialog@@QAEHH@Z");
+            verdict(0x00609B50U, "INCONCLUSIVE-original-faulted", "?pos_to_id@Dialog@@QAEHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00609B50U)) {
@@ -8391,8 +11450,20 @@ static bool verify_Dialog_pos_to_id_00609b50() {
             verdict(0x00609B50U, "FAIL-no-redirect", "?pos_to_id@Dialog@@QAEHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00609B50U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00609B50U, GetTickCount() - started_at, "?pos_to_id@Dialog@@QAEHH@Z");
+            verdict(0x00609B50U, "FAIL-faulted", "?pos_to_id@Dialog@@QAEHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: return value differs\n");
@@ -8404,8 +11475,12 @@ static bool verify_Dialog_pos_to_id_00609b50() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8470,9 +11545,23 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
             verdict(0x00609C90U, "FAIL-no-redirect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00609C90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00609C90U)) {
+                verdict(0x00609C90U, "FAIL-no-redirect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00609C90U, GetTickCount() - started_at, "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609C90U, "INCONCLUSIVE-original-faulted", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00609C90U)) {
@@ -8480,8 +11569,19 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
             verdict(0x00609C90U, "FAIL-no-redirect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00609C90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00609C90U, GetTickCount() - started_at, "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609C90U, "FAIL-faulted", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8489,8 +11589,12 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8552,9 +11656,23 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
             verdict(0x00609CC0U, "FAIL-no-redirect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00609CC0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00609CC0U)) {
+                verdict(0x00609CC0U, "FAIL-no-redirect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00609CC0U, GetTickCount() - started_at, "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609CC0U, "INCONCLUSIVE-original-faulted", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00609CC0U)) {
@@ -8562,8 +11680,19 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
             verdict(0x00609CC0U, "FAIL-no-redirect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00609CC0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00609CC0U, GetTickCount() - started_at, "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609CC0U, "FAIL-faulted", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8571,8 +11700,12 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8634,9 +11767,23 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
             verdict(0x00609CF0U, "FAIL-no-redirect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00609CF0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00609CF0U)) {
+                verdict(0x00609CF0U, "FAIL-no-redirect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+                return false;
+            }
+            timing(0x00609CF0U, GetTickCount() - started_at, "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609CF0U, "INCONCLUSIVE-original-faulted", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00609CF0U)) {
@@ -8644,8 +11791,19 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
             verdict(0x00609CF0U, "FAIL-no-redirect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00609CF0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00609CF0U, GetTickCount() - started_at, "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609CF0U, "FAIL-faulted", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8653,8 +11811,12 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8716,9 +11878,23 @@ static bool verify_Caviar_UNK10_00618320() {
             verdict(0x00618320U, "FAIL-no-redirect", "?UNK10@Caviar@@QAEXHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00618320U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00618320U)) {
+                verdict(0x00618320U, "FAIL-no-redirect", "?UNK10@Caviar@@QAEXHHH@Z");
+                return false;
+            }
+            timing(0x00618320U, GetTickCount() - started_at, "?UNK10@Caviar@@QAEXHHH@Z");
+            verdict(0x00618320U, "INCONCLUSIVE-original-faulted", "?UNK10@Caviar@@QAEXHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00618320U)) {
@@ -8726,8 +11902,19 @@ static bool verify_Caviar_UNK10_00618320() {
             verdict(0x00618320U, "FAIL-no-redirect", "?UNK10@Caviar@@QAEXHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00618320U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00618320U, GetTickCount() - started_at, "?UNK10@Caviar@@QAEXHHH@Z");
+            verdict(0x00618320U, "FAIL-faulted", "?UNK10@Caviar@@QAEXHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8735,8 +11922,12 @@ static bool verify_Caviar_UNK10_00618320() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8798,9 +11989,23 @@ static bool verify_Caviar_UNK11_00618340() {
             verdict(0x00618340U, "FAIL-no-redirect", "?UNK11@Caviar@@QAEXHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        oracle_fault_guard::begin(0x00618340U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00618340U)) {
+                verdict(0x00618340U, "FAIL-no-redirect", "?UNK11@Caviar@@QAEXHHH@Z");
+                return false;
+            }
+            timing(0x00618340U, GetTickCount() - started_at, "?UNK11@Caviar@@QAEXHHH@Z");
+            verdict(0x00618340U, "INCONCLUSIVE-original-faulted", "?UNK11@Caviar@@QAEXHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x00618340U)) {
@@ -8808,8 +12013,19 @@ static bool verify_Caviar_UNK11_00618340() {
             verdict(0x00618340U, "FAIL-no-redirect", "?UNK11@Caviar@@QAEXHHH@Z");
             return false;
         }
-        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
-        snapshot(after_recovered);
+        oracle_fault_guard::begin(0x00618340U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00618340U, GetTickCount() - started_at, "?UNK11@Caviar@@QAEXHHH@Z");
+            verdict(0x00618340U, "FAIL-faulted", "?UNK11@Caviar@@QAEXHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         uintptr_t where = 0;
         if (!same_globals(after_original, after_recovered, &where)) {
@@ -8817,8 +12033,12 @@ static bool verify_Caviar_UNK11_00618340() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8880,9 +12100,24 @@ static bool verify_ButtonGroup_set_0062b870() {
             verdict(0x0062B870U, "FAIL-no-redirect", "?set@ButtonGroup@@QAEHHH@Z");
             return false;
         }
-        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x0062B870U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0062B870U)) {
+                verdict(0x0062B870U, "FAIL-no-redirect", "?set@ButtonGroup@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x0062B870U, GetTickCount() - started_at, "?set@ButtonGroup@@QAEHHH@Z");
+            verdict(0x0062B870U, "INCONCLUSIVE-original-faulted", "?set@ButtonGroup@@QAEHHH@Z");
+            return true;
+        }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
         if (!resume_redirect_at(0x0062B870U)) {
@@ -8890,8 +12125,20 @@ static bool verify_ButtonGroup_set_0062b870() {
             verdict(0x0062B870U, "FAIL-no-redirect", "?set@ButtonGroup@@QAEHHH@Z");
             return false;
         }
-        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x0062B870U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x0062B870U, GetTickCount() - started_at, "?set@ButtonGroup@@QAEHHH@Z");
+            verdict(0x0062B870U, "FAIL-faulted", "?set@ButtonGroup@@QAEHHH@Z");
+            return false;
+        }
         restore(before);   // leave the process as it was found
         if (original_result != recovered_result) {
             std::printf("  ?set@ButtonGroup@@QAEHHH@Z: return value differs\n");
@@ -8903,8 +12150,12 @@ static bool verify_ButtonGroup_set_0062b870() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: staged object differs\n");
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
             passed = false;
         }
         uintptr_t moved = 0;
@@ -8933,6 +12184,7 @@ static bool verify_ButtonGroup_set_0062b870() {
 }
 
 bool run_generated_signature_oracles() {
+    oracle_fault_guard::arm();
     bool passed = true;
     passed &= verify_StringStruct_seek_id_00401560();
     passed &= verify_StringStruct_current_id_00401640();

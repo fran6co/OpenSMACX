@@ -389,11 +389,84 @@ class EmissionTests(unittest.TestCase):
     def test_the_process_is_left_as_it_was_found(self):
         text = generator.emit(generator.candidates(
             *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
-        # Two restores: one between the calls so both sides start equal, one
-        # after so the oracle does not perturb the game that follows it.
-        self.assertEqual(2, text.count("restore(before)"))
+        # Four restores now: one between the calls so both sides start equal, one
+        # after so the oracle does not perturb the game that follows it, and one
+        # on each fault-escape path - a body that died may have written globals
+        # before it did, and leaving those is how three runs ended in an
+        # unhandled division by zero inside unrecovered code reading state a
+        # restore had made inconsistent.
+        self.assertEqual(4, text.count("restore(before)"))
+        # Every escape restores before it returns, which is the property; the
+        # count above only guards the arithmetic.
+        for spelling in ("INCONCLUSIVE-original-faulted", "FAIL-faulted"):
+            escape = text[text.index(spelling) - 900:text.index(spelling)]
+            self.assertIn("restore(before)", escape,
+                          f"the {spelling} path leaves globals perturbed")
 
     # ---- the two guards, each tested so that removing it FAILS ----
+
+    def test_each_call_is_wrapped_by_the_FAULT_GUARD(self):
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn('#include "oracle_fault_guard.h"', text)
+        self.assertIn("oracle_fault_guard::arm();", text)
+        # Both sides: the original, and the recovered body.
+        self.assertEqual(2, text.count("oracle_fault_guard::begin("))
+        self.assertEqual(2, text.count("setjmp(*oracle_fault_guard::buffer())"))
+
+    def test_a_fault_on_the_ORIGINAL_side_RESUMES_the_redirect(self):
+        # THE most dangerous failure mode of the guard. The redirect is suspended
+        # at fault time; escaping without resuming leaves the recovered body
+        # uninstalled for the REST OF THE PROCESS, so every later function's
+        # "recovered" call runs the original and passes trivially.
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        escape = text[text.index("INCONCLUSIVE-original-faulted") - 900:
+                      text.index("INCONCLUSIVE-original-faulted")]
+        self.assertIn("resume_redirect_at", escape)
+        self.assertIn("restore(before)", escape)
+
+    def test_a_fault_never_counts_as_an_OBSERVED_EFFECT(self):
+        # A body that died proved nothing, so it must not be able to satisfy the
+        # reached-past-the-guards check and turn into a PASS.
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        start = text.index('oracle_fault_guard::begin(0x00400000U, "original")')
+        escape = text[start:text.index("INCONCLUSIVE-original-faulted", start)]
+        self.assertNotIn("observed_effect = true", escape)
+
+    def test_a_fault_on_the_ORIGINAL_side_is_INCONCLUSIVE_not_a_FAIL(self):
+        # The seed is outside the body's domain; that does not indict the
+        # recovery. The asymmetry is the whole point.
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn('verdict(0x00400000U, "INCONCLUSIVE-original-faulted"', text)
+
+    def test_a_fault_on_the_RECOVERED_side_IS_a_FAIL(self):
+        # The original completed and the recovery did not: a divergence, and the
+        # strongest kind available here.
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn('verdict(0x00400000U, "FAIL-faulted"', text)
+
+    def test_neither_faulted_verdict_can_earn_a_marker(self):
+        # earned_markers discards on any non-PASS state, so the new spellings are
+        # marker-safe by construction. Pinned so nobody "helpfully" adds cases.
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            proven = base / "proven.csv"
+            proven.write_text(
+                "address,name,size,mechanism,evidence\n"
+                "0x00400000,n,40,hybrid_runtime,generated_signature_oracle.cpp\n")
+            verdicts = base / "v.txt"
+            for state in ("INCONCLUSIVE-original-faulted", "FAIL-faulted"):
+                verdicts.write_text(
+                    f"GENERATED-ORACLE-VERDICT: 0x00400000 {state}  ?x@@YAXXZ\n")
+                self.assertEqual(
+                    set(),
+                    generator.earned_markers(
+                        proven, Path("generated_signature_oracle.cpp"), verdicts),
+                    f"{state} must not earn a marker")
 
     def test_the_globals_comparison_uses_the_SHARED_helper_not_a_byte_loop(self):
         text = generator.emit(generator.candidates(
@@ -449,13 +522,18 @@ class EmissionTests(unittest.TestCase):
         # idempotent setter agrees for free.
         text = self._member_text()
         body = text[text.index("verify_Thing_poke_"):]
-        first = body.index("suspend_redirect_at")
-        second = body.index("resume_redirect_at")
+        # Bracketed by the two CALLS, not by suspend/resume: the fault-escape
+        # path carries its own resume_redirect_at, which appears textually before
+        # the happy-path reseed and made the old span the wrong one to measure.
+        first = body.index('oracle_fault_guard::begin')
+        second = body.index('"recovered"')
         between = body[first:second]
         self.assertIn("std::memcpy(staged, staged_seed, ObjectSize)", between,
                       "the fixture is not reseeded between the two calls")
-        self.assertIn("std::memcmp(staged_original, staged, ObjectSize)", body,
+        self.assertIn("globals_diff::equal(staged_original, staged,", body,
                       "the object the two sides wrote is never compared")
+        self.assertIn("staged object differs at +0x%X", body,
+                      "a staged-object FAIL must name the field that moved")
 
     def test_a_function_that_produced_NO_EFFECT_reports_INCONCLUSIVE(self):
         # FALSE-PASS 1. Scroll::set_pos opens `if (!parent) return 0;`, so a
