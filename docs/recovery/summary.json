@@ -121,6 +121,28 @@
         "functions": 2552,
         "percent_of_lift_scope_bytes": 8.14
       },
+      "unproven_by_shape": {
+        "loop": {
+          "bytes": 110922,
+          "functions": 437,
+          "percent_of_unproven_bytes": 58.86
+        },
+        "seam_forwarding": {
+          "bytes": 14707,
+          "functions": 761,
+          "percent_of_unproven_bytes": 7.8
+        },
+        "straight_line": {
+          "bytes": 62282,
+          "functions": 1259,
+          "percent_of_unproven_bytes": 33.05
+        },
+        "x87": {
+          "bytes": 532,
+          "functions": 12,
+          "percent_of_unproven_bytes": 0.28
+        }
+      },
       "unproven_recovered": {
         "bytes": 188443,
         "denominator": "recovered",

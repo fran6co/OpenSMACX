@@ -943,6 +943,10 @@ if(BUILD_TESTING)
     # numbers for one tree.
     opensmacx_add_python_tool_test(recovery-metrics-tests test_recovery_metrics.py)
 
+    # The shape catalogue behind unproven_by_shape. A misclassified body is
+    # invisible in the total, so the decisions are tested on synthetic bytes.
+    opensmacx_add_python_tool_test(recovered-shape-classifier-tests test_classify_recovered_shapes.py)
+
     # The whole-image summary: every headline number the project publishes.
     # The byte-weighted verdict table, "compared and agreed", the evidence
     # tiers under it, the three numbers that must go DOWN and the seed
