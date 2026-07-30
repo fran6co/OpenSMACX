@@ -181,6 +181,18 @@ terranx_hybrid.exe could not load imports
             {0x0046FB10: "PASS",
              0x004456A0: "INCONCLUSIVE-no-effect"})
 
+    def test_a_verdict_state_tally_counts_each_state(self):
+        # The shape recorded into the report JSON on every run, passing or not.
+        log = "\n".join(
+            f"GENERATED-ORACLE-VERDICT: 0x004{i:05X} "
+            + ("PASS" if i < 2 else "INCONCLUSIVE-no-effect") + " ?f"
+            for i in range(17))
+        verdicts = parse_generated_verdicts(log)
+        states = {}
+        for state in verdicts.values():
+            states[state] = states.get(state, 0) + 1
+        self.assertEqual(states, {"PASS": 2, "INCONCLUSIVE-no-effect": 15})
+
     def test_no_verdict_lines_parses_to_nothing_rather_than_failing(self):
         # The state the tree is in today: the suite never ran, so the log has
         # none. That must read as zero verdicts, which --expect-verdicts then

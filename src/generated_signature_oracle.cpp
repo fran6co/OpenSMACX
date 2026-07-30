@@ -12,11 +12,12 @@
 // cannot mint one. An earlier revision minted 37 that had never run.
 //
 // PROVEN-AGAINST-ORIGINAL: 0x0046FB10  ?main_caption@MapWin@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x004E25E0  ?pid_2_idx@AlphaNet@@QAEHK@Z
 // PROVEN-AGAINST-ORIGINAL: 0x0052DC70  ?not_my_turn@@YAHXZ
 // PROVEN-AGAINST-ORIGINAL: 0x0058EE50  ?desktop_update@@YAXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x005FD2B0  ?do_sound@@YAXXZ
 //
-// 104 function(s) below carry NO marker: they have not run
+// 103 function(s) below carry NO marker: they have not run
 // yet, or they ran and reported INCONCLUSIVE-no-effect, which means
 // every seed bailed on a guard and the agreement proves nothing.
 
