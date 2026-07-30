@@ -305,6 +305,47 @@ class MarkerTests(unittest.TestCase):
                 proven, base / "generated_signature_oracle.cpp", verdicts)
         self.assertEqual({0x00400100}, earned)
 
+    def test_an_INCONCLUSIVE_verdict_DEMOTES_a_published_marker(self):
+        # THE OTHER LOAD-BEARING TEST, and it is not hypothetical. The first
+        # suite run to produce verdicts reported INCONCLUSIVE-no-effect for
+        # 0x004456A0 ?passover_callback@@YAXXZ and 0x00455E50
+        # ?load_deswin_sprites@@YAXXZ - both ALREADY in proven.csv and counted in
+        # proven_recovered. They agreed because neither side did anything
+        # observable. A run must therefore be able to take a marker AWAY, or the
+        # published count keeps a claim its own evidence refutes.
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            proven = base / "proven.csv"
+            proven.write_text(
+                "address,name,size,mechanism,evidence\n"
+                "0x004456A0,?passover_callback@@YAXXZ,10,hybrid_runtime,"
+                "src/generated_signature_oracle.cpp\n"
+                "0x0052DC70,?other@@YAXXZ,20,hybrid_runtime,"
+                "src/generated_signature_oracle.cpp\n")
+            verdicts = base / "run.txt"
+            verdicts.write_text(
+                "GENERATED-ORACLE-VERDICT: 0x004456A0 INCONCLUSIVE-no-effect\n"
+                "GENERATED-ORACLE-VERDICT: 0x0052DC70 PASS\n")
+            earned = generator.earned_markers(
+                proven, base / "generated_signature_oracle.cpp", verdicts)
+        # The published-but-vacuous one is demoted; the one that really passed
+        # keeps its marker.
+        self.assertEqual({0x0052DC70}, earned)
+
+    def test_a_FAIL_verdict_DEMOTES_a_published_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            proven = base / "proven.csv"
+            proven.write_text(
+                "address,name,size,mechanism,evidence\n"
+                "0x004456A0,?x@@YAXXZ,10,hybrid_runtime,"
+                "src/generated_signature_oracle.cpp\n")
+            verdicts = base / "run.txt"
+            verdicts.write_text("GENERATED-ORACLE-VERDICT: 0x004456A0 FAIL\n")
+            earned = generator.earned_markers(
+                proven, base / "generated_signature_oracle.cpp", verdicts)
+        self.assertEqual(set(), earned)
+
     def test_an_INCONCLUSIVE_verdict_line_earns_NOTHING(self):
         # THE LOAD-BEARING TEST. An INCONCLUSIVE result means every seed bailed
         # on a guard and the two bodies agreed without either running. If this

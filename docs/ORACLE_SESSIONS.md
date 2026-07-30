@@ -14,7 +14,34 @@ trust it.
 
 ## 2026-07-30 — the generated route learns members and a staged `this`
 
-### Proven count: 54 (unchanged this session)
+### Proven count: 54 -> 53, and the DIRECTION is the finding
+
+The suite ran. It produced 9 verdicts before crashing on the 10th function, and
+those 9 verdicts cost the project a net proof:
+
+| verdict | functions |
+| --- | --- |
+| `PASS` | 1 — `?main_caption@MapWin@@QAEXXZ` (0x0046FB10) |
+| `INCONCLUSIVE-no-effect` | 8 |
+
+**Two of the 8 inconclusive were already published proofs**: `0x004456A0
+?passover_callback@@YAXXZ` and `0x00455E50 ?load_deswin_sprites@@YAXXZ`, both
+counted in `proven_recovered`. The effect detector found that no seed made either
+side do anything observable — they agreed by both doing nothing. That is the
+flattering PASS this route was built to prevent, and it was already inside the
+published number.
+
+So a run now demotes as well as promotes, and `proven.csv` went 54 / 6,115 B ->
+**53 / 6,086 B**: minus 45 B of vacuous claims, plus 16 B of real one. The one
+gain is worth more than the arithmetic suggests — `?main_caption@MapWin@@QAEXXZ`
+is the first function this route has ever proven through a STAGED RECEIVER,
+which is what the session set out to build.
+
+The remaining 3 of the original 5 keep their markers because the crash stopped
+the run before reaching them. They are unverified by this mechanism, not
+confirmed by it.
+
+### Proven count by mechanism (was: 54 unchanged)
 
 | mechanism | functions | source |
 | --- | --- | --- |
@@ -22,15 +49,31 @@ trust it.
 | `hybrid_runtime`, hand-written | 17 | `src/*_oracle.cpp` markers |
 | `hybrid_runtime`, generated | 5 | `src/generated_signature_oracle.cpp` |
 
-`proven_recovered` 54 fn / 6,115 B (3.12% of recovered bytes);
-`unproven_recovered` **2,498 fn / 190,008 B (96.88%)**. Unrecovered: 2,808 fn /
-2,012,914 B.
+After this session: `proven_recovered` **53 fn / 6,086 B**; `unproven_recovered`
+**2,499 fn / 190,037 B**. Unrecovered: 2,808 fn / 2,012,914 B.
 
-**The count did not move, and that is the honest outcome.** 117 new oracles were
-generated and built, but a marker is now earned at RUNTIME, not at generation
-time, and the suite has not yet been run to completion. Publishing 117 markers
-on the strength of a successful compile is precisely the mistake that put 37
-unearned markers in this tree once.
+108 oracles are generated and built; **4 carry markers**. A marker is earned at
+RUNTIME, not at generation, so building 104 more oracles bought capacity and not
+one point of coverage. Publishing them on the strength of a successful compile is
+precisely the mistake that put 37 unearned markers in this tree once.
+
+### Two crashes, both the same lesson about the zero-filled receiver
+
+Run 1 died on its FIRST function: `?close@StringStruct@@QAEXXZ`, unhandled page
+fault on read access to `0x00000004` at `0x00401074`. Run 2 got 9 verdicts and
+died on the 10th: `?UNK1@PlanWin@@QAEXXZ`, same fault, `0x0048B3C2`.
+
+Zeros make a guard bail safely, and that is a property of the BODY, not of the
+seed. A body that walks a pointer chain its constructor guarantees non-null reads
+`[this+X]` as 0 and faults on `[0+4]`. Lifecycle methods never have the property
+— teardown frees what it finds, construction allocates — so `close`, `init`,
+`free`, `destroy`, `release` and their kin are refused by name; `close` alone was
+the largest name class in the candidate set, 12 of them. `?UNK1@PlanWin@@QAEXXZ`
+is refused individually, with the run that proved it.
+
+Both were identified in one step by the announce-before-calling line, which prints
+the name and flushes before each call. Run 1's log contained exactly one
+`running` line and no verdicts.
 
 ### Shape-addressable set: 5 -> 122 (generated route)
 
@@ -39,7 +82,7 @@ unearned markers in this tree once.
 | gate | candidates |
 | --- | --- |
 | before: free functions taking (void) | 5 |
-| after: + `__thiscall` members, staged receiver | **122** (117 members, 5 free), 8,935 B |
+| after: + `__thiscall` members, staged receiver | **108** (103 members, 5 free), 6,839 B, after the lifecycle and crash exclusions |
 
 Reach of the route as a whole, from `docs/recovery/functions.csv` against the
 `specs[]` table in `src/dllmain.cpp`: 1,994 redirected functions are unproven;

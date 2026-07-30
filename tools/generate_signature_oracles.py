@@ -202,6 +202,11 @@ LIFECYCLE_METHODS = {
 # function fails on 0 and on 1 as well.
 UNSAFE_AT_ORACLE_TIME = {
     0x0044C880,  # ?help_tech@@YAXH@Z - divide by zero via draw_labs, args 0 and 1
+    # ?UNK1@PlanWin@@QAEXXZ - run 2 of the suite: "Unhandled page fault on read
+    # access to 00000004 at address 0048B3C2", two bytes into the body, after 9
+    # verdicts had already printed. It dereferences state that does not exist
+    # when deferred oracles run; a zero-filled receiver cannot supply it.
+    0x0048B3C0,
 }
 
 
@@ -251,13 +256,27 @@ def earned_markers(proven_path: Path, output_path: Path,
                 if target in (row.get("evidence") or ""):
                     earned.add(int(row["address"], 16))
     if verdict_path is not None:
+        # A RUN OVERRIDES THE RECORD, IN BOTH DIRECTIONS, and the demotion half
+        # is not hypothetical. The first suite run to reach a verdict reported
+        # INCONCLUSIVE-no-effect for 0x004456A0 ?passover_callback@@YAXXZ and
+        # 0x00455E50 ?load_deswin_sprites@@YAXXZ - both of which were ALREADY in
+        # proven.csv. They agreed because neither side did anything observable,
+        # which is the flattering PASS this route exists to prevent, sitting in
+        # the published count. Treating proven.csv as the last word would have
+        # preserved exactly the two markers the new evidence refutes.
         for line in verdict_path.read_text().splitlines():
-            # The suite prints one line per function; only an unqualified PASS
-            # earns a marker. INCONCLUSIVE-no-effect explicitly does not.
-            match = re.match(r"GENERATED-ORACLE-VERDICT:\s*(0x[0-9A-Fa-f]+)\s+PASS$",
-                             line.strip())
-            if match:
-                earned.add(int(match.group(1), 16))
+            match = re.match(
+                r"GENERATED-ORACLE-VERDICT:\s*(0x[0-9A-Fa-f]+)\s+(\S+)",
+                line.strip())
+            if not match:
+                continue
+            address, state = int(match.group(1), 16), match.group(2)
+            if state == "PASS":
+                earned.add(address)
+            else:
+                # INCONCLUSIVE-no-effect, FAIL, FAIL-no-redirect: all of them
+                # are evidence AGAINST a marker, so the address loses one.
+                earned.discard(address)
     return earned
 
 
