@@ -17,7 +17,7 @@
 // PROVEN-AGAINST-ORIGINAL: 0x0058EE50  ?desktop_update@@YAXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x005FD2B0  ?do_sound@@YAXXZ
 //
-// 117 function(s) below carry NO marker: they have not run
+// 104 function(s) below carry NO marker: they have not run
 // yet, or they ran and reported INCONCLUSIVE-no-effect, which means
 // every seed bailed on a guard and the agreement proves nothing.
 
@@ -78,74 +78,6 @@ void verdict(uintptr_t address, const char *state, const char *name) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
 #pragma GCC diagnostic ignored "-Wuseless-cast"
-
-// ?close@StringStruct@@QAEXXZ  (153 B)
-// recovered in src/stringstruct.cpp:203
-// staged receiver: StringStruct, 0x24 B, zero-filled
-static bool verify_StringStruct_close_00401060() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00401060U);
-    std::printf("  running ?close@StringStruct@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x24U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x00401060U)) {
-            std::printf("  ?close@StringStruct@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x00401060U, "FAIL-no-redirect", "?close@StringStruct@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x00401060U)) {
-            std::printf("  ?close@StringStruct@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x00401060U, "FAIL-no-redirect", "?close@StringStruct@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@StringStruct@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@StringStruct@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x00401060U, "FAIL", "?close@StringStruct@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@StringStruct@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x00401060U, "INCONCLUSIVE-no-effect", "?close@StringStruct@@QAEXXZ");
-        return true;
-    }
-    verdict(0x00401060U, "PASS", "?close@StringStruct@@QAEXXZ");
-    return true;
-}
 
 // ?seek_id@StringStruct@@QAEHH@Z  (78 B)
 // recovered in src/stringstruct.cpp:59
@@ -785,74 +717,6 @@ static bool verify_MapWin_main_caption_0046fb10() {
     return true;
 }
 
-// ?close@MapWin@@QAEXXZ  (40 B)
-// recovered in src/mapwin.cpp:76
-// staged receiver: MapWin, 0x22480 B, zero-filled
-static bool verify_MapWin_close_00470f70() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00470F70U);
-    std::printf("  running ?close@MapWin@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x22480U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x00470F70U)) {
-            std::printf("  ?close@MapWin@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x00470F70U, "FAIL-no-redirect", "?close@MapWin@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x00470F70U)) {
-            std::printf("  ?close@MapWin@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x00470F70U, "FAIL-no-redirect", "?close@MapWin@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@MapWin@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@MapWin@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x00470F70U, "FAIL", "?close@MapWin@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@MapWin@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x00470F70U, "INCONCLUSIVE-no-effect", "?close@MapWin@@QAEXXZ");
-        return true;
-    }
-    verdict(0x00470F70U, "PASS", "?close@MapWin@@QAEXXZ");
-    return true;
-}
-
 // ?UNK1@PlanWin@@QAEXXZ  (47 B)
 // recovered in src/planwin.cpp:110
 // staged receiver: PlanWin, 0x22A64 B, zero-filled
@@ -1061,74 +925,6 @@ static bool verify_Console_edit_lock_004e1f40() {
         return true;
     }
     verdict(0x004E1F40U, "PASS", "?edit_lock@Console@@QAEHXZ");
-    return true;
-}
-
-// ?close@AlphaNet@@QAEXXZ  (40 B)
-// recovered in src/alphanet.cpp:113
-// staged receiver: AlphaNet, 0x14A0 B, zero-filled
-static bool verify_AlphaNet_close_004e25b0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x004E25B0U);
-    std::printf("  running ?close@AlphaNet@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x14A0U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x004E25B0U)) {
-            std::printf("  ?close@AlphaNet@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x004E25B0U, "FAIL-no-redirect", "?close@AlphaNet@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x004E25B0U)) {
-            std::printf("  ?close@AlphaNet@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x004E25B0U, "FAIL-no-redirect", "?close@AlphaNet@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@AlphaNet@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@AlphaNet@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x004E25B0U, "FAIL", "?close@AlphaNet@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@AlphaNet@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x004E25B0U, "INCONCLUSIVE-no-effect", "?close@AlphaNet@@QAEXXZ");
-        return true;
-    }
-    verdict(0x004E25B0U, "PASS", "?close@AlphaNet@@QAEXXZ");
     return true;
 }
 
@@ -1800,74 +1596,6 @@ static bool verify_desktop_update_0058ee50() {
     return true;
 }
 
-// ?close@GraphicWin@@QAEXXZ  (166 B)
-// recovered in src/graphicwin.cpp:131
-// staged receiver: GraphicWin, 0xA14 B, zero-filled
-static bool verify_GraphicWin_close_005d4e40() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005D4E40U);
-    std::printf("  running ?close@GraphicWin@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0xA14U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x005D4E40U)) {
-            std::printf("  ?close@GraphicWin@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x005D4E40U, "FAIL-no-redirect", "?close@GraphicWin@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x005D4E40U)) {
-            std::printf("  ?close@GraphicWin@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x005D4E40U, "FAIL-no-redirect", "?close@GraphicWin@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@GraphicWin@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@GraphicWin@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x005D4E40U, "FAIL", "?close@GraphicWin@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@GraphicWin@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x005D4E40U, "INCONCLUSIVE-no-effect", "?close@GraphicWin@@QAEXXZ");
-        return true;
-    }
-    verdict(0x005D4E40U, "PASS", "?close@GraphicWin@@QAEXXZ");
-    return true;
-}
-
 // ?fill@GraphicWin@@QAEXH@Z  (246 B)
 // recovered in src/graphicwin.cpp:267
 // staged receiver: GraphicWin, 0xA14 B, zero-filled
@@ -2096,74 +1824,6 @@ static bool verify_GraphicWin_redraw_005d5a70() {
         return true;
     }
     verdict(0x005D5A70U, "PASS", "?redraw@GraphicWin@@QAEXXZ");
-    return true;
-}
-
-// ?close@Buffer@@QAEXXZ  (501 B)
-// recovered in src/buffer.cpp:480
-// staged receiver: Buffer, 0x588 B, zero-filled
-static bool verify_Buffer_close_005d7470() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005D7470U);
-    std::printf("  running ?close@Buffer@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x588U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x005D7470U)) {
-            std::printf("  ?close@Buffer@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x005D7470U, "FAIL-no-redirect", "?close@Buffer@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x005D7470U)) {
-            std::printf("  ?close@Buffer@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x005D7470U, "FAIL-no-redirect", "?close@Buffer@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@Buffer@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@Buffer@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x005D7470U, "FAIL", "?close@Buffer@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@Buffer@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x005D7470U, "INCONCLUSIVE-no-effect", "?close@Buffer@@QAEXXZ");
-        return true;
-    }
-    verdict(0x005D7470U, "PASS", "?close@Buffer@@QAEXXZ");
     return true;
 }
 
@@ -3000,74 +2660,6 @@ static bool verify_Buffer_release_hdc_005e3563() {
         return true;
     }
     verdict(0x005E3563U, "PASS", "?release_hdc@Buffer@@QAEXH@Z");
-    return true;
-}
-
-// ?close@Sprite@@QAEXXZ  (100 B)
-// recovered in src/sprite.cpp:65
-// staged receiver: Sprite, 0x2C B, zero-filled
-static bool verify_Sprite_close_005e3820() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005E3820U);
-    std::printf("  running ?close@Sprite@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x2CU;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x005E3820U)) {
-            std::printf("  ?close@Sprite@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x005E3820U, "FAIL-no-redirect", "?close@Sprite@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x005E3820U)) {
-            std::printf("  ?close@Sprite@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x005E3820U, "FAIL-no-redirect", "?close@Sprite@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@Sprite@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@Sprite@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x005E3820U, "FAIL", "?close@Sprite@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@Sprite@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x005E3820U, "INCONCLUSIVE-no-effect", "?close@Sprite@@QAEXXZ");
-        return true;
-    }
-    verdict(0x005E3820U, "PASS", "?close@Sprite@@QAEXXZ");
     return true;
 }
 
@@ -7160,74 +6752,6 @@ static bool verify_BasePop_UNK4_006051a0() {
     return true;
 }
 
-// ?close@Scroll@@QAEXXZ  (350 B)
-// recovered in src/scroll.cpp:184
-// staged receiver: Scroll, 0x214C B, zero-filled
-static bool verify_Scroll_close_00605370() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00605370U);
-    std::printf("  running ?close@Scroll@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x214CU;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x00605370U)) {
-            std::printf("  ?close@Scroll@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x00605370U, "FAIL-no-redirect", "?close@Scroll@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x00605370U)) {
-            std::printf("  ?close@Scroll@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x00605370U, "FAIL-no-redirect", "?close@Scroll@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@Scroll@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@Scroll@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x00605370U, "FAIL", "?close@Scroll@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@Scroll@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x00605370U, "INCONCLUSIVE-no-effect", "?close@Scroll@@QAEXXZ");
-        return true;
-    }
-    verdict(0x00605370U, "PASS", "?close@Scroll@@QAEXXZ");
-    return true;
-}
-
 // ?set_range@Scroll@@QAEXHH@Z  (93 B)
 // recovered in src/scroll.cpp:316
 // staged receiver: Scroll, 0x214C B, zero-filled
@@ -7920,74 +7444,6 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
     return true;
 }
 
-// ?close@BaseButton@@QAEXXZ  (208 B)
-// recovered in src/basebutton.cpp:81
-// staged receiver: BaseButton, 0xAB8 B, zero-filled
-static bool verify_BaseButton_close_006070c0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x006070C0U);
-    std::printf("  running ?close@BaseButton@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0xAB8U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x006070C0U)) {
-            std::printf("  ?close@BaseButton@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x006070C0U, "FAIL-no-redirect", "?close@BaseButton@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x006070C0U)) {
-            std::printf("  ?close@BaseButton@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x006070C0U, "FAIL-no-redirect", "?close@BaseButton@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@BaseButton@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@BaseButton@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x006070C0U, "FAIL", "?close@BaseButton@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@BaseButton@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x006070C0U, "INCONCLUSIVE-no-effect", "?close@BaseButton@@QAEXXZ");
-        return true;
-    }
-    verdict(0x006070C0U, "PASS", "?close@BaseButton@@QAEXXZ");
-    return true;
-}
-
 // ?set_text_color@BaseButton@@QAEXHHHH@Z  (61 B)
 // recovered in src/basebutton.cpp:315
 // staged receiver: BaseButton, 0xAB8 B, zero-filled
@@ -8297,74 +7753,6 @@ static bool verify_BaseButton_set_00607c80() {
         return true;
     }
     verdict(0x00607C80U, "PASS", "?set@BaseButton@@QAEXH@Z");
-    return true;
-}
-
-// ?close@FlatButton@@QAEXXZ  (161 B)
-// recovered in src/flatbutton.cpp:28
-// staged receiver: FlatButton, 0xB4C B, zero-filled
-static bool verify_FlatButton_close_00607da0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00607DA0U);
-    std::printf("  running ?close@FlatButton@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0xB4CU;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x00607DA0U)) {
-            std::printf("  ?close@FlatButton@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x00607DA0U, "FAIL-no-redirect", "?close@FlatButton@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x00607DA0U)) {
-            std::printf("  ?close@FlatButton@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x00607DA0U, "FAIL-no-redirect", "?close@FlatButton@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@FlatButton@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@FlatButton@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x00607DA0U, "FAIL", "?close@FlatButton@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@FlatButton@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x00607DA0U, "INCONCLUSIVE-no-effect", "?close@FlatButton@@QAEXXZ");
-        return true;
-    }
-    verdict(0x00607DA0U, "PASS", "?close@FlatButton@@QAEXXZ");
     return true;
 }
 
@@ -8925,142 +8313,6 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
     return true;
 }
 
-// ?close@ListBox@@QAEXXZ  (125 B)
-// recovered in src/listbox.cpp:52
-// staged receiver: ListBox, 0xB54 B, zero-filled
-static bool verify_ListBox_close_00609f20() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00609F20U);
-    std::printf("  running ?close@ListBox@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0xB54U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x00609F20U)) {
-            std::printf("  ?close@ListBox@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x00609F20U, "FAIL-no-redirect", "?close@ListBox@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x00609F20U)) {
-            std::printf("  ?close@ListBox@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x00609F20U, "FAIL-no-redirect", "?close@ListBox@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@ListBox@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@ListBox@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x00609F20U, "FAIL", "?close@ListBox@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@ListBox@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x00609F20U, "INCONCLUSIVE-no-effect", "?close@ListBox@@QAEXXZ");
-        return true;
-    }
-    verdict(0x00609F20U, "PASS", "?close@ListBox@@QAEXXZ");
-    return true;
-}
-
-// ?close@CaviarData@@QAEXXZ  (28 B)
-// recovered in src/caviar.cpp:47
-// staged receiver: CaviarData, 0xC B, zero-filled
-static bool verify_CaviarData_close_00616c60() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00616C60U);
-    std::printf("  running ?close@CaviarData@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0xCU;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x00616C60U)) {
-            std::printf("  ?close@CaviarData@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x00616C60U, "FAIL-no-redirect", "?close@CaviarData@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x00616C60U)) {
-            std::printf("  ?close@CaviarData@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x00616C60U, "FAIL-no-redirect", "?close@CaviarData@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@CaviarData@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@CaviarData@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x00616C60U, "FAIL", "?close@CaviarData@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@CaviarData@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x00616C60U, "INCONCLUSIVE-no-effect", "?close@CaviarData@@QAEXXZ");
-        return true;
-    }
-    verdict(0x00616C60U, "PASS", "?close@CaviarData@@QAEXXZ");
-    return true;
-}
-
 // ?UNK10@Caviar@@QAEXHHH@Z  (24 B)
 // recovered in src/caviar.cpp:248
 // staged receiver: Caviar, 0x13D0 B, zero-filled
@@ -9217,152 +8469,6 @@ static bool verify_Caviar_UNK11_00618340() {
     return true;
 }
 
-// ?close@ButtonGroup@@QAEXXZ  (32 B)
-// recovered in src/buttongroup.cpp:42
-// staged receiver: ButtonGroup, 0x94 B, zero-filled
-static bool verify_ButtonGroup_close_0062b7f0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x0062B7F0U);
-    std::printf("  running ?close@ButtonGroup@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x94U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x0062B7F0U)) {
-            std::printf("  ?close@ButtonGroup@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x0062B7F0U, "FAIL-no-redirect", "?close@ButtonGroup@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x0062B7F0U)) {
-            std::printf("  ?close@ButtonGroup@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x0062B7F0U, "FAIL-no-redirect", "?close@ButtonGroup@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?close@ButtonGroup@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?close@ButtonGroup@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x0062B7F0U, "FAIL", "?close@ButtonGroup@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?close@ButtonGroup@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x0062B7F0U, "INCONCLUSIVE-no-effect", "?close@ButtonGroup@@QAEXXZ");
-        return true;
-    }
-    verdict(0x0062B7F0U, "PASS", "?close@ButtonGroup@@QAEXXZ");
-    return true;
-}
-
-// ?init@ButtonGroup@@QAEXHH@Z  (60 B)
-// recovered in src/buttongroup.cpp:60
-// staged receiver: ButtonGroup, 0x94 B, zero-filled
-static bool verify_ButtonGroup_init_0062b810() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x0062B810U);
-    std::printf("  running ?init@ButtonGroup@@QAEXHH@Z\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x94U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
-        {0, 1},
-        {1, -1},
-        {-1, 2},
-        {2, 7},
-        {7, 2147483647},
-        {2147483647, -2147483648},
-        {-2147483648, 1431655765},
-        {1431655765, 0},
-    };
-    for (const auto &argv : cases) {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x0062B810U)) {
-            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: cannot suspend redirect\n");
-            verdict(0x0062B810U, "FAIL-no-redirect", "?init@ButtonGroup@@QAEXHH@Z");
-            return false;
-        }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x0062B810U)) {
-            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: cannot resume redirect\n");
-            verdict(0x0062B810U, "FAIL-no-redirect", "?init@ButtonGroup@@QAEXHH@Z");
-            return false;
-        }
-        target(staged, (int)argv[0], (int)argv[1]);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x0062B810U, "FAIL", "?init@ButtonGroup@@QAEXHH@Z");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?init@ButtonGroup@@QAEXHH@Z: no seed produced an observable effect\n");
-        verdict(0x0062B810U, "INCONCLUSIVE-no-effect", "?init@ButtonGroup@@QAEXHH@Z");
-        return true;
-    }
-    verdict(0x0062B810U, "PASS", "?init@ButtonGroup@@QAEXHH@Z");
-    return true;
-}
-
 // ?set@ButtonGroup@@QAEHHH@Z  (47 B)
 // recovered in src/buttongroup.cpp:110
 // staged receiver: ButtonGroup, 0x94 B, zero-filled
@@ -9450,7 +8556,6 @@ static bool verify_ButtonGroup_set_0062b870() {
 
 bool run_generated_signature_oracles() {
     bool passed = true;
-    passed &= verify_StringStruct_close_00401060();
     passed &= verify_StringStruct_seek_id_00401560();
     passed &= verify_StringStruct_current_id_00401640();
     passed &= verify_StringStruct_next_entry_00402500();
@@ -9460,11 +8565,9 @@ bool run_generated_signature_oracles() {
     passed &= verify_MapWin_on_left_click_0046eba0();
     passed &= verify_MapWin_on_right_click_0046ebe0();
     passed &= verify_MapWin_main_caption_0046fb10();
-    passed &= verify_MapWin_close_00470f70();
     passed &= verify_PlanWin_UNK1_0048b3c0();
     passed &= verify_PlanWin_blink_0048bc20();
     passed &= verify_Console_edit_lock_004e1f40();
-    passed &= verify_AlphaNet_close_004e25b0();
     passed &= verify_AlphaNet_pid_2_idx_004e25e0();
     passed &= verify_AlphaNet_pid_2_who_004e2610();
     passed &= verify_AlphaNet_who_2_pid_004e2660();
@@ -9474,11 +8577,9 @@ bool run_generated_signature_oracles() {
     passed &= verify_Console_update_data_00514880();
     passed &= verify_not_my_turn_0052dc70();
     passed &= verify_desktop_update_0058ee50();
-    passed &= verify_GraphicWin_close_005d4e40();
     passed &= verify_GraphicWin_fill_005d5250();
     passed &= verify_GraphicWin_fill_005d5440();
     passed &= verify_GraphicWin_redraw_005d5a70();
-    passed &= verify_Buffer_close_005d7470();
     passed &= verify_Buffer_set_text_color_005dacb0();
     passed &= verify_Buffer_set_text_color2_005dace0();
     passed &= verify_Buffer_set_text_color3_005dad10();
@@ -9490,7 +8591,6 @@ bool run_generated_signature_oracles() {
     passed &= verify_Buffer_free_data_005e34a3();
     passed &= verify_Buffer_get_hdc_005e3503();
     passed &= verify_Buffer_release_hdc_005e3563();
-    passed &= verify_Sprite_close_005e3820();
     passed &= verify_Win_set_cursor_005ec7c0();
     passed &= verify_Win_UNK3_005ece80();
     passed &= verify_Win_move_005ed7d0();
@@ -9542,7 +8642,6 @@ bool run_generated_signature_oracles() {
     passed &= verify_BasePop_set_string_color_hyper_006047c0();
     passed &= verify_BasePop_UNK3_00605180();
     passed &= verify_BasePop_UNK4_006051a0();
-    passed &= verify_Scroll_close_00605370();
     passed &= verify_Scroll_set_range_006059b0();
     passed &= verify_Scroll_set_button_color_00605a10();
     passed &= verify_Scroll_set_bevel_thickness_00605a50();
@@ -9552,12 +8651,10 @@ bool run_generated_signature_oracles() {
     passed &= verify_Scroll_set_bar_thickness_00605b80();
     passed &= verify_Scroll_set_pos_00605d20();
     passed &= verify_Scroll_set_thumb_rect_00606ea0();
-    passed &= verify_BaseButton_close_006070c0();
     passed &= verify_BaseButton_set_text_color_00607360();
     passed &= verify_BaseButton_set_text_color2_006073a0();
     passed &= verify_BaseButton_set_text_color3_006073e0();
     passed &= verify_BaseButton_set_00607c80();
-    passed &= verify_FlatButton_close_00607da0();
     passed &= verify_Dialog_set_selected_id_006099d0();
     passed &= verify_Dialog_get_selected_id_00609a50();
     passed &= verify_Dialog_id_to_pos_00609af0();
@@ -9565,13 +8662,9 @@ bool run_generated_signature_oracles() {
     passed &= verify_Dialog_set_dialog_text_color_00609c90();
     passed &= verify_Dialog_set_dialog_text_color2_00609cc0();
     passed &= verify_Dialog_set_dialog_text_color3_00609cf0();
-    passed &= verify_ListBox_close_00609f20();
-    passed &= verify_CaviarData_close_00616c60();
     passed &= verify_Caviar_UNK10_00618320();
     passed &= verify_Caviar_UNK11_00618340();
-    passed &= verify_ButtonGroup_close_0062b7f0();
-    passed &= verify_ButtonGroup_init_0062b810();
     passed &= verify_ButtonGroup_set_0062b870();
-    std::printf("generated signature oracles: %d function(s)\n", 122);
+    std::printf("generated signature oracles: %d function(s)\n", 109);
     return passed;
 }
