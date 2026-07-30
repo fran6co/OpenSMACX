@@ -96,6 +96,16 @@ STATIC_INPUTS = (
     # claiming 54 while proven.csv said 53 - a stale figure the gate called
     # verified.
     REPO_ROOT / "docs" / "recovery" / "proven.csv",
+    # recovery_metrics.py IS an input, for the same reason proven.csv is: it
+    # decides the byte-weighted block summary.json publishes, so editing it
+    # changes a committed output. Caught the honest way - adding the
+    # unproven_by_shape split changed the block and `--promote` reported
+    # "cached", because only the exporter and the correlator were in this list.
+    REPO_ROOT / "tools" / "recovery_metrics.py",
+    # The shape catalogue the split is computed from. Deciding a shape needs the
+    # pinned executable, so the answer is committed and read here; editing it
+    # must therefore invalidate the stamp exactly as proven.csv does.
+    REPO_ROOT / "docs" / "recovery" / "recovered-shapes.csv",
 )
 
 

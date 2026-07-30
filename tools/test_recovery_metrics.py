@@ -474,6 +474,74 @@ class ProvenTests(unittest.TestCase):
         self.assertEqual(250, metrics.unproven_recovered(rows, {0x00400000}).byte_count)
 
 
+class UnprovenByShapeTests(unittest.TestCase):
+    """The split exists so 188,443 B is not read as a reachable target."""
+
+    ROWS = [
+        {"address": "0x00401000", "size": "100", "binary_kind": "game",
+         "recovery_state": "source_complete"},
+        {"address": "0x00402000", "size": "200", "binary_kind": "game",
+         "recovery_state": "source_complete"},
+        {"address": "0x00403000", "size": "40", "binary_kind": "game",
+         "recovery_state": "source_complete"},
+        # Not recovered, so it is not in this table at all.
+        {"address": "0x00404000", "size": "900", "binary_kind": "game",
+         "recovery_state": "unrecovered"},
+    ]
+    SHAPES = {0x00401000: "loop", 0x00402000: "straight_line",
+              0x00403000: "seam_forwarding"}
+
+    def test_the_buckets_sum_to_unproven_recovered(self):
+        # The property that makes the split trustworthy: every unproven byte is
+        # in exactly one bucket, so the table cannot quietly omit a cohort.
+        proven = set()
+        block = metrics.unproven_by_shape(self.ROWS, proven, self.SHAPES)
+        self.assertEqual(
+            metrics.unproven_recovered(self.ROWS, proven).byte_count,
+            sum(entry["bytes"] for entry in block.values()))
+        self.assertEqual(
+            metrics.unproven_recovered(self.ROWS, proven).functions,
+            sum(entry["functions"] for entry in block.values()))
+
+    def test_a_PROVEN_function_leaves_the_table(self):
+        block = metrics.unproven_by_shape(
+            self.ROWS, {0x00401000}, self.SHAPES)
+        self.assertNotIn("loop", block)
+        self.assertEqual(240, sum(e["bytes"] for e in block.values()))
+
+    def test_an_UNRECOVERED_function_was_never_in_it(self):
+        block = metrics.unproven_by_shape(self.ROWS, set(), self.SHAPES)
+        self.assertEqual(340, sum(e["bytes"] for e in block.values()))
+
+    def test_a_function_with_no_recorded_shape_is_UNCLASSIFIED_not_dropped(self):
+        # Silently dropping it would make the buckets disagree with the total,
+        # which is the one thing this table must never do.
+        block = metrics.unproven_by_shape(self.ROWS, set(), {})
+        self.assertEqual({"unclassified"}, set(block))
+        self.assertEqual(340, block["unclassified"]["bytes"])
+
+    def test_percentages_are_over_the_UNPROVEN_bytes_not_the_scope(self):
+        block = metrics.unproven_by_shape(self.ROWS, set(), self.SHAPES)
+        self.assertAlmostEqual(
+            100.0, sum(e["percent_of_unproven_bytes"] for e in block.values()),
+            places=1)
+
+    def test_the_committed_catalogue_covers_every_recovered_function(self):
+        # A shape catalogue that has drifted behind the inventory would push
+        # real functions into `unclassified` and read as ignorance rather than
+        # staleness, so the coverage is checked against the real tree.
+        shapes = metrics.load_shapes()
+        if not shapes:
+            self.skipTest("recovered-shapes.csv is not present")
+        rows = metrics.load_catalogue()
+        recovered = [r for r in rows
+                     if metrics.row_state(r) == metrics.RECOVERED_RECOVERY_STATE]
+        missing = [r["address"] for r in recovered
+                   if metrics.row_address(r) not in shapes]
+        self.assertEqual([], missing[:10],
+                         f"{len(missing)} recovered functions have no shape")
+
+
 class PublishedFileTests(unittest.TestCase):
     """The committed summary.json must describe the committed functions.csv.
 

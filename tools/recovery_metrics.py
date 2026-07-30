@@ -235,6 +235,63 @@ def unproven_recovered(rows, proven: set[int]) -> Tally:
                                     and row_address(row) not in proven))
 
 
+SHAPES_CSV = (
+    Path(__file__).resolve().parent.parent / "docs" / "recovery"
+    / "recovered-shapes.csv")
+
+
+def load_shapes(path=None) -> dict:
+    """address -> shape, from the committed catalogue, or {} if absent.
+
+    Like `load_proven_addresses`, this reads a committed file rather than
+    deciding anything, so this module keeps working with no IDB, no Wine and no
+    executable. An empty result means the split is not published - which reads
+    as "we do not know why", not as "there is no reason".
+    """
+    source = SHAPES_CSV if path is None else Path(path)
+    if not source.is_file():
+        return {}
+    shapes = {}
+    with source.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            address = row_address(row)
+            if address is not None:
+                shapes[address] = row["shape"]
+    return shapes
+
+
+def unproven_by_shape(rows, proven: set[int], shapes: dict) -> dict:
+    """WHY each unproven byte is unproven, so the total is not read as a target.
+
+    190,037 bytes published as one figure reads as a debt that could reach zero.
+    It cannot. `seam_forwarding` is a floor no differential can reach at any
+    effort - those recovered bodies hand the ORIGINAL address onward through a
+    shared seam, so both sides of a comparison run the same original code. And
+    the buckets are wildly uneven in a way the single number hides: measured
+    2026-07-30, 58.86% of the unproven bytes sit behind a loop while 7.80% are
+    the floor, so a plan aimed at "the debt" is really aimed at whichever bucket
+    it happens to be able to move.
+
+    A shape is a property of the ORIGINAL body, so it does not depend on the
+    recovery being right, and it does not change when a function is proven -
+    the function simply leaves this table.
+    """
+    unproven = [row for row in rows
+                if row_state(row) == RECOVERED_RECOVERY_STATE
+                and row_address(row) not in proven]
+    out: dict[str, dict] = {}
+    total = sum(row_size(row) for row in unproven)
+    for row in unproven:
+        shape = shapes.get(row_address(row), "unclassified")
+        entry = out.setdefault(shape, {"bytes": 0, "functions": 0})
+        entry["bytes"] += row_size(row)
+        entry["functions"] += 1
+    for shape, entry in out.items():
+        entry["percent_of_unproven_bytes"] = (
+            round(100.0 * entry["bytes"] / total, 2) if total else 0.0)
+    return dict(sorted(out.items(), key=lambda kv: -kv[1]["bytes"]))
+
+
 def grouped(rows, column: str, denominator: Tally) -> dict:
     """{value: {bytes, functions, percent}} over one catalogue column.
 
@@ -319,6 +376,8 @@ def bytes_block(rows, proven: set[int] | None = None) -> dict:
             "meaning": ("recovered bytes never executed against the original: "
                         "declared complete, never demonstrated equivalent"),
         },
+        "unproven_by_shape": unproven_by_shape(
+            rows, proven, load_shapes()),
         "by_recovery_state": grouped(rows, "recovery_state", scope),
         "by_binary_kind": grouped(rows, "binary_kind", scope),
     }
