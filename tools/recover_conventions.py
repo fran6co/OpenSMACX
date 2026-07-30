@@ -108,7 +108,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import re
 import sys
 from collections import Counter
@@ -386,31 +385,6 @@ class BodyEvidence:
         if len(self.ret_imms) != 1:
             return None
         return self.ret_imms[0]
-
-
-def body_conventions(evidence: BodyEvidence) -> set[str]:
-    """Every convention consistent with this body.
-
-    A bare `ret` admits `__cdecl`, a zero-argument `__stdcall` and a
-    zero-argument `__thiscall`; the ECX signal is what narrows it.
-    """
-    pop = evidence.callee_pop_bytes
-    if pop is None:
-        return set()
-    if pop == 0:
-        allowed = {"__cdecl", "__stdcall"}
-        if evidence.ecx_read_first:
-            allowed.add("__thiscall")
-        return allowed
-    allowed = {"__stdcall"}
-    if evidence.ecx_read_first:
-        allowed.add("__thiscall")
-    else:
-        # A callee-pop body that never reads ECX is still a legal __thiscall -
-        # a member that ignores `this` - so this is not an exclusion, only a
-        # weaker preference recorded by `agreement` below.
-        allowed.add("__thiscall")
-    return allowed
 
 
 def resolve_this_location(signature: Signature,
