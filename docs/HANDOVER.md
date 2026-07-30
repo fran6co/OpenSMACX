@@ -1217,18 +1217,60 @@ still disagreed:
 The three-survivor core is stable and understood. The extra one is not real:
 applying `!=` -> `==` at 0063E7F0:722 by hand FAILS the fixture.
 
-**A likely mechanism, not yet confirmed.** Both clean runs report exactly one
-mutant that "hung rather than failed an assertion". The suite runs under Wine.
-A hung mutant leaves a Wine process holding `recovery-leaf-tests.exe`, so the
-NEXT mutant's link cannot replace the binary - and if that build still exits
-zero, the harness tests the PREVIOUS mutant's executable and records a false
-survivor. That fits the one-off, position-dependent nature of the extra
-entries. Confirming it means checking the binary's mtime actually advanced
-after `build()`, which is the fix as well as the diagnosis.
+**MEASURED 2026-07-30, and the mechanism above is REFUTED.** The suspected cause
+was the hung mutant: it leaves a Wine process holding `recovery-leaf-tests.exe`,
+the next mutant's link cannot replace the binary, the build still exits zero, and
+the harness tests the PREVIOUS mutant's executable. The check for it is now built
+- `build()` compares the artifact's `(mtime_ns, size, inode)` across the build and
+returns `STALE` when a successful build replaced nothing - and it **never fired**:
+zero STALE across four full sweeps, 1,444 mutant builds. On reflection it could
+not have: this is a Linux cross-build, where an open handle does not stop `ld`
+replacing its output, and a link that genuinely failed would exit non-zero and
+already be counted as `no compile`.
 
-**Until then a full-file "N/N killed" is weaker evidence than it looks, and
-the "sweep N/N" figures in this session's earlier commits came from full-file
-runs.** The reliable forms are a targeted `--address` run and a hand poison.
+What the four sweeps did establish, comparing outcomes by MUTANT INDEX rather
+than by `address:line operator` (which is not unique - the `constant` operator
+emits several mutants per line, and keying on it makes unrelated mutants look
+like flips):
+
+| | measured |
+|---|---|
+| indices present in all four runs | 361 |
+| indices whose outcome disagreed | **5 (1.39%)** |
+| direction of every disagreement | **three runs killed, one let through** |
+| which run flipped | different in each case: idx 35 -> run 3, 134 -> run 2, 163 -> run 4, 219 -> run 4, 224 -> run 2 |
+| hang position | index 152 in ALL FOUR - deterministic, so not the cause |
+| calibrated threshold | 1.4 s baseline, 30 s threshold, identical in all four |
+
+So it is a low-rate per-run flake, not a set of weak fixtures: different mutants
+flip in different runs. All five perturb a memory offset or a pointer guard -
+`0x8`->`0` in a chase, `==`->`!=` on a null check, `0x4C`->`0` in a `load32` -
+where whether the perturbation is observable depends on fixture memory the test
+does not pin.
+
+**The asymmetry is the fix.** The flake only ever manufactures survivors, so
+re-observing a survivor removes it, and that is nearly free: the mutant is
+already built, so a confirmation is one test run, and a sweep has a couple of
+dozen survivors against 361 mutants. `--confirm-survivors N` (default 2) re-runs
+a surviving mutant before reporting it as a coverage hole and prints how many
+were killed on re-run, so the flake rate stays visible rather than absorbed.
+
+**The fix was then validated against the ground truth the four sweeps
+established.** 20 mutants survived in ALL FOUR unconfirmed runs; 25 survived in
+at least one. Two further sweeps with `--confirm-survivors 2` both reported
+exactly **20**, the set was **identical to the always-survived set**, and the
+five it excluded were exactly the five flip indices (35, 134, 163, 219, 224).
+The two confirmed sweeps also agreed with each other on all 361 outcomes, where
+the unconfirmed ones disagreed on five. One of them caught 2 flakes on the fly
+(indices 206 and 215, both in `005CBBC0`) and reported them as killed-on-re-run.
+
+Cost of that: about 20 extra test runs, roughly 30 seconds, against the ~90
+minutes three extra full sweeps would take to get the same answer.
+
+A full-file `N/N killed` is now worth what it says, provided
+`--confirm-survivors` was on. The `sweep N/N` figures in commits before this
+change came from unconfirmed full-file runs and carry a ~1.4% false-survivor
+rate; a targeted `--address` run and a hand poison remain the strongest forms.
 
 ### The mutation harness is blind to two shapes, and that is not a pass
 

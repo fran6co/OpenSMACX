@@ -350,17 +350,23 @@ class HarnessClassificationTest(unittest.TestCase):
     """The three outcomes must stay distinct: a mutant that never compiled is
     not evidence that the suite observes anything."""
 
-    def _run(self, build_ok, test_passes):
+    def _run(self, build_ok, test_passes, confirm=0):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "sample.cpp"
             source.write_text(SOURCE)
+            # The artifact has to exist: main() refuses a baseline that produced
+            # no binary, because a staleness check over a file that is never
+            # there compares None with None and answers "fresh" every time.
+            (Path(directory) / "t.exe").write_bytes(b"MZ")
             args = argparse.Namespace(
                 source=str(source), build_dir=directory, target="t", test="t",
-                address=[], operator=["constant"], limit=1, timeout=60)
-            # The trailing True is the rebuild main() performs after restoring
+                address=[], operator=["constant"], limit=1, timeout=60,
+                artifact=None, confirm_survivors=confirm)
+            # The trailing PASSED is the rebuild main() performs after restoring
             # the original source in its finally block.
             with mock.patch.object(mutate_and_verify.Harness, "build",
-                                   side_effect=list(build_ok) + [True]), \
+                                   side_effect=list(build_ok)
+                                   + [mutate_and_verify.PASSED]), \
                  mock.patch.object(mutate_and_verify.Harness, "check",
                                    side_effect=test_passes), \
                  mock.patch("sys.argv", ["mutate_and_verify", str(source)]), \
@@ -371,32 +377,201 @@ class HarnessClassificationTest(unittest.TestCase):
     PASSED = mutate_and_verify.PASSED
     FAILED = mutate_and_verify.FAILED
     TIMEOUT = mutate_and_verify.TIMEOUT
+    STALE = mutate_and_verify.STALE
+
+    def _harness(self, directory, artifact=None):
+        args = argparse.Namespace(
+            source="x.cpp", build_dir=directory, target="t", test="t",
+            timeout=60, artifact=artifact)
+        return mutate_and_verify.Harness(args)
+
+    def test_a_survivor_confirmed_by_a_RE_RUN_is_still_a_survivor(self):
+        # baseline build, baseline check, mutant build, then the mutant check
+        # plus two confirmations, all passing.
+        code, _ = self._run([self.PASSED, self.PASSED],
+                            [self.PASSED, self.PASSED, self.PASSED, self.PASSED],
+                            confirm=2)
+        self.assertEqual(1, code)
+
+    def test_a_survivor_the_RE_RUN_kills_is_a_kill_not_a_coverage_hole(self):
+        # The measured flake: three sweeps kill a mutant and one lets it
+        # through, always in that direction. One re-observation removes it, so
+        # the run must exit clean rather than report a hole that is not there.
+        code, _ = self._run([self.PASSED, self.PASSED],
+                            [self.PASSED, self.PASSED, self.FAILED],
+                            confirm=2)
+        self.assertEqual(0, code)
+
+    def test_confirmation_stops_at_the_first_kill(self):
+        # Cheapness is the reason this is affordable: it must not keep re-running
+        # after it already has its answer.
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "t.exe").write_bytes(b"MZ")
+            harness = self._harness(directory)
+            with mock.patch.object(
+                    harness, "check",
+                    side_effect=[mutate_and_verify.FAILED]) as check:
+                self.assertEqual(self.FAILED, harness.confirm_survivor(5))
+            self.assertEqual(1, check.call_count)
+
+    def test_confirmation_can_be_disabled(self):
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "t.exe").write_bytes(b"MZ")
+            harness = self._harness(directory)
+            with mock.patch.object(harness, "check") as check:
+                self.assertEqual(self.PASSED, harness.confirm_survivor(0))
+            check.assert_not_called()
+
+    def test_a_build_that_exits_zero_without_replacing_the_binary_is_STALE(self):
+        # The link in the chain of evidence nothing used to check: source ->
+        # binary -> suite. A build that reports success and leaves the binary
+        # alone means the suite measured the PREVIOUS mutant.
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "t.exe").write_bytes(b"MZ")
+            harness = self._harness(directory)
+            with mock.patch.object(harness, "_run",
+                                   return_value=mutate_and_verify.PASSED):
+                self.assertEqual(self.STALE, harness.build())
+
+    def test_a_build_that_replaces_the_binary_is_PASSED(self):
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "t.exe"
+            artifact.write_bytes(b"MZ")
+            harness = self._harness(directory)
+
+            def touch(*_args, **_kwargs):
+                artifact.write_bytes(b"MZ-rebuilt-and-longer")
+                return mutate_and_verify.PASSED
+
+            with mock.patch.object(harness, "_run", side_effect=touch):
+                self.assertEqual(self.PASSED, harness.build())
+
+    def test_a_replaced_INODE_counts_as_fresh(self):
+        # A toolchain that writes a temporary and renames it over the target can
+        # land identical mtime and size; reading that as STALE would report a
+        # real measurement as unmeasured.
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "t.exe"
+            artifact.write_bytes(b"MZ")
+            stat = artifact.stat()
+            harness = self._harness(directory)
+
+            def rename_over(*_args, **_kwargs):
+                other = Path(directory) / "t.exe.new"
+                other.write_bytes(b"MZ")
+                os.utime(other, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+                other.replace(artifact)
+                return mutate_and_verify.PASSED
+
+            with mock.patch.object(harness, "_run", side_effect=rename_over):
+                after = artifact.stat()
+                self.assertEqual(stat.st_size, after.st_size)
+                self.assertEqual(self.PASSED, harness.build())
+
+    def test_a_build_that_deletes_the_binary_is_STALE_not_PASSED(self):
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "t.exe"
+            artifact.write_bytes(b"MZ")
+            harness = self._harness(directory)
+
+            def remove(*_args, **_kwargs):
+                artifact.unlink()
+                return mutate_and_verify.PASSED
+
+            with mock.patch.object(harness, "_run", side_effect=remove):
+                self.assertEqual(self.STALE, harness.build())
+
+    def test_an_explicit_artifact_path_overrides_the_default(self):
+        with tempfile.TemporaryDirectory() as directory:
+            elsewhere = Path(directory) / "sub" / "other.exe"
+            harness = self._harness(directory, artifact=str(elsewhere))
+            self.assertEqual(elsewhere.resolve(), harness.artifact)
+
+    def test_a_STALE_mutant_is_neither_killed_nor_survived(self):
+        # It must not read as a kill (which would claim coverage that was never
+        # measured) nor as a survivor (which would claim a coverage hole that may
+        # not exist). It fails the run either way, so `N/N killed` cannot be
+        # printed over a sweep that skipped some of its own mutants.
+        code, _ = self._run([self.PASSED, self.STALE, self.PASSED],
+                            [self.PASSED])
+        self.assertEqual(1, code)
+
+    def test_a_missing_artifact_after_the_baseline_is_refused(self):
+        # Without this the staleness check compares None with None on every
+        # mutant and silently answers "fresh" - the check would be inert and
+        # nothing would say so.
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "sample.cpp"
+            source.write_text(SOURCE)
+            args = argparse.Namespace(
+                source=str(source), build_dir=directory, target="t", test="t",
+                address=[], operator=["constant"], limit=1, timeout=60,
+                artifact=None)
+            with mock.patch.object(mutate_and_verify.Harness, "build",
+                                   return_value=mutate_and_verify.PASSED), \
+                 mock.patch.object(mutate_and_verify.Harness, "check",
+                                   return_value=mutate_and_verify.PASSED), \
+                 mock.patch("sys.argv", ["mutate_and_verify", str(source)]), \
+                 mock.patch("argparse.ArgumentParser.parse_args",
+                            return_value=args):
+                self.assertEqual(2, mutate_and_verify.main())
+
+    def test_a_TIMEOUT_reaps_the_processes_still_holding_the_binary(self):
+        # subprocess's timeout kills ctest and nothing under it, so the wine
+        # process running the test binary outlives it and can still hold the
+        # file the next mutant needs to link over.
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "t.exe").write_bytes(b"MZ")
+            harness = self._harness(directory)
+            with mock.patch.object(harness, "_run",
+                                   return_value=mutate_and_verify.TIMEOUT), \
+                 mock.patch.object(mutate_and_verify,
+                                   "stop_executable_processes",
+                                   return_value=True) as reap:
+                self.assertEqual(self.TIMEOUT, harness.check())
+            reap.assert_called_once_with(harness.artifact)
+
+    def test_a_PASSING_check_reaps_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "t.exe").write_bytes(b"MZ")
+            harness = self._harness(directory)
+            with mock.patch.object(harness, "_run",
+                                   return_value=mutate_and_verify.PASSED), \
+                 mock.patch.object(mutate_and_verify,
+                                   "stop_executable_processes") as reap:
+                self.assertEqual(self.PASSED, harness.check())
+            reap.assert_not_called()
 
     def test_survivor_reports_failure_exit_code(self):
         # baseline build, baseline test, mutant build, mutant test(passes)
-        code, _ = self._run([True, True], [self.PASSED, self.PASSED])
+        code, _ = self._run([self.PASSED, self.PASSED],
+                            [self.PASSED, self.PASSED])
         self.assertEqual(1, code)
 
     def test_killed_mutant_exits_clean(self):
-        code, _ = self._run([True, True], [self.PASSED, self.FAILED])
+        code, _ = self._run([self.PASSED, self.PASSED],
+                            [self.PASSED, self.FAILED])
         self.assertEqual(0, code)
 
     def test_hung_mutant_counts_as_killed_not_as_a_crash(self):
         # A perturbation that hangs the suite has been observed by it. Letting
         # the timeout propagate aborted a whole run mid-sweep.
-        code, _ = self._run([True, True], [self.PASSED, self.TIMEOUT])
+        code, _ = self._run([self.PASSED, self.PASSED],
+                            [self.PASSED, self.TIMEOUT])
         self.assertEqual(0, code)
 
     def test_uncompilable_mutant_is_not_counted_as_killed(self):
-        code, _ = self._run([True, False, True], [self.PASSED])
+        code, _ = self._run([self.PASSED, self.FAILED, self.PASSED],
+                            [self.PASSED])
         self.assertEqual(0, code)
 
     def test_failing_baseline_aborts(self):
-        code, _ = self._run([True], [self.FAILED])
+        code, _ = self._run([self.PASSED], [self.FAILED])
         self.assertEqual(2, code)
 
     def test_source_is_restored_after_run(self):
-        _, restored = self._run([True, True], [self.PASSED, self.FAILED])
+        _, restored = self._run([self.PASSED, self.PASSED],
+                                [self.PASSED, self.FAILED])
         self.assertEqual(SOURCE, restored)
 
     def test_source_is_restored_when_baseline_fails(self):
