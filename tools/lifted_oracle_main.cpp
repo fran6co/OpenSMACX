@@ -65,6 +65,9 @@
 #include "lifted_oracle.h"
 #include "lifted_oracle_fold.h"
 
+// OpensmacxHeapSize, for reporting the heap the guest was given.
+#include "lifted_loader.h"
+
 #include <windows.h>
 
 #include <cstdio>
@@ -302,7 +305,7 @@ int main(int argc, char **argv) {
                     "%u refused, %u of %u bytes used\n",
                     unsigned(report.alloc_calls), unsigned(report.alloc_bytes),
                     unsigned(report.alloc_failures), unsigned(report.heap_used),
-                    unsigned(0x009F0000U - 0x009C2200U));
+                    unsigned(OpensmacxHeapSize));
         if (report.alloc_largest_refused)
             std::printf("build-state: the largest REFUSED request was %u bytes "
                         "- that is how much guest heap this needs\n",
@@ -324,12 +327,16 @@ int main(int argc, char **argv) {
             std::fprintf(stderr, "oracle: --build-state: %s\n", error);
             return 2;
         }
+        std::printf("build-state: startup steps %u attempted, %u returned\n",
+                    unsigned(report.steps_attempted),
+                    unsigned(report.steps_returned));
         if (!report.returned) {
             // NOT a state file. Saying where it stopped is the whole value of a
             // failed run - it is the next work item - but writing a dump of a
             // half-run __cinit would produce a file that looks like state.
-            std::printf("BUILD-STATE-STOPPED-AT %#010x  code %#010lx "
+            std::printf("BUILD-STATE-STOPPED-IN %s at %#010x  code %#010lx "
                         "accessing %#010x\n",
+                        report.stopped_in ? report.stopped_in : "?",
                         unsigned(report.fault_address),
                         (unsigned long)report.fault_code,
                         unsigned(report.fault_data));

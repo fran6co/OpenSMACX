@@ -155,7 +155,15 @@ constexpr uint32_t OracleImageBase = 0x00400000U;
 constexpr uint32_t OracleImageSize = 0x0060c000U;
 // Rounded up to the 64 KiB allocation granularity so the reservation and the
 // commit inside it agree about where the span ends.
-constexpr uint32_t OracleSpanReservation = 0x00610000U;
+//
+// This covers the WHOLE guest span, not just the image, because --build-state
+// serves the CRT's heap from a region above the guest stack and side A has to
+// be able to write it. OpensmacxSpanSize is 0x0090d000 (image + stack + a 2 MiB
+// heap); rounding to granularity gives 0x00910000. The extra address space
+// costs nothing when unused - the pages above the image are committed only for
+// --build-state - and having one number here means the oracle's reservation
+// cannot fall behind the loader's layout.
+constexpr uint32_t OracleSpanReservation = 0x00910000U;
 
 // Everything free below this is reserved address space so that a wild guest
 // write lands on nothing instead of on the host's heap. See the comment at the
@@ -370,6 +378,12 @@ struct OracleBuildStateReport {
     uint32_t address_in_span;
     // Non-null when a shim refused to end the process on the guest's behalf.
     const char *refused;
+    // Which startup step stopped, and how far the sequence got. A run that
+    // stops in __heap_init and one that stops in __cinit have almost nothing
+    // in common, so the totals alone would be useless.
+    const char *stopped_in;
+    uint32_t steps_attempted;
+    uint32_t steps_returned;
     // Whether __cinit RETURNED. A fault leaves the state half-built, and a
     // half-built dump must never be written: it would look like real state and
     // be a snapshot of an aborted constructor.
