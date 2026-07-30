@@ -2,9 +2,8 @@
 """Generate hybrid-runtime oracles for functions whose signature is derivable.
 
 `unproven_recovered` says 96.9% of recovered bytes have never been executed
-against the original. Every proof that exists was hand-written, which is why
-there are 49 of them against 2,501 unproven functions. This turns the cheap
-cases into a build step.
+against the original - 2,498 functions, 190,008 B. Every proof that exists was
+hand-written. This turns the cheap cases into a build step.
 
 WHY THIS NEEDS NO SYMBOL LOOKUP, which is the part that makes it possible.
 
@@ -17,25 +16,69 @@ the address runs the original, with it active the same address runs the
 recovery. `suspend_redirect_at` / `resume_redirect_at` in dllmain.cpp are the
 switch, and src/sprite_oracle.cpp uses them by hand already.
 
-WHAT IS COMPARED, and why a return value alone would be worthless. The
-candidates here take no arguments - that is what makes their signature
-derivable - and they are not pure: `base_minerals` and `base_nutrient` compute
-into global arrays and return nothing. So the comparison snapshots .data/.bss,
-runs one side, captures the result AND the memory it produced, restores, runs
-the other side, and compares both. A recovery that returns the right value and
-writes the wrong globals fails here, which is the whole point.
+WHAT IS COMPARED, and why a return value alone would be worthless. Many
+candidates return void and do their work in .data - `base_minerals` computes
+into global arrays and returns nothing. So the comparison snapshots .data/.bss
+AND the staged object, runs one side, captures the result plus everything it
+wrote, restores BOTH, runs the other side, and compares. A recovery that
+returns the right value and writes the wrong globals fails here.
 
-The process is left exactly as it was found: the snapshot is restored after the
-second call too, so running an oracle cannot perturb the game that follows it.
+MEMBER FUNCTIONS AND ARGUMENTS, and the two ways they lie.
+
+Members with arguments are admitted, which they were not before, because the
+shape is readable off the inventory's `prototype` column rather than guessed
+from the mangled name: `int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog*
+this, int)` states the class, the convention and every argument type. But two
+failure modes make an agreeing member oracle worth nothing unless they are
+handled, and both are handled here:
+
+  1. GUARD AGREEMENT. A staged object no field of which means anything makes the
+     body bail at its first guard on BOTH sides, and the comparison agrees
+     having executed four bytes of a hundred. `Scroll::set_pos` opens
+     `if (!parent) return 0;`, and the hand-written suite escapes that only
+     because a human wrote 0x45454545 into offset 0xC4 - an offset no signature
+     states. So every case records whether the original produced ANY observable
+     effect, and a function where no seed did is reported
+     `INCONCLUSIVE-no-effect` and REFUSED A MARKER. It is not a pass; it is a
+     request for a hand-written field seed.
+
+  2. THE OBJECT NOT RESTORED BETWEEN THE TWO CALLS. The globals snapshot spans
+     0x00682000..0x009C21F8 and a staged object lives outside it, so restoring
+     only globals compares A(s0) against R(A(s0)) instead of R(s0). Every
+     idempotent setter then agrees for free, and 325 candidates return void -
+     exactly that shape. The fixture is snapshotted and restored alongside the
+     globals.
+
+THE OBJECT IS SEEDED WITH ZEROS, deliberately, and that costs reach on purpose.
+This runs inside the real game with no isolation. A patterned object makes every
+pointer field a wild address, and the first body that dereferences one takes the
+game down - which is what `?help_tech@@YAXH@Z` did on the third function of
+thirty-six. Zeros make guards bail SAFELY. The consequence is that many members
+will report `INCONCLUSIVE-no-effect`, and that is the honest outcome: the
+generator says so rather than publishing agreement as proof.
 
 WHAT IS DELIBERATELY NOT GENERATED:
 
-  * anything taking arguments - staging them needs types this cannot infer
-    safely, and a wrong argument proves nothing while looking like a proof;
   * `sub_*` functions, whose arity is unknown; `ret N` is the only statement of
     it and reading that is a separate job;
-  * anything already proven, which would inflate the count without adding
-    evidence.
+  * members of a class whose `sizeof` is not pinned by a static_assert in
+    src/*.h - without the real size the fixture is the wrong length and the
+    comparison reads past the object;
+  * any argument that is not an integer-like scalar. A pointer argument would
+    need a second staged object, and a wrong one proves nothing while looking
+    like a proof;
+  * bodies below MinimumBodyBytes, which cannot disagree in an interesting way;
+  * members that are not __thiscall (QAA/__cdecl, QAG/__stdcall): the prototype
+    column is empty for those, so there is nothing to read.
+
+MARKERS ARE EARNED AT RUNTIME, NOT AT GENERATION TIME. This is the correction
+that matters most. An earlier revision published a `PROVEN-AGAINST-ORIGINAL:`
+marker for every function it emitted; 37 of them had never been run, and
+`docs/recovery/{proven,summary}.json` were promoted to match. A marker is now
+emitted only for an address that is either already recorded in proven.csv
+against this file - those were earned by three runs of three - or listed in the
+`--verdicts` file produced by an actual suite run. Generating cannot mint a
+proof.
 """
 
 from __future__ import annotations
@@ -51,6 +94,7 @@ DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_PROVEN = REPO_ROOT / "docs" / "recovery" / "proven.csv"
 DEFAULT_OUTPUT = REPO_ROOT / "src" / "generated_signature_oracle.cpp"
 DEFAULT_DLLMAIN = REPO_ROOT / "src" / "dllmain.cpp"
+DEFAULT_HEADERS = REPO_ROOT / "src"
 
 # MSVC mangling: ?name@@<scope><conv><return><args>Z. `Y` is a free function;
 # the character after it is the calling convention, then the return type, then
@@ -61,15 +105,83 @@ DEFAULT_DLLMAIN = REPO_ROOT / "src" / "dllmain.cpp"
 FREE_WITH_ARGS = re.compile(r"^\?([A-Za-z_][\w]*)@@Y([A-Z])([A-Z])([A-Z]+)@Z$")
 FREE_NO_ARG = re.compile(r"^\?([A-Za-z_][\w]*)@@Y([A-Z])([A-Z])XZ$")
 
-# Argument types that can be passed as a plain integer. A pointer or a struct
-# would need a staged object, and guessing one proves nothing while looking
-# like a proof.
-INT_ARGS = {"H": "int", "I": "unsigned int", "J": "long", "K": "unsigned long"}
+# `?method@Class@@Q<cv><conv>...` - a public member. `AE` is non-const
+# __thiscall, which is the only member shape this generates.
+MEMBER_NAME = re.compile(r"^\?([A-Za-z_][\w]*)@([A-Za-z_][\w]*)@@QAE")
+
+# The inventory's own prototype column, which states what the mangled name only
+# encodes: `int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog* this, int)`.
+PROTOTYPE = re.compile(
+    r"^(?P<ret>[A-Za-z_][\w :*]*?)\s*\(\s*(?P<conv>__\w+)\s+\?[^)]*\)"
+    r"\s*\((?P<params>.*)\)\s*$")
+
+# A static_assert in a header is the only statement of a class's real size that
+# has been checked against the original. Deriving it from the C++ type would be
+# circular: the recovered layout is what is under test.
+PINNED_SIZE = re.compile(
+    r"static_assert\(\s*sizeof\(\s*([A-Za-z_][\w]*)\s*\)\s*==\s*"
+    r"(0[xX][0-9A-Fa-f]+|\d+)")
+
+# Argument and return types that can be driven as a plain integer. A pointer or
+# a struct would need a staged object of its own.
+SCALAR_PARAMS = {
+    "int": "int",
+    "unsigned int": "unsigned int",
+    "unsigned": "unsigned int",
+    "long": "long",
+    "unsigned long": "unsigned long",
+    "short": "short",
+    "unsigned short": "unsigned short",
+    "char": "char",
+    "unsigned char": "unsigned char",
+    "signed char": "signed char",
+    "bool": "bool",
+    "uint32_t": "uint32_t",
+    "int32_t": "int32_t",
+    "uint16_t": "uint16_t",
+    "int16_t": "int16_t",
+    "uint8_t": "uint8_t",
+    "int8_t": "int8_t",
+}
+
+# A body this small cannot disagree in a way worth publishing: `xor eax,eax /
+# ret` agrees with any transcription of itself. The existing route already
+# claims a 1 B and a 3 B function, which is a wart, not a precedent to extend.
+MinimumBodyBytes = 16
 
 # Seeds every argument is driven with. Small, boundary and negative values,
 # which is where a transcription slip shows up; the same reasoning as the
 # lifted oracle's case list.
 ARGUMENT_SEEDS = (0, 1, -1, 2, 7, 0x7FFFFFFF, -0x80000000, 0x55555555)
+
+# Classes whose methods must not be driven twice, because the thing they touch
+# is not inside the snapshot and cannot be rolled back by restoring it.
+#
+#   * the audio and MIDI families own OS device handles. Calling
+#     `?close@AutoSound@@QAEXXZ` and then restoring .data does not un-release a
+#     wave device; the second call operates on a handle the first one freed.
+#     `run_runtime_oracles` has already recorded three runs ending in an
+#     unhandled division by zero at 0x004991DD inside original code reading
+#     state a .data restore had made inconsistent.
+#   * `Time` is written by ANOTHER THREAD. Time::start arms timeSetEvent with a
+#     LPTIMECALLBACK, and MultimediaProc writes Time objects that sit inside the
+#     0x00682000..0x009C21F8 window. Snapshot and restore are not atomic against
+#     it, so a callback landing between two snapshots reads as "globals differ"
+#     - a FALSE FAIL - and a restore that reverts the flag loses a WM_USER+1 the
+#     game has already posted.
+UNSAFE_CLASSES = {
+    "AutoSound", "Midi", "Sound", "Wave", "WaveControlGroup", "Wave_Device",
+    "Time",
+}
+
+# Functions that cannot be driven when the deferred oracle phase runs, each
+# with the run that proved it. `?help_tech@@YAXH@Z` reaches
+# ?draw_labs@ReportWin@@QAEXXZ, which divides by zero because the report window
+# state it reads does not exist yet. This is not an out-of-domain argument: the
+# function fails on 0 and on 1 as well.
+UNSAFE_AT_ORACLE_TIME = {
+    0x0044C880,  # ?help_tech@@YAXH@Z - divide by zero via draw_labs, args 0 and 1
+}
 
 
 def redirected_addresses(dllmain_path: Path) -> set[int]:
@@ -87,31 +199,154 @@ def redirected_addresses(dllmain_path: Path) -> set[int]:
     return {int(value, 16) for value in
             re.findall(r"^\s*(0x[0-9A-Fa-f]{8}),\s*$", text[start:end], re.M)}
 
-# Return types this can express. Anything else - a pointer, a struct, a class
-# reference - is skipped rather than guessed at.
-RETURN_TYPES = {
-    "X": ("void", "void"),
-    "H": ("int", "int"),
-    "I": ("unsigned int", "unsigned"),
-    "J": ("long", "long"),
-    "K": ("unsigned long", "unsigned long"),
-    "_N": ("bool", "bool"),
-    "E": ("unsigned char", "unsigned char"),
-    "D": ("char", "char"),
-    "F": ("short", "short"),
-    "G": ("unsigned short", "unsigned short"),
-    "M": ("float", "float"),
-    "N": ("double", "double"),
-}
 
-CONVENTIONS = {"A": "__cdecl", "G": "__stdcall", "I": "__fastcall"}
+def pinned_class_sizes(header_dir: Path) -> dict:
+    """Class sizes asserted against the original, read from src/*.h.
+
+    Only these classes can be staged: a fixture of the wrong length makes the
+    comparison read past the object, which is a false FAIL at best.
+    """
+    sizes = {}
+    for header in sorted(header_dir.glob("*.h")):
+        for name, value in PINNED_SIZE.findall(header.read_text()):
+            sizes[name] = int(value, 0)
+    return sizes
+
+
+def earned_markers(proven_path: Path, output_path: Path,
+                   verdict_path: Path | None) -> set[int]:
+    """Addresses permitted to carry a PROVEN-AGAINST-ORIGINAL marker.
+
+    Two sources, both of them records of something that actually ran:
+    proven.csv rows whose evidence names this generated file, and a verdict file
+    written by a suite run. Generation alone never mints a marker - that is what
+    put 37 unearned markers in the tree once.
+    """
+    earned = set()
+    if proven_path.exists():
+        target = output_path.name
+        with proven_path.open(newline="") as handle:
+            for row in csv.DictReader(handle):
+                if target in (row.get("evidence") or ""):
+                    earned.add(int(row["address"], 16))
+    if verdict_path is not None:
+        for line in verdict_path.read_text().splitlines():
+            # The suite prints one line per function; only an unqualified PASS
+            # earns a marker. INCONCLUSIVE-no-effect explicitly does not.
+            match = re.match(r"GENERATED-ORACLE-VERDICT:\s*(0x[0-9A-Fa-f]+)\s+PASS$",
+                             line.strip())
+            if match:
+                earned.add(int(match.group(1), 16))
+    return earned
+
+
+def scalar_parameters(params: str) -> list | None:
+    """Argument types after `this`, or None if any is not an integer scalar."""
+    text = params.strip()
+    if not text or text == "void":
+        return None
+    parts = [part.strip() for part in text.split(",")]
+    if "*" not in parts[0]:
+        return None  # the first parameter must be the receiver
+    if len(parts) == 1:
+        # Receiver only. This is the SAFEST shape the generator emits: a staged
+        # `this` and no argument domain to get wrong, which is where 588 of the
+        # unproven members sit. Refusing it would have thrown away the one
+        # cohort with no domain risk at all.
+        return []
+    types = []
+    for part in parts[1:]:
+        base = part.split()
+        # Drop a parameter name if the column carries one.
+        candidate = part if len(base) == 1 else " ".join(base[:-1]) \
+            if base[-1].isidentifier() and " ".join(base[:-1]) in SCALAR_PARAMS \
+            else part
+        candidate = candidate.strip()
+        if candidate not in SCALAR_PARAMS:
+            return None
+        types.append(SCALAR_PARAMS[candidate])
+    return types
+
+
+def member_candidate(row: dict, sizes: dict) -> dict | None:
+    """A __thiscall member with integer arguments and a pinned class size."""
+    name = row["name"]
+    named = MEMBER_NAME.match(name)
+    if not named:
+        return None
+    method, class_name = named.groups()
+    if class_name not in sizes:
+        return None  # size never asserted against the original
+    if class_name in UNSAFE_CLASSES:
+        return None  # owns an OS handle, or another thread writes it
+    prototype = (row.get("prototype") or "").strip()
+    if not prototype:
+        return None  # empty for QAA/__cdecl and QAG/__stdcall members
+    shape = PROTOTYPE.match(prototype)
+    if not shape:
+        return None
+    if shape.group("conv") != "__thiscall":
+        return None
+    ret = shape.group("ret").strip()
+    if ret != "void" and ret not in SCALAR_PARAMS:
+        return None
+    arg_types = scalar_parameters(shape.group("params"))
+    if arg_types is None:
+        return None
+    return {
+        "symbol": f"{class_name}_{method}",
+        "convention": "__thiscall",
+        "return": "void" if ret == "void" else SCALAR_PARAMS[ret],
+        "args": arg_types,
+        "class": class_name,
+        "object_size": sizes[class_name],
+    }
+
+
+def free_candidate(row: dict) -> dict | None:
+    """A free function taking (void). Arguments are refused by DOMAIN.
+
+    `?help_tech@@YAXH@Z` takes a tech id; seeded with -1 and 0x7FFFFFFF it
+    walked into ?draw_labs@ReportWin@@QAEXXZ, which divided by zero and took the
+    game down. The lifted oracle drives arbitrary integers safely because it
+    runs against an isolated memory image where a wild value can only fault the
+    harness. This runs inside the real game: a value outside a function's domain
+    is a crash, not a result, and nothing in a mangled name states the domain.
+    A free function's arguments are unguarded by any receiver, so they stay
+    refused; a member's are at least bounded by the object's own fields.
+    """
+    name = row["name"]
+    if FREE_WITH_ARGS.match(name):
+        return None
+    match = FREE_NO_ARG.match(name)
+    if not match:
+        return None
+    symbol, convention, ret = match.groups()
+    conventions = {"A": "__cdecl", "G": "__stdcall", "I": "__fastcall"}
+    returns = {
+        "X": "void", "H": "int", "I": "unsigned int", "J": "long",
+        "K": "unsigned long", "E": "unsigned char", "D": "char",
+        "F": "short", "G": "unsigned short", "M": "float", "N": "double",
+    }
+    if convention not in conventions or ret not in returns:
+        return None
+    return {
+        "symbol": symbol,
+        "convention": conventions[convention],
+        "return": returns[ret],
+        "args": [],
+        "class": None,
+        "object_size": 0,
+    }
 
 
 def candidates(functions_path: Path, proven_path: Path,
-               redirected: set) -> list[dict]:
-    # proven_path is accepted and deliberately unread - see the note in the
-    # selection loop about why filtering on it is circular.
+               redirected: set, sizes: dict | None = None) -> list:
+    # proven_path is accepted and deliberately unread for SELECTION - see the
+    # note below. It is read separately, by earned_markers(), to decide which
+    # rows may carry a marker.
     del proven_path
+    sizes = {} if sizes is None else sizes
     found = []
     with functions_path.open(newline="") as handle:
         for row in csv.DictReader(handle):
@@ -127,71 +362,55 @@ def candidates(functions_path: Path, proven_path: Path,
             # function proven twice is not double-counted either -
             # export_proven_functions.py unions islands and markers by address
             # and records both mechanisms on one row.
-
             if address not in redirected:
                 continue
-            name = row["name"]
-            match = FREE_WITH_ARGS.match(name)
-            if match:
-                symbol, convention, ret, args = match.groups()
-                # ARGUMENTS ARE REFUSED, and the reason is the DOMAIN, not
-                # the type. `?help_tech@@YAXH@Z` takes a tech id; seeded with
-                # -1 and 0x7FFFFFFF it walked into
-                # ?draw_labs@ReportWin@@QAEXXZ, which divided by zero and took
-                # the game down on the third function of thirty-six.
-                #
-                # The lifted oracle drives arbitrary integers safely because it
-                # runs against an isolated memory image, where a wild value can
-                # only fault the harness. This runs inside the real game: the
-                # original has no bounds checks and there is no isolation, so a
-                # value outside a function's domain is a crash, not a result.
-                # Nothing in a mangled name states the domain.
-                del args
+            if address in UNSAFE_AT_ORACLE_TIME:
                 continue
-            else:
-                match = FREE_NO_ARG.match(name)
-                if not match:
-                    continue
-                symbol, convention, ret = match.groups()
-                arg_types = []
-            if convention not in CONVENTIONS or ret not in RETURN_TYPES:
+            shape = free_candidate(row) or member_candidate(row, sizes)
+            if shape is None:
                 continue
-            found.append({
+            size = int(row["size"])
+            # A member's whole point is that it does something to its object, so
+            # hold it to the size floor. The zero-argument free functions
+            # already in the tree predate the floor and keep their place.
+            if shape["class"] is not None and size < MinimumBodyBytes:
+                continue
+            shape.update({
                 "address": address,
-                "name": name,
-                "symbol": symbol,
-                "convention": CONVENTIONS[convention],
-                "return": RETURN_TYPES[ret][0],
-                "args": arg_types,
-                "size": int(row["size"]),
+                "name": row["name"],
+                "size": size,
                 "source": row["source_locations"],
             })
+            found.append(shape)
     return sorted(found, key=lambda item: item["address"])
 
 
-def emit(rows: list[dict]) -> str:
-    out: list[str] = []
+def emit(rows: list, earned: set | None = None) -> str:
+    earned = set() if earned is None else earned
+    out: list = []
     w = out.append
     w("// GENERATED by tools/generate_signature_oracles.py - do not edit.")
     w("//")
     w("// Each function below is executed in its ORIGINAL form, at its canonical")
     w("// address inside the hybrid process, and compared against the recovered")
     w("// implementation reached through the same address with the redirect")
-    w("// restored. Return value AND the globals each side produces are compared;")
-    w("// these functions return void as often as not and do their work in .data.")
+    w("// restored. Return value, the globals each side produces AND the staged")
+    w("// object each side wrote are compared.")
     w("//")
-    w("// The markers below are the input to `unproven_recovered` in")
-    w("// docs/recovery/summary.json; tools/export_proven_functions.py decides")
-    w("// what counts.")
+    w("// A marker below means the function has RUN and agreed - either in the")
+    w("// three-of-three runs recorded in docs/recovery/proven.csv or in a suite")
+    w("// run whose verdicts were fed back with --verdicts. Generating this file")
+    w("// cannot mint one. An earlier revision minted 37 that had never run.")
     w("//")
-    # THE MARKERS ARE EARNED, and the selection is what earns them. Only
-    # zero-argument functions the hybrid actually redirects are admitted, and
-    # that suite has run to completion three times out of three with the game
-    # surviving and the comparison passing. Anything that could not run is
-    # refused in candidates() rather than emitted and hoped for - which is the
-    # difference between a proof and a marker.
     for row in rows:
-        w(f"// PROVEN-AGAINST-ORIGINAL: 0x{row['address']:08X}  {row['name']}")
+        if row["address"] in earned:
+            w(f"// PROVEN-AGAINST-ORIGINAL: 0x{row['address']:08X}  {row['name']}")
+    unearned = [row for row in rows if row["address"] not in earned]
+    if unearned:
+        w("//")
+        w(f"// {len(unearned)} function(s) below carry NO marker: they have not run")
+        w("// yet, or they ran and reported INCONCLUSIVE-no-effect, which means")
+        w("// every seed bailed on a guard and the agreement proves nothing.")
     w("")
     w('#include "stdafx.h"')
     w('#include "generated_signature_oracle.h"')
@@ -236,7 +455,23 @@ def emit(rows: list[dict]) -> str:
     w("    return true;")
     w("}")
     w("")
+    w("// One verdict line per function, in a form tools/ can read back. Only an")
+    w("// unqualified PASS earns a marker on the next regeneration; the whole")
+    w("// point of INCONCLUSIVE is that it must NOT.")
+    w("void verdict(uintptr_t address, const char *state, const char *name) {")
+    w('    std::printf("GENERATED-ORACLE-VERDICT: 0x%08lX %s  %s\\n",')
+    w("                (unsigned long)address, state, name);")
+    w("    std::fflush(stdout);")
+    w("}")
+    w("")
     w("}  // namespace")
+    w("")
+    # A __thiscall function POINTER is not a class method, so GCC warns on every
+    # one of them. The hand-written suites silence it the same way; the
+    # attribute is exactly what makes the receiver arrive in ECX.
+    w('#pragma GCC diagnostic push')
+    w('#pragma GCC diagnostic ignored "-Wattributes"')
+    w('#pragma GCC diagnostic ignored "-Wuseless-cast"')
     w("")
 
     for row in rows:
@@ -245,14 +480,35 @@ def emit(rows: list[dict]) -> str:
         addr = f"0x{row['address']:08X}"
         fn = f"verify_{row['symbol']}_{row['address']:08x}"
         args = row["args"]
-        params = ", ".join(args) if args else ""
-        w(f"// {row['name']}")
+        staged = row["class"] is not None
+        params = ["void *"] if staged else []
+        params += args
+        w(f"// {row['name']}  ({row['size']} B)")
         w(f"// recovered in {row['source']}")
+        if staged:
+            w(f"// staged receiver: {row['class']}, "
+              f"0x{row['object_size']:X} B, zero-filled")
         w(f"static bool {fn}() {{")
-        w(f"    typedef {ret} ({conv} *Callable)({params});")
+        w(f"    typedef {ret} ({conv} *Callable)({', '.join(params)});")
         w(f"    Callable target = reinterpret_cast<Callable>({addr}U);")
+        # ANNOUNCE BEFORE CALLING, flushed. If a body takes the game down there
+        # is no verdict line for it, and this is the only record of which one it
+        # was; commit 7a2c554 credits exactly this with turning "the game
+        # crashes" into "crashes on help_tech".
+        w(f'    std::printf("  running {row["name"]}\\n");')
+        w("    std::fflush(stdout);")
         w("    std::vector<uint8_t> before, after_original, after_recovered;")
         w("    bool passed = true;")
+        w("    bool observed_effect = false;")
+        if staged:
+            size = row["object_size"]
+            # static, not stack: Console is 0x247A8 and MapWin 0x22480, and the
+            # deferred phase runs on the game's own thread. A sibling harness
+            # already took a STATUS_STACK_OVERFLOW from a stack-reserve change.
+            w(f"    constexpr size_t ObjectSize = 0x{size:X}U;")
+            w("    alignas(16) static uint8_t staged[ObjectSize];")
+            w("    alignas(16) static uint8_t staged_seed[ObjectSize];")
+            w("    alignas(16) static uint8_t staged_original[ObjectSize];")
         if args:
             # One row per case, so a failure names the arguments that caused it.
             # long long, not the argument type: a seed of -1 or INT_MIN is a
@@ -266,16 +522,23 @@ def emit(rows: list[dict]) -> str:
                 w(f"        {{{values}}},")
             w("    };")
             w("    for (const auto &argv : cases) {")
-            call = "target(" + ", ".join(
-                f"({args[i]})argv[{i}]" for i in range(len(args))) + ")"
-            indent = "        "
         else:
             w("    {")
-            call = "target()"
-            indent = "        "
+        indent = "        "
+        actuals = []
+        if staged:
+            actuals.append("staged")
+        actuals += [f"({args[i]})argv[{i}]" for i in range(len(args))]
+        call = "target(" + ", ".join(actuals) + ")"
+        if staged:
+            # ZEROS, not a pattern: a patterned object makes every pointer field
+            # a wild address and the first dereference kills the game.
+            w(f"{indent}std::memset(staged_seed, 0, ObjectSize);")
+            w(f"{indent}std::memcpy(staged, staged_seed, ObjectSize);")
         w(f"{indent}snapshot(before);")
         w(f"{indent}if (!suspend_redirect_at({addr}U)) {{")
         w(f'{indent}    std::printf("  {row["name"]}: cannot suspend redirect\\n");')
+        w(f'{indent}    verdict({addr}U, "FAIL-no-redirect", "{row["name"]}");')
         w(f"{indent}    return false;")
         w(f"{indent}}}")
         if ret == "void":
@@ -283,9 +546,17 @@ def emit(rows: list[dict]) -> str:
         else:
             w(f"{indent}const {ret} original_result = {call};")
         w(f"{indent}snapshot(after_original);")
+        if staged:
+            w(f"{indent}std::memcpy(staged_original, staged, ObjectSize);")
         w(f"{indent}restore(before);")
+        if staged:
+            # THE FIXTURE RESTORE. Without it the recovered call starts from
+            # whatever the original left, so the comparison is A(s0) against
+            # R(A(s0)) and every idempotent setter agrees for free.
+            w(f"{indent}std::memcpy(staged, staged_seed, ObjectSize);")
         w(f"{indent}if (!resume_redirect_at({addr}U)) {{")
         w(f'{indent}    std::printf("  {row["name"]}: cannot resume redirect\\n");')
+        w(f'{indent}    verdict({addr}U, "FAIL-no-redirect", "{row["name"]}");')
         w(f"{indent}    return false;")
         w(f"{indent}}}")
         if ret == "void":
@@ -305,8 +576,41 @@ def emit(rows: list[dict]) -> str:
         w(f"{indent}                reinterpret_cast<void *>(where));")
         w(f"{indent}    passed = false;")
         w(f"{indent}}}")
+        if staged:
+            w(f"{indent}if (std::memcmp(staged_original, staged, ObjectSize) != 0) {{")
+            w(f'{indent}    std::printf("  {row["name"]}: staged object differs\\n");')
+            w(f"{indent}    passed = false;")
+            w(f"{indent}}}")
+        # EFFECT DETECTION. Did the ORIGINAL actually do anything observable
+        # from this seed? If no seed ever did, the two bodies agreed without
+        # either of them running, and that is not evidence.
+        w(f"{indent}uintptr_t moved = 0;")
+        w(f"{indent}if (!same_globals(before, after_original, &moved)) {{")
+        w(f"{indent}    observed_effect = true;")
+        w(f"{indent}}}")
+        if staged:
+            w(f"{indent}if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {{")
+            w(f"{indent}    observed_effect = true;")
+            w(f"{indent}}}")
+        if ret != "void":
+            w(f"{indent}if (original_result != ({ret})0) {{")
+            w(f"{indent}    observed_effect = true;")
+            w(f"{indent}}}")
         w("    }")
-        w("    return passed;")
+        w("    if (!passed) {")
+        w(f'        verdict({addr}U, "FAIL", "{row["name"]}");')
+        w("        return false;")
+        w("    }")
+        w("    if (!observed_effect) {")
+        # Not a failure of the suite - the bodies DID agree - but not a proof
+        # either, and the verdict line is what stops it becoming one.
+        w(f'        std::printf("  {row["name"]}: no seed produced an observable '
+          f'effect\\n");')
+        w(f'        verdict({addr}U, "INCONCLUSIVE-no-effect", "{row["name"]}");')
+        w("        return true;")
+        w("    }")
+        w(f'    verdict({addr}U, "PASS", "{row["name"]}");')
+        w("    return true;")
         w("}")
         w("")
 
@@ -327,22 +631,35 @@ def main(argv=None) -> int:
     parser.add_argument("--proven", type=Path, default=DEFAULT_PROVEN)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--dllmain", type=Path, default=DEFAULT_DLLMAIN)
+    parser.add_argument("--headers", type=Path, default=DEFAULT_HEADERS,
+                        help="directory of src/*.h to read pinned class sizes from")
+    parser.add_argument("--verdicts", type=Path,
+                        help="a suite run's output; PASS lines in it earn markers")
     parser.add_argument("--check", action="store_true",
                         help="fail if the output would differ; write nothing")
     parser.add_argument("--list", action="store_true",
                         help="print the candidates and stop")
     options = parser.parse_args(argv)
 
+    sizes = pinned_class_sizes(options.headers)
     rows = candidates(options.functions, options.proven,
-                      redirected_addresses(options.dllmain))
+                      redirected_addresses(options.dllmain), sizes)
+    earned = earned_markers(options.proven, options.output, options.verdicts)
     if options.list:
         for row in rows:
-            print(f"0x{row['address']:08X}  {row['size']:5d} B  {row['name']}")
+            kind = row["class"] or "free"
+            mark = "proven" if row["address"] in earned else "-"
+            print(f"0x{row['address']:08X}  {row['size']:5d} B  "
+                  f"{len(row['args'])} arg  {kind:14s} {mark:7s} {row['name']}")
+        members = [row for row in rows if row["class"] is not None]
         print(f"{len(rows)} candidate(s), "
-              f"{sum(row['size'] for row in rows)} bytes")
+              f"{sum(row['size'] for row in rows)} bytes; "
+              f"{len(members)} staged member(s), "
+              f"{len(rows) - len(members)} free; "
+              f"{len(earned & {row['address'] for row in rows})} carry a marker")
         return 0
 
-    text = emit(rows)
+    text = emit(rows, earned)
     if options.check:
         current = options.output.read_text() if options.output.exists() else ""
         if current != text:
