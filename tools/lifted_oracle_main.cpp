@@ -217,6 +217,13 @@ int main(int argc, char **argv) {
         auto next = [&]() { return (i + 1 < argc) ? argv[++i] : ""; };
         if (!std::strcmp(a, "--exe")) exe_path = next();
         else if (!std::strcmp(a, "--state")) state_path = next();
+        else if (!std::strcmp(a, "--remap")) {
+            const char *mode = next();
+            if (!std::strcmp(mode, "all")) g_remap_mode = OracleRemapAll;
+            else if (!std::strcmp(mode, "changed")) g_remap_mode = OracleRemapChanged;
+            else if (!std::strcmp(mode, "none")) g_remap_mode = OracleRemapNone;
+            else { std::fprintf(stderr, "oracle: --remap takes all|changed|none\n"); return 2; }
+        }
         else if (!std::strcmp(a, "--build-state")) build_state_path = next();
         else if (!std::strcmp(a, "--list")) list_path = next();
         else if (!std::strcmp(a, "--report")) report_path = next();

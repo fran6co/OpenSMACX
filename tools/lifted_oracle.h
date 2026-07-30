@@ -337,6 +337,17 @@ int oracle_bootstrap(int argc, char **argv, int *exit_code);
 const char *oracle_load_image(const char *path);
 // Overlay real .data/.bss from a hybrid dump. NEVER touches .text - see the
 // definition for why that restriction is load-bearing.
+// What --state does with a word that names something outside the flat span.
+//
+//   All      rewrite every one into the arena. The original behaviour, and it
+//            rewrites ~16,000 words per run, most of which are static data.
+//   Changed  rewrite only words the running program actually wrote. A word
+//            equal to the pristine image is a compile-time constant and cannot
+//            be a heap pointer.
+//   None     rewrite nothing, so an unfollowable pointer stays unfollowable.
+enum OracleRemapMode { OracleRemapAll, OracleRemapChanged, OracleRemapNone };
+extern OracleRemapMode g_remap_mode;
+
 const char *oracle_overlay_state(const char *path);
 
 // --build-state. Bind the loaded image's IAT to the real Win32 entry points,
