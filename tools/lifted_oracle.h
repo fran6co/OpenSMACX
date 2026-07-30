@@ -369,6 +369,7 @@ struct OracleBuildStateReport {
     uint32_t alloc_largest_refused;
     uint32_t heap_used;
     uint32_t wrote;
+    uint32_t wrote_heap;
     uint32_t dialogs;
     // Measured over the words this run CHANGED, not over the whole window.
     // Counting the window instead reads mostly the image's own static .data
