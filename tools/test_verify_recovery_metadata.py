@@ -284,6 +284,43 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
             verify_recovery_metadata.export_checkpoint_matches(
                 idb, verify_dir))
 
+    def test_refresh_counts_a_PROVEN_function_as_proven(self):
+        # The refresh path is the one most runs take, and it rebuilds
+        # summary.json's byte-weighted block. If it does not thread the proven
+        # set through, every checkpoint-reusing run publishes
+        # proven_recovered = 0 and silently moves the proven bytes back into
+        # unproven_recovered - the exact figure the project promises only ever
+        # goes down for a real reason. Measured on the real tree 2026-07-30:
+        # a line-shifting src edit triggered refresh, and 53 proven functions
+        # (6,086 B) became zero while proven.csv still held all 53 rows.
+        idb, verify_dir = self.make_export_checkpoint()
+        annotations = {
+            0x00401000: [{
+                "location": "src/first.cpp:7",
+                "status": "Complete",
+            }],
+        }
+        with mock.patch(
+                "export_recovery_inventory.load_source_annotations",
+                return_value=annotations), mock.patch(
+                "export_recovery_inventory.load_source_bindings",
+                return_value=[]), mock.patch(
+                "export_recovery_inventory.load_redirects",
+                return_value=[]), mock.patch(
+                "export_recovery_inventory.load_overrides",
+                return_value={}), mock.patch(
+                "export_recovery_inventory.load_proven_addresses",
+                return_value={0x00401000}):
+            verify_recovery_metadata.refresh_export_metadata(verify_dir)
+
+        summary = json.loads(
+            (verify_dir / "summary.json").read_text(encoding="utf-8"))
+        block = summary["functions"]["bytes"]
+        self.assertEqual(block["proven_recovered"]["functions"], 1)
+        self.assertEqual(block["proven_recovered"]["bytes"], 300)
+        self.assertEqual(block["unproven_recovered"]["functions"], 0)
+        self.assertEqual(block["unproven_recovered"]["bytes"], 0)
+
     def test_modified_export_output_forces_canonical_export(self):
         idb, verify_dir = self.make_export_checkpoint()
         (verify_dir / "functions.csv").write_text(
