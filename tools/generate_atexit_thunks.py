@@ -53,8 +53,7 @@ import pefile  # noqa: E402
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
 from generator_support import (LICENSE,  # noqa: E402
-                               identifier_of_global, read_bytes,
-                               scan_seam_bindings)
+                               identifier_of_global, scan_seam_bindings)
 from generator_support import seam_name as support_seam_name  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -146,27 +145,14 @@ def variable_of(row) -> str:
 # --------------------------------------------------------------------------
 
 
-def adjustor_module():
-    """tools/generate_adjustor_thunks, imported on demand.
-
-    That module imports this one at module scope for LICENSE, so importing it
-    back at module scope here would close the cycle: the partially initialised
-    module would not have `entry_extent` bound yet at the moment this body
-    looked it up. A deferred import is the whole fix.
-    """
-    import generate_adjustor_thunks  # noqa: PLC0415  (see the docstring)
-    return generate_adjustor_thunks
-
-
-def entry_extent(row):
-    """generate_adjustor_thunks.entry_extent, through the deferred import.
-
-    NOT `size`: that column sums every span in `body_ranges`, and 416
-    catalogued functions are split, so decoding `size` bytes from the entry of
-    one of those runs into whatever follows it.
-    """
-    return adjustor_module().entry_extent(row)
-
+# NOT `size`: that column sums every span in `body_ranges`, and 416 catalogued
+# functions are split, so decoding `size` bytes from the entry of one of those
+# runs into whatever follows it. This was reached through a deferred import for
+# as long as generate_adjustor_thunks imported this module back for its licence
+# block; both now take that from generator_support, so the cycle is gone and an
+# ordinary import says what it means.
+from generate_adjustor_thunks import (callee_pop,  # noqa: E402
+                                      entry_extent)
 
 # `extern <type> *<Name>;   // 0xADDR` - how every seam in this tree records
 # the original address it defaults to. Seams dedupe on that ADDRESS and never
@@ -393,7 +379,7 @@ def opaque_teardown_row(pe, functions, row, forward):
         return f"cannot name a seam for target {target_name}"
     if delegates.name_convention_and_arity(target_name) != ("thiscall", 0):
         return f"target {target_name} is not a nullary thiscall"
-    pop = adjustor_module().callee_pop(pe, functions, forward.target)
+    pop = callee_pop(pe, functions, forward.target)
     if pop != 0:
         return (f"target {target_name} pops {pop}"
                 if pop is not None

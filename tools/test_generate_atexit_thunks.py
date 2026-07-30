@@ -37,10 +37,13 @@ def teardown_thunk(address: int, storage: int, target: int,
 
 
 class TestEntryExtent(unittest.TestCase):
-    def test_defers_to_the_adjustor_generator(self):
-        self.assertIs(gen.adjustor_module(), adjustor)
-        self.assertIs(gen.adjustor_module().entry_extent,
-                      adjustor.entry_extent)
+    def test_it_is_the_adjustor_generator_s_own_function(self):
+        # One definition of "how many bytes of this row may be decoded", not
+        # two that agree today. This used to reach through a deferred import
+        # to dodge a module cycle; the cycle is gone, so it asserts the
+        # property directly rather than the workaround.
+        self.assertIs(gen.entry_extent, adjustor.entry_extent)
+        self.assertIs(gen.callee_pop, adjustor.callee_pop)
 
     def test_uses_end_address_not_size_for_a_split_body(self):
         # `size` sums both spans of a split function; only the entry span is

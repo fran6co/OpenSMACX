@@ -89,10 +89,10 @@ import pefile  # noqa: E402
 
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
-from generator_support import scan_seam_bindings  # noqa: E402
+from generator_support import LICENSE, scan_seam_bindings, snake  # noqa: E402
 from generator_support import seam_name as support_seam_name  # noqa: E402
-from generate_adjustor_thunks import (LICENSE, callee_pop,  # noqa: E402
-                                      camel, declaration, entry_extent, snake)
+from generate_adjustor_thunks import (callee_pop,  # noqa: E402
+                                      declaration, entry_extent)
 
 # The file the emitted bodies land in. A row that is already source-complete
 # somewhere ELSE belongs to another recovery and must not be emitted a second
@@ -191,8 +191,6 @@ STATIC_DELETE_NAME = re.compile(r"^\?\?3(\w+)@@")
 QUALIFIED_NAME = re.compile(r"^(\w+)::(\w+)$")
 UNNAMED = re.compile(r"^sub_[0-9a-fA-F]+$")
 
-DTOR_NAME = re.compile(r"^(?:j_)?\?\?1(\w+)@@")
-METHOD_NAME = re.compile(r"^\?(\w+)@(\w+)@@")
 
 # The receiver sits this far into a poisoned arena, so the largest adjustment
 # the family uses still lands inside it. Checked against the emitted rows.
