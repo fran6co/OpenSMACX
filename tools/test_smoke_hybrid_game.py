@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,11 +13,23 @@ from movie_skip import (
 )
 from smoke_hybrid_game import (
     analyze_diagnostics,
+    parse_generated_verdicts,
     prepare_runtime_oracle_result_path,
     validate_runtime_oracles,
     validate_smoke,
 )
 from setup_game import stage_pracx
+
+# Every suite src/runtime_oracle.cpp registers, phase one then deferred. The
+# gate must expect all of them by name; a suite the gate does not name is a
+# suite the gate stops checking, which is how the generated-signatures hole
+# stayed open.
+REGISTERED_SUITES = (
+    "constructor", "basebutton", "scroll", "win", "sprite", "buffer",
+    "graphicwin", "stringstruct", "spying",
+    "basebutton-release", "sprite-release", "buffer-release",
+    "generated-signatures",
+)
 
 
 class AnalyzeDiagnosticsTests(unittest.TestCase):
@@ -107,6 +120,85 @@ terranx_hybrid.exe could not load imports
             self.assertEqual(
                 validate_runtime_oracles(result),
                 {"scroll": "passed", "checkbox": "passed"})
+
+    def test_a_result_missing_an_EXPECTED_suite_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = Path(directory) / "runtime-oracle.txt"
+            result.write_text("scroll passed\nall passed\n", encoding="ascii")
+            # Terminator present, suite absent: the exact shape the gate passed
+            # on for the 108 generated oracles.
+            with self.assertRaisesRegex(
+                    RuntimeError, "never reported: generated-signatures"):
+                validate_runtime_oracles(
+                    result, ["scroll", "generated-signatures"])
+            self.assertEqual(
+                validate_runtime_oracles(result, ["scroll"]),
+                {"scroll": "passed"})
+
+    def test_THE_LAST_GREEN_GATES_OWN_RESULT_FILE_is_now_refused(self):
+        # The positive control for this whole change, and it is not synthetic:
+        # this is the file the last passing gate wrote, byte for byte. It lists
+        # twelve suites and `all passed`, and `generated-signatures` - 108
+        # oracles, zero verdict lines in the log beside it - is not among them.
+        # If this ever passes again, the check has been defeated.
+        text = (
+            "constructor passed\nbasebutton passed\nscroll passed\n"
+            "win passed\nsprite passed\nbuffer passed\ngraphicwin passed\n"
+            "stringstruct passed\nspying passed\nbasebutton-release passed\n"
+            "sprite-release passed\nbuffer-release passed\nall passed\n")
+        with tempfile.TemporaryDirectory() as directory:
+            result = Path(directory) / "runtime-oracle.txt"
+            result.write_text(text, encoding="ascii")
+            with self.assertRaisesRegex(
+                    RuntimeError, "never reported: generated-signatures"):
+                validate_runtime_oracles(result, REGISTERED_SUITES)
+
+    def test_a_result_ending_in_DEFERRED_PENDING_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = Path(directory) / "runtime-oracle.txt"
+            result.write_text("scroll passed\ndeferred pending\n",
+                              encoding="ascii")
+            with self.assertRaisesRegex(
+                    RuntimeError, "deferred suites never ran"):
+                validate_runtime_oracles(result)
+
+    def test_a_result_ending_in_REPORT_OVERFLOW_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = Path(directory) / "runtime-oracle.txt"
+            result.write_text("scroll passed\nreport-overflow\n",
+                              encoding="ascii")
+            with self.assertRaisesRegex(RuntimeError, "overflowed its buffer"):
+                validate_runtime_oracles(result)
+
+    def test_generated_verdict_lines_are_parsed_out_of_the_log(self):
+        log = (
+            "  running ?main_caption@MapWin@@QAEXXZ\n"
+            "GENERATED-ORACLE-VERDICT: 0x0046FB10 PASS ?main_caption@MapWin\n"
+            "GENERATED-ORACLE-VERDICT: 0x004456A0 INCONCLUSIVE-no-effect ?x\n"
+            "unrelated line\n")
+        self.assertEqual(
+            parse_generated_verdicts(log),
+            {0x0046FB10: "PASS",
+             0x004456A0: "INCONCLUSIVE-no-effect"})
+
+    def test_no_verdict_lines_parses_to_nothing_rather_than_failing(self):
+        # The state the tree is in today: the suite never ran, so the log has
+        # none. That must read as zero verdicts, which --expect-verdicts then
+        # refuses, rather than as a parse error somewhere else.
+        self.assertEqual(parse_generated_verdicts("err:sync:something\n"), {})
+
+    def test_the_EXPECTED_suite_set_matches_the_one_the_DLL_registers(self):
+        # The drift guard. If someone registers a suite in runtime_oracle.cpp
+        # and does not add it to the gate's expectation, the gate silently stops
+        # checking it - which is how this defect existed in the first place.
+        source = (Path(__file__).resolve().parent.parent / "src"
+                  / "runtime_oracle.cpp").read_text(encoding="utf-8")
+        registered = re.findall(r'\{"([a-z-]+)", run_\w+\}', source)
+        self.assertEqual(sorted(registered), sorted(REGISTERED_SUITES))
+        cmake = (Path(__file__).resolve().parent.parent
+                 / "CMakeLists.txt").read_text(encoding="utf-8")
+        expected = re.findall(r'--expect-oracle-suite=([a-z-]+)', cmake)
+        self.assertEqual(sorted(expected), sorted(REGISTERED_SUITES))
 
     def test_runtime_oracle_result_rejects_symlink_without_removing_target(self):
         build_root = Path(__file__).resolve().parent.parent / "build"

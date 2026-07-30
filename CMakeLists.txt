@@ -1071,6 +1071,24 @@ set(OPENSMACX_HYBRID_SMOKE_COMMAND
     --log "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke.log"
     --result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke-result.json"
     --oracle-result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-runtime-oracle-result.txt"
+    # Every suite src/runtime_oracle.cpp registers, named so the smoke fails on
+    # one that never reports rather than accepting the terminator alone. The
+    # last green gate accepted a result file with generated-signatures missing
+    # and zero verdict lines in the log; a named set is what catches that.
+    # tools/test_smoke_hybrid_game.py pins this list against the DLL's own.
+    --expect-oracle-suite=constructor
+    --expect-oracle-suite=basebutton
+    --expect-oracle-suite=scroll
+    --expect-oracle-suite=win
+    --expect-oracle-suite=sprite
+    --expect-oracle-suite=buffer
+    --expect-oracle-suite=graphicwin
+    --expect-oracle-suite=stringstruct
+    --expect-oracle-suite=spying
+    --expect-oracle-suite=basebutton-release
+    --expect-oracle-suite=sprite-release
+    --expect-oracle-suite=buffer-release
+    --expect-oracle-suite=generated-signatures
 )
 if(OPENSMACX_WINE)
     list(APPEND OPENSMACX_HYBRID_SMOKE_COMMAND --wine "${OPENSMACX_WINE}")

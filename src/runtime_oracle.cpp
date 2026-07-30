@@ -27,8 +27,15 @@ constexpr char ResultEnvironment[] = "OPENSMACX_RUNTIME_ORACLE_RESULT";
 
 // Retained from the first phase so the deferred phase can rewrite the same
 // file with its own suite lines appended.
+//
+// 4096, not 1024: adding a suite line used to be free until the report neared
+// the buffer, at which point `_snprintf_s(_TRUNCATE)` returns -1 and the write
+// was ABANDONED, leaving the previous phase's terminator standing as the last
+// line - a passing gate reporting a truncated run. The overflow is now
+// reported rather than silently dropped, and the buffer has room besides.
+constexpr size_t ReportSize = 4096;
 char ResultPath[MAX_PATH] = "";
-char PhaseOneReport[1024] = "";
+char PhaseOneReport[ReportSize] = "";
 
 struct ProbeContext {
     uint8_t *base;
@@ -52,6 +59,23 @@ const runtime_oracle::Suite Suites[] = {
     {"stringstruct", run_string_struct_oracle_suite},
     {"spying", run_spying_oracle_suite},
 };
+
+// Declared before run_runtime_oracles because phase one has to know whether a
+// deferred phase is pending: writing "all passed" while suites are still to run
+// is what let the gate report success on a run that never reached them.
+extern const runtime_oracle::Suite DeferredSuites[];
+constexpr size_t DeferredSuiteCount = 4;
+
+// Overwrite the tail of a report that would not fit with a terminator naming
+// the reason. A truncated report used to be abandoned unwritten, which left the
+// previous phase's "all passed" as the file's last line - the validator reads
+// only the last line, so an overflow read as a pass.
+void write_overflow_terminator(char *report, size_t used) {
+    constexpr char Marker[] = "report-overflow\n";
+    const size_t room = sizeof(Marker);
+    const size_t at = used + room <= ReportSize ? used : ReportSize - room;
+    memcpy(report + at, Marker, room);
+}
 
 bool write_result(const char *path, const char *result) {
     HANDLE file = CreateFileA(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
@@ -146,7 +170,7 @@ bool run_runtime_oracles() {
         ResultPath[0] = '\0';
         return false;
     }
-    char report[1024] = "";
+    char report[ReportSize] = "";
     size_t used = 0;
     bool all_passed = true;
     for (const runtime_oracle::Suite &suite : Suites) {
@@ -156,14 +180,24 @@ bool run_runtime_oracles() {
             report + used, sizeof(report) - used, _TRUNCATE, "%s %s\n",
             suite.name, suite_passed ? "passed" : "failed");
         if (written < 0) {
+            write_overflow_terminator(report, used);
+            write_result(ResultPath, report);
             return false;
         }
         used += static_cast<size_t>(written);
     }
     if (all_passed) {
+        // "all passed" is the terminator the smoke gate accepts, and phase one
+        // has NOT earned it while a deferred phase is still to run. Claiming it
+        // here is exactly how a gate killed at 20 s reported success for a
+        // deferred suite that needs far longer and never produced a verdict.
+        const char *terminator =
+            DeferredSuiteCount == 0 ? "all passed\n" : "deferred pending\n";
         const int written = _snprintf_s(
-            report + used, sizeof(report) - used, _TRUNCATE, "all passed\n");
+            report + used, sizeof(report) - used, _TRUNCATE, "%s", terminator);
         if (written < 0) {
+            write_overflow_terminator(report, used);
+            write_result(ResultPath, report);
             return false;
         }
     }
@@ -174,29 +208,35 @@ bool run_runtime_oracles() {
 
 namespace {
 
+// The generated-signatures suite IS registered. An earlier revision of this
+// comment said it was "left out", directly above the line registering it -
+// read either way round, the record was wrong.
+//
+// It belongs in the DEFERRED phase, which took three attempts to establish:
+// run_runtime_oracles() runs before InstalledSpecs is populated, so
+// suspend_redirect_at can match nothing there; and the suite must select from
+// the redirect table in dllmain.cpp, not the inventory's redirect_exports
+// column, which does not agree with it.
+//
+// What running it costs is real and is why the phase-one terminator changed.
+// The comparison restores .data/.bss between the two calls, which is right for
+// a function whose effects live there and wrong for one that allocates or
+// writes a file - ?load_deswin_sprites@@YAXXZ and ?auto_save@@YAXXZ do both -
+// and three runs out of three ended in an unhandled division by zero at
+// 0x004991DD, inside UNRECOVERED original code reading state the restore had
+// made inconsistent. Until a fault becomes a verdict rather than the end of the
+// process, a run that dies here now leaves a file naming the last suite that
+// finished, so the gate reports the truncation instead of a pass.
 const runtime_oracle::Suite DeferredSuites[] = {
     {"basebutton-release", run_base_button_release_suite},
     {"sprite-release", run_sprite_release_suite},
     {"buffer-release", run_buffer_release_suite},
     {"generated-signatures", run_generated_signature_oracles},
-    // TEMPORARILY REGISTERED to find which function takes the process down.
-    //
-    // The suite is built and linked, and it is correct about the two things
-    // that took three attempts to get right - it belongs in the DEFERRED phase,
-    // because run_runtime_oracles() runs before InstalledSpecs is populated and
-    // suspend_redirect_at can match nothing there; and it must select from the
-    // redirect table in dllmain.cpp, not the inventory's redirect_exports
-    // column, which does not agree with it.
-    //
-    // It is left out because running it kills the game. The comparison restores
-    // .data/.bss between the two calls, which is right for a function whose
-    // effects live there and wrong for one that allocates or writes a file -
-    // and ?load_deswin_sprites@@YAXXZ and ?auto_save@@YAXXZ do both. Three runs
-    // out of three ended in an unhandled division by zero at 0x004991DD, inside
-    // UNRECOVERED original code reading state the restore had made
-    // inconsistent. Re-register it once the oracles have somewhere to run that
-    // does not have to survive them.
 };
+
+static_assert(sizeof(DeferredSuites) / sizeof(DeferredSuites[0])
+                  == DeferredSuiteCount,
+              "DeferredSuiteCount must match the table phase one checks");
 
 bool DeferredCompleted = false;
 
@@ -210,16 +250,19 @@ void run_deferred_oracles() {
     }
     DeferredCompleted = true;
 
-    char report[1024] = "";
+    char report[ReportSize] = "";
     size_t used = 0;
     bool all_passed = true;
-    // Carry phase one's lines forward minus the terminator so the file stays a
+    // Carry phase one's lines forward minus its terminator so the file stays a
     // single record; if this phase never runs the earlier record still stands.
     for (const char *cursor = PhaseOneReport; *cursor; ++cursor) {
-        if (strncmp(cursor, "all passed\n", 11) == 0) {
+        if (strncmp(cursor, "deferred pending\n", 17) == 0
+            || strncmp(cursor, "all passed\n", 11) == 0) {
             break;
         }
         if (used + 2 >= sizeof(report)) {
+            write_overflow_terminator(report, used);
+            write_result(ResultPath, report);
             return;
         }
         report[used++] = *cursor;
@@ -231,13 +274,24 @@ void run_deferred_oracles() {
             report + used, sizeof(report) - used, _TRUNCATE, "%s %s\n",
             suite.name, suite_passed ? "passed" : "failed");
         if (written < 0) {
+            write_overflow_terminator(report, used);
+            write_result(ResultPath, report);
             return;
         }
         used += static_cast<size_t>(written);
+        // Rewrite after EVERY suite, not once at the end. A suite that takes
+        // the process down - or a gate that kills the process while one is
+        // still running - then leaves a file whose last line names the suite
+        // that did finish, instead of leaving phase one's terminator standing
+        // and reporting a pass for work that never happened.
+        write_result(ResultPath, report);
     }
     if (all_passed) {
-        _snprintf_s(report + used, sizeof(report) - used, _TRUNCATE,
-                    "all passed\n");
+        const int written = _snprintf_s(
+            report + used, sizeof(report) - used, _TRUNCATE, "all passed\n");
+        if (written < 0) {
+            write_overflow_terminator(report, used);
+        }
     }
     write_result(ResultPath, report);
 }
