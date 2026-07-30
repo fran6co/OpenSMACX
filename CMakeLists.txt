@@ -971,6 +971,15 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(lifted-oracle-why-not-full-tests
         test_lifted_oracle_why_not_full.py)
 
+    # Canonical address -> the bytes our compiler produced, which is one half of
+    # the SMT equivalence spike's input. Its failure mode is not finding
+    # nothing, it is finding the WRONG body and looking certain: the tests pin
+    # that a body ends at the next symbol IN ITS OWN SECTION, that an ambiguous
+    # name is refused, and that i686 fastcall decoration is undone in the one
+    # direction c++filt accepts. Fixtures are synthetic COFF; no build needed.
+    opensmacx_add_python_tool_test(compiled-recovery-extractor-tests
+        test_extract_compiled_recovery.py)
+
     # The only place in this repository where a function's ABI is written down
     # mechanically rather than guessed: the 4,821 MSVC-mangled names. The parse
     # has one trap that reads as correct - on an INSTANCE member the character
