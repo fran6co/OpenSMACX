@@ -3,18 +3,23 @@
 // Each function below is executed in its ORIGINAL form, at its canonical
 // address inside the hybrid process, and compared against the recovered
 // implementation reached through the same address with the redirect
-// restored. Return value AND the globals each side produces are compared;
-// these functions return void as often as not and do their work in .data.
+// restored. Return value, the globals each side produces AND the staged
+// object each side wrote are compared.
 //
-// The markers below are the input to `unproven_recovered` in
-// docs/recovery/summary.json; tools/export_proven_functions.py decides
-// what counts.
+// A marker below means the function has RUN and agreed - either in the
+// three-of-three runs recorded in docs/recovery/proven.csv or in a suite
+// run whose verdicts were fed back with --verdicts. Generating this file
+// cannot mint one. An earlier revision minted 37 that had never run.
 //
 // PROVEN-AGAINST-ORIGINAL: 0x004456A0  ?passover_callback@@YAXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x00455E50  ?load_deswin_sprites@@YAXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x0052DC70  ?not_my_turn@@YAHXZ
 // PROVEN-AGAINST-ORIGINAL: 0x0058EE50  ?desktop_update@@YAXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x005FD2B0  ?do_sound@@YAXXZ
+//
+// 117 function(s) below carry NO marker: they have not run
+// yet, or they ran and reported INCONCLUSIVE-no-effect, which means
+// every seed bailed on a guard and the agreement proves nothing.
 
 #include "stdafx.h"
 #include "generated_signature_oracle.h"
@@ -59,19 +64,414 @@ bool same_globals(const std::vector<uint8_t> &a,
     return true;
 }
 
+// One verdict line per function, in a form tools/ can read back. Only an
+// unqualified PASS earns a marker on the next regeneration; the whole
+// point of INCONCLUSIVE is that it must NOT.
+void verdict(uintptr_t address, const char *state, const char *name) {
+    std::printf("GENERATED-ORACLE-VERDICT: 0x%08lX %s  %s\n",
+                (unsigned long)address, state, name);
+    std::fflush(stdout);
+}
+
 }  // namespace
 
-// ?passover_callback@@YAXXZ
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+
+// ?close@StringStruct@@QAEXXZ  (153 B)
+// recovered in src/stringstruct.cpp:203
+// staged receiver: StringStruct, 0x24 B, zero-filled
+static bool verify_StringStruct_close_00401060() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00401060U);
+    std::printf("  running ?close@StringStruct@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x24U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00401060U)) {
+            std::printf("  ?close@StringStruct@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00401060U, "FAIL-no-redirect", "?close@StringStruct@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00401060U)) {
+            std::printf("  ?close@StringStruct@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00401060U, "FAIL-no-redirect", "?close@StringStruct@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@StringStruct@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@StringStruct@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00401060U, "FAIL", "?close@StringStruct@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@StringStruct@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00401060U, "INCONCLUSIVE-no-effect", "?close@StringStruct@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00401060U, "PASS", "?close@StringStruct@@QAEXXZ");
+    return true;
+}
+
+// ?seek_id@StringStruct@@QAEHH@Z  (78 B)
+// recovered in src/stringstruct.cpp:59
+// staged receiver: StringStruct, 0x24 B, zero-filled
+static bool verify_StringStruct_seek_id_00401560() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00401560U);
+    std::printf("  running ?seek_id@StringStruct@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x24U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00401560U)) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x00401560U, "FAIL-no-redirect", "?seek_id@StringStruct@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00401560U)) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x00401560U, "FAIL-no-redirect", "?seek_id@StringStruct@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00401560U, "FAIL", "?seek_id@StringStruct@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?seek_id@StringStruct@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x00401560U, "INCONCLUSIVE-no-effect", "?seek_id@StringStruct@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x00401560U, "PASS", "?seek_id@StringStruct@@QAEHH@Z");
+    return true;
+}
+
+// ?current_id@StringStruct@@QAEHXZ  (17 B)
+// recovered in src/stringstruct.cpp:18
+// staged receiver: StringStruct, 0x24 B, zero-filled
+static bool verify_StringStruct_current_id_00401640() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00401640U);
+    std::printf("  running ?current_id@StringStruct@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x24U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00401640U)) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x00401640U, "FAIL-no-redirect", "?current_id@StringStruct@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00401640U)) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x00401640U, "FAIL-no-redirect", "?current_id@StringStruct@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00401640U, "FAIL", "?current_id@StringStruct@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?current_id@StringStruct@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x00401640U, "INCONCLUSIVE-no-effect", "?current_id@StringStruct@@QAEHXZ");
+        return true;
+    }
+    verdict(0x00401640U, "PASS", "?current_id@StringStruct@@QAEHXZ");
+    return true;
+}
+
+// ?next_entry@StringStruct@@QAEHXZ  (47 B)
+// recovered in src/stringstruct.cpp:38
+// staged receiver: StringStruct, 0x24 B, zero-filled
+static bool verify_StringStruct_next_entry_00402500() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00402500U);
+    std::printf("  running ?next_entry@StringStruct@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x24U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00402500U)) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x00402500U, "FAIL-no-redirect", "?next_entry@StringStruct@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00402500U)) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x00402500U, "FAIL-no-redirect", "?next_entry@StringStruct@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00402500U, "FAIL", "?next_entry@StringStruct@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?next_entry@StringStruct@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x00402500U, "INCONCLUSIVE-no-effect", "?next_entry@StringStruct@@QAEHXZ");
+        return true;
+    }
+    verdict(0x00402500U, "PASS", "?next_entry@StringStruct@@QAEHXZ");
+    return true;
+}
+
+// ?current_entry@StringStruct@@QAEHXZ  (17 B)
+// recovered in src/stringstruct.cpp:28
+// staged receiver: StringStruct, 0x24 B, zero-filled
+static bool verify_StringStruct_current_entry_00402530() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00402530U);
+    std::printf("  running ?current_entry@StringStruct@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x24U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00402530U)) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x00402530U, "FAIL-no-redirect", "?current_entry@StringStruct@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00402530U)) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x00402530U, "FAIL-no-redirect", "?current_entry@StringStruct@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00402530U, "FAIL", "?current_entry@StringStruct@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?current_entry@StringStruct@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x00402530U, "INCONCLUSIVE-no-effect", "?current_entry@StringStruct@@QAEHXZ");
+        return true;
+    }
+    verdict(0x00402530U, "PASS", "?current_entry@StringStruct@@QAEHXZ");
+    return true;
+}
+
+// ?passover_callback@@YAXXZ  (10 B)
 // recovered in src/guarded_teardowns.cpp:104
 static bool verify_passover_callback_004456a0() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x004456A0U);
+    std::printf("  running ?passover_callback@@YAXXZ\n");
+    std::fflush(stdout);
     std::vector<uint8_t> before, after_original, after_recovered;
     bool passed = true;
+    bool observed_effect = false;
     {
         snapshot(before);
         if (!suspend_redirect_at(0x004456A0U)) {
             std::printf("  ?passover_callback@@YAXXZ: cannot suspend redirect\n");
+            verdict(0x004456A0U, "FAIL-no-redirect", "?passover_callback@@YAXXZ");
             return false;
         }
         target();
@@ -79,6 +479,7 @@ static bool verify_passover_callback_004456a0() {
         restore(before);
         if (!resume_redirect_at(0x004456A0U)) {
             std::printf("  ?passover_callback@@YAXXZ: cannot resume redirect\n");
+            verdict(0x004456A0U, "FAIL-no-redirect", "?passover_callback@@YAXXZ");
             return false;
         }
         target();
@@ -90,21 +491,39 @@ static bool verify_passover_callback_004456a0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
     }
-    return passed;
+    if (!passed) {
+        verdict(0x004456A0U, "FAIL", "?passover_callback@@YAXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?passover_callback@@YAXXZ: no seed produced an observable effect\n");
+        verdict(0x004456A0U, "INCONCLUSIVE-no-effect", "?passover_callback@@YAXXZ");
+        return true;
+    }
+    verdict(0x004456A0U, "PASS", "?passover_callback@@YAXXZ");
+    return true;
 }
 
-// ?load_deswin_sprites@@YAXXZ
+// ?load_deswin_sprites@@YAXXZ  (35 B)
 // recovered in src/leaf_recoveries.cpp:1304
 static bool verify_load_deswin_sprites_00455e50() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x00455E50U);
+    std::printf("  running ?load_deswin_sprites@@YAXXZ\n");
+    std::fflush(stdout);
     std::vector<uint8_t> before, after_original, after_recovered;
     bool passed = true;
+    bool observed_effect = false;
     {
         snapshot(before);
         if (!suspend_redirect_at(0x00455E50U)) {
             std::printf("  ?load_deswin_sprites@@YAXXZ: cannot suspend redirect\n");
+            verdict(0x00455E50U, "FAIL-no-redirect", "?load_deswin_sprites@@YAXXZ");
             return false;
         }
         target();
@@ -112,6 +531,7 @@ static bool verify_load_deswin_sprites_00455e50() {
         restore(before);
         if (!resume_redirect_at(0x00455E50U)) {
             std::printf("  ?load_deswin_sprites@@YAXXZ: cannot resume redirect\n");
+            verdict(0x00455E50U, "FAIL-no-redirect", "?load_deswin_sprites@@YAXXZ");
             return false;
         }
         target();
@@ -123,21 +543,1167 @@ static bool verify_load_deswin_sprites_00455e50() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
     }
-    return passed;
+    if (!passed) {
+        verdict(0x00455E50U, "FAIL", "?load_deswin_sprites@@YAXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?load_deswin_sprites@@YAXXZ: no seed produced an observable effect\n");
+        verdict(0x00455E50U, "INCONCLUSIVE-no-effect", "?load_deswin_sprites@@YAXXZ");
+        return true;
+    }
+    verdict(0x00455E50U, "PASS", "?load_deswin_sprites@@YAXXZ");
+    return true;
 }
 
-// ?not_my_turn@@YAHXZ
+// ?on_left_click@MapWin@@QAEXHH@Z  (37 B)
+// recovered in src/mapwin.cpp:102
+// staged receiver: MapWin, 0x22480 B, zero-filled
+static bool verify_MapWin_on_left_click_0046eba0() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x0046EBA0U);
+    std::printf("  running ?on_left_click@MapWin@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x22480U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0046EBA0U)) {
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x0046EBA0U, "FAIL-no-redirect", "?on_left_click@MapWin@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0046EBA0U)) {
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x0046EBA0U, "FAIL-no-redirect", "?on_left_click@MapWin@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0046EBA0U, "FAIL", "?on_left_click@MapWin@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x0046EBA0U, "INCONCLUSIVE-no-effect", "?on_left_click@MapWin@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x0046EBA0U, "PASS", "?on_left_click@MapWin@@QAEXHH@Z");
+    return true;
+}
+
+// ?on_right_click@MapWin@@QAEXHH@Z  (37 B)
+// recovered in src/mapwin.cpp:118
+// staged receiver: MapWin, 0x22480 B, zero-filled
+static bool verify_MapWin_on_right_click_0046ebe0() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x0046EBE0U);
+    std::printf("  running ?on_right_click@MapWin@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x22480U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0046EBE0U)) {
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x0046EBE0U, "FAIL-no-redirect", "?on_right_click@MapWin@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0046EBE0U)) {
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x0046EBE0U, "FAIL-no-redirect", "?on_right_click@MapWin@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0046EBE0U, "FAIL", "?on_right_click@MapWin@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x0046EBE0U, "INCONCLUSIVE-no-effect", "?on_right_click@MapWin@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x0046EBE0U, "PASS", "?on_right_click@MapWin@@QAEXHH@Z");
+    return true;
+}
+
+// ?main_caption@MapWin@@QAEXXZ  (16 B)
+// recovered in src/mapwin.cpp:58
+// staged receiver: MapWin, 0x22480 B, zero-filled
+static bool verify_MapWin_main_caption_0046fb10() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x0046FB10U);
+    std::printf("  running ?main_caption@MapWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x22480U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0046FB10U)) {
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x0046FB10U, "FAIL-no-redirect", "?main_caption@MapWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0046FB10U)) {
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x0046FB10U, "FAIL-no-redirect", "?main_caption@MapWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0046FB10U, "FAIL", "?main_caption@MapWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?main_caption@MapWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x0046FB10U, "INCONCLUSIVE-no-effect", "?main_caption@MapWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x0046FB10U, "PASS", "?main_caption@MapWin@@QAEXXZ");
+    return true;
+}
+
+// ?close@MapWin@@QAEXXZ  (40 B)
+// recovered in src/mapwin.cpp:76
+// staged receiver: MapWin, 0x22480 B, zero-filled
+static bool verify_MapWin_close_00470f70() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00470F70U);
+    std::printf("  running ?close@MapWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x22480U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00470F70U)) {
+            std::printf("  ?close@MapWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00470F70U, "FAIL-no-redirect", "?close@MapWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00470F70U)) {
+            std::printf("  ?close@MapWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00470F70U, "FAIL-no-redirect", "?close@MapWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@MapWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@MapWin@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00470F70U, "FAIL", "?close@MapWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@MapWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00470F70U, "INCONCLUSIVE-no-effect", "?close@MapWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00470F70U, "PASS", "?close@MapWin@@QAEXXZ");
+    return true;
+}
+
+// ?UNK1@PlanWin@@QAEXXZ  (47 B)
+// recovered in src/planwin.cpp:110
+// staged receiver: PlanWin, 0x22A64 B, zero-filled
+static bool verify_PlanWin_UNK1_0048b3c0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x0048B3C0U);
+    std::printf("  running ?UNK1@PlanWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x22A64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0048B3C0U)) {
+            std::printf("  ?UNK1@PlanWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x0048B3C0U, "FAIL-no-redirect", "?UNK1@PlanWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0048B3C0U)) {
+            std::printf("  ?UNK1@PlanWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x0048B3C0U, "FAIL-no-redirect", "?UNK1@PlanWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK1@PlanWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK1@PlanWin@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0048B3C0U, "FAIL", "?UNK1@PlanWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK1@PlanWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x0048B3C0U, "INCONCLUSIVE-no-effect", "?UNK1@PlanWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x0048B3C0U, "PASS", "?UNK1@PlanWin@@QAEXXZ");
+    return true;
+}
+
+// ?blink@PlanWin@@QAEXXZ  (43 B)
+// recovered in src/planwin.cpp:89
+// staged receiver: PlanWin, 0x22A64 B, zero-filled
+static bool verify_PlanWin_blink_0048bc20() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x0048BC20U);
+    std::printf("  running ?blink@PlanWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x22A64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0048BC20U)) {
+            std::printf("  ?blink@PlanWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x0048BC20U, "FAIL-no-redirect", "?blink@PlanWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0048BC20U)) {
+            std::printf("  ?blink@PlanWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x0048BC20U, "FAIL-no-redirect", "?blink@PlanWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?blink@PlanWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?blink@PlanWin@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0048BC20U, "FAIL", "?blink@PlanWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?blink@PlanWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x0048BC20U, "INCONCLUSIVE-no-effect", "?blink@PlanWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x0048BC20U, "PASS", "?blink@PlanWin@@QAEXXZ");
+    return true;
+}
+
+// ?edit_lock@Console@@QAEHXZ  (48 B)
+// recovered in src/console.cpp:137
+// staged receiver: Console, 0x247A8 B, zero-filled
+static bool verify_Console_edit_lock_004e1f40() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x004E1F40U);
+    std::printf("  running ?edit_lock@Console@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x247A8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004E1F40U)) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x004E1F40U, "FAIL-no-redirect", "?edit_lock@Console@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004E1F40U)) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x004E1F40U, "FAIL-no-redirect", "?edit_lock@Console@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x004E1F40U, "FAIL", "?edit_lock@Console@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?edit_lock@Console@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x004E1F40U, "INCONCLUSIVE-no-effect", "?edit_lock@Console@@QAEHXZ");
+        return true;
+    }
+    verdict(0x004E1F40U, "PASS", "?edit_lock@Console@@QAEHXZ");
+    return true;
+}
+
+// ?close@AlphaNet@@QAEXXZ  (40 B)
+// recovered in src/alphanet.cpp:113
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+static bool verify_AlphaNet_close_004e25b0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x004E25B0U);
+    std::printf("  running ?close@AlphaNet@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x14A0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004E25B0U)) {
+            std::printf("  ?close@AlphaNet@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x004E25B0U, "FAIL-no-redirect", "?close@AlphaNet@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004E25B0U)) {
+            std::printf("  ?close@AlphaNet@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x004E25B0U, "FAIL-no-redirect", "?close@AlphaNet@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@AlphaNet@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@AlphaNet@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x004E25B0U, "FAIL", "?close@AlphaNet@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@AlphaNet@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x004E25B0U, "INCONCLUSIVE-no-effect", "?close@AlphaNet@@QAEXXZ");
+        return true;
+    }
+    verdict(0x004E25B0U, "PASS", "?close@AlphaNet@@QAEXXZ");
+    return true;
+}
+
+// ?pid_2_idx@AlphaNet@@QAEHK@Z  (39 B)
+// recovered in src/alphanet.cpp:15
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+static bool verify_AlphaNet_pid_2_idx_004e25e0() {
+    typedef int (__thiscall *Callable)(void *, unsigned int);
+    Callable target = reinterpret_cast<Callable>(0x004E25E0U);
+    std::printf("  running ?pid_2_idx@AlphaNet@@QAEHK@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x14A0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004E25E0U)) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: cannot suspend redirect\n");
+            verdict(0x004E25E0U, "FAIL-no-redirect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            return false;
+        }
+        const int original_result = target(staged, (unsigned int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004E25E0U)) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: cannot resume redirect\n");
+            verdict(0x004E25E0U, "FAIL-no-redirect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (unsigned int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x004E25E0U, "FAIL", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: no seed produced an observable effect\n");
+        verdict(0x004E25E0U, "INCONCLUSIVE-no-effect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+        return true;
+    }
+    verdict(0x004E25E0U, "PASS", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+    return true;
+}
+
+// ?pid_2_who@AlphaNet@@QAEHK@Z  (67 B)
+// recovered in src/alphanet.cpp:33
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+static bool verify_AlphaNet_pid_2_who_004e2610() {
+    typedef int (__thiscall *Callable)(void *, unsigned int);
+    Callable target = reinterpret_cast<Callable>(0x004E2610U);
+    std::printf("  running ?pid_2_who@AlphaNet@@QAEHK@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x14A0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004E2610U)) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: cannot suspend redirect\n");
+            verdict(0x004E2610U, "FAIL-no-redirect", "?pid_2_who@AlphaNet@@QAEHK@Z");
+            return false;
+        }
+        const int original_result = target(staged, (unsigned int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004E2610U)) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: cannot resume redirect\n");
+            verdict(0x004E2610U, "FAIL-no-redirect", "?pid_2_who@AlphaNet@@QAEHK@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (unsigned int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x004E2610U, "FAIL", "?pid_2_who@AlphaNet@@QAEHK@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: no seed produced an observable effect\n");
+        verdict(0x004E2610U, "INCONCLUSIVE-no-effect", "?pid_2_who@AlphaNet@@QAEHK@Z");
+        return true;
+    }
+    verdict(0x004E2610U, "PASS", "?pid_2_who@AlphaNet@@QAEHK@Z");
+    return true;
+}
+
+// ?who_2_pid@AlphaNet@@QAEHH@Z  (72 B)
+// recovered in src/alphanet.cpp:53
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+static bool verify_AlphaNet_who_2_pid_004e2660() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x004E2660U);
+    std::printf("  running ?who_2_pid@AlphaNet@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x14A0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004E2660U)) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x004E2660U, "FAIL-no-redirect", "?who_2_pid@AlphaNet@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004E2660U)) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x004E2660U, "FAIL-no-redirect", "?who_2_pid@AlphaNet@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x004E2660U, "FAIL", "?who_2_pid@AlphaNet@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x004E2660U, "INCONCLUSIVE-no-effect", "?who_2_pid@AlphaNet@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x004E2660U, "PASS", "?who_2_pid@AlphaNet@@QAEHH@Z");
+    return true;
+}
+
+// ?who_2_idx@AlphaNet@@QAEXH@Z  (44 B)
+// recovered in src/alphanet.cpp:73
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+static bool verify_AlphaNet_who_2_idx_004e26b0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x004E26B0U);
+    std::printf("  running ?who_2_idx@AlphaNet@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x14A0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004E26B0U)) {
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x004E26B0U, "FAIL-no-redirect", "?who_2_idx@AlphaNet@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004E26B0U)) {
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x004E26B0U, "FAIL-no-redirect", "?who_2_idx@AlphaNet@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x004E26B0U, "FAIL", "?who_2_idx@AlphaNet@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x004E26B0U, "INCONCLUSIVE-no-effect", "?who_2_idx@AlphaNet@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x004E26B0U, "PASS", "?who_2_idx@AlphaNet@@QAEXH@Z");
+    return true;
+}
+
+// ?clear_group@Console@@QAEXXZ  (43 B)
+// recovered in src/console.cpp:108
+// staged receiver: Console, 0x247A8 B, zero-filled
+static bool verify_Console_clear_group_0050f650() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x0050F650U);
+    std::printf("  running ?clear_group@Console@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x247A8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0050F650U)) {
+            std::printf("  ?clear_group@Console@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x0050F650U, "FAIL-no-redirect", "?clear_group@Console@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0050F650U)) {
+            std::printf("  ?clear_group@Console@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x0050F650U, "FAIL-no-redirect", "?clear_group@Console@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?clear_group@Console@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?clear_group@Console@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0050F650U, "FAIL", "?clear_group@Console@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?clear_group@Console@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x0050F650U, "INCONCLUSIVE-no-effect", "?clear_group@Console@@QAEXXZ");
+        return true;
+    }
+    verdict(0x0050F650U, "PASS", "?clear_group@Console@@QAEXXZ");
+    return true;
+}
+
+// ?focus@Console@@QAEXHHH@Z  (259 B)
+// recovered in src/console.cpp:250
+// staged receiver: Console, 0x247A8 B, zero-filled
+static bool verify_Console_focus_005108a0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005108A0U);
+    std::printf("  running ?focus@Console@@QAEXHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x247A8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][3] = {
+        {0, 1, -1},
+        {1, -1, 2},
+        {-1, 2, 7},
+        {2, 7, 2147483647},
+        {7, 2147483647, -2147483648},
+        {2147483647, -2147483648, 1431655765},
+        {-2147483648, 1431655765, 0},
+        {1431655765, 0, 1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005108A0U)) {
+            std::printf("  ?focus@Console@@QAEXHHH@Z: cannot suspend redirect\n");
+            verdict(0x005108A0U, "FAIL-no-redirect", "?focus@Console@@QAEXHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005108A0U)) {
+            std::printf("  ?focus@Console@@QAEXHHH@Z: cannot resume redirect\n");
+            verdict(0x005108A0U, "FAIL-no-redirect", "?focus@Console@@QAEXHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?focus@Console@@QAEXHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?focus@Console@@QAEXHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005108A0U, "FAIL", "?focus@Console@@QAEXHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?focus@Console@@QAEXHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005108A0U, "INCONCLUSIVE-no-effect", "?focus@Console@@QAEXHHH@Z");
+        return true;
+    }
+    verdict(0x005108A0U, "PASS", "?focus@Console@@QAEXHHH@Z");
+    return true;
+}
+
+// ?update_data@Console@@QAEXH@Z  (42 B)
+// recovered in src/console.cpp:195
+// staged receiver: Console, 0x247A8 B, zero-filled
+static bool verify_Console_update_data_00514880() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00514880U);
+    std::printf("  running ?update_data@Console@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x247A8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00514880U)) {
+            std::printf("  ?update_data@Console@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00514880U, "FAIL-no-redirect", "?update_data@Console@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00514880U)) {
+            std::printf("  ?update_data@Console@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00514880U, "FAIL-no-redirect", "?update_data@Console@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?update_data@Console@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?update_data@Console@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00514880U, "FAIL", "?update_data@Console@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?update_data@Console@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00514880U, "INCONCLUSIVE-no-effect", "?update_data@Console@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00514880U, "PASS", "?update_data@Console@@QAEXH@Z");
+    return true;
+}
+
+// ?not_my_turn@@YAHXZ  (44 B)
 // recovered in src/game.cpp:53
 static bool verify_not_my_turn_0052dc70() {
     typedef int (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x0052DC70U);
+    std::printf("  running ?not_my_turn@@YAHXZ\n");
+    std::fflush(stdout);
     std::vector<uint8_t> before, after_original, after_recovered;
     bool passed = true;
+    bool observed_effect = false;
     {
         snapshot(before);
         if (!suspend_redirect_at(0x0052DC70U)) {
             std::printf("  ?not_my_turn@@YAHXZ: cannot suspend redirect\n");
+            verdict(0x0052DC70U, "FAIL-no-redirect", "?not_my_turn@@YAHXZ");
             return false;
         }
         const int original_result = target();
@@ -145,6 +1711,7 @@ static bool verify_not_my_turn_0052dc70() {
         restore(before);
         if (!resume_redirect_at(0x0052DC70U)) {
             std::printf("  ?not_my_turn@@YAHXZ: cannot resume redirect\n");
+            verdict(0x0052DC70U, "FAIL-no-redirect", "?not_my_turn@@YAHXZ");
             return false;
         }
         const int recovered_result = target();
@@ -160,21 +1727,42 @@ static bool verify_not_my_turn_0052dc70() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
     }
-    return passed;
+    if (!passed) {
+        verdict(0x0052DC70U, "FAIL", "?not_my_turn@@YAHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?not_my_turn@@YAHXZ: no seed produced an observable effect\n");
+        verdict(0x0052DC70U, "INCONCLUSIVE-no-effect", "?not_my_turn@@YAHXZ");
+        return true;
+    }
+    verdict(0x0052DC70U, "PASS", "?not_my_turn@@YAHXZ");
+    return true;
 }
 
-// ?desktop_update@@YAXXZ
+// ?desktop_update@@YAXXZ  (1 B)
 // recovered in src/maininterface.cpp:42
 static bool verify_desktop_update_0058ee50() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x0058EE50U);
+    std::printf("  running ?desktop_update@@YAXXZ\n");
+    std::fflush(stdout);
     std::vector<uint8_t> before, after_original, after_recovered;
     bool passed = true;
+    bool observed_effect = false;
     {
         snapshot(before);
         if (!suspend_redirect_at(0x0058EE50U)) {
             std::printf("  ?desktop_update@@YAXXZ: cannot suspend redirect\n");
+            verdict(0x0058EE50U, "FAIL-no-redirect", "?desktop_update@@YAXXZ");
             return false;
         }
         target();
@@ -182,6 +1770,7 @@ static bool verify_desktop_update_0058ee50() {
         restore(before);
         if (!resume_redirect_at(0x0058EE50U)) {
             std::printf("  ?desktop_update@@YAXXZ: cannot resume redirect\n");
+            verdict(0x0058EE50U, "FAIL-no-redirect", "?desktop_update@@YAXXZ");
             return false;
         }
         target();
@@ -193,21 +1782,4322 @@ static bool verify_desktop_update_0058ee50() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
     }
-    return passed;
+    if (!passed) {
+        verdict(0x0058EE50U, "FAIL", "?desktop_update@@YAXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?desktop_update@@YAXXZ: no seed produced an observable effect\n");
+        verdict(0x0058EE50U, "INCONCLUSIVE-no-effect", "?desktop_update@@YAXXZ");
+        return true;
+    }
+    verdict(0x0058EE50U, "PASS", "?desktop_update@@YAXXZ");
+    return true;
 }
 
-// ?do_sound@@YAXXZ
+// ?close@GraphicWin@@QAEXXZ  (166 B)
+// recovered in src/graphicwin.cpp:131
+// staged receiver: GraphicWin, 0xA14 B, zero-filled
+static bool verify_GraphicWin_close_005d4e40() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005D4E40U);
+    std::printf("  running ?close@GraphicWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xA14U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005D4E40U)) {
+            std::printf("  ?close@GraphicWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005D4E40U, "FAIL-no-redirect", "?close@GraphicWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005D4E40U)) {
+            std::printf("  ?close@GraphicWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005D4E40U, "FAIL-no-redirect", "?close@GraphicWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@GraphicWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@GraphicWin@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005D4E40U, "FAIL", "?close@GraphicWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@GraphicWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005D4E40U, "INCONCLUSIVE-no-effect", "?close@GraphicWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005D4E40U, "PASS", "?close@GraphicWin@@QAEXXZ");
+    return true;
+}
+
+// ?fill@GraphicWin@@QAEXH@Z  (246 B)
+// recovered in src/graphicwin.cpp:267
+// staged receiver: GraphicWin, 0xA14 B, zero-filled
+static bool verify_GraphicWin_fill_005d5250() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005D5250U);
+    std::printf("  running ?fill@GraphicWin@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xA14U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005D5250U)) {
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005D5250U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005D5250U)) {
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005D5250U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005D5250U, "FAIL", "?fill@GraphicWin@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?fill@GraphicWin@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005D5250U, "INCONCLUSIVE-no-effect", "?fill@GraphicWin@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005D5250U, "PASS", "?fill@GraphicWin@@QAEXH@Z");
+    return true;
+}
+
+// ?fill@GraphicWin@@QAEHHHHHH@Z  (39 B)
+// recovered in src/graphicwin.cpp:223
+// staged receiver: GraphicWin, 0xA14 B, zero-filled
+static bool verify_GraphicWin_fill_005d5440() {
+    typedef int (__thiscall *Callable)(void *, int, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005D5440U);
+    std::printf("  running ?fill@GraphicWin@@QAEHHHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xA14U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][5] = {
+        {0, 1, -1, 2, 7},
+        {1, -1, 2, 7, 2147483647},
+        {-1, 2, 7, 2147483647, -2147483648},
+        {2, 7, 2147483647, -2147483648, 1431655765},
+        {7, 2147483647, -2147483648, 1431655765, 0},
+        {2147483647, -2147483648, 1431655765, 0, 1},
+        {-2147483648, 1431655765, 0, 1, -1},
+        {1431655765, 0, 1, -1, 2},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005D5440U)) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: cannot suspend redirect\n");
+            verdict(0x005D5440U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEHHHHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005D5440U)) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: cannot resume redirect\n");
+            verdict(0x005D5440U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEHHHHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005D5440U, "FAIL", "?fill@GraphicWin@@QAEHHHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005D5440U, "INCONCLUSIVE-no-effect", "?fill@GraphicWin@@QAEHHHHHH@Z");
+        return true;
+    }
+    verdict(0x005D5440U, "PASS", "?fill@GraphicWin@@QAEHHHHHH@Z");
+    return true;
+}
+
+// ?redraw@GraphicWin@@QAEXXZ  (244 B)
+// recovered in src/graphicwin.cpp:335
+// staged receiver: GraphicWin, 0xA14 B, zero-filled
+static bool verify_GraphicWin_redraw_005d5a70() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005D5A70U);
+    std::printf("  running ?redraw@GraphicWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xA14U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005D5A70U)) {
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005D5A70U, "FAIL-no-redirect", "?redraw@GraphicWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005D5A70U)) {
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005D5A70U, "FAIL-no-redirect", "?redraw@GraphicWin@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005D5A70U, "FAIL", "?redraw@GraphicWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?redraw@GraphicWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005D5A70U, "INCONCLUSIVE-no-effect", "?redraw@GraphicWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005D5A70U, "PASS", "?redraw@GraphicWin@@QAEXXZ");
+    return true;
+}
+
+// ?close@Buffer@@QAEXXZ  (501 B)
+// recovered in src/buffer.cpp:480
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_close_005d7470() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005D7470U);
+    std::printf("  running ?close@Buffer@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005D7470U)) {
+            std::printf("  ?close@Buffer@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005D7470U, "FAIL-no-redirect", "?close@Buffer@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005D7470U)) {
+            std::printf("  ?close@Buffer@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005D7470U, "FAIL-no-redirect", "?close@Buffer@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@Buffer@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@Buffer@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005D7470U, "FAIL", "?close@Buffer@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@Buffer@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005D7470U, "INCONCLUSIVE-no-effect", "?close@Buffer@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005D7470U, "PASS", "?close@Buffer@@QAEXXZ");
+    return true;
+}
+
+// ?set_text_color@Buffer@@QAEXHHHH@Z  (43 B)
+// recovered in src/buffer.cpp:162
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_set_text_color_005dacb0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005DACB0U);
+    std::printf("  running ?set_text_color@Buffer@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DACB0U)) {
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x005DACB0U, "FAIL-no-redirect", "?set_text_color@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DACB0U)) {
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x005DACB0U, "FAIL-no-redirect", "?set_text_color@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DACB0U, "FAIL", "?set_text_color@Buffer@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005DACB0U, "INCONCLUSIVE-no-effect", "?set_text_color@Buffer@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x005DACB0U, "PASS", "?set_text_color@Buffer@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_text_color2@Buffer@@QAEXHHHH@Z  (43 B)
+// recovered in src/buffer.cpp:175
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_set_text_color2_005dace0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005DACE0U);
+    std::printf("  running ?set_text_color2@Buffer@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DACE0U)) {
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x005DACE0U, "FAIL-no-redirect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DACE0U)) {
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x005DACE0U, "FAIL-no-redirect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DACE0U, "FAIL", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005DACE0U, "INCONCLUSIVE-no-effect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x005DACE0U, "PASS", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_text_color3@Buffer@@QAEXHHHH@Z  (43 B)
+// recovered in src/buffer.cpp:188
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_set_text_color3_005dad10() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005DAD10U);
+    std::printf("  running ?set_text_color3@Buffer@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DAD10U)) {
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x005DAD10U, "FAIL-no-redirect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DAD10U)) {
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x005DAD10U, "FAIL-no-redirect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DAD10U, "FAIL", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005DAD10U, "INCONCLUSIVE-no-effect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x005DAD10U, "PASS", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_text_color_hyper@Buffer@@QAEXHHHH@Z  (43 B)
+// recovered in src/buffer.cpp:201
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_set_text_color_hyper_005dad40() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005DAD40U);
+    std::printf("  running ?set_text_color_hyper@Buffer@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DAD40U)) {
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x005DAD40U, "FAIL-no-redirect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DAD40U)) {
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x005DAD40U, "FAIL-no-redirect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DAD40U, "FAIL", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005DAD40U, "INCONCLUSIVE-no-effect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x005DAD40U, "PASS", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?text_height@Buffer@@QAEHXZ  (37 B)
+// recovered in src/buffer.cpp:750
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_text_height_005dca80() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005DCA80U);
+    std::printf("  running ?text_height@Buffer@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DCA80U)) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005DCA80U, "FAIL-no-redirect", "?text_height@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DCA80U)) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005DCA80U, "FAIL-no-redirect", "?text_height@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DCA80U, "FAIL", "?text_height@Buffer@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?text_height@Buffer@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005DCA80U, "INCONCLUSIVE-no-effect", "?text_height@Buffer@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005DCA80U, "PASS", "?text_height@Buffer@@QAEHXZ");
+    return true;
+}
+
+// ?text_line_height@Buffer@@QAEHXZ  (43 B)
+// recovered in src/buffer.cpp:368
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_text_line_height_005dcab0() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005DCAB0U);
+    std::printf("  running ?text_line_height@Buffer@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DCAB0U)) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005DCAB0U, "FAIL-no-redirect", "?text_line_height@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DCAB0U)) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005DCAB0U, "FAIL-no-redirect", "?text_line_height@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DCAB0U, "FAIL", "?text_line_height@Buffer@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?text_line_height@Buffer@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005DCAB0U, "INCONCLUSIVE-no-effect", "?text_line_height@Buffer@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005DCAB0U, "PASS", "?text_line_height@Buffer@@QAEHXZ");
+    return true;
+}
+
+// ?clear_links@Buffer@@QAEXXZ  (68 B)
+// recovered in src/buffer.cpp:951
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_clear_links_005def90() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005DEF90U);
+    std::printf("  running ?clear_links@Buffer@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005DEF90U)) {
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005DEF90U, "FAIL-no-redirect", "?clear_links@Buffer@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005DEF90U)) {
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005DEF90U, "FAIL-no-redirect", "?clear_links@Buffer@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005DEF90U, "FAIL", "?clear_links@Buffer@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?clear_links@Buffer@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005DEF90U, "INCONCLUSIVE-no-effect", "?clear_links@Buffer@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005DEF90U, "PASS", "?clear_links@Buffer@@QAEXXZ");
+    return true;
+}
+
+// ?get_data@Buffer@@QAEHXZ  (119 B)
+// recovered in src/buffer.cpp:285
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_get_data_005e3373() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005E3373U);
+    std::printf("  running ?get_data@Buffer@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005E3373U)) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005E3373U, "FAIL-no-redirect", "?get_data@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005E3373U)) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005E3373U, "FAIL-no-redirect", "?get_data@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005E3373U, "FAIL", "?get_data@Buffer@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_data@Buffer@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005E3373U, "INCONCLUSIVE-no-effect", "?get_data@Buffer@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005E3373U, "PASS", "?get_data@Buffer@@QAEHXZ");
+    return true;
+}
+
+// ?free_data@Buffer@@QAEXH@Z  (88 B)
+// recovered in src/buffer.cpp:330
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_free_data_005e34a3() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005E34A3U);
+    std::printf("  running ?free_data@Buffer@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005E34A3U)) {
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005E34A3U, "FAIL-no-redirect", "?free_data@Buffer@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005E34A3U)) {
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005E34A3U, "FAIL-no-redirect", "?free_data@Buffer@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005E34A3U, "FAIL", "?free_data@Buffer@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?free_data@Buffer@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005E34A3U, "INCONCLUSIVE-no-effect", "?free_data@Buffer@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005E34A3U, "PASS", "?free_data@Buffer@@QAEXH@Z");
+    return true;
+}
+
+// ?get_hdc@Buffer@@QAEHXZ  (89 B)
+// recovered in src/buffer.cpp:633
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_get_hdc_005e3503() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005E3503U);
+    std::printf("  running ?get_hdc@Buffer@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005E3503U)) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005E3503U, "FAIL-no-redirect", "?get_hdc@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005E3503U)) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005E3503U, "FAIL-no-redirect", "?get_hdc@Buffer@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005E3503U, "FAIL", "?get_hdc@Buffer@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_hdc@Buffer@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005E3503U, "INCONCLUSIVE-no-effect", "?get_hdc@Buffer@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005E3503U, "PASS", "?get_hdc@Buffer@@QAEHXZ");
+    return true;
+}
+
+// ?release_hdc@Buffer@@QAEXH@Z  (96 B)
+// recovered in src/buffer.cpp:667
+// staged receiver: Buffer, 0x588 B, zero-filled
+static bool verify_Buffer_release_hdc_005e3563() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005E3563U);
+    std::printf("  running ?release_hdc@Buffer@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x588U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005E3563U)) {
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005E3563U, "FAIL-no-redirect", "?release_hdc@Buffer@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005E3563U)) {
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005E3563U, "FAIL-no-redirect", "?release_hdc@Buffer@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005E3563U, "FAIL", "?release_hdc@Buffer@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?release_hdc@Buffer@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005E3563U, "INCONCLUSIVE-no-effect", "?release_hdc@Buffer@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005E3563U, "PASS", "?release_hdc@Buffer@@QAEXH@Z");
+    return true;
+}
+
+// ?close@Sprite@@QAEXXZ  (100 B)
+// recovered in src/sprite.cpp:65
+// staged receiver: Sprite, 0x2C B, zero-filled
+static bool verify_Sprite_close_005e3820() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005E3820U);
+    std::printf("  running ?close@Sprite@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x2CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005E3820U)) {
+            std::printf("  ?close@Sprite@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005E3820U, "FAIL-no-redirect", "?close@Sprite@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005E3820U)) {
+            std::printf("  ?close@Sprite@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005E3820U, "FAIL-no-redirect", "?close@Sprite@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@Sprite@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@Sprite@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005E3820U, "FAIL", "?close@Sprite@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@Sprite@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005E3820U, "INCONCLUSIVE-no-effect", "?close@Sprite@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005E3820U, "PASS", "?close@Sprite@@QAEXXZ");
+    return true;
+}
+
+// ?set_cursor@Win@@QAEHH@Z  (62 B)
+// recovered in src/win.cpp:549
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_cursor_005ec7c0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EC7C0U);
+    std::printf("  running ?set_cursor@Win@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EC7C0U)) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005EC7C0U, "FAIL-no-redirect", "?set_cursor@Win@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EC7C0U)) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005EC7C0U, "FAIL-no-redirect", "?set_cursor@Win@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EC7C0U, "FAIL", "?set_cursor@Win@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_cursor@Win@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005EC7C0U, "INCONCLUSIVE-no-effect", "?set_cursor@Win@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005EC7C0U, "PASS", "?set_cursor@Win@@QAEHH@Z");
+    return true;
+}
+
+// ?UNK3@Win@@QAEHH@Z  (54 B)
+// recovered in src/win.cpp:897
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_UNK3_005ece80() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005ECE80U);
+    std::printf("  running ?UNK3@Win@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005ECE80U)) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005ECE80U, "FAIL-no-redirect", "?UNK3@Win@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005ECE80U)) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005ECE80U, "FAIL-no-redirect", "?UNK3@Win@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005ECE80U, "FAIL", "?UNK3@Win@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK3@Win@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005ECE80U, "INCONCLUSIVE-no-effect", "?UNK3@Win@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005ECE80U, "PASS", "?UNK3@Win@@QAEHH@Z");
+    return true;
+}
+
+// ?move@Win@@QAEHHH@Z  (167 B)
+// recovered in src/win.cpp:165
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_move_005ed7d0() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005ED7D0U);
+    std::printf("  running ?move@Win@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005ED7D0U)) {
+            std::printf("  ?move@Win@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005ED7D0U, "FAIL-no-redirect", "?move@Win@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005ED7D0U)) {
+            std::printf("  ?move@Win@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005ED7D0U, "FAIL-no-redirect", "?move@Win@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?move@Win@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?move@Win@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?move@Win@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005ED7D0U, "FAIL", "?move@Win@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?move@Win@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005ED7D0U, "INCONCLUSIVE-no-effect", "?move@Win@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005ED7D0U, "PASS", "?move@Win@@QAEHHH@Z");
+    return true;
+}
+
+// ?set_vert_pos@Win@@QAEXH@Z  (23 B)
+// recovered in src/win.cpp:813
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_vert_pos_005ee030() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE030U);
+    std::printf("  running ?set_vert_pos@Win@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE030U)) {
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005EE030U, "FAIL-no-redirect", "?set_vert_pos@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE030U)) {
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005EE030U, "FAIL-no-redirect", "?set_vert_pos@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE030U, "FAIL", "?set_vert_pos@Win@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_vert_pos@Win@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE030U, "INCONCLUSIVE-no-effect", "?set_vert_pos@Win@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005EE030U, "PASS", "?set_vert_pos@Win@@QAEXH@Z");
+    return true;
+}
+
+// ?get_vert_pos@Win@@QAEHXZ  (20 B)
+// recovered in src/win.cpp:246
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_get_vert_pos_005ee050() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005EE050U);
+    std::printf("  running ?get_vert_pos@Win@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE050U)) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005EE050U, "FAIL-no-redirect", "?get_vert_pos@Win@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE050U)) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005EE050U, "FAIL-no-redirect", "?get_vert_pos@Win@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE050U, "FAIL", "?get_vert_pos@Win@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_vert_pos@Win@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005EE050U, "INCONCLUSIVE-no-effect", "?get_vert_pos@Win@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005EE050U, "PASS", "?get_vert_pos@Win@@QAEHXZ");
+    return true;
+}
+
+// ?set_horz_pos@Win@@QAEXH@Z  (23 B)
+// recovered in src/win.cpp:826
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_horz_pos_005ee070() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE070U);
+    std::printf("  running ?set_horz_pos@Win@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE070U)) {
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005EE070U, "FAIL-no-redirect", "?set_horz_pos@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE070U)) {
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005EE070U, "FAIL-no-redirect", "?set_horz_pos@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE070U, "FAIL", "?set_horz_pos@Win@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_horz_pos@Win@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE070U, "INCONCLUSIVE-no-effect", "?set_horz_pos@Win@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005EE070U, "PASS", "?set_horz_pos@Win@@QAEXH@Z");
+    return true;
+}
+
+// ?get_horz_pos@Win@@QAEHXZ  (20 B)
+// recovered in src/win.cpp:263
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_get_horz_pos_005ee090() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005EE090U);
+    std::printf("  running ?get_horz_pos@Win@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE090U)) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005EE090U, "FAIL-no-redirect", "?get_horz_pos@Win@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE090U)) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005EE090U, "FAIL-no-redirect", "?get_horz_pos@Win@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE090U, "FAIL", "?get_horz_pos@Win@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_horz_pos@Win@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005EE090U, "INCONCLUSIVE-no-effect", "?get_horz_pos@Win@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005EE090U, "PASS", "?get_horz_pos@Win@@QAEHXZ");
+    return true;
+}
+
+// ?set_vert_range@Win@@QAEXHH@Z  (28 B)
+// recovered in src/win.cpp:839
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_vert_range_005ee0b0() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE0B0U);
+    std::printf("  running ?set_vert_range@Win@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE0B0U)) {
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x005EE0B0U, "FAIL-no-redirect", "?set_vert_range@Win@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE0B0U)) {
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x005EE0B0U, "FAIL-no-redirect", "?set_vert_range@Win@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE0B0U, "FAIL", "?set_vert_range@Win@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_vert_range@Win@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE0B0U, "INCONCLUSIVE-no-effect", "?set_vert_range@Win@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x005EE0B0U, "PASS", "?set_vert_range@Win@@QAEXHH@Z");
+    return true;
+}
+
+// ?set_horz_range@Win@@QAEXHH@Z  (28 B)
+// recovered in src/win.cpp:852
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_horz_range_005ee0d0() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE0D0U);
+    std::printf("  running ?set_horz_range@Win@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE0D0U)) {
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x005EE0D0U, "FAIL-no-redirect", "?set_horz_range@Win@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE0D0U)) {
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x005EE0D0U, "FAIL-no-redirect", "?set_horz_range@Win@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE0D0U, "FAIL", "?set_horz_range@Win@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_horz_range@Win@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE0D0U, "INCONCLUSIVE-no-effect", "?set_horz_range@Win@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x005EE0D0U, "PASS", "?set_horz_range@Win@@QAEXHH@Z");
+    return true;
+}
+
+// ?set_vert_paging@Win@@QAEXH@Z  (23 B)
+// recovered in src/win.cpp:280
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_vert_paging_005ee0f0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE0F0U);
+    std::printf("  running ?set_vert_paging@Win@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE0F0U)) {
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005EE0F0U, "FAIL-no-redirect", "?set_vert_paging@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE0F0U)) {
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005EE0F0U, "FAIL-no-redirect", "?set_vert_paging@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE0F0U, "FAIL", "?set_vert_paging@Win@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_vert_paging@Win@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE0F0U, "INCONCLUSIVE-no-effect", "?set_vert_paging@Win@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005EE0F0U, "PASS", "?set_vert_paging@Win@@QAEXH@Z");
+    return true;
+}
+
+// ?set_horz_paging@Win@@QAEXH@Z  (23 B)
+// recovered in src/win.cpp:291
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_set_horz_paging_005ee110() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE110U);
+    std::printf("  running ?set_horz_paging@Win@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE110U)) {
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005EE110U, "FAIL-no-redirect", "?set_horz_paging@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE110U)) {
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005EE110U, "FAIL-no-redirect", "?set_horz_paging@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE110U, "FAIL", "?set_horz_paging@Win@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_horz_paging@Win@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE110U, "INCONCLUSIVE-no-effect", "?set_horz_paging@Win@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005EE110U, "PASS", "?set_horz_paging@Win@@QAEXH@Z");
+    return true;
+}
+
+// ?UNK8@Win@@QAEXH@Z  (39 B)
+// recovered in src/win.cpp:678
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_UNK8_005ee130() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE130U);
+    std::printf("  running ?UNK8@Win@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE130U)) {
+            std::printf("  ?UNK8@Win@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005EE130U, "FAIL-no-redirect", "?UNK8@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE130U)) {
+            std::printf("  ?UNK8@Win@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005EE130U, "FAIL-no-redirect", "?UNK8@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK8@Win@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK8@Win@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE130U, "FAIL", "?UNK8@Win@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK8@Win@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE130U, "INCONCLUSIVE-no-effect", "?UNK8@Win@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005EE130U, "PASS", "?UNK8@Win@@QAEXH@Z");
+    return true;
+}
+
+// ?UNK9@Win@@QAEXH@Z  (39 B)
+// recovered in src/win.cpp:694
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_UNK9_005ee160() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005EE160U);
+    std::printf("  running ?UNK9@Win@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005EE160U)) {
+            std::printf("  ?UNK9@Win@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x005EE160U, "FAIL-no-redirect", "?UNK9@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005EE160U)) {
+            std::printf("  ?UNK9@Win@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x005EE160U, "FAIL-no-redirect", "?UNK9@Win@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK9@Win@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK9@Win@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005EE160U, "FAIL", "?UNK9@Win@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK9@Win@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x005EE160U, "INCONCLUSIVE-no-effect", "?UNK9@Win@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x005EE160U, "PASS", "?UNK9@Win@@QAEXH@Z");
+    return true;
+}
+
+// ?sync_palette@Win@@QAEXXZ  (52 B)
+// recovered in src/win.cpp:787
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_sync_palette_005f2c60() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005F2C60U);
+    std::printf("  running ?sync_palette@Win@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F2C60U)) {
+            std::printf("  ?sync_palette@Win@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005F2C60U, "FAIL-no-redirect", "?sync_palette@Win@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F2C60U)) {
+            std::printf("  ?sync_palette@Win@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005F2C60U, "FAIL-no-redirect", "?sync_palette@Win@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?sync_palette@Win@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?sync_palette@Win@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F2C60U, "FAIL", "?sync_palette@Win@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?sync_palette@Win@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005F2C60U, "INCONCLUSIVE-no-effect", "?sync_palette@Win@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005F2C60U, "PASS", "?sync_palette@Win@@QAEXXZ");
+    return true;
+}
+
+// ?is_dialog_focus@Win@@QAEHXZ  (63 B)
+// recovered in src/win.cpp:421
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_is_dialog_focus_005f2ca0() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005F2CA0U);
+    std::printf("  running ?is_dialog_focus@Win@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F2CA0U)) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005F2CA0U, "FAIL-no-redirect", "?is_dialog_focus@Win@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F2CA0U)) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005F2CA0U, "FAIL-no-redirect", "?is_dialog_focus@Win@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F2CA0U, "FAIL", "?is_dialog_focus@Win@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?is_dialog_focus@Win@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005F2CA0U, "INCONCLUSIVE-no-effect", "?is_dialog_focus@Win@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005F2CA0U, "PASS", "?is_dialog_focus@Win@@QAEHXZ");
+    return true;
+}
+
+// ?is_visible@Win@@QAEHXZ  (38 B)
+// recovered in src/win.cpp:175
+// staged receiver: Win, 0x444 B, zero-filled
+static bool verify_Win_is_visible_005f7e90() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005F7E90U);
+    std::printf("  running ?is_visible@Win@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x444U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F7E90U)) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005F7E90U, "FAIL-no-redirect", "?is_visible@Win@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F7E90U)) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005F7E90U, "FAIL-no-redirect", "?is_visible@Win@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F7E90U, "FAIL", "?is_visible@Win@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?is_visible@Win@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005F7E90U, "INCONCLUSIVE-no-effect", "?is_visible@Win@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005F7E90U, "PASS", "?is_visible@Win@@QAEHXZ");
+    return true;
+}
+
+// ?hide_item@PullDown@@QAEHH@Z  (111 B)
+// recovered in src/pulldown.cpp:40
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_hide_item_005f8cb0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F8CB0U);
+    std::printf("  running ?hide_item@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F8CB0U)) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F8CB0U, "FAIL-no-redirect", "?hide_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F8CB0U)) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F8CB0U, "FAIL-no-redirect", "?hide_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F8CB0U, "FAIL", "?hide_item@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?hide_item@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F8CB0U, "INCONCLUSIVE-no-effect", "?hide_item@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F8CB0U, "PASS", "?hide_item@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?show_item@PullDown@@QAEHH@Z  (111 B)
+// recovered in src/pulldown.cpp:59
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_show_item_005f8d20() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F8D20U);
+    std::printf("  running ?show_item@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F8D20U)) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F8D20U, "FAIL-no-redirect", "?show_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F8D20U)) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F8D20U, "FAIL-no-redirect", "?show_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F8D20U, "FAIL", "?show_item@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?show_item@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F8D20U, "INCONCLUSIVE-no-effect", "?show_item@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F8D20U, "PASS", "?show_item@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?disable_item@PullDown@@QAEHH@Z  (95 B)
+// recovered in src/pulldown.cpp:78
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_disable_item_005f8d90() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F8D90U);
+    std::printf("  running ?disable_item@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F8D90U)) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F8D90U, "FAIL-no-redirect", "?disable_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F8D90U)) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F8D90U, "FAIL-no-redirect", "?disable_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F8D90U, "FAIL", "?disable_item@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?disable_item@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F8D90U, "INCONCLUSIVE-no-effect", "?disable_item@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F8D90U, "PASS", "?disable_item@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?enable_item@PullDown@@QAEHH@Z  (95 B)
+// recovered in src/pulldown.cpp:93
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_enable_item_005f8df0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F8DF0U);
+    std::printf("  running ?enable_item@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F8DF0U)) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F8DF0U, "FAIL-no-redirect", "?enable_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F8DF0U)) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F8DF0U, "FAIL-no-redirect", "?enable_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F8DF0U, "FAIL", "?enable_item@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?enable_item@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F8DF0U, "INCONCLUSIVE-no-effect", "?enable_item@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F8DF0U, "PASS", "?enable_item@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?check_item@PullDown@@QAEHH@Z  (95 B)
+// recovered in src/pulldown.cpp:108
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_check_item_005f9040() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F9040U);
+    std::printf("  running ?check_item@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F9040U)) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F9040U, "FAIL-no-redirect", "?check_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F9040U)) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F9040U, "FAIL-no-redirect", "?check_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F9040U, "FAIL", "?check_item@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?check_item@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F9040U, "INCONCLUSIVE-no-effect", "?check_item@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F9040U, "PASS", "?check_item@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?uncheck_item@PullDown@@QAEHH@Z  (95 B)
+// recovered in src/pulldown.cpp:123
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_uncheck_item_005f90a0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F90A0U);
+    std::printf("  running ?uncheck_item@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F90A0U)) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F90A0U, "FAIL-no-redirect", "?uncheck_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F90A0U)) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F90A0U, "FAIL-no-redirect", "?uncheck_item@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F90A0U, "FAIL", "?uncheck_item@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F90A0U, "INCONCLUSIVE-no-effect", "?uncheck_item@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F90A0U, "PASS", "?uncheck_item@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?id_to_index@PullDown@@QAEHH@Z  (40 B)
+// recovered in src/pulldown.cpp:311
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_id_to_index_005f9d00() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005F9D00U);
+    std::printf("  running ?id_to_index@PullDown@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F9D00U)) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005F9D00U, "FAIL-no-redirect", "?id_to_index@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F9D00U)) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005F9D00U, "FAIL-no-redirect", "?id_to_index@PullDown@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F9D00U, "FAIL", "?id_to_index@PullDown@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?id_to_index@PullDown@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005F9D00U, "INCONCLUSIVE-no-effect", "?id_to_index@PullDown@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005F9D00U, "PASS", "?id_to_index@PullDown@@QAEHH@Z");
+    return true;
+}
+
+// ?get_selected@PullDown@@QAEHXZ  (28 B)
+// recovered in src/pulldown.cpp:138
+// staged receiver: PullDown, 0xF40 B, zero-filled
+static bool verify_PullDown_get_selected_005f9f40() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005F9F40U);
+    std::printf("  running ?get_selected@PullDown@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF40U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005F9F40U)) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005F9F40U, "FAIL-no-redirect", "?get_selected@PullDown@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005F9F40U)) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005F9F40U, "FAIL-no-redirect", "?get_selected@PullDown@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005F9F40U, "FAIL", "?get_selected@PullDown@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_selected@PullDown@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005F9F40U, "INCONCLUSIVE-no-effect", "?get_selected@PullDown@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005F9F40U, "PASS", "?get_selected@PullDown@@QAEHXZ");
+    return true;
+}
+
+// ?UNK3@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:129
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_UNK3_005fb1d0() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB1D0U);
+    std::printf("  running ?UNK3@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB1D0U)) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB1D0U, "FAIL-no-redirect", "?UNK3@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB1D0U)) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB1D0U, "FAIL-no-redirect", "?UNK3@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB1D0U, "FAIL", "?UNK3@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK3@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB1D0U, "INCONCLUSIVE-no-effect", "?UNK3@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB1D0U, "PASS", "?UNK3@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?UNK6@Menu@@QAEHH@Z  (96 B)
+// recovered in src/menu.cpp:395
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_UNK6_005fb2a0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB2A0U);
+    std::printf("  running ?UNK6@Menu@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB2A0U)) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB2A0U, "FAIL-no-redirect", "?UNK6@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB2A0U)) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005FB2A0U, "FAIL-no-redirect", "?UNK6@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB2A0U, "FAIL", "?UNK6@Menu@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK6@Menu@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB2A0U, "INCONCLUSIVE-no-effect", "?UNK6@Menu@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005FB2A0U, "PASS", "?UNK6@Menu@@QAEHH@Z");
+    return true;
+}
+
+// ?hide_menu_item@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:166
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_hide_menu_item_005fb300() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB300U);
+    std::printf("  running ?hide_menu_item@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB300U)) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB300U, "FAIL-no-redirect", "?hide_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB300U)) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB300U, "FAIL-no-redirect", "?hide_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB300U, "FAIL", "?hide_menu_item@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB300U, "INCONCLUSIVE-no-effect", "?hide_menu_item@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB300U, "PASS", "?hide_menu_item@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?UNK7@Menu@@QAEHH@Z  (96 B)
+// recovered in src/menu.cpp:435
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_UNK7_005fb360() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB360U);
+    std::printf("  running ?UNK7@Menu@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB360U)) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB360U, "FAIL-no-redirect", "?UNK7@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB360U)) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005FB360U, "FAIL-no-redirect", "?UNK7@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB360U, "FAIL", "?UNK7@Menu@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK7@Menu@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB360U, "INCONCLUSIVE-no-effect", "?UNK7@Menu@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005FB360U, "PASS", "?UNK7@Menu@@QAEHH@Z");
+    return true;
+}
+
+// ?show_menu_item@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:203
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_show_menu_item_005fb3c0() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB3C0U);
+    std::printf("  running ?show_menu_item@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB3C0U)) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB3C0U, "FAIL-no-redirect", "?show_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB3C0U)) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB3C0U, "FAIL-no-redirect", "?show_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB3C0U, "FAIL", "?show_menu_item@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB3C0U, "INCONCLUSIVE-no-effect", "?show_menu_item@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB3C0U, "PASS", "?show_menu_item@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?UNK8@Menu@@QAEHH@Z  (96 B)
+// recovered in src/menu.cpp:475
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_UNK8_005fb420() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB420U);
+    std::printf("  running ?UNK8@Menu@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB420U)) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB420U, "FAIL-no-redirect", "?UNK8@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB420U)) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005FB420U, "FAIL-no-redirect", "?UNK8@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB420U, "FAIL", "?UNK8@Menu@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK8@Menu@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB420U, "INCONCLUSIVE-no-effect", "?UNK8@Menu@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005FB420U, "PASS", "?UNK8@Menu@@QAEHH@Z");
+    return true;
+}
+
+// ?disable_menu_item@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:240
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_disable_menu_item_005fb480() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB480U);
+    std::printf("  running ?disable_menu_item@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB480U)) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB480U, "FAIL-no-redirect", "?disable_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB480U)) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB480U, "FAIL-no-redirect", "?disable_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB480U, "FAIL", "?disable_menu_item@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB480U, "INCONCLUSIVE-no-effect", "?disable_menu_item@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB480U, "PASS", "?disable_menu_item@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?UNK9@Menu@@QAEHH@Z  (96 B)
+// recovered in src/menu.cpp:515
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_UNK9_005fb4e0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB4E0U);
+    std::printf("  running ?UNK9@Menu@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB4E0U)) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB4E0U, "FAIL-no-redirect", "?UNK9@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB4E0U)) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005FB4E0U, "FAIL-no-redirect", "?UNK9@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB4E0U, "FAIL", "?UNK9@Menu@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK9@Menu@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB4E0U, "INCONCLUSIVE-no-effect", "?UNK9@Menu@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005FB4E0U, "PASS", "?UNK9@Menu@@QAEHH@Z");
+    return true;
+}
+
+// ?enable_menu_item@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:277
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_enable_menu_item_005fb540() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB540U);
+    std::printf("  running ?enable_menu_item@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB540U)) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB540U, "FAIL-no-redirect", "?enable_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB540U)) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB540U, "FAIL-no-redirect", "?enable_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB540U, "FAIL", "?enable_menu_item@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB540U, "INCONCLUSIVE-no-effect", "?enable_menu_item@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB540U, "PASS", "?enable_menu_item@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?check_menu_item@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:314
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_check_menu_item_005fb760() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB760U);
+    std::printf("  running ?check_menu_item@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB760U)) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB760U, "FAIL-no-redirect", "?check_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB760U)) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB760U, "FAIL-no-redirect", "?check_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB760U, "FAIL", "?check_menu_item@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB760U, "INCONCLUSIVE-no-effect", "?check_menu_item@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB760U, "PASS", "?check_menu_item@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?uncheck_menu_item@Menu@@QAEHHH@Z  (84 B)
+// recovered in src/menu.cpp:351
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_uncheck_menu_item_005fb7c0() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB7C0U);
+    std::printf("  running ?uncheck_menu_item@Menu@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB7C0U)) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB7C0U, "FAIL-no-redirect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB7C0U)) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x005FB7C0U, "FAIL-no-redirect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB7C0U, "FAIL", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB7C0U, "INCONCLUSIVE-no-effect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x005FB7C0U, "PASS", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+    return true;
+}
+
+// ?id_to_index@Menu@@QAEHH@Z  (40 B)
+// recovered in src/menu.cpp:33
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_id_to_index_005fb990() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005FB990U);
+    std::printf("  running ?id_to_index@Menu@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FB990U)) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005FB990U, "FAIL-no-redirect", "?id_to_index@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FB990U)) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005FB990U, "FAIL-no-redirect", "?id_to_index@Menu@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FB990U, "FAIL", "?id_to_index@Menu@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?id_to_index@Menu@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FB990U, "INCONCLUSIVE-no-effect", "?id_to_index@Menu@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005FB990U, "PASS", "?id_to_index@Menu@@QAEHH@Z");
+    return true;
+}
+
+// ?requested_height@Menu@@QAEHXZ  (20 B)
+// recovered in src/menu.cpp:92
+// staged receiver: Menu, 0xB64 B, zero-filled
+static bool verify_Menu_requested_height_005fc6a0() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005FC6A0U);
+    std::printf("  running ?requested_height@Menu@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB64U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FC6A0U)) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005FC6A0U, "FAIL-no-redirect", "?requested_height@Menu@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FC6A0U)) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005FC6A0U, "FAIL-no-redirect", "?requested_height@Menu@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FC6A0U, "FAIL", "?requested_height@Menu@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?requested_height@Menu@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005FC6A0U, "INCONCLUSIVE-no-effect", "?requested_height@Menu@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005FC6A0U, "PASS", "?requested_height@Menu@@QAEHXZ");
+    return true;
+}
+
+// ?do_sound@@YAXXZ  (3 B)
 // recovered in src/autosound.cpp:144
 static bool verify_do_sound_005fd2b0() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x005FD2B0U);
+    std::printf("  running ?do_sound@@YAXXZ\n");
+    std::fflush(stdout);
     std::vector<uint8_t> before, after_original, after_recovered;
     bool passed = true;
+    bool observed_effect = false;
     {
         snapshot(before);
         if (!suspend_redirect_at(0x005FD2B0U)) {
             std::printf("  ?do_sound@@YAXXZ: cannot suspend redirect\n");
+            verdict(0x005FD2B0U, "FAIL-no-redirect", "?do_sound@@YAXXZ");
             return false;
         }
         target();
@@ -215,6 +6105,7 @@ static bool verify_do_sound_005fd2b0() {
         restore(before);
         if (!resume_redirect_at(0x005FD2B0U)) {
             std::printf("  ?do_sound@@YAXXZ: cannot resume redirect\n");
+            verdict(0x005FD2B0U, "FAIL-no-redirect", "?do_sound@@YAXXZ");
             return false;
         }
         target();
@@ -226,17 +6117,3461 @@ static bool verify_do_sound_005fd2b0() {
                         reinterpret_cast<void *>(where));
             passed = false;
         }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
     }
-    return passed;
+    if (!passed) {
+        verdict(0x005FD2B0U, "FAIL", "?do_sound@@YAXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?do_sound@@YAXXZ: no seed produced an observable effect\n");
+        verdict(0x005FD2B0U, "INCONCLUSIVE-no-effect", "?do_sound@@YAXXZ");
+        return true;
+    }
+    verdict(0x005FD2B0U, "PASS", "?do_sound@@YAXXZ");
+    return true;
+}
+
+// ?get_pos@Palette@@QAEHH@Z  (37 B)
+// recovered in src/palette.cpp:85
+// staged receiver: Palette, 0x454 B, zero-filled
+static bool verify_Palette_get_pos_005fed10() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x005FED10U);
+    std::printf("  running ?get_pos@Palette@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x454U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005FED10U)) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005FED10U, "FAIL-no-redirect", "?get_pos@Palette@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005FED10U)) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005FED10U, "FAIL-no-redirect", "?get_pos@Palette@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x005FED10U, "FAIL", "?get_pos@Palette@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_pos@Palette@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005FED10U, "INCONCLUSIVE-no-effect", "?get_pos@Palette@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005FED10U, "PASS", "?get_pos@Palette@@QAEHH@Z");
+    return true;
+}
+
+// ?set_width@BasePop@@QAEXH@Z  (87 B)
+// recovered in src/basepop.cpp:387
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_set_width_00601b20() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00601B20U);
+    std::printf("  running ?set_width@BasePop@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00601B20U)) {
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00601B20U, "FAIL-no-redirect", "?set_width@BasePop@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00601B20U)) {
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00601B20U, "FAIL-no-redirect", "?set_width@BasePop@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00601B20U, "FAIL", "?set_width@BasePop@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_width@BasePop@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00601B20U, "INCONCLUSIVE-no-effect", "?set_width@BasePop@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00601B20U, "PASS", "?set_width@BasePop@@QAEXH@Z");
+    return true;
+}
+
+// ?set_loc@BasePop@@QAEXHH@Z  (37 B)
+// recovered in src/basepop.cpp:25
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_set_loc_00601b80() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00601B80U);
+    std::printf("  running ?set_loc@BasePop@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00601B80U)) {
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x00601B80U, "FAIL-no-redirect", "?set_loc@BasePop@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00601B80U)) {
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x00601B80U, "FAIL-no-redirect", "?set_loc@BasePop@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00601B80U, "FAIL", "?set_loc@BasePop@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_loc@BasePop@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x00601B80U, "INCONCLUSIVE-no-effect", "?set_loc@BasePop@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x00601B80U, "PASS", "?set_loc@BasePop@@QAEXHH@Z");
+    return true;
+}
+
+// ?write_check@BasePop@@QAEXJ@Z  (19 B)
+// recovered in src/basepop.cpp:364
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_write_check_00601bb0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00601BB0U);
+    std::printf("  running ?write_check@BasePop@@QAEXJ@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00601BB0U)) {
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: cannot suspend redirect\n");
+            verdict(0x00601BB0U, "FAIL-no-redirect", "?write_check@BasePop@@QAEXJ@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00601BB0U)) {
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: cannot resume redirect\n");
+            verdict(0x00601BB0U, "FAIL-no-redirect", "?write_check@BasePop@@QAEXJ@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00601BB0U, "FAIL", "?write_check@BasePop@@QAEXJ@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?write_check@BasePop@@QAEXJ@Z: no seed produced an observable effect\n");
+        verdict(0x00601BB0U, "INCONCLUSIVE-no-effect", "?write_check@BasePop@@QAEXJ@Z");
+        return true;
+    }
+    verdict(0x00601BB0U, "PASS", "?write_check@BasePop@@QAEXJ@Z");
+    return true;
+}
+
+// ?read_check@BasePop@@QAEXXZ  (17 B)
+// recovered in src/basepop.cpp:581
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_read_check_00601bd0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00601BD0U);
+    std::printf("  running ?read_check@BasePop@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00601BD0U)) {
+            std::printf("  ?read_check@BasePop@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00601BD0U, "FAIL-no-redirect", "?read_check@BasePop@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00601BD0U)) {
+            std::printf("  ?read_check@BasePop@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00601BD0U, "FAIL-no-redirect", "?read_check@BasePop@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?read_check@BasePop@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?read_check@BasePop@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00601BD0U, "FAIL", "?read_check@BasePop@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?read_check@BasePop@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00601BD0U, "INCONCLUSIVE-no-effect", "?read_check@BasePop@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00601BD0U, "PASS", "?read_check@BasePop@@QAEXXZ");
+    return true;
+}
+
+// ?on_key_click@BasePop@@QAEHHH@Z  (17 B)
+// recovered in src/basepop.cpp:447
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_on_key_click_00604490() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00604490U);
+    std::printf("  running ?on_key_click@BasePop@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00604490U)) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x00604490U, "FAIL-no-redirect", "?on_key_click@BasePop@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00604490U)) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x00604490U, "FAIL-no-redirect", "?on_key_click@BasePop@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00604490U, "FAIL", "?on_key_click@BasePop@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00604490U, "INCONCLUSIVE-no-effect", "?on_key_click@BasePop@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x00604490U, "PASS", "?on_key_click@BasePop@@QAEHHH@Z");
+    return true;
+}
+
+// ?on_key_up@BasePop@@QAEHH@Z  (17 B)
+// recovered in src/basepop.cpp:464
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_on_key_up_006044b0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x006044B0U);
+    std::printf("  running ?on_key_up@BasePop@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006044B0U)) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x006044B0U, "FAIL-no-redirect", "?on_key_up@BasePop@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006044B0U)) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x006044B0U, "FAIL-no-redirect", "?on_key_up@BasePop@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006044B0U, "FAIL", "?on_key_up@BasePop@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?on_key_up@BasePop@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x006044B0U, "INCONCLUSIVE-no-effect", "?on_key_up@BasePop@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x006044B0U, "PASS", "?on_key_up@BasePop@@QAEHH@Z");
+    return true;
+}
+
+// ?set_string_color@BasePop@@QAEXHHHH@Z  (43 B)
+// recovered in src/basepop.cpp:215
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_set_string_color_00604730() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00604730U);
+    std::printf("  running ?set_string_color@BasePop@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00604730U)) {
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00604730U, "FAIL-no-redirect", "?set_string_color@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00604730U)) {
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00604730U, "FAIL-no-redirect", "?set_string_color@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00604730U, "FAIL", "?set_string_color@BasePop@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00604730U, "INCONCLUSIVE-no-effect", "?set_string_color@BasePop@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00604730U, "PASS", "?set_string_color@BasePop@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_string_color2@BasePop@@QAEXHHHH@Z  (43 B)
+// recovered in src/basepop.cpp:232
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_set_string_color2_00604760() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00604760U);
+    std::printf("  running ?set_string_color2@BasePop@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00604760U)) {
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00604760U, "FAIL-no-redirect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00604760U)) {
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00604760U, "FAIL-no-redirect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00604760U, "FAIL", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00604760U, "INCONCLUSIVE-no-effect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00604760U, "PASS", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_string_color3@BasePop@@QAEXHHHH@Z  (43 B)
+// recovered in src/basepop.cpp:249
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_set_string_color3_00604790() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00604790U);
+    std::printf("  running ?set_string_color3@BasePop@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00604790U)) {
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00604790U, "FAIL-no-redirect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00604790U)) {
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00604790U, "FAIL-no-redirect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00604790U, "FAIL", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00604790U, "INCONCLUSIVE-no-effect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00604790U, "PASS", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_string_color_hyper@BasePop@@QAEXHHHH@Z  (43 B)
+// recovered in src/basepop.cpp:266
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_set_string_color_hyper_006047c0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x006047C0U);
+    std::printf("  running ?set_string_color_hyper@BasePop@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006047C0U)) {
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x006047C0U, "FAIL-no-redirect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006047C0U)) {
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x006047C0U, "FAIL-no-redirect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006047C0U, "FAIL", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x006047C0U, "INCONCLUSIVE-no-effect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x006047C0U, "PASS", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?UNK3@BasePop@@QAEXH@Z  (27 B)
+// recovered in src/basepop.cpp:494
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_UNK3_00605180() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605180U);
+    std::printf("  running ?UNK3@BasePop@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605180U)) {
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605180U, "FAIL-no-redirect", "?UNK3@BasePop@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605180U)) {
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605180U, "FAIL-no-redirect", "?UNK3@BasePop@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605180U, "FAIL", "?UNK3@BasePop@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK3@BasePop@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605180U, "INCONCLUSIVE-no-effect", "?UNK3@BasePop@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605180U, "PASS", "?UNK3@BasePop@@QAEXH@Z");
+    return true;
+}
+
+// ?UNK4@BasePop@@QAEXH@Z  (27 B)
+// recovered in src/basepop.cpp:515
+// staged receiver: BasePop, 0x3230 B, zero-filled
+static bool verify_BasePop_UNK4_006051a0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x006051A0U);
+    std::printf("  running ?UNK4@BasePop@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x3230U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006051A0U)) {
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x006051A0U, "FAIL-no-redirect", "?UNK4@BasePop@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006051A0U)) {
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x006051A0U, "FAIL-no-redirect", "?UNK4@BasePop@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006051A0U, "FAIL", "?UNK4@BasePop@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK4@BasePop@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x006051A0U, "INCONCLUSIVE-no-effect", "?UNK4@BasePop@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x006051A0U, "PASS", "?UNK4@BasePop@@QAEXH@Z");
+    return true;
+}
+
+// ?close@Scroll@@QAEXXZ  (350 B)
+// recovered in src/scroll.cpp:184
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_close_00605370() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00605370U);
+    std::printf("  running ?close@Scroll@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605370U)) {
+            std::printf("  ?close@Scroll@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00605370U, "FAIL-no-redirect", "?close@Scroll@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605370U)) {
+            std::printf("  ?close@Scroll@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00605370U, "FAIL-no-redirect", "?close@Scroll@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@Scroll@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@Scroll@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605370U, "FAIL", "?close@Scroll@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@Scroll@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00605370U, "INCONCLUSIVE-no-effect", "?close@Scroll@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00605370U, "PASS", "?close@Scroll@@QAEXXZ");
+    return true;
+}
+
+// ?set_range@Scroll@@QAEXHH@Z  (93 B)
+// recovered in src/scroll.cpp:316
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_range_006059b0() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x006059B0U);
+    std::printf("  running ?set_range@Scroll@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006059B0U)) {
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x006059B0U, "FAIL-no-redirect", "?set_range@Scroll@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006059B0U)) {
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x006059B0U, "FAIL-no-redirect", "?set_range@Scroll@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006059B0U, "FAIL", "?set_range@Scroll@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_range@Scroll@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x006059B0U, "INCONCLUSIVE-no-effect", "?set_range@Scroll@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x006059B0U, "PASS", "?set_range@Scroll@@QAEXHH@Z");
+    return true;
+}
+
+// ?set_button_color@Scroll@@QAEXH@Z  (61 B)
+// recovered in src/scroll.cpp:338
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_button_color_00605a10() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605A10U);
+    std::printf("  running ?set_button_color@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605A10U)) {
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605A10U, "FAIL-no-redirect", "?set_button_color@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605A10U)) {
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605A10U, "FAIL-no-redirect", "?set_button_color@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605A10U, "FAIL", "?set_button_color@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_button_color@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605A10U, "INCONCLUSIVE-no-effect", "?set_button_color@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605A10U, "PASS", "?set_button_color@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_bevel_thickness@Scroll@@QAEXH@Z  (61 B)
+// recovered in src/scroll.cpp:354
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_bevel_thickness_00605a50() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605A50U);
+    std::printf("  running ?set_bevel_thickness@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605A50U)) {
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605A50U, "FAIL-no-redirect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605A50U)) {
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605A50U, "FAIL-no-redirect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605A50U, "FAIL", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605A50U, "INCONCLUSIVE-no-effect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605A50U, "PASS", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_bevel_upper@Scroll@@QAEXH@Z  (61 B)
+// recovered in src/scroll.cpp:370
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_bevel_upper_00605a90() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605A90U);
+    std::printf("  running ?set_bevel_upper@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605A90U)) {
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605A90U, "FAIL-no-redirect", "?set_bevel_upper@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605A90U)) {
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605A90U, "FAIL-no-redirect", "?set_bevel_upper@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605A90U, "FAIL", "?set_bevel_upper@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605A90U, "INCONCLUSIVE-no-effect", "?set_bevel_upper@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605A90U, "PASS", "?set_bevel_upper@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_bevel_lower@Scroll@@QAEXH@Z  (61 B)
+// recovered in src/scroll.cpp:386
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_bevel_lower_00605ad0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605AD0U);
+    std::printf("  running ?set_bevel_lower@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605AD0U)) {
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605AD0U, "FAIL-no-redirect", "?set_bevel_lower@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605AD0U)) {
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605AD0U, "FAIL-no-redirect", "?set_bevel_lower@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605AD0U, "FAIL", "?set_bevel_lower@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605AD0U, "INCONCLUSIVE-no-effect", "?set_bevel_lower@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605AD0U, "PASS", "?set_bevel_lower@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_border_color@Scroll@@QAEXH@Z  (100 B)
+// recovered in src/scroll.cpp:431
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_border_color_00605b10() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605B10U);
+    std::printf("  running ?set_border_color@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605B10U)) {
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605B10U, "FAIL-no-redirect", "?set_border_color@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605B10U)) {
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605B10U, "FAIL-no-redirect", "?set_border_color@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605B10U, "FAIL", "?set_border_color@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_border_color@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605B10U, "INCONCLUSIVE-no-effect", "?set_border_color@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605B10U, "PASS", "?set_border_color@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_bar_thickness@Scroll@@QAEXH@Z  (96 B)
+// recovered in src/scroll.cpp:402
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_bar_thickness_00605b80() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605B80U);
+    std::printf("  running ?set_bar_thickness@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605B80U)) {
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605B80U, "FAIL-no-redirect", "?set_bar_thickness@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605B80U)) {
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605B80U, "FAIL-no-redirect", "?set_bar_thickness@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605B80U, "FAIL", "?set_bar_thickness@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605B80U, "INCONCLUSIVE-no-effect", "?set_bar_thickness@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605B80U, "PASS", "?set_bar_thickness@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_pos@Scroll@@QAEXH@Z  (106 B)
+// recovered in src/scroll.cpp:512
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_pos_00605d20() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00605D20U);
+    std::printf("  running ?set_pos@Scroll@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00605D20U)) {
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00605D20U, "FAIL-no-redirect", "?set_pos@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00605D20U)) {
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00605D20U, "FAIL-no-redirect", "?set_pos@Scroll@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00605D20U, "FAIL", "?set_pos@Scroll@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_pos@Scroll@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00605D20U, "INCONCLUSIVE-no-effect", "?set_pos@Scroll@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00605D20U, "PASS", "?set_pos@Scroll@@QAEXH@Z");
+    return true;
+}
+
+// ?set_thumb_rect@Scroll@@QAEXXZ  (88 B)
+// recovered in src/scroll.cpp:653
+// staged receiver: Scroll, 0x214C B, zero-filled
+static bool verify_Scroll_set_thumb_rect_00606ea0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00606EA0U);
+    std::printf("  running ?set_thumb_rect@Scroll@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x214CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00606EA0U)) {
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00606EA0U, "FAIL-no-redirect", "?set_thumb_rect@Scroll@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00606EA0U)) {
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00606EA0U, "FAIL-no-redirect", "?set_thumb_rect@Scroll@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00606EA0U, "FAIL", "?set_thumb_rect@Scroll@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00606EA0U, "INCONCLUSIVE-no-effect", "?set_thumb_rect@Scroll@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00606EA0U, "PASS", "?set_thumb_rect@Scroll@@QAEXXZ");
+    return true;
+}
+
+// ?close@BaseButton@@QAEXXZ  (208 B)
+// recovered in src/basebutton.cpp:81
+// staged receiver: BaseButton, 0xAB8 B, zero-filled
+static bool verify_BaseButton_close_006070c0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x006070C0U);
+    std::printf("  running ?close@BaseButton@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xAB8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006070C0U)) {
+            std::printf("  ?close@BaseButton@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x006070C0U, "FAIL-no-redirect", "?close@BaseButton@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006070C0U)) {
+            std::printf("  ?close@BaseButton@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x006070C0U, "FAIL-no-redirect", "?close@BaseButton@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@BaseButton@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@BaseButton@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006070C0U, "FAIL", "?close@BaseButton@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@BaseButton@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x006070C0U, "INCONCLUSIVE-no-effect", "?close@BaseButton@@QAEXXZ");
+        return true;
+    }
+    verdict(0x006070C0U, "PASS", "?close@BaseButton@@QAEXXZ");
+    return true;
+}
+
+// ?set_text_color@BaseButton@@QAEXHHHH@Z  (61 B)
+// recovered in src/basebutton.cpp:315
+// staged receiver: BaseButton, 0xAB8 B, zero-filled
+static bool verify_BaseButton_set_text_color_00607360() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00607360U);
+    std::printf("  running ?set_text_color@BaseButton@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xAB8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00607360U)) {
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00607360U, "FAIL-no-redirect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00607360U)) {
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00607360U, "FAIL-no-redirect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00607360U, "FAIL", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00607360U, "INCONCLUSIVE-no-effect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00607360U, "PASS", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_text_color2@BaseButton@@QAEXHHHH@Z  (61 B)
+// recovered in src/basebutton.cpp:335
+// staged receiver: BaseButton, 0xAB8 B, zero-filled
+static bool verify_BaseButton_set_text_color2_006073a0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x006073A0U);
+    std::printf("  running ?set_text_color2@BaseButton@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xAB8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006073A0U)) {
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x006073A0U, "FAIL-no-redirect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006073A0U)) {
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x006073A0U, "FAIL-no-redirect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006073A0U, "FAIL", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x006073A0U, "INCONCLUSIVE-no-effect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x006073A0U, "PASS", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_text_color3@BaseButton@@QAEXHHHH@Z  (61 B)
+// recovered in src/basebutton.cpp:347
+// staged receiver: BaseButton, 0xAB8 B, zero-filled
+static bool verify_BaseButton_set_text_color3_006073e0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x006073E0U);
+    std::printf("  running ?set_text_color3@BaseButton@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xAB8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006073E0U)) {
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x006073E0U, "FAIL-no-redirect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006073E0U)) {
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x006073E0U, "FAIL-no-redirect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006073E0U, "FAIL", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x006073E0U, "INCONCLUSIVE-no-effect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x006073E0U, "PASS", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set@BaseButton@@QAEXH@Z  (61 B)
+// recovered in src/basebutton.cpp:395
+// staged receiver: BaseButton, 0xAB8 B, zero-filled
+static bool verify_BaseButton_set_00607c80() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00607C80U);
+    std::printf("  running ?set@BaseButton@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xAB8U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00607C80U)) {
+            std::printf("  ?set@BaseButton@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00607C80U, "FAIL-no-redirect", "?set@BaseButton@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00607C80U)) {
+            std::printf("  ?set@BaseButton@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00607C80U, "FAIL-no-redirect", "?set@BaseButton@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set@BaseButton@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set@BaseButton@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00607C80U, "FAIL", "?set@BaseButton@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set@BaseButton@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00607C80U, "INCONCLUSIVE-no-effect", "?set@BaseButton@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00607C80U, "PASS", "?set@BaseButton@@QAEXH@Z");
+    return true;
+}
+
+// ?close@FlatButton@@QAEXXZ  (161 B)
+// recovered in src/flatbutton.cpp:28
+// staged receiver: FlatButton, 0xB4C B, zero-filled
+static bool verify_FlatButton_close_00607da0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00607DA0U);
+    std::printf("  running ?close@FlatButton@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB4CU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00607DA0U)) {
+            std::printf("  ?close@FlatButton@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00607DA0U, "FAIL-no-redirect", "?close@FlatButton@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00607DA0U)) {
+            std::printf("  ?close@FlatButton@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00607DA0U, "FAIL-no-redirect", "?close@FlatButton@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@FlatButton@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@FlatButton@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00607DA0U, "FAIL", "?close@FlatButton@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@FlatButton@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00607DA0U, "INCONCLUSIVE-no-effect", "?close@FlatButton@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00607DA0U, "PASS", "?close@FlatButton@@QAEXXZ");
+    return true;
+}
+
+// ?set_selected_id@Dialog@@QAEXH@Z  (115 B)
+// recovered in src/dialog.cpp:108
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_set_selected_id_006099d0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x006099D0U);
+    std::printf("  running ?set_selected_id@Dialog@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x006099D0U)) {
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x006099D0U, "FAIL-no-redirect", "?set_selected_id@Dialog@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x006099D0U)) {
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x006099D0U, "FAIL-no-redirect", "?set_selected_id@Dialog@@QAEXH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x006099D0U, "FAIL", "?set_selected_id@Dialog@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x006099D0U, "INCONCLUSIVE-no-effect", "?set_selected_id@Dialog@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x006099D0U, "PASS", "?set_selected_id@Dialog@@QAEXH@Z");
+    return true;
+}
+
+// ?get_selected_id@Dialog@@QAEHXZ  (150 B)
+// recovered in src/dialog.cpp:118
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_get_selected_id_00609a50() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00609A50U);
+    std::printf("  running ?get_selected_id@Dialog@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609A50U)) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x00609A50U, "FAIL-no-redirect", "?get_selected_id@Dialog@@QAEHXZ");
+            return false;
+        }
+        const int original_result = target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609A50U)) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x00609A50U, "FAIL-no-redirect", "?get_selected_id@Dialog@@QAEHXZ");
+            return false;
+        }
+        const int recovered_result = target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609A50U, "FAIL", "?get_selected_id@Dialog@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?get_selected_id@Dialog@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x00609A50U, "INCONCLUSIVE-no-effect", "?get_selected_id@Dialog@@QAEHXZ");
+        return true;
+    }
+    verdict(0x00609A50U, "PASS", "?get_selected_id@Dialog@@QAEHXZ");
+    return true;
+}
+
+// ?id_to_pos@Dialog@@QAEHH@Z  (91 B)
+// recovered in src/dialog.cpp:81
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_id_to_pos_00609af0() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00609AF0U);
+    std::printf("  running ?id_to_pos@Dialog@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609AF0U)) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x00609AF0U, "FAIL-no-redirect", "?id_to_pos@Dialog@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609AF0U)) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x00609AF0U, "FAIL-no-redirect", "?id_to_pos@Dialog@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609AF0U, "FAIL", "?id_to_pos@Dialog@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x00609AF0U, "INCONCLUSIVE-no-effect", "?id_to_pos@Dialog@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x00609AF0U, "PASS", "?id_to_pos@Dialog@@QAEHH@Z");
+    return true;
+}
+
+// ?pos_to_id@Dialog@@QAEHH@Z  (154 B)
+// recovered in src/dialog.cpp:153
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_pos_to_id_00609b50() {
+    typedef int (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x00609B50U);
+    std::printf("  running ?pos_to_id@Dialog@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609B50U)) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x00609B50U, "FAIL-no-redirect", "?pos_to_id@Dialog@@QAEHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609B50U)) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x00609B50U, "FAIL-no-redirect", "?pos_to_id@Dialog@@QAEHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609B50U, "FAIL", "?pos_to_id@Dialog@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x00609B50U, "INCONCLUSIVE-no-effect", "?pos_to_id@Dialog@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x00609B50U, "PASS", "?pos_to_id@Dialog@@QAEHH@Z");
+    return true;
+}
+
+// ?set_dialog_text_color@Dialog@@QAEXHHHH@Z  (40 B)
+// recovered in src/dialog.cpp:42
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_set_dialog_text_color_00609c90() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00609C90U);
+    std::printf("  running ?set_dialog_text_color@Dialog@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609C90U)) {
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00609C90U, "FAIL-no-redirect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609C90U)) {
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00609C90U, "FAIL-no-redirect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609C90U, "FAIL", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00609C90U, "INCONCLUSIVE-no-effect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00609C90U, "PASS", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z  (43 B)
+// recovered in src/dialog.cpp:55
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00609CC0U);
+    std::printf("  running ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609CC0U)) {
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00609CC0U, "FAIL-no-redirect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609CC0U)) {
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00609CC0U, "FAIL-no-redirect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609CC0U, "FAIL", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00609CC0U, "INCONCLUSIVE-no-effect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00609CC0U, "PASS", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z  (43 B)
+// recovered in src/dialog.cpp:68
+// staged receiver: Dialog, 0xF4 B, zero-filled
+static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
+    typedef void (__thiscall *Callable)(void *, int, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00609CF0U);
+    std::printf("  running ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xF4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609CF0U)) {
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00609CF0U, "FAIL-no-redirect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609CF0U)) {
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: cannot resume redirect\n");
+            verdict(0x00609CF0U, "FAIL-no-redirect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609CF0U, "FAIL", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00609CF0U, "INCONCLUSIVE-no-effect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+        return true;
+    }
+    verdict(0x00609CF0U, "PASS", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+    return true;
+}
+
+// ?close@ListBox@@QAEXXZ  (125 B)
+// recovered in src/listbox.cpp:52
+// staged receiver: ListBox, 0xB54 B, zero-filled
+static bool verify_ListBox_close_00609f20() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00609F20U);
+    std::printf("  running ?close@ListBox@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xB54U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00609F20U)) {
+            std::printf("  ?close@ListBox@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00609F20U, "FAIL-no-redirect", "?close@ListBox@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00609F20U)) {
+            std::printf("  ?close@ListBox@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00609F20U, "FAIL-no-redirect", "?close@ListBox@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@ListBox@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@ListBox@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00609F20U, "FAIL", "?close@ListBox@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@ListBox@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00609F20U, "INCONCLUSIVE-no-effect", "?close@ListBox@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00609F20U, "PASS", "?close@ListBox@@QAEXXZ");
+    return true;
+}
+
+// ?close@CaviarData@@QAEXXZ  (28 B)
+// recovered in src/caviar.cpp:47
+// staged receiver: CaviarData, 0xC B, zero-filled
+static bool verify_CaviarData_close_00616c60() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00616C60U);
+    std::printf("  running ?close@CaviarData@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xCU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00616C60U)) {
+            std::printf("  ?close@CaviarData@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00616C60U, "FAIL-no-redirect", "?close@CaviarData@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00616C60U)) {
+            std::printf("  ?close@CaviarData@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00616C60U, "FAIL-no-redirect", "?close@CaviarData@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@CaviarData@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@CaviarData@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00616C60U, "FAIL", "?close@CaviarData@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@CaviarData@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00616C60U, "INCONCLUSIVE-no-effect", "?close@CaviarData@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00616C60U, "PASS", "?close@CaviarData@@QAEXXZ");
+    return true;
+}
+
+// ?UNK10@Caviar@@QAEXHHH@Z  (24 B)
+// recovered in src/caviar.cpp:248
+// staged receiver: Caviar, 0x13D0 B, zero-filled
+static bool verify_Caviar_UNK10_00618320() {
+    typedef void (__thiscall *Callable)(void *, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00618320U);
+    std::printf("  running ?UNK10@Caviar@@QAEXHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x13D0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][3] = {
+        {0, 1, -1},
+        {1, -1, 2},
+        {-1, 2, 7},
+        {2, 7, 2147483647},
+        {7, 2147483647, -2147483648},
+        {2147483647, -2147483648, 1431655765},
+        {-2147483648, 1431655765, 0},
+        {1431655765, 0, 1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00618320U)) {
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: cannot suspend redirect\n");
+            verdict(0x00618320U, "FAIL-no-redirect", "?UNK10@Caviar@@QAEXHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00618320U)) {
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: cannot resume redirect\n");
+            verdict(0x00618320U, "FAIL-no-redirect", "?UNK10@Caviar@@QAEXHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00618320U, "FAIL", "?UNK10@Caviar@@QAEXHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00618320U, "INCONCLUSIVE-no-effect", "?UNK10@Caviar@@QAEXHHH@Z");
+        return true;
+    }
+    verdict(0x00618320U, "PASS", "?UNK10@Caviar@@QAEXHHH@Z");
+    return true;
+}
+
+// ?UNK11@Caviar@@QAEXHHH@Z  (42 B)
+// recovered in src/caviar.cpp:301
+// staged receiver: Caviar, 0x13D0 B, zero-filled
+static bool verify_Caviar_UNK11_00618340() {
+    typedef void (__thiscall *Callable)(void *, int, int, int);
+    Callable target = reinterpret_cast<Callable>(0x00618340U);
+    std::printf("  running ?UNK11@Caviar@@QAEXHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x13D0U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][3] = {
+        {0, 1, -1},
+        {1, -1, 2},
+        {-1, 2, 7},
+        {2, 7, 2147483647},
+        {7, 2147483647, -2147483648},
+        {2147483647, -2147483648, 1431655765},
+        {-2147483648, 1431655765, 0},
+        {1431655765, 0, 1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00618340U)) {
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: cannot suspend redirect\n");
+            verdict(0x00618340U, "FAIL-no-redirect", "?UNK11@Caviar@@QAEXHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00618340U)) {
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: cannot resume redirect\n");
+            verdict(0x00618340U, "FAIL-no-redirect", "?UNK11@Caviar@@QAEXHHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x00618340U, "FAIL", "?UNK11@Caviar@@QAEXHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00618340U, "INCONCLUSIVE-no-effect", "?UNK11@Caviar@@QAEXHHH@Z");
+        return true;
+    }
+    verdict(0x00618340U, "PASS", "?UNK11@Caviar@@QAEXHHH@Z");
+    return true;
+}
+
+// ?close@ButtonGroup@@QAEXXZ  (32 B)
+// recovered in src/buttongroup.cpp:42
+// staged receiver: ButtonGroup, 0x94 B, zero-filled
+static bool verify_ButtonGroup_close_0062b7f0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x0062B7F0U);
+    std::printf("  running ?close@ButtonGroup@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x94U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0062B7F0U)) {
+            std::printf("  ?close@ButtonGroup@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x0062B7F0U, "FAIL-no-redirect", "?close@ButtonGroup@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0062B7F0U)) {
+            std::printf("  ?close@ButtonGroup@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x0062B7F0U, "FAIL-no-redirect", "?close@ButtonGroup@@QAEXXZ");
+            return false;
+        }
+        target(staged);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?close@ButtonGroup@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?close@ButtonGroup@@QAEXXZ: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0062B7F0U, "FAIL", "?close@ButtonGroup@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?close@ButtonGroup@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x0062B7F0U, "INCONCLUSIVE-no-effect", "?close@ButtonGroup@@QAEXXZ");
+        return true;
+    }
+    verdict(0x0062B7F0U, "PASS", "?close@ButtonGroup@@QAEXXZ");
+    return true;
+}
+
+// ?init@ButtonGroup@@QAEXHH@Z  (60 B)
+// recovered in src/buttongroup.cpp:60
+// staged receiver: ButtonGroup, 0x94 B, zero-filled
+static bool verify_ButtonGroup_init_0062b810() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x0062B810U);
+    std::printf("  running ?init@ButtonGroup@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x94U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0062B810U)) {
+            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x0062B810U, "FAIL-no-redirect", "?init@ButtonGroup@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0062B810U)) {
+            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x0062B810U, "FAIL-no-redirect", "?init@ButtonGroup@@QAEXHH@Z");
+            return false;
+        }
+        target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?init@ButtonGroup@@QAEXHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0062B810U, "FAIL", "?init@ButtonGroup@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?init@ButtonGroup@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x0062B810U, "INCONCLUSIVE-no-effect", "?init@ButtonGroup@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x0062B810U, "PASS", "?init@ButtonGroup@@QAEXHH@Z");
+    return true;
+}
+
+// ?set@ButtonGroup@@QAEHHH@Z  (47 B)
+// recovered in src/buttongroup.cpp:110
+// staged receiver: ButtonGroup, 0x94 B, zero-filled
+static bool verify_ButtonGroup_set_0062b870() {
+    typedef int (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x0062B870U);
+    std::printf("  running ?set@ButtonGroup@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> before, after_original, after_recovered;
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x94U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0062B870U)) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x0062B870U, "FAIL-no-redirect", "?set@ButtonGroup@@QAEHHH@Z");
+            return false;
+        }
+        const int original_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_original);
+        std::memcpy(staged_original, staged, ObjectSize);
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x0062B870U)) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x0062B870U, "FAIL-no-redirect", "?set@ButtonGroup@@QAEHHH@Z");
+            return false;
+        }
+        const int recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+        snapshot(after_recovered);
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: staged object differs\n");
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    if (!passed) {
+        verdict(0x0062B870U, "FAIL", "?set@ButtonGroup@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set@ButtonGroup@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x0062B870U, "INCONCLUSIVE-no-effect", "?set@ButtonGroup@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x0062B870U, "PASS", "?set@ButtonGroup@@QAEHHH@Z");
+    return true;
 }
 
 bool run_generated_signature_oracles() {
     bool passed = true;
+    passed &= verify_StringStruct_close_00401060();
+    passed &= verify_StringStruct_seek_id_00401560();
+    passed &= verify_StringStruct_current_id_00401640();
+    passed &= verify_StringStruct_next_entry_00402500();
+    passed &= verify_StringStruct_current_entry_00402530();
     passed &= verify_passover_callback_004456a0();
     passed &= verify_load_deswin_sprites_00455e50();
+    passed &= verify_MapWin_on_left_click_0046eba0();
+    passed &= verify_MapWin_on_right_click_0046ebe0();
+    passed &= verify_MapWin_main_caption_0046fb10();
+    passed &= verify_MapWin_close_00470f70();
+    passed &= verify_PlanWin_UNK1_0048b3c0();
+    passed &= verify_PlanWin_blink_0048bc20();
+    passed &= verify_Console_edit_lock_004e1f40();
+    passed &= verify_AlphaNet_close_004e25b0();
+    passed &= verify_AlphaNet_pid_2_idx_004e25e0();
+    passed &= verify_AlphaNet_pid_2_who_004e2610();
+    passed &= verify_AlphaNet_who_2_pid_004e2660();
+    passed &= verify_AlphaNet_who_2_idx_004e26b0();
+    passed &= verify_Console_clear_group_0050f650();
+    passed &= verify_Console_focus_005108a0();
+    passed &= verify_Console_update_data_00514880();
     passed &= verify_not_my_turn_0052dc70();
     passed &= verify_desktop_update_0058ee50();
+    passed &= verify_GraphicWin_close_005d4e40();
+    passed &= verify_GraphicWin_fill_005d5250();
+    passed &= verify_GraphicWin_fill_005d5440();
+    passed &= verify_GraphicWin_redraw_005d5a70();
+    passed &= verify_Buffer_close_005d7470();
+    passed &= verify_Buffer_set_text_color_005dacb0();
+    passed &= verify_Buffer_set_text_color2_005dace0();
+    passed &= verify_Buffer_set_text_color3_005dad10();
+    passed &= verify_Buffer_set_text_color_hyper_005dad40();
+    passed &= verify_Buffer_text_height_005dca80();
+    passed &= verify_Buffer_text_line_height_005dcab0();
+    passed &= verify_Buffer_clear_links_005def90();
+    passed &= verify_Buffer_get_data_005e3373();
+    passed &= verify_Buffer_free_data_005e34a3();
+    passed &= verify_Buffer_get_hdc_005e3503();
+    passed &= verify_Buffer_release_hdc_005e3563();
+    passed &= verify_Sprite_close_005e3820();
+    passed &= verify_Win_set_cursor_005ec7c0();
+    passed &= verify_Win_UNK3_005ece80();
+    passed &= verify_Win_move_005ed7d0();
+    passed &= verify_Win_set_vert_pos_005ee030();
+    passed &= verify_Win_get_vert_pos_005ee050();
+    passed &= verify_Win_set_horz_pos_005ee070();
+    passed &= verify_Win_get_horz_pos_005ee090();
+    passed &= verify_Win_set_vert_range_005ee0b0();
+    passed &= verify_Win_set_horz_range_005ee0d0();
+    passed &= verify_Win_set_vert_paging_005ee0f0();
+    passed &= verify_Win_set_horz_paging_005ee110();
+    passed &= verify_Win_UNK8_005ee130();
+    passed &= verify_Win_UNK9_005ee160();
+    passed &= verify_Win_sync_palette_005f2c60();
+    passed &= verify_Win_is_dialog_focus_005f2ca0();
+    passed &= verify_Win_is_visible_005f7e90();
+    passed &= verify_PullDown_hide_item_005f8cb0();
+    passed &= verify_PullDown_show_item_005f8d20();
+    passed &= verify_PullDown_disable_item_005f8d90();
+    passed &= verify_PullDown_enable_item_005f8df0();
+    passed &= verify_PullDown_check_item_005f9040();
+    passed &= verify_PullDown_uncheck_item_005f90a0();
+    passed &= verify_PullDown_id_to_index_005f9d00();
+    passed &= verify_PullDown_get_selected_005f9f40();
+    passed &= verify_Menu_UNK3_005fb1d0();
+    passed &= verify_Menu_UNK6_005fb2a0();
+    passed &= verify_Menu_hide_menu_item_005fb300();
+    passed &= verify_Menu_UNK7_005fb360();
+    passed &= verify_Menu_show_menu_item_005fb3c0();
+    passed &= verify_Menu_UNK8_005fb420();
+    passed &= verify_Menu_disable_menu_item_005fb480();
+    passed &= verify_Menu_UNK9_005fb4e0();
+    passed &= verify_Menu_enable_menu_item_005fb540();
+    passed &= verify_Menu_check_menu_item_005fb760();
+    passed &= verify_Menu_uncheck_menu_item_005fb7c0();
+    passed &= verify_Menu_id_to_index_005fb990();
+    passed &= verify_Menu_requested_height_005fc6a0();
     passed &= verify_do_sound_005fd2b0();
-    std::printf("generated signature oracles: %d function(s)\n", 5);
+    passed &= verify_Palette_get_pos_005fed10();
+    passed &= verify_BasePop_set_width_00601b20();
+    passed &= verify_BasePop_set_loc_00601b80();
+    passed &= verify_BasePop_write_check_00601bb0();
+    passed &= verify_BasePop_read_check_00601bd0();
+    passed &= verify_BasePop_on_key_click_00604490();
+    passed &= verify_BasePop_on_key_up_006044b0();
+    passed &= verify_BasePop_set_string_color_00604730();
+    passed &= verify_BasePop_set_string_color2_00604760();
+    passed &= verify_BasePop_set_string_color3_00604790();
+    passed &= verify_BasePop_set_string_color_hyper_006047c0();
+    passed &= verify_BasePop_UNK3_00605180();
+    passed &= verify_BasePop_UNK4_006051a0();
+    passed &= verify_Scroll_close_00605370();
+    passed &= verify_Scroll_set_range_006059b0();
+    passed &= verify_Scroll_set_button_color_00605a10();
+    passed &= verify_Scroll_set_bevel_thickness_00605a50();
+    passed &= verify_Scroll_set_bevel_upper_00605a90();
+    passed &= verify_Scroll_set_bevel_lower_00605ad0();
+    passed &= verify_Scroll_set_border_color_00605b10();
+    passed &= verify_Scroll_set_bar_thickness_00605b80();
+    passed &= verify_Scroll_set_pos_00605d20();
+    passed &= verify_Scroll_set_thumb_rect_00606ea0();
+    passed &= verify_BaseButton_close_006070c0();
+    passed &= verify_BaseButton_set_text_color_00607360();
+    passed &= verify_BaseButton_set_text_color2_006073a0();
+    passed &= verify_BaseButton_set_text_color3_006073e0();
+    passed &= verify_BaseButton_set_00607c80();
+    passed &= verify_FlatButton_close_00607da0();
+    passed &= verify_Dialog_set_selected_id_006099d0();
+    passed &= verify_Dialog_get_selected_id_00609a50();
+    passed &= verify_Dialog_id_to_pos_00609af0();
+    passed &= verify_Dialog_pos_to_id_00609b50();
+    passed &= verify_Dialog_set_dialog_text_color_00609c90();
+    passed &= verify_Dialog_set_dialog_text_color2_00609cc0();
+    passed &= verify_Dialog_set_dialog_text_color3_00609cf0();
+    passed &= verify_ListBox_close_00609f20();
+    passed &= verify_CaviarData_close_00616c60();
+    passed &= verify_Caviar_UNK10_00618320();
+    passed &= verify_Caviar_UNK11_00618340();
+    passed &= verify_ButtonGroup_close_0062b7f0();
+    passed &= verify_ButtonGroup_init_0062b810();
+    passed &= verify_ButtonGroup_set_0062b870();
+    std::printf("generated signature oracles: %d function(s)\n", 122);
     return passed;
 }
