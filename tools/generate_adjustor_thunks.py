@@ -51,9 +51,7 @@ import pefile  # noqa: E402
 
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
-import generate_atexit_thunks as atexit_gen  # noqa: E402
-from generator_support import (LICENSE, camel,  # noqa: E402,F401
-                               read_bytes, snake)
+from generator_support import LICENSE, snake  # noqa: E402
 from generator_support import seam_name as support_seam_name  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -10,7 +10,6 @@ skeleton that compiles and links perfectly while being wrong about the image.
 
 from __future__ import annotations
 
-import json
 import sys
 import tempfile
 import unittest

@@ -38,7 +38,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import find_constant_returns as const  # noqa: E402
-from generator_support import LICENSE, snake  # noqa: E402
+from generator_support import snake  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
