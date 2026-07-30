@@ -577,7 +577,23 @@ int main(int argc, char **argv) {
         for (int c = 0; c < cases; ++c) {
             if (verbose) std::printf("stage: case %#010x/%d\n", unsigned(entry.address), c);
             OracleResult r = oracle_run_case(entry.address, c);
-            if (verbose) std::printf("stage:   -> %s\n", oracle_verdict_name(r.verdict));
+            if (verbose) {
+                // The verdict alone cannot distinguish "the original read a
+                // global nothing constructed" from any other fault, and that
+                // distinction is the whole question behind the one-seed-short
+                // cohort. fault_data is the address the access NAMED, so a
+                // small value is a near-null deref off a zeroed pointer.
+                if (r.fault_code)
+                    std::printf("stage:   -> %s  code=%#010lx eip=%#010x "
+                                "data=%#010x\n",
+                                oracle_verdict_name(r.verdict),
+                                (unsigned long)r.fault_code,
+                                unsigned(r.fault_address),
+                                unsigned(r.fault_data));
+                else
+                    std::printf("stage:   -> %s\n",
+                                oracle_verdict_name(r.verdict));
+            }
             const int previous_winner = fold.winning_case;
             const bool keep_going = oracle_fold_step(&fold, r.verdict, c);
             if (fold.winning_case != previous_winner) worst = r;
