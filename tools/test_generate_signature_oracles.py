@@ -122,9 +122,11 @@ class SelectionTests(unittest.TestCase):
     def test_a_MEMBER_taking_no_arguments_IS_selected(self):
         # The safest shape there is: a staged `this` and no argument domain to
         # get wrong. 588 of the unproven members are this shape.
+        # Deliberately NOT `close`: that is a lifecycle method and is refused a
+        # few tests below, for a reason a real suite run measured.
         found = self.candidates([member(
-            name="?close@Thing@@QAEXXZ",
-            prototype="void (__thiscall ?close@Thing@@QAEXXZ)(Thing* this)")])
+            name="?refresh@Thing@@QAEXXZ",
+            prototype="void (__thiscall ?refresh@Thing@@QAEXXZ)(Thing* this)")])
         self.assertEqual(1, len(found))
         self.assertEqual([], found[0]["args"])
         self.assertEqual("Thing", found[0]["class"])
@@ -181,6 +183,29 @@ class SelectionTests(unittest.TestCase):
                     name=f"?close@{class_name}@@QAEXXZ",
                     prototype=f"void (__thiscall ?close@{class_name}@@QAEXXZ)"
                               f"({class_name}* this)")], sizes=sizes))
+
+    def test_a_LIFECYCLE_method_is_refused(self):
+        # MEASURED, not anticipated. The first suite run died on its first
+        # function: ?close@StringStruct@@QAEXXZ (0x00401060) took an unhandled
+        # page fault reading 0x00000004 at 0x00401074. A zero-filled receiver is
+        # safe only for a body that GUARDS its pointer fields; close() walks a
+        # chain the constructor guarantees non-null, so [this+X] read 0 and
+        # [0+4] faulted. Teardown frees what it finds and construction
+        # allocates; either way the effect escapes the .data snapshot.
+        for method in ("close", "init", "free", "destroy", "release"):
+            with self.subTest(method=method):
+                name = f"?{method}@Thing@@QAEXXZ"
+                self.assertEqual([], self.candidates([member(
+                    name=name,
+                    prototype=f"void (__thiscall {name})(Thing* this)")]))
+
+    def test_a_NON_lifecycle_method_of_the_same_class_is_still_selected(self):
+        # The control for the gate above: it must refuse by METHOD, not sweep up
+        # the whole class.
+        name = "?id_to_pos@Thing@@QAEHH@Z"
+        self.assertEqual(1, len(self.candidates([member(
+            name=name,
+            prototype=f"int (__thiscall {name})(Thing* this, int)")])))
 
     def test_a_member_of_TIME_is_refused_because_another_thread_writes_it(self):
         # MultimediaProc writes Time objects inside the snapshot window, so a

@@ -174,6 +174,27 @@ UNSAFE_CLASSES = {
     "Time",
 }
 
+# LIFECYCLE METHODS, refused for the same reason as the classes above: their
+# effect escapes the snapshot, and a synthesized receiver is the wrong input by
+# construction.
+#
+# MEASURED, not anticipated. The first run of the 122-oracle suite died on its
+# FIRST function: `?close@StringStruct@@QAEXXZ` (0x00401060) took an unhandled
+# page fault on read access to 0x00000004 at 0x00401074, and the game never
+# reached the deferred phase. A zero-filled receiver is safe only for a body that
+# GUARDS on its pointer fields; close() walks a chain the constructor guarantees
+# non-null, so [this+X] read 0 and [0+4] faulted. Only one "running" line was
+# printed, which is what identified it in one step.
+#
+# Teardown assumes constructed state and frees what it finds; construction
+# allocates, and calling it twice leaks a block that restoring .data cannot free.
+# `close` alone is the largest single name class in the candidate set - 12 of
+# them.
+LIFECYCLE_METHODS = {
+    "close", "close2", "close3", "destroy", "free", "clear", "purge",
+    "shutdown", "flush", "init", "init2", "reinit", "open", "release",
+}
+
 # Functions that cannot be driven when the deferred oracle phase runs, each
 # with the run that proved it. `?help_tech@@YAXH@Z` reaches
 # ?draw_labs@ReportWin@@QAEXXZ, which divides by zero because the report window
@@ -275,6 +296,8 @@ def member_candidate(row: dict, sizes: dict) -> dict | None:
     if not named:
         return None
     method, class_name = named.groups()
+    if method in LIFECYCLE_METHODS:
+        return None  # allocates or releases; the effect escapes the snapshot
     if class_name not in sizes:
         return None  # size never asserted against the original
     if class_name in UNSAFE_CLASSES:
