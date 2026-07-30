@@ -279,6 +279,7 @@ def refresh_export_metadata(verify_dir):
         derive_recovery_state,
         flatten,
         load_overrides,
+        load_proven_addresses,
         load_redirects,
         load_source_annotations,
         load_source_bindings,
@@ -379,7 +380,11 @@ def refresh_export_metadata(verify_dir):
     # the machine-carried debt. Leaving it stale would publish a byte total
     # that disagreed with the counts printed beside it, and the reused-export
     # path is the path most runs take.
-    summary["functions"]["bytes"] = recovery_metrics.bytes_block(rows)
+    # The full exporter passes the proven set (export_recovery_inventory.py);
+    # this refresh path must too, or every checkpoint-reusing run publishes
+    # proven_recovered as zero and moves the proven bytes into the debt.
+    summary["functions"]["bytes"] = recovery_metrics.bytes_block(
+        rows, load_proven_addresses())
     unresolved_annotations = sorted(set(source_annotations) - known_starts)
     summary["source_annotations"] = {
         "annotations": sum(len(items) for items in source_annotations.values()),
