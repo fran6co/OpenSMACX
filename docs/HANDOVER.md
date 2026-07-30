@@ -198,7 +198,7 @@ tools/host_doctor.py           run this FIRST on a new machine
 docs/HOST_MIGRATION.md         moving the harness between machines
 ```
 
-**1,158 Python tests across 40 files, 40 ctest targets.** Python tests are
+**1,220 Python tests across 42 files, 42 ctest targets.** Python tests are
 `unittest`, standalone, no pytest. Run them with
 `uv run --with-requirements tools/requirements.txt python3 <path>` — the system
 `python3` deliberately lacks capstone and pefile.
