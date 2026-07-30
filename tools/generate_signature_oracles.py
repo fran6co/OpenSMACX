@@ -459,6 +459,8 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("")
     w('#include "runtime_oracle.h"')
     w("")
+    w('#include "globals_diff.h"')
+    w("")
     w("#include <cstdio>")
     w("#include <cstdint>")
     w("#include <cstring>")
@@ -473,6 +475,14 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("constexpr uintptr_t GlobalsEnd   = 0x009C21F8U;")
     w("constexpr size_t GlobalsSize = GlobalsEnd - GlobalsBegin;")
     w("")
+    # Namespace scope, not per function. As locals these were three
+    # std::vector<uint8_t> per verify_ body, so the suite first-touched
+    # 108 x 3 x 3,408,376 = 1.05 GiB of fresh pages - about 275,000 page faults
+    # through Wine - to hold three buffers it uses one at a time.
+    w("std::vector<uint8_t> GlobalsBefore;")
+    w("std::vector<uint8_t> GlobalsAfterOriginal;")
+    w("std::vector<uint8_t> GlobalsAfterRecovered;")
+    w("")
     w("void snapshot(std::vector<uint8_t> &into) {")
     w("    into.resize(GlobalsSize);")
     w("    std::memcpy(into.data(), reinterpret_cast<const void *>(GlobalsBegin),")
@@ -485,16 +495,18 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("}")
     w("")
     w("// Where the two images first disagree, for a message that names an address")
-    w("// rather than saying only that something differed.")
+    w("// rather than saying only that something differed. The comparison itself")
+    w("// lives in src/globals_diff.h: it was a scalar loop over 3,408,376 bytes")
+    w("// run twice per case, and the bisect that keeps the address is the only")
+    w("// subtle part, which a hand-written header lets a C++ test check directly.")
     w("bool same_globals(const std::vector<uint8_t> &a,")
     w("                  const std::vector<uint8_t> &b, uintptr_t *where) {")
-    w("    for (size_t index = 0; index < GlobalsSize; ++index) {")
-    w("        if (a[index] != b[index]) {")
-    w("            *where = GlobalsBegin + index;")
-    w("            return false;")
-    w("        }")
+    w("    size_t first = 0;")
+    w("    if (globals_diff::equal(a.data(), b.data(), GlobalsSize, &first)) {")
+    w("        return true;")
     w("    }")
-    w("    return true;")
+    w("    *where = GlobalsBegin + first;")
+    w("    return false;")
     w("}")
     w("")
     w("// One verdict line per function, in a form tools/ can read back. Only an")
@@ -503,6 +515,16 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("void verdict(uintptr_t address, const char *state, const char *name) {")
     w('    std::printf("GENERATED-ORACLE-VERDICT: 0x%08lX %s  %s\\n",')
     w("                (unsigned long)address, state, name);")
+    w("    std::fflush(stdout);")
+    w("}")
+    w("")
+    # The suite's cost per function, because it was never measured. The figure
+    # this file's notes carried - "a 180 s run" - was prose; nothing timed it,
+    # and the arithmetic argues the byte scan alone cannot account for it. Emit
+    # the number so a speedup can be attributed instead of assumed.
+    w("void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {")
+    w('    std::printf("GENERATED-ORACLE-TIMING: 0x%08lX %lu ms  %s\\n",')
+    w("                (unsigned long)address, (unsigned long)elapsed_ms, name);")
     w("    std::fflush(stdout);")
     w("}")
     w("")
@@ -539,7 +561,13 @@ def emit(rows: list, earned: set | None = None) -> str:
         # crashes" into "crashes on help_tech".
         w(f'    std::printf("  running {row["name"]}\\n");')
         w("    std::fflush(stdout);")
-        w("    std::vector<uint8_t> before, after_original, after_recovered;")
+        # Aliases onto the namespace-scope buffers, so the body below reads the
+        # same as it did when these were locals while the pages are allocated
+        # once for the whole suite rather than three times per function.
+        w("    std::vector<uint8_t> &before = GlobalsBefore;")
+        w("    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;")
+        w("    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;")
+        w("    const DWORD started_at = GetTickCount();")
         w("    bool passed = true;")
         w("    bool observed_effect = false;")
         if staged:
@@ -639,6 +667,11 @@ def emit(rows: list, earned: set | None = None) -> str:
             w(f"{indent}    observed_effect = true;")
             w(f"{indent}}}")
         w("    }")
+        # Timed on every exit, including the ones that return early: a function
+        # that is slow because it bailed at a guard and a function that is slow
+        # because it ran are different problems, and only the per-function number
+        # tells them apart.
+        w(f'    timing({addr}U, GetTickCount() - started_at, "{row["name"]}");')
         w("    if (!passed) {")
         w(f'        verdict({addr}U, "FAIL", "{row["name"]}");')
         w("        return false;")

@@ -11,7 +11,15 @@ set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requiremen
 set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
 set(OPENSMACX_WINE_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/wineprefix"
     CACHE PATH "Dedicated owned Wine prefix used only by this build's runtime tests")
-set(OPENSMACX_HYBRID_SMOKE_SECONDS 20 CACHE STRING
+# 60, measured, not guessed. At 20 s the game never reached the
+# scenario_opening_movie call site that triggers the DEFERRED oracle phase, so
+# four suites - including the 108 generated ones - silently did not run while the
+# gate reported success. What costs the time is the game booting to that call
+# site: the generated suite itself is 8 ms per function, 0.1 s for the seventeen
+# that get to run, so suite cost was never the constraint and the "180 s run" the
+# oracle notes carried was never measured. 60 s reaches the deferred phase with
+# margin; a longer window buys nothing.
+set(OPENSMACX_HYBRID_SMOKE_SECONDS 60 CACHE STRING
     "Seconds to observe a staged hybrid smoke launch")
 set(OPENSMACX_GAMEPLAY_SCENARIO_SAVE "" CACHE STRING
     "Local fixture path relative to OPENSMACX_GAME_DIR")
@@ -702,6 +710,45 @@ if(BUILD_TESTING)
     # reach committed numbers. tools/lifted_oracle_fold.h is the extraction; it
     # is pure, so this target links nothing but the test file itself and needs
     # no image, no Wine prefix and no lifted objects to be meaningful.
+    # The bisect that names WHICH global moved. It reports an address in a FAIL
+    # verdict, so an off-by-one in it produces a plausible wrong answer rather
+    # than a visible failure - which is why it is a hand-written header with a
+    # behavioural test instead of emitted text.
+    add_executable(globals-diff-tests
+        tests/globals_diff_tests.cpp
+    )
+    target_compile_features(globals-diff-tests PRIVATE cxx_std_11)
+    set_target_properties(globals-diff-tests PROPERTIES
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+    if(MINGW)
+        target_compile_options(globals-diff-tests PRIVATE
+            -pedantic -Wall -Wextra -Wshadow)
+        # Self-contained, as every other test executable here is: without it the
+        # binary wants libstdc++-6.dll and libgcc_s_dw2-1.dll from the Wine
+        # prefix and fails to load with c0000135.
+        target_link_options(globals-diff-tests PRIVATE -static)
+    endif()
+    if(CMAKE_CROSSCOMPILING)
+        set(OPENSMACX_GLOBALS_DIFF_TEST_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:globals-diff-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+        )
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_GLOBALS_DIFF_TEST_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_test(NAME globals-diff-tests
+            COMMAND ${OPENSMACX_GLOBALS_DIFF_TEST_COMMAND}
+        )
+    else()
+        add_test(NAME globals-diff-tests COMMAND globals-diff-tests)
+    endif()
+
     add_executable(lifted-oracle-fold-tests
         tests/lifted_oracle_fold_tests.cpp
     )
@@ -1624,6 +1671,7 @@ if(MINGW AND BUILD_TESTING)
             recovery-leaf-tests
             recovery-gameplay-tests
             lifted-oracle-fold-tests
+            globals-diff-tests
             assemble-legacy-leaves
             smoke-hybrid-game
         USES_TERMINAL
