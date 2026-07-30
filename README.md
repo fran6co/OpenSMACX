@@ -4,7 +4,8 @@ A project to decompile SMAC/X to C++ with the long term goal of creating a full 
 Source tested and compiled as an x86 DLL with Visual Studio 2019 using Visual C++ with default 
 settings.
 
-Tested with CodeBlocks 20.03 using GCC 8.1.0 compiler. Project file (cbp) courtesy of induktio.
+Historically also built with CodeBlocks 20.03 using GCC 8.1.0; that project file (courtesy of
+induktio) has been removed in favour of the CMake build below, which is what the gates use.
 
 The patcher script found under tools is compatible with the latest GOG version as well as the most
 recent version of my unofficial patch. Cursory testing shows it is compatible with PRACX.
