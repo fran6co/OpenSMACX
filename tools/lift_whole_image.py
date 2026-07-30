@@ -840,8 +840,23 @@ ls lifted_*.cpp | xargs -P "$JOBS" -I{} \\
 # the default specs; without them the link fails naming _imp__GdiFlush@0 and
 # _imp__timeGetTime@0 respectively. user32, advapi32 and kernel32 arrive
 # through the default specs.
-"$CXX" -std=c++17 -O2 -static -o lifted_probe.exe ./*.o -lgdi32 -lwinmm
+# Two executables from one object set, because there are two mains and they
+# answer different questions. lifted_probe.exe is the LINK-KEEPER: it resolves
+# dispatch probes and exits, which is what proves an artifact this size links at
+# all. lifted_boot.exe actually RUNS the image and reports where it stops, which
+# is task #32. Building only the first is why booting was a manual step that no
+# committed script performed and that therefore drifted.
+COMMON=$(ls ./*.o | grep -v 'lifted_boot.cpp.o$' | grep -v 'lifted_main.cpp.o$')
+"$CXX" -std=c++17 -O2 -static -o lifted_probe.exe \
+    $COMMON lifted_main.cpp.o -lgdi32 -lwinmm
 echo "built lifted_probe.exe"
+# --stack matters here and not for the probe: the boot runs real game code on
+# the guest stack, and Wine places a 32-bit process's initial stack low enough
+# to collide with the 0x00400000 span unless the reserve is raised. The oracle's
+# build script records the measured table behind this number.
+"$CXX" -std=c++17 -O2 -static -Wl,--stack,0x180000 -o lifted_boot.exe \
+    $COMMON lifted_boot.cpp.o -lgdi32 -lwinmm
+echo "built lifted_boot.exe"
 """
 
 
@@ -867,6 +882,20 @@ def write_crt_source(out: Path, tools: Path) -> None:
     """
     (out / "lifted_crt.cpp").write_text(
         (tools / "lifted_crt.cpp").read_text(encoding="utf-8"),
+        encoding="utf-8")
+
+
+def write_boot_source(out: Path, tools: Path) -> None:
+    """Copy the boot in so the shard glob compiles it.
+
+    It is named lifted_* so the glob picks it up, and the build script then keeps
+    its object out of lifted_probe.exe: two translation units defining main link
+    to nothing useful. Copied rather than compiled in place because the generated
+    headers it includes - lifted_runtime.h, lifted_crt_init.h - live here, not in
+    tools/.
+    """
+    (out / "lifted_boot.cpp").write_text(
+        (tools / "lifted_boot.cpp").read_text(encoding="utf-8"),
         encoding="utf-8")
 
 
@@ -941,6 +970,7 @@ def main() -> int:
     write_main(args.out, functions)
     write_loader(args.out, Path(__file__).resolve().parent)
     write_crt_source(args.out, Path(__file__).resolve().parent)
+    write_boot_source(args.out, Path(__file__).resolve().parent)
     write_build_script(args.out, Path(__file__).resolve().parent)
     # BEFORE write_dispatch, and that order is load-bearing: lowering is what
     # discovers the embedded funclets that need their own entry points, and the

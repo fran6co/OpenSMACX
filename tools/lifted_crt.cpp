@@ -249,9 +249,61 @@ const OpensmacxCrtEntry *entry_for(uint32_t address) {
 
 }  // namespace
 
+namespace {
+
+// SURVEY MODE, off by default. See opensmacx_crt_survey in the header for why
+// the evidence it produces is weaker and spelled differently.
+bool Surveying = false;
+unsigned Surveyed = 0;
+
+// The stub an unimplemented-but-NAMED CRT routine gets under --survey: return
+// to the caller as cdecl with EAX = 0 instead of trapping, so one run reaches
+// past it and the whole frontier can be enumerated rather than one item per
+// rebuild-and-run cycle.
+//
+// It returns a LIE - zero - and that is the entire reason a surveyed run is not
+// a boot. A caller that checks the result takes the failure branch; one that
+// does not carries a null onward. Either way what follows is not the program.
+void crt_survey_skip(OpensmacxStaticRecompileState &s) {
+    // The state carries no instruction pointer, so the stub cannot name itself;
+    // opensmacx_crt_dispatch prints the address when it hands this out, which is
+    // the one place that has both the address and the decision.
+    ++Surveyed;
+    ret(s, 0U);
+}
+
+}  // namespace
+
 OpensmacxLiftedFunction opensmacx_crt_dispatch(uint32_t address) {
     const OpensmacxCrtEntry *entry = entry_for(address);
-    return entry ? shim_for_name(entry->name) : nullptr;
+    if (!entry) {
+        return nullptr;
+    }
+    OpensmacxLiftedFunction shim = shim_for_name(entry->name);
+    if (shim) {
+        return shim;
+    }
+    if (Surveying) {
+        // Named, unimplemented, and we were asked to keep going. Logged HERE
+        // because this is the only point holding both the address and the
+        // decision - the stub gets no instruction pointer, and the trap that
+        // would otherwise fire is never entered. Dispatch runs once per distinct
+        // call site, so a routine reached from twenty sites prints up to twenty
+        // times and the driver deduplicates.
+        std::printf("SURVEY-REACHED %#010x %s\n", unsigned(address),
+                    entry->name);
+        std::fflush(stdout);
+        return &crt_survey_skip;
+    }
+    return nullptr;
+}
+
+void opensmacx_crt_survey(bool enabled) {
+    Surveying = enabled;
+}
+
+unsigned opensmacx_crt_surveyed(void) {
+    return Surveyed;
 }
 
 const char *opensmacx_crt_name(uint32_t address) {

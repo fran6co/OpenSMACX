@@ -49,4 +49,22 @@ const char *opensmacx_crt_name(uint32_t address);
 // (implemented, catalogued) - the honest completion figure for this layer.
 void opensmacx_crt_coverage(unsigned *implemented, unsigned *catalogued);
 
+// SURVEY MODE: enumerate the frontier instead of stopping at its first member.
+//
+// With it on, opensmacx_crt_dispatch answers a NAMED but unimplemented CRT
+// address with a stub that returns to the caller as cdecl with EAX = 0 rather
+// than trapping. One run then reaches past every such routine and the whole
+// reachable frontier can be listed, instead of the boot converging one work item
+// per rebuild-and-run cycle - 306 cycles to learn a list, at the current count.
+//
+// WHAT A SURVEYED RUN IS NOT: a boot. Every skipped routine returned zero, which
+// is a lie, so execution after the first skip is not the program's. The verdicts
+// are spelled apart for that reason - a real stop is BOOT-STOPPED-AT, a surveyed
+// one SURVEY-REACHED - and a survey frontier is a work queue, never a claim about
+// how far the boot got.
+void opensmacx_crt_survey(bool enabled);
+
+// How many times the survey stub answered. Zero on a run with survey off.
+unsigned opensmacx_crt_surveyed(void);
+
 #endif  // OPENSMACX_LIFTED_CRT_H
