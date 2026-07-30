@@ -63,6 +63,23 @@ PINNED_RE = re.compile(r"static_assert\(sizeof\((\w+)\)\s*==\s*(0x[0-9A-Fa-f]+|\
 CTOR_RE = re.compile(r"^\?\?0(\w+)@@")
 INITIALIZER_RE = re.compile(r"^\?\?__E")
 
+# MSVC's EH vector iterators take the ELEMENT SIZE as a literal argument, so
+# every array-constructed class states its own sizeof at each call site. This is
+# exact evidence of the same standing as `operator new(N)`, and it reaches a
+# population allocation evidence cannot: an object that is never heap-allocated
+# but does appear as a global array.
+#
+# The argument counts are the signatures' own: the constructor iterators take
+# (ptr, size, count, ctor, dtor) and the destructor iterator (ptr, size, count,
+# dtor). Pushes are right-to-left, so in program order the size is always the
+# second-to-last.
+VECTOR_ITERATORS = {
+    0x006457C2: 5,   # ??_L@YGXPAXIHP6EX0@Z1@Z  eh vector constructor iterator
+    0x00645F8E: 5,   # ??_N@YGXPAXIHP6EX0@Z1@Z
+    0x006456E4: 4,   # ??_M@YGXPAXIHP6EX0@Z@Z   eh vector destructor iterator
+}
+DTOR_RE = re.compile(r"^\?\?1(\w+)@@")
+
 
 @dataclass
 class Evidence:
@@ -372,9 +389,65 @@ def virtual_base(image: Image, ctor: int, length: int,
         f"touches nothing at or past 0x{total:X}"), base_name
 
 
+def vector_iterator_sizes(image: Image,
+                          by_address: dict[int, dict]) -> dict[str, set[int]]:
+    """class -> element sizes read off every vector-iterator call site.
+
+    Returns a SET per class on purpose. Two call sites naming the same class
+    with different sizes means one of them is describing something else, and
+    the caller must refuse rather than pick; settled() already enforces that,
+    but keeping the ambiguity visible here is what makes it enforceable.
+    """
+    sizes: dict[str, set[int]] = {}
+    # PER FUNCTION, not one linear sweep of .text. A linear decode
+    # desynchronises on data and jump tables: it finds 24 of the 212 iterator
+    # call sites in this image and resolves none of them, because the `push`
+    # run before each call is misdecoded. Every function's start and length is
+    # already known, so decode from those.
+    instructions = []
+    for start in sorted(by_address):
+        length = int(by_address[start].get("size") or 0)
+        if length:
+            instructions.extend(image.disasm(start, length))
+    for index, instruction in enumerate(instructions):
+        if instruction.mnemonic != "call" or not instruction.operands:
+            continue
+        operand = instruction.operands[0]
+        if operand.type != X86_OP_IMM:
+            continue
+        arity = VECTOR_ITERATORS.get(operand.imm & 0xFFFFFFFF)
+        if arity is None:
+            continue
+        pushed: list[int | None] = []
+        for previous in reversed(instructions[max(0, index - 12):index]):
+            if previous.mnemonic != "push":
+                break
+            source = previous.operands[0]
+            pushed.append(source.imm & 0xFFFFFFFF
+                          if source.type == X86_OP_IMM else None)
+        pushed.reverse()
+        if len(pushed) < arity:
+            continue          # a register-computed argument; say nothing
+        arguments = pushed[-arity:]
+        size = arguments[-2]
+        if not size:
+            continue
+        # The ctor is third from the end for the 5-argument form; the dtor is
+        # first in both. Either names the class.
+        for candidate in {arguments[0], arguments[-4] if arity == 5 else None}:
+            if not candidate:
+                continue
+            name = (by_address.get(candidate) or {}).get("name", "")
+            found = CTOR_RE.match(name) or DTOR_RE.match(name)
+            if found:
+                sizes.setdefault(found.group(1), set()).add(size)
+    return sizes
+
+
 def derive(image: Image, name: str, by_address: dict[int, dict],
            pinned: dict[str, int],
-           globals_: list[tuple[int, str, int]]) -> Layout:
+           globals_: list[tuple[int, str, int]],
+           strides: dict[str, set[int]] | None = None) -> Layout:
     layout = Layout(name)
     found = constructors(by_address, name)
     if not found:
@@ -385,6 +458,13 @@ def derive(image: Image, name: str, by_address: dict[int, dict],
     allocation = allocation_size(image, layout.ctor, by_address)
     if allocation:
         layout.evidence.append(allocation)
+
+    stride = (strides or {}).get(name)
+    if stride and len(stride) == 1:
+        size = next(iter(stride))
+        layout.evidence.append(Evidence(
+            "array", size,
+            "element size passed to an EH vector iterator"))
 
     for candidate in found:
         bound = global_bound(image, candidate, globals_)
@@ -441,6 +521,9 @@ def main() -> int:
     by_address, _ = load_functions()
     pinned = load_pinned()
     globals_ = global_objects(image, by_address)
+    # Scanned once: the sweep is over the whole .text and every class asks the
+    # same question of it.
+    strides = vector_iterator_sizes(image, by_address)
 
     names = args.classes
     if args.check_pinned:
@@ -450,7 +533,7 @@ def main() -> int:
 
     agree = differ = silent = 0
     for name in names:
-        layout = derive(image, name, by_address, pinned, globals_)
+        layout = derive(image, name, by_address, pinned, globals_, strides)
         if args.check_pinned:
             settled = layout.settled()
             if settled is None:
