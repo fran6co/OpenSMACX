@@ -204,6 +204,7 @@ int main(int argc, char **argv) {
     bool selfcheck = false;
     int dump_seed = -1;
     const char *state_path = nullptr;
+    const char *build_state_path = nullptr;
     uint32_t selfcheck_address = 0x00401000U;
     bool append = false;
     uint32_t resume_after = 0;
@@ -213,6 +214,7 @@ int main(int argc, char **argv) {
         auto next = [&]() { return (i + 1 < argc) ? argv[++i] : ""; };
         if (!std::strcmp(a, "--exe")) exe_path = next();
         else if (!std::strcmp(a, "--state")) state_path = next();
+        else if (!std::strcmp(a, "--build-state")) build_state_path = next();
         else if (!std::strcmp(a, "--list")) list_path = next();
         else if (!std::strcmp(a, "--report")) report_path = next();
         else if (!std::strcmp(a, "--only")) only = uint32_t(std::strtoul(next(), nullptr, 0));
@@ -277,6 +279,68 @@ int main(int argc, char **argv) {
             "  spuriously after a few instructions. Verdicts from this run\n"
             "  describe the instrumentation, not the lowering. The watchdog\n"
             "  (--watchdog, default on) is the guard that works here.\n");
+    }
+
+    if (build_state_path) {
+        OracleBuildStateReport report;
+        const char *error = oracle_build_state(build_state_path, &report);
+        // The import figures print even on failure: a run that faults with
+        // zero imports overridden failed for a reason that has nothing to do
+        // with __cinit, and the two must not be confused.
+        std::printf("build-state: imports %u slots, %u bound to real Win32, "
+                    "%u overridden by this harness, %u unresolved\n",
+                    unsigned(report.imports.slots), unsigned(report.imports.bound),
+                    unsigned(report.imports.overridden),
+                    unsigned(report.imports.unresolved));
+        if (report.imports.unresolved)
+            std::printf("build-state:   first unresolved: %s\n",
+                        report.imports.first_unresolved);
+        if (report.imports.missing_modules)
+            std::printf("build-state:   %u DLL(s) would not load\n",
+                        unsigned(report.imports.missing_modules));
+        std::printf("build-state: guest heap %u call(s), %u bytes served, "
+                    "%u refused, %u of %u bytes used\n",
+                    unsigned(report.alloc_calls), unsigned(report.alloc_bytes),
+                    unsigned(report.alloc_failures), unsigned(report.heap_used),
+                    unsigned(0x009F0000U - 0x009C2200U));
+        if (report.alloc_largest_refused)
+            std::printf("build-state: the largest REFUSED request was %u bytes "
+                        "- that is how much guest heap this needs\n",
+                        unsigned(report.alloc_largest_refused));
+        if (report.address_shaped)
+            std::printf("build-state: %u of %u address-shaped words are "
+                        "in-span (%.1f%%; the hybrid dumps managed 26-30%%)\n",
+                        unsigned(report.address_in_span),
+                        unsigned(report.address_shaped),
+                        100.0 * double(report.address_in_span) /
+                            double(report.address_shaped));
+        if (report.dialogs)
+            std::printf("build-state: %u MessageBoxA call(s) answered IDOK "
+                        "without showing anything\n", unsigned(report.dialogs));
+        if (report.refused)
+            std::printf("build-state: the guest called %s; refused rather than "
+                        "taking the harness down with it\n", report.refused);
+        if (error) {
+            std::fprintf(stderr, "oracle: --build-state: %s\n", error);
+            return 2;
+        }
+        if (!report.returned) {
+            // NOT a state file. Saying where it stopped is the whole value of a
+            // failed run - it is the next work item - but writing a dump of a
+            // half-run __cinit would produce a file that looks like state.
+            std::printf("BUILD-STATE-STOPPED-AT %#010x  code %#010lx "
+                        "accessing %#010x\n",
+                        unsigned(report.fault_address),
+                        (unsigned long)report.fault_code,
+                        unsigned(report.fault_data));
+            std::printf("build-state: __cinit did not return, so NO state file "
+                        "was written\n");
+            return 1;
+        }
+        std::printf("BUILD-STATE-COMPLETE eax=%#010x, wrote %u bytes to %s\n",
+                    unsigned(report.eax), unsigned(report.wrote),
+                    build_state_path);
+        return 0;
     }
 
     if (selftest) {

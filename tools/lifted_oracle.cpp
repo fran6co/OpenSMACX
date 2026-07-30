@@ -2199,6 +2199,393 @@ static OracleOriginalRun run_original_once(uint32_t address, int case_index,
     return run;
 }
 
+// ---------------------------------------------------------------------------
+// --build-state: let the ORIGINAL build its own .data/.bss
+//
+// Every attempt so far has FABRICATED global state and then argued about how
+// plausible it was. Nine seeding experiments moved the fault wall 3.6% against
+// a goal needing 33%, and real dumps taken from the hybrid measured WORSE,
+// because only 26-30% of their address-shaped words land inside the flat span.
+//
+// The untried source is the program itself. `__cinit` at 0x00644DD2 is 45 bytes
+// that call `__initterm` twice - .CRT$XI, then .CRT$XC's 434 entries - and side
+// A is real original machine code, executable, at its real base. So run it. The
+// result is real CONTENTS because a real program wrote them, and every pointer
+// in it is IN-SPAN BY CONSTRUCTION because this harness chose where the heap
+// lives. No seeding strategy can have both properties at once.
+//
+// WHY THE IMPORTS CAN MOSTLY BE THEMSELVES. Side A executes natively in a
+// 32-bit Windows process, so KERNEL32, USER32, GDI32 and WINMM are already
+// loaded and GetProcAddress hands back entry points that work. The static
+// closure of __cinit reaches 672 functions, of which 84 are statically-linked
+// CRT bodies that need nothing at all - they are real code in the image - and
+// 71 are DLL imports. Binding those for real is the whole difference between
+// this and shimming an emulator.
+//
+// WHAT MUST NOT BE ITSELF: anything that hands back memory. A real HeapAlloc
+// returns a host address outside 0x00400000..0x00A0C000, and a global holding
+// one is precisely the pointer that faults on the lifted side - the disease
+// this is meant to cure, reintroduced at the last step. So the allocators are
+// served from a guest region, and what they return is in-span for the same
+// reason the guest stack is.
+//
+// THE BINDING CANNOT REACH THE DUMP, and that is asserted rather than assumed:
+// the IAT ends at 0x006693A0 and the dump window starts at 0x00682000. If a
+// future image moved its IAT into .data, this would otherwise start quietly
+// writing HOST function pointers into a file the oracle later trusts as state.
+// ---------------------------------------------------------------------------
+
+constexpr uint32_t OracleCinitAddress = 0x00644DD2U;
+// The same window overlay_state reads back, so what is written here is exactly
+// what --state consumes.
+constexpr uint32_t OracleDumpEnd = 0x009C2200U;
+constexpr uint32_t OracleIatHigh = 0x006693A0U;
+static_assert(OracleIatHigh <= 0x00682000U,
+              "the IAT overlaps the dump window, so binding it would write "
+              "host function pointers into a state file");
+
+// --build-state seeds no arena and runs no per-case stack, so it owns the whole
+// scratch window above .bss. The heap is the low part and the stack the high
+// part, because the stack grows down and a heap that grows up meets it in the
+// middle, where an overrun is a wrong answer rather than silent corruption.
+constexpr uint32_t OracleBuildHeapBase = 0x009C2200U;
+constexpr uint32_t OracleBuildHeapEnd = 0x009F0000U;
+constexpr uint32_t OracleBuildStackTop = 0x00A0B000U;
+static_assert(OracleBuildStackTop < OracleImageBase + OracleImageSize,
+              "the build-state stack must stay inside the flat span");
+
+static uint32_t g_build_next = OracleBuildHeapBase;
+static uint32_t g_build_calls = 0;
+static uint32_t g_build_bytes = 0;
+static uint32_t g_build_failures = 0;
+static uint32_t g_build_largest_refused = 0;
+
+// A bump allocator with a 16-byte header holding the requested size, because
+// HeapSize and HeapReAlloc are both in the closure and neither can be answered
+// without it. Nothing is ever freed: 438 initialisers run once, and a free list
+// would be more code with more ways to be wrong than the memory it reclaims.
+static uint32_t build_alloc(uint32_t bytes, bool zero) {
+    ++g_build_calls;
+    const uint32_t payload = (bytes + 15U) & ~15U;
+    const uint32_t need = payload + 16U;
+    if (payload < bytes || need < payload ||
+        g_build_next + need > OracleBuildHeapEnd) {
+        ++g_build_failures;
+        // The size of the biggest refusal is how much heap this actually
+        // needs. A refused allocation does not fault here - it returns NULL,
+        // the CRT stores NULL in a global, and the fault lands somewhere else
+        // entirely, so without this number the cause is invisible from the
+        // symptom.
+        if (bytes > g_build_largest_refused) g_build_largest_refused = bytes;
+        return 0;
+    }
+    const uint32_t header = g_build_next;
+    g_build_next += need;
+    g_build_bytes += need;
+    std::memcpy(g_side_a + (header - OracleImageBase), &bytes, 4);
+    const uint32_t block = header + 16U;
+    if (zero) std::memset(g_side_a + (block - OracleImageBase), 0, payload);
+    return block;
+}
+
+static uint32_t build_size_of(uint32_t block) {
+    if (block < OracleBuildHeapBase + 16U || block >= OracleBuildHeapEnd) return 0;
+    uint32_t bytes = 0;
+    std::memcpy(&bytes, g_side_a + (block - 16U - OracleImageBase), 4);
+    return bytes;
+}
+
+// HEAP_ZERO_MEMORY.
+constexpr uint32_t OracleHeapZeroMemory = 0x00000008U;
+
+static void *__stdcall shim_heap_alloc(void *, uint32_t flags, uint32_t bytes) {
+    return reinterpret_cast<void *>(
+        uintptr_t(build_alloc(bytes, (flags & OracleHeapZeroMemory) != 0)));
+}
+
+static int __stdcall shim_heap_free(void *, uint32_t, void *) {
+    return 1;   // nothing is reclaimed; see build_alloc
+}
+
+static uint32_t __stdcall shim_heap_size(void *, uint32_t, void *block) {
+    return build_size_of(uint32_t(uintptr_t(block)));
+}
+
+static void *__stdcall shim_heap_realloc(void *, uint32_t flags, void *block,
+                                         uint32_t bytes) {
+    const uint32_t old = uint32_t(uintptr_t(block));
+    const uint32_t fresh = build_alloc(bytes, (flags & OracleHeapZeroMemory) != 0);
+    if (fresh && old) {
+        const uint32_t had = build_size_of(old);
+        const uint32_t copy = had < bytes ? had : bytes;
+        if (copy)
+            std::memmove(g_side_a + (fresh - OracleImageBase),
+                         g_side_a + (old - OracleImageBase), copy);
+    }
+    return reinterpret_cast<void *>(uintptr_t(fresh));
+}
+
+static void *__stdcall shim_virtual_alloc(void *, uint32_t size, uint32_t,
+                                          uint32_t) {
+    // The requested address is ignored on purpose: the caller wants memory, and
+    // the only memory whose address survives into the lifted side is ours.
+    return reinterpret_cast<void *>(uintptr_t(build_alloc(size, true)));
+}
+
+static void *__stdcall shim_get_process_heap(void) {
+    // A handle nothing dereferences, distinguishable from NULL so a CRT that
+    // checks the return does not take an error path.
+    return reinterpret_cast<void *>(uintptr_t(OracleBuildHeapBase));
+}
+
+static bool in_span(const void *pointer, uint32_t length) {
+    const uint32_t address = uint32_t(uintptr_t(pointer));
+    return address >= OracleImageBase &&
+           address - OracleImageBase <= OracleImageSize - length;
+}
+
+static const char *g_build_refused = nullptr;
+static uint32_t g_build_dialogs = 0;
+
+// A shim cannot simply RETURN when the guest expects never to come back, and it
+// must not actually exit: ExitProcess would take the harness with it and
+// surface as one of the KILLED-host-refused rows the sweep already records,
+// which says nothing about __cinit. So it faults on purpose, and the vectored
+// handler converts that into the same clean abort every original-side fault
+// takes - with a name attached, so the report can say what asked to die.
+static void build_refuse(const char *what) {
+    g_build_refused = what;
+    *reinterpret_cast<volatile int *>(0) = 0;
+}
+
+static void __stdcall shim_exit_process(uint32_t) {
+    build_refuse("ExitProcess");
+}
+
+static int __stdcall shim_terminate_process(void *, uint32_t) {
+    build_refuse("TerminateProcess");
+    return 0;
+}
+
+static int __stdcall shim_message_box(void *, const char *, const char *,
+                                      uint32_t) {
+    // IDOK, without showing anything. With a display attached a real dialog
+    // blocks forever waiting for a click nobody will make, and without one it
+    // fails in a way that depends on the driver - neither is a measurement.
+    ++g_build_dialogs;
+    return 1;
+}
+
+// THE LOCKS ARE NOT AN OPTIMISATION, they are a correctness requirement, and
+// they are the reason the first run of this hung. Two separate problems:
+//
+// 1. Real startup calls _mtinit before _cinit, so by the time a constructor
+//    takes a CRT lock the CRITICAL_SECTIONs are initialised. Running __cinit
+//    alone leaves them zero-filled in .bss, and EnterCriticalSection on a
+//    zeroed section waits forever - measured, as
+//    `RtlpWaitForCriticalSection section 009C0538 blocked by 0000`.
+// 2. A REAL InitializeCriticalSection writes a DebugInfo POINTER into the
+//    structure. Those structures live in .bss, inside the dump window, so the
+//    real call would plant HOST heap addresses in the very bytes this run
+//    exists to write out - the exact contamination --build-state is for.
+//
+// One thread runs here, so mutual exclusion is vacuous and a no-op is not a
+// weakening of anything.
+static void __stdcall shim_initialize_critical_section(void *section) {
+    if (in_span(section, 24)) std::memset(section, 0, 24);
+}
+
+static void __stdcall shim_enter_critical_section(void *) {}
+static void __stdcall shim_leave_critical_section(void *) {}
+static void __stdcall shim_delete_critical_section(void *) {}
+
+static const void *build_state_override(const char *name) {
+    struct Entry { const char *name; const void *shim; };
+    static const Entry table[] = {
+        {"HeapAlloc", reinterpret_cast<const void *>(&shim_heap_alloc)},
+        {"HeapFree", reinterpret_cast<const void *>(&shim_heap_free)},
+        {"HeapSize", reinterpret_cast<const void *>(&shim_heap_size)},
+        {"HeapReAlloc", reinterpret_cast<const void *>(&shim_heap_realloc)},
+        {"VirtualAlloc", reinterpret_cast<const void *>(&shim_virtual_alloc)},
+        {"GetProcessHeap", reinterpret_cast<const void *>(&shim_get_process_heap)},
+        {"InitializeCriticalSection",
+         reinterpret_cast<const void *>(&shim_initialize_critical_section)},
+        {"EnterCriticalSection",
+         reinterpret_cast<const void *>(&shim_enter_critical_section)},
+        {"LeaveCriticalSection",
+         reinterpret_cast<const void *>(&shim_leave_critical_section)},
+        {"DeleteCriticalSection",
+         reinterpret_cast<const void *>(&shim_delete_critical_section)},
+        {"ExitProcess", reinterpret_cast<const void *>(&shim_exit_process)},
+        {"TerminateProcess",
+         reinterpret_cast<const void *>(&shim_terminate_process)},
+        {"MessageBoxA", reinterpret_cast<const void *>(&shim_message_box)},
+    };
+    for (const Entry &entry : table)
+        if (!std::strcmp(entry.name, name)) return entry.shim;
+    return nullptr;
+}
+
+static bool in_image(uint32_t rva, uint32_t length) {
+    return rva < OracleImageSize && length <= OracleImageSize - rva;
+}
+
+// Applied to the PRISTINE master for the same reason overlay_state is: every
+// run restores from it, so a binding written to a side would be erased.
+static const char *bind_imports(OracleImportReport *report) {
+    std::memset(report, 0, sizeof *report);
+    if (!g_image_loaded) return "--build-state needs the image loaded first";
+    uint32_t pe_offset = 0;
+    std::memcpy(&pe_offset, g_pristine + 0x3C, 4);
+    if (!in_image(pe_offset, 0xF8)) return "bad e_lfanew";
+    uint16_t magic = 0;
+    std::memcpy(&magic, g_pristine + pe_offset + 24, 2);
+    if (magic != 0x10B) return "not a PE32 image";
+    uint32_t import_rva = 0;
+    std::memcpy(&import_rva, g_pristine + pe_offset + 24 + 96 + 8, 4);
+    if (!import_rva || !in_image(import_rva, 20))
+        return "the image has no usable import directory";
+
+    for (uint32_t descriptor = import_rva; ; descriptor += 20) {
+        if (!in_image(descriptor, 20)) return "the import directory runs off the image";
+        uint32_t original_thunk = 0, name_rva = 0, first_thunk = 0;
+        std::memcpy(&original_thunk, g_pristine + descriptor, 4);
+        std::memcpy(&name_rva, g_pristine + descriptor + 12, 4);
+        std::memcpy(&first_thunk, g_pristine + descriptor + 16, 4);
+        if (!original_thunk && !name_rva && !first_thunk) break;
+        if (!in_image(name_rva, 1) || !in_image(first_thunk, 4))
+            return "an import descriptor points outside the image";
+        const char *dll = reinterpret_cast<const char *>(g_pristine + name_rva);
+        HMODULE module = GetModuleHandleA(dll);
+        if (!module) module = LoadLibraryA(dll);
+        if (!module) ++report->missing_modules;
+        const uint32_t names = original_thunk ? original_thunk : first_thunk;
+        for (uint32_t i = 0; ; ++i) {
+            if (!in_image(names + i * 4, 4) || !in_image(first_thunk + i * 4, 4))
+                return "an import thunk runs off the image";
+            uint32_t entry = 0;
+            std::memcpy(&entry, g_pristine + names + i * 4, 4);
+            if (!entry) break;
+            ++report->slots;
+            char label[160];
+            const void *address = nullptr;
+            bool overridden = false;
+            if (entry & 0x80000000U) {
+                const uint16_t ordinal = uint16_t(entry & 0xFFFFU);
+                std::snprintf(label, sizeof label, "%s#%u", dll, unsigned(ordinal));
+                if (module)
+                    address = reinterpret_cast<const void *>(GetProcAddress(
+                        module, reinterpret_cast<LPCSTR>(uintptr_t(ordinal))));
+            } else {
+                if (!in_image(entry + 2, 1))
+                    return "an import name runs off the image";
+                const char *name =
+                    reinterpret_cast<const char *>(g_pristine + entry + 2);
+                std::snprintf(label, sizeof label, "%s!%s", dll, name);
+                if (module)
+                    address = reinterpret_cast<const void *>(
+                        GetProcAddress(module, name));
+                if (const void *shim = build_state_override(name)) {
+                    address = shim;
+                    overridden = true;
+                }
+            }
+            if (!address) {
+                ++report->unresolved;
+                if (!report->first_unresolved[0])
+                    std::snprintf(report->first_unresolved,
+                                  sizeof report->first_unresolved, "%s", label);
+                continue;
+            }
+            const uint32_t value = uint32_t(uintptr_t(address));
+            std::memcpy(g_pristine + first_thunk + i * 4, &value, 4);
+            if (overridden) ++report->overridden; else ++report->bound;
+        }
+    }
+    return nullptr;
+}
+
+// How much of what came out actually points somewhere the lifted side can
+// follow. This is the figure that condemned the hybrid dumps - only 26-30% of
+// their address-shaped words landed in the flat span - so it is measured the
+// SAME way here, with the same bounds overlay_state's remapper uses, or the two
+// numbers could not be compared and the claim would be unfalsifiable.
+static void measure_span_residency(OracleBuildStateReport *report) {
+    constexpr uint32_t kLow = 0x00682000U, kHigh = 0x009C21F8U;
+    constexpr uint32_t kHeapLow = 0x00010000U, kHeapHigh = 0x20000000U;
+    for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
+        uint32_t word = 0;
+        std::memcpy(&word, g_side_a + (a - OracleImageBase), 4);
+        if (word < kHeapLow || word >= kHeapHigh) continue;
+        ++report->address_shaped;
+        if (word >= OracleImageBase && word < OracleImageBase + OracleImageSize)
+            ++report->address_in_span;
+    }
+}
+
+const char *oracle_build_state(const char *path, OracleBuildStateReport *report) {
+    std::memset(report, 0, sizeof *report);
+    if (!g_image_loaded) return "--build-state needs the image loaded first";
+    if (const char *error = bind_imports(&report->imports)) return error;
+
+    restore_from_pristine(g_side_a);
+    std::memset(g_side_a + (OracleBuildHeapBase - OracleImageBase), 0,
+                OracleBuildStackTop - OracleBuildHeapBase);
+    g_build_next = OracleBuildHeapBase;
+    g_build_calls = g_build_bytes = g_build_failures = 0;
+    g_build_largest_refused = 0;
+    g_build_dialogs = 0;
+    g_build_refused = nullptr;
+
+    const uint32_t esp = OracleBuildStackTop - 16U;
+    const uint32_t landing = uint32_t(uintptr_t(&oracle_return_point));
+    std::memcpy(g_side_a + (esp - OracleImageBase), &landing, 4);
+
+    for (int i = 0; i < 9; ++i) oracle_in[i] = 0;
+    oracle_in[4] = esp;
+    oracle_in[8] = 0x202U;          // IF set, everything else clear
+    oracle_target = OracleCinitAddress;
+    std::memset(oracle_out, 0, sizeof oracle_out);
+    oracle_fault = 0;
+    oracle_fault_addr = 0;
+    oracle_fault_data = 0;
+
+    g_original_thread_id = GetCurrentThreadId();
+    g_side = OracleSideOriginal;
+    g_run_started_tick = LONG(GetTickCount());
+    g_run_active = 1;
+    oracle_run_original();
+    g_run_active = 0;
+    g_side = OracleSideIdle;
+
+    report->fault_code = oracle_fault;
+    report->fault_address = oracle_fault_addr;
+    report->fault_data = oracle_fault_data;
+    report->eax = oracle_out[0];
+    report->alloc_calls = g_build_calls;
+    report->alloc_bytes = g_build_bytes;
+    report->alloc_failures = g_build_failures;
+    report->alloc_largest_refused = g_build_largest_refused;
+    report->heap_used = g_build_next - OracleBuildHeapBase;
+    report->dialogs = g_build_dialogs;
+    report->refused = g_build_refused;
+    report->returned = oracle_fault == 0;
+    // Measured either way: a run that stopped part-way still says how clean the
+    // state it got to was, and that is how to tell "nearly there" from "the
+    // pointers were wrong from the start".
+    measure_span_residency(report);
+    if (!report->returned) return nullptr;   // the caller reports the fault
+
+    std::FILE *file = std::fopen(path, "wb");
+    if (!file) return "cannot open the --build-state output file";
+    const size_t length = size_t(OracleDumpEnd - OracleImageBase);
+    const size_t written = std::fwrite(g_side_a, 1, length, file);
+    std::fclose(file);
+    if (written != length) return "short write of the state file";
+    report->wrote = uint32_t(length);
+    return nullptr;
+}
+
 // Three runs, three fills. Registers, flags, whether it faulted, and every byte
 // it wrote are compared against the first fill; if any of them moved, the
 // original was reading the top page and this case cannot be judged.
