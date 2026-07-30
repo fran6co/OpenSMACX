@@ -215,7 +215,6 @@ Sprite *g_CHECKBOX_SPRITE_2 = (Sprite *)0x009B8F90;
 Sprite *g_FILEWIN_SPRITE_1 = (Sprite *)0x009B9048;
 Sprite *g_FILEWIN_SPRITE_2 = (Sprite *)0x009B9018;
 Sprite *g_FILEWIN_SPRITE_3 = (Sprite *)0x009B9078;
-Strings *StringTable = (Strings *)0x009B90D8;
 Buffer *g_CAVIAR_BUFFER_1 = (Buffer *)0x009B9108;
 Buffer *g_CAVIAR_BUFFER_2 = (Buffer *)0x009B96B0;
 

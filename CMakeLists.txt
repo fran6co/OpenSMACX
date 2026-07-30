@@ -321,7 +321,6 @@ if(MINGW)
     target_link_options(OpenSMACX PRIVATE
         $<$<CONFIG:Release>:-s>
         -static
-        -Wl,--allow-multiple-definition
     )
 
     set(OPENSMACX_ALPHANET_OBJECT
