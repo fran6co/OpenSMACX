@@ -59,10 +59,34 @@ constexpr uint32_t OpensmacxStackLimit =
 constexpr uint32_t OpensmacxStackTop =
     OpensmacxStackLimit + OpensmacxStackSize;
 
+// THE GUEST HEAP, and its size is a measurement rather than a preference.
+//
+// --build-state runs the original's own __cinit so the program builds its own
+// globals, and the first thing that stopped it was an allocation: the CRT's
+// ___sbh_alloc_new_region asks for exactly 1,048,576 bytes for a small-block
+// region, and the scratch window above .bss holds 183,904. Serving it from a
+// HOST heap is not an option - the whole point is that a global holding a heap
+// pointer must name somewhere the lifted side can follow, and a host address
+// is precisely the pointer that faults.
+//
+// So the heap is a named region inside the same flat allocation, above the
+// stack. That is design R1, and it is chosen over range-dispatching in
+// opensmacx_at() for the reason recorded at the top of this file: a branch
+// there costs an unpredictable test on every memory reference in 713,586
+// lowered instructions. One more region above the stack keeps opensmacx_at()
+// a single subtraction, exactly as generated.
+//
+// 2 MiB rather than the 1 MiB measured, because the CRT allocates regions on
+// demand and sizing to the first observed request would make a second one a
+// mystery failure instead of a bigger number.
+constexpr uint32_t OpensmacxHeapSize = 0x00200000U;
+constexpr uint32_t OpensmacxHeapBase = OpensmacxStackTop;
+constexpr uint32_t OpensmacxHeapEnd = OpensmacxHeapBase + OpensmacxHeapSize;
+
 // Total size of the flat allocation. lifted_image.cpp must define
 // opensmacx_image[] with exactly this many bytes.
 constexpr uint32_t OpensmacxSpanSize =
-    OpensmacxImageSize + OpensmacxStackSpanSize;
+    OpensmacxImageSize + OpensmacxStackSpanSize + OpensmacxHeapSize;
 
 // Environment variable consulted first for the path to the user's own
 // executable, so a test can point at its own copy without a path being baked

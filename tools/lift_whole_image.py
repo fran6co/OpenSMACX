@@ -308,7 +308,11 @@ def write_image(out: Path, pe: pefile.PE, base: int, size: int) -> None:
         "// directly above, so opensmacx_at() stays one subtraction.\n"
         "// Zero-filled on purpose: the bytes are loaded at startup from the\n"
         "// user's own executable so no original content enters this tree.\n"
-        "unsigned char opensmacx_image[OpensmacxImageSize + OpensmacxStackSpanSize];\n"
+        # Sized from the one constant rather than by restating its parts. When
+        # the guest heap was added, the old spelling silently omitted it and
+        # only the static_assert below caught it; deriving means the next
+        # region cannot introduce that gap at all.
+        "unsigned char opensmacx_image[OpensmacxSpanSize];\n"
         "\n"
         "// The stack geometry in lifted_loader.h is derived from\n"
         "// OpensmacxImageSize, not from this array, so the two could drift\n"

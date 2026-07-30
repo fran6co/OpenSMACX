@@ -318,10 +318,15 @@ class EmissionTests(unittest.TestCase):
             out = Path(raw)
             lifter.write_image(out, build_pe(), 0x00400000, 0x1000)
             text = (out / "lifted_image.cpp").read_text(encoding="utf-8")
-        self.assertIn(
-            "unsigned char opensmacx_image["
-            "OpensmacxImageSize + OpensmacxStackSpanSize];",
-            text)
+        # Sized from the ONE span constant, never by restating its parts. The
+        # old spelling named the image and the stack, so when the guest heap
+        # was added for --build-state it silently covered neither - the array
+        # would have been 2 MiB short of the span the loader hands out, and
+        # only the static_assert below it caught that. Deriving means the next
+        # region cannot reintroduce the gap, so the assertion is on the
+        # DERIVATION and not merely on today's text.
+        self.assertIn("unsigned char opensmacx_image[OpensmacxSpanSize];", text)
+        self.assertNotIn("OpensmacxImageSize + OpensmacxStackSpanSize", text)
         self.assertNotIn("0x90,", text)
 
     def test_image_source_ties_its_size_to_the_stack_geometry(self):

@@ -12,6 +12,71 @@ trust it.
 
 ---
 
+## 2026-07-30 — the original builds its own state, and it is not enough
+
+Phase 2.1's `--build-state` is implemented and it works: the original's own
+startup runs, 438 initialisers of real machine code execute, and a state file
+comes out. Measured against the threshold fixed in advance, **it fails.** No
+proof route moved, so both mandatory numbers are unchanged at 53 proven.
+
+### The pre-committed test, and the result
+
+Sweep pair with and without the state, both non-refusing, because the refusing
+population is 74,687 B and cannot host a 250,000 B improvement in principle:
+
+| criterion | required | measured | |
+| --- | --- | --- | --- |
+| `INCONCLUSIVE-original-fault` better | ≥250,000 B | **+19,186 B** | **NOT MET** — 7.7% of it |
+| `agreed_full_strength` not worse | — | 42,209 B / 768 fn, unchanged | met |
+| kill: full strength worse by >2,000 B or >20 fn | — | not triggered | no revert |
+
+Bought weakened, and reported as the plan requires: `agreed_only_on_paths_taken`
+rose 11,360 B (558,043 → 569,403) and `executed` rose 15,375 B. More code runs;
+it is not more code that agrees. The wall went 1,584,976 → 1,565,790 B, which is
+1.54% of the 1,246,125 B of near-null mass measured as addressable.
+
+### Why, and it was visible before the sweep
+
+The run reports how many address-shaped words in the dump window are in-span,
+with the bounds `overlay_state`'s remapper uses. It reads **21.7%** — *worse*
+than the 26-30% that condemned the hybrid dumps. The state is real, and it is
+full of host-scoped values anyway, because 208 of the 221 imports are bound to
+the real Win32 functions and the ones returning handles, module bases and locale
+pointers store them straight into globals inside the dump window. Binding for
+real is what made this cheap and is also what capped it.
+
+So the next move is not more constructors, it is more overrides: every import
+that returns a host-scoped value needs a guest-region answer, the way the
+allocators and the critical-section family already do.
+
+### What it took to get __cinit to return
+
+Three blockers, each a measurement rather than a guess:
+
+1. **A hang, not a fault.** `RtlpWaitForCriticalSection section 009C0538
+   blocked by 0000` — a `CRITICAL_SECTION` in the guest's own `.bss`, zeroed
+   because `_mtinit` runs before `_cinit` and was not being run. A *real*
+   `InitializeCriticalSection` would also write a DebugInfo pointer into a
+   structure inside the dump window, so the override is required twice over.
+2. **A 1 MiB allocation.** `___sbh_alloc_new_region` asks for exactly
+   1,048,576 bytes; the scratch window above `.bss` holds 183,904. This is what
+   sized the R1 guest heap at 2 MiB. The fault it caused landed three steps
+   downstream, in `___initstdio`, so the harness now reports the largest
+   *refused* request — the cause, not the symptom.
+3. **`__cinit` alone is not startup.** It stopped in `___initstdio` at
+   0x00647c06 reading `__pioinfo[]` at 0x009c10a0, which `__ioinit` fills
+   earlier. The sequence transcribed from `start` at 0x00646C9D is
+   `__heap_init(1)`, `__mtinit`, `__ioinit`, `__cinit`; with all four, all four
+   return.
+
+The argv/env steps in that sequence are deliberately skipped:
+`GetCommandLineA` and `___crtGetEnvironmentStringsA` return host pointers that
+`start` stores into globals inside the dump window. A constructor reading
+`__argv` or `_environ` therefore sees NULL here, and anything derived from them
+is not built — stated because it is a real hole in the state, not a detail.
+
+---
+
 ## 2026-07-30 — a whole-image baseline, and the fault wall names itself
 
 No proof route moved this session, so both mandatory numbers are unchanged: 53

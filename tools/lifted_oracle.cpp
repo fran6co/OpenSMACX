@@ -14,6 +14,10 @@
 #include <vector>
 
 #include "lifted_runtime.h"   // opensmacx_image, opensmacx_dispatch
+// The GEOMETRY of the flat span - stack, guard band and the guest heap
+// --build-state serves the CRT from - lives here rather than in the generated
+// runtime header, which knows only the image's base and size.
+#include "lifted_loader.h"
 #include "lifted_tls.h"       // opensmacx_tib_reset
 #include "lifted_string.h"    // OpensmacxDirectionFlag - the lift's DF
 
@@ -509,7 +513,11 @@ static const char *overlay_state(const char *path, unsigned char *image) {
         uint32_t w;
         std::memcpy(&w, image + (a - OracleImageBase), 4);
         const bool below = w >= kHeapLow && w < OracleImageBase;
-        const bool above = w >= OracleImageBase + OracleImageSize && w < kHeapHigh;
+        // The bound is the whole guest span, not the image: a pointer into
+        // the guest heap above the stack is one the lifted side CAN follow,
+        // and it is precisely what --build-state produces. Remapping those
+        // into the arena would throw away the only real objects in the dump.
+        const bool above = w >= OracleImageBase + OpensmacxSpanSize && w < kHeapHigh;
         if (!below && !above) continue;
         // Spread them over the arena's objects rather than collapsing every
         // heap pointer onto one, so two globals that named different objects
@@ -2248,11 +2256,18 @@ static_assert(OracleIatHigh <= 0x00682000U,
 // scratch window above .bss. The heap is the low part and the stack the high
 // part, because the stack grows down and a heap that grows up meets it in the
 // middle, where an overrun is a wrong answer rather than silent corruption.
-constexpr uint32_t OracleBuildHeapBase = 0x009C2200U;
-constexpr uint32_t OracleBuildHeapEnd = 0x009F0000U;
+// The heap is the loader's named region above the guest stack - design R1 -
+// because the CRT asks for 1 MiB in one go and the scratch window above .bss
+// holds 183,904 bytes. The build-state STACK stays in the scratch window,
+// where it fits and where nothing the lift runs will read it.
+constexpr uint32_t OracleBuildHeapBase = OpensmacxHeapBase;
+constexpr uint32_t OracleBuildHeapEnd = OpensmacxHeapEnd;
+constexpr uint32_t OracleBuildStackLow = 0x009C2200U;
 constexpr uint32_t OracleBuildStackTop = 0x00A0B000U;
 static_assert(OracleBuildStackTop < OracleImageBase + OracleImageSize,
-              "the build-state stack must stay inside the flat span");
+              "the build-state stack must stay inside the image");
+static_assert(OracleBuildHeapEnd - OracleImageBase <= OracleSpanReservation,
+              "the guest heap must fit inside the span the bootstrap reserves");
 
 static uint32_t g_build_next = OracleBuildHeapBase;
 static uint32_t g_build_calls = 0;
@@ -2338,10 +2353,13 @@ static void *__stdcall shim_get_process_heap(void) {
     return reinterpret_cast<void *>(uintptr_t(OracleBuildHeapBase));
 }
 
+// The WHOLE guest span, heap included - a CRITICAL_SECTION can be allocated
+// as easily as declared, and refusing to touch one in the heap would leave it
+// holding whatever the allocator last left there.
 static bool in_span(const void *pointer, uint32_t length) {
     const uint32_t address = uint32_t(uintptr_t(pointer));
-    return address >= OracleImageBase &&
-           address - OracleImageBase <= OracleImageSize - length;
+    return address >= OracleImageBase && length <= OpensmacxSpanSize &&
+           address - OracleImageBase <= OpensmacxSpanSize - length;
 }
 
 static const char *g_build_refused = nullptr;
@@ -2399,6 +2417,10 @@ static void __stdcall shim_enter_critical_section(void *) {}
 static void __stdcall shim_leave_critical_section(void *) {}
 static void __stdcall shim_delete_critical_section(void *) {}
 
+static void *__stdcall shim_heap_create(uint32_t, uint32_t, uint32_t) {
+    return reinterpret_cast<void *>(uintptr_t(OpensmacxHeapBase));
+}
+
 static const void *build_state_override(const char *name) {
     struct Entry { const char *name; const void *shim; };
     static const Entry table[] = {
@@ -2408,6 +2430,9 @@ static const void *build_state_override(const char *name) {
         {"HeapReAlloc", reinterpret_cast<const void *>(&shim_heap_realloc)},
         {"VirtualAlloc", reinterpret_cast<const void *>(&shim_virtual_alloc)},
         {"GetProcessHeap", reinterpret_cast<const void *>(&shim_get_process_heap)},
+        // __heap_init stores the result in _crtheap, which is in the dump
+        // window, so a real handle would be a host value written into state.
+        {"HeapCreate", reinterpret_cast<const void *>(&shim_heap_create)},
         {"InitializeCriticalSection",
          reinterpret_cast<const void *>(&shim_initialize_critical_section)},
         {"EnterCriticalSection",
@@ -2518,33 +2543,43 @@ static void measure_span_residency(OracleBuildStateReport *report) {
         std::memcpy(&word, g_side_a + (a - OracleImageBase), 4);
         if (word < kHeapLow || word >= kHeapHigh) continue;
         ++report->address_shaped;
-        if (word >= OracleImageBase && word < OracleImageBase + OracleImageSize)
+        if (word >= OracleImageBase && word < OracleImageBase + OpensmacxSpanSize)
             ++report->address_in_span;
     }
 }
 
-const char *oracle_build_state(const char *path, OracleBuildStateReport *report) {
-    std::memset(report, 0, sizeof *report);
-    if (!g_image_loaded) return "--build-state needs the image loaded first";
-    if (const char *error = bind_imports(&report->imports)) return error;
+struct OracleBuildStep {
+    uint32_t address;
+    const char *name;
+    uint32_t argument;
+    bool has_argument;
+};
 
-    restore_from_pristine(g_side_a);
-    std::memset(g_side_a + (OracleBuildHeapBase - OracleImageBase), 0,
-                OracleBuildStackTop - OracleBuildHeapBase);
-    g_build_next = OracleBuildHeapBase;
-    g_build_calls = g_build_bytes = g_build_failures = 0;
-    g_build_largest_refused = 0;
-    g_build_dialogs = 0;
-    g_build_refused = nullptr;
+// Transcribed from `start` at 0x00646C9D. See the note inside
+// oracle_build_state for why the argv/env steps are not here.
+static const OracleBuildStep kOracleBuildSequence[] = {
+    {0x00647D7AU, "__heap_init", 1U, true},
+    {0x0064915CU, "__mtinit", 0U, false},
+    {0x0064BC04U, "__ioinit", 0U, false},
+    {OracleCinitAddress, "__cinit", 0U, false},
+};
 
-    const uint32_t esp = OracleBuildStackTop - 16U;
+// One cdecl call into side A. Each step gets a fresh frame at the same stack
+// top, which is what `start` effectively does too - the steps communicate
+// through GLOBALS, not through the stack, so nothing is lost by not nesting
+// them, and a per-step frame means a stop names exactly one function.
+static bool run_guest_call(uint32_t address, uint32_t argument,
+                           bool has_argument, uint32_t *eax_out) {
+    const uint32_t esp = OracleBuildStackTop - 16U - (has_argument ? 4U : 0U);
     const uint32_t landing = uint32_t(uintptr_t(&oracle_return_point));
     std::memcpy(g_side_a + (esp - OracleImageBase), &landing, 4);
+    if (has_argument)
+        std::memcpy(g_side_a + (esp + 4U - OracleImageBase), &argument, 4);
 
     for (int i = 0; i < 9; ++i) oracle_in[i] = 0;
     oracle_in[4] = esp;
     oracle_in[8] = 0x202U;          // IF set, everything else clear
-    oracle_target = OracleCinitAddress;
+    oracle_target = address;
     std::memset(oracle_out, 0, sizeof oracle_out);
     oracle_fault = 0;
     oracle_fault_addr = 0;
@@ -2557,6 +2592,64 @@ const char *oracle_build_state(const char *path, OracleBuildStateReport *report)
     oracle_run_original();
     g_run_active = 0;
     g_side = OracleSideIdle;
+    if (eax_out) *eax_out = oracle_out[0];
+    return oracle_fault == 0;
+}
+
+const char *oracle_build_state(const char *path, OracleBuildStateReport *report) {
+    std::memset(report, 0, sizeof *report);
+    if (!g_image_loaded) return "--build-state needs the image loaded first";
+    if (const char *error = bind_imports(&report->imports)) return error;
+
+    // Reserved by the bootstrap, committed only here: a normal sweep never
+    // touches the heap region and should not pay for its pages.
+    if (!VirtualAlloc(reinterpret_cast<void *>(uintptr_t(OracleBuildHeapBase)),
+                      OracleBuildHeapEnd - OracleBuildHeapBase, MEM_COMMIT,
+                      PAGE_READWRITE))
+        return "cannot commit the guest heap region";
+
+    restore_from_pristine(g_side_a);
+    std::memset(g_side_a + (OracleBuildStackLow - OracleImageBase), 0,
+                OracleBuildStackTop - OracleBuildStackLow);
+    std::memset(g_side_a + (OracleBuildHeapBase - OracleImageBase), 0,
+                OracleBuildHeapEnd - OracleBuildHeapBase);
+    g_build_next = OracleBuildHeapBase;
+    g_build_calls = g_build_bytes = g_build_failures = 0;
+    g_build_largest_refused = 0;
+    g_build_dialogs = 0;
+    g_build_refused = nullptr;
+
+    // RUN THE PREFIX, NOT JUST __cinit, and the reason is a measurement: with
+    // __cinit alone this stopped in ___initstdio at 0x00647c06 reading
+    // __pioinfo[] at 0x009c10a0, which is NULL because __ioinit fills it and
+    // __ioinit runs EARLIER in startup. The order below is transcribed from
+    // `start` at 0x00646C9D, which calls, in this sequence:
+    //
+    //     push 1 / call __heap_init   0x00647D7A   (one cdecl argument)
+    //     call __mtinit               0x0064915C
+    //     call __ioinit               0x0064BC04
+    //     call [0x6691b0]             GetCommandLineA -> 0x009C21E4
+    //     call ___crtGetEnvironmentStringsA          -> 0x009C04F8
+    //     call __setargv              0x0064B885
+    //     call __setenvp              0x0064B7CC
+    //     call __cinit                0x00644DD2
+    //
+    // The argv/env four are DELIBERATELY SKIPPED. GetCommandLineA and
+    // ___crtGetEnvironmentStringsA return HOST pointers, and `start` stores
+    // both into globals inside the dump window - so running them would write
+    // exactly the kind of unfollowable address this whole exercise exists to
+    // keep out of the state. What that costs is stated rather than hidden: a
+    // constructor reading __argv or _environ sees NULL here, and any global it
+    // derives from them is not built.
+    for (const OracleBuildStep &step : kOracleBuildSequence) {
+        report->steps_attempted++;
+        if (!run_guest_call(step.address, step.argument, step.has_argument,
+                            &report->eax)) {
+            report->stopped_in = step.name;
+            break;
+        }
+        report->steps_returned++;
+    }
 
     report->fault_code = oracle_fault;
     report->fault_address = oracle_fault_addr;
@@ -2569,7 +2662,7 @@ const char *oracle_build_state(const char *path, OracleBuildStateReport *report)
     report->heap_used = g_build_next - OracleBuildHeapBase;
     report->dialogs = g_build_dialogs;
     report->refused = g_build_refused;
-    report->returned = oracle_fault == 0;
+    report->returned = report->steps_returned == report->steps_attempted;
     // Measured either way: a run that stopped part-way still says how clean the
     // state it got to was, and that is how to tell "nearly there" from "the
     // pointers were wrong from the start".
