@@ -259,5 +259,102 @@ class PinnedParsingTest(unittest.TestCase):
         self.assertEqual({"Win": 0x444, "Random": 4}, pinned)
 
 
+class VectorIteratorTest(unittest.TestCase):
+    """sizeof read off an EH vector iterator call site.
+
+    This reaches a population allocation evidence cannot: a class that is never
+    heap-allocated but does appear as a global array. It is exact because the
+    iterator's own signature takes the element size, so the image is stating
+    sizeof rather than bounding it - which is why Font resolves to its true
+    0x28 here, where the global-bound method reports 0x718.
+    """
+
+    ITERATOR = 0x006457C2      # ??_L, five arguments
+    DTOR_ITERATOR = 0x006456E4  # ??_M, four arguments
+    CTOR = 0x00500000
+    DTOR = 0x00500100
+
+    def push(self, value):
+        item = mock.Mock()
+        item.mnemonic, item.op_str = "push", hex(value)
+        operand = mock.Mock()
+        operand.type, operand.imm = layout.X86_OP_IMM, value
+        item.operands = [operand]
+        return item
+
+    def push_register(self):
+        # A NON-ZERO imm on purpose. Capstone leaves .imm meaningless for a
+        # register operand, and a zero here would let the separate
+        # zero-size guard catch the case - so the test would pass while the
+        # type check it exists for was gone.
+        item = mock.Mock()
+        item.mnemonic, item.op_str = "push", "eax"
+        operand = mock.Mock()
+        operand.type, operand.imm = 0, 0x99
+        item.operands = [operand]
+        return item
+
+    def call(self, target):
+        item = mock.Mock()
+        item.mnemonic, item.op_str = "call", hex(target)
+        operand = mock.Mock()
+        operand.type, operand.imm = layout.X86_OP_IMM, target
+        item.operands = [operand]
+        return item
+
+    def scan(self, instructions, table=None):
+        image = mock.Mock()
+        image.disasm.side_effect = lambda address, length: instructions
+        table = table or {0x00404000: {"name": "?holder@@YAXXZ", "size": "256"},
+                          self.CTOR: {"name": "??0Widget@@QAE@XZ", "size": "32"},
+                          self.DTOR: {"name": "??1Widget@@QAE@XZ", "size": "16"}}
+        # Only the holder carries instructions; the others are name lookups.
+        def disasm(address, length):
+            return instructions if address == 0x00404000 else []
+        image.disasm.side_effect = disasm
+        return layout.vector_iterator_sizes(image, table)
+
+    def site(self, size, count=4):
+        # Right-to-left, so program order is dtor, ctor, count, size, ptr.
+        return [self.push(self.DTOR), self.push(self.CTOR), self.push(count),
+                self.push(size), self.push(0x00900000), self.call(self.ITERATOR)]
+
+    def test_reads_the_element_size_from_a_constructor_iterator(self):
+        self.assertEqual({"Widget": {0x28}}, self.scan(self.site(0x28)))
+
+    def test_reads_it_from_a_destructor_iterator_too(self):
+        # Four arguments, so program order is dtor, count, size, ptr - the size
+        # is still second-to-last, which is the whole reason that is the rule.
+        instructions = [self.push(self.DTOR), self.push(4), self.push(0x70),
+                        self.push(0x00900000), self.call(self.DTOR_ITERATOR)]
+        self.assertEqual({"Widget": {0x70}}, self.scan(instructions))
+
+    def test_two_call_sites_that_disagree_are_both_kept(self):
+        # Keeping both is what lets settled() refuse. Collapsing them here
+        # would silently pick one, and a wrong layout compiles perfectly and
+        # corrupts memory at runtime.
+        found = self.scan(self.site(0x28) + self.site(0x30))
+        self.assertEqual({0x28, 0x30}, found["Widget"])
+
+    def test_a_register_argument_yields_nothing(self):
+        # A count or size computed at runtime means the site states nothing.
+        instructions = [self.push(self.DTOR), self.push(self.CTOR),
+                        self.push(4), self.push_register(),
+                        self.push(0x00900000), self.call(self.ITERATOR)]
+        self.assertEqual({}, self.scan(instructions))
+
+    def test_a_short_push_run_yields_nothing(self):
+        instructions = [self.push(4), self.push(0x28),
+                        self.push(0x00900000), self.call(self.ITERATOR)]
+        self.assertEqual({}, self.scan(instructions))
+
+    def test_a_zero_size_is_refused(self):
+        self.assertEqual({}, self.scan(self.site(0)))
+
+    def test_a_call_to_something_else_is_ignored(self):
+        instructions = self.site(0x28)[:-1] + [self.call(0x00401234)]
+        self.assertEqual({}, self.scan(instructions))
+
+
 if __name__ == "__main__":
     unittest.main()
