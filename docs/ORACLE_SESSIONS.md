@@ -12,6 +12,104 @@ trust it.
 
 ---
 
+## 2026-07-30 — a whole-image baseline, and the fault wall names itself
+
+No proof route moved this session, so both mandatory numbers are unchanged: 53
+functions carry a proof, and the reachable set is where the last entry left it.
+What changed is that there is a current-host baseline to diff against, and the
+fault wall has a measured shape instead of a size.
+
+### The baseline: 5,673 rows, no dropped lines
+
+```
+REPORT=$PWD/build/oracle/report-base.tsv LOG=$PWD/build/oracle/sweep-base.log \
+    ./tools/lifted_oracle_sweep.sh --refuse-blocked --cases 16
+```
+
+`--refuse-blocked` because `baseline-arm64/report.tsv` was swept that way and
+anything compared against it must be too. Finished with 0 hangs and 1 host
+death; `tools/lifted_oracle_summary.py` reads 42,209 B / 1.75% / 768 fn at full
+strength and 2,214,194 B / 91.86% machine-carried — the historical figures, on
+this host, reproduced.
+
+Against the arm64 baseline the host move is not free, and the direction differs
+by figure:
+
+| figure | before | after | delta |
+| --- | ---: | ---: | --- |
+| `agreed` | 178,248 | 191,129 | +12,881 better, 1,465 -> 1,614 fn |
+| `agreed_full_strength` | 42,236 | 42,209 | **-27 worse**, 767 -> 768 fn |
+| `agreed_under_weakened_conditions` | 136,012 | 148,920 | +12,908 worse |
+
+Bytes and function count disagree on the only figure that matters, which is why
+both are printed. 2,496 B across 14 functions agreed before and do not now.
+
+### 95.3% of the faulting bytes are a dereference of zero
+
+The report's `detail` column already carries `accessing 0x...` on every faulting
+row, so this needed no run at all — only someone to read the column:
+
+| where the original's faulting access pointed | fn | bytes | share |
+| --- | ---: | ---: | ---: |
+| near-null (below 64 KiB) | 244 | 71,130 | **95.3%** |
+| inside the image span | 42 | 2,165 | 2.9% |
+| wild | 11 | 1,081 | 1.4% |
+| stack | 1 | 251 | 0.3% |
+
+A near-null access is a zeroed pointer with a field offset added, which is the
+signature of a global no constructor ever built. **This is the first direct
+evidence that `--build-state` is aimed at the right thing** rather than a
+plausible story about why the wall exists.
+
+State the denominator honestly: this is the `--refuse-blocked` population, 298
+fn / 74,627 B, not the 1,641,560 B wall a non-refusing sweep produces. It says
+what the faults *look like*, not how many of them there are.
+
+### The one-seed-short cohort is the exception, not the rule
+
+94 fn / 11,518 B are exactly one seed short of full strength.
+`tools/lifted_oracle_why_not_full.py` replays each under `--verbose` and records
+a reason for all 94: 92 `INCONCLUSIVE-original-fault`, 1
+`INCONCLUSIVE-lifted-out-of-span`, 1 `INCONCLUSIVE-original-timeout`. By region:
+49 near-null, 35 wild, 9 top-page, 1 stack-guard.
+
+Wild leads on bytes here (6,057 vs 4,455) and that is one function:
+`?wants_prop@@YAHHHH@Z` is 3,970 B of it, faulting on `0x592dc72c`. So the
+cohort does **not** resemble the population above, and it should not be used to
+argue about it — a tail of functions that nearly worked is selected for the
+faults that are hardest to explain.
+
+### The tool dropped the most important line it could read
+
+First run recorded 91 reasons for 94 functions and reported no error. `%#010x`
+of zero prints `0000000000` with no `0x`, because C only adds the prefix for a
+non-zero value — so the pattern matched every fault address except **literal
+zero**, the single most diagnostic value in the set. Three functions lost their
+reason silently.
+
+Two guards now, both with positive controls: an unreadable verdict line is
+reported rather than skipped, and a function that is N seeds short must produce
+N reasons. The second is what caught it; the judged-seed cross-check stayed
+quiet throughout, because the dropped case was not a judged one.
+
+### 6 of 9 FAILs are the harness reading its own memory
+
+Every `FAIL` in the baseline, run against a stock build and against
+`OUT=$PWD/build/oracle-shim EXTRA_CXXFLAGS=-DORACLE_LAYOUT_SHIM=0x51000`:
+
+| | functions |
+| --- | --- |
+| detail MOVED under the shim — not a lowering bug | 6, of which **2 flip to PASS** |
+| detail STABLE — candidate real divergence | 3 |
+
+The three survivors are `?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z`,
+`sub_634720` (x87 status word, original `0x0200` vs lifted `0`) and
+`sub_63a9d0`. The two that flip to PASS, `?is_known@@YAHHHH@Z` and
+`?anything_at@@YAHHH@Z`, are the clearest statement of why the control is
+mandatory: without it they would have been reported as lowering bugs.
+
+---
+
 ## 2026-07-30 — the generated route learns members and a staged `this`
 
 ### Proven count: 54 -> 53, and the DIRECTION is the finding

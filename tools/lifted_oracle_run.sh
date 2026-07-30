@@ -20,6 +20,12 @@ WINE="${WINE:-$(command -v wine \
     || echo '/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine')}"
 EXE="${EXE:-$ROOT/.opensmacx/game/terranx_original.exe}"
 PLAN="${PLAN:-$ROOT/build/oracle/plan.tsv}"
+# Overridable so a diagnostic can run its own copy while a sweep is in
+# progress. The sweep's watchdog reaps with `pkill -f
+# 'build.oracle.lifted_oracle.exe'`, which matches any process holding that
+# path, so a concurrent probe MUST come from somewhere else or the sweep will
+# kill it on its first stall.
+ORACLE="${ORACLE:-$ROOT/build/oracle/lifted_oracle.exe}"
 # Captured BEFORE the default is applied: afterwards REPORT is always set and
 # the short-run guard below could never fire.
 REPORT_EXPLICIT="${REPORT+yes}"
@@ -53,5 +59,5 @@ case " $* " in
         ;;
 esac
 
-exec "$WINE" "$ROOT/build/oracle/lifted_oracle.exe" \
+exec "$WINE" "$ORACLE" \
     --exe "$(win "$EXE")" --list "$(win "$PLAN")" --report "$(win "$REPORT")" "$@"

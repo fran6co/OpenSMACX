@@ -962,6 +962,15 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(lifted-oracle-compare-tests test_lifted_oracle_compare.py)
 
+    # Reads WHY a nearly-full-strength function fell short. Two of its guards
+    # exist because the first real run tripped on them: `%#010x` of zero prints
+    # no `0x`, so the pattern silently dropped exactly the null-dereference
+    # lines that are the whole diagnosis; and a function that is N seeds short
+    # owes N reasons, which is the only check that noticed. Fixtures are
+    # captured oracle text; nothing here runs the oracle.
+    opensmacx_add_python_tool_test(lifted-oracle-why-not-full-tests
+        test_lifted_oracle_why_not_full.py)
+
     # The only place in this repository where a function's ABI is written down
     # mechanically rather than guessed: the 4,821 MSVC-mangled names. The parse
     # has one trap that reads as correct - on an INSTANCE member the character
