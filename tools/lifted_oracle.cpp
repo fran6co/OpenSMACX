@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #include "lifted_runtime.h"   // opensmacx_image, opensmacx_dispatch
@@ -300,6 +301,10 @@ const void *oracle_lifted_image_host_address() { return opensmacx_image; }
 static unsigned char *g_pristine = nullptr;
 static unsigned char *const g_side_a =
     reinterpret_cast<unsigned char *>(static_cast<uintptr_t>(OracleImageBase));
+// Whether the per-case reset also restores the guest heap. False until a
+// --state carries one, because a sweep that never loads a heap should not pay
+// to compare 2 MiB of zeroes on every case.
+static bool g_restore_heap = false;
 static bool g_image_loaded = false;
 static uint32_t g_code_begin = 0, g_code_end = 0;
 
@@ -572,7 +577,10 @@ const char *oracle_load_image(const char *path) {
     std::memcpy(&headers_size, raw + pe_offset + 24 + 60, 4);
     if (image_base != OracleImageBase) { std::free(raw); return "unexpected image base"; }
 
-    g_pristine = static_cast<unsigned char *>(std::calloc(1, OracleImageSize));
+    // The WHOLE span, not just the image: --state can carry a guest heap, and
+    // the heap has to be restored between cases like everything else or the
+    // second case sees whatever the first one did to it.
+    g_pristine = static_cast<unsigned char *>(std::calloc(1, OpensmacxSpanSize));
     if (!g_pristine) { std::free(raw); return "out of memory for the pristine copy"; }
     if (headers_size > OracleImageSize) headers_size = OracleImageSize;
     std::memcpy(g_pristine, raw, headers_size);
@@ -617,8 +625,40 @@ const char *oracle_load_image(const char *path) {
     return nullptr;
 }
 
+// Load the heap a --build-state run wrote beside its dump, if there is one.
+// Absent is not an error: states built before this existed, and states from a
+// hybrid dump, simply have no heap.
+static const char *overlay_heap(const char *path) {
+    const std::string heap_path = std::string(path) + ".heap";
+    std::FILE *file = std::fopen(heap_path.c_str(), "rb");
+    if (!file) return nullptr;
+    std::fseek(file, 0, SEEK_END);
+    const long size = std::ftell(file);
+    std::fseek(file, 0, SEEK_SET);
+    const long expect = long(OpensmacxHeapEnd - OpensmacxHeapBase);
+    if (size != expect) {
+        std::fclose(file);
+        return "the .heap beside --state is not the size of the guest heap";
+    }
+    // Side A needs real pages there; the lifted side already has them, because
+    // opensmacx_image covers the whole span.
+    if (!VirtualAlloc(reinterpret_cast<void *>(uintptr_t(OpensmacxHeapBase)),
+                      OpensmacxHeapSize, MEM_COMMIT, PAGE_READWRITE)) {
+        std::fclose(file);
+        return "cannot commit the guest heap for --state";
+    }
+    const size_t read = std::fread(
+        g_pristine + (OpensmacxHeapBase - OracleImageBase), 1, size_t(size), file);
+    std::fclose(file);
+    if (read != size_t(size)) return "short read of the .heap beside --state";
+    // Only now, so a sweep without a heap keeps the cheaper reset.
+    g_restore_heap = true;
+    return nullptr;
+}
+
 const char *oracle_overlay_state(const char *path) {
     if (!g_image_loaded) return "--state needs the image loaded first";
+    if (const char *error = overlay_heap(path)) return error;
     // Applied to the PRISTINE master, not to a side. restore_from_pristine()
     // runs before every case on both sides, so anything written to a side here
     // would be erased by the first reset; and both sides must start from
@@ -1736,14 +1776,28 @@ static uint32_t flags_from_eflags(uint32_t eflags) {
 // also about twenty times faster.
 // ---------------------------------------------------------------------------
 
-static void restore_from_pristine(unsigned char *side) {
-    for (uint32_t offset = 0; offset < OracleImageSize; offset += 4096) {
+static void restore_range(unsigned char *side, uint32_t begin, uint32_t end) {
+    for (uint32_t offset = begin; offset < end; offset += 4096) {
         uint32_t length = 4096;
-        if (offset + length > OracleImageSize) length = OracleImageSize - offset;
+        if (offset + length > end) length = end - offset;
         if (std::memcmp(side + offset, g_pristine + offset, length) != 0) {
             std::memcpy(side + offset, g_pristine + offset, length);
         }
     }
+}
+
+// TWO RANGES, NOT ONE, and the gap between them is why. Side A commits the
+// image and - when a --state carries one - the guest heap, but NOT the guest
+// stack span between them: that belongs to the lifted side, and the oracle's
+// own guest stack lives inside the image at 0x009f0000. Walking straight
+// through from the image to the heap touches that uncommitted middle and takes
+// the harness down with an access violation inside memcmp, which reports as a
+// HARNESS FAULT rather than as anything about the lift.
+static void restore_from_pristine(unsigned char *side) {
+    restore_range(side, 0, OracleImageSize);
+    if (g_restore_heap)
+        restore_range(side, OpensmacxHeapBase - OracleImageBase,
+                      OpensmacxHeapEnd - OracleImageBase);
 }
 
 // ---------------------------------------------------------------------------
@@ -2691,6 +2745,22 @@ const char *oracle_build_state(const char *path, OracleBuildStateReport *report)
     std::fclose(file);
     if (written != length) return "short write of the state file";
     report->wrote = uint32_t(length);
+
+    // THE POINTERS ARE USELESS WITHOUT THE OBJECTS. The dump window stops at
+    // 0x009C2200, so a global holding 0x00b12281 - a real object a constructor
+    // built - survives into the state while the object itself does not. That
+    // was measured: 20 functions / 27,124 B moved from a near-null fault to a
+    // WILD one, faulting on heap addresses that are valid in a --build-state
+    // run and unmapped in every other. So the heap travels with the state.
+    std::string heap_path = std::string(path) + ".heap";
+    std::FILE *heap = std::fopen(heap_path.c_str(), "wb");
+    if (!heap) return "cannot open the --build-state heap file";
+    const size_t heap_length = size_t(OracleBuildHeapEnd - OracleBuildHeapBase);
+    const size_t heap_written = std::fwrite(
+        g_side_a + (OracleBuildHeapBase - OracleImageBase), 1, heap_length, heap);
+    std::fclose(heap);
+    if (heap_written != heap_length) return "short write of the heap file";
+    report->wrote_heap = uint32_t(heap_length);
     return nullptr;
 }
 

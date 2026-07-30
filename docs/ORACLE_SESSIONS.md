@@ -86,6 +86,44 @@ of which the 1 MiB sbh region is most of the bytes.
 into the program — and not more import overrides, which is what the wrong
 diagnosis above would have bought.
 
+### Carrying the heap too, and it does not help either
+
+Of the 24 functions that moved near-null → wild, 20 (27,124 B) fault on a base
+inside the R1 guest heap: `0x00b12281`, a real object a constructor built. The
+dump window stops at 0x009C2200, so the *pointer* survived into the state and
+the *object* did not. That is a harness gap, so it was closed — `--build-state`
+now writes a `.heap` beside the dump, `--state` loads it, and the per-case reset
+restores the heap as a second range. (Not one contiguous range: side A never
+commits the guest stack span between image and heap, and walking through it
+takes the harness down inside `memcmp`.)
+
+It works, and it changes nothing worth having. That function's fault moves
+deeper — a different instruction, reading a different address — so the object is
+genuinely there now. In aggregate:
+
+| | fault wall | vs no state |
+| --- | ---: | ---: |
+| no state | 1,584,976 B | — |
+| state, no heap | 1,565,790 B | +19,186 B |
+| state **with** heap | 1,569,464 B | **+15,512 B** |
+
+Slightly *worse* than without it, and 6.2% of the 250,000 B threshold. Three
+variants of the same idea now agree with each other: the fault wall does not
+come from state the CRT builds. 1,806 of 1,838 near-null-faulting functions are
+untouched by any of them.
+
+`agreed_full_strength` is unchanged at 42,209 B / 768 fn throughout, so nothing
+regressed and the kill criterion was never triggered. `--build-state` stays as a
+working instrument — the boot will want it — but it is not the win Phase 2.1
+projected, and no further tuning of it is worth a session.
+
+**Noticed while measuring, not yet tested:** `overlay_state`'s remapper rewrites
+every out-of-span word in `[0x10000, 0x20000000)` into the arena, on the
+assumption that address-shaped words are pointers. The analysis above disproves
+that assumption, and the overlay reports `remapped 15956 out-of-span pointers`
+on every run — so `--state` may be corrupting ~16,000 real data words each time,
+which would be a reason every state experiment has underperformed.
+
 ### What it took to get __cinit to return
 
 Three blockers, each a measurement rather than a guess:
