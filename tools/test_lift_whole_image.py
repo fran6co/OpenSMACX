@@ -370,5 +370,81 @@ class EmissionTests(unittest.TestCase):
         self.assertIn("0x00664000U, &lifted_00664000", text)
 
 
+
+class CrtInitBoundsTests(unittest.TestCase):
+    """The two initialiser arrays, read from __cinit rather than guessed.
+
+    A name-based guess cannot do this job and the measurement says how badly:
+    of 434 live .CRT$XC entries 42 are not named `??__E`, and NONE of the four
+    .CRT$XI entries are - including ___onexitinit, which builds the atexit table
+    every C++ initialiser then registers with. A walk driven by the `??__E` name
+    filter therefore runs the wrong subset and stops in __onexit.
+    """
+
+    class FakePE:
+        def __init__(self, code, base=0x00400000, at=0x00644DD2):
+            self.OPTIONAL_HEADER = type("H", (), {"ImageBase": base})()
+            offset = at - base
+            self.sections = [type("S", (), {
+                "VirtualAddress": 0x1000,
+                "Misc_VirtualSize": offset + len(code),
+                "SizeOfRawData": offset + len(code),
+                "PointerToRawData": 0x200,
+            })()]
+            self.__data__ = (b"\x00" * (0x200 + offset - 0x1000) + code)
+
+    def _cinit(self, first=(0x006826D0, 0x006826E4),
+               second=(0x00682000, 0x006826CC)):
+        # push end / push begin / call __initterm, twice. rel32 call from the
+        # instruction after it to 0x00644ED8.
+        def push(value):
+            return b"\x68" + value.to_bytes(4, "little")
+
+        code = b""
+        at = 0x00644DD2
+        for begin, end in (first, second):
+            code += push(end) + push(begin)
+            at_call = at + len(code)
+            rel = (0x00644ED8 - (at_call + 5)) & 0xFFFFFFFF
+            code += b"\xe8" + rel.to_bytes(4, "little")
+        return code + b"\xc3"
+
+    def test_both_ranges_are_read_in_the_order_cinit_walks_them(self):
+        bounds = lifter.crt_init_bounds(self.FakePE(self._cinit()))
+        self.assertEqual(
+            [("XI", 0x006826D0, 0x006826E4), ("XC", 0x00682000, 0x006826CC)],
+            bounds)
+
+    def test_XI_comes_FIRST_because_it_builds_the_atexit_table(self):
+        bounds = lifter.crt_init_bounds(self.FakePE(self._cinit()))
+        self.assertEqual("XI", bounds[0][0])
+
+    def test_every_range_is_ASCENDING(self):
+        # cdecl pushes right to left, so the LAST push is __initterm's FIRST
+        # argument. I read it the other way round first and got two negative
+        # spans, which emit as an empty walk that looks like a table with no
+        # entries rather than like a bug.
+        #
+        # Asserted as a property of the RESULT rather than by damaging the guard
+        # and expecting SystemExit: that form of the test does not fail when the
+        # guard is removed - verified, with __pycache__ cleared - because the
+        # reversed input still yields two ranges and returns normally. A test
+        # that cannot fail is worth nothing, so this checks the thing that would
+        # actually be wrong.
+        for name, begin, end in lifter.crt_init_bounds(
+                self.FakePE(self._cinit())):
+            self.assertLess(begin, end, f"{name} range is not ascending")
+
+    def test_a_reversed_push_order_is_REFUSED(self):
+        with self.assertRaises(SystemExit):
+            lifter.crt_init_bounds(self.FakePE(
+                self._cinit(first=(0x006826E4, 0x006826D0))))
+
+    def test_a_body_without_two_initterm_calls_is_refused(self):
+        with self.assertRaises(SystemExit):
+            lifter.crt_init_bounds(self.FakePE(b"\xc3"))
+
+
 if __name__ == "__main__":
     unittest.main()
+
