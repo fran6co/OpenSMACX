@@ -802,11 +802,6 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_stage_preset_game_dir.py"
     )
 
-    add_test(NAME redirect-signature-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
-    )
-
     add_test(NAME batch-decompile-tool-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_batch_decompile.py"
@@ -875,6 +870,16 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lift_whole_image.py"
     )
 
+    add_test(NAME lifted-crt-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_crt.py"
+    )
+
+    add_test(NAME find-leaf-testable-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_find_leaf_testable.py"
+    )
+
     add_test(NAME x86-lowerer-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_x86_lower.py"
@@ -916,6 +921,11 @@ if(BUILD_TESTING)
     add_test(NAME lifted-oracle-summary-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_summary.py"
+    )
+
+    add_test(NAME lifted-oracle-compare-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_compare.py"
     )
 
     # The only place in this repository where a function's ABI is written down
@@ -992,6 +1002,11 @@ if(BUILD_TESTING)
     add_test(NAME atexit-thunk-generator-tests
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_atexit_thunks.py"
+    )
+
+    add_test(NAME field-accessor-generator-tests
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_field_accessors.py"
     )
 
     add_test(NAME init-thunk-generator-tests
