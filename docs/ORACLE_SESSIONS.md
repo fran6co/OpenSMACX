@@ -12,6 +12,49 @@ trust it.
 
 ---
 
+## 2026-07-31 — the best state result on record, and it trips the kill criterion
+
+The hybrid-dump route was rejected long ago on two measurements that are now
+known to be unsound: the "only 26-30% of address-shaped words land in-span"
+figure came from the whole-window residency metric this project corrected
+yesterday, and every sweep that tested it ran through a remapper that was
+rewriting 13,046 static-data words per run. Re-run with both fixed, on the same
+`state-game.bin` dump, changing ONE variable:
+
+| | fault wall | vs no state |
+| --- | ---: | ---: |
+| no state | 1,584,976 B | — |
+| game state, old remapper | 1,612,851 B | **−27,875 worse** |
+| game state, fixed remapper | **1,457,339 B** | **+127,637 better** |
+
+The remapper fix alone is worth 155,512 B on this state, and it flips the
+verdict's sign. This is 6.6x the best `--build-state` ever produced and 51.1% of
+the 250,000 B threshold - by a wide margin the largest movement any state
+experiment in this project has achieved.
+
+Measured with the corrected residency metric, the dump also carries far more
+real state than anything the CRT builds: 279,120 changed words of which 68,116
+are address-shaped and 28,841 in-span, against `--build-state`'s 5,626 and
+2,716. That is the diagnosis from yesterday confirmed from the other side - the
+object graph is built by `WinMain` and gameplay, and a dump taken there has ten
+times the usable pointer state.
+
+**And it is refused.** `agreed_full_strength` goes 42,209 -> 40,191 B across 768
+-> 674 functions. The pre-committed kill criterion is "full strength worse by
+>2,000 B or >20 functions"; both are exceeded, by 18 B and by 74 functions.
+`agreed_only_on_paths_taken` also rises 60,248 B, so a large part of what looks
+like progress is evidence bought weakened.
+
+So the state is not adopted. Recording why that matters: +127,637 B on the
+headline debt is an extremely easy thing to call success, and without a
+threshold fixed in advance it would have been called that. The trade this makes
+- more code reached, less code genuinely agreeing - is exactly the one the
+criterion exists to refuse.
+
+What is worth keeping is the remapper finding, which is not about this state at
+all: every state experiment this project has ever run was measured through the
+corruption, so their results are all suspect in the same direction.
+
 ## 2026-07-30 — the original builds its own state, and it is not enough
 
 Phase 2.1's `--build-state` is implemented and it works: the original's own
