@@ -53,7 +53,8 @@ import pefile  # noqa: E402
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
 from generator_support import (LICENSE,  # noqa: E402
-                               identifier_of_global, read_bytes)
+                               identifier_of_global, read_bytes,
+                               scan_seam_bindings)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -165,9 +166,6 @@ def entry_extent(row):
 # the original address it defaults to. Seams dedupe on that ADDRESS and never
 # on the name: a second name for one address is a duplicate definition, and
 # the link error lands a long way from its cause.
-BINDING_RE = re.compile(
-    r"^extern\s+(\w+)\s*\*(\w+);\s*//\s*0x([0-9A-Fa-f]+)\s*$")
-
 # Typedef names that spell exactly `void(__thiscall)(void *)`, so a seam
 # already bound under one of them carries an opaque nullary teardown or
 # constructor unchanged.
@@ -194,23 +192,16 @@ def load_bindings(source_dir: Path, exclude=()):
     """
     by_address: dict[int, tuple[str, str, str]] = {}
     by_name: dict[str, tuple[int, str]] = {}
-    for header in sorted(Path(source_dir).glob("*.h")):
-        if header.name in exclude:
-            continue
-        for line in header.read_text().splitlines():
-            match = BINDING_RE.match(line)
-            if not match:
-                continue
-            typedef, name = match.group(1), match.group(2)
-            address = int(match.group(3), 16)
-            previous = by_address.get(address)
-            if previous and previous[0] != name:
-                raise SystemExit(
-                    f"0x{address:08X} is bound as {previous[0]} in "
-                    f"{previous[2]} and as {name} in {header.name}; "
-                    f"refusing to guess which one an opaque seam may reuse")
-            by_address[address] = (name, typedef, header.name)
-            by_name[name] = (address, header.name)
+    for header_name, name, typedef, address in scan_seam_bindings(
+            source_dir, exclude):
+        previous = by_address.get(address)
+        if previous and previous[0] != name:
+            raise SystemExit(
+                f"0x{address:08X} is bound as {previous[0]} in "
+                f"{previous[2]} and as {name} in {header_name}; "
+                f"refusing to guess which one an opaque seam may reuse")
+        by_address[address] = (name, typedef, header_name)
+        by_name[name] = (address, header_name)
     return by_address, by_name
 
 

@@ -8,7 +8,9 @@ arithmetic, and a committed fixture must not be derived from original bytes.
 
 from __future__ import annotations
 
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -122,6 +124,77 @@ class NameTest(unittest.TestCase):
         self.assertEqual("stringsinitctor",
                          support.identifier_of_global("StringsInitCtor"))
         self.assertEqual("strings_init_ctor", support.snake("StringsInitCtor"))
+
+
+class SeamScanTest(unittest.TestCase):
+    def headers(self, **files):
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory)
+        for name, text in files.items():
+            (directory / name).write_text(text, encoding="utf-8")
+        return directory
+
+    def test_it_reads_the_symbol_type_and_address(self):
+        directory = self.headers(**{"a.h": "extern func_x *ThingTarget;  // 0x00401000\n"})
+        self.assertEqual(
+            [("a.h", "ThingTarget", "func_x", 0x00401000)],
+            support.scan_seam_bindings(directory))
+
+    def test_trailing_prose_after_the_address_still_counts(self):
+        # The bug this scan was written to end. One of the three copies
+        # anchored the address to end-of-line, so these two real shapes were
+        # invisible to it and their addresses looked unbound.
+        directory = self.headers(**{
+            "console.h":
+                "extern void *ConsoleInfoWin;      "
+                "// 0x007AD2A0, the process-wide InfoWin\n",
+            "listbox.h":
+                "extern uint32_t *ListBoxCloseStaticDefaults;   "
+                "// 0x006970E0 [0..3]\n",
+        })
+        found = {name: address
+                 for _, name, _, address in support.scan_seam_bindings(directory)}
+        self.assertEqual({"ConsoleInfoWin": 0x007AD2A0,
+                          "ListBoxCloseStaticDefaults": 0x006970E0}, found)
+
+    def test_the_star_may_sit_against_either_side(self):
+        directory = self.headers(**{
+            "a.h": "extern Foo* Attached;  // 0x00401000\n"
+                   "extern Foo *Detached;  // 0x00402000\n",
+        })
+        self.assertEqual(
+            {"Attached", "Detached"},
+            {name for _, name, _, _ in support.scan_seam_bindings(directory)})
+
+    def test_a_declaration_without_an_address_comment_is_not_a_seam(self):
+        # The address is the whole point: seams dedupe on it, so a pointer
+        # extern that does not name one cannot participate.
+        directory = self.headers(**{"a.h": "extern Foo *Plain;\n"})
+        self.assertEqual([], support.scan_seam_bindings(directory))
+
+    def test_exclude_drops_a_generators_own_output(self):
+        directory = self.headers(**{
+            "mine.h": "extern Foo *Ours;  // 0x00401000\n",
+            "other.h": "extern Foo *Theirs;  // 0x00402000\n",
+        })
+        self.assertEqual(
+            ["Theirs"],
+            [name for _, name, _, _
+             in support.scan_seam_bindings(directory, exclude={"mine.h"})])
+
+    def test_it_finds_the_seams_the_real_tree_declares(self):
+        # Guards against a regex tightening that quietly stops seeing the
+        # committed bindings: the count only moves when a seam is added or
+        # removed on purpose.
+        source = Path(__file__).resolve().parent.parent / "src"
+        found = support.scan_seam_bindings(source)
+        self.assertGreater(len(found), 200)
+        by_address = {}
+        for header, name, _, address in found:
+            if address in by_address and by_address[address] != name:
+                self.fail(f"0x{address:08X} is bound as two names: "
+                          f"{by_address[address]} and {name} ({header})")
+            by_address[address] = name
 
 
 class LicenseTest(unittest.TestCase):
