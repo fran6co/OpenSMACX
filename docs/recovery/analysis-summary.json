@@ -52,7 +52,7 @@
   "inputs": {
     "binding_classifications_sha256": "7185cd1b0d0d57baef47761ca8a4a61a8e4c402d1f8278402d856d396d041dca",
     "canonical_inventory_sha256": "3f4f2abccb69e7ce52aa3c7dbfa4c62de2326031f0151387f2cef5b2d4388fb0",
-    "canonical_summary_sha256": "8175d7af883a63300c47db6ecc914ea209783f0f4de7ecfd8e07a17ac560abfc"
+    "canonical_summary_sha256": "837af376269ac0dafa084784ed3cd4d00f518b81200cf8b68b8ad7ae490e07f7"
   },
   "outputs": {
     "analysis_correlation_sha256": "cb74b81bb6bed1a603ce300186f696690cf70fed7641811b9f66492f45d66d0c",

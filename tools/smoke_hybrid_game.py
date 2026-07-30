@@ -344,12 +344,23 @@ def main():
         analysis = analyze_diagnostics(diagnostics, scenario_executable.name)
         after = matching_scenario_process_ids(scenario_executable)
         new_processes = sorted(after - before)
-        oracle_suites = validate_runtime_oracles(
-            oracle_result_path, args.expect_oracle_suite)
+        # Recorded BEFORE validation, deliberately. How far the generated suite
+        # got is at its most useful on the run that failed - a suite that dies
+        # on function 18 of 108 has still banked 17 verdicts, and they are the
+        # whole reason the run was worth doing. Reporting them only on success
+        # threw away the evidence in exactly the case that produced it.
         verdicts = parse_generated_verdicts(diagnostics)
         states = {}
         for state in verdicts.values():
             states[state] = states.get(state, 0) + 1
+        report["generated_oracle_verdicts"] = len(verdicts)
+        report["generated_oracle_verdict_states"] = dict(sorted(states.items()))
+        oracle_suites = validate_runtime_oracles(
+            oracle_result_path, args.expect_oracle_suite)
+        if len(verdicts) < args.expect_verdicts:
+            raise RuntimeError(
+                f"the generated oracle suite produced {len(verdicts)} verdicts, "
+                f"expected at least {args.expect_verdicts}")
         report.update({
             **analysis,
             "executable": str(executable),
@@ -358,13 +369,7 @@ def main():
             "new_processes": new_processes,
             "preexisting_processes": sorted(before),
             "runtime_oracles": oracle_suites,
-            "generated_oracle_verdicts": len(verdicts),
-            "generated_oracle_verdict_states": dict(sorted(states.items())),
         })
-        if len(verdicts) < args.expect_verdicts:
-            raise RuntimeError(
-                f"the generated oracle suite produced {len(verdicts)} verdicts, "
-                f"expected at least {args.expect_verdicts}")
         report["runtime_evidence"] = validate_smoke(analysis, new_processes)
         report["status"] = "passed"
     except (OSError, subprocess.CalledProcessError, RuntimeError) as error:
