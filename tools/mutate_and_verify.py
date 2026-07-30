@@ -28,6 +28,10 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from runtime_process import stop_executable_processes  # noqa: E402
+
 # Lines that are not safe or not meaningful to drop/reorder wholesale.
 CONTROL_PREFIXES = (
     "return", "if", "for", "while", "else", "do", "switch", "case", "break",
@@ -93,6 +97,14 @@ class Result:
     survived: list[Mutant] = field(default_factory=list)
     uncompilable: list[Mutant] = field(default_factory=list)
     hung: list[Mutant] = field(default_factory=list)
+    # Mutants whose build succeeded without replacing the binary. Counted
+    # separately and never folded into killed or survived, for the same reason
+    # `uncompilable` is: they are evidence of nothing.
+    stale: list[Mutant] = field(default_factory=list)
+    # Mutants the suite let through once and then killed on a re-run. Counted so
+    # the flake RATE is published rather than absorbed: these are the mutants
+    # that made two runs of an identical tree disagree.
+    flaky: list[Mutant] = field(default_factory=list)
 
 
 def parse_functions(lines: list[str]) -> list[Function]:
@@ -361,6 +373,12 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
 
 
 PASSED, FAILED, TIMEOUT = "passed", "failed", "timeout"
+# A fourth build outcome, and it is not a kind of failure. STALE means the build
+# reported success and yet the test binary on disk did not change, so whatever
+# CTest ran afterwards was the PREVIOUS mutant's executable. That result is
+# UNMEASURED - neither killed nor survived - and it is the leading suspect for
+# full-file sweeps reporting different coverage holes on identical trees.
+STALE = "stale"
 KEEP_OWNED_PREFIX_ENV = "OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING"
 
 
@@ -373,6 +391,9 @@ class Harness:
         self.reuse_owned_wine_prefix = getattr(
             args, "reuse_owned_wine_prefix", False)
         self.owned_wine_prefix_is_running = False
+        artifact = getattr(args, "artifact", None)
+        self.artifact = (Path(artifact).resolve() if artifact
+                         else self.build_dir / f"{self.target}.exe")
         # Tightened once the baseline run has been timed. A mutant that hangs
         # is a detection, and waiting the full build timeout for it wastes
         # minutes per occurrence.
@@ -386,10 +407,39 @@ class Harness:
             return TIMEOUT
         return PASSED if result.returncode == 0 else FAILED
 
-    def build(self) -> bool:
-        return self._run(["cmake", "--build", str(self.build_dir),
-                          "--target", self.target], Path.cwd(),
-                         self.timeout) == PASSED
+    def _artifact_identity(self):
+        """(mtime, size, inode), or None when the binary is not there.
+
+        Inode as well as mtime and size: a toolchain that writes to a temporary
+        and renames it over the target can leave mtime and size unchanged while
+        genuinely replacing the file, and reading that as STALE would report a
+        real measurement as unmeasured.
+        """
+        try:
+            stat = self.artifact.stat()
+        except OSError:
+            return None
+        return (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+
+    def build(self) -> str:
+        """PASSED, FAILED, or STALE -- a build can succeed and change nothing.
+
+        The sweep's whole chain of evidence is "this source produced this
+        binary, which the suite then ran". Nothing checked the middle link. If
+        the link fails while the build still exits zero, CTest runs the previous
+        mutant's executable and the harness records whatever that does - a false
+        SURVIVED if the previous mutant was equivalent, a false killed if not.
+        """
+        before = self._artifact_identity()
+        status = self._run(["cmake", "--build", str(self.build_dir),
+                            "--target", self.target], Path.cwd(),
+                           self.timeout)
+        if status != PASSED:
+            return FAILED
+        after = self._artifact_identity()
+        if after is None:
+            return STALE
+        return PASSED if before is None or after != before else STALE
 
     def check(self, cleanup=False) -> str:
         """PASSED, FAILED, or TIMEOUT -- a hung mutant is not a crashed run.
@@ -407,14 +457,37 @@ class Harness:
         else:
             os.environ.pop(KEEP_OWNED_PREFIX_ENV, None)
         try:
-            return self._run(
+            status = self._run(
                 ["ctest", "--no-tests=error", "-R", self.test],
                 self.build_dir, self.test_timeout)
+            if status == TIMEOUT:
+                # subprocess's timeout kills CTest and nothing else, so the
+                # wine process running the test binary outlives it. Unlike
+                # smoke_hybrid_game.py, this harness had no reaping step at
+                # all - so an orphan could still hold the executable while the
+                # next mutant tried to link over it. Reap the ones we own, by
+                # the artifact path, never a global shutdown.
+                self.reap()
+            return status
         finally:
             if previous is None:
                 os.environ.pop(KEEP_OWNED_PREFIX_ENV, None)
             else:
                 os.environ[KEEP_OWNED_PREFIX_ENV] = previous
+
+    def reap(self) -> bool:
+        """Stop processes still running THIS harness's test binary.
+
+        Matched on the artifact path, so a sibling agent's copy of the same
+        executable elsewhere is not touched, and never a `wineserver -k` over
+        anything but what this harness started.
+        """
+        try:
+            return stop_executable_processes(self.artifact)
+        except Exception as error:                      # noqa: BLE001
+            print(f"warning: could not reap {self.artifact.name}: {error}",
+                  flush=True)
+            return False
 
     def cleanup(self) -> None:
         """Stop a prefix retained by the opt-in fast mutation path.
@@ -427,6 +500,33 @@ class Harness:
             return
         self.check(cleanup=True)
         self.owned_wine_prefix_is_running = False
+
+    def confirm_survivor(self, attempts: int) -> str:
+        """Re-run a mutant the suite just let through, without rebuilding it.
+
+        A survivor is the claim this harness makes that costs the most - it says
+        some behaviour of a recovery is unobserved - and it is also the outcome
+        that has been measured to be unreliable. Four sweeps over an identical
+        tree (361 mutants each, 2026-07-30) disagreed on 5 of 361 indices, 1.39%,
+        and every single disagreement was in the SAME DIRECTION: three runs
+        killed the mutant and one let it through. Different mutants flipped in
+        different runs, so it is a low-rate flake and not a set of weak
+        fixtures. All five perturb a memory offset or a pointer guard, where
+        whether the perturbation is observable depends on fixture memory the test
+        does not pin.
+        `STALE` was zero across all four runs, which retires the stale-binary
+        mechanism `docs/HANDOVER.md` had recorded as the likely cause.
+
+        Because the flake only ever manufactures survivors, re-observing a
+        survivor is enough to remove it, and it is nearly free: the binary is
+        already built, so a confirmation costs one test run, and there are
+        usually a couple of dozen survivors in a sweep.
+        """
+        for _ in range(max(0, attempts)):
+            status = self.check()
+            if status != PASSED:
+                return status
+        return PASSED
 
     def calibrate(self, elapsed: float) -> None:
         """Allow a generous multiple of the clean runtime before calling a hang."""
@@ -446,6 +546,15 @@ def main() -> int:
                         help="restrict to these mutation operators (repeatable)")
     parser.add_argument("--limit", type=int, default=0, help="cap mutants (0 = all)")
     parser.add_argument("--timeout", type=int, default=600)
+    parser.add_argument(
+        "--confirm-survivors", type=int, default=2, metavar="N",
+        help=("re-run a surviving mutant N more times before reporting it as a "
+              "coverage hole (0 disables). Costs one test run per survivor and "
+              "removes the measured 1.39%% false-survivor rate"))
+    parser.add_argument(
+        "--artifact",
+        help=("the test binary the build must replace for a mutant to count as "
+              "measured; defaults to <build-dir>/<target>.exe"))
     parser.add_argument(
         "--reuse-owned-wine-prefix", action="store_true",
         help=("keep run_windows_test.py's marker-protected Wine prefix alive "
@@ -488,8 +597,17 @@ def main() -> int:
     result = Result()
     try:
         print(f"baseline: building {args.target}", flush=True)
-        if not harness.build():
+        if harness.build() == FAILED:
             print("error: baseline build failed; fix the tree first", file=sys.stderr)
+            return 2
+        # The baseline is the one build allowed to be STALE - an already-current
+        # tree legitimately rebuilds nothing - but the artifact has to EXIST, or
+        # every later staleness check is comparing None against None and
+        # silently answers "fresh".
+        if not harness.artifact.is_file():
+            print(f"error: {harness.artifact} does not exist after the baseline "
+                  f"build; pass --artifact if the target writes elsewhere",
+                  file=sys.stderr)
             return 2
         print(f"baseline: running {args.test}", flush=True)
         started = time.monotonic()
@@ -506,11 +624,28 @@ def main() -> int:
         for index, mutant in enumerate(mutants, start=1):
             source.write_text("".join(mutant.lines))
             label = f"[{index}/{len(mutants)}] {mutant.address}:{mutant.line_number} {mutant.operator}"
-            if not harness.build():
+            built = harness.build()
+            if built == FAILED:
                 result.uncompilable.append(mutant)
                 print(f"{label} -- skipped (no compile)", flush=True)
                 continue
+            if built == STALE:
+                result.stale.append(mutant)
+                print(f"{label} -- STALE: the build reported success without "
+                      f"replacing {harness.artifact.name}; this mutant is "
+                      f"UNMEASURED", flush=True)
+                continue
             status = harness.check()
+            if status == PASSED and args.confirm_survivors > 0:
+                # Re-observe before claiming a coverage hole. Measured flake
+                # rate 1.39% per sweep, always in this direction.
+                status = harness.confirm_survivor(args.confirm_survivors)
+                if status != PASSED:
+                    result.flaky.append(mutant)
+                    result.killed.append(mutant)
+                    print(f"{label} -- killed on re-run (the suite let it "
+                          f"through once: FLAKY)", flush=True)
+                    continue
             if status == PASSED:
                 result.survived.append(mutant)
                 print(f"{label} -- SURVIVED: {mutant.description}", flush=True)
@@ -536,6 +671,11 @@ def main() -> int:
     print(f"killed      {len(result.killed)}/{valid}")
     print(f"survived    {len(result.survived)}")
     print(f"no compile  {len(result.uncompilable)} (proves nothing)")
+    if result.stale:
+        print(f"STALE       {len(result.stale)} (UNMEASURED - the build "
+              f"reported success\n            without replacing the binary, so "
+              f"the suite ran the\n            previous mutant. These are not "
+              f"survivors and not kills.)")
     # Per operator, because the totals hide the case that matters most: an
     # operator that generated no compilable mutant at all tested NOTHING, and
     # summed into `killed n/n` that is indistinguishable from having tested
@@ -556,13 +696,22 @@ def main() -> int:
                   f"no compile {counted(result.uncompilable)}{note}")
     if result.hung:
         print(f"  of the killed, {len(result.hung)} hung rather than failed an assertion")
+    if result.flaky:
+        print(f"  of the killed, {len(result.flaky)} were let through ONCE and "
+              f"killed on a re-run.\n  Those are the mutants that make two "
+              f"sweeps of one tree disagree; without\n  --confirm-survivors "
+              f"they would have been reported as coverage holes.")
     if result.survived:
         print("\nCOVERAGE HOLES -- these perturbations are not observed:")
         for mutant in result.survived:
             print(f"  {mutant.address}:{mutant.line_number} [{mutant.operator}] "
                   f"{mutant.description}")
     print("=" * 72)
-    return 1 if result.survived else 0
+    # A STALE mutant fails the run as surely as a survivor does. Not because the
+    # recovery is wrong - nothing was learned about it either way - but because
+    # "N/N killed" must never be printable over a sweep that silently skipped
+    # some of its own mutants.
+    return 1 if result.survived or result.stale else 0
 
 
 if __name__ == "__main__":
