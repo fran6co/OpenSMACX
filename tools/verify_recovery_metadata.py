@@ -438,15 +438,60 @@ def run_regeneration(idb_path, verify_dir, force=False):
         check=True)
 
 
+# Figures in summary.json that this tool CANNOT regenerate, and must therefore
+# not compare. `proven_recovered` and `unproven_recovered` are derived from the
+# oracle markers in src/*_oracle.cpp and the island addresses in CMakeLists.txt
+# by tools/export_proven_functions.py - nothing about them comes from the IDB.
+# Regeneration here always yields 0 proven, so a byte comparison of the whole
+# file fails for ANY tree that has committed a proof: 54 of them, since 7a2c554.
+# That made the gate unpassable rather than strict, which is worse than absent -
+# it stopped `stage-hybrid-game`, the target that runs the oracles that would
+# earn the next proof.
+#
+# `analysis-summary.json` is the same problem one layer up: it records
+# `inputs/canonical_summary_sha256`, a hash OF summary.json, so the
+# unregenerable proof block poisons the hash too. Dropping the hash loses no
+# coverage that matters - summary.json itself is still compared field by field
+# just above, so drift in it fails there; the hash only additionally covered the
+# proof block, which is deliberately not compared.
+NOT_REGENERABLE = {
+    "summary.json": (("functions", "bytes", "proven_recovered"),
+                     ("functions", "bytes", "unproven_recovered")),
+    "analysis-summary.json": (("inputs", "canonical_summary_sha256"),),
+}
+
+
+def without_proof_figures(payload, name="summary.json"):
+    """A copy of `name` with the blocks this tool cannot regenerate removed."""
+    trimmed = json.loads(json.dumps(payload))
+    for path in NOT_REGENERABLE.get(name, ()):
+        node = trimmed
+        for key in path[:-1]:
+            node = node.get(key) if isinstance(node, dict) else None
+            if node is None:
+                break
+        if isinstance(node, dict):
+            node.pop(path[-1], None)
+    return trimmed
+
+
 def compare_outputs(verify_dir):
     for name in COMPARED_OUTPUTS:
         generated = verify_dir / name
         committed = REPO_ROOT / "docs" / "recovery" / name
         if not generated.is_file():
             raise RuntimeError(f"regeneration did not produce {generated}")
-        if generated.read_bytes() != committed.read_bytes():
-            raise RuntimeError(
-                f"regenerated {name} differs from committed docs/recovery/{name}")
+        if generated.read_bytes() == committed.read_bytes():
+            continue
+        if name in NOT_REGENERABLE:
+            # Compare everything the IDB does determine, skipping only the
+            # proof-derived blocks. A drift anywhere else still fails.
+            if (without_proof_figures(json.loads(generated.read_text()), name)
+                    == without_proof_figures(json.loads(committed.read_text()),
+                                             name)):
+                continue
+        raise RuntimeError(
+            f"regenerated {name} differs from committed docs/recovery/{name}")
 
 
 def promote_outputs(verify_dir):
