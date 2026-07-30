@@ -51,7 +51,7 @@ row, so this needed no run at all — only someone to read the column:
 
 | where the original's faulting access pointed | fn | bytes | share |
 | --- | ---: | ---: | ---: |
-| near-null (below 64 KiB) | 244 | 71,130 | **95.3%** |
+| near-null (below 64 KiB) | 244 | 71,130 | 95.3% |
 | inside the image span | 42 | 2,165 | 2.9% |
 | wild | 11 | 1,081 | 1.4% |
 | stack | 1 | 251 | 0.3% |
@@ -61,9 +61,38 @@ signature of a global no constructor ever built. **This is the first direct
 evidence that `--build-state` is aimed at the right thing** rather than a
 plausible story about why the wall exists.
 
-State the denominator honestly: this is the `--refuse-blocked` population, 298
-fn / 74,627 B, not the 1,641,560 B wall a non-refusing sweep produces. It says
-what the faults *look like*, not how many of them there are.
+State the denominator honestly: that is the `--refuse-blocked` population, 298
+fn / 74,627 B. The wall Phase 2.1 targets is the non-refusing one, so it was
+swept too — same command without `--refuse-blocked`, to
+`build/oracle/report-noref.tsv`, finishing with 0 hangs and 8 host deaths.
+`INCONCLUSIVE-original-fault` there is **1,584,976 B / 65.76% across 2,354
+functions**, and it breaks down:
+
+| where the faulting access pointed | fn | bytes | share |
+| --- | ---: | ---: | ---: |
+| near-null | 1,838 | 1,246,125 | **79.1%** |
+| wild | 208 | 134,296 | 8.5% |
+| top-page | 125 | 97,319 | 6.2% |
+| stack | 53 | 68,143 | 4.3% |
+| inside the image span | 105 | 29,128 | 1.8% |
+
+25 fn / 9,965 B carry a fault code with no access address and are excluded from
+the percentages rather than assigned to a bucket.
+
+**1,246,125 B is the mass `--build-state` can address**, and the plan's
+pre-committed success threshold of 250,000 B is 20% of it — a target with a
+denominator now, instead of a hope. The 79.1% is lower than the 95.3% above
+because refusal was hiding the harder faults, which is the direction to expect
+and the reason the refusing figure must not be quoted for this purpose.
+
+The offsets say the same thing twice. Of the 1,838 near-null accesses, 813 are
+**exactly zero** and 832 more fall in `1..0xff`: a null pointer, then a null
+pointer plus a member offset. 174 are in `0x100..0xfff` and 19 above that.
+
+Equally worth saying: 8.5% wild and 6.2% top-page are **not** reachable this
+way. A CRT that runs does not populate a pointer holding seed bytes, and the top
+64 KiB is the range the harness already documents as unmodellable. Roughly a
+fifth of the wall needs a different answer.
 
 ### The one-seed-short cohort is the exception, not the rule
 
