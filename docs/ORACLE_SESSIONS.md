@@ -12,6 +12,55 @@ trust it.
 
 ---
 
+## 2026-07-31 — 2.3 was closed against the wrong evidence; the IDB has the layouts
+
+Phase 2.3 was closed here on seven mechanisms, each with a control, all
+near-zero: allocation, vbtable, array stride, constructor zeroing, copy
+constructor / `operator=` (which do not exist in this image at all), `imul` by
+the class size (0 right, 2 wrong), and the stride between global instances
+(0 right, 1 wrong). The structural argument looked sound - for a single global
+object the compiler needs a size at allocation and at array destruction, and
+there is neither, so it never appears in code.
+
+All seven searched the EXECUTABLE. The answer was in the analysis directory.
+
+`.opensmacx/analysis/terranx_ORIG_200_v3_7.5.SP3.idb`, the original
+repository's database, carries IDA struct definitions for these classes.
+`python-idb` is already pinned and can reach them through the raw ID0 b-tree,
+even though its IDC shim exposes no struct API at all.
+
+The discriminator is the netnode id. A FUNCTION name resolves to a netnode
+whose id is its address - `??0StringStruct@@QAE@H@Z` gives 0x401000. A CLASS
+name resolves into the 0xFF000000+ struct-id space - `Console` gives
+0xff034e43. Lookups for invented names raise, so the distinction is real and
+not an artifact of the reader.
+
+Under tag `M` the member table is IDA packed dwords: flags, member count, then
+five-tuples whose third element is the member's size. Summing those and
+aligning to 4 reproduces the struct size.
+
+**Not usable yet, and the control says why.** On the 40 classes with a pinned
+size: **31 right, 2 WRONG, 7 silent.** `Console` misses by exactly 4 and
+`PullDown` reads 0xa14 against a true 0xf40, so the five-tuple stride is wrong
+for some member kind - nested structs, unions or arrays carrying an extra
+packed field. The bar here is ZERO wrong, because a wrong layout compiles
+perfectly and corrupts memory at runtime, so this stays a lead until the parse
+is tightened.
+
+What it is worth if it lands: the IDB defines a struct for **54 of the 73
+blocked classes, covering 299 of the 420 blocked members**. That is the
+population no mechanism searching the executable could reach, because the
+information was never in the executable.
+
+A cheaper fallback exists for the rest, and it comes from noticing that 2.3 had
+been asking the wrong question. The generator gate demands a PINNED EXACT size,
+but the oracle only needs enough bytes for a zero-filled receiver, and it
+stages into a fresh `static uint8_t staged[ObjectSize]` rather than over the
+real global - so over-allocating is safe and only under-allocating corrupts.
+Next-global UPPER bounds are therefore usable: 21 of the 73 blocked classes
+have one in a sane range, covering 162 members, and on the pinned classes the
+bound was at or above the true size 13 times and below it 0 times.
+
 ## 2026-07-31 — the best state result on record, and it trips the kill criterion
 
 The hybrid-dump route was rejected long ago on two measurements that are now
