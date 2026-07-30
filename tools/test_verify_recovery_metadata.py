@@ -543,5 +543,100 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
                 verify_recovery_metadata.main()
 
 
+
+
+class ManifestClosureTests(unittest.TestCase):
+    """The manifest must cover everything the generation reads.
+
+    This is the test that should have existed four defects ago. Each of them was
+    the same shape - an input that changes a committed output was absent from
+    STATIC_INPUTS, so editing it left the stamp valid and the gate reported
+    success over stale data - and each was found by noticing a wrong number:
+
+      * analysis-summary.json recorded a hash of a summary.json it no longer
+        matched, because the exporter and the correlator write in that order and
+        only the first had been re-run;
+      * proven.csv was not an input, so demoting two markers left summary.json
+        claiming 54 proofs while proven.csv said 53, stamped "verified";
+      * the reused-export refresh path rebuilt the byte block WITHOUT the proven
+        set, publishing proven_recovered as zero;
+      * recovery_metrics.py - the module that DECIDES the block - was not an
+        input, so adding the unproven_by_shape split reported "cached".
+
+    Reviewing the list by hand is what failed four times, so these two tests
+    derive it instead.
+    """
+
+    ENTRY_POINTS = ("export_recovery_inventory", "correlate_recovery_analyses",
+                    "verify_recovery_metadata")
+
+    def _closure(self):
+        """Every tools/ module the generation imports, transitively."""
+        import ast
+
+        tools = Path(__file__).resolve().parent
+        local = {path.stem for path in tools.glob("*.py")}
+        seen, queue = set(), list(self.ENTRY_POINTS)
+        while queue:
+            name = queue.pop()
+            if name in seen or name not in local:
+                continue
+            seen.add(name)
+            tree = ast.parse((tools / f"{name}.py").read_text())
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    queue.extend(alias.name.split(".")[0]
+                                 for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    queue.append(node.module.split(".")[0])
+        return seen
+
+    def test_every_module_the_generation_IMPORTS_is_an_input(self):
+        declared = {path.name for path in verify_recovery_metadata.STATIC_INPUTS}
+        missing = sorted(f"{name}.py" for name in self._closure()
+                         if f"{name}.py" not in declared)
+        self.assertEqual(
+            [], missing,
+            "these modules run during generation but are not in STATIC_INPUTS, "
+            "so editing one leaves the stamp valid over stale output")
+
+    def test_every_docs_FILE_the_generation_names_is_an_input_or_an_output(self):
+        """Data inputs, found by introspection rather than by reading the source.
+
+        A path constant is collected whatever expression built it - REPO_ROOT /
+        ... or Path(__file__).parent.parent / ... - which a regex over the source
+        does not manage, and two of the four defects above were exactly a data
+        file nobody had listed.
+        """
+        import importlib
+
+        repo = Path(__file__).resolve().parent.parent
+        docs = repo / "docs"
+        declared = {path.resolve() for path in verify_recovery_metadata.STATIC_INPUTS}
+        outputs = {(repo / "docs" / "recovery" / name).resolve()
+                   for name in verify_recovery_metadata.COMPARED_OUTPUTS}
+        named = {}
+        for name in sorted(self._closure()):
+            module = importlib.import_module(name)
+            for attribute in dir(module):
+                value = getattr(module, attribute)
+                items = value if isinstance(value, (list, tuple)) else [value]
+                for item in items:
+                    if not isinstance(item, Path):
+                        continue
+                    resolved = item.resolve()
+                    # Directories are where output goes, not inputs.
+                    if docs in resolved.parents and not resolved.is_dir():
+                        named.setdefault(resolved, f"{name}.{attribute}")
+        missing = sorted(
+            f"{path.relative_to(repo).as_posix()} ({named[path]})"
+            for path in named
+            if path not in declared and path not in outputs)
+        self.assertEqual(
+            [], missing,
+            "these docs/ files are named by the generation but are neither "
+            "inputs nor declared outputs")
+
+
 if __name__ == "__main__":
     unittest.main()

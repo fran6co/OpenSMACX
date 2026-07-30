@@ -106,6 +106,15 @@ STATIC_INPUTS = (
     # pinned executable, so the answer is committed and read here; editing it
     # must therefore invalidate the stamp exactly as proven.csv does.
     REPO_ROOT / "docs" / "recovery" / "recovered-shapes.csv",
+    # Every tools/ module the generation imports is an input, by RULE rather
+    # than by judgement about whether a particular one can change an output.
+    # Four separate omissions from this list have each let the gate report
+    # "cached" or "verified" over stale data, and every one of them was found by
+    # noticing a wrong number rather than by the machinery. The rule is now
+    # mechanical: tools/test_verify_recovery_metadata.py derives the import
+    # closure of the generation entry points and fails if a module is missing
+    # here, so the next omission is a red test rather than a wrong figure.
+    REPO_ROOT / "tools" / "local_artifact.py",
 )
 
 
