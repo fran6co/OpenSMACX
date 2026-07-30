@@ -64,6 +64,8 @@ import pefile  # noqa: E402
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
 import generate_atexit_thunks as atexit_gen  # noqa: E402
+from generator_support import (LICENSE,  # noqa: E402
+                               identifier_of_global)
 # entry_extent, not `size`: that column sums every span in `body_ranges` and
 # 416 catalogued functions are split, so decoding `size` bytes from the entry
 # of one of those runs past the body and into the next function.
@@ -71,7 +73,6 @@ from generate_adjustor_thunks import (  # noqa: E402
     callee_pop, declaration, entry_extent)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LICENSE = atexit_gen.LICENSE
 OPAQUE_NULLARY = atexit_gen.OPAQUE_NULLARY
 
 # The constructors the family dispatches to, keyed by catalogued name. The
@@ -656,7 +657,7 @@ def render_header(rows, shared_globals, declare=(), includes=()) -> str:
     for row in rows:
         lines.append(
             f"DLLEXPORT void __cdecl "
-            f"construct_{atexit_gen.snake(row['global_name'])}();")
+            f"construct_{identifier_of_global(row['global_name'])}();")
     lines.append("")
     return "\n".join(lines)
 
@@ -710,7 +711,7 @@ def render_source(rows, shared_globals, atexit_address, declare=()) -> str:
     lines.append('#pragma GCC diagnostic ignored "-Wattributes"')
     lines.append("#endif")
     for kind, _include, seam, body in scalar_specs:
-        lines.append(f"void __thiscall {atexit_gen.snake(seam)}_default("
+        lines.append(f"void __thiscall {identifier_of_global(seam)}_default("
                      "void *object) {")
         lines.append(f"    {body}")
         lines.append("}")
@@ -722,7 +723,7 @@ def render_source(rows, shared_globals, atexit_address, declare=()) -> str:
     lines.append("")
     for _kind, _include, seam, _body in scalar_specs:
         lines.append(f"func_thiscall_teardown *{seam} = "
-                     f"&{atexit_gen.snake(seam)}_default;")
+                     f"&{identifier_of_global(seam)}_default;")
     if declare:
         lines.append("")
         lines.append("// The opaque-storage constructors, each defaulting to")
@@ -768,7 +769,7 @@ def render_source(rows, shared_globals, atexit_address, declare=()) -> str:
         lines.append("Status: Complete")
         lines.append("*/")
         lines.append(
-            f"void __cdecl construct_{atexit_gen.snake(row['global_name'])}() {{")
+            f"void __cdecl construct_{identifier_of_global(row['global_name'])}() {{")
         lines.extend(body)
         lines.append(f"    GameAtexit(reinterpret_cast<func_atexit_callback *>("
                      f"0x{row['registered']:08X}));")
@@ -811,7 +812,7 @@ def render_opaque_tables(rows) -> list[str]:
             values = [atexit_gen.storage_literal(row["global_address"])]
             values += [str(value) for value in row["arguments"]]
             out.append(
-                f"    {{&construct_{atexit_gen.snake(row['global_name'])}, "
+                f"    {{&construct_{identifier_of_global(row['global_name'])}, "
                 f"&{row['seam']},")
             out.append("     " + ", ".join(values) + ",")
             out.append(f"     reinterpret_cast<func_atexit_callback *>("
@@ -832,7 +833,7 @@ def render_opaque_tables(rows) -> list[str]:
         out.append("const InitOpaqueArrayCase g_init_opaque_array_cases[] = {")
         for row in arrays:
             out.append(
-                f"    {{&construct_{atexit_gen.snake(row['global_name'])},")
+                f"    {{&construct_{identifier_of_global(row['global_name'])},")
             out.append(
                 f"     {atexit_gen.storage_literal(row['global_address'])}, "
                 f"0x{row['element_size']:X}, {row['count']},")
@@ -959,7 +960,7 @@ def render_tests(rows) -> str:
             continue
         seam = INIT_DOMAINS[row["target_name"]][2]
         out.append(
-            f"    {{&construct_{atexit_gen.snake(row['global_name'])}, "
+            f"    {{&construct_{identifier_of_global(row['global_name'])}, "
             f"&{atexit_gen.variable_of(row)}, &{seam}, "
             f"reinterpret_cast<func_atexit_callback *>("
             f"0x{row['registered']:08X}U)}},")
@@ -980,7 +981,7 @@ def render_tests(rows) -> str:
         ctor_seam = ELEMENT_CTORS[row["ctor_name"]][1]
         dtor_seam = ELEMENT_DTORS[row["dtor_name"]]
         out.append(
-            f"    {{&construct_{atexit_gen.snake(row['global_name'])}, "
+            f"    {{&construct_{identifier_of_global(row['global_name'])}, "
             f"&{atexit_gen.variable_of(row)}, 0x{row['element_size']:X}, "
             f"{row['count']}, &{ctor_seam}, &{dtor_seam}, "
             f"reinterpret_cast<func_atexit_callback *>("
@@ -1193,7 +1194,7 @@ def main() -> int:
     names = [row["global_name"] for row in rows]
     if len(set(names)) != len(names):
         raise SystemExit("duplicate global names; refusing to emit")
-    symbols = [atexit_gen.snake(row["global_name"]) for row in rows]
+    symbols = [identifier_of_global(row["global_name"]) for row in rows]
     if len(set(symbols)) != len(symbols):
         raise SystemExit("duplicate emitted symbols; refusing to emit")
 
@@ -1209,7 +1210,7 @@ def main() -> int:
     args.scratch_dir.mkdir(parents=True, exist_ok=True)
     (args.scratch_dir / "init-thunk-tests.cpp").write_text(render_tests(rows))
     wire = "\n".join(
-        f"0x{row['address']:08X} construct_{atexit_gen.snake(row['global_name'])}"
+        f"0x{row['address']:08X} construct_{identifier_of_global(row['global_name'])}"
         for row in rows) + "\n"
     (args.scratch_dir / "init-wire.txt").write_text(wire)
     print(f"emitted {source_dir}/init_thunks.{{h,cpp}}, test fragment, "

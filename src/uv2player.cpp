@@ -28,6 +28,6 @@ int UV2Player::UNK4() {
     return 0;
 }
 
-int __fastcall u_v2_player_unk4_redirect(UV2Player *self, void *) {
+int __fastcall uv2_player_unk4_redirect(UV2Player *self, void *) {
     return self->UNK4();
 }

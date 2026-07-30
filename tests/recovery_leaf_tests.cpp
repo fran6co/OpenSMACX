@@ -29711,7 +29711,7 @@ void test_constant_return_stubs_wave4() {
     std::memcpy(player_expected.data(), player_storage.data(),
                 player_storage.size());
     expect(player->UNK4() == 0);
-    expect(u_v2_player_unk4_redirect(player, nullptr) == 0);
+    expect(uv2_player_unk4_redirect(player, nullptr) == 0);
     expect_storage_bytes(player_storage.data(), player_expected.data(),
                          player_storage.size());
 

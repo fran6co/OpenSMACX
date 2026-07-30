@@ -52,27 +52,10 @@ import pefile  # noqa: E402
 
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
+from generator_support import (LICENSE,  # noqa: E402
+                               identifier_of_global, read_bytes)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-LICENSE = """/*
- * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
- * Copyright (C) 2013-2021 Brendan Casey
- *
- * OpenSMACX is free software: you can redistribute it and / or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * OpenSMACX is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
- */
-"""
 
 # The four teardowns the family dispatches to. A thunk whose proven target is
 # anything else is reported and left alone.
@@ -131,11 +114,6 @@ REUSED_GLOBALS = {
 
 def variable_of(row) -> str:
     return REUSED_GLOBALS.get(row["global_name"], row["global_name"])
-
-
-def snake(name: str) -> str:
-    text = name[2:] if name.startswith("g_") else name
-    return re.sub(r"__+", "_", text.lower())
 
 
 # --------------------------------------------------------------------------
@@ -610,7 +588,7 @@ def render_header(rows, declare=(), includes=()) -> str:
     lines.append("")
     for row in rows:
         lines.append(
-            f"DLLEXPORT void __cdecl destroy_{snake(row['global_name'])}();")
+            f"DLLEXPORT void __cdecl destroy_{identifier_of_global(row['global_name'])}();")
     lines.append("")
     return "\n".join(lines)
 
@@ -672,7 +650,7 @@ def render_source(rows, declare=()) -> str:
         lines.append("Return Value: n/a")
         lines.append("Status: Complete")
         lines.append("*/")
-        lines.append(f"void __cdecl destroy_{snake(row['global_name'])}() {{")
+        lines.append(f"void __cdecl destroy_{identifier_of_global(row['global_name'])}() {{")
         lines.extend(body)
         lines.append("}")
         lines.append("")
@@ -703,7 +681,7 @@ def render_tests(rows) -> str:
             ("??1Font@@QAE@XZ", "g_atexit_font_cases")):
         out.append(f"const AtexitThunkCase {table}[] = {{")
         for row in cases(target_name):
-            out.append(f"    {{&destroy_{snake(row['global_name'])}, "
+            out.append(f"    {{&destroy_{identifier_of_global(row['global_name'])}, "
                        f"&{variable_of(row)}}},")
         out.append("};")
     out.append("struct AtexitArrayCase {")
@@ -718,7 +696,7 @@ def render_tests(rows) -> str:
         if row["target_name"] != VECTOR_DTOR_NAME:
             continue
         seam = ELEMENT_TEARDOWNS[row["teardown_name"]][2]
-        out.append(f"    {{&destroy_{snake(row['global_name'])}, "
+        out.append(f"    {{&destroy_{identifier_of_global(row['global_name'])}, "
                    f"&{variable_of(row)}, 0x{row['element_size']:X}, "
                    f"{row['count']}, &{seam}}},")
     out.append("};")
@@ -735,7 +713,7 @@ def render_tests(rows) -> str:
         out.append("};")
         out.append("const AtexitOpaqueCase g_atexit_opaque_cases[] = {")
         for row in opaque(rows):
-            entry = (f"    {{&destroy_{snake(row['global_name'])}, "
+            entry = (f"    {{&destroy_{identifier_of_global(row['global_name'])}, "
                      f"&{row['seam']},")
             out.append(entry)
             out.append(f"     {storage_literal(row['global_address'])}}},")
@@ -1063,7 +1041,7 @@ def main() -> int:
     names = [row["global_name"] for row in rows]
     if len(set(names)) != len(names):
         raise SystemExit("duplicate global names; refusing to emit")
-    symbols = [snake(row["global_name"]) for row in rows]
+    symbols = [identifier_of_global(row["global_name"]) for row in rows]
     if len(set(symbols)) != len(symbols):
         raise SystemExit("duplicate emitted symbols; refusing to emit")
 
@@ -1078,7 +1056,7 @@ def main() -> int:
     args.scratch_dir.mkdir(parents=True, exist_ok=True)
     (args.scratch_dir / "atexit-thunk-tests.cpp").write_text(render_tests(rows))
     wire = "\n".join(
-        f"0x{row['address']:08X} destroy_{snake(row['global_name'])}"
+        f"0x{row['address']:08X} destroy_{identifier_of_global(row['global_name'])}"
         for row in rows) + "\n"
     (args.scratch_dir / "atexit-wire.txt").write_text(wire)
     print(f"emitted {source_dir}/atexit_thunks.{{h,cpp}}, test fragment, "

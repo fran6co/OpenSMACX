@@ -815,6 +815,8 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(disassembly-tool-tests test_disasm.py)
 
+    opensmacx_add_python_tool_test(generator-support-tests test_generator_support.py)
+
     opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)
 
     opensmacx_add_python_tool_test(delegation-thunk-generator-tests test_generate_delegation_thunks.py)

@@ -6212,7 +6212,7 @@ bool install_redirects() {
         },
         {
             0x004BF380,
-            reinterpret_cast<uintptr_t>(&u_v2_player_unk4_redirect),
+            reinterpret_cast<uintptr_t>(&uv2_player_unk4_redirect),
             OPENSMACX_SIGNATURE_004BF380,
         },
         {
