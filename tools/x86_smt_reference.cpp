@@ -60,6 +60,24 @@ bool apply(const std::string &op, uint32_t a, uint32_t b,
     if (op == "xor16") { result = opensmacx_xor_w<16>(state, a, b); return true; }
     if (op == "inc16") { result = opensmacx_inc_w<16>(state, a);    return true; }
     if (op == "dec16") { result = opensmacx_dec_w<16>(state, a);    return true; }
+    if (op == "neg8") { result = opensmacx_neg_w<8>(state, a); return true; }
+    if (op == "neg16") { result = opensmacx_neg_w<16>(state, a); return true; }
+    if (op == "neg32") { result = opensmacx_neg_w<32>(state, a); return true; }
+    if (op == "not8") { result = opensmacx_not_w<8>(state, a); return true; }
+    if (op == "not16") { result = opensmacx_not_w<16>(state, a); return true; }
+    if (op == "not32") { result = opensmacx_not_w<32>(state, a); return true; }
+    if (op == "shl8") { result = opensmacx_shl_w<8>(state, a, b); return true; }
+    if (op == "shl16") { result = opensmacx_shl_w<16>(state, a, b); return true; }
+    if (op == "shl32") { result = opensmacx_shl_w<32>(state, a, b); return true; }
+    if (op == "shr8") { result = opensmacx_shr_w<8>(state, a, b); return true; }
+    if (op == "shr16") { result = opensmacx_shr_w<16>(state, a, b); return true; }
+    if (op == "shr32") { result = opensmacx_shr_w<32>(state, a, b); return true; }
+    if (op == "sar8") { result = opensmacx_sar_w<8>(state, a, b); return true; }
+    if (op == "sar16") { result = opensmacx_sar_w<16>(state, a, b); return true; }
+    if (op == "sar32") { result = opensmacx_sar_w<32>(state, a, b); return true; }
+    if (op == "imul8") { result = opensmacx_imul_w<8>(state, a, b); return true; }
+    if (op == "imul16") { result = opensmacx_imul_w<16>(state, a, b); return true; }
+    if (op == "imul32") { result = opensmacx_imul_w<32>(state, a, b); return true; }
     return false;
 }
 

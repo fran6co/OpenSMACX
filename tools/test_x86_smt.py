@@ -85,6 +85,71 @@ class ConcreteTests(unittest.TestCase):
         self.assertTrue(flags & x86_smt.CF)
 
 
+class ShiftTests(unittest.TestCase):
+    """The shift rules that are easiest to encode almost-correctly."""
+
+    def test_a_shift_by_zero_touches_no_flag(self):
+        # lifted_x86.h returns early on a zero count, and that early return is
+        # the semantics rather than an optimisation: every other encoding of
+        # SHL would clear CF here.
+        before = x86_smt.CF | x86_smt.OF | x86_smt.ZF
+        result, flags = x86_smt.concrete("shl", 32, 0xFFFFFFFF, 0, before)
+        self.assertEqual(0xFFFFFFFF, result)
+        self.assertEqual(before, flags)
+
+    def test_the_count_is_masked_to_five_bits_at_every_width(self):
+        # An 8-bit shift by 32 is a shift by ZERO, not a shift that clears the
+        # operand - and therefore touches no flag either.
+        result, flags = x86_smt.concrete("shl", 8, 0xAB, 32, x86_smt.CF)
+        self.assertEqual(0xAB, result)
+        self.assertEqual(x86_smt.CF, flags)
+
+    def test_shr_overflow_comes_from_the_original_operand(self):
+        # OF is the sign of what went IN, not of what came out.
+        _, flags = x86_smt.concrete("shr", 32, 0x80000000, 1, 0)
+        self.assertTrue(flags & x86_smt.OF)
+        _, flags = x86_smt.concrete("shr", 32, 0x40000000, 1, 0)
+        self.assertFalse(flags & x86_smt.OF)
+
+    def test_sar_never_sets_overflow(self):
+        _, flags = x86_smt.concrete("sar", 32, 0x80000000, 1, x86_smt.OF)
+        self.assertFalse(flags & x86_smt.OF)
+
+    def test_sar_shifts_the_sign_in(self):
+        result, _ = x86_smt.concrete("sar", 32, 0x80000000, 4, 0)
+        self.assertEqual(0xF8000000, result)
+
+    def test_not_touches_no_flag(self):
+        before = x86_smt.CF | x86_smt.ZF | x86_smt.SF
+        result, flags = x86_smt.concrete("not", 32, 0x0F0F0F0F, 0, before)
+        self.assertEqual(0xF0F0F0F0, result)
+        self.assertEqual(before, flags)
+
+    def test_neg_sets_carry_when_the_operand_was_non_zero(self):
+        _, flags = x86_smt.concrete("neg", 32, 1, 0, 0)
+        self.assertTrue(flags & x86_smt.CF)
+        _, flags = x86_smt.concrete("neg", 32, 0, 0, 0)
+        self.assertFalse(flags & x86_smt.CF)
+
+    def test_neg_overflows_only_on_the_value_with_no_negation(self):
+        _, flags = x86_smt.concrete("neg", 32, 0x80000000, 0, 0)
+        self.assertTrue(flags & x86_smt.OF)
+
+    def test_imul_flags_say_whether_the_product_fitted(self):
+        _, flags = x86_smt.concrete("imul", 32, 2, 3, 0)
+        self.assertFalse(flags & x86_smt.CF)
+        self.assertFalse(flags & x86_smt.OF)
+        _, flags = x86_smt.concrete("imul", 32, 0x10000, 0x10000, 0)
+        self.assertTrue(flags & x86_smt.CF)
+        self.assertTrue(flags & x86_smt.OF)
+
+    def test_imul_is_signed(self):
+        # -1 * -1 == 1 fits; an unsigned reading would call it truncated.
+        result, flags = x86_smt.concrete("imul", 32, 0xFFFFFFFF, 0xFFFFFFFF, 0)
+        self.assertEqual(1, result)
+        self.assertFalse(flags & x86_smt.CF)
+
+
 class SymbolicTests(unittest.TestCase):
     """The prover never sees a concrete state, so the formulas must be free."""
 
