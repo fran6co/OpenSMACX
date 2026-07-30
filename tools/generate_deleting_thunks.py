@@ -90,7 +90,7 @@ import pefile  # noqa: E402
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
 from generate_adjustor_thunks import (LICENSE, callee_pop,  # noqa: E402
-                                      declaration, entry_extent, snake)
+                                      camel, declaration, entry_extent, snake)
 
 # The file the emitted bodies land in. A row that is already source-complete
 # somewhere ELSE belongs to another recovery and must not be emitted a second
@@ -202,10 +202,6 @@ FORWARD_TYPES = {
     4: "func_deleting_forward",
     0: "func_deleting_forward_nullary",
 }
-
-
-def camel(name: str) -> str:
-    return "".join(part.capitalize() for part in name.split("_") if part)
 
 
 def owns(row) -> bool:

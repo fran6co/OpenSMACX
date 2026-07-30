@@ -38,7 +38,7 @@ import json
 import re
 import sys
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 # The cache stores one file per function, named by canonical address.
