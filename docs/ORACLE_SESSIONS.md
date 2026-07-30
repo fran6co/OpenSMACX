@@ -94,9 +94,26 @@ sizes, since only 38 classes have a `sizeof` pinned by a `static_assert` in
 ### What the other route can never reach, measured
 
 `legacy_leaf_island` is capped at **41** candidates (6,182 B) at `--max-size
-512`, 42 at 1024, **43 uncapped** (8,133 B). Raising the cap is nearly
-worthless: the binding constraints are `contains_relocation` (1,545) and
-`non_exact_analysis` (747), not size.
+512`, 42 at 1024, **43 uncapped** (8,133 B). Re-measured 2026-07-30 and
+unchanged. Raising the cap is nearly worthless: the binding constraints are
+`contains_relocation` (**1,059**, down from 1,545 as recoveries left the
+unrecovered population) and `non_exact_analysis` (747), not size — `too_large`
+rejects only 518.
+
+**Four different candidate counts exist on disk and all four are defensible.
+Quote the population, never the number.** Reconciled 2026-07-30 by re-running
+the extractor at three caps:
+
+| count | population reviewed | status |
+|---:|---|---|
+| **41 / 42 / 43** | 2,808 `unrecovered` | current, and what this section means |
+| 66 | 2,870 `unrecovered` | a stale `build/<preset>/legacy-leaves/` manifest; the population shrank as recoveries landed |
+| 124 | 5,027 `unrecovered` | a much older `.opensmacx/legacy-leaves/` manifest |
+| 131 | the unproven **recovered** set, via a patched `select_rows` | a different question, and `docs/HANDOVER.md` labels it as one |
+
+The two stale figures live in gitignored trees and are refreshed by the next
+`extract-legacy-leaves`; nothing needs correcting but the habit of quoting a
+bare number. `AGENTS.md` used to restate one and now points at the manifest.
 
 A tempting widening was measured and rejected: the extractor gates on
 `ghidra_relation != "exact"` (`tools/extract_legacy_leaves.py:430`), excluding
@@ -136,17 +153,61 @@ for containing relocations (1,545), calls (433) or external branches (26).** Any
 future bulk generator aimed at that population raises `unproven_recovered` by
 construction. That is how the current 2,499 accumulated.
 
+### The gate was never running this suite, and the reason was a display
+
+Measured 2026-07-30, and it invalidates the verdict figures recorded above
+rather than adding to them. The smoke gate accepted a result file whose last
+line was `all passed`, and phase one wrote that terminator as soon as its own
+nine suites passed — while four deferred suites, this one included, were still
+to run. The last green gate's result file lists twelve suites with
+`generated-signatures` absent and zero `GENERATED-ORACLE-VERDICT` lines in the
+log beside it. So the 108 oracles had never run under the gate at all, and the
+gate had never said so. Fixed in `8606ea0`: phase one writes `deferred pending`,
+the deferred phase rewrites the file after every suite, and the validator refuses
+a file missing a suite it was told to expect.
+
+With that honest, the gate failed and named the real cause: **the deferred phase
+needs an X display.** Phase-one oracles run inside `DllMain` before any window
+exists, so all nine pass headless; the deferred phase triggers from
+`scenario_opening_movie`, which the game cannot reach without a window
+(`err:winediag:nodrv_CreateWindow`). Run runtime gates with `DISPLAY` set.
+
+Run with a display, the suite produced **17 verdicts** before dying on function
+18, `?update_data@Console@@QAEXH@Z` — not 9, and not the 108 the file contains:
+
+| verdict | count |
+|---|---:|
+| `INCONCLUSIVE-no-effect` | 15 |
+| `PASS` | 2 |
+
+One PASS is new evidence: `0x004E25E0 ?pid_2_idx@AlphaNet@@QAEHK@Z`, 39 B, whose
+three siblings are island-proven while it never was. proven 53 → 54 / 6,125 B.
+
+Three of the fifteen INCONCLUSIVE addresses are themselves published proofs —
+the AlphaNet siblings, by the island mechanism — and demoting those would have
+been wrong. `INCONCLUSIVE-no-effect` from this route says only that a zero-filled
+receiver observed nothing, which is a statement about these fixtures, not
+evidence against a mechanism that ran the original's own copied bytes.
+`earned_markers()` already gets this right, and the reason is worth keeping:
+it seeds only from proven.csv rows whose evidence names THIS generated file, so
+an island proof is never in the set and the discard cannot reach it. Verified by
+running it both ways — one marker gained, none lost.
+
 ### Open, and needed before the next session claims anything
 
-* 104 of the 108 oracles have never produced a verdict: the run crashed on its
-  10th function. Each cycle costs a rebuild, a restage and a 180 s run, and each
-  crash names exactly one function to exclude, so this converges one exclusion at
-  a time. A structured-exception handler around the call would turn a fault into
-  a verdict and end the one-per-cycle rate, and it is not built.
-* 8 of the 9 verdicts so far are INCONCLUSIVE-no-effect. A zero-filled receiver
-  gets past almost no guard, which is the honest cost of the safe seed. The fix
-  is the per-function field seed the hand-written suites use - 0x45454545 into
-  Scroll's offset 0xC4 is the model - and no signature supplies it.
+* 91 of the 108 oracles have still never produced a verdict, and the crash rate
+  is unchanged: one exclusion per rebuild-restage-run cycle. Note the "180 s" per
+  cycle in earlier revisions of this file was never measured — it is prose. A
+  fault guard that turns a page fault into a verdict is what ends the
+  one-per-cycle rate, and it is still not built.
+* 15 of the 17 verdicts are INCONCLUSIVE-no-effect. A zero-filled receiver gets
+  past almost no guard, which is the honest cost of the safe seed. The fix is the
+  per-function field seed the hand-written suites use - 0x45454545 into Scroll's
+  offset 0xC4 is the model - and no signature supplies it. Note where the suite
+  runs from: `scenario_opening_movie` fires BEFORE any save is loaded, so these
+  oracles meet the emptiest state the process ever has. Running them after
+  `refresh_loaded_game()` would give the same fixtures a real object graph, and
+  the hook already exists in `src/scenario.cpp`.
 * `unproven_recovered` may have a floor well above zero: the thunk cohort has no
   observable effect for a runtime differential to latch onto, and the
   `init`/`atexit` bodies push the ORIGINAL address through a shared seam, so the
