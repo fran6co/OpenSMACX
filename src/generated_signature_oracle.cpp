@@ -26,6 +26,8 @@
 
 #include "runtime_oracle.h"
 
+#include "globals_diff.h"
+
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
@@ -40,6 +42,10 @@ constexpr uintptr_t GlobalsBegin = 0x00682000U;
 constexpr uintptr_t GlobalsEnd   = 0x009C21F8U;
 constexpr size_t GlobalsSize = GlobalsEnd - GlobalsBegin;
 
+std::vector<uint8_t> GlobalsBefore;
+std::vector<uint8_t> GlobalsAfterOriginal;
+std::vector<uint8_t> GlobalsAfterRecovered;
+
 void snapshot(std::vector<uint8_t> &into) {
     into.resize(GlobalsSize);
     std::memcpy(into.data(), reinterpret_cast<const void *>(GlobalsBegin),
@@ -52,16 +58,18 @@ void restore(const std::vector<uint8_t> &from) {
 }
 
 // Where the two images first disagree, for a message that names an address
-// rather than saying only that something differed.
+// rather than saying only that something differed. The comparison itself
+// lives in src/globals_diff.h: it was a scalar loop over 3,408,376 bytes
+// run twice per case, and the bisect that keeps the address is the only
+// subtle part, which a hand-written header lets a C++ test check directly.
 bool same_globals(const std::vector<uint8_t> &a,
                   const std::vector<uint8_t> &b, uintptr_t *where) {
-    for (size_t index = 0; index < GlobalsSize; ++index) {
-        if (a[index] != b[index]) {
-            *where = GlobalsBegin + index;
-            return false;
-        }
+    size_t first = 0;
+    if (globals_diff::equal(a.data(), b.data(), GlobalsSize, &first)) {
+        return true;
     }
-    return true;
+    *where = GlobalsBegin + first;
+    return false;
 }
 
 // One verdict line per function, in a form tools/ can read back. Only an
@@ -70,6 +78,12 @@ bool same_globals(const std::vector<uint8_t> &a,
 void verdict(uintptr_t address, const char *state, const char *name) {
     std::printf("GENERATED-ORACLE-VERDICT: 0x%08lX %s  %s\n",
                 (unsigned long)address, state, name);
+    std::fflush(stdout);
+}
+
+void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {
+    std::printf("GENERATED-ORACLE-TIMING: 0x%08lX %lu ms  %s\n",
+                (unsigned long)address, (unsigned long)elapsed_ms, name);
     std::fflush(stdout);
 }
 
@@ -87,7 +101,10 @@ static bool verify_StringStruct_seek_id_00401560() {
     Callable target = reinterpret_cast<Callable>(0x00401560U);
     std::printf("  running ?seek_id@StringStruct@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x24U;
@@ -151,6 +168,7 @@ static bool verify_StringStruct_seek_id_00401560() {
             observed_effect = true;
         }
     }
+    timing(0x00401560U, GetTickCount() - started_at, "?seek_id@StringStruct@@QAEHH@Z");
     if (!passed) {
         verdict(0x00401560U, "FAIL", "?seek_id@StringStruct@@QAEHH@Z");
         return false;
@@ -172,7 +190,10 @@ static bool verify_StringStruct_current_id_00401640() {
     Callable target = reinterpret_cast<Callable>(0x00401640U);
     std::printf("  running ?current_id@StringStruct@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x24U;
@@ -226,6 +247,7 @@ static bool verify_StringStruct_current_id_00401640() {
             observed_effect = true;
         }
     }
+    timing(0x00401640U, GetTickCount() - started_at, "?current_id@StringStruct@@QAEHXZ");
     if (!passed) {
         verdict(0x00401640U, "FAIL", "?current_id@StringStruct@@QAEHXZ");
         return false;
@@ -247,7 +269,10 @@ static bool verify_StringStruct_next_entry_00402500() {
     Callable target = reinterpret_cast<Callable>(0x00402500U);
     std::printf("  running ?next_entry@StringStruct@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x24U;
@@ -301,6 +326,7 @@ static bool verify_StringStruct_next_entry_00402500() {
             observed_effect = true;
         }
     }
+    timing(0x00402500U, GetTickCount() - started_at, "?next_entry@StringStruct@@QAEHXZ");
     if (!passed) {
         verdict(0x00402500U, "FAIL", "?next_entry@StringStruct@@QAEHXZ");
         return false;
@@ -322,7 +348,10 @@ static bool verify_StringStruct_current_entry_00402530() {
     Callable target = reinterpret_cast<Callable>(0x00402530U);
     std::printf("  running ?current_entry@StringStruct@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x24U;
@@ -376,6 +405,7 @@ static bool verify_StringStruct_current_entry_00402530() {
             observed_effect = true;
         }
     }
+    timing(0x00402530U, GetTickCount() - started_at, "?current_entry@StringStruct@@QAEHXZ");
     if (!passed) {
         verdict(0x00402530U, "FAIL", "?current_entry@StringStruct@@QAEHXZ");
         return false;
@@ -396,7 +426,10 @@ static bool verify_passover_callback_004456a0() {
     Callable target = reinterpret_cast<Callable>(0x004456A0U);
     std::printf("  running ?passover_callback@@YAXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     {
@@ -428,6 +461,7 @@ static bool verify_passover_callback_004456a0() {
             observed_effect = true;
         }
     }
+    timing(0x004456A0U, GetTickCount() - started_at, "?passover_callback@@YAXXZ");
     if (!passed) {
         verdict(0x004456A0U, "FAIL", "?passover_callback@@YAXXZ");
         return false;
@@ -448,7 +482,10 @@ static bool verify_load_deswin_sprites_00455e50() {
     Callable target = reinterpret_cast<Callable>(0x00455E50U);
     std::printf("  running ?load_deswin_sprites@@YAXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     {
@@ -480,6 +517,7 @@ static bool verify_load_deswin_sprites_00455e50() {
             observed_effect = true;
         }
     }
+    timing(0x00455E50U, GetTickCount() - started_at, "?load_deswin_sprites@@YAXXZ");
     if (!passed) {
         verdict(0x00455E50U, "FAIL", "?load_deswin_sprites@@YAXXZ");
         return false;
@@ -501,7 +539,10 @@ static bool verify_MapWin_on_left_click_0046eba0() {
     Callable target = reinterpret_cast<Callable>(0x0046EBA0U);
     std::printf("  running ?on_left_click@MapWin@@QAEXHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x22480U;
@@ -558,6 +599,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
             observed_effect = true;
         }
     }
+    timing(0x0046EBA0U, GetTickCount() - started_at, "?on_left_click@MapWin@@QAEXHH@Z");
     if (!passed) {
         verdict(0x0046EBA0U, "FAIL", "?on_left_click@MapWin@@QAEXHH@Z");
         return false;
@@ -579,7 +621,10 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
     Callable target = reinterpret_cast<Callable>(0x0046EBE0U);
     std::printf("  running ?on_right_click@MapWin@@QAEXHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x22480U;
@@ -636,6 +681,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
             observed_effect = true;
         }
     }
+    timing(0x0046EBE0U, GetTickCount() - started_at, "?on_right_click@MapWin@@QAEXHH@Z");
     if (!passed) {
         verdict(0x0046EBE0U, "FAIL", "?on_right_click@MapWin@@QAEXHH@Z");
         return false;
@@ -657,7 +703,10 @@ static bool verify_MapWin_main_caption_0046fb10() {
     Callable target = reinterpret_cast<Callable>(0x0046FB10U);
     std::printf("  running ?main_caption@MapWin@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x22480U;
@@ -704,6 +753,7 @@ static bool verify_MapWin_main_caption_0046fb10() {
             observed_effect = true;
         }
     }
+    timing(0x0046FB10U, GetTickCount() - started_at, "?main_caption@MapWin@@QAEXXZ");
     if (!passed) {
         verdict(0x0046FB10U, "FAIL", "?main_caption@MapWin@@QAEXXZ");
         return false;
@@ -725,7 +775,10 @@ static bool verify_PlanWin_blink_0048bc20() {
     Callable target = reinterpret_cast<Callable>(0x0048BC20U);
     std::printf("  running ?blink@PlanWin@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x22A64U;
@@ -772,6 +825,7 @@ static bool verify_PlanWin_blink_0048bc20() {
             observed_effect = true;
         }
     }
+    timing(0x0048BC20U, GetTickCount() - started_at, "?blink@PlanWin@@QAEXXZ");
     if (!passed) {
         verdict(0x0048BC20U, "FAIL", "?blink@PlanWin@@QAEXXZ");
         return false;
@@ -793,7 +847,10 @@ static bool verify_Console_edit_lock_004e1f40() {
     Callable target = reinterpret_cast<Callable>(0x004E1F40U);
     std::printf("  running ?edit_lock@Console@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x247A8U;
@@ -847,6 +904,7 @@ static bool verify_Console_edit_lock_004e1f40() {
             observed_effect = true;
         }
     }
+    timing(0x004E1F40U, GetTickCount() - started_at, "?edit_lock@Console@@QAEHXZ");
     if (!passed) {
         verdict(0x004E1F40U, "FAIL", "?edit_lock@Console@@QAEHXZ");
         return false;
@@ -868,7 +926,10 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
     Callable target = reinterpret_cast<Callable>(0x004E25E0U);
     std::printf("  running ?pid_2_idx@AlphaNet@@QAEHK@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x14A0U;
@@ -932,6 +993,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
             observed_effect = true;
         }
     }
+    timing(0x004E25E0U, GetTickCount() - started_at, "?pid_2_idx@AlphaNet@@QAEHK@Z");
     if (!passed) {
         verdict(0x004E25E0U, "FAIL", "?pid_2_idx@AlphaNet@@QAEHK@Z");
         return false;
@@ -953,7 +1015,10 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
     Callable target = reinterpret_cast<Callable>(0x004E2610U);
     std::printf("  running ?pid_2_who@AlphaNet@@QAEHK@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x14A0U;
@@ -1017,6 +1082,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
             observed_effect = true;
         }
     }
+    timing(0x004E2610U, GetTickCount() - started_at, "?pid_2_who@AlphaNet@@QAEHK@Z");
     if (!passed) {
         verdict(0x004E2610U, "FAIL", "?pid_2_who@AlphaNet@@QAEHK@Z");
         return false;
@@ -1038,7 +1104,10 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
     Callable target = reinterpret_cast<Callable>(0x004E2660U);
     std::printf("  running ?who_2_pid@AlphaNet@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x14A0U;
@@ -1102,6 +1171,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
             observed_effect = true;
         }
     }
+    timing(0x004E2660U, GetTickCount() - started_at, "?who_2_pid@AlphaNet@@QAEHH@Z");
     if (!passed) {
         verdict(0x004E2660U, "FAIL", "?who_2_pid@AlphaNet@@QAEHH@Z");
         return false;
@@ -1123,7 +1193,10 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
     Callable target = reinterpret_cast<Callable>(0x004E26B0U);
     std::printf("  running ?who_2_idx@AlphaNet@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x14A0U;
@@ -1180,6 +1253,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
             observed_effect = true;
         }
     }
+    timing(0x004E26B0U, GetTickCount() - started_at, "?who_2_idx@AlphaNet@@QAEXH@Z");
     if (!passed) {
         verdict(0x004E26B0U, "FAIL", "?who_2_idx@AlphaNet@@QAEXH@Z");
         return false;
@@ -1201,7 +1275,10 @@ static bool verify_Console_clear_group_0050f650() {
     Callable target = reinterpret_cast<Callable>(0x0050F650U);
     std::printf("  running ?clear_group@Console@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x247A8U;
@@ -1248,6 +1325,7 @@ static bool verify_Console_clear_group_0050f650() {
             observed_effect = true;
         }
     }
+    timing(0x0050F650U, GetTickCount() - started_at, "?clear_group@Console@@QAEXXZ");
     if (!passed) {
         verdict(0x0050F650U, "FAIL", "?clear_group@Console@@QAEXXZ");
         return false;
@@ -1269,7 +1347,10 @@ static bool verify_Console_focus_005108a0() {
     Callable target = reinterpret_cast<Callable>(0x005108A0U);
     std::printf("  running ?focus@Console@@QAEXHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x247A8U;
@@ -1326,6 +1407,7 @@ static bool verify_Console_focus_005108a0() {
             observed_effect = true;
         }
     }
+    timing(0x005108A0U, GetTickCount() - started_at, "?focus@Console@@QAEXHHH@Z");
     if (!passed) {
         verdict(0x005108A0U, "FAIL", "?focus@Console@@QAEXHHH@Z");
         return false;
@@ -1347,7 +1429,10 @@ static bool verify_Console_update_data_00514880() {
     Callable target = reinterpret_cast<Callable>(0x00514880U);
     std::printf("  running ?update_data@Console@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x247A8U;
@@ -1404,6 +1489,7 @@ static bool verify_Console_update_data_00514880() {
             observed_effect = true;
         }
     }
+    timing(0x00514880U, GetTickCount() - started_at, "?update_data@Console@@QAEXH@Z");
     if (!passed) {
         verdict(0x00514880U, "FAIL", "?update_data@Console@@QAEXH@Z");
         return false;
@@ -1424,7 +1510,10 @@ static bool verify_not_my_turn_0052dc70() {
     Callable target = reinterpret_cast<Callable>(0x0052DC70U);
     std::printf("  running ?not_my_turn@@YAHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     {
@@ -1463,6 +1552,7 @@ static bool verify_not_my_turn_0052dc70() {
             observed_effect = true;
         }
     }
+    timing(0x0052DC70U, GetTickCount() - started_at, "?not_my_turn@@YAHXZ");
     if (!passed) {
         verdict(0x0052DC70U, "FAIL", "?not_my_turn@@YAHXZ");
         return false;
@@ -1483,7 +1573,10 @@ static bool verify_desktop_update_0058ee50() {
     Callable target = reinterpret_cast<Callable>(0x0058EE50U);
     std::printf("  running ?desktop_update@@YAXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     {
@@ -1515,6 +1608,7 @@ static bool verify_desktop_update_0058ee50() {
             observed_effect = true;
         }
     }
+    timing(0x0058EE50U, GetTickCount() - started_at, "?desktop_update@@YAXXZ");
     if (!passed) {
         verdict(0x0058EE50U, "FAIL", "?desktop_update@@YAXXZ");
         return false;
@@ -1536,7 +1630,10 @@ static bool verify_GraphicWin_fill_005d5250() {
     Callable target = reinterpret_cast<Callable>(0x005D5250U);
     std::printf("  running ?fill@GraphicWin@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xA14U;
@@ -1593,6 +1690,7 @@ static bool verify_GraphicWin_fill_005d5250() {
             observed_effect = true;
         }
     }
+    timing(0x005D5250U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEXH@Z");
     if (!passed) {
         verdict(0x005D5250U, "FAIL", "?fill@GraphicWin@@QAEXH@Z");
         return false;
@@ -1614,7 +1712,10 @@ static bool verify_GraphicWin_fill_005d5440() {
     Callable target = reinterpret_cast<Callable>(0x005D5440U);
     std::printf("  running ?fill@GraphicWin@@QAEHHHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xA14U;
@@ -1678,6 +1779,7 @@ static bool verify_GraphicWin_fill_005d5440() {
             observed_effect = true;
         }
     }
+    timing(0x005D5440U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEHHHHHH@Z");
     if (!passed) {
         verdict(0x005D5440U, "FAIL", "?fill@GraphicWin@@QAEHHHHHH@Z");
         return false;
@@ -1699,7 +1801,10 @@ static bool verify_GraphicWin_redraw_005d5a70() {
     Callable target = reinterpret_cast<Callable>(0x005D5A70U);
     std::printf("  running ?redraw@GraphicWin@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xA14U;
@@ -1746,6 +1851,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
             observed_effect = true;
         }
     }
+    timing(0x005D5A70U, GetTickCount() - started_at, "?redraw@GraphicWin@@QAEXXZ");
     if (!passed) {
         verdict(0x005D5A70U, "FAIL", "?redraw@GraphicWin@@QAEXXZ");
         return false;
@@ -1767,7 +1873,10 @@ static bool verify_Buffer_set_text_color_005dacb0() {
     Callable target = reinterpret_cast<Callable>(0x005DACB0U);
     std::printf("  running ?set_text_color@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -1824,6 +1933,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
             observed_effect = true;
         }
     }
+    timing(0x005DACB0U, GetTickCount() - started_at, "?set_text_color@Buffer@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x005DACB0U, "FAIL", "?set_text_color@Buffer@@QAEXHHHH@Z");
         return false;
@@ -1845,7 +1955,10 @@ static bool verify_Buffer_set_text_color2_005dace0() {
     Callable target = reinterpret_cast<Callable>(0x005DACE0U);
     std::printf("  running ?set_text_color2@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -1902,6 +2015,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
             observed_effect = true;
         }
     }
+    timing(0x005DACE0U, GetTickCount() - started_at, "?set_text_color2@Buffer@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x005DACE0U, "FAIL", "?set_text_color2@Buffer@@QAEXHHHH@Z");
         return false;
@@ -1923,7 +2037,10 @@ static bool verify_Buffer_set_text_color3_005dad10() {
     Callable target = reinterpret_cast<Callable>(0x005DAD10U);
     std::printf("  running ?set_text_color3@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -1980,6 +2097,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
             observed_effect = true;
         }
     }
+    timing(0x005DAD10U, GetTickCount() - started_at, "?set_text_color3@Buffer@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x005DAD10U, "FAIL", "?set_text_color3@Buffer@@QAEXHHHH@Z");
         return false;
@@ -2001,7 +2119,10 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
     Callable target = reinterpret_cast<Callable>(0x005DAD40U);
     std::printf("  running ?set_text_color_hyper@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2058,6 +2179,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
             observed_effect = true;
         }
     }
+    timing(0x005DAD40U, GetTickCount() - started_at, "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x005DAD40U, "FAIL", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
         return false;
@@ -2079,7 +2201,10 @@ static bool verify_Buffer_text_height_005dca80() {
     Callable target = reinterpret_cast<Callable>(0x005DCA80U);
     std::printf("  running ?text_height@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2133,6 +2258,7 @@ static bool verify_Buffer_text_height_005dca80() {
             observed_effect = true;
         }
     }
+    timing(0x005DCA80U, GetTickCount() - started_at, "?text_height@Buffer@@QAEHXZ");
     if (!passed) {
         verdict(0x005DCA80U, "FAIL", "?text_height@Buffer@@QAEHXZ");
         return false;
@@ -2154,7 +2280,10 @@ static bool verify_Buffer_text_line_height_005dcab0() {
     Callable target = reinterpret_cast<Callable>(0x005DCAB0U);
     std::printf("  running ?text_line_height@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2208,6 +2337,7 @@ static bool verify_Buffer_text_line_height_005dcab0() {
             observed_effect = true;
         }
     }
+    timing(0x005DCAB0U, GetTickCount() - started_at, "?text_line_height@Buffer@@QAEHXZ");
     if (!passed) {
         verdict(0x005DCAB0U, "FAIL", "?text_line_height@Buffer@@QAEHXZ");
         return false;
@@ -2229,7 +2359,10 @@ static bool verify_Buffer_clear_links_005def90() {
     Callable target = reinterpret_cast<Callable>(0x005DEF90U);
     std::printf("  running ?clear_links@Buffer@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2276,6 +2409,7 @@ static bool verify_Buffer_clear_links_005def90() {
             observed_effect = true;
         }
     }
+    timing(0x005DEF90U, GetTickCount() - started_at, "?clear_links@Buffer@@QAEXXZ");
     if (!passed) {
         verdict(0x005DEF90U, "FAIL", "?clear_links@Buffer@@QAEXXZ");
         return false;
@@ -2297,7 +2431,10 @@ static bool verify_Buffer_get_data_005e3373() {
     Callable target = reinterpret_cast<Callable>(0x005E3373U);
     std::printf("  running ?get_data@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2351,6 +2488,7 @@ static bool verify_Buffer_get_data_005e3373() {
             observed_effect = true;
         }
     }
+    timing(0x005E3373U, GetTickCount() - started_at, "?get_data@Buffer@@QAEHXZ");
     if (!passed) {
         verdict(0x005E3373U, "FAIL", "?get_data@Buffer@@QAEHXZ");
         return false;
@@ -2372,7 +2510,10 @@ static bool verify_Buffer_free_data_005e34a3() {
     Callable target = reinterpret_cast<Callable>(0x005E34A3U);
     std::printf("  running ?free_data@Buffer@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2429,6 +2570,7 @@ static bool verify_Buffer_free_data_005e34a3() {
             observed_effect = true;
         }
     }
+    timing(0x005E34A3U, GetTickCount() - started_at, "?free_data@Buffer@@QAEXH@Z");
     if (!passed) {
         verdict(0x005E34A3U, "FAIL", "?free_data@Buffer@@QAEXH@Z");
         return false;
@@ -2450,7 +2592,10 @@ static bool verify_Buffer_get_hdc_005e3503() {
     Callable target = reinterpret_cast<Callable>(0x005E3503U);
     std::printf("  running ?get_hdc@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2504,6 +2649,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
             observed_effect = true;
         }
     }
+    timing(0x005E3503U, GetTickCount() - started_at, "?get_hdc@Buffer@@QAEHXZ");
     if (!passed) {
         verdict(0x005E3503U, "FAIL", "?get_hdc@Buffer@@QAEHXZ");
         return false;
@@ -2525,7 +2671,10 @@ static bool verify_Buffer_release_hdc_005e3563() {
     Callable target = reinterpret_cast<Callable>(0x005E3563U);
     std::printf("  running ?release_hdc@Buffer@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x588U;
@@ -2582,6 +2731,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
             observed_effect = true;
         }
     }
+    timing(0x005E3563U, GetTickCount() - started_at, "?release_hdc@Buffer@@QAEXH@Z");
     if (!passed) {
         verdict(0x005E3563U, "FAIL", "?release_hdc@Buffer@@QAEXH@Z");
         return false;
@@ -2603,7 +2753,10 @@ static bool verify_Win_set_cursor_005ec7c0() {
     Callable target = reinterpret_cast<Callable>(0x005EC7C0U);
     std::printf("  running ?set_cursor@Win@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -2667,6 +2820,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
             observed_effect = true;
         }
     }
+    timing(0x005EC7C0U, GetTickCount() - started_at, "?set_cursor@Win@@QAEHH@Z");
     if (!passed) {
         verdict(0x005EC7C0U, "FAIL", "?set_cursor@Win@@QAEHH@Z");
         return false;
@@ -2688,7 +2842,10 @@ static bool verify_Win_UNK3_005ece80() {
     Callable target = reinterpret_cast<Callable>(0x005ECE80U);
     std::printf("  running ?UNK3@Win@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -2752,6 +2909,7 @@ static bool verify_Win_UNK3_005ece80() {
             observed_effect = true;
         }
     }
+    timing(0x005ECE80U, GetTickCount() - started_at, "?UNK3@Win@@QAEHH@Z");
     if (!passed) {
         verdict(0x005ECE80U, "FAIL", "?UNK3@Win@@QAEHH@Z");
         return false;
@@ -2773,7 +2931,10 @@ static bool verify_Win_move_005ed7d0() {
     Callable target = reinterpret_cast<Callable>(0x005ED7D0U);
     std::printf("  running ?move@Win@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -2837,6 +2998,7 @@ static bool verify_Win_move_005ed7d0() {
             observed_effect = true;
         }
     }
+    timing(0x005ED7D0U, GetTickCount() - started_at, "?move@Win@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005ED7D0U, "FAIL", "?move@Win@@QAEHHH@Z");
         return false;
@@ -2858,7 +3020,10 @@ static bool verify_Win_set_vert_pos_005ee030() {
     Callable target = reinterpret_cast<Callable>(0x005EE030U);
     std::printf("  running ?set_vert_pos@Win@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -2915,6 +3080,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
             observed_effect = true;
         }
     }
+    timing(0x005EE030U, GetTickCount() - started_at, "?set_vert_pos@Win@@QAEXH@Z");
     if (!passed) {
         verdict(0x005EE030U, "FAIL", "?set_vert_pos@Win@@QAEXH@Z");
         return false;
@@ -2936,7 +3102,10 @@ static bool verify_Win_get_vert_pos_005ee050() {
     Callable target = reinterpret_cast<Callable>(0x005EE050U);
     std::printf("  running ?get_vert_pos@Win@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -2990,6 +3159,7 @@ static bool verify_Win_get_vert_pos_005ee050() {
             observed_effect = true;
         }
     }
+    timing(0x005EE050U, GetTickCount() - started_at, "?get_vert_pos@Win@@QAEHXZ");
     if (!passed) {
         verdict(0x005EE050U, "FAIL", "?get_vert_pos@Win@@QAEHXZ");
         return false;
@@ -3011,7 +3181,10 @@ static bool verify_Win_set_horz_pos_005ee070() {
     Callable target = reinterpret_cast<Callable>(0x005EE070U);
     std::printf("  running ?set_horz_pos@Win@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3068,6 +3241,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
             observed_effect = true;
         }
     }
+    timing(0x005EE070U, GetTickCount() - started_at, "?set_horz_pos@Win@@QAEXH@Z");
     if (!passed) {
         verdict(0x005EE070U, "FAIL", "?set_horz_pos@Win@@QAEXH@Z");
         return false;
@@ -3089,7 +3263,10 @@ static bool verify_Win_get_horz_pos_005ee090() {
     Callable target = reinterpret_cast<Callable>(0x005EE090U);
     std::printf("  running ?get_horz_pos@Win@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3143,6 +3320,7 @@ static bool verify_Win_get_horz_pos_005ee090() {
             observed_effect = true;
         }
     }
+    timing(0x005EE090U, GetTickCount() - started_at, "?get_horz_pos@Win@@QAEHXZ");
     if (!passed) {
         verdict(0x005EE090U, "FAIL", "?get_horz_pos@Win@@QAEHXZ");
         return false;
@@ -3164,7 +3342,10 @@ static bool verify_Win_set_vert_range_005ee0b0() {
     Callable target = reinterpret_cast<Callable>(0x005EE0B0U);
     std::printf("  running ?set_vert_range@Win@@QAEXHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3221,6 +3402,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
             observed_effect = true;
         }
     }
+    timing(0x005EE0B0U, GetTickCount() - started_at, "?set_vert_range@Win@@QAEXHH@Z");
     if (!passed) {
         verdict(0x005EE0B0U, "FAIL", "?set_vert_range@Win@@QAEXHH@Z");
         return false;
@@ -3242,7 +3424,10 @@ static bool verify_Win_set_horz_range_005ee0d0() {
     Callable target = reinterpret_cast<Callable>(0x005EE0D0U);
     std::printf("  running ?set_horz_range@Win@@QAEXHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3299,6 +3484,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
             observed_effect = true;
         }
     }
+    timing(0x005EE0D0U, GetTickCount() - started_at, "?set_horz_range@Win@@QAEXHH@Z");
     if (!passed) {
         verdict(0x005EE0D0U, "FAIL", "?set_horz_range@Win@@QAEXHH@Z");
         return false;
@@ -3320,7 +3506,10 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
     Callable target = reinterpret_cast<Callable>(0x005EE0F0U);
     std::printf("  running ?set_vert_paging@Win@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3377,6 +3566,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
             observed_effect = true;
         }
     }
+    timing(0x005EE0F0U, GetTickCount() - started_at, "?set_vert_paging@Win@@QAEXH@Z");
     if (!passed) {
         verdict(0x005EE0F0U, "FAIL", "?set_vert_paging@Win@@QAEXH@Z");
         return false;
@@ -3398,7 +3588,10 @@ static bool verify_Win_set_horz_paging_005ee110() {
     Callable target = reinterpret_cast<Callable>(0x005EE110U);
     std::printf("  running ?set_horz_paging@Win@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3455,6 +3648,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
             observed_effect = true;
         }
     }
+    timing(0x005EE110U, GetTickCount() - started_at, "?set_horz_paging@Win@@QAEXH@Z");
     if (!passed) {
         verdict(0x005EE110U, "FAIL", "?set_horz_paging@Win@@QAEXH@Z");
         return false;
@@ -3476,7 +3670,10 @@ static bool verify_Win_UNK8_005ee130() {
     Callable target = reinterpret_cast<Callable>(0x005EE130U);
     std::printf("  running ?UNK8@Win@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3533,6 +3730,7 @@ static bool verify_Win_UNK8_005ee130() {
             observed_effect = true;
         }
     }
+    timing(0x005EE130U, GetTickCount() - started_at, "?UNK8@Win@@QAEXH@Z");
     if (!passed) {
         verdict(0x005EE130U, "FAIL", "?UNK8@Win@@QAEXH@Z");
         return false;
@@ -3554,7 +3752,10 @@ static bool verify_Win_UNK9_005ee160() {
     Callable target = reinterpret_cast<Callable>(0x005EE160U);
     std::printf("  running ?UNK9@Win@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3611,6 +3812,7 @@ static bool verify_Win_UNK9_005ee160() {
             observed_effect = true;
         }
     }
+    timing(0x005EE160U, GetTickCount() - started_at, "?UNK9@Win@@QAEXH@Z");
     if (!passed) {
         verdict(0x005EE160U, "FAIL", "?UNK9@Win@@QAEXH@Z");
         return false;
@@ -3632,7 +3834,10 @@ static bool verify_Win_sync_palette_005f2c60() {
     Callable target = reinterpret_cast<Callable>(0x005F2C60U);
     std::printf("  running ?sync_palette@Win@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3679,6 +3884,7 @@ static bool verify_Win_sync_palette_005f2c60() {
             observed_effect = true;
         }
     }
+    timing(0x005F2C60U, GetTickCount() - started_at, "?sync_palette@Win@@QAEXXZ");
     if (!passed) {
         verdict(0x005F2C60U, "FAIL", "?sync_palette@Win@@QAEXXZ");
         return false;
@@ -3700,7 +3906,10 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
     Callable target = reinterpret_cast<Callable>(0x005F2CA0U);
     std::printf("  running ?is_dialog_focus@Win@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3754,6 +3963,7 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
             observed_effect = true;
         }
     }
+    timing(0x005F2CA0U, GetTickCount() - started_at, "?is_dialog_focus@Win@@QAEHXZ");
     if (!passed) {
         verdict(0x005F2CA0U, "FAIL", "?is_dialog_focus@Win@@QAEHXZ");
         return false;
@@ -3775,7 +3985,10 @@ static bool verify_Win_is_visible_005f7e90() {
     Callable target = reinterpret_cast<Callable>(0x005F7E90U);
     std::printf("  running ?is_visible@Win@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x444U;
@@ -3829,6 +4042,7 @@ static bool verify_Win_is_visible_005f7e90() {
             observed_effect = true;
         }
     }
+    timing(0x005F7E90U, GetTickCount() - started_at, "?is_visible@Win@@QAEHXZ");
     if (!passed) {
         verdict(0x005F7E90U, "FAIL", "?is_visible@Win@@QAEHXZ");
         return false;
@@ -3850,7 +4064,10 @@ static bool verify_PullDown_hide_item_005f8cb0() {
     Callable target = reinterpret_cast<Callable>(0x005F8CB0U);
     std::printf("  running ?hide_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -3914,6 +4131,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
             observed_effect = true;
         }
     }
+    timing(0x005F8CB0U, GetTickCount() - started_at, "?hide_item@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F8CB0U, "FAIL", "?hide_item@PullDown@@QAEHH@Z");
         return false;
@@ -3935,7 +4153,10 @@ static bool verify_PullDown_show_item_005f8d20() {
     Callable target = reinterpret_cast<Callable>(0x005F8D20U);
     std::printf("  running ?show_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -3999,6 +4220,7 @@ static bool verify_PullDown_show_item_005f8d20() {
             observed_effect = true;
         }
     }
+    timing(0x005F8D20U, GetTickCount() - started_at, "?show_item@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F8D20U, "FAIL", "?show_item@PullDown@@QAEHH@Z");
         return false;
@@ -4020,7 +4242,10 @@ static bool verify_PullDown_disable_item_005f8d90() {
     Callable target = reinterpret_cast<Callable>(0x005F8D90U);
     std::printf("  running ?disable_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -4084,6 +4309,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
             observed_effect = true;
         }
     }
+    timing(0x005F8D90U, GetTickCount() - started_at, "?disable_item@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F8D90U, "FAIL", "?disable_item@PullDown@@QAEHH@Z");
         return false;
@@ -4105,7 +4331,10 @@ static bool verify_PullDown_enable_item_005f8df0() {
     Callable target = reinterpret_cast<Callable>(0x005F8DF0U);
     std::printf("  running ?enable_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -4169,6 +4398,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
             observed_effect = true;
         }
     }
+    timing(0x005F8DF0U, GetTickCount() - started_at, "?enable_item@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F8DF0U, "FAIL", "?enable_item@PullDown@@QAEHH@Z");
         return false;
@@ -4190,7 +4420,10 @@ static bool verify_PullDown_check_item_005f9040() {
     Callable target = reinterpret_cast<Callable>(0x005F9040U);
     std::printf("  running ?check_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -4254,6 +4487,7 @@ static bool verify_PullDown_check_item_005f9040() {
             observed_effect = true;
         }
     }
+    timing(0x005F9040U, GetTickCount() - started_at, "?check_item@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F9040U, "FAIL", "?check_item@PullDown@@QAEHH@Z");
         return false;
@@ -4275,7 +4509,10 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
     Callable target = reinterpret_cast<Callable>(0x005F90A0U);
     std::printf("  running ?uncheck_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -4339,6 +4576,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
             observed_effect = true;
         }
     }
+    timing(0x005F90A0U, GetTickCount() - started_at, "?uncheck_item@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F90A0U, "FAIL", "?uncheck_item@PullDown@@QAEHH@Z");
         return false;
@@ -4360,7 +4598,10 @@ static bool verify_PullDown_id_to_index_005f9d00() {
     Callable target = reinterpret_cast<Callable>(0x005F9D00U);
     std::printf("  running ?id_to_index@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -4424,6 +4665,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
             observed_effect = true;
         }
     }
+    timing(0x005F9D00U, GetTickCount() - started_at, "?id_to_index@PullDown@@QAEHH@Z");
     if (!passed) {
         verdict(0x005F9D00U, "FAIL", "?id_to_index@PullDown@@QAEHH@Z");
         return false;
@@ -4445,7 +4687,10 @@ static bool verify_PullDown_get_selected_005f9f40() {
     Callable target = reinterpret_cast<Callable>(0x005F9F40U);
     std::printf("  running ?get_selected@PullDown@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF40U;
@@ -4499,6 +4744,7 @@ static bool verify_PullDown_get_selected_005f9f40() {
             observed_effect = true;
         }
     }
+    timing(0x005F9F40U, GetTickCount() - started_at, "?get_selected@PullDown@@QAEHXZ");
     if (!passed) {
         verdict(0x005F9F40U, "FAIL", "?get_selected@PullDown@@QAEHXZ");
         return false;
@@ -4520,7 +4766,10 @@ static bool verify_Menu_UNK3_005fb1d0() {
     Callable target = reinterpret_cast<Callable>(0x005FB1D0U);
     std::printf("  running ?UNK3@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -4584,6 +4833,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
             observed_effect = true;
         }
     }
+    timing(0x005FB1D0U, GetTickCount() - started_at, "?UNK3@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB1D0U, "FAIL", "?UNK3@Menu@@QAEHHH@Z");
         return false;
@@ -4605,7 +4855,10 @@ static bool verify_Menu_UNK6_005fb2a0() {
     Callable target = reinterpret_cast<Callable>(0x005FB2A0U);
     std::printf("  running ?UNK6@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -4669,6 +4922,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
             observed_effect = true;
         }
     }
+    timing(0x005FB2A0U, GetTickCount() - started_at, "?UNK6@Menu@@QAEHH@Z");
     if (!passed) {
         verdict(0x005FB2A0U, "FAIL", "?UNK6@Menu@@QAEHH@Z");
         return false;
@@ -4690,7 +4944,10 @@ static bool verify_Menu_hide_menu_item_005fb300() {
     Callable target = reinterpret_cast<Callable>(0x005FB300U);
     std::printf("  running ?hide_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -4754,6 +5011,7 @@ static bool verify_Menu_hide_menu_item_005fb300() {
             observed_effect = true;
         }
     }
+    timing(0x005FB300U, GetTickCount() - started_at, "?hide_menu_item@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB300U, "FAIL", "?hide_menu_item@Menu@@QAEHHH@Z");
         return false;
@@ -4775,7 +5033,10 @@ static bool verify_Menu_UNK7_005fb360() {
     Callable target = reinterpret_cast<Callable>(0x005FB360U);
     std::printf("  running ?UNK7@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -4839,6 +5100,7 @@ static bool verify_Menu_UNK7_005fb360() {
             observed_effect = true;
         }
     }
+    timing(0x005FB360U, GetTickCount() - started_at, "?UNK7@Menu@@QAEHH@Z");
     if (!passed) {
         verdict(0x005FB360U, "FAIL", "?UNK7@Menu@@QAEHH@Z");
         return false;
@@ -4860,7 +5122,10 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
     Callable target = reinterpret_cast<Callable>(0x005FB3C0U);
     std::printf("  running ?show_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -4924,6 +5189,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
             observed_effect = true;
         }
     }
+    timing(0x005FB3C0U, GetTickCount() - started_at, "?show_menu_item@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB3C0U, "FAIL", "?show_menu_item@Menu@@QAEHHH@Z");
         return false;
@@ -4945,7 +5211,10 @@ static bool verify_Menu_UNK8_005fb420() {
     Callable target = reinterpret_cast<Callable>(0x005FB420U);
     std::printf("  running ?UNK8@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5009,6 +5278,7 @@ static bool verify_Menu_UNK8_005fb420() {
             observed_effect = true;
         }
     }
+    timing(0x005FB420U, GetTickCount() - started_at, "?UNK8@Menu@@QAEHH@Z");
     if (!passed) {
         verdict(0x005FB420U, "FAIL", "?UNK8@Menu@@QAEHH@Z");
         return false;
@@ -5030,7 +5300,10 @@ static bool verify_Menu_disable_menu_item_005fb480() {
     Callable target = reinterpret_cast<Callable>(0x005FB480U);
     std::printf("  running ?disable_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5094,6 +5367,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
             observed_effect = true;
         }
     }
+    timing(0x005FB480U, GetTickCount() - started_at, "?disable_menu_item@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB480U, "FAIL", "?disable_menu_item@Menu@@QAEHHH@Z");
         return false;
@@ -5115,7 +5389,10 @@ static bool verify_Menu_UNK9_005fb4e0() {
     Callable target = reinterpret_cast<Callable>(0x005FB4E0U);
     std::printf("  running ?UNK9@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5179,6 +5456,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
             observed_effect = true;
         }
     }
+    timing(0x005FB4E0U, GetTickCount() - started_at, "?UNK9@Menu@@QAEHH@Z");
     if (!passed) {
         verdict(0x005FB4E0U, "FAIL", "?UNK9@Menu@@QAEHH@Z");
         return false;
@@ -5200,7 +5478,10 @@ static bool verify_Menu_enable_menu_item_005fb540() {
     Callable target = reinterpret_cast<Callable>(0x005FB540U);
     std::printf("  running ?enable_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5264,6 +5545,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
             observed_effect = true;
         }
     }
+    timing(0x005FB540U, GetTickCount() - started_at, "?enable_menu_item@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB540U, "FAIL", "?enable_menu_item@Menu@@QAEHHH@Z");
         return false;
@@ -5285,7 +5567,10 @@ static bool verify_Menu_check_menu_item_005fb760() {
     Callable target = reinterpret_cast<Callable>(0x005FB760U);
     std::printf("  running ?check_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5349,6 +5634,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
             observed_effect = true;
         }
     }
+    timing(0x005FB760U, GetTickCount() - started_at, "?check_menu_item@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB760U, "FAIL", "?check_menu_item@Menu@@QAEHHH@Z");
         return false;
@@ -5370,7 +5656,10 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
     Callable target = reinterpret_cast<Callable>(0x005FB7C0U);
     std::printf("  running ?uncheck_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5434,6 +5723,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
             observed_effect = true;
         }
     }
+    timing(0x005FB7C0U, GetTickCount() - started_at, "?uncheck_menu_item@Menu@@QAEHHH@Z");
     if (!passed) {
         verdict(0x005FB7C0U, "FAIL", "?uncheck_menu_item@Menu@@QAEHHH@Z");
         return false;
@@ -5455,7 +5745,10 @@ static bool verify_Menu_id_to_index_005fb990() {
     Callable target = reinterpret_cast<Callable>(0x005FB990U);
     std::printf("  running ?id_to_index@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5519,6 +5812,7 @@ static bool verify_Menu_id_to_index_005fb990() {
             observed_effect = true;
         }
     }
+    timing(0x005FB990U, GetTickCount() - started_at, "?id_to_index@Menu@@QAEHH@Z");
     if (!passed) {
         verdict(0x005FB990U, "FAIL", "?id_to_index@Menu@@QAEHH@Z");
         return false;
@@ -5540,7 +5834,10 @@ static bool verify_Menu_requested_height_005fc6a0() {
     Callable target = reinterpret_cast<Callable>(0x005FC6A0U);
     std::printf("  running ?requested_height@Menu@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xB64U;
@@ -5594,6 +5891,7 @@ static bool verify_Menu_requested_height_005fc6a0() {
             observed_effect = true;
         }
     }
+    timing(0x005FC6A0U, GetTickCount() - started_at, "?requested_height@Menu@@QAEHXZ");
     if (!passed) {
         verdict(0x005FC6A0U, "FAIL", "?requested_height@Menu@@QAEHXZ");
         return false;
@@ -5614,7 +5912,10 @@ static bool verify_do_sound_005fd2b0() {
     Callable target = reinterpret_cast<Callable>(0x005FD2B0U);
     std::printf("  running ?do_sound@@YAXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     {
@@ -5646,6 +5947,7 @@ static bool verify_do_sound_005fd2b0() {
             observed_effect = true;
         }
     }
+    timing(0x005FD2B0U, GetTickCount() - started_at, "?do_sound@@YAXXZ");
     if (!passed) {
         verdict(0x005FD2B0U, "FAIL", "?do_sound@@YAXXZ");
         return false;
@@ -5667,7 +5969,10 @@ static bool verify_Palette_get_pos_005fed10() {
     Callable target = reinterpret_cast<Callable>(0x005FED10U);
     std::printf("  running ?get_pos@Palette@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x454U;
@@ -5731,6 +6036,7 @@ static bool verify_Palette_get_pos_005fed10() {
             observed_effect = true;
         }
     }
+    timing(0x005FED10U, GetTickCount() - started_at, "?get_pos@Palette@@QAEHH@Z");
     if (!passed) {
         verdict(0x005FED10U, "FAIL", "?get_pos@Palette@@QAEHH@Z");
         return false;
@@ -5752,7 +6058,10 @@ static bool verify_BasePop_set_width_00601b20() {
     Callable target = reinterpret_cast<Callable>(0x00601B20U);
     std::printf("  running ?set_width@BasePop@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -5809,6 +6118,7 @@ static bool verify_BasePop_set_width_00601b20() {
             observed_effect = true;
         }
     }
+    timing(0x00601B20U, GetTickCount() - started_at, "?set_width@BasePop@@QAEXH@Z");
     if (!passed) {
         verdict(0x00601B20U, "FAIL", "?set_width@BasePop@@QAEXH@Z");
         return false;
@@ -5830,7 +6140,10 @@ static bool verify_BasePop_set_loc_00601b80() {
     Callable target = reinterpret_cast<Callable>(0x00601B80U);
     std::printf("  running ?set_loc@BasePop@@QAEXHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -5887,6 +6200,7 @@ static bool verify_BasePop_set_loc_00601b80() {
             observed_effect = true;
         }
     }
+    timing(0x00601B80U, GetTickCount() - started_at, "?set_loc@BasePop@@QAEXHH@Z");
     if (!passed) {
         verdict(0x00601B80U, "FAIL", "?set_loc@BasePop@@QAEXHH@Z");
         return false;
@@ -5908,7 +6222,10 @@ static bool verify_BasePop_write_check_00601bb0() {
     Callable target = reinterpret_cast<Callable>(0x00601BB0U);
     std::printf("  running ?write_check@BasePop@@QAEXJ@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -5965,6 +6282,7 @@ static bool verify_BasePop_write_check_00601bb0() {
             observed_effect = true;
         }
     }
+    timing(0x00601BB0U, GetTickCount() - started_at, "?write_check@BasePop@@QAEXJ@Z");
     if (!passed) {
         verdict(0x00601BB0U, "FAIL", "?write_check@BasePop@@QAEXJ@Z");
         return false;
@@ -5986,7 +6304,10 @@ static bool verify_BasePop_read_check_00601bd0() {
     Callable target = reinterpret_cast<Callable>(0x00601BD0U);
     std::printf("  running ?read_check@BasePop@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6033,6 +6354,7 @@ static bool verify_BasePop_read_check_00601bd0() {
             observed_effect = true;
         }
     }
+    timing(0x00601BD0U, GetTickCount() - started_at, "?read_check@BasePop@@QAEXXZ");
     if (!passed) {
         verdict(0x00601BD0U, "FAIL", "?read_check@BasePop@@QAEXXZ");
         return false;
@@ -6054,7 +6376,10 @@ static bool verify_BasePop_on_key_click_00604490() {
     Callable target = reinterpret_cast<Callable>(0x00604490U);
     std::printf("  running ?on_key_click@BasePop@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6118,6 +6443,7 @@ static bool verify_BasePop_on_key_click_00604490() {
             observed_effect = true;
         }
     }
+    timing(0x00604490U, GetTickCount() - started_at, "?on_key_click@BasePop@@QAEHHH@Z");
     if (!passed) {
         verdict(0x00604490U, "FAIL", "?on_key_click@BasePop@@QAEHHH@Z");
         return false;
@@ -6139,7 +6465,10 @@ static bool verify_BasePop_on_key_up_006044b0() {
     Callable target = reinterpret_cast<Callable>(0x006044B0U);
     std::printf("  running ?on_key_up@BasePop@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6203,6 +6532,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
             observed_effect = true;
         }
     }
+    timing(0x006044B0U, GetTickCount() - started_at, "?on_key_up@BasePop@@QAEHH@Z");
     if (!passed) {
         verdict(0x006044B0U, "FAIL", "?on_key_up@BasePop@@QAEHH@Z");
         return false;
@@ -6224,7 +6554,10 @@ static bool verify_BasePop_set_string_color_00604730() {
     Callable target = reinterpret_cast<Callable>(0x00604730U);
     std::printf("  running ?set_string_color@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6281,6 +6614,7 @@ static bool verify_BasePop_set_string_color_00604730() {
             observed_effect = true;
         }
     }
+    timing(0x00604730U, GetTickCount() - started_at, "?set_string_color@BasePop@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00604730U, "FAIL", "?set_string_color@BasePop@@QAEXHHHH@Z");
         return false;
@@ -6302,7 +6636,10 @@ static bool verify_BasePop_set_string_color2_00604760() {
     Callable target = reinterpret_cast<Callable>(0x00604760U);
     std::printf("  running ?set_string_color2@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6359,6 +6696,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
             observed_effect = true;
         }
     }
+    timing(0x00604760U, GetTickCount() - started_at, "?set_string_color2@BasePop@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00604760U, "FAIL", "?set_string_color2@BasePop@@QAEXHHHH@Z");
         return false;
@@ -6380,7 +6718,10 @@ static bool verify_BasePop_set_string_color3_00604790() {
     Callable target = reinterpret_cast<Callable>(0x00604790U);
     std::printf("  running ?set_string_color3@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6437,6 +6778,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
             observed_effect = true;
         }
     }
+    timing(0x00604790U, GetTickCount() - started_at, "?set_string_color3@BasePop@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00604790U, "FAIL", "?set_string_color3@BasePop@@QAEXHHHH@Z");
         return false;
@@ -6458,7 +6800,10 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
     Callable target = reinterpret_cast<Callable>(0x006047C0U);
     std::printf("  running ?set_string_color_hyper@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6515,6 +6860,7 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
             observed_effect = true;
         }
     }
+    timing(0x006047C0U, GetTickCount() - started_at, "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x006047C0U, "FAIL", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
         return false;
@@ -6536,7 +6882,10 @@ static bool verify_BasePop_UNK3_00605180() {
     Callable target = reinterpret_cast<Callable>(0x00605180U);
     std::printf("  running ?UNK3@BasePop@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6593,6 +6942,7 @@ static bool verify_BasePop_UNK3_00605180() {
             observed_effect = true;
         }
     }
+    timing(0x00605180U, GetTickCount() - started_at, "?UNK3@BasePop@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605180U, "FAIL", "?UNK3@BasePop@@QAEXH@Z");
         return false;
@@ -6614,7 +6964,10 @@ static bool verify_BasePop_UNK4_006051a0() {
     Callable target = reinterpret_cast<Callable>(0x006051A0U);
     std::printf("  running ?UNK4@BasePop@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x3230U;
@@ -6671,6 +7024,7 @@ static bool verify_BasePop_UNK4_006051a0() {
             observed_effect = true;
         }
     }
+    timing(0x006051A0U, GetTickCount() - started_at, "?UNK4@BasePop@@QAEXH@Z");
     if (!passed) {
         verdict(0x006051A0U, "FAIL", "?UNK4@BasePop@@QAEXH@Z");
         return false;
@@ -6692,7 +7046,10 @@ static bool verify_Scroll_set_range_006059b0() {
     Callable target = reinterpret_cast<Callable>(0x006059B0U);
     std::printf("  running ?set_range@Scroll@@QAEXHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -6749,6 +7106,7 @@ static bool verify_Scroll_set_range_006059b0() {
             observed_effect = true;
         }
     }
+    timing(0x006059B0U, GetTickCount() - started_at, "?set_range@Scroll@@QAEXHH@Z");
     if (!passed) {
         verdict(0x006059B0U, "FAIL", "?set_range@Scroll@@QAEXHH@Z");
         return false;
@@ -6770,7 +7128,10 @@ static bool verify_Scroll_set_button_color_00605a10() {
     Callable target = reinterpret_cast<Callable>(0x00605A10U);
     std::printf("  running ?set_button_color@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -6827,6 +7188,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
             observed_effect = true;
         }
     }
+    timing(0x00605A10U, GetTickCount() - started_at, "?set_button_color@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605A10U, "FAIL", "?set_button_color@Scroll@@QAEXH@Z");
         return false;
@@ -6848,7 +7210,10 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
     Callable target = reinterpret_cast<Callable>(0x00605A50U);
     std::printf("  running ?set_bevel_thickness@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -6905,6 +7270,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
             observed_effect = true;
         }
     }
+    timing(0x00605A50U, GetTickCount() - started_at, "?set_bevel_thickness@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605A50U, "FAIL", "?set_bevel_thickness@Scroll@@QAEXH@Z");
         return false;
@@ -6926,7 +7292,10 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
     Callable target = reinterpret_cast<Callable>(0x00605A90U);
     std::printf("  running ?set_bevel_upper@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -6983,6 +7352,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
             observed_effect = true;
         }
     }
+    timing(0x00605A90U, GetTickCount() - started_at, "?set_bevel_upper@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605A90U, "FAIL", "?set_bevel_upper@Scroll@@QAEXH@Z");
         return false;
@@ -7004,7 +7374,10 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
     Callable target = reinterpret_cast<Callable>(0x00605AD0U);
     std::printf("  running ?set_bevel_lower@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -7061,6 +7434,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
             observed_effect = true;
         }
     }
+    timing(0x00605AD0U, GetTickCount() - started_at, "?set_bevel_lower@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605AD0U, "FAIL", "?set_bevel_lower@Scroll@@QAEXH@Z");
         return false;
@@ -7082,7 +7456,10 @@ static bool verify_Scroll_set_border_color_00605b10() {
     Callable target = reinterpret_cast<Callable>(0x00605B10U);
     std::printf("  running ?set_border_color@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -7139,6 +7516,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
             observed_effect = true;
         }
     }
+    timing(0x00605B10U, GetTickCount() - started_at, "?set_border_color@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605B10U, "FAIL", "?set_border_color@Scroll@@QAEXH@Z");
         return false;
@@ -7160,7 +7538,10 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
     Callable target = reinterpret_cast<Callable>(0x00605B80U);
     std::printf("  running ?set_bar_thickness@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -7217,6 +7598,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
             observed_effect = true;
         }
     }
+    timing(0x00605B80U, GetTickCount() - started_at, "?set_bar_thickness@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605B80U, "FAIL", "?set_bar_thickness@Scroll@@QAEXH@Z");
         return false;
@@ -7238,7 +7620,10 @@ static bool verify_Scroll_set_pos_00605d20() {
     Callable target = reinterpret_cast<Callable>(0x00605D20U);
     std::printf("  running ?set_pos@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -7295,6 +7680,7 @@ static bool verify_Scroll_set_pos_00605d20() {
             observed_effect = true;
         }
     }
+    timing(0x00605D20U, GetTickCount() - started_at, "?set_pos@Scroll@@QAEXH@Z");
     if (!passed) {
         verdict(0x00605D20U, "FAIL", "?set_pos@Scroll@@QAEXH@Z");
         return false;
@@ -7316,7 +7702,10 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
     Callable target = reinterpret_cast<Callable>(0x00606EA0U);
     std::printf("  running ?set_thumb_rect@Scroll@@QAEXXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x214CU;
@@ -7363,6 +7752,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
             observed_effect = true;
         }
     }
+    timing(0x00606EA0U, GetTickCount() - started_at, "?set_thumb_rect@Scroll@@QAEXXZ");
     if (!passed) {
         verdict(0x00606EA0U, "FAIL", "?set_thumb_rect@Scroll@@QAEXXZ");
         return false;
@@ -7384,7 +7774,10 @@ static bool verify_BaseButton_set_text_color_00607360() {
     Callable target = reinterpret_cast<Callable>(0x00607360U);
     std::printf("  running ?set_text_color@BaseButton@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xAB8U;
@@ -7441,6 +7834,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
             observed_effect = true;
         }
     }
+    timing(0x00607360U, GetTickCount() - started_at, "?set_text_color@BaseButton@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00607360U, "FAIL", "?set_text_color@BaseButton@@QAEXHHHH@Z");
         return false;
@@ -7462,7 +7856,10 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
     Callable target = reinterpret_cast<Callable>(0x006073A0U);
     std::printf("  running ?set_text_color2@BaseButton@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xAB8U;
@@ -7519,6 +7916,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
             observed_effect = true;
         }
     }
+    timing(0x006073A0U, GetTickCount() - started_at, "?set_text_color2@BaseButton@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x006073A0U, "FAIL", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
         return false;
@@ -7540,7 +7938,10 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
     Callable target = reinterpret_cast<Callable>(0x006073E0U);
     std::printf("  running ?set_text_color3@BaseButton@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xAB8U;
@@ -7597,6 +7998,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
             observed_effect = true;
         }
     }
+    timing(0x006073E0U, GetTickCount() - started_at, "?set_text_color3@BaseButton@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x006073E0U, "FAIL", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
         return false;
@@ -7618,7 +8020,10 @@ static bool verify_BaseButton_set_00607c80() {
     Callable target = reinterpret_cast<Callable>(0x00607C80U);
     std::printf("  running ?set@BaseButton@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xAB8U;
@@ -7675,6 +8080,7 @@ static bool verify_BaseButton_set_00607c80() {
             observed_effect = true;
         }
     }
+    timing(0x00607C80U, GetTickCount() - started_at, "?set@BaseButton@@QAEXH@Z");
     if (!passed) {
         verdict(0x00607C80U, "FAIL", "?set@BaseButton@@QAEXH@Z");
         return false;
@@ -7696,7 +8102,10 @@ static bool verify_Dialog_set_selected_id_006099d0() {
     Callable target = reinterpret_cast<Callable>(0x006099D0U);
     std::printf("  running ?set_selected_id@Dialog@@QAEXH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -7753,6 +8162,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
             observed_effect = true;
         }
     }
+    timing(0x006099D0U, GetTickCount() - started_at, "?set_selected_id@Dialog@@QAEXH@Z");
     if (!passed) {
         verdict(0x006099D0U, "FAIL", "?set_selected_id@Dialog@@QAEXH@Z");
         return false;
@@ -7774,7 +8184,10 @@ static bool verify_Dialog_get_selected_id_00609a50() {
     Callable target = reinterpret_cast<Callable>(0x00609A50U);
     std::printf("  running ?get_selected_id@Dialog@@QAEHXZ\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -7828,6 +8241,7 @@ static bool verify_Dialog_get_selected_id_00609a50() {
             observed_effect = true;
         }
     }
+    timing(0x00609A50U, GetTickCount() - started_at, "?get_selected_id@Dialog@@QAEHXZ");
     if (!passed) {
         verdict(0x00609A50U, "FAIL", "?get_selected_id@Dialog@@QAEHXZ");
         return false;
@@ -7849,7 +8263,10 @@ static bool verify_Dialog_id_to_pos_00609af0() {
     Callable target = reinterpret_cast<Callable>(0x00609AF0U);
     std::printf("  running ?id_to_pos@Dialog@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -7913,6 +8330,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
             observed_effect = true;
         }
     }
+    timing(0x00609AF0U, GetTickCount() - started_at, "?id_to_pos@Dialog@@QAEHH@Z");
     if (!passed) {
         verdict(0x00609AF0U, "FAIL", "?id_to_pos@Dialog@@QAEHH@Z");
         return false;
@@ -7934,7 +8352,10 @@ static bool verify_Dialog_pos_to_id_00609b50() {
     Callable target = reinterpret_cast<Callable>(0x00609B50U);
     std::printf("  running ?pos_to_id@Dialog@@QAEHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -7998,6 +8419,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
             observed_effect = true;
         }
     }
+    timing(0x00609B50U, GetTickCount() - started_at, "?pos_to_id@Dialog@@QAEHH@Z");
     if (!passed) {
         verdict(0x00609B50U, "FAIL", "?pos_to_id@Dialog@@QAEHH@Z");
         return false;
@@ -8019,7 +8441,10 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
     Callable target = reinterpret_cast<Callable>(0x00609C90U);
     std::printf("  running ?set_dialog_text_color@Dialog@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -8076,6 +8501,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
             observed_effect = true;
         }
     }
+    timing(0x00609C90U, GetTickCount() - started_at, "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00609C90U, "FAIL", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
         return false;
@@ -8097,7 +8523,10 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
     Callable target = reinterpret_cast<Callable>(0x00609CC0U);
     std::printf("  running ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -8154,6 +8583,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
             observed_effect = true;
         }
     }
+    timing(0x00609CC0U, GetTickCount() - started_at, "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00609CC0U, "FAIL", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
         return false;
@@ -8175,7 +8605,10 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
     Callable target = reinterpret_cast<Callable>(0x00609CF0U);
     std::printf("  running ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0xF4U;
@@ -8232,6 +8665,7 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
             observed_effect = true;
         }
     }
+    timing(0x00609CF0U, GetTickCount() - started_at, "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
     if (!passed) {
         verdict(0x00609CF0U, "FAIL", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
         return false;
@@ -8253,7 +8687,10 @@ static bool verify_Caviar_UNK10_00618320() {
     Callable target = reinterpret_cast<Callable>(0x00618320U);
     std::printf("  running ?UNK10@Caviar@@QAEXHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x13D0U;
@@ -8310,6 +8747,7 @@ static bool verify_Caviar_UNK10_00618320() {
             observed_effect = true;
         }
     }
+    timing(0x00618320U, GetTickCount() - started_at, "?UNK10@Caviar@@QAEXHHH@Z");
     if (!passed) {
         verdict(0x00618320U, "FAIL", "?UNK10@Caviar@@QAEXHHH@Z");
         return false;
@@ -8331,7 +8769,10 @@ static bool verify_Caviar_UNK11_00618340() {
     Callable target = reinterpret_cast<Callable>(0x00618340U);
     std::printf("  running ?UNK11@Caviar@@QAEXHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x13D0U;
@@ -8388,6 +8829,7 @@ static bool verify_Caviar_UNK11_00618340() {
             observed_effect = true;
         }
     }
+    timing(0x00618340U, GetTickCount() - started_at, "?UNK11@Caviar@@QAEXHHH@Z");
     if (!passed) {
         verdict(0x00618340U, "FAIL", "?UNK11@Caviar@@QAEXHHH@Z");
         return false;
@@ -8409,7 +8851,10 @@ static bool verify_ButtonGroup_set_0062b870() {
     Callable target = reinterpret_cast<Callable>(0x0062B870U);
     std::printf("  running ?set@ButtonGroup@@QAEHHH@Z\n");
     std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
     constexpr size_t ObjectSize = 0x94U;
@@ -8473,6 +8918,7 @@ static bool verify_ButtonGroup_set_0062b870() {
             observed_effect = true;
         }
     }
+    timing(0x0062B870U, GetTickCount() - started_at, "?set@ButtonGroup@@QAEHHH@Z");
     if (!passed) {
         verdict(0x0062B870U, "FAIL", "?set@ButtonGroup@@QAEHHH@Z");
         return false;

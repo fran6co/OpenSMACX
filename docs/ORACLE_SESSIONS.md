@@ -195,11 +195,15 @@ running it both ways — one marker gained, none lost.
 
 ### Open, and needed before the next session claims anything
 
-* 91 of the 108 oracles have still never produced a verdict, and the crash rate
-  is unchanged: one exclusion per rebuild-restage-run cycle. Note the "180 s" per
-  cycle in earlier revisions of this file was never measured — it is prose. A
-  fault guard that turns a page fault into a verdict is what ends the
-  one-per-cycle rate, and it is still not built.
+* 91 of the 108 oracles have still never produced a verdict, and the crash is the
+  only reason. **The suite is not slow, and the "180 s run" earlier revisions of
+  this file costed a cycle at was never measured.** Instrumented 2026-07-30 with
+  `GENERATED-ORACLE-TIMING`: the seventeen functions that run take **0.1 s in
+  total — mean 5 ms, median 8 ms, max 12 ms**, so all 108 would be about a
+  second. What the window pays for is the game booting to
+  `scenario_opening_movie`, which needs ~60 s and is now the configured value.
+  A fault guard that turns a page fault into a verdict is the only thing left
+  between 17 verdicts and 108, and it is still not built.
 * 15 of the 17 verdicts are INCONCLUSIVE-no-effect. A zero-filled receiver gets
   past almost no guard, which is the honest cost of the safe seed. The fix is the
   per-function field seed the hand-written suites use - 0x45454545 into Scroll's

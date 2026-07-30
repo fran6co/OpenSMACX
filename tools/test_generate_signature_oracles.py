@@ -395,6 +395,52 @@ class EmissionTests(unittest.TestCase):
 
     # ---- the two guards, each tested so that removing it FAILS ----
 
+    def test_the_globals_comparison_uses_the_SHARED_helper_not_a_byte_loop(self):
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn('#include "globals_diff.h"', text)
+        self.assertIn("globals_diff::equal(", text)
+        # The scalar walk it replaced: 3,408,376 bytes, twice per case.
+        self.assertNotIn("for (size_t index = 0; index < GlobalsSize", text)
+
+    def test_the_globals_comparison_still_reports_WHERE_they_differ(self):
+        # The address in a FAIL verdict is the whole value of the verdict, so the
+        # fast path must not have dropped it.
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn("*where = GlobalsBegin + first;", text)
+
+    def test_the_snapshot_buffers_are_allocated_ONCE_not_per_function(self):
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn("std::vector<uint8_t> GlobalsBefore;", text)
+        # As locals these were 3 x 3.4 MB per verify_ body: 1.05 GiB of pages
+        # first-touched to hold three buffers used one at a time.
+        self.assertNotIn("std::vector<uint8_t> before, after_original", text)
+        self.assertIn("std::vector<uint8_t> &before = GlobalsBefore;", text)
+
+    def test_each_function_reports_its_ELAPSED_time(self):
+        # The per-cycle cost in this project's notes was prose, never measured.
+        text = generator.emit(generator.candidates(
+            *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
+        self.assertIn("GENERATED-ORACLE-TIMING:", text)
+        self.assertIn("timing(0x", text)
+        self.assertIn("GetTickCount() - started_at", text)
+
+    def test_the_per_case_snapshot_is_NOT_hoisted_out_of_the_loop(self):
+        # Deliberately NOT an optimisation. Another thread writes inside the
+        # globals span - which is why Time is in UNSAFE_CLASSES - so `before`
+        # is not invariant across cases even though the process is restored
+        # between them. Correctness over speed, pinned so a later pass at this
+        # file does not "tidy" it.
+        # A member WITH an argument, because only those emit a case loop; a
+        # zero-argument function has a single case and no loop to hoist out of.
+        text = generator.emit(generator.candidates(
+            *self._paths([member()]), SelectionTests.REDIRECTED, SIZES))
+        body = text[text.index("static bool verify_"):]
+        loop = body.index("for (const auto &argv : cases)")
+        self.assertIn("snapshot(before)", body[loop:])
+
     def test_the_STAGED_OBJECT_is_restored_between_the_two_calls(self):
         # FALSE-PASS 3, and it is silent. The globals snapshot spans
         # 0x00682000..0x009C21F8; a staged object lives outside it. Restore only
