@@ -947,6 +947,8 @@ if(BUILD_TESTING)
     # invisible in the total, so the decisions are tested on synthetic bytes.
     opensmacx_add_python_tool_test(recovered-shape-classifier-tests test_classify_recovered_shapes.py)
 
+    opensmacx_add_python_tool_test(boot-loop-tests test_lifted_boot_loop.py)
+
     # The whole-image summary: every headline number the project publishes.
     # The byte-weighted verdict table, "compared and agreed", the evidence
     # tiers under it, the three numbers that must go DOWN and the seed
