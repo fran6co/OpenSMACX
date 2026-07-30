@@ -76,6 +76,15 @@ function(opensmacx_require_local_artifact_path variable)
     set(${variable} "${candidate}" PARENT_SCOPE)
 endfunction()
 
+# Nearly every tools/test_*.py registration is the same three lines; one
+# definition keeps them identical.
+function(opensmacx_add_python_tool_test name test_file)
+    add_test(NAME ${name}
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/${test_file}"
+    )
+endfunction()
+
 foreach(variable IN ITEMS
         OPENSMACX_GAME_DIR
         OPENSMACX_STAGED_GAME_DIR
@@ -253,7 +262,6 @@ set(OPENSMACX_SOURCES
 )
 
 add_library(OpenSMACX SHARED ${OPENSMACX_SOURCES})
-add_library(OpenSMACX::OpenSMACX ALIAS OpenSMACX)
 
 target_compile_features(OpenSMACX PRIVATE cxx_std_11)
 target_compile_definitions(OpenSMACX PRIVATE
@@ -777,113 +785,50 @@ if(BUILD_TESTING)
         )
     endif()
 
-    add_test(NAME hybrid-smoke-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_smoke_hybrid_game.py"
-    )
+    opensmacx_add_python_tool_test(hybrid-smoke-tool-tests test_smoke_hybrid_game.py)
 
-    add_test(NAME gameplay-scenario-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_run_gameplay_scenario.py"
-    )
+    opensmacx_add_python_tool_test(gameplay-scenario-tool-tests test_run_gameplay_scenario.py)
 
-    add_test(NAME external-analysis-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_external_analysis.py"
-    )
+    opensmacx_add_python_tool_test(external-analysis-tool-tests test_external_analysis.py)
 
-    add_test(NAME recovery-metadata-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_verify_recovery_metadata.py"
-    )
+    opensmacx_add_python_tool_test(recovery-metadata-tool-tests test_verify_recovery_metadata.py)
 
-    add_test(NAME stage-preset-game-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_stage_preset_game_dir.py"
-    )
+    opensmacx_add_python_tool_test(stage-preset-game-tool-tests test_stage_preset_game_dir.py)
 
-    add_test(NAME batch-decompile-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_batch_decompile.py"
-    )
+    opensmacx_add_python_tool_test(batch-decompile-tool-tests test_batch_decompile.py)
 
-    add_test(NAME mutation-harness-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_mutate_and_verify.py"
-    )
+    opensmacx_add_python_tool_test(mutation-harness-tool-tests test_mutate_and_verify.py)
 
     # Runs on the stock interpreter on purpose. The doctor's job is to diagnose
     # a machine that has none of the dependencies yet, so a test that needed
     # them would not be testing the thing that matters.
-    add_test(NAME host-doctor-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_host_doctor.py"
-    )
+    opensmacx_add_python_tool_test(host-doctor-tests test_host_doctor.py)
 
-    add_test(NAME shape-classifier-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_classify_recovery_shapes.py"
-    )
+    opensmacx_add_python_tool_test(shape-classifier-tool-tests test_classify_recovery_shapes.py)
 
-    add_test(NAME add-redirect-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_add_redirect.py"
-    )
+    opensmacx_add_python_tool_test(add-redirect-tool-tests test_add_redirect.py)
 
-    add_test(NAME bulk-recover-stubs-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_bulk_recover_stubs.py"
-    )
+    opensmacx_add_python_tool_test(bulk-recover-stubs-tool-tests test_bulk_recover_stubs.py)
 
-    add_test(NAME constant-return-scan-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_find_constant_returns.py"
-    )
+    opensmacx_add_python_tool_test(constant-return-scan-tool-tests test_find_constant_returns.py)
 
-    add_test(NAME class-layout-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_derive_class_layout.py"
-    )
+    opensmacx_add_python_tool_test(class-layout-tool-tests test_derive_class_layout.py)
 
-    add_test(NAME disassembly-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_disasm.py"
-    )
+    opensmacx_add_python_tool_test(disassembly-tool-tests test_disasm.py)
 
-    add_test(NAME delegate-analysis-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_analyze_delegates.py"
-    )
+    opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)
 
-    add_test(NAME delegation-thunk-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_delegation_thunks.py"
-    )
+    opensmacx_add_python_tool_test(delegation-thunk-generator-tests test_generate_delegation_thunks.py)
 
-    add_test(NAME nullsub-thunk-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_nullsub_thunks.py"
-    )
+    opensmacx_add_python_tool_test(nullsub-thunk-generator-tests test_generate_nullsub_thunks.py)
 
-    add_test(NAME whole-image-lifter-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lift_whole_image.py"
-    )
+    opensmacx_add_python_tool_test(whole-image-lifter-tests test_lift_whole_image.py)
 
-    add_test(NAME lifted-crt-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_crt.py"
-    )
+    opensmacx_add_python_tool_test(lifted-crt-tests test_lifted_crt.py)
 
-    add_test(NAME find-leaf-testable-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_find_leaf_testable.py"
-    )
+    opensmacx_add_python_tool_test(find-leaf-testable-tests test_find_leaf_testable.py)
 
-    add_test(NAME x86-lowerer-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_x86_lower.py"
-    )
+    opensmacx_add_python_tool_test(x86-lowerer-tests test_x86_lower.py)
 
     # The mutation runner is the only evidence that an oracle PASS means
     # anything, so its own bugs turn into confident wrong numbers everywhere
@@ -891,10 +836,7 @@ if(BUILD_TESTING)
     # the two kinds of INCONCLUSIVE mean opposite things and were scored the
     # same, and a mutation whose regex matched nothing vanished from the run
     # instead of being reported as an untested property.
-    add_test(NAME oracle-mutation-runner-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_mutate.py"
-    )
+    opensmacx_add_python_tool_test(oracle-mutation-runner-tests test_lifted_oracle_mutate.py)
 
     # The one module that decides what every published number MEANS: which
     # rows are in scope (5,673 of 6,000 - external_library is excluded by
@@ -904,10 +846,7 @@ if(BUILD_TESTING)
     # different row shapes - the exporter's in-memory dicts and the reused
     # export's CSV strings - so a difference between them would publish two
     # numbers for one tree.
-    add_test(NAME recovery-metrics-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_recovery_metrics.py"
-    )
+    opensmacx_add_python_tool_test(recovery-metrics-tests test_recovery_metrics.py)
 
     # The whole-image summary: every headline number the project publishes.
     # The byte-weighted verdict table, "compared and agreed", the evidence
@@ -918,15 +857,9 @@ if(BUILD_TESTING)
     # field that is a SUM of body spans as if it were a contiguous address
     # extent. The fixtures are synthetic reports in a temp dir; nothing here
     # reads build/oracle.
-    add_test(NAME lifted-oracle-summary-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_summary.py"
-    )
+    opensmacx_add_python_tool_test(lifted-oracle-summary-tests test_lifted_oracle_summary.py)
 
-    add_test(NAME lifted-oracle-compare-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_compare.py"
-    )
+    opensmacx_add_python_tool_test(lifted-oracle-compare-tests test_lifted_oracle_compare.py)
 
     # The only place in this repository where a function's ABI is written down
     # mechanically rather than guessed: the 4,821 MSVC-mangled names. The parse
@@ -937,10 +870,7 @@ if(BUILD_TESTING)
     # parse against undname per row, pin the argument layout, and pin the
     # body-versus-name arbitration that decides where `this` really arrives.
     # This file was delivered without a registration and ctest never ran it.
-    add_test(NAME calling-convention-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_recover_conventions.py"
-    )
+    opensmacx_add_python_tool_test(calling-convention-tests test_recover_conventions.py)
 
     # The plan decides what the oracle is allowed to compare, so every mistake
     # in it can only LOSE coverage - and losing coverage is silent: the
@@ -951,10 +881,7 @@ if(BUILD_TESTING)
     # mask in both directions, per flag, including the redefinition rule that
     # is the whole risk and the second body span this repo has read wrong
     # before.
-    add_test(NAME lifted-oracle-plan-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_plan.py"
-    )
+    opensmacx_add_python_tool_test(lifted-oracle-plan-tests test_lifted_oracle_plan.py)
 
     # The join between the oracle's trap CLASSIFIER and the four files that
     # write the trap reasons it matches. The classifier decides whether a trap
@@ -968,10 +895,7 @@ if(BUILD_TESTING)
     # everything still compiles, every C++ test stays green, and the verdict
     # silently degrades - the two halves only ever meet at runtime under Wine
     # against the user's own executable. This test is where they meet instead.
-    add_test(NAME lifted-oracle-trap-reason-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_lifted_oracle_trap_reasons.py"
-    )
+    opensmacx_add_python_tool_test(lifted-oracle-trap-reason-tests test_lifted_oracle_trap_reasons.py)
 
     # The import boundary's derivation: which import lives at which IAT slot,
     # and how many bytes of argument each one pops. Both are recovered rather
@@ -979,66 +903,33 @@ if(BUILD_TESTING)
     # neighbouring function while every ABI check still passes - so the
     # derivation is cross-checked here against arithmetic on the PE's own
     # FirstThunk, independent of the pefile attribute the generator reads.
-    add_test(NAME import-shim-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_imports.py"
-    )
+    opensmacx_add_python_tool_test(import-shim-tool-tests test_generate_imports.py)
 
-    add_test(NAME jump-table-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_jump_tables.py"
-    )
+    opensmacx_add_python_tool_test(jump-table-tests test_jump_tables.py)
 
-    add_test(NAME deleting-thunk-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_deleting_thunks.py"
-    )
+    opensmacx_add_python_tool_test(deleting-thunk-generator-tests test_generate_deleting_thunks.py)
 
-    add_test(NAME adjustor-thunk-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_adjustor_thunks.py"
-    )
+    opensmacx_add_python_tool_test(adjustor-thunk-generator-tests test_generate_adjustor_thunks.py)
 
-    add_test(NAME atexit-thunk-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_atexit_thunks.py"
-    )
+    opensmacx_add_python_tool_test(atexit-thunk-generator-tests test_generate_atexit_thunks.py)
 
-    add_test(NAME field-accessor-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_field_accessors.py"
-    )
+    opensmacx_add_python_tool_test(field-accessor-generator-tests test_generate_field_accessors.py)
 
-    add_test(NAME init-thunk-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_init_thunks.py"
-    )
+    opensmacx_add_python_tool_test(init-thunk-generator-tests test_generate_init_thunks.py)
 
-    add_test(NAME redirect-signature-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
-    )
+    opensmacx_add_python_tool_test(redirect-signature-generator-tests test_generate_redirect_signatures.py)
 
-    add_test(NAME redirect-patch-fit-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_verify_redirect_patch_fit.py"
-    )
+    opensmacx_add_python_tool_test(redirect-patch-fit-tool-tests test_verify_redirect_patch_fit.py)
 
     # The inventory behind `unproven_recovered`. Its dangerous failure is
     # publishing a proof that is not one, so it is gated like the metric it
     # feeds.
-    add_test(NAME proven-functions-tool-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_export_proven_functions.py"
-    )
+    opensmacx_add_python_tool_test(proven-functions-tool-tests test_export_proven_functions.py)
 
     # The generator that emits those proofs. Same dangerous failure, one step
     # earlier: an oracle for a function the hybrid cannot execute both forms of
     # would carry a marker that lowers the metric while proving nothing.
-    add_test(NAME signature-oracle-generator-tests
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_signature_oracles.py"
-    )
+    opensmacx_add_python_tool_test(signature-oracle-generator-tests test_generate_signature_oracles.py)
 
     # The check itself, against the real table: `install_redirect` writes five
     # bytes with no regard for how long the function it replaces is, and 280 of
@@ -1059,24 +950,32 @@ install(TARGETS OpenSMACX
 
 set(OPENSMACX_METADATA_VERIFY_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/recovery-metadata-verify")
-add_custom_target(verify-recovery-metadata
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
-        --idb "${OPENSMACX_RECOVERY_IDB}"
-        --verify-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
-    DEPENDS
-        "${OPENSMACX_RECOVERY_IDB}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ida9-functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
-    USES_TERMINAL
-    VERBATIM
-)
+# The two metadata-gate targets run the same command over the same inputs;
+# promote adds --promote. One definition keeps their dependency lists from
+# drifting apart.
+function(opensmacx_add_metadata_gate_target name)
+    add_custom_target(${name}
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
+            --idb "${OPENSMACX_RECOVERY_IDB}"
+            --verify-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
+            ${ARGN}
+        DEPENDS
+            "${OPENSMACX_RECOVERY_IDB}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ida9-functions.csv"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
+        USES_TERMINAL
+        VERBATIM
+    )
+endfunction()
+
+opensmacx_add_metadata_gate_target(verify-recovery-metadata)
 
 # Every recovery invalidates the committed metadata by construction, so the
 # unpromoted gate is guaranteed to fail its first pass on any batch that landed
@@ -1084,25 +983,7 @@ add_custom_target(verify-recovery-metadata
 # performs the byte comparison, which turns the standing two-pass cycle into
 # one. It is deliberately NOT a dependency of verify-recovery-batch: the gate
 # must keep failing on drift for anyone who has not consciously promoted.
-add_custom_target(promote-recovery-metadata
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
-        --idb "${OPENSMACX_RECOVERY_IDB}"
-        --verify-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
-        --promote
-    DEPENDS
-        "${OPENSMACX_RECOVERY_IDB}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ida9-functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
-    USES_TERMINAL
-    VERBATIM
-)
+opensmacx_add_metadata_gate_target(promote-recovery-metadata --promote)
 
 add_custom_target(prepare-hybrid-image
     COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
@@ -1575,12 +1456,6 @@ if(MINGW)
             USES_TERMINAL
             VERBATIM
         )
-        add_custom_target(generate-static-recompile-pilot
-            DEPENDS
-                "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
-                "${OPENSMACX_STATIC_RECOMPILE_MANIFEST}"
-        )
-
         set_source_files_properties(
             "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
             PROPERTIES GENERATED TRUE)
@@ -1729,6 +1604,7 @@ if(MINGW AND BUILD_TESTING)
             verify-redirect-signatures
             recovery-leaf-tests
             recovery-gameplay-tests
+            lifted-oracle-fold-tests
             assemble-legacy-leaves
             smoke-hybrid-game
         USES_TERMINAL
