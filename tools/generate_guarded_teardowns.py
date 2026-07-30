@@ -300,9 +300,13 @@ def emit(accepted, targets, existing):
         lines.append(f"extern func_thiscall_teardown "
                      f"*TeardownTarget{target:08X};")
     for target in sorted(set(targets) & set(RECOVERED_TARGETS)):
-        lines.insert(3, f'#include "{RECOVERED_TARGETS[target][1]}"')
+        include = f'#include "{RECOVERED_TARGETS[target][1]}"'
+        if include not in lines:
+            lines.insert(3, include)
     for name in sorted(reuse_headers):
-        lines.insert(3, f'#include "{name}"')
+        include = f'#include "{name}"'
+        if include not in lines:
+            lines.insert(3, include)
     lines.append("")
     for row, *_ in accepted:
         lines.append(f"void __cdecl {symbol_for(row)}();")

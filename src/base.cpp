@@ -23,7 +23,6 @@
 #include "game.h"
 #include "log.h"
 #include "map.h"
-#include "strings.h"
 #include "text.h"
 #include "technology.h"
 #include "veh.h"

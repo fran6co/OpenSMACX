@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "text_recovery.h"
+#include "general.h"
 #include "strings.h"
 
 #include <cstddef>
