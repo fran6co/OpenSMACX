@@ -90,6 +90,7 @@ import pefile  # noqa: E402
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
 from generator_support import scan_seam_bindings  # noqa: E402
+from generator_support import seam_name as support_seam_name  # noqa: E402
 from generate_adjustor_thunks import (LICENSE, callee_pop,  # noqa: E402
                                       camel, declaration, entry_extent, snake)
 
@@ -424,20 +425,15 @@ def adjust_symbol(name: str) -> str:
     return ""
 
 
+# The only family that also forwards to UNNAMED bodies, which have no
+# catalogued name to spell a seam from and fall back to their address. It
+# never binds a constructor.
+SEAM_KINDS = frozenset({"scalar_delete", "dtor", "method", "unnamed"})
+
+
 def target_symbol(name: str, address: int) -> str:
     """A seam name for a forward target, from its own catalogue name."""
-    match = SCALAR_DELETE_NAME.match(name)
-    if match:
-        return f"{match.group(1)}ScalarDeleteTarget"
-    match = DTOR_NAME.match(name)
-    if match:
-        return f"{match.group(1)}DtorTarget"
-    match = METHOD_NAME.match(name)
-    if match:
-        return f"{match.group(2)}{camel(match.group(1))}Target"
-    if UNNAMED.match(name):
-        return f"Sub{address:08X}Target"
-    return ""
+    return support_seam_name(name, SEAM_KINDS, address)
 
 
 def classify(pe):

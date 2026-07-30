@@ -55,6 +55,7 @@ import disasm  # noqa: E402
 from generator_support import (LICENSE,  # noqa: E402
                                identifier_of_global, read_bytes,
                                scan_seam_bindings)
+from generator_support import seam_name as support_seam_name  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -97,6 +98,11 @@ ELEMENT_TEARDOWNS = {
     "??1FactionArt@@QAE@XZ":
         ("FactionArt", "faction.h", "FactionArtElementTeardown"),
 }
+
+# This family binds destructors and constructors and named methods, and never
+# a scalar-deleting destructor - those belong to the deleting-thunk generator,
+# and a name outside this set is a row to skip.
+SEAM_KINDS = frozenset({"dtor", "ctor", "method"})
 
 THUNK_NAME_RE = re.compile(r"^\?\?__F(\w+)@@YAXXZ$")
 
@@ -260,17 +266,7 @@ def seam_name(mangled: str) -> str:
     are named after: a target bound there resolves to the same name here and
     is reused rather than redefined.
     """
-    match = re.match(r"^(?:j_)?\?\?1(\w+)@@", mangled)
-    if match:
-        return f"{match.group(1)}DtorTarget"
-    match = re.match(r"^(?:j_)?\?\?0(\w+)@@", mangled)
-    if match:
-        return f"{match.group(1)}CtorTarget"
-    match = re.match(r"^\?(\w+)@(\w+)@@", mangled)
-    if match:
-        camel = adjustor_module().camel(match.group(1))
-        return f"{match.group(2)}{camel}Target"
-    return ""
+    return support_seam_name(mangled, SEAM_KINDS)
 
 
 def resolve_seams(needs, bindings):

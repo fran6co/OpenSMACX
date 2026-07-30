@@ -142,6 +142,57 @@ def camel(name: str) -> str:
     return "".join(part.capitalize() for part in name.split("_") if part)
 
 
+# How a seam is spelled, in one place because the spellings MUST agree across
+# generators. A target already bound in one generated header has to resolve to
+# the SAME name in another generator's scan, or that generator declares a second
+# name for one address - and two names for one address is not a link error, so
+# nothing catches it. The agreement used to be maintained by copying: the atexit
+# generator's docstring says outright that it uses the adjustor generator's
+# spelling on purpose.
+#
+# The four patterns are mutually exclusive - a `??1`/`??0`/`??_G` name cannot
+# match the method pattern, whose second character must be a word character -
+# so the order they are tried in does not matter.
+SEAM_SPELLINGS = (
+    ("scalar_delete", re.compile(r"^\?\?_G(\w+)@@"),
+     lambda m: f"{m.group(1)}ScalarDeleteTarget"),
+    ("dtor", re.compile(r"^(?:j_)?\?\?1(\w+)@@"),
+     lambda m: f"{m.group(1)}DtorTarget"),
+    ("ctor", re.compile(r"^(?:j_)?\?\?0(\w+)@@"),
+     lambda m: f"{m.group(1)}CtorTarget"),
+    ("method", re.compile(r"^\?(\w+)@(\w+)@@"),
+     lambda m: f"{m.group(2)}{camel(m.group(1))}Target"),
+)
+
+UNNAMED_FUNCTION = re.compile(r"^sub_[0-9a-fA-F]+$")
+
+
+def seam_name(mangled: str, kinds, address: int | None = None) -> str:
+    """The shared spelling of a seam for `mangled`, or "" if out of domain.
+
+    `kinds` is the CALLER's domain, and it is explicit rather than universal
+    because the generators legitimately differ: the atexit family never binds a
+    scalar-deleting destructor, and the adjustor family never binds a
+    constructor. A name outside the caller's domain returns "", which is how
+    each generator says "not mine, skip the row" - so widening the domain here
+    would silently make a generator start emitting rows it used to refuse.
+    Empty is a refusal, not a failure.
+
+    `address` is only consulted for the `unnamed` kind, where there is no
+    catalogued name to derive a spelling from.
+    """
+    for kind, pattern, spell in SEAM_SPELLINGS:
+        if kind not in kinds:
+            continue
+        match = pattern.match(mangled)
+        if match:
+            return spell(match)
+    if ("unnamed" in kinds and address is not None
+            and UNNAMED_FUNCTION.match(mangled)):
+        return f"Sub{address:08X}Target"
+    return ""
+
+
 def identifier_of_global(name: str) -> str:
     """A global's catalogued name as the identifier the emitted twin uses.
 

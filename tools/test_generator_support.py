@@ -197,6 +197,60 @@ class SeamScanTest(unittest.TestCase):
             by_address[address] = name
 
 
+class SeamNameTest(unittest.TestCase):
+    ALL = frozenset({"scalar_delete", "dtor", "ctor", "method", "unnamed"})
+
+    def test_each_kind_has_its_spelling(self):
+        self.assertEqual("SpriteDtorTarget",
+                         support.seam_name("??1Sprite@@QAE@XZ", self.ALL))
+        self.assertEqual("SpriteCtorTarget",
+                         support.seam_name("??0Sprite@@QAE@XZ", self.ALL))
+        self.assertEqual("PopMenuScalarDeleteTarget",
+                         support.seam_name("??_GPopMenu@@QAE@XZ", self.ALL))
+        self.assertEqual("SpriteCloseTarget",
+                         support.seam_name("?close@Sprite@@QAEXXZ", self.ALL))
+
+    def test_a_jump_thunk_resolves_to_the_same_seam_as_its_target(self):
+        # 0x004483C0 is five bytes of `jmp ??1Ambience`, and two generators
+        # reach the destructor by different routes; both must name it once.
+        self.assertEqual(
+            support.seam_name("??1Ambience@@QAE@XZ", self.ALL),
+            support.seam_name("j_??1Ambience@@QAE@XZ", self.ALL))
+
+    def test_an_unnamed_body_falls_back_to_its_address(self):
+        self.assertEqual(
+            "Sub0060CE40Target",
+            support.seam_name("sub_60ce40", self.ALL, 0x0060CE40))
+
+    def test_an_unnamed_body_without_an_address_has_no_spelling(self):
+        self.assertEqual("", support.seam_name("sub_60ce40", self.ALL))
+
+    def test_a_kind_outside_the_callers_domain_is_REFUSED(self):
+        # The property that keeps this shareable. Each generator passes only
+        # the kinds it binds, and "" is how it says "skip this row" - so a
+        # domain widened here would make a generator emit rows it refuses
+        # today, silently changing committed generated source.
+        self.assertEqual("", support.seam_name("??_GPopMenu@@QAE@XZ",
+                                              frozenset({"dtor", "method"})))
+        self.assertEqual("", support.seam_name("??0Sprite@@QAE@XZ",
+                                              frozenset({"dtor", "method"})))
+        self.assertEqual("SpriteDtorTarget",
+                         support.seam_name("??1Sprite@@QAE@XZ",
+                                           frozenset({"dtor", "method"})))
+
+    def test_the_compiler_names_cannot_be_read_as_methods(self):
+        # Why the spellings can be tried in any order: a ??-prefixed name has
+        # a non-word character where the method pattern needs one.
+        methods_only = frozenset({"method"})
+        for name in ("??1Sprite@@QAE@XZ", "??0Sprite@@QAE@XZ",
+                     "??_GPopMenu@@QAE@XZ"):
+            self.assertEqual("", support.seam_name(name, methods_only), name)
+
+    def test_an_unrecognised_name_has_no_spelling(self):
+        self.assertEqual("", support.seam_name("_imp__Sleep@4", self.ALL))
+        self.assertEqual("", support.seam_name("", self.ALL))
+
+
 class LicenseTest(unittest.TestCase):
     def test_it_is_the_block_the_committed_generated_files_open_with(self):
         # The generators previously carried six copies of this, three of them
