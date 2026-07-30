@@ -117,12 +117,37 @@ regressed and the kill criterion was never triggered. `--build-state` stays as a
 working instrument — the boot will want it — but it is not the win Phase 2.1
 projected, and no further tuning of it is worth a session.
 
-**Noticed while measuring, not yet tested:** `overlay_state`'s remapper rewrites
-every out-of-span word in `[0x10000, 0x20000000)` into the arena, on the
-assumption that address-shaped words are pointers. The analysis above disproves
-that assumption, and the overlay reports `remapped 15956 out-of-span pointers`
-on every run — so `--state` may be corrupting ~16,000 real data words each time,
-which would be a reason every state experiment has underperformed.
+### The remapper was rewriting data, and that part is now fixed
+
+`overlay_state` rewrote every out-of-span word in `[0x10000, 0x20000000)` into
+the arena, on the assumption that an address-shaped word is a pointer. The
+analysis above disproves it, and the fix follows from the same idea: **only a
+word the running program WROTE can be a runtime pointer.** A word identical to
+the pristine image is a compile-time constant and cannot name a heap object.
+
+`--remap all|changed|none`, defaulting to `changed`. Counted on the same state:
+
+| mode | words rewritten |
+| --- | ---: |
+| `all` (the old behaviour) | 15,956 |
+| `changed` (the default now) | **2,910** |
+
+So **13,046 words — 81.8% — were static data**, rewritten into arena pointers on
+every state run this project has ever done. Swept:
+
+| | fault wall | vs no state | `agreed` |
+| --- | ---: | ---: | ---: |
+| no state | 1,584,976 B | — | — |
+| state, `--remap all` | 1,569,464 B | +15,512 B | **−145 B worse** |
+| state, `--remap changed` | 1,566,965 B | +18,011 B | **+509 B better** |
+
+`agreed` improving is the part that matters: every previous state experiment in
+this project made it *worse*, and that was the corruption, not the state. It is
+still only 7.2% of the 250,000 B threshold, and `agreed_full_strength` is
+unchanged at 42,209 B / 768 fn throughout.
+
+So the remapper was a real defect with a real fix, and it does not change the
+conclusion: four variants now agree that the fault wall is not built by the CRT.
 
 ### What it took to get __cinit to return
 

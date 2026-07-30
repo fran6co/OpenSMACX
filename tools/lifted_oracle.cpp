@@ -305,6 +305,10 @@ static unsigned char *const g_side_a =
 // --state carries one, because a sweep that never loads a heap should not pay
 // to compare 2 MiB of zeroes on every case.
 static bool g_restore_heap = false;
+// How --state treats out-of-span words. See the remap loop for why the default
+// is no longer to rewrite every one of them.
+OracleRemapMode g_remap_mode = OracleRemapChanged;
+
 static bool g_image_loaded = false;
 static uint32_t g_code_begin = 0, g_code_end = 0;
 
@@ -491,6 +495,11 @@ static const char *overlay_state(const char *path, unsigned char *image) {
     const size_t read = std::fread(dump.data(), 1, dump.size(), file);
     std::fclose(file);
     if (read != dump.size()) return "--state file is short";
+    // A COPY OF WHAT WAS THERE, taken before the overlay, because the only
+    // honest way to tell a runtime pointer from a compile-time constant is
+    // whether the running program wrote it. See the remap mode below.
+    std::vector<unsigned char> was(image + (kLow - OracleImageBase),
+                                   image + (kHigh - OracleImageBase));
     std::memcpy(image + (kLow - OracleImageBase),
                 dump.data() + (kLow - OracleImageBase), kHigh - kLow);
     // REMAP THE POINTERS THAT LEAVE THE SPAN, and keep everything else.
@@ -513,10 +522,25 @@ static const char *overlay_state(const char *path, unsigned char *image) {
     // also why the first measurement of this, which counted anything
     // pointer-shaped, said 88% and was too crude to quote.
     constexpr uint32_t kHeapLow = 0x00010000U, kHeapHigh = 0x20000000U;
-    uint32_t remapped = 0;
+    uint32_t remapped = 0, spared = 0;
     for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
         uint32_t w;
         std::memcpy(&w, image + (a - OracleImageBase), 4);
+        if (g_remap_mode == OracleRemapNone) continue;
+        // ONLY WORDS THE PROGRAM WROTE can be runtime pointers. This whole
+        // remapper assumed an address-shaped word is a pointer, and that
+        // assumption is false here: the dump window is mostly the image's own
+        // static .data, whose out-of-span words are constants like 0x01000100,
+        // 0x05050505 and 0x0a0a0a0a spread evenly across the low megabytes -
+        // the signature of data, not of addresses. Remapping those rewrites
+        // real contents into arena pointers, which is damage, not repair. A
+        // word identical to the pristine image was never written by anything
+        // and cannot be a heap pointer.
+        if (g_remap_mode == OracleRemapChanged) {
+            uint32_t before;
+            std::memcpy(&before, was.data() + (a - kLow), 4);
+            if (before == w) { ++spared; continue; }
+        }
         const bool below = w >= kHeapLow && w < OracleImageBase;
         // The bound is the whole guest span, not the image: a pointer into
         // the guest heap above the stack is one the lifted side CAN follow,
@@ -532,8 +556,12 @@ static const char *overlay_state(const char *path, unsigned char *image) {
         std::memcpy(image + (a - OracleImageBase), &object, 4);
         ++remapped;
     }
-    std::printf("state overlay: remapped %u out-of-span pointers\n",
-                unsigned(remapped));
+    std::printf("state overlay: remapped %u out-of-span pointer(s)%s\n",
+                unsigned(remapped),
+                g_remap_mode == OracleRemapNone ? "  (remapping OFF)" : "");
+    if (spared)
+        std::printf("state overlay: spared %u out-of-span word(s) the running "
+                    "program never wrote\n", unsigned(spared));
 
     uint32_t live = 0;
     for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
