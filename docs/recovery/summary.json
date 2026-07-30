@@ -1433,7 +1433,7 @@
   },
   "source_bindings": {
     "by_kind": {
-      "data": 554,
+      "data": 553,
       "function": 351
     },
     "items": [
@@ -7747,20 +7747,11 @@
         "type": "Sprite *"
       },
       {
-        "address": "0x009B90D8",
-        "function": "",
-        "function_address": "",
-        "kind": "data",
-        "location": "src/init_thunks.cpp:218",
-        "symbol": "StringTable",
-        "type": "Strings *"
-      },
-      {
         "address": "0x009B9108",
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:219",
+        "location": "src/init_thunks.cpp:218",
         "symbol": "g_CAVIAR_BUFFER_1",
         "type": "Buffer *"
       },
@@ -7769,7 +7760,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/init_thunks.cpp:220",
+        "location": "src/init_thunks.cpp:219",
         "symbol": "g_CAVIAR_BUFFER_2",
         "type": "Buffer *"
       },
@@ -9584,6 +9575,6 @@
       }
     ],
     "matched_function_starts": 351,
-    "total": 905
+    "total": 904
   }
 }

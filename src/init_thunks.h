@@ -145,7 +145,6 @@ extern Sprite *g_CHECKBOX_SPRITE_2;
 extern Sprite *g_FILEWIN_SPRITE_1;
 extern Sprite *g_FILEWIN_SPRITE_2;
 extern Sprite *g_FILEWIN_SPRITE_3;
-extern Strings *StringTable;
 extern Buffer *g_CAVIAR_BUFFER_1;
 extern Buffer *g_CAVIAR_BUFFER_2;
 

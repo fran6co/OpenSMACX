@@ -385,6 +385,15 @@ LPSTR Strings::put(LPCSTR input) {
     return output;
 }
 
+// src/strings.cpp owns this global; src/init_thunks.cpp names it but no longer
+// defines it, because a second definition of one object only ever linked
+// through -Wl,--allow-multiple-definition. This suite cannot link strings.cpp
+// - it stands in for Strings::put just above - so it supplies the pointer
+// itself, at the address the executable puts the object. The init-thunk case
+// table below reads the pointer VALUE through its `slot` field and never
+// dereferences it, so no storage has to exist here.
+Strings *StringTable = reinterpret_cast<Strings *>(0x009B90D8);
+
 BOOL __cdecl in_box(int x, int y, const RECT *rect);
 
 namespace {

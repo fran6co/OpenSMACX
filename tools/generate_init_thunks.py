@@ -557,6 +557,16 @@ def table_bindings(rows, f_rows):
     return table
 
 
+# Globals a hand-written source file already declares and defines. The init
+# side must reuse them - referencing the name but emitting neither the extern
+# nor the definition - because a second definition only ever linked through
+# -Wl,--allow-multiple-definition, which also hides genuinely accidental
+# duplicates. Address is pinned so the two owners cannot silently diverge.
+SOURCE_OWNED_GLOBALS = {
+    "StringTable": (0x009B90D8, "strings.h"),
+}
+
+
 def atexit_side_globals(pe, functions) -> dict[str, int]:
     """global name -> address for every global atexit_thunks.h already binds.
 
@@ -639,7 +649,7 @@ def render_header(rows, shared_globals, declare=(), includes=()) -> str:
         lines.append("")
     for row in typed(rows):
         variable = atexit_gen.variable_of(row)
-        if variable in shared_globals:
+        if variable in shared_globals or variable in SOURCE_OWNED_GLOBALS:
             continue
         lines.append(f"extern {kind_of(row)} *{variable};")
     lines.append("")
@@ -724,7 +734,7 @@ def render_source(rows, shared_globals, atexit_address, declare=()) -> str:
     lines.append("")
     for row in typed(rows):
         variable = atexit_gen.variable_of(row)
-        if variable in shared_globals:
+        if variable in shared_globals or variable in SOURCE_OWNED_GLOBALS:
             continue
         lines.append(f"{kind_of(row)} *{variable} = "
                      f"({kind_of(row)} *)0x{row['global_address']:08X};")
@@ -1129,6 +1139,12 @@ def main() -> int:
             raise SystemExit(
                 f"{variable}: init side 0x{row['global_address']:08X} vs "
                 f"teardown side 0x{shared[variable]:08X}")
+        if variable in SOURCE_OWNED_GLOBALS and \
+                SOURCE_OWNED_GLOBALS[variable][0] != row["global_address"]:
+            raise SystemExit(
+                f"{variable}: init side 0x{row['global_address']:08X} vs "
+                f"source-owned 0x{SOURCE_OWNED_GLOBALS[variable][0]:08X} "
+                f"({SOURCE_OWNED_GLOBALS[variable][1]})")
 
     # Seams dedupe on address against src/*.h, against the seams the two
     # element tables own (which carry no address comment for the scanner to

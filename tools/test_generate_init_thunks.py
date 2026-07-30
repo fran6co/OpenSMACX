@@ -316,6 +316,60 @@ class TestRenderedOpaqueTest(unittest.TestCase):
         self.assertEqual(gen.render_opaque_loops(typed_only), [])
 
 
+class TestSourceOwnedGlobals(unittest.TestCase):
+    """A global a hand-written file defines must be referenced, not redefined.
+
+    src/strings.cpp defines `Strings *StringTable` and this generator used to
+    emit a second definition of it into src/init_thunks.cpp. That only ever
+    linked because the DLL passes -Wl,--allow-multiple-definition, which also
+    suppresses genuinely accidental duplicates, so the flag could not be
+    removed while the duplicate stood.
+    """
+
+    def rows(self):
+        return [
+            # The source-owned one: strings.cpp already defines it.
+            {"address": 0x00616880, "global_name": "StringTable",
+             "global_address": 0x009B90D8,
+             "target_name": "??0Strings@@QAE@XZ",
+             "target_address": 0x006168D0, "registered": 0x006168C0},
+            # A generator-owned one, so every assertion below has a control:
+            # the same render call must still declare and define this.
+            {"address": 0x00616980, "global_name": "g_OTHER_STRINGS",
+             "global_address": 0x009B9200,
+             "target_name": "??0Strings@@QAE@XZ",
+             "target_address": 0x006168D0, "registered": 0x006169C0},
+        ]
+
+    def test_the_header_declares_neither_a_definition_nor_an_extern(self):
+        header = gen.render_header(self.rows(), {})
+        self.assertNotIn("extern Strings *StringTable;", header)
+        self.assertIn("extern Strings *g_OTHER_STRINGS;", header)
+
+    def test_the_source_does_not_define_a_source_owned_global(self):
+        source = gen.render_source(self.rows(), {}, 0x00645398)
+        self.assertNotIn(
+            "Strings *StringTable = (Strings *)0x009B90D8;", source)
+        self.assertIn(
+            "Strings *g_OTHER_STRINGS = (Strings *)0x009B9200;", source)
+
+    def test_the_thunk_still_constructs_through_the_reused_global(self):
+        # Skipping the definition must not skip the initializer: the thunk
+        # body still names StringTable, now resolving to strings.cpp's object.
+        source = gen.render_source(self.rows(), {}, 0x00645398)
+        self.assertIn("    StringsInitCtor(StringTable);", source)
+        self.assertIn("void __cdecl construct_stringtable() {", source)
+
+    def test_the_pinned_address_is_the_one_strings_cpp_uses(self):
+        address, header = gen.SOURCE_OWNED_GLOBALS["StringTable"]
+        self.assertEqual(0x009B90D8, address)
+        self.assertEqual("strings.h", header)
+        definition = (Path(__file__).resolve().parent.parent / "src" /
+                      "strings.cpp").read_text(encoding="utf-8")
+        self.assertIn(
+            f"Strings *StringTable = (Strings *)0x{address:08X};", definition)
+
+
 class TestRenderedOpaqueSource(unittest.TestCase):
     def test_a_scalar_body_calls_the_seam_on_a_literal_address(self):
         body = atexit_gen.wrapped_call(
