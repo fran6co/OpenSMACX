@@ -96,23 +96,39 @@ def undefined_flags(op: str, width: int, count: int) -> int:
     return 0
 
 
-def build_executor(source: Path, output: Path) -> Path:
+def build_executor(source: Path, output: Path) -> tuple[Path, list[str]]:
+    """Build the executor, natively if 32-bit multilib is present.
+
+    Native is strongly preferred. Under Wine a crash restarts services whose
+    diagnostics reach stdout, which desynchronises answers from questions -
+    seen once as "80 cases, 95 answers", a failure mode that looks like a
+    validation result rather than an accident. `-no-pie` because the assembly
+    names its globals absolutely.
+    """
     output.parent.mkdir(parents=True, exist_ok=True)
+    native = output.with_suffix(".native")
+    done = subprocess.run(
+        ["g++", "-m32", "-no-pie", "-std=c++17", "-O1", str(source),
+         "-o", str(native)], capture_output=True, text=True)
+    if done.returncode == 0:
+        return native, []
     done = subprocess.run(
         ["i686-w64-mingw32-g++", "-std=c++17", "-O1", "-static",
          str(source), "-o", str(output)],
         capture_output=True, text=True)
     if done.returncode != 0:
         raise SystemExit(f"cannot build the executor:\n{done.stderr}")
-    return output
+    return output, ["wine"]
 
 
-def run_cpu(binary: Path, cases: list[tuple]) -> list[tuple[int, int]]:
+def run_cpu(binary, cases: list[tuple]) -> list[tuple[int, int]]:
+    binary, launcher = binary
     lines = []
     for op, width, a, b, flags in cases:
         code = ENCODINGS[(op, width)] + "c3"
         lines.append(f"{code} {a:x} {b:x} 0 0 0 0 0 {flags:x} {WINDOW}")
-    done = subprocess.run(["wine", str(binary)], input="\n".join(lines) + "\n",
+    done = subprocess.run(launcher + [str(binary)],
+                          input="\n".join(lines) + "\n",
                           capture_output=True, text=True)
     answers = []
     for line in done.stdout.splitlines():
