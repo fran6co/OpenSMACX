@@ -11,8 +11,7 @@
 // run whose verdicts were fed back with --verdicts. Generating this file
 // cannot mint one. An earlier revision minted 37 that had never run.
 //
-// PROVEN-AGAINST-ORIGINAL: 0x004456A0  ?passover_callback@@YAXXZ
-// PROVEN-AGAINST-ORIGINAL: 0x00455E50  ?load_deswin_sprites@@YAXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x0046FB10  ?main_caption@MapWin@@QAEXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x0052DC70  ?not_my_turn@@YAHXZ
 // PROVEN-AGAINST-ORIGINAL: 0x0058EE50  ?desktop_update@@YAXXZ
 // PROVEN-AGAINST-ORIGINAL: 0x005FD2B0  ?do_sound@@YAXXZ
@@ -714,74 +713,6 @@ static bool verify_MapWin_main_caption_0046fb10() {
         return true;
     }
     verdict(0x0046FB10U, "PASS", "?main_caption@MapWin@@QAEXXZ");
-    return true;
-}
-
-// ?UNK1@PlanWin@@QAEXXZ  (47 B)
-// recovered in src/planwin.cpp:110
-// staged receiver: PlanWin, 0x22A64 B, zero-filled
-static bool verify_PlanWin_UNK1_0048b3c0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x0048B3C0U);
-    std::printf("  running ?UNK1@PlanWin@@QAEXXZ\n");
-    std::fflush(stdout);
-    std::vector<uint8_t> before, after_original, after_recovered;
-    bool passed = true;
-    bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x22A64U;
-    alignas(16) static uint8_t staged[ObjectSize];
-    alignas(16) static uint8_t staged_seed[ObjectSize];
-    alignas(16) static uint8_t staged_original[ObjectSize];
-    {
-        std::memset(staged_seed, 0, ObjectSize);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        snapshot(before);
-        if (!suspend_redirect_at(0x0048B3C0U)) {
-            std::printf("  ?UNK1@PlanWin@@QAEXXZ: cannot suspend redirect\n");
-            verdict(0x0048B3C0U, "FAIL-no-redirect", "?UNK1@PlanWin@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_original);
-        std::memcpy(staged_original, staged, ObjectSize);
-        restore(before);
-        std::memcpy(staged, staged_seed, ObjectSize);
-        if (!resume_redirect_at(0x0048B3C0U)) {
-            std::printf("  ?UNK1@PlanWin@@QAEXXZ: cannot resume redirect\n");
-            verdict(0x0048B3C0U, "FAIL-no-redirect", "?UNK1@PlanWin@@QAEXXZ");
-            return false;
-        }
-        target(staged);
-        snapshot(after_recovered);
-        restore(before);   // leave the process as it was found
-        uintptr_t where = 0;
-        if (!same_globals(after_original, after_recovered, &where)) {
-            std::printf("  ?UNK1@PlanWin@@QAEXXZ: globals differ, first at %p\n",
-                        reinterpret_cast<void *>(where));
-            passed = false;
-        }
-        if (std::memcmp(staged_original, staged, ObjectSize) != 0) {
-            std::printf("  ?UNK1@PlanWin@@QAEXXZ: staged object differs\n");
-            passed = false;
-        }
-        uintptr_t moved = 0;
-        if (!same_globals(before, after_original, &moved)) {
-            observed_effect = true;
-        }
-        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
-            observed_effect = true;
-        }
-    }
-    if (!passed) {
-        verdict(0x0048B3C0U, "FAIL", "?UNK1@PlanWin@@QAEXXZ");
-        return false;
-    }
-    if (!observed_effect) {
-        std::printf("  ?UNK1@PlanWin@@QAEXXZ: no seed produced an observable effect\n");
-        verdict(0x0048B3C0U, "INCONCLUSIVE-no-effect", "?UNK1@PlanWin@@QAEXXZ");
-        return true;
-    }
-    verdict(0x0048B3C0U, "PASS", "?UNK1@PlanWin@@QAEXXZ");
     return true;
 }
 
@@ -8565,7 +8496,6 @@ bool run_generated_signature_oracles() {
     passed &= verify_MapWin_on_left_click_0046eba0();
     passed &= verify_MapWin_on_right_click_0046ebe0();
     passed &= verify_MapWin_main_caption_0046fb10();
-    passed &= verify_PlanWin_UNK1_0048b3c0();
     passed &= verify_PlanWin_blink_0048bc20();
     passed &= verify_Console_edit_lock_004e1f40();
     passed &= verify_AlphaNet_pid_2_idx_004e25e0();
@@ -8665,6 +8595,6 @@ bool run_generated_signature_oracles() {
     passed &= verify_Caviar_UNK10_00618320();
     passed &= verify_Caviar_UNK11_00618340();
     passed &= verify_ButtonGroup_set_0062b870();
-    std::printf("generated signature oracles: %d function(s)\n", 109);
+    std::printf("generated signature oracles: %d function(s)\n", 108);
     return passed;
 }

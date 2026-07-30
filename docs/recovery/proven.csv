@@ -1,6 +1,5 @@
 address,name,size,mechanism,evidence
-0x004456A0,?passover_callback@@YAXXZ,10,hybrid_runtime,src/generated_signature_oracle.cpp
-0x00455E50,?load_deswin_sprites@@YAXXZ,35,hybrid_runtime,src/generated_signature_oracle.cpp
+0x0046FB10,?main_caption@MapWin@@QAEXXZ,16,hybrid_runtime,src/generated_signature_oracle.cpp
 0x004BA830,?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z,51,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E2610,?pid_2_who@AlphaNet@@QAEHK@Z,67,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E2660,?who_2_pid@AlphaNet@@QAEHH@Z,72,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
