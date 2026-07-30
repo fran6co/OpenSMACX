@@ -5,36 +5,59 @@ address,name,size,mechanism,evidence
 0x004E2610,?pid_2_who@AlphaNet@@QAEHK@Z,67,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E2660,?who_2_pid@AlphaNet@@QAEHH@Z,72,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E26B0,?who_2_idx@AlphaNet@@QAEXH@Z,44,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x0052DC70,?not_my_turn@@YAHXZ,44,hybrid_runtime,src/generated_signature_oracle.cpp
-0x0058EE50,?desktop_update@@YAXXZ,1,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005D4CF0,??0GraphicWin@@QAE@XZ,230,hybrid_runtime,src/constructor_oracle.cpp
 0x005D4E40,?close@GraphicWin@@QAEXXZ,166,hybrid_runtime,src/graphicwin_oracle.cpp
+0x005D5440,?fill@GraphicWin@@QAEHHHHHH@Z,39,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005D7210,??0Buffer@@QAE@XZ,530,hybrid_runtime,src/constructor_oracle.cpp
+0x005DACB0,?set_text_color@Buffer@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005DACE0,?set_text_color2@Buffer@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005DAD10,?set_text_color3@Buffer@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005DAD40,?set_text_color_hyper@Buffer@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005DCA80,?text_height@Buffer@@QAEHXZ,37,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005DCAB0,?text_line_height@Buffer@@QAEHXZ,43,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005E3373,?get_data@Buffer@@QAEHXZ,119,hybrid_runtime,src/buffer_oracle.cpp
+0x005E34A3,?free_data@Buffer@@QAEXH@Z,88,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005E3503,?get_hdc@Buffer@@QAEHXZ,89,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005E3563,?release_hdc@Buffer@@QAEXH@Z,96,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005EB3D0,??0Win@@QAE@XZ,621,hybrid_runtime,src/constructor_oracle.cpp
+0x005EC7C0,?set_cursor@Win@@QAEHH@Z,62,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005ED240,?client_to_screen@Win@@QAEXPAH0@Z,133,hybrid_runtime,src/win_oracle.cpp
-0x005ED7D0,?move@Win@@QAEHHH@Z,167,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x005ED7D0,?move@Win@@QAEHHH@Z,167,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
 0x005EE0F0,?set_vert_paging@Win@@QAEXH@Z,23,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x005EE110,?set_horz_paging@Win@@QAEXH@Z,23,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x005F2C60,?sync_palette@Win@@QAEXXZ,52,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005F7E90,?is_visible@Win@@QAEHXZ,38,hybrid_runtime,src/win_oracle.cpp
 0x005F86C0,sub_5f86c0,38,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005F8CB0,?hide_item@PullDown@@QAEHH@Z,111,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005F8D20,?show_item@PullDown@@QAEHH@Z,111,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005F8D90,?disable_item@PullDown@@QAEHH@Z,95,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005F8DF0,?enable_item@PullDown@@QAEHH@Z,95,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005F9040,?check_item@PullDown@@QAEHH@Z,95,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005F90A0,?uncheck_item@PullDown@@QAEHH@Z,95,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x005F8CB0,?hide_item@PullDown@@QAEHH@Z,111,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005F8D20,?show_item@PullDown@@QAEHH@Z,111,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005F8D90,?disable_item@PullDown@@QAEHH@Z,95,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005F8DF0,?enable_item@PullDown@@QAEHH@Z,95,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005F9040,?check_item@PullDown@@QAEHH@Z,95,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005F90A0,?uncheck_item@PullDown@@QAEHH@Z,95,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005F9D00,?id_to_index@PullDown@@QAEHH@Z,40,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005F9F40,?get_selected@PullDown@@QAEHXZ,28,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x005FA7A0,?in_box@@YAHHHHHHH@Z,59,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x005FB1D0,?UNK3@Menu@@QAEHHH@Z,84,hybrid_runtime,src/generated_signature_oracle.cpp
 0x005FB820,?set_menu_proc@Menu@@QAEXP6AXH@Z@Z,13,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005FB990,?id_to_index@Menu@@QAEHH@Z,40,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
-0x005FD2B0,?do_sound@@YAXXZ,3,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005FB990,?id_to_index@Menu@@QAEHH@Z,40,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x005FC6A0,?requested_height@Menu@@QAEHXZ,20,hybrid_runtime,src/generated_signature_oracle.cpp
+0x005FED10,?get_pos@Palette@@QAEHH@Z,37,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00601B80,?set_loc@BasePop@@QAEXHH@Z,37,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00604490,?on_key_click@BasePop@@QAEHHH@Z,17,hybrid_runtime,src/generated_signature_oracle.cpp
+0x006044B0,?on_key_up@BasePop@@QAEHH@Z,17,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00604730,?set_string_color@BasePop@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00604760,?set_string_color2@BasePop@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00604790,?set_string_color3@BasePop@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x006047C0,?set_string_color_hyper@BasePop@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00605180,?UNK3@BasePop@@QAEXH@Z,27,hybrid_runtime,src/generated_signature_oracle.cpp
+0x006051A0,?UNK4@BasePop@@QAEXH@Z,27,hybrid_runtime,src/generated_signature_oracle.cpp
 0x00605370,?close@Scroll@@QAEXXZ,350,hybrid_runtime,src/scroll_oracle.cpp
 0x006059B0,?set_range@Scroll@@QAEXHH@Z,93,hybrid_runtime,src/scroll_oracle.cpp
 0x00605A50,?set_bevel_thickness@Scroll@@QAEXH@Z,61,hybrid_runtime,src/scroll_oracle.cpp
 0x00605A90,?set_bevel_upper@Scroll@@QAEXH@Z,61,hybrid_runtime,src/scroll_oracle.cpp
 0x00605AD0,?set_bevel_lower@Scroll@@QAEXH@Z,61,hybrid_runtime,src/scroll_oracle.cpp
-0x00605B10,?set_border_color@Scroll@@QAEXH@Z,100,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x00605B10,?set_border_color@Scroll@@QAEXH@Z,100,legacy_leaf_island+hybrid_runtime,CMakeLists.txt recovery-oracles --address; src/generated_signature_oracle.cpp
+0x00605B80,?set_bar_thickness@Scroll@@QAEXH@Z,96,hybrid_runtime,src/generated_signature_oracle.cpp
 0x00605BE0,?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z,75,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x00605C30,?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z,75,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x00606C50,?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z,590,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
@@ -43,9 +66,15 @@ address,name,size,mechanism,evidence
 0x00606F30,??0BaseButton@@QAE@XZ,291,hybrid_runtime,src/constructor_oracle.cpp
 0x006070C0,?close@BaseButton@@QAEXXZ,208,hybrid_runtime,src/basebutton_oracle.cpp
 0x00607DA0,?close@FlatButton@@QAEXXZ,161,hybrid_runtime,src/basebutton_oracle.cpp
+0x00609B50,?pos_to_id@Dialog@@QAEHH@Z,154,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00609C90,?set_dialog_text_color@Dialog@@QAEXHHHH@Z,40,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00609CC0,?set_dialog_text_color2@Dialog@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00609CF0,?set_dialog_text_color3@Dialog@@QAEXHHHH@Z,43,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00618320,?UNK10@Caviar@@QAEXHHH@Z,24,hybrid_runtime,src/generated_signature_oracle.cpp
 0x00625750,?reseed@Random@@QAEXK@Z,19,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x00625770,?get@Random@@QAEIHH@Z,55,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x00628150,sub_628150,37,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x0062B870,?set@ButtonGroup@@QAEHHH@Z,47,hybrid_runtime,src/generated_signature_oracle.cpp
 0x0062BA80,??0AutoSound@@QAE@XZ,360,hybrid_runtime,src/constructor_oracle.cpp
 0x006343C0,??0Vector@@QAE@XZ,13,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x006343D0,?close@Vector@@QAEXXZ,11,legacy_leaf_island,CMakeLists.txt recovery-oracles --address

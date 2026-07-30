@@ -173,6 +173,7 @@ set(OPENSMACX_SOURCES
     src/general.cpp
     src/graphicwin.cpp
     src/generated_signature_oracle.cpp
+    src/oracle_fault_guard.cpp
     src/graphicwin_oracle.cpp
     src/heap.cpp
     src/log.cpp
@@ -403,6 +404,10 @@ if(MINGW)
             --nm "${CMAKE_NM}"
             --objdump "${CMAKE_OBJDUMP}"
             --object "${OPENSMACX_ALPHANET_OBJECT}"
+            --generated-signature-oracle-object
+                "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/generated_signature_oracle.cpp.obj"
+            --oracle-fault-guard-object
+                "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/oracle_fault_guard.cpp.obj"
             --autosound-object "${OPENSMACX_AUTOSOUND_OBJECT}"
             --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
             --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
@@ -749,6 +754,44 @@ if(BUILD_TESTING)
         add_test(NAME globals-diff-tests COMMAND globals-diff-tests)
     endif()
 
+    # The guard rewrites a faulting thread's EIP and ESP from a process-global
+    # handler. What keeps that safe is a closed exception-code list and a thread
+    # gate, neither of which is visible by reading the generated oracle.
+    add_executable(oracle-fault-guard-tests
+        tests/oracle_fault_guard_tests.cpp
+        src/oracle_fault_guard.cpp
+    )
+    target_compile_features(oracle-fault-guard-tests PRIVATE cxx_std_11)
+    target_include_directories(oracle-fault-guard-tests PRIVATE src)
+    set_target_properties(oracle-fault-guard-tests PROPERTIES
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+    if(MINGW)
+        target_compile_options(oracle-fault-guard-tests PRIVATE
+            -pedantic -Wall -Wextra -Wno-attributes)
+        target_link_options(oracle-fault-guard-tests PRIVATE -static)
+    endif()
+    if(CMAKE_CROSSCOMPILING)
+        set(OPENSMACX_FAULT_GUARD_TEST_COMMAND
+            "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
+            --executable "$<TARGET_FILE:oracle-fault-guard-tests>"
+            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
+        )
+        if(OPENSMACX_WINE)
+            list(APPEND OPENSMACX_FAULT_GUARD_TEST_COMMAND
+                --wine "${OPENSMACX_WINE}")
+        endif()
+        add_test(NAME oracle-fault-guard-tests
+            COMMAND ${OPENSMACX_FAULT_GUARD_TEST_COMMAND}
+        )
+    else()
+        add_test(NAME oracle-fault-guard-tests
+            COMMAND oracle-fault-guard-tests)
+    endif()
+
     add_executable(lifted-oracle-fold-tests
         tests/lifted_oracle_fold_tests.cpp
     )
@@ -796,7 +839,11 @@ if(BUILD_TESTING)
                 --nm "${CMAKE_NM}"
                 --objdump "${CMAKE_OBJDUMP}"
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
-                --autosound-object "${OPENSMACX_AUTOSOUND_OBJECT}"
+                --generated-signature-oracle-object
+                "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/generated_signature_oracle.cpp.obj"
+            --oracle-fault-guard-object
+                "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/oracle_fault_guard.cpp.obj"
+            --autosound-object "${OPENSMACX_AUTOSOUND_OBJECT}"
                 --scenario-object "${OPENSMACX_SCENARIO_OBJECT}"
                 --button-group-object "${OPENSMACX_BUTTON_GROUP_OBJECT}"
                 --basepop-font-object "${OPENSMACX_BASEPOP_FONT_OBJECT}"

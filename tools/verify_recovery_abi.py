@@ -33,6 +33,13 @@ def main():
     parser.add_argument("--nm", required=True)
     parser.add_argument("--objdump", required=True)
     parser.add_argument("--object", required=True)
+    # Brought under the -fno-exceptions sweep below, which iterates every
+    # argument whose name ends in "object". The generated oracle gained a
+    # setjmp/longjmp fault guard, and the guarantee that it introduces no
+    # exception machinery should be gated rather than asserted - these two
+    # were the only oracle objects the sweep did not see.
+    parser.add_argument("--generated-signature-oracle-object")
+    parser.add_argument("--oracle-fault-guard-object")
     parser.add_argument("--autosound-object")
     parser.add_argument("--scenario-object")
     parser.add_argument("--button-group-object")
