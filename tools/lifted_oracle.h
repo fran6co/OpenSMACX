@@ -331,6 +331,53 @@ const char *oracle_load_image(const char *path);
 // definition for why that restriction is load-bearing.
 const char *oracle_overlay_state(const char *path);
 
+// --build-state. Bind the loaded image's IAT to the real Win32 entry points,
+// serve the allocating imports from a guest region so what they return is
+// in-span, run `__cinit` on side A, and write .data/.bss in exactly the format
+// oracle_overlay_state reads back.
+//
+// The distinction the fields are shaped around: `bound` imports are the real
+// Windows functions and `overridden` ones are this harness's allocators. A run
+// where `overridden` is zero produced state full of host heap pointers and is
+// worthless, so the two are never summed.
+struct OracleImportReport {
+    uint32_t slots;
+    uint32_t bound;
+    uint32_t overridden;
+    uint32_t unresolved;
+    uint32_t missing_modules;
+    char first_unresolved[160];
+};
+
+struct OracleBuildStateReport {
+    OracleImportReport imports;
+    uint32_t fault_code;
+    uint32_t fault_address;
+    uint32_t fault_data;
+    uint32_t eax;
+    uint32_t alloc_calls;
+    uint32_t alloc_bytes;
+    uint32_t alloc_failures;
+    uint32_t alloc_largest_refused;
+    uint32_t heap_used;
+    uint32_t wrote;
+    uint32_t dialogs;
+    // Address-shaped words in the dump window, and how many of them name
+    // somewhere the lifted side can actually follow. Measured with the same
+    // bounds overlay_state's remapper uses, so it is directly comparable to the
+    // 26-30% that condemned the hybrid dumps.
+    uint32_t address_shaped;
+    uint32_t address_in_span;
+    // Non-null when a shim refused to end the process on the guest's behalf.
+    const char *refused;
+    // Whether __cinit RETURNED. A fault leaves the state half-built, and a
+    // half-built dump must never be written: it would look like real state and
+    // be a snapshot of an aborted constructor.
+    bool returned;
+};
+
+const char *oracle_build_state(const char *path, OracleBuildStateReport *report);
+
 // Arms the vectored handler and the budget. `budget` of 0 disables the
 // trap-flag instruction budget (much faster, no runaway protection beyond the
 // watchdog); anything else is a hard cap on instructions executed by the
