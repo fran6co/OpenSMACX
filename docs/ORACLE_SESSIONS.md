@@ -296,11 +296,45 @@ Every `FAIL` in the baseline, run against a stock build and against
 | detail MOVED under the shim — not a lowering bug | 6, of which **2 flip to PASS** |
 | detail STABLE — candidate real divergence | 3 |
 
-The three survivors are `?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z`,
-`sub_634720` (x87 status word, original `0x0200` vs lifted `0`) and
-`sub_63a9d0`. The two that flip to PASS, `?is_known@@YAHHHH@Z` and
-`?anything_at@@YAHHH@Z`, are the clearest statement of why the control is
-mandatory: without it they would have been reported as lowering bugs.
+The two that flip to PASS, `?is_known@@YAHHHH@Z` and `?anything_at@@YAHHH@Z`,
+are the clearest statement of why the control is mandatory: without it they
+would have been reported as lowering bugs.
+
+**All three survivors are one cause, and it is real.** The two that looked like
+arena-pointer divergences were not pointers at all — the blamed instruction in
+each is `fnstsw ax`, so the compared EAX is the x87 STATUS WORD with stale high
+bits. Decoded:
+
+| function | original | lifted | differs in |
+| --- | --- | --- | --- |
+| `?RGB_to_HSV@@YAX…` | `0x3820` | `0x3800` | PE (inexact) |
+| `sub_63a9d0` | `0x4022` | `0x4000` | DE (denormal), PE |
+| `sub_634720` | `0x0200` | `0x0000` | C1 |
+
+**The lift never sets the x87 IEEE exception flags.** That is a genuine lowering
+gap, not a harness artifact — which is exactly what surviving the shim means.
+
+How much it matters is also measured. Across every catalogued function there are
+**206 `fnstsw`/`fstsw` sites**, and of the 152 that mask the result:
+
+| mask | sites | reads |
+| --- | ---: | --- |
+| `0x0100` | 80 | C0 |
+| `0x4100` | 55 | C0, C3 |
+| `0x4000` | 16 | C3 |
+| `0x0020` | **1** | PE |
+
+151 of 152 read only the comparison codes, which the lift models correctly. The
+single site that reads an exception flag is `__check_range_exit` at 0x0064a8c9,
+which is `external_library` — CRT code the lift never translates. So **no lifted
+function in this image reads the bits the lift fails to set.**
+
+These stay FAIL. The divergence is real, and masking a register the program
+happens not to read would be converting an honest failure into a flattering pass
+on the grounds that it probably does not matter — which is the move this
+harness exists to prevent. Recorded as a known gap with a measured blast radius
+of zero reachable sites, so a future session can price the fix rather than
+rediscover the cause.
 
 ---
 
