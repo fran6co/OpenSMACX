@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import generate_adjustor_thunks as adjustor  # noqa: E402
 import generate_atexit_thunks as gen  # noqa: E402
+import generator_support as support  # noqa: E402
 
 
 def mov_ecx(value: int) -> bytes:
@@ -346,8 +347,9 @@ class TestRenderSeamBlock(unittest.TestCase):
             "// note",
             "extern func_thiscall_teardown *MessageWinDtorTarget;"
             "   // 0x00472020"])
-        # The comment is what load_bindings reads back for the dedupe.
-        self.assertIsNotNone(gen.BINDING_RE.match(lines[-1]))
+        # The comment is what load_bindings reads back for the dedupe, so the
+        # shared scan must be able to parse what this generator emits.
+        self.assertIsNotNone(support.SEAM_BINDING_RE.match(lines[-1]))
 
 
 if __name__ == "__main__":

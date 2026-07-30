@@ -21,6 +21,7 @@ catalogued rows and an unreadable one is a row to refuse, not a crash.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pefile
 
@@ -80,6 +81,47 @@ def read_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
             available = section.SizeOfRawData - delta
             return pe.__data__[offset:offset + min(length, available)]
     return b""
+
+
+# A rebindable seam as the headers declare it: `extern <type> *<name>;` with
+# the original address it defaults to in a trailing comment. The comment is
+# where the ADDRESS comes from, and seams dedupe on address rather than on name
+# because two names for one address is NOT a link error - it is a fixture that
+# rebinds one of them and silently leaves the other pointing at the original
+# image.
+SEAM_BINDING_RE = re.compile(
+    r"^\s*extern\s+([\w:]+)\s*\*\s*(\w+)\s*;\s*//\s*0x([0-9A-Fa-f]+)")
+
+
+def scan_seam_bindings(source_dir, exclude=()):
+    """[(header name, symbol, type, address)] for the seams src/*.h declares.
+
+    Parsing only - each generator keeps its own policy about what a hit means,
+    because they differ: one reuses the existing spelling, another refuses to
+    emit at all.
+
+    `exclude` drops a generator's own output, which would otherwise report last
+    run's seams as prior art and make a rerun depend on what is already on disk.
+
+    This was three regexes in three files, and they disagreed. Measured over
+    src/*.h: requiring the address to END the line, as one copy did, hid four
+    real bindings whose comment carries trailing prose - `// 0x007AD2A0, the
+    process-wide InfoWin` and `// 0x006970E0 [0..3]` among them - so that copy
+    saw 205 seams where its sibling saw 209. A generator blind to a binding
+    mints a second name for the address, which is the failure this scan exists
+    to prevent.
+    """
+    out = []
+    excluded = set(exclude)
+    for header in sorted(Path(source_dir).glob("*.h")):
+        if header.name in excluded:
+            continue
+        for line in header.read_text().splitlines():
+            match = SEAM_BINDING_RE.match(line)
+            if match:
+                out.append((header.name, match.group(2), match.group(1),
+                            int(match.group(3), 16)))
+    return out
 
 
 def snake(name: str) -> str:

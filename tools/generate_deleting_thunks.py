@@ -89,6 +89,7 @@ import pefile  # noqa: E402
 
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
+from generator_support import scan_seam_bindings  # noqa: E402
 from generate_adjustor_thunks import (LICENSE, callee_pop,  # noqa: E402
                                       camel, declaration, entry_extent, snake)
 
@@ -694,18 +695,15 @@ def refuse_seams_already_bound(by_address):
     cause. Anything this trips on belongs in HANDLED_FORWARDS or
     HANDLED_DESTRUCTORS, reusing the existing spelling rather than adding a
     second name for one address."""
-    declared = re.compile(r"extern\s+\w+\s+\*(\w+);\s*//\s*(0x[0-9A-Fa-f]{8})")
-    for header in sorted(Path("src").glob("*.h")):
-        if header.name == "deleting_thunks.h":
-            continue
-        for name, address in declared.findall(header.read_text()):
-            hit = by_address.get(int(address, 16))
-            if hit is not None:
-                raise SystemExit(
-                    f"{address} is already bound as {name} in {header}; "
-                    f"this run would define it again as {hit[0]}. Reuse the "
-                    f"existing symbol through HANDLED_FORWARDS or "
-                    f"HANDLED_DESTRUCTORS instead.")
+    for header_name, name, _, address in scan_seam_bindings(
+            "src", exclude={"deleting_thunks.h"}):
+        hit = by_address.get(address)
+        if hit is not None:
+            raise SystemExit(
+                f"0x{address:08X} is already bound as {name} in "
+                f"src/{header_name}; this run would define it again as "
+                f"{hit[0]}. Reuse the existing symbol through "
+                f"HANDLED_FORWARDS or HANDLED_DESTRUCTORS instead.")
 
 
 def parameters_of(row):
