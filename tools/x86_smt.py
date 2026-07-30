@@ -142,6 +142,74 @@ def carry_bit(flags):
     return z3.LShR(flags & z3.BitVecVal(CF, 32), 0) & z3.BitVecVal(1, 32)
 
 
+def _sext(value, width: int):
+    """Sign-extend a width-W value to a full 32-bit one."""
+    if width == 32:
+        return value
+    return z3.SignExt(32 - width, z3.Extract(width - 1, 0, value))
+
+
+def shift_core(op: str, value, count, flags, width: int):
+    """SHL/SHR/SAR. Returns (result, flags).
+
+    THE COUNT IS MASKED TO 5 BITS FIRST, AT EVERY WIDTH, so an 8-bit shift by
+    32 is a shift by zero - and a shift by zero touches NO FLAG AT ALL. That
+    early return in lifted_x86.h is the semantics and not an optimisation, so
+    it is encoded as a guard over the whole flag word rather than folded into
+    the individual flag expressions.
+    """
+    mask = z3.BitVecVal(mask_of(width), 32)
+    sign = z3.BitVecVal(sign_of(width), 32)
+    value = value & mask
+    count = count & z3.BitVecVal(31, 32)
+    zero = z3.BitVecVal(0, 32)
+    one = z3.BitVecVal(1, 32)
+
+    if op == "shl":
+        result = (value << count) & mask
+        # CF is the last bit shifted out of the top; past the operand width
+        # there is nothing left to shift out.
+        shifted = z3.LShR(value, (z3.BitVecVal(width, 32) - count)
+                          & z3.BitVecVal(31, 32)) & one
+        carry = z3.If(z3.ULE(count, z3.BitVecVal(width, 32)), shifted, zero)
+        carried = carry != zero
+        changed = (_keep(flags) | result_flags(result, width)
+                   | _bit(carried, CF)
+                   # Defined architecturally only for count 1, where it is
+                   # "the sign changed"; computed uniformly for determinism.
+                   | _bit(((result & sign) != zero) != carried, OF))
+    elif op == "shr":
+        result = z3.LShR(value, count)
+        carry = z3.LShR(value, count - one) & one
+        changed = (_keep(flags) | result_flags(result, width)
+                   | _bit(carry != zero, CF)
+                   # For SHR, OF is the sign of the ORIGINAL operand.
+                   | _bit((value & sign) != zero, OF))
+    elif op == "sar":
+        wide = _sext(value, width)
+        result = (wide >> count) & mask
+        carry = (wide >> (count - one)) & one
+        # OF is CLEARED by SAR: an arithmetic right shift cannot change sign.
+        changed = (_keep(flags) | result_flags(result, width)
+                   | _bit(carry != zero, CF))
+    else:
+        raise KeyError(op)
+    unshifted = value if op != "sar" else value & mask
+    return (z3.If(count == zero, unshifted, result),
+            z3.If(count == zero, flags, changed))
+
+
+def imul_core(a, b, flags, width: int):
+    """Two-operand IMUL. CF and OF mean "the full product did not fit"."""
+    wide = z3.SignExt(64 - width, z3.Extract(width - 1, 0, a)) * \
+        z3.SignExt(64 - width, z3.Extract(width - 1, 0, b))
+    result = z3.ZeroExt(32 - width, z3.Extract(width - 1, 0, wide))
+    back = z3.SignExt(64 - width, z3.Extract(width - 1, 0, result))
+    truncated = wide != back
+    return result, (_keep(flags) | result_flags(result, width)
+                    | _bit(truncated, CF) | _bit(truncated, OF))
+
+
 # Every operation this module encodes, by the name the reference harness uses,
 # so the validator cannot drift out of step with either side.
 def evaluate(op: str, width: int, a, b, flags):
@@ -173,10 +241,21 @@ def evaluate(op: str, width: int, a, b, flags):
         result, changed = sub_core(a, one, zero, flags, width)
         return result, (changed & z3.BitVecVal(~CF & 0xFFFFFFFF, 32)) | (
             flags & z3.BitVecVal(CF, 32))
+    if op == "neg":
+        # Exactly `sub` from zero, flags included.
+        return sub_core(zero, a, zero, flags, width)
+    if op == "not":
+        # NOT affects NO flags. Not "sets them from the result" - none.
+        return (~a) & z3.BitVecVal(mask_of(width), 32), flags
+    if op in ("shl", "shr", "sar"):
+        return shift_core(op, a, b, flags, width)
+    if op == "imul":
+        return imul_core(a, b, flags, width)
     raise KeyError(op)
 
 
-SUPPORTED = ("add", "adc", "sub", "sbb", "and", "or", "xor", "inc", "dec")
+SUPPORTED = ("add", "adc", "sub", "sbb", "and", "or", "xor", "inc", "dec",
+             "neg", "not", "shl", "shr", "sar", "imul")
 
 
 def concrete(op: str, width: int, a: int, b: int, flags: int) -> tuple[int, int]:
