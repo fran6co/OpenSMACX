@@ -63,6 +63,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
+from generator_support import read_bytes  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 from capstone.x86 import (X86_OP_IMM, X86_OP_MEM,  # noqa: E402
                           X86_OP_REG, X86_REG_EAX, X86_REG_EBP,
@@ -74,17 +75,6 @@ from capstone.x86 import (X86_OP_IMM, X86_OP_MEM,  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
-
-
-def read_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
-    base = pe.OPTIONAL_HEADER.ImageBase
-    for section in pe.sections:
-        begin = base + section.VirtualAddress
-        end = begin + max(section.Misc_VirtualSize, section.SizeOfRawData)
-        if begin <= address < end:
-            offset = section.PointerToRawData + (address - begin)
-            return pe.__data__[offset:offset + length]
-    return b""
 
 
 def this_offset(operand) -> int | None:

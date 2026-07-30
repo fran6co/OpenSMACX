@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
+from generator_support import read_bytes  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -40,17 +41,6 @@ JUMP_PATCH_BYTES = 5
 # Argument sizes for the mangled type codes simple enough to be unambiguous.
 SIZES = {"D": 4, "E": 4, "C": 4, "F": 4, "G": 4, "H": 4,
          "I": 4, "J": 4, "K": 4, "M": 4, "N": 8, "O": 8}
-
-
-def read_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
-    base = pe.OPTIONAL_HEADER.ImageBase
-    for section in pe.sections:
-        begin = base + section.VirtualAddress
-        end = begin + max(section.Misc_VirtualSize, section.SizeOfRawData)
-        if begin <= address < end:
-            offset = section.PointerToRawData + (address - begin)
-            return pe.__data__[offset:offset + length]
-    return b""
 
 
 def constant_body(code: bytes) -> tuple[int | None, int] | None:

@@ -60,6 +60,8 @@ from capstone import CS_ARCH_X86, CS_MODE_32, Cs
 from capstone import x86
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
 
+from generator_support import read_bytes
+
 # A table longer than this is not a switch, it is a walk that has escaped. No
 # real site comes near it - the largest in the image has 101 arms - so this
 # only bounds the damage if a future image breaks an assumption above.
@@ -72,23 +74,6 @@ LOW8_OWNER = {
     x86.X86_REG_AL: x86.X86_REG_EAX, x86.X86_REG_BL: x86.X86_REG_EBX,
     x86.X86_REG_CL: x86.X86_REG_ECX, x86.X86_REG_DL: x86.X86_REG_EDX,
 }
-
-
-def read_bytes(pe, address: int, length: int) -> bytes:
-    """`length` bytes at a virtual address, or short/empty past the image.
-
-    Deliberately a copy of `lift_whole_image.read_bytes` rather than an import:
-    the generator imports THIS module, and a cycle between them would be paid
-    for by every tool that touches either one.
-    """
-    base = pe.OPTIONAL_HEADER.ImageBase
-    for section in pe.sections:
-        begin = base + section.VirtualAddress
-        end = begin + max(section.Misc_VirtualSize, section.SizeOfRawData)
-        if begin <= address < end:
-            offset = section.PointerToRawData + (address - begin)
-            return pe.__data__[offset:offset + length]
-    return b""
 
 
 def inside(spans, address: int) -> bool:

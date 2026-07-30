@@ -53,6 +53,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
+from generator_support import read_bytes  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 from capstone.x86 import X86_OP_IMM  # noqa: E402
 
@@ -98,17 +99,6 @@ def section_of(pe: pefile.PE, address: int) -> str:
         if begin <= address < end:
             return section.Name.decode("ascii", "replace").rstrip("\0").lower()
     return ""
-
-
-def read_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
-    base = pe.OPTIONAL_HEADER.ImageBase
-    for section in pe.sections:
-        begin = base + section.VirtualAddress
-        end = begin + max(section.Misc_VirtualSize, section.SizeOfRawData)
-        if begin <= address < end:
-            offset = section.PointerToRawData + (address - begin)
-            return pe.__data__[offset:offset + length]
-    return b""
 
 
 def image_span(pe: pefile.PE) -> tuple[int, int]:

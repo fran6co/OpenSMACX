@@ -52,9 +52,10 @@ import pefile  # noqa: E402
 import analyze_delegates as delegates  # noqa: E402
 import disasm  # noqa: E402
 import generate_atexit_thunks as atexit_gen  # noqa: E402
+from generator_support import (LICENSE, camel,  # noqa: E402,F401
+                               read_bytes, snake)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LICENSE = atexit_gen.LICENSE
 
 # The whole mangled-signature grammar this family uses, keyed by the suffix
 # after the class name. Pointer parameters are emitted as `void *`: the thunk
@@ -92,13 +93,6 @@ TEST_ARENA_LEAD = 2048
 TEST_ARENA_TAIL = 256
 
 
-def snake(name: str) -> str:
-    """CamelCase or Camel_Case to snake_case, leaving snake_case alone."""
-    text = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
-    text = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", text)
-    return re.sub(r"__+", "_", text).strip("_").lower()
-
-
 def declaration(prefix: str, parameters, suffix: str) -> list[str]:
     """A declaration, greedily wrapped under the paren at the column limit."""
     one_line = f"{prefix}({', '.join(parameters)}){suffix}"
@@ -114,10 +108,6 @@ def declaration(prefix: str, parameters, suffix: str) -> list[str]:
         else:
             lines.append(indent + piece)
     return [line.rstrip() for line in lines]
-
-
-def camel(name: str) -> str:
-    return "".join(part.capitalize() for part in name.split("_") if part)
 
 
 def parse_thunk_name(name: str):

@@ -38,29 +38,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import find_constant_returns as const  # noqa: E402
+from generator_support import LICENSE, snake  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 SRC_DIR = REPO_ROOT / "src"
-
-LICENSE = '''/*
- * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
- * Copyright (C) 2013-2021 Brendan Casey
- *
- * OpenSMACX is free software: you can redistribute it and / or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * OpenSMACX is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
- */
-'''
 
 
 @dataclass
@@ -71,15 +53,6 @@ class Stub:
     param_count: int     # number of int-sized parameters
     returns: int | None  # constant returned, or None for void
     return_type: str     # "void" | "int"
-
-
-def snake(name: str) -> str:
-    out = []
-    for index, char in enumerate(name):
-        if char.isupper() and index:
-            out.append("_")
-        out.append(char.lower())
-    return "".join(out).replace("__", "_")
 
 
 def classify(row: dict, pe) -> Stub | None:
