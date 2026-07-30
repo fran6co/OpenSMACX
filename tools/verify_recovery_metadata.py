@@ -87,6 +87,15 @@ STATIC_INPUTS = (
     REPO_ROOT / "docs" / "recovery" / "ida9-functions.csv",
     REPO_ROOT / "docs" / "recovery" / "ghidra-functions.csv",
     REPO_ROOT / "docs" / "recovery" / "ghidra-interior-references.csv",
+    # proven.csv IS an input, and leaving it out made the cache lie. The
+    # exporter reads it through load_proven_addresses() and it determines
+    # summary.json's proven_recovered / unproven_recovered, so editing it must
+    # invalidate the stamp. Measured: demoting two markers took proven.csv from
+    # 54 / 6,115 B to 53 / 6,086 B, and `--promote` then reported
+    # "cached (9a6313c3de4c3f37)" and regenerated nothing, leaving summary.json
+    # claiming 54 while proven.csv said 53 - a stale figure the gate called
+    # verified.
+    REPO_ROOT / "docs" / "recovery" / "proven.csv",
 )
 
 

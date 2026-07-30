@@ -41,13 +41,13 @@ The remaining 3 of the original 5 keep their markers because the crash stopped
 the run before reaching them. They are unverified by this mechanism, not
 confirmed by it.
 
-### Proven count by mechanism (was: 54 unchanged)
+### Proven count by mechanism, after the demotion
 
 | mechanism | functions | source |
 | --- | --- | --- |
 | `legacy_leaf_island` | 32 | `docs/recovery/proven.csv` |
 | `hybrid_runtime`, hand-written | 17 | `src/*_oracle.cpp` markers |
-| `hybrid_runtime`, generated | 5 | `src/generated_signature_oracle.cpp` |
+| `hybrid_runtime`, generated | 4 | `src/generated_signature_oracle.cpp` |
 
 After this session: `proven_recovered` **53 fn / 6,086 B**; `unproven_recovered`
 **2,499 fn / 190,037 B**. Unrecovered: 2,808 fn / 2,012,914 B.
@@ -75,7 +75,7 @@ Both were identified in one step by the announce-before-calling line, which prin
 the name and flushes before each call. Run 1's log contained exactly one
 `running` line and no verdicts.
 
-### Shape-addressable set: 5 -> 122 (generated route)
+### Shape-addressable set: 5 -> 108 (generated route)
 
 `tools/generate_signature_oracles.py --list`
 
@@ -87,7 +87,7 @@ the name and flushes before each call. Run 1's log contained exactly one
 Reach of the route as a whole, from `docs/recovery/functions.csv` against the
 `specs[]` table in `src/dllmain.cpp`: 1,994 redirected functions are unproven;
 815 are `@@Q` members (25,393 B); **543 are `__thiscall` with arguments (17,803
-B)** — the ceiling. 122 is what is buildable today; the gap to 543 is class
+B)** — the ceiling. 108 is what is buildable today; the gap to 543 is class
 sizes, since only 38 classes have a `sizeof` pinned by a `static_assert` in
 `src/*.h` and the rest need `tools/derive_class_layout.py` first.
 
@@ -134,12 +134,19 @@ proof — `tools/export_proven_functions.py:29-31` disqualifies it by name.
 **2,004 of the 2,808 unrecovered functions are island-ineligible specifically
 for containing relocations (1,545), calls (433) or external branches (26).** Any
 future bulk generator aimed at that population raises `unproven_recovered` by
-construction. That is how the current 2,498 accumulated.
+construction. That is how the current 2,499 accumulated.
 
 ### Open, and needed before the next session claims anything
 
-* The suite has not been run. Until it is, the verdict lines are untested code
-  and the 117 members are capacity, not coverage.
+* 104 of the 108 oracles have never produced a verdict: the run crashed on its
+  10th function. Each cycle costs a rebuild, a restage and a 180 s run, and each
+  crash names exactly one function to exclude, so this converges one exclusion at
+  a time. A structured-exception handler around the call would turn a fault into
+  a verdict and end the one-per-cycle rate, and it is not built.
+* 8 of the 9 verdicts so far are INCONCLUSIVE-no-effect. A zero-filled receiver
+  gets past almost no guard, which is the honest cost of the safe seed. The fix
+  is the per-function field seed the hand-written suites use - 0x45454545 into
+  Scroll's offset 0xC4 is the model - and no signature supplies it.
 * `unproven_recovered` may have a floor well above zero: the thunk cohort has no
   observable effect for a runtime differential to latch onto, and the
   `init`/`atexit` bodies push the ORIGINAL address through a shared seam, so the
