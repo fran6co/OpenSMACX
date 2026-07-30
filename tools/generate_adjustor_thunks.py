@@ -54,6 +54,7 @@ import disasm  # noqa: E402
 import generate_atexit_thunks as atexit_gen  # noqa: E402
 from generator_support import (LICENSE, camel,  # noqa: E402,F401
                                read_bytes, snake)
+from generator_support import seam_name as support_seam_name  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -126,21 +127,14 @@ def parse_thunk_name(name: str):
     return None
 
 
+# A jump target here is a named method, a destructor, or a scalar-deleting
+# destructor; this family never binds a constructor.
+SEAM_KINDS = frozenset({"method", "dtor", "scalar_delete"})
+
+
 def target_symbol(name: str) -> str:
     """A seam name for a jump target, from its own mangled name."""
-    match = re.match(r"^\?(\w+)@(\w+)@@", name)
-    if match:
-        return f"{match.group(2)}{camel(match.group(1))}Target"
-    match = re.match(r"^\?\?1(\w+)@@", name)
-    if match:
-        return f"{match.group(1)}DtorTarget"
-    match = re.match(r"^\?\?_G(\w+)@@", name)
-    if match:
-        return f"{match.group(1)}ScalarDeleteTarget"
-    match = re.match(r"^j_\?\?1(\w+)@@", name)
-    if match:
-        return f"{match.group(1)}DtorTarget"
-    return ""
+    return support_seam_name(name, SEAM_KINDS)
 
 
 def decode_raw_template(data: bytes, address: int):
