@@ -2530,17 +2530,32 @@ static const char *bind_imports(OracleImportReport *report) {
     return nullptr;
 }
 
-// How much of what came out actually points somewhere the lifted side can
-// follow. This is the figure that condemned the hybrid dumps - only 26-30% of
-// their address-shaped words landed in the flat span - so it is measured the
-// SAME way here, with the same bounds overlay_state's remapper uses, or the two
-// numbers could not be compared and the claim would be unfalsifiable.
+// What the startup ACTUALLY WROTE, and where it points.
+//
+// The first version of this counted every address-shaped word in the dump
+// window and read 21.7%, which was then reported as evidence that binding the
+// imports for real had filled the state with host pointers. IT WAS NOT
+// EVIDENCE OF ANYTHING. The window is mostly the image's own static .data, so
+// the count was dominated by ordinary constants - 0x01000100, 0x05050505,
+// 0x0a0a0a0a - spread almost uniformly across the low megabytes, which is the
+// signature of data and not of pointers. Diffing against the pristine image
+// instead shows 181,426 words changed and only 58 of them anywhere near a
+// host-pointer range.
+//
+// So the population is the CHANGED words, because those are the only ones this
+// run is responsible for. Everything else was there before it started and says
+// nothing about whether the state is followable.
 static void measure_span_residency(OracleBuildStateReport *report) {
     constexpr uint32_t kLow = 0x00682000U, kHigh = 0x009C21F8U;
     constexpr uint32_t kHeapLow = 0x00010000U, kHeapHigh = 0x20000000U;
     for (uint32_t a = kLow; a + 4 <= kHigh; a += 4) {
-        uint32_t word = 0;
+        uint32_t word = 0, before = 0;
         std::memcpy(&word, g_side_a + (a - OracleImageBase), 4);
+        std::memcpy(&before, g_pristine + (a - OracleImageBase), 4);
+        if (word == before) continue;
+        ++report->words_changed;
+        if (word >= OracleBuildHeapBase && word < OracleBuildHeapEnd)
+            ++report->points_into_heap;
         if (word < kHeapLow || word >= kHeapHigh) continue;
         ++report->address_shaped;
         if (word >= OracleImageBase && word < OracleImageBase + OpensmacxSpanSize)

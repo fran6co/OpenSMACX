@@ -35,19 +35,56 @@ rose 11,360 B (558,043 → 569,403) and `executed` rose 15,375 B. More code runs
 it is not more code that agrees. The wall went 1,584,976 → 1,565,790 B, which is
 1.54% of the 1,246,125 B of near-null mass measured as addressable.
 
-### Why, and it was visible before the sweep
+### Why — and the first answer given here was wrong
 
-The run reports how many address-shaped words in the dump window are in-span,
-with the bounds `overlay_state`'s remapper uses. It reads **21.7%** — *worse*
-than the 26-30% that condemned the hybrid dumps. The state is real, and it is
-full of host-scoped values anyway, because 208 of the 221 imports are bound to
-the real Win32 functions and the ones returning handles, module bases and locale
-pointers store them straight into globals inside the dump window. Binding for
-real is what made this cheap and is also what capped it.
+**Correction.** This entry first said the state was full of host-scoped values
+because the imports were bound for real, citing a 21.7% in-span residency as
+evidence. That number measured every address-shaped word in the dump window,
+which is mostly the image's own static `.data`: the "out-of-span" population was
+dominated by constants like `0x01000100`, `0x05050505` and `0x0a0a0a0a`, spread
+almost uniformly across the low megabytes, which is the signature of data rather
+than of pointers. It was not evidence of contamination, or of anything.
 
-So the next move is not more constructors, it is more overrides: every import
-that returns a host-scoped value needs a guest-region answer, the way the
-allocators and the critical-section family already do.
+Diffing the built state against the pristine image gives the real population —
+the **181,426 words this run changed** — and among those:
+
+| | count |
+| --- | ---: |
+| changed words in any plausible host-pointer range | **58** |
+| of which most are float or colour constants (`0x461c4000`, `0xff0000ff`) | |
+| changed address-shaped words that are in-span | 2,716 of 5,626 = **48.3%** |
+| changed words pointing into the R1 guest heap | 18 |
+
+So there is essentially **no host-pointer contamination**, and binding the
+imports for real was not the limit. The instrument now measures only the changed
+words, because those are the only ones the run is responsible for.
+
+### What actually limits it
+
+Splitting the fault wall by region, before and after:
+
+| region | before | after | delta |
+| --- | ---: | ---: | ---: |
+| near-null | 1,246,125 B | 1,194,622 B | **−51,503 B** |
+| wild | 134,296 B | 166,859 B | **+32,563 B** |
+| top-page | 97,319 B | 97,319 B | 0 |
+| stack | 68,143 B | 68,143 B | 0 |
+
+The mechanism works: 51,503 B of near-null faults were genuinely converted. But
+**two thirds of that conversion lands in `wild` rather than in agreement** — a
+global that held zero now holds a value, and dereferencing it reaches somewhere
+else instead of failing at zero. Net movement is the 19,186 B above.
+
+And the shape of what did *not* move is the finding: 1,806 of the original 1,838
+near-null-faulting functions are still near-null. Their globals were never
+touched. Only 18 changed words point into the heap at all, from 42 allocations
+of which the 1 MiB sbh region is most of the bytes.
+
+**Static initialisers are not where this program builds its object graph.** The
+`ListBox` cluster and the rest of the faulting mass are filled in later, by
+`WinMain` and by gameplay. That makes the next step the boot — running further
+into the program — and not more import overrides, which is what the wrong
+diagnosis above would have bought.
 
 ### What it took to get __cinit to return
 

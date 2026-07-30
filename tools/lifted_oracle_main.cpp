@@ -310,9 +310,13 @@ int main(int argc, char **argv) {
             std::printf("build-state: the largest REFUSED request was %u bytes "
                         "- that is how much guest heap this needs\n",
                         unsigned(report.alloc_largest_refused));
+        std::printf("build-state: %u word(s) changed in the dump window, "
+                    "%u of them point into the guest heap\n",
+                    unsigned(report.words_changed),
+                    unsigned(report.points_into_heap));
         if (report.address_shaped)
-            std::printf("build-state: %u of %u address-shaped words are "
-                        "in-span (%.1f%%; the hybrid dumps managed 26-30%%)\n",
+            std::printf("build-state: of the CHANGED words, %u of %u "
+                        "address-shaped are in-span (%.1f%%)\n",
                         unsigned(report.address_in_span),
                         unsigned(report.address_shaped),
                         100.0 * double(report.address_in_span) /

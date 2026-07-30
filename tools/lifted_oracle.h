@@ -370,10 +370,12 @@ struct OracleBuildStateReport {
     uint32_t heap_used;
     uint32_t wrote;
     uint32_t dialogs;
-    // Address-shaped words in the dump window, and how many of them name
-    // somewhere the lifted side can actually follow. Measured with the same
-    // bounds overlay_state's remapper uses, so it is directly comparable to the
-    // 26-30% that condemned the hybrid dumps.
+    // Measured over the words this run CHANGED, not over the whole window.
+    // Counting the window instead reads mostly the image's own static .data
+    // and produced a number that was quoted once as evidence and supported
+    // nothing - see measure_span_residency for what that cost.
+    uint32_t words_changed;
+    uint32_t points_into_heap;
     uint32_t address_shaped;
     uint32_t address_in_span;
     // Non-null when a shim refused to end the process on the guest's behalf.
