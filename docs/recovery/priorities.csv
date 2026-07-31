@@ -1290,9 +1290,6 @@ P3,1821,0x004E5A60,?base_change@@YAXHH@Z,1404,1,8,unrecovered,,,2,exact,exact,"v
 P2,12621,0x004E5FE0,?base_reset@@YAXHH@Z,795,12,6,unrecovered,,,2,exact,exact,"void (__cdecl ?base_reset@@YAXHH@Z)(int baseID, int)"
 P3,4120,0x004E6300,?bases_reset@@YAXHHH@Z,252,4,1,unrecovered,,,2,exact,exact,
 P3,1720,0x004E68B0,?farm_compute@@YAXXZ,1438,1,7,unrecovered,,,2,exact,exact,
-P2,10321,0x004E6E50,?crop_yield@@YAHHHHHH@Z,1206,10,3,unrecovered,,,2,exact,exact,"int (__cdecl ?crop_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)"
-P2,6321,0x004E7310,?mine_yield@@YAHHHHHH@Z,1080,6,3,unrecovered,,,2,exact,exact,"int (__cdecl ?mine_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)"
-P2,8321,0x004E7750,?energy_yield@@YAHHHHHH@Z,1619,8,3,unrecovered,,,2,exact,exact,"int (__cdecl ?energy_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)"
 P3,10,0x004E7DB0,sub_4e7db0,13,0,0,unrecovered,,,1,exact,missing,
 P2,7321,0x004E7DC0,?resource_yield@@YAHHHHHH@Z,116,7,3,unrecovered,,,2,exact,exact,"int (__cdecl ?resource_yield@@YAHHHHHH@Z)(int type, int factionID, int baseID, int xCoord, int yCoord)"
 P3,310,0x004E7E50,sub_4e7e50,276,0,3,unrecovered,,,1,missing,exact,

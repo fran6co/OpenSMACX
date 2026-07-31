@@ -45,6 +45,55 @@ uint32_t *BaseCurrentForcesSupported = (uint32_t *)0x0090E8FC;
 uint32_t *BaseCurrentForcesMaintCost = (uint32_t *)0x0090E91C;
 
 /*
+ * Out-parameter of the three terrain yield functions: how much of a resource
+ * the square lost to the "three per square needs a technology" restriction, and
+ * to mine_yield's roadless-mine mineral limit. Callers zero it, ask for a
+ * yield, then read it back - BaseWin::draw_farm (0x0040F0F0) does exactly that
+ * for each of the three resources, and resource_yield zeroes it for RSC_PSI.
+ * Purpose is observed from those call sites; the executable does not name it.
+ */
+int *TileYieldRestricted = (int *)0x0090E998;
+
+/*
+ * energy_yield publishes the clamped energy of a square that contains a base
+ * here. Its only other reader in the image is base_terraform (0x004ECCBD).
+ */
+int *BaseSquareEnergy = (int *)0x0090E914;
+
+/*
+ * The faction elected Planetary Governor: written by CouncWin::make_resolution
+ * (0x004246E5), persisted by game_data (0x005A6B61), read by call_council,
+ * wants_prop, num_objectives and the council windows. energy_yield grants it a
+ * point of energy on a base square.
+ *
+ * NOTE: src/spying_recovery.cpp already binds this same address as
+ * `SpyingObserverFaction` - the Governor is the faction that may view any other
+ * faction's bases, so the two names describe one datum. They are deliberately
+ * NOT unified here: spying_recovery.cpp belongs to OPENSMACX_LEAF_SRC_CLOSURE,
+ * which does not link base.cpp, so neither file can host the other's
+ * definition without moving a translation unit between suites. Two pointer
+ * variables onto one address are correct at run time; the hazard is that a test
+ * rebinding one does not rebind the other.
+ */
+int *GovernorFaction = (int *)0x009A6614;
+
+/*
+ * A two-turn state advanced by random_events (0x0051F2F4 steps it 1 -> 2 -> 0
+ * at turn start and arms it at 0x00520529). While the selected bit is set,
+ * energy_yield triples its result.
+ */
+int *GlobalEnergyEventState = (int *)0x009A6818;
+
+/*
+ * Selects which bit of GlobalEnergyEventState energy_yield consults. Read by
+ * Console::on_key_click, faction_upkeep, NetDaemon::lock_base, wait_loop,
+ * check_spock, base_yield and base_doctors; sits immediately below
+ * ConsoleControlTurnActive (0x0093A938) and near IsMultiplayerPBEM (0x0093A95C).
+ * TODO: identify global - its writer was not located, so it is not named.
+ */
+int *UnkGlobal0093A934 = (int *)0x0093A934;
+
+/*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
 Original Offset: 00421670
 Return Value: Does base already have or planning on building facility? true/false
@@ -657,6 +706,550 @@ uint32_t __cdecl worm_mod(uint32_t base_id, uint32_t faction_id) {
         worm_modifier_count++;
     }
     return worm_modifier_count;
+}
+
+
+/*
+Purpose: Address the map tile the terrain yield functions price.
+Original Offset: n/a
+Return Value: Pointer to map tile
+Status: Complete
+
+The three yield functions each inline this, and they inline it with signed
+arithmetic - `imul` against y and `sar esi, 1` on x. map_loc() takes unsigned
+coordinates and therefore shifts x logically, which differs for a negative x.
+Neither form bounds-checks, exactly as the original does not.
+*/
+static Map *yield_tile(int x, int y) {
+    return &(*MapTiles)[(x >> 1) + y * (int)*MapLongitude];
+}
+
+/*
+Purpose: Identify the faction owning a base standing on the specified tile.
+Original Offset: n/a
+Return Value: Faction id of the base in the tile, or -1 for none/unowned
+Status: Complete
+
+All three yield functions inline this same sequence: the tile's low `bit` flag
+selects it, the owner nibble of val2 supplies the id, and an id at or above
+MaxPlayerNum - 0xF is the "unoccupied" marker - is rejected.
+*/
+static int yield_tile_owner(const Map *tile) {
+    if (!(tile->bit & BIT_BASE_IN_TILE)) {
+        return -1;
+    }
+    int owner = tile->val2 & 0xF;
+    return (owner < MaxPlayerNum) ? owner : -1;
+}
+
+/*
+Purpose: Calculate the nutrients produced by a single map square.
+Original Offset: 004E6E50
+Return Value: Nutrients from the square
+Status: Complete
+
+`assume_improved` prices the square as if it had already been terraformed; the
+name is inferred from the call sites, where StatusWin::draw_status asks for the
+same square twice and base_terraform and the AI previews pass 1. Here it
+suppresses the fungus path, an improved square having had its fungus cleared.
+*/
+int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
+                       BOOL assume_improved) {
+    Map *tile = yield_tile(x, y);
+    uint32_t bit = tile->bit;
+    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+    BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
+    // Bonus id 1 is the nutrient bonus.
+    BOOL has_nutrient_bonus = bonus_at(x, y, 0) == 1;
+    uint32_t bit2 = tile->bit2;
+    // Nutrient landmarks: Jungle counts on land, Freshwater Sea on ocean.
+    BOOL landmark_bonus =
+        (((bit2 & (BIT2_UNK_80000000 | BIT2_JUNGLE)) == BIT2_JUNGLE)
+            && !is_ocean_tile)
+        || ((bit2 & BIT2_FRESH) && is_ocean_tile);
+    int crop;
+
+    if (has_base_in_tile) {
+        crop = ResourceInfo[RSCINFO_BASE_SQ].nutrients;
+        if (has_nutrient_bonus) {
+            crop *= 2;
+        }
+        if (landmark_bonus) {
+            crop++;
+        }
+        if (base_id < 0) {
+            return crop; // the original returns here rather than reaching the tail
+        }
+        if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
+            || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+            crop += ResourceInfo[RSCINFO_RECYCLING_TANKS].nutrients;
+        }
+    } else if (bit & BIT_THERMAL_BORE) {
+        crop = ResourceInfo[RSCINFO_BOREHOLE_SQ].nutrients;
+        // Faithful: 0x004E6FCB is `test esi, esi` on the borehole value that was
+        // just loaded, NOT on the resource bonus flag. mine_yield's structurally
+        // parallel arm tests the flag. Transcribed literally.
+        if (crop) {
+            crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
+        }
+    } else if (bit & BIT_MONOLITH) {
+        crop = ResourceInfo[RSCINFO_MONOLITH].nutrients;
+        if (has_nutrient_bonus) {
+            crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
+        }
+        if (has_project(SP_MANIFOLD_HARMONICS, faction_id)
+            && PlayersData[faction_id].soc_effect_pending.planet > 0) {
+            crop++;
+        }
+    } else if ((bit & BIT_FUNGUS) && !assume_improved
+               && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+        int planet = PlayersData[faction_id].soc_effect_pending.planet;
+        int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
+        crop = range(PlayersData[faction_id].tech_fungus_nutrient + planet_mod,
+                     0, 99);
+        if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 0) {
+            crop++;
+        }
+    } else {
+        if (is_ocean_tile) {
+            crop = ResourceInfo[RSCINFO_OCEAN_SQ].nutrients;
+            if (has_nutrient_bonus) {
+                crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
+            }
+            if (landmark_bonus) {
+                crop++;
+            }
+            if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF
+                || *ExpansionEnabled) {
+                // A kelp farm.
+                if (bit & BIT_FARM) {
+                    crop += ResourceInfo[RSCINFO_IMPROVED_SEA].nutrients;
+                    // Legacy: unguarded for base_id < 0, exactly as 0x004E7150.
+                    // Bases[(uint32_t)-1] and Bases[-1] are the same address on
+                    // 32-bit x86, so this reproduces the original's read.
+                    if (has_fac_built(FAC_AQUAFARM, (uint32_t)base_id)) {
+                        crop++;
+                    }
+                }
+                if ((bit & BIT_MINE) && crop > 1) {
+                    crop += Rules->tgl_nutrient_effect_with_mine;
+                }
+            }
+        } else if (bit & BIT_FOREST) {
+            crop = ResourceInfo[RSCINFO_FOREST_SQ].nutrients;
+            if (has_nutrient_bonus) {
+                crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
+            }
+            if (base_id >= 0) {
+                if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+                    crop++;
+                }
+                if (has_fac_built(FAC_TREE_FARM, base_id)) {
+                    crop++;
+                }
+            }
+            if (landmark_bonus) {
+                crop++;
+            }
+        } else {
+            int rockiness = tile->val3 >> 6;
+            // Rainfall level: arid / moist / rainy.
+            crop = (tile->climate >> 3) & 3;
+            if (rockiness > ROCKINESS_ROLLING) {
+                crop = 0;
+            }
+            if (has_nutrient_bonus) {
+                crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
+            }
+            if (landmark_bonus) {
+                crop++;
+            }
+            if (crop < 0) {
+                crop = 0;
+            }
+            if ((bit & BIT_FARM) && rockiness <= ROCKINESS_ROLLING) {
+                crop += ResourceInfo[RSCINFO_IMPROVED_LAND].nutrients;
+            }
+            if ((bit & BIT_MINE) && crop > 1) {
+                crop += Rules->tgl_nutrient_effect_with_mine;
+            }
+        }
+        if (bit & BIT_SOIL_ENRICHER) {
+            crop += crop / 2;
+        }
+        BOOL has_condenser = (bit & BIT_CONDENSER) != 0;
+        if (has_condenser) {
+            crop += crop / 2;
+        }
+        // Only the ocean and land arms reach the restriction; the base,
+        // borehole, monolith and fungus arms jump past it to the event tail.
+        if (crop > 2 && !has_tech(Rules->tech_three_nutrients_sqr, faction_id)
+            && !has_nutrient_bonus && !has_condenser) {
+            *TileYieldRestricted += crop - 2;
+            crop = 2;
+        }
+    }
+
+    if (base_id >= 0) {
+        uint32_t event = Bases[base_id].event;
+        if (event & BEVENT_BUMPER) {
+            crop++;
+        }
+        if ((event & BEVENT_FAMINE) && crop) {
+            crop--;
+        }
+    }
+    return crop;
+}
+
+/*
+Purpose: Calculate the minerals produced by a single map square.
+Original Offset: 004E7310
+Return Value: Minerals from the square
+Status: Complete
+
+`assume_improved` stands in for a mine or borehole on land and a mining platform
+at sea, and suppresses the roadless-mine mineral limit.
+*/
+int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
+                       BOOL assume_improved) {
+    Map *tile = yield_tile(x, y);
+    uint32_t bit = tile->bit;
+    uint32_t bit2 = tile->bit2;
+    // Landmark sequence code, signed exactly as `sar edi, 0x18`. Bit 31 of bit2
+    // is required clear by every test below, so the sign only decides branches
+    // that are not taken.
+    int code = (int)bit2 >> 24;
+    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+    // Bonus id 2 is the mineral bonus.
+    BOOL has_mineral_bonus = bonus_at(x, y, 0) == 2;
+    BOOL landmark_bonus =
+        (((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+            && code < 9)
+        || (((bit2 & (BIT2_UNK_80000000 | BIT2_CRATER)) == BIT2_CRATER)
+            && code < 9)
+        || (((bit2 & (BIT2_UNK_80000000 | BIT2_FOSSIL)) == BIT2_FOSSIL)
+            && code < 6)
+        || ((bit2 & (BIT2_UNK_80000000 | BIT2_CANYON)) == BIT2_CANYON);
+    int mineral = (has_mineral_bonus ? ResourceInfo[RSCINFO_BONUS_SQ].minerals
+                                     : 0)
+                  + (landmark_bonus ? 1 : 0);
+    BOOL restrict_yield = false;
+
+    if (yield_tile_owner(tile) >= 0) {
+        mineral += ResourceInfo[RSCINFO_BASE_SQ].minerals;
+        if (base_id < 0) {
+            return mineral; // the original returns here rather than reaching the tail
+        }
+        if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
+            || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+            mineral += ResourceInfo[RSCINFO_RECYCLING_TANKS].minerals;
+        }
+    } else if (bit & BIT_MONOLITH) {
+        // Assignment, not addition: the bonus and landmark prefix is discarded.
+        mineral = ResourceInfo[RSCINFO_MONOLITH].minerals;
+        if (has_mineral_bonus) {
+            mineral += ResourceInfo[RSCINFO_BONUS_SQ].minerals;
+        }
+        if (has_project(SP_MANIFOLD_HARMONICS, faction_id)
+            && PlayersData[faction_id].soc_effect_pending.planet > 1) {
+            mineral++;
+        }
+    } else if (bit & BIT_THERMAL_BORE) {
+        mineral = ResourceInfo[RSCINFO_BOREHOLE_SQ].minerals;
+        if (has_mineral_bonus) {
+            mineral += ResourceInfo[RSCINFO_BONUS_SQ].minerals;
+        }
+        // Unlike crop_yield's borehole arm, this one does reach the restriction.
+        restrict_yield = true;
+    } else if ((bit & BIT_FUNGUS)
+               && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+        // Note there is no assume_improved suppressor here; crop_yield has one.
+        int planet = PlayersData[faction_id].soc_effect_pending.planet;
+        int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
+        mineral = range(PlayersData[faction_id].tech_fungus_mineral + planet_mod,
+                        0, 99);
+        if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 1) {
+            mineral++;
+        }
+    } else if (is_ocean_tile) {
+        restrict_yield = true;
+        mineral += ResourceInfo[RSCINFO_OCEAN_SQ].minerals;
+        // Legacy: the aquatic bonus keys off the faction owning BASE_ID, not off
+        // faction_id, and is unguarded for base_id < 0 (0x004E75E2).
+        int base_owner = Bases[base_id].faction_id_current;
+        if ((Players[base_owner].rule_flags & RFLAG_AQUATIC)
+            && (tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF) {
+            mineral++;
+        }
+        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || *ExpansionEnabled) {
+            if ((bit & BIT_MINE) || assume_improved) {
+                mineral += ResourceInfo[RSCINFO_IMPROVED_SEA].minerals;
+                if (has_tech(Rules->tech_mining_platform_bonus, faction_id)) {
+                    mineral++;
+                }
+                // Legacy: unguarded for base_id < 0, exactly as 0x004E765F.
+                if (has_fac_built(FAC_SUBSEA_TRUNKLINE, (uint32_t)base_id)) {
+                    mineral++;
+                }
+            }
+        }
+    } else {
+        restrict_yield = true;
+        int rockiness = tile->val3 >> 6;
+        if (bit & BIT_FOREST) {
+            mineral += ResourceInfo[RSCINFO_FOREST_SQ].minerals;
+        } else if ((bit & (BIT_MINE | BIT_THERMAL_BORE)) || assume_improved) {
+            mineral += rockiness;
+            int extra = rockiness ? rockiness : 1;
+            if (has_mineral_bonus || landmark_bonus) {
+                extra++;
+            }
+            if (!(bit & BIT_ROAD) && !assume_improved) {
+                int limit = (int)Rules->limit_mineral_mine_sans_road;
+                if (extra > limit) {
+                    *TileYieldRestricted += extra - limit;
+                    extra = limit;
+                }
+            }
+            mineral += extra;
+        } else if (rockiness) {
+            mineral++;
+        }
+    }
+
+    if (restrict_yield && mineral > 2
+        && !has_tech(Rules->tech_three_minerals_sqr, faction_id)
+        && !has_mineral_bonus) {
+        *TileYieldRestricted += mineral - 2;
+        mineral = 2;
+    }
+
+    if (base_id >= 0) {
+        uint32_t event = Bases[base_id].event;
+        if (event & BEVENT_INDUSTRY) {
+            mineral++;
+        }
+        if ((event & BEVENT_BUST) && mineral) {
+            mineral--;
+        }
+    }
+    return mineral;
+}
+
+/*
+Purpose: Calculate the energy produced by a single map square.
+Original Offset: 004E7750
+Return Value: Energy from the square
+Status: Complete
+
+`assume_improved` stands in for a solar collector on land and a tidal harness at
+sea.
+
+The fungus arm deliberately skips the whole shared tail - river, resource bonus,
+landmark, Merchant Exchange, economy and the clip to 2 - by jumping from
+0x004E7AD2 straight to the base event tail at 0x004E7D4B. That is what the bytes
+do, not a transcription slip.
+*/
+int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
+                         BOOL assume_improved) {
+    Map *tile = yield_tile(x, y);
+    uint32_t bit = tile->bit;
+    uint32_t bit2 = tile->bit2;
+    int code = (int)bit2 >> 24;
+    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+    BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
+    // Bonus id 3 is the energy bonus.
+    BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
+    BOOL landmark_bonus =
+        (((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+            && code < 9)
+        || ((bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM)
+        || ((bit2 & (BIT2_UNK_80000000 | BIT2_GEOTHERMAL)) == BIT2_GEOTHERMAL)
+        || ((bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE);
+    int energy = 0;
+    BOOL skip_shared_tail = false;
+
+    if (has_base_in_tile) {
+        energy = ResourceInfo[RSCINFO_BASE_SQ].energy;
+        // Legacy: read BEFORE the base_id sign check at 0x004E7896, so a base_id
+        // of -1 reads one Base entry below the array, exactly as the original.
+        if (has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)) {
+            energy++;
+        }
+        int golden_age = 0;
+        if (base_id >= 0) {
+            if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
+                || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+                energy += ResourceInfo[RSCINFO_RECYCLING_TANKS].energy;
+            }
+            if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
+                golden_age = 1;
+            }
+        }
+        int economy = PlayersData[faction_id].soc_effect_pending.economy
+                      + golden_age;
+        if (economy < 0) {
+            // The original asks for Headquarters again here rather than reusing
+            // the answer above.
+            if (!has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)
+                || economy < -1
+                || PlayersData[faction_id].current_num_bases == 1u) {
+                economy++;
+            }
+        } else if (economy > 1) {
+            if (economy > 4) {
+                economy = 4;
+            }
+            economy = economy * 2 - 4;
+        }
+        energy += economy;
+        if (*GovernorFaction == faction_id) {
+            energy++;
+        }
+    } else if (bit & BIT_MONOLITH) {
+        energy = ResourceInfo[RSCINFO_MONOLITH].energy;
+        if (has_project(SP_MANIFOLD_HARMONICS, faction_id)) {
+            int planet = PlayersData[faction_id].soc_effect_pending.planet;
+            if (planet >= 0) {
+                energy++;
+            }
+            if (planet >= 3) {
+                energy++;
+            }
+        }
+    } else if (bit & BIT_THERMAL_BORE) {
+        energy = ResourceInfo[RSCINFO_BOREHOLE_SQ].energy;
+    } else if ((bit & BIT_FUNGUS)
+               && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+        int planet = PlayersData[faction_id].soc_effect_pending.planet;
+        int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
+        energy = range(PlayersData[faction_id].tech_fungus_energy + planet_mod,
+                       0, 99);
+        if (has_project(SP_MANIFOLD_HARMONICS, faction_id)) {
+            if (planet >= 0) {
+                energy++;
+            }
+            if (planet >= 3) {
+                energy++;
+            }
+        }
+        skip_shared_tail = true;
+    } else if (is_ocean_tile) {
+        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || *ExpansionEnabled) {
+            energy = ResourceInfo[RSCINFO_OCEAN_SQ].energy;
+            if ((bit & BIT_SOLAR_TIDAL) || assume_improved) {
+                energy += ResourceInfo[RSCINFO_IMPROVED_SEA].energy;
+                // Legacy: unguarded for base_id < 0, exactly as 0x004E7B19.
+                if (has_fac_built(FAC_THERMOCLINE_TRANSDUCER,
+                                  (uint32_t)base_id)) {
+                    energy++;
+                }
+            }
+        }
+        if (bit & BIT_FOREST) {
+            energy--;
+        }
+    } else if (bit & BIT_FOREST) {
+        energy = ResourceInfo[RSCINFO_FOREST_SQ].energy;
+        if (base_id >= 0 && has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+            energy++;
+        }
+    } else {
+        // Altitude levels above 2.
+        int solar = (tile->climate >> 5) - 2;
+        if (solar < 0) {
+            solar = 0;
+        }
+        if ((bit & (BIT_SOLAR_TIDAL | BIT_ECH_MIRROR | BIT_THERMAL_BORE))
+            || assume_improved) {
+            energy = solar;
+        }
+        if (bit & BIT_SOLAR_TIDAL) {
+            // Each adjacent echelon mirror belonging to the current base's
+            // faction reflects one more energy onto this collector. The x wrap
+            // is xrange() inlined, except that the original masks MapIsFlat with
+            // 1 rather than testing it for nonzero.
+            BOOL is_flat = *MapIsFlat & 1;
+            int longitude_bounds = *MapLongitudeBounds;
+            for (int i = 0; i < 8; i++) {
+                int x_adj = x + RadiusBaseX[i];
+                if (!is_flat) {
+                    if (x_adj < 0) {
+                        x_adj += longitude_bounds;
+                    } else if (x_adj >= longitude_bounds) {
+                        x_adj -= longitude_bounds;
+                    }
+                }
+                int y_adj = y + RadiusBaseY[i];
+                if (y_adj < 0 || y_adj >= *MapLatitudeBounds) {
+                    continue;
+                }
+                if (x_adj < 0 || x_adj >= longitude_bounds) {
+                    continue;
+                }
+                Map *adjacent = yield_tile(x_adj, y_adj);
+                if (!(adjacent->bit & BIT_ECH_MIRROR)) {
+                    continue;
+                }
+                if (adjacent->territory
+                    != (int)(*BaseCurrent)->faction_id_current) {
+                    continue;
+                }
+                energy++;
+            }
+        }
+    }
+
+    if (!skip_shared_tail) {
+        if ((bit & BIT_RIVER) && !is_ocean_tile) {
+            energy++;
+        }
+        if (has_energy_bonus) {
+            energy += ResourceInfo[RSCINFO_BONUS_SQ].energy;
+        }
+        if (landmark_bonus) {
+            energy++;
+        }
+        int golden_age = 0;
+        if (base_id >= 0) {
+            if (SecretProject->merchant_exchange == base_id) {
+                energy++;
+            }
+            if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
+                golden_age = 1;
+            }
+        }
+        if (PlayersData[faction_id].soc_effect_pending.economy + golden_age
+            >= 2) {
+            energy++;
+        }
+        if (has_base_in_tile) {
+            energy = range(energy, 0, 99);
+            *BaseSquareEnergy = energy;
+        } else if (energy > 2
+                   && !has_tech(Rules->tech_three_energy_sqr, faction_id)
+                   && !has_energy_bonus) {
+            *TileYieldRestricted += energy - 2;
+            energy = 2;
+        }
+    }
+
+    if (base_id >= 0) {
+        uint32_t event = Bases[base_id].event;
+        if (event & BEVENT_HEAT_WAVE) {
+            energy++;
+        }
+        if ((event & BEVENT_CLOUD_COVER) && energy) {
+            energy--;
+        }
+    }
+    if (*DustCloudDuration && energy) {
+        energy--;
+    }
+    int event_active = *UnkGlobal0093A934 ? (*GlobalEnergyEventState & 2)
+                                          : (*GlobalEnergyEventState & 1);
+    return event_active ? energy * 3 : energy;
 }
 
 /*

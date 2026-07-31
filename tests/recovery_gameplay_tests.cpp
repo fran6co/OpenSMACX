@@ -44,6 +44,8 @@
 #include "../src/faction.h"
 #include "../src/alpha.h"
 #include "../src/base.h"
+#include "../src/general.h"
+#include "../src/technology.h"
 #include "recovery_fixtures.h"
 
 using recovery_fixtures::expect;
@@ -2221,12 +2223,1370 @@ void test_action_home() {
 
 #undef HOME_CHECK
 
+
+/*
+ * A self-contained world for crop_yield / mine_yield / energy_yield.
+ *
+ * The three share a skeleton but not a helper - the original inlines the whole
+ * thing three times - so they share this fixture instead. Every global they and
+ * their three callees (bonus_at, bitmask, has_tech) reach is a pointer, so
+ * ScopedSeam gives the world local storage and no fixed address is touched.
+ *
+ * Three things about the fixture are load-bearing:
+ *
+ *  - `Bases` is seamed to &bases[1], NOT &bases[0]. Four sites in these bodies
+ *    index Bases with an unguarded base_id, and every caller in the image
+ *    (StatusWin::draw_status, enemy_move, Console::terraform, base_terraform)
+ *    passes -1. The original reads one Base below the array there; bases[0] is
+ *    that entry, so the fixture can assert what -1 actually does instead of
+ *    crashing.
+ *  - ResourceInfo is filled so that entry i field f holds 3*i + f + 1. Every one
+ *    of the 27 (row, column) pairs is therefore a different number, and any
+ *    wrong index or wrong resource column shows up as a wrong total rather than
+ *    as a coincidence.
+ *  - MapRandSeed is 0, which makes bonus_at() return 0 for any tile without
+ *    BIT_RSC_BONUS. With the bit set the pseudo-random path is skipped too, and
+ *    the answer is decided by BIT_NUTRIENT_RSC / BIT_MINERAL_RSC /
+ *    BIT_ENERGY_RSC alone - so a bonus is exact rather than positional.
+ */
+struct YieldWorld {
+    Map tiles[64];
+    Base bases[6];
+    PlayerData players_data[9];
+    Player players[9];
+    RulesResourceinfo resource_info[MaxResourceInfoNum];
+    RulesBasic rules;
+    BaseSecretProject projects;
+    RulesTechnology technology[MaxTechnologyNum];
+    uint8_t tech_achieved[MaxTechnologyNum];
+    Map *tiles_ptr;
+    Base *base_current;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t map_rand_seed;
+    uint32_t game_rules;
+    BOOL expansion;
+    int dust_cloud;
+    int restricted;
+    int base_square_energy;
+    int governor;
+    int energy_event;
+    int energy_event_selector;
+};
+
+YieldWorld g_yield_world;
+
+// Technology ids the fixture hands to the four Rules gates, one each so a gate
+// reading the wrong Rules field is visible.
+const int YTECH_THREE_NUTRIENTS = 1;
+const int YTECH_THREE_MINERALS = 2;
+const int YTECH_THREE_ENERGY = 3;
+const int YTECH_MINING_PLATFORM = 4;
+
+// The subject faction in every case below. has_tech() refuses faction 0
+// outright, so 1 is the smallest usable id.
+const int YFACTION = 1;
+
+// Land is spelled as the shore-line altitude; anything below it is ocean.
+const uint8_t YALT_LAND = 0x60;      // alt 3
+const uint8_t YALT_SHELF = 0x40;     // alt 2, ocean shelf
+const uint8_t YALT_DEEP = 0x20;      // alt 1, ocean
+
+// The map is 16 wide, so a tile index is (x >> 1) + y * MapLongitude.
+Map &ytile(int x, int y) { return g_yield_world.tiles[(x >> 1) + y * 8]; }
+
+void yield_give_fac(Base &base, uint32_t facility) {
+    uint32_t offset;
+    uint32_t mask;
+    bitmask(facility, &offset, &mask);
+    base.facilities_built[offset] |= (uint8_t)mask;
+}
+
+void yield_reset() {
+    std::memset(&g_yield_world, 0, sizeof(g_yield_world));
+    std::memset(&g_yield_world.projects, 0xFF, sizeof(g_yield_world.projects));
+    g_yield_world.tiles_ptr = g_yield_world.tiles;
+    g_yield_world.base_current = &g_yield_world.bases[1];  // == Bases[0]
+    g_yield_world.longitude = 8;
+    g_yield_world.lon_bounds = 16;
+    g_yield_world.lat_bounds = 8;
+    g_yield_world.is_flat = 1;
+    g_yield_world.map_rand_seed = 0;
+    g_yield_world.governor = -1;  // never the subject faction unless a case says so
+    for (int k = 0; k < 64; k++) {
+        g_yield_world.tiles[k].climate = YALT_LAND;
+    }
+    for (int i = 0; i < MaxResourceInfoNum; i++) {
+        g_yield_world.resource_info[i].nutrients = 3 * i + 1;
+        g_yield_world.resource_info[i].minerals = 3 * i + 2;
+        g_yield_world.resource_info[i].energy = 3 * i + 3;
+    }
+    g_yield_world.rules.tech_three_nutrients_sqr = YTECH_THREE_NUTRIENTS;
+    g_yield_world.rules.tech_three_minerals_sqr = YTECH_THREE_MINERALS;
+    g_yield_world.rules.tech_three_energy_sqr = YTECH_THREE_ENERGY;
+    g_yield_world.rules.tech_mining_platform_bonus = YTECH_MINING_PLATFORM;
+    g_yield_world.rules.tgl_nutrient_effect_with_mine = -1;
+    g_yield_world.rules.limit_mineral_mine_sans_road = 2;
+    // The subject faction holds the three "three per square" technologies by
+    // default, so the clip stays out of the way except where a case revokes it.
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 1 << YFACTION;
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 1 << YFACTION;
+    g_yield_world.tech_achieved[YTECH_THREE_ENERGY] = 1 << YFACTION;
+    g_yield_world.players_data[YFACTION].tech_fungus_nutrient = 4;
+    g_yield_world.players_data[YFACTION].tech_fungus_mineral = 5;
+    g_yield_world.players_data[YFACTION].tech_fungus_energy = 6;
+    g_yield_world.players_data[YFACTION].current_num_bases = 3;
+}
+
+// Mark a tile as carrying a base owned by `owner`.
+void yield_put_base_in_tile(Map &tile, int owner) {
+    tile.bit |= BIT_BASE_IN_TILE;
+    tile.val2 = (uint8_t)((tile.val2 & 0xF0) | (owner & 0xF));
+}
+
+// Resource bonus selection, exact rather than positional; see the struct note.
+const uint32_t YBONUS_NUTRIENT = BIT_RSC_BONUS | BIT_NUTRIENT_RSC;
+const uint32_t YBONUS_MINERAL = BIT_RSC_BONUS | BIT_NUTRIENT_RSC | BIT_MINERAL_RSC;
+const uint32_t YBONUS_ENERGY = BIT_RSC_BONUS | BIT_NUTRIENT_RSC | BIT_ENERGY_RSC;
+
+#define YCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool yield_ok = (cond);                                         \
+        if (!yield_ok) {                                                      \
+            std::fprintf(stderr, "terrain_yield: line %d: %s\n", __LINE__,    \
+                         #cond);                                              \
+        }                                                                     \
+        expect(yield_ok);                                                     \
+    } while (0)
+
+class YieldSeams {
+ public:
+    YieldSeams()
+        : tiles_(&MapTiles, &g_yield_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_yield_world.longitude),
+          lon_(&MapLongitudeBounds, &g_yield_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_yield_world.lat_bounds),
+          flat_(&MapIsFlat, &g_yield_world.is_flat),
+          seed_(&MapRandSeed, &g_yield_world.map_rand_seed),
+          rules_gate_(&GameRules, &g_yield_world.game_rules),
+          bases_(&Bases, &g_yield_world.bases[1]),
+          base_current_(&BaseCurrent, &g_yield_world.base_current),
+          projects_(&SecretProject, &g_yield_world.projects),
+          resource_(&ResourceInfo, g_yield_world.resource_info),
+          rules_(&Rules, &g_yield_world.rules),
+          players_data_(&PlayersData, g_yield_world.players_data),
+          players_(&Players, g_yield_world.players),
+          technology_(&Technology, g_yield_world.technology),
+          achieved_(&GameTechAchieved, g_yield_world.tech_achieved),
+          expansion_(&ExpansionEnabled, &g_yield_world.expansion),
+          dust_(&DustCloudDuration, &g_yield_world.dust_cloud),
+          restricted_(&TileYieldRestricted, &g_yield_world.restricted),
+          base_energy_(&BaseSquareEnergy, &g_yield_world.base_square_energy),
+          governor_(&GovernorFaction, &g_yield_world.governor),
+          energy_event_(&GlobalEnergyEventState, &g_yield_world.energy_event),
+          selector_(&UnkGlobal0093A934, &g_yield_world.energy_event_selector) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> seed_;
+    ScopedSeam<uint32_t> rules_gate_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<Base *> base_current_;
+    ScopedSeam<BaseSecretProject> projects_;
+    ScopedSeam<RulesResourceinfo> resource_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<Player> players_;
+    ScopedSeam<RulesTechnology> technology_;
+    ScopedSeam<uint8_t> achieved_;
+    ScopedSeam<BOOL> expansion_;
+    ScopedSeam<int> dust_;
+    ScopedSeam<int> restricted_;
+    ScopedSeam<int> base_energy_;
+    ScopedSeam<int> governor_;
+    ScopedSeam<int> energy_event_;
+    ScopedSeam<int> selector_;
+};
+
+void test_crop_yield() {
+    YieldSeams seams;
+    const int X = 2;
+    const int Y = 2;
+
+    // ---- plain land: the rainfall level, and the rockiness that erases it ---
+    yield_reset();
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);   // arid
+    ytile(X, Y).climate = YALT_LAND | 0x08;          // moist
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).climate = YALT_LAND | 0x10;          // rainy
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    ytile(X, Y).val3 = 0x40;                         // rolling: still counted
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    ytile(X, Y).val3 = 0x80;                         // rocky: erased
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);
+
+    // The tile really is read from (x >> 1) + y * MapLongitude: the neighbour
+    // sharing the index is the same square, the one in the next row is not.
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    YCHECK(crop_yield(YFACTION, 0, 3, Y, 0) == 2);   // (3,2) shares the index
+    YCHECK(crop_yield(YFACTION, 0, 4, Y, 0) == 0);   // (4,2) does not
+    YCHECK(crop_yield(YFACTION, 0, X, 3, 0) == 0);
+
+    // ---- the nutrient bonus is bonus id 1, not 2 and not 3 -----------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2 + 7);
+    ytile(X, Y).bit = YBONUS_MINERAL;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    ytile(X, Y).bit = YBONUS_ENERGY;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+
+    // ---- the Jungle landmark counts on land, Freshwater Sea on ocean -------
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit2 = BIT2_JUNGLE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    ytile(X, Y).bit2 = BIT2_JUNGLE | BIT2_UNK_80000000;  // suppressed
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    ytile(X, Y).bit2 = BIT2_FRESH;                       // wrong terrain for it
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    // On the shelf the pair swaps over. OCEAN_SQ.nutrients is 1.
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit2 = BIT2_FRESH;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 1);
+    ytile(X, Y).bit2 = BIT2_JUNGLE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+    // BIT2_FRESH is tested WITHOUT the 0x80000000 suppressor, unlike Jungle.
+    ytile(X, Y).bit2 = BIT2_FRESH | BIT2_UNK_80000000;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 1);
+
+    // ---- farm and mine on plain land ---------------------------------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = BIT_FARM;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2 + 16);  // IMPROVED_LAND
+    ytile(X, Y).val3 = 0x40;                             // rolling still farms
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2 + 16);
+    ytile(X, Y).val3 = 0x80;                             // rocky does not
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = BIT_MINE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);       // 2 > 1, so -1 applies
+    ytile(X, Y).climate = YALT_LAND | 0x08;              // moist: 1, not > 1
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+
+    // ---- soil enricher and condenser are each a half, applied in turn ------
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = BIT_SOIL_ENRICHER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    ytile(X, Y).bit = BIT_CONDENSER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    ytile(X, Y).bit = BIT_SOIL_ENRICHER | BIT_CONDENSER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);       // 2 -> 3 -> 4
+
+    // ---- the clip to two, and its three suppressors ------------------------
+    // Without the technology a square is held to 2 and the overflow is
+    // published; with it, or with a resource bonus, or under a condenser, it is
+    // not. The condenser suppressor is crop_yield's alone.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 0;
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = BIT_SOIL_ENRICHER;                 // 2 -> 3
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 1);
+    g_yield_world.restricted = 0;
+    ytile(X, Y).bit = BIT_CONDENSER;                     // also 3, but suppressed
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    YCHECK(g_yield_world.restricted == 0);
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 1 << YFACTION;
+    ytile(X, Y).bit = BIT_SOIL_ENRICHER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    YCHECK(g_yield_world.restricted == 0);
+    // A different faction does not hold the technology.
+    YCHECK(crop_yield(2, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 1);
+    // The gate is Rules->tech_three_nutrients_sqr, not the mineral or energy one.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 0;
+    g_yield_world.rules.tech_three_nutrients_sqr = YTECH_THREE_MINERALS;
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = BIT_SOIL_ENRICHER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    // The published overflow accumulates rather than being assigned.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 0;
+    g_yield_world.restricted = 100;
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    ytile(X, Y).bit = BIT_SOIL_ENRICHER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 101);
+
+    // ---- forest -------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 10);      // FOREST_SQ.nutrients
+    ytile(X, Y).bit = BIT_FOREST | YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 10 + 7);
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    ytile(X, Y).bit2 = BIT2_JUNGLE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 11);
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    yield_give_fac(g_yield_world.bases[1], FAC_HYBRID_FOREST);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 11);
+    yield_give_fac(g_yield_world.bases[1], FAC_TREE_FARM);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 12);
+    YCHECK(crop_yield(YFACTION, -1, X, Y, 0) == 10);     // no base, no facilities
+
+    // ---- ocean --------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);       // OCEAN_SQ.nutrients
+    ytile(X, Y).bit = BIT_FARM;                          // kelp farm
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 19);  // IMPROVED_SEA
+    yield_give_fac(g_yield_world.bases[1], FAC_AQUAFARM);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 19 + 1);
+    // Deep ocean is outside the improvement block unless SMACX is enabled.
+    yield_reset();
+    ytile(X, Y).climate = YALT_DEEP;
+    ytile(X, Y).bit = BIT_FARM;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+    g_yield_world.expansion = 1;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 19);
+    // A sea mine takes its nutrient back, and only above 1.
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = BIT_MINE | BIT_FARM;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 19 - 1);
+    ytile(X, Y).bit = BIT_MINE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);       // 1 is not > 1
+    // The aquafarm read is NOT guarded against base_id -1: it reads the entry
+    // below the array, which the fixture provides.
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = BIT_FARM;
+    yield_give_fac(g_yield_world.bases[0], FAC_AQUAFARM);
+    YCHECK(crop_yield(YFACTION, -1, X, Y, 0) == 1 + 19 + 1);
+
+    // ---- a base square ------------------------------------------------------
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);       // BASE_SQ.nutrients
+    ytile(X, Y).bit |= YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 8);       // doubled, not increased
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    ytile(X, Y).bit2 = BIT2_JUNGLE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 5);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_RECYCLING_TANKS);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4 + 13);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_PRESSURE_DOME);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4 + 13);
+    // An owner nibble of MaxPlayerNum or above is the "unoccupied" marker and
+    // does not make it a base square.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 0xF);
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 7);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 8);
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    // Without BIT_BASE_IN_TILE the owner nibble means nothing.
+    yield_reset();
+    ytile(X, Y).val2 = 3;
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+
+    // ---- a thermal borehole tests the VALUE, not the bonus flag ------------
+    // This is the asymmetry with mine_yield's parallel arm and it is literal:
+    // 0x004E6FCB is `test esi, esi` on the borehole nutrients just loaded.
+    yield_reset();
+    ytile(X, Y).bit = BIT_THERMAL_BORE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 25 + 7);  // no bonus, still added
+    g_yield_world.resource_info[RSCINFO_BOREHOLE_SQ].nutrients = 0;
+    ytile(X, Y).bit = BIT_THERMAL_BORE | YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);       // bonus, nothing added
+    // The borehole arm is tested BEFORE the monolith arm here; mine_yield and
+    // energy_yield order the two the other way round.
+    yield_reset();
+    ytile(X, Y).bit = BIT_THERMAL_BORE | BIT_MONOLITH;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 25 + 7);
+    // Neither arm reaches the clip: 32 survives with no technology at all.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 0;
+    ytile(X, Y).bit = BIT_THERMAL_BORE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 32);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- a monolith ---------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 22);      // MONOLITH.nutrients
+    ytile(X, Y).bit = BIT_MONOLITH | YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 22 + 7);  // added, not doubled
+    // Manifold Harmonics needs a positive PLANET rating as well as the project.
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH;
+    g_yield_world.projects.manifold_harmonics = 0;       // held by Bases[0]
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 22);      // planet 0 is not > 0
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 1;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 23);
+    g_yield_world.bases[1].faction_id_current = 2;       // somebody else built it
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 22);
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    g_yield_world.projects.manifold_harmonics = -1;      // nobody built it
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 22);
+
+    // ---- fungus -------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);       // tech_fungus_nutrient
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 1) == 0);       // improved: arm skipped
+    // A negative PLANET rating is subtracted, floored at -3; a positive one is
+    // not added.
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -2;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -9;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 5;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);
+    // ... and the sum is clamped at zero from below.
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -3;
+    g_yield_world.players_data[YFACTION].tech_fungus_nutrient = 1;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);
+    // Manifold Harmonics adds one on top, and only above PLANET 0.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.projects.manifold_harmonics = 0;
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 2;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 5);
+    // Deep ocean fungus is below the shelf and falls through to the ocean arm.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    ytile(X, Y).climate = YALT_SHELF;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);
+    ytile(X, Y).climate = YALT_DEEP;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);       // OCEAN_SQ.nutrients
+
+    // Faction 0 owns bases too, and its owner nibble is zero: "no base here" is
+    // spelled -1, not 0.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 0);
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);
+
+    // ---- the PLANET clamp and the Manifold threshold at exactly 1 ----------
+    // planet_mod is 0 for any rating above 0, so a rating of 1 subtracts
+    // nothing; the Manifold bonus, by contrast, does fire at 1.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 1;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 4);
+    g_yield_world.projects.manifold_harmonics = 0;
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 5);
+
+    // ---- the ocean arm takes the resource bonus too -------------------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 7);
+
+    // ---- plain land floors at zero before the improvements are added -------
+    // A negative bonus is the only way a square's terrain value goes below
+    // zero, and the floor is applied after the bonus and the landmark.
+    yield_reset();
+    g_yield_world.resource_info[RSCINFO_BONUS_SQ].nutrients = -5;
+    ytile(X, Y).bit = YBONUS_NUTRIENT;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_JUNGLE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);
+    // With a farm on top the floored zero is what gets improved.
+    ytile(X, Y).bit = YBONUS_NUTRIENT | BIT_FARM;
+    ytile(X, Y).bit2 = 0;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 16);
+
+    // ---- the clip is strictly above two -------------------------------------
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_NUTRIENTS] = 0;
+    ytile(X, Y).climate = YALT_LAND | 0x08;              // moist: one nutrient
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+    YCHECK(g_yield_world.restricted == 0);
+    ytile(X, Y).climate = YALT_LAND | 0x10;              // rainy: two
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- the base events, and the base square's early return ---------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND | 0x10;
+    g_yield_world.bases[1].event = BEVENT_BUMPER;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 3);
+    g_yield_world.bases[1].event = BEVENT_FAMINE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
+    g_yield_world.bases[1].event = BEVENT_BUMPER | BEVENT_FAMINE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 2);
+    ytile(X, Y).climate = YALT_LAND;                     // arid: nothing to take
+    g_yield_world.bases[1].event = BEVENT_FAMINE;
+    YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 0);
+    YCHECK(crop_yield(YFACTION, -1, X, Y, 0) == 0);      // no base, no events
+    // A base square with base_id -1 returns before the event tail, so an event
+    // on the entry below the array cannot reach it.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.bases[0].event = BEVENT_BUMPER;
+    YCHECK(crop_yield(YFACTION, -1, X, Y, 0) == 4);
+}
+
+void test_mine_yield() {
+    YieldSeams seams;
+    const int X = 2;
+    const int Y = 2;
+
+    // ---- plain land: rockiness alone ---------------------------------------
+    yield_reset();
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).val3 = 0x40;                             // rolling
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).val3 = 0x80;                             // rocky: still just one
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+
+    // ---- the mineral bonus is bonus id 2 ------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = YBONUS_MINERAL;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 8);       // BONUS_SQ.minerals
+    ytile(X, Y).bit = YBONUS_NUTRIENT;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit = YBONUS_ENERGY;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+
+    // ---- the mineral landmark set ------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit2 = BIT2_VOLCANO;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).bit2 = BIT2_CRATER;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).bit2 = BIT2_FOSSIL;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).bit2 = BIT2_CANYON;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).bit2 = BIT2_JUNGLE;                      // a crop landmark
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    // The landmark sequence code caps Volcano and Crater at 9 and Fossil at 6;
+    // Canyon has no cap at all.
+    ytile(X, Y).bit2 = BIT2_VOLCANO | 0x09000000u;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_VOLCANO | 0x08000000u;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).bit2 = BIT2_CRATER | 0x09000000u;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_FOSSIL | 0x06000000u;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_FOSSIL | 0x05000000u;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).bit2 = BIT2_CANYON | 0x7F000000u;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    // Every one of the four is suppressed by bit 31, which also makes the code
+    // negative - so the caps cannot be what lets it through.
+    ytile(X, Y).bit2 = BIT2_VOLCANO | BIT2_UNK_80000000;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_CRATER | BIT2_UNK_80000000;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_FOSSIL | BIT2_UNK_80000000;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    ytile(X, Y).bit2 = BIT2_CANYON | BIT2_UNK_80000000;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+
+    // ---- a mine, a borehole, or the "assume improved" preview ---------------
+    // rockiness is added once as terrain and once as the mine's own extra, and
+    // a flat square still earns one.
+    yield_reset();
+    g_yield_world.rules.limit_mineral_mine_sans_road = 99;  // out of the way
+    ytile(X, Y).bit = BIT_MINE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);       // flat: 0 + max(0,1)
+    ytile(X, Y).val3 = 0x40;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);       // rolling: 1 + 1
+    ytile(X, Y).val3 = 0x80;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 4);       // rocky: 2 + 2
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);       // ... and then clipped
+    YCHECK(g_yield_world.restricted == 2);
+    // The preview flag takes the same arm as a real mine.
+    yield_reset();
+    g_yield_world.rules.limit_mineral_mine_sans_road = 99;
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 1 << YFACTION;
+    ytile(X, Y).val3 = 0x80;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 1) == 4);       // assume_improved
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);       // rocky, unimproved
+    // A bonus or a landmark adds one to the mine's own extra.
+    yield_reset();
+    g_yield_world.rules.limit_mineral_mine_sans_road = 99;
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 1 << YFACTION;
+    ytile(X, Y).bit = BIT_MINE;
+    ytile(X, Y).bit2 = BIT2_CANYON;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1 + 0 + 2);  // landmark twice over
+
+    // ---- the roadless mine limit -------------------------------------------
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 1 << YFACTION;
+    ytile(X, Y).bit = BIT_MINE;
+    ytile(X, Y).val3 = 0x80;                             // rocky: extra would be 2
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 4);       // limit 2, extra 2: no clip
+    YCHECK(g_yield_world.restricted == 0);
+    g_yield_world.rules.limit_mineral_mine_sans_road = 1;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 3);
+    YCHECK(g_yield_world.restricted == 1);
+    g_yield_world.restricted = 0;
+    ytile(X, Y).bit = BIT_MINE | BIT_ROAD;               // a road lifts the limit
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 4);
+    YCHECK(g_yield_world.restricted == 0);
+    ytile(X, Y).bit = BIT_MINE;                          // ... so does the preview
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 1) == 4);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- forest -------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 11);      // FOREST_SQ.minerals
+    ytile(X, Y).bit = BIT_FOREST | BIT_MINE;             // forest is tested first
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 11);
+    // The prefix survives the forest arm, unlike the monolith and borehole arms.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST | YBONUS_MINERAL;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 8 + 11);
+
+    // ---- ocean --------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);       // OCEAN_SQ.minerals
+    // The aquatic bonus keys off the faction owning BASE_ID, not the caller's.
+    g_yield_world.players[5].rule_flags = RFLAG_AQUATIC;
+    g_yield_world.bases[1].faction_id_current = 5;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 3);
+    g_yield_world.players[5].rule_flags = 0;
+    g_yield_world.players[YFACTION].rule_flags = RFLAG_AQUATIC;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    // ... and only on the shelf.
+    g_yield_world.players[5].rule_flags = RFLAG_AQUATIC;
+    ytile(X, Y).climate = YALT_DEEP;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    // It reads Bases[base_id] unguarded, so -1 reads the entry below the array.
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    g_yield_world.bases[0].faction_id_current = 5;
+    g_yield_world.players[5].rule_flags = RFLAG_AQUATIC;
+    YCHECK(mine_yield(YFACTION, -1, X, Y, 0) == 3);
+    // A sea mine, the mining platform technology, and the subsea trunkline.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 1 << YFACTION;
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = BIT_MINE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2 + 20);  // IMPROVED_SEA
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 1) == 2 + 20);  // preview does the same
+    g_yield_world.tech_achieved[YTECH_MINING_PLATFORM] = 1 << YFACTION;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2 + 20 + 1);
+    yield_give_fac(g_yield_world.bases[1], FAC_SUBSEA_TRUNKLINE);
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2 + 20 + 2);
+    // Deep ocean needs SMACX for the improvement block.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 1 << YFACTION;
+    ytile(X, Y).climate = YALT_DEEP;
+    ytile(X, Y).bit = BIT_MINE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    g_yield_world.expansion = 1;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2 + 20);
+
+    // ---- a base square ------------------------------------------------------
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5);       // BASE_SQ.minerals
+    ytile(X, Y).bit |= YBONUS_MINERAL;                   // the prefix survives
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5 + 8);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_RECYCLING_TANKS);
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5 + 14);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_PRESSURE_DOME);
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5 + 14);
+    // A base square with base_id -1 returns before the event tail.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.bases[0].event = BEVENT_INDUSTRY;
+    YCHECK(mine_yield(YFACTION, -1, X, Y, 0) == 5);
+    // Nor does the base square ever reach the clip.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_RECYCLING_TANKS);
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 19);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- a monolith DISCARDS the bonus and landmark prefix ------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 23);      // MONOLITH.minerals
+    ytile(X, Y).bit = BIT_MONOLITH | YBONUS_MINERAL;
+    ytile(X, Y).bit2 = BIT2_CANYON;                      // landmark: discarded
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 23 + 8);
+    // The monolith arm is tested BEFORE the borehole arm here; crop_yield
+    // orders the two the other way round.
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH | BIT_THERMAL_BORE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 23);
+    // Manifold Harmonics needs PLANET above 1 here, not above 0.
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH;
+    g_yield_world.projects.manifold_harmonics = 0;
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 1;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 23);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 2;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 24);
+    // Neither the monolith nor the fungus arm reaches the clip.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    ytile(X, Y).bit = BIT_MONOLITH;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 23);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- a thermal borehole tests the FLAG, not the value -------------------
+    // The mirror image of crop_yield's arm, and the reason neither was
+    // normalised.
+    yield_reset();
+    ytile(X, Y).bit = BIT_THERMAL_BORE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 26);      // no bonus, nothing added
+    ytile(X, Y).bit = BIT_THERMAL_BORE | YBONUS_MINERAL;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 26 + 8);
+    // ... and unlike crop_yield's, it DOES reach the clip.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    ytile(X, Y).bit = BIT_THERMAL_BORE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 24);
+    // The landmark prefix is discarded by this arm too.
+    yield_reset();
+    ytile(X, Y).bit = BIT_THERMAL_BORE;
+    ytile(X, Y).bit2 = BIT2_CANYON;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 26);
+
+    // ---- fungus -------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5);       // tech_fungus_mineral
+    // There is NO assume_improved suppressor here; crop_yield has one.
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 1) == 5);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -2;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 3);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -9;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    ytile(X, Y).climate = YALT_DEEP;                     // below the shelf
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);       // ocean arm instead
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.projects.manifold_harmonics = 0;
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 1;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5);       // 1 is not > 1
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 2;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 6);
+
+    // ---- the clip, and its two suppressors ----------------------------------
+    // Mineral has no condenser suppressor - only the technology and the bonus.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    ytile(X, Y).bit = BIT_FOREST;                        // 11 minerals
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 9);
+    g_yield_world.restricted = 0;
+    ytile(X, Y).bit = BIT_FOREST | BIT_CONDENSER;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);       // no condenser reprieve
+    g_yield_world.restricted = 0;
+    ytile(X, Y).bit = BIT_FOREST | YBONUS_MINERAL;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 8 + 11);
+    YCHECK(g_yield_world.restricted == 0);
+    // The gate is Rules->tech_three_minerals_sqr.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    g_yield_world.rules.tech_three_minerals_sqr = YTECH_THREE_NUTRIENTS;
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 11);
+
+    // Faction 0's base square is a base square.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 0);
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5);
+
+    // The fungus arm reaches down to the ocean shelf exactly, and its sum is
+    // floored at zero.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    ytile(X, Y).climate = YALT_SHELF;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 5);
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.players_data[YFACTION].tech_fungus_mineral = 1;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -3;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+
+    // The ocean arm reaches the clip, like the borehole and land arms.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = BIT_MINE;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 20);
+
+    // The clip is strictly above two.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_MINERALS] = 0;
+    ytile(X, Y).val3 = 0x40;                             // one mineral
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    YCHECK(g_yield_world.restricted == 0);
+    ytile(X, Y).bit = BIT_MINE;                          // two: 1 terrain + 1 extra
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- the base events ----------------------------------------------------
+    yield_reset();
+    ytile(X, Y).val3 = 0x40;                             // one mineral
+    g_yield_world.bases[1].event = BEVENT_INDUSTRY;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
+    g_yield_world.bases[1].event = BEVENT_BUST;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    g_yield_world.bases[1].event = BEVENT_INDUSTRY | BEVENT_BUST;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).val3 = 0;                                // nothing to take
+    g_yield_world.bases[1].event = BEVENT_BUST;
+    YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
+    YCHECK(mine_yield(YFACTION, -1, X, Y, 0) == 0);
+}
+
+void test_energy_yield() {
+    YieldSeams seams;
+    const int X = 2;
+    const int Y = 2;
+
+    // ---- plain land: the altitude above level two --------------------------
+    // Nothing collects it without a solar collector, an echelon mirror, a
+    // borehole, or the preview flag.
+    yield_reset();
+    ytile(X, Y).climate = 0xA0;                          // alt 5
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 1) == 3);     // preview
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3);
+    ytile(X, Y).bit = BIT_ECH_MIRROR;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3);
+    ytile(X, Y).bit = BIT_THERMAL_BORE;                  // its own arm, in fact
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 27);    // BOREHOLE.energy
+    // The altitude term floors at zero rather than going negative.
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND;                     // alt 3
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).climate = 0x60 | 0x1F;                   // still alt 3
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(X, Y).climate = 0xE0;                          // alt 7
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 5);
+
+    // ---- echelon mirrors reflect onto a solar collector ---------------------
+    // Each neighbour that carries a mirror AND whose territory names the
+    // CURRENT base's faction adds one. RadiusBaseX/Y walks the eight tiles
+    // around (x, y).
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND;                     // one solar unit
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(4, 2).bit = BIT_ECH_MIRROR;                    // (2,2)+(2,0)
+    ytile(4, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    ytile(4, 2).territory = 5;                           // somebody else's
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);
+    ytile(4, 2).territory = 4;
+    ytile(4, 2).bit = 0;                                 // no mirror
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);
+    // Two of them, and a third outside the ring that must not count.
+    ytile(4, 2).bit = BIT_ECH_MIRROR;
+    ytile(2, 4).bit = BIT_ECH_MIRROR;                    // (2,2)+(0,2)
+    ytile(2, 4).territory = 4;
+    ytile(8, 2).bit = BIT_ECH_MIRROR;                    // four columns away
+    ytile(8, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3);
+    // The scan needs the collector: a mirror alone reflects nothing.
+    ytile(X, Y).bit = BIT_ECH_MIRROR;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);
+    // Off-map neighbours are skipped rather than read.
+    yield_reset();
+    ytile(0, 0).climate = YALT_LAND;
+    ytile(0, 0).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(2, 0).bit = BIT_ECH_MIRROR;
+    ytile(2, 0).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, 0, 0, 0) == 2);
+
+    // ---- forest -------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);    // FOREST_SQ.energy
+    yield_give_fac(g_yield_world.bases[1], FAC_HYBRID_FOREST);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    YCHECK(energy_yield(YFACTION, -1, X, Y, 0) == 12);   // guarded, unlike crop's
+
+    // ---- ocean --------------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3);     // OCEAN_SQ.energy
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;                   // tidal harness
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3 + 21);
+    yield_give_fac(g_yield_world.bases[1], FAC_THERMOCLINE_TRANSDUCER);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3 + 21 + 1);
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 1) == 3 + 21);  // preview
+    // Deep ocean produces nothing at all without SMACX - not even the base
+    // ocean energy, unlike the crop and mineral arms.
+    yield_reset();
+    ytile(X, Y).climate = YALT_DEEP;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);
+    g_yield_world.expansion = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3 + 21);
+    // Sea fungus - as forest on an ocean tile - costs one.
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    // The transducer read is unguarded for base_id -1.
+    yield_reset();
+    ytile(X, Y).climate = YALT_SHELF;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    yield_give_fac(g_yield_world.bases[0], FAC_THERMOCLINE_TRANSDUCER);
+    YCHECK(energy_yield(YFACTION, -1, X, Y, 0) == 3 + 21 + 1);
+
+    // ---- a monolith ---------------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 24);    // MONOLITH.energy
+    // Manifold Harmonics gives one at PLANET 0 and another at PLANET 3.
+    g_yield_world.projects.manifold_harmonics = 0;
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 25);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 24);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 2;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 25);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 3;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 26);
+    // The monolith arm is tested before the borehole arm.
+    yield_reset();
+    ytile(X, Y).bit = BIT_MONOLITH | BIT_THERMAL_BORE;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 24);
+
+    // ---- fungus skips the whole shared tail --------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6);     // tech_fungus_energy
+    // Like mine_yield and unlike crop_yield, this arm has no preview
+    // suppressor: 0x004E7A2F tests only BIT_FUNGUS and the altitude.
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 1) == 6);
+    // A river, a resource bonus, a landmark and the Merchant Exchange all reach
+    // every other arm and none of them reaches this one.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS | BIT_RIVER | YBONUS_ENERGY;
+    ytile(X, Y).bit2 = BIT2_URANIUM;
+    g_yield_world.projects.merchant_exchange = 0;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.economy = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6);
+    // The identical square without the fungus collects all four.
+    ytile(X, Y).bit = BIT_RIVER | YBONUS_ENERGY | BIT_SOLAR_TIDAL;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1 + 1 + 9 + 1 + 1 + 1);
+    // Manifold Harmonics still applies inside the fungus arm.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.projects.manifold_harmonics = 0;
+    g_yield_world.bases[1].faction_id_current = YFACTION;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 7);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 3;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 8);
+    // The base events, the dust cloud and the tripling are AFTER the skip, so
+    // they still apply to a fungus square.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.bases[1].event = BEVENT_HEAT_WAVE;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 7);
+
+    // ---- the shared tail ----------------------------------------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST | BIT_RIVER;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    ytile(X, Y).climate = YALT_SHELF;                    // a river at sea: no
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST | YBONUS_ENERGY;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12 + 9);
+    ytile(X, Y).bit = BIT_FOREST | YBONUS_MINERAL;       // wrong bonus id
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    // The energy landmark set: Volcano (capped at code 9), Uranium, Geothermal
+    // and Ridge, with Crater, Fossil, Canyon and Jungle belonging elsewhere.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    ytile(X, Y).bit2 = BIT2_VOLCANO;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    ytile(X, Y).bit2 = BIT2_VOLCANO | 0x09000000u;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    ytile(X, Y).bit2 = BIT2_URANIUM;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    ytile(X, Y).bit2 = BIT2_URANIUM | 0x7F000000u;       // uncapped
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    ytile(X, Y).bit2 = BIT2_GEOTHERMAL;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    ytile(X, Y).bit2 = BIT2_RIDGE;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    ytile(X, Y).bit2 = BIT2_CRATER;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    ytile(X, Y).bit2 = BIT2_FOSSIL;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    ytile(X, Y).bit2 = BIT2_CANYON;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    ytile(X, Y).bit2 = BIT2_URANIUM | BIT2_UNK_80000000;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    ytile(X, Y).bit2 = BIT2_GEOTHERMAL | BIT2_UNK_80000000;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    ytile(X, Y).bit2 = BIT2_RIDGE | BIT2_UNK_80000000;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    // The Merchant Exchange pays the base that holds it, and only that base.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    g_yield_world.projects.merchant_exchange = 0;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    YCHECK(energy_yield(YFACTION, 1, X, Y, 0) == 12);
+    YCHECK(energy_yield(YFACTION, -1, X, Y, 0) == 12);
+    // ECONOMY of two or better pays one more, and a golden age counts toward it.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.economy = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    g_yield_world.bases[1].state = BSTATE_GOLDEN_AGE_ACTIVE;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    g_yield_world.bases[1].state = 0;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.economy = 2;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+
+    // ---- the clip to two ----------------------------------------------------
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_ENERGY] = 0;
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 10);
+    g_yield_world.restricted = 0;
+    ytile(X, Y).bit = BIT_FOREST | YBONUS_ENERGY;        // a bonus suppresses it
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12 + 9);
+    YCHECK(g_yield_world.restricted == 0);
+    ytile(X, Y).bit = BIT_FOREST | BIT_CONDENSER;        // a condenser does not
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    // The gate is Rules->tech_three_energy_sqr.
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_ENERGY] = 0;
+    g_yield_world.rules.tech_three_energy_sqr = YTECH_THREE_NUTRIENTS;
+    ytile(X, Y).bit = BIT_FOREST;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+
+    // ---- a base square publishes instead of clipping ------------------------
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_ENERGY] = 0;
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6);     // BASE_SQ.energy, unclipped
+    YCHECK(g_yield_world.base_square_energy == 6);
+    YCHECK(g_yield_world.restricted == 0);
+    // The publication is clamped to 0..99 while the return is not clamped
+    // afterwards - the base event tail still runs on the clamped value.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.resource_info[RSCINFO_BASE_SQ].energy = 500;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 99);
+    YCHECK(g_yield_world.base_square_energy == 99);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.resource_info[RSCINFO_BASE_SQ].energy = -5;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);
+    YCHECK(g_yield_world.base_square_energy == 0);
+    // Headquarters is read BEFORE the base_id sign check, so -1 reads the entry
+    // below the array and the point is granted anyway.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[0], FAC_HEADQUARTERS);
+    YCHECK(energy_yield(YFACTION, -1, X, Y, 0) == 7);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_HEADQUARTERS);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 7);
+    // Recycling Tanks and the Pressure Dome, and only with a real base id.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_RECYCLING_TANKS);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 15);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[1], FAC_PRESSURE_DOME);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 15);
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    yield_give_fac(g_yield_world.bases[0], FAC_RECYCLING_TANKS);
+    YCHECK(energy_yield(YFACTION, -1, X, Y, 0) == 6);
+    // The elected Planetary Governor earns one more on its own base square.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.governor = YFACTION;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 7);
+    YCHECK(energy_yield(2, 0, X, Y, 0) == 6);
+
+    // ---- the ECONOMY curve on a base square ---------------------------------
+    // Positive: 2 and 3 and 4 map to 0, 2 and 4, and everything above 4 is held
+    // at 4. Below 2 nothing is added.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    for (int economy = 0; economy <= 6; economy++) {
+        g_yield_world.players_data[YFACTION].soc_effect_pending.economy = economy;
+        int transformed = economy;
+        if (economy > 1) {
+            transformed = ((economy > 4) ? 4 : economy) * 2 - 4;
+        }
+        // The shared tail adds its own step on the RAW rating, not the
+        // transformed one.
+        int expected = 6 + transformed + ((economy >= 2) ? 1 : 0);
+        YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == expected);
+    }
+    // Negative: it is pulled back toward zero once, unless the base has a
+    // Headquarters, is not worse than -1, and is not the faction's only base.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.economy = -1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 0);      // no HQ: -1 -> 0
+    yield_give_fac(g_yield_world.bases[1], FAC_HEADQUARTERS);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 1 - 1);  // HQ holds it at -1
+    g_yield_world.players_data[YFACTION].current_num_bases = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 1 + 0);  // the only base
+    g_yield_world.players_data[YFACTION].current_num_bases = 3;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.economy = -2;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 1 - 1);  // worse than -1
+    // A golden age counts toward the curve's input as well as the tail's.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 3);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.economy = 1;
+    g_yield_world.bases[1].state = BSTATE_GOLDEN_AGE_ACTIVE;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6 + 0 + 1);
+
+    // ---- the landmark code is the TOP BYTE of bit2 -------------------------
+    // Shifted by anything less it would carry the landmark bits themselves into
+    // the comparison and put every Volcano over the cap.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    ytile(X, Y).bit2 = BIT2_VOLCANO | 0x01000000u;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+
+    // Faction 0's base square is a base square here too.
+    yield_reset();
+    yield_put_base_in_tile(ytile(X, Y), 0);
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6);
+
+    // ---- the fungus arm's altitude floor and PLANET arithmetic -------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    ytile(X, Y).climate = YALT_SHELF;                    // exactly the shelf
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6);
+    yield_reset();
+    ytile(X, Y).bit = BIT_FUNGUS;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -2;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 4);
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -9;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3);     // floored at -3
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 6);     // above 0 subtracts nothing
+    g_yield_world.players_data[YFACTION].tech_fungus_energy = 1;
+    g_yield_world.players_data[YFACTION].soc_effect_pending.planet = -3;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);     // and the sum floors at 0
+
+    // ---- the clip is strictly above two -------------------------------------
+    yield_reset();
+    g_yield_world.tech_achieved[YTECH_THREE_ENERGY] = 0;
+    ytile(X, Y).climate = YALT_LAND;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;                   // one energy
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);
+    YCHECK(g_yield_world.restricted == 0);
+    ytile(X, Y).climate = 0x80;                          // alt 4: two energy
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    YCHECK(g_yield_world.restricted == 0);
+
+    // ---- the echelon mirror ring, tile by tile -----------------------------
+    // The ring is RadiusBaseX/Y[0..7]. Step 8 is the collector's own tile and
+    // must NOT be walked, and step 0 must be.
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL | BIT_ECH_MIRROR;
+    ytile(X, Y).territory = 4;
+    g_yield_world.bases[1].faction_id_current = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 1);     // it does not see itself
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(3, 1).bit = BIT_ECH_MIRROR;                    // step 0 is (+1,-1)
+    ytile(3, 1).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+    // Column zero is on the map, so a mirror there counts.
+    yield_reset();
+    ytile(X, Y).climate = YALT_LAND;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(0, 2).bit = BIT_ECH_MIRROR;                    // step 5 is (-2,0)
+    ytile(0, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+
+    // Column zero counts on a ROUND map too: the wrap is applied only to a
+    // NEGATIVE column, so a neighbour that lands exactly on zero is left where
+    // it is rather than pushed off the right-hand edge.
+    yield_reset();
+    g_yield_world.is_flat = 0;
+    ytile(X, Y).climate = YALT_LAND;
+    ytile(X, Y).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(0, 2).bit = BIT_ECH_MIRROR;                    // step 5 is (-2,0)
+    ytile(0, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 2);
+
+    // On a flat map a neighbour off the left edge is skipped, NOT wrapped
+    // round to the far column.
+    yield_reset();
+    ytile(0, 2).climate = YALT_LAND;
+    ytile(0, 2).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(14, 2).bit = BIT_ECH_MIRROR;                   // where (-2,0) would land
+    ytile(14, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, 0, 2, 0) == 1);
+    // On a round map it is wrapped, from both edges.
+    g_yield_world.is_flat = 0;
+    YCHECK(energy_yield(YFACTION, 0, 0, 2, 0) == 2);
+    yield_reset();
+    g_yield_world.is_flat = 0;
+    ytile(14, 2).climate = YALT_LAND;
+    ytile(14, 2).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(0, 2).bit = BIT_ECH_MIRROR;                    // 14 + 2 == 16 wraps to 0
+    ytile(0, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, 14, 2, 0) == 2);
+    // The flat test is `MapIsFlat & 1`, so an even flag is round.
+    yield_reset();
+    g_yield_world.is_flat = 2;
+    ytile(0, 2).climate = YALT_LAND;
+    ytile(0, 2).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(14, 2).bit = BIT_ECH_MIRROR;
+    ytile(14, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, 0, 2, 0) == 2);
+
+    // The two bounds are exclusive. Both are shrunk below the fixture's tile
+    // array here, so the tile one step past each edge exists and can be shown
+    // NOT to be consulted.
+    yield_reset();
+    g_yield_world.lat_bounds = 6;
+    ytile(X, 4).climate = YALT_LAND;
+    ytile(X, 4).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(X, 6).bit = BIT_ECH_MIRROR;                    // step 3 is (0,+2)
+    ytile(X, 6).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, X, 4, 0) == 1);
+    g_yield_world.lat_bounds = 8;
+    YCHECK(energy_yield(YFACTION, 0, X, 4, 0) == 2);
+    yield_reset();
+    g_yield_world.lon_bounds = 12;
+    ytile(10, 2).climate = YALT_LAND;
+    ytile(10, 2).bit = BIT_SOLAR_TIDAL;
+    g_yield_world.bases[1].faction_id_current = 4;
+    ytile(12, 2).bit = BIT_ECH_MIRROR;                   // step 1 is (+2,0)
+    ytile(12, 2).territory = 4;
+    YCHECK(energy_yield(YFACTION, 0, 10, 2, 0) == 1);
+    g_yield_world.lon_bounds = 16;
+    YCHECK(energy_yield(YFACTION, 0, 10, 2, 0) == 2);
+
+    // ---- the base events, the dust cloud and the tripling ------------------
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    g_yield_world.bases[1].event = BEVENT_HEAT_WAVE;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 13);
+    g_yield_world.bases[1].event = BEVENT_CLOUD_COVER;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 11);
+    g_yield_world.bases[1].event = BEVENT_HEAT_WAVE | BEVENT_CLOUD_COVER;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    yield_reset();
+    g_yield_world.bases[1].event = BEVENT_CLOUD_COVER;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);     // nothing to take
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    g_yield_world.dust_cloud = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 11);
+    yield_reset();
+    g_yield_world.dust_cloud = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);
+    // The tripling consults bit 1 of the state when the selector is set, and
+    // bit 0 when it is clear.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    g_yield_world.energy_event = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 36);
+    g_yield_world.energy_event = 2;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    g_yield_world.energy_event_selector = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 36);
+    g_yield_world.energy_event = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    g_yield_world.energy_event = 3;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 36);
+    g_yield_world.energy_event = 0;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 12);
+    // The tripling comes last: it multiplies what the dust cloud left.
+    yield_reset();
+    ytile(X, Y).bit = BIT_FOREST;
+    g_yield_world.dust_cloud = 1;
+    g_yield_world.energy_event = 1;
+    YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 33);
+}
+
+#undef YCHECK
+
 }  // namespace
 
 int main() {
     test_not_my_turn();
     test_stack_veh_boarding();
     test_action_home();
+    test_crop_yield();
+    test_mine_yield();
+    test_energy_yield();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
