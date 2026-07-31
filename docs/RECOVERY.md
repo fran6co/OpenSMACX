@@ -169,7 +169,15 @@ cmake --build --preset mingw-i686-release --target verify-recovery-batch
 ```
 
 Run the source and ABI portions in both Debug and Release; the distributable build remains independent
-of the local IDB, original executable, and generated oracle objects.
+of the local IDB, original executable, and generated oracle objects. Both presets at once is the
+normal way to do that, since the two lanes share no writable state:
+
+```sh
+.opensmacx/venv/bin/python tools/run_gate.py
+```
+
+Measured on this tree, 332.44 s serial against 190.11 s concurrent (1.75x) with identical verdicts.
+`--preset <name>` runs one lane alone; `--serial` runs both in sequence.
 
 Functions recovered after the legacy import table was fixed can be redirected at process attach.
 Each runtime redirect validates an original-code byte signature before installing an x86 relative
