@@ -1076,6 +1076,17 @@ if(BUILD_TESTING)
     # invisible in the total, so the decisions are tested on synthetic bytes.
     opensmacx_add_python_tool_test(recovered-shape-classifier-tests test_classify_recovered_shapes.py)
 
+    # Every population docs/EXCLUSIONS.md declares out of scope. An exclusion
+    # is a promise about a number, and the two numbers this file re-derives
+    # were both wrong when they were prose: `push -1; push imm32` counted as an
+    # SEH prologue invented ~685 `_except_handler3` frames that do not exist,
+    # and a linear sweep decoding a switch table reported thirteen port-I/O
+    # bodies where there is one. The synthetic fixtures pin both refusals, and
+    # where the pinned executable is present the last case re-measures the
+    # image and fails on any figure the document has let drift.
+    opensmacx_add_python_tool_test(exclusion-census-tests
+        test_measure_exclusions.py)
+
     # The upper-bound catalogue that lets a class with no pinned sizeof stage an
     # oracle receiver. The safety argument is directional - a bound above the
     # true size wastes a zero-filled buffer, one below it lets a method write

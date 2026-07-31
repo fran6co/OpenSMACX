@@ -1,0 +1,231 @@
+# What will not be recovered
+
+Everything else in `docs/` says how to recover a function. This file says which
+functions the project has decided not to, and on what grounds — because until
+now those decisions lived in a plan file outside the repository, and a new
+agent rediscovered each wall by walking into it.
+
+Read the grounds, not just the list. Three different things are called
+"excluded" here and they are not interchangeable:
+
+- **Availability.** The code can be *linked* instead of rewritten. Nothing is
+  given up; the obligation moves from "write it" to "prove the substitute
+  behaves the same".
+- **Expressibility.** There is no C++ expression for what the body does. A
+  platform layer replaces it, and the acceptance criterion has to be stated
+  before the replacement is written, not after.
+- **Verifiability.** The source can be recovered; no differential oracle in
+  this repository can *check* it. These are not excluded from recovery. They
+  are excluded from the proof mechanism, and their acceptance is behavioural.
+
+An exclusion is a promise about a population, and a population is a number.
+Every figure below is re-derived by `tools/measure_exclusions.py`, and
+`--check` fails when this document and the image disagree:
+
+```
+.opensmacx/venv/bin/python tools/measure_exclusions.py --check
+```
+
+The `measured` block at the bottom of this file is what it checks. Do not edit
+a number there by hand to make the check pass; re-run the tool.
+
+## 1. The MSVC 6 CRT — availability, and now nearly moot
+
+327 functions, 45,155 bytes, `recovery_state == external_library`. 278 of them
+carry the leading-underscore C convention, which is the cheapest evidence that
+this is a library and not the game.
+
+The exclusion has always rested on the claim that this code can be linked
+rather than rewritten. That is a claim about *behaviour*, and three groups
+inside it are not generic enough for a modern libc to satisfy it silently:
+
+- **`__CIsin`, `__CIcos`, `__CIsqrt`, `__CIatan`, `__CIpow`, `__CIacos`** —
+  the x87 intrinsic helpers. This project already treats x87 rounding as
+  load-bearing rather than incidental: `tools/lifted_x87.h` exists precisely
+  because the control word decides the answer, and `docs/HANDOVER.md` records
+  that a SLEIGH interpreter was rejected for emitting `trunc(round(ST0))` and
+  never reading it — wrong at every `fistp` site in the image.
+- **`__output` and `_$I10_OUTPUT`** — printf formatting and long-double
+  conversion. Their output reaches saved games and displayed text, so a
+  difference is user-visible and file-format-visible, not internal.
+- **`___sbh_heap_init`, `___sbh_find_block`, `___sbh_free_block`,
+  `___sbh_alloc_block`, `___sbh_alloc_new_region`, `___sbh_alloc_new_group`,
+  `___sbh_resize_block`** — the MSVC 6 small-block heap. No other allocator
+  reproduces its size classes or its reuse order, and code that survives on
+  a particular allocator's layout survives nowhere else.
+
+**This is now largely solvable and should be, before anyone writes a line of
+CRT replacement.** MSVC 6.0 Professional is installed at `~/opt/vc6`;
+`~/opt/vc6/BIN/CL.EXE` reports FileVersion `12.00.8168.0`, the exact compiler
+the Rich header pins (`docs/HANDOVER.md`), and `~/opt/vc6/LIB/LIBC.LIB` is
+present. Linking the ISO's own `LIBC.LIB` makes these functions **identical**
+rather than assumed-equivalent, which retires the entire behavioural argument
+above instead of arguing it.
+
+## 2. MSVC structured exception frames — the wall that was not there
+
+**Corrected on 2026-07-31.** The earlier reading of this image was that 1,072
+SEH prologues existed, 387 of them C++ EH thunks and the remaining ~685
+`_except_handler3` frames that the EH-omission argument does not cover. That
+was a byte-pattern artifact and the population does not exist.
+
+`push -1; push imm32` occurs 1,072 times, and 687 of those are ordinary
+argument pairs — `push -1; push 0xa0; call sub_5DACB0`. Subtracting 387 from
+1,072 subtracted one census from a different one. Anchoring on the frame
+*store* instead, `mov fs:[0], esp`, and reading the handler back out of the
+nearest preceding push:
+
+| registrations | handler | where |
+| ---: | --- | --- |
+| 387 | a per-function `__ehhandler` thunk to `__CxxFrameHandler` (`0x00644FD6`) | game and CRT |
+| 14 | `__except_handler3` (`0x00646DF8`) directly | CRT only |
+| 1 | `__local_unwind2`'s own handler (`0x0064524C`) | CRT only |
+| **402** | | |
+
+**No game function in this image registers an `_except_handler3` frame.** All
+14 are CRT: `start`, `__threadstart@4`, `___FrameUnwindToState`,
+`CallCatchBlock`, `BuildCatchObject`, `terminate`, `__ArrayUnwind`, the three
+`??_L`/`??_M`/`??_N` array helpers, `___crtLCMapStringA`,
+`___crtGetStringTypeA`, and two unnamed CRT bodies. The largest is 548 bytes;
+none is anywhere near a kilobyte.
+
+Confirmed independently: the four-byte value `0x00646DF8` appears exactly 14
+times in the whole image, at the 14 sites above and nowhere else.
+
+**Consequence: there is no `_except_handler3` residue to schedule last and
+none to declare.** The EH-omission argument in `AGENTS.md` — that the frames
+cannot execute because the image contains no C++ throw entry point — covers
+every frame a recovery will ever meet. The instruction to re-examine any
+function whose prologue targets a handler other than `0x00644FD6` still
+stands, and is now known to fire only inside the CRT, which is excluded
+anyway.
+
+## 3. Port I/O — expressibility, and it is one function
+
+Exactly one body in this image does port I/O on a directly reachable path:
+`sub_5d4240`, 60 bytes at `0x005D4240`, `unrecovered`, no catalogued callers.
+
+```
+push ebp / mov ebp, esp / push esi / push edi / pushal / cli
+mov edx, 0x3C8 / out dx, al          ; VGA DAC write index
+mov edx, 0x3C9
+  mov al, [ebx] / shr al, 2 / out dx, al   ; R, G, B, 6 bits each
+  ...  256 times
+sti / popal / ...
+```
+
+It programs the VGA palette DAC directly, with interrupts disabled. There is
+no C++ expression for `out dx, al`; a hosted process cannot execute it at all.
+The replacement is a platform-layer palette call, and **the acceptance
+criterion is stated here in advance**: the replacement is accepted when the
+256 palette entries the display reports afterwards equal the 256 entries this
+loop would have written, each channel shifted right by two. Not "the screen
+looks right".
+
+Thirteen other functions — `battle_report`, `top_menu`, `probe`,
+`editor_natural`, `process_message` and others — appear to contain `out`/`in`
+on a first pass and do not. Their hits are inside MSVC switch tables in
+`.text`: a table of addresses into a function at `0x0040E6xx` carries the byte
+`0xE6` in every entry, and a sweep that desynchronises decodes it as
+`out 0x40, al`. `tools/measure_exclusions.py` separates the two by asking
+whether the dwords around a hit read as a table of addresses into the same
+function, and reports the impostor count so that it cannot quietly become zero.
+
+## 4. DirectDraw, DirectPlay, DirectSound, MSVFW32 — verifiability
+
+941 functions, 1,187,932 bytes, **48.4% of catalogued bytes**, transitively
+reach one of those four libraries along direct call edges from the six DirectX
+and three MSVFW32 import slots.
+
+The IAT surface is nine imports. The real surface is every
+`call [vtable+n]` on a returned COM interface pointer, so no import-shim work
+touches it and the closure above is a floor rather than a measurement of the
+true reach.
+
+These functions are **recoverable as source and unverifiable by any
+differential oracle in this repository**. `docs/HANDOVER.md` puts the oracle's
+honest ceiling at ~49% of bytes testable with COM skipped; the other half is
+reachable only by booting the lifted executable and comparing observable
+behaviour. Acceptance for anything in this population is behavioural, and a
+recovery here that reports "no oracle available" is complete, not deficient.
+
+## 5. Indirect call sites — every seam count here is a floor
+
+5,159 call sites in `docs/recovery/callgraph.json` have no known target. They
+are invisible to the call graph, so **every caller count, every seam count and
+every reachability closure in this repository is a lower bound**, including
+the DirectX closure above. When sizing work that turns calls into seams,
+budget **+20% on methods** over what the graph says; virtual dispatch is where
+the missing edges concentrate.
+
+## 6. Multiplayer / `NetDaemon` — weaker evidence, recorded as such
+
+36 functions, 43,599 bytes carry the `NetDaemon` name; 24,378 of those bytes
+are still `original_dependency`, and 23,394 of them are two functions:
+`NetDaemon::process_message` (18,489 B) and `NetDaemon::synch` (4,905 B).
+
+The smoke gate never exercises any of it. A recovery here can be covered by
+source-level tests and nothing else, and that is **weaker evidence than
+everything else in the repository** — it must be recorded as such in the commit
+rather than presented alongside gate-verified work. `AGENTS.md` already says
+smoke does not exercise multiplayer; this is the population that sentence is
+about.
+
+## 7. The Thinker mod — measured, not licensed away
+
+The licence objection was withdrawn. The measured position is what decides it,
+and the measurement is specific.
+
+Of Thinker's **2,562** address hypotheses (`tools/correlate_thinker_layouts.py`
+reduces the fetched headers to an ignored CSV), **2,279 land exactly on
+catalogued function entries** — a hit rate no accident produces. Where a name
+carries a class prefix, its **class attribution is 100% correct: 1,216 of
+1,216** agree with the catalogue's mangled class, including constructors,
+destructors, scalar deleting destructors and dynamic-initialiser thunks.
+
+So it understands the binary. It does not, however, know anything the
+catalogue does not:
+
+- It names **exactly one** function the catalogue leaves as `sub_*`:
+  `sub_51dd00`, which Thinker calls `NetDaemon_cleanup`. One.
+- Its method names are **its own inventions**, not the real symbols. Only 6 of
+  2,279 names match the catalogue's, and this image ships mangled names for
+  89% of its functions, so the real name is already known wherever it matters.
+- Its class layouts are **5 right, 7 wrong** against the 40 pinned sizes
+  (`docs/ORACLE_SESSIONS.md`), and the failures are not near-misses: `Buffer`
+  0x1c against 0x588, `Font` 0x8 against 0x28, `Win` 0xc8 against 0x444.
+
+**Use it to understand behaviour. Do not import its names, its addresses, or
+its layouts.** A wrong layout compiles perfectly and corrupts memory at
+runtime, which is the exact failure this project is built to avoid.
+
+---
+
+## The measured block
+
+Re-derived by `tools/measure_exclusions.py`; `--check` compares this block
+against the pinned executable, `docs/recovery/functions.csv` and
+`docs/recovery/callgraph.json`. The Thinker figures are not here: they depend
+on an ignored, never-committed hypothesis CSV, so they cannot be gate-checked
+and are cited above with their derivation instead.
+
+```measured
+external_library.functions = 327
+external_library.bytes = 45155
+external_library.underscore_names = 278
+seh.frames = 402
+seh.cxx_frame_handler = 387
+seh.except_handler3 = 14
+seh.except_handler3_functions = 14
+seh.except_handler3_game_functions = 0
+port_io.functions = 1
+port_io.bytes = 60
+port_io.jump_table_impostors = 1
+directx.functions = 941
+directx.bytes = 1187932
+directx.percent_of_catalogued_bytes = 48.4
+indirect_call_sites = 5159
+netdaemon.functions = 36
+netdaemon.bytes = 43599
+netdaemon.original_dependency_bytes = 24378
+```
