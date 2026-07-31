@@ -4447,6 +4447,637 @@ void test_base_support_pacifism() {
 
 #undef SCHECK
 
+/*
+ * A self-contained world for world_site.
+ *
+ * The map is 32 columns by 16 rows - MapLongitude 16, because two adjacent x
+ * share a tile index - and the subject site is (16, 8), far enough from every
+ * edge that all forty-nine radius offsets land in bounds. Checked while
+ * writing: the twenty-one inner offsets from (16, 8) address twenty-one
+ * DISTINCT tile indices, so a case can move one radius tile without moving
+ * another.
+ *
+ * Two of the fixture's settings exist to make the two callees decidable rather
+ * than pseudo-random:
+ *
+ *  - MapRandSeed is 0, so bonus_at() answers on BIT_RSC_BONUS alone and is
+ *    non-zero exactly when the tile carries it and sits at or above the ocean
+ *    shelf.
+ *  - GameRules carries RULES_NO_UNITY_SCATTERING, which takes goody_at()
+ *    straight to its bitfield answer instead of its position hash. Without it
+ *    goody_at() returns 2 on a scattering of land tiles and `special` picks up
+ *    a term no case asked for.
+ */
+struct SiteWorld {
+    Map tiles[256];
+    Continent continents[MaxContinentNum];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t map_rand_seed;
+    uint32_t game_rules;
+    int turn;
+};
+
+SiteWorld g_site_world;
+
+const int SITE_X = 16;
+const int SITE_Y = 8;
+
+// Plain land: altitude three, arid, flat, nothing built.
+const uint8_t SALT_LAND = 0x60;
+const uint8_t SALT_SHELF = 0x40;
+const uint8_t SALT_DEEP = 0x20;
+
+Map &stile2(int x, int y) { return g_site_world.tiles[(x >> 1) + y * 16]; }
+
+// The tile the i-th radius offset from the subject site addresses.
+Map &sring(int i) {
+    return stile2(SITE_X + RadiusOffsetX[i], SITE_Y + RadiusOffsetY[i]);
+}
+
+void site_reset() {
+    std::memset(&g_site_world, 0, sizeof(g_site_world));
+    g_site_world.tiles_ptr = g_site_world.tiles;
+    g_site_world.longitude = 16;
+    g_site_world.lon_bounds = 32;
+    g_site_world.lat_bounds = 16;
+    g_site_world.is_flat = 1;
+    g_site_world.map_rand_seed = 0;
+    g_site_world.game_rules = RULES_NO_UNITY_SCATTERING;
+    g_site_world.turn = 0;
+    for (int k = 0; k < 256; k++) {
+        g_site_world.tiles[k].climate = SALT_LAND;
+    }
+}
+
+// The tile the i-th radius offset from an arbitrary site addresses.
+Map &sringat(int cx, int cy, int i) {
+    return stile2(cx + RadiusOffsetX[i], cy + RadiusOffsetY[i]);
+}
+
+// Twenty of the twenty-one inner tiles carry a river, which is +5 to the score
+// and leaves room for a case to push it either way.
+void site_arm_rivers_at(int cx, int cy) {
+    for (int i = 1; i < 21; i++) {
+        sringat(cx, cy, i).bit |= BIT_RIVER;
+    }
+}
+
+void site_arm_rivers() { site_arm_rivers_at(SITE_X, SITE_Y); }
+
+#define SCHECK2(cond)                                                         \
+    do {                                                                      \
+        const bool site_ok = (cond);                                          \
+        if (!site_ok) {                                                       \
+            std::fprintf(stderr, "world_site: line %d: %s\n", __LINE__,       \
+                         #cond);                                              \
+        }                                                                     \
+        expect(site_ok);                                                      \
+    } while (0)
+
+class SiteSeams {
+ public:
+    SiteSeams()
+        : tiles_(&MapTiles, &g_site_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_site_world.longitude),
+          lon_(&MapLongitudeBounds, &g_site_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_site_world.lat_bounds),
+          flat_(&MapIsFlat, &g_site_world.is_flat),
+          seed_(&MapRandSeed, &g_site_world.map_rand_seed),
+          rules_(&GameRules, &g_site_world.game_rules),
+          continents_(&Continents, g_site_world.continents),
+          turn_(&TurnCurrentNum, &g_site_world.turn) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> seed_;
+    ScopedSeam<uint32_t> rules_;
+    ScopedSeam<Continent> continents_;
+    ScopedSeam<int> turn_;
+};
+
+void test_world_site_terrain() {
+    SiteSeams seams;
+
+    // ---- the floor, and the river term that lifts it off it ----------------
+    // Twenty-one plain land tiles score nothing at all; the constant 6 in the
+    // rich-terrain term is the whole of it, and the clamp holds the answer at
+    // one rather than zero.
+    site_reset();
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 1);
+    // Rivers are counted a quarter each, truncating.
+    for (int n = 1; n <= 8; n++) {
+        site_reset();
+        for (int i = 0; i < n; i++) {
+            sring(i).bit |= BIT_RIVER;
+        }
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 1 + n / 4);
+    }
+    // A tile already inside somebody's base radius is not counted at all.
+    site_reset();
+    for (int i = 0; i < 8; i++) {
+        sring(i).bit |= BIT_RIVER;
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 3);
+    sring(3).bit |= BIT_BASE_RADIUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 2);
+
+    // ---- resource bonuses, and the centre tile's sign inversion ------------
+    site_reset();
+    site_arm_rivers();
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    sring(1).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 8);   // +2 away from centre
+    site_reset();
+    site_arm_rivers();
+    sring(0).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);   // -1 on the centre
+    // A bonus under fungus is not seen: fungus skips the whole block.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_RSC_BONUS | BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    // A tile already in a base radius still contributes its bonus - the skip
+    // happens after the bonus block, not before it.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_RSC_BONUS | BIT_BASE_RADIUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 8 - 1);  // bonus in, river out
+
+    // ---- the four landmarks, each with its own weight ----------------------
+    struct LandmarkCase {
+        uint32_t bit2;
+        int away;
+        int centre;
+    };
+    const LandmarkCase landmarks[4] = {
+        { BIT2_VOLCANO, 1, -1 },
+        { BIT2_CRATER, 2, -1 },
+        { BIT2_URANIUM, 1, -3 },
+        { BIT2_JUNGLE, 2, 2 },       // the only one that does not invert
+    };
+    for (int k = 0; k < 4; k++) {
+        site_reset();
+        site_arm_rivers();
+        sring(1).bit2 = landmarks[k].bit2;
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 6 + landmarks[k].away);
+        site_reset();
+        site_arm_rivers();
+        sring(0).bit2 = landmarks[k].bit2;
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 6 + landmarks[k].centre);
+    }
+    // Volcano and Crater are gated on the landmark's tile sequence code, which
+    // lives in the top byte; Uranium and Jungle are not.
+    const uint32_t gated[2] = { BIT2_VOLCANO, BIT2_CRATER };
+    const int gated_away[2] = { 1, 2 };
+    for (int k = 0; k < 2; k++) {
+        site_reset();
+        site_arm_rivers();
+        sring(1).bit2 = gated[k] | 0x08000000u;
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 6 + gated_away[k]);
+        site_reset();
+        site_arm_rivers();
+        sring(1).bit2 = gated[k] | 0x09000000u;
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    }
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit2 = BIT2_URANIUM | 0x09000000u;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    // BIT2_UNK_80000000 suppresses all four.
+    for (int k = 0; k < 4; k++) {
+        site_reset();
+        site_arm_rivers();
+        sring(1).bit2 = landmarks[k].bit2 | BIT2_UNK_80000000;
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    }
+
+    // ---- supply pods count, and not on the centre tile ---------------------
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_UNK_4000000;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    site_reset();
+    site_arm_rivers();
+    sring(0).bit |= BIT_UNK_4000000;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+
+    // ---- rich terrain: forest, monolith, and the monolith's second term ----
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_FOREST;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);   // (1*3+6)/4 == 2, was 1
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    // A monolith without a forest scores a second time once the tile is high
+    // enough or wet enough. Altitude five gives an elevation of three.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH;
+    sring(1).climate = 0xA0;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 8);   // (2*3+6)/4 == 3
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH | BIT_FOREST;         // the forest cancels it
+    sring(1).climate = 0xA0;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    // Rainfall reaches the same second term without the altitude.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH;
+    sring(1).climate = (uint8_t)(SALT_LAND | 0x10);    // rainfall two
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 8);
+    // and a volcano zeroes the rainfall before that test sees it.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH;
+    sring(1).climate = (uint8_t)(SALT_LAND | 0x10);
+    sring(1).bit2 = BIT2_VOLCANO | 0x09000000u;        // gated out of `special`
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    // Rockiness two zeroes it too.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH;
+    sring(1).climate = (uint8_t)(SALT_LAND | 0x10);
+    sring(1).val3 = 0x80;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    // On the centre tile both terms invert, and the second one costs two.
+    site_reset();
+    site_arm_rivers();
+    sring(0).bit |= BIT_MONOLITH;
+    sring(0).climate = 0xA0;
+    // rich == -3, so (rich*3+6)/4 == 0 where the floor is 1; but a monolith on
+    // the centre tile is refused outright.
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 0);
+
+    // ---- fair terrain: rolling, rainy and under fungus ----------------------
+    // Land is never below elevation one, so this arm is reachable only with
+    // fungus on the tile.
+    for (int n = 1; n <= 5; n++) {
+        site_reset();
+        site_arm_rivers();
+        for (int i = 1; i <= n; i++) {
+            sring(i).climate = (uint8_t)(SALT_LAND | 0x08);
+            sring(i).val3 = 0x40;
+            sring(i).bit |= BIT_FUNGUS;
+        }
+        SCHECK2(world_site(SITE_X, SITE_Y, false) == 6 + (n + 1) / 3);
+    }
+    // Without the fungus the same tile is RICH instead, not fair.
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = (uint8_t)(SALT_LAND | 0x08);
+    sring(1).val3 = 0x40;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+    // Without the rolling rockiness it is neither.
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = (uint8_t)(SALT_LAND | 0x08);
+    sring(1).bit |= BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    // Nor without the rain.
+    site_reset();
+    site_arm_rivers();
+    sring(1).val3 = 0x40;
+    sring(1).bit |= BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+
+    // A volcano zeroes the rainfall before the fair-terrain arm tests it, so
+    // two tiles that would otherwise be fair are worth nothing.
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 2; i++) {
+        sring(i).climate = (uint8_t)(SALT_LAND | 0x08);
+        sring(i).val3 = 0x40;
+        sring(i).bit |= BIT_FUNGUS;
+        sring(i).bit2 = BIT2_VOLCANO | 0x09000000u;
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+
+    // A forest on the centre tile costs, where anywhere else it pays.
+    site_reset();
+    site_arm_rivers();
+    sring(0).bit |= BIT_FOREST;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);
+
+    // The monolith's second term needs rainfall ABOVE one, not merely present.
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_MONOLITH;
+    sring(1).climate = (uint8_t)(SALT_LAND | 0x08);    // rainfall one
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 7);
+
+    // ---- rocky tiles are a quarter each, and not on the centre -------------
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 4; i++) {
+        sring(i).val3 = 0x80;
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 3; i++) {
+        sring(i).val3 = 0x80;
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 3; i++) {
+        sring(i).val3 = 0x80;
+    }
+    sring(0).val3 = 0x40;   // rolling on the centre is not rocky and is allowed
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+
+    // ---- fungus is only charged after turn 150 -----------------------------
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 3; i++) {
+        sring(i).bit |= BIT_FUNGUS;
+    }
+    g_site_world.turn = 150;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    g_site_world.turn = 151;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);
+    for (int i = 4; i <= 5; i++) {
+        sring(i).bit |= BIT_FUNGUS;
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);   // five thirds is one
+    sring(6).bit |= BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 4);
+}
+
+void test_world_site_score() {
+    SiteSeams seams;
+
+    // ---- ocean in the radius, and which way it counts ----------------------
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 4; i++) {
+        sring(i).climate = SALT_SHELF;
+    }
+    // Four ocean tiles stop being river tiles as well: the ocean arm of the
+    // loop leaves before the river count.
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 3);    // 16/4 + 1 - 4/2
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 7);     // ... + 4/2 instead
+    // Below the shelf each tile counts twice: once as ocean, once as deep.
+    site_reset();
+    site_arm_rivers();
+    for (int i = 1; i <= 4; i++) {
+        sring(i).climate = SALT_DEEP;
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 1);    // 4 + 1 - (2 + 2)
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 9);
+    // An ocean tile with a bonus at or above the shelf still scores; below it
+    // bonus_at answers zero.
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = SALT_SHELF;
+    sring(1).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);    // 19/4 + 1 + 1 - 0
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = SALT_DEEP;
+    sring(1).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);    // 4 + 1 + 1 - 1
+    // Fungus at or above the shelf suppresses the ocean bonus.
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = SALT_SHELF;
+    sring(1).bit |= BIT_RSC_BONUS | BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);
+    // The centre tile's ocean never scores a bonus at all.
+    site_reset();
+    site_arm_rivers();
+    sring(0).climate = SALT_SHELF;
+    sring(0).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 6);     // 5 + 1 + 0 + 0
+
+    // ---- a big continent, decided by the nine innermost tiles only ---------
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = SALT_SHELF;
+    sring(1).region = 5;
+    g_site_world.continents[5].tile_count = 50;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5 + 4);   // 19/4 + 1 + 4 - 0
+    g_site_world.continents[5].tile_count = 49;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);       // 19/4 + 1 - 0
+    // Ninth offset in, tenth out.
+    site_reset();
+    site_arm_rivers();
+    sring(8).climate = SALT_SHELF;
+    sring(8).region = 5;
+    g_site_world.continents[5].tile_count = 50;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 9);
+    site_reset();
+    site_arm_rivers();
+    sring(9).climate = SALT_SHELF;
+    sring(9).region = 5;
+    g_site_world.continents[5].tile_count = 50;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);
+    // On an ocean site the same continent costs two instead of paying four.
+    site_reset();
+    site_arm_rivers();
+    sring(1).climate = SALT_SHELF;
+    sring(1).region = 5;
+    g_site_world.continents[5].tile_count = 50;
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 5 - 2);    // and (1-1)/2 == 0
+
+    // ---- the last radius tile's two flags are worth four -------------------
+    site_reset();
+    site_arm_rivers();
+    sring(20).bit |= BIT_UNK_4000;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 10);
+    site_reset();
+    site_arm_rivers();
+    sring(20).bit |= BIT_UNK_40000000;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 10);
+    // It really is the LAST tile of the radius and not any other.
+    site_reset();
+    site_arm_rivers();
+    sring(19).bit |= BIT_UNK_4000;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+
+    // ---- crowding, counted over the outer ring -----------------------------
+    site_reset();
+    site_arm_rivers();
+    sring(25).bit |= BIT_BASE_IN_TILE;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);    // one, at single weight
+    site_reset();
+    site_arm_rivers();
+    sring(21).bit |= BIT_BASE_IN_TILE;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 4);    // the first four count two
+    site_reset();
+    site_arm_rivers();
+    sring(24).bit |= BIT_BASE_IN_TILE;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 4);
+    // Ocean on both the site and the neighbouring base makes it four.
+    site_reset();
+    for (int i = 1; i < 21; i++) {
+        sring(i).bit |= BIT_RIVER;
+    }
+    sring(0).climate = SALT_SHELF;
+    sring(21).climate = SALT_SHELF;
+    sring(21).bit |= BIT_BASE_IN_TILE;
+    // 20 rivers -> 5, +1, ocean count 1 -> water 0; an ocean site pays 4 x 1.
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 2);
+    // A land site is the wrong element for an ocean tile, and four is the
+    // crowding at which that becomes a refusal.
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 0);
+    // Three is not four.
+    site_reset();
+    for (int i = 1; i < 21; i++) {
+        sring(i).bit |= BIT_RIVER;
+    }
+    sring(0).climate = SALT_SHELF;
+    sring(21).bit |= BIT_BASE_IN_TILE;   // land neighbour: two, not four
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 2);    // 5 + 1 - 2*2
+
+    // ---- the outer ring is 21 to 48, and nothing else ----------------------
+    site_reset();
+    site_arm_rivers();
+    sring(1).bit |= BIT_BASE_IN_TILE;      // inside the inner ring, not counted
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    site_reset();
+    site_arm_rivers();
+    sring(49).bit |= BIT_BASE_IN_TILE;     // one past the outer ring
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    sring(48).bit |= BIT_BASE_IN_TILE;     // the last one that is counted
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 5);
+
+    // ---- both loops take a coordinate of zero and refuse one of bounds -----
+    // Offset 47 is (0, -6) and offset 48 is (-6, 0), so a site six from an edge
+    // puts exactly one outer-ring tile on the boundary.
+    site_reset();
+    site_arm_rivers_at(SITE_X, 6);
+    sringat(SITE_X, 6, 47).bit |= BIT_BASE_IN_TILE;    // y == 0, counted
+    SCHECK2(world_site(SITE_X, 6, false) == 5);
+    site_reset();
+    site_arm_rivers_at(6, SITE_Y);
+    sringat(6, SITE_Y, 48).bit |= BIT_BASE_IN_TILE;    // x == 0, counted
+    SCHECK2(world_site(6, SITE_Y, false) == 5);
+    site_reset();
+    g_site_world.lat_bounds = 14;
+    site_arm_rivers();
+    sring(45).bit |= BIT_BASE_IN_TILE;                 // y == bound, refused
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    site_reset();
+    g_site_world.lon_bounds = 30;
+    site_arm_rivers_at(24, SITE_Y);
+    sringat(24, SITE_Y, 46).bit |= BIT_BASE_IN_TILE;   // x == bound, refused
+    SCHECK2(world_site(24, SITE_Y, false) == 6);
+
+    // The inner ring's own four bounds, with offsets 13 and 20 at dy -3, 16 and
+    // 17 at dy +3, 18 and 19 at dx -3, and 14 and 15 at dx +3. Each pair is
+    // worth four to `special` when it is in bounds and nothing when it is not.
+    site_reset();
+    site_arm_rivers_at(SITE_X, 3);
+    sringat(SITE_X, 3, 13).bit |= BIT_RSC_BONUS;       // y == 0
+    sringat(SITE_X, 3, 20).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, 3, false) == 10);
+    site_reset();
+    site_arm_rivers_at(3, SITE_Y);
+    sringat(3, SITE_Y, 18).bit |= BIT_RSC_BONUS;       // x == 0
+    sringat(3, SITE_Y, 19).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(3, SITE_Y, false) == 10);
+    site_reset();
+    g_site_world.lat_bounds = 14;
+    site_arm_rivers_at(SITE_X, 11);
+    sringat(SITE_X, 11, 16).bit |= BIT_RSC_BONUS;      // y == bound
+    sringat(SITE_X, 11, 17).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(SITE_X, 11, false) == 5);
+    site_reset();
+    g_site_world.lon_bounds = 30;
+    site_arm_rivers_at(27, SITE_Y);
+    sringat(27, SITE_Y, 14).bit |= BIT_RSC_BONUS;      // x == bound
+    sringat(27, SITE_Y, 15).bit |= BIT_RSC_BONUS;
+    SCHECK2(world_site(27, SITE_Y, false) == 5);
+
+    // The doubling's third term needs BOTH the site and the neighbouring base
+    // to be ocean; the site's own altitude is read for it.
+    site_reset();
+    site_arm_rivers();
+    sring(21).climate = SALT_SHELF;
+    sring(21).bit |= BIT_BASE_IN_TILE;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 4);   // two, not four
+
+    // ---- the four refusals --------------------------------------------------
+    site_reset();
+    site_arm_rivers();
+    sring(0).bit |= BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 0);    // fungus above the shelf
+    site_reset();
+    site_arm_rivers();
+    sring(0).climate = SALT_DEEP;                       // below it, allowed
+    sring(0).bit |= BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 6);
+    site_reset();
+    site_arm_rivers();
+    sring(0).climate = SALT_SHELF;                      // exactly the shelf
+    sring(0).bit |= BIT_FUNGUS;
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 0);
+    site_reset();
+    site_arm_rivers();
+    sring(0).bit |= BIT_MONOLITH;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 0);
+    site_reset();
+    site_arm_rivers();
+    sring(0).val3 = 0x80;                               // rocky land
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 0);
+    site_reset();
+    site_arm_rivers();
+    sring(0).val3 = 0x40;                               // rolling land is fine
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 6);
+    site_reset();
+    site_arm_rivers();
+    sring(0).val3 = 0x80;
+    sring(0).climate = SALT_SHELF;                      // rocky ocean is fine
+    SCHECK2(world_site(SITE_X, SITE_Y, true) == 6);
+
+    // A score of exactly zero is lifted to one rather than refused.
+    site_reset();
+    sring(25).bit |= BIT_BASE_IN_TILE;
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 1);
+
+    // ---- both clamps --------------------------------------------------------
+    site_reset();
+    for (int i = 1; i < 21; i++) {
+        sring(i).bit |= BIT_RSC_BONUS;                  // special == 40
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 15);
+    site_reset();
+    for (int i = 1; i <= 12; i++) {
+        sring(i).climate = SALT_DEEP;                   // water == 12
+    }
+    SCHECK2(world_site(SITE_X, SITE_Y, false) == 1);
+
+    // ---- the x wrap, and the low bit of MapIsFlat that gates it ------------
+    // From x == 0 the nine radius offsets with a negative x fall off a flat
+    // map and wrap around a round one.
+    site_reset();
+    for (int k = 0; k < 256; k++) {
+        g_site_world.tiles[k].bit = BIT_RIVER;
+    }
+    SCHECK2(world_site(0, SITE_Y, false) == 4);         // 12 rivers -> 3, +1
+    g_site_world.is_flat = 0;
+    SCHECK2(world_site(0, SITE_Y, false) == 6);         // 21 rivers -> 5, +1
+    // Only the low bit is consulted, which xrange() does not do.
+    g_site_world.is_flat = 2;
+    SCHECK2(world_site(0, SITE_Y, false) == 6);
+    g_site_world.is_flat = 3;
+    SCHECK2(world_site(0, SITE_Y, false) == 4);
+}
+
+#undef SCHECK2
+
 }  // namespace
 
 int main() {
@@ -4459,6 +5090,8 @@ int main() {
     test_base_support_convoys();
     test_base_support_maintenance();
     test_base_support_pacifism();
+    test_world_site_terrain();
+    test_world_site_score();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

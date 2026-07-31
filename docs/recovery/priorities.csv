@@ -1846,7 +1846,6 @@ P3,1420,0x005C38B0,?world_rivers@@YAXXZ,1718,1,4,unrecovered,,,2,exact,exact,
 P3,3720,0x005C3F70,?world_shorelines@@YAXXZ,371,3,7,unrecovered,,,2,exact,exact,
 P3,111,0x005C4410,?world_UNK1@@YAXHH@Z,87,0,1,unrecovered,,,1,missing,exact,"void (__cdecl ?world_UNK1@@YAXHH@Z)(int xCoord, int yCoord)"
 P0,1003420,0x005C4470,?world_rainfall@@YAXXZ,2897,3,4,original_dependency,game_service,recover_world_generation,2,exact,exact,
-P2,8220,0x005C4FD0,?world_site@@YAHHHH@Z,1509,8,2,unrecovered,,,2,exact,exact,
 P2,19220,0x005C5A30,?world_climate@@YAXXZ,171,18,12,unrecovered,,,2,exact,exact,
 P3,7320,0x005C86E0,?world_build@@YAXXZ,701,4,33,unrecovered,,,2,exact,exact,
 P3,2621,0x005C8DA0,??0Gamma@@QAE@XZ,280,2,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
