@@ -36,7 +36,10 @@ against it, never to trust directly.
    source-owned or original-dependency; confirm the SEH prologue targets
    `__CxxFrameHandler` at `0x00644FD6` (safe to omit) versus an
    `_except_handler3` frame (not omittable — see the closing Caveat).
-2. Write the leaf test first (`tests/recovery_leaf_tests.cpp`); for a
+2. Write the leaf test first, in the `tests/leaf/<family>_tests.cpp` that
+   owns the subject: append the `void test_*()`, append one `LEAF_CASE`
+   line at the bottom of that same file, and bump that family's count in
+   `tests/leaf/leaf_case_manifest.h` (the run asserts it). For a
    composed teardown, build the reference image by running the already-recovered
    component chain on a byte-identical twin and require an exact match, as
    `test_scroll_destructor` does.

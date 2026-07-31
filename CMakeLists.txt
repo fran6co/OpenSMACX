@@ -449,8 +449,10 @@ elseif(MSVC)
 endif()
 
 if(BUILD_TESTING)
-    add_executable(recovery-leaf-tests
-        tests/recovery_leaf_tests.cpp
+    # The src closure the leaf suite links.  Explicit list, never a glob: a
+    # glob that misses a file drops coverage exactly the way an unregistered
+    # test does.
+    set(OPENSMACX_LEAF_SRC_CLOSURE
         src/atexit_thunks.cpp
         src/init_thunks.cpp
         src/adjustor_thunks.cpp
@@ -554,37 +556,73 @@ if(BUILD_TESTING)
         src/texture.cpp
         src/win.cpp
     )
-    target_compile_features(recovery-leaf-tests PRIVATE cxx_std_11)
-    target_compile_options(recovery-leaf-tests PRIVATE -fno-exceptions)
-    target_compile_definitions(recovery-leaf-tests PRIVATE
-        BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
-    set_target_properties(recovery-leaf-tests PROPERTIES
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
+
+    # The split suite.  Direct sources, not a static library, so no static
+    # initialiser can be discarded for want of --whole-archive; and one
+    # explicit line per family, so a missing family is visible here as well as
+    # at run time.
+    set(OPENSMACX_LEAF_TEST_SRCS
+        tests/leaf/leaf_harness.cpp
+        tests/leaf/leaf_stubs.cpp
+        tests/leaf/core_construction_tests.cpp
+        tests/leaf/leaf_recoveries_tests.cpp
+        tests/leaf/widget_accessors_tests.cpp
+        tests/leaf/text_and_resources_tests.cpp
+        tests/leaf/dialog_and_strings_tests.cpp
+        tests/leaf/win_and_graphic_tests.cpp
+        tests/leaf/destructors_tests.cpp
+        tests/leaf/buffer_and_font_tests.cpp
+        tests/leaf/constant_stubs_tests.cpp
+        tests/leaf/wave_and_sound_tests.cpp
+        tests/leaf/delegates_tests.cpp
+        tests/leaf/forwarders_tests.cpp
+        tests/leaf/stubs_and_locks_tests.cpp
+        tests/leaf/locks_tests.cpp
+        tests/leaf/device_forwarders_tests.cpp
+        tests/leaf/buffer_writers_tests.cpp
+        tests/leaf/pops_and_console_tests.cpp
+        tests/leaf/thunks_tests.cpp
     )
 
-    if(MINGW)
-        target_compile_options(recovery-leaf-tests PRIVATE
-            -pedantic
-            -Wall
-            -Wextra
-            -Wshadow
-            -Wcast-align
-            -Wfloat-conversion
-            -Wuseless-cast
-            -Wno-comment
-            -Wno-parentheses
-            -Wno-unknown-pragmas
-            $<$<CONFIG:Debug>:-Og>
-            $<$<CONFIG:Release>:-O2>
+
+    add_executable(recovery-leaf-tests
+        ${OPENSMACX_LEAF_TEST_SRCS}
+        ${OPENSMACX_LEAF_SRC_CLOSURE}
+    )
+
+    foreach(_leaf_target recovery-leaf-tests)
+        target_compile_features(${_leaf_target} PRIVATE cxx_std_11)
+        target_compile_options(${_leaf_target} PRIVATE -fno-exceptions)
+        target_compile_definitions(${_leaf_target} PRIVATE
+            BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
+        set_target_properties(${_leaf_target} PROPERTIES
+            CXX_EXTENSIONS OFF
+            CXX_STANDARD 11
+            CXX_STANDARD_REQUIRED YES
         )
-        target_link_options(recovery-leaf-tests PRIVATE
-            -static
-            -Wl,--wrap=atexit
-            -Wl,--wrap=fclose
-            -Wl,--wrap=free)
-    endif()
+
+        if(MINGW)
+            target_compile_options(${_leaf_target} PRIVATE
+                -pedantic
+                -Wall
+                -Wextra
+                -Wshadow
+                -Wcast-align
+                -Wfloat-conversion
+                -Wuseless-cast
+                -Wno-comment
+                -Wno-parentheses
+                -Wno-unknown-pragmas
+                $<$<CONFIG:Debug>:-Og>
+                $<$<CONFIG:Release>:-O2>
+            )
+            target_link_options(${_leaf_target} PRIVATE
+                -static
+                -Wl,--wrap=atexit
+                -Wl,--wrap=fclose
+                -Wl,--wrap=free)
+        endif()
+    endforeach()
 
     if(CMAKE_CROSSCOMPILING)
         set(OPENSMACX_RECOVERY_TEST_COMMAND
