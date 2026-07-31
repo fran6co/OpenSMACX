@@ -101,7 +101,11 @@ def structures():
             size = tif.get_size()
             # BADSIZE comes back as -1 or a huge unsigned; either way it is
             # not an answer and must not be written as one.
-            if name and size and size != idaapi.BADSIZE and size < (1 << 31):
+            # BADSIZE is not an attribute of idaapi on every build, so it is
+            # fetched defensively rather than named: an AttributeError here
+            # would abort the export with a message about the wrong thing.
+            bad = getattr(idaapi, "BADSIZE", (1 << 64) - 1)
+            if name and size and size != bad and 0 < size < (1 << 31):
                 found.append((name, size))
     if not found and hasattr(idautils, "Structs"):
         for _, sid, name in idautils.Structs():
@@ -109,6 +113,24 @@ def structures():
             if size:
                 found.append((name, size))
     return found
+
+
+def describe():
+    """What this build actually offers, printed when the export fails.
+
+    A script that dies inside IDA leaves whoever ran it holding a traceback and
+    no way to act on it. This prints the three facts a fix would need - the
+    version, whether the type library is reachable, and how many ordinals it
+    reports - so one failed run is enough to correct the script.
+    """
+    print("  ida version   : %s" % idaapi.get_kernel_version())
+    module, library = _type_library()
+    print("  type library  : %s" % ("reachable via %s" % module.__name__
+                                    if library is not None else "NOT reachable"))
+    if library is not None:
+        print("  ordinals      : %s" % _ordinal_limit(module, library))
+    print("  idautils.Structs: %s" % hasattr(idautils, "Structs"))
+    print("  idaapi.BADSIZE  : %s" % hasattr(idaapi, "BADSIZE"))
 
 
 def main():
@@ -127,4 +149,18 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Self-reporting on purpose. IDA runs this from a menu, so a bare traceback
+    # scrolls past in the Output window with no indication of which API was
+    # missing; catching it and describing the build turns one failed run into
+    # an actionable report.
+    try:
+        main()
+    except Exception:
+        import traceback
+        print("export_idb_struct_sizes FAILED")
+        traceback.print_exc()
+        print("this build reports:")
+        try:
+            describe()
+        except Exception:
+            print("  (even the description failed; paste the traceback above)")
