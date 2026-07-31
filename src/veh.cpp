@@ -2130,6 +2130,155 @@ int __cdecl stack_fix(int veh_id) {
 }
 
 /*
+Purpose: Board the eligible units stacked with the specified transport or carrier, optionally
+         lifting the whole stack off the map afterwards. Mode 0 marks and counts without moving
+         anything; mode 1 sorts the stack first and lifts each boarder plus the subject to the
+         off-map holding square; mode 2+ makes a single pass and short-circuits to the lift when
+         the subject already sits on a faction-owned base.
+Original Offset: 005B8EE0
+Return Value: Remaining capacity for mode 0, otherwise the unit id
+Status: Complete
+*/
+int __cdecl stack_veh(int veh_id, int mode) {
+    if (veh_id < 0) {
+        return mode ? veh_id : 0;
+    }
+    if (!veh_cargo(veh_id) && !has_abil(Vehs[veh_id].proto_id, ABL_CARRIER)) {
+        // Neither a transport nor a carrier: nothing can be stacked onto it.
+        return mode ? veh_drop(veh_lift(veh_id), -2, -2) : 0;
+    }
+    if (*IsMultiplayerNet) {
+        stack_fix(veh_id); // return value is discarded by the original
+    }
+    if (mode) {
+        if (mode > 1) {
+            // Unguarded on purpose: the original reads this tile without an on_map() check and
+            // halves x with an arithmetic shift, so map_loc()'s uint32_t parameter would send a
+            // negative x roughly a gigabyte away. Same for the two other unguarded reads below.
+            const Map *tile = &(*MapTiles)[(Vehs[veh_id].x >> 1)
+                + Vehs[veh_id].y * (int)*MapLongitude];
+            // The original also compares the masked nibble against 0, which is vacuous.
+            if ((tile->bit & BIT_BASE_IN_TILE) && (tile->val2 & 0xF) < MaxPlayerNum) {
+                return veh_drop(veh_lift(veh_id), -2, -2);
+            }
+        }
+        stack_sort(veh_id);
+    } else {
+        for (int i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
+            Vehs[i].state &= ~VSTATE_UNK_1; // so this call's boarding flags start clean
+        }
+    }
+    int16_t subject_x = Vehs[veh_id].x;
+    int16_t subject_y = Vehs[veh_id].y;
+    BOOL is_open_ocean = on_map(subject_x, subject_y) && is_ocean(subject_x, subject_y)
+        && !((bit_at(subject_x, subject_y) & BIT_BASE_IN_TILE)
+             && owner_at(subject_x, subject_y) < MaxPlayerNum);
+    uint32_t subject_faction = Vehs[veh_id].faction_id;
+    BOOL subject_is_air = (get_triad(veh_id) == TRIAD_AIR);
+    int cargo_left = (int)veh_cargo(veh_id);
+    int carrier_left = has_abil(Vehs[veh_id].proto_id, ABL_CARRIER)
+        ? ((int)veh_cargo(veh_id) < 1 ? 1 : (int)veh_cargo(veh_id)) : 0;
+    if (!subject_faction) {
+        cargo_left = 99;
+    }
+    int pass_count = (mode <= 1) ? 2 : 1;
+    for (int pass = 0; pass < pass_count; pass++) {
+        int i = mode ? veh_id : veh_top(veh_id);
+        while (i >= 0) {
+            if (!cargo_left && !carrier_left) {
+                break;
+            }
+            // Captured before the body: mode 1 lifts the unit, rewriting this link.
+            // The original's redundant negative test on the link is dropped.
+            // (This note sits on its own line rather than trailing the statement because
+            // tools/mutate_and_verify.py scans a trailing comment as if it were code: the
+            // `< 0` it used to carry produced two mutants that only ever rewrote a comment,
+            // so they were unkillable by construction. The tool already skips whole-line
+            // comments for exactly that reason.)
+            int next_veh_id = Vehs[i].next_veh_id_stack;
+            if (Vehs[i].faction_id != subject_faction) {
+                i = next_veh_id;
+                continue;
+            }
+            BOOL eligible = (cargo_left && get_triad(i) == TRIAD_LAND && !veh_cargo(i));
+            if (!eligible && (!carrier_left || get_triad(i) != TRIAD_AIR
+                              || has_abil(Vehs[i].proto_id, ABL_CARRIER))) {
+                i = next_veh_id;
+                continue;
+            }
+            BOOL accept;
+            if (!pass) {
+                // First pass re-boards only what is already recorded as riding this transport.
+                accept = (Vehs[i].order == ORDER_SENTRY_BOARD
+                          && Vehs[i].waypoint_x[0] == veh_id);
+            } else {
+                accept = true;
+                if (subject_is_air) {
+                    const Map *tile = &(*MapTiles)[(Vehs[veh_id].x >> 1)
+                        + Vehs[veh_id].y * (int)*MapLongitude];
+                    uint32_t owner = tile->val2 & 0xF;
+                    // Note the > 0 here: unlike the two other owner tests, faction 0 is rejected.
+                    if (!((tile->bit & BIT_BASE_IN_TILE) && owner < MaxPlayerNum && owner > 0)
+                        && !(tile->bit & BIT_AIRBASE)) {
+                        accept = false;
+                    }
+                }
+                uint32_t unit_faction = Vehs[i].faction_id;
+                BOOL both_unk_200 = ((Vehs[veh_id].state & VSTATE_UNK_200)
+                                     && (Vehs[i].state & VSTATE_UNK_200));
+                if (accept && ((1 << unit_faction) & *FactionsStatus) && !both_unk_200) {
+                    accept = (Vehs[i].order == ORDER_SENTRY_BOARD)
+                        ? (Vehs[i].waypoint_x[0] < 0) : is_open_ocean;
+                } else if (accept) {
+                    if (Vehs[i].state & VSTATE_UNK_40000) {
+                        const Map *tile = &(*MapTiles)[(Vehs[i].x >> 1)
+                            + Vehs[i].y * (int)*MapLongitude];
+                        accept = ((Vehs[i].state & VSTATE_UNK_20000)
+                                  && PlayersData[unit_faction].region_base_plan[tile->region]
+                                         == PLAN_NAVAL_TRANSPORT);
+                    } else {
+                        uint8_t plan = VehPrototypes[Vehs[i].proto_id].plan;
+                        if (Vehs[i].order == ORDER_HOLD || plan == PLAN_ALIEN_ARTIFACT
+                            || plan == PLAN_TERRAFORMING) {
+                            accept = is_open_ocean;
+                        } else if (!is_open_ocean) {
+                            int16_t unit_x = Vehs[i].x;
+                            int16_t unit_y = Vehs[i].y;
+                            accept = !(on_map(unit_x, unit_y)
+                                       && PlayersData[unit_faction]
+                                              .region_base_plan[region_at(unit_x, unit_y)]
+                                          == PLAN_DEFENSIVE
+                                       && plan < PLAN_COLONIZATION);
+                        }
+                    }
+                }
+            }
+            if (accept && !(!mode && (Vehs[i].state & VSTATE_UNK_1))) {
+                sleep(i);
+                Vehs[i].waypoint_x[0] = (int16_t)veh_id;
+                if (mode) {
+                    veh_drop(veh_lift(i), -2, -2);
+                    Vehs[i].state &= ~VSTATE_UNK_10000;
+                } else {
+                    Vehs[i].state |= VSTATE_UNK_1;
+                }
+                if (carrier_left > 0) {
+                    carrier_left--;
+                }
+                if (cargo_left > 0) {
+                    cargo_left--;
+                }
+            }
+            i = next_veh_id;
+        }
+    }
+    if (mode) {
+        return veh_drop(veh_lift(veh_id), -2, -2);
+    }
+    return veh_cargo(veh_id) ? cargo_left : carrier_left;
+}
+
+/*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
 Original Offset: 005B9580
 Return Value: Dependent on type parameter

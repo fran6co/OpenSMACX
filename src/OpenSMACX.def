@@ -305,6 +305,7 @@ EXPORTS
     "?stack_sort@@YAXI@Z" = _Z10stack_sortj
     "?stack_sort_2@@YAXI@Z" = _Z12stack_sort_2j
     "?stack_fix@@YAHH@Z" = _Z9stack_fixi
+    "?stack_veh@@YAHHH@Z" = _Z9stack_vehii
     "?name_base@@YAXIPADHH@Z" = _Z9name_basejPcii
     "?start_timers@@YAXXZ" = _Z12start_timersv
     "?stop_timers@@YAXXZ" = _Z11stop_timersv
