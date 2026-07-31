@@ -703,8 +703,17 @@ if(BUILD_TESTING)
         add_test(NAME recovery-leaf-tests
             COMMAND ${OPENSMACX_RECOVERY_TEST_COMMAND}
         )
+        # The reversed run is the regression test for order dependence between
+        # leaf cases - a case that borrows a pointer another case left behind
+        # passes forward and faults reversed. It was documented as such while
+        # nothing ran it; a guarantee nobody executes is a comment.
+        add_test(NAME recovery-leaf-tests-reversed
+            COMMAND ${OPENSMACX_RECOVERY_TEST_COMMAND} -- --reverse
+        )
     else()
         add_test(NAME recovery-leaf-tests COMMAND recovery-leaf-tests)
+        add_test(NAME recovery-leaf-tests-reversed
+            COMMAND recovery-leaf-tests --reverse)
     endif()
 
     # Direct-source tests for the gameplay core.

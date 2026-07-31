@@ -158,6 +158,9 @@ void test_guarded_delegates() {
 
     std::vector<uint8_t> sw(sizeof(StatusWin) + 32), sw_want(sw.size());
     auto *status = reinterpret_cast<StatusWin *>(sw.data() + 16);
+    // `sw` dies at the closing brace; hand the pointer back so nothing later
+    // dereferences this frame's storage.
+    const uint8_t *const saved_status_object = g_status_object;
     g_status_object = sw.data() + 16;
     auto set_held = [&](int32_t value) {
         std::memcpy(sw.data() + 16 + 0x15D4, &value, sizeof(value));
@@ -190,6 +193,7 @@ void test_guarded_delegates() {
     expect(g_release_calls == 1);
     SubInterfaceOriginalReleaseIfaceMode = saved_release;
     SubInterfaceGlobal = saved_global;
+    g_status_object = saved_status_object;
 }
 
 namespace {

@@ -18,6 +18,11 @@ def main():
     parser.add_argument("--executable", required=True)
     parser.add_argument("--wine")
     parser.add_argument("--wine-prefix")
+    # Everything after `--` goes to the test binary untouched. Without this a
+    # test that takes a flag can only be run by hand, which is how
+    # recovery-leaf-tests' `--reverse` came to be documented as "the regression
+    # test" for an ordering bug while nothing in CI ever ran it.
+    parser.add_argument("test_args", nargs="*", metavar="-- ARG...")
     args = parser.parse_args()
 
     executable = Path(args.executable).expanduser().resolve()
@@ -25,7 +30,8 @@ def main():
         parser.error(f"test executable not found: {executable}")
 
     if os.name == "nt":
-        raise SystemExit(subprocess.run([str(executable)]).returncode)
+        raise SystemExit(
+            subprocess.run([str(executable), *args.test_args]).returncode)
     if not args.wine_prefix:
         parser.error("a dedicated --wine-prefix is required")
 
@@ -36,7 +42,8 @@ def main():
     environment["WINEPREFIX"] = str(wine_prefix)
     keep_prefix_running = os.environ.get(KEEP_OWNED_PREFIX_ENV) == "1"
     try:
-        result = subprocess.run([wine, str(executable)], env=environment).returncode
+        result = subprocess.run([wine, str(executable), *args.test_args],
+                                env=environment).returncode
     finally:
         if not keep_prefix_running:
             stop_owned_wine_prefix(wine_prefix, wine)

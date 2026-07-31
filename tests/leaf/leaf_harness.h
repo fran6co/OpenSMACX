@@ -18,15 +18,23 @@
 // and configure fails loudly if you forget it.
 //
 // WHY CASES CARRY A NUMBER
-//   The order is load-bearing, not cosmetic.  Reversing the pre-split main()
-//   call list faults under Wine: test_wave_device_construction reads through
-//   g_wave_dtor_obj, which only test_wave_destructor (position 200 of 229)
-//   ever assigns, so running the former first dereferences a null pointer.
 //   Static-initialisation order across translation units is unspecified, so a
 //   registry that ran cases in registration order would be at the mercy of the
 //   link line.  Each case therefore carries its position in the original
 //   main() call list and the harness sorts by it.  The order is a property of
-//   the sources.
+//   the sources, and it is reproduced exactly so that this split stayed a
+//   refactor.
+//
+//   The number is NOT a licence to depend on the order.  It used to be: the
+//   pre-split call list could not be reversed, because
+//   test_wave_device_construction and test_wave_device_groups read through
+//   g_wave_dtor_obj, which only test_wave_destructor (position 200 of 229)
+//   assigned - and which it leaked as a pointer into a std::vector destroyed
+//   at its own return, so the two readers were reading freed heap even in the
+//   order that "worked".  That is fixed: every case that installs one of those
+//   hooks now owns the storage they land in and restores the pointer, and the
+//   suite passes under `--reverse` as well as forwards.  `--reverse` is the
+//   regression test for it.
 //
 //   There is a second, independent hazard at the same seam.  The pre-split
 //   main() carried this note, and it still applies:
@@ -41,8 +49,9 @@
 //     around that call site, not a bug in add() or in this test; moving the
 //     call site to the end of main() avoids it without masking it.
 //
-//   Both hazards are preserved rather than fixed: the split reproduces the
-//   baseline order exactly, and neither is this refactor's to repair.
+//   That one is still preserved rather than fixed, and it is not in scope
+//   here.  The forward order keeps it out of the way; measured, `--reverse`
+//   does not trip it either.
 #ifndef OPENSMACX_TESTS_LEAF_LEAF_HARNESS_H
 #define OPENSMACX_TESTS_LEAF_LEAF_HARNESS_H
 

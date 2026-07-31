@@ -215,6 +215,35 @@ int main(int argc, char **argv) {
     static int sprite_memory_sink = 0;
     SpriteMemoryUsed = &sprite_memory_sink;
 
+    // Argument parsing is strict on purpose.  An earlier standalone sweep of
+    // this suite was vacuous because an unrecognised selector simply fell
+    // through to the run loop and then to `return failures == 0`, so every
+    // misspelled case name reported a pass without running anything.  An
+    // unknown argument is now a hard error, and the run loop below refuses to
+    // report success unless it can say how many cases it actually called.
+    bool list_only = false;
+    bool reverse = false;
+    const char *only = nullptr;
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--list") == 0) {
+            list_only = true;
+        } else if (std::strcmp(argv[i], "--reverse") == 0) {
+            reverse = true;
+        } else if (std::strcmp(argv[i], "--only") == 0) {
+            if (i + 1 >= argc) {
+                std::fprintf(stderr, "leaf: --only needs a case name\n");
+                return 2;
+            }
+            only = argv[++i];
+        } else {
+            std::fprintf(stderr,
+                         "leaf: unknown argument %s (want --list, --reverse "
+                         "or --only <case>)\n",
+                         argv[i]);
+            return 2;
+        }
+    }
+
     if (!verify_registry()) {
         return 2;
     }
@@ -223,15 +252,53 @@ int main(int argc, char **argv) {
     // --list prints the names that would run, in run order.  The neutrality
     // proof diffs this against the baseline extracted from the pre-split
     // main().
-    if (argc > 1 && std::strcmp(argv[1], "--list") == 0) {
+    if (list_only) {
         for (int i = 0; i < leaf::g_case_count; ++i) {
             std::printf("%s\n", leaf::g_cases[i].name);
         }
         return 0;
     }
 
-    for (int i = 0; i < leaf::g_case_count; ++i) {
+    // --reverse runs the same cases back to front.  It is the direct evidence
+    // that no case depends on an earlier one having run: a suite that passes
+    // in both directions has no ordering channel left to hide in.
+    int ran = 0;
+    for (int k = 0; k < leaf::g_case_count; ++k) {
+        const int i = reverse ? (leaf::g_case_count - 1 - k) : k;
+        if (only != nullptr && std::strcmp(leaf::g_cases[i].name, only) != 0) {
+            continue;
+        }
+        if (only != nullptr) {
+            std::fprintf(stderr, "leaf: RUN %s\n", leaf::g_cases[i].name);
+            std::fflush(stderr);
+        }
         leaf::g_cases[i].fn();
+        ++ran;
+        if (only != nullptr) {
+            std::fprintf(stderr, "leaf: DONE %s (failures=%d)\n",
+                         leaf::g_cases[i].name, failures);
+            std::fflush(stderr);
+        }
+    }
+
+    // The run marker.  It is printed unconditionally so that "the suite was
+    // green" and "the suite ran something" are never the same claim.
+    std::fprintf(stderr, "leaf: ran %d of %d case(s), %d failure(s)\n", ran,
+                 leaf::g_case_count, failures);
+    if (ran == 0) {
+        std::fprintf(stderr,
+                     "leaf: no case ran%s; refusing to report success\n",
+                     only != nullptr
+                         ? " - --only matched no registered case name"
+                         : "");
+        return 2;
+    }
+    if (only != nullptr && ran != 1) {
+        std::fprintf(stderr,
+                     "leaf: --only %s selected %d cases; names are unique so "
+                     "this cannot happen\n",
+                     only, ran);
+        return 2;
     }
     return failures == 0 ? 0 : 1;
 }

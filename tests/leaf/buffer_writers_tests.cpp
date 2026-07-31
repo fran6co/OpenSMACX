@@ -854,6 +854,8 @@ void test_base_button_set() {
     std::memcpy(parent2.data(), &pvt, 4);
     g_bb_retarget = true;
     g_bb_retarget_id = 555;
+    // `parent2` dies at the closing brace; restored at the end of the case.
+    void *const saved_retarget_parent = g_bb_retarget_parent;
     g_bb_retarget_parent = parent2.data();
     set32(0xA78, 7);
     set32(0xC4, reinterpret_cast<uintptr_t>(parent.data()));
@@ -874,6 +876,7 @@ void test_base_button_set() {
     expect(g_bb_notify_id == 7 && g_bb_notify_value == 2000);
     // Nothing past the object was disturbed.
     expect(get32(sizeof(BaseButton)) == 0);
+    g_bb_retarget_parent = saved_retarget_parent;
 }
 
 void *g_tex_freed;
