@@ -67,7 +67,31 @@ DWORD __stdcall observe_wave_time_get_time(void) {
 // g_wave_dtor_obj so they can witness which vtable was installed at call time
 // and, for the release hook, re-link the wave to make the inlined base
 // destructor's normally-dead unlink reachable.
+//
+// THE POINTER IS PART OF THE HOOK'S CONTRACT. Installing any of the three
+// hooks below arms a dereference of g_wave_dtor_obj, so a case that installs
+// one owes it storage - and owes the next case the pointer back. Every case
+// that touches it therefore saves it, points it at storage of its own that
+// outlives the hook, and restores it, exactly as it does for the WaveXxx
+// function-pointer globals.
+//
+// The offsets reached through it, so the storage can be sized rather than
+// guessed:
+//     observe_wave_pull_from_group   reads        +0x00..+0x03
+//     observe_wave_release           reads        +0x00..+0x03
+//                                    reads/writes +0x40..+0x4B
+//     observe_wave_operator_delete   reads        +0x4C..+0x4F
+// The high-water mark is 0x50 bytes. kWaveDtorObjBytes is sizeof(Wave), which
+// covers it and is what the pointer names in every case that has a real wave
+// to point at; a case that only needs somewhere safe for the hook to land uses
+// the constant directly.
 uint8_t *g_wave_dtor_obj;
+
+const size_t kWaveDtorObjBytes = sizeof(Wave);
+
+static_assert(kWaveDtorObjBytes >= 0x50,
+              "g_wave_dtor_obj storage must reach the +0x4C dword that "
+              "observe_wave_operator_delete reads");
 
 void *g_wave_dtor_pull_dev;
 
@@ -1015,6 +1039,10 @@ void test_wave_volume_fname_play() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *wave = reinterpret_cast<Wave *>(obj);
+    // The hooks installed below read through g_wave_dtor_obj, and `obj`
+    // points into `storage`, which dies at the closing brace: save the
+    // pointer and hand it back so nothing outlives this frame.
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
     g_wave_dtor_obj = obj;
 
     auto *const saved_new = WaveOperatorNew;
@@ -1248,6 +1276,7 @@ void test_wave_volume_fname_play() {
     WaveDeviceGroupVolumes = saved_gvol;
     WaveDeviceGlobal = saved_dev_global;
     WaveTimeGetTimeSlot = saved_time;
+    g_wave_dtor_obj = saved_dtor_obj;
 }
 
 void test_wave_load_empty() {
@@ -1554,6 +1583,10 @@ void test_wave_init() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *wave = reinterpret_cast<Wave *>(obj);
+    // The hooks installed below read through g_wave_dtor_obj, and `obj`
+    // points into `storage`, which dies at the closing brace: save the
+    // pointer and hand it back so nothing outlives this frame.
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
     g_wave_dtor_obj = obj;
 
     auto *const saved_delete = WaveOperatorDelete;
@@ -1720,6 +1753,7 @@ void test_wave_init() {
     WaveOperatorNew = saved_new;
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;
+    g_wave_dtor_obj = saved_dtor_obj;
 }
 
 void test_wave_device_forwarder_family() {
@@ -2059,6 +2093,9 @@ void test_wave_device_lifecycle() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *device = reinterpret_cast<Wave_Device *>(obj);
+    // `obj` points into `storage`, which dies at the closing brace; hand the
+    // pointer back so no later case can dereference this frame's memory.
+    uint8_t *const saved_down_obj = g_wdev_down_obj;
     g_wdev_down_obj = obj;
 
     auto **const saved_factory = WaveDeviceFactorySlot;
@@ -2194,6 +2231,7 @@ void test_wave_device_lifecycle() {
 
     WaveDeviceFactorySlot = saved_factory;
     WaveDeviceDestroySlot = saved_destroy;
+    g_wdev_down_obj = saved_down_obj;
 }
 
 void test_sound_chain_and_dtor() {
@@ -2201,6 +2239,10 @@ void test_sound_chain_and_dtor() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *sound = reinterpret_cast<Sound *>(obj);
+    // The hooks installed below read through g_wave_dtor_obj, and `obj`
+    // points into `storage`, which dies at the closing brace: save the
+    // pointer and hand it back so nothing outlives this frame.
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
     g_wave_dtor_obj = obj;
 
     auto *const saved_delete = WaveOperatorDelete;
@@ -2422,6 +2464,7 @@ void test_sound_chain_and_dtor() {
     WaveDeviceReleaseGuard = saved_guard;
     WaveChainHead = saved_head;
     WaveChainTail = saved_tail;
+    g_wave_dtor_obj = saved_dtor_obj;
 }
 
 void test_wave_device_construction() {
@@ -2429,7 +2472,23 @@ void test_wave_device_construction() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *device = reinterpret_cast<Wave_Device *>(obj);
+    // Same contract as g_wave_dtor_obj below, and the same hazard: `obj` points
+    // into `storage`, which dies at the closing brace, and four hooks
+    // (observe_vector_ctor_iter, observe_vector_dtor_iter, observe_wdev_destroy,
+    // observe_wdev_device_down) dereference this. Leaving it set handed the next
+    // case a pointer into a dead vector.
+    uint8_t *const saved_down_obj = g_wdev_down_obj;
     g_wdev_down_obj = obj;
+
+    // observe_wave_operator_delete reads through g_wave_dtor_obj at +0x4C on
+    // every free, so installing it means owning storage for it. This case used
+    // to inherit whatever pointer another case had left behind, which made it
+    // pass only when test_wave_destructor had already run - and read that
+    // case's freed vector when it had. Its lifetime is this whole function, so
+    // it outlives the hook, which is uninstalled just below.
+    std::vector<uint8_t> dtor_obj_backing(kWaveDtorObjBytes, 0);
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
+    g_wave_dtor_obj = dtor_obj_backing.data();
 
     auto *const saved_delete = WaveOperatorDelete;
     auto *const saved_vctor = VectorCtorIterator;
@@ -2580,6 +2639,8 @@ void test_wave_device_construction() {
     WaveOperatorDelete = saved_delete;
     VectorCtorIterator = saved_vctor;
     VectorDtorIterator = saved_vdtor;
+    g_wave_dtor_obj = saved_dtor_obj;
+    g_wdev_down_obj = saved_down_obj;
 }
 
 // --- Wave_Device::select fixtures ---------------------------------------
@@ -3192,6 +3253,8 @@ void test_ambience_dtor() {
     void *const F2 = &fbuf2;
     void *const D = &dbuf1;
     void *const D2 = &dbuf2;
+    // `obj` dies with this frame; restored at the close beside the other globals.
+    uint8_t *const saved_amb_obj = g_amb_obj;
     g_amb_obj = obj;
     g_amb_guard_cell = &guard;
     auto reset = [&](uint32_t flags, void *fname, void *device) {
@@ -3344,6 +3407,7 @@ void test_ambience_dtor() {
     WaveDeviceReleaseGuard = saved_guard;
     WaveChainHead = saved_head;
     WaveChainTail = saved_tail;
+    g_amb_obj = saved_amb_obj;
 }
 
 // --- popup_wave_callback fixtures ---------------------------------------
@@ -3827,6 +3891,14 @@ void test_wave_device_groups() {
     uint8_t *const obj = storage.data() + 16;
     auto *device = reinterpret_cast<Wave_Device *>(obj);
 
+    // As in test_wave_device_construction: installing
+    // observe_wave_operator_delete arms a read through g_wave_dtor_obj at
+    // +0x4C, so this case owns the storage the hook lands in and hands the
+    // pointer back when it is done.
+    std::vector<uint8_t> dtor_obj_backing(kWaveDtorObjBytes, 0);
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
+    g_wave_dtor_obj = dtor_obj_backing.data();
+
     auto *const saved_insert = WaveDeviceGroupInsert;
     auto *const saved_delete = WaveOperatorDelete;
     WaveDeviceGroupInsert = &observe_wave_group_insert;
@@ -4092,6 +4164,7 @@ void test_wave_device_groups() {
 
     WaveDeviceGroupInsert = saved_insert;
     WaveOperatorDelete = saved_delete;
+    g_wave_dtor_obj = saved_dtor_obj;
 }
 
 void test_sound_set_type_and_load() {
@@ -4099,6 +4172,10 @@ void test_sound_set_type_and_load() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *sound = reinterpret_cast<Sound *>(obj);
+    // The hooks installed below read through g_wave_dtor_obj, and `obj`
+    // points into `storage`, which dies at the closing brace: save the
+    // pointer and hand it back so nothing outlives this frame.
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
     g_wave_dtor_obj = obj;
 
     auto set32 = [&](size_t off, uint32_t v) { std::memcpy(obj + off, &v, 4); };
@@ -4306,6 +4383,7 @@ void test_sound_set_type_and_load() {
     WaveOperatorNew = saved_new;
     WaveDeviceCreateSlot = saved_create;
     WaveDeviceReleaseGuard = saved_guard;
+    g_wave_dtor_obj = saved_dtor_obj;
 }
 
 void test_ambience_construct() {
@@ -4434,6 +4512,13 @@ void test_wave_destructor() {
     std::vector<uint8_t> expected(storage.size());
     uint8_t *const obj = storage.data() + 16;
     auto *wave = reinterpret_cast<Wave *>(obj);
+
+    // `obj` points into `storage`, which dies at the closing brace. Leaking it
+    // into g_wave_dtor_obj left every later case that installs one of the
+    // g_wave_dtor_obj hooks reading freed heap, and left every case that runs
+    // before this one dereferencing a null pointer. Save and restore it with
+    // the rest.
+    uint8_t *const saved_dtor_obj = g_wave_dtor_obj;
     g_wave_dtor_obj = obj;
 
     auto *const saved_pull = WaveDevicePullFromGroup;
@@ -4687,6 +4772,7 @@ void test_wave_destructor() {
     WaveDeviceReleaseGuard = saved_guard;
     WaveChainHead = saved_head;
     WaveChainTail = saved_tail;
+    g_wave_dtor_obj = saved_dtor_obj;
 }
 
 void test_delegating_closers() {

@@ -126,6 +126,8 @@ void test_sound_fade() {
     vtable[0x28 / 4] = reinterpret_cast<void *>(&observe_sound_fallback);
     void *vtable_ptr = vtable;
     std::memcpy(storage.data(), &vtable_ptr, sizeof(vtable_ptr));
+    // `storage` dies at the closing brace; restored at the end of the case.
+    void *const saved_slot0_obj = g_sound_slot0_obj;
     g_sound_slot0_obj = storage.data();
 
     // Slot 0 accepts (nonzero): no fallback, and it got the argument and this.
@@ -167,6 +169,7 @@ void test_sound_fade() {
     sound_fade_redirect(sound, nullptr, 42);
     expect(g_sound_slot0_calls == 1 && g_sound_slot0_arg == 42);
     expect(g_sound_fallback_calls == 1);
+    g_sound_slot0_obj = saved_slot0_obj;
 }
 
 namespace {
