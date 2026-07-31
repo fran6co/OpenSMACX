@@ -475,6 +475,14 @@ def step(state: State, instruction) -> State:
                                        state.flags)
         write_operand(state, instruction, operands[0], result)
         return state
+    if name.startswith("set") and len(name) > 3:
+        # setcc writes ONE byte and leaves the rest of the register alone,
+        # which write_register already handles; the value is the condition
+        # itself, so the two share a table and cannot drift apart.
+        value = z3.If(condition(name[3:], state.flags),
+                      z3.BitVecVal(1, 32), z3.BitVecVal(0, 32))
+        write_operand(state, instruction, operands[0], value)
+        return state
     if name == "cmp":
         width = operand_width(instruction, operands[0])
         left = read_operand(state, instruction, operands[0])
@@ -501,6 +509,66 @@ def step(state: State, instruction) -> State:
     raise Unsupported(f"{name} {instruction.op_str}")
 
 
+def encode_function(code: bytes, address: int, state: State,
+                    limit: int = 64) -> State:
+    """Every path from entry to `ret`, merged with ITE.
+
+    The recovered bodies this targets have a median of six instructions and p90
+    of three branches, so enumerating paths is cheaper than any cleverness and
+    needs no invariants. `limit` bounds the recursion against a decode that
+    runs away rather than against real control flow.
+
+    A LOOP RAISES. Bounding one silently would produce a formula about a
+    program that runs a fixed number of iterations, which is a different
+    program from the one being proved - and it would be a formula the prover
+    would happily discharge.
+    """
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    engine = Cs(CS_ARCH_X86, CS_MODE_32)
+    engine.detail = True
+    stream = {item.address: item for item in engine.disasm(code, address)}
+    if not stream:
+        raise Unsupported("nothing decoded")
+
+    def walk(at: int, current: State, seen: frozenset, depth: int) -> State:
+        while True:
+            if depth > limit:
+                raise Unsupported("path longer than the limit")
+            item = stream.get(at)
+            if item is None:
+                raise Unsupported(f"control leaves the block at {at:#x}")
+            if at in seen:
+                raise Unsupported(f"loop back to {at:#x}")
+            seen = seen | {at}
+            name = item.mnemonic
+            if name == "ret":
+                return current
+            if name == "jmp":
+                target = item.operands[0]
+                if target.type != 2:          # X86_OP_IMM
+                    raise Unsupported("indirect jmp")
+                at = target.imm
+                depth += 1
+                continue
+            if name.startswith("j"):
+                target = item.operands[0]
+                if target.type != 2:
+                    raise Unsupported("indirect branch")
+                when = condition(name[1:], current.flags)
+                # Both sides explored from the SAME state, then merged. The
+                # copies matter: `step` mutates, so sharing one state would
+                # let the taken path's writes leak into the untaken one.
+                taken = walk(target.imm, current.copy(), seen, depth + 1)
+                fell = walk(item.address + item.size, current.copy(), seen,
+                            depth + 1)
+                return merge(taken, fell, when)
+            current = step(current, item)
+            at = item.address + item.size
+            depth += 1
+
+    return walk(address, state, frozenset(), 0)
+
+
 def encode_block(code: bytes, address: int, state: State) -> State:
     """Fold a straight-line block into the state, stopping at `ret`.
 
@@ -518,3 +586,62 @@ def encode_block(code: bytes, address: int, state: State) -> State:
             raise Unsupported(f"control flow: {instruction.mnemonic}")
         state = step(state, instruction)
     return state
+
+
+# ---------------------------------------------------------------------------
+# Conditions, branches and path merging
+#
+# The recovered bodies this targets have a median of six instructions and p90
+# of three branches, with no loops - so every path from entry to `ret` is
+# enumerated and the results merged with ITE. No unrolling and no invariants,
+# because there is nothing to unroll.
+#
+# A LOOP IS REFUSED, not bounded. Silently unrolling one would produce a
+# formula about a program that runs a fixed number of iterations, which is a
+# different program from the one being proved.
+# ---------------------------------------------------------------------------
+
+def flag_set(flags, bit: int):
+    return (flags & z3.BitVecVal(bit, 32)) != z3.BitVecVal(0, 32)
+
+
+def condition(name: str, flags):
+    """The predicate a `j<cc>` or `set<cc>` tests, as a Z3 Bool.
+
+    Spelled out per mnemonic rather than derived, because the signed and
+    unsigned families read almost alike and differ in exactly the place that
+    matters: `jl` is SF != OF and `jb` is CF, and swapping them produces a
+    formula that agrees with the program on every non-negative input.
+    """
+    cf, pf, zf = flag_set(flags, CF), flag_set(flags, PF), flag_set(flags, ZF)
+    sf, of = flag_set(flags, SF), flag_set(flags, OF)
+    table = {
+        "o": of, "no": z3.Not(of),
+        "b": cf, "c": cf, "nae": cf,
+        "ae": z3.Not(cf), "nb": z3.Not(cf), "nc": z3.Not(cf),
+        "e": zf, "z": zf,
+        "ne": z3.Not(zf), "nz": z3.Not(zf),
+        "be": z3.Or(cf, zf), "na": z3.Or(cf, zf),
+        "a": z3.And(z3.Not(cf), z3.Not(zf)),
+        "nbe": z3.And(z3.Not(cf), z3.Not(zf)),
+        "s": sf, "ns": z3.Not(sf),
+        "p": pf, "pe": pf, "np": z3.Not(pf), "po": z3.Not(pf),
+        "l": sf != of, "nge": sf != of,
+        "ge": sf == of, "nl": sf == of,
+        "le": z3.Or(zf, sf != of), "ng": z3.Or(zf, sf != of),
+        "g": z3.And(z3.Not(zf), sf == of),
+        "nle": z3.And(z3.Not(zf), sf == of),
+    }
+    if name not in table:
+        raise Unsupported(f"condition {name}")
+    return table[name]
+
+
+def merge(taken: State, not_taken: State, when) -> State:
+    """One state from two, selected by the path condition."""
+    merged = State.__new__(State)
+    merged.regs = {name: z3.If(when, taken.regs[name], not_taken.regs[name])
+                   for name in REGISTERS}
+    merged.flags = z3.If(when, taken.flags, not_taken.flags)
+    merged.mem = z3.If(when, taken.mem, not_taken.mem)
+    return merged
