@@ -5,15 +5,17 @@
 // bodies live in tests/leaf/<family>_tests.cpp and register themselves; the
 // harness never has to be edited to add one.
 //
-// ADDING A TEST
+// ADDING A TEST - ONE FILE
 //   1. Append `void test_<name>()` to the family file it belongs to.
-//   2. Append `LEAF_CASE(LEAF_APPEND + n, test_<name>);` at the bottom of that
+//   2. Append `LEAF_CASE(LEAF_APPEND, test_<name>);` at the bottom of that
 //      same file.
-//   3. Bump that family's number in tests/leaf/leaf_case_manifest.h.
-// Step 3 is the only edit outside the family file, and it is checked at run
-// time: get it wrong and the binary refuses to run rather than quietly losing
-// or double-counting a case.  Nothing else - not main(), not the CMake list
-// unless the family itself is new - ever has to change.
+// That is the whole procedure.  There is no number to choose and no second
+// file to touch, so two recoveries in two different families share no file at
+// all and cannot conflict.  The per-family case counts are derived at build
+// time by tools/generate_leaf_manifest.py and still checked at run time, so a
+// case that stops registering still makes the binary refuse to run rather than
+// quietly losing coverage.  Only a brand-new family file needs a CMake edit,
+// and configure fails loudly if you forget it.
 //
 // WHY CASES CARRY A NUMBER
 //   The order is load-bearing, not cosmetic.  Reversing the pre-split main()
@@ -201,9 +203,13 @@ struct Registrar {
 #define LEAF_CASE(order, fn)                                                  \
     const ::leaf::Registrar leaf_registrar_##fn((order), #fn, &(fn), LEAF_FAMILY)
 
-// Baseline positions run 0..228.  A case added after the split uses
-// LEAF_APPEND + n so it sorts after every original case; ties break by name,
-// so the order is a property of the sources and not of the link line.
+// Baseline positions run 0..228.  A case added after the split registers at
+// LEAF_APPEND - bare, no offset - so it sorts after every original case.
+// Ties at LEAF_APPEND break by name, which is why no offset is needed and why
+// none should be invented: a number picked here would have to be unique across
+// every family file at once, which is precisely the global coordination this
+// split exists to remove.  The harness allows duplicate positions at or above
+// LEAF_APPEND and forbids them below it.
 #define LEAF_APPEND 100000
 
 #endif  // OPENSMACX_TESTS_LEAF_LEAF_HARNESS_H

@@ -1,8 +1,10 @@
 // Recovery leaf tests: win_and_graphic.
 //
 // Carved verbatim out of tests/recovery_leaf_tests.cpp.  Add a case by
-// appending a `void test_*()` here plus one LEAF_CASE line at the bottom, and
-// bumping this family's count in tests/leaf/leaf_case_manifest.h.
+// appending a `void test_*()` here plus `LEAF_CASE(LEAF_APPEND, test_*);` at
+// the bottom.  This file is the only file that edit touches: the per-family
+// case counts are derived from these `LEAF_CASE(` lines at build time, and
+// LEAF_APPEND needs no offset because ties there break by name.
 #include "leaf_shared.h"
 
 #define LEAF_FAMILY "win_and_graphic"

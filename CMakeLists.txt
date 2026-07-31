@@ -561,9 +561,7 @@ if(BUILD_TESTING)
     # initialiser can be discarded for want of --whole-archive; and one
     # explicit line per family, so a missing family is visible here as well as
     # at run time.
-    set(OPENSMACX_LEAF_TEST_SRCS
-        tests/leaf/leaf_harness.cpp
-        tests/leaf/leaf_stubs.cpp
+    set(OPENSMACX_LEAF_FAMILY_SRCS
         tests/leaf/core_construction_tests.cpp
         tests/leaf/leaf_recoveries_tests.cpp
         tests/leaf/widget_accessors_tests.cpp
@@ -583,12 +581,79 @@ if(BUILD_TESTING)
         tests/leaf/pops_and_console_tests.cpp
         tests/leaf/thunks_tests.cpp
     )
+    set(OPENSMACX_LEAF_TEST_SRCS
+        tests/leaf/leaf_harness.cpp
+        tests/leaf/leaf_stubs.cpp
+        ${OPENSMACX_LEAF_FAMILY_SRCS}
+    )
 
+    # The case manifest is derived, never edited: it is the file that two
+    # independent recoveries in different families would otherwise both have to
+    # touch.
+    #
+    # It must NOT be derived from OPENSMACX_LEAF_FAMILY_SRCS, which is the list
+    # it exists to police.  Deriving it from that list would mean a family
+    # dropping out of the build also drops out of the manifest: both sides of
+    # the run-time count check would shrink together, the counts would still
+    # agree, and the guard would be blind exactly when it is needed.  So the
+    # counts come from an INDEPENDENT glob of the directory, and this configure
+    # step fails if the glob and the explicit list disagree in either
+    # direction.  The build still uses the explicit list; the glob exists only
+    # to notice divergence and to keep a dropped family present in the manifest
+    # so the binary refuses to run.
+    file(GLOB OPENSMACX_LEAF_FAMILY_GLOB CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/leaf/*_tests.cpp")
+    list(SORT OPENSMACX_LEAF_FAMILY_GLOB)
+    set(_leaf_listed_abs "")
+    foreach(_leaf_family_src IN LISTS OPENSMACX_LEAF_FAMILY_SRCS)
+        list(APPEND _leaf_listed_abs
+            "${CMAKE_CURRENT_SOURCE_DIR}/${_leaf_family_src}")
+    endforeach()
+    list(SORT _leaf_listed_abs)
+    if(NOT _leaf_listed_abs STREQUAL OPENSMACX_LEAF_FAMILY_GLOB)
+        set(_leaf_unlisted "")
+        foreach(_leaf_path IN LISTS OPENSMACX_LEAF_FAMILY_GLOB)
+            if(NOT _leaf_path IN_LIST _leaf_listed_abs)
+                string(APPEND _leaf_unlisted "\n    ${_leaf_path}")
+            endif()
+        endforeach()
+        set(_leaf_missing "")
+        foreach(_leaf_path IN LISTS _leaf_listed_abs)
+            if(NOT _leaf_path IN_LIST OPENSMACX_LEAF_FAMILY_GLOB)
+                string(APPEND _leaf_missing "\n    ${_leaf_path}")
+            endif()
+        endforeach()
+        message(FATAL_ERROR
+            "tests/leaf family files and OPENSMACX_LEAF_FAMILY_SRCS disagree.\n"
+            "On disk but not built (their cases would silently stop running):"
+            "${_leaf_unlisted}\n"
+            "Listed in CMake but not on disk:${_leaf_missing}\n"
+            "Every tests/leaf/*_tests.cpp must appear in "
+            "OPENSMACX_LEAF_FAMILY_SRCS and vice versa.")
+    endif()
+
+    set(OPENSMACX_LEAF_MANIFEST
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/leaf/leaf_generated_manifest.h")
+    add_custom_command(
+        OUTPUT "${OPENSMACX_LEAF_MANIFEST}"
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_leaf_manifest.py"
+            --output "${OPENSMACX_LEAF_MANIFEST}"
+            ${OPENSMACX_LEAF_FAMILY_GLOB}
+        DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_leaf_manifest.py"
+            ${OPENSMACX_LEAF_FAMILY_GLOB}
+        COMMENT "Deriving the leaf case manifest from tests/leaf/*_tests.cpp"
+        VERBATIM
+    )
 
     add_executable(recovery-leaf-tests
         ${OPENSMACX_LEAF_TEST_SRCS}
+        ${OPENSMACX_LEAF_MANIFEST}
         ${OPENSMACX_LEAF_SRC_CLOSURE}
     )
+    target_include_directories(recovery-leaf-tests PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/leaf")
 
     foreach(_leaf_target recovery-leaf-tests)
         target_compile_features(${_leaf_target} PRIVATE cxx_std_11)
@@ -960,6 +1025,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(lifted-crt-tests test_lifted_crt.py)
 
     opensmacx_add_python_tool_test(find-leaf-testable-tests test_find_leaf_testable.py)
+
+    opensmacx_add_python_tool_test(leaf-manifest-generator-tests
+        test_generate_leaf_manifest.py)
 
     opensmacx_add_python_tool_test(x86-lowerer-tests test_x86_lower.py)
 
