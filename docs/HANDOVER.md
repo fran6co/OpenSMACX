@@ -151,6 +151,37 @@ observable behaviour (task #32)**. No seed count reaches it.
    still not `lifted_x86.h`'s arbitrary one. `--no-undef` runs the experiment.
    See the migration results below; do not assume the shift rule is safe,
    `fixed_div` blames a `shl`.
+7. **`mutate_and_verify.py` defaults to a target that does not compile your
+   file.** Both `--target` and `--test` default to `recovery-leaf-tests`, whose
+   source closure (`OPENSMACX_LEAF_SRC_CLOSURE` in `CMakeLists.txt`) does not
+   include `src/veh.cpp`, `src/base.cpp` or `src/map.cpp`. Mutate a recovery in
+   one of those and every mutant comes back `STALE ... UNMEASURED` — which is
+   the harness being honest that the build succeeded without changing a byte,
+   and is worthless as evidence. Anything outside the leaf closure needs
+   `--target recovery-gameplay-tests --test recovery-gameplay-tests`. A sweep
+   that reports all-STALE has measured nothing; do not read it as a pass.
+8. **The promotion order is promote → classify → promote.**
+   `promote-recovery-metadata` runs only `verify_recovery_metadata.py
+   --promote`; it never runs `tools/classify_recovered_shapes.py`.
+   `docs/recovery/recovered-shapes.csv` is derived state and is *also* a stamp
+   input, and `summary.json`'s `unproven_by_shape` block is computed from it,
+   so a single promote publishes a new `functions.csv` beside a split derived
+   from the old shapes. Skipping the middle step leaves `recovery-metrics-tests`
+   red, which is the good outcome; the bad one is not noticing why.
+9. **`src/OpenSMACX.def` is a committed source, not a generated file.** Nothing
+   in `tools/` writes it — `verify_recovery_metadata.py`,
+   `export_recovery_inventory.py` and `build_export_recovery_queue.py` only
+   read it. A new recovery that should be exported needs its MSVC-decorated
+   alias added **by hand**, in the `"<decorated>" = <itanium>` form the file
+   already uses.
+10. **Parameter types must be `int`, not `uint32_t`, or the decoration will not
+    match.** MSVC mangles `int` as `H` and `unsigned int` as `I`, so the same
+    function is `?x_dist@@YAHHH@Z` with `int` parameters and `?x_dist@@YAHII@Z`
+    with `uint32_t` ones. The `.def` alias then names a symbol the DLL does not
+    export, and the failure surfaces at link or redirect-install time rather
+    than where the wrong type was written. `uint32_t` is right for *field*
+    writes at documented offsets; it is wrong in a signature that has to
+    decorate.
 
 ## Open work, in priority order
 
