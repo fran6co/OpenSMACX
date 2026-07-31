@@ -59,6 +59,48 @@ cannot be adopted raw. A class whose IDB sum equals its next-global upper bound
 is pinned exactly by two independent sources agreeing, and that is the shape
 the campaign should use.
 
+### How far the IDB parse actually gets, and why it stops there
+
+Pushed further with a better reader. python-idb's `get_tag_entries(tag="M")` is
+reliable where hand-rolled b-tree cursors silently drop entries - walking the
+raw prefix returned only xrefs for `Sprite` and only members for `Console`,
+which is a bug in the walking and not in the database.
+
+The header word of the member table varies - 0x1000 for Console and MapWin,
+0x1110 for Sprite, 0x1010 for Font - and it is IDA's SF_ALIGN field, bits 7..10,
+holding alignment as a power of two. Sprite's 0x1110 decodes to align 4, which
+is exactly the 0x29 -> 0x2c it needed. Decoding it moves the control from 31
+right to **33 right, 2 wrong, 5 silent**.
+
+It cannot get to zero, and the reason is data rather than parsing. `PullDown`
+declares ONE member of 0xa14 against a true 0xf40: the struct is an incomplete
+reconstruction, no parser recovers a member that was never entered, and nothing
+distinguishes the 54 unvalidated blocked classes from that case. `Console`
+remains 4 short with all 145 members parsed.
+
+Combining the two directions does not rescue it either. The IDB gives a LOWER
+bound and the next-global gives an UPPER one, so where they meet the size would
+be pinned by two independent sources - but they never meet: **0 of the 40 known
+classes** have IDB-lower equal to global-upper, because the upper bound measures
+to the next CONSTRUCTED global and is far looser than the object.
+
+So the IDB is a good lead that stops below the bar. What survives is the
+upper-bound staging route, which needs no IDB at all.
+
+### The other database cannot be opened here
+
+`.opensmacx/game/terranx.exe.i64` is the manually built one and, checked, it
+does NOT carry the game layouts: its exported C header defines 66 structs, all
+Windows SDK types - `HWND__`, `tagWNDCLASSA`, `_EXCEPTION_RECORD` - with **zero
+overlap** with the 40 pinned classes. Bigger meant more auto-analysis, not more
+human work.
+
+The database that does have the layouts is the older 32-bit `.idb`, and IDA
+Free refuses it: 32-bit databases need IDA Pro. IDA Free also ships no
+IDAPython - only IDC - so `tools/export_idb_struct_sizes.idc` exists against
+the function list in the install's own `idc/idc.idc`, for whoever has a licence
+that can open the file.
+
 ### Thinker was checked, and it is the weaker source
 
 The Thinker mod carries reverse-engineered headers for the same binary, and the
