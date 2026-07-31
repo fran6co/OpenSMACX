@@ -25,6 +25,11 @@ describe are assumed everywhere below and are not repeated here:
   end, and which schedule estimates that refutes. Read it before promising a
   date or building a throughput tool: two long-carried rate figures turned out
   to be wrong, and one planned workstream was cancelled on the numbers in it.
+- `docs/BYTE_MATCH_ROUTE.md` — whether recompiling a recovered body with the
+  original VC6 12.00.8168 reproduces the shipped instruction sequence. It does,
+  where the body was written to match: read it before writing a body you intend
+  to verify this way, because the flag set is `/c /O2 /Gy /GR- /Oy-` and the
+  source *form* matters — a ternary and an `if` are not the same object code.
 - `docs/STATIC_RECOMPILATION.md`, `docs/PORTING.md` — the stopped static-recompile
   pilot and the general porting notes.
 

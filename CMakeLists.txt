@@ -1035,6 +1035,12 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(disassembly-tool-tests test_disasm.py)
 
+    # The experiment itself needs Visual C++ 6.0 under Wine and skips cleanly
+    # without it, so only its offline half is registered: the COFF reader, the
+    # normalisation, and the comparator. Those are the parts that could turn a
+    # mismatch into a match, and they run everywhere.
+    opensmacx_add_python_tool_test(msvc6-byte-match-tests test_msvc6_byte_match.py)
+
     opensmacx_add_python_tool_test(generator-support-tests test_generator_support.py)
 
     opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)
