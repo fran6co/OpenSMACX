@@ -103,6 +103,11 @@ run.
 
 ### Flag sensitivity, measured
 
+Every figure in this table was measured **before** the `?bitmask` repair below,
+against the source as it then stood. Re-running the corrected flag row today
+gives 4/5, not 3/5; the rest are unremeasured and are left as the record of
+that run rather than silently restated.
+
 | flags | matches | note |
 |---|---:|---|
 | `/O2 /Gy /GR-` | 0/5 | frame pointer omitted; diverges at #0 |
@@ -136,16 +141,62 @@ runs these itself and prints them under a header saying so.
   This is a real defect in a body already marked `source_complete`: it behaves
   identically for every input below 2³¹ and differently for a negative one, so
   no value-level oracle over plausible inputs would have found it. Byte
-  matching found it on first contact. **It is deliberately left unfixed by the
+  matching found it on first contact. **It was deliberately left unfixed by the
   commit that records this**, because fixing it would move the score from 3/5
   to 4/5 in the same change that reports the score, and a pre-registered
-  experiment that edits its own inputs measures nothing. It is a defect to
-  repair on its own evidence, in its own change.
+  experiment that edits its own inputs measures nothing. It was a defect to
+  repair on its own evidence, in its own change — and it has since been, in the
+  change described under [The repair, measured separately](#the-repair-measured-separately).
 * **`0x00532A50 sub_532a50` — source form, not semantics.** The recovery uses a
   ternary, `remainder == 0 ? quotient : quotient + 1`, which VC6 lowers to
   `jne` with the arms swapped. Writing it as `if (remainder != 0) { ... }`
   reproduces the original **exactly**, 49 B / 24 mnemonics, `je` included. The
   two are the same function; the original's author wrote an if-statement.
+
+## The repair, measured separately: 3/5 → 4/5
+
+`?bitmask` was repaired in its own change, on the evidence above. The signature
+in `src/general.cpp` and `src/general.h` became
+`void __cdecl bitmask(int input, int *offset, int *mask)`, matching the
+prototype `functions.csv` had carried all along.
+
+| | before | after |
+|---|---|---|
+| `0x0050BA00` rebuilt | 33 B / 14 mn, mismatch #4 `and` vs `mov` | **39 B / 17 mn, MATCH** |
+| score, `/O2 /Gy /GR- /Oy-` | 3/5 | **4/5** |
+
+Two things fell out of the repair that the byte match itself does not see:
+
+* **The `.def` export was wrong too, and in the same direction.**
+  `src/OpenSMACX.def` aliased `"?bitmask@@YAXIPAI0@Z"` — the *unsigned*
+  decoration — which matched no name in the IDB, so it sat in
+  `summary.json`'s `redirects.unmatched` list, one of 319, without anything
+  failing. Correcting it to `"?bitmask@@YAXHPAHPAH@Z" = _Z7bitmaskiPiS_` drops
+  unmatched to 318 and populates the row's `redirect_exports` column for the
+  first time. The GCC half must be *derived* (`i686-w64-mingw32-nm -C`) and not
+  guessed: a wrong alias fails the link outright with
+  `cannot export <sym>: symbol not defined`, which is how the whole defect was
+  originally found.
+* **VC6 does not actually spell the name the catalogue does.** Compiling
+  `void __cdecl bitmask(int, int *, int *)` with 12.00.8168 emits
+  `?bitmask@@YAXHPAH0@Z` — the repeated `PAH` back-referenced to `0` — not
+  `?bitmask@@YAXHPAHPAH@Z`. The catalogue holds 48 names with a written-out
+  repeat against 38 using a back-reference, so the two spellings are mixed
+  across the corpus, and the pinned executable carries no symbol names at all
+  to arbitrate. The IDB name is what the export pipeline keys on, so that is
+  what the `.def` uses; the discrepancy is recorded here because it means
+  **catalogue decorations are reconstructions, not ground truth**, and any
+  future check that re-mangles a signature and compares strings will trip over
+  this on ~48 names.
+
+Callers were changed rather than cast. All six in `src/` plus one test helper
+declared local `uint32_t offset, mask` and passed their addresses; those locals
+became `int`, which is the type the out-parameters now write. No cast was added
+at any site: `functions.csv` records every caller's *own* original signature as
+signed too (`?set_fac@@YAXHHH@Z`, `?sea_coast@@YAHHH@Z`,
+`has_fac_built(int)`), so the `uint32_t` at those boundaries is the same
+over-declaration one level up, and a cast would have cemented it instead of
+leaving it visible.
 
 ## Controls
 

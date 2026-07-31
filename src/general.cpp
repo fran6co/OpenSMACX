@@ -872,7 +872,7 @@ Original Offset: 0050BA00
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bitmask(uint32_t input, uint32_t *offset, uint32_t *mask) {
+void __cdecl bitmask(int input, int *offset, int *mask) {
     *offset = input / 8;
     *mask = 1 << (input & 7);
 }

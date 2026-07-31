@@ -387,7 +387,7 @@ with open(exe_path, "r+b") as f, mmap.mmap(f.fileno(), 0) as bin_app:
     bin_app.seek(0x001002E0) # ?base_project@@YAHI@Z
     patch_call_bytes(bin_app)
     bin_app.write(struct.pack("<L", addr+4*172))
-    bin_app.seek(0x0010BA00) # ?bitmask@@YAXIPAI0@Z
+    bin_app.seek(0x0010BA00) # ?bitmask@@YAXHPAHPAH@Z
     patch_call_bytes(bin_app)
     bin_app.write(struct.pack("<L", addr+4*173))
     bin_app.seek(0x001BF010) # ?is_sensor@@YAHII@Z

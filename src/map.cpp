@@ -194,8 +194,8 @@ Return Value: Is there a path? true/false
 Status: Complete
 */
 BOOL __cdecl sea_coast(uint32_t region_dst, uint32_t region_src) {
-    uint32_t offset;
-    uint32_t mask;
+    int offset;
+    int mask;
     bitmask(region_src & RegionBounds, &offset, &mask);
     return (Continents[region_dst].sea_coasts[offset] & mask) != 0;
 }
