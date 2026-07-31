@@ -326,24 +326,27 @@ class HarnessCommandTest(unittest.TestCase):
         harness.check()
         self.assertIn("--no-tests=error", captured["command"])
 
-    def test_owned_wine_prefix_reuse_is_opt_in_and_cleaned(self):
-        args = argparse.Namespace(
-            build_dir=".", target="t", test="t", timeout=60,
-            reuse_owned_wine_prefix=True)
+    def test_check_never_retains_the_owned_wine_prefix(self):
+        # The retired --reuse-owned-wine-prefix opt-in set this variable to
+        # keep the Wine session alive between mutants. It made each check FOUR
+        # TIMES SLOWER (1.33 s against 0.34 s): the retained wineserver and
+        # its services inherit CTest's output pipe, and CTest reads that pipe
+        # to EOF. tools/test_run_windows_test.py guards the runner end.
+        args = argparse.Namespace(build_dir=".", target="t", test="t",
+                                  timeout=60)
         harness = mutate_and_verify.Harness(args)
         environments = []
 
         def fake_run(command, cwd, timeout):
             environments.append(os.environ.get(
-                mutate_and_verify.KEEP_OWNED_PREFIX_ENV))
+                "OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING"))
             return mutate_and_verify.PASSED
 
         harness._run = fake_run
-        harness.check()
-        harness.cleanup()
-        self.assertEqual(["1", None], environments)
-        self.assertNotIn(
-            mutate_and_verify.KEEP_OWNED_PREFIX_ENV, os.environ)
+        with mock.patch.dict(os.environ):
+            os.environ.pop("OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING", None)
+            harness.check()
+        self.assertEqual([None], environments)
 
 
 class HarnessClassificationTest(unittest.TestCase):

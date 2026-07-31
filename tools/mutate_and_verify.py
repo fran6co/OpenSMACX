@@ -62,7 +62,6 @@ not yet saturated.
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import signal
 import subprocess
@@ -445,7 +444,6 @@ PASSED, FAILED, TIMEOUT = "passed", "failed", "timeout"
 # UNMEASURED - neither killed nor survived - and it is the leading suspect for
 # full-file sweeps reporting different coverage holes on identical trees.
 STALE = "stale"
-KEEP_OWNED_PREFIX_ENV = "OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING"
 
 
 class Harness:
@@ -454,9 +452,6 @@ class Harness:
         self.target = args.target
         self.test = args.test
         self.timeout = args.timeout
-        self.reuse_owned_wine_prefix = getattr(
-            args, "reuse_owned_wine_prefix", False)
-        self.owned_wine_prefix_is_running = False
         artifact = getattr(args, "artifact", None)
         self.artifact = (Path(artifact).resolve() if artifact
                          else self.build_dir / f"{self.target}.exe")
@@ -507,39 +502,33 @@ class Harness:
             return STALE
         return PASSED if before is None or after != before else STALE
 
-    def check(self, cleanup=False) -> str:
+    def check(self) -> str:
         """PASSED, FAILED, or TIMEOUT -- a hung mutant is not a crashed run.
 
         --no-tests=error is load-bearing: `ctest -R` with a pattern that
         matches nothing exits zero, which would make every mutant of a
         misspelled --test "survive" and report the whole file as one giant
         coverage hole.
+
+        There is deliberately no owned-prefix reuse here. The opt-in that used
+        to keep the Wine session alive between mutants made this call FOUR
+        TIMES SLOWER (measured 1.33 s against 0.34 s), because the retained
+        wineserver and its service processes hold the write end of CTest's
+        output pipe and CTest reads that pipe to EOF. See
+        tools/run_windows_test.py.
         """
-        keep_prefix = self.reuse_owned_wine_prefix and not cleanup
-        previous = os.environ.get(KEEP_OWNED_PREFIX_ENV)
-        if keep_prefix:
-            os.environ[KEEP_OWNED_PREFIX_ENV] = "1"
-            self.owned_wine_prefix_is_running = True
-        else:
-            os.environ.pop(KEEP_OWNED_PREFIX_ENV, None)
-        try:
-            status = self._run(
-                ["ctest", "--no-tests=error", "-R", self.test],
-                self.build_dir, self.test_timeout)
-            if status == TIMEOUT:
-                # subprocess's timeout kills CTest and nothing else, so the
-                # wine process running the test binary outlives it. Unlike
-                # smoke_hybrid_game.py, this harness had no reaping step at
-                # all - so an orphan could still hold the executable while the
-                # next mutant tried to link over it. Reap the ones we own, by
-                # the artifact path, never a global shutdown.
-                self.reap()
-            return status
-        finally:
-            if previous is None:
-                os.environ.pop(KEEP_OWNED_PREFIX_ENV, None)
-            else:
-                os.environ[KEEP_OWNED_PREFIX_ENV] = previous
+        status = self._run(
+            ["ctest", "--no-tests=error", "-R", self.test],
+            self.build_dir, self.test_timeout)
+        if status == TIMEOUT:
+            # subprocess's timeout kills CTest and nothing else, so the
+            # wine process running the test binary outlives it. Unlike
+            # smoke_hybrid_game.py, this harness had no reaping step at
+            # all - so an orphan could still hold the executable while the
+            # next mutant tried to link over it. Reap the ones we own, by
+            # the artifact path, never a global shutdown.
+            self.reap()
+        return status
 
     def reap(self) -> bool:
         """Stop processes still running THIS harness's test binary.
@@ -554,18 +543,6 @@ class Harness:
             print(f"warning: could not reap {self.artifact.name}: {error}",
                   flush=True)
             return False
-
-    def cleanup(self) -> None:
-        """Stop a prefix retained by the opt-in fast mutation path.
-
-        A final ordinary CTest invocation uses the same marker-protected
-        runner as every other test, so it both checks the restored binary and
-        stops only the build's owned prefix.
-        """
-        if not self.owned_wine_prefix_is_running:
-            return
-        self.check(cleanup=True)
-        self.owned_wine_prefix_is_running = False
 
     def confirm_survivor(self, attempts: int) -> str:
         """Re-run a mutant the suite just let through, without rebuilding it.
@@ -628,10 +605,6 @@ def main() -> int:
         "--artifact",
         help=("the test binary the build must replace for a mutant to count as "
               "measured; defaults to <build-dir>/<target>.exe"))
-    parser.add_argument(
-        "--reuse-owned-wine-prefix", action="store_true",
-        help=("keep run_windows_test.py's marker-protected Wine prefix alive "
-              "between mutants, then stop it after restoring the source"))
     args = parser.parse_args()
 
     source = Path(args.source).resolve()
@@ -746,7 +719,6 @@ def main() -> int:
     finally:
         restore()
         harness.build()
-        harness.cleanup()
 
     valid = len(result.killed) + len(result.survived)
     print("\n" + "=" * 72)

@@ -9,9 +9,6 @@ from owned_wine_prefix import prepare_owned_wine_prefix, stop_owned_wine_prefix
 from wine_runtime import find_wine
 
 
-KEEP_OWNED_PREFIX_ENV = "OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING"
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Run a Windows test executable locally")
@@ -40,13 +37,21 @@ def main():
     prepare_owned_wine_prefix(wine_prefix, wine)
     environment = os.environ.copy()
     environment["WINEPREFIX"] = str(wine_prefix)
-    keep_prefix_running = os.environ.get(KEEP_OWNED_PREFIX_ENV) == "1"
     try:
         result = subprocess.run([wine, str(executable), *args.test_args],
                                 env=environment).returncode
     finally:
-        if not keep_prefix_running:
-            stop_owned_wine_prefix(wine_prefix, wine)
+        # Unconditionally, and never as an optimisation to be skipped. The
+        # wineserver and the six service processes it starts - services.exe,
+        # two winedevice.exe, explorer.exe, plugplay.exe, svchost.exe,
+        # rpcss.exe - inherit THIS process's stdout and stderr. Leaving them
+        # alive to save teardown therefore leaves the write end of the
+        # caller's pipe open after the test has exited, and CTest, which
+        # reads that pipe to EOF, waits for the retained session instead.
+        # Measured on recovery-leaf-tests: the test process exits at 0.32 s
+        # and the pipe reaches EOF at 1.38 s, a 1.05 s wait bought to skip a
+        # 0.053 s `wineserver -k`. See docs/HANDOVER.md.
+        stop_owned_wine_prefix(wine_prefix, wine)
     raise SystemExit(result)
 
 

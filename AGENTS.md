@@ -61,7 +61,7 @@ against it, never to trust directly.
    bindings`.
 5. Build `promote-recovery-metadata` (Release preset) *before* the gate.
 6. `verify-recovery-batch` in **both** presets; then
-   `tools/mutate_and_verify.py <source> --address <addr> --reuse-owned-wine-prefix`
+   `tools/mutate_and_verify.py <source> --address <addr>`
    and require every valid mutant killed.
 7. Commit the batch.
 
@@ -451,12 +451,16 @@ restores the source in a `finally` and on SIGINT/SIGTERM, so an interrupted
 sweep does not leave a mutant on disk - but confirm `git status` is clean
 before trusting a later build anyway.
 
-For large Wine-backed sweeps, pass `--reuse-owned-wine-prefix`. The option
-keeps only `run_windows_test.py`'s dedicated marker-protected build prefix
-running between mutants, then performs one ordinary restored-source test to
-stop that prefix. It does not change the prefix path, relax ownership checks,
-or issue a global Wine shutdown. This removes repeated Wine teardown while
-preserving the same executable and CTest selection for every mutant.
+There is no owned-prefix reuse option any more, and reintroducing one would
+make sweeps slower, not faster. `--reuse-owned-wine-prefix` kept the Wine
+session alive between mutants to skip teardown; measured, teardown is a
+`wineserver -k` costing 0.053 s, while the retained session costs 1.05 s per
+CTest invocation. The wineserver and the six service processes it starts
+inherit `run_windows_test.py`'s stdout and stderr, so a session left running
+holds the write end of CTest's output pipe open after the test binary has
+exited, and CTest reads that pipe to EOF: the test process exits at 0.32 s and
+the pipe reaches EOF at 1.38 s. A 12-mutant sweep took 70.7 s with the option
+and 45.8 s without it, same 12/12 kills.
 
 Swaps are only emitted where the two statements genuinely interact. Two stores
 to distinct lvalues with constant right-hand sides are order-independent in
@@ -575,7 +579,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/add_redirect.py`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
 - `tools/generate_mingw_exports.py`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
 - `tools/classify_recovery_shapes.py`: sorts cached decompilations into recoverable shapes to find mechanical candidates; it errs toward reporting `complex`, and a shape match only means a generated implementation is worth attempting.
-- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Its opt-in owned-prefix reuse avoids repeated Wine teardown and always finishes with the normal marker-protected cleanup path.
+- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Every CTest invocation stops the owned Wine prefix; the retired reuse option cost 1.05 s per invocation to save 0.053 s of teardown, because the retained Wine session holds CTest's output pipe open.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
 - `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.

@@ -1292,6 +1292,60 @@ problem.
 
 Two of the ten functions recovered on this host were in that class.
 
+### Keeping the Wine prefix alive made every CTest run 4x slower
+
+`--reuse-owned-wine-prefix` existed to skip Wine teardown between mutants. It
+did skip it, and it cost far more than it saved. Same warm tree, same command,
+only `OPENSMACX_KEEP_OWNED_WINE_PREFIX_RUNNING` differing:
+
+```
+ctest -R recovery-leaf-tests   without: 0.99 0.78 0.78 s
+                               with:    2.91 2.85 2.74 s
+```
+
+Three things it is **not**: the Wine run itself (`run_windows_test.py` invoked
+by hand takes 0.36 s either way, output to a file), the teardown
+(`wineserver -k` plus `-w` on a live session, timed inside the runner: 0.053 s),
+or `prepare_owned_wine_prefix`'s unconditional stop (patching it out changed
+nothing).
+
+The mechanism is the **output pipe**. Instrumenting a run whose stdout and
+stderr are a pipe, and recording separately when the child exits and when the
+pipe reaches EOF:
+
+```
+keep=False  t_exit=0.396  t_eof=0.396
+keep=True   t_exit=0.331  t_eof=1.381
+```
+
+The test process is gone at 0.33 s; the reader waits another 1.05 s. Scanning
+`/proc` for the pipe's inode at `t_exit` names the holders:
+
+```
+wineserver32 -p0, services.exe, winedevice.exe x2, explorer.exe,
+plugplay.exe, svchost.exe, rpcss.exe          (all on fd 2)
+```
+
+The wineserver and the six service processes it starts inherit the runner's
+stdout and stderr. Leaving them alive leaves the write end of CTest's output
+pipe open, and CTest reads that pipe to EOF, so it waits out the retained
+session's own shutdown timeout. The option bought a 1.05 s wait to save 0.053 s.
+
+Reuse done *properly* would be worth something - with the server pre-started
+detached (`wineserver -p`, stdio to `/dev/null`) and its services warmed by a
+detached client first, the same suite runs in **0.090 s** instead of 0.294 s
+and EOF arrives with the exit. It was rejected anyway: a persistent server
+without that detached warm-up is not slow but **deadlocked**, which is how the
+experiment was found - the first piped client starts the services, they inherit
+its pipe, the server never exits because it is persistent, and the reader
+blocks forever (killed at 300 s). A 0.2 s/test gain is not worth a design whose
+failure mode is an infinite hang in the gate.
+
+So the option is gone, `run_windows_test.py` always stops the prefix, and
+`tools/test_run_windows_test.py` guards the runner against the variable coming
+back. Measured on a 12-mutant `src/buffer.cpp` constant sweep, 12/12 killed
+either way: **70.7 s -> 45.8 s, 1.54x.**
+
 ### The next recovery, already scouted
 
 `?stop_timer@BattleWin@@QAEXXZ` at **0x00421b40**, 8 bytes:
