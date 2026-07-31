@@ -36,8 +36,11 @@ construction:
 
 from __future__ import annotations
 
+import contextlib
 import csv
+import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -619,6 +622,237 @@ class PublishedFileTests(unittest.TestCase):
                        published["by_recovery_state"].items()}
         self.assertEqual(counts, byte_counts)
         self.assertEqual(functions["total"], published["catalogued"]["functions"])
+
+
+class DeltaTests(unittest.TestCase):
+    """`--delta <ref>` must price the PAST with today's definition.
+
+    Three ways this feature reads as good news while measuring nothing, each
+    with a test below:
+
+    * IT COMPARES THE WORKTREE WITH ITSELF. If a ref git cannot produce fell
+      back to the file on disk, the delta would be 0 B and print `same` - the
+      most reassuring output this tool has - for a ref that does not exist.
+      Both failure modes (unknown ref, catalogue absent at that ref) must
+      raise.
+    * IT READS THE SIGN BACKWARDS. `machine_carried` must go DOWN, so a
+      negative delta is progress. Swapping old and new produces a number of the
+      same magnitude and the opposite meaning, which no assertion on the
+      absolute value can catch; the tests pin the arrow, the sign AND the word.
+    * IT SILENTLY REDEFINES THE METRIC. The fixture gives each recovery_state a
+      distinct power of two, so a delta computed by any other membership test
+      lands on a number this suite names explicitly.
+
+    The tests build a throwaway git repository rather than naming a ref of this
+    one: `HEAD~5` means something different after the next commit, and a test
+    whose expected number moves with the branch is not a test.
+    """
+
+    RECOVERED = "source_complete"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        # .resolve(): on macOS a tempdir lives under /var -> /private/var, and
+        # load_catalogue_at_ref computes the repo-relative path with
+        # relative_to, which is textual and would raise on the unresolved form.
+        self.repo = Path(self.tmp.name).resolve()
+        self.catalogue = self.repo / "docs" / "recovery" / "functions.csv"
+        self.catalogue.parent.mkdir(parents=True)
+        self.run_git("init", "-q", str(self.repo), cwd=True)
+
+    def run_git(self, *args, cwd=False):
+        command = ["git"] if cwd else [
+            "git", "-C", str(self.repo),
+            "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+            "-c", "commit.gpgsign=false"]
+        done = subprocess.run(command + list(args), capture_output=True)
+        self.assertEqual(0, done.returncode,
+                         done.stderr.decode("utf-8", "replace"))
+
+    def commit(self, entries, message="catalogue"):
+        write_functions(self.catalogue.parent, entries)
+        self.run_git("add", "-A")
+        self.run_git("commit", "-q", "-m", message)
+
+    def status(self) -> str:
+        done = subprocess.run(["git", "-C", str(self.repo), "status",
+                               "--porcelain"], capture_output=True)
+        return done.stdout.decode()
+
+    def at_ref(self, ref):
+        return metrics.load_catalogue_at_ref(ref, self.catalogue, self.repo)
+
+    def test_the_old_rows_come_from_the_ref_and_not_from_the_worktree(self):
+        self.commit(STATES)
+        # Recover the `unrecovered` row (1 byte) in the worktree only: the
+        # committed debt is 1+4+8+16 = 29, the worktree debt is 28. Any read of
+        # the wrong file gives one number for both.
+        write_functions(self.catalogue.parent,
+                        [("0x00401000", 1, self.RECOVERED, "game")]
+                        + STATES[1:])
+        self.assertEqual(Tally(4, 29), metrics.machine_carried(self.at_ref("HEAD")))
+        self.assertEqual(Tally(3, 28), metrics.machine_carried(
+            metrics.load_catalogue(self.catalogue)))
+
+    def test_reading_a_ref_leaves_the_worktree_exactly_as_it_was(self):
+        """`git show`, never a checkout: the comparison has to be runnable
+        while the tree is dirty, which is when anyone wants it."""
+        self.commit(STATES)
+        write_functions(self.catalogue.parent,
+                        [("0x00401000", 1, self.RECOVERED, "game")]
+                        + STATES[1:])
+        before = self.status()
+        self.assertIn("docs/recovery/functions.csv", before)
+        self.at_ref("HEAD")
+        self.assertEqual(before, self.status())
+
+    def test_a_falling_debt_is_better_and_carries_a_negative_sign(self):
+        self.commit(STATES)
+        new_rows = rows_of([("0x00401000", 1, self.RECOVERED, "game")]
+                           + STATES[1:])
+        lines = metrics.delta_lines(self.at_ref("HEAD"), new_rows, "HEAD")
+        self.assertEqual("machine_carried: 29 -> 28 (-1 B)",
+                         lines[0].split("  ")[0])
+        self.assertIn("better", lines[0])
+        self.assertIn("FELL 1 B", lines[0])
+        self.assertNotIn("worse", lines[0])
+
+    def test_a_rising_debt_is_worse_and_carries_a_positive_sign(self):
+        """The regression case, which the tool exists to be able to report."""
+        self.commit([("0x00401000", 1, self.RECOVERED, "game")] + STATES[1:])
+        lines = metrics.delta_lines(self.at_ref("HEAD"), rows_of(STATES),
+                                    "HEAD")
+        self.assertEqual("machine_carried: 28 -> 29 (+1 B)",
+                         lines[0].split("  ")[0])
+        self.assertIn("worse", lines[0])
+        self.assertIn("ROSE 1 B", lines[0])
+        self.assertNotIn("better", lines[0])
+
+    def test_an_unchanged_debt_says_same_and_never_better(self):
+        self.commit(STATES)
+        lines = metrics.delta_lines(self.at_ref("HEAD"), rows_of(STATES),
+                                    "HEAD")
+        self.assertEqual("machine_carried: 29 -> 29 (+0 B)",
+                         lines[0].split("  ")[0])
+        self.assertIn("same", lines[0])
+        self.assertIn("debt unchanged", lines[0])
+
+    def test_the_direction_is_stated_in_words_not_left_to_the_sign(self):
+        """A minus sign is good news here and bad news almost everywhere else.
+
+        `lifted_oracle_compare` exists because signed deltas without a direction
+        word were judged a defect in this repository; this line must not
+        reintroduce one.
+        """
+        self.commit(STATES)
+        new_rows = rows_of([("0x00401000", 1, self.RECOVERED, "game")]
+                           + STATES[1:])
+        line = metrics.delta_lines(self.at_ref("HEAD"), new_rows, "HEAD")[0]
+        self.assertIn("must go down", line)
+
+    def test_the_shape_of_the_old_catalogue_is_printed_beside_the_delta(self):
+        """`machine_carried` is a membership test over two state NAMES, so a
+        ref that spelled a state differently, or held different rows, moves the
+        number with no recovery having happened. Row count and lift scope make
+        that visible instead of letting it read as progress."""
+        self.commit(STATES)
+        lines = metrics.delta_lines(self.at_ref("HEAD"), rows_of(STATES[:5]),
+                                    "v0.1")
+        body = "\n".join(lines)
+        self.assertIn("old (v0.1): 6 catalogue rows", body)
+        self.assertIn("new (worktree): 5 catalogue rows", body)
+        self.assertIn("lift scope 31 B / 5 fn", body)
+
+    def test_an_unknown_ref_raises_instead_of_comparing_with_the_worktree(self):
+        self.commit(STATES)
+        with self.assertRaises(metrics.CatalogueRefError) as caught:
+            self.at_ref("no-such-ref-ee6f1c")
+        self.assertIn("no-such-ref-ee6f1c", str(caught.exception))
+
+    def test_a_ref_from_before_the_catalogue_existed_raises(self):
+        (self.repo / "README.md").write_text("first\n", encoding="utf-8")
+        self.run_git("add", "-A")
+        self.run_git("commit", "-q", "-m", "before the catalogue")
+        self.commit(STATES)
+        with self.assertRaises(metrics.CatalogueRefError) as caught:
+            self.at_ref("HEAD~1")
+        message = str(caught.exception)
+        self.assertIn("docs/recovery/functions.csv", message)
+        self.assertIn("HEAD~1", message)
+
+    def test_a_catalogue_outside_the_repository_raises(self):
+        self.commit(STATES)
+        outside = Path(self.tmp.name).resolve().parent / "not-in-the-repo.csv"
+        with self.assertRaises(metrics.CatalogueRefError):
+            metrics.load_catalogue_at_ref("HEAD", outside, self.repo)
+
+    def test_both_catalogue_sources_are_parsed_by_the_same_reader(self):
+        """One dialect decision, not two. A second reader that decoded plain
+        utf-8 would name the first column `﻿address` on a BOM'd ref: the
+        totals would still look right while every address became unreadable."""
+        self.commit(STATES)
+        self.assertEqual(metrics.load_catalogue(self.catalogue),
+                         self.at_ref("HEAD"))
+        self.assertEqual(
+            [metrics.row_address(row) for row in self.at_ref("HEAD")],
+            [0x00401000, 0x00402000, 0x00403000, 0x00404000, 0x00405000,
+             0x00406000])
+
+    def test_a_byte_order_mark_at_the_ref_does_not_break_the_addresses(self):
+        write_functions(self.catalogue.parent, STATES)
+        self.catalogue.write_bytes(
+            b"\xef\xbb\xbf" + self.catalogue.read_bytes())
+        self.run_git("add", "-A")
+        self.run_git("commit", "-q", "-m", "bom")
+        rows = self.at_ref("HEAD")
+        self.assertEqual(Tally(4, 29), metrics.machine_carried(rows))
+        self.assertIsNotNone(metrics.row_address(rows[0]))
+
+
+class CommandLineTests(unittest.TestCase):
+    """The CLI contract, which had no test at all before `--delta`."""
+
+    FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+
+    def run_main(self, argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = metrics.main(argv)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_a_bare_positional_catalogue_path_still_works(self):
+        """The documented way to price another catalogue, from before this
+        module had argparse. Adding a flag must not take it away."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_functions(tmp, STATES)
+            code, out, _ = self.run_main([str(path)])
+        self.assertEqual(0, code)
+        self.assertIn("machine-carried", out)
+        self.assertIn("29 B", out)
+        self.assertIn("lift scope", out)
+
+    def test_an_unknown_ref_exits_nonzero_and_prints_no_delta(self):
+        if not self.FUNCTIONS.is_file():
+            self.skipTest("committed recovery catalogue not present")
+        code, out, err = self.run_main(["--delta", "no-such-ref-ee6f1c"])
+        self.assertEqual(1, code)
+        self.assertIn("no-such-ref-ee6f1c", err)
+        self.assertNotIn("machine_carried:", out)
+
+    def test_delta_against_HEAD_of_this_repository_prints_the_line(self):
+        if not self.FUNCTIONS.is_file():
+            self.skipTest("committed recovery catalogue not present")
+        if subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
+                          capture_output=True).returncode:
+            self.skipTest("not a git repository with a commit")
+        code, out, _ = self.run_main(["--delta", "HEAD"])
+        self.assertEqual(0, code)
+        line = [l for l in out.splitlines() if l.startswith("machine_carried:")]
+        self.assertEqual(1, len(line), out)
+        self.assertRegex(line[0],
+                         r"^machine_carried: \d+ -> \d+ \([-+]\d+ B\)"
+                         r"  (better|worse|same): ")
 
 
 if __name__ == "__main__":

@@ -28,6 +28,15 @@ Everything here exists so that there is exactly ONE place that decides:
     DOWN and had no metric at all: the bytes whose behaviour is still supplied
     by machine-derived code rather than by recovered repository source.
 
+    `--delta <ref>` prices that direction over time: it reads the catalogue as
+    it stood at a git ref, prices it through the SAME `machine_carried`, and
+    says `better`/`worse`/`same` in words rather than leaving a signed integer
+    for the reader to interpret. The old catalogue arrives through
+    `git show <ref>:<path>`, which never touches the worktree - no checkout, no
+    stash - and a ref git cannot produce is an error, never a silent fallback
+    to the worktree file, because that would print a delta of 0 and read as
+    "no regression".
+
 Nothing in this module reads the oracle report or the original executable; it
 is arithmetic over the committed catalogue, so it is testable without Wine, an
 IDB, or the user's copy of the game.
@@ -35,7 +44,10 @@ IDB, or the user's copy of the game.
 
 from __future__ import annotations
 
+import argparse
 import csv
+import io
+import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -131,9 +143,64 @@ def row_state(row: dict) -> str:
     return (row.get("recovery_state") or "").strip()
 
 
+def parse_catalogue(handle) -> list[dict]:
+    """THE dialect decision, in one place, for both catalogue sources.
+
+    A catalogue arrives either from the worktree (a file) or from a git ref (a
+    string). Both go through here so that the header, the quoting and the BOM
+    are decided identically: a second reader that decoded plain `utf-8` would
+    name the first column `﻿address` on a BOM'd ref, leaving `row_state`
+    and `row_size` working - so the totals would still look plausible - while
+    `row_address` returned None for every row and the proven split silently
+    collapsed to zero.
+    """
+    return list(csv.DictReader(handle))
+
+
 def load_catalogue(path: Path | str = FUNCTIONS_CSV) -> list[dict]:
     with Path(path).open(newline="", encoding="utf-8-sig") as handle:
-        return list(csv.DictReader(handle))
+        return parse_catalogue(handle)
+
+
+class CatalogueRefError(RuntimeError):
+    """A catalogue git could not produce at the requested ref.
+
+    Its own class so that no caller can mistake it for "the file is fine, the
+    numbers are equal". Every failure here - unknown ref, path absent at that
+    ref, git missing - must reach the user as an error; falling back to the
+    worktree file would print `0 B` and read as "no regression".
+    """
+
+
+def load_catalogue_at_ref(ref: str, path: Path | str = FUNCTIONS_CSV,
+                          repo: Path | str = REPO_ROOT) -> list[dict]:
+    """The catalogue as it stood at `ref`, without touching the worktree.
+
+    `git show` writes to stdout only: no checkout, no stash, no index change.
+    That matters more than convenience - the comparison must be runnable while
+    the tree is dirty, which is precisely when someone wants to know whether
+    the debt moved.
+    """
+    root = Path(repo).resolve()
+    try:
+        relative = Path(path).resolve().relative_to(root).as_posix()
+    except ValueError as error:
+        raise CatalogueRefError(
+            f"{path} is outside {root}, so no git ref can name it") from error
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "show", f"{ref}:{relative}"],
+            capture_output=True, check=True)
+    except FileNotFoundError as error:  # no git on this machine
+        raise CatalogueRefError(
+            "git is not on PATH, so no earlier catalogue can be read") from error
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or b"").decode("utf-8", "replace").strip()
+        raise CatalogueRefError(
+            f"cannot read {relative} at {ref}: "
+            f"{detail or f'git show exited {error.returncode}'}") from error
+    text = completed.stdout.decode("utf-8-sig")
+    return parse_catalogue(io.StringIO(text, newline=""))
 
 
 def tally(rows, predicate=None) -> Tally:
@@ -401,10 +468,61 @@ def scope_sizes(rows) -> dict[int, int]:
     return sizes
 
 
-def main() -> int:
+def delta_lines(old_rows, new_rows, ref: str) -> list[str]:
+    """`machine_carried: <old> -> <new> (<signed delta> B)`, plus its meaning.
+
+    The sign is never left bare. `machine_carried` must go DOWN, so a NEGATIVE
+    delta is progress - the one place in this project where a minus sign is the
+    good news, and the one most likely to be read the other way round. The word
+    `better`/`worse`/`same` carries the direction, exactly as
+    `lifted_oracle_compare.verdict` does, and `fell`/`rose` restates it so that
+    a line quoted out of context still says which way the debt moved.
+
+    The old catalogue's shape is printed beside the delta because
+    `machine_carried` is a membership test over two state NAMES: a ref whose
+    catalogue spelled a state differently, or held a different number of rows,
+    would move the number with no recovery having happened. Row count and lift
+    scope make that visible instead of letting it read as progress.
+    """
+    old = machine_carried(old_rows)
+    new = machine_carried(new_rows)
+    delta = new.byte_count - old.byte_count
+    if delta == 0:
+        mark, moved = "same", "debt unchanged"
+    elif delta < 0:
+        mark, moved = "better", f"debt FELL {-delta} B"
+    else:
+        mark, moved = "worse", f"debt ROSE {delta} B"
+    old_scope, new_scope = lift_scope(old_rows), lift_scope(new_rows)
+    return [
+        f"machine_carried: {old.byte_count} -> {new.byte_count} "
+        f"({delta:+d} B)  {mark}: {moved} (must go down)",
+        f"  functions: {old.functions} -> {new.functions}",
+        f"  old ({ref}): {len(old_rows)} catalogue rows, lift scope "
+        f"{old_scope.byte_count} B / {old_scope.functions} fn",
+        f"  new (worktree): {len(new_rows)} catalogue rows, lift scope "
+        f"{new_scope.byte_count} B / {new_scope.functions} fn",
+    ]
+
+
+def main(argv=None) -> int:
     import sys
 
-    rows = load_catalogue(sys.argv[1] if len(sys.argv) > 1 else FUNCTIONS_CSV)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    # Positional, optional, and still the documented way to price another
+    # catalogue: `recovery_metrics.py <some.csv>` worked before argparse
+    # existed here and must keep working.
+    parser.add_argument("catalogue", nargs="?", default=FUNCTIONS_CSV,
+                        help="catalogue to price (default: %(default)s)")
+    parser.add_argument("--delta", metavar="REF",
+                        help="also print how machine_carried moved since this "
+                             "git ref, read with `git show REF:<catalogue>` - "
+                             "the worktree is never touched")
+    args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+
+    rows = load_catalogue(args.catalogue)
     scope = lift_scope(rows)
     print(f"catalogued      {catalogued(rows).byte_count:9d} B  "
           f"{catalogued(rows).functions:5d} fn")
@@ -415,6 +533,15 @@ def main() -> int:
     debt = machine_carried(rows)
     print(f"machine-carried {debt.byte_count:9d} B  {debt.functions:5d} fn   "
           f"{debt.percent_of(scope):.2f}% of scope bytes  (must go down)")
+    if args.delta:
+        try:
+            old_rows = load_catalogue_at_ref(args.delta, args.catalogue)
+        except CatalogueRefError as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+        print()
+        for line in delta_lines(old_rows, rows, args.delta):
+            print(line)
     return 0
 
 
