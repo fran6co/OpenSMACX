@@ -511,6 +511,11 @@ extern int *BaseCurrentGrowthRate;
 extern uint32_t *BaseCurrentVehPacifismCount;
 extern uint32_t *BaseCurrentForcesSupported; // Forces Supported by Base
 extern uint32_t *BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
+extern int *TileYieldRestricted; // resource a square lost to the per-square restriction
+extern int *BaseSquareEnergy; // energy_yield's publication for a base square
+extern int *GovernorFaction; // elected Planetary Governor; see the note in base.cpp
+extern int *GlobalEnergyEventState; // energy tripling state driven by random_events
+extern int *UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
 DLLEXPORT BOOL __cdecl has_fac(int facility_id, uint32_t base_id, int queue_count);
 DLLEXPORT void __cdecl set_base(uint32_t base_id);
@@ -534,6 +539,12 @@ DLLEXPORT void __cdecl base_first(uint32_t base_id);
 DLLEXPORT uint32_t __cdecl morale_mod(uint32_t base_id, uint32_t faction_id, uint32_t triad);
 DLLEXPORT uint32_t __cdecl breed_mod(uint32_t base_id, uint32_t faction_id);
 DLLEXPORT uint32_t __cdecl worm_mod(uint32_t base_id, uint32_t faction_id);
+DLLEXPORT int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
+                                 BOOL assume_improved);
+DLLEXPORT int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
+                                 BOOL assume_improved);
+DLLEXPORT int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
+                                   BOOL assume_improved);
 DLLEXPORT void __cdecl base_nutrient();
 DLLEXPORT void __cdecl base_minerals();
 DLLEXPORT uint32_t __cdecl black_market(int energy);

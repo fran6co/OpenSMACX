@@ -307,6 +307,9 @@ EXPORTS
     "?stack_fix@@YAHH@Z" = _Z9stack_fixi
     "?stack_veh@@YAHHH@Z" = _Z9stack_vehii
     "?action_home@@YAHHH@Z" = _Z11action_homeii
+    "?crop_yield@@YAHHHHHH@Z" = _Z10crop_yieldiiiii
+    "?mine_yield@@YAHHHHHH@Z" = _Z10mine_yieldiiiii
+    "?energy_yield@@YAHHHHHH@Z" = _Z12energy_yieldiiiii
     "?name_base@@YAXIPADHH@Z" = _Z9name_basejPcii
     "?start_timers@@YAXXZ" = _Z12start_timersv
     "?stop_timers@@YAXXZ" = _Z11stop_timersv
