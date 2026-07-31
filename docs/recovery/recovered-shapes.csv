@@ -1910,6 +1910,7 @@ address,name,shape
 0x005C3680,?world_riverbeds@@YAXXZ,loop
 0x005C40F0,?world_validate@@YAHXZ,loop
 0x005C4170,?world_temperature@@YAXXZ,loop
+0x005C4FD0,?world_site@@YAHHHH@Z,loop
 0x005C55C0,?world_analysis@@YAXXZ,loop
 0x005C58C0,?world_alt_put_detail@@YAXHH@Z,straight_line
 0x005C58E0,?world_polar_caps@@YAXXZ,loop

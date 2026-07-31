@@ -359,6 +359,7 @@ DLLEXPORT void __cdecl build_hills(int altitude);
 DLLEXPORT void __cdecl world_riverbeds();
 DLLEXPORT BOOL __cdecl world_validate();
 DLLEXPORT void __cdecl world_temperature();
+DLLEXPORT int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 DLLEXPORT void __cdecl world_analysis();
 DLLEXPORT void __cdecl world_alt_put_detail(uint32_t x, uint32_t y);
 DLLEXPORT void __cdecl world_polar_caps();

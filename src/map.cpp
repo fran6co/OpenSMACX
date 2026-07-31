@@ -1872,6 +1872,237 @@ void __cdecl world_temperature() {
 }
 
 /*
+Purpose: Address the map tile world_site() scores.
+Original Offset: n/a
+Return Value: Pointer to map tile
+Status: Complete
+
+map_loc() cannot stand in. It takes unsigned coordinates and therefore shifts x
+logically, while world_site() inlines this with `sar` on x - and its centre
+tile, unlike the twenty-eight and twenty-one radius tiles, is never bounds
+checked, so a negative x reaches the shift.
+*/
+static Map *site_tile(int x, int y) {
+    return &(*MapTiles)[(x >> 1) + y * (int)*MapLongitude];
+}
+
+/*
+Purpose: Wrap an x coordinate the way world_site() wraps it.
+Original Offset: n/a
+Return Value: Wrapped x
+Status: Complete
+
+xrange() cannot stand in either, for one bit: this tests the LOW BIT of
+MapIsFlat where xrange() tests the whole value. The two agree on the 0/1 the
+game stores there and disagree on anything else, and the difference is in the
+original, not in the transcription.
+*/
+static int site_xrange(int x) {
+    if (!(*MapIsFlat & 1)) {
+        if (x >= 0) {
+            if (x >= *MapLongitudeBounds) {
+                x -= *MapLongitudeBounds;
+            }
+        } else {
+            x += *MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
+Purpose: Score the specified tile as a site for a new base.
+Original Offset: 005C4FD0
+Return Value: Site value 0 (unusable) or 1-15
+Status: Complete
+
+Two rings. The outer one, radius offsets 21 to 48, only counts how crowded the
+neighbourhood already is; the inner one, the twenty-one tiles of a base's own
+production radius, is what is actually scored. `is_ocean_site` says which kind
+of site is wanted, and it is compared against the centre tile's own altitude
+rather than being normalised - a caller passing anything but 0 or 1 never
+matches.
+
+The original accumulates a rainfall total across the inner ring into a stack
+local at ebp-0x30 - zeroed at 0x005C50C5, read at 0x005C5327, stored back at
+0x005C5339 - and never reads it again. It is a dead local, not observable from
+outside the frame, and it is not transcribed.
+*/
+int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
+    int crowding = 0;
+    for (int i = 21; i < 49; i++) {
+        int x_radius = site_xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (y_radius < 0 || y_radius >= *MapLatitudeBounds || x_radius < 0
+            || x_radius >= *MapLongitudeBounds) {
+            continue;
+        }
+        Map *tile = site_tile(x_radius, y_radius);
+        if (!(tile->bit & BIT_BASE_IN_TILE)) {
+            continue;
+        }
+        crowding++;
+        if (i >= 25) {
+            continue; // the first four count double, and can count quadruple
+        }
+        crowding++;
+        if ((site_tile(x, y)->climate & 0xE0) < ALT_BIT_SHORE_LINE
+            && (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+            crowding += 2;
+        }
+    }
+    int special = 0;       // bonus resources, landmarks and pods
+    int rich_terrain = 0;  // monolith, forest, or rainy rolling land above sea
+    int fair_terrain = 0;  // rainy rolling land that is none of those
+    int ocean_count = 0;
+    int deep_count = 0;    // ocean below the shelf
+    int river_tiles = 0;
+    int fungus_tiles = 0;
+    int rocky_tiles = 0;
+    BOOL big_continent = false;
+    /*
+    * The original's frame aliases this pointer onto the slot that held the
+    * MapIsFlat copy, and the epilogue reads it whether or not the loop ever
+    * assigned it. With every tile of the radius out of bounds that is a
+    * dereference of 0 or 1. Reproduced rather than guarded: the two are the
+    * same program, and the caller that could reach it is off the map already.
+    */
+    Map *radius_tile = reinterpret_cast<Map *>(
+        static_cast<uintptr_t>(*MapIsFlat & 1));
+    for (int i = 0; i < 21; i++) {
+        int x_radius = site_xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (y_radius < 0 || y_radius >= *MapLatitudeBounds || x_radius < 0
+            || x_radius >= *MapLongitudeBounds) {
+            continue;
+        }
+        radius_tile = site_tile(x_radius, y_radius);
+        int altitude = radius_tile->climate & 0xE0;
+        if (altitude < ALT_BIT_SHORE_LINE) {
+            ocean_count++;
+            if (altitude < ALT_BIT_OCEAN_SHELF) {
+                deep_count++;
+            }
+            // Only the nine innermost tiles decide whether this is a big land.
+            if (i < 9 && Continents[radius_tile->region].tile_count >= 50) {
+                big_continent = true;
+            }
+            if (!i || !bonus_at(x_radius, y_radius, 1)) {
+                continue;
+            }
+            Map *bonus_tile = site_tile(x_radius, y_radius);
+            if ((bonus_tile->bit & BIT_FUNGUS)
+                && (int)(bonus_tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+                continue;
+            }
+            special++;
+            continue;
+        }
+        int rockiness = radius_tile->val3 >> 6;
+        if (rockiness && i && rockiness > 1) {
+            rocky_tiles++;
+        }
+        if (!(radius_tile->bit & BIT_FUNGUS)) {
+            if (bonus_at(x_radius, y_radius, 1)) {
+                special += i ? 2 : -1;
+            }
+            uint32_t bit2 = site_tile(x_radius, y_radius)->bit2;
+            // The top byte is the landmark's tile sequence code; past nine the
+            // tile is too far along the landmark to be worth anything.
+            if ((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO
+                && (bit2 & 0xFF000000) < 0x09000000) {
+                special += i ? 1 : -1;
+            }
+            if ((bit2 & (BIT2_UNK_80000000 | BIT2_CRATER)) == BIT2_CRATER
+                && (bit2 & 0xFF000000) < 0x09000000) {
+                special += i ? 2 : -1;
+            }
+            if ((bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM) {
+                special += i ? 1 : -3;
+            }
+            if ((bit2 & (BIT2_UNK_80000000 | BIT2_JUNGLE)) == BIT2_JUNGLE
+                && (int)(radius_tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                special += 2;
+            }
+            if (i && goody_at(x_radius, y_radius)) {
+                special++;
+            }
+        }
+        int elevation = (radius_tile->climate >> 5) - 2;
+        if (elevation < 0) {
+            elevation = 0;
+        }
+        int rainfall = (radius_tile->climate >> 3) & 3;
+        if (rockiness == ROCKINESS_ROCKY
+            || (radius_tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO))
+                == BIT2_VOLCANO) {
+            rainfall = 0;
+        }
+        uint32_t bit = radius_tile->bit;
+        if (bit & BIT_FUNGUS) {
+            fungus_tiles++;
+        }
+        if (bit & BIT_BASE_RADIUS) {
+            continue; // already worked by somebody
+        }
+        BOOL is_rich = (bit & (BIT_MONOLITH | BIT_FOREST)) != 0;
+        if (!is_rich && rainfall && rockiness == ROCKINESS_ROLLING) {
+            if (elevation && !(bit & BIT_FUNGUS)) {
+                is_rich = true;
+            } else {
+                fair_terrain += i ? 1 : -1;
+                if (rainfall > rockiness && !(bit & BIT_FUNGUS)) {
+                    fair_terrain += i ? 1 : -1;
+                }
+            }
+        }
+        if (is_rich) {
+            rich_terrain += i ? 1 : -1;
+            if ((bit & BIT_MONOLITH) && !(bit & BIT_FOREST)
+                && (rainfall > 1 || elevation > 1)) {
+                rich_terrain += i ? 1 : -2;
+            }
+        }
+        if (bit & BIT_RIVER) {
+            river_tiles++;
+        }
+    }
+    int score = river_tiles / 4 + special;
+    if (big_continent) {
+        score += is_ocean_site ? -2 : 4;
+    }
+    if (radius_tile->bit & (BIT_UNK_4000 | BIT_UNK_40000000)) {
+        score += 4;
+    }
+    int water = (ocean_count - big_continent) / 2 + deep_count / 2;
+    score += is_ocean_site ? water : -water;
+    score += (rich_terrain * 3 + 6) / 4;
+    score += (fair_terrain + 1) / 3;
+    if (*TurnCurrentNum > 150) {
+        score += fungus_tiles / -3;
+    }
+    Map *tile = site_tile(x, y);
+    int altitude = tile->climate & 0xE0;
+    int is_ocean = (altitude < ALT_BIT_SHORE_LINE) ? 1 : 0;
+    score -= rocky_tiles / 4;
+    score -= crowding * ((is_ocean != is_ocean_site) ? 2 : 1);
+    if (((tile->bit & BIT_FUNGUS) && altitude >= ALT_BIT_OCEAN_SHELF)
+        || (tile->bit & BIT_MONOLITH)) {
+        return 0;
+    }
+    if ((tile->val3 & 0xC0) > 0x40 && altitude >= ALT_BIT_SHORE_LINE) {
+        return 0; // rocky land cannot hold a base
+    }
+    if (is_ocean != is_ocean_site && crowding >= 4) {
+        return 0; // the wrong element, and no room for it either
+    }
+    if (score < 1) {
+        return 1;
+    }
+    return (score > 15) ? 15 : score;
+}
+
+/*
 Purpose: Analysis of the world map.
 Original Offset: 005C55C0
 Return Value: n/a
