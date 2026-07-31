@@ -1,0 +1,1554 @@
+address,name,prototype,convention,stack_slots,purge
+0x00402F10,??__Eg_ALPHAMENU_WAVE@@YAXXZ,void (__cdecl ??__Eg_ALPHAMENU_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00402F30,??__Fg_ALPHAMENU_WAVE@@YAXXZ,void (__cdecl ??__Fg_ALPHAMENU_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00403AF0,?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z,"int (__cdecl ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z)(AlphaMenu* this, GraphicWin*, int, RECT*)",__cdecl,111,verified
+0x00403B70,?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z,"int (__cdecl ?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z)(AlphaMenu* this, GraphicWin*)",__cdecl,1,verified
+0x00403BA0,?amovie_project@@YAXH@Z,void (__cdecl ?amovie_project@@YAXH@Z)(int),__cdecl,1,verified
+0x00403BE0,?amovie_project@@YAXPAD@Z,void (__cdecl ?amovie_project@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x004043A0,??_GAlphaMovie@@UAEPAXI@Z,"void* (__thiscall ??_GAlphaMovie@@UAEPAXI@Z)(AlphaMovie* this, unsigned int)",__thiscall,1,verified
+0x00404440,??__Eg_UNUSED_SPRITE_VAR02@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR02@@YAXXZ)(),__cdecl,,verified
+0x00404460,??__Fg_UNUSED_SPRITE_VAR02@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR02@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404470,??__Eg_UNUSED_SPRITE_VAR11@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR11@@YAXXZ)(),__cdecl,,verified
+0x00404490,??__Fg_UNUSED_SPRITE_VAR11@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR11@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004044A0,??__Eg_UNUSED_SPRITE_VAR06@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR06@@YAXXZ)(),__cdecl,,verified
+0x004044C0,??__Fg_UNUSED_SPRITE_VAR06@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR06@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004044D0,??__Eg_UNUSED_SPRITE_VAR09@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR09@@YAXXZ)(),__cdecl,,verified
+0x004044F0,??__Fg_UNUSED_SPRITE_VAR09@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR09@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404500,??__Eg_UNUSED_SPRITE_VAR21@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR21@@YAXXZ)(),__cdecl,,verified
+0x00404520,??__Fg_UNUSED_SPRITE_VAR21@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR21@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404530,??__Eg_UNUSED_SPRITE_VAR05@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR05@@YAXXZ)(),__cdecl,,verified
+0x00404550,??__Fg_UNUSED_SPRITE_VAR05@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR05@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404560,??__Eg_UNUSED_SPRITE_VAR08@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR08@@YAXXZ)(),__cdecl,,verified
+0x00404580,??__Fg_UNUSED_SPRITE_VAR08@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR08@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404590,??__Eg_UNUSED_SPRITE_VAR04@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR04@@YAXXZ)(),__cdecl,,verified
+0x004045B0,??__Fg_UNUSED_SPRITE_VAR04@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR04@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004045C0,??__Eg_UNUSED_SPRITE_VAR01@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR01@@YAXXZ)(),__cdecl,,verified
+0x004045E0,??__Fg_UNUSED_SPRITE_VAR01@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR01@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004045F0,??__Eg_UNUSED_SPRITE_VAR18@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR18@@YAXXZ)(),__cdecl,,verified
+0x00404610,??__Fg_UNUSED_SPRITE_VAR18@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR18@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404620,??__Eg_UNUSED_SPRITE_VAR03@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR03@@YAXXZ)(),__cdecl,,verified
+0x00404640,??__Fg_UNUSED_SPRITE_VAR03@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR03@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404650,??__Eg_UNUSED_SPRITE_VAR20@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR20@@YAXXZ)(),__cdecl,,verified
+0x00404670,??__Fg_UNUSED_SPRITE_VAR20@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR20@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404680,??__Eg_UNUSED_SPRITE_VAR16@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR16@@YAXXZ)(),__cdecl,,verified
+0x004046A0,??__Fg_UNUSED_SPRITE_VAR16@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR16@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004046B0,??__Eg_UNUSED_SPRITE_VAR14@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR14@@YAXXZ)(),__cdecl,,verified
+0x004046D0,??__Fg_UNUSED_SPRITE_VAR14@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR14@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004046E0,??__Eg_UNUSED_SPRITE_VAR22@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR22@@YAXXZ)(),__cdecl,,verified
+0x00404700,??__Fg_UNUSED_SPRITE_VAR22@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR22@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404710,??__Eg_UNUSED_SPRITE_VAR10@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR10@@YAXXZ)(),__cdecl,,verified
+0x00404730,??__Fg_UNUSED_SPRITE_VAR10@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR10@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404740,??__Eg_UNUSED_SPRITE_VAR15@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR15@@YAXXZ)(),__cdecl,,verified
+0x00404760,??__Fg_UNUSED_SPRITE_VAR15@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR15@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404770,??__Eg_UNUSED_SPRITE_VAR13@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR13@@YAXXZ)(),__cdecl,,verified
+0x00404790,??__Fg_UNUSED_SPRITE_VAR13@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR13@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004047A0,??__Eg_UNUSED_SPRITE_VAR17@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR17@@YAXXZ)(),__cdecl,,verified
+0x004047C0,??__Fg_UNUSED_SPRITE_VAR17@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR17@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004047D0,??__Eg_UNUSED_SPRITE_VAR19@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR19@@YAXXZ)(),__cdecl,,verified
+0x004047F0,??__Fg_UNUSED_SPRITE_VAR19@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR19@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404800,??__Eg_UNUSED_SPRITE_VAR12@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR12@@YAXXZ)(),__cdecl,,verified
+0x00404820,??__Fg_UNUSED_SPRITE_VAR12@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR12@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404830,??__Eg_UNUSED_SPRITE_VAR07@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR07@@YAXXZ)(),__cdecl,,verified
+0x00404850,??__Fg_UNUSED_SPRITE_VAR07@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR07@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00404860,?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z,"void (__cdecl ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z)(Sprite*, GraphicWin*, int, int, int)",__cdecl,11111,verified
+0x00404FB0,?alloc@Popup@@QAAHXZ,int (__cdecl ?alloc@Popup@@QAAHXZ)(Popup* this),__cdecl,,verified
+0x00405140,?POP2@@YAHPBDPBDH@Z,"int (__cdecl ?POP2@@YAHPBDPBDH@Z)(int8*, int8*, int)",__cdecl,111,verified
+0x004055A0,?POP3@@YAXPBDPBDHHH@Z,"void (__cdecl ?POP3@@YAXPBDPBDHHH@Z)(int8*, int8*, int, int, int)",__cdecl,11111,verified
+0x00406850,??1Sprite@@QAE@XZ,void (__thiscall ??1Sprite@@QAE@XZ)(Sprite* this),__thiscall,,verified-via-tail-jump
+0x00406B40,??_GBasePop@@UAEPAXI@Z,"void* (__thiscall ??_GBasePop@@UAEPAXI@Z)(BasePop* this, unsigned int)",__thiscall,1,verified
+0x00406BD0,??_GPopup@@UAEPAXI@Z,"void* (__thiscall ??_GPopup@@UAEPAXI@Z)(Popup* this, unsigned int)",__thiscall,1,verified
+0x00406F20,??_GScroll@@UAEPAXI@Z,"void* (__thiscall ??_GScroll@@UAEPAXI@Z)(Scroll* this, unsigned int)",__thiscall,1,verified
+0x004072D0,?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z,"void (__cdecl ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z)(AlphaSave* this, GraphicWin*, int, int, int, int, int)",__cdecl,111111,verified
+0x00408080,??_GEditBox@@UAEPAXI@Z,"void* (__thiscall ??_GEditBox@@UAEPAXI@Z)(EditBox* this, unsigned int)",__thiscall,1,verified
+0x00408140,??_GAlphaSave@@UAEPAXI@Z,"void* (__thiscall ??_GAlphaSave@@UAEPAXI@Z)(AlphaSave* this, unsigned int)",__thiscall,1,verified
+0x004083B0,??__Eg_BASEWIN@@YAXXZ,void (__cdecl ??__Eg_BASEWIN@@YAXXZ)(),__cdecl,,verified
+0x004083D0,??__Fg_BASEWIN@@YAXXZ,void (__cdecl ??__Fg_BASEWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004083E0,??__Eg_BASEWIN_WAVE@@YAXXZ,void (__cdecl ??__Eg_BASEWIN_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00408400,??__Fg_BASEWIN_WAVE@@YAXXZ,void (__cdecl ??__Fg_BASEWIN_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00408410,?load_inverts@@YAXXZ,void (__cdecl ?load_inverts@@YAXXZ)(),__cdecl,,verified
+0x00416580,?bubble_me_elmo2@BaseWin@@QAGXPADHH@Z,"void (__stdcall ?bubble_me_elmo2@BaseWin@@QAGXPADHH@Z)(BaseWin* this, int8*, int, int)",__stdcall,111,verified
+0x0041AF40,?timer_callback@BaseWin@@QAAXHH@Z,"void (__cdecl ?timer_callback@BaseWin@@QAAXHH@Z)(BaseWin* this, int, int)",__cdecl,11,verified
+0x004213A0,??_GProdPicker@@UAEPAXI@Z,"void* (__thiscall ??_GProdPicker@@UAEPAXI@Z)(ProdPicker* this, unsigned int)",__thiscall,1,verified
+0x004213D0,??_GBaseWin@@UAEPAXI@Z,"void* (__thiscall ??_GBaseWin@@UAEPAXI@Z)(BaseWin* this, unsigned int)",__thiscall,1,verified
+0x00421640,??_GPopMenu@@UAEPAXI@Z,"void* (__thiscall ??_GPopMenu@@UAEPAXI@Z)(PopMenu* this, unsigned int)",__thiscall,1,verified
+0x004219B0,??__Eg_BattleWin@@YAXXZ,void (__cdecl ??__Eg_BattleWin@@YAXXZ)(),__cdecl,,verified
+0x004219D0,??__Fg_BattleWin@@YAXXZ,void (__cdecl ??__Fg_BattleWin@@YAXXZ)(),__cdecl,,unknown
+0x00422EB0,?timer_callback_daemon@BattleWin@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@BattleWin@@QAAXHH@Z)(BattleWin* this, int, int)",__cdecl,11,verified-via-tail-jump
+0x00422EC0,?timer_callback_daemon@BattleWin@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@BattleWin@@QAAXH@Z)(BattleWin* this, int)",__cdecl,1,verified-via-tail-jump
+0x00422F20,?compare_palettes@@YAHXZ,int (__cdecl ?compare_palettes@@YAHXZ)(),__cdecl,,verified
+0x00423000,?colortables_init_faction@@YAXH@Z,void (__cdecl ?colortables_init_faction@@YAXH@Z)(int),__cdecl,1,verified
+0x00423570,?colortables_init@@YAXXZ,void (__cdecl ?colortables_init@@YAXXZ)(),__cdecl,,verified
+0x004243A0,??__Eg_COUNCWIN@@YAXXZ,void (__cdecl ??__Eg_COUNCWIN@@YAXXZ)(),__cdecl,,verified
+0x004243C0,??__Fg_COUNCWIN@@YAXXZ,void (__cdecl ??__Fg_COUNCWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004243D0,?clear_council_notify@@YAXH@Z,void (__cdecl ?clear_council_notify@@YAXH@Z)(int),__cdecl,1,verified
+0x004243F0,?clear_council_notify@@YAXXZ,void (__cdecl ?clear_council_notify@@YAXXZ)(),__cdecl,,verified
+0x00428350,?council@@YAXHHH@Z,"void (__cdecl ?council@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00428750,??__Eg_CREDITS_WAVE@@YAXXZ,void (__cdecl ??__Eg_CREDITS_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00428770,??__Fg_CREDITS_WAVE@@YAXXZ,void (__cdecl ??__Fg_CREDITS_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00428DD0,?timer_callback_daemon@Credits@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@Credits@@QAAXH@Z)(Credits* this, int)",__cdecl,1,verified
+0x00428DF0,?show_credits@@YAXXZ,void (__cdecl ?show_credits@@YAXXZ)(),__cdecl,,verified
+0x00428E60,??_GCredits@@UAEPAXI@Z,"void* (__thiscall ??_GCredits@@UAEPAXI@Z)(Credits* this, unsigned int)",__thiscall,1,verified
+0x00428F90,??__Eg_DATALINK@@YAXXZ,void (__cdecl ??__Eg_DATALINK@@YAXXZ)(),__cdecl,,verified
+0x00428FB0,??__Fg_DATALINK@@YAXXZ,void (__cdecl ??__Fg_DATALINK@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00432850,??__Eg_DESIGNWIN@@YAXXZ,void (__cdecl ??__Eg_DESIGNWIN@@YAXXZ)(),__cdecl,,verified
+0x00432870,??__Fg_DESIGNWIN@@YAXXZ,void (__cdecl ??__Fg_DESIGNWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00432880,??__Eg_DESIGNWIN_WAVE@@YAXXZ,void (__cdecl ??__Eg_DESIGNWIN_WAVE@@YAXXZ)(),__cdecl,,verified
+0x004328A0,??__Fg_DESIGNWIN_WAVE@@YAXXZ,void (__cdecl ??__Fg_DESIGNWIN_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004329B0,?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z,"int (__thiscall ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, RECT*, int)",__thiscall,111,verified
+0x00432CC0,?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z,"int (__thiscall ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, RECT*, int)",__thiscall,111,verified
+0x00433170,?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z,"int (__thiscall ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, RECT*, int)",__thiscall,111,verified
+0x0043C170,?timer_function@DesignWin@@QAAXH@Z,"void (__cdecl ?timer_function@DesignWin@@QAAXH@Z)(DesignWin* this, int)",__cdecl,1,unknown
+0x0043EDB0,??_GDesignWin@@UAEPAXI@Z,"void* (__thiscall ??_GDesignWin@@UAEPAXI@Z)(DesignWin* this, unsigned int)",__thiscall,1,verified
+0x0043EDE0,??_GSelectPartWin@@UAEPAXI@Z,"void* (__thiscall ??_GSelectPartWin@@UAEPAXI@Z)(SelectPartWin* this, unsigned int)",__thiscall,1,verified
+0x0043EFC0,??__Eg_DIPLOPOP@@YAXXZ,void (__cdecl ??__Eg_DIPLOPOP@@YAXXZ)(),__cdecl,,verified
+0x0043EFE0,??__Fg_DIPLOPOP@@YAXXZ,void (__cdecl ??__Fg_DIPLOPOP@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0043F200,?timer_callback_daemon@DiploPop@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@DiploPop@@QAAXHH@Z)(DiploPop* this, int, int)",__cdecl,11,verified
+0x0043F250,?timer_callback_daemon2@DiploPop@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon2@DiploPop@@QAAXHH@Z)(DiploPop* this, int, int)",__cdecl,11,verified
+0x00440F00,??__Eg_DIPLOWIN@@YAXXZ,void (__cdecl ??__Eg_DIPLOWIN@@YAXXZ)(),__cdecl,,verified
+0x00440F20,??__Fg_DIPLOWIN@@YAXXZ,void (__cdecl ??__Fg_DIPLOWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00440F80,?clear_hotseat_chat@@YAXXZ,void (__cdecl ?clear_hotseat_chat@@YAXXZ)(),__cdecl,,verified
+0x00441250,?clear_all_offers@@YAXXZ,void (__cdecl ?clear_all_offers@@YAXXZ)(),__cdecl,,verified
+0x004412A0,?string_callback@DiploWin@@QAAXHH@Z,"void (__cdecl ?string_callback@DiploWin@@QAAXHH@Z)(DiploWin* this, int, int)",__cdecl,11,verified
+0x00444D90,?diplo@@YAXHH@Z,"void (__cdecl ?diplo@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00445130,?energy_compute@@YAXHH@Z,"void (__cdecl ?energy_compute@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00445450,??__Eg_CPU_WAVES@@YAXXZ,void (__cdecl ??__Eg_CPU_WAVES@@YAXXZ)(),__cdecl,,verified
+0x00445480,??__Fg_CPU_WAVES@@YAXXZ,void (__cdecl ??__Fg_CPU_WAVES@@YAXXZ)(),__cdecl,,verified
+0x004454A0,??__Eg_MENU_UP_WAVE@@YAXXZ,void (__cdecl ??__Eg_MENU_UP_WAVE@@YAXXZ)(),__cdecl,,verified
+0x004454C0,??__Fg_MENU_UP_WAVE@@YAXXZ,void (__cdecl ??__Fg_MENU_UP_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004454D0,??__Eg_MENU_DOWN_WAVE@@YAXXZ,void (__cdecl ??__Eg_MENU_DOWN_WAVE@@YAXXZ)(),__cdecl,,verified
+0x004454F0,??__Fg_MENU_DOWN_WAVE@@YAXXZ,void (__cdecl ??__Fg_MENU_DOWN_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00445500,??__Eg_SCOOT_WAVE@@YAXXZ,void (__cdecl ??__Eg_SCOOT_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00445520,??__Fg_SCOOT_WAVE@@YAXXZ,void (__cdecl ??__Fg_SCOOT_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00445530,??__Eg_OK_WAVE@@YAXXZ,void (__cdecl ??__Eg_OK_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00445550,??__Fg_OK_WAVE@@YAXXZ,void (__cdecl ??__Fg_OK_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00445560,??__Eg_PASSOVER_WAVE@@YAXXZ,void (__cdecl ??__Eg_PASSOVER_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00445580,??__Fg_PASSOVER_WAVE@@YAXXZ,void (__cdecl ??__Fg_PASSOVER_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00445590,??__Eg_FX@@YAXXZ,void (__cdecl ??__Eg_FX@@YAXXZ)(),__cdecl,,verified
+0x004455B0,??__Fg_FX@@YAXXZ,void (__cdecl ??__Fg_FX@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004455C0,??__Eg_AMBIENCE@@YAXXZ,void (__cdecl ??__Eg_AMBIENCE@@YAXXZ)(),__cdecl,,verified
+0x004455E0,??__Fg_AMBIENCE@@YAXXZ,void (__cdecl ??__Fg_AMBIENCE@@YAXXZ)(),__cdecl,,unknown
+0x004455F0,?wave_it@@YAXH@Z,void (__cdecl ?wave_it@@YAXH@Z)(int),__cdecl,1,verified
+0x00445650,?ok_callback@@YAXXZ,void (__cdecl ?ok_callback@@YAXXZ)(),__cdecl,,verified
+0x004456A0,?passover_callback@@YAXXZ,void (__cdecl ?passover_callback@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004456B0,?popup_wave_callback@@YAXPAUPopupWave@@H@Z,"void (__cdecl ?popup_wave_callback@@YAXPAUPopupWave@@H@Z)(PopupWave*, int)",__cdecl,11,verified
+0x004457C0,?input_callback@@YAXXZ,void (__cdecl ?input_callback@@YAXXZ)(),__cdecl,,verified
+0x004457E0,?load_music@@YAXH@Z,void (__cdecl ?load_music@@YAXH@Z)(int),__cdecl,1,verified
+0x00446B40,?ambience@@YAHH@Z,int (__cdecl ?ambience@@YAHH@Z)(int),__cdecl,1,verified
+0x00446D10,?ambience_veh@@YAXH@Z,void (__cdecl ?ambience_veh@@YAXH@Z)(int),__cdecl,1,verified
+0x004483D0,??__Eg_FAMEWIN@@YAXXZ,void (__cdecl ??__Eg_FAMEWIN@@YAXXZ)(),__cdecl,,verified
+0x004483F0,??__Fg_FAMEWIN@@YAXXZ,void (__cdecl ??__Fg_FAMEWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044AE50,?hall_of_fame@@YAXH@Z,void (__cdecl ?hall_of_fame@@YAXH@Z)(int),__cdecl,1,verified
+0x0044B000,?hof_save@@YAHXZ,int (__cdecl ?hof_save@@YAHXZ)(),__cdecl,,verified
+0x0044B070,?hof_load@@YAHXZ,int (__cdecl ?hof_load@@YAHXZ)(),__cdecl,,verified
+0x0044B300,??_GFameWin@@UAEPAXI@Z,"void* (__thiscall ??_GFameWin@@UAEPAXI@Z)(FameWin* this, unsigned int)",__thiscall,1,verified
+0x0044B380,?tech_heck@@YAXP6AXPAD@ZH@Z,"void (__cdecl ?tech_heck@@YAXP6AXPAD@ZH@Z)(void (__cdecl *)(int8*), int)",__cdecl,11,verified
+0x0044B9E0,?help_tech_info@@YAXP6AXPAD@ZHHH@Z,"void (__cdecl ?help_tech_info@@YAXP6AXPAD@ZHHH@Z)(void (__cdecl *)(int8*), int, int, int)",__cdecl,1111,verified
+0x0044C7D0,?help_info_pop@@YAXPAD@Z,void (__cdecl ?help_info_pop@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x0044C7F0,?help_tech_info@@YAXPAUPopup@@HH@Z,"void (__cdecl ?help_tech_info@@YAXPAUPopup@@HH@Z)(Popup*, int, int)",__cdecl,111,verified
+0x0044C880,?help_tech@@YAXH@Z,void (__cdecl ?help_tech@@YAXH@Z)(int),__cdecl,1,verified
+0x0044C910,?help_weapon@@YAXH@Z,void (__cdecl ?help_weapon@@YAXH@Z)(int),__cdecl,1,verified
+0x0044C940,?help_armor@@YAXH@Z,void (__cdecl ?help_armor@@YAXH@Z)(int),__cdecl,1,verified
+0x0044C980,?help_chassis@@YAXH@Z,void (__cdecl ?help_chassis@@YAXH@Z)(int),__cdecl,1,verified
+0x0044C9B0,?help_facility@@YAXH@Z,void (__cdecl ?help_facility@@YAXH@Z)(int),__cdecl,1,verified
+0x0044C9E0,?help_project@@YAXH@Z,void (__cdecl ?help_project@@YAXH@Z)(int),__cdecl,1,verified
+0x0044CA10,?help_abil@@YAXH@Z,void (__cdecl ?help_abil@@YAXH@Z)(int),__cdecl,1,verified
+0x0044CA40,?help_social@@YAXH@Z,void (__cdecl ?help_social@@YAXH@Z)(int),__cdecl,1,verified
+0x0044CA70,?help_faction@@YAXH@Z,void (__cdecl ?help_faction@@YAXH@Z)(int),__cdecl,1,verified
+0x0044CAD0,?help_veh@@YAXH@Z,void (__cdecl ?help_veh@@YAXH@Z)(int),__cdecl,1,verified
+0x0044CB30,?help_any@@YAXXZ,void (__cdecl ?help_any@@YAXXZ)(),__cdecl,,verified
+0x0044CB80,?help_create_link@@YAXPAD00@Z,"void (__cdecl ?help_create_link@@YAXPAD00@Z)(int8*, int8*, int8*)",__cdecl,111,verified
+0x0044CC20,??__Eg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ,void (__cdecl ??__Eg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ)(),__cdecl,,verified
+0x0044CC40,??__Fg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ,void (__cdecl ??__Fg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044CC50,??__EFactionArt@@YAXXZ,void (__cdecl ??__EFactionArt@@YAXXZ)(),__cdecl,,verified
+0x0044CC80,??__FFactionArt@@YAXXZ,void (__cdecl ??__FFactionArt@@YAXXZ)(),__cdecl,,verified
+0x0044CCA0,??__Eg_IFACE_CLOSE_X_SPRITES@@YAXXZ,void (__cdecl ??__Eg_IFACE_CLOSE_X_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044CCD0,??__Fg_IFACE_CLOSE_X_SPRITES@@YAXXZ,void (__cdecl ??__Fg_IFACE_CLOSE_X_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044CCF0,??__Eg_IFACE_BOX_SPRITES1@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES1@@YAXXZ)(),__cdecl,,verified
+0x0044CD20,??__Fg_IFACE_BOX_SPRITES1@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES1@@YAXXZ)(),__cdecl,,verified
+0x0044CD40,??__Eg_IFACE_BOX_SPRITES2@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES2@@YAXXZ)(),__cdecl,,verified
+0x0044CD70,??__Fg_IFACE_BOX_SPRITES2@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES2@@YAXXZ)(),__cdecl,,verified
+0x0044CD90,??__Eg_IFACE_BOX_SPRITES3@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES3@@YAXXZ)(),__cdecl,,verified
+0x0044CDC0,??__Fg_IFACE_BOX_SPRITES3@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES3@@YAXXZ)(),__cdecl,,verified
+0x0044CDE0,??__Eg_IFACE_BOX_SPRITES4@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES4@@YAXXZ)(),__cdecl,,verified
+0x0044CE10,??__Fg_IFACE_BOX_SPRITES4@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES4@@YAXXZ)(),__cdecl,,verified
+0x0044CE30,??__Eg_IFACE_BOX_SPRITES5@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES5@@YAXXZ)(),__cdecl,,verified
+0x0044CE60,??__Fg_IFACE_BOX_SPRITES5@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES5@@YAXXZ)(),__cdecl,,verified
+0x0044CE80,??__Eg_IFACE_BOX_SPRITES6@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES6@@YAXXZ)(),__cdecl,,verified
+0x0044CEB0,??__Fg_IFACE_BOX_SPRITES6@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES6@@YAXXZ)(),__cdecl,,verified
+0x0044CED0,??__Eg_IFACE_BOX_SPRITES7@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES7@@YAXXZ)(),__cdecl,,verified
+0x0044CF00,??__Fg_IFACE_BOX_SPRITES7@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES7@@YAXXZ)(),__cdecl,,verified
+0x0044CF20,??__Eg_IFACE_BOX_SPRITES8@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITES8@@YAXXZ)(),__cdecl,,verified
+0x0044CF50,??__Fg_IFACE_BOX_SPRITES8@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITES8@@YAXXZ)(),__cdecl,,verified
+0x0044CF70,??__Eg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ,void (__cdecl ??__Eg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ)(),__cdecl,,verified
+0x0044CFA0,??__Fg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ,void (__cdecl ??__Fg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ)(),__cdecl,,verified
+0x0044CFC0,??__Eg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044CFE0,??__Fg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044CFF0,??__Eg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D010,??__Fg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D020,??__Eg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D040,??__Fg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D050,??__Eg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D070,??__Fg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D080,??__Eg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D0A0,??__Fg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D0B0,??__Eg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D0D0,??__Fg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D0E0,??__Eg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D100,??__Fg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D110,??__Eg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044D130,??__Fg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D140,??__Eg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ,void (__cdecl ??__Eg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ)(),__cdecl,,verified
+0x0044D160,??__Fg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ,void (__cdecl ??__Fg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D170,??__Eg_UNUSED_CAVIARDATA_VAR1@@YAXXZ,void (__cdecl ??__Eg_UNUSED_CAVIARDATA_VAR1@@YAXXZ)(),__cdecl,,verified
+0x0044D190,??__Fg_UNUSED_CAVIARDATA_VAR1@@YAXXZ,void (__cdecl ??__Fg_UNUSED_CAVIARDATA_VAR1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D1A0,??__Eg_SSF_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SSF_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D1C0,??__Fg_SSF_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SSF_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D1D0,??__Eg_SDP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SDP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D1F0,??__Fg_SDP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SDP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D200,??__Eg_SAS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SAS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D220,??__Fg_SAS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SAS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D230,??__Eg_SCD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SCD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D250,??__Fg_SCD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SCD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D260,??__Eg_SCJ_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SCJ_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D280,??__Fg_SCJ_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SCJ_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D290,??__Eg_SAGS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SAGS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D2B0,??__Fg_SAGS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SAGS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D2C0,??__Eg_SFT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SFT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D2E0,??__Fg_SFT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SFT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D2F0,??__Eg_VHR_CAVIARDATA1@@YAXXZ,void (__cdecl ??__Eg_VHR_CAVIARDATA1@@YAXXZ)(),__cdecl,,verified
+0x0044D310,??__Fg_VHR_CAVIARDATA1@@YAXXZ,void (__cdecl ??__Fg_VHR_CAVIARDATA1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D320,??__Eg_SHT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SHT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D340,??__Fg_SHT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SHT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D350,??__Eg_SRB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SRB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D370,??__Fg_SRB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SRB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D380,??__Eg_ASAS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_ASAS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D3A0,??__Fg_ASAS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_ASAS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D3B0,??__Eg_RESLASER_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_RESLASER_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D3D0,??__Fg_RESLASER_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_RESLASER_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D3E0,??__Eg_RESBOLT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_RESBOLT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D400,??__Fg_RESBOLT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_RESBOLT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D410,??__Eg_FUNLOAD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_FUNLOAD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D430,??__Fg_FUNLOAD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_FUNLOAD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D440,??__Eg_TECLOAD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_TECLOAD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D460,??__Fg_TECLOAD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_TECLOAD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D470,??__Eg_SP_DISSWAVE_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SP_DISSWAVE_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D490,??__Fg_SP_DISSWAVE_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SP_DISSWAVE_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D4A0,??__Eg_SP_MARINED_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SP_MARINED_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D4C0,??__Fg_SP_MARINED_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SP_MARINED_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D4D0,??__Eg_SP_NANOO_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SP_NANOO_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D4F0,??__Fg_SP_NANOO_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SP_NANOO_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D500,??__Eg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D520,??__Fg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D530,??__Eg_AA01_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_AA01_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D550,??__Fg_AA01_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_AA01_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D560,??__Eg_AA_ROVER_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_AA_ROVER_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D580,??__Fg_AA_ROVER_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_AA_ROVER_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D590,??__Eg_AA_WING_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_AA_WING_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D5C0,??__Fg_AA_WING_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_AA_WING_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D5E0,??__Eg_ACP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_ACP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D610,??__Fg_ACP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_ACP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D630,??__Eg_AX_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_AX_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D650,??__Fg_AX_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_AX_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D660,??__Eg_AA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_AA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D680,??__Fg_AA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_AA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D690,??__Eg_ACOLPOD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_ACOLPOD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D6B0,??__Fg_ACOLPOD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_ACOLPOD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D6C0,??__Eg_AT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_AT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D6E0,??__Fg_AT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_AT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D6F0,??__Eg_VTA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VTA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D710,??__Fg_VTA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VTA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D720,??__Eg_ATP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_ATP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D740,??__Fg_ATP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_ATP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D750,??__Eg_SSFA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SSFA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D770,??__Fg_SSFA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SSFA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D780,??__Eg_SFTA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_SFTA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D7A0,??__Fg_SFTA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_SFTA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D7B0,??__Eg_VW00_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VW00_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D7D0,??__Fg_VW00_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VW00_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D7E0,??__Eg_VIPTAWL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VIPTAWL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D800,??__Fg_VIPTAWL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VIPTAWL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D810,??__Eg_VIPTASGN_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VIPTASGN_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D830,??__Fg_VIPTASGN_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VIPTASGN_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D840,??__Eg_VIPTAPSI_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VIPTAPSI_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D860,??__Fg_VIPTAPSI_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VIPTAPSI_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D870,??__Eg_VIPTR_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VIPTR_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D8A0,??__Fg_VIPTR_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VIPTR_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D8C0,??__Eg_VIPTA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VIPTA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D8F0,??__Fg_VIPTA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VIPTA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D910,??__Eg_PTMOD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_PTMOD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D930,??__Fg_PTMOD_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_PTMOD_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D940,??__Eg_VB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D960,??__Fg_VB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D970,??__Eg_VBP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VBP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D990,??__Fg_VBP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VBP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D9A0,??__Eg_VGMC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VGMC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D9C0,??__Fg_VGMC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VGMC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044D9D0,??__Eg_VGMCP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VGMCP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044D9F0,??__Fg_VGMCP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VGMCP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DA00,??__Eg_VLIGHTS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VLIGHTS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DA20,??__Fg_VLIGHTS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VLIGHTS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DA30,??__Eg_VPT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VPT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DA50,??__Fg_VPT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VPT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DA60,??__Eg_A_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_A_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DA80,??__Fg_A_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_A_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DA90,??__Eg_APWALL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_APWALL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DAB0,??__Fg_APWALL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_APWALL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DAC0,??__Eg_ASGEN_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_ASGEN_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DAE0,??__Fg_ASGEN_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_ASGEN_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DAF0,??__Eg_APSID_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_APSID_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DB10,??__Fg_APSID_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_APSID_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DB20,??__Eg_VA01_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VA01_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DB40,??__Fg_VA01_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VA01_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DB50,??__Eg_VR_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VR_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DB80,??__Fg_VR_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VR_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DBA0,??__Eg_VHR_CAVIARDATA2@@YAXXZ,void (__cdecl ??__Eg_VHR_CAVIARDATA2@@YAXXZ)(),__cdecl,,verified
+0x0044DBC0,??__Fg_VHR_CAVIARDATA2@@YAXXZ,void (__cdecl ??__Fg_VHR_CAVIARDATA2@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DBD0,??__Eg_VRC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VRC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DC00,??__Fg_VRC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VRC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DC20,??__Eg_VI_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VI_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DC40,??__Fg_VI_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VI_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DC50,??__Eg_VGMT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VGMT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DC70,??__Fg_VGMT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VGMT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DC80,??__Eg_VGMTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VGMTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DCA0,??__Fg_VGMTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VGMTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DCB0,??__Eg_UNUSED_CAVIARDATA_VAR2@@YAXXZ,void (__cdecl ??__Eg_UNUSED_CAVIARDATA_VAR2@@YAXXZ)(),__cdecl,,verified
+0x0044DCD0,??__Fg_UNUSED_CAVIARDATA_VAR2@@YAXXZ,void (__cdecl ??__Fg_UNUSED_CAVIARDATA_VAR2@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DCE0,??__Eg_VWNTU_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VWNTU_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DD00,??__Fg_VWNTU_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VWNTU_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DD10,??__Eg_VT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DD30,??__Fg_VT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DD40,??__Eg_DROP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_DROP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DD60,??__Fg_DROP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_DROP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DD70,??__Eg_DROPLET_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_DROPLET_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DD90,??__Fg_DROPLET_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_DROPLET_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DDA0,??__Eg_VCL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DDC0,??__Fg_VCL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DDD0,??__Eg_UNUSED_CAVIARDATA_VAR3@@YAXXZ,void (__cdecl ??__Eg_UNUSED_CAVIARDATA_VAR3@@YAXXZ)(),__cdecl,,verified
+0x0044DE00,??__Fg_UNUSED_CAVIARDATA_VAR3@@YAXXZ,void (__cdecl ??__Fg_UNUSED_CAVIARDATA_VAR3@@YAXXZ)(),__cdecl,,verified
+0x0044DE20,??__Eg_VCLT00_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCLT00_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DE40,??__Fg_VCLT00_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCLT00_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DE50,??__Eg_VHT_VBP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VHT_VBP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DE70,??__Fg_VHT_VBP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VHT_VBP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DE80,??__Eg_VHTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VHTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DEA0,??__Fg_VHTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VHTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DEB0,??__Eg_VHTA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VHTA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DEE0,??__Fg_VHTA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VHTA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DF00,??__Eg_VHTTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VHTTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DF20,??__Fg_VHTTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VHTTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DF30,??__Eg_VHTTPA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VHTTPA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DF60,??__Fg_VHTTPA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VHTTPA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DF80,??__Eg_VSP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VSP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DFA0,??__Fg_VSP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VSP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044DFB0,??__Eg_VSPA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VSPA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044DFE0,??__Fg_VSPA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VSPA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E000,??__Eg_VSPTF_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VSPTF_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E020,??__Fg_VSPTF_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VSPTF_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E030,??__Eg_VSPTB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VSPTB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E050,??__Fg_VSPTB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VSPTB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E060,??__Eg_VFL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VFL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E080,??__Fg_VFL_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VFL_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E090,??__Eg_VGS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VGS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E0B0,??__Fg_VGS_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VGS_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E0C0,??__Eg_VGSP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VGSP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E0E0,??__Fg_VGSP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VGSP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E0F0,??__Eg_VJTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VJTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E110,??__Fg_VJTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VJTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E120,??__Eg_VJT0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VJT0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E150,??__Fg_VJT0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VJT0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E170,??__Eg_VCU_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCU_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E190,??__Fg_VCU_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCU_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E1A0,??__Eg_VCUP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCUP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E1C0,??__Fg_VCUP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCUP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E1D0,??__Eg_VCUA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCUA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E200,??__Fg_VCUA0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCUA0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E220,??__Eg_VCUW_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCUW_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E240,??__Fg_VCUW_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCUW_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E250,??__Eg_VCT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E270,??__Fg_VCT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E280,??__Eg_VCTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E2A0,??__Fg_VCTP_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCTP_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E2B0,??__Eg_VCTB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCTB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E2D0,??__Fg_VCTB_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCTB_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E2E0,??__Eg_VCT0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VCT0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E310,??__Fg_VCT0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VCT0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E330,??__Eg_VWNTT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VWNTT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E350,??__Fg_VWNTT_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VWNTT_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E360,??__Eg_VWNST_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VWNST_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E380,??__Fg_VWNST_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VWNST_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E390,??__Eg_VWNAA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VWNAA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E3B0,??__Fg_VWNAA_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VWNAA_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E3C0,??__Eg_VW_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VW_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E3F0,??__Fg_VW_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VW_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E410,??__Eg_VM_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VM_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E430,??__Fg_VM_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VM_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E440,??__Eg_VM13_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VM13_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E460,??__Fg_VM13_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VM13_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E470,??__Eg_VPBR0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_VPBR0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E4A0,??__Fg_VPBR0_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_VPBR0_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E4C0,??__Eg_UNUSED_CAVIARDATA_VAR4@@YAXXZ,void (__cdecl ??__Eg_UNUSED_CAVIARDATA_VAR4@@YAXXZ)(),__cdecl,,verified
+0x0044E4F0,??__Fg_UNUSED_CAVIARDATA_VAR4@@YAXXZ,void (__cdecl ??__Fg_UNUSED_CAVIARDATA_VAR4@@YAXXZ)(),__cdecl,,verified
+0x0044E510,??__Eg_NW_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_NW_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E530,??__Fg_NW_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_NW_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E540,??__Eg_NI_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_NI_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E560,??__Fg_NI_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_NI_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E570,??__Eg_NLC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Eg_NLC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified
+0x0044E590,??__Fg_NLC_CAVIARDATA@@YAXXZ,void (__cdecl ??__Fg_NLC_CAVIARDATA@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E5A0,??__Eg_UNUSED_CAVIARDATA_VAR5@@YAXXZ,void (__cdecl ??__Eg_UNUSED_CAVIARDATA_VAR5@@YAXXZ)(),__cdecl,,verified
+0x0044E5D0,??__Fg_UNUSED_CAVIARDATA_VAR5@@YAXXZ,void (__cdecl ??__Fg_UNUSED_CAVIARDATA_VAR5@@YAXXZ)(),__cdecl,,verified
+0x0044E5F0,??__Eg_RADIUS1_TEXTURE@@YAXXZ,void (__cdecl ??__Eg_RADIUS1_TEXTURE@@YAXXZ)(),__cdecl,,verified
+0x0044E610,??__Fg_RADIUS1_TEXTURE@@YAXXZ,void (__cdecl ??__Fg_RADIUS1_TEXTURE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E620,??__Eg_RADIUS2_TEXTURE@@YAXXZ,void (__cdecl ??__Eg_RADIUS2_TEXTURE@@YAXXZ)(),__cdecl,,verified
+0x0044E640,??__Fg_RADIUS2_TEXTURE@@YAXXZ,void (__cdecl ??__Fg_RADIUS2_TEXTURE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E650,??__Eg_ROCKY_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_ROCKY_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E680,??__Fg_ROCKY_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_ROCKY_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E6A0,??__Eg_OCEAN_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_OCEAN_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E6D0,??__Fg_OCEAN_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_OCEAN_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E6F0,??__Eg_FLAT_ARID_LAND_TEXTURE@@YAXXZ,void (__cdecl ??__Eg_FLAT_ARID_LAND_TEXTURE@@YAXXZ)(),__cdecl,,verified
+0x0044E710,??__Fg_FLAT_ARID_LAND_TEXTURE@@YAXXZ,void (__cdecl ??__Fg_FLAT_ARID_LAND_TEXTURE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E720,??__Eg_MOIST_LAND_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_MOIST_LAND_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E750,??__Fg_MOIST_LAND_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_MOIST_LAND_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E770,??__Eg_RAINY_LAND_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_RAINY_LAND_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E7A0,??__Fg_RAINY_LAND_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_RAINY_LAND_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E7C0,??__Eg_JUNGLE_LAND_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_JUNGLE_LAND_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E7F0,??__Fg_JUNGLE_LAND_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_JUNGLE_LAND_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E810,??__Eg_DUNE_LAND_TEXTURE@@YAXXZ,void (__cdecl ??__Eg_DUNE_LAND_TEXTURE@@YAXXZ)(),__cdecl,,verified
+0x0044E830,??__Fg_DUNE_LAND_TEXTURE@@YAXXZ,void (__cdecl ??__Fg_DUNE_LAND_TEXTURE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044E840,??__Eg_SUNNY_MESA_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_SUNNY_MESA_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E870,??__Fg_SUNNY_MESA_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_SUNNY_MESA_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E890,??__Eg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E8C0,??__Fg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E8E0,??__Eg_ROAD_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_ROAD_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E910,??__Fg_ROAD_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_ROAD_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E930,??__Eg_MAGTUBE_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_MAGTUBE_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E960,??__Fg_MAGTUBE_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_MAGTUBE_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E980,??__Eg_RIVER_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_RIVER_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E9B0,??__Fg_RIVER_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_RIVER_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044E9D0,??__Eg_MOUNT_PLANET_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_MOUNT_PLANET_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EA00,??__Fg_MOUNT_PLANET_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_MOUNT_PLANET_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EA20,??__Eg_GARLAND_CRATER_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_GARLAND_CRATER_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EA50,??__Fg_GARLAND_CRATER_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_GARLAND_CRATER_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EA70,??__Eg_FUNGUS_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_FUNGUS_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EAA0,??__Fg_FUNGUS_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_FUNGUS_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EAC0,??__Eg_FARM_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_FARM_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EAF0,??__Fg_FARM_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_FARM_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EB10,??__Eg_FOREST_TEXTURES@@YAXXZ,void (__cdecl ??__Eg_FOREST_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EB40,??__Fg_FOREST_TEXTURES@@YAXXZ,void (__cdecl ??__Fg_FOREST_TEXTURES@@YAXXZ)(),__cdecl,,verified
+0x0044EB60,??__Eg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ,void (__cdecl ??__Eg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ)(),__cdecl,,verified
+0x0044EB80,??__Fg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ,void (__cdecl ??__Fg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044EB90,??__Eg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EBC0,??__Fg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EBE0,??__Eg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EC10,??__Fg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EC30,??__Eg_TER1_UNUSED_SPRITES2@@YAXXZ,void (__cdecl ??__Eg_TER1_UNUSED_SPRITES2@@YAXXZ)(),__cdecl,,verified
+0x0044EC60,??__Fg_TER1_UNUSED_SPRITES2@@YAXXZ,void (__cdecl ??__Fg_TER1_UNUSED_SPRITES2@@YAXXZ)(),__cdecl,,verified
+0x0044EC80,??__Eg_TER1_MINE_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_MINE_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044ECA0,??__Fg_TER1_MINE_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_MINE_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044ECB0,??__Eg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044ECD0,??__Fg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044ECE0,??__Eg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044ED00,??__Fg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044ED10,??__Eg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044ED30,??__Fg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044ED40,??__Eg_TER1_TUT_BLANK_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_TUT_BLANK_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044ED60,??__Fg_TER1_TUT_BLANK_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_TUT_BLANK_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044ED70,??__Eg_TER1_KELP_FARM_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_KELP_FARM_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044ED90,??__Fg_TER1_KELP_FARM_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_KELP_FARM_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044EDA0,??__Eg_TER1_CONDENSER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_CONDENSER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044EDC0,??__Fg_TER1_CONDENSER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_CONDENSER_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044EDD0,??__Eg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044EDF0,??__Fg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044EE00,??__Eg_TER1_BOREHOLE_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_BOREHOLE_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044EE20,??__Fg_TER1_BOREHOLE_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_BOREHOLE_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044EE30,??__Eg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044EE50,??__Fg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044EE60,??__Eg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EE90,??__Fg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EEB0,??__Eg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EEE0,??__Fg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EF00,??__Eg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EF30,??__Fg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EF50,??__Eg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EF80,??__Fg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044EFA0,??__Eg_TER1_UNUSED_SPRITES1@@YAXXZ,void (__cdecl ??__Eg_TER1_UNUSED_SPRITES1@@YAXXZ)(),__cdecl,,verified
+0x0044EFD0,??__Fg_TER1_UNUSED_SPRITES1@@YAXXZ,void (__cdecl ??__Fg_TER1_UNUSED_SPRITES1@@YAXXZ)(),__cdecl,,verified
+0x0044EFF0,??__Eg_TER1_FARM_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_FARM_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F020,??__Fg_TER1_FARM_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_FARM_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F040,??__Eg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F070,??__Fg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F090,??__Eg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F0C0,??__Fg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F0E0,??__Eg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F110,??__Fg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F130,??__Eg_GLOW_SPRITES@@YAXXZ,void (__cdecl ??__Eg_GLOW_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F160,??__Fg_GLOW_SPRITES@@YAXXZ,void (__cdecl ??__Fg_GLOW_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F180,??__Eg_TER1_UNITY_POD_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TER1_UNITY_POD_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F1B0,??__Fg_TER1_UNITY_POD_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TER1_UNITY_POD_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F1D0,??__Eg_TER1_MONOLITH_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_MONOLITH_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F1F0,??__Fg_TER1_MONOLITH_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_MONOLITH_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F200,??__Eg_TER1_BUNKER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_BUNKER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F220,??__Fg_TER1_BUNKER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_BUNKER_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F230,??__Eg_TER1_AIRBASE_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_AIRBASE_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F250,??__Fg_TER1_AIRBASE_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_AIRBASE_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F260,??__Eg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ,void (__cdecl ??__Eg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F280,??__Fg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ,void (__cdecl ??__Fg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F290,??__Eg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ,void (__cdecl ??__Eg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F2C0,??__Fg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ,void (__cdecl ??__Fg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F2E0,??__Eg_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Eg_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F310,??__Fg_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Fg_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F330,??__Eg_FLAGS_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Eg_FLAGS_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F360,??__Fg_FLAGS_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Fg_FLAGS_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F380,??__Eg_ICONS_GENERAL_SPRITES@@YAXXZ,void (__cdecl ??__Eg_ICONS_GENERAL_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F3B0,??__Fg_ICONS_GENERAL_SPRITES@@YAXXZ,void (__cdecl ??__Fg_ICONS_GENERAL_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F3D0,??__Eg_RESOURCE_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_RESOURCE_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F400,??__Fg_RESOURCE_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_RESOURCE_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F420,??__Eg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F450,??__Fg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F470,??__Eg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F4A0,??__Fg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F4C0,??__Eg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F4F0,??__Fg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F510,??__Eg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F540,??__Fg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F560,??__Eg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F590,??__Fg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F5B0,??__Eg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F5E0,??__Fg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F600,??__Eg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F630,??__Fg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F650,??__Eg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F680,??__Fg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F6A0,??__Eg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Eg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F6C0,??__Fg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Fg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F6D0,??__Eg_SILVER_MENU_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SILVER_MENU_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F700,??__Fg_SILVER_MENU_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SILVER_MENU_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F720,??__Eg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F750,??__Fg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F770,??__Eg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Eg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F790,??__Fg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Fg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F7A0,??__Eg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Eg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F7C0,??__Fg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Fg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F7D0,??__Eg_PEACE_SIGN_SPRITES@@YAXXZ,void (__cdecl ??__Eg_PEACE_SIGN_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F800,??__Fg_PEACE_SIGN_SPRITES@@YAXXZ,void (__cdecl ??__Fg_PEACE_SIGN_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F820,??__Eg_ICON_TILE_SQUARE_SPRITE@@YAXXZ,void (__cdecl ??__Eg_ICON_TILE_SQUARE_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F840,??__Fg_ICON_TILE_SQUARE_SPRITE@@YAXXZ,void (__cdecl ??__Fg_ICON_TILE_SQUARE_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F850,??__Eg_XI_BOOM_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Eg_XI_BOOM_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F880,??__Fg_XI_BOOM_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Fg_XI_BOOM_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F8A0,??__Eg_XF_BOOM_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Eg_XF_BOOM_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F8D0,??__Fg_XF_BOOM_VEH_SPRITES@@YAXXZ,void (__cdecl ??__Fg_XF_BOOM_VEH_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044F8F0,??__Eg_BATTLE_MIND_WORM_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BATTLE_MIND_WORM_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F910,??__Fg_BATTLE_MIND_WORM_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BATTLE_MIND_WORM_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F920,??__Eg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F940,??__Fg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F950,??__Eg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F970,??__Fg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F980,??__Eg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F9A0,??__Fg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F9B0,??__Eg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044F9D0,??__Fg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044F9E0,??__Eg_BATTLE_SEALURK_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BATTLE_SEALURK_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FA00,??__Fg_BATTLE_SEALURK_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BATTLE_SEALURK_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FA10,??__Eg_TECH_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_TECH_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FA40,??__Fg_TECH_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_TECH_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FA60,??__Eg_FACILITY_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_FACILITY_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FA90,??__Fg_FACILITY_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_FACILITY_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FAB0,??__Eg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FAE0,??__Fg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FB00,??__Eg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ,void (__cdecl ??__Eg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FB30,??__Fg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ,void (__cdecl ??__Fg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FB50,??__Eg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FB80,??__Fg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FBA0,??__Eg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FBD0,??__Fg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FBF0,??__Eg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Eg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FC10,??__Fg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ,void (__cdecl ??__Fg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FC20,??__Eg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Eg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FC40,??__Fg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ,void (__cdecl ??__Fg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FC50,??__Eg_IFACE_LOCK_SPRITES@@YAXXZ,void (__cdecl ??__Eg_IFACE_LOCK_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FC80,??__Fg_IFACE_LOCK_SPRITES@@YAXXZ,void (__cdecl ??__Fg_IFACE_LOCK_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0044FCA0,??__Eg_UNUSED_SPRITES_VAR01@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR01@@YAXXZ)(),__cdecl,,verified
+0x0044FCD0,??__Fg_UNUSED_SPRITES_VAR01@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR01@@YAXXZ)(),__cdecl,,verified
+0x0044FCF0,??__Eg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FD10,??__Fg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FD20,??__Eg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FD40,??__Fg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FD50,??__Eg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FD70,??__Fg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FD80,??__Eg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FDA0,??__Fg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FDB0,??__Eg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FDD0,??__Fg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FDE0,??__Eg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FE00,??__Fg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FE10,??__Eg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FE30,??__Fg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FE40,??__Eg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FE60,??__Fg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FE70,??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FE90,??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FEA0,??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FEC0,??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FED0,??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x0044FEF0,??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FF00,??__Eg_UNUSED_SPRITE_VAR23@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR23@@YAXXZ)(),__cdecl,,verified
+0x0044FF20,??__Fg_UNUSED_SPRITE_VAR23@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR23@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FF30,??__Eg_UNUSED_SPRITE_VAR24@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR24@@YAXXZ)(),__cdecl,,verified
+0x0044FF50,??__Fg_UNUSED_SPRITE_VAR24@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR24@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FF60,??__Eg_UNUSED_SPRITE_VAR25@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR25@@YAXXZ)(),__cdecl,,verified
+0x0044FF80,??__Fg_UNUSED_SPRITE_VAR25@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR25@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FF90,??__Eg_UNUSED_SPRITE_VAR26@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR26@@YAXXZ)(),__cdecl,,verified
+0x0044FFB0,??__Fg_UNUSED_SPRITE_VAR26@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR26@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FFC0,??__Eg_UNUSED_SPRITE_VAR27@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR27@@YAXXZ)(),__cdecl,,verified
+0x0044FFE0,??__Fg_UNUSED_SPRITE_VAR27@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR27@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0044FFF0,??__Eg_UNUSED_SPRITE_VAR28@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR28@@YAXXZ)(),__cdecl,,verified
+0x00450010,??__Fg_UNUSED_SPRITE_VAR28@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR28@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450020,??__Eg_UNUSED_SPRITE_VAR29@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR29@@YAXXZ)(),__cdecl,,verified
+0x00450040,??__Fg_UNUSED_SPRITE_VAR29@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR29@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450050,??__Eg_UNUSED_SPRITE_VAR30@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR30@@YAXXZ)(),__cdecl,,verified
+0x00450070,??__Fg_UNUSED_SPRITE_VAR30@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR30@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450080,??__Eg_UNUSED_SPRITE_VAR31@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR31@@YAXXZ)(),__cdecl,,verified
+0x004500A0,??__Fg_UNUSED_SPRITE_VAR31@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR31@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004500B0,??__Eg_UNUSED_SPRITE_VAR32@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR32@@YAXXZ)(),__cdecl,,verified
+0x004500D0,??__Fg_UNUSED_SPRITE_VAR32@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR32@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004500E0,??__Eg_UNUSED_SPRITE_VAR33@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR33@@YAXXZ)(),__cdecl,,verified
+0x00450100,??__Fg_UNUSED_SPRITE_VAR33@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR33@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450110,??__Eg_UNUSED_SPRITE_VAR34@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR34@@YAXXZ)(),__cdecl,,verified
+0x00450130,??__Fg_UNUSED_SPRITE_VAR34@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR34@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450140,??__Eg_UNUSED_SPRITE_VAR35@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR35@@YAXXZ)(),__cdecl,,verified
+0x00450160,??__Fg_UNUSED_SPRITE_VAR35@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR35@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450170,??__Eg_UNUSED_SPRITE_VAR36@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR36@@YAXXZ)(),__cdecl,,verified
+0x00450190,??__Fg_UNUSED_SPRITE_VAR36@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR36@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004501A0,??__Eg_UNUSED_SPRITE_VAR37@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR37@@YAXXZ)(),__cdecl,,verified
+0x004501C0,??__Fg_UNUSED_SPRITE_VAR37@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR37@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004501D0,??__Eg_UNUSED_SPRITE_VAR38@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR38@@YAXXZ)(),__cdecl,,verified
+0x004501F0,??__Fg_UNUSED_SPRITE_VAR38@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR38@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450200,??__Eg_UNUSED_SPRITE_VAR39@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR39@@YAXXZ)(),__cdecl,,verified
+0x00450220,??__Fg_UNUSED_SPRITE_VAR39@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR39@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450230,??__Eg_UNUSED_SPRITE_VAR40@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR40@@YAXXZ)(),__cdecl,,verified
+0x00450250,??__Fg_UNUSED_SPRITE_VAR40@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR40@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450260,??__Eg_UNUSED_SPRITE_VAR41@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR41@@YAXXZ)(),__cdecl,,verified
+0x00450280,??__Fg_UNUSED_SPRITE_VAR41@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR41@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450290,??__Eg_UNUSED_SPRITE_VAR42@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR42@@YAXXZ)(),__cdecl,,verified
+0x004502B0,??__Fg_UNUSED_SPRITE_VAR42@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR42@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004502C0,??__Eg_UNUSED_SPRITE_VAR43@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR43@@YAXXZ)(),__cdecl,,verified
+0x004502E0,??__Fg_UNUSED_SPRITE_VAR43@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR43@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004502F0,??__Eg_UNUSED_SPRITE_VAR44@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR44@@YAXXZ)(),__cdecl,,verified
+0x00450310,??__Fg_UNUSED_SPRITE_VAR44@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR44@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450320,??__Eg_UNUSED_SPRITE_VAR45@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR45@@YAXXZ)(),__cdecl,,verified
+0x00450340,??__Fg_UNUSED_SPRITE_VAR45@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR45@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450350,??__Eg_UNUSED_SPRITE_VAR46@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR46@@YAXXZ)(),__cdecl,,verified
+0x00450370,??__Fg_UNUSED_SPRITE_VAR46@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR46@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450380,??__Eg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ,void (__cdecl ??__Eg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x004503B0,??__Fg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ,void (__cdecl ??__Fg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x004503D0,??__Eg_UNUSED_SPRITE_VAR47@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR47@@YAXXZ)(),__cdecl,,verified
+0x004503F0,??__Fg_UNUSED_SPRITE_VAR47@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR47@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450400,??__Eg_UNUSED_SPRITE_VAR48@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR48@@YAXXZ)(),__cdecl,,verified
+0x00450420,??__Fg_UNUSED_SPRITE_VAR48@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR48@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450430,??__Eg_UNUSED_SPRITE_VAR49@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR49@@YAXXZ)(),__cdecl,,verified
+0x00450450,??__Fg_UNUSED_SPRITE_VAR49@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR49@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450460,??__Eg_UNUSED_SPRITE_VAR50@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR50@@YAXXZ)(),__cdecl,,verified
+0x00450480,??__Fg_UNUSED_SPRITE_VAR50@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR50@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450490,??__Eg_UNUSED_SPRITE_VAR51@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR51@@YAXXZ)(),__cdecl,,verified
+0x004504B0,??__Fg_UNUSED_SPRITE_VAR51@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR51@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004504C0,??__Eg_UNUSED_SPRITE_VAR52@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR52@@YAXXZ)(),__cdecl,,verified
+0x004504E0,??__Fg_UNUSED_SPRITE_VAR52@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR52@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004504F0,??__Eg_UNUSED_SPRITE_VAR53@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR53@@YAXXZ)(),__cdecl,,verified
+0x00450510,??__Fg_UNUSED_SPRITE_VAR53@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR53@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450520,??__Eg_UNUSED_SPRITE_VAR54@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR54@@YAXXZ)(),__cdecl,,verified
+0x00450540,??__Fg_UNUSED_SPRITE_VAR54@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR54@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450550,??__Eg_UNUSED_SPRITE_VAR55@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR55@@YAXXZ)(),__cdecl,,verified
+0x00450570,??__Fg_UNUSED_SPRITE_VAR55@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR55@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450580,??__Eg_UNUSED_SPRITE_VAR56@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR56@@YAXXZ)(),__cdecl,,verified
+0x004505A0,??__Fg_UNUSED_SPRITE_VAR56@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR56@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004505B0,??__Eg_UNUSED_SPRITE_VAR57@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR57@@YAXXZ)(),__cdecl,,verified
+0x004505D0,??__Fg_UNUSED_SPRITE_VAR57@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR57@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004505E0,??__Eg_UNUSED_SPRITE_VAR58@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR58@@YAXXZ)(),__cdecl,,verified
+0x00450600,??__Fg_UNUSED_SPRITE_VAR58@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR58@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450610,??__Eg_UNUSED_SPRITE_VAR59@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR59@@YAXXZ)(),__cdecl,,verified
+0x00450630,??__Fg_UNUSED_SPRITE_VAR59@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR59@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450640,??__Eg_UNUSED_SPRITE_VAR60@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR60@@YAXXZ)(),__cdecl,,verified
+0x00450660,??__Fg_UNUSED_SPRITE_VAR60@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR60@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450670,??__Eg_UNUSED_SPRITE_VAR61@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR61@@YAXXZ)(),__cdecl,,verified
+0x00450690,??__Fg_UNUSED_SPRITE_VAR61@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR61@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004506A0,??__Eg_UNUSED_SPRITE_VAR62@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR62@@YAXXZ)(),__cdecl,,verified
+0x004506C0,??__Fg_UNUSED_SPRITE_VAR62@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR62@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004506D0,??__Eg_UNUSED_SPRITE_VAR63@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR63@@YAXXZ)(),__cdecl,,verified
+0x004506F0,??__Fg_UNUSED_SPRITE_VAR63@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR63@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450700,??__Eg_UNUSED_SPRITE_VAR64@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR64@@YAXXZ)(),__cdecl,,verified
+0x00450720,??__Fg_UNUSED_SPRITE_VAR64@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR64@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450730,??__Eg_UNUSED_SPRITE_VAR65@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR65@@YAXXZ)(),__cdecl,,verified
+0x00450750,??__Fg_UNUSED_SPRITE_VAR65@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR65@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450760,??__Eg_UNUSED_SPRITE_VAR66@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR66@@YAXXZ)(),__cdecl,,verified
+0x00450780,??__Fg_UNUSED_SPRITE_VAR66@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR66@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450790,??__Eg_UNUSED_SPRITE_VAR67@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR67@@YAXXZ)(),__cdecl,,verified
+0x004507B0,??__Fg_UNUSED_SPRITE_VAR67@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR67@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004507C0,??__Eg_UNUSED_SPRITE_VAR68@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR68@@YAXXZ)(),__cdecl,,verified
+0x004507E0,??__Fg_UNUSED_SPRITE_VAR68@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR68@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004507F0,??__Eg_UNUSED_SPRITE_VAR69@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR69@@YAXXZ)(),__cdecl,,verified
+0x00450810,??__Fg_UNUSED_SPRITE_VAR69@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR69@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450820,??__Eg_UNUSED_SPRITE_VAR70@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR70@@YAXXZ)(),__cdecl,,verified
+0x00450840,??__Fg_UNUSED_SPRITE_VAR70@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR70@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450850,??__Eg_UNUSED_SPRITE_VAR71@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR71@@YAXXZ)(),__cdecl,,verified
+0x00450870,??__Fg_UNUSED_SPRITE_VAR71@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR71@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450880,??__Eg_UNUSED_SPRITE_VAR72@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR72@@YAXXZ)(),__cdecl,,verified
+0x004508A0,??__Fg_UNUSED_SPRITE_VAR72@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR72@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004508B0,??__Eg_UNUSED_SPRITE_VAR73@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR73@@YAXXZ)(),__cdecl,,verified
+0x004508D0,??__Fg_UNUSED_SPRITE_VAR73@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR73@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004508E0,??__Eg_UNUSED_SPRITE_VAR74@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR74@@YAXXZ)(),__cdecl,,verified
+0x00450900,??__Fg_UNUSED_SPRITE_VAR74@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR74@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450910,??__Eg_UNUSED_SPRITES_VAR02@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR02@@YAXXZ)(),__cdecl,,verified
+0x00450940,??__Fg_UNUSED_SPRITES_VAR02@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR02@@YAXXZ)(),__cdecl,,verified
+0x00450960,??__Eg_UNUSED_SPRITES_VAR03@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR03@@YAXXZ)(),__cdecl,,verified
+0x00450990,??__Fg_UNUSED_SPRITES_VAR03@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR03@@YAXXZ)(),__cdecl,,verified
+0x004509B0,??__Eg_UNUSED_SPRITES_VAR04@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR04@@YAXXZ)(),__cdecl,,verified
+0x004509E0,??__Fg_UNUSED_SPRITES_VAR04@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR04@@YAXXZ)(),__cdecl,,verified
+0x00450A00,??__Eg_UNUSED_SPRITES_VAR05@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR05@@YAXXZ)(),__cdecl,,verified
+0x00450A30,??__Fg_UNUSED_SPRITES_VAR05@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR05@@YAXXZ)(),__cdecl,,verified
+0x00450A50,??__Eg_UNUSED_SPRITES_VAR06@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR06@@YAXXZ)(),__cdecl,,verified
+0x00450A80,??__Fg_UNUSED_SPRITES_VAR06@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR06@@YAXXZ)(),__cdecl,,verified
+0x00450AA0,??__Eg_UNUSED_SPRITES_VAR07@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR07@@YAXXZ)(),__cdecl,,verified
+0x00450AD0,??__Fg_UNUSED_SPRITES_VAR07@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR07@@YAXXZ)(),__cdecl,,verified
+0x00450AF0,??__Eg_UNUSED_SPRITES_VAR08@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR08@@YAXXZ)(),__cdecl,,verified
+0x00450B20,??__Fg_UNUSED_SPRITES_VAR08@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR08@@YAXXZ)(),__cdecl,,verified
+0x00450B40,??__Eg_UNUSED_SPRITES_VAR09@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR09@@YAXXZ)(),__cdecl,,verified
+0x00450B70,??__Fg_UNUSED_SPRITES_VAR09@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR09@@YAXXZ)(),__cdecl,,verified
+0x00450B90,??__Eg_UNUSED_SPRITES_VAR10@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITES_VAR10@@YAXXZ)(),__cdecl,,verified
+0x00450BC0,??__Fg_UNUSED_SPRITES_VAR10@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITES_VAR10@@YAXXZ)(),__cdecl,,verified
+0x00450BE0,??__Eg_UNUSED_SPRITE_VAR75@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR75@@YAXXZ)(),__cdecl,,verified
+0x00450C00,??__Fg_UNUSED_SPRITE_VAR75@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR75@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450C10,??__Eg_UNUSED_SPRITE_VAR76@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR76@@YAXXZ)(),__cdecl,,verified
+0x00450C30,??__Fg_UNUSED_SPRITE_VAR76@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR76@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450C40,??__Eg_UNUSED_SPRITE_VAR77@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR77@@YAXXZ)(),__cdecl,,verified
+0x00450C60,??__Fg_UNUSED_SPRITE_VAR77@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR77@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450C70,??__Eg_UNUSED_SPRITE_VAR78@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR78@@YAXXZ)(),__cdecl,,verified
+0x00450C90,??__Fg_UNUSED_SPRITE_VAR78@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR78@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450CA0,??__Eg_UNUSED_SPRITE_VAR79@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR79@@YAXXZ)(),__cdecl,,verified
+0x00450CC0,??__Fg_UNUSED_SPRITE_VAR79@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR79@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450CD0,??__Eg_UNUSED_SPRITE_VAR80@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR80@@YAXXZ)(),__cdecl,,verified
+0x00450CF0,??__Fg_UNUSED_SPRITE_VAR80@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR80@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450D00,??__Eg_UNUSED_SPRITE_VAR81@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR81@@YAXXZ)(),__cdecl,,verified
+0x00450D20,??__Fg_UNUSED_SPRITE_VAR81@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR81@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450D30,??__Eg_UNUSED_SPRITE_VAR82@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR82@@YAXXZ)(),__cdecl,,verified
+0x00450D50,??__Fg_UNUSED_SPRITE_VAR82@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR82@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450D60,??__Eg_UNUSED_SPRITE_VAR83@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR83@@YAXXZ)(),__cdecl,,verified
+0x00450D80,??__Fg_UNUSED_SPRITE_VAR83@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR83@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00450D90,??__Eg_BASEWIN_SPRITES@@YAXXZ,void (__cdecl ??__Eg_BASEWIN_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x00450DC0,??__Fg_BASEWIN_SPRITES@@YAXXZ,void (__cdecl ??__Fg_BASEWIN_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x00451030,?load_voxels@@YAXXZ,void (__cdecl ?load_voxels@@YAXXZ)(),__cdecl,,verified
+0x00451A10,?load_palette@@YAXXZ,void (__cdecl ?load_palette@@YAXXZ)(),__cdecl,,verified
+0x00451C50,?load_terrain@@YAXXZ,void (__cdecl ?load_terrain@@YAXXZ)(),__cdecl,,verified
+0x00453710,?load_faction_art@@YAXH@Z,void (__cdecl ?load_faction_art@@YAXH@Z)(int),__cdecl,1,verified
+0x00453A20,?load_bases@@YAXXZ,void (__cdecl ?load_bases@@YAXXZ)(),__cdecl,,verified
+0x00453A70,?load_box_sprites@@YAXXZ,void (__cdecl ?load_box_sprites@@YAXXZ)(),__cdecl,,verified
+0x00453F70,?load_flags@@YAXXZ,void (__cdecl ?load_flags@@YAXXZ)(),__cdecl,,verified
+0x00454270,?load_vehicles@@YAXXZ,void (__cdecl ?load_vehicles@@YAXXZ)(),__cdecl,,verified
+0x004547E0,?load_icons@@YAXXZ,void (__cdecl ?load_icons@@YAXXZ)(),__cdecl,,verified
+0x00454D10,?load_misc@@YAXXZ,void (__cdecl ?load_misc@@YAXXZ)(),__cdecl,,verified
+0x00454FC0,?load_cursors@@YAXXZ,void (__cdecl ?load_cursors@@YAXXZ)(),__cdecl,,verified
+0x00455400,?load_cycling@@YAXXZ,void (__cdecl ?load_cycling@@YAXXZ)(),__cdecl,,verified
+0x004554C0,?def_caption_draw@@YAHPAUGraphicWin@@PADPAUBuffer@@@Z,"int (__cdecl ?def_caption_draw@@YAHPAUGraphicWin@@PADPAUBuffer@@@Z)(GraphicWin*, int8*, Buffer*)",__cdecl,111,verified
+0x00455610,?load_interface@@YAXH@Z,void (__cdecl ?load_interface@@YAXH@Z)(int),__cdecl,1,verified
+0x00455E50,?load_deswin_sprites@@YAXXZ,void (__cdecl ?load_deswin_sprites@@YAXXZ)(),__cdecl,,verified
+0x00455E80,?load_fixed_sprites@@YAXXZ,void (__cdecl ?load_fixed_sprites@@YAXXZ)(),__cdecl,,unknown
+0x00455EB0,?load_sprites@@YAXXZ,void (__cdecl ?load_sprites@@YAXXZ)(),__cdecl,,verified
+0x004562C0,??__Eg_INFOWIN@@YAXXZ,void (__cdecl ??__Eg_INFOWIN@@YAXXZ)(),__cdecl,,verified
+0x004562E0,??__Fg_INFOWIN@@YAXXZ,void (__cdecl ??__Fg_INFOWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00459260,?timer_daemon@InfoWin@@QAAXH@Z,"void (__cdecl ?timer_daemon@InfoWin@@QAAXH@Z)(InfoWin* this, int)",__cdecl,1,verified
+0x00459560,??__Eg_MAININTERFACE@@YAXXZ,void (__cdecl ??__Eg_MAININTERFACE@@YAXXZ)(),__cdecl,,verified
+0x00459580,??__Fg_MAININTERFACE@@YAXXZ,void (__cdecl ??__Fg_MAININTERFACE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00459590,??__Eg_MAININTERFACE_WAVE@@YAXXZ,void (__cdecl ??__Eg_MAININTERFACE_WAVE@@YAXXZ)(),__cdecl,,verified
+0x004595B0,??__Fg_MAININTERFACE_WAVE@@YAXXZ,void (__cdecl ??__Fg_MAININTERFACE_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004595C0,?bung_momma@@YAXXZ,void (__cdecl ?bung_momma@@YAXXZ)(),__cdecl,,verified
+0x0045C200,?timer_callback_daemon@MainInterface@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@MainInterface@@QAAXHH@Z)(MainInterface* this, int, int)",__cdecl,11,verified
+0x0045D440,?slide_show@@YAXPAUGraphicWin@@H@Z,"void (__cdecl ?slide_show@@YAXPAUGraphicWin@@H@Z)(GraphicWin*, int)",__cdecl,11,verified
+0x0045D970,?slide_hide@@YAXPAUGraphicWin@@H@Z,"void (__cdecl ?slide_hide@@YAXPAUGraphicWin@@H@Z)(GraphicWin*, int)",__cdecl,11,verified
+0x0045DEA0,?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z,"void (__cdecl ?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z)(GraphicWin*, Scroll*)",__cdecl,11,verified
+0x0045E540,?scroll_hide@@YAXPAUGraphicWin@@PAUScroll@@@Z,"void (__cdecl ?scroll_hide@@YAXPAUGraphicWin@@PAUScroll@@@Z)(GraphicWin*, Scroll*)",__cdecl,11,verified
+0x0045F1C0,??_GMainInterface@@UAEPAXI@Z,"void* (__thiscall ??_GMainInterface@@UAEPAXI@Z)(MainInterface* this, unsigned int)",__thiscall,1,verified
+0x0045F920,??__Eg_JACKAL_FONT@@YAXXZ,void (__cdecl ??__Eg_JACKAL_FONT@@YAXXZ)(),__cdecl,,verified
+0x0045F940,??__Fg_JACKAL_FONT@@YAXXZ,void (__cdecl ??__Fg_JACKAL_FONT@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00462080,??__Eg_MAPWIN@@YAXXZ,void (__cdecl ??__Eg_MAPWIN@@YAXXZ)(),__cdecl,,verified
+0x004620A0,??__Fg_MAPWIN@@YAXXZ,void (__cdecl ??__Fg_MAPWIN@@YAXXZ)(),__cdecl,,unknown
+0x00462190,?alt_get_ocean_detail@@YAHHHHH@Z,"int (__cdecl ?alt_get_ocean_detail@@YAHHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x004632D0,?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z,"int (__cdecl ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z)(MapWin* this, Buffer*, MapWin*, int, int, int, int, int, int, int, int)",__cdecl,1111111111,verified
+0x0046AE00,?draw_cursor@@YAXXZ,void (__cdecl ?draw_cursor@@YAXXZ)(),__cdecl,,verified
+0x0046AEF0,?draw_radius@@YAXHHHH@Z,"void (__cdecl ?draw_radius@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x0046AF90,?draw_tile_fixup@@YAXHHHH@Z,"void (__cdecl ?draw_tile_fixup@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x0046B040,?draw_tile_fixup@@YAXHHHHHH@Z,"void (__cdecl ?draw_tile_fixup@@YAXHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
+0x0046B140,?draw_tiles@@YAXHHH@Z,"void (__cdecl ?draw_tiles@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0046B190,?draw_map@@YAXH@Z,void (__cdecl ?draw_map@@YAXH@Z)(int),__cdecl,1,verified
+0x00471030,?mapwin_system_init@@YAXH@Z,void (__cdecl ?mapwin_system_init@@YAXH@Z)(int),__cdecl,1,verified
+0x004710E0,?mapwin_system_shutdown@@YAXXZ,void (__cdecl ?mapwin_system_shutdown@@YAXXZ)(),__cdecl,,unknown
+0x004711A0,?terrain_fixup@@YAXPAUMapWin@@@Z,void (__cdecl ?terrain_fixup@@YAXPAUMapWin@@@Z)(MapWin*),__cdecl,1,verified
+0x00471240,?mapwin_terrain_fixup@@YAXXZ,void (__cdecl ?mapwin_terrain_fixup@@YAXXZ)(),__cdecl,,verified
+0x00471320,??__Eg_MESSAGEWIN@@YAXXZ,void (__cdecl ??__Eg_MESSAGEWIN@@YAXXZ)(),__cdecl,,verified
+0x00471340,??__Fg_MESSAGEWIN@@YAXXZ,void (__cdecl ??__Fg_MESSAGEWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00471350,??__Eg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ,void (__cdecl ??__Eg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x00471380,??__Fg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ,void (__cdecl ??__Fg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x00471870,?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z,"int (__cdecl ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z)(MessageWin* this, GraphicWin*, int, int, int, int, int)",__cdecl,111111,verified
+0x00471F70,?listbox_fill@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@@Z,"int (__cdecl ?listbox_fill@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@@Z)(MessageWin* this, GraphicWin*, int, int, RECT*)",__cdecl,1111,verified
+0x00471FD0,?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z,"int (__cdecl ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z)(MessageWin* this, GraphicWin*, int, int, RECT*, int8*)",__cdecl,11111,verified
+0x00472200,??__Eg_MONUWIN@@YAXXZ,void (__cdecl ??__Eg_MONUWIN@@YAXXZ)(),__cdecl,,verified
+0x00472220,??__Fg_MONUWIN@@YAXXZ,void (__cdecl ??__Fg_MONUWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00476A50,?monument@@YAXH@Z,void (__cdecl ?monument@@YAXH@Z)(int),__cdecl,1,verified
+0x00476B30,?clear_monuments@@YAXXZ,void (__cdecl ?clear_monuments@@YAXXZ)(),__cdecl,,verified
+0x00476B70,?mon_colony_founded@@YAXHPAD@Z,"void (__cdecl ?mon_colony_founded@@YAXHPAD@Z)(int, int8*)",__cdecl,11,verified
+0x00476C90,?mon_tech_discovered@@YAXHH@Z,"void (__cdecl ?mon_tech_discovered@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00476DA0,?mon_secrets_of_tech@@YAXH@Z,void (__cdecl ?mon_secrets_of_tech@@YAXH@Z)(int),__cdecl,1,verified
+0x00476EE0,?mon_prototype_built@@YAXH@Z,void (__cdecl ?mon_prototype_built@@YAXH@Z)(int),__cdecl,1,verified
+0x00476FE0,?mon_facility_built@@YAXHPAD@Z,"void (__cdecl ?mon_facility_built@@YAXHPAD@Z)(int, int8*)",__cdecl,11,verified
+0x00477100,?mon_secret_project@@YAXHH@Z,"void (__cdecl ?mon_secret_project@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00477210,?mon_enemy_destroyed@@YAXHH@Z,"void (__cdecl ?mon_enemy_destroyed@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00477440,?mon_naval_unit_built@@YAXH@Z,void (__cdecl ?mon_naval_unit_built@@YAXH@Z)(int),__cdecl,1,verified
+0x00477540,?mon_air_unit_built@@YAXH@Z,void (__cdecl ?mon_air_unit_built@@YAXH@Z)(int),__cdecl,1,verified
+0x00477640,?mon_native_life_bred@@YAXH@Z,void (__cdecl ?mon_native_life_bred@@YAXH@Z)(int),__cdecl,1,verified
+0x00477740,?mon_first_in_space@@YAXH@Z,void (__cdecl ?mon_first_in_space@@YAXH@Z)(int),__cdecl,1,verified
+0x00477840,?mon_built_preserve@@YAXH@Z,void (__cdecl ?mon_built_preserve@@YAXH@Z)(int),__cdecl,1,verified
+0x00477940,?mon_winning_unify@@YAXHH@Z,"void (__cdecl ?mon_winning_unify@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x004779D0,?mon_winning_trans@@YAXHH@Z,"void (__cdecl ?mon_winning_trans@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00477A60,?mon_killed_faction@@YAXHH@Z,"void (__cdecl ?mon_killed_faction@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00477E10,??__Eg_MULTIWIN@@YAXXZ,void (__cdecl ??__Eg_MULTIWIN@@YAXXZ)(),__cdecl,,verified
+0x00477E30,??__Fg_MULTIWIN@@YAXXZ,void (__cdecl ??__Fg_MULTIWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00477E40,??__Eg_MULTIWIN_WAVE@@YAXXZ,void (__cdecl ??__Eg_MULTIWIN_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00477E60,??__Fg_MULTIWIN_WAVE@@YAXXZ,void (__cdecl ??__Fg_MULTIWIN_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0047A770,??__Eg_NETMSG1@@YAXXZ,void (__cdecl ??__Eg_NETMSG1@@YAXXZ)(),__cdecl,,verified
+0x0047A790,??__Fg_NETMSG1@@YAXXZ,void (__cdecl ??__Fg_NETMSG1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0047A7A0,??__Eg_NETMSG2@@YAXXZ,void (__cdecl ??__Eg_NETMSG2@@YAXXZ)(),__cdecl,,verified
+0x0047A7C0,??__Fg_NETMSG2@@YAXXZ,void (__cdecl ??__Fg_NETMSG2@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0047A800,?timer_daemon@NetMsg@@QAAXH@Z,"void (__cdecl ?timer_daemon@NetMsg@@QAAXH@Z)(NetMsg* this, int)",__cdecl,1,verified
+0x0047AFF0,??__Eg_NETWIN@@YAXXZ,void (__cdecl ??__Eg_NETWIN@@YAXXZ)(),__cdecl,,verified
+0x0047B010,??__Fg_NETWIN@@YAXXZ,void (__cdecl ??__Fg_NETWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0047B020,?send_faction_data@@YAXH@Z,void (__cdecl ?send_faction_data@@YAXH@Z)(int),__cdecl,1,verified
+0x0047B0F0,?send_all_player_packets@@YAXH@Z,void (__cdecl ?send_all_player_packets@@YAXH@Z)(int),__cdecl,1,verified
+0x0047B260,?send_session_packet@@YAXHH@Z,"void (__cdecl ?send_session_packet@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0047B2E0,?send_session2_packet@@YAXHH@Z,"void (__cdecl ?send_session2_packet@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00483240,?modal_callback_daemon@NetWin@@QAAHXZ,int (__cdecl ?modal_callback_daemon@NetWin@@QAAHXZ)(NetWin* this),__cdecl,,verified
+0x004832D0,?string_callback@NetWin@@QAAXHH@Z,"void (__cdecl ?string_callback@NetWin@@QAAXHH@Z)(NetWin* this, int, int)",__cdecl,11,verified
+0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,void (__cdecl ??__Eg_NEWTECHWIN@@YAXXZ)(),__cdecl,,verified
+0x00483870,??__Fg_NEWTECHWIN@@YAXXZ,void (__cdecl ??__Fg_NEWTECHWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00483880,??__Eg_NEWTECHWIN_SPRITES@@YAXXZ,void (__cdecl ??__Eg_NEWTECHWIN_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x004838B0,??__Fg_NEWTECHWIN_SPRITES@@YAXXZ,void (__cdecl ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x00483920,?info@NewTechWin@@QAAXPAD@Z,"void (__cdecl ?info@NewTechWin@@QAAXPAD@Z)(NewTechWin* this, int8*)",__cdecl,1,verified
+0x00488750,??__Eg_PICKWIN@@YAXXZ,void (__cdecl ??__Eg_PICKWIN@@YAXXZ)(),__cdecl,,verified
+0x00488770,??__Fg_PICKWIN@@YAXXZ,void (__cdecl ??__Fg_PICKWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00488780,?list_was_dblclicked@@YAXH@Z,void (__cdecl ?list_was_dblclicked@@YAXH@Z)(int),__cdecl,1,verified
+0x0048AE00,??__Eg_PLANWIN@@YAXXZ,void (__cdecl ??__Eg_PLANWIN@@YAXXZ)(),__cdecl,,verified
+0x0048AE20,??__Fg_PLANWIN@@YAXXZ,void (__cdecl ??__Fg_PLANWIN@@YAXXZ)(),__cdecl,,unknown
+0x0048BEE0,?xrange@@YAHH@Z,int (__cdecl ?xrange@@YAHH@Z)(int),__cdecl,1,verified
+0x0048C0A0,?popp@@YAHPADPBDHPBDP6AHXZ@Z,"int (__cdecl ?popp@@YAHPADPBDHPBDP6AHXZ@Z)(int8*, int8*, int, int8*, int (__cdecl *)())",__cdecl,11111,verified
+0x0048C320,?popt@@YAHPADPBDHPADH@Z,"int (__cdecl ?popt@@YAHPADPBDHPADH@Z)(int8*, int8*, int, int8*, int)",__cdecl,11111,verified
+0x0048C360,?popv@@YAHPADPBDHH@Z,"int (__cdecl ?popv@@YAHPADPBDHH@Z)(int8*, int8*, int, int)",__cdecl,1111,verified
+0x0048C650,?popb@@YAHPBDHHPBDPAUSprite@@@Z,"int (__cdecl ?popb@@YAHPBDHHPBDPAUSprite@@@Z)(int8*, int, int, int8*, Sprite*)",__cdecl,11111,verified
+0x0048CF50,?veh_sprite_click@@YAHH@Z,int (__cdecl ?veh_sprite_click@@YAHH@Z)(int),__cdecl,1,verified
+0x0048D010,?veh_sprite_double_click@@YAHH@Z,int (__cdecl ?veh_sprite_double_click@@YAHH@Z)(int),__cdecl,1,verified
+0x0048D4F0,??__Eg_PREFWIN@@YAXXZ,void (__cdecl ??__Eg_PREFWIN@@YAXXZ)(),__cdecl,,verified
+0x0048D510,??__Fg_PREFWIN@@YAXXZ,void (__cdecl ??__Fg_PREFWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0048D520,??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ,void (__cdecl ??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ)(),__cdecl,,verified
+0x0048D540,??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ,void (__cdecl ??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004946D0,?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z,"void (__cdecl ?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z)(ProdPicker* this, int, ProdPicker*)",__cdecl,11,verified
+0x00495170,??__Eg_QUAYLEWIN@@YAXXZ,void (__cdecl ??__Eg_QUAYLEWIN@@YAXXZ)(),__cdecl,,verified
+0x00495190,??__Fg_QUAYLEWIN@@YAXXZ,void (__cdecl ??__Fg_QUAYLEWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00496900,??__Eg_REPORTIF@@YAXXZ,void (__cdecl ??__Eg_REPORTIF@@YAXXZ)(),__cdecl,,verified
+0x00496920,??__Fg_REPORTIF@@YAXXZ,void (__cdecl ??__Fg_REPORTIF@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00496930,??__Eg_REPORTWIN@@YAXXZ,void (__cdecl ??__Eg_REPORTWIN@@YAXXZ)(),__cdecl,,verified
+0x00496950,??__Fg_REPORTWIN@@YAXXZ,void (__cdecl ??__Fg_REPORTWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0049FFC0,?sat_anim_daemon@@YAXH@Z,void (__cdecl ?sat_anim_daemon@@YAXH@Z)(int),__cdecl,1,verified
+0x004A0250,?sat_expl_daemon@@YAXH@Z,void (__cdecl ?sat_expl_daemon@@YAXH@Z)(int),__cdecl,1,verified
+0x004A4050,?bl_daemon@@YAXH@Z,void (__cdecl ?bl_daemon@@YAXH@Z)(int),__cdecl,1,verified
+0x004A8440,?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z,"void (__cdecl ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z)(GraphicWin*, int, int, RECT*, int8*)",__cdecl,11111,verified
+0x004AC9A0,?report_labs@@YAXXZ,void (__cdecl ?report_labs@@YAXXZ)(),__cdecl,,verified
+0x004AC9F0,?report_energy@@YAXXZ,void (__cdecl ?report_energy@@YAXXZ)(),__cdecl,,verified
+0x004ACA40,?report_ops@@YAXXZ,void (__cdecl ?report_ops@@YAXXZ)(),__cdecl,,verified
+0x004ACA90,?report_projects@@YAXXZ,void (__cdecl ?report_projects@@YAXXZ)(),__cdecl,,verified
+0x004ACAE0,?report_sat@@YAXXZ,void (__cdecl ?report_sat@@YAXXZ)(),__cdecl,,verified
+0x004ACB30,?report_security@@YAXXZ,void (__cdecl ?report_security@@YAXXZ)(),__cdecl,,verified
+0x004ACB80,?report_score@@YAXH@Z,void (__cdecl ?report_score@@YAXH@Z)(int),__cdecl,1,verified
+0x004ACBD0,?report_intel@@YAXH@Z,void (__cdecl ?report_intel@@YAXH@Z)(int),__cdecl,1,verified
+0x004AE9B0,??__ESocialWinParent@@YAXXZ,void (__cdecl ??__ESocialWinParent@@YAXXZ)(),__cdecl,,verified
+0x004AE9D0,??__FSocialWinParent@@YAXXZ,void (__cdecl ??__FSocialWinParent@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004B3F50,??_GSocialWin@@UAEPAXI@Z,"void* (__thiscall ??_GSocialWin@@UAEPAXI@Z)(SocialWin* this, unsigned int)",__thiscall,1,verified
+0x004B3FA0,??__Eg_STATUSWIN@@YAXXZ,void (__cdecl ??__Eg_STATUSWIN@@YAXXZ)(),__cdecl,,verified
+0x004B3FC0,??__Fg_STATUSWIN@@YAXXZ,void (__cdecl ??__Fg_STATUSWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004B4BF0,?draw_my_dest@@YAXH@Z,void (__cdecl ?draw_my_dest@@YAXH@Z)(int),__cdecl,1,verified
+0x004BA220,?textcolor_init@@YAXXZ,void (__cdecl ?textcolor_init@@YAXXZ)(),__cdecl,,verified
+0x004BA5C0,??__Eg_TUTWIN@@YAXXZ,void (__cdecl ??__Eg_TUTWIN@@YAXXZ)(),__cdecl,,verified
+0x004BA5E0,??__Fg_TUTWIN@@YAXXZ,void (__cdecl ??__Fg_TUTWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004BA5F0,?tut_check@@YAHH@Z,int (__cdecl ?tut_check@@YAHH@Z)(int),__cdecl,1,verified
+0x004BA650,?tut_check2@@YAHH@Z,int (__cdecl ?tut_check2@@YAHH@Z)(int),__cdecl,1,verified
+0x004BDF20,?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,"void (__cdecl ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(TutWin* this, Sprite*, GraphicWin*, int, int, int)",__cdecl,11111,verified
+0x004BDFA0,?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,"void (__cdecl ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(TutWin* this, Sprite*, GraphicWin*, int, int, int)",__cdecl,11111,verified
+0x004BEE60,?UNK2@UV2Player@@QAAHHHHH@Z,"int (__cdecl ?UNK2@UV2Player@@QAAHHHHH@Z)(UV2Player* this, int, int, int, int)",__cdecl,1111,verified
+0x004BF390,?on_key@UV2Player@@QAAHXZ,int (__cdecl ?on_key@UV2Player@@QAAHXZ)(UV2Player* this),__cdecl,,verified
+0x004BF6E0,??__Eg_VEHDRAW_CAVIAR@@YAXXZ,void (__cdecl ??__Eg_VEHDRAW_CAVIAR@@YAXXZ)(),__cdecl,,verified
+0x004BF700,??__Fg_VEHDRAW_CAVIAR@@YAXXZ,void (__cdecl ??__Fg_VEHDRAW_CAVIAR@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004BF710,??__Eg_VEHDRAW_BUFFER@@YAXXZ,void (__cdecl ??__Eg_VEHDRAW_BUFFER@@YAXXZ)(),__cdecl,,verified
+0x004BF730,??__Fg_VEHDRAW_BUFFER@@YAXXZ,void (__cdecl ??__Fg_VEHDRAW_BUFFER@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004BF740,?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z,"void (__cdecl ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z)(VOX_Vect*, VOX_Matrix*)",__cdecl,11,verified
+0x004BFC70,?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z,"void (__cdecl ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z)(Buffer*, int, int, int, int)",__cdecl,11111,verified
+0x004C0F50,?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z,"void (__cdecl ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z)(Buffer*, int, int, int, int)",__cdecl,11111,verified
+0x004C1B10,?vehdraw_compute_facet_normals@@YAXXZ,void (__cdecl ?vehdraw_compute_facet_normals@@YAXXZ)(),__cdecl,,verified
+0x004C1D10,?vehdraw_setup@@YAXXZ,void (__cdecl ?vehdraw_setup@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004C2470,?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z,"int (__cdecl ?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z)(int, int, int, int, int, Caviar*)",__cdecl,111111,verified
+0x004C3090,?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z,"int (__cdecl ?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z)(int, int, int, int, int, Caviar*)",__cdecl,111111,verified
+0x004C3800,?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z,"int (__cdecl ?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z)(int, int, int, int, int, Caviar*)",__cdecl,111111,verified
+0x004C38B0,??__Eg_WORLDWIN@@YAXXZ,void (__cdecl ??__Eg_WORLDWIN@@YAXXZ)(),__cdecl,,verified
+0x004C38D0,??__Fg_WORLDWIN@@YAXXZ,void (__cdecl ??__Fg_WORLDWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004C5C50,??__Eg_WAVE_DEVICE@@YAXXZ,void (__cdecl ??__Eg_WAVE_DEVICE@@YAXXZ)(),__cdecl,,verified
+0x004C5C70,??__Fg_WAVE_DEVICE@@YAXXZ,void (__cdecl ??__Fg_WAVE_DEVICE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004C5C80,??__Eg_MIDI_DEVICE@@YAXXZ,void (__cdecl ??__Eg_MIDI_DEVICE@@YAXXZ)(),__cdecl,,verified
+0x004C5CA0,??__Fg_MIDI_DEVICE@@YAXXZ,void (__cdecl ??__Fg_MIDI_DEVICE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004C5CB0,??__Eg_WAVE_IN_DEVICE@@YAXXZ,void (__cdecl ??__Eg_WAVE_IN_DEVICE@@YAXXZ)(),__cdecl,,verified
+0x004C5CD0,??__Fg_WAVE_IN_DEVICE@@YAXXZ,void (__cdecl ??__Fg_WAVE_IN_DEVICE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004C5CE0,?init_sound@@YAHPAXK@Z,"int (__cdecl ?init_sound@@YAHPAXK@Z)(void*, unsigned int)",__cdecl,11,verified
+0x004C5D90,?release_sound@@YAHXZ,int (__cdecl ?release_sound@@YAHXZ)(),__cdecl,,verified
+0x004C5E50,?load_sound_dll@@YAHXZ,int (__cdecl ?load_sound_dll@@YAHXZ)(),__cdecl,,verified
+0x004C5F70,?unload_sound_dll@@YAXXZ,void (__cdecl ?unload_sound_dll@@YAXXZ)(),__cdecl,,verified
+0x004C5FB0,?init_sound_timer@@YAHKK@Z,"int (__cdecl ?init_sound_timer@@YAHKK@Z)(unsigned int, unsigned int)",__cdecl,11,verified
+0x004C5FE0,?get_sound_version@@YAHXZ,int (__cdecl ?get_sound_version@@YAHXZ)(),__cdecl,,verified
+0x004C67C0,??1Wave@@QAE@XZ,void (__thiscall ??1Wave@@QAE@XZ)(Wave* this),__thiscall,,verified
+0x004CD060,?action_feature@@YAXXZ,void (__cdecl ?action_feature@@YAXXZ)(),__cdecl,,verified
+0x004D6070,?goto_routine@Console@@QAAXH@Z,"void (__cdecl ?goto_routine@Console@@QAAXH@Z)(Console* this, int)",__cdecl,1,verified
+0x004E4020,?best_specialist@@YAHXZ,int (__cdecl ?best_specialist@@YAHXZ)(),__cdecl,,verified
+0x004E6300,?bases_reset@@YAXHHH@Z,"void (__cdecl ?bases_reset@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x004E68B0,?farm_compute@@YAXXZ,void (__cdecl ?farm_compute@@YAXXZ)(),__cdecl,,verified
+0x004E80B0,?base_yield@@YAXXZ,void (__cdecl ?base_yield@@YAXXZ)(),__cdecl,,verified
+0x004E9550,?base_support@@YAXXZ,void (__cdecl ?base_support@@YAXXZ)(),__cdecl,,verified
+0x004E9B70,?base_nutrient@@YAXXZ,void (__cdecl ?base_nutrient@@YAXXZ)(),__cdecl,,verified
+0x004E9CB0,?base_minerals@@YAXXZ,void (__cdecl ?base_minerals@@YAXXZ)(),__cdecl,,verified
+0x004EA1F0,?black_market@@YAHH@Z,int (__cdecl ?black_market@@YAHH@Z)(int),__cdecl,1,verified
+0x004EA540,?base_psych@@YAXXZ,void (__cdecl ?base_psych@@YAXXZ)(),__cdecl,,verified
+0x004EB560,?base_energy@@YAXXZ,void (__cdecl ?base_energy@@YAXXZ)(),__cdecl,,verified
+0x004EC3B0,?base_compute@@YAHH@Z,int (__cdecl ?base_compute@@YAHH@Z)(int),__cdecl,1,verified
+0x004EC3F0,?base_connect@@YAHH@Z,int (__cdecl ?base_connect@@YAHH@Z)(int),__cdecl,1,verified
+0x004ECBF0,?base_terraform@@YAXH@Z,void (__cdecl ?base_terraform@@YAXH@Z)(int),__cdecl,1,verified
+0x004EF1C0,?base_growth@@YAHXZ,int (__cdecl ?base_growth@@YAHXZ)(),__cdecl,,verified
+0x004F07E0,?base_production@@YAXXZ,void (__cdecl ?base_production@@YAXXZ)(),__cdecl,,verified
+0x004F3FE0,?base_hurry@@YAXXZ,void (__cdecl ?base_hurry@@YAXXZ)(),__cdecl,,verified
+0x004F4830,?base_check_support@@YAXXZ,void (__cdecl ?base_check_support@@YAXXZ)(),__cdecl,,verified
+0x004F4DC0,?base_energy_costs@@YAXXZ,void (__cdecl ?base_energy_costs@@YAXXZ)(),__cdecl,,verified
+0x004F4E80,?base_research@@YAXXZ,void (__cdecl ?base_research@@YAXXZ)(),__cdecl,,verified
+0x004F4FB0,?drone_riot@@YAXXZ,void (__cdecl ?drone_riot@@YAXXZ)(),__cdecl,,verified
+0x004F5CE0,?base_drones@@YAXXZ,void (__cdecl ?base_drones@@YAXXZ)(),__cdecl,,verified
+0x004F5F30,?base_doctors@@YAXXZ,void (__cdecl ?base_doctors@@YAXXZ)(),__cdecl,,verified
+0x004F65F0,?base_maint@@YAXXZ,void (__cdecl ?base_maint@@YAXXZ)(),__cdecl,,verified
+0x004F67F0,?base_ecology@@YAXXZ,void (__cdecl ?base_ecology@@YAXXZ)(),__cdecl,,verified
+0x004F8110,?base_claimed@@YAHHHHHHH@Z,"int (__cdecl ?base_claimed@@YAHHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
+0x00500120,?clear@@YAXXZ,void (__cdecl ?clear@@YAXXZ)(),__cdecl,,verified
+0x00500130,?says@@YAXPBD@Z,void (__cdecl ?says@@YAXPBD@Z)(int8*),__cdecl,1,verified
+0x00501D30,?battle_init@@YAXXZ,void (__cdecl ?battle_init@@YAXXZ)(),__cdecl,,verified
+0x00501D50,?add_bat@@YAXHHPAD@Z,"void (__cdecl ?add_bat@@YAXHHPAD@Z)(int, int, int8*)",__cdecl,111,verified
+0x00505D20,??__Eg_BOOM_BUFFER1@@YAXXZ,void (__cdecl ??__Eg_BOOM_BUFFER1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00505D30,??__Eg_BOOM_FLIC@@YAXXZ,void (__cdecl ??__Eg_BOOM_FLIC@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00505D40,??__Eg_BOOM_BUFFERS1@@YAXXZ,void (__cdecl ??__Eg_BOOM_BUFFERS1@@YAXXZ)(),__cdecl,,verified
+0x00505D60,??__Eg_BOOM_BUFFERS2@@YAXXZ,void (__cdecl ??__Eg_BOOM_BUFFERS2@@YAXXZ)(),__cdecl,,verified
+0x0050B8A0,?say_num@@YAXH@Z,void (__cdecl ?say_num@@YAXH@Z)(int),__cdecl,1,verified
+0x0050B8D0,?POP3@@YAXPBDHHH@Z,"void (__cdecl ?POP3@@YAXPBDHHH@Z)(int8*, int, int, int)",__cdecl,1111,verified
+0x0050B970,?popp@@YAHPBDPBDP6AHXZ@Z,"int (__cdecl ?popp@@YAHPBDPBDP6AHXZ@Z)(int8*, int8*, int (__cdecl *)())",__cdecl,111,verified
+0x0050B9E0,?pop@NetMsg@@QAAXPBDPBD@Z,"void (__cdecl ?pop@NetMsg@@QAAXPBDPBD@Z)(NetMsg* this, int8*, int8*)",__cdecl,11,verified
+0x0050BA30,?bit_count@@YAHH@Z,int (__cdecl ?bit_count@@YAHH@Z)(int),__cdecl,1,verified
+0x0050BA50,?intervention@@YAXHH@Z,"void (__cdecl ?intervention@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0050BCC0,?double_cross@@YAXHHH@Z,"void (__cdecl ?double_cross@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0050C2E0,?act_of_aggression@@YAHHH@Z,"int (__cdecl ?act_of_aggression@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0050DD90,?clock_wait@@YAXH@Z,void (__cdecl ?clock_wait@@YAXH@Z)(int),__cdecl,1,verified
+0x0050DE00,?sea_coasts@@YAHH@Z,int (__cdecl ?sea_coasts@@YAHH@Z)(int),__cdecl,1,verified
+0x0050E850,??__Eg_CONSOLE@@YAXXZ,void (__cdecl ??__Eg_CONSOLE@@YAXXZ)(),__cdecl,,verified
+0x0050E870,??__Fg_CONSOLE@@YAXXZ,void (__cdecl ??__Fg_CONSOLE@@YAXXZ)(),__cdecl,,unknown
+0x0050E890,?auto_play_callback@@YAXH@Z,void (__cdecl ?auto_play_callback@@YAXH@Z)(int),__cdecl,1,verified
+0x0050E980,??__Eg_CONSOLE_TIMER@@YAXXZ,void (__cdecl ??__Eg_CONSOLE_TIMER@@YAXXZ)(),__cdecl,,verified
+0x0050E9A0,??__Fg_CONSOLE_TIMER@@YAXXZ,void (__cdecl ??__Fg_CONSOLE_TIMER@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0050EA40,?blink_timer@@YAXH@Z,void (__cdecl ?blink_timer@@YAXH@Z)(int),__cdecl,1,verified
+0x0050EE30,?blink2_timer@@YAXH@Z,void (__cdecl ?blink2_timer@@YAXH@Z)(int),__cdecl,1,verified
+0x0050EE80,?line_timer@@YAXH@Z,void (__cdecl ?line_timer@@YAXH@Z)(int),__cdecl,1,verified
+0x0050EF10,?turn_timer@@YAXH@Z,void (__cdecl ?turn_timer@@YAXH@Z)(int),__cdecl,1,verified
+0x0050EF50,?go_reset@@YAXXZ,void (__cdecl ?go_reset@@YAXXZ)(),__cdecl,,verified
+0x0050F170,?go_timer@@YAXH@Z,void (__cdecl ?go_timer@@YAXH@Z)(int),__cdecl,1,verified
+0x0050F3D0,?start_timers@@YAXXZ,void (__cdecl ?start_timers@@YAXXZ)(),__cdecl,,verified
+0x0050F440,?stop_timers@@YAXXZ,void (__cdecl ?stop_timers@@YAXXZ)(),__cdecl,,unknown
+0x0051D720,?menu_daemon@Console@@QAAXH@Z,"void (__cdecl ?menu_daemon@Console@@QAAXH@Z)(Console* this, int)",__cdecl,1,verified
+0x0051E000,?read_tamper@@YAXXZ,void (__cdecl ?read_tamper@@YAXXZ)(),__cdecl,,verified
+0x0051E090,?set_tamper@@YAXXZ,void (__cdecl ?set_tamper@@YAXXZ)(),__cdecl,,verified
+0x0051E110,?check_tamper@@YAXXZ,void (__cdecl ?check_tamper@@YAXXZ)(),__cdecl,,verified
+0x0051E390,?clear_tamper@@YAXXZ,void (__cdecl ?clear_tamper@@YAXXZ)(),__cdecl,,verified
+0x0051E3C0,?clear_all_player_messages@@YAXXZ,void (__cdecl ?clear_all_player_messages@@YAXXZ)(),__cdecl,,verified
+0x0051F0C0,?help_spock@@YAXXZ,void (__cdecl ?help_spock@@YAXXZ)(),__cdecl,,verified
+0x0051F1B0,?check_spock@@YAXXZ,void (__cdecl ?check_spock@@YAXXZ)(),__cdecl,,verified
+0x0051F200,?wait_loop@@YAXXZ,void (__cdecl ?wait_loop@@YAXXZ)(),__cdecl,,verified
+0x0051F2C0,?wait_2@@YAXXZ,void (__cdecl ?wait_2@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0051F2E0,?random_events@@YAXH@Z,void (__cdecl ?random_events@@YAXH@Z)(int),__cdecl,1,verified
+0x00522180,?alien_fauna@@YAXXZ,void (__cdecl ?alien_fauna@@YAXXZ)(),__cdecl,,verified
+0x00522F00,?do_fungal_towers@@YAXXZ,void (__cdecl ?do_fungal_towers@@YAXXZ)(),__cdecl,,verified
+0x00523B50,?ascent@@YAXXZ,void (__cdecl ?ascent@@YAXXZ)(),__cdecl,,verified
+0x00523C60,?set_time_controls@@YAXXZ,void (__cdecl ?set_time_controls@@YAXXZ)(),__cdecl,,verified
+0x00523DD0,?reset_territory@@YAXXZ,void (__cdecl ?reset_territory@@YAXXZ)(),__cdecl,,verified
+0x00524210,?climactic_changes@@YAXXZ,void (__cdecl ?climactic_changes@@YAXXZ)(),__cdecl,,verified
+0x00524870,?end_of_game@@YAHH@Z,int (__cdecl ?end_of_game@@YAHH@Z)(int),__cdecl,1,verified
+0x005258C0,?turn_upkeep@@YAXXZ,void (__cdecl ?turn_upkeep@@YAXXZ)(),__cdecl,,verified
+0x00527290,?faction_upkeep@@YAXH@Z,void (__cdecl ?faction_upkeep@@YAXH@Z)(int),__cdecl,1,verified
+0x005275B0,?control_turn@@YAXXZ,void (__cdecl ?control_turn@@YAXXZ)(),__cdecl,,verified
+0x00528EA0,?net_upkeep_phase@@YAHH@Z,int (__cdecl ?net_upkeep_phase@@YAHH@Z)(int),__cdecl,1,verified
+0x005290A0,?net_upkeep@@YAXXZ,void (__cdecl ?net_upkeep@@YAXXZ)(),__cdecl,,verified
+0x00529C00,?mash_planes@@YAXXZ,void (__cdecl ?mash_planes@@YAXXZ)(),__cdecl,,verified
+0x00529E70,?net_not_my_turn@@YAXXZ,void (__cdecl ?net_not_my_turn@@YAXXZ)(),__cdecl,,verified
+0x00529F30,?net_end_of_turn@@YAXXZ,void (__cdecl ?net_end_of_turn@@YAXXZ)(),__cdecl,,verified
+0x0052A2E0,?net_control_turn@@YAXXZ,void (__cdecl ?net_control_turn@@YAXXZ)(),__cdecl,,verified
+0x0052AA30,?control_game@@YAXXZ,void (__cdecl ?control_game@@YAXXZ)(),__cdecl,,verified
+0x0052AE20,?eligible@@YAHH@Z,int (__cdecl ?eligible@@YAHH@Z)(int),__cdecl,1,verified
+0x0052AEB0,?wants_prop@@YAHHHH@Z,"int (__cdecl ?wants_prop@@YAHHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0052BE60,?council_get_vote@@YAHHHH@Z,"int (__cdecl ?council_get_vote@@YAHHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0052BF60,?council_action@@YAXHH@Z,"void (__cdecl ?council_action@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0052C670,?can_call_council@@YAHHH@Z,"int (__cdecl ?can_call_council@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0052DAC0,??__Eg_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Eg_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0052DAF0,??__Fg_CURSOR_SPRITES@@YAXXZ,void (__cdecl ??__Fg_CURSOR_SPRITES@@YAXXZ)(),__cdecl,,verified
+0x0052DB10,??__Eg_NETDAEMON@@YAXXZ,void (__cdecl ??__Eg_NETDAEMON@@YAXXZ)(),__cdecl,,verified
+0x0052DB30,??__Fg_NETDAEMON@@YAXXZ,void (__cdecl ??__Fg_NETDAEMON@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0052DBA0,?current_server@@YAHXZ,int (__cdecl ?current_server@@YAHXZ)(),__cdecl,,verified
+0x0052DBF0,?next_player_turn@@YAHXZ,int (__cdecl ?next_player_turn@@YAHXZ)(),__cdecl,,verified
+0x0052DC70,?not_my_turn@@YAHXZ,int (__cdecl ?not_my_turn@@YAHXZ)(),__cdecl,,verified
+0x00532A90,?rebuild_vehicle_bits@@YAXXZ,void (__cdecl ?rebuild_vehicle_bits@@YAXXZ)(),__cdecl,,verified
+0x00532B70,?rebuild_base_bits@@YAXXZ,void (__cdecl ?rebuild_base_bits@@YAXXZ)(),__cdecl,,verified
+0x00532C30,?synch_display@@YAXHHHH@Z,"void (__cdecl ?synch_display@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00538F30,?danger@@YAXPADPADHHH@Z,"void (__cdecl ?danger@@YAXPADPADHHH@Z)(int8*, int8*, int, int, int)",__cdecl,11111,verified
+0x00538FE0,?checksum_file@@YAEPAD@Z,unsigned int8 (__cdecl ?checksum_file@@YAEPAD@Z)(int8*),__cdecl,1,verified
+0x00539090,?checksum@@YAEPADHE@Z,"unsigned int8 (__cdecl ?checksum@@YAEPADHE@Z)(int8*, int, unsigned int8)",__cdecl,111,verified
+0x005390C0,?checksum_password@@YAHPAD@Z,int (__cdecl ?checksum_password@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x00539160,?auto_contact@@YAHXZ,int (__cdecl ?auto_contact@@YAHXZ)(),__cdecl,,verified
+0x005391C0,?net_treaty_on@@YAXHHHH@Z,"void (__cdecl ?net_treaty_on@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00539230,?net_treaty_off@@YAXHHHH@Z,"void (__cdecl ?net_treaty_off@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005392A0,?net_set_treaty@@YAXHHHHH@Z,"void (__cdecl ?net_set_treaty@@YAXHHHHH@Z)(int, int, int, int, int)",__cdecl,11111,verified
+0x00539310,?net_agenda_on@@YAXHHHH@Z,"void (__cdecl ?net_agenda_on@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00539380,?net_agenda_off@@YAXHHHH@Z,"void (__cdecl ?net_agenda_off@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005393F0,?net_set_agenda@@YAXHHHHH@Z,"void (__cdecl ?net_set_agenda@@YAXHHHHH@Z)(int, int, int, int, int)",__cdecl,11111,verified
+0x00539460,?net_energy@@YAXHHHHH@Z,"void (__cdecl ?net_energy@@YAXHHHHH@Z)(int, int, int, int, int)",__cdecl,11111,verified
+0x00539510,?net_loan@@YAXHHHH@Z,"void (__cdecl ?net_loan@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00539580,?net_maps@@YAXHHH@Z,"void (__cdecl ?net_maps@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x005395F0,?net_tech@@YAXHHHH@Z,"void (__cdecl ?net_tech@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00539660,?net_pact_ends@@YAXHHH@Z,"void (__cdecl ?net_pact_ends@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x005396D0,?net_withdrawal@@YAXHHH@Z,"void (__cdecl ?net_withdrawal@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00539740,?net_cede_base@@YAXHHH@Z,"void (__cdecl ?net_cede_base@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x005397B0,?net_double_cross@@YAXHHHH@Z,"void (__cdecl ?net_double_cross@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00539820,?diplo_lock@@YAHH@Z,int (__cdecl ?diplo_lock@@YAHH@Z)(int),__cdecl,1,verified
+0x005398C0,?diplo_unlock@@YAXXZ,void (__cdecl ?diplo_unlock@@YAXXZ)(),__cdecl,,unknown
+0x005398E0,?pop_wait@@YAHXZ,int (__cdecl ?pop_wait@@YAHXZ)(),__cdecl,,verified
+0x00539920,?pop_expire@@YAHXZ,int (__cdecl ?pop_expire@@YAHXZ)(),__cdecl,,verified
+0x005399A0,?diplomacy_caption@@YAXHH@Z,"void (__cdecl ?diplomacy_caption@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00539C00,?great_satan@@YAHHH@Z,"int (__cdecl ?great_satan@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00539D40,?aah_ooga@@YAHHH@Z,"int (__cdecl ?aah_ooga@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00539E40,?climactic_battle@@YAHXZ,int (__cdecl ?climactic_battle@@YAHXZ)(),__cdecl,,verified
+0x00539EF0,?at_climax@@YAHH@Z,int (__cdecl ?at_climax@@YAHH@Z)(int),__cdecl,1,verified
+0x0053A100,?reputation@@YAHHH@Z,"int (__cdecl ?reputation@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0053A1C0,?energy_value@@YAHH@Z,int (__cdecl ?energy_value@@YAHH@Z)(int),__cdecl,1,verified
+0x0053A230,?mention_prototypes@@YAXHH@Z,"void (__cdecl ?mention_prototypes@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053A4A0,?scan_prototypes@@YAXHH@Z,"void (__cdecl ?scan_prototypes@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053CAF0,?pact_of_brotherhood@@YAXHH@Z,"void (__cdecl ?pact_of_brotherhood@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053CE10,?make_treaty@@YAXHH@Z,"void (__cdecl ?make_treaty@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053D160,?pledge_truce@@YAXHHH@Z,"void (__cdecl ?pledge_truce@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0053D360,?introduce@@YAXHH@Z,"void (__cdecl ?introduce@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053DCE0,?wants_to_speak@@YAHHH@Z,"int (__cdecl ?wants_to_speak@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0053E4C0,?demands_withdrawal@@YAXHH@Z,"void (__cdecl ?demands_withdrawal@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053E5C0,?renounce_pact@@YAXHH@Z,"void (__cdecl ?renounce_pact@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053E800,?tech_analysis@@YAXHH@Z,"void (__cdecl ?tech_analysis@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0053EB50,?buy_council_vote@@YAXHHHH@Z,"void (__cdecl ?buy_council_vote@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005401A0,?buy_tech@@YAHHHHHH@Z,"int (__cdecl ?buy_tech@@YAHHHHHH@Z)(int, int, int, int, int)",__cdecl,11111,verified
+0x00540630,?energy_trade@@YAHHH@Z,"int (__cdecl ?energy_trade@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00541100,?tech_trade@@YAHHHHHH@Z,"int (__cdecl ?tech_trade@@YAHHHHHH@Z)(int, int, int, int, int)",__cdecl,11111,verified
+0x00543A20,?trade_maps@@YAXHH@Z,"void (__cdecl ?trade_maps@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00543BC0,?propose_pact@@YAHHH@Z,"int (__cdecl ?propose_pact@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00544E40,?propose_treaty@@YAHHH@Z,"int (__cdecl ?propose_treaty@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00545D60,?propose_trade_maps@@YAXHH@Z,"void (__cdecl ?propose_trade_maps@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00545E80,?propose_attack@@YAHHH@Z,"int (__cdecl ?propose_attack@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00548DD0,?dont_withdrawal@@YAHHH@Z,"int (__cdecl ?dont_withdrawal@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00548F80,?do_withdrawal@@YAHHH@Z,"int (__cdecl ?do_withdrawal@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00549270,?demand_withdrawal@@YAHHH@Z,"int (__cdecl ?demand_withdrawal@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00549930,?threaten@@YAXHH@Z,"void (__cdecl ?threaten@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0054ACC0,?suggest_plan@@YAHHH@Z,"int (__cdecl ?suggest_plan@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0054B140,?battle_routine@@YAXH@Z,void (__cdecl ?battle_routine@@YAXH@Z)(int),__cdecl,1,verified
+0x0054B1C0,?battle_plans@@YAXHH@Z,"void (__cdecl ?battle_plans@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0054BEC0,?call_off_vendetta@@YAXHH@Z,"void (__cdecl ?call_off_vendetta@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0054C560,?diplomacy_menu@@YAHHH@Z,"int (__cdecl ?diplomacy_menu@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0054DCF0,?proposal_menu@@YAHHH@Z,"int (__cdecl ?proposal_menu@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0054F420,?make_a_proposal@@YAXHHH@Z,"void (__cdecl ?make_a_proposal@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x005589E0,?commlink_attempter@@YAHHH@Z,"int (__cdecl ?commlink_attempter@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00558C60,?commlink_attempt@@YAXH@Z,void (__cdecl ?commlink_attempt@@YAXH@Z)(int),__cdecl,1,verified
+0x005591A0,?say_tech@@YAXHH@Z,"void (__cdecl ?say_tech@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x005591C0,?bad_reg@@YAHH@Z,int (__cdecl ?bad_reg@@YAHH@Z)(int),__cdecl,1,verified
+0x00559230,??__Eg_FONTQUEUE_VAL2@@YAXXZ,void (__cdecl ??__Eg_FONTQUEUE_VAL2@@YAXXZ)(),__cdecl,,verified
+0x00559250,??__Fg_FONTQUEUE_VAL2@@YAXXZ,void (__cdecl ??__Fg_FONTQUEUE_VAL2@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00559260,??__Eg_FONTQUEUE_VAL1@@YAXXZ,void (__cdecl ??__Eg_FONTQUEUE_VAL1@@YAXXZ)(),__cdecl,,verified
+0x00559280,??__Fg_FONTQUEUE_VAL1@@YAXXZ,void (__cdecl ??__Fg_FONTQUEUE_VAL1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0055AF20,?base_draw@@YAXPAUBuffer@@HHHHH@Z,"void (__cdecl ?base_draw@@YAXPAUBuffer@@HHHHH@Z)(Buffer*, int, int, int, int, int)",__cdecl,111111,verified
+0x0055B760,?treaty_off@@YAXHHH@Z,"void (__cdecl ?treaty_off@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0055B820,?agenda_off@@YAXHHH@Z,"void (__cdecl ?agenda_off@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0055B870,?treaty_on@@YAXHHH@Z,"void (__cdecl ?treaty_on@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0055BA80,?agenda_on@@YAXHHH@Z,"void (__cdecl ?agenda_on@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0055BB30,?set_treaty@@YAXHHHH@Z,"void (__cdecl ?set_treaty@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x0055BC00,?spying@@YAHH@Z,int (__cdecl ?spying@@YAHH@Z)(int),__cdecl,1,verified
+0x0055C430,?comm_check@@YAXHH@Z,"void (__cdecl ?comm_check@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055C730,?pact_attacks@@YAXHH@Z,"void (__cdecl ?pact_attacks@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055C840,?enemies_war@@YAXHH@Z,"void (__cdecl ?enemies_war@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055CCA0,?pact_unpact@@YAXHH@Z,"void (__cdecl ?pact_unpact@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055CE20,?enemies_unpact@@YAXHH@Z,"void (__cdecl ?enemies_unpact@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055D040,?pact_truce@@YAXHH@Z,"void (__cdecl ?pact_truce@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055D190,?pact_treaty@@YAXHH@Z,"void (__cdecl ?pact_treaty@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055D760,?enemies_treaty@@YAXHHH@Z,"void (__cdecl ?enemies_treaty@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x0055E370,?encounter@@YAXHHHHHH@Z,"void (__cdecl ?encounter@@YAXHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
+0x0055EB80,?territory@@YAHHHHPAHPAH@Z,"int (__cdecl ?territory@@YAHHHHPAHPAH@Z)(int, int, int, int*, int*)",__cdecl,11111,verified
+0x0055F450,?major_atrocity@@YAXHH@Z,"void (__cdecl ?major_atrocity@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0055F770,?break_treaty@@YAHHHH@Z,"int (__cdecl ?break_treaty@@YAHHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00579790,?x_dist@@YAHHH@Z,"int (__cdecl ?x_dist@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x005797D0,?site_at@@YAHHHH@Z,"int (__cdecl ?site_at@@YAHHHH@Z)(int, int, int)",__cdecl,111,verified
+0x005798A0,?base_who@@YAHHH@Z,"int (__cdecl ?base_who@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0057D240,?header_write@@YAXPADPAUFILE@@@Z,"void (__cdecl ?header_write@@YAXPADPAUFILE@@@Z)(int8*, FILE*)",__cdecl,11,verified
+0x0057DF00,?clear_bunglist@@YAXH@Z,void (__cdecl ?clear_bunglist@@YAXH@Z)(int),__cdecl,1,verified
+0x0057DFC0,?is_bunged@@YA_NHHHHHH@Z,"bool (__cdecl ?is_bunged@@YA_NHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
+0x0057F1D0,?retire_proto@@YAXHH@Z,"void (__cdecl ?retire_proto@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x0057F4B0,?prune_protos@@YAXHHH@Z,"void (__cdecl ?prune_protos@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00581260,?consider_designs@@YAXH@Z,void (__cdecl ?consider_designs@@YAXH@Z)(int),__cdecl,1,verified
+0x00583CB0,?design_new_veh@@YAXHH@Z,"void (__cdecl ?design_new_veh@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00583CD0,?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z,"void (__cdecl ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z)(GraphicWin*, int, int, int, int, int)",__cdecl,111111,verified
+0x00584B50,?abil_cond@@YAHHHHH@Z,"int (__cdecl ?abil_cond@@YAHHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x00584D00,??__Eg_TOP_MENU_WAVE@@YAXXZ,void (__cdecl ??__Eg_TOP_MENU_WAVE@@YAXXZ)(),__cdecl,,verified
+0x00584D20,??__Fg_TOP_MENU_WAVE@@YAXXZ,void (__cdecl ??__Fg_TOP_MENU_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00584E40,?chas_name@@YAHPAD@Z,int (__cdecl ?chas_name@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x00584F40,?weap_name@@YAHPAD@Z,int (__cdecl ?weap_name@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x00585030,?arm_name@@YAHPAD@Z,int (__cdecl ?arm_name@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x00585150,?tech_item@@YAHXZ,int (__cdecl ?tech_item@@YAHXZ)(),__cdecl,,verified
+0x00585170,?read_basic_rules@@YAHXZ,int (__cdecl ?read_basic_rules@@YAHXZ)(),__cdecl,,verified
+0x00585E30,?read_tech@@YAHXZ,int (__cdecl ?read_tech@@YAHXZ)(),__cdecl,,verified
+0x00586050,?read_faction@@YAXH@Z,void (__cdecl ?read_faction@@YAXH@Z)(int),__cdecl,1,verified
+0x00586F30,?read_factions@@YAHXZ,int (__cdecl ?read_factions@@YAHXZ)(),__cdecl,,verified
+0x005871D0,?noun_item@@YAXPAHPAH@Z,"void (__cdecl ?noun_item@@YAXPAHPAH@Z)(int*, int*)",__cdecl,11,verified
+0x00587240,?read_units@@YAHXZ,int (__cdecl ?read_units@@YAHXZ)(),__cdecl,,verified
+0x005882A0,??__Eg_FONTS@@YAXXZ,void (__cdecl ??__Eg_FONTS@@YAXXZ)(),__cdecl,,verified
+0x005882D0,??__Fg_FONTS@@YAXXZ,void (__cdecl ??__Fg_FONTS@@YAXXZ)(),__cdecl,,verified
+0x005882F0,?find_font@@YAHHH@Z,"int (__cdecl ?find_font@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00588340,?scroll_normal@@YAXXZ,void (__cdecl ?scroll_normal@@YAXXZ)(),__cdecl,,verified
+0x005883D0,?scroll_small@@YAXXZ,void (__cdecl ?scroll_small@@YAXXZ)(),__cdecl,,verified
+0x00588460,?popups_normal@@YAXXZ,void (__cdecl ?popups_normal@@YAXXZ)(),__cdecl,,verified
+0x005888E0,?popups_tutorial@@YAXXZ,void (__cdecl ?popups_tutorial@@YAXXZ)(),__cdecl,,verified
+0x005889C0,?popups_medium@@YAXXZ,void (__cdecl ?popups_medium@@YAXXZ)(),__cdecl,,verified
+0x00588AA0,?config_popups@@YAXXZ,void (__cdecl ?config_popups@@YAXXZ)(),__cdecl,,verified
+0x00588F90,?alien_start@@YAXXZ,void (__cdecl ?alien_start@@YAXXZ)(),__cdecl,,verified
+0x00589330,?time_controls_dialog@@YAXPAUPopup@@@Z,void (__cdecl ?time_controls_dialog@@YAXPAUPopup@@@Z)(Popup*),__cdecl,1,verified
+0x005898A0,?thumb_routine@@YAXH@Z,void (__cdecl ?thumb_routine@@YAXH@Z)(int),__cdecl,1,verified
+0x00589B20,?close_opening@@YAXXZ,void (__cdecl ?close_opening@@YAXXZ)(),__cdecl,,verified
+0x00589B60,?init_opening@@YAHPBD@Z,int (__cdecl ?init_opening@@YAHPBD@Z)(int8*),__cdecl,1,verified
+0x00589D30,?config_game@@YAHH@Z,int (__cdecl ?config_game@@YAHH@Z)(int),__cdecl,1,verified
+0x0058C2A0,?custom_planet@@YAHHH@Z,"int (__cdecl ?custom_planet@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0058CED0,?size_of_planet@@YAHH@Z,int (__cdecl ?size_of_planet@@YAHH@Z)(int),__cdecl,1,verified
+0x0058DB30,?multiplayer_init@@YAHH@Z,int (__cdecl ?multiplayer_init@@YAHH@Z)(int),__cdecl,1,verified
+0x0058E360,?top_menu@@YAHH@Z,int (__cdecl ?top_menu@@YAHH@Z)(int),__cdecl,1,verified
+0x0058EE50,?desktop_update@@YAXXZ,void (__cdecl ?desktop_update@@YAXXZ)(),__cdecl,,verified
+0x0058EE60,?desktop_init@@YAHH@Z,int (__cdecl ?desktop_init@@YAHH@Z)(int),__cdecl,1,verified
+0x0058EFF0,?desktop_close@@YAXXZ,void (__cdecl ?desktop_close@@YAXXZ)(),__cdecl,,unknown
+0x0058F040,?system_init@@YAHXZ,int (__cdecl ?system_init@@YAHXZ)(),__cdecl,,verified
+0x0058F250,?system_close@@YAXXZ,void (__cdecl ?system_close@@YAXXZ)(),__cdecl,,verified
+0x0058F430,?game_close@@YAXH@Z,void (__cdecl ?game_close@@YAXH@Z)(int),__cdecl,1,unknown
+0x0058F610,?say_special@@YAXPADPADH@Z,"void (__cdecl ?say_special@@YAXPADPADH@Z)(int8*, int8*, int)",__cdecl,111,verified
+0x0058F700,?say_fac_special@@YAXPADPADH@Z,"void (__cdecl ?say_fac_special@@YAXPADPADH@Z)(int8*, int8*, int)",__cdecl,111,verified
+0x0058F810,?get_phrase@@YAPADHH@Z,"int8* (__cdecl ?get_phrase@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x0058F8B0,?get_noun_phrase@@YAPADHH@Z,"int8* (__cdecl ?get_noun_phrase@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x0058F9D0,?get_pact@@YAPADH@Z,int8* (__cdecl ?get_pact@@YAPADH@Z)(int),__cdecl,1,verified
+0x0058FA20,?get_pacts@@YAPADH@Z,int8* (__cdecl ?get_pacts@@YAPADH@Z)(int),__cdecl,1,verified
+0x0058FA70,?get_pacts@@YAPADHH@Z,"int8* (__cdecl ?get_pacts@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x0058FB00,?get_pact_hood@@YAPADHH@Z,"int8* (__cdecl ?get_pact_hood@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x0058FBC0,?get_his_her@@YAPADHH@Z,"int8* (__cdecl ?get_his_her@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x0058FC50,?get_him_her@@YAPADHH@Z,"int8* (__cdecl ?get_him_her@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x0058FCE0,?get_he_she@@YAPADHH@Z,"int8* (__cdecl ?get_he_she@@YAPADHH@Z)(int, int)",__cdecl,11,verified
+0x00590510,?say_reactor@@YAXPAXHH@Z,"void (__cdecl ?say_reactor@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x005905C0,?say_weapon@@YAXPAXHH@Z,"void (__cdecl ?say_weapon@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x005906F0,?say_armor@@YAXPAXHH@Z,"void (__cdecl ?say_armor@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590800,?say_chassis@@YAXPAXHH@Z,"void (__cdecl ?say_chassis@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590910,?say_facility@@YAXPAXHH@Z,"void (__cdecl ?say_facility@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590990,?say_project@@YAXPAXHH@Z,"void (__cdecl ?say_project@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590A10,?say_society@@YAXPAXHH@Z,"void (__cdecl ?say_society@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590AA0,?say_ability@@YAXPAXHH@Z,"void (__cdecl ?say_ability@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590B30,?say_techs@@YAXPAXHH@Z,"void (__cdecl ?say_techs@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590BA0,?say_vehicles@@YAXPAXHH@Z,"void (__cdecl ?say_vehicles@@YAXPAXHH@Z)(void*, int, int)",__cdecl,111,verified
+0x00590E90,?map_shutdown@@YAXXZ,void (__cdecl ?map_shutdown@@YAXXZ)(),__cdecl,,verified
+0x00590ED0,?map_init@@YAXXZ,void (__cdecl ?map_init@@YAXXZ)(),__cdecl,,verified
+0x00591040,?map_wipe@@YAXXZ,void (__cdecl ?map_wipe@@YAXXZ)(),__cdecl,,verified
+0x005918A0,?alt_natural@@YAHHH@Z,"int (__cdecl ?alt_natural@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00591AD0,?temp_set@@YAXHHH@Z,"void (__cdecl ?temp_set@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00592550,?find_landmark@@YAHHHH@Z,"int (__cdecl ?find_landmark@@YAHHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00592940,?fixup_landmarks@@YAXXZ,void (__cdecl ?fixup_landmarks@@YAXXZ)(),__cdecl,,verified
+0x00592A80,?set_dirty@@YAXXZ,void (__cdecl ?set_dirty@@YAXXZ)(),__cdecl,,verified
+0x00592AF0,?clear_dirty@@YAXXZ,void (__cdecl ?clear_dirty@@YAXXZ)(),__cdecl,,verified
+0x00592E70,?message_base@@YAXHHPADH@Z,"void (__cdecl ?message_base@@YAXHHPADH@Z)(int, int, int8*, int)",__cdecl,1111,verified
+0x00592EE0,?message_data@@YAXHHHHHH@Z,"void (__cdecl ?message_data@@YAXHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
+0x00592FF0,?message_big_data@@YAXHHPAHH@Z,"void (__cdecl ?message_big_data@@YAXHHPAHH@Z)(int, int, int*, int)",__cdecl,1111,verified
+0x00593090,?message_lock@@YAXHHHHHHHH@Z,"void (__cdecl ?message_lock@@YAXHHHHHHHH@Z)(int, int, int, int, int, int, int, int)",__cdecl,11111111,verified
+0x00593110,?message_landmark@@YAXHHPADHHHH@Z,"void (__cdecl ?message_landmark@@YAXHHPADHHHH@Z)(int, int, int8*, int, int, int, int)",__cdecl,1111111,verified
+0x00593190,?message_chat@@YAXHHPAD@Z,"void (__cdecl ?message_chat@@YAXHHPAD@Z)(int, int, int8*)",__cdecl,111,verified
+0x00593250,?synch_base@@YAXH@Z,void (__cdecl ?synch_base@@YAXH@Z)(int),__cdecl,1,verified
+0x00593280,?synch_energy@@YAXH@Z,void (__cdecl ?synch_energy@@YAXH@Z)(int),__cdecl,1,verified
+0x005932E0,?synch_leader@@YAXH@Z,void (__cdecl ?synch_leader@@YAXH@Z)(int),__cdecl,1,verified
+0x00593310,?synch_ai@@YAXH@Z,void (__cdecl ?synch_ai@@YAXH@Z)(int),__cdecl,1,verified
+0x00593340,?synch_research@@YAXH@Z,void (__cdecl ?synch_research@@YAXH@Z)(int),__cdecl,1,verified
+0x00593390,?synch_alloc@@YAXH@Z,void (__cdecl ?synch_alloc@@YAXH@Z)(int),__cdecl,1,verified
+0x005933C0,?synch_soc@@YAXH@Z,void (__cdecl ?synch_soc@@YAXH@Z)(int),__cdecl,1,verified
+0x005933F0,?synch_proto@@YAXH@Z,void (__cdecl ?synch_proto@@YAXH@Z)(int),__cdecl,1,verified
+0x00593420,?synch_obs@@YAXH@Z,void (__cdecl ?synch_obs@@YAXH@Z)(int),__cdecl,1,verified
+0x005934B0,?synch_template@@YAXH@Z,void (__cdecl ?synch_template@@YAXH@Z)(int),__cdecl,1,verified
+0x005934E0,?synch_radius@@YAXH@Z,void (__cdecl ?synch_radius@@YAXH@Z)(int),__cdecl,1,verified
+0x0059A1B0,??__EPaths@@YAXXZ,void (__cdecl ??__EPaths@@YAXXZ)(),__cdecl,,verified
+0x0059A1C0,??__FPaths@@YAXXZ,void (__cdecl ??__FPaths@@YAXXZ)(),__cdecl,,verified
+0x0059D3B0,?popm@@YAHPADPADHHP6AHXZ@Z,"int (__cdecl ?popm@@YAHPADPADHHP6AHXZ@Z)(int8*, int8*, int, int, int (__cdecl *)())",__cdecl,11111,verified
+0x0059D690,?popm@@YAHPADHHP6AHXZ@Z,"int (__cdecl ?popm@@YAHPADHHP6AHXZ@Z)(int8*, int, int, int (__cdecl *)())",__cdecl,1111,verified
+0x0059DA20,?default_prefs@@YAHXZ,int (__cdecl ?default_prefs@@YAHXZ)(),__cdecl,,verified
+0x0059DAA0,?default_prefs2@@YAHXZ,int (__cdecl ?default_prefs2@@YAHXZ)(),__cdecl,,verified
+0x0059DB20,?default_warn@@YAHXZ,int (__cdecl ?default_warn@@YAHXZ)(),__cdecl,,verified
+0x0059DB30,?default_rules@@YAHXZ,int (__cdecl ?default_rules@@YAHXZ)(),__cdecl,,verified
+0x0059DBD0,?prefs_fac_load@@YAXXZ,void (__cdecl ?prefs_fac_load@@YAXXZ)(),__cdecl,,verified
+0x0059E950,?prefs_use@@YAXXZ,void (__cdecl ?prefs_use@@YAXXZ)(),__cdecl,,verified
+0x005A58B0,?space@@YAXXZ,void (__cdecl ?space@@YAXXZ)(),__cdecl,,verified
+0x005A58E0,?parse_set@@YAXHH@Z,"void (__cdecl ?parse_set@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x005A5910,?vector_dist@@YAHHHHH@Z,"int (__cdecl ?vector_dist@@YAHHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005A94F0,?save_daemon@@YAHPAD@Z,int (__cdecl ?save_daemon@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x005A96D0,?see_map_check@@YAXXZ,void (__cdecl ?see_map_check@@YAXXZ)(),__cdecl,,verified
+0x005A9B20,?save_map_daemon@@YAHPAD@Z,int (__cdecl ?save_map_daemon@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x005A9C10,?load_map_daemon@@YAHPAD@Z,int (__cdecl ?load_map_daemon@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x005A9DB0,?yearmotize@@YAXPAD@Z,void (__cdecl ?yearmotize@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x005A9EB0,?save_game@@YAHH@Z,int (__cdecl ?save_game@@YAHH@Z)(int),__cdecl,1,verified
+0x005AAAB0,?load_game@@YAHHH@Z,"int (__cdecl ?load_game@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x005AB600,?load_map@@YAHXZ,int (__cdecl ?load_map@@YAHXZ)(),__cdecl,,verified
+0x005ABB90,?save_map@@YAXXZ,void (__cdecl ?save_map@@YAXXZ)(),__cdecl,,verified
+0x005ABD10,?kill_auto_save@@YAXXZ,void (__cdecl ?kill_auto_save@@YAXXZ)(),__cdecl,,verified
+0x005ABD20,?auto_save@@YAXXZ,void (__cdecl ?auto_save@@YAXXZ)(),__cdecl,,verified
+0x005ABEC0,?wipe_undo@@YAXXZ,void (__cdecl ?wipe_undo@@YAXXZ)(),__cdecl,,verified
+0x005ABF20,?auto_undo@@YAXXZ,void (__cdecl ?auto_undo@@YAXXZ)(),__cdecl,,verified
+0x005AC5A0,?most_objectives@@YAHPAHPAH@Z,"int (__cdecl ?most_objectives@@YAHPAHPAH@Z)(int*, int*)",__cdecl,11,verified
+0x005AC690,?rankings@@YAXH@Z,void (__cdecl ?rankings@@YAXH@Z)(int),__cdecl,1,verified
+0x005ADBD0,?timer_callback_daemon@ReplayWin@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@ReplayWin@@QAAXH@Z)(ReplayWin* this, int)",__cdecl,1,verified
+0x005ADBF0,?show_replay@@YAXXZ,void (__cdecl ?show_replay@@YAXXZ)(),__cdecl,,verified
+0x005ADE80,?replay_base@@YAXHHHH@Z,"void (__cdecl ?replay_base@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005AE0F0,??__Eg_CRASH_LANDING_WAVE@@YAXXZ,void (__cdecl ??__Eg_CRASH_LANDING_WAVE@@YAXXZ)(),__cdecl,,verified
+0x005AE110,??__Fg_CRASH_LANDING_WAVE@@YAXXZ,void (__cdecl ??__Fg_CRASH_LANDING_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x005AE120,?crash_landing@@YAXH@Z,void (__cdecl ?crash_landing@@YAXH@Z)(int),__cdecl,1,verified
+0x005AEDE0,?time_warp@@YAXXZ,void (__cdecl ?time_warp@@YAXXZ)(),__cdecl,,verified
+0x005B0420,?balance@@YAXXZ,void (__cdecl ?balance@@YAXXZ)(),__cdecl,,verified
+0x005B0A30,?scenario_setup@@YAXXZ,void (__cdecl ?scenario_setup@@YAXXZ)(),__cdecl,,verified
+0x005B3380,?eliminate_player@@YAHHH@Z,"int (__cdecl ?eliminate_player@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x005B38D0,?clear_scenario@@YAXXZ,void (__cdecl ?clear_scenario@@YAXXZ)(),__cdecl,,verified
+0x005B3920,?setup_game@@YAXH@Z,void (__cdecl ?setup_game@@YAXH@Z)(int),__cdecl,1,verified
+0x005B4600,?social_set@@YAXH@Z,void (__cdecl ?social_set@@YAXH@Z)(int),__cdecl,1,verified
+0x005B9C10,??__Eg_WAVE_GENERAL@@YAXXZ,void (__cdecl ??__Eg_WAVE_GENERAL@@YAXXZ)(),__cdecl,,verified
+0x005B9C30,??__Fg_WAVE_GENERAL@@YAXXZ,void (__cdecl ??__Fg_WAVE_GENERAL@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x005BDD70,?tech_mil@@YAHH@Z,int (__cdecl ?tech_mil@@YAHH@Z)(int),__cdecl,1,verified
+0x005BDD90,?tech_tech@@YAHH@Z,int (__cdecl ?tech_tech@@YAHH@Z)(int),__cdecl,1,verified
+0x005BDDC0,?tech_infra@@YAHH@Z,int (__cdecl ?tech_infra@@YAHH@Z)(int),__cdecl,1,verified
+0x005BDDF0,?tech_colonize@@YAHH@Z,int (__cdecl ?tech_colonize@@YAHH@Z)(int),__cdecl,1,verified
+0x005BE940,?tech_research@@YAXHH@Z,"void (__cdecl ?tech_research@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x005BEC40,??__Eg_PALETTE1@@YAXXZ,void (__cdecl ??__Eg_PALETTE1@@YAXXZ)(),__cdecl,,verified
+0x005BEC60,??__Fg_PALETTE1@@YAXXZ,void (__cdecl ??__Fg_PALETTE1@@YAXXZ)(),__cdecl,,unknown
+0x005BEC70,??__Eg_PALETTE2@@YAXXZ,void (__cdecl ??__Eg_PALETTE2@@YAXXZ)(),__cdecl,,verified
+0x005BEC90,??__Fg_PALETTE2@@YAXXZ,void (__cdecl ??__Fg_PALETTE2@@YAXXZ)(),__cdecl,,unknown
+0x005BF310,?X_pop@@YAHPBDP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPBDP6AHXZ@Z)(int8*, int (__cdecl *)())",__cdecl,11,verified
+0x005BF330,?X_pop@@YAHPADPBDP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPADPBDP6AHXZ@Z)(int8*, int8*, int (__cdecl *)())",__cdecl,111,verified
+0x005BF350,?X_pop@@YAHPADPBDPADHP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPADPBDPADHP6AHXZ@Z)(int8*, int8*, int8*, int, int (__cdecl *)())",__cdecl,11111,verified
+0x005BF390,?X_pop@@YAHPBDHHP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPBDHHP6AHXZ@Z)(int8*, int, int, int (__cdecl *)())",__cdecl,1111,verified
+0x005BF3C0,?X_pop@@YAHPADPBDHHP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPADPBDHHP6AHXZ@Z)(int8*, int8*, int, int, int (__cdecl *)())",__cdecl,11111,verified
+0x005BF3F0,?X_pop@@YAHPBDHP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPBDHP6AHXZ@Z)(int8*, int, int (__cdecl *)())",__cdecl,111,verified
+0x005BF420,?X_pop@@YAHPADPBDHP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPADPBDHP6AHXZ@Z)(int8*, int8*, int, int (__cdecl *)())",__cdecl,1111,verified
+0x005BF450,?X_pop@@YAHPBDHPADHP6AHXZ@Z,"int (__cdecl ?X_pop@@YAHPBDHPADHP6AHXZ@Z)(int8*, int, int8*, int, int (__cdecl *)())",__cdecl,11111,verified
+0x005BF5D0,?X_pops@@YAHPBDPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDPAUSprite@@P6AHXZ@Z)(int8*, Sprite*, int (__cdecl *)())",__cdecl,111,verified
+0x005BF600,?X_pops@@YAHPBDPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDPAUSprite@@HHP6AHXZ@Z)(int8*, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111,verified
+0x005BF630,?X_pops@@YAHPADPBDPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDPAUSprite@@P6AHXZ@Z)(int8*, int8*, Sprite*, int (__cdecl *)())",__cdecl,1111,verified
+0x005BF660,?X_pops@@YAHPADPBDPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, Sprite*, int, int, int (__cdecl *)())",__cdecl,111111,verified
+0x005BF690,?X_pops@@YAHPBDHHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDHHPAUSprite@@P6AHXZ@Z)(int8*, int, int, Sprite*, int (__cdecl *)())",__cdecl,11111,verified
+0x005BF6C0,?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z)(int8*, int, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,1111111,verified
+0x005BF6F0,?X_pops@@YAHPADPBDPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDPADHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,111111,verified
+0x005BF730,?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111111,verified
+0x005BF770,?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int, int, Sprite*, int (__cdecl *)())",__cdecl,111111,verified
+0x005BF7A0,?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111111,verified
+0x005BF7D0,?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z)(int8*, int, Sprite*, int (__cdecl *)())",__cdecl,1111,verified
+0x005BF800,?X_pops@@YAHPBDHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDHPAUSprite@@HHP6AHXZ@Z)(int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,111111,verified
+0x005BF830,?X_pops@@YAHPADPBDHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,11111,verified
+0x005BF860,?X_pops@@YAHPADPBDHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,1111111,verified
+0x005BF890,?X_pops@@YAHPBDHPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDHPADHPAUSprite@@P6AHXZ@Z)(int8*, int, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,111111,verified
+0x005BF8C0,?X_pops@@YAHPBDHPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPBDHPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111111,verified
+0x005BF900,?X_pops@@YAHPADPBDHPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?X_pops@@YAHPADPBDHPADHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,1111111,verified
+0x005BFAB0,?X_pop_ask@@YAHPBDHPADP6AHXZH@Z,"int (__cdecl ?X_pop_ask@@YAHPBDHPADP6AHXZH@Z)(int8*, int, int8*, int (__cdecl *)(), int)",__cdecl,11111,verified
+0x005BFAE0,?X_pop_ask@@YAHPADPBDHP6AHXZH@Z,"int (__cdecl ?X_pop_ask@@YAHPADPBDHP6AHXZH@Z)(int8*, int8*, int, int (__cdecl *)(), int)",__cdecl,11111,verified
+0x005BFB10,?X_pop_ask@@YAHPBDHP6AHXZH@Z,"int (__cdecl ?X_pop_ask@@YAHPBDHP6AHXZH@Z)(int8*, int, int (__cdecl *)(), int)",__cdecl,1111,verified
+0x005BFB40,?X_pop_ask@@YAHPADPBDPADP6AHXZH@Z,"int (__cdecl ?X_pop_ask@@YAHPADPBDPADP6AHXZH@Z)(int8*, int8*, int8*, int (__cdecl *)(), int)",__cdecl,11111,verified
+0x005BFB80,?X_pop_ask@@YAHPBDPADP6AHXZH@Z,"int (__cdecl ?X_pop_ask@@YAHPBDPADP6AHXZH@Z)(int8*, int8*, int (__cdecl *)(), int)",__cdecl,1111,verified
+0x005BFBC0,?X_pop_ask@@YAHPADPBDHPADP6AHXZH@Z,"int (__cdecl ?X_pop_ask@@YAHPADPBDHPADP6AHXZH@Z)(int8*, int8*, int, int8*, int (__cdecl *)(), int)",__cdecl,111111,verified
+0x005BFD10,?X_pop_ask_number@@YAHPBDHP6AHXZ@Z,"int (__cdecl ?X_pop_ask_number@@YAHPBDHP6AHXZ@Z)(int8*, int, int (__cdecl *)())",__cdecl,111,verified
+0x005BFD30,?X_pop_ask_number@@YAHPADPBDP6AHXZ@Z,"int (__cdecl ?X_pop_ask_number@@YAHPADPBDP6AHXZ@Z)(int8*, int8*, int (__cdecl *)())",__cdecl,111,verified
+0x005BFD50,?X_pop_ask_number@@YAHPBDP6AHXZ@Z,"int (__cdecl ?X_pop_ask_number@@YAHPBDP6AHXZ@Z)(int8*, int (__cdecl *)())",__cdecl,11,verified
+0x005BFD70,?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z,"int (__cdecl ?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z)(int8*, int8*, int, int (__cdecl *)())",__cdecl,1111,verified
+0x005C0260,?veh_promote@@YAXH@Z,void (__cdecl ?veh_promote@@YAXH@Z)(int),__cdecl,1,verified
+0x005C0CB0,?veh_find@@YAHHHHH@Z,"int (__cdecl ?veh_find@@YAHHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005C23E0,?world_lower_alt@@YAXHH@Z,"void (__cdecl ?world_lower_alt@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x005C28F0,?build_continent@@YAXH@Z,void (__cdecl ?build_continent@@YAXH@Z)(int),__cdecl,1,verified
+0x005C2B40,?build_hills@@YAXH@Z,void (__cdecl ?build_hills@@YAXH@Z)(int),__cdecl,1,verified
+0x005C2CB0,?world_erosion@@YAXXZ,void (__cdecl ?world_erosion@@YAXXZ)(),__cdecl,,verified
+0x005C32A0,?world_rocky@@YAXXZ,void (__cdecl ?world_rocky@@YAXXZ)(),__cdecl,,verified
+0x005C3440,?world_fungus@@YAXXZ,void (__cdecl ?world_fungus@@YAXXZ)(),__cdecl,,verified
+0x005C3680,?world_riverbeds@@YAXXZ,void (__cdecl ?world_riverbeds@@YAXXZ)(),__cdecl,,verified
+0x005C38B0,?world_rivers@@YAXXZ,void (__cdecl ?world_rivers@@YAXXZ)(),__cdecl,,verified
+0x005C3F70,?world_shorelines@@YAXXZ,void (__cdecl ?world_shorelines@@YAXXZ)(),__cdecl,,verified
+0x005C40F0,?world_validate@@YAHXZ,int (__cdecl ?world_validate@@YAHXZ)(),__cdecl,,verified
+0x005C4170,?world_temperature@@YAXXZ,void (__cdecl ?world_temperature@@YAXXZ)(),__cdecl,,verified
+0x005C4470,?world_rainfall@@YAXXZ,void (__cdecl ?world_rainfall@@YAXXZ)(),__cdecl,,verified
+0x005C4FD0,?world_site@@YAHHHH@Z,"int (__cdecl ?world_site@@YAHHHH@Z)(int, int, int)",__cdecl,111,verified
+0x005C55C0,?world_analysis@@YAXXZ,void (__cdecl ?world_analysis@@YAXXZ)(),__cdecl,,verified
+0x005C58E0,?world_polar_caps@@YAXXZ,void (__cdecl ?world_polar_caps@@YAXXZ)(),__cdecl,,verified
+0x005C5A30,?world_climate@@YAXXZ,void (__cdecl ?world_climate@@YAXXZ)(),__cdecl,,verified
+0x005C5AE0,?world_linearize_contours@@YAXXZ,void (__cdecl ?world_linearize_contours@@YAXXZ)(),__cdecl,,verified
+0x005C8630,?world_landmarks@@YAXXZ,void (__cdecl ?world_landmarks@@YAXXZ)(),__cdecl,,unknown
+0x005C86E0,?world_build@@YAXXZ,void (__cdecl ?world_build@@YAXXZ)(),__cdecl,,verified
+0x005C89B0,?say_year@@YAXPAD@Z,void (__cdecl ?say_year@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x005C97C0,??__Eg_MULTIDEBUG@@YAXXZ,void (__cdecl ??__Eg_MULTIDEBUG@@YAXXZ)(),__cdecl,,verified
+0x005C97E0,??__Fg_MULTIDEBUG@@YAXXZ,void (__cdecl ??__Fg_MULTIDEBUG@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x005C9900,?timer_callback_daemon@MultiDebug@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@MultiDebug@@QAAXH@Z)(MultiDebug* this, int)",__cdecl,1,verified
+0x005D6A50,?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z,"void (__cdecl ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z)(GraphicWin* this, NCSprites*)",__cdecl,1,verified
+0x005D71D0,??__Eg_BUFFER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BUFFER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x005D71F0,??__Fg_BUFFER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BUFFER_SPRITE@@YAXXZ)(),__cdecl,,verified
+0x005D7B40,?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z,"int (__stdcall ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z)(Buffer* this, int8*, Palette*, int, int)",__stdcall,1111,verified
+0x005D7CA0,?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z,"int (__stdcall ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z)(Buffer* this, int8*, Palette*, int, int)",__stdcall,1111,verified
+0x005DA680,?poly@Buffer@@QAEHPAUVert@@HH@Z,"int (__thiscall ?poly@Buffer@@QAEHPAUVert@@HH@Z)(Buffer* this, Vert*, int, int)",__thiscall,111,verified
+0x005DC2D0,?get_special@@YAHPADPAH@Z,"int (__cdecl ?get_special@@YAHPADPAH@Z)(int8*, int*)",__cdecl,11,verified
+0x005DC310,?get_special_link@@YAHPADPAH@Z,"int (__cdecl ?get_special_link@@YAHPADPAH@Z)(int8*, int*)",__cdecl,11,verified
+0x005DF570,?init_class@Buffer@@QAAHXZ,int (__cdecl ?init_class@Buffer@@QAAHXZ)(Buffer* this),__cdecl,,verified
+0x005DF580,?close_class@Buffer@@QAAXXZ,void (__cdecl ?close_class@Buffer@@QAAXXZ)(Buffer* this),__cdecl,,verified
+0x005E2480,?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z,"int (__cdecl ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z)(Buffer* this, int8*, int*, int*)",__cdecl,111,verified
+0x005E37B0,??__Eg_BUFFER@@YAXXZ,void (__cdecl ??__Eg_BUFFER@@YAXXZ)(),__cdecl,,verified
+0x005E37D0,??__Fg_BUFFER@@YAXXZ,void (__cdecl ??__Fg_BUFFER@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x005EB350,??__Eg_WIN_BUFFER@@YAXXZ,void (__cdecl ??__Eg_WIN_BUFFER@@YAXXZ)(),__cdecl,,verified
+0x005EB370,??__Fg_WIN_BUFFER@@YAXXZ,void (__cdecl ??__Fg_WIN_BUFFER@@YAXXZ)(),__cdecl,,verified
+0x005EC690,?get_hdc@Win@@QAGPAUHDC__@@XZ,HDC__* (__stdcall ?get_hdc@Win@@QAGPAUHDC__@@XZ)(Win* this),__stdcall,,verified
+0x005EC6F0,?release_hdc@Win@@QAGXXZ,void (__stdcall ?release_hdc@Win@@QAGXXZ)(Win* this),__stdcall,,verified
+0x005EFD20,?flip@Win@@QAAXPAURECT@@@Z,"void (__cdecl ?flip@Win@@QAAXPAURECT@@@Z)(Win* this, RECT*)",__cdecl,1,verified
+0x005F01F0,?init_class@Win@@QAAHPAD@Z,"int (__cdecl ?init_class@Win@@QAAHPAD@Z)(Win* this, int8*)",__cdecl,1,verified
+0x005F04E0,?close_class@Win@@QAAXXZ,void (__cdecl ?close_class@Win@@QAAXXZ)(Win* this),__cdecl,,verified
+0x005F0650,?window_proc@Win@@QAGJPAXIIJ@Z,"int (__stdcall ?window_proc@Win@@QAGJPAXIIJ@Z)(Win* this, void*, unsigned int, unsigned int, int)",__stdcall,1111,verified
+0x005F15C0,?OnKey@Win@@QAAXPAXIJHI@Z,"void (__cdecl ?OnKey@Win@@QAAXPAXIJHI@Z)(Win* this, void*, unsigned int, int, int, unsigned int)",__cdecl,11111,verified
+0x005F1660,?OnChar@Win@@QAAXPAXDH@Z,"void (__cdecl ?OnChar@Win@@QAAXPAXDH@Z)(Win* this, void*, int8, int)",__cdecl,111,verified
+0x005F16D0,?OnSysKey@Win@@QAAXPAXIJHI@Z,"void (__cdecl ?OnSysKey@Win@@QAAXPAXIJHI@Z)(Win* this, void*, unsigned int, int, int, unsigned int)",__cdecl,11111,verified
+0x005F1820,?update_cursor@Win@@QAAHPAUWin@@H@Z,"int (__cdecl ?update_cursor@Win@@QAAHPAUWin@@H@Z)(Win* this, Win*, int)",__cdecl,11,verified
+0x005F2290,?OnMouseMove@Win@@QAAXPAXHHI@Z,"void (__cdecl ?OnMouseMove@Win@@QAAXPAXHHI@Z)(Win* this, void*, int, int, unsigned int)",__cdecl,1111,verified
+0x005F2330,?OnLButtonDown@Win@@QAAXPAXJHHI@Z,"void (__cdecl ?OnLButtonDown@Win@@QAAXPAXJHHI@Z)(Win* this, void*, int, int, int, unsigned int)",__cdecl,11111,verified
+0x005F2570,?OnLButtonUp@Win@@QAAXPAXHHI@Z,"void (__cdecl ?OnLButtonUp@Win@@QAAXPAXHHI@Z)(Win* this, void*, int, int, unsigned int)",__cdecl,1111,verified
+0x005F25C0,?OnRButtonDown@Win@@QAAXPAXJHHI@Z,"void (__cdecl ?OnRButtonDown@Win@@QAAXPAXJHHI@Z)(Win* this, void*, int, int, int, unsigned int)",__cdecl,11111,verified
+0x005F2620,?OnRButtonUp@Win@@QAAXPAXHHI@Z,"void (__cdecl ?OnRButtonUp@Win@@QAAXPAXHHI@Z)(Win* this, void*, int, int, unsigned int)",__cdecl,1111,verified
+0x005F2670,?OnSetCursor@Win@@QAAHPAXPAXII@Z,"int (__cdecl ?OnSetCursor@Win@@QAAHPAXPAXII@Z)(Win* this, void*, void*, unsigned int, unsigned int)",__cdecl,1111,verified
+0x005F2C40,?set_display_mode@Win@@QAAHHHHH@Z,"int (__cdecl ?set_display_mode@Win@@QAAHHHHH@Z)(Win* this, int, int, int, int)",__cdecl,1111,verified
+0x005F2CE0,?set_def_focus@Win@@QAAXPAUWin@@@Z,"void (__cdecl ?set_def_focus@Win@@QAAXPAUWin@@@Z)(Win* this, Win*)",__cdecl,1,verified
+0x005F4CC0,?redraw@Win@@QAAXXZ,void (__cdecl ?redraw@Win@@QAAXXZ)(Win* this),__cdecl,,verified
+0x005F4D00,?update@Win@@QAAXXZ,void (__cdecl ?update@Win@@QAAXXZ)(Win* this),__cdecl,,verified
+0x005F4EC0,?recurse_zorder@@YAXPAUWin@@@Z,void (__cdecl ?recurse_zorder@@YAXPAUWin@@@Z)(Win*),__cdecl,1,verified
+0x005F5020,?update_zorder@Win@@QAAXXZ,void (__cdecl ?update_zorder@Win@@QAAXXZ)(Win* this),__cdecl,,verified
+0x005F5080,?add_parent@Win@@QAAXPAUWin@@@Z,"void (__cdecl ?add_parent@Win@@QAAXPAUWin@@@Z)(Win* this, Win*)",__cdecl,1,verified
+0x005F50E0,?remove_parent@Win@@QAAXPAUWin@@@Z,"void (__cdecl ?remove_parent@Win@@QAAXPAUWin@@@Z)(Win* this, Win*)",__cdecl,1,verified
+0x005F5140,?bring_parent_to_top@Win@@QAAXPAVWin@@@Z,"void (__cdecl ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z)(Win* this, Win*)",__cdecl,1,verified
+0x005F5200,?add_child@Win@@QAEXPAUWin@@@Z,"void (__thiscall ?add_child@Win@@QAEXPAUWin@@@Z)(Win* this, Win*)",__thiscall,1,verified
+0x005F5270,?remove_child@Win@@QAEXPAUWin@@@Z,"void (__thiscall ?remove_child@Win@@QAEXPAUWin@@@Z)(Win* this, Win*)",__thiscall,1,verified
+0x005F5F60,?on_char@Win@@QAAHDH@Z,"int (__cdecl ?on_char@Win@@QAAHDH@Z)(Win* this, int8, int)",__cdecl,11,verified
+0x005F6A50,?get_key_window@Win@@QAGHXZ,int (__stdcall ?get_key_window@Win@@QAGHXZ)(Win* this),__stdcall,,verified
+0x005F6AB0,?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z,"int (__cdecl ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z)(Win*, int*, int*)",__cdecl,111,verified
+0x005F6F10,?get_mouse_window@Win@@QAAHPAH0@Z,"int (__cdecl ?get_mouse_window@Win@@QAAHPAH0@Z)(Win* this, int*, int*)",__cdecl,11,verified
+0x005F7320,?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z,"int (__cdecl ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z)(Win* this, RECT*, Win*)",__cdecl,11,verified
+0x005F8500,?clear_bubble_text@Win@@QAGXXZ,void (__stdcall ?clear_bubble_text@Win@@QAGXXZ)(Win* this),__stdcall,,verified
+0x005FA7A0,?in_box@@YAHHHHHHH@Z,"int (__cdecl ?in_box@@YAHHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
+0x005FA7E0,?in_box@@YAHHHPAURECT@@@Z,"int (__cdecl ?in_box@@YAHHHPAURECT@@@Z)(int, int, RECT*)",__cdecl,111,verified
+0x005FAEE0,?set_def_font@Menu@@QAAXPAUFont@@@Z,"void (__cdecl ?set_def_font@Menu@@QAAXPAUFont@@@Z)(Menu* this, Font*)",__cdecl,1,verified
+0x005FC700,?wait_task@@YAXXZ,void (__cdecl ?wait_task@@YAXXZ)(),__cdecl,,verified
+0x005FC7F0,?do_task@@YAHXZ,int (__cdecl ?do_task@@YAHXZ)(),__cdecl,,verified
+0x005FC8F0,?do_all_tasks@@YAXXZ,void (__cdecl ?do_all_tasks@@YAXXZ)(),__cdecl,,verified
+0x005FC9F0,?do_all_tasks@@YAXPAUWin@@@Z,void (__cdecl ?do_all_tasks@@YAXPAUWin@@@Z)(Win*),__cdecl,1,unknown
+0x005FCA30,?do_non_input@@YAXXZ,void (__cdecl ?do_non_input@@YAXXZ)(),__cdecl,,verified
+0x005FCB20,?do_all_non_input@@YAXXZ,void (__cdecl ?do_all_non_input@@YAXXZ)(),__cdecl,,unknown
+0x005FCB60,?do_draw@@YAHXZ,int (__cdecl ?do_draw@@YAHXZ)(),__cdecl,,verified
+0x005FCBB0,?do_all_draws@@YAXXZ,void (__cdecl ?do_all_draws@@YAXXZ)(),__cdecl,,verified
+0x005FCC20,?do_keyboard@@YAXXZ,void (__cdecl ?do_keyboard@@YAXXZ)(),__cdecl,,verified
+0x005FCC70,?do_all_keyboard@@YAXXZ,void (__cdecl ?do_all_keyboard@@YAXXZ)(),__cdecl,,verified
+0x005FCF90,?do_char@@YAXXZ,void (__cdecl ?do_char@@YAXXZ)(),__cdecl,,verified
+0x005FCFE0,?do_all_chars@@YAXXZ,void (__cdecl ?do_all_chars@@YAXXZ)(),__cdecl,,verified
+0x005FD050,?do_mouse@@YAXXZ,void (__cdecl ?do_mouse@@YAXXZ)(),__cdecl,,verified
+0x005FD0A0,?do_all_mouse@@YAXXZ,void (__cdecl ?do_all_mouse@@YAXXZ)(),__cdecl,,verified
+0x005FD120,?flush_input@@YAXXZ,void (__cdecl ?flush_input@@YAXXZ)(),__cdecl,,verified
+0x005FD1C0,?flush_keyboard@@YAXXZ,void (__cdecl ?flush_keyboard@@YAXXZ)(),__cdecl,,verified
+0x005FD220,?flush_mouse@@YAXXZ,void (__cdecl ?flush_mouse@@YAXXZ)(),__cdecl,,verified
+0x005FD2B0,?do_sound@@YAXXZ,void (__cdecl ?do_sound@@YAXXZ)(),__cdecl,,verified
+0x005FD360,?do_all_sounds@@YAXXZ,void (__cdecl ?do_all_sounds@@YAXXZ)(),__cdecl,,verified
+0x005FD370,?flush_timer@@YAXXZ,void (__cdecl ?flush_timer@@YAXXZ)(),__cdecl,,verified
+0x005FD400,??__ETxt@@YAXXZ,void (__cdecl ??__ETxt@@YAXXZ)(),__cdecl,,verified
+0x005FD460,??__FTxt@@YAXXZ,void (__cdecl ??__FTxt@@YAXXZ)(),__cdecl,,verified
+0x005FD4C0,?text_set_get_ptr@@YAXXZ,void (__cdecl ?text_set_get_ptr@@YAXXZ)(),__cdecl,,verified
+0x005FD4D0,?text_set_item_ptr@@YAXXZ,void (__cdecl ?text_set_item_ptr@@YAXXZ)(),__cdecl,,verified
+0x005FD4E0,??__ETxtIndex@@YAXXZ,void (__cdecl ??__ETxtIndex@@YAXXZ)(),__cdecl,,verified
+0x005FD510,??__FTxtIndex@@YAXXZ,void (__cdecl ??__FTxtIndex@@YAXXZ)(),__cdecl,,verified
+0x005FD530,?text_close@@YAXXZ,void (__cdecl ?text_close@@YAXXZ)(),__cdecl,,verified
+0x005FD570,?text_get@@YAPADXZ,int8* (__cdecl ?text_get@@YAPADXZ)(),__cdecl,,verified
+0x005FD5E0,?text_string@@YAPADXZ,int8* (__cdecl ?text_string@@YAPADXZ)(),__cdecl,,verified
+0x005FD670,?text_item@@YAPADXZ,int8* (__cdecl ?text_item@@YAPADXZ)(),__cdecl,,verified
+0x005FD6D0,?text_item_string@@YAPADXZ,int8* (__cdecl ?text_item_string@@YAPADXZ)(),__cdecl,,verified
+0x005FD740,?text_item_number@@YAHXZ,int (__cdecl ?text_item_number@@YAHXZ)(),__cdecl,,verified
+0x005FD7A0,?text_item_binary@@YAHXZ,int (__cdecl ?text_item_binary@@YAHXZ)(),__cdecl,,verified
+0x005FD800,?text_item_hex@@YAHXZ,int (__cdecl ?text_item_hex@@YAHXZ)(),__cdecl,,verified
+0x005FE1F0,?text_make_index@@YAXPAD@Z,void (__cdecl ?text_make_index@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x005FE230,?text_search_index@@YAHPAD0@Z,"int (__cdecl ?text_search_index@@YAHPAD0@Z)(int8*, int8*)",__cdecl,11,verified
+0x005FE270,?text_clear_index@@YAXXZ,void (__cdecl ?text_clear_index@@YAXXZ)(),__cdecl,,verified
+0x005FE4F0,?set_active_window@Palette@@QAAXPAVWin@@@Z,"void (__cdecl ?set_active_window@Palette@@QAAXPAVWin@@@Z)(Palette* this, Win*)",__cdecl,1,verified
+0x005FEAD0,?timer_callback@Palette@@QAAXHH@Z,"void (__cdecl ?timer_callback@Palette@@QAAXHH@Z)(Palette* this, int, int)",__cdecl,11,verified
+0x005FEBB0,?init_palette_class@Palette@@QAAXH@Z,"void (__cdecl ?init_palette_class@Palette@@QAAXH@Z)(Palette* this, int)",__cdecl,1,verified
+0x005FECF0,?close_palette_class@Palette@@QAAXXZ,void (__cdecl ?close_palette_class@Palette@@QAAXXZ)(Palette* this),__cdecl,,verified
+0x006003A0,?filefind_cd_drive_letter@@YAPADXZ,int8* (__cdecl ?filefind_cd_drive_letter@@YAPADXZ)(),__cdecl,,verified
+0x006003B0,?filefind_set_alternate@@YAXPAD@Z,void (__cdecl ?filefind_set_alternate@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x00600400,?filefind_init@@YAHPADH@Z,"int (__cdecl ?filefind_init@@YAHPADH@Z)(int8*, int)",__cdecl,11,verified
+0x006005D0,?filefind_get@@YAHPAD@Z,int (__cdecl ?filefind_get@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x00600760,?purge_leading@@YAXPAD@Z,void (__cdecl ?purge_leading@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x00600780,?purge_trailing@@YAXPAD@Z,void (__cdecl ?purge_trailing@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x00600840,?add_lf@@YAXPAD@Z,void (__cdecl ?add_lf@@YAXPAD@Z)(int8*),__cdecl,1,verified
+0x006018A0,?set_def_ok_text@BasePop@@QAAHPAD@Z,"int (__cdecl ?set_def_ok_text@BasePop@@QAAHPAD@Z)(BasePop* this, int8*)",__cdecl,1,verified
+0x00601910,?set_def_cancel_text@BasePop@@QAAHPAD@Z,"int (__cdecl ?set_def_cancel_text@BasePop@@QAAHPAD@Z)(BasePop* this, int8*)",__cdecl,1,verified
+0x006043D0,?set_def_file@BasePop@@QAAHPAD@Z,"int (__cdecl ?set_def_file@BasePop@@QAAHPAD@Z)(BasePop* this, int8*)",__cdecl,1,verified
+0x00604590,?init_class@BasePop@@QAAHXZ,int (__cdecl ?init_class@BasePop@@QAAHXZ)(BasePop* this),__cdecl,,verified
+0x00604680,?close_class@BasePop@@QAAXXZ,void (__cdecl ?close_class@BasePop@@QAAXXZ)(BasePop* this),__cdecl,,verified
+0x006048C0,?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,"int (__cdecl ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*, Font*)",__cdecl,1111,verified
+0x00604900,?set_def_string_color@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_string_color@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x00604930,?set_def_string_color2@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_string_color2@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x00604960,?set_def_string_color3@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_string_color3@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x00604990,?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x006049C0,?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,"int (__cdecl ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*)",__cdecl,111,verified
+0x006049F0,?set_def_button_color@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_button_color@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x00604A20,?set_def_button_color2@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_button_color2@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x00604A50,?set_def_button_color3@BasePop@@QAAXHHHH@Z,"void (__cdecl ?set_def_button_color3@BasePop@@QAAXHHHH@Z)(BasePop* this, int, int, int, int)",__cdecl,1111,verified
+0x00604A80,?on_modal@BasePop@@QAAHXZ,int (__cdecl ?on_modal@BasePop@@QAAHXZ)(BasePop* this),__cdecl,,verified
+0x00604A90,?fallout@BasePop@@QAAXXZ,void (__cdecl ?fallout@BasePop@@QAAXXZ)(BasePop* this),__cdecl,,verified
+0x006050F0,?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z,"void (__cdecl ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z)(BasePop* this, GraphicWin*, int, int, int, int)",__cdecl,11111,verified
+0x00607420,?set_def_text_color@BaseButton@@QAAXHHHH@Z,"void (__cdecl ?set_def_text_color@BaseButton@@QAAXHHHH@Z)(BaseButton* this, int, int, int, int)",__cdecl,1111,verified
+0x00607450,?set_def_text_color2@BaseButton@@QAAXHHHH@Z,"void (__cdecl ?set_def_text_color2@BaseButton@@QAAXHHHH@Z)(BaseButton* this, int, int, int, int)",__cdecl,1111,verified
+0x00607480,?set_def_text_color3@BaseButton@@QAAXHHHH@Z,"void (__cdecl ?set_def_text_color3@BaseButton@@QAAXHHHH@Z)(BaseButton* this, int, int, int, int)",__cdecl,1111,verified
+0x006074B0,?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,"int (__cdecl ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z)(BaseButton* this, Font*, Font*, Font*)",__cdecl,111,verified
+0x00607B10,?timer_callback_daemon@BaseButton@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@BaseButton@@QAAXHH@Z)(BaseButton* this, int, int)",__cdecl,11,verified
+0x00609D20,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,"int (__cdecl ?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)",__cdecl,111,verified
+0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,"void (__cdecl ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z)(Dialog* this, int, int, int, int, int)",__cdecl,11111,verified
+0x0060D060,??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ,void (__cdecl ??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ)(),__cdecl,,verified
+0x0060D080,??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ,void (__cdecl ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ)(),__cdecl,,verified
+0x0060D0A0,??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ,void (__cdecl ??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ)(),__cdecl,,verified
+0x0060D0C0,??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ,void (__cdecl ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ)(),__cdecl,,verified
+0x0060E4D0,?init_class@RadioButton@@QAAHXZ,int (__cdecl ?init_class@RadioButton@@QAAHXZ)(RadioButton* this),__cdecl,,verified
+0x0060E5D0,?close_class@RadioButton@@QAAXXZ,void (__cdecl ?close_class@RadioButton@@QAAXXZ)(RadioButton* this),__cdecl,,unknown
+0x0060E5F0,??__Eg_CHECKBOX_SPRITE_1@@YAXXZ,void (__cdecl ??__Eg_CHECKBOX_SPRITE_1@@YAXXZ)(),__cdecl,,verified
+0x0060E610,??__Fg_CHECKBOX_SPRITE_1@@YAXXZ,void (__cdecl ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ)(),__cdecl,,verified
+0x0060E630,??__Eg_CHECKBOX_SPRITE_2@@YAXXZ,void (__cdecl ??__Eg_CHECKBOX_SPRITE_2@@YAXXZ)(),__cdecl,,verified
+0x0060E650,??__Fg_CHECKBOX_SPRITE_2@@YAXXZ,void (__cdecl ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ)(),__cdecl,,verified
+0x0060FC60,?init_class@CheckBox@@QAAHXZ,int (__cdecl ?init_class@CheckBox@@QAAHXZ)(CheckBox* this),__cdecl,,verified
+0x0060FD60,?close_class@CheckBox@@QAAXXZ,void (__cdecl ?close_class@CheckBox@@QAAXXZ)(CheckBox* this),__cdecl,,unknown
+0x00613790,??__Eg_FILEWIN_SPRITE_1@@YAXXZ,void (__cdecl ??__Eg_FILEWIN_SPRITE_1@@YAXXZ)(),__cdecl,,verified
+0x006137B0,??__Fg_FILEWIN_SPRITE_1@@YAXXZ,void (__cdecl ??__Fg_FILEWIN_SPRITE_1@@YAXXZ)(),__cdecl,,verified
+0x006137D0,??__Eg_FILEWIN_SPRITE_2@@YAXXZ,void (__cdecl ??__Eg_FILEWIN_SPRITE_2@@YAXXZ)(),__cdecl,,verified
+0x006137F0,??__Fg_FILEWIN_SPRITE_2@@YAXXZ,void (__cdecl ??__Fg_FILEWIN_SPRITE_2@@YAXXZ)(),__cdecl,,verified
+0x00613810,??__Eg_FILEWIN_SPRITE_3@@YAXXZ,void (__cdecl ??__Eg_FILEWIN_SPRITE_3@@YAXXZ)(),__cdecl,,verified
+0x00613830,??__Fg_FILEWIN_SPRITE_3@@YAXXZ,void (__cdecl ??__Fg_FILEWIN_SPRITE_3@@YAXXZ)(),__cdecl,,verified
+0x00614C50,?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z,"void (__cdecl ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z)(FileWin* this, GraphicWin*, int, int, int, int, int)",__cdecl,111111,verified
+0x00614D90,?init_class@FileWin@@QAAHXZ,int (__cdecl ?init_class@FileWin@@QAAHXZ)(FileWin* this),__cdecl,,verified
+0x00614E30,?close_class@FileWin@@QAAXXZ,void (__cdecl ?close_class@FileWin@@QAAXXZ)(FileWin* this),__cdecl,,verified
+0x00616860,?set_modal@Time@@QAAXXZ,void (__cdecl ?set_modal@Time@@QAAXXZ)(Time* this),__cdecl,,verified
+0x00616870,?release_modal@Time@@QAAXXZ,void (__cdecl ?release_modal@Time@@QAAXXZ)(Time* this),__cdecl,,verified
+0x00616880,?init_class@Time@@QAAHXZ,int (__cdecl ?init_class@Time@@QAAHXZ)(Time* this),__cdecl,,verified
+0x00616890,?close_class@Time@@QAAXXZ,void (__cdecl ?close_class@Time@@QAAXXZ)(Time* this),__cdecl,,verified
+0x006168A0,??__EStringTable@@YAXXZ,void (__cdecl ??__EStringTable@@YAXXZ)(),__cdecl,,verified
+0x006168C0,??__FStringTable@@YAXXZ,void (__cdecl ??__FStringTable@@YAXXZ)(),__cdecl,,unknown
+0x006169D0,?labels_shutdown@@YAXXZ,void (__cdecl ?labels_shutdown@@YAXXZ)(),__cdecl,,verified
+0x00616A00,?labels_init@@YAHXZ,int (__cdecl ?labels_init@@YAHXZ)(),__cdecl,,verified
+0x00616AA0,??__Eg_CAVIAR_BUFFER_1@@YAXXZ,void (__cdecl ??__Eg_CAVIAR_BUFFER_1@@YAXXZ)(),__cdecl,,verified
+0x00616AC0,??__Fg_CAVIAR_BUFFER_1@@YAXXZ,void (__cdecl ??__Fg_CAVIAR_BUFFER_1@@YAXXZ)(),__cdecl,,verified
+0x00616AE0,??__Eg_CAVIAR_BUFFER_2@@YAXXZ,void (__cdecl ??__Eg_CAVIAR_BUFFER_2@@YAXXZ)(),__cdecl,,verified
+0x00616B00,??__Fg_CAVIAR_BUFFER_2@@YAXXZ,void (__cdecl ??__Fg_CAVIAR_BUFFER_2@@YAXXZ)(),__cdecl,,verified
+0x006185A0,?init_class@Caviar@@QAAHXZ,int (__cdecl ?init_class@Caviar@@QAAHXZ)(Caviar* this),__cdecl,,verified
+0x00618D20,?close_class@Caviar@@QAAXXZ,void (__cdecl ?close_class@Caviar@@QAAXXZ)(Caviar* this),__cdecl,,verified
+0x00618DA0,?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z,"void (__cdecl ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z)(Caviar* this, VOX_ScnRenderHnd*, int, VOX_Vect*, VOX_Matrix*, VOX_Rect*, VOX_Vect*)",__cdecl,111111,verified
+0x00618E10,?vx_malloc@Caviar@@QAAXK@Z,"void (__cdecl ?vx_malloc@Caviar@@QAAXK@Z)(Caviar* this, unsigned int)",__cdecl,1,verified
+0x00618E20,?vx_free@Caviar@@QAAXPAX@Z,"void (__cdecl ?vx_free@Caviar@@QAAXPAX@Z)(Caviar* this, void*)",__cdecl,1,verified
+0x00618E30,?vx_read@Caviar@@QAAXHPADJ@Z,"void (__cdecl ?vx_read@Caviar@@QAAXHPADJ@Z)(Caviar* this, int, int8*, int)",__cdecl,111,verified
+0x00618E50,?vx_write@Caviar@@QAAXHPAXJ@Z,"void (__cdecl ?vx_write@Caviar@@QAAXHPAXJ@Z)(Caviar* this, int, void*, int)",__cdecl,111,verified
+0x00618E70,?vx_seek@Caviar@@QAAXHJH@Z,"void (__cdecl ?vx_seek@Caviar@@QAAXHJH@Z)(Caviar* this, int, int, int)",__cdecl,111,verified
+0x00618E90,?vx_tell@Caviar@@QAAXH@Z,"void (__cdecl ?vx_tell@Caviar@@QAAXH@Z)(Caviar* this, int)",__cdecl,1,verified
+0x006195B0,?init_font_class@Font@@QAAHPAUFont@@@Z,"int (__cdecl ?init_font_class@Font@@QAAHPAUFont@@@Z)(Font* this, Font*)",__cdecl,1,verified
+0x00619610,?close_font_class@Font@@QAAXXZ,void (__cdecl ?close_font_class@Font@@QAAXXZ)(Font* this),__cdecl,,verified
+0x0061FC90,?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z,"int (__cdecl ?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z)(Texture* this, EdgeScan*, int)",__cdecl,11,verified
+0x00623F80,?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z,"void (__thiscall ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z)(Texture* this, Buffer*, Vert*, int*, Texture*, unsigned int8*, int, Vert*, int)",__thiscall,11111111,verified
+0x00624D80,?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z,"int (__cdecl ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z)(Texture* this, EdgeScan*, int)",__cdecl,11,verified
+0x00625700,??__ERand@@YAXXZ,void (__cdecl ??__ERand@@YAXXZ)(),__cdecl,,verified
+0x00625720,??__FRand@@YAXXZ,void (__cdecl ??__FRand@@YAXXZ)(),__cdecl,,verified
+0x006257E0,?random_reseed@@YAXK@Z,void (__cdecl ?random_reseed@@YAXK@Z)(unsigned int),__cdecl,1,verified
+0x00625800,?random_get@@YAIXZ,unsigned int (__cdecl ?random_get@@YAIXZ)(),__cdecl,,verified
+0x00625810,?random@@YAIHH@Z,"unsigned int (__cdecl ?random@@YAIHH@Z)(int, int)",__cdecl,11,verified
+0x00625850,?random@@YANXZ,double (__cdecl ?random@@YANXZ)(),__cdecl,,verified
+0x00625E30,?parse_num@@YAHHH@Z,"int (__cdecl ?parse_num@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00625F20,??__ELogging@@YAXXZ,void (__cdecl ??__ELogging@@YAXXZ)(),__cdecl,,verified
+0x00625F90,??__FLogging@@YAXXZ,void (__cdecl ??__FLogging@@YAXXZ)(),__cdecl,,verified
+0x00626230,?log_reset@@YAXXZ,void (__cdecl ?log_reset@@YAXXZ)(),__cdecl,,verified
+0x00626250,?log_say@@YAXPADPADHHH@Z,"void (__cdecl ?log_say@@YAXPADPADHHH@Z)(int8*, int8*, int, int, int)",__cdecl,11111,verified
+0x006262F0,?log_say@@YAXPADHHH@Z,"void (__cdecl ?log_say@@YAXPADHHH@Z)(int8*, int, int, int)",__cdecl,1111,verified
+0x00626350,?log_say_hex@@YAXPADPADHHH@Z,"void (__cdecl ?log_say_hex@@YAXPADPADHHH@Z)(int8*, int8*, int, int, int)",__cdecl,11111,verified
+0x006263F0,?log_say_hex@@YAXPADHHH@Z,"void (__cdecl ?log_say_hex@@YAXPADHHH@Z)(int8*, int, int, int)",__cdecl,1111,verified
+0x00626450,?log_set_state@@YAXH@Z,void (__cdecl ?log_set_state@@YAXH@Z)(int),__cdecl,1,verified
+0x006265A0,?scan_out_line_poly@@YAIHH@Z,"unsigned int (__cdecl ?scan_out_line_poly@@YAIHH@Z)(int, int)",__cdecl,11,verified
+0x00626620,?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z,"int (__cdecl ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z)(Buffer*, Vert*, int, int)",__cdecl,1111,verified
+0x00626D90,?scan_out_line_poly_dest@@YAIHH@Z,"unsigned int (__cdecl ?scan_out_line_poly_dest@@YAIHH@Z)(int, int)",__cdecl,11,verified
+0x00626E10,?polygon_dest@@YAHPAUBuffer@@PAUVert@@HPAE@Z,"int (__cdecl ?polygon_dest@@YAHPAUBuffer@@PAUVert@@HPAE@Z)(Buffer*, Vert*, int, unsigned int8*)",__cdecl,1111,verified
+0x00627130,?pop@@YAHPADP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADP6AHXZ@Z)(int8*, int (__cdecl *)())",__cdecl,11,verified
+0x00627160,?pop@@YAHPADPADP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADPADP6AHXZ@Z)(int8*, int8*, int (__cdecl *)())",__cdecl,111,verified
+0x00627190,?pop@@YAHPADPADPADHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADPADPADHP6AHXZ@Z)(int8*, int8*, int8*, int, int (__cdecl *)())",__cdecl,11111,verified
+0x006271D0,?pop@@YAHPADHHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADHHP6AHXZ@Z)(int8*, int, int, int (__cdecl *)())",__cdecl,1111,verified
+0x00627200,?pop@@YAHPADPADHHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADPADHHP6AHXZ@Z)(int8*, int8*, int, int, int (__cdecl *)())",__cdecl,11111,verified
+0x00627230,?pop@@YAHPADHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADHP6AHXZ@Z)(int8*, int, int (__cdecl *)())",__cdecl,111,verified
+0x00627260,?pop@@YAHPADPADHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADPADHP6AHXZ@Z)(int8*, int8*, int, int (__cdecl *)())",__cdecl,1111,verified
+0x00627290,?pop@@YAHPADHPADHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADHPADHP6AHXZ@Z)(int8*, int, int8*, int, int (__cdecl *)())",__cdecl,11111,verified
+0x006272C0,?pop@@YAHPADPADHPADHP6AHXZ@Z,"int (__cdecl ?pop@@YAHPADPADHPADHP6AHXZ@Z)(int8*, int8*, int, int8*, int, int (__cdecl *)())",__cdecl,111111,verified
+0x006272F0,?pop_close@@YAXXZ,void (__cdecl ?pop_close@@YAXXZ)(),__cdecl,,unknown
+0x00627310,?pops@@YAHPADPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPAUSprite@@P6AHXZ@Z)(int8*, Sprite*, int (__cdecl *)())",__cdecl,111,verified
+0x00627340,?pops@@YAHPADPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPAUSprite@@HHP6AHXZ@Z)(int8*, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111,verified
+0x00627370,?pops@@YAHPADPADPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADPAUSprite@@P6AHXZ@Z)(int8*, int8*, Sprite*, int (__cdecl *)())",__cdecl,1111,verified
+0x006273A0,?pops@@YAHPADPADPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, Sprite*, int, int, int (__cdecl *)())",__cdecl,111111,verified
+0x006273D0,?pops@@YAHPADHHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADHHPAUSprite@@P6AHXZ@Z)(int8*, int, int, Sprite*, int (__cdecl *)())",__cdecl,11111,verified
+0x00627400,?pops@@YAHPADHHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADHHPAUSprite@@HHP6AHXZ@Z)(int8*, int, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,1111111,verified
+0x00627440,?pops@@YAHPADPADPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADPADHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,111111,verified
+0x00627480,?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111111,verified
+0x006274D0,?pops@@YAHPADPADHHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADHHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int, int, Sprite*, int (__cdecl *)())",__cdecl,111111,verified
+0x00627500,?pops@@YAHPADPADHHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADHHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111111,verified
+0x00627540,?pops@@YAHPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADHPAUSprite@@P6AHXZ@Z)(int8*, int, Sprite*, int (__cdecl *)())",__cdecl,1111,verified
+0x00627570,?pops@@YAHPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,111111,verified
+0x006275A0,?pops@@YAHPADPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,11111,verified
+0x006275D0,?pops@@YAHPADPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,1111111,verified
+0x00627600,?pops@@YAHPADHPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADHPADHPAUSprite@@P6AHXZ@Z)(int8*, int, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,111111,verified
+0x00627630,?pops@@YAHPADHPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADHPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,11111111,verified
+0x00627670,?pops@@YAHPADPADHPADHPAUSprite@@P6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADHPADHPAUSprite@@P6AHXZ@Z)(int8*, int8*, int, int8*, int, Sprite*, int (__cdecl *)())",__cdecl,1111111,verified
+0x006276A0,?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z,"int (__cdecl ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int, int8*, int, Sprite*, int, int, int (__cdecl *)())",__cdecl,111111111,verified
+0x00628A50,?swap@@YAXPAHPAH@Z,"void (__cdecl ?swap@@YAXPAHPAH@Z)(int*, int*)",__cdecl,11,verified
+0x00628A80,?swap@@YAXPAEPAE@Z,"void (__cdecl ?swap@@YAXPAEPAE@Z)(unsigned int8*, unsigned int8*)",__cdecl,11,verified
+0x00628AB0,?bit_count_signed@@YAHH@Z,int (__cdecl ?bit_count_signed@@YAHH@Z)(int),__cdecl,1,verified
+0x00628AD0,?fixed_div@@YAHJJ@Z,"int (__cdecl ?fixed_div@@YAHJJ@Z)(int, int)",__cdecl,11,verified
+0x00628AF0,?memrchr@@YAHPBX0H@Z,"int (__cdecl ?memrchr@@YAHPBX0H@Z)(void*, void*, int)",__cdecl,111,verified
+0x00628B30,?findnum@@YAHPAD@Z,int (__cdecl ?findnum@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x00628B70,?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z,"void (__cdecl ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z)(HSV*, PALETTEENTRY*)",__cdecl,11,verified
+0x00628DB0,?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z,"void (__cdecl ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z)(PALETTEENTRY*, HSV*)",__cdecl,11,verified
+0x006290E0,?quick_root@@YAHH@Z,int (__cdecl ?quick_root@@YAHH@Z)(int),__cdecl,1,verified
+0x0062D500,?jackal_close@@YAXXZ,void (__cdecl ?jackal_close@@YAXXZ)(),__cdecl,,verified
+0x0062D570,?jackal_version_check@@YAHPAD@Z,int (__cdecl ?jackal_version_check@@YAHPAD@Z)(int8*),__cdecl,1,verified
+0x0062D5B0,?do_net@@YAXXZ,void (__cdecl ?do_net@@YAXXZ)(),__cdecl,,verified
+0x0062D5D0,?check_net@@YAXXZ,void (__cdecl ?check_net@@YAXXZ)(),__cdecl,,verified
+0x006327E0,?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z,"int (__cdecl ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z)(Net* this, NetThreadInfo*)",__cdecl,1,verified
+0x006339A0,?init_class@CheckButton@@QAAHXZ,int (__cdecl ?init_class@CheckButton@@QAAHXZ)(CheckButton* this),__cdecl,,verified
+0x006339B0,?close_class@CheckButton@@QAAXXZ,void (__cdecl ?close_class@CheckButton@@QAAXXZ)(CheckButton* this),__cdecl,,verified
+0x00634BB0,?env_open@@YAHPADPAD@Z,"int (__cdecl ?env_open@@YAHPADPAD@Z)(int8*, int8*)",__cdecl,11,verified
+0x00636300,?do_video@@YAXXZ,void (__cdecl ?do_video@@YAXXZ)(),__cdecl,,verified
+0x0063B910,?init_cursor_class@Cursor@@QAAXXZ,void (__cdecl ?init_cursor_class@Cursor@@QAAXXZ)(Cursor* this),__cdecl,,verified
+0x0063B930,?close_cursor_class@Cursor@@QAAXXZ,void (__cdecl ?close_cursor_class@Cursor@@QAAXXZ)(Cursor* this),__cdecl,,verified
+0x0063B940,?trig_init@@YAHXZ,int (__cdecl ?trig_init@@YAHXZ)(),__cdecl,,verified
+0x0063B9B0,?sin@@YAHHH@Z,"int (__cdecl ?sin@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x0063BAC0,?cos@@YAHHH@Z,"int (__cdecl ?cos@@YAHHH@Z)(int, int)",__cdecl,11,verified
+0x00644F45,?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z,"void (__stdcall ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z)(void*, EHRegistrationNode*)",__stdcall,11,verified
+0x0064500C,?_CallCatchBlock2@@YAPAXPAUEHRegistrationNode@@PBU_s_FuncInfo@@PAXHK@Z,"void* (__cdecl ?_CallCatchBlock2@@YAPAXPAUEHRegistrationNode@@PBU_s_FuncInfo@@PAXHK@Z)(EHRegistrationNode*, _s_FuncInfo*, void*, int, unsigned int)",__cdecl,11111,verified
+0x00645085,?_CallSETranslator@@YAHPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAX2PBU_s_FuncInfo@@H1@Z,"int (__cdecl ?_CallSETranslator@@YAHPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAX2PBU_s_FuncInfo@@H1@Z)(EHExceptionRecord*, EHRegistrationNode*, void*, void*, _s_FuncInfo*, int, EHRegistrationNode*)",__cdecl,1111111,verified
+0x006451B0,?_GetRangeOfTrysToCheck@@YAPBU_s_TryBlockMapEntry@@PBU_s_FuncInfo@@HHPAI1@Z,"_s_TryBlockMapEntry* (__cdecl ?_GetRangeOfTrysToCheck@@YAPBU_s_TryBlockMapEntry@@PBU_s_FuncInfo@@HHPAI1@Z)(_s_FuncInfo*, int, int, unsigned int*, unsigned int*)",__cdecl,11111,verified
+0x00645764,?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z,"void (__stdcall ?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z)(void*, unsigned int, int, void (__thiscall *)(void*))",__stdcall,1111,unknown
+0x00648BED,?TypeMatch@@YAHPBU_s_HandlerType@@PBU_s_CatchableType@@PBU_s_ThrowInfo@@@Z,"int (__cdecl ?TypeMatch@@YAHPBU_s_HandlerType@@PBU_s_CatchableType@@PBU_s_ThrowInfo@@@Z)(_s_HandlerType*, _s_CatchableType*, _s_ThrowInfo*)",__cdecl,111,verified
+0x00648D79,?CallCatchBlock@@YAPAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAU_CONTEXT@@PBU_s_FuncInfo@@PAXHK@Z,"void* (__cdecl ?CallCatchBlock@@YAPAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAU_CONTEXT@@PBU_s_FuncInfo@@PAXHK@Z)(EHExceptionRecord*, EHRegistrationNode*, _CONTEXT*, _s_FuncInfo*, void*, int, unsigned int)",__cdecl,1111111,verified
+0x00648E94,?ExFilterRethrow@@YAHPAU_EXCEPTION_POINTERS@@@Z,int (__cdecl ?ExFilterRethrow@@YAHPAU_EXCEPTION_POINTERS@@@Z)(_EXCEPTION_POINTERS*),__cdecl,1,verified
+0x00648EBE,?BuildCatchObject@@YAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PBU_s_HandlerType@@PBU_s_CatchableType@@@Z,"void (__cdecl ?BuildCatchObject@@YAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PBU_s_HandlerType@@PBU_s_CatchableType@@@Z)(EHExceptionRecord*, EHRegistrationNode*, _s_HandlerType*, _s_CatchableType*)",__cdecl,1111,verified
+0x006490E9,?AdjustPointer@@YAPAXPAXABUPMD@@@Z,"void* (__cdecl ?AdjustPointer@@YAPAXPAXABUPMD@@@Z)(void*, PMD*)",__cdecl,11,verified
+0x006492CA,?terminate@@YAXXZ,void (__cdecl ?terminate@@YAXXZ)(),__cdecl,,verified

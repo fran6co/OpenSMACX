@@ -153,6 +153,15 @@ CV_SLOT = set("ABCD")
 # Kinds that take an implicit `this`.
 THIS_KINDS = {"instance", "virtual", "thunk"}
 
+# A template argument list, which is the ONE construct that nests `@@` inside
+# the qualified name and so breaks the first-`@@` scan below.
+TEMPLATE_MARKER = "?$"
+
+# The convention word as a demangler prints it. Kept here rather than in each
+# caller because two copies of this list have already drifted in this tree.
+CONVENTION_TOKEN = re.compile(
+    r"\b(__cdecl|__thiscall|__stdcall|__fastcall|__pascal|__clrcall)\b")
+
 
 def split_infix(name: str) -> tuple[str, str] | None:
     """(kind_char, convention_char) for a mangled function name, else None.
@@ -160,8 +169,28 @@ def split_infix(name: str) -> tuple[str, str] | None:
     Returns None for anything that is not a function: data decorations,
     vftables, RTTI records and the `??__E` dynamic initialisers all fail the
     slot check rather than being special-cased by prefix.
+
+    WHY A TEMPLATE NAME IS REFUSED OUTRIGHT. The scan below assumes the FIRST
+    `@@` closes the qualified name, which is where the kind/cv/convention infix
+    begins. That assumption holds exactly when the qualified name contains no
+    nested `@@`, and the only MSVC construct that nests one is a template
+    argument list, introduced by `?$`. Read at the wrong `@@`,
+    `?f@?$Vec@PAVFoo@@TEvent@@@@QAEXH@Z` lands inside the template arguments and
+    parses as kind `T` (public STATIC) convention `E` - so the receiver a
+    `QAE` instance method must have is silently dropped, and nothing downstream
+    can tell that from a real static.
+
+    The two template names in this catalogue,
+    `?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ_0` and
+    `?Reinitialize@?$StructuredWorkStealingQueue@...@QAEXXZ`, were already
+    refused before this check existed - but only because the character after
+    their first `@@` happens not to be a KIND letter, which is luck, not a
+    parse. Refusing on the marker says what is actually true: this function
+    cannot locate the infix in a template name, so it declines to guess.
     """
     if not name.startswith("?"):
+        return None
+    if TEMPLATE_MARKER in name:
         return None
     marker = name.find("@@")
     if marker < 0:
@@ -193,10 +222,25 @@ def split_infix(name: str) -> tuple[str, str] | None:
 def demangled_args(demangled: str) -> str | None:
     """The text between the argument parentheses of a demangled signature.
 
-    Scans with a depth counter from the FIRST `(` so that a function-pointer
-    parameter - `void (__thiscall *)(void *)` - does not end the list early.
+    Scans with a depth counter so that a function-pointer parameter -
+    `void (__thiscall *)(void *)` - does not end the list early.
+
+    NOT from the first `(`, which is the bug this replaced. A function that
+    RETURNS a pointer to an array demangles as `int (* __cdecl grid_row(void))
+    [8]`, and there the first `(` opens the return type: scanning from it
+    returns `* __cdecl grid_row(void)` and the caller splits that into one
+    phantom parameter, so a function taking nothing reads as taking something.
+
+    The argument list is the first parenthesis after the CONVENTION word, which
+    a demangler always prints and always prints before the function's own name.
+    A signature with no convention word is not a function signature at all, and
+    is refused rather than guessed at from a paren that may belong to the
+    return type.
     """
-    start = demangled.find("(")
+    found = CONVENTION_TOKEN.search(demangled)
+    if found is None:
+        return None
+    start = demangled.find("(", found.end())
     if start < 0:
         return None
     depth = 0

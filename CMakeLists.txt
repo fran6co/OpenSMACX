@@ -1009,6 +1009,50 @@ if(BUILD_TESTING)
     # This file was delivered without a registration and ctest never ran it.
     opensmacx_add_python_tool_test(calling-convention-tests test_recover_conventions.py)
 
+    # The same mangled names, read for their FULL prototype rather than just
+    # their convention: 1,605 catalogued rows have a mangled name and no
+    # prototype, and the linker already wrote every one of those prototypes
+    # down. The dangerous failure is not a missing row, it is a WRONG one -
+    # every consumer of the `prototype` column reads it as certain, so a
+    # mis-rendered argument list silently changes which oracles are generated
+    # and which proofs compare EAX. The generator gates itself on a five-axis
+    # agreement control against the 3,213 rows that carry both a name and an
+    # IDA recording (convention and stack layout agree on all 3,213), and these
+    # tests pin the rendered shape byte-for-byte, pin the refusals, and hold
+    # the weak IDA-argument-count file separate from the certain one - it
+    # carries no convention, because IDA's agrees only 30.3% of the time.
+    #
+    # That control's population is the rows that ALREADY have a recording, so
+    # it is by construction disjoint from the rows being published, and it
+    # never asks the machine code anything. Nine published rows turned out to
+    # be contradicted by the `ret imm` their own body executes. A purge gate
+    # now refuses those, and docs/recovery/callee-purge.csv carries its answer
+    # so the gate replays here with no executable present: these tests rebuild
+    # the implied purge from the PUBLISHED columns and fail if any row
+    # disagrees with the committed observation, which is what stops a
+    # regenerated catalogue from quietly re-admitting one.
+    #
+    # That gate swept each body linearly and filed "no ret" as no evidence. It
+    # was one instruction short: 345 of those bodies end in a DIRECT JMP - they
+    # are tail-call thunks and their `ret` is in the target. Following the jump
+    # ONE hop (never two; a chain is unknown) reaches 324 of them, and 277
+    # AGREE with the published prototype while 47 CONTRADICT it. The 277 are
+    # what makes the hop a method rather than a way of manufacturing refusals,
+    # and the run refuses to write if that agreement collapses. The 47 are
+    # every `??3<Class>@@SAXPAXI@Z` row in the image - `sub ecx, <imm> ; jmp
+    # <??_G...>` adjustor thunks published as purging 0 while the body they
+    # jump to executes `ret 4`, so a caller pushed 8 and got 4 popped. They
+    # were also 47 of the 47 `static`-kind rows, a whole kind no control had
+    # ever reached. All 47 are refused, and these tests pin that.
+    #
+    # A hopped number is NOT a direct observation and must never read as one:
+    # callee-purge.csv carries a `source` column and the published `purge`
+    # column distinguishes `verified-via-tail-jump` from `verified`. The tests
+    # pin both, and pin that a pre-hop three-column catalogue is REFUSED rather
+    # than having its sourceless numbers rounded up into direct observations.
+    opensmacx_add_python_tool_test(derived-prototype-tests
+        test_derive_prototypes_from_names.py)
+
     # The plan decides what the oracle is allowed to compare, so every mistake
     # in it can only LOSE coverage - and losing coverage is silent: the
     # function stops failing instead of starting to. The `undef=<hex>` mask is
