@@ -70,6 +70,27 @@ class InfixTest(unittest.TestCase):
     def test_unmangled_name_is_not_a_function(self):
         self.assertIsNone(rc.split_infix("sub_401000"))
 
+    def test_a_TEMPLATE_name_is_refused_rather_than_read_at_the_wrong_at_at(self):
+        # The infix is located at the FIRST `@@`, which in a template name
+        # falls inside the template ARGUMENTS. Here that reads kind `T`
+        # (public STATIC) and convention `E`, so the receiver a `QAE` instance
+        # method must have is silently dropped and nothing downstream can tell
+        # the result from a real static.
+        self.assertIsNone(rc.split_infix("?f@?$Vec@PAVFoo@@TEvent@@@@QAEXH@Z"))
+
+    def test_the_same_method_WITHOUT_template_arguments_still_parses(self):
+        # So the refusal above is the template marker, not the shape.
+        self.assertEqual(("Q", "E"), rc.split_infix("?f@Vec@@QAEXH@Z"))
+
+    def test_both_real_template_names_in_the_catalogue_are_refused(self):
+        for name in (
+                "?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@"
+                "MAEHXZ_0",
+                "?Reinitialize@?$StructuredWorkStealingQueue@"
+                "V_UnrealizedChore@details@Concurrency@@"
+                "V_CriticalNonReentrantLock@23@@details@Concurrency@@QAEXXZ"):
+            self.assertIsNone(rc.split_infix(name), name)
+
     def test_kind_and_convention_tables_agree_with_the_infix(self):
         kind_char, conv_char = rc.split_infix("?f@C@@QAAXXZ")
         self.assertEqual("instance", rc.KIND[kind_char][1])
@@ -133,6 +154,24 @@ class DemangledArgsTest(unittest.TestCase):
 
     def test_no_parentheses(self):
         self.assertIsNone(rc.demangled_args("const Win::`vftable'"))
+
+    def test_a_pointer_to_ARRAY_return_does_not_invent_a_parameter(self):
+        # `int (* __cdecl grid_row(void))[8]`. The FIRST `(` opens the RETURN
+        # type here, not the argument list: scanning from it yields
+        # `* __cdecl grid_row(void)`, which the caller splits into one phantom
+        # parameter, so a function taking nothing reads as taking something.
+        self.assertEqual(
+            "void", rc.demangled_args("int (* __cdecl grid_row(void))[8]"))
+
+    def test_that_phantom_parameter_really_would_have_been_produced(self):
+        # The counterpart: the old scan-from-the-first-paren rule, spelled out,
+        # so this test fails if the shape above ever stops being dangerous.
+        text = "int (* __cdecl grid_row(void))[8]"
+        self.assertNotEqual(text.find("("), text.find("(", text.find("__cdecl")))
+
+    def test_a_signature_with_no_convention_word_is_refused(self):
+        # Not guessed at from whichever paren happens to come first.
+        self.assertIsNone(rc.demangled_args("Win::Win(int)"))
 
 
 def signature(name, demangled, kind, convention, slots):
