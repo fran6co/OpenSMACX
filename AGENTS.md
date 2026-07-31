@@ -58,17 +58,27 @@ against it, never to trust directly.
 3. Implement in the class's existing `src/*.cpp`, matching the recovered style:
    `volatile uint32_t*` field writes at documented offsets, staged vtables,
    rebindable seams (a function-pointer global defaulting to the fixed address)
-   for every original-dependency call, EH frame omitted.
+   for every original-dependency call, EH frame omitted. Parameters are `int`,
+   never `uint32_t`: MSVC decorates them `H` and `I`, so the wrong one makes
+   `@@YAHHH@Z` into `@@YAHII@Z` and the export stops matching.
 4. `tools/add_redirect.py <addr> <symbol>` wires the CSV, signature header,
    dllmain table, and count in one checked step. New original-dependency
    bindings must be classified in `docs/recovery-binding-classifications.csv`
    or metadata regeneration fails with `unclassified original function
-   bindings`.
-5. Build `promote-recovery-metadata` (Release preset) *before* the gate.
+   bindings`. `src/OpenSMACX.def` is **not** generated — add the decorated
+   alias for a new export by hand.
+5. Build `promote-recovery-metadata` (Release preset) *before* the gate — and
+   the order is **promote → classify → promote**. Promotion does not run
+   `tools/classify_recovered_shapes.py`, and `summary.json` is computed from
+   the `recovered-shapes.csv` it writes.
 6. `tools/run_gate.py` - `verify-recovery-batch` in **both** presets, run
    concurrently, one log per lane; then
    `tools/mutate_and_verify.py <source> --address <addr>`
-   and require every valid mutant killed.
+   and require every valid mutant killed. That command defaults to
+   `--target recovery-leaf-tests`, which does not compile `src/veh.cpp`,
+   `src/base.cpp` or `src/map.cpp`; outside the leaf closure pass
+   `--target recovery-gameplay-tests --test recovery-gameplay-tests` or every
+   mutant returns `STALE ... UNMEASURED` and the sweep proves nothing.
 7. Commit the batch.
 
 ### Parallel recovery across agents
