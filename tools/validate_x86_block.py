@@ -67,7 +67,28 @@ BLOCKS = {
     "movzx widens":        ("0fb60500000030" "a324000030" "c3", ()),
     "movsx sign extends":  ("0fbe0500000030" "a328000030" "c3", ()),
     "read back a write":   ("a320000030" "8b1d20000030" "c3", ()),
+    # Branches. Each has two rets, and the decode guard below still requires
+    # the LAST instruction to be one - a sequence whose final byte is not a
+    # ret would run off the end into whatever the page holds.
+    "branch on equality":  ("39c8" "7506" "b801000000" "c3"
+                            "b802000000" "c3", ()),
+    "branch on sign":      ("85c0" "7906" "b8ffffffff" "c3"
+                            "b801000000" "c3", ()),
 }
+
+# EVERY CONDITION, not a selection. A control that damaged `ge` to lose its
+# equality case went undetected, because no sequence tested `ge` at all - the
+# validator was silently covering five conditions out of sixteen while reading
+# as though it covered the family. `cmp eax, ecx` then `set<cc> al`, one per
+# encoding, closes that: the second opcode byte is 0x90 + the condition's own
+# number, so the table below IS the x86 encoding rather than a transcription of
+# it.
+SETCC_CONDITIONS = (
+    "o", "no", "b", "ae", "e", "ne", "be", "a",
+    "s", "ns", "p", "np", "l", "ge", "le", "g",
+)
+for _index, _name in enumerate(SETCC_CONDITIONS):
+    BLOCKS[f"setcc {_name}"] = (f"39c80f{0x90 + _index:02x}c0c3", ())
 
 
 def concrete_state(regs: dict, flags: int, window: bytes) -> x86_smt.State:
@@ -86,7 +107,10 @@ def concrete_state(regs: dict, flags: int, window: bytes) -> x86_smt.State:
 
 def encoded_result(code: bytes, regs: dict, flags: int, window: bytes):
     state = concrete_state(regs, flags, window)
-    out = x86_smt.encode_block(code, 0x1000, state)
+    # encode_function, not encode_block: it handles a straight run as the
+    # degenerate one-path case and additionally merges branches, so every
+    # sequence goes through the same code the prover will use.
+    out = x86_smt.encode_function(code, 0x1000, state)
     values = {name: z3.simplify(out.regs[name]).as_long()
               for name in x86_smt.REGISTERS}
     got_flags = z3.simplify(out.flags).as_long()
@@ -134,6 +158,23 @@ def main(argv=None) -> int:
             regs = {name: rng.getrandbits(32) for name in x86_smt.REGISTERS}
             regs["esp"] = GUEST_ESP
             regs["ebp"] = 0
+            # THE COMPARED PAIR NEEDS ITS BOUNDARIES. Every branch and setcc
+            # sequence is `cmp eax, ecx`, and with two uniform 32-bit draws the
+            # two are never equal and never adjacent - so ZF is always clear and
+            # every condition that differs only on equality is untested. A
+            # control that damaged `ge` into `g` went undetected for exactly
+            # that reason: they differ ONLY when the operands are equal.
+            choice = rng.random()
+            if choice < 0.25:
+                regs["ecx"] = regs["eax"]                      # ZF set
+            elif choice < 0.35:
+                regs["ecx"] = (regs["eax"] + 1) & 0xFFFFFFFF   # off by one
+            elif choice < 0.45:
+                regs["ecx"] = (regs["eax"] - 1) & 0xFFFFFFFF
+            elif choice < 0.55:
+                # Straddles the signed/unsigned split, where `l` and `b`
+                # disagree and a swapped condition would otherwise pass.
+                regs["eax"], regs["ecx"] = 0x7FFFFFFF, 0x80000000
             for name in small:
                 # Small enough that base + index*4 + disp stays in the window.
                 regs[name] = rng.randrange(0, 16)
