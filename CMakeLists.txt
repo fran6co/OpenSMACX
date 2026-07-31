@@ -947,6 +947,16 @@ if(BUILD_TESTING)
     # invisible in the total, so the decisions are tested on synthetic bytes.
     opensmacx_add_python_tool_test(recovered-shape-classifier-tests test_classify_recovered_shapes.py)
 
+    # The upper-bound catalogue that lets a class with no pinned sizeof stage an
+    # oracle receiver. The safety argument is directional - a bound above the
+    # true size wastes a zero-filled buffer, one below it lets a method write
+    # past its receiver - so these tests are about the refusals and about
+    # `bounded` never being spelled the same as `pinned`. Deriving the
+    # catalogue needs the uncommitted executable and stays a local step, as it
+    # does for every other catalogue here.
+    opensmacx_add_python_tool_test(class-size-bounds-tests
+        test_derive_class_size_bounds.py)
+
     opensmacx_add_python_tool_test(boot-loop-tests test_lifted_boot_loop.py)
 
     # The whole-image summary: every headline number the project publishes.
