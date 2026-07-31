@@ -18,6 +18,9 @@ describe are assumed everywhere below and are not repeated here:
   smoke gate that every recovery must pass.
 - `docs/LEGACY_ISLANDS.md` — island generation, eligibility, and the
   zero-island release rule.
+- `docs/EXCLUSIONS.md` — what will **not** be recovered, on what grounds, and
+  the measured size of each population. Read it before planning work, not
+  after: it is the difference between hitting a wall and knowing one is there.
 - `docs/STATIC_RECOMPILATION.md`, `docs/PORTING.md` — the stopped static-recompile
   pilot and the general porting notes.
 
@@ -34,8 +37,10 @@ against it, never to trust directly.
 
 1. `tools/disasm.py` the target and every callee; classify each call as
    source-owned or original-dependency; confirm the SEH prologue targets
-   `__CxxFrameHandler` at `0x00644FD6` (safe to omit) versus an
-   `_except_handler3` frame (not omittable — see the closing Caveat).
+   `__CxxFrameHandler` at `0x00644FD6`, which is safe to omit. Every game
+   frame in this image does; the fifteen that do not are CRT (see the closing
+   section), so a prologue naming anything else means you are reading library
+   code and should stop.
 2. Write the leaf test first, in the `tests/leaf/<family>_tests.cpp` that
    owns the subject, and touch **no other file**: append the `void test_*()`,
    then append `LEAF_CASE(LEAF_APPEND, test_*);` at the bottom of that same
@@ -161,8 +166,56 @@ The working split that respects those constraints:
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
-- The catalog's `additional_repositories` entry pins the Thinker mod (GPLv2; incompatible with this project's GPLv3-or-later, so its text can never be copied or committed regardless of hypothesis policy). `tools/correlate_thinker_layouts.py` reduces the fetched headers to ignored struct-offset and global-address hypothesis CSVs; every lead still requires independent verification against the hash-bound canonical executable before source, tests, or metadata are committed.
+- The catalog's `additional_repositories` entry pins the Thinker mod. It is kept out on the **measured** position, not the licence one: it lands 2,279 of 2,562 address hypotheses exactly on catalogued entries with 100% correct class attribution (1,216/1,216), yet names exactly one function the catalogue leaves as `sub_*`, invents its method names, and is 5 right / 7 wrong on the pinned layouts — see `docs/EXCLUSIONS.md`. `tools/correlate_thinker_layouts.py` reduces the fetched headers to ignored struct-offset and global-address hypothesis CSVs; every lead still requires independent verification against the hash-bound canonical executable before source, tests, or metadata are committed, and its text is never copied or committed either way.
 - The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements or mapped unrecovered functions, 415 exact source-complete mappings, and 47 name-ambiguous rows manually resolved as 45 source-complete mappings and two source-only compatibility exports.
+
+## Out of Scope
+
+`docs/EXCLUSIONS.md` is the declaration: what will not be recovered, why, and
+how big each population is. Every figure in it is re-derived by
+`tools/measure_exclusions.py`, and `exclusion-census-tests` fails the gate if
+the document and the image ever disagree, so those numbers cannot rot the way
+the `Recovery State` line did.
+
+The distinction that matters is *why* something is out of scope, because the
+three reasons carry different obligations:
+
+- **Availability** — the code can be linked instead of rewritten. The MSVC 6
+  CRT, 327 functions / 45,155 B. The obligation is behavioural equivalence, and
+  it is nearly moot: MSVC 6.0 is installed at `~/opt/vc6` (`CL.EXE` 12.00.8168,
+  the exact compiler the Rich header pins) with its own `LIBC.LIB`, so linking
+  it makes the x87 `__CI*` helpers, `__output`/`_$I10_OUTPUT` and the
+  `___sbh_*` small-block heap **identical** rather than assumed-equivalent.
+- **Expressibility** — there is no C++ for the body. Exactly one function:
+  `sub_5d4240`, 60 B, a VGA DAC palette loop of `out dx, al` with `cli`/`sti`.
+  A platform-layer replacement is fine, under the acceptance criterion stated
+  in advance in `docs/EXCLUSIONS.md` — not "the screen looks right".
+- **Verifiability** — recoverable as source, not checkable by any oracle here.
+  941 functions / 48.4% of catalogued bytes transitively reach DirectDraw,
+  DirectPlay, DirectSound or MSVFW32, and the real surface is `call [vtable+n]`
+  on a COM pointer, which no import work reaches. Acceptance is behavioural,
+  and "no oracle available" is a complete result here, not a deficient one.
+
+Two things that are not exclusions but bound every plan:
+
+- **5,159 indirect call sites have no known target.** Every caller count, seam
+  count and reachability closure in this repository — including the 941 above —
+  is a **lower bound**. Budget +20% on methods.
+- **Multiplayer / `NetDaemon`** (36 fn / 43,599 B, 24,378 B still
+  `original_dependency`) is never exercised by smoke. Source-level tests are
+  the only evidence available, and a commit must say so rather than present it
+  next to gate-verified work.
+
+The **Thinker mod** is not excluded by licence — that objection was withdrawn —
+but by measurement. It lands 2,279 of 2,562 address hypotheses exactly on
+catalogued entries and its class attribution is 100% correct (1,216/1,216), so
+it understands the binary; it also names exactly **one** function the catalogue
+leaves as `sub_*`, invents its method names rather than using the real symbols,
+and gets the pinned class layouts 5 right / 7 wrong. Use it to understand
+behaviour. Do not import its names, addresses or layouts.
+
+There is **no `_except_handler3` residue**. That wall was an arithmetic
+artifact and has been withdrawn; see the closing section.
 
 ## Completed Work
 
@@ -626,4 +679,8 @@ Recovered replacements therefore omit the frame, which is behaviourally equivale
 - The DLL and both test executables compile with `-fno-exceptions`, so no recovered body can raise where the original could not.
 - `verify-recovery-abi` fails any recovered object that grows an `.eh_frame` section or imports `__gxx_personality`/`_Unwind_`/`CxxFrameHandler`, which is what a translation unit losing the flag would look like.
 
-Caveat: of 1,072 SEH prologues only 387 are C++ EH thunks. The remaining ~685 are `_except_handler3`-style `__try`/`__except`/`__finally`, which respond to *structured* exceptions such as access violations, and those genuinely can occur. The reasoning above does not transfer to them. Before recovering any function whose prologue targets a handler other than `0x00644FD6`, re-examine it.
+The caveat this section used to carry has been withdrawn, and the arithmetic behind it is worth knowing because the same mistake is easy to repeat. It said that of 1,072 SEH prologues only 387 were C++ EH thunks, leaving ~685 `_except_handler3` frames that respond to real structured exceptions and to which the reasoning above does not transfer. Those ~685 were `1072 - 387`, and the two numbers count different things: 1,072 is how often the byte sequence `push -1; push imm32` appears, and 687 of those are ordinary argument pairs such as `push -1; push 0xa0; call sub_5DACB0`.
+
+Counting frame *registrations* instead — `mov fs:[0], esp`, with the handler read back out of the nearest preceding push — the image has **402**: 387 through a per-function `__ehhandler` thunk to `__CxxFrameHandler`, **14** naming `__except_handler3` directly, and one naming `__local_unwind2`'s own handler. All fifteen of the non-C++ frames are inside the CRT, the largest 548 bytes, and the dword `0x00646DF8` occurs exactly 14 times in the whole image. **No game function registers an `_except_handler3` frame**, so the omission argument above covers every frame a recovery will meet. `tools/measure_exclusions.py` re-derives this and `--check` fails if it ever stops being true.
+
+The instruction survives the correction: before recovering any function whose prologue targets a handler other than `0x00644FD6`, re-examine it. It is now known to fire only on CRT code, which is excluded anyway.
