@@ -34,9 +34,9 @@ called that "no evidence". For 345 of the 1,601 candidates it was instead
 evidence one instruction away: resolve the jump ONE hop and read the target's
 `ret imm`. Measured 2026-07-31 over the 1,601 candidates:
 
-    purge-VERIFIED, from the row's own body                 1,254
+    purge-VERIFIED, from the row's own body                 1,253
     purge-VERIFIED-VIA-TAIL-JUMP, from one hop                277
-    purge-UNKNOWN, no single `ret imm` either way              22
+    purge-UNKNOWN, no single REACHABLE `ret imm` either way     23
     refused, contradicted by the row's own body                 1
     refused, contradicted through a tail jump                  47
                                                             -----
@@ -104,8 +104,19 @@ dynamic initialisers (396 and 392), a shape the control population does not
 contain at all. Not one of the 1,553 emitted rows carries a two-slot argument,
 so `stack_slots` is all-ones throughout and the "stack layout 100%" axis is
 measuring argument POSITIONING and not argument WIDTH. The purge gate is the one
-axis that reaches the emitted rows directly, and it now reaches 1,531 of them -
-1,254 through the body and 277 through one hop.
+axis that reaches the emitted rows directly, and it now reaches 1,530 of them -
+1,253 through the body and 277 through one hop.
+
+AND THE EVIDENCE MUST BE REACHABLE. A linear sweep cannot tell a live `ret` from
+a dead one, which let two rows claim VERIFIED on a number no path executes:
+`?_JumpToContinuation` ends at `jmp eax` and its epilogue is unreachable, and
+`?terminate`'s only `ret` sits in an EH funclet. Both numbers were right, which
+is precisely why the label was wrong - "verified" asserted an observation the
+processor never makes. A recursive walk from the entry now filters the evidence,
+and because an indirect jump contributes no edge the result is a LOWER bound: it
+can withhold the word, never award it wrongly. The same filter EARNED a claim
+too - `?__ArrayUnwind` read as ambiguous on two distinct `ret`s until the dead
+one in its unwind funclet was discarded, leaving a single reachable `ret 0x10`.
 
 The `static` kind used to be the sharpest of these blind spots: 47 emitted rows
 against 0 in the control, an entire kind nothing had ever checked. The hop
@@ -565,6 +576,43 @@ def ret_immediates(instructions) -> set:
             if one.mnemonic in ("ret", "retf")}
 
 
+def reachable_addresses(instructions, entry: int) -> set:
+    """Instruction addresses reachable from `entry` by nameable control flow.
+
+    A LINEAR SWEEP CANNOT TELL A LIVE `ret` FROM A DEAD ONE, and twice now this
+    gate has been caught calling something evidence that the processor never
+    executes. `?_JumpToContinuation` ends at `jmp eax`; the `pop/pop/pop/leave/
+    ret 8` after it is an epilogue no path reaches. `?terminate`'s only `ret`
+    lives in an EH funclet with no edge from the entry. Both numbers happen to
+    be right, but "verified" claimed a direct observation, and that is the same
+    overstatement as filing a contradiction under "unknown".
+
+    Conditional branches contribute both edges; an unconditional `jmp` breaks
+    the fallthrough. An INDIRECT jump contributes no edge at all - past
+    `jmp eax` this cannot say where control went. That makes the result a
+    LOWER BOUND on reachability, which is the safe direction: it can only
+    withhold the word "verified", never award it wrongly.
+    """
+    by_address = {one.address: one for one in instructions}
+    reachable: set = set()
+    pending = [entry]
+    while pending:
+        at = pending.pop()
+        while at in by_address and at not in reachable:
+            reachable.add(at)
+            one = by_address[at]
+            if one.mnemonic in ("ret", "retf"):
+                break
+            if one.mnemonic == "jmp":
+                if DIRECT_JUMP.match(one.op_str):
+                    pending.append(int(one.op_str, 16))
+                break                       # no fallthrough, resolved or not
+            if one.mnemonic.startswith("j") and DIRECT_JUMP.match(one.op_str):
+                pending.append(int(one.op_str, 16))   # conditional: both edges
+            at = one.address + one.size
+    return reachable
+
+
 def stack_shift_reason(instructions) -> str | None:
     """Why this sequence may have moved ESP, or None if it provably did not.
 
@@ -647,14 +695,27 @@ def read_purges(addresses, rows, exe: Path) -> dict:
                                  "no body_ranges in the catalogue")
             continue
         instructions = decode(spans)
-        seen = ret_immediates(instructions)
+        # THE EVIDENCE MUST BE REACHABLE. A `ret` the entry cannot get to is
+        # not an observation of anything; see `reachable_addresses`.
+        reachable = reachable_addresses(instructions, spans[0][0])
+        live = [one for one in instructions if one.address in reachable]
+        seen = ret_immediates(live)
+        stranded = ret_immediates(instructions) - seen
         count = f"{len(spans)} body span(s)"
         if len(seen) == 1:
             out[address] = Purge(next(iter(seen)), SOURCE_BODY,
-                                 f"one ret imm over {count}")
+                                 f"one reachable ret imm over {count}")
         elif seen:
             out[address] = Purge(None, SOURCE_NONE,
-                                 f"{len(seen)} distinct ret imm over {count}")
+                                 f"{len(seen)} distinct reachable ret imm "
+                                 f"over {count}")
+        elif stranded:
+            # There IS a ret, and no path from the entry reaches it. Publishing
+            # its number as `verified` is the overstatement this branch exists
+            # to refuse - the row keeps its prototype and loses the claim.
+            out[address] = Purge(None, SOURCE_NONE,
+                                 f"the only ret imm over {count} is not "
+                                 f"reachable from the entry")
         else:
             out[address] = _one_hop(address, instructions, spans, count,
                                     by_number, spans_of, decode)
@@ -689,12 +750,19 @@ def _one_hop(address, instructions, spans, count, by_number, spans_of, decode):
         return Purge(None, SOURCE_NONE,
                      f"{lead}, which has no body_ranges in the catalogue")
 
-    seen = ret_immediates(decode(target_spans))
+    # The target's `ret` must be reachable from the TARGET's entry, for the same
+    # reason the body's must be reachable from its own: a dead epilogue states a
+    # number the processor never executes, and hopping to one would launder the
+    # overstatement through an extra instruction rather than remove it.
+    target_code = decode(target_spans)
+    target_live = reachable_addresses(target_code, target_spans[0][0])
+    seen = ret_immediates([one for one in target_code
+                           if one.address in target_live])
     reached = f"{len(target_spans)} body span(s)"
     if len(seen) == 1:
         return Purge(next(iter(seen)), SOURCE_TAIL_JUMP,
-                     f"one ret imm in the tail-jump target 0x{target:08X} "
-                     f"over {reached}")
+                     f"one reachable ret imm in the tail-jump target "
+                     f"0x{target:08X} over {reached}")
     if not seen:
         return Purge(None, SOURCE_NONE,
                      f"{lead}, which reaches no ret of its own; that is a "
