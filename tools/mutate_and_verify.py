@@ -14,6 +14,49 @@ assertion. Compile failures are not evidence either way and are reported
 separately -- a mutant that never built has proven nothing.
 
 Exit status is 0 only when every valid mutant was killed.
+
+SHARDING, because this is the slowest thing in a recovery. A sweep is one
+rebuild-and-run per mutant, strictly serial, and mutant count scales with
+function size -- measured at roughly one per 18-22 bytes, so ~90 for a 1.5 KB
+body and ~103 for a 2.2 KB one. At ~3.5 s each that is five to six minutes per
+pass, and hardening a new test runs several passes. It dominates.
+
+The mutants are INDEPENDENT of one another. They are serial only because they
+all write the same source file and the same binary. `--shard I/N` splits them,
+so N workers can sweep one function together. Measured 2026-07-31 on
+?stack_veh@@YAHHH@Z, 88 mutants:
+
+    serial, one build directory        313 s
+    four shards, four lanes             99 s     3.16x, 79% efficiency
+
+with byte-identical verdicts -- the same 75 killed, the same 2 survivors.
+
+EACH WORKER NEEDS ITS OWN SOURCE TREE. This script edits the source in place
+and reverts afterwards, so shards sharing a tree would overwrite each other's
+mutations and score nonsense. A lane costs about seven seconds to build and
+2 GB of disk:
+
+    git archive HEAD | tar -x -C "$S" --one-top-level=lane$i
+    mkdir -p "$S/lane$i/.opensmacx"
+    cp -al <repo>/.opensmacx/game "$S/lane$i/.opensmacx/game"   # hard links
+    cd "$S/lane$i" && cmake -S . -B build -G Ninja \
+        --toolchain cmake/toolchains/mingw-i686.cmake
+    cmake --build build --target <suite> -j4
+
+Hard links, not a symlink: the build refuses a symlinked OPENSMACX_GAME_DIR and
+refuses one outside the lane's own ignored root, and hard links satisfy both at
+no cost. The Wine prefix is already ${CMAKE_CURRENT_BINARY_DIR}/wineprefix, so
+per-lane build directories isolate it for free.
+
+A SHARD IS NOT A SWEEP, and the run says so on every invocation. Each shard
+prints its own tally, and `survived 0` from one shard looks exactly like a clean
+full sweep. All N shards must run and their survivors be unioned before a
+function has been swept; exit status from one shard means only that its own
+share was killed.
+
+Disk binds before CPU: at ~2 GB per lane, four lanes is a comfortable default
+and the per-mutant cost had risen only 3.5 s -> 4.5 s at that width, so it was
+not yet saturated.
 """
 
 from __future__ import annotations
@@ -105,6 +148,29 @@ class Result:
     # the flake RATE is published rather than absorbed: these are the mutants
     # that made two runs of an identical tree disagree.
     flaky: list[Mutant] = field(default_factory=list)
+
+
+def parse_shard(value: str | None) -> tuple[int, int] | None:
+    """`I/N` -> (I-1, N), or None. Raises SystemExit on anything malformed.
+
+    ONE-BASED ON THE COMMAND LINE, zero-based internally. `--shard 1/4` is the
+    first of four, because a caller writing a loop over `1 2 3 4` and getting
+    silent nonsense from `--shard 4/4` would have no way to notice: every shard
+    reports its own clean-looking tally, so an off-by-one costs coverage without
+    costing a green run. Malformed input is fatal for the same reason - there is
+    no safe default when the alternative is silently sweeping a quarter of a
+    function and reading it as the whole.
+    """
+    if value is None:
+        return None
+    try:
+        index, count = (int(part) for part in value.split("/", 1))
+    except ValueError:
+        raise SystemExit(f"error: --shard wants I/N, got {value!r}")
+    if count < 1 or not 1 <= index <= count:
+        raise SystemExit(f"error: --shard {value} is out of range; "
+                         f"I must be 1..N and N at least 1")
+    return index - 1, count
 
 
 def parse_functions(lines: list[str]) -> list[Function]:
@@ -538,6 +604,13 @@ def main() -> int:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("source", help="recovered source file to mutate")
     parser.add_argument("--build-dir", default="build/mingw-i686-debug")
+    parser.add_argument("--shard", metavar="I/N",
+                        help="run only mutants whose index %% N == I-1, so N "
+                             "workers in N SEPARATE SOURCE TREES can sweep one "
+                             "function together. Each worker needs its own tree "
+                             "and its own --build-dir: this script mutates the "
+                             "source in place, so shards sharing a tree would "
+                             "overwrite each other. See the module docstring.")
     parser.add_argument("--target", default="recovery-leaf-tests")
     parser.add_argument("--test", default="recovery-leaf-tests")
     parser.add_argument("--address", action="append", default=[],
@@ -583,6 +656,19 @@ def main() -> int:
         mutants = [m for m in mutants if m.operator in set(args.operator)]
     if args.limit:
         mutants = mutants[:args.limit]
+    # getattr, not args.shard: callers that build a Namespace directly (the
+    # test suite does) predate this flag, and a new optional argument must not
+    # break them.
+    shard = parse_shard(getattr(args, "shard", None))
+    if shard:
+        index, count = shard
+        whole = len(mutants)
+        mutants = [m for n, m in enumerate(mutants) if n % count == index]
+        print(f"SHARD {index + 1} OF {count}: {len(mutants)} of this "
+              f"function's {whole} mutant(s). THIS RUN IS NOT A SWEEP - its "
+              f"'survived 0' means only that no mutant IN THIS SHARD survived. "
+              f"All {count} shards must be run and their survivors unioned "
+              f"before the function has been swept.")
 
     harness = Harness(args)
 

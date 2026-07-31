@@ -605,5 +605,43 @@ class IdenticalStatementSwapTests(unittest.TestCase):
             "    x_ = 1;", "    x_ = 2;"))
 
 
+class ShardTests(unittest.TestCase):
+    """`--shard I/N` splits one function's mutants across worker trees.
+
+    Measured 2026-07-31 on ?stack_veh@@YAHHH@Z: 88 mutants took 313 s in one
+    build directory and 99 s across four lanes - 3.16x - with byte-identical
+    verdicts, the same 75 killed and the same 2 survivors.
+    """
+
+    def test_absent_shard_means_the_whole_function(self):
+        self.assertIsNone(mutate_and_verify.parse_shard(None))
+
+    def test_the_command_line_is_one_based(self):
+        # `--shard 1/4` is the FIRST of four. A caller looping over 1..N would
+        # get silence from a zero-based 4/4, and silence here costs coverage
+        # without costing a green run.
+        self.assertEqual((0, 4), mutate_and_verify.parse_shard("1/4"))
+        self.assertEqual((3, 4), mutate_and_verify.parse_shard("4/4"))
+
+    def test_a_malformed_shard_is_fatal_rather_than_defaulted(self):
+        # There is no safe default: the alternative to failing is silently
+        # sweeping a fraction of a function and reporting it as a sweep.
+        for bad in ("0/4", "5/4", "x/4", "4", "1/0", "", "1/2/3"):
+            with self.subTest(bad=bad), self.assertRaises(SystemExit):
+                mutate_and_verify.parse_shard(bad)
+
+    def test_the_shards_partition_the_mutants_exactly(self):
+        # Every mutant in exactly one shard: none dropped, none swept twice.
+        # A shard scheme that loses mutants would report a cleaner sweep than
+        # was actually run, which is the failure this guards.
+        for count in (2, 3, 4, 7):
+            seen: list[int] = []
+            for index in range(count):
+                offset, total = mutate_and_verify.parse_shard(f"{index + 1}/{count}")
+                seen.extend(n for n in range(88) if n % total == offset)
+            self.assertEqual(sorted(seen), list(range(88)),
+                             f"shards of {count} do not partition 88 mutants")
+
+
 if __name__ == "__main__":
     unittest.main()
