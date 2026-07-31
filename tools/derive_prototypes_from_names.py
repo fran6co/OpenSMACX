@@ -166,6 +166,18 @@ AGREEMENT_FLOOR = {
     "return type": (3197, 3213),
 }
 
+# The control's own size, pinned separately, because every entry above is a
+# RATIO and a ratio is blind to its denominator. If rows stop reaching the
+# control - a parse regression, a column rename, a filter that quietly excludes
+# a shape - all five rates can stay green on a shrinking population. Measured
+# 2026-07-31: a 10% row loss holds every rate and moves this from 3213 to 2892.
+CONTROL_POPULATION_FLOOR = 3213
+
+# Likewise the published catalogue. A generator that emits fewer rows for a
+# reason nobody chose is a silent loss of coverage, and the purge gate's own
+# refusals are counted and named, so a legitimate drop is always explainable.
+PUBLISHED_ROWS_FLOOR = 1553
+
 # One copy, in recover_conventions, because two copies of this list drifted.
 CONVENTION_TOKEN = conventions.CONVENTION_TOKEN
 
@@ -915,10 +927,14 @@ def comparable(text: str) -> str:
 class Control:
     """Agreement between what a name states and what IDA recorded."""
 
-    def __init__(self):
+    def __init__(self, population_floor: int = CONTROL_POPULATION_FLOOR):
         self.agree = {key: 0 for key in AGREEMENT_FLOOR}
         self.population = 0
         self.disagreements = {key: [] for key in AGREEMENT_FLOOR}
+        # Injectable so a unit test can exercise the RATIO logic on a synthetic
+        # population without tripping the catalogue-sized pin. The real run
+        # always takes the default; a test that wants the pin sets it.
+        self.population_floor = population_floor
 
     def rate(self, key: str) -> float:
         if not self.population:
@@ -927,6 +943,17 @@ class Control:
 
     def failures(self) -> list[str]:
         out = []
+        # THE POPULATION IS A FLOOR TOO, and leaving it out was a real hole:
+        # every check below is a RATIO, so rows silently vanishing from the
+        # control keeps all five green while the evidence behind them shrinks.
+        # Measured: dropping 10% of the control leaves 3213 -> 2892 with every
+        # rate unchanged and nothing said. A ratio cannot notice its own
+        # denominator falling.
+        if self.population < self.population_floor:
+            out.append(f"control population {self.population}, below the pinned "
+                       f"{self.population_floor}: rows stopped reaching the "
+                       f"control, and every rate below is measured on less "
+                       f"evidence than when it was pinned")
         for key, (agreeing, sample) in AGREEMENT_FLOOR.items():
             floor = agreeing / sample
             if self.rate(key) < floor - 1e-12:
@@ -1270,6 +1297,13 @@ def main(argv=None) -> int:
         return 1
 
     found, refused = derive(rows, undname.undname, purges)
+    if len(found) < PUBLISHED_ROWS_FLOOR:
+        print(f"REFUSED: {len(found)} row(s) derived, below the pinned "
+              f"{PUBLISHED_ROWS_FLOOR}. Every refusal this generator makes is "
+              f"counted and named, so a legitimate drop can always be explained "
+              f"- an unexplained one is coverage lost without a decision.",
+              file=sys.stderr)
+        return 1
     print(f"{len(found)} prototype(s) derived from the name alone")
     named = ", ".join(f"{count} {reason}"
                       for reason, count in sorted(refused.items()) if count)

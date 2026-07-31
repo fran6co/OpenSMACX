@@ -291,17 +291,40 @@ class ControlTests(unittest.TestCase):
         self.assertEqual(0, measured.agree["stack layout"])
 
     def test_failures_names_every_axis_that_fell_below_its_floor(self):
-        measured = prototypes.Control()
+        # population_floor=0 so this exercises the RATIO axes alone; the
+        # population pin has its own tests below.
+        measured = prototypes.Control(population_floor=0)
         measured.population = 100
         measured.agree = {key: 0 for key in prototypes.AGREEMENT_FLOOR}
         self.assertEqual(len(prototypes.AGREEMENT_FLOOR),
                          len(measured.failures()))
 
     def test_failures_is_empty_when_every_axis_is_perfect(self):
-        measured = prototypes.Control()
+        measured = prototypes.Control(population_floor=0)
         measured.population = 100
         measured.agree = {key: 100 for key in prototypes.AGREEMENT_FLOOR}
         self.assertEqual([], measured.failures())
+
+    def test_a_shrinking_population_is_caught_though_every_RATE_holds(self):
+        # The hole this closes: every axis above is a ratio, and a ratio cannot
+        # see its own denominator fall. Rows silently leaving the control keep
+        # all five green on less evidence than was pinned.
+        measured = prototypes.Control(population_floor=3213)
+        measured.population = 2892          # a 10% loss, rates untouched
+        measured.agree = {key: 2892 for key in prototypes.AGREEMENT_FLOOR}
+        self.assertEqual([], [f for f in measured.failures()
+                              if "population" not in f],
+                         "no RATIO axis should complain - that is the point")
+        failures = measured.failures()
+        self.assertEqual(1, len(failures))
+        self.assertIn("control population 2892", failures[0])
+        self.assertIn("3213", failures[0])
+
+    def test_the_population_floor_matches_the_pinned_control_size(self):
+        # The floor and the documented control size are the same number, so a
+        # future re-measurement cannot move one and leave the other behind.
+        self.assertEqual(prototypes.CONTROL_POPULATION_FLOOR,
+                         prototypes.AGREEMENT_FLOOR["convention"][1])
 
     def test_a_parameter_NAME_never_counts_as_a_disagreement(self):
         # `int8* sectionID` and `int8*` are the same type; the name is
