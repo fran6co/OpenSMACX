@@ -37,9 +37,16 @@ against it, never to trust directly.
    `__CxxFrameHandler` at `0x00644FD6` (safe to omit) versus an
    `_except_handler3` frame (not omittable — see the closing Caveat).
 2. Write the leaf test first, in the `tests/leaf/<family>_tests.cpp` that
-   owns the subject: append the `void test_*()`, append one `LEAF_CASE`
-   line at the bottom of that same file, and bump that family's count in
-   `tests/leaf/leaf_case_manifest.h` (the run asserts it). For a
+   owns the subject, and touch **no other file**: append the `void test_*()`,
+   then append `LEAF_CASE(LEAF_APPEND, test_*);` at the bottom of that same
+   file. Pass `LEAF_APPEND` bare — never `LEAF_APPEND + n`. Appended cases run
+   after all 229 baseline cases and tie-break by name, so no number has to be
+   coordinated with anyone, and two recoveries in two families share zero
+   files. The per-family case counts are derived at build time by
+   `tools/generate_leaf_manifest.py` (counting `^LEAF_CASE(` lines) and still
+   asserted at run time, so a case that stops registering makes the binary
+   refuse to run. Only a brand-new family file needs a CMake edit — add it to
+   `OPENSMACX_LEAF_FAMILY_SRCS`; configure fails loudly if you forget. For a
    composed teardown, build the reference image by running the already-recovered
    component chain on a byte-identical twin and require an exact match, as
    `test_scroll_destructor` does.

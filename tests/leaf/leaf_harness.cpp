@@ -50,7 +50,11 @@ Registrar::Registrar(int order, const char *name, CaseFn fn,
 namespace {
 
 // The manifest, materialised twice: once as the list of families that are
-// supposed to exist, once as the count each is supposed to register.
+// supposed to exist, once as the count each is supposed to register.  It is
+// generated at build time by tools/generate_leaf_manifest.py from a glob of
+// tests/leaf/*_tests.cpp - deliberately not from the CMake source list it
+// polices, so that a family dropping out of the build stays in the manifest
+// and this check still fires.
 #define LEAF_FAMILY_COUNT(family, count) {#family, (count), 0},
 struct FamilyRow {
     const char *name;
@@ -58,7 +62,7 @@ struct FamilyRow {
     int seen;
 };
 FamilyRow g_families[] = {
-#include "leaf_case_manifest.h"
+#include "leaf_generated_manifest.h"
     {nullptr, 0, 0}
 };
 #undef LEAF_FAMILY_COUNT
@@ -72,9 +76,9 @@ int family_rows() {
 }
 
 // Sort by baseline position, then by name.  Ties on position cannot happen
-// among the original 229 cases; for cases added later (LEAF_APPEND + n) the
-// name is what makes the order a property of the sources rather than of the
-// link line.
+// among the original 229 cases; for cases added later (LEAF_APPEND) the name
+// is what makes the order a property of the sources rather than of the link
+// line.
 bool precedes(const leaf::Entry &a, const leaf::Entry &b) {
     if (a.order != b.order) {
         return a.order < b.order;
@@ -109,9 +113,23 @@ bool verify_registry() {
         ok = false;
     }
 
-    // Duplicate names would let one case shadow another.  Duplicate baseline
-    // positions would make the run order depend on something other than the
-    // sources.  Both are errors, not warnings.
+    // Duplicate names would let one case shadow another: always an error,
+    // at every position.
+    //
+    // Duplicate BASELINE positions - below LEAF_APPEND - are also an error.
+    // Those 229 numbers are the pre-split main() call list; two cases claiming
+    // one of them means the carve went wrong, and the order would no longer be
+    // recoverable from the sources.
+    //
+    // At or above LEAF_APPEND a duplicate is not an error and must not be one.
+    // precedes() already breaks position ties by name, so a shared position
+    // there still yields one total order fixed by the sources alone.  Refusing
+    // duplicates there rejected exactly the case the tie-break exists for, and
+    // turned LEAF_APPEND into a global number namespace with no coordination
+    // point: two authors in two families both writing the natural
+    // `LEAF_APPEND + 1` merged clean, built clean, and then the suite refused
+    // to run.  Appending is now `LEAF_CASE(LEAF_APPEND, test_x)` with no
+    // number to pick and nothing to coordinate.
     for (int i = 0; i < leaf::g_case_count; ++i) {
         for (int j = i + 1; j < leaf::g_case_count; ++j) {
             if (std::strcmp(leaf::g_cases[i].name, leaf::g_cases[j].name) == 0) {
@@ -121,13 +139,16 @@ bool verify_registry() {
                              leaf::g_cases[j].family);
                 ok = false;
             }
-            if (leaf::g_cases[i].order == leaf::g_cases[j].order) {
+            if (leaf::g_cases[i].order == leaf::g_cases[j].order &&
+                leaf::g_cases[i].order < LEAF_APPEND) {
                 std::fprintf(stderr,
-                             "leaf registry: duplicate position %d (%s in %s, "
-                             "%s in %s)\n",
+                             "leaf registry: duplicate baseline position %d "
+                             "(%s in %s, %s in %s); positions below %d are the "
+                             "pre-split main() call list and are unique\n",
                              leaf::g_cases[i].order, leaf::g_cases[i].name,
                              leaf::g_cases[i].family, leaf::g_cases[j].name,
-                             leaf::g_cases[j].family);
+                             leaf::g_cases[j].family,
+                             static_cast<int>(LEAF_APPEND));
                 ok = false;
             }
         }
@@ -145,7 +166,8 @@ bool verify_registry() {
         if (row < 0) {
             std::fprintf(stderr,
                          "leaf registry: case %s came from family %s, which is "
-                         "not in tests/leaf/leaf_case_manifest.h\n",
+                         "not in the derived manifest; LEAF_FAMILY must match "
+                         "the <family>_tests.cpp file name\n",
                          leaf::g_cases[i].name, leaf::g_cases[i].family);
             ok = false;
             continue;
