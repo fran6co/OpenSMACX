@@ -55,7 +55,7 @@
 // PROVEN-AGAINST-ORIGINAL: 0x00618320  ?UNK10@Caviar@@QAEXHHH@Z
 // PROVEN-AGAINST-ORIGINAL: 0x0062B870  ?set@ButtonGroup@@QAEHHH@Z
 //
-// 65 function(s) below carry NO marker: they have not run
+// 75 function(s) below carry NO marker: they have not run
 // yet, or they ran and reported INCONCLUSIVE-no-effect, which means
 // every seed bailed on a guard and the agreement proves nothing.
 
@@ -136,7 +136,7 @@ void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {
 
 // ?seek_id@StringStruct@@QAEHH@Z  (78 B)
 // recovered in src/stringstruct.cpp:59
-// staged receiver: StringStruct, 0x24 B, zero-filled
+// staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_seek_id_00401560() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00401560U);
@@ -256,7 +256,7 @@ static bool verify_StringStruct_seek_id_00401560() {
 
 // ?current_id@StringStruct@@QAEHXZ  (17 B)
 // recovered in src/stringstruct.cpp:18
-// staged receiver: StringStruct, 0x24 B, zero-filled
+// staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_id_00401640() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x00401640U);
@@ -366,7 +366,7 @@ static bool verify_StringStruct_current_id_00401640() {
 
 // ?next_entry@StringStruct@@QAEHXZ  (47 B)
 // recovered in src/stringstruct.cpp:38
-// staged receiver: StringStruct, 0x24 B, zero-filled
+// staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_next_entry_00402500() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x00402500U);
@@ -476,7 +476,7 @@ static bool verify_StringStruct_next_entry_00402500() {
 
 // ?current_entry@StringStruct@@QAEHXZ  (17 B)
 // recovered in src/stringstruct.cpp:28
-// staged receiver: StringStruct, 0x24 B, zero-filled
+// staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_entry_00402530() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x00402530U);
@@ -746,9 +746,110 @@ static bool verify_load_deswin_sprites_00455e50() {
     return true;
 }
 
+// ?reset@InfoWin@@QAEXXZ  (28 B)
+// recovered in src/infowin.cpp:78
+// staged receiver: InfoWin, 0x1580 B, zero-filled, size bounded
+static bool verify_InfoWin_reset_00459280() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00459280U);
+    std::printf("  running ?reset@InfoWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x1580U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00459280U)) {
+            std::printf("  ?reset@InfoWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00459280U, "FAIL-no-redirect", "?reset@InfoWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00459280U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00459280U)) {
+                verdict(0x00459280U, "FAIL-no-redirect", "?reset@InfoWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x00459280U, GetTickCount() - started_at, "?reset@InfoWin@@QAEXXZ");
+            verdict(0x00459280U, "INCONCLUSIVE-original-faulted", "?reset@InfoWin@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00459280U)) {
+            std::printf("  ?reset@InfoWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00459280U, "FAIL-no-redirect", "?reset@InfoWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00459280U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?reset@InfoWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00459280U, GetTickCount() - started_at, "?reset@InfoWin@@QAEXXZ");
+            verdict(0x00459280U, "FAIL-faulted", "?reset@InfoWin@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?reset@InfoWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?reset@InfoWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00459280U, GetTickCount() - started_at, "?reset@InfoWin@@QAEXXZ");
+    if (!passed) {
+        verdict(0x00459280U, "FAIL", "?reset@InfoWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?reset@InfoWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00459280U, "INCONCLUSIVE-no-effect", "?reset@InfoWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00459280U, "PASS", "?reset@InfoWin@@QAEXXZ");
+    return true;
+}
+
 // ?on_left_click@MapWin@@QAEXHH@Z  (37 B)
 // recovered in src/mapwin.cpp:102
-// staged receiver: MapWin, 0x22480 B, zero-filled
+// staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_on_left_click_0046eba0() {
     typedef void (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x0046EBA0U);
@@ -859,7 +960,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
 
 // ?on_right_click@MapWin@@QAEXHH@Z  (37 B)
 // recovered in src/mapwin.cpp:118
-// staged receiver: MapWin, 0x22480 B, zero-filled
+// staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_on_right_click_0046ebe0() {
     typedef void (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x0046EBE0U);
@@ -970,7 +1071,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
 
 // ?main_caption@MapWin@@QAEXXZ  (16 B)
 // recovered in src/mapwin.cpp:58
-// staged receiver: MapWin, 0x22480 B, zero-filled
+// staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_main_caption_0046fb10() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x0046FB10U);
@@ -1069,9 +1170,110 @@ static bool verify_MapWin_main_caption_0046fb10() {
     return true;
 }
 
+// ?UNK5@NetWin@@QAEXXZ  (28 B)
+// recovered in src/netwin.cpp:122
+// staged receiver: NetWin, 0x7748 B, zero-filled, size bounded
+static bool verify_NetWin_UNK5_00483820() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00483820U);
+    std::printf("  running ?UNK5@NetWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x7748U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00483820U)) {
+            std::printf("  ?UNK5@NetWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00483820U, "FAIL-no-redirect", "?UNK5@NetWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00483820U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00483820U)) {
+                verdict(0x00483820U, "FAIL-no-redirect", "?UNK5@NetWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x00483820U, GetTickCount() - started_at, "?UNK5@NetWin@@QAEXXZ");
+            verdict(0x00483820U, "INCONCLUSIVE-original-faulted", "?UNK5@NetWin@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00483820U)) {
+            std::printf("  ?UNK5@NetWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00483820U, "FAIL-no-redirect", "?UNK5@NetWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00483820U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK5@NetWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00483820U, GetTickCount() - started_at, "?UNK5@NetWin@@QAEXXZ");
+            verdict(0x00483820U, "FAIL-faulted", "?UNK5@NetWin@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK5@NetWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK5@NetWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00483820U, GetTickCount() - started_at, "?UNK5@NetWin@@QAEXXZ");
+    if (!passed) {
+        verdict(0x00483820U, "FAIL", "?UNK5@NetWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK5@NetWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00483820U, "INCONCLUSIVE-no-effect", "?UNK5@NetWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00483820U, "PASS", "?UNK5@NetWin@@QAEXXZ");
+    return true;
+}
+
 // ?blink@PlanWin@@QAEXXZ  (43 B)
 // recovered in src/planwin.cpp:89
-// staged receiver: PlanWin, 0x22A64 B, zero-filled
+// staged receiver: PlanWin, 0x22A64 B, zero-filled, size pinned
 static bool verify_PlanWin_blink_0048bc20() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x0048BC20U);
@@ -1170,9 +1372,663 @@ static bool verify_PlanWin_blink_0048bc20() {
     return true;
 }
 
+// ?reset@StatusWin@@QAEXXZ  (31 B)
+// recovered in src/statuswin.cpp:59
+// staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
+static bool verify_StatusWin_reset_004b8970() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x004B8970U);
+    std::printf("  running ?reset@StatusWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x1900U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004B8970U)) {
+            std::printf("  ?reset@StatusWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x004B8970U, "FAIL-no-redirect", "?reset@StatusWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004B8970U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004B8970U)) {
+                verdict(0x004B8970U, "FAIL-no-redirect", "?reset@StatusWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x004B8970U, GetTickCount() - started_at, "?reset@StatusWin@@QAEXXZ");
+            verdict(0x004B8970U, "INCONCLUSIVE-original-faulted", "?reset@StatusWin@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004B8970U)) {
+            std::printf("  ?reset@StatusWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x004B8970U, "FAIL-no-redirect", "?reset@StatusWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004B8970U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?reset@StatusWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x004B8970U, GetTickCount() - started_at, "?reset@StatusWin@@QAEXXZ");
+            verdict(0x004B8970U, "FAIL-faulted", "?reset@StatusWin@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?reset@StatusWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?reset@StatusWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x004B8970U, GetTickCount() - started_at, "?reset@StatusWin@@QAEXXZ");
+    if (!passed) {
+        verdict(0x004B8970U, "FAIL", "?reset@StatusWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?reset@StatusWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x004B8970U, "INCONCLUSIVE-no-effect", "?reset@StatusWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x004B8970U, "PASS", "?reset@StatusWin@@QAEXXZ");
+    return true;
+}
+
+// ?set_loc@StatusWin@@QAEXHH@Z  (40 B)
+// recovered in src/statuswin.cpp:37
+// staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
+static bool verify_StatusWin_set_loc_004b9f90() {
+    typedef void (__thiscall *Callable)(void *, int, int);
+    Callable target = reinterpret_cast<Callable>(0x004B9F90U);
+    std::printf("  running ?set_loc@StatusWin@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x1900U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004B9F90U)) {
+            std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x004B9F90U, "FAIL-no-redirect", "?set_loc@StatusWin@@QAEXHH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004B9F90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004B9F90U)) {
+                verdict(0x004B9F90U, "FAIL-no-redirect", "?set_loc@StatusWin@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x004B9F90U, GetTickCount() - started_at, "?set_loc@StatusWin@@QAEXHH@Z");
+            verdict(0x004B9F90U, "INCONCLUSIVE-original-faulted", "?set_loc@StatusWin@@QAEXHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004B9F90U)) {
+            std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x004B9F90U, "FAIL-no-redirect", "?set_loc@StatusWin@@QAEXHH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004B9F90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004B9F90U, GetTickCount() - started_at, "?set_loc@StatusWin@@QAEXHH@Z");
+            verdict(0x004B9F90U, "FAIL-faulted", "?set_loc@StatusWin@@QAEXHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x004B9F90U, GetTickCount() - started_at, "?set_loc@StatusWin@@QAEXHH@Z");
+    if (!passed) {
+        verdict(0x004B9F90U, "FAIL", "?set_loc@StatusWin@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x004B9F90U, "INCONCLUSIVE-no-effect", "?set_loc@StatusWin@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x004B9F90U, "PASS", "?set_loc@StatusWin@@QAEXHH@Z");
+    return true;
+}
+
+// ?UNK1@TutWin@@QAEXXZ  (65 B)
+// recovered in src/tutwin.cpp:30
+// staged receiver: TutWin, 0x5430 B, zero-filled, size bounded
+static bool verify_TutWin_UNK1_004ba720() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x004BA720U);
+    std::printf("  running ?UNK1@TutWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x5430U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004BA720U)) {
+            std::printf("  ?UNK1@TutWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x004BA720U, "FAIL-no-redirect", "?UNK1@TutWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004BA720U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004BA720U)) {
+                verdict(0x004BA720U, "FAIL-no-redirect", "?UNK1@TutWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x004BA720U, GetTickCount() - started_at, "?UNK1@TutWin@@QAEXXZ");
+            verdict(0x004BA720U, "INCONCLUSIVE-original-faulted", "?UNK1@TutWin@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004BA720U)) {
+            std::printf("  ?UNK1@TutWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x004BA720U, "FAIL-no-redirect", "?UNK1@TutWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004BA720U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK1@TutWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x004BA720U, GetTickCount() - started_at, "?UNK1@TutWin@@QAEXXZ");
+            verdict(0x004BA720U, "FAIL-faulted", "?UNK1@TutWin@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK1@TutWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK1@TutWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x004BA720U, GetTickCount() - started_at, "?UNK1@TutWin@@QAEXXZ");
+    if (!passed) {
+        verdict(0x004BA720U, "FAIL", "?UNK1@TutWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK1@TutWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x004BA720U, "INCONCLUSIVE-no-effect", "?UNK1@TutWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x004BA720U, "PASS", "?UNK1@TutWin@@QAEXXZ");
+    return true;
+}
+
+// ?UNK3@TutWin@@QAEXH@Z  (16 B)
+// recovered in src/tutwin.cpp:49
+// staged receiver: TutWin, 0x5430 B, zero-filled, size bounded
+static bool verify_TutWin_UNK3_004bddd0() {
+    typedef void (__thiscall *Callable)(void *, int);
+    Callable target = reinterpret_cast<Callable>(0x004BDDD0U);
+    std::printf("  running ?UNK3@TutWin@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x5430U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004BDDD0U)) {
+            std::printf("  ?UNK3@TutWin@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x004BDDD0U, "FAIL-no-redirect", "?UNK3@TutWin@@QAEXH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004BDDD0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004BDDD0U)) {
+                verdict(0x004BDDD0U, "FAIL-no-redirect", "?UNK3@TutWin@@QAEXH@Z");
+                return false;
+            }
+            timing(0x004BDDD0U, GetTickCount() - started_at, "?UNK3@TutWin@@QAEXH@Z");
+            verdict(0x004BDDD0U, "INCONCLUSIVE-original-faulted", "?UNK3@TutWin@@QAEXH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004BDDD0U)) {
+            std::printf("  ?UNK3@TutWin@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x004BDDD0U, "FAIL-no-redirect", "?UNK3@TutWin@@QAEXH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x004BDDD0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK3@TutWin@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004BDDD0U, GetTickCount() - started_at, "?UNK3@TutWin@@QAEXH@Z");
+            verdict(0x004BDDD0U, "FAIL-faulted", "?UNK3@TutWin@@QAEXH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK3@TutWin@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK3@TutWin@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x004BDDD0U, GetTickCount() - started_at, "?UNK3@TutWin@@QAEXH@Z");
+    if (!passed) {
+        verdict(0x004BDDD0U, "FAIL", "?UNK3@TutWin@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK3@TutWin@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x004BDDD0U, "INCONCLUSIVE-no-effect", "?UNK3@TutWin@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x004BDDD0U, "PASS", "?UNK3@TutWin@@QAEXH@Z");
+    return true;
+}
+
+// ?is_disabled@Midi_Device@@QAEHXZ  (18 B)
+// recovered in src/sounddevice.cpp:397
+// staged receiver: Midi_Device, 0x28 B, zero-filled, size bounded
+static bool verify_Midi_Device_is_disabled_004c5920() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x004C5920U);
+    std::printf("  running ?is_disabled@Midi_Device@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x28U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004C5920U)) {
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x004C5920U, "FAIL-no-redirect", "?is_disabled@Midi_Device@@QAEHXZ");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x004C5920U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004C5920U)) {
+                verdict(0x004C5920U, "FAIL-no-redirect", "?is_disabled@Midi_Device@@QAEHXZ");
+                return false;
+            }
+            timing(0x004C5920U, GetTickCount() - started_at, "?is_disabled@Midi_Device@@QAEHXZ");
+            verdict(0x004C5920U, "INCONCLUSIVE-original-faulted", "?is_disabled@Midi_Device@@QAEHXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004C5920U)) {
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x004C5920U, "FAIL-no-redirect", "?is_disabled@Midi_Device@@QAEHXZ");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x004C5920U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x004C5920U, GetTickCount() - started_at, "?is_disabled@Midi_Device@@QAEHXZ");
+            verdict(0x004C5920U, "FAIL-faulted", "?is_disabled@Midi_Device@@QAEHXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x004C5920U, GetTickCount() - started_at, "?is_disabled@Midi_Device@@QAEHXZ");
+    if (!passed) {
+        verdict(0x004C5920U, "FAIL", "?is_disabled@Midi_Device@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x004C5920U, "INCONCLUSIVE-no-effect", "?is_disabled@Midi_Device@@QAEHXZ");
+        return true;
+    }
+    verdict(0x004C5920U, "PASS", "?is_disabled@Midi_Device@@QAEHXZ");
+    return true;
+}
+
+// ?set_codec@Wave_In_Device@@QAEHK@Z  (32 B)
+// recovered in src/delegation_thunks.cpp:188
+// staged receiver: Wave_In_Device, 0x7B60 B, zero-filled, size bounded
+static bool verify_Wave_In_Device_set_codec_004c5a80() {
+    typedef int (__thiscall *Callable)(void *, unsigned int);
+    Callable target = reinterpret_cast<Callable>(0x004C5A80U);
+    std::printf("  running ?set_codec@Wave_In_Device@@QAEHK@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x7B60U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x004C5A80U)) {
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: cannot suspend redirect\n");
+            verdict(0x004C5A80U, "FAIL-no-redirect", "?set_codec@Wave_In_Device@@QAEHK@Z");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x004C5A80U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged, (unsigned int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x004C5A80U)) {
+                verdict(0x004C5A80U, "FAIL-no-redirect", "?set_codec@Wave_In_Device@@QAEHK@Z");
+                return false;
+            }
+            timing(0x004C5A80U, GetTickCount() - started_at, "?set_codec@Wave_In_Device@@QAEHK@Z");
+            verdict(0x004C5A80U, "INCONCLUSIVE-original-faulted", "?set_codec@Wave_In_Device@@QAEHK@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x004C5A80U)) {
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: cannot resume redirect\n");
+            verdict(0x004C5A80U, "FAIL-no-redirect", "?set_codec@Wave_In_Device@@QAEHK@Z");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x004C5A80U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged, (unsigned int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x004C5A80U, GetTickCount() - started_at, "?set_codec@Wave_In_Device@@QAEHK@Z");
+            verdict(0x004C5A80U, "FAIL-faulted", "?set_codec@Wave_In_Device@@QAEHK@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x004C5A80U, GetTickCount() - started_at, "?set_codec@Wave_In_Device@@QAEHK@Z");
+    if (!passed) {
+        verdict(0x004C5A80U, "FAIL", "?set_codec@Wave_In_Device@@QAEHK@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: no seed produced an observable effect\n");
+        verdict(0x004C5A80U, "INCONCLUSIVE-no-effect", "?set_codec@Wave_In_Device@@QAEHK@Z");
+        return true;
+    }
+    verdict(0x004C5A80U, "PASS", "?set_codec@Wave_In_Device@@QAEHK@Z");
+    return true;
+}
+
 // ?edit_lock@Console@@QAEHXZ  (48 B)
 // recovered in src/console.cpp:137
-// staged receiver: Console, 0x247A8 B, zero-filled
+// staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_edit_lock_004e1f40() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x004E1F40U);
@@ -1282,7 +2138,7 @@ static bool verify_Console_edit_lock_004e1f40() {
 
 // ?pid_2_idx@AlphaNet@@QAEHK@Z  (39 B)
 // recovered in src/alphanet.cpp:15
-// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_pid_2_idx_004e25e0() {
     typedef int (__thiscall *Callable)(void *, unsigned int);
     Callable target = reinterpret_cast<Callable>(0x004E25E0U);
@@ -1402,7 +2258,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
 
 // ?pid_2_who@AlphaNet@@QAEHK@Z  (67 B)
 // recovered in src/alphanet.cpp:33
-// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_pid_2_who_004e2610() {
     typedef int (__thiscall *Callable)(void *, unsigned int);
     Callable target = reinterpret_cast<Callable>(0x004E2610U);
@@ -1522,7 +2378,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
 
 // ?who_2_pid@AlphaNet@@QAEHH@Z  (72 B)
 // recovered in src/alphanet.cpp:53
-// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_who_2_pid_004e2660() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x004E2660U);
@@ -1642,7 +2498,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
 
 // ?who_2_idx@AlphaNet@@QAEXH@Z  (44 B)
 // recovered in src/alphanet.cpp:73
-// staged receiver: AlphaNet, 0x14A0 B, zero-filled
+// staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_who_2_idx_004e26b0() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x004E26B0U);
@@ -1753,7 +2609,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
 
 // ?clear_group@Console@@QAEXXZ  (43 B)
 // recovered in src/console.cpp:108
-// staged receiver: Console, 0x247A8 B, zero-filled
+// staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_clear_group_0050f650() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x0050F650U);
@@ -1854,7 +2710,7 @@ static bool verify_Console_clear_group_0050f650() {
 
 // ?focus@Console@@QAEXHHH@Z  (259 B)
 // recovered in src/console.cpp:250
-// staged receiver: Console, 0x247A8 B, zero-filled
+// staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_focus_005108a0() {
     typedef void (__thiscall *Callable)(void *, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x005108A0U);
@@ -1965,7 +2821,7 @@ static bool verify_Console_focus_005108a0() {
 
 // ?update_data@Console@@QAEXH@Z  (42 B)
 // recovered in src/console.cpp:195
-// staged receiver: Console, 0x247A8 B, zero-filled
+// staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_update_data_00514880() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00514880U);
@@ -2164,6 +3020,217 @@ static bool verify_not_my_turn_0052dc70() {
     return true;
 }
 
+// ?receive@NetDaemon@@QAEHXZ  (62 B)
+// recovered in src/netdaemon.cpp:37
+// staged receiver: NetDaemon, 0x2D58 B, zero-filled, size bounded
+static bool verify_NetDaemon_receive_00530320() {
+    typedef int (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x00530320U);
+    std::printf("  running ?receive@NetDaemon@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x2D58U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00530320U)) {
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x00530320U, "FAIL-no-redirect", "?receive@NetDaemon@@QAEHXZ");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00530320U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00530320U)) {
+                verdict(0x00530320U, "FAIL-no-redirect", "?receive@NetDaemon@@QAEHXZ");
+                return false;
+            }
+            timing(0x00530320U, GetTickCount() - started_at, "?receive@NetDaemon@@QAEHXZ");
+            verdict(0x00530320U, "INCONCLUSIVE-original-faulted", "?receive@NetDaemon@@QAEHXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x00530320U)) {
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x00530320U, "FAIL-no-redirect", "?receive@NetDaemon@@QAEHXZ");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00530320U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00530320U, GetTickCount() - started_at, "?receive@NetDaemon@@QAEHXZ");
+            verdict(0x00530320U, "FAIL-faulted", "?receive@NetDaemon@@QAEHXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00530320U, GetTickCount() - started_at, "?receive@NetDaemon@@QAEHXZ");
+    if (!passed) {
+        verdict(0x00530320U, "FAIL", "?receive@NetDaemon@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?receive@NetDaemon@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x00530320U, "INCONCLUSIVE-no-effect", "?receive@NetDaemon@@QAEHXZ");
+        return true;
+    }
+    verdict(0x00530320U, "PASS", "?receive@NetDaemon@@QAEHXZ");
+    return true;
+}
+
+// ?unlock_veh@NetDaemon@@QAEXXZ  (90 B)
+// recovered in src/netdaemon.cpp:213
+// staged receiver: NetDaemon, 0x2D58 B, zero-filled, size bounded
+static bool verify_NetDaemon_unlock_veh_005310f0() {
+    typedef void (__thiscall *Callable)(void *);
+    Callable target = reinterpret_cast<Callable>(0x005310F0U);
+    std::printf("  running ?unlock_veh@NetDaemon@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x2D58U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005310F0U)) {
+            std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005310F0U, "FAIL-no-redirect", "?unlock_veh@NetDaemon@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x005310F0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005310F0U)) {
+                verdict(0x005310F0U, "FAIL-no-redirect", "?unlock_veh@NetDaemon@@QAEXXZ");
+                return false;
+            }
+            timing(0x005310F0U, GetTickCount() - started_at, "?unlock_veh@NetDaemon@@QAEXXZ");
+            verdict(0x005310F0U, "INCONCLUSIVE-original-faulted", "?unlock_veh@NetDaemon@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!resume_redirect_at(0x005310F0U)) {
+            std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005310F0U, "FAIL-no-redirect", "?unlock_veh@NetDaemon@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x005310F0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005310F0U, GetTickCount() - started_at, "?unlock_veh@NetDaemon@@QAEXXZ");
+            verdict(0x005310F0U, "FAIL-faulted", "?unlock_veh@NetDaemon@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x005310F0U, GetTickCount() - started_at, "?unlock_veh@NetDaemon@@QAEXXZ");
+    if (!passed) {
+        verdict(0x005310F0U, "FAIL", "?unlock_veh@NetDaemon@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005310F0U, "INCONCLUSIVE-no-effect", "?unlock_veh@NetDaemon@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005310F0U, "PASS", "?unlock_veh@NetDaemon@@QAEXXZ");
+    return true;
+}
+
 // ?desktop_update@@YAXXZ  (1 B)
 // recovered in src/maininterface.cpp:42
 static bool verify_desktop_update_0058ee50() {
@@ -2247,7 +3314,7 @@ static bool verify_desktop_update_0058ee50() {
 
 // ?fill@GraphicWin@@QAEXH@Z  (246 B)
 // recovered in src/graphicwin.cpp:267
-// staged receiver: GraphicWin, 0xA14 B, zero-filled
+// staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5250() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005D5250U);
@@ -2358,7 +3425,7 @@ static bool verify_GraphicWin_fill_005d5250() {
 
 // ?fill@GraphicWin@@QAEHHHHHH@Z  (39 B)
 // recovered in src/graphicwin.cpp:223
-// staged receiver: GraphicWin, 0xA14 B, zero-filled
+// staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5440() {
     typedef int (__thiscall *Callable)(void *, int, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x005D5440U);
@@ -2478,7 +3545,7 @@ static bool verify_GraphicWin_fill_005d5440() {
 
 // ?redraw@GraphicWin@@QAEXXZ  (244 B)
 // recovered in src/graphicwin.cpp:335
-// staged receiver: GraphicWin, 0xA14 B, zero-filled
+// staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_redraw_005d5a70() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005D5A70U);
@@ -2579,7 +3646,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
 
 // ?set_text_color@Buffer@@QAEXHHHH@Z  (43 B)
 // recovered in src/buffer.cpp:162
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_005dacb0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x005DACB0U);
@@ -2690,7 +3757,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
 
 // ?set_text_color2@Buffer@@QAEXHHHH@Z  (43 B)
 // recovered in src/buffer.cpp:175
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color2_005dace0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x005DACE0U);
@@ -2801,7 +3868,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
 
 // ?set_text_color3@Buffer@@QAEXHHHH@Z  (43 B)
 // recovered in src/buffer.cpp:188
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color3_005dad10() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x005DAD10U);
@@ -2912,7 +3979,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
 
 // ?set_text_color_hyper@Buffer@@QAEXHHHH@Z  (43 B)
 // recovered in src/buffer.cpp:201
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_hyper_005dad40() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x005DAD40U);
@@ -3023,7 +4090,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
 
 // ?text_height@Buffer@@QAEHXZ  (37 B)
 // recovered in src/buffer.cpp:750
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_height_005dca80() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005DCA80U);
@@ -3133,7 +4200,7 @@ static bool verify_Buffer_text_height_005dca80() {
 
 // ?text_line_height@Buffer@@QAEHXZ  (43 B)
 // recovered in src/buffer.cpp:368
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_line_height_005dcab0() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005DCAB0U);
@@ -3243,7 +4310,7 @@ static bool verify_Buffer_text_line_height_005dcab0() {
 
 // ?clear_links@Buffer@@QAEXXZ  (68 B)
 // recovered in src/buffer.cpp:951
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_clear_links_005def90() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005DEF90U);
@@ -3344,7 +4411,7 @@ static bool verify_Buffer_clear_links_005def90() {
 
 // ?get_data@Buffer@@QAEHXZ  (119 B)
 // recovered in src/buffer.cpp:285
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_data_005e3373() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005E3373U);
@@ -3454,7 +4521,7 @@ static bool verify_Buffer_get_data_005e3373() {
 
 // ?free_data@Buffer@@QAEXH@Z  (88 B)
 // recovered in src/buffer.cpp:330
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_free_data_005e34a3() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005E34A3U);
@@ -3565,7 +4632,7 @@ static bool verify_Buffer_free_data_005e34a3() {
 
 // ?get_hdc@Buffer@@QAEHXZ  (89 B)
 // recovered in src/buffer.cpp:633
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_hdc_005e3503() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005E3503U);
@@ -3675,7 +4742,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
 
 // ?release_hdc@Buffer@@QAEXH@Z  (96 B)
 // recovered in src/buffer.cpp:667
-// staged receiver: Buffer, 0x588 B, zero-filled
+// staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_release_hdc_005e3563() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005E3563U);
@@ -3786,7 +4853,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
 
 // ?set_cursor@Win@@QAEHH@Z  (62 B)
 // recovered in src/win.cpp:549
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_cursor_005ec7c0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EC7C0U);
@@ -3906,7 +4973,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
 
 // ?UNK3@Win@@QAEHH@Z  (54 B)
 // recovered in src/win.cpp:897
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK3_005ece80() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005ECE80U);
@@ -4026,7 +5093,7 @@ static bool verify_Win_UNK3_005ece80() {
 
 // ?move@Win@@QAEHHH@Z  (167 B)
 // recovered in src/win.cpp:165
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_move_005ed7d0() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005ED7D0U);
@@ -4146,7 +5213,7 @@ static bool verify_Win_move_005ed7d0() {
 
 // ?set_vert_pos@Win@@QAEXH@Z  (23 B)
 // recovered in src/win.cpp:813
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_pos_005ee030() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EE030U);
@@ -4257,7 +5324,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
 
 // ?get_vert_pos@Win@@QAEHXZ  (20 B)
 // recovered in src/win.cpp:246
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_get_vert_pos_005ee050() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005EE050U);
@@ -4367,7 +5434,7 @@ static bool verify_Win_get_vert_pos_005ee050() {
 
 // ?set_horz_pos@Win@@QAEXH@Z  (23 B)
 // recovered in src/win.cpp:826
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_pos_005ee070() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EE070U);
@@ -4478,7 +5545,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
 
 // ?get_horz_pos@Win@@QAEHXZ  (20 B)
 // recovered in src/win.cpp:263
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_get_horz_pos_005ee090() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005EE090U);
@@ -4588,7 +5655,7 @@ static bool verify_Win_get_horz_pos_005ee090() {
 
 // ?set_vert_range@Win@@QAEXHH@Z  (28 B)
 // recovered in src/win.cpp:839
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_range_005ee0b0() {
     typedef void (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005EE0B0U);
@@ -4699,7 +5766,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
 
 // ?set_horz_range@Win@@QAEXHH@Z  (28 B)
 // recovered in src/win.cpp:852
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_range_005ee0d0() {
     typedef void (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005EE0D0U);
@@ -4810,7 +5877,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
 
 // ?set_vert_paging@Win@@QAEXH@Z  (23 B)
 // recovered in src/win.cpp:280
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_paging_005ee0f0() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EE0F0U);
@@ -4921,7 +5988,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
 
 // ?set_horz_paging@Win@@QAEXH@Z  (23 B)
 // recovered in src/win.cpp:291
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_paging_005ee110() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EE110U);
@@ -5032,7 +6099,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
 
 // ?UNK8@Win@@QAEXH@Z  (39 B)
 // recovered in src/win.cpp:678
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK8_005ee130() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EE130U);
@@ -5143,7 +6210,7 @@ static bool verify_Win_UNK8_005ee130() {
 
 // ?UNK9@Win@@QAEXH@Z  (39 B)
 // recovered in src/win.cpp:694
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK9_005ee160() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005EE160U);
@@ -5254,7 +6321,7 @@ static bool verify_Win_UNK9_005ee160() {
 
 // ?sync_palette@Win@@QAEXXZ  (52 B)
 // recovered in src/win.cpp:787
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_sync_palette_005f2c60() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005F2C60U);
@@ -5355,7 +6422,7 @@ static bool verify_Win_sync_palette_005f2c60() {
 
 // ?is_dialog_focus@Win@@QAEHXZ  (63 B)
 // recovered in src/win.cpp:421
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_is_dialog_focus_005f2ca0() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005F2CA0U);
@@ -5465,7 +6532,7 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
 
 // ?is_visible@Win@@QAEHXZ  (38 B)
 // recovered in src/win.cpp:175
-// staged receiver: Win, 0x444 B, zero-filled
+// staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_is_visible_005f7e90() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005F7E90U);
@@ -5575,7 +6642,7 @@ static bool verify_Win_is_visible_005f7e90() {
 
 // ?hide_item@PullDown@@QAEHH@Z  (111 B)
 // recovered in src/pulldown.cpp:40
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_hide_item_005f8cb0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F8CB0U);
@@ -5695,7 +6762,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
 
 // ?show_item@PullDown@@QAEHH@Z  (111 B)
 // recovered in src/pulldown.cpp:59
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_show_item_005f8d20() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F8D20U);
@@ -5815,7 +6882,7 @@ static bool verify_PullDown_show_item_005f8d20() {
 
 // ?disable_item@PullDown@@QAEHH@Z  (95 B)
 // recovered in src/pulldown.cpp:78
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_disable_item_005f8d90() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F8D90U);
@@ -5935,7 +7002,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
 
 // ?enable_item@PullDown@@QAEHH@Z  (95 B)
 // recovered in src/pulldown.cpp:93
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_enable_item_005f8df0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F8DF0U);
@@ -6055,7 +7122,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
 
 // ?check_item@PullDown@@QAEHH@Z  (95 B)
 // recovered in src/pulldown.cpp:108
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_check_item_005f9040() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F9040U);
@@ -6175,7 +7242,7 @@ static bool verify_PullDown_check_item_005f9040() {
 
 // ?uncheck_item@PullDown@@QAEHH@Z  (95 B)
 // recovered in src/pulldown.cpp:123
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_uncheck_item_005f90a0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F90A0U);
@@ -6295,7 +7362,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
 
 // ?id_to_index@PullDown@@QAEHH@Z  (40 B)
 // recovered in src/pulldown.cpp:311
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_id_to_index_005f9d00() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005F9D00U);
@@ -6415,7 +7482,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
 
 // ?get_selected@PullDown@@QAEHXZ  (28 B)
 // recovered in src/pulldown.cpp:138
-// staged receiver: PullDown, 0xF40 B, zero-filled
+// staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_get_selected_005f9f40() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005F9F40U);
@@ -6525,7 +7592,7 @@ static bool verify_PullDown_get_selected_005f9f40() {
 
 // ?UNK3@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:129
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK3_005fb1d0() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB1D0U);
@@ -6645,7 +7712,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
 
 // ?UNK6@Menu@@QAEHH@Z  (96 B)
 // recovered in src/menu.cpp:395
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK6_005fb2a0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005FB2A0U);
@@ -6765,7 +7832,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
 
 // ?hide_menu_item@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:166
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_hide_menu_item_005fb300() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB300U);
@@ -6885,7 +7952,7 @@ static bool verify_Menu_hide_menu_item_005fb300() {
 
 // ?UNK7@Menu@@QAEHH@Z  (96 B)
 // recovered in src/menu.cpp:435
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK7_005fb360() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005FB360U);
@@ -7005,7 +8072,7 @@ static bool verify_Menu_UNK7_005fb360() {
 
 // ?show_menu_item@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:203
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_show_menu_item_005fb3c0() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB3C0U);
@@ -7125,7 +8192,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
 
 // ?UNK8@Menu@@QAEHH@Z  (96 B)
 // recovered in src/menu.cpp:475
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK8_005fb420() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005FB420U);
@@ -7245,7 +8312,7 @@ static bool verify_Menu_UNK8_005fb420() {
 
 // ?disable_menu_item@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:240
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_disable_menu_item_005fb480() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB480U);
@@ -7365,7 +8432,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
 
 // ?UNK9@Menu@@QAEHH@Z  (96 B)
 // recovered in src/menu.cpp:515
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK9_005fb4e0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005FB4E0U);
@@ -7485,7 +8552,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
 
 // ?enable_menu_item@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:277
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_enable_menu_item_005fb540() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB540U);
@@ -7605,7 +8672,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
 
 // ?check_menu_item@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:314
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_check_menu_item_005fb760() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB760U);
@@ -7725,7 +8792,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
 
 // ?uncheck_menu_item@Menu@@QAEHHH@Z  (84 B)
 // recovered in src/menu.cpp:351
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_uncheck_menu_item_005fb7c0() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x005FB7C0U);
@@ -7845,7 +8912,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
 
 // ?id_to_index@Menu@@QAEHH@Z  (40 B)
 // recovered in src/menu.cpp:33
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_id_to_index_005fb990() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005FB990U);
@@ -7965,7 +9032,7 @@ static bool verify_Menu_id_to_index_005fb990() {
 
 // ?requested_height@Menu@@QAEHXZ  (20 B)
 // recovered in src/menu.cpp:92
-// staged receiver: Menu, 0xB64 B, zero-filled
+// staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_requested_height_005fc6a0() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x005FC6A0U);
@@ -8156,7 +9223,7 @@ static bool verify_do_sound_005fd2b0() {
 
 // ?get_pos@Palette@@QAEHH@Z  (37 B)
 // recovered in src/palette.cpp:85
-// staged receiver: Palette, 0x454 B, zero-filled
+// staged receiver: Palette, 0x454 B, zero-filled, size pinned
 static bool verify_Palette_get_pos_005fed10() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x005FED10U);
@@ -8276,7 +9343,7 @@ static bool verify_Palette_get_pos_005fed10() {
 
 // ?set_width@BasePop@@QAEXH@Z  (87 B)
 // recovered in src/basepop.cpp:387
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_width_00601b20() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00601B20U);
@@ -8387,7 +9454,7 @@ static bool verify_BasePop_set_width_00601b20() {
 
 // ?set_loc@BasePop@@QAEXHH@Z  (37 B)
 // recovered in src/basepop.cpp:25
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_loc_00601b80() {
     typedef void (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x00601B80U);
@@ -8498,7 +9565,7 @@ static bool verify_BasePop_set_loc_00601b80() {
 
 // ?write_check@BasePop@@QAEXJ@Z  (19 B)
 // recovered in src/basepop.cpp:364
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_write_check_00601bb0() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00601BB0U);
@@ -8609,7 +9676,7 @@ static bool verify_BasePop_write_check_00601bb0() {
 
 // ?read_check@BasePop@@QAEXXZ  (17 B)
 // recovered in src/basepop.cpp:581
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_read_check_00601bd0() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x00601BD0U);
@@ -8710,7 +9777,7 @@ static bool verify_BasePop_read_check_00601bd0() {
 
 // ?on_key_click@BasePop@@QAEHHH@Z  (17 B)
 // recovered in src/basepop.cpp:447
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_on_key_click_00604490() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x00604490U);
@@ -8830,7 +9897,7 @@ static bool verify_BasePop_on_key_click_00604490() {
 
 // ?on_key_up@BasePop@@QAEHH@Z  (17 B)
 // recovered in src/basepop.cpp:464
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_on_key_up_006044b0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x006044B0U);
@@ -8950,7 +10017,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
 
 // ?set_string_color@BasePop@@QAEXHHHH@Z  (43 B)
 // recovered in src/basepop.cpp:215
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color_00604730() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00604730U);
@@ -9061,7 +10128,7 @@ static bool verify_BasePop_set_string_color_00604730() {
 
 // ?set_string_color2@BasePop@@QAEXHHHH@Z  (43 B)
 // recovered in src/basepop.cpp:232
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color2_00604760() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00604760U);
@@ -9172,7 +10239,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
 
 // ?set_string_color3@BasePop@@QAEXHHHH@Z  (43 B)
 // recovered in src/basepop.cpp:249
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color3_00604790() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00604790U);
@@ -9283,7 +10350,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
 
 // ?set_string_color_hyper@BasePop@@QAEXHHHH@Z  (43 B)
 // recovered in src/basepop.cpp:266
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color_hyper_006047c0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x006047C0U);
@@ -9394,7 +10461,7 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
 
 // ?UNK3@BasePop@@QAEXH@Z  (27 B)
 // recovered in src/basepop.cpp:494
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_UNK3_00605180() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605180U);
@@ -9505,7 +10572,7 @@ static bool verify_BasePop_UNK3_00605180() {
 
 // ?UNK4@BasePop@@QAEXH@Z  (27 B)
 // recovered in src/basepop.cpp:515
-// staged receiver: BasePop, 0x3230 B, zero-filled
+// staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_UNK4_006051a0() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x006051A0U);
@@ -9616,7 +10683,7 @@ static bool verify_BasePop_UNK4_006051a0() {
 
 // ?set_range@Scroll@@QAEXHH@Z  (93 B)
 // recovered in src/scroll.cpp:316
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_range_006059b0() {
     typedef void (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x006059B0U);
@@ -9727,7 +10794,7 @@ static bool verify_Scroll_set_range_006059b0() {
 
 // ?set_button_color@Scroll@@QAEXH@Z  (61 B)
 // recovered in src/scroll.cpp:338
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_button_color_00605a10() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605A10U);
@@ -9838,7 +10905,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
 
 // ?set_bevel_thickness@Scroll@@QAEXH@Z  (61 B)
 // recovered in src/scroll.cpp:354
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_thickness_00605a50() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605A50U);
@@ -9949,7 +11016,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
 
 // ?set_bevel_upper@Scroll@@QAEXH@Z  (61 B)
 // recovered in src/scroll.cpp:370
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_upper_00605a90() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605A90U);
@@ -10060,7 +11127,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
 
 // ?set_bevel_lower@Scroll@@QAEXH@Z  (61 B)
 // recovered in src/scroll.cpp:386
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_lower_00605ad0() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605AD0U);
@@ -10171,7 +11238,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
 
 // ?set_border_color@Scroll@@QAEXH@Z  (100 B)
 // recovered in src/scroll.cpp:431
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_border_color_00605b10() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605B10U);
@@ -10282,7 +11349,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
 
 // ?set_bar_thickness@Scroll@@QAEXH@Z  (96 B)
 // recovered in src/scroll.cpp:402
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bar_thickness_00605b80() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605B80U);
@@ -10393,7 +11460,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
 
 // ?set_pos@Scroll@@QAEXH@Z  (106 B)
 // recovered in src/scroll.cpp:512
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_pos_00605d20() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00605D20U);
@@ -10504,7 +11571,7 @@ static bool verify_Scroll_set_pos_00605d20() {
 
 // ?set_thumb_rect@Scroll@@QAEXXZ  (88 B)
 // recovered in src/scroll.cpp:653
-// staged receiver: Scroll, 0x214C B, zero-filled
+// staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_thumb_rect_00606ea0() {
     typedef void (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x00606EA0U);
@@ -10605,7 +11672,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
 
 // ?set_text_color@BaseButton@@QAEXHHHH@Z  (61 B)
 // recovered in src/basebutton.cpp:315
-// staged receiver: BaseButton, 0xAB8 B, zero-filled
+// staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color_00607360() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00607360U);
@@ -10716,7 +11783,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
 
 // ?set_text_color2@BaseButton@@QAEXHHHH@Z  (61 B)
 // recovered in src/basebutton.cpp:335
-// staged receiver: BaseButton, 0xAB8 B, zero-filled
+// staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color2_006073a0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x006073A0U);
@@ -10827,7 +11894,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
 
 // ?set_text_color3@BaseButton@@QAEXHHHH@Z  (61 B)
 // recovered in src/basebutton.cpp:347
-// staged receiver: BaseButton, 0xAB8 B, zero-filled
+// staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color3_006073e0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x006073E0U);
@@ -10938,7 +12005,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
 
 // ?set@BaseButton@@QAEXH@Z  (61 B)
 // recovered in src/basebutton.cpp:395
-// staged receiver: BaseButton, 0xAB8 B, zero-filled
+// staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_00607c80() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00607C80U);
@@ -11049,7 +12116,7 @@ static bool verify_BaseButton_set_00607c80() {
 
 // ?set_selected_id@Dialog@@QAEXH@Z  (115 B)
 // recovered in src/dialog.cpp:108
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_selected_id_006099d0() {
     typedef void (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x006099D0U);
@@ -11160,7 +12227,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
 
 // ?get_selected_id@Dialog@@QAEHXZ  (150 B)
 // recovered in src/dialog.cpp:118
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_get_selected_id_00609a50() {
     typedef int (__thiscall *Callable)(void *);
     Callable target = reinterpret_cast<Callable>(0x00609A50U);
@@ -11270,7 +12337,7 @@ static bool verify_Dialog_get_selected_id_00609a50() {
 
 // ?id_to_pos@Dialog@@QAEHH@Z  (91 B)
 // recovered in src/dialog.cpp:81
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_id_to_pos_00609af0() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00609AF0U);
@@ -11390,7 +12457,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
 
 // ?pos_to_id@Dialog@@QAEHH@Z  (154 B)
 // recovered in src/dialog.cpp:153
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_pos_to_id_00609b50() {
     typedef int (__thiscall *Callable)(void *, int);
     Callable target = reinterpret_cast<Callable>(0x00609B50U);
@@ -11510,7 +12577,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
 
 // ?set_dialog_text_color@Dialog@@QAEXHHHH@Z  (40 B)
 // recovered in src/dialog.cpp:42
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color_00609c90() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00609C90U);
@@ -11621,7 +12688,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
 
 // ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z  (43 B)
 // recovered in src/dialog.cpp:55
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00609CC0U);
@@ -11732,7 +12799,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
 
 // ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z  (43 B)
 // recovered in src/dialog.cpp:68
-// staged receiver: Dialog, 0xF4 B, zero-filled
+// staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00609CF0U);
@@ -11843,7 +12910,7 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
 
 // ?UNK10@Caviar@@QAEXHHH@Z  (24 B)
 // recovered in src/caviar.cpp:248
-// staged receiver: Caviar, 0x13D0 B, zero-filled
+// staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
 static bool verify_Caviar_UNK10_00618320() {
     typedef void (__thiscall *Callable)(void *, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00618320U);
@@ -11954,7 +13021,7 @@ static bool verify_Caviar_UNK10_00618320() {
 
 // ?UNK11@Caviar@@QAEXHHH@Z  (42 B)
 // recovered in src/caviar.cpp:301
-// staged receiver: Caviar, 0x13D0 B, zero-filled
+// staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
 static bool verify_Caviar_UNK11_00618340() {
     typedef void (__thiscall *Callable)(void *, int, int, int);
     Callable target = reinterpret_cast<Callable>(0x00618340U);
@@ -12065,7 +13132,7 @@ static bool verify_Caviar_UNK11_00618340() {
 
 // ?set@ButtonGroup@@QAEHHH@Z  (47 B)
 // recovered in src/buttongroup.cpp:110
-// staged receiver: ButtonGroup, 0x94 B, zero-filled
+// staged receiver: ButtonGroup, 0x94 B, zero-filled, size pinned
 static bool verify_ButtonGroup_set_0062b870() {
     typedef int (__thiscall *Callable)(void *, int, int);
     Callable target = reinterpret_cast<Callable>(0x0062B870U);
@@ -12192,10 +13259,18 @@ bool run_generated_signature_oracles() {
     passed &= verify_StringStruct_current_entry_00402530();
     passed &= verify_passover_callback_004456a0();
     passed &= verify_load_deswin_sprites_00455e50();
+    passed &= verify_InfoWin_reset_00459280();
     passed &= verify_MapWin_on_left_click_0046eba0();
     passed &= verify_MapWin_on_right_click_0046ebe0();
     passed &= verify_MapWin_main_caption_0046fb10();
+    passed &= verify_NetWin_UNK5_00483820();
     passed &= verify_PlanWin_blink_0048bc20();
+    passed &= verify_StatusWin_reset_004b8970();
+    passed &= verify_StatusWin_set_loc_004b9f90();
+    passed &= verify_TutWin_UNK1_004ba720();
+    passed &= verify_TutWin_UNK3_004bddd0();
+    passed &= verify_Midi_Device_is_disabled_004c5920();
+    passed &= verify_Wave_In_Device_set_codec_004c5a80();
     passed &= verify_Console_edit_lock_004e1f40();
     passed &= verify_AlphaNet_pid_2_idx_004e25e0();
     passed &= verify_AlphaNet_pid_2_who_004e2610();
@@ -12205,6 +13280,8 @@ bool run_generated_signature_oracles() {
     passed &= verify_Console_focus_005108a0();
     passed &= verify_Console_update_data_00514880();
     passed &= verify_not_my_turn_0052dc70();
+    passed &= verify_NetDaemon_receive_00530320();
+    passed &= verify_NetDaemon_unlock_veh_005310f0();
     passed &= verify_desktop_update_0058ee50();
     passed &= verify_GraphicWin_fill_005d5250();
     passed &= verify_GraphicWin_fill_005d5440();
@@ -12294,6 +13371,6 @@ bool run_generated_signature_oracles() {
     passed &= verify_Caviar_UNK10_00618320();
     passed &= verify_Caviar_UNK11_00618340();
     passed &= verify_ButtonGroup_set_0062b870();
-    std::printf("generated signature oracles: %d function(s)\n", 108);
+    std::printf("generated signature oracles: %d function(s)\n", 118);
     return passed;
 }

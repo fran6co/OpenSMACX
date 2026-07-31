@@ -308,8 +308,9 @@ def scalar_parameters(params: str) -> list | None:
     return types
 
 
-def member_candidate(row: dict, sizes: dict) -> dict | None:
-    """A __thiscall member with integer arguments and a pinned class size."""
+def member_candidate(row: dict, sizes: dict, bounds: dict | None = None) -> dict | None:
+    """A __thiscall member with integer arguments and a stageable class size."""
+    bounds = bounds or {}
     name = row["name"]
     named = MEMBER_NAME.match(name)
     if not named:
@@ -318,7 +319,7 @@ def member_candidate(row: dict, sizes: dict) -> dict | None:
     if method in LIFECYCLE_METHODS:
         return None  # allocates or releases; the effect escapes the snapshot
     if class_name not in sizes:
-        return None  # size never asserted against the original
+        return None  # neither pinned nor bounded; nothing to stage into
     if class_name in UNSAFE_CLASSES:
         return None  # owns an OS handle, or another thread writes it
     prototype = (row.get("prototype") or "").strip()
@@ -342,6 +343,13 @@ def member_candidate(row: dict, sizes: dict) -> dict | None:
         "args": arg_types,
         "class": class_name,
         "object_size": sizes[class_name],
+        # PINNED means a static_assert checked the recovered class against the
+        # original. BOUNDED means only that the object cannot be larger than
+        # this, because the next constructed global sits there. The two are
+        # never merged: a bounded oracle stages a receiver that is big enough
+        # and is NOT evidence about the class's layout, and a reader who
+        # cannot tell them apart will eventually quote one as the other.
+        "size_source": bounds.get(class_name, "pinned"),
     }
 
 
@@ -383,12 +391,14 @@ def free_candidate(row: dict) -> dict | None:
 
 
 def candidates(functions_path: Path, proven_path: Path,
-               redirected: set, sizes: dict | None = None) -> list:
+               redirected: set, sizes: dict | None = None,
+               bounds: dict | None = None) -> list:
     # proven_path is accepted and deliberately unread for SELECTION - see the
     # note below. It is read separately, by earned_markers(), to decide which
     # rows may carry a marker.
     del proven_path
     sizes = {} if sizes is None else sizes
+    bounds = {} if bounds is None else bounds
     found = []
     with functions_path.open(newline="") as handle:
         for row in csv.DictReader(handle):
@@ -408,7 +418,7 @@ def candidates(functions_path: Path, proven_path: Path,
                 continue
             if address in UNSAFE_AT_ORACLE_TIME:
                 continue
-            shape = free_candidate(row) or member_candidate(row, sizes)
+            shape = free_candidate(row) or member_candidate(row, sizes, bounds)
             if shape is None:
                 continue
             size = int(row["size"])
@@ -554,7 +564,8 @@ def emit(rows: list, earned: set | None = None) -> str:
         w(f"// recovered in {row['source']}")
         if staged:
             w(f"// staged receiver: {row['class']}, "
-              f"0x{row['object_size']:X} B, zero-filled")
+              f"0x{row['object_size']:X} B, zero-filled, "
+              f"size {row.get('size_source', 'pinned')}")
         w(f"static bool {fn}() {{")
         w(f"    typedef {ret} ({conv} *Callable)({', '.join(params)});")
         w(f"    Callable target = reinterpret_cast<Callable>({addr}U);")
@@ -785,8 +796,20 @@ def main(argv=None) -> int:
     options = parser.parse_args(argv)
 
     sizes = pinned_class_sizes(options.headers)
+    # Classes with no pinned sizeof but a known UPPER bound. Staging only needs
+    # a buffer the method cannot run off the end of, and the receiver is a
+    # fresh static array rather than the real global, so over-allocating is
+    # harmless while under-allocating corrupts. Read from a committed
+    # catalogue because deriving it needs the uncommitted executable and
+    # --check runs where there is none.
+    import derive_class_size_bounds
+    bounds = derive_class_size_bounds.load()
+    bounded = {name: size for name, size in bounds.items() if name not in sizes}
+    sizes = dict(sizes)
+    sizes.update(bounded)
     rows = candidates(options.functions, options.proven,
-                      redirected_addresses(options.dllmain), sizes)
+                      redirected_addresses(options.dllmain), sizes,
+                      {name: "bounded" for name in bounded})
     earned = earned_markers(options.proven, options.output, options.verdicts)
     if options.list:
         for row in rows:
