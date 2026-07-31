@@ -140,6 +140,31 @@ exists. The other **81.1%** has none.
 Do not publish a single-number calendar. Publish the frontier estimate and an
 explicit unknown for the rest.
 
+## A verification route whose cost does not track size
+
+Everything above prices *recovery*. Verification is priced separately, and both
+existing routes scale with the body: the differential oracles by mutant count,
+the SMT prover by decidability. **Byte matching would not** — a body that
+recompiles to the original instruction sequence costs O(1) to believe,
+whatever its size, calls, loops, COM or SEH.
+
+That was tested with the compiler SMACX shipped with, VC6 RTM 12.00.8168, under
+a pre-registered rule. Five `source_complete` struct-free leaves scored **0/5**
+on the pre-registered flags (`/O2` omits the frame pointer the shipped image
+keeps) and **3/5** once `/Oy-` was added — three exact mnemonic-and-length
+matches across three calling conventions, including the original's strength
+reduction of `× 10000` and its magic-number `/ 10000`. One compile is 0.234 s.
+
+The two misses were both the recovered *source*, not the compiler, and one of
+them is a bug the route found: `?bitmask@@YAXHPAHPAH@Z` divides signed in the
+original and is recovered as `uint32_t`, a difference invisible to any oracle
+over non-negative inputs. Full result, controls and the pre-registration:
+[BYTE_MATCH_ROUTE.md](BYTE_MATCH_ROUTE.md).
+
+**The cost that matters is not the tooling.** It is that a body must be written
+to *match* rather than to *behave*, and all 2,557 already-`source_complete`
+functions were written to behave.
+
 ## Cancelled on this evidence
 
 - **`tools/integrate_batch.py`.** One full gate cycle is 423 s = 0.118
