@@ -3578,6 +3578,875 @@ void test_energy_yield() {
 
 #undef YCHECK
 
+/*
+ * A self-contained world for base_support.
+ *
+ * Everything the body and its five callees - crop_yield, mine_yield,
+ * energy_yield, has_abil, whose_territory - reach is a pointer global, so
+ * ScopedSeam gives the world local storage and no fixed address is touched.
+ *
+ * Four things about the fixture are load-bearing:
+ *
+ *  - `Bases` is seamed to &bases[1] and `BaseCurrent` to the same entry, so
+ *    that has_fac_built(FAC_BROOD_PIT, *BaseIDCurrentSelected) and the yield
+ *    functions all see one base and bases[0] absorbs a -1 index.
+ *  - The two convoy accumulators are 256 entries, not 4. The body indexes them
+ *    with an unchecked `order_auto_type`, and one of its arms - a supply convoy
+ *    whose auto type is above RSC_PSI - is only reachable with an index past
+ *    the end of the real four-entry arrays.
+ *  - Weapon 0 is unarmed, weapon 1 conventional and weapon 2 psi, because three
+ *    separate decisions turn on the SIGN of the offense rating and a fourth on
+ *    it being non-zero.
+ *  - The harvest tile (4, 4) is deliberately not the base tile (2, 2): a convoy
+ *    standing on a base tile takes the other branch.
+ */
+const int SFACTION = 1;
+const int SUP_PROTO_COUNT = 96;
+
+const int SUP_WPN_NONE = 0;   // offense 0
+const int SUP_WPN_GUN = 1;    // offense 4
+const int SUP_WPN_PSI = 2;    // offense -1
+const int SUP_WPN_WEAK = 3;   // offense 1, the boundary of "offense > 0"
+
+const int SUP_CH_LAND = 0;
+const int SUP_CH_SEA = 1;
+const int SUP_CH_AIR = 2;
+
+struct SupportWorld {
+    Map tiles[64];
+    Base bases[6];
+    PlayerData players_data[9];
+    Player players[9];
+    Veh vehs[16];
+    VehPrototype protos[SUP_PROTO_COUNT];
+    RulesWeapon weapons[8];
+    RulesChassis chassis[4];
+    RulesResourceinfo resource_info[MaxResourceInfoNum];
+    RulesBasic rules;
+    BaseSecretProject projects;
+    RulesTechnology technology[MaxTechnologyNum];
+    uint8_t tech_achieved[MaxTechnologyNum];
+    uint32_t convoy_to[256];
+    uint32_t convoy_from[256];
+    uint32_t pacifism_count;
+    uint32_t maint_count;
+    uint32_t forces_supported;
+    uint32_t maint_cost;
+    uint32_t upkeep_stage;
+    Map *tiles_ptr;
+    Base *base_current;
+    int base_id_selected;
+    int veh_count;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t map_rand_seed;
+    uint32_t game_rules;
+    uint32_t game_state;
+    BOOL expansion;
+    int dust_cloud;
+    int restricted;
+    int base_square_energy;
+    int governor;
+    int energy_event;
+    int energy_event_selector;
+};
+
+SupportWorld g_support_world;
+
+const int STECH_THREE_NUTRIENTS = 1;
+const int STECH_THREE_MINERALS = 2;
+const int STECH_THREE_ENERGY = 3;
+const int STECH_MINING_PLATFORM = 4;
+
+Map &stile(int x, int y) { return g_support_world.tiles[(x >> 1) + y * 8]; }
+
+void support_give_fac(Base &base, uint32_t facility) {
+    int offset;
+    int mask;
+    bitmask(facility, &offset, &mask);
+    base.facilities_built[offset] |= (uint8_t)mask;
+}
+
+void support_reset() {
+    std::memset(&g_support_world, 0, sizeof(g_support_world));
+    std::memset(&g_support_world.projects, 0xFF, sizeof(g_support_world.projects));
+    g_support_world.tiles_ptr = g_support_world.tiles;
+    g_support_world.base_current = &g_support_world.bases[1];  // == Bases[0]
+    g_support_world.base_id_selected = 0;
+    g_support_world.longitude = 8;
+    g_support_world.lon_bounds = 16;
+    g_support_world.lat_bounds = 8;
+    g_support_world.is_flat = 1;
+    g_support_world.map_rand_seed = 0;
+    g_support_world.governor = -1;
+    for (int k = 0; k < 64; k++) {
+        g_support_world.tiles[k].climate = 0x60;  // alt 3, land
+        g_support_world.tiles[k].territory = -1;  // unclaimed
+    }
+    for (int i = 0; i < MaxResourceInfoNum; i++) {
+        g_support_world.resource_info[i].nutrients = 3 * i + 1;
+        g_support_world.resource_info[i].minerals = 3 * i + 2;
+        g_support_world.resource_info[i].energy = 3 * i + 3;
+    }
+    g_support_world.rules.tech_three_nutrients_sqr = STECH_THREE_NUTRIENTS;
+    g_support_world.rules.tech_three_minerals_sqr = STECH_THREE_MINERALS;
+    g_support_world.rules.tech_three_energy_sqr = STECH_THREE_ENERGY;
+    g_support_world.rules.tech_mining_platform_bonus = STECH_MINING_PLATFORM;
+    g_support_world.rules.tgl_nutrient_effect_with_mine = -1;
+    g_support_world.rules.limit_mineral_mine_sans_road = 2;
+    g_support_world.tech_achieved[STECH_THREE_NUTRIENTS] = 1 << SFACTION;
+    g_support_world.tech_achieved[STECH_THREE_MINERALS] = 1 << SFACTION;
+    g_support_world.tech_achieved[STECH_THREE_ENERGY] = 1 << SFACTION;
+    g_support_world.bases[1].faction_id_current = SFACTION;
+    g_support_world.bases[1].x = 2;
+    g_support_world.bases[1].y = 2;
+    g_support_world.bases[1].population_size = 1;
+    g_support_world.weapons[SUP_WPN_NONE].offense_rating = 0;
+    g_support_world.weapons[SUP_WPN_GUN].offense_rating = 4;
+    g_support_world.weapons[SUP_WPN_PSI].offense_rating = -1;
+    g_support_world.weapons[SUP_WPN_WEAK].offense_rating = 1;
+    g_support_world.chassis[SUP_CH_LAND].triad = TRIAD_LAND;
+    g_support_world.chassis[SUP_CH_SEA].triad = TRIAD_SEA;
+    g_support_world.chassis[SUP_CH_AIR].triad = TRIAD_AIR;
+}
+
+// A prototype with a plan, a weapon and a chassis; everything else stays zero.
+VehPrototype &sup_proto(int proto_id, uint32_t plan, int weapon_id, int chassis_id) {
+    VehPrototype &proto = g_support_world.protos[proto_id];
+    proto.plan = (uint8_t)plan;
+    proto.weapon_id = (uint8_t)weapon_id;
+    proto.chassis_id = (uint8_t)chassis_id;
+    return proto;
+}
+
+// A unit of the subject faction, homed at the current base, at (x, y).
+Veh &sup_veh(int proto_id, int x, int y) {
+    Veh &veh = g_support_world.vehs[g_support_world.veh_count++];
+    veh.faction_id = (uint8_t)SFACTION;
+    veh.proto_id = (int16_t)proto_id;
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    veh.home_base_id = 0;
+    return veh;
+}
+
+void sup_put_base_in_tile(Map &tile, int owner) {
+    tile.bit |= BIT_BASE_IN_TILE;
+    tile.val2 = (uint8_t)((tile.val2 & 0xF0) | (owner & 0xF));
+}
+
+#define SCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool support_ok = (cond);                                       \
+        if (!support_ok) {                                                    \
+            std::fprintf(stderr, "base_support: line %d: %s\n", __LINE__,     \
+                         #cond);                                              \
+        }                                                                     \
+        expect(support_ok);                                                   \
+    } while (0)
+
+class SupportSeams {
+ public:
+    SupportSeams()
+        : tiles_(&MapTiles, &g_support_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_support_world.longitude),
+          lon_(&MapLongitudeBounds, &g_support_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_support_world.lat_bounds),
+          flat_(&MapIsFlat, &g_support_world.is_flat),
+          seed_(&MapRandSeed, &g_support_world.map_rand_seed),
+          rules_gate_(&GameRules, &g_support_world.game_rules),
+          state_(&GameState, &g_support_world.game_state),
+          bases_(&Bases, &g_support_world.bases[1]),
+          base_current_(&BaseCurrent, &g_support_world.base_current),
+          base_selected_(&BaseIDCurrentSelected, &g_support_world.base_id_selected),
+          upkeep_(&BaseUpkeepStage, &g_support_world.upkeep_stage),
+          convoy_to_(&BaseCurrentConvoyTo, g_support_world.convoy_to),
+          convoy_from_(&BaseCurrentConvoyFrom, g_support_world.convoy_from),
+          pacifism_(&BaseCurrentVehPacifismCount, &g_support_world.pacifism_count),
+          maint_count_(&BaseCurrentForcesMaintCount, &g_support_world.maint_count),
+          supported_(&BaseCurrentForcesSupported, &g_support_world.forces_supported),
+          maint_cost_(&BaseCurrentForcesMaintCost, &g_support_world.maint_cost),
+          projects_(&SecretProject, &g_support_world.projects),
+          resource_(&ResourceInfo, g_support_world.resource_info),
+          rules_(&Rules, &g_support_world.rules),
+          players_data_(&PlayersData, g_support_world.players_data),
+          players_(&Players, g_support_world.players),
+          technology_(&Technology, g_support_world.technology),
+          achieved_(&GameTechAchieved, g_support_world.tech_achieved),
+          expansion_(&ExpansionEnabled, &g_support_world.expansion),
+          dust_(&DustCloudDuration, &g_support_world.dust_cloud),
+          restricted_(&TileYieldRestricted, &g_support_world.restricted),
+          base_energy_(&BaseSquareEnergy, &g_support_world.base_square_energy),
+          governor_(&GovernorFaction, &g_support_world.governor),
+          energy_event_(&GlobalEnergyEventState, &g_support_world.energy_event),
+          selector_(&UnkGlobal0093A934, &g_support_world.energy_event_selector),
+          vehs_(&Vehs, g_support_world.vehs),
+          protos_(&VehPrototypes, g_support_world.protos),
+          veh_count_(&VehCurrentCount, &g_support_world.veh_count),
+          weapons_(&Weapon, g_support_world.weapons),
+          chassis_(&Chassis, g_support_world.chassis) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> seed_;
+    ScopedSeam<uint32_t> rules_gate_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<Base *> base_current_;
+    ScopedSeam<int> base_selected_;
+    ScopedSeam<uint32_t> upkeep_;
+    ScopedSeam<uint32_t> convoy_to_;
+    ScopedSeam<uint32_t> convoy_from_;
+    ScopedSeam<uint32_t> pacifism_;
+    ScopedSeam<uint32_t> maint_count_;
+    ScopedSeam<uint32_t> supported_;
+    ScopedSeam<uint32_t> maint_cost_;
+    ScopedSeam<BaseSecretProject> projects_;
+    ScopedSeam<RulesResourceinfo> resource_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<Player> players_;
+    ScopedSeam<RulesTechnology> technology_;
+    ScopedSeam<uint8_t> achieved_;
+    ScopedSeam<BOOL> expansion_;
+    ScopedSeam<int> dust_;
+    ScopedSeam<int> restricted_;
+    ScopedSeam<int> base_energy_;
+    ScopedSeam<int> governor_;
+    ScopedSeam<int> energy_event_;
+    ScopedSeam<int> selector_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<RulesWeapon> weapons_;
+    ScopedSeam<RulesChassis> chassis_;
+};
+
+/*
+ * Give the harvest tile (4, 4) a yield of 2 nutrients, 1 mineral and 3 energy,
+ * three different numbers so that the convoy switch cannot pick the wrong one
+ * and still agree. The three assertions here are the fixture's own check.
+ */
+void support_arm_harvest_tile() {
+    stile(4, 4).climate = 0xA0 | 0x10;   // alt 5, rainy
+    stile(4, 4).val3 = 0x40;             // rolling
+    stile(4, 4).bit = BIT_SOLAR_TIDAL;
+    SCHECK(crop_yield(SFACTION, 0, 4, 4, false) == 2);
+    SCHECK(mine_yield(SFACTION, 0, 4, 4, false) == 1);
+    SCHECK(energy_yield(SFACTION, 0, 4, 4, false) == 3);
+}
+
+void test_base_support_convoys() {
+    SupportSeams seams;
+
+    // ---- the accumulators are cleared, not accumulated ---------------------
+    support_reset();
+    for (int i = 0; i < 4; i++) {
+        g_support_world.convoy_to[i] = 11 + i;
+        g_support_world.convoy_from[i] = 21 + i;
+    }
+    g_support_world.convoy_to[4] = 99;      // one past the four that are cleared
+    g_support_world.convoy_from[4] = 98;
+    g_support_world.pacifism_count = 5;
+    g_support_world.maint_count = 6;
+    g_support_world.forces_supported = 7;
+    g_support_world.maint_cost = 8;
+    base_support();
+    for (int i = 0; i < 4; i++) {
+        SCHECK(g_support_world.convoy_to[i] == 0);
+        SCHECK(g_support_world.convoy_from[i] == 0);
+    }
+    SCHECK(g_support_world.convoy_to[4] == 99);
+    SCHECK(g_support_world.convoy_from[4] == 98);
+    SCHECK(g_support_world.pacifism_count == 0);
+    SCHECK(g_support_world.maint_count == 0);
+    SCHECK(g_support_world.forces_supported == 0);
+    SCHECK(g_support_world.maint_cost == 0);
+
+    // ---- the faction of the CURRENT BASE selects the units -----------------
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 4, 4);
+        veh.order = ORDER_CONVOY;
+        veh.order_auto_type = RSC_NUTRIENTS;
+        veh.faction_id = SFACTION + 1;      // someone else's convoy
+    }
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 0);
+    g_support_world.vehs[0].faction_id = SFACTION;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 2);
+
+    // ---- one arm of the switch per resource, and the two that yield zero ---
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 4, 4);
+        veh.order = ORDER_CONVOY;
+        veh.order_auto_type = RSC_MINERALS;
+    }
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_MINERALS] == 1);
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 0);
+    g_support_world.vehs[0].order_auto_type = RSC_ENERGY;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 3);
+    // RSC_PSI yields nothing AND clears the yield-restriction publication.
+    g_support_world.vehs[0].order_auto_type = RSC_PSI;
+    g_support_world.restricted = 77;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_PSI] == 0);
+    SCHECK(g_support_world.restricted == 0);
+    // Above RSC_PSI there is no arm at all: zero is added, and it is added to
+    // the entry the auto type names, past the end of the real array.
+    g_support_world.vehs[0].order_auto_type = 4;
+    g_support_world.convoy_to[4] = 40;
+    g_support_world.restricted = 77;
+    base_support();
+    SCHECK(g_support_world.convoy_to[4] == 40);
+    SCHECK(g_support_world.restricted == 77);   // only RSC_PSI clears it
+
+    // ---- what stops a convoy of ours from contributing ---------------------
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    sup_proto(21, PLAN_TERRAFORMING, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 4, 4);
+        veh.order = ORDER_MOVE_TO;          // not ORDER_CONVOY
+        veh.order_auto_type = RSC_NUTRIENTS;
+    }
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 0);
+    g_support_world.vehs[0].order = ORDER_CONVOY;
+    g_support_world.vehs[0].proto_id = 21;  // not a supply convoy plan
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 0);
+    g_support_world.vehs[0].proto_id = 20;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 2);
+    // A base standing in the harvest tile suppresses the yield and instead
+    // charges the square as a convoy OUT of this base.
+    sup_put_base_in_tile(stile(4, 4), 3);
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 0);
+    SCHECK(g_support_world.convoy_from[RSC_NUTRIENTS] == 1);
+    // Owner 0xF is the "unoccupied" marker and does not count as a base.
+    sup_put_base_in_tile(stile(4, 4), 0xF);
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 2);
+    SCHECK(g_support_world.convoy_from[RSC_NUTRIENTS] == 0);
+
+    // ---- a convoy homed elsewhere counts one, and only on the base tile ----
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    sup_proto(21, PLAN_TERRAFORMING, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 2, 2);       // the current base's own tile
+        veh.order = ORDER_CONVOY;
+        veh.order_auto_type = RSC_ENERGY;
+        veh.home_base_id = 3;               // homed somewhere else
+    }
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 1);   // one, not a yield
+    SCHECK(g_support_world.convoy_from[RSC_ENERGY] == 0);
+    // Each of the four guards, one at a time.
+    g_support_world.vehs[0].x = 4;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 0);
+    g_support_world.vehs[0].x = 2;
+    g_support_world.vehs[0].y = 4;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 0);
+    g_support_world.vehs[0].y = 2;
+    g_support_world.vehs[0].order = ORDER_HOLD;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 0);
+    g_support_world.vehs[0].order = ORDER_CONVOY;
+    g_support_world.vehs[0].proto_id = 21;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 0);
+    g_support_world.vehs[0].proto_id = 20;
+    g_support_world.vehs[0].home_base_id = -1;   // "no home" is not "elsewhere"
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 0);
+    g_support_world.vehs[0].home_base_id = 3;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 1);
+    // A unit homed elsewhere never reaches the support or pacifism sections.
+    SCHECK(g_support_world.forces_supported == 0);
+    SCHECK(g_support_world.pacifism_count == 0);
+
+    // ---- convoy OUT is counted for our own convoy in any base -------------
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 6, 6);
+        veh.order = ORDER_CONVOY;
+        veh.order_auto_type = RSC_MINERALS;
+    }
+    base_support();
+    SCHECK(g_support_world.convoy_from[RSC_MINERALS] == 0);
+    sup_put_base_in_tile(stile(6, 6), 2);
+    base_support();
+    SCHECK(g_support_world.convoy_from[RSC_MINERALS] == 1);
+    g_support_world.vehs[0].order = ORDER_HOLD;
+    base_support();
+    SCHECK(g_support_world.convoy_from[RSC_MINERALS] == 0);
+
+    // ---- the loop stops at the count, not one past it ----------------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    {
+        // A unit one entry past the count, complete in every other way.
+        Veh &beyond = g_support_world.vehs[g_support_world.veh_count];
+        beyond.faction_id = (uint8_t)SFACTION;
+        beyond.proto_id = 20;
+        beyond.x = 6;
+        beyond.y = 6;
+        beyond.home_base_id = 0;
+    }
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+
+    // ---- home base zero is a real base id, not "no home" -------------------
+    // The guard is on the home base id being non-negative, and base 0 is only
+    // ever "another base" when the selected base is not base 0.
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    g_support_world.base_id_selected = 1;
+    g_support_world.base_current = &g_support_world.bases[2];   // == Bases[1]
+    g_support_world.bases[2].faction_id_current = (uint8_t)SFACTION;
+    g_support_world.bases[2].x = 2;
+    g_support_world.bases[2].y = 2;
+    {
+        Veh &veh = sup_veh(20, 2, 2);
+        veh.order = ORDER_CONVOY;
+        veh.order_auto_type = RSC_ENERGY;
+        veh.home_base_id = 0;
+    }
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_ENERGY] == 1);
+
+    // ---- faction zero owns a base like any other faction -------------------
+    // yield_tile_owner returns the owner, and zero is an owner; only the 0xF
+    // marker and the missing bit mean "no base".
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 4, 4);
+        veh.order = ORDER_CONVOY;
+        veh.order_auto_type = RSC_NUTRIENTS;
+    }
+    sup_put_base_in_tile(stile(4, 4), 0);
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 0);
+    SCHECK(g_support_world.convoy_from[RSC_NUTRIENTS] == 1);
+
+    // ---- the arm above RSC_PSI adds zero, after an arm that added two ------
+    support_reset();
+    support_arm_harvest_tile();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &first = sup_veh(20, 4, 4);
+        first.order = ORDER_CONVOY;
+        first.order_auto_type = RSC_NUTRIENTS;
+        Veh &second = sup_veh(20, 4, 4);
+        second.order = ORDER_CONVOY;
+        second.order_auto_type = 4;
+    }
+    g_support_world.convoy_to[4] = 40;
+    base_support();
+    SCHECK(g_support_world.convoy_to[RSC_NUTRIENTS] == 2);
+    SCHECK(g_support_world.convoy_to[4] == 40);
+
+    // ---- a convoy is never supported and never costs maintenance ----------
+    support_reset();
+    sup_proto(20, PLAN_SUPPLY_CONVOY, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_proto(21, PLAN_TERRAFORMING, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    base_support();
+    SCHECK(g_support_world.forces_supported == 0);
+    g_support_world.vehs[0].proto_id = 21;   // plan 9 is the last supported one
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+}
+
+void test_base_support_maintenance() {
+    SupportSeams seams;
+
+    // ---- the free allowance, and the cost of the unit past it --------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    for (int i = 0; i < 3; i++) {
+        sup_veh(20, 6, 6);
+    }
+    g_support_world.players_data[SFACTION].soc_effect_pending.support = 0;  // 2 free
+    base_support();
+    SCHECK(g_support_world.forces_supported == 3);
+    SCHECK(g_support_world.maint_count == 1);
+    SCHECK(g_support_world.maint_cost == 1);
+    SCHECK(!(g_support_world.vehs[0].state & VSTATE_REQUIRES_SUPPORT));
+    SCHECK(!(g_support_world.vehs[1].state & VSTATE_REQUIRES_SUPPORT));
+    SCHECK((g_support_world.vehs[2].state & VSTATE_REQUIRES_SUPPORT) != 0);
+    // The whole free_support table, one rating at a time, against three units.
+    const int free_by_support[8] = { 0, 0, 1, 1, 2, 3, 4, 4 };
+    for (int support = -4; support <= 3; support++) {
+        support_reset();
+        sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+        for (int i = 0; i < 3; i++) {
+            sup_veh(20, 6, 6);
+        }
+        g_support_world.players_data[SFACTION].soc_effect_pending.support = support;
+        base_support();
+        int free_units = free_by_support[support + 4];
+        int charged = (3 > free_units) ? 3 - free_units : 0;
+        SCHECK((int)g_support_world.maint_count == charged);
+        SCHECK((int)g_support_world.maint_cost == charged * ((support <= -4) ? 2 : 1));
+    }
+    // At +3 alone the allowance follows the population when that is above four.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    for (int i = 0; i < 6; i++) {
+        sup_veh(20, 6, 6);
+    }
+    g_support_world.players_data[SFACTION].soc_effect_pending.support = 3;
+    g_support_world.bases[1].population_size = 6;
+    base_support();
+    SCHECK(g_support_world.maint_count == 0);
+    g_support_world.bases[1].population_size = 4;   // not above four: still four
+    base_support();
+    SCHECK(g_support_world.maint_count == 2);
+    g_support_world.bases[1].population_size = 5;
+    base_support();
+    SCHECK(g_support_world.maint_count == 1);
+    // ... and nowhere else. At +2 the allowance is four whatever the population.
+    g_support_world.players_data[SFACTION].soc_effect_pending.support = 2;
+    g_support_world.bases[1].population_size = 6;
+    base_support();
+    SCHECK(g_support_world.maint_count == 2);
+
+    // ---- a clean reactor is supported by nobody ----------------------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND).ability_flags
+        = ABL_CLEAN_REACTOR;
+    sup_veh(20, 6, 6);
+    g_support_world.players_data[SFACTION].soc_effect_pending.support = -4;
+    g_support_world.upkeep_stage = 1;
+    base_support();
+    SCHECK(g_support_world.forces_supported == 0);
+    SCHECK(g_support_world.maint_count == 0);
+    SCHECK(g_support_world.maint_cost == 0);
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[0] == 0);
+    g_support_world.protos[20].ability_flags = ABL_TRANCE;   // a different one
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+    SCHECK(g_support_world.maint_cost == 2);
+
+    // ---- native life in fungus is supported for free -----------------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_PSI, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    stile(6, 6).bit = BIT_FUNGUS;
+    stile(6, 6).climate = 0x40;             // ocean shelf: exactly the threshold
+    base_support();
+    SCHECK(g_support_world.forces_supported == 0);
+    stile(6, 6).climate = 0x20;             // one level lower
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+    stile(6, 6).climate = 0x40;
+    stile(6, 6).bit = 0;                    // no fungus
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+    stile(6, 6).bit = BIT_FUNGUS;
+    g_support_world.protos[20].weapon_id = SUP_WPN_GUN;   // positive offense
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+    // Prototype 15 takes the exemption whatever its weapon.
+    support_reset();
+    sup_proto(15, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(15, 6, 6);
+    stile(6, 6).bit = BIT_FUNGUS;
+    stile(6, 6).climate = 0x40;
+    base_support();
+    SCHECK(g_support_world.forces_supported == 0);
+    // A custom prototype does not, whatever its weapon.
+    support_reset();
+    sup_proto(64, PLAN_DEFENSIVE, SUP_WPN_PSI, SUP_CH_LAND);
+    sup_veh(64, 6, 6);
+    stile(6, 6).bit = BIT_FUNGUS;
+    stile(6, 6).climate = 0x40;
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);
+
+    // An offense rating of exactly one is above zero, and is supported.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_NONE, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    stile(6, 6).bit = BIT_FUNGUS;
+    stile(6, 6).climate = 0x40;
+    base_support();
+    SCHECK(g_support_world.forces_supported == 1);   // offense zero is not psi
+
+    // ---- the social-engineering preview table ------------------------------
+    // One unit, so the entry is charged wherever the allowance is zero, which
+    // is the -4 and -3 ratings alone.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    // A mineral intake well above the cost, so the amplification below is out
+    // of the way here; with the default intake of zero everything triples.
+    g_support_world.bases[1].mineral_intake_2 = 10;
+    base_support();
+    for (int i = 0; i < 8; i++) {
+        SCHECK(g_support_world.players_data[SFACTION].unk_38[i] == 0);  // stage 0
+    }
+    g_support_world.upkeep_stage = 1;
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[0] == 2);   // -4 costs two
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[1] == 1);
+    for (int i = 2; i < 8; i++) {
+        SCHECK(g_support_world.players_data[SFACTION].unk_38[i] == 0);
+    }
+    // It accumulates rather than being assigned.
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[0] == 4);
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[1] == 2);
+    // The marginal cost doubles above half the base's mineral intake and
+    // triples once it reaches the whole of it. Cost one against intake:
+    //   intake 4 -> half 2, 1 <= 2      -> 1
+    //   intake 2 -> half 1, 1 <= 1      -> 1
+    //   intake 1 -> 1 >= 1              -> 1 + (1 - 0) * 2 = 3
+    //   intake 0 -> 1 >= 0              -> 1 + (1 - 0) * 2 = 3
+    //   intake 3 -> half 1, 1 <= 1      -> 1
+    // and cost two against intake 3: half 1, 2 < 3 and 2 > 1 -> 2 * 2 - 1 = 3.
+    const int intakes[5] = { 4, 2, 1, 0, 3 };
+    const int expected[5] = { 1, 1, 3, 3, 1 };
+    for (int i = 0; i < 5; i++) {
+        support_reset();
+        sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+        sup_veh(20, 6, 6);
+        g_support_world.upkeep_stage = 1;
+        g_support_world.bases[1].mineral_intake_2 = intakes[i];
+        base_support();
+        SCHECK((int)g_support_world.players_data[SFACTION].unk_38[1] == expected[i]);
+    }
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    g_support_world.upkeep_stage = 1;
+    g_support_world.bases[1].mineral_intake_2 = 3;
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[0] == 3);   // cost two
+    // Stage 2 is not stage 1.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    g_support_world.upkeep_stage = 2;
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_38[0] == 0);
+
+    // Every one of the eight ratings is charged, and each is charged once per
+    // unit that is past ITS allowance rather than past the active one. Five
+    // units against free_support { 0, 0, 1, 1, 2, 3, 4, 4 } charge the k-th
+    // unit at rating i whenever k > free_support[i]; rating -4 costs two.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    for (int i = 0; i < 5; i++) {
+        sup_veh(20, 6, 6);
+    }
+    g_support_world.upkeep_stage = 1;
+    g_support_world.bases[1].mineral_intake_2 = 10;
+    base_support();
+    {
+        const int charged[8] = { 10, 5, 4, 4, 3, 2, 1, 1 };
+        for (int i = 0; i < 8; i++) {
+            SCHECK((int)g_support_world.players_data[SFACTION].unk_38[i] == charged[i]);
+        }
+    }
+
+    // ---- the AI's offensive tally ------------------------------------------
+    // Plans 0 and 1 count twice, 3 and 5 not at all, everything else once.
+    const uint32_t plans[8] = { PLAN_OFFENSIVE, PLAN_COMBAT, PLAN_DEFENSIVE,
+                                PLAN_RECONNAISANCE, PLAN_AIR_SUPERIORITY,
+                                PLAN_PLANET_BUSTER, PLAN_NAVAL_TRANSPORT,
+                                PLAN_TERRAFORMING };
+    const int tally[8] = { 2, 2, 1, 0, 1, 0, 1, 1 };
+    for (int i = 0; i < 8; i++) {
+        support_reset();
+        sup_proto(20, plans[i], SUP_WPN_GUN, SUP_CH_LAND);
+        sup_veh(20, 6, 6);
+        base_support();
+        SCHECK((int)g_support_world.players_data[SFACTION].unk_48 == tally[i]);
+    }
+    // An offense rating of one is still above zero.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_WEAK, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_48 == 1);
+    // An unarmed unit is never counted, whatever its plan.
+    support_reset();
+    sup_proto(20, PLAN_OFFENSIVE, SUP_WPN_NONE, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_48 == 0);
+    // A psi weapon counts on a custom prototype and not on a predefined one.
+    support_reset();
+    sup_proto(63, PLAN_OFFENSIVE, SUP_WPN_PSI, SUP_CH_LAND);
+    sup_veh(63, 6, 6);
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_48 == 0);
+    support_reset();
+    sup_proto(64, PLAN_OFFENSIVE, SUP_WPN_PSI, SUP_CH_LAND);
+    sup_veh(64, 6, 6);
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_48 == 2);
+    // The tally accumulates across bases; it is not this function's to clear.
+    base_support();
+    SCHECK(g_support_world.players_data[SFACTION].unk_48 == 4);
+
+    // ---- the three state bits are cleared before anything sets them --------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_NONE, SUP_CH_LAND);
+    {
+        Veh &veh = sup_veh(20, 6, 6);
+        veh.state = VSTATE_REQUIRES_SUPPORT | VSTATE_PACIFISM_DRONE
+            | VSTATE_PACIFISM_FREE_SKIP | VSTATE_EXPLORE;
+    }
+    g_support_world.players_data[SFACTION].soc_effect_pending.support = 3;
+    base_support();
+    SCHECK(g_support_world.vehs[0].state == VSTATE_EXPLORE);
+}
+
+void test_base_support_pacifism() {
+    SupportSeams seams;
+
+    // ---- only armed units, and only away from home -------------------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    stile(6, 6).territory = -1;                 // nobody's
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 1);
+    stile(6, 6).territory = (int8_t)SFACTION;   // ours
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 0);
+    stile(6, 6).territory = 4;                  // someone else's
+    g_support_world.game_state = STATE_OMNISCIENT_VIEW;
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 1);
+    // A base in the tile stands in for our own territory.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    stile(6, 6).territory = 4;
+    g_support_world.game_state = STATE_OMNISCIENT_VIEW;
+    sup_put_base_in_tile(stile(6, 6), 4);
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 0);
+    // Faction zero's base counts as a base here too.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    stile(6, 6).territory = 4;
+    g_support_world.game_state = STATE_OMNISCIENT_VIEW;
+    sup_put_base_in_tile(stile(6, 6), 0);
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 0);
+    // An unarmed unit abroad is never a pacifism drone.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_NONE, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 0);
+
+    // ---- air units count at home, unless they are interceptors -------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_AIR);
+    sup_veh(20, 6, 6);
+    stile(6, 6).territory = (int8_t)SFACTION;
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 1);
+    g_support_world.protos[20].plan = PLAN_AIR_SUPERIORITY;
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 0);
+    g_support_world.protos[20].plan = PLAN_DEFENSIVE;
+    g_support_world.protos[20].chassis_id = SUP_CH_SEA;
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 0);
+    // Abroad, an interceptor counts like anything else.
+    g_support_world.protos[20].chassis_id = SUP_CH_AIR;
+    g_support_world.protos[20].plan = PLAN_AIR_SUPERIORITY;
+    stile(6, 6).territory = -1;
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 1);
+
+    // ---- the POLICE rating decides which bit the unit gets -----------------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    sup_veh(20, 6, 6);
+    g_support_world.players_data[SFACTION].soc_effect_pending.police = -2;
+    base_support();
+    SCHECK(g_support_world.pacifism_count == 2);
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == 0);
+    SCHECK((g_support_world.vehs[1].state & 0x600000) == 0);
+    g_support_world.players_data[SFACTION].soc_effect_pending.police = -3;
+    base_support();
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == VSTATE_PACIFISM_FREE_SKIP);
+    SCHECK((g_support_world.vehs[1].state & 0x600000) == VSTATE_PACIFISM_DRONE);
+    g_support_world.players_data[SFACTION].soc_effect_pending.police = -4;
+    base_support();
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == VSTATE_PACIFISM_DRONE);
+    SCHECK((g_support_world.vehs[1].state & 0x600000) == VSTATE_PACIFISM_DRONE);
+    // A Brood Pit in the CURRENT base lifts the rating by two.
+    support_give_fac(g_support_world.bases[1], FAC_BROOD_PIT);
+    base_support();
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == 0);
+    SCHECK((g_support_world.vehs[1].state & 0x600000) == 0);
+    g_support_world.players_data[SFACTION].soc_effect_pending.police = -5;
+    base_support();
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == VSTATE_PACIFISM_FREE_SKIP);
+    SCHECK((g_support_world.vehs[1].state & 0x600000) == VSTATE_PACIFISM_DRONE);
+    // It is the Brood Pit and not a neighbouring facility id.
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND);
+    sup_veh(20, 6, 6);
+    g_support_world.players_data[SFACTION].soc_effect_pending.police = -4;
+    support_give_fac(g_support_world.bases[1], FAC_COVERT_OPS_CENTER);
+    support_give_fac(g_support_world.bases[1], FAC_AQUAFARM);
+    base_support();
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == VSTATE_PACIFISM_DRONE);
+
+    // ---- a clean reactor skips support but still causes pacifism -----------
+    support_reset();
+    sup_proto(20, PLAN_DEFENSIVE, SUP_WPN_GUN, SUP_CH_LAND).ability_flags
+        = ABL_CLEAN_REACTOR;
+    sup_veh(20, 6, 6);
+    g_support_world.players_data[SFACTION].soc_effect_pending.police = -4;
+    base_support();
+    SCHECK(g_support_world.forces_supported == 0);
+    SCHECK(g_support_world.pacifism_count == 1);
+    SCHECK((g_support_world.vehs[0].state & 0x600000) == VSTATE_PACIFISM_DRONE);
+}
+
+#undef SCHECK
+
 }  // namespace
 
 int main() {
@@ -3587,6 +4456,9 @@ int main() {
     test_crop_yield();
     test_mine_yield();
     test_energy_yield();
+    test_base_support_convoys();
+    test_base_support_maintenance();
+    test_base_support_pacifism();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

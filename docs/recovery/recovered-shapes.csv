@@ -1466,6 +1466,7 @@ address,name,shape
 0x004E6E50,?crop_yield@@YAHHHHHH@Z,straight_line
 0x004E7310,?mine_yield@@YAHHHHHH@Z,straight_line
 0x004E7750,?energy_yield@@YAHHHHHH@Z,loop
+0x004E9550,?base_support@@YAXXZ,loop
 0x004E9B60,nullsub_220,straight_line
 0x004E9B70,?base_nutrient@@YAXXZ,straight_line
 0x004E9CB0,?base_minerals@@YAXXZ,straight_line

@@ -1295,7 +1295,6 @@ P2,7321,0x004E7DC0,?resource_yield@@YAHHHHHH@Z,116,7,3,unrecovered,,,2,exact,exa
 P3,310,0x004E7E50,sub_4e7e50,276,0,3,unrecovered,,,1,missing,exact,
 P3,310,0x004E7F80,sub_4e7f80,276,0,3,unrecovered,,,1,missing,exact,
 P2,7920,0x004E80B0,?base_yield@@YAXXZ,5275,7,9,unrecovered,,,2,exact,exact,
-P2,7620,0x004E9550,?base_support@@YAXXZ,1530,7,6,unrecovered,,,2,exact,exact,
 P2,7620,0x004EB560,?base_energy@@YAXXZ,3654,7,6,unrecovered,,,2,exact,exact,
 P1,43520,0x004EC3B0,?base_compute@@YAHH@Z,55,43,5,unrecovered,,,2,exact,exact,
 P3,1820,0x004EC3F0,?base_connect@@YAHH@Z,1940,1,8,unrecovered,,,2,exact,exact,

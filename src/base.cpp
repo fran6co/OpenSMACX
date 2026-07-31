@@ -45,6 +45,15 @@ uint32_t *BaseCurrentForcesSupported = (uint32_t *)0x0090E8FC;
 uint32_t *BaseCurrentForcesMaintCost = (uint32_t *)0x0090E91C;
 
 /*
+ * How many of the base's supported units are past its free allowance, counted
+ * alongside BaseCurrentForcesMaintCost. base_support() (0x004E9550) is the only
+ * function in the executable that touches this address at all - it zeroes it,
+ * reads it back and stores the increment, and nothing ever reads the total - so
+ * the count is written and then dropped. Kept because it is observable state.
+ */
+uint32_t *BaseCurrentForcesMaintCount = (uint32_t *)0x0090EA08;
+
+/*
  * Out-parameter of the three terrain yield functions: how much of a resource
  * the square lost to the "three per square needs a technology" restriction, and
  * to mine_yield's roadless-mine mineral limit. Callers zero it, ask for a
@@ -1250,6 +1259,206 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     int event_active = *UnkGlobal0093A934 ? (*GlobalEnergyEventState & 2)
                                           : (*GlobalEnergyEventState & 1);
     return event_active ? energy * 3 : energy;
+}
+
+/*
+Purpose: Tally what the current base's forces cost it: the resources its supply
+         convoys move in and out, the units it supports, the minerals their
+         maintenance takes, and the pacifism drones they cause.
+Original Offset: 004E9550
+Return Value: n/a
+Status: Complete
+
+One pass over every Veh of the base's faction, splitting on whether the unit is
+homed here. The five accumulators this zeroes are read by base_nutrient
+(0x004E9B70), base_minerals (0x004E9CB0) and base_psych, which is why the whole
+tally has to be finished before any of them run.
+
+Two of the eight `free_support` entries are not `support + 2`: -4 and -3 both
+give nothing, and +3 gives max(4, population), so the table is built rather than
+computed. It is indexed by the SUPPORT rating offset by four, -4 at [0].
+
+The original recomputes the Brood Pit police adjustment a second time in the
+`police != -3` arm, with a second inlined bitmask() over the same facility and
+the same base. Nothing between the two writes facilities_built, so it is written
+once here. The three has_abil(ABL_CLEAN_REACTOR) calls are NOT collapsed: the
+first one gates the whole support section, so the second and third can only ever
+see false, but has_abil() logs on a negative prototype id and the call count is
+therefore observable.
+*/
+void __cdecl base_support() {
+    int faction_id = (*BaseCurrent)->faction_id_current;
+    for (int rsc = 0; rsc < 4; rsc++) {
+        BaseCurrentConvoyTo[rsc] = 0;
+        BaseCurrentConvoyFrom[rsc] = 0;
+    }
+    *BaseCurrentVehPacifismCount = 0;
+    *BaseCurrentForcesMaintCount = 0;
+    *BaseCurrentForcesSupported = 0;
+    *BaseCurrentForcesMaintCost = 0;
+    int free_support[8]; // units supported for free, by SUPPORT rating + 4
+    for (int support = -4; support <= 3; support++) {
+        int free_units;
+        if (support >= 3) {
+            int pop_size = (*BaseCurrent)->population_size;
+            free_units = (pop_size > 4) ? pop_size : 4;
+        } else if (support < -2) {
+            free_units = 0;
+        } else if (support == -2) {
+            free_units = 1;
+        } else {
+            free_units = support + 2;
+        }
+        free_support[support + 4] = free_units;
+    }
+    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+        Veh *veh = &Vehs[veh_id];
+        if (veh->faction_id != faction_id) {
+            continue;
+        }
+        int proto_id = veh->proto_id;
+        if (veh->home_base_id != *BaseIDCurrentSelected) {
+            /*
+            * A convoy homed at another base but standing on this base's own
+            * tile counts one, not a yield; base_nutrient() adds
+            * BaseCurrentConvoyTo to the base's intake all the same.
+            */
+            if (VehPrototypes[proto_id].plan == PLAN_SUPPLY_CONVOY
+                && veh->x == (*BaseCurrent)->x && veh->y == (*BaseCurrent)->y
+                && veh->order == ORDER_CONVOY && veh->home_base_id >= 0) {
+                BaseCurrentConvoyTo[veh->order_auto_type]++;
+            }
+            continue;
+        }
+        if (VehPrototypes[proto_id].plan == PLAN_SUPPLY_CONVOY
+            && yield_tile_owner(yield_tile(veh->x, veh->y)) < 0
+            && veh->order == ORDER_CONVOY) {
+            int convoyed;
+            switch (veh->order_auto_type) {
+              case RSC_NUTRIENTS:
+                convoyed = crop_yield(faction_id, *BaseIDCurrentSelected, veh->x, veh->y,
+                                      false);
+                break;
+              case RSC_MINERALS:
+                convoyed = mine_yield(faction_id, *BaseIDCurrentSelected, veh->x, veh->y,
+                                      false);
+                break;
+              case RSC_ENERGY:
+                convoyed = energy_yield(faction_id, *BaseIDCurrentSelected, veh->x, veh->y,
+                                        false);
+                break;
+              case RSC_PSI:
+                *TileYieldRestricted = 0;
+                convoyed = 0;
+                break;
+              default:
+                convoyed = 0;
+                break;
+            }
+            BaseCurrentConvoyTo[veh->order_auto_type] += convoyed;
+        }
+        /*
+        * The AI's offensive strength tally. A negative offense rating is a psi
+        * weapon: those count only on a custom prototype, never on one of the
+        * predefined native life forms.
+        */
+        int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+        if (offense && (offense > 0 || proto_id >= MaxVehProtoFactionNum)) {
+            uint32_t tally_plan = VehPrototypes[proto_id].plan;
+            if (tally_plan != PLAN_RECONNAISANCE && tally_plan != PLAN_PLANET_BUSTER) {
+                PlayersData[faction_id].unk_48++;
+                if (tally_plan == PLAN_OFFENSIVE || tally_plan == PLAN_COMBAT) {
+                    PlayersData[faction_id].unk_48++;
+                }
+            }
+        }
+        veh->state &= ~(VSTATE_REQUIRES_SUPPORT | VSTATE_PACIFISM_DRONE
+                        | VSTATE_PACIFISM_FREE_SKIP);
+        uint32_t plan = VehPrototypes[proto_id].plan;
+        // A convoy of ours standing in any base is charged as consumption.
+        if (plan == PLAN_SUPPLY_CONVOY && veh->order == ORDER_CONVOY
+            && yield_tile_owner(yield_tile(veh->x, veh->y)) >= 0) {
+            BaseCurrentConvoyFrom[veh->order_auto_type]++;
+        }
+        if (plan > PLAN_TERRAFORMING) {
+            continue; // convoys and above are never supported
+        }
+        if (!has_abil(proto_id, ABL_CLEAN_REACTOR)) {
+            /*
+            * Native life in fungus is supported for free. The prototype test is
+            * a psi weapon on a predefined prototype, or prototype 15 - the Sea
+            * Lurk, whose weapon is not psi.
+            */
+            BOOL free_in_fungus = false;
+            if (proto_id < MaxVehProtoFactionNum) {
+                if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0
+                    || proto_id == 15) {
+                    Map *tile = yield_tile(veh->x, veh->y);
+                    if ((tile->bit & BIT_FUNGUS)
+                        && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+                        free_in_fungus = true;
+                    }
+                }
+            }
+            if (!free_in_fungus) {
+                (*BaseCurrentForcesSupported)++;
+                int support = PlayersData[faction_id].soc_effect_pending.support;
+                if ((int)*BaseCurrentForcesSupported
+                        > free_support[range(support + 4, 0, 7)]
+                    && !has_abil(proto_id, ABL_CLEAN_REACTOR)) {
+                    (*BaseCurrentForcesMaintCount)++;
+                    veh->state |= VSTATE_REQUIRES_SUPPORT;
+                    *BaseCurrentForcesMaintCost += (support <= -4) ? 2 : 1;
+                }
+            }
+            /*
+            * What this unit would cost at each of the eight SUPPORT ratings,
+            * for social_ai() to price a social engineering change with. The
+            * marginal cost triples once it passes the base's mineral intake and
+            * doubles once it passes half of it.
+            */
+            if (*BaseUpkeepStage == 1) {
+                for (int support = -4; support <= 3; support++) {
+                    if ((int)*BaseCurrentForcesSupported <= free_support[support + 4]) {
+                        continue;
+                    }
+                    int cost = has_abil(proto_id, ABL_CLEAN_REACTOR)
+                        ? 0 : ((support <= -4) ? 2 : 1);
+                    int minerals = (*BaseCurrent)->mineral_intake_2;
+                    int half_minerals = minerals / 2;
+                    if (cost >= minerals) {
+                        cost += (cost - half_minerals) * 2;
+                    } else if (cost > half_minerals) {
+                        cost = cost * 2 - half_minerals;
+                    }
+                    PlayersData[faction_id].unk_38[support + 4] += cost;
+                }
+            }
+        }
+        /*
+        * Pacifism. Only armed units count, and only away from home - except for
+        * air units, which count anywhere unless they are interceptors.
+        */
+        if (!Weapon[VehPrototypes[proto_id].weapon_id].offense_rating) {
+            continue;
+        }
+        if (yield_tile_owner(yield_tile(veh->x, veh->y)) >= 0
+            || whose_territory(faction_id, veh->x, veh->y, NULL, false) == faction_id) {
+            if (Chassis[VehPrototypes[proto_id].chassis_id].triad != TRIAD_AIR
+                || VehPrototypes[proto_id].plan == PLAN_AIR_SUPERIORITY) {
+                continue;
+            }
+        }
+        (*BaseCurrentVehPacifismCount)++;
+        int police = PlayersData[faction_id].soc_effect_pending.police
+            + (has_fac_built(FAC_BROOD_PIT, *BaseIDCurrentSelected) ? 2 : 0);
+        if (police == -3) {
+            veh->state |= (*BaseCurrentVehPacifismCount == 1) ? VSTATE_PACIFISM_FREE_SKIP
+                                                              : VSTATE_PACIFISM_DRONE;
+        } else if (police < -3) {
+            veh->state |= VSTATE_PACIFISM_DRONE;
+        }
+    }
 }
 
 /*
