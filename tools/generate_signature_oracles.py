@@ -671,6 +671,53 @@ def emit(rows: list, earned: set | None = None) -> str:
             # whatever the original left, so the comparison is A(s0) against
             # R(A(s0)) and every idempotent setter agrees for free.
             w(f"{indent}std::memcpy(staged, staged_seed, ObjectSize);")
+        # THE PLACEBO. Run the ORIGINAL a second time from the same seed, with
+        # the redirect still suspended, and require it to reproduce itself.
+        #
+        # Without this a function whose effect includes a freshly allocated
+        # pointer FAILS forever and reads as a recovery defect.
+        # ?clear_links@Buffer@@QAEXXZ was exactly that: it calls Spot::init on
+        # the Spot at +0x4B0, which frees and re-allocates, so the compared
+        # byte is the low byte of a malloc result - 0x10 on one run and 0xF0 on
+        # the next. Nothing about the recovered body was wrong, and the harness
+        # had no way to say so.
+        #
+        # This is the exact control for the recovered call that follows: same
+        # seed, same restored globals, same suspended state. If the ORIGINAL
+        # cannot agree with ITSELF under those conditions, the comparison has no
+        # power and the honest verdict is that it was not measured - never PASS,
+        # and never FAIL either.
+        w(f'{indent}oracle_fault_guard::begin({addr}U, "original-again");')
+        w(f"{indent}bool stable = true;")
+        w(f"{indent}if (setjmp(*oracle_fault_guard::buffer()) == 0) {{")
+        w(f"{indent}    {call};")
+        w(f"{indent}    snapshot(after_recovered);")
+        w(f"{indent}    oracle_fault_guard::end();")
+        w(f"{indent}    uintptr_t drift = 0;")
+        w(f"{indent}    if (!same_globals(after_original, after_recovered, &drift))")
+        w(f"{indent}        stable = false;")
+        if staged:
+            w(f"{indent}    size_t drift_at = 0;")
+            w(f"{indent}    if (!globals_diff::equal(staged_original, staged,")
+            w(f"{indent}                             ObjectSize, &drift_at))")
+            w(f"{indent}        stable = false;")
+        w(f"{indent}}} else {{")
+        # Faulting only on the second run is itself instability, and it is
+        # reported as such rather than blamed on the recovered body.
+        w(f"{indent}    oracle_fault_guard::end();")
+        w(f"{indent}    stable = false;")
+        w(f"{indent}}}")
+        w(f"{indent}restore(before);")
+        if staged:
+            w(f"{indent}std::memcpy(staged, staged_seed, ObjectSize);")
+        w(f"{indent}if (!stable) {{")
+        w(f'{indent}    std::printf("  {row["name"]}: the ORIGINAL does not '
+          f'reproduce itself; nothing here can be judged\\n");')
+        w(f'{indent}    timing({addr}U, GetTickCount() - started_at, "{row["name"]}");')
+        w(f'{indent}    verdict({addr}U, "INCONCLUSIVE-original-unstable", '
+          f'"{row["name"]}");')
+        w(f"{indent}    return true;")
+        w(f"{indent}}}")
         w(f"{indent}if (!resume_redirect_at({addr}U)) {{")
         w(f'{indent}    std::printf("  {row["name"]}: cannot resume redirect\\n");')
         w(f'{indent}    verdict({addr}U, "FAIL-no-redirect", "{row["name"]}");')

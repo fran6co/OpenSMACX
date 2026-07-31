@@ -197,6 +197,31 @@ static bool verify_StringStruct_seek_id_00401560() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00401560U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?seek_id@StringStruct@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00401560U, GetTickCount() - started_at, "?seek_id@StringStruct@@QAEHH@Z");
+            verdict(0x00401560U, "INCONCLUSIVE-original-unstable", "?seek_id@StringStruct@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00401560U)) {
             std::printf("  ?seek_id@StringStruct@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x00401560U, "FAIL-no-redirect", "?seek_id@StringStruct@@QAEHH@Z");
@@ -307,6 +332,31 @@ static bool verify_StringStruct_current_id_00401640() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00401640U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?current_id@StringStruct@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00401640U, GetTickCount() - started_at, "?current_id@StringStruct@@QAEHXZ");
+            verdict(0x00401640U, "INCONCLUSIVE-original-unstable", "?current_id@StringStruct@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00401640U)) {
             std::printf("  ?current_id@StringStruct@@QAEHXZ: cannot resume redirect\n");
             verdict(0x00401640U, "FAIL-no-redirect", "?current_id@StringStruct@@QAEHXZ");
@@ -417,6 +467,31 @@ static bool verify_StringStruct_next_entry_00402500() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00402500U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?next_entry@StringStruct@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00402500U, GetTickCount() - started_at, "?next_entry@StringStruct@@QAEHXZ");
+            verdict(0x00402500U, "INCONCLUSIVE-original-unstable", "?next_entry@StringStruct@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00402500U)) {
             std::printf("  ?next_entry@StringStruct@@QAEHXZ: cannot resume redirect\n");
             verdict(0x00402500U, "FAIL-no-redirect", "?next_entry@StringStruct@@QAEHXZ");
@@ -527,6 +602,31 @@ static bool verify_StringStruct_current_entry_00402530() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00402530U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?current_entry@StringStruct@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00402530U, GetTickCount() - started_at, "?current_entry@StringStruct@@QAEHXZ");
+            verdict(0x00402530U, "INCONCLUSIVE-original-unstable", "?current_entry@StringStruct@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00402530U)) {
             std::printf("  ?current_entry@StringStruct@@QAEHXZ: cannot resume redirect\n");
             verdict(0x00402530U, "FAIL-no-redirect", "?current_entry@StringStruct@@QAEHXZ");
@@ -627,6 +727,26 @@ static bool verify_passover_callback_004456a0() {
             return true;
         }
         restore(before);
+        oracle_fault_guard::begin(0x004456A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        if (!stable) {
+            std::printf("  ?passover_callback@@YAXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004456A0U, GetTickCount() - started_at, "?passover_callback@@YAXXZ");
+            verdict(0x004456A0U, "INCONCLUSIVE-original-unstable", "?passover_callback@@YAXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x004456A0U)) {
             std::printf("  ?passover_callback@@YAXXZ: cannot resume redirect\n");
             verdict(0x004456A0U, "FAIL-no-redirect", "?passover_callback@@YAXXZ");
@@ -708,6 +828,26 @@ static bool verify_load_deswin_sprites_00455e50() {
             return true;
         }
         restore(before);
+        oracle_fault_guard::begin(0x00455E50U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        if (!stable) {
+            std::printf("  ?load_deswin_sprites@@YAXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00455E50U, GetTickCount() - started_at, "?load_deswin_sprites@@YAXXZ");
+            verdict(0x00455E50U, "INCONCLUSIVE-original-unstable", "?load_deswin_sprites@@YAXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00455E50U)) {
             std::printf("  ?load_deswin_sprites@@YAXXZ: cannot resume redirect\n");
             verdict(0x00455E50U, "FAIL-no-redirect", "?load_deswin_sprites@@YAXXZ");
@@ -798,6 +938,31 @@ static bool verify_InfoWin_reset_00459280() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00459280U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?reset@InfoWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00459280U, GetTickCount() - started_at, "?reset@InfoWin@@QAEXXZ");
+            verdict(0x00459280U, "INCONCLUSIVE-original-unstable", "?reset@InfoWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00459280U)) {
             std::printf("  ?reset@InfoWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x00459280U, "FAIL-no-redirect", "?reset@InfoWin@@QAEXXZ");
@@ -909,6 +1074,31 @@ static bool verify_MapWin_on_left_click_0046eba0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0046EBA0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0046EBA0U, GetTickCount() - started_at, "?on_left_click@MapWin@@QAEXHH@Z");
+            verdict(0x0046EBA0U, "INCONCLUSIVE-original-unstable", "?on_left_click@MapWin@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x0046EBA0U)) {
             std::printf("  ?on_left_click@MapWin@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x0046EBA0U, "FAIL-no-redirect", "?on_left_click@MapWin@@QAEXHH@Z");
@@ -1020,6 +1210,31 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0046EBE0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0046EBE0U, GetTickCount() - started_at, "?on_right_click@MapWin@@QAEXHH@Z");
+            verdict(0x0046EBE0U, "INCONCLUSIVE-original-unstable", "?on_right_click@MapWin@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x0046EBE0U)) {
             std::printf("  ?on_right_click@MapWin@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x0046EBE0U, "FAIL-no-redirect", "?on_right_click@MapWin@@QAEXHH@Z");
@@ -1121,6 +1336,31 @@ static bool verify_MapWin_main_caption_0046fb10() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0046FB10U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?main_caption@MapWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0046FB10U, GetTickCount() - started_at, "?main_caption@MapWin@@QAEXXZ");
+            verdict(0x0046FB10U, "INCONCLUSIVE-original-unstable", "?main_caption@MapWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x0046FB10U)) {
             std::printf("  ?main_caption@MapWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x0046FB10U, "FAIL-no-redirect", "?main_caption@MapWin@@QAEXXZ");
@@ -1222,6 +1462,31 @@ static bool verify_NetWin_UNK5_00483820() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00483820U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK5@NetWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00483820U, GetTickCount() - started_at, "?UNK5@NetWin@@QAEXXZ");
+            verdict(0x00483820U, "INCONCLUSIVE-original-unstable", "?UNK5@NetWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00483820U)) {
             std::printf("  ?UNK5@NetWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x00483820U, "FAIL-no-redirect", "?UNK5@NetWin@@QAEXXZ");
@@ -1323,6 +1588,31 @@ static bool verify_PlanWin_blink_0048bc20() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0048BC20U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?blink@PlanWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0048BC20U, GetTickCount() - started_at, "?blink@PlanWin@@QAEXXZ");
+            verdict(0x0048BC20U, "INCONCLUSIVE-original-unstable", "?blink@PlanWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x0048BC20U)) {
             std::printf("  ?blink@PlanWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x0048BC20U, "FAIL-no-redirect", "?blink@PlanWin@@QAEXXZ");
@@ -1424,6 +1714,31 @@ static bool verify_StatusWin_reset_004b8970() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004B8970U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?reset@StatusWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004B8970U, GetTickCount() - started_at, "?reset@StatusWin@@QAEXXZ");
+            verdict(0x004B8970U, "INCONCLUSIVE-original-unstable", "?reset@StatusWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x004B8970U)) {
             std::printf("  ?reset@StatusWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x004B8970U, "FAIL-no-redirect", "?reset@StatusWin@@QAEXXZ");
@@ -1535,6 +1850,31 @@ static bool verify_StatusWin_set_loc_004b9f90() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004B9F90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004B9F90U, GetTickCount() - started_at, "?set_loc@StatusWin@@QAEXHH@Z");
+            verdict(0x004B9F90U, "INCONCLUSIVE-original-unstable", "?set_loc@StatusWin@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004B9F90U)) {
             std::printf("  ?set_loc@StatusWin@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x004B9F90U, "FAIL-no-redirect", "?set_loc@StatusWin@@QAEXHH@Z");
@@ -1636,6 +1976,31 @@ static bool verify_TutWin_UNK1_004ba720() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004BA720U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK1@TutWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004BA720U, GetTickCount() - started_at, "?UNK1@TutWin@@QAEXXZ");
+            verdict(0x004BA720U, "INCONCLUSIVE-original-unstable", "?UNK1@TutWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x004BA720U)) {
             std::printf("  ?UNK1@TutWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x004BA720U, "FAIL-no-redirect", "?UNK1@TutWin@@QAEXXZ");
@@ -1747,6 +2112,31 @@ static bool verify_TutWin_UNK3_004bddd0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004BDDD0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK3@TutWin@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004BDDD0U, GetTickCount() - started_at, "?UNK3@TutWin@@QAEXH@Z");
+            verdict(0x004BDDD0U, "INCONCLUSIVE-original-unstable", "?UNK3@TutWin@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004BDDD0U)) {
             std::printf("  ?UNK3@TutWin@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x004BDDD0U, "FAIL-no-redirect", "?UNK3@TutWin@@QAEXH@Z");
@@ -1849,6 +2239,31 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004C5920U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004C5920U, GetTickCount() - started_at, "?is_disabled@Midi_Device@@QAEHXZ");
+            verdict(0x004C5920U, "INCONCLUSIVE-original-unstable", "?is_disabled@Midi_Device@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x004C5920U)) {
             std::printf("  ?is_disabled@Midi_Device@@QAEHXZ: cannot resume redirect\n");
             verdict(0x004C5920U, "FAIL-no-redirect", "?is_disabled@Midi_Device@@QAEHXZ");
@@ -1969,6 +2384,31 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004C5A80U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (unsigned int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004C5A80U, GetTickCount() - started_at, "?set_codec@Wave_In_Device@@QAEHK@Z");
+            verdict(0x004C5A80U, "INCONCLUSIVE-original-unstable", "?set_codec@Wave_In_Device@@QAEHK@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004C5A80U)) {
             std::printf("  ?set_codec@Wave_In_Device@@QAEHK@Z: cannot resume redirect\n");
             verdict(0x004C5A80U, "FAIL-no-redirect", "?set_codec@Wave_In_Device@@QAEHK@Z");
@@ -2079,6 +2519,31 @@ static bool verify_Console_edit_lock_004e1f40() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004E1F40U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?edit_lock@Console@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004E1F40U, GetTickCount() - started_at, "?edit_lock@Console@@QAEHXZ");
+            verdict(0x004E1F40U, "INCONCLUSIVE-original-unstable", "?edit_lock@Console@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x004E1F40U)) {
             std::printf("  ?edit_lock@Console@@QAEHXZ: cannot resume redirect\n");
             verdict(0x004E1F40U, "FAIL-no-redirect", "?edit_lock@Console@@QAEHXZ");
@@ -2199,6 +2664,31 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004E25E0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (unsigned int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004E25E0U, GetTickCount() - started_at, "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            verdict(0x004E25E0U, "INCONCLUSIVE-original-unstable", "?pid_2_idx@AlphaNet@@QAEHK@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004E25E0U)) {
             std::printf("  ?pid_2_idx@AlphaNet@@QAEHK@Z: cannot resume redirect\n");
             verdict(0x004E25E0U, "FAIL-no-redirect", "?pid_2_idx@AlphaNet@@QAEHK@Z");
@@ -2319,6 +2809,31 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004E2610U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (unsigned int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004E2610U, GetTickCount() - started_at, "?pid_2_who@AlphaNet@@QAEHK@Z");
+            verdict(0x004E2610U, "INCONCLUSIVE-original-unstable", "?pid_2_who@AlphaNet@@QAEHK@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004E2610U)) {
             std::printf("  ?pid_2_who@AlphaNet@@QAEHK@Z: cannot resume redirect\n");
             verdict(0x004E2610U, "FAIL-no-redirect", "?pid_2_who@AlphaNet@@QAEHK@Z");
@@ -2439,6 +2954,31 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004E2660U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004E2660U, GetTickCount() - started_at, "?who_2_pid@AlphaNet@@QAEHH@Z");
+            verdict(0x004E2660U, "INCONCLUSIVE-original-unstable", "?who_2_pid@AlphaNet@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004E2660U)) {
             std::printf("  ?who_2_pid@AlphaNet@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x004E2660U, "FAIL-no-redirect", "?who_2_pid@AlphaNet@@QAEHH@Z");
@@ -2558,6 +3098,31 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x004E26B0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x004E26B0U, GetTickCount() - started_at, "?who_2_idx@AlphaNet@@QAEXH@Z");
+            verdict(0x004E26B0U, "INCONCLUSIVE-original-unstable", "?who_2_idx@AlphaNet@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x004E26B0U)) {
             std::printf("  ?who_2_idx@AlphaNet@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x004E26B0U, "FAIL-no-redirect", "?who_2_idx@AlphaNet@@QAEXH@Z");
@@ -2659,6 +3224,31 @@ static bool verify_Console_clear_group_0050f650() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0050F650U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?clear_group@Console@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0050F650U, GetTickCount() - started_at, "?clear_group@Console@@QAEXXZ");
+            verdict(0x0050F650U, "INCONCLUSIVE-original-unstable", "?clear_group@Console@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x0050F650U)) {
             std::printf("  ?clear_group@Console@@QAEXXZ: cannot resume redirect\n");
             verdict(0x0050F650U, "FAIL-no-redirect", "?clear_group@Console@@QAEXXZ");
@@ -2770,6 +3360,31 @@ static bool verify_Console_focus_005108a0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005108A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?focus@Console@@QAEXHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005108A0U, GetTickCount() - started_at, "?focus@Console@@QAEXHHH@Z");
+            verdict(0x005108A0U, "INCONCLUSIVE-original-unstable", "?focus@Console@@QAEXHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005108A0U)) {
             std::printf("  ?focus@Console@@QAEXHHH@Z: cannot resume redirect\n");
             verdict(0x005108A0U, "FAIL-no-redirect", "?focus@Console@@QAEXHHH@Z");
@@ -2881,6 +3496,31 @@ static bool verify_Console_update_data_00514880() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00514880U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?update_data@Console@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00514880U, GetTickCount() - started_at, "?update_data@Console@@QAEXH@Z");
+            verdict(0x00514880U, "INCONCLUSIVE-original-unstable", "?update_data@Console@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00514880U)) {
             std::printf("  ?update_data@Console@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00514880U, "FAIL-no-redirect", "?update_data@Console@@QAEXH@Z");
@@ -2974,6 +3614,26 @@ static bool verify_not_my_turn_0052dc70() {
             return true;
         }
         restore(before);
+        oracle_fault_guard::begin(0x0052DC70U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        if (!stable) {
+            std::printf("  ?not_my_turn@@YAHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0052DC70U, GetTickCount() - started_at, "?not_my_turn@@YAHXZ");
+            verdict(0x0052DC70U, "INCONCLUSIVE-original-unstable", "?not_my_turn@@YAHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x0052DC70U)) {
             std::printf("  ?not_my_turn@@YAHXZ: cannot resume redirect\n");
             verdict(0x0052DC70U, "FAIL-no-redirect", "?not_my_turn@@YAHXZ");
@@ -3073,6 +3733,31 @@ static bool verify_NetDaemon_receive_00530320() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00530320U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?receive@NetDaemon@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00530320U, GetTickCount() - started_at, "?receive@NetDaemon@@QAEHXZ");
+            verdict(0x00530320U, "INCONCLUSIVE-original-unstable", "?receive@NetDaemon@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00530320U)) {
             std::printf("  ?receive@NetDaemon@@QAEHXZ: cannot resume redirect\n");
             verdict(0x00530320U, "FAIL-no-redirect", "?receive@NetDaemon@@QAEHXZ");
@@ -3182,6 +3867,31 @@ static bool verify_NetDaemon_unlock_veh_005310f0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005310F0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005310F0U, GetTickCount() - started_at, "?unlock_veh@NetDaemon@@QAEXXZ");
+            verdict(0x005310F0U, "INCONCLUSIVE-original-unstable", "?unlock_veh@NetDaemon@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005310F0U)) {
             std::printf("  ?unlock_veh@NetDaemon@@QAEXXZ: cannot resume redirect\n");
             verdict(0x005310F0U, "FAIL-no-redirect", "?unlock_veh@NetDaemon@@QAEXXZ");
@@ -3274,6 +3984,26 @@ static bool verify_desktop_update_0058ee50() {
             return true;
         }
         restore(before);
+        oracle_fault_guard::begin(0x0058EE50U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        if (!stable) {
+            std::printf("  ?desktop_update@@YAXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0058EE50U, GetTickCount() - started_at, "?desktop_update@@YAXXZ");
+            verdict(0x0058EE50U, "INCONCLUSIVE-original-unstable", "?desktop_update@@YAXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x0058EE50U)) {
             std::printf("  ?desktop_update@@YAXXZ: cannot resume redirect\n");
             verdict(0x0058EE50U, "FAIL-no-redirect", "?desktop_update@@YAXXZ");
@@ -3374,6 +4104,31 @@ static bool verify_GraphicWin_fill_005d5250() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005D5250U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?fill@GraphicWin@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005D5250U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEXH@Z");
+            verdict(0x005D5250U, "INCONCLUSIVE-original-unstable", "?fill@GraphicWin@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005D5250U)) {
             std::printf("  ?fill@GraphicWin@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005D5250U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEXH@Z");
@@ -3486,6 +4241,31 @@ static bool verify_GraphicWin_fill_005d5440() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005D5440U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005D5440U, GetTickCount() - started_at, "?fill@GraphicWin@@QAEHHHHHH@Z");
+            verdict(0x005D5440U, "INCONCLUSIVE-original-unstable", "?fill@GraphicWin@@QAEHHHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005D5440U)) {
             std::printf("  ?fill@GraphicWin@@QAEHHHHHH@Z: cannot resume redirect\n");
             verdict(0x005D5440U, "FAIL-no-redirect", "?fill@GraphicWin@@QAEHHHHHH@Z");
@@ -3595,6 +4375,31 @@ static bool verify_GraphicWin_redraw_005d5a70() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005D5A70U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?redraw@GraphicWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005D5A70U, GetTickCount() - started_at, "?redraw@GraphicWin@@QAEXXZ");
+            verdict(0x005D5A70U, "INCONCLUSIVE-original-unstable", "?redraw@GraphicWin@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005D5A70U)) {
             std::printf("  ?redraw@GraphicWin@@QAEXXZ: cannot resume redirect\n");
             verdict(0x005D5A70U, "FAIL-no-redirect", "?redraw@GraphicWin@@QAEXXZ");
@@ -3706,6 +4511,31 @@ static bool verify_Buffer_set_text_color_005dacb0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DACB0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DACB0U, GetTickCount() - started_at, "?set_text_color@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DACB0U, "INCONCLUSIVE-original-unstable", "?set_text_color@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005DACB0U)) {
             std::printf("  ?set_text_color@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x005DACB0U, "FAIL-no-redirect", "?set_text_color@Buffer@@QAEXHHHH@Z");
@@ -3817,6 +4647,31 @@ static bool verify_Buffer_set_text_color2_005dace0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DACE0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DACE0U, GetTickCount() - started_at, "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DACE0U, "INCONCLUSIVE-original-unstable", "?set_text_color2@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005DACE0U)) {
             std::printf("  ?set_text_color2@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x005DACE0U, "FAIL-no-redirect", "?set_text_color2@Buffer@@QAEXHHHH@Z");
@@ -3928,6 +4783,31 @@ static bool verify_Buffer_set_text_color3_005dad10() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DAD10U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DAD10U, GetTickCount() - started_at, "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DAD10U, "INCONCLUSIVE-original-unstable", "?set_text_color3@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005DAD10U)) {
             std::printf("  ?set_text_color3@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x005DAD10U, "FAIL-no-redirect", "?set_text_color3@Buffer@@QAEXHHHH@Z");
@@ -4039,6 +4919,31 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DAD40U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DAD40U, GetTickCount() - started_at, "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            verdict(0x005DAD40U, "INCONCLUSIVE-original-unstable", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005DAD40U)) {
             std::printf("  ?set_text_color_hyper@Buffer@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x005DAD40U, "FAIL-no-redirect", "?set_text_color_hyper@Buffer@@QAEXHHHH@Z");
@@ -4141,6 +5046,31 @@ static bool verify_Buffer_text_height_005dca80() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DCA80U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?text_height@Buffer@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DCA80U, GetTickCount() - started_at, "?text_height@Buffer@@QAEHXZ");
+            verdict(0x005DCA80U, "INCONCLUSIVE-original-unstable", "?text_height@Buffer@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005DCA80U)) {
             std::printf("  ?text_height@Buffer@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005DCA80U, "FAIL-no-redirect", "?text_height@Buffer@@QAEHXZ");
@@ -4251,6 +5181,31 @@ static bool verify_Buffer_text_line_height_005dcab0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DCAB0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?text_line_height@Buffer@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DCAB0U, GetTickCount() - started_at, "?text_line_height@Buffer@@QAEHXZ");
+            verdict(0x005DCAB0U, "INCONCLUSIVE-original-unstable", "?text_line_height@Buffer@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005DCAB0U)) {
             std::printf("  ?text_line_height@Buffer@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005DCAB0U, "FAIL-no-redirect", "?text_line_height@Buffer@@QAEHXZ");
@@ -4360,6 +5315,31 @@ static bool verify_Buffer_clear_links_005def90() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005DEF90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?clear_links@Buffer@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005DEF90U, GetTickCount() - started_at, "?clear_links@Buffer@@QAEXXZ");
+            verdict(0x005DEF90U, "INCONCLUSIVE-original-unstable", "?clear_links@Buffer@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005DEF90U)) {
             std::printf("  ?clear_links@Buffer@@QAEXXZ: cannot resume redirect\n");
             verdict(0x005DEF90U, "FAIL-no-redirect", "?clear_links@Buffer@@QAEXXZ");
@@ -4462,6 +5442,31 @@ static bool verify_Buffer_get_data_005e3373() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005E3373U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_data@Buffer@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005E3373U, GetTickCount() - started_at, "?get_data@Buffer@@QAEHXZ");
+            verdict(0x005E3373U, "INCONCLUSIVE-original-unstable", "?get_data@Buffer@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005E3373U)) {
             std::printf("  ?get_data@Buffer@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005E3373U, "FAIL-no-redirect", "?get_data@Buffer@@QAEHXZ");
@@ -4581,6 +5586,31 @@ static bool verify_Buffer_free_data_005e34a3() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005E34A3U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?free_data@Buffer@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005E34A3U, GetTickCount() - started_at, "?free_data@Buffer@@QAEXH@Z");
+            verdict(0x005E34A3U, "INCONCLUSIVE-original-unstable", "?free_data@Buffer@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005E34A3U)) {
             std::printf("  ?free_data@Buffer@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005E34A3U, "FAIL-no-redirect", "?free_data@Buffer@@QAEXH@Z");
@@ -4683,6 +5713,31 @@ static bool verify_Buffer_get_hdc_005e3503() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005E3503U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_hdc@Buffer@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005E3503U, GetTickCount() - started_at, "?get_hdc@Buffer@@QAEHXZ");
+            verdict(0x005E3503U, "INCONCLUSIVE-original-unstable", "?get_hdc@Buffer@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005E3503U)) {
             std::printf("  ?get_hdc@Buffer@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005E3503U, "FAIL-no-redirect", "?get_hdc@Buffer@@QAEHXZ");
@@ -4802,6 +5857,31 @@ static bool verify_Buffer_release_hdc_005e3563() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005E3563U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?release_hdc@Buffer@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005E3563U, GetTickCount() - started_at, "?release_hdc@Buffer@@QAEXH@Z");
+            verdict(0x005E3563U, "INCONCLUSIVE-original-unstable", "?release_hdc@Buffer@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005E3563U)) {
             std::printf("  ?release_hdc@Buffer@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005E3563U, "FAIL-no-redirect", "?release_hdc@Buffer@@QAEXH@Z");
@@ -4914,6 +5994,31 @@ static bool verify_Win_set_cursor_005ec7c0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EC7C0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_cursor@Win@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EC7C0U, GetTickCount() - started_at, "?set_cursor@Win@@QAEHH@Z");
+            verdict(0x005EC7C0U, "INCONCLUSIVE-original-unstable", "?set_cursor@Win@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EC7C0U)) {
             std::printf("  ?set_cursor@Win@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005EC7C0U, "FAIL-no-redirect", "?set_cursor@Win@@QAEHH@Z");
@@ -5034,6 +6139,31 @@ static bool verify_Win_UNK3_005ece80() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005ECE80U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK3@Win@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005ECE80U, GetTickCount() - started_at, "?UNK3@Win@@QAEHH@Z");
+            verdict(0x005ECE80U, "INCONCLUSIVE-original-unstable", "?UNK3@Win@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005ECE80U)) {
             std::printf("  ?UNK3@Win@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005ECE80U, "FAIL-no-redirect", "?UNK3@Win@@QAEHH@Z");
@@ -5154,6 +6284,31 @@ static bool verify_Win_move_005ed7d0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005ED7D0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?move@Win@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005ED7D0U, GetTickCount() - started_at, "?move@Win@@QAEHHH@Z");
+            verdict(0x005ED7D0U, "INCONCLUSIVE-original-unstable", "?move@Win@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005ED7D0U)) {
             std::printf("  ?move@Win@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005ED7D0U, "FAIL-no-redirect", "?move@Win@@QAEHHH@Z");
@@ -5273,6 +6428,31 @@ static bool verify_Win_set_vert_pos_005ee030() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE030U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_vert_pos@Win@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE030U, GetTickCount() - started_at, "?set_vert_pos@Win@@QAEXH@Z");
+            verdict(0x005EE030U, "INCONCLUSIVE-original-unstable", "?set_vert_pos@Win@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE030U)) {
             std::printf("  ?set_vert_pos@Win@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005EE030U, "FAIL-no-redirect", "?set_vert_pos@Win@@QAEXH@Z");
@@ -5375,6 +6555,31 @@ static bool verify_Win_get_vert_pos_005ee050() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE050U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_vert_pos@Win@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE050U, GetTickCount() - started_at, "?get_vert_pos@Win@@QAEHXZ");
+            verdict(0x005EE050U, "INCONCLUSIVE-original-unstable", "?get_vert_pos@Win@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE050U)) {
             std::printf("  ?get_vert_pos@Win@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005EE050U, "FAIL-no-redirect", "?get_vert_pos@Win@@QAEHXZ");
@@ -5494,6 +6699,31 @@ static bool verify_Win_set_horz_pos_005ee070() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE070U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_horz_pos@Win@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE070U, GetTickCount() - started_at, "?set_horz_pos@Win@@QAEXH@Z");
+            verdict(0x005EE070U, "INCONCLUSIVE-original-unstable", "?set_horz_pos@Win@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE070U)) {
             std::printf("  ?set_horz_pos@Win@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005EE070U, "FAIL-no-redirect", "?set_horz_pos@Win@@QAEXH@Z");
@@ -5596,6 +6826,31 @@ static bool verify_Win_get_horz_pos_005ee090() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE090U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_horz_pos@Win@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE090U, GetTickCount() - started_at, "?get_horz_pos@Win@@QAEHXZ");
+            verdict(0x005EE090U, "INCONCLUSIVE-original-unstable", "?get_horz_pos@Win@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE090U)) {
             std::printf("  ?get_horz_pos@Win@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005EE090U, "FAIL-no-redirect", "?get_horz_pos@Win@@QAEHXZ");
@@ -5715,6 +6970,31 @@ static bool verify_Win_set_vert_range_005ee0b0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE0B0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_vert_range@Win@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE0B0U, GetTickCount() - started_at, "?set_vert_range@Win@@QAEXHH@Z");
+            verdict(0x005EE0B0U, "INCONCLUSIVE-original-unstable", "?set_vert_range@Win@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE0B0U)) {
             std::printf("  ?set_vert_range@Win@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x005EE0B0U, "FAIL-no-redirect", "?set_vert_range@Win@@QAEXHH@Z");
@@ -5826,6 +7106,31 @@ static bool verify_Win_set_horz_range_005ee0d0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE0D0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_horz_range@Win@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE0D0U, GetTickCount() - started_at, "?set_horz_range@Win@@QAEXHH@Z");
+            verdict(0x005EE0D0U, "INCONCLUSIVE-original-unstable", "?set_horz_range@Win@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE0D0U)) {
             std::printf("  ?set_horz_range@Win@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x005EE0D0U, "FAIL-no-redirect", "?set_horz_range@Win@@QAEXHH@Z");
@@ -5937,6 +7242,31 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE0F0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_vert_paging@Win@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE0F0U, GetTickCount() - started_at, "?set_vert_paging@Win@@QAEXH@Z");
+            verdict(0x005EE0F0U, "INCONCLUSIVE-original-unstable", "?set_vert_paging@Win@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE0F0U)) {
             std::printf("  ?set_vert_paging@Win@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005EE0F0U, "FAIL-no-redirect", "?set_vert_paging@Win@@QAEXH@Z");
@@ -6048,6 +7378,31 @@ static bool verify_Win_set_horz_paging_005ee110() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE110U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_horz_paging@Win@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE110U, GetTickCount() - started_at, "?set_horz_paging@Win@@QAEXH@Z");
+            verdict(0x005EE110U, "INCONCLUSIVE-original-unstable", "?set_horz_paging@Win@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE110U)) {
             std::printf("  ?set_horz_paging@Win@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005EE110U, "FAIL-no-redirect", "?set_horz_paging@Win@@QAEXH@Z");
@@ -6159,6 +7514,31 @@ static bool verify_Win_UNK8_005ee130() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE130U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK8@Win@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE130U, GetTickCount() - started_at, "?UNK8@Win@@QAEXH@Z");
+            verdict(0x005EE130U, "INCONCLUSIVE-original-unstable", "?UNK8@Win@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE130U)) {
             std::printf("  ?UNK8@Win@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005EE130U, "FAIL-no-redirect", "?UNK8@Win@@QAEXH@Z");
@@ -6270,6 +7650,31 @@ static bool verify_Win_UNK9_005ee160() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005EE160U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK9@Win@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005EE160U, GetTickCount() - started_at, "?UNK9@Win@@QAEXH@Z");
+            verdict(0x005EE160U, "INCONCLUSIVE-original-unstable", "?UNK9@Win@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005EE160U)) {
             std::printf("  ?UNK9@Win@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x005EE160U, "FAIL-no-redirect", "?UNK9@Win@@QAEXH@Z");
@@ -6371,6 +7776,31 @@ static bool verify_Win_sync_palette_005f2c60() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F2C60U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?sync_palette@Win@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F2C60U, GetTickCount() - started_at, "?sync_palette@Win@@QAEXXZ");
+            verdict(0x005F2C60U, "INCONCLUSIVE-original-unstable", "?sync_palette@Win@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005F2C60U)) {
             std::printf("  ?sync_palette@Win@@QAEXXZ: cannot resume redirect\n");
             verdict(0x005F2C60U, "FAIL-no-redirect", "?sync_palette@Win@@QAEXXZ");
@@ -6473,6 +7903,31 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F2CA0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?is_dialog_focus@Win@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F2CA0U, GetTickCount() - started_at, "?is_dialog_focus@Win@@QAEHXZ");
+            verdict(0x005F2CA0U, "INCONCLUSIVE-original-unstable", "?is_dialog_focus@Win@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005F2CA0U)) {
             std::printf("  ?is_dialog_focus@Win@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005F2CA0U, "FAIL-no-redirect", "?is_dialog_focus@Win@@QAEHXZ");
@@ -6583,6 +8038,31 @@ static bool verify_Win_is_visible_005f7e90() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F7E90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?is_visible@Win@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F7E90U, GetTickCount() - started_at, "?is_visible@Win@@QAEHXZ");
+            verdict(0x005F7E90U, "INCONCLUSIVE-original-unstable", "?is_visible@Win@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005F7E90U)) {
             std::printf("  ?is_visible@Win@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005F7E90U, "FAIL-no-redirect", "?is_visible@Win@@QAEHXZ");
@@ -6703,6 +8183,31 @@ static bool verify_PullDown_hide_item_005f8cb0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F8CB0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?hide_item@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F8CB0U, GetTickCount() - started_at, "?hide_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8CB0U, "INCONCLUSIVE-original-unstable", "?hide_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F8CB0U)) {
             std::printf("  ?hide_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F8CB0U, "FAIL-no-redirect", "?hide_item@PullDown@@QAEHH@Z");
@@ -6823,6 +8328,31 @@ static bool verify_PullDown_show_item_005f8d20() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F8D20U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?show_item@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F8D20U, GetTickCount() - started_at, "?show_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8D20U, "INCONCLUSIVE-original-unstable", "?show_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F8D20U)) {
             std::printf("  ?show_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F8D20U, "FAIL-no-redirect", "?show_item@PullDown@@QAEHH@Z");
@@ -6943,6 +8473,31 @@ static bool verify_PullDown_disable_item_005f8d90() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F8D90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?disable_item@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F8D90U, GetTickCount() - started_at, "?disable_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8D90U, "INCONCLUSIVE-original-unstable", "?disable_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F8D90U)) {
             std::printf("  ?disable_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F8D90U, "FAIL-no-redirect", "?disable_item@PullDown@@QAEHH@Z");
@@ -7063,6 +8618,31 @@ static bool verify_PullDown_enable_item_005f8df0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F8DF0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?enable_item@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F8DF0U, GetTickCount() - started_at, "?enable_item@PullDown@@QAEHH@Z");
+            verdict(0x005F8DF0U, "INCONCLUSIVE-original-unstable", "?enable_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F8DF0U)) {
             std::printf("  ?enable_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F8DF0U, "FAIL-no-redirect", "?enable_item@PullDown@@QAEHH@Z");
@@ -7183,6 +8763,31 @@ static bool verify_PullDown_check_item_005f9040() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F9040U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?check_item@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F9040U, GetTickCount() - started_at, "?check_item@PullDown@@QAEHH@Z");
+            verdict(0x005F9040U, "INCONCLUSIVE-original-unstable", "?check_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F9040U)) {
             std::printf("  ?check_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F9040U, "FAIL-no-redirect", "?check_item@PullDown@@QAEHH@Z");
@@ -7303,6 +8908,31 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F90A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F90A0U, GetTickCount() - started_at, "?uncheck_item@PullDown@@QAEHH@Z");
+            verdict(0x005F90A0U, "INCONCLUSIVE-original-unstable", "?uncheck_item@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F90A0U)) {
             std::printf("  ?uncheck_item@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F90A0U, "FAIL-no-redirect", "?uncheck_item@PullDown@@QAEHH@Z");
@@ -7423,6 +9053,31 @@ static bool verify_PullDown_id_to_index_005f9d00() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F9D00U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?id_to_index@PullDown@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F9D00U, GetTickCount() - started_at, "?id_to_index@PullDown@@QAEHH@Z");
+            verdict(0x005F9D00U, "INCONCLUSIVE-original-unstable", "?id_to_index@PullDown@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005F9D00U)) {
             std::printf("  ?id_to_index@PullDown@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005F9D00U, "FAIL-no-redirect", "?id_to_index@PullDown@@QAEHH@Z");
@@ -7533,6 +9188,31 @@ static bool verify_PullDown_get_selected_005f9f40() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005F9F40U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_selected@PullDown@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005F9F40U, GetTickCount() - started_at, "?get_selected@PullDown@@QAEHXZ");
+            verdict(0x005F9F40U, "INCONCLUSIVE-original-unstable", "?get_selected@PullDown@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005F9F40U)) {
             std::printf("  ?get_selected@PullDown@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005F9F40U, "FAIL-no-redirect", "?get_selected@PullDown@@QAEHXZ");
@@ -7653,6 +9333,31 @@ static bool verify_Menu_UNK3_005fb1d0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB1D0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK3@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB1D0U, GetTickCount() - started_at, "?UNK3@Menu@@QAEHHH@Z");
+            verdict(0x005FB1D0U, "INCONCLUSIVE-original-unstable", "?UNK3@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB1D0U)) {
             std::printf("  ?UNK3@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB1D0U, "FAIL-no-redirect", "?UNK3@Menu@@QAEHHH@Z");
@@ -7773,6 +9478,31 @@ static bool verify_Menu_UNK6_005fb2a0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB2A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK6@Menu@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB2A0U, GetTickCount() - started_at, "?UNK6@Menu@@QAEHH@Z");
+            verdict(0x005FB2A0U, "INCONCLUSIVE-original-unstable", "?UNK6@Menu@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB2A0U)) {
             std::printf("  ?UNK6@Menu@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005FB2A0U, "FAIL-no-redirect", "?UNK6@Menu@@QAEHH@Z");
@@ -7893,6 +9623,31 @@ static bool verify_Menu_hide_menu_item_005fb300() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB300U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB300U, GetTickCount() - started_at, "?hide_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB300U, "INCONCLUSIVE-original-unstable", "?hide_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB300U)) {
             std::printf("  ?hide_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB300U, "FAIL-no-redirect", "?hide_menu_item@Menu@@QAEHHH@Z");
@@ -8013,6 +9768,31 @@ static bool verify_Menu_UNK7_005fb360() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB360U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK7@Menu@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB360U, GetTickCount() - started_at, "?UNK7@Menu@@QAEHH@Z");
+            verdict(0x005FB360U, "INCONCLUSIVE-original-unstable", "?UNK7@Menu@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB360U)) {
             std::printf("  ?UNK7@Menu@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005FB360U, "FAIL-no-redirect", "?UNK7@Menu@@QAEHH@Z");
@@ -8133,6 +9913,31 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB3C0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB3C0U, GetTickCount() - started_at, "?show_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB3C0U, "INCONCLUSIVE-original-unstable", "?show_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB3C0U)) {
             std::printf("  ?show_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB3C0U, "FAIL-no-redirect", "?show_menu_item@Menu@@QAEHHH@Z");
@@ -8253,6 +10058,31 @@ static bool verify_Menu_UNK8_005fb420() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB420U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK8@Menu@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB420U, GetTickCount() - started_at, "?UNK8@Menu@@QAEHH@Z");
+            verdict(0x005FB420U, "INCONCLUSIVE-original-unstable", "?UNK8@Menu@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB420U)) {
             std::printf("  ?UNK8@Menu@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005FB420U, "FAIL-no-redirect", "?UNK8@Menu@@QAEHH@Z");
@@ -8373,6 +10203,31 @@ static bool verify_Menu_disable_menu_item_005fb480() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB480U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB480U, GetTickCount() - started_at, "?disable_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB480U, "INCONCLUSIVE-original-unstable", "?disable_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB480U)) {
             std::printf("  ?disable_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB480U, "FAIL-no-redirect", "?disable_menu_item@Menu@@QAEHHH@Z");
@@ -8493,6 +10348,31 @@ static bool verify_Menu_UNK9_005fb4e0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB4E0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK9@Menu@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB4E0U, GetTickCount() - started_at, "?UNK9@Menu@@QAEHH@Z");
+            verdict(0x005FB4E0U, "INCONCLUSIVE-original-unstable", "?UNK9@Menu@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB4E0U)) {
             std::printf("  ?UNK9@Menu@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005FB4E0U, "FAIL-no-redirect", "?UNK9@Menu@@QAEHH@Z");
@@ -8613,6 +10493,31 @@ static bool verify_Menu_enable_menu_item_005fb540() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB540U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB540U, GetTickCount() - started_at, "?enable_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB540U, "INCONCLUSIVE-original-unstable", "?enable_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB540U)) {
             std::printf("  ?enable_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB540U, "FAIL-no-redirect", "?enable_menu_item@Menu@@QAEHHH@Z");
@@ -8733,6 +10638,31 @@ static bool verify_Menu_check_menu_item_005fb760() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB760U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB760U, GetTickCount() - started_at, "?check_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB760U, "INCONCLUSIVE-original-unstable", "?check_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB760U)) {
             std::printf("  ?check_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB760U, "FAIL-no-redirect", "?check_menu_item@Menu@@QAEHHH@Z");
@@ -8853,6 +10783,31 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB7C0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB7C0U, GetTickCount() - started_at, "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            verdict(0x005FB7C0U, "INCONCLUSIVE-original-unstable", "?uncheck_menu_item@Menu@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB7C0U)) {
             std::printf("  ?uncheck_menu_item@Menu@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x005FB7C0U, "FAIL-no-redirect", "?uncheck_menu_item@Menu@@QAEHHH@Z");
@@ -8973,6 +10928,31 @@ static bool verify_Menu_id_to_index_005fb990() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FB990U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?id_to_index@Menu@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FB990U, GetTickCount() - started_at, "?id_to_index@Menu@@QAEHH@Z");
+            verdict(0x005FB990U, "INCONCLUSIVE-original-unstable", "?id_to_index@Menu@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FB990U)) {
             std::printf("  ?id_to_index@Menu@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005FB990U, "FAIL-no-redirect", "?id_to_index@Menu@@QAEHH@Z");
@@ -9083,6 +11063,31 @@ static bool verify_Menu_requested_height_005fc6a0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FC6A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?requested_height@Menu@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FC6A0U, GetTickCount() - started_at, "?requested_height@Menu@@QAEHXZ");
+            verdict(0x005FC6A0U, "INCONCLUSIVE-original-unstable", "?requested_height@Menu@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005FC6A0U)) {
             std::printf("  ?requested_height@Menu@@QAEHXZ: cannot resume redirect\n");
             verdict(0x005FC6A0U, "FAIL-no-redirect", "?requested_height@Menu@@QAEHXZ");
@@ -9183,6 +11188,26 @@ static bool verify_do_sound_005fd2b0() {
             return true;
         }
         restore(before);
+        oracle_fault_guard::begin(0x005FD2B0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        if (!stable) {
+            std::printf("  ?do_sound@@YAXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FD2B0U, GetTickCount() - started_at, "?do_sound@@YAXXZ");
+            verdict(0x005FD2B0U, "INCONCLUSIVE-original-unstable", "?do_sound@@YAXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x005FD2B0U)) {
             std::printf("  ?do_sound@@YAXXZ: cannot resume redirect\n");
             verdict(0x005FD2B0U, "FAIL-no-redirect", "?do_sound@@YAXXZ");
@@ -9284,6 +11309,31 @@ static bool verify_Palette_get_pos_005fed10() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005FED10U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_pos@Palette@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005FED10U, GetTickCount() - started_at, "?get_pos@Palette@@QAEHH@Z");
+            verdict(0x005FED10U, "INCONCLUSIVE-original-unstable", "?get_pos@Palette@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x005FED10U)) {
             std::printf("  ?get_pos@Palette@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x005FED10U, "FAIL-no-redirect", "?get_pos@Palette@@QAEHH@Z");
@@ -9403,6 +11453,31 @@ static bool verify_BasePop_set_width_00601b20() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00601B20U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_width@BasePop@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00601B20U, GetTickCount() - started_at, "?set_width@BasePop@@QAEXH@Z");
+            verdict(0x00601B20U, "INCONCLUSIVE-original-unstable", "?set_width@BasePop@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00601B20U)) {
             std::printf("  ?set_width@BasePop@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00601B20U, "FAIL-no-redirect", "?set_width@BasePop@@QAEXH@Z");
@@ -9514,6 +11589,31 @@ static bool verify_BasePop_set_loc_00601b80() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00601B80U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_loc@BasePop@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00601B80U, GetTickCount() - started_at, "?set_loc@BasePop@@QAEXHH@Z");
+            verdict(0x00601B80U, "INCONCLUSIVE-original-unstable", "?set_loc@BasePop@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00601B80U)) {
             std::printf("  ?set_loc@BasePop@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x00601B80U, "FAIL-no-redirect", "?set_loc@BasePop@@QAEXHH@Z");
@@ -9625,6 +11725,31 @@ static bool verify_BasePop_write_check_00601bb0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00601BB0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?write_check@BasePop@@QAEXJ@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00601BB0U, GetTickCount() - started_at, "?write_check@BasePop@@QAEXJ@Z");
+            verdict(0x00601BB0U, "INCONCLUSIVE-original-unstable", "?write_check@BasePop@@QAEXJ@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00601BB0U)) {
             std::printf("  ?write_check@BasePop@@QAEXJ@Z: cannot resume redirect\n");
             verdict(0x00601BB0U, "FAIL-no-redirect", "?write_check@BasePop@@QAEXJ@Z");
@@ -9726,6 +11851,31 @@ static bool verify_BasePop_read_check_00601bd0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00601BD0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?read_check@BasePop@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00601BD0U, GetTickCount() - started_at, "?read_check@BasePop@@QAEXXZ");
+            verdict(0x00601BD0U, "INCONCLUSIVE-original-unstable", "?read_check@BasePop@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00601BD0U)) {
             std::printf("  ?read_check@BasePop@@QAEXXZ: cannot resume redirect\n");
             verdict(0x00601BD0U, "FAIL-no-redirect", "?read_check@BasePop@@QAEXXZ");
@@ -9838,6 +11988,31 @@ static bool verify_BasePop_on_key_click_00604490() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00604490U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00604490U, GetTickCount() - started_at, "?on_key_click@BasePop@@QAEHHH@Z");
+            verdict(0x00604490U, "INCONCLUSIVE-original-unstable", "?on_key_click@BasePop@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00604490U)) {
             std::printf("  ?on_key_click@BasePop@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x00604490U, "FAIL-no-redirect", "?on_key_click@BasePop@@QAEHHH@Z");
@@ -9958,6 +12133,31 @@ static bool verify_BasePop_on_key_up_006044b0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006044B0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?on_key_up@BasePop@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006044B0U, GetTickCount() - started_at, "?on_key_up@BasePop@@QAEHH@Z");
+            verdict(0x006044B0U, "INCONCLUSIVE-original-unstable", "?on_key_up@BasePop@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006044B0U)) {
             std::printf("  ?on_key_up@BasePop@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x006044B0U, "FAIL-no-redirect", "?on_key_up@BasePop@@QAEHH@Z");
@@ -10077,6 +12277,31 @@ static bool verify_BasePop_set_string_color_00604730() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00604730U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00604730U, GetTickCount() - started_at, "?set_string_color@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604730U, "INCONCLUSIVE-original-unstable", "?set_string_color@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00604730U)) {
             std::printf("  ?set_string_color@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00604730U, "FAIL-no-redirect", "?set_string_color@BasePop@@QAEXHHHH@Z");
@@ -10188,6 +12413,31 @@ static bool verify_BasePop_set_string_color2_00604760() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00604760U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00604760U, GetTickCount() - started_at, "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604760U, "INCONCLUSIVE-original-unstable", "?set_string_color2@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00604760U)) {
             std::printf("  ?set_string_color2@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00604760U, "FAIL-no-redirect", "?set_string_color2@BasePop@@QAEXHHHH@Z");
@@ -10299,6 +12549,31 @@ static bool verify_BasePop_set_string_color3_00604790() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00604790U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00604790U, GetTickCount() - started_at, "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            verdict(0x00604790U, "INCONCLUSIVE-original-unstable", "?set_string_color3@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00604790U)) {
             std::printf("  ?set_string_color3@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00604790U, "FAIL-no-redirect", "?set_string_color3@BasePop@@QAEXHHHH@Z");
@@ -10410,6 +12685,31 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006047C0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006047C0U, GetTickCount() - started_at, "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            verdict(0x006047C0U, "INCONCLUSIVE-original-unstable", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006047C0U)) {
             std::printf("  ?set_string_color_hyper@BasePop@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x006047C0U, "FAIL-no-redirect", "?set_string_color_hyper@BasePop@@QAEXHHHH@Z");
@@ -10521,6 +12821,31 @@ static bool verify_BasePop_UNK3_00605180() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605180U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK3@BasePop@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605180U, GetTickCount() - started_at, "?UNK3@BasePop@@QAEXH@Z");
+            verdict(0x00605180U, "INCONCLUSIVE-original-unstable", "?UNK3@BasePop@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605180U)) {
             std::printf("  ?UNK3@BasePop@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605180U, "FAIL-no-redirect", "?UNK3@BasePop@@QAEXH@Z");
@@ -10632,6 +12957,31 @@ static bool verify_BasePop_UNK4_006051a0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006051A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK4@BasePop@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006051A0U, GetTickCount() - started_at, "?UNK4@BasePop@@QAEXH@Z");
+            verdict(0x006051A0U, "INCONCLUSIVE-original-unstable", "?UNK4@BasePop@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006051A0U)) {
             std::printf("  ?UNK4@BasePop@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x006051A0U, "FAIL-no-redirect", "?UNK4@BasePop@@QAEXH@Z");
@@ -10743,6 +13093,31 @@ static bool verify_Scroll_set_range_006059b0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006059B0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_range@Scroll@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006059B0U, GetTickCount() - started_at, "?set_range@Scroll@@QAEXHH@Z");
+            verdict(0x006059B0U, "INCONCLUSIVE-original-unstable", "?set_range@Scroll@@QAEXHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006059B0U)) {
             std::printf("  ?set_range@Scroll@@QAEXHH@Z: cannot resume redirect\n");
             verdict(0x006059B0U, "FAIL-no-redirect", "?set_range@Scroll@@QAEXHH@Z");
@@ -10854,6 +13229,31 @@ static bool verify_Scroll_set_button_color_00605a10() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605A10U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_button_color@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605A10U, GetTickCount() - started_at, "?set_button_color@Scroll@@QAEXH@Z");
+            verdict(0x00605A10U, "INCONCLUSIVE-original-unstable", "?set_button_color@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605A10U)) {
             std::printf("  ?set_button_color@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605A10U, "FAIL-no-redirect", "?set_button_color@Scroll@@QAEXH@Z");
@@ -10965,6 +13365,31 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605A50U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605A50U, GetTickCount() - started_at, "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            verdict(0x00605A50U, "INCONCLUSIVE-original-unstable", "?set_bevel_thickness@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605A50U)) {
             std::printf("  ?set_bevel_thickness@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605A50U, "FAIL-no-redirect", "?set_bevel_thickness@Scroll@@QAEXH@Z");
@@ -11076,6 +13501,31 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605A90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605A90U, GetTickCount() - started_at, "?set_bevel_upper@Scroll@@QAEXH@Z");
+            verdict(0x00605A90U, "INCONCLUSIVE-original-unstable", "?set_bevel_upper@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605A90U)) {
             std::printf("  ?set_bevel_upper@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605A90U, "FAIL-no-redirect", "?set_bevel_upper@Scroll@@QAEXH@Z");
@@ -11187,6 +13637,31 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605AD0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605AD0U, GetTickCount() - started_at, "?set_bevel_lower@Scroll@@QAEXH@Z");
+            verdict(0x00605AD0U, "INCONCLUSIVE-original-unstable", "?set_bevel_lower@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605AD0U)) {
             std::printf("  ?set_bevel_lower@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605AD0U, "FAIL-no-redirect", "?set_bevel_lower@Scroll@@QAEXH@Z");
@@ -11298,6 +13773,31 @@ static bool verify_Scroll_set_border_color_00605b10() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605B10U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_border_color@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605B10U, GetTickCount() - started_at, "?set_border_color@Scroll@@QAEXH@Z");
+            verdict(0x00605B10U, "INCONCLUSIVE-original-unstable", "?set_border_color@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605B10U)) {
             std::printf("  ?set_border_color@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605B10U, "FAIL-no-redirect", "?set_border_color@Scroll@@QAEXH@Z");
@@ -11409,6 +13909,31 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605B80U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605B80U, GetTickCount() - started_at, "?set_bar_thickness@Scroll@@QAEXH@Z");
+            verdict(0x00605B80U, "INCONCLUSIVE-original-unstable", "?set_bar_thickness@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605B80U)) {
             std::printf("  ?set_bar_thickness@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605B80U, "FAIL-no-redirect", "?set_bar_thickness@Scroll@@QAEXH@Z");
@@ -11520,6 +14045,31 @@ static bool verify_Scroll_set_pos_00605d20() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00605D20U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_pos@Scroll@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00605D20U, GetTickCount() - started_at, "?set_pos@Scroll@@QAEXH@Z");
+            verdict(0x00605D20U, "INCONCLUSIVE-original-unstable", "?set_pos@Scroll@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00605D20U)) {
             std::printf("  ?set_pos@Scroll@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00605D20U, "FAIL-no-redirect", "?set_pos@Scroll@@QAEXH@Z");
@@ -11621,6 +14171,31 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00606EA0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00606EA0U, GetTickCount() - started_at, "?set_thumb_rect@Scroll@@QAEXXZ");
+            verdict(0x00606EA0U, "INCONCLUSIVE-original-unstable", "?set_thumb_rect@Scroll@@QAEXXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00606EA0U)) {
             std::printf("  ?set_thumb_rect@Scroll@@QAEXXZ: cannot resume redirect\n");
             verdict(0x00606EA0U, "FAIL-no-redirect", "?set_thumb_rect@Scroll@@QAEXXZ");
@@ -11732,6 +14307,31 @@ static bool verify_BaseButton_set_text_color_00607360() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00607360U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00607360U, GetTickCount() - started_at, "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            verdict(0x00607360U, "INCONCLUSIVE-original-unstable", "?set_text_color@BaseButton@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00607360U)) {
             std::printf("  ?set_text_color@BaseButton@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00607360U, "FAIL-no-redirect", "?set_text_color@BaseButton@@QAEXHHHH@Z");
@@ -11843,6 +14443,31 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006073A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006073A0U, GetTickCount() - started_at, "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            verdict(0x006073A0U, "INCONCLUSIVE-original-unstable", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006073A0U)) {
             std::printf("  ?set_text_color2@BaseButton@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x006073A0U, "FAIL-no-redirect", "?set_text_color2@BaseButton@@QAEXHHHH@Z");
@@ -11954,6 +14579,31 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006073E0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006073E0U, GetTickCount() - started_at, "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            verdict(0x006073E0U, "INCONCLUSIVE-original-unstable", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006073E0U)) {
             std::printf("  ?set_text_color3@BaseButton@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x006073E0U, "FAIL-no-redirect", "?set_text_color3@BaseButton@@QAEXHHHH@Z");
@@ -12065,6 +14715,31 @@ static bool verify_BaseButton_set_00607c80() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00607C80U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set@BaseButton@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00607C80U, GetTickCount() - started_at, "?set@BaseButton@@QAEXH@Z");
+            verdict(0x00607C80U, "INCONCLUSIVE-original-unstable", "?set@BaseButton@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00607C80U)) {
             std::printf("  ?set@BaseButton@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x00607C80U, "FAIL-no-redirect", "?set@BaseButton@@QAEXH@Z");
@@ -12176,6 +14851,31 @@ static bool verify_Dialog_set_selected_id_006099d0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x006099D0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x006099D0U, GetTickCount() - started_at, "?set_selected_id@Dialog@@QAEXH@Z");
+            verdict(0x006099D0U, "INCONCLUSIVE-original-unstable", "?set_selected_id@Dialog@@QAEXH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x006099D0U)) {
             std::printf("  ?set_selected_id@Dialog@@QAEXH@Z: cannot resume redirect\n");
             verdict(0x006099D0U, "FAIL-no-redirect", "?set_selected_id@Dialog@@QAEXH@Z");
@@ -12278,6 +14978,31 @@ static bool verify_Dialog_get_selected_id_00609a50() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00609A50U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?get_selected_id@Dialog@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00609A50U, GetTickCount() - started_at, "?get_selected_id@Dialog@@QAEHXZ");
+            verdict(0x00609A50U, "INCONCLUSIVE-original-unstable", "?get_selected_id@Dialog@@QAEHXZ");
+            return true;
+        }
         if (!resume_redirect_at(0x00609A50U)) {
             std::printf("  ?get_selected_id@Dialog@@QAEHXZ: cannot resume redirect\n");
             verdict(0x00609A50U, "FAIL-no-redirect", "?get_selected_id@Dialog@@QAEHXZ");
@@ -12398,6 +15123,31 @@ static bool verify_Dialog_id_to_pos_00609af0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00609AF0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00609AF0U, GetTickCount() - started_at, "?id_to_pos@Dialog@@QAEHH@Z");
+            verdict(0x00609AF0U, "INCONCLUSIVE-original-unstable", "?id_to_pos@Dialog@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00609AF0U)) {
             std::printf("  ?id_to_pos@Dialog@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x00609AF0U, "FAIL-no-redirect", "?id_to_pos@Dialog@@QAEHH@Z");
@@ -12518,6 +15268,31 @@ static bool verify_Dialog_pos_to_id_00609b50() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00609B50U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00609B50U, GetTickCount() - started_at, "?pos_to_id@Dialog@@QAEHH@Z");
+            verdict(0x00609B50U, "INCONCLUSIVE-original-unstable", "?pos_to_id@Dialog@@QAEHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00609B50U)) {
             std::printf("  ?pos_to_id@Dialog@@QAEHH@Z: cannot resume redirect\n");
             verdict(0x00609B50U, "FAIL-no-redirect", "?pos_to_id@Dialog@@QAEHH@Z");
@@ -12637,6 +15412,31 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00609C90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00609C90U, GetTickCount() - started_at, "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609C90U, "INCONCLUSIVE-original-unstable", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00609C90U)) {
             std::printf("  ?set_dialog_text_color@Dialog@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00609C90U, "FAIL-no-redirect", "?set_dialog_text_color@Dialog@@QAEXHHHH@Z");
@@ -12748,6 +15548,31 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00609CC0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00609CC0U, GetTickCount() - started_at, "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609CC0U, "INCONCLUSIVE-original-unstable", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00609CC0U)) {
             std::printf("  ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00609CC0U, "FAIL-no-redirect", "?set_dialog_text_color2@Dialog@@QAEXHHHH@Z");
@@ -12859,6 +15684,31 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00609CF0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00609CF0U, GetTickCount() - started_at, "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            verdict(0x00609CF0U, "INCONCLUSIVE-original-unstable", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00609CF0U)) {
             std::printf("  ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z: cannot resume redirect\n");
             verdict(0x00609CF0U, "FAIL-no-redirect", "?set_dialog_text_color3@Dialog@@QAEXHHHH@Z");
@@ -12970,6 +15820,31 @@ static bool verify_Caviar_UNK10_00618320() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00618320U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00618320U, GetTickCount() - started_at, "?UNK10@Caviar@@QAEXHHH@Z");
+            verdict(0x00618320U, "INCONCLUSIVE-original-unstable", "?UNK10@Caviar@@QAEXHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00618320U)) {
             std::printf("  ?UNK10@Caviar@@QAEXHHH@Z: cannot resume redirect\n");
             verdict(0x00618320U, "FAIL-no-redirect", "?UNK10@Caviar@@QAEXHHH@Z");
@@ -13081,6 +15956,31 @@ static bool verify_Caviar_UNK11_00618340() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00618340U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00618340U, GetTickCount() - started_at, "?UNK11@Caviar@@QAEXHHH@Z");
+            verdict(0x00618340U, "INCONCLUSIVE-original-unstable", "?UNK11@Caviar@@QAEXHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x00618340U)) {
             std::printf("  ?UNK11@Caviar@@QAEXHHH@Z: cannot resume redirect\n");
             verdict(0x00618340U, "FAIL-no-redirect", "?UNK11@Caviar@@QAEXHHH@Z");
@@ -13193,6 +16093,31 @@ static bool verify_ButtonGroup_set_0062b870() {
         }
         restore(before);
         std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0062B870U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            target(staged, (int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?set@ButtonGroup@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0062B870U, GetTickCount() - started_at, "?set@ButtonGroup@@QAEHHH@Z");
+            verdict(0x0062B870U, "INCONCLUSIVE-original-unstable", "?set@ButtonGroup@@QAEHHH@Z");
+            return true;
+        }
         if (!resume_redirect_at(0x0062B870U)) {
             std::printf("  ?set@ButtonGroup@@QAEHHH@Z: cannot resume redirect\n");
             verdict(0x0062B870U, "FAIL-no-redirect", "?set@ButtonGroup@@QAEHHH@Z");

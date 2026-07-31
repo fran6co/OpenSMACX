@@ -389,16 +389,20 @@ class EmissionTests(unittest.TestCase):
     def test_the_process_is_left_as_it_was_found(self):
         text = generator.emit(generator.candidates(
             *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
-        # Four restores now: one between the calls so both sides start equal, one
-        # after so the oracle does not perturb the game that follows it, and one
-        # on each fault-escape path - a body that died may have written globals
-        # before it did, and leaving those is how three runs ended in an
-        # unhandled division by zero inside unrecovered code reading state a
-        # restore had made inconsistent.
-        self.assertEqual(4, text.count("restore(before)"))
+        # FIVE restores, counted from the emitted text rather than reasoned
+        # about: the original's fault-escape, after the original run, after the
+        # control run, the recovered body's fault-escape, and the final one that
+        # leaves the process as it was found. Each call is followed by a restore
+        # so the next starts from identical globals, and each escape restores
+        # before returning - a body that died may have written globals before it
+        # did, and leaving those is how three runs ended in an unhandled
+        # division by zero inside unrecovered code reading state a restore had
+        # made inconsistent.
+        self.assertEqual(5, text.count("restore(before)"))
         # Every escape restores before it returns, which is the property; the
         # count above only guards the arithmetic.
-        for spelling in ("INCONCLUSIVE-original-faulted", "FAIL-faulted"):
+        for spelling in ("INCONCLUSIVE-original-faulted", "FAIL-faulted",
+                         "INCONCLUSIVE-original-unstable"):
             escape = text[text.index(spelling) - 900:text.index(spelling)]
             self.assertIn("restore(before)", escape,
                           f"the {spelling} path leaves globals perturbed")
@@ -410,9 +414,16 @@ class EmissionTests(unittest.TestCase):
             *self._paths([row()]), SelectionTests.REDIRECTED, SIZES))
         self.assertIn('#include "oracle_fault_guard.h"', text)
         self.assertIn("oracle_fault_guard::arm();", text)
-        # Both sides: the original, and the recovered body.
-        self.assertEqual(2, text.count("oracle_fault_guard::begin("))
-        self.assertEqual(2, text.count("setjmp(*oracle_fault_guard::buffer())"))
+        # THREE calls now: the original, the original AGAIN as its own
+        # control, and the recovered body. Asserted as an INVARIANT rather than
+        # a literal - every call into guest code must be guarded, and a count
+        # that has to be edited whenever a call is added is a count that will
+        # eventually be edited without checking why.
+        calls = text.count("target(")
+        self.assertEqual(3, calls, "expected original, control and recovered")
+        self.assertEqual(calls, text.count("oracle_fault_guard::begin("))
+        self.assertEqual(calls,
+                         text.count("setjmp(*oracle_fault_guard::buffer())"))
 
     def test_a_fault_on_the_ORIGINAL_side_RESUMES_the_redirect(self):
         # THE most dangerous failure mode of the guard. The redirect is suspended
