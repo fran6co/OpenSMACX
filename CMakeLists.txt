@@ -11,6 +11,12 @@ set(OPENSMACX_PYTHON "" CACHE FILEPATH "Python interpreter with tools/requiremen
 set(OPENSMACX_WINE "" CACHE FILEPATH "Wine executable used to run Windows tools")
 set(OPENSMACX_WINE_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/wineprefix"
     CACHE PATH "Dedicated owned Wine prefix used only by this build's runtime tests")
+# The gate's suite is 58 tests of which 51 are host-side and independent; the
+# seven Wine-backed ones share the single prefix above and are serialised
+# against each other by a RESOURCE_LOCK. 8, not the core count: with the Wine
+# tests on a lock they are the critical path, so more lanes buy nothing.
+set(OPENSMACX_CTEST_JOBS 8 CACHE STRING
+    "Parallel CTest lanes used by verify-recovery-batch")
 # 60, measured, not guessed. At 20 s the game never reached the
 # scenario_opening_movie call site that triggers the DEFERRED oracle phase, so
 # four suites - including the 108 generated ones - silently did not run while the
@@ -1915,8 +1921,43 @@ if(MINGW AND BUILD_TESTING)
         VERBATIM
     )
 
+    # Every test that goes through tools/run_windows_test.py drives the ONE
+    # marker-protected prefix at ${OPENSMACX_WINE_PREFIX}, and that runner
+    # stops the prefix when it finishes. Two of them at once therefore means
+    # one killing the other's wineserver mid-test: measured, plain `ctest -j8`
+    # failed 1 of 58 (recovery-leaf-tests) where the serial run passed 58/58,
+    # and an earlier lane failed 3. RESOURCE_LOCK is what lets -j be honest -
+    # CTest never schedules two holders of the same lock together.
+    #
+    # if(TEST) rather than a bare set_tests_properties, because these tests
+    # exist only when cross-compiling; and the list is checked mechanically by
+    # the wine-test-lock-check test below, because a wine-backed test MISSING
+    # from it does not fail, it flakes.
+    foreach(_wine_locked_test IN ITEMS
+            recovery-leaf-tests
+            recovery-leaf-tests-reversed
+            recovery-gameplay-tests
+            globals-diff-tests
+            oracle-fault-guard-tests
+            lifted-oracle-fold-tests
+            recovery-oracle)
+        if(TEST ${_wine_locked_test})
+            set_tests_properties(${_wine_locked_test} PROPERTIES
+                RESOURCE_LOCK wineprefix)
+        endif()
+    endforeach()
+
+    # Reads the generated CTestTestfile.cmake, so it checks what CTest will
+    # actually run rather than what this file appears to say.
+    add_test(NAME wine-test-lock-check
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_wine_test_locks.py"
+            --ctest-file "${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake"
+    )
+
     add_custom_target(verify-recovery-batch
         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
+            --parallel "${OPENSMACX_CTEST_JOBS}"
         DEPENDS
             verify-recovery-metadata
             verify-recovery-abi
