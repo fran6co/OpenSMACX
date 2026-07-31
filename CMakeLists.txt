@@ -1004,6 +1004,12 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(mutation-harness-tool-tests test_mutate_and_verify.py)
 
+    # The runner that every Wine-backed test goes through. Its one job beyond
+    # invoking wine is to stop the owned prefix afterwards, and skipping that
+    # to "save teardown" cost 1.05 s per CTest invocation because the retained
+    # session holds CTest's output pipe open.
+    opensmacx_add_python_tool_test(windows-test-runner-tests test_run_windows_test.py)
+
     # Runs on the stock interpreter on purpose. The doctor's job is to diagnose
     # a machine that has none of the dependencies yet, so a test that needed
     # them would not be testing the thing that matters.
