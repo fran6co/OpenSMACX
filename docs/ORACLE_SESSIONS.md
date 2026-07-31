@@ -12,6 +12,57 @@ trust it.
 
 ---
 
+## 2026-07-31 — the staging route pays: 83 proven becomes 89
+
+Both mandatory numbers moved, in the right order. The reachable set grew first
+(108 oracles -> 118) and then was spent: **proven_recovered 83 -> 89 functions,
+7,680 -> 7,879 bytes, 3.92% -> 4.02% of recovered bytes.**
+
+### What the bounded oracles returned
+
+All ten produced a verdict: **6 PASS, 4 INCONCLUSIVE-no-effect, 0 FAIL.** Six
+were addresses no route had ever proven:
+
+| address | function |
+| --- | --- |
+| 0x00483820 | `?UNK5@NetWin@@QAEXXZ` |
+| 0x004B9F90 | `?set_loc@StatusWin@@QAEXHH@Z` |
+| 0x004BA720 | `?UNK1@TutWin@@QAEXXZ` |
+| 0x004BDDD0 | `?UNK3@TutWin@@QAEXH@Z` |
+| 0x004C5920 | `?is_disabled@Midi_Device@@QAEHXZ` |
+| 0x004C5A80 | `?set_codec@Wave_In_Device@@QAEHK@Z` |
+
+Every one belongs to a class with NO pinned `sizeof` - NetWin, StatusWin,
+TutWin, Midi_Device, Wave_In_Device - which is to say they are precisely the
+functions the exact-size requirement had been excluding. A bounded PASS is no
+weaker than a pinned one: both compare the original and the recovered body on
+the same staged buffer, and the bound decides only how much zero-filled room
+they were given.
+
+Whole run: 118 verdicts, 50 PASS, 45 INCONCLUSIVE-no-effect, 22
+INCONCLUSIVE-original-faulted, 1 FAIL.
+
+### The gate still fails, and is left failing
+
+The one FAIL is `?clear_links@Buffer@@QAEXXZ` at 0x005DEF90. `Buffer`'s size is
+PINNED, so it is not a staging artifact, and it has been open since the
+fault-guard session. A FAIL fails the suite by design, so the gate reports
+failed and stays that way rather than being quieted.
+
+### Correction: the smoke duration is not a measurement variable
+
+Both CMake caches were handing `--duration 20` while the source has said 60
+since the gate was widened, and the previous commit here warned that fixing it
+would make runs incomparable, "because it changes how far the game gets before
+the deferred phase".
+
+Re-run at 60 s, the distribution is **identical**: 118 verdicts, 50 / 45 / 22 /
+1, the same in every bucket. The caution was wrong. The deferred phase runs
+from `scenario_opening_movie` at a fixed point in startup, so the extra forty
+seconds happen entirely AFTER the verdicts exist, and runs at 20 s and 60 s are
+directly comparable. Worth knowing in both directions: the duration cannot buy
+more coverage either.
+
 ## 2026-07-31 — 2.3 was closed against the wrong evidence; the IDB has the layouts
 
 Phase 2.3 was closed here on seven mechanisms, each with a control, all
