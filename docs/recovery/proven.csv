@@ -1,6 +1,12 @@
 address,name,size,mechanism,evidence
 0x0046FB10,?main_caption@MapWin@@QAEXXZ,16,hybrid_runtime,src/generated_signature_oracle.cpp
+0x00483820,?UNK5@NetWin@@QAEXXZ,28,hybrid_runtime,src/generated_signature_oracle.cpp
+0x004B9F90,?set_loc@StatusWin@@QAEXHH@Z,40,hybrid_runtime,src/generated_signature_oracle.cpp
+0x004BA720,?UNK1@TutWin@@QAEXXZ,65,hybrid_runtime,src/generated_signature_oracle.cpp
 0x004BA830,?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z,51,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
+0x004BDDD0,?UNK3@TutWin@@QAEXH@Z,16,hybrid_runtime,src/generated_signature_oracle.cpp
+0x004C5920,?is_disabled@Midi_Device@@QAEHXZ,18,hybrid_runtime,src/generated_signature_oracle.cpp
+0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,32,hybrid_runtime,src/generated_signature_oracle.cpp
 0x004E25E0,?pid_2_idx@AlphaNet@@QAEHK@Z,39,hybrid_runtime,src/generated_signature_oracle.cpp
 0x004E2610,?pid_2_who@AlphaNet@@QAEHK@Z,67,legacy_leaf_island,CMakeLists.txt recovery-oracles --address
 0x004E2660,?who_2_pid@AlphaNet@@QAEHH@Z,72,legacy_leaf_island,CMakeLists.txt recovery-oracles --address

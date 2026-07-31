@@ -110,11 +110,11 @@
         "percent_of_lift_scope_bytes": 91.86
       },
       "proven_recovered": {
-        "bytes": 7680,
+        "bytes": 7879,
         "denominator": "recovered",
-        "functions": 83,
+        "functions": 89,
         "meaning": "recovered bytes an oracle has executed against the original and found to agree",
-        "percent_of_recovered_bytes": 3.92
+        "percent_of_recovered_bytes": 4.02
       },
       "recovered": {
         "bytes": 196123,
@@ -125,17 +125,17 @@
         "loop": {
           "bytes": 110922,
           "functions": 437,
-          "percent_of_unproven_bytes": 58.86
+          "percent_of_unproven_bytes": 58.92
         },
         "seam_forwarding": {
           "bytes": 14707,
           "functions": 761,
-          "percent_of_unproven_bytes": 7.8
+          "percent_of_unproven_bytes": 7.81
         },
         "straight_line": {
-          "bytes": 62282,
-          "functions": 1259,
-          "percent_of_unproven_bytes": 33.05
+          "bytes": 62083,
+          "functions": 1253,
+          "percent_of_unproven_bytes": 32.98
         },
         "x87": {
           "bytes": 532,
@@ -144,12 +144,12 @@
         }
       },
       "unproven_recovered": {
-        "bytes": 188443,
+        "bytes": 188244,
         "denominator": "recovered",
         "direction": "must go down",
-        "functions": 2469,
+        "functions": 2463,
         "meaning": "recovered bytes never executed against the original: declared complete, never demonstrated equivalent",
-        "percent_of_recovered_bytes": 96.08
+        "percent_of_recovered_bytes": 95.98
       }
     },
     "total": 6000,

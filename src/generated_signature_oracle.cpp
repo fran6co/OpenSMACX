@@ -12,6 +12,12 @@
 // cannot mint one. An earlier revision minted 37 that had never run.
 //
 // PROVEN-AGAINST-ORIGINAL: 0x0046FB10  ?main_caption@MapWin@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x00483820  ?UNK5@NetWin@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x004B9F90  ?set_loc@StatusWin@@QAEXHH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x004BA720  ?UNK1@TutWin@@QAEXXZ
+// PROVEN-AGAINST-ORIGINAL: 0x004BDDD0  ?UNK3@TutWin@@QAEXH@Z
+// PROVEN-AGAINST-ORIGINAL: 0x004C5920  ?is_disabled@Midi_Device@@QAEHXZ
+// PROVEN-AGAINST-ORIGINAL: 0x004C5A80  ?set_codec@Wave_In_Device@@QAEHK@Z
 // PROVEN-AGAINST-ORIGINAL: 0x004E25E0  ?pid_2_idx@AlphaNet@@QAEHK@Z
 // PROVEN-AGAINST-ORIGINAL: 0x005D5440  ?fill@GraphicWin@@QAEHHHHHH@Z
 // PROVEN-AGAINST-ORIGINAL: 0x005DACB0  ?set_text_color@Buffer@@QAEXHHHH@Z
@@ -55,7 +61,7 @@
 // PROVEN-AGAINST-ORIGINAL: 0x00618320  ?UNK10@Caviar@@QAEXHHH@Z
 // PROVEN-AGAINST-ORIGINAL: 0x0062B870  ?set@ButtonGroup@@QAEHHH@Z
 //
-// 75 function(s) below carry NO marker: they have not run
+// 69 function(s) below carry NO marker: they have not run
 // yet, or they ran and reported INCONCLUSIVE-no-effect, which means
 // every seed bailed on a guard and the agreement proves nothing.
 
