@@ -511,15 +511,66 @@ def main() -> int:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("classes", nargs="*", help="class names, e.g. Console")
+    parser.add_argument("--score-csv", type=Path,
+                        help="score a name,size CSV of size HYPOTHESES against "
+                             "the pinned classes; exits non-zero on ANY wrong "
+                             "answer, because a wrong layout compiles perfectly "
+                             "and corrupts memory at runtime")
     parser.add_argument("--check-pinned", action="store_true",
                         help="replay the derivation against every hand-pinned "
                              "class and summarise agreement")
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     args = parser.parse_args()
 
+    pinned = load_pinned()
+
+    if args.score_csv:
+        # THE GATE EVERY HYPOTHESIS SOURCE MUST PASS. Thinker's headers failed
+        # it at 5 right and 7 wrong - its same-named structs are different
+        # types - and the IDB reachable from python-idb fails it at 31 right
+        # and 2 wrong. Neither may stage a receiver until this reads zero
+        # wrong, because the failure is silent: a wrong size compiles, links,
+        # and corrupts memory only at run time.
+        import csv as _csv
+        claimed = {}
+        with args.score_csv.open(newline="", encoding="utf-8-sig") as handle:
+            for row in _csv.DictReader(handle):
+                name = (row.get("struct") or row.get("class")
+                        or row.get("name") or "").strip()
+                raw = (row.get("size") or "").strip()
+                if not name or not raw:
+                    continue
+                try:
+                    claimed[name] = int(raw, 0)
+                except ValueError:
+                    continue
+        right = bad = quiet = 0
+        for name, truth in sorted(pinned.items()):
+            got = claimed.get(name)
+            if got is None:
+                quiet += 1
+                continue
+            if got == truth:
+                right += 1
+            else:
+                bad += 1
+                print(f"  WRONG {name:24} claims 0x{got:X}, pinned 0x{truth:X}")
+        print(f"\n{args.score_csv.name}: {len(claimed)} size(s) claimed")
+        print(f"  against {len(pinned)} pinned classes: {right} right, "
+              f"{bad} WRONG, {quiet} not claimed")
+        if bad:
+            print("  REFUSED. Zero wrong is the bar; a wrong layout is not a "
+                  "coverage gap, it is memory corruption at run time.")
+            return 1
+        if not right:
+            print("  REFUSED. Nothing verifiable: this CSV overlaps no class "
+                  "whose size is known, so it has not been checked at all.")
+            return 1
+        print("  accepted as a hypothesis source for classes it also covers")
+        return 0
+
     image = Image(args.exe)
     by_address, _ = load_functions()
-    pinned = load_pinned()
     globals_ = global_objects(image, by_address)
     # Scanned once: the sweep is over the whole .text and every class asks the
     # same question of it.

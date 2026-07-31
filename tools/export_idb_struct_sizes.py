@@ -40,6 +40,10 @@ try:
     import idaapi
     import idautils
     import idc
+    try:
+        import ida_typeinf          # IDA 7.4+; absent on older builds
+    except ImportError:
+        ida_typeinf = None
 except ImportError:  # pragma: no cover - only importable inside IDA
     raise SystemExit(
         "This script runs INSIDE IDA. It is checked in so that whoever has the "
@@ -51,24 +55,59 @@ import csv
 import os
 
 
+def _type_library():
+    """The local type library, across three generations of the API."""
+    for module in (globals().get("ida_typeinf"), idaapi):
+        if module is None:
+            continue
+        getter = getattr(module, "get_idati", None)
+        if getter:
+            return module, getter()
+    return None, None
+
+
+def _ordinal_limit(module, library):
+    """IDA 9 renamed get_ordinal_qty to get_ordinal_limit."""
+    for name in ("get_ordinal_limit", "get_ordinal_qty"):
+        call = getattr(module, name, None)
+        if call:
+            try:
+                return call(library)
+            except TypeError:
+                return call()
+    return 0
+
+
 def structures():
-    """(name, size) for every structure, across IDA's two eras of API."""
+    """(name, size) for every structure, across IDA's eras of API.
+
+    IDA 9 folded structures into the type system and removed
+    `idautils.Structs`, so the type-library walk is tried FIRST and the old
+    struct API is only a fallback. Both are attempted rather than one being
+    chosen from the version string, because a version test would be one more
+    thing to get wrong on a machine this was never run on.
+    """
     found = []
-    # IDA 7.4+ exposes the type library; older builds use the struct API.
-    if hasattr(idaapi, "get_idati") and hasattr(idaapi, "get_ordinal_qty"):
-        library = idaapi.get_idati()
-        for ordinal in range(1, idaapi.get_ordinal_qty(library) + 1):
-            tif = idaapi.tinfo_t()
+    module, library = _type_library()
+    if library is not None:
+        tinfo = getattr(module, "tinfo_t", None) or idaapi.tinfo_t
+        for ordinal in range(1, _ordinal_limit(module, library) + 1):
+            tif = tinfo()
             if not tif.get_numbered_type(library, ordinal):
                 continue
             if not tif.is_struct():
                 continue
             name = tif.get_type_name()
-            if name:
-                found.append((name, tif.get_size()))
+            size = tif.get_size()
+            # BADSIZE comes back as -1 or a huge unsigned; either way it is
+            # not an answer and must not be written as one.
+            if name and size and size != idaapi.BADSIZE and size < (1 << 31):
+                found.append((name, size))
     if not found and hasattr(idautils, "Structs"):
         for _, sid, name in idautils.Structs():
-            found.append((name, idc.get_struc_size(sid)))
+            size = idc.get_struc_size(sid)
+            if size:
+                found.append((name, size))
     return found
 
 
