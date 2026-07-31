@@ -750,3 +750,123 @@ def apply_call(state: State, target) -> State:
     # more precise statement and it makes Z3 answer `unknown`.
     after.mem = CALLEE_MEMORY(target, visible, esp)
     return after
+
+
+# ---------------------------------------------------------------------------
+# The obligation
+#
+# Two bodies are equivalent when, started from IDENTICAL state, they agree on
+# what a caller can observe:
+#
+#   the projected return value   EAX, plus EDX for a 64-bit return
+#   every byte at or above ESP0  which is everything the caller can still name
+#
+# The private region is exactly `addr < ESP0`. That is exact rather than
+# conservative, and it is why the two sides laying their frames out completely
+# differently costs nothing: those bytes are dead the moment either returns.
+#
+# `forall a >= ESP0` is posed as a FREE variable rather than a z3.ForAll. To
+# prove a universal you refute its negation on an arbitrary witness, and the
+# free form stays in the decidable fragment - the ForAll form is exactly the
+# shape that made Z3 answer `unknown` for the callee canonicalisation.
+# ---------------------------------------------------------------------------
+
+PROVED = "PROVED"
+REFUTED = "REFUTED"
+UNKNOWN = "UNKNOWN"
+
+
+def equivalence_query(before: State, left: State, right: State,
+                      returns_value: bool = True, wide_return: bool = False):
+    """The NEGATION of equivalence: satisfiable exactly when they differ."""
+    probe = z3.BitVec("obligation_probe", 32)
+    differences = []
+    if returns_value:
+        differences.append(left.regs["eax"] != right.regs["eax"])
+        if wide_return:
+            differences.append(left.regs["edx"] != right.regs["edx"])
+    differences.append(z3.And(
+        z3.UGE(probe, before.regs["esp"]),
+        z3.Select(left.mem, probe) != z3.Select(right.mem, probe)))
+    return z3.Or(*differences)
+
+
+def prove_equivalent(original: bytes, recovered: bytes, address: int = 0x1000,
+                     returns_value: bool = True, wide_return: bool = False,
+                     timeout_ms: int = 60000, recovered_address: int = None,
+                     receiver_disjoint: bool = True):
+    """(verdict, detail) for two bodies started from identical state.
+
+    Returns UNKNOWN rather than guessing, and the caller must treat it as a
+    non-result. An `unknown` folded into a boolean reads as a PROOF, which is
+    the single most dangerous thing this module could do - it has already
+    happened once here, to a check written as `== unsat`.
+    """
+    before = State()
+    left_start, right_start = before.copy(), before.copy()
+    try:
+        left = encode_function(original, address, left_start)
+        # The recovered body is compiled at its own base - section-relative in
+        # an object file, nothing to do with the original's canonical address -
+        # so its branch targets are only meaningful against that base.
+        right = encode_function(recovered,
+                                address if recovered_address is None
+                                else recovered_address, right_start)
+    except Unsupported as reason:
+        return UNKNOWN, f"not encodable: {reason}"
+
+    solver = z3.Solver()
+    solver.set("timeout", timeout_ms)
+    # A STACK POINTER THAT CANNOT WRAP. Without this the solver is free to put
+    # ESP0 within a few bytes of zero, where `esp0 - 4` is UNSIGNED-GREATER
+    # than esp0 - so a `push` writing the caller's own frame slot lands
+    # "above ESP0" and shows up as an observable difference. That produced a
+    # spurious counterexample on ?UNK3@TutWin, whose two bodies are plainly
+    # equivalent and differ only in that the original builds a frame.
+    #
+    # The bound is a precondition on the machine, not a weakening of the
+    # obligation: no thread in this program runs with a stack pointer in the
+    # first 64 KiB or the last, and a proof under it is a proof for every stack
+    # that actually exists.
+    esp0 = before.regs["esp"]
+    solver.add(z3.UGT(esp0, z3.BitVecVal(0x00010000, 32)))
+    solver.add(z3.ULT(esp0, z3.BitVecVal(0xF0000000, 32)))
+    # THE RECEIVER IS NOT THE ARGUMENT AREA, and without saying so every
+    # __thiscall method refutes. Left free, the solver lays the object on top
+    # of the caller's own pushed arguments - measured on
+    # ?set_text_color@Buffer, where it chose ecx = 0xb04001a8 against
+    # esp0 = 0xb04006f4 so that `this + 0x56c` and `[esp0 + 0x10]` are the same
+    # bytes. Under that aliasing the two bodies really do differ: the original
+    # reads all four arguments interleaved with its stores, ours reads each one
+    # immediately before storing it, so a store that clobbers a not-yet-read
+    # argument is visible in one and not the other.
+    #
+    # No real call does this - the arguments a caller pushes are not inside the
+    # object it is calling a method on - so it is stated as a precondition
+    # rather than left to be rediscovered as fourteen refutations.
+    #
+    # THE LIMIT, because it is an assumption and not a derivation: the window
+    # is a fixed 64 KiB rather than the object's real extent, which is not
+    # known here. A stack-allocated receiver genuinely close to ESP is
+    # therefore excluded from the theorem rather than proved about, so this
+    # narrows what a PROOF covers and can never manufacture one.
+    if receiver_disjoint:
+        # ONE wrapped difference, bounded on BOTH sides. Written first as
+        # `UGT(d, 64K) or UGT(-d, 64K)` it was vacuous: for an object just
+        # BELOW the stack, d is a huge unsigned number and the first disjunct
+        # is trivially true, so the precondition permitted precisely the
+        # aliasing it existed to exclude. The two-sided form says what was
+        # meant - far above AND far below.
+        distance = before.regs["ecx"] - esp0
+        solver.add(z3.UGT(distance, z3.BitVecVal(0x00010000, 32)))
+        solver.add(z3.ULT(distance, z3.BitVecVal(0xFFFF0000, 32)))
+    solver.add(equivalence_query(before, left, right, returns_value,
+                                 wide_return))
+    result = solver.check()
+    if result == z3.unsat:
+        return PROVED, None
+    if result == z3.sat:
+        # A counterexample on a body believed correct is the most valuable
+        # outcome available, so it is returned rather than summarised away.
+        return REFUTED, solver.model()
+    return UNKNOWN, solver.reason_unknown()
