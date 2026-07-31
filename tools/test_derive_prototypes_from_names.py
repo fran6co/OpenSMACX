@@ -1022,7 +1022,8 @@ class PurgeCatalogueTests(unittest.TestCase):
         # allow-list is widened with it rather than loosened into a wildcard -
         # and deliberately still admits no mnemonic and no byte.
         allowed = re.compile(
-            r"^(one ret imm|\d+ distinct ret imm|no body_ranges"
+            r"^(one reachable ret imm|\d+ distinct reachable ret imm"
+            r"|the only ret imm|no body_ranges"
             r"|no ret and no direct tail jump|a direct tail jump)")
         forbidden = re.compile(r"\b(mov|jmp|sub|push|pop|lea|ecx|eax|esp)\b")
         with prototypes.PURGE_CSV.open(newline="",
@@ -1030,6 +1031,61 @@ class PurgeCatalogueTests(unittest.TestCase):
             for row in csv.DictReader(handle):
                 self.assertRegex(row["evidence"], allowed)
                 self.assertNotRegex(row["evidence"], forbidden)
+
+    def test_a_ret_the_entry_cannot_reach_is_not_evidence(self):
+        # The defect this pins: a linear sweep cannot tell a live `ret` from a
+        # dead one. `?_JumpToContinuation` ends at `jmp eax` and the epilogue
+        # after it is unreachable; `?terminate`'s only `ret` is in an EH
+        # funclet. Both numbers happened to be right, which is exactly why
+        # calling them "verified" was an overstatement worth refusing.
+        with prototypes.PURGE_CSV.open(newline="",
+                                       encoding="utf-8-sig") as handle:
+            rows = {row["address"]: row for row in csv.DictReader(handle)}
+        for address in ("0x00644F45", "0x006492CA"):
+            self.assertEqual(prototypes.SOURCE_NONE, rows[address]["source"],
+                             address)
+            self.assertIn("not reachable from the entry",
+                          rows[address]["evidence"], address)
+
+    def test_discarding_a_dead_ret_can_RESOLVE_an_ambiguous_body(self):
+        # The same filter that withdraws a claim also earns one. __ArrayUnwind
+        # carries two `ret`s - a bare one in its EH unwind funclet and `ret 0x10`
+        # on the reachable path - and two distinct immediates used to read as
+        # ambiguous. Dropping the unreachable one leaves a single answer.
+        with prototypes.PURGE_CSV.open(newline="",
+                                       encoding="utf-8-sig") as handle:
+            rows = {row["address"]: row for row in csv.DictReader(handle)}
+        row = rows["0x00645764"]
+        self.assertEqual(prototypes.SOURCE_BODY, row["source"])
+        self.assertEqual("0x10", row["observed"] if "observed" in row
+                         else row.get("purge", "0x10"))
+
+    def test_reachable_addresses_stops_at_ret_and_at_an_indirect_jump(self):
+        # Duck-typed instructions, so this runs where capstone is absent - the
+        # same reason the module imports it lazily.
+        class Fake:
+            def __init__(self, address, size, mnemonic, op_str=""):
+                self.address, self.size = address, size
+                self.mnemonic, self.op_str = mnemonic, op_str
+
+        # entry -> jmp eax ; then a dead epilogue that a sweep would believe.
+        body = [Fake(0x1000, 2, "xor", "eax, eax"),
+                Fake(0x1002, 2, "jmp", "eax"),
+                Fake(0x1004, 1, "pop", "edi"),
+                Fake(0x1005, 3, "ret", "8")]
+        reached = prototypes.reachable_addresses(body, 0x1000)
+        self.assertEqual({0x1000, 0x1002}, reached)
+        self.assertEqual(set(), prototypes.ret_immediates(
+            [one for one in body if one.address in reached]))
+
+        # A conditional branch must contribute BOTH edges, or the filter would
+        # withhold "verified" from ordinary branching code.
+        both = [Fake(0x2000, 2, "je", "0x2006"),
+                Fake(0x2002, 3, "mov", "eax, 1"),
+                Fake(0x2005, 1, "ret"),
+                Fake(0x2006, 3, "ret", "4")]
+        reached = prototypes.reachable_addresses(both, 0x2000)
+        self.assertEqual({0x2000, 0x2002, 0x2005, 0x2006}, reached)
 
     def test_the_purge_catalogue_source_column_holds_only_declared_words(self):
         with prototypes.PURGE_CSV.open(newline="",
