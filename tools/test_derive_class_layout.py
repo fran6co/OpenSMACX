@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import derive_class_layout as layout
@@ -354,6 +356,53 @@ class VectorIteratorTest(unittest.TestCase):
     def test_a_call_to_something_else_is_ignored(self):
         instructions = self.site(0x28)[:-1] + [self.call(0x00401234)]
         self.assertEqual({}, self.scan(instructions))
+
+
+class ScoreCsvTest(unittest.TestCase):
+    """The gate every size hypothesis must pass before it stages a receiver.
+
+    Two sources have already failed it: Thinker's headers at 5 right and 11
+    wrong, because its same-named structs are different types, and the IDB
+    reachable from python-idb at 31 right and 2 wrong. The bar is ZERO wrong -
+    a wrong layout compiles, links, and corrupts memory only at run time, so it
+    is not a coverage gap that can be traded against reach.
+    """
+
+    def score(self, text):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sizes.csv"
+            path.write_text(text)
+            with mock.patch.object(layout, "load_pinned",
+                                   return_value={"Font": 0x28, "Sprite": 0x2C}), \
+                    mock.patch("sys.argv",
+                               ["derive", "--score-csv", str(path)]), \
+                    mock.patch("sys.stdout"):
+                return layout.main()
+
+    def test_a_correct_csv_is_accepted(self):
+        self.assertEqual(0, self.score("struct,size\nFont,0x28\nSprite,0x2c\n"))
+
+    def test_one_wrong_size_refuses_the_whole_csv(self):
+        # Not "mostly right": one wrong entry is one corrupted layout, and
+        # there is no way to tell which of the others share its cause.
+        self.assertEqual(1, self.score("struct,size\nFont,0x28\nSprite,0x99\n"))
+
+    def test_a_csv_overlapping_no_known_class_is_refused(self):
+        # Zero wrong out of zero checked is not verification, and accepting it
+        # would let an entirely unverified source through by saying nothing.
+        self.assertEqual(1, self.score("struct,size\nUnknownThing,0x10\n"))
+
+    def test_hexadecimal_sizes_are_read(self):
+        # HEX ONLY on purpose. An earlier version mixed one decimal and one hex
+        # entry, so losing hex support merely dropped the hex row and the
+        # remaining decimal one still scored 1 right - the test passed either
+        # way and could not tell a working parser from a broken one. With only
+        # hex entries a broken parser claims nothing and is refused as
+        # unverifiable.
+        self.assertEqual(0, self.score("struct,size\nFont,0x28\nSprite,0x2c\n"))
+
+    def test_decimal_sizes_are_read_too(self):
+        self.assertEqual(0, self.score("struct,size\nFont,40\nSprite,44\n"))
 
 
 if __name__ == "__main__":
