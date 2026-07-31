@@ -1010,6 +1010,8 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(mutation-harness-tool-tests test_mutate_and_verify.py)
 
+    opensmacx_add_python_tool_test(gate-runner-tests test_run_gate.py)
+
     # The runner that every Wine-backed test goes through. Its one job beyond
     # invoking wine is to stop the owned prefix afterwards, and skipping that
     # to "save teardown" cost 1.05 s per CTest invocation because the retained

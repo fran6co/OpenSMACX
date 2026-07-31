@@ -62,8 +62,9 @@ every registered suite reports success.
 6. Add the object file to `verify-recovery-abi` so the disassembly checks
    confirm the suite calls its original addresses (see the
    `--scroll-oracle-object` block in `tools/verify_recovery_abi.py`).
-7. Run the full `verify-recovery-batch` in both presets; the smoke gate now
-   requires the new suite line in the oracle result.
+7. Run the full `verify-recovery-batch` in both presets - `tools/run_gate.py`
+   runs the two lanes concurrently; the smoke gate now requires the new suite
+   line in the oracle result.
 
 Use a deferred suite for any release branch that needs a real executable-CRT
 allocation. Keep resource-free shapes in phase one, register the deferred
