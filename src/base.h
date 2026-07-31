@@ -511,6 +511,7 @@ extern int *BaseCurrentGrowthRate;
 extern uint32_t *BaseCurrentVehPacifismCount;
 extern uint32_t *BaseCurrentForcesSupported; // Forces Supported by Base
 extern uint32_t *BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
+extern uint32_t *BaseCurrentForcesMaintCount; // Forces past the free allowance; never read back
 extern int *TileYieldRestricted; // resource a square lost to the per-square restriction
 extern int *BaseSquareEnergy; // energy_yield's publication for a base square
 extern int *GovernorFaction; // elected Planetary Governor; see the note in base.cpp
@@ -545,6 +546,7 @@ DLLEXPORT int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
 DLLEXPORT int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                                    BOOL assume_improved);
+DLLEXPORT void __cdecl base_support();
 DLLEXPORT void __cdecl base_nutrient();
 DLLEXPORT void __cdecl base_minerals();
 DLLEXPORT uint32_t __cdecl black_market(int energy);

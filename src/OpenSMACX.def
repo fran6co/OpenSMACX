@@ -311,6 +311,7 @@ EXPORTS
     "?crop_yield@@YAHHHHHH@Z" = _Z10crop_yieldiiiii
     "?mine_yield@@YAHHHHHH@Z" = _Z10mine_yieldiiiii
     "?energy_yield@@YAHHHHHH@Z" = _Z12energy_yieldiiiii
+    "?base_support@@YAXXZ" = _Z12base_supportv
     "?name_base@@YAXIPADHH@Z" = _Z9name_basejPcii
     "?start_timers@@YAXXZ" = _Z12start_timersv
     "?stop_timers@@YAXXZ" = _Z11stop_timersv
