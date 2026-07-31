@@ -48,7 +48,42 @@ perfectly and corrupts memory at runtime, so this stays a lead until the parse
 is tightened.
 
 What it is worth if it lands: the IDB defines a struct for **54 of the 73
-blocked classes, covering 299 of the 420 blocked members**. That is the
+blocked classes, covering 299 of the 420 blocked members**.
+
+Two defects in it are now understood rather than guessed at. `PullDown` has
+`count = 1`: the IDB defines ONE member of 0xa14 against a true 0xf40, so that
+struct is an incomplete hand-reconstruction. `Console` parses 145 of 145
+members cleanly and still sums 4 short. So the IDB yields a LOWER bound that is
+usually exact - which is the UNSAFE direction for staging, and the reason it
+cannot be adopted raw. A class whose IDB sum equals its next-global upper bound
+is pinned exactly by two independent sources agreeing, and that is the shape
+the campaign should use.
+
+### Thinker was checked, and it is the weaker source
+
+The Thinker mod carries reverse-engineered headers for the same binary, and the
+repository policy already covers it: GPLv2 against this project's
+GPLv3-or-later, so its text can never be copied or committed regardless, and
+`tools/correlate_thinker_layouts.py` reduces fetched headers to ignored
+hypothesis CSVs that each require independent verification.
+
+Verified against the 40 known sizes, the two hypothesis sources rank clearly:
+
+| source | right | wrong |
+| --- | ---: | ---: |
+| Thinker headers | 5 | **7** |
+| the IDB | 31 | 2 |
+
+Thinker is wrong more often than right where it has an opinion, and the
+failures are not near-misses: `Buffer` 0x1c against 0x588, `Font` 0x8 against
+0x28, `Win` 0xc8 against 0x444. Those are NAME COLLISIONS rather than layout
+disagreements - Thinker models the game's data structures (`MapTile`, `BASE`,
+`MAP`), and where a name coincides with a UI class it is an unrelated type. It
+overlaps only 6 of the 73 blocked classes.
+
+Adopting it would have introduced wrong layouts into a campaign whose whole
+risk is that a wrong layout compiles perfectly and corrupts memory at runtime.
+The verify-independently rule is what caught it, on the first check. That is the
 population no mechanism searching the executable could reach, because the
 information was never in the executable.
 
