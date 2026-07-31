@@ -496,6 +496,17 @@ def step(state: State, instruction) -> State:
         right = read_operand(state, instruction, operands[1])
         _, state.flags = evaluate("and", width, left, right, state.flags)
         return state
+    if name == "call":
+        operand = operands[0]
+        if operand.type == 2:                       # X86_OP_IMM, a direct call
+            target = z3.BitVecVal(operand.imm & 0xFFFFFFFF, 32)
+        else:
+            # Indirect and virtual calls are NOT excluded: the target is read
+            # like any other operand, so two sides computing the same pointer
+            # get the same callee term and two sides computing different ones
+            # do not. That distinction is the point.
+            target = read_operand(state, instruction, operand)
+        return apply_call(state, target)
     if name == "push":
         value = read_operand(state, instruction, operands[0])
         state.regs["esp"] = state.regs["esp"] - z3.BitVecVal(4, 32)
@@ -645,3 +656,97 @@ def merge(taken: State, not_taken: State, when) -> State:
     merged.flags = z3.If(when, taken.flags, not_taken.flags)
     merged.mem = z3.If(when, taken.mem, not_taken.mem)
     return merged
+
+
+# ---------------------------------------------------------------------------
+# Calls
+#
+# A callee is UNINTERPRETED: whatever it does, it does the same thing to both
+# sides. That is the whole reason this works, and it is worth stating exactly,
+# because it is easy to mistake for a weakness.
+#
+# The model does not have to be ACCURATE. It has to be the SAME FUNCTION on
+# both sides, applied to arguments the two sides can be shown to agree on. If
+# the recovered body reaches the same call target with the same reachable
+# memory, the callee's contribution to both final states is literally the same
+# term and cancels. A more faithful model would not prove more; an
+# INCONSISTENT one would prove less, or worse, prove something false.
+#
+# `target` is a BitVec rather than a constant, so an indirect or virtual call
+# is not a special case: two sides calling through the same computed pointer
+# get the same term, and two sides computing DIFFERENT pointers do not - which
+# is exactly the distinction a proof needs to make.
+#
+# WHAT THE CALLEE MAY SEE is canonicalised first. Everything at or above ESP is
+# reachable by it; everything below is this frame's private space, which the
+# callee cannot name because it has not been given a pointer to it. Passing raw
+# memory instead would make the callee's result depend on the caller's dead
+# locals, and the two sides lay their frames out differently - so a true
+# equivalence would fail to prove for a reason that has nothing to do with the
+# program.
+# ---------------------------------------------------------------------------
+
+MEMORY_SORT = z3.ArraySort(z3.BitVecSort(32), z3.BitVecSort(8))
+CALLEE_MEMORY = z3.Function("callee_memory", z3.BitVecSort(32), MEMORY_SORT,
+                            z3.BitVecSort(32), MEMORY_SORT)
+CALLEE_RESULT = z3.Function("callee_result", z3.BitVecSort(32), MEMORY_SORT,
+                            z3.BitVecSort(32), z3.BitVecSort(32))
+CALLEE_SECOND = z3.Function("callee_second", z3.BitVecSort(32), MEMORY_SORT,
+                            z3.BitVecSort(32), z3.BitVecSort(32))
+CALLEE_FLAGS = z3.Function("callee_flags", z3.BitVecSort(32), MEMORY_SORT,
+                           z3.BitVecSort(32), z3.BitVecSort(32))
+
+
+def canonical(mem, esp):
+    """What a callee can see.
+
+    NO LAMBDA, and that is a decidability decision rather than a modelling one.
+    Canonicalising with `Lambda(a, If(a >= esp, mem[a], 0))` is the more
+    faithful statement - the private region is exactly `addr < esp` - but Z3
+    answers `unknown` on it, reporting "incomplete (theory array)". An
+    undecidable obligation discharges nothing, and worse, an `unknown` read as
+    an `unsat` looks exactly like a proof.
+
+    So the callee is given the memory itself and the ESP that bounds it, and
+    the bound does its work as an ARGUMENT rather than as a rewritten array.
+    Two sides that agree on memory and on ESP still get the same term, which is
+    what the cancellation needs.
+
+    What this gives up: if the two sides differ BELOW ESP - dead locals in
+    frames they lay out differently - their callee terms differ and a true
+    equivalence may fail to prove. That is the safe direction, and it is left
+    to be measured rather than pre-emptied, since no such case has been seen
+    yet.
+    """
+    return mem
+
+
+def apply_call(state: State, target) -> State:
+    """Fold an uninterpreted callee into the state.
+
+    ESP is left where it was: the call pushes a return address and the callee's
+    `ret` pops it. A stdcall callee also pops its arguments, which this does not
+    model - and does not need to, because the same unmodelled adjustment lands
+    on both sides and cancels. Only a difference between the sides can survive.
+    """
+    esp = state.regs["esp"]
+    visible = canonical(state.mem, esp)
+    after = State.__new__(State)
+    after.regs = dict(state.regs)
+    # Callee-saved by the cdecl/stdcall/thiscall ABIs this image uses: EBX,
+    # ESI, EDI and EBP come back unchanged, and treating them as clobbered
+    # would lose every proof whose body reads one after a call.
+    after.regs["eax"] = CALLEE_RESULT(target, visible, esp)
+    after.regs["edx"] = CALLEE_SECOND(target, visible, esp)
+    after.regs["ecx"] = CALLEE_SECOND(target + z3.BitVecVal(1, 32), visible, esp)
+    after.flags = CALLEE_FLAGS(target, visible, esp)
+    # The callee may write anything, INCLUDING below ESP, and that costs
+    # nothing: 32-bit x86 has no red zone, so bytes below ESP are scratch that
+    # no correct caller reads after a call. Locals live between ESP and EBP,
+    # which is above ESP and therefore preserved or not by the callee exactly
+    # as the uninterpreted function says.
+    #
+    # Splicing the two regions with a Lambda was tried and reverted: it is the
+    # more precise statement and it makes Z3 answer `unknown`.
+    after.mem = CALLEE_MEMORY(target, visible, esp)
+    return after
