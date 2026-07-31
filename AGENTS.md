@@ -21,6 +21,10 @@ describe are assumed everywhere below and are not repeated here:
 - `docs/EXCLUSIONS.md` — what will **not** be recovered, on what grounds, and
   the measured size of each population. Read it before planning work, not
   after: it is the difference between hitting a wall and knowing one is there.
+- `docs/RECOVERY_ECONOMICS.md` — what a recovery actually costs, measured end to
+  end, and which schedule estimates that refutes. Read it before promising a
+  date or building a throughput tool: two long-carried rate figures turned out
+  to be wrong, and one planned workstream was cancelled on the numbers in it.
 - `docs/STATIC_RECOMPILATION.md`, `docs/PORTING.md` — the stopped static-recompile
   pilot and the general porting notes.
 
