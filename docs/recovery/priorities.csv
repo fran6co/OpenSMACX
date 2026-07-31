@@ -1806,7 +1806,6 @@ P2,6321,0x005B5AD0,?spot_loc@@YAXHHH@Z,821,6,3,unrecovered,,,2,exact,exact,"void
 P3,10,0x005B5E10,sub_5b5e10,144,0,0,unrecovered,,,1,missing,start_only,
 P3,111,0x005B61A0,sub_5b61a0,185,0,1,unrecovered,,,1,missing,exact,int (__cdecl sub_5B61A0)(int vehID)
 P2,8121,0x005B6260,?spot_all@@YAXHH@Z,10370,6,21,unrecovered,,,2,exact,exact,"void (__cdecl ?spot_all@@YAXHH@Z)(uint32_t vehID, BOOL tgl)"
-P2,10721,0x005B8EE0,?stack_veh@@YAHHH@Z,1583,10,7,unrecovered,,,2,exact,exact,"int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)"
 P2,5121,0x005B9510,?stack_kill@@YAXH@Z,103,5,1,unrecovered,,,2,exact,exact,void (__cdecl ?stack_kill@@YAXH@Z)(int vehID)
 P3,511,0x005BADC0,?tech_secret@@YAXHH@Z,148,0,5,unrecovered,,,1,missing,exact,"void (__cdecl ?tech_secret@@YAXHH@Z)(int techID, int factionID)"
 P1,30321,0x005BB000,?tech_achieved@@YAXHHHH@Z,7779,24,63,unrecovered,,,2,exact,entry_range,"void (__cdecl ?tech_achieved@@YAXHHHH@Z)(int factionID1, int techID, int factionID2, int)"

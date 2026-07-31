@@ -553,6 +553,7 @@ DLLEXPORT void __cdecl stack_put(int veh_id, int x, int y);
 DLLEXPORT void __cdecl stack_sort(uint32_t veh_id);
 DLLEXPORT void __cdecl stack_sort_2(uint32_t veh_id);
 DLLEXPORT int __cdecl stack_fix(int veh_id);
+DLLEXPORT int __cdecl stack_veh(int veh_id, int mode);
 DLLEXPORT int __cdecl stack_check(int veh_id, uint32_t type, int cond1, int cond2, int cond3);
 DLLEXPORT BOOL __cdecl veh_avail(uint32_t proto_id, uint32_t faction_id, int base_id);
 DLLEXPORT BOOL __cdecl wants_prototype(uint32_t proto_id, uint32_t faction_id);
