@@ -20,7 +20,8 @@ import sys
 import tempfile
 
 from local_artifact import require_local_artifact_path
-from run_ghidra_analysis import configure_java, locate_analyze_headless
+from run_ghidra_analysis import (
+    DEFAULT_EXE, configure_java, locate_analyze_headless)
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -81,6 +82,45 @@ def cached_addresses(manifest, output_dir):
     return cached
 
 
+def project_file(project_dir):
+    return Path(project_dir) / f"{PROJECT_NAME}.gpr"
+
+
+def project_exists(project_dir):
+    return project_file(project_dir).is_file()
+
+
+def bootstrap_project(arguments):
+    """Create the persistent recovery project by importing the executable.
+
+    `-process` attaches to a project that must already exist, and nothing in
+    the tree ever created this one: the analysis lane imports under a
+    different project name and passes -deleteProject, so it destroys what it
+    makes.  This import deliberately omits -deleteProject -- the project is
+    the cache that makes every later batch cheap, and it lives under the
+    ignored build directory because it embeds the original image.
+    """
+    exe = Path(arguments.exe).expanduser().resolve()
+    if not exe.is_file():
+        raise RuntimeError(f"executable not found: {exe}")
+    analyze_headless = locate_analyze_headless(arguments.ghidra_home)
+    environment = os.environ.copy()
+    configure_java(environment)
+    Path(arguments.project_dir).mkdir(parents=True, exist_ok=True)
+    command = [
+        *analyze_headless,
+        str(arguments.project_dir),
+        PROJECT_NAME,
+        "-import", str(exe),
+        "-max-cpu", str(arguments.max_cpu),
+    ]
+    subprocess.run(command, check=True, env=environment)
+    if not project_exists(arguments.project_dir):
+        raise RuntimeError(
+            "bootstrap import reported success but produced no "
+            f"{project_file(arguments.project_dir)}")
+
+
 def run_headless(addresses, output_dir, arguments):
     script_dir = Path(__file__).resolve().parent / "ghidra"
     analyze_headless = locate_analyze_headless(arguments.ghidra_home)
@@ -93,7 +133,7 @@ def run_headless(addresses, output_dir, arguments):
         address_list = Path(handle.name)
     try:
         command = [
-            str(analyze_headless),
+            *analyze_headless,
             str(arguments.project_dir),
             PROJECT_NAME,
             "-process", PROGRAM_NAME,
@@ -131,6 +171,14 @@ def main():
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--project-dir", type=Path, default=DEFAULT_PROJECT_DIR)
     parser.add_argument("--ghidra-home")
+    parser.add_argument("--exe", type=Path, default=DEFAULT_EXE,
+                        help="Executable to import when bootstrapping")
+    parser.add_argument("--bootstrap", action="store_true",
+                        help="Create and populate the Ghidra project when it "
+                             "does not exist yet, instead of refusing")
+    parser.add_argument("--max-cpu", type=int,
+                        default=max(1, os.cpu_count() or 1),
+                        help="Analysis cores for the bootstrap import")
     parser.add_argument("--timeout", type=int, default=120,
                         help="Per-function decompilation timeout in seconds")
     parser.add_argument("--force", action="store_true",
@@ -168,6 +216,18 @@ def main():
         f"{len(requested) - len(pending)} cached, {len(pending)} to run")
     if args.dry_run or not pending:
         return 0
+
+    if not project_exists(args.project_dir):
+        if not args.bootstrap:
+            # Refuse loudly rather than let -process abort with a Ghidra
+            # IOException that reads like a Ghidra installation problem.
+            print(f"batch-decompile: no Ghidra project at "
+                  f"{project_file(args.project_dir)}; pass --bootstrap to "
+                  f"create it by importing {args.exe}", file=sys.stderr)
+            return 1
+        print(f"batch-decompile: bootstrapping "
+              f"{project_file(args.project_dir)} from {args.exe}")
+        bootstrap_project(args)
 
     results = run_headless(pending, output_dir, args)
     manifest.update(results)
