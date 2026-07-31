@@ -157,8 +157,10 @@ reduction of `× 10000` and its magic-number `/ 10000`. One compile is 0.234 s.
 
 The two misses were both the recovered *source*, not the compiler, and one of
 them is a bug the route found: `?bitmask@@YAXHPAHPAH@Z` divides signed in the
-original and is recovered as `uint32_t`, a difference invisible to any oracle
-over non-negative inputs. Full result, controls and the pre-registration:
+original and was recovered as `uint32_t`, a difference invisible to any oracle
+over non-negative inputs. Repairing it in its own later change took the score
+to **4/5** and also corrected a `.def` export that had never matched any IDB
+name. Full result, controls and the pre-registration:
 [BYTE_MATCH_ROUTE.md](BYTE_MATCH_ROUTE.md).
 
 **The cost that matters is not the tooling.** It is that a body must be written

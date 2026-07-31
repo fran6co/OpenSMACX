@@ -173,7 +173,7 @@ EXPORTS
     "?has_project@@YAHII@Z" = _Z11has_projectjj
     "?has_fac_built@@YAHI@Z" = _Z13has_fac_builtj
     "?base_project@@YAHI@Z" = _Z12base_projectj
-    "?bitmask@@YAXIPAI0@Z" = _Z7bitmaskjPjS_
+    "?bitmask@@YAXHPAHPAH@Z" = _Z7bitmaskiPiS_
     "?has_tech@@YAHHH@Z" = _Z8has_techii
     "?tech_mil@@YAHI@Z" = _Z8tech_milj
     "?tech_tech@@YAHI@Z" = _Z9tech_techj

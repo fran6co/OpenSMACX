@@ -546,8 +546,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl set_fac(uint32_t facility_id, uint32_t base_id, BOOL set) {
-    uint32_t offset;
-    uint32_t mask;
+    int offset;
+    int mask;
     bitmask(facility_id, &offset, &mask);
     if (set) {
         Bases[base_id].facilities_built[offset] |= mask;
@@ -566,7 +566,7 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
     if (facility_id > FacilitySPStart) {
         return true;
     }
-    uint32_t offset, mask;
+    int offset, mask;
     bitmask(facility_id, &offset, &mask);
     return (PlayersData[faction_id].facility_announced[offset] & mask) != 0;
 }
@@ -578,8 +578,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set) {
-    uint32_t offset;
-    uint32_t mask;
+    int offset;
+    int mask;
     bitmask(facility_id, &offset, &mask);
     if (set) {
         PlayersData[faction_id].facility_announced[offset] |= mask;
@@ -1780,8 +1780,8 @@ Return Value: Does base have facility built? true/false
 Status: Complete
 */
 BOOL __cdecl has_fac_built(uint32_t facility_id, uint32_t base_id) {
-    uint32_t offset;
-    uint32_t mask;
+    int offset;
+    int mask;
     bitmask(facility_id, &offset, &mask);
     return (Bases[base_id].facilities_built[offset] & mask) != 0;
 }

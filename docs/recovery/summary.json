@@ -167,7 +167,7 @@
   },
   "redirects": {
     "definitions": 467,
-    "exact_name_matches": 148,
+    "exact_name_matches": 149,
     "unmatched": [
       {
         "location": "src/OpenSMACX.def:49",
@@ -348,10 +348,6 @@
       {
         "location": "src/OpenSMACX.def:165",
         "name": "?bit_set@@YAXIIIH@Z"
-      },
-      {
-        "location": "src/OpenSMACX.def:176",
-        "name": "?bitmask@@YAXIPAI0@Z"
       },
       {
         "location": "src/OpenSMACX.def:378",

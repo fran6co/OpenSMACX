@@ -2298,8 +2298,8 @@ const uint8_t YALT_DEEP = 0x20;      // alt 1, ocean
 Map &ytile(int x, int y) { return g_yield_world.tiles[(x >> 1) + y * 8]; }
 
 void yield_give_fac(Base &base, uint32_t facility) {
-    uint32_t offset;
-    uint32_t mask;
+    int offset;
+    int mask;
     bitmask(facility, &offset, &mask);
     base.facilities_built[offset] |= (uint8_t)mask;
 }

@@ -2842,7 +2842,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0050B9A0,0x0050B9B6,22,.text,?say_stats_3@@YAXH@Z,void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID),0x0050B9A0-0x0050B9B6,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1321,Complete,,,source_complete,,,,1,1
 0x0050B9C0,0x0050B9DE,30,.text,sub_50b9c0,,0x0050B9C0-0x0050B9DE,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x0050B9E0,0x0050B9FE,30,.text,?pop@NetMsg@@QAAXPBDPBD@Z,,0x0050B9E0-0x0050B9FE,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
-0x0050BA00,0x0050BA27,39,.text,?bitmask@@YAXHPAHPAH@Z,"void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)",0x0050BA00-0x0050BA27,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:871,Complete,,,source_complete,,,,0,103
+0x0050BA00,0x0050BA27,39,.text,?bitmask@@YAXHPAHPAH@Z,"void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)",0x0050BA00-0x0050BA27,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:871,Complete,?bitmask@@YAXHPAHPAH@Z,,source_complete,,,,0,103
 0x0050BA30,0x0050BA4E,30,.text,?bit_count@@YAHH@Z,,0x0050BA30-0x0050BA4E,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:749,Complete,,,source_complete,,,,0,34
 0x0050BA50,0x0050BCB6,614,.text,?intervention@@YAXHH@Z,,0x0050BA50-0x0050BCB6,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x0050BCC0,0x0050C2D7,1559,.text,?double_cross@@YAXHHH@Z,,0x0050BCC0-0x0050C2D7,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,9,15

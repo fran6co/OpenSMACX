@@ -63,7 +63,7 @@ DLLEXPORT void __cdecl swap(uint8_t *var1, uint8_t *var2);
 DLLEXPORT int __cdecl fixed_div(int numerator, int denominator);
 DLLEXPORT const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
 DLLEXPORT int __cdecl quick_root(int input);
-DLLEXPORT void __cdecl bitmask(uint32_t input, uint32_t *offset, uint32_t *mask);
+DLLEXPORT void __cdecl bitmask(int input, int *offset, int *mask);
 DLLEXPORT uint8_t __cdecl checksum(uint8_t *input, uint32_t length, uint8_t seed);
 DLLEXPORT uint32_t __cdecl checksum_password(LPCSTR password);
 DLLEXPORT uint32_t __cdecl rnd(int bounds, LPSTR input);
