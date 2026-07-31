@@ -1166,7 +1166,6 @@ P3,3621,0x004CA7F0,?action_staple@@YAXH@Z,603,3,6,unrecovered,,,2,exact,exact,vo
 P2,7521,0x004CAA50,?action_destroy@@YAXHHHH@Z,2226,5,25,unrecovered,,,2,exact,exact,"void (__cdecl ?action_destroy@@YAXHHHH@Z)(int vehID, int, int xCoord, int yCoord)"
 P3,2821,0x004CB310,?action_go_to@@YAXH@Z,623,2,8,unrecovered,,,2,exact,exact,void (__cdecl ?action_go_to@@YAXH@Z)(int vehID)
 P3,3321,0x004CB580,?action_road_to@@YAXH@Z,1304,2,13,unrecovered,,,2,exact,exact,void (__cdecl ?action_road_to@@YAXH@Z)(int vehID)
-P2,8621,0x004CBAA0,?action_home@@YAHHH@Z,2239,8,6,unrecovered,,,2,exact,exact,"int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)"
 P3,5821,0x004CC360,?action_airdrop@@YAHHHHH@Z,3313,3,28,unrecovered,,,2,exact,exact,"int (__cdecl ?action_airdrop@@YAHHHHH@Z)(int vehID, int xCoord, int yCoord, int factionID)"
 P3,100,0x004CD060,?action_feature@@YAXXZ,34,0,1,unrecovered,,,0,missing,missing,
 P3,3421,0x004CD090,?action_arty@@YAXHHH@Z,605,2,14,unrecovered,,,2,exact,exact,"void (__cdecl ?action_arty@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)"

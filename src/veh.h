@@ -587,3 +587,4 @@ DLLEXPORT int8_t __cdecl get_proto_defense_rating(uint32_t proto_id);
 DLLEXPORT int8_t __cdecl get_defense_rating(uint32_t veh_id);
 DLLEXPORT BOOL __cdecl is_proto_missile(uint32_t proto_id);
 DLLEXPORT BOOL __cdecl is_missile(uint32_t veh_id);
+DLLEXPORT int __cdecl action_home(int veh_id, int flags);

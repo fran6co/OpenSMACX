@@ -42,6 +42,8 @@
 #include "../src/veh.h"
 #include "../src/map.h"
 #include "../src/faction.h"
+#include "../src/alpha.h"
+#include "../src/base.h"
 #include "recovery_fixtures.h"
 
 using recovery_fixtures::expect;
@@ -1008,11 +1010,1223 @@ void test_stack_veh_boarding() {
     expect(g_stack_world.vehs[1].x == -2);
 }
 
+
+/*
+ * A self-contained world for action_home().
+ *
+ * Every global the function and its callees reach is a pointer, so ScopedSeam
+ * gives the whole world local storage and no fixed 0x0095xxxx address is ever
+ * dereferenced. The map is 16 wide by 8 tall, so a tile index is
+ * (x >> 1) + y * 8 and 64 tiles cover it exactly.
+ *
+ * The subject's prototype id stays below MaxVehProtoFactionNum (64) and its
+ * weapon's offense_rating is negative on purpose. That pair is what keeps
+ * speed() cheap and exact: has_abil() computes faction 0 and returns before it
+ * reads Players or Ability; morale_veh() takes the "Basic Psi Veh" early return
+ * before it reads Players, Technology or the social engineering block; and the
+ * elite-morale bonus in speed() is disabled by the same offense_rating test, so
+ * a unit's speed is exactly its chassis speed times move_rate_roads. Every
+ * distance threshold below is therefore an exact integer, not an approximation.
+ *
+ * SecretProject is filled with -1 so has_project() is false for every project,
+ * which is what keeps the Maritime Control Center and Cloudbase Academy bonuses
+ * out of speed() and speed_proto().
+ *
+ * PlayerData is ~8 KB each, so the world is static rather than a local.
+ */
+struct ActionHomeWorld {
+    Veh vehs[8];
+    VehPrototype protos[8];
+    RulesChassis chassis[4];
+    RulesWeapon weapons[2];
+    Base bases[4];
+    Map tiles[64];
+    PlayerData players[16];
+    BaseSecretProject projects;
+    RulesBasic rules;
+    uint8_t factions_status[4];
+    Map *tiles_ptr;
+    int base_count;
+    int veh_count;
+    int lon_bounds;
+    int lat_bounds;
+    uint32_t longitude;
+    BOOL is_flat;
+    uint32_t game_state;
+};
+
+ActionHomeWorld g_home_world;
+
+// Chassis ids used by the action_home fixtures.
+const uint8_t HOME_CH_LAND = 0;
+const uint8_t HOME_CH_SEA = 1;
+const uint8_t HOME_CH_AIR = 2;
+
+// Prototype ids used by the action_home fixtures.
+const int HOME_P_LAND = 1;        // TRIAD_LAND, no abilities
+const int HOME_P_SEA = 2;         // TRIAD_SEA
+const int HOME_P_AIR = 3;         // TRIAD_AIR, PLAN_COMBAT - neither carrier nor convoy
+const int HOME_P_CARRIER = 4;     // TRIAD_AIR, ABL_CARRIER
+const int HOME_P_AIRCONVOY = 5;   // TRIAD_AIR, PLAN_SUPPLY_CONVOY
+const int HOME_P_LANDCONVOY = 6;  // TRIAD_LAND, PLAN_SUPPLY_CONVOY
+
+// The map is 16 wide, so map_loc()'s index is (x >> 1) + y * MapLongitude.
+int home_tile(int x, int y) { return (x >> 1) + y * 8; }
+
+void home_reset() {
+    std::memset(&g_home_world, 0, sizeof(g_home_world));
+    std::memset(&g_home_world.projects, 0xFF, sizeof(g_home_world.projects));
+    g_home_world.tiles_ptr = g_home_world.tiles;
+    g_home_world.lon_bounds = 16;
+    g_home_world.lat_bounds = 8;
+    g_home_world.longitude = 8;  // map.h: "halve of MapLongitudeBounds"
+    g_home_world.is_flat = 1;    // keeps xrange() and x_dist() free of wrap-around
+    g_home_world.rules.move_rate_roads = 1;  // so max_dist is reach, undivided
+    g_home_world.veh_count = 1;
+    g_home_world.base_count = 0;
+    g_home_world.factions_status[0] = 0x02;  // faction 1 is a human player
+
+    // offense_rating < 0 is load-bearing; see the note on the struct.
+    g_home_world.weapons[0].offense_rating = -1;
+    g_home_world.weapons[0].mode = 0;  // not WPN_MODE_TRANSPORT
+
+    g_home_world.chassis[HOME_CH_LAND].triad = TRIAD_LAND;
+    g_home_world.chassis[HOME_CH_LAND].speed = 2;
+    g_home_world.chassis[HOME_CH_SEA].triad = TRIAD_SEA;
+    g_home_world.chassis[HOME_CH_SEA].speed = 2;
+    // An air chassis gets reactor_id * 2 added by speed_proto(), so a base speed
+    // of 0 with a fission reactor lands on the same 2 as the other two triads.
+    g_home_world.chassis[HOME_CH_AIR].triad = TRIAD_AIR;
+    g_home_world.chassis[HOME_CH_AIR].speed = 0;
+
+    for (int k = 1; k < 8; k++) {
+        g_home_world.protos[k].reactor_id = 1;
+        g_home_world.protos[k].plan = PLAN_COMBAT;
+    }
+    g_home_world.protos[HOME_P_LAND].chassis_id = HOME_CH_LAND;
+    g_home_world.protos[HOME_P_SEA].chassis_id = HOME_CH_SEA;
+    g_home_world.protos[HOME_P_AIR].chassis_id = HOME_CH_AIR;
+    g_home_world.protos[HOME_P_CARRIER].chassis_id = HOME_CH_AIR;
+    g_home_world.protos[HOME_P_CARRIER].ability_flags = ABL_CARRIER;
+    g_home_world.protos[HOME_P_AIRCONVOY].chassis_id = HOME_CH_AIR;
+    g_home_world.protos[HOME_P_AIRCONVOY].plan = PLAN_SUPPLY_CONVOY;
+    g_home_world.protos[HOME_P_LANDCONVOY].chassis_id = HOME_CH_LAND;
+    g_home_world.protos[HOME_P_LANDCONVOY].plan = PLAN_SUPPLY_CONVOY;
+
+    for (int k = 0; k < 8; k++) {
+        Veh &veh = g_home_world.vehs[k];
+        veh.x = -1;
+        veh.y = -1;
+        veh.order = ORDER_NONE;
+    }
+    Veh &subject = g_home_world.vehs[0];
+    subject.x = 2;
+    subject.y = 2;
+    subject.faction_id = 1;
+    subject.proto_id = HOME_P_LAND;
+    // A value that is neither ORDER_NONE nor ORDER_MOVE_TO, so "the orders were
+    // left alone" and "the orders were cleared" are distinguishable outcomes.
+    subject.order = ORDER_SENTRY_BOARD;
+}
+
+// Raise every tile to the shore line, so is_ocean() is false map-wide and
+// base_on_sea() can never connect two tiles.
+void home_dry_land() {
+    for (int k = 0; k < 64; k++) {
+        g_home_world.tiles[k].climate = (uint8_t)ALT_BIT_SHORE_LINE;
+    }
+}
+
+// Report which assertion failed. expect() only counts, and a sweep that has to
+// bisect 200 assertions by hand is a sweep that does not get run.
+#define HOME_CHECK(cond)                                                      \
+    do {                                                                      \
+        const bool home_ok = (cond);                                          \
+        if (!home_ok) {                                                       \
+            std::fprintf(stderr, "action_home: line %d: %s\n", __LINE__,      \
+                         #cond);                                              \
+        }                                                                     \
+        expect(home_ok);                                                      \
+    } while (0)
+
+void test_action_home() {
+    ScopedSeam<Veh> vehs_seam(&Vehs, g_home_world.vehs);
+    ScopedSeam<VehPrototype> protos_seam(&VehPrototypes, g_home_world.protos);
+    ScopedSeam<RulesChassis> chassis_seam(&Chassis, g_home_world.chassis);
+    ScopedSeam<RulesWeapon> weapon_seam(&Weapon, g_home_world.weapons);
+    ScopedSeam<Base> bases_seam(&Bases, g_home_world.bases);
+    ScopedSeam<int> base_count_seam(&BaseCurrentCount, &g_home_world.base_count);
+    ScopedSeam<int> veh_count_seam(&VehCurrentCount, &g_home_world.veh_count);
+    ScopedSeam<PlayerData> players_seam(&PlayersData, g_home_world.players);
+    ScopedSeam<uint8_t> status_seam(&FactionsStatus, g_home_world.factions_status);
+    ScopedSeam<Map *> tiles_seam(&MapTiles, &g_home_world.tiles_ptr);
+    ScopedSeam<int> lon_seam(&MapLongitudeBounds, &g_home_world.lon_bounds);
+    ScopedSeam<int> lat_seam(&MapLatitudeBounds, &g_home_world.lat_bounds);
+    ScopedSeam<uint32_t> longitude_seam(&MapLongitude, &g_home_world.longitude);
+    ScopedSeam<BOOL> flat_seam(&MapIsFlat, &g_home_world.is_flat);
+    ScopedSeam<RulesBasic> rules_seam(&Rules, &g_home_world.rules);
+    ScopedSeam<uint32_t> state_seam(&GameState, &g_home_world.game_state);
+    ScopedSeam<BaseSecretProject> projects_seam(&SecretProject, &g_home_world.projects);
+
+    Veh &veh = g_home_world.vehs[0];
+    Base &base = g_home_world.bases[0];
+
+    // ---- nothing anywhere -------------------------------------------------
+    // best stays (-1,-1), which fails the on_map() guard. Nothing is written.
+    // This is also what pins the (-1,-1) initialisers: (0,0) is on the map, so
+    // a zero-initialised best would resolve and issue a move order.
+    home_reset();
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    HOME_CHECK(veh.waypoint_x[0] == 0);
+    HOME_CHECK(veh.waypoint_y[0] == 0);
+    HOME_CHECK(veh.state == 0);
+
+    // ---- a friendly base, out of reach ------------------------------------
+    // dist == (x_dist(2,6) + abs(2-4)) >> 1 == (4 + 2) >> 1 == 3.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    HOME_CHECK(veh.moves_expended == 0);  // a range 0 chassis never reaches veh_skip
+
+    // The y half of the distance is a separate term from the x half: moving the
+    // base to the same column leaves a strictly smaller distance, and the
+    // waypoint is written from the base's own coordinates, not the unit's.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 6;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 2);
+    HOME_CHECK(veh.waypoint_y[0] == 6);
+
+    // ---- standing on the base ---------------------------------------------
+    // A human keeps the rest of the turn; the AI spends it through veh_skip().
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 2;
+    base.faction_id_current = 1;
+    veh.moves_expended = 7;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);
+    HOME_CHECK(veh.waypoint_x[0] == 0);
+    HOME_CHECK(veh.waypoint_y[0] == 0);
+    HOME_CHECK(veh.moves_expended == 7);
+
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.factions_status[0] = 0;  // faction 1 is the AI now
+    base.x = 2;
+    base.y = 2;
+    base.faction_id_current = 1;
+    veh.moves_expended = 7;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);
+    HOME_CHECK(veh.moves_expended == 2);  // veh_skip() ran: speed() is 2
+
+    // ---- the pact bit ------------------------------------------------------
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 2;
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    g_home_world.players[1].diplo_treaties[2] = 0x2;  // a treaty, but not a pact
+    HOME_CHECK(action_home(0, 0) == 0);
+    g_home_world.players[1].diplo_treaties[2] = DTREATY_PACT;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    // The treaty is read from the SUBJECT's row against the BASE's faction, so
+    // the transposed lookup is a different cell.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 2;
+    g_home_world.players[2].diplo_treaties[1] = DTREATY_PACT;
+    HOME_CHECK(action_home(0, 0) == 0);
+
+    // ---- flags == 2 rejects a base carrying BSTATE_UNK_200000 --------------
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    base.state = BSTATE_UNK_200000;
+    HOME_CHECK(action_home(0, 2) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    HOME_CHECK(action_home(0, 0) == 1);  // same base, a different mode
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    // The test is equality against 2, not a bit test: 3 is also odd and also
+    // has bit 1 set, and it must NOT reject.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;  // clears the endurance gate
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    base.state = BSTATE_UNK_200000;
+    HOME_CHECK(action_home(0, 3) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    // ... and with the bit clear, mode 2 accepts.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 2) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+
+    // ---- TRIAD_LAND needs a land route ------------------------------------
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    g_home_world.tiles[home_tile(6, 4)].region = 9;  // the unit's tile is still 0
+    HOME_CHECK(action_home(0, 0) == 0);
+    // veh_region is read from the unit's own tile, so matching there matches.
+    g_home_world.tiles[home_tile(2, 2)].region = 9;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+
+    // ---- TRIAD_SEA ---------------------------------------------------------
+    // A base on the unit's own tile is accepted without consulting base_on_sea.
+    // Raising every tile to the shore line makes is_ocean() false everywhere,
+    // so base_on_sea() cannot succeed and the same-tile short circuit is the
+    // only way in.
+    home_reset();
+    veh.proto_id = HOME_P_SEA;
+    home_dry_land();
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 2;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);
+
+    // Sharing only the column is not sharing the tile, and neither is sharing
+    // only the row: both halves of the coordinate test are required.
+    home_reset();
+    veh.proto_id = HOME_P_SEA;
+    home_dry_land();
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 6;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    home_reset();
+    veh.proto_id = HOME_P_SEA;
+    home_dry_land();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 2;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    // An all-ocean, single-region map connects them, and base_on_sea says yes.
+    home_reset();
+    veh.proto_id = HOME_P_SEA;
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    // A sea unit is not held to the land unit's region test: the base tile
+    // itself being another region changes nothing while the water connects.
+    home_reset();
+    veh.proto_id = HOME_P_SEA;
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    g_home_world.tiles[home_tile(6, 4)].region = 9;
+    HOME_CHECK(action_home(0, 0) == 1);
+
+    // ---- the base loop keeps the strict minimum, and honours the count -----
+    home_reset();
+    g_home_world.base_count = 2;
+    g_home_world.bases[0].x = 6;
+    g_home_world.bases[0].y = 4;
+    g_home_world.bases[0].faction_id_current = 1;
+    g_home_world.bases[1].x = 4;
+    g_home_world.bases[1].y = 2;
+    g_home_world.bases[1].faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 4);   // dist 1 beats dist 3
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+    // Equal distances keep the FIRST base: the comparison is strict.
+    home_reset();
+    g_home_world.base_count = 2;
+    g_home_world.bases[0].x = 2;
+    g_home_world.bases[0].y = 4;
+    g_home_world.bases[0].faction_id_current = 1;
+    g_home_world.bases[1].x = 4;
+    g_home_world.bases[1].y = 2;
+    g_home_world.bases[1].faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 2);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    // The same pair with the count at 1: base 1 is out of the scan entirely.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.bases[0].x = 6;
+    g_home_world.bases[0].y = 4;
+    g_home_world.bases[0].faction_id_current = 1;
+    g_home_world.bases[1].x = 2;
+    g_home_world.bases[1].y = 2;
+    g_home_world.bases[1].faction_id_current = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);  // not the "standing on it" answer
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+
+    // ---- the base loop's on-alert shortcut ---------------------------------
+    // It reaches the finish WITHOUT passing the endurance gate: same range 0
+    // chassis and same odd flags value that the next block shows returning 0.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 2;
+    base.faction_id_current = 1;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 1) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);
+    // Drop any one of the five predicates and the shortcut stops firing, so the
+    // gate runs after all and refuses. Each is restored before the next.
+    veh.order_auto_type = 0;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.state = 0;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.state = VSTATE_UNK_200;
+    veh.waypoint_x[1] = 7;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 7;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 1) == 1);  // and restored, it fires again
+
+    // dist <= max_dist is the fifth predicate. max_dist is 0 for a range 0
+    // chassis, so a base one step away is too far for the shortcut.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 4;
+    base.y = 2;
+    base.faction_id_current = 1;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 4;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 1) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // The shortcut WRITES best_dist, unlike the radius shortcut below. With a
+    // range 3 chassis max_dist is 6, so "comfortably within reach" fires and
+    // the answer is 0; had best_dist been left at 9999 the answer would be 1
+    // with the orders cleared.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 3;
+    base.x = 2;
+    base.y = 2;
+    base.faction_id_current = 1;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 1) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // It also stops the scan: a nearer base after it must not win.
+    home_reset();
+    g_home_world.base_count = 2;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;  // max_dist 4
+    g_home_world.bases[0].x = 6;
+    g_home_world.bases[0].y = 4;
+    g_home_world.bases[0].faction_id_current = 1;
+    g_home_world.bases[1].x = 2;
+    g_home_world.bases[1].y = 2;
+    g_home_world.bases[1].faction_id_current = 1;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 6;
+    veh.waypoint_y[1] = 4;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+
+    // ---- the endurance gate ------------------------------------------------
+    // An odd flags value, and flags == 4, are answered only by a chassis that
+    // has endurance. The destination is never even looked at.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 1) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    HOME_CHECK(action_home(0, 4) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    HOME_CHECK(action_home(0, 2) == 1);  // even and not 4: the gate is skipped
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+
+    // ---- flags == 4 is a reachability question -----------------------------
+    // A range 2 chassis at speed 2 reaches 2 * (2 - 0 - 1) + 2 == 4.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    base.x = 10;
+    base.y = 2;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 4) == 1);  // dist 4, exactly max_dist
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 10);
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    base.x = 10;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 4) == 0);  // dist 5, one past max_dist
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // ---- an odd flags value is a "do I need to go?" question ---------------
+    // max_dist 6 from a range 3 chassis. best_dist + 1 <= max_dist - 1 is the
+    // "comfortably within reach, nothing to do" test, and both boundaries are
+    // checked here: dist 4 gives 5 <= 5 and refuses, dist 5 gives 6 <= 5 and
+    // proceeds.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 3;
+    base.x = 10;
+    base.y = 2;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 1) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 3;
+    base.x = 10;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 1) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 10);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+
+    // ---- a negative flags value is a pure query ----------------------------
+    // The comparison is SIGNED. Read unsigned it would fall through and rewrite
+    // the orders. -2 is even and not 4, so the endurance gate lets it past.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, -2) == 1);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    HOME_CHECK(veh.waypoint_x[0] == 0);
+    HOME_CHECK(veh.waypoint_y[0] == 0);
+    // -1 is odd, so it must clear the endurance gate first.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 6;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, -1) == 0);  // range 0: refused at the gate
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    HOME_CHECK(action_home(0, -1) == 1);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    HOME_CHECK(veh.waypoint_x[0] == 0);
+
+    // ---- the out-of-reach tail --------------------------------------------
+    // A human-controlled endurance unit whose destination is past max_dist gets
+    // the order it was just given taken back, and exactly four state bits are
+    // scrubbed. Every other bit of a fully set state survives.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;  // max_dist 4
+    base.x = 10;
+    base.y = 4;                                    // dist 5
+    base.faction_id_current = 1;
+    veh.state = 0xFFFFFFFFU;
+    veh.order_auto_type = 0;  // ORDERA_ON_ALERT would take the shortcut instead
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 10);  // the waypoint is still written
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    HOME_CHECK(veh.order == ORDER_NONE);
+    HOME_CHECK(veh.state == 0xFCFFBDFFU);
+    // The AI is not given that courtesy.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    g_home_world.factions_status[0] = 0;
+    base.x = 10;
+    base.y = 4;
+    base.faction_id_current = 1;
+    veh.state = 0xFFFFFFFFU;
+    veh.order_auto_type = 0;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.state == 0xFFFFFFFFU);
+    // Neither is a chassis without endurance.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 10;
+    base.y = 4;
+    base.faction_id_current = 1;
+    veh.state = 0xFFFFFFFFU;
+    veh.order_auto_type = 0;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.state == 0xFFFFFFFFU);
+    // Nor a destination that IS within reach: dist 4, max_dist 4.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    base.x = 10;
+    base.y = 2;
+    base.faction_id_current = 1;
+    veh.state = 0xFFFFFFFFU;
+    veh.order_auto_type = 0;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.state == 0xFFFFFFFFU);
+
+    // ---- reach arithmetic --------------------------------------------------
+    // moves_expended is subtracted, and the result is clamped at 0 rather than
+    // going negative: 5 expended out of a speed of 2 leaves 0, not -3.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    base.x = 6;
+    base.y = 4;                                    // dist 3
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 4) == 1);            // max_dist 4
+    veh.order = ORDER_SENTRY_BOARD;
+    veh.moves_expended = 5;
+    HOME_CHECK(action_home(0, 4) == 0);            // max_dist 2 now
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // terraforming_turns is subtracted from the chassis range before it is
+    // multiplied out: range 3 with 1 turn spent reaches 4, not 6.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 3;
+    base.x = 10;
+    base.y = 4;                                    // dist 5
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 4) == 1);            // max_dist 6
+    veh.order = ORDER_SENTRY_BOARD;
+    veh.terraforming_turns = 1;
+    HOME_CHECK(action_home(0, 4) == 0);            // max_dist 4
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // A range 1 chassis, and ONLY a range 1 chassis, additionally trades its
+    // remaining hitpoints for distance: proto_power is 10 for a fission
+    // reactor, so it buys 2 * ((10 - 1) / 1) == 18 on top of the 2 it had.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 1;
+    base.x = 10;
+    base.y = 4;                                    // dist 5
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 4) == 1);            // max_dist 20
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    base.x = 10;
+    base.y = 4;
+    base.faction_id_current = 1;
+    HOME_CHECK(action_home(0, 4) == 0);            // max_dist 4, no hitpoint term
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // The hitpoint term is clamped at 9999 from above and 0 from below, and the
+    // -1 before the reactor division is real. A fully destroyed unit (10 damage
+    // against 10 hitpoints) gives (0 - 1) / 1 == -1, which SUBTRACTS a move:
+    // reach becomes 0 and a base one step away is out of reach. Clamping the
+    // hitpoints to 1 instead would give 0 and leave it reachable.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 1;
+    base.x = 4;
+    base.y = 2;                                    // dist 1
+    base.faction_id_current = 1;
+    veh.dmg_incurred = 10;                         // speed() drops to 1
+    HOME_CHECK(action_home(0, 4) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    veh.dmg_incurred = 9;                          // one hitpoint left
+    HOME_CHECK(action_home(0, 4) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+
+    // The reactor is the divisor, not a constant: a fusion reactor doubles both
+    // the hitpoints and the divisor, so the quotient is unchanged at full
+    // health but not once the unit is damaged. 27 damage against a fusion
+    // reactor's 30 hitpoints leaves 3, and (3 - 1) / 3 is 0 - the whole
+    // hitpoint term vanishes and max_dist is 1 rather than 2.
+    home_reset();
+    g_home_world.base_count = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 1;
+    g_home_world.protos[HOME_P_LAND].reactor_id = 3;
+    base.x = 6;
+    base.y = 2;                                    // dist 2
+    base.faction_id_current = 1;
+    veh.dmg_incurred = 27;
+    HOME_CHECK(action_home(0, 4) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    base.x = 4;                                    // dist 1
+    HOME_CHECK(action_home(0, 4) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+
+    // ---- TRIAD_AIR: carriers and air supply convoys ------------------------
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIR;
+    HOME_CHECK(action_home(0, 0) == 0);  // neither a carrier nor a convoy
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+    // The other half of the predicate: an AIR supply convoy also qualifies, a
+    // LAND one does not.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIRCONVOY;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_LANDCONVOY;
+    HOME_CHECK(action_home(0, 0) == 0);
+    // Somebody else's carrier is not a home.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 2;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 0) == 0);
+    // And the whole scan belongs to the air triad: a land unit ignores it.
+    home_reset();
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 0) == 0);
+
+    // The subject skips itself. Unit 0 is a carrier standing on its own tile,
+    // and if it counted the answer would be "you are already home".
+    home_reset();
+    veh.proto_id = HOME_P_CARRIER;
+    g_home_world.veh_count = 1;
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // The unit scan honours *VehCurrentCount, and keeps the strict minimum
+    // against whatever the base loop already found.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 6;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    g_home_world.vehs[2].x = 2;
+    g_home_world.vehs[2].y = 2;
+    g_home_world.vehs[2].faction_id = 1;
+    g_home_world.vehs[2].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);  // unit 2 is past the count
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    // A base at the same distance as the carrier wins, because the unit loop's
+    // comparison is strict too.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 4;                                    // dist 1
+    base.faction_id_current = 1;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;                    // also dist 1
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 2);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    // A nearer carrier does displace it.
+    g_home_world.vehs[1].x = 2;
+    g_home_world.vehs[1].y = 2;                    // dist 0
+    veh.order = ORDER_SENTRY_BOARD;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);           // standing on it
+
+    // ---- the AI's distance bias on a carrier -------------------------------
+    // Under an odd flags value the AI adds the carrier's own speed in road
+    // moves to the distance. Both runs are identical apart from who is driving:
+    // the human sees dist 2 and answers "comfortably within reach, nothing to
+    // do", the AI sees 2 + 2 == 4 and issues the move.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;   // max_dist 4
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 6;
+    g_home_world.vehs[1].y = 2;                    // dist 2
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 1) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    g_home_world.factions_status[0] = 0;           // the AI now
+    HOME_CHECK(action_home(0, 1) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    // With an even flags value that is not 4 the whole block is skipped, so the
+    // AI sees the unbiased 2 as well.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.factions_status[0] = 0;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 6;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 2) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    // flags == 4 enters the same block: 2 + 2 == 4 is still within max_dist 4,
+    // but the biased distance is what the tail compares.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.factions_status[0] = 0;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 8;
+    g_home_world.vehs[1].y = 2;                    // dist 3, biased to 5
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    HOME_CHECK(action_home(0, 4) == 0);            // 5 > 4
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    g_home_world.factions_status[0] = 0x02;        // the human sees 3
+    HOME_CHECK(action_home(0, 4) == 1);
+
+    // ---- an air supply convoy must be reachable this turn ------------------
+    // A range 2 air chassis with a base speed of 6 moves 8, so max_dist is 16
+    // and the convoy at dist 4 is comfortably inside it. What rejects it is the
+    // separate raw-distance test against what is LEFT of this turn.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.chassis[HOME_CH_AIR].speed = 6;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 10;
+    g_home_world.vehs[1].y = 2;                    // dist 4
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIRCONVOY;
+    HOME_CHECK(action_home(0, 4) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 10);
+    veh.order = ORDER_SENTRY_BOARD;
+    veh.moves_expended = 5;                        // 3 road moves left, dist 4
+    HOME_CHECK(action_home(0, 4) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+    // The test belongs to convoys alone: a carrier at the same spot with the
+    // same moves spent is still accepted.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.chassis[HOME_CH_AIR].speed = 6;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 10;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    veh.moves_expended = 5;
+    HOME_CHECK(action_home(0, 4) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    // And it is skipped entirely when the flags do not ask for it.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].speed = 6;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 10;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIRCONVOY;
+    veh.moves_expended = 5;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 10);
+
+    // ---- the airbase radius scan -------------------------------------------
+    // RadiusOffsetX/Y[2] is (+2, 0), so tile (4,2) is the third step.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+    // Without the airbase bit the tile is just a tile.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_VEH_IN_TILE;
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // Somebody else's unit parked on the airbase needs a pact. The occupier is
+    // the low nibble of val2, and the check is skipped entirely once the nibble
+    // reaches MaxPlayerNum - 0xF is how an unoccupied tile is spelled.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE | BIT_VEH_IN_TILE;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 7;
+    HOME_CHECK(action_home(0, 0) == 0);
+    g_home_world.players[1].diplo_treaties[7] = DTREATY_PACT;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE | BIT_VEH_IN_TILE;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 8;  // out of the faction range
+    HOME_CHECK(action_home(0, 0) == 1);
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE | BIT_VEH_IN_TILE;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 0xF;  // unoccupied
+    HOME_CHECK(action_home(0, 0) == 1);
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE | BIT_VEH_IN_TILE;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 1;  // our own unit
+    HOME_CHECK(action_home(0, 0) == 1);
+    // The nibble is a nibble: the high half of val2 is the site, not an owner.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE | BIT_VEH_IN_TILE;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 0x71;  // site 7, owner 1
+    HOME_CHECK(action_home(0, 0) == 1);
+    // ... and only when there is a unit in the tile at all.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 7;
+    HOME_CHECK(action_home(0, 0) == 1);
+
+    // The AI additionally demands the airbase sit in its own territory AND that
+    // the tile's owner nibble name it. They are separate reads of separate
+    // fields, so neither alone is enough.
+    home_reset();
+    g_home_world.factions_status[0] = 0;
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    HOME_CHECK(action_home(0, 0) == 0);            // territory unclaimed
+    g_home_world.tiles[home_tile(4, 2)].territory = 2;
+    HOME_CHECK(action_home(0, 0) == 0);            // and claimed by someone else
+    g_home_world.tiles[home_tile(4, 2)].territory = 1;
+    HOME_CHECK(action_home(0, 0) == 0);            // ours, but the owner is not
+    g_home_world.tiles[home_tile(4, 2)].val2 = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+    // A human is held to neither.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(4, 2)].territory = 2;
+    HOME_CHECK(action_home(0, 0) == 1);
+
+    // owner_at() reports the raw nibble, and a nibble at or past MaxPlayerNum
+    // is remapped to -1 before the comparison. The remap is only observable
+    // from a faction id of 8, where the raw nibble would otherwise match.
+    home_reset();
+    veh.faction_id = 8;
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(4, 2)].territory = 8;
+    g_home_world.tiles[home_tile(4, 2)].val2 = 8;
+    HOME_CHECK(action_home(0, 0) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // ---- the radius width -------------------------------------------------
+    // The scan is RadiusRange[best_dist] wide, saturating at index 8. A base at
+    // dist 1 narrows it to the 9 innermost tiles, and the airbase at step 21 -
+    // offset (+4, 0) - falls outside; with no base at all, best_dist is 9999,
+    // the index saturates and the same airbase is found.
+    home_reset();
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 4;                                    // dist 1
+    base.faction_id_current = 1;
+    g_home_world.tiles[home_tile(6, 2)].bit = BIT_AIRBASE;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 2);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    home_reset();
+    g_home_world.tiles[home_tile(6, 2)].bit = BIT_AIRBASE;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 6);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+
+    // The radius scan keeps the strict minimum, in scan order. Steps 2 and 4
+    // are (+2,0) and (0,+2), both one unit away; the earlier one wins.
+    home_reset();
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(2, 4)].bit = BIT_AIRBASE;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+    // A strictly nearer one later in the scan does displace it: step 21 is
+    // (+4,0) at distance 2, step 0 is the unit's own tile at distance 0.
+    home_reset();
+    g_home_world.tiles[home_tile(6, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(2, 2)].bit = BIT_AIRBASE;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);           // standing on it
+
+    // ---- the radius scan's on-alert shortcut -------------------------------
+    // It bypasses the endurance gate, exactly as the base loop's does: a range
+    // 0 chassis and an odd flags value would otherwise be refused.
+    home_reset();
+    g_home_world.tiles[home_tile(2, 2)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 1) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);
+    // Each predicate in turn, restored afterwards.
+    veh.order = ORDER_SENTRY_BOARD;
+    veh.order_auto_type = 0;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.state = 0;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.state = VSTATE_UNK_200;
+    veh.waypoint_x[1] = 7;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 7;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.waypoint_y[1] = 2;
+    // A damaged unit does not get the shortcut - this one predicate has no
+    // counterpart in the base loop.
+    veh.dmg_incurred = 1;
+    HOME_CHECK(action_home(0, 1) == 0);
+    veh.dmg_incurred = 0;
+    HOME_CHECK(action_home(0, 1) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);
+
+    // Unlike the base loop's shortcut, this one does NOT write best_dist. With
+    // flags == 4 the tail asks best_dist > max_dist, and 9999 > 0 refuses;
+    // had the distance been recorded, 0 > 0 would have let it through.
+    home_reset();
+    g_home_world.tiles[home_tile(2, 2)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 4) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // The same, seen from the other side: with an endurance chassis the
+    // untouched 9999 drives the out-of-reach tail, so the move order the
+    // function just wrote is taken straight back off again.
+    home_reset();
+    g_home_world.chassis[HOME_CH_LAND].range = 2;  // max_dist 4
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 4;
+    veh.waypoint_y[1] = 2;                         // dist 1 <= max_dist 4
+    HOME_CHECK(action_home(0, 1) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+    HOME_CHECK(veh.order == ORDER_NONE);
+    HOME_CHECK(veh.state == 0);                    // VSTATE_UNK_200 was scrubbed
+
+    // ---- the subject is not always unit 0 ---------------------------------
+    // The unit scan starts at unit 0 and excludes the subject by identity, not
+    // by position: here the carrier IS unit 0 and the subject is unit 1.
+    home_reset();
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[0].x = 4;
+    g_home_world.vehs[0].y = 2;
+    g_home_world.vehs[0].faction_id = 1;
+    g_home_world.vehs[0].proto_id = HOME_P_CARRIER;
+    g_home_world.vehs[0].order = ORDER_NONE;
+    g_home_world.vehs[1].x = 2;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIR;
+    g_home_world.vehs[1].order = ORDER_SENTRY_BOARD;
+    HOME_CHECK(action_home(1, 0) == 1);
+    HOME_CHECK(g_home_world.vehs[1].order == ORDER_MOVE_TO);
+    HOME_CHECK(g_home_world.vehs[1].waypoint_x[0] == 4);
+    HOME_CHECK(g_home_world.vehs[1].waypoint_y[0] == 2);
+    HOME_CHECK(g_home_world.vehs[0].order == ORDER_NONE);  // the carrier is untouched
+    // ... and the subject still does not count as its own carrier.
+    home_reset();
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[0].x = 6;
+    g_home_world.vehs[0].y = 2;
+    g_home_world.vehs[0].faction_id = 1;
+    g_home_world.vehs[0].proto_id = HOME_P_AIR;
+    g_home_world.vehs[1].x = 2;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_CARRIER;
+    g_home_world.vehs[1].order = ORDER_SENTRY_BOARD;
+    HOME_CHECK(action_home(1, 0) == 0);
+    HOME_CHECK(g_home_world.vehs[1].order == ORDER_SENTRY_BOARD);
+
+    // ---- the convoy reachability test, at its boundaries -------------------
+    // A range 2 air chassis with base speed 6 and a fission reactor moves 8
+    // road moves a turn, so these three runs differ only in how much of the
+    // turn is already spent. The convoy sits 4 units away in all of them.
+    // 5 moves left, distance 4: reachable.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.chassis[HOME_CH_AIR].speed = 6;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 10;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIRCONVOY;
+    veh.moves_expended = 3;
+    HOME_CHECK(action_home(0, 4) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 10);
+    // Exactly 4 moves left against distance 4 is still reachable: the test is
+    // strictly greater-than, so equality passes.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.chassis[HOME_CH_AIR].speed = 6;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 10;
+    g_home_world.vehs[1].y = 2;
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIRCONVOY;
+    veh.moves_expended = 4;
+    HOME_CHECK(action_home(0, 4) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 10);
+    // A turn that is over leaves 0 road moves, not 1, so even the adjacent
+    // convoy is out of reach.
+    home_reset();
+    veh.proto_id = HOME_P_AIR;
+    g_home_world.chassis[HOME_CH_AIR].range = 2;
+    g_home_world.chassis[HOME_CH_AIR].speed = 6;
+    g_home_world.veh_count = 2;
+    g_home_world.vehs[1].x = 4;
+    g_home_world.vehs[1].y = 2;                    // dist 1
+    g_home_world.vehs[1].faction_id = 1;
+    g_home_world.vehs[1].proto_id = HOME_P_AIRCONVOY;
+    veh.moves_expended = 10;                       // more than a whole turn
+    HOME_CHECK(action_home(0, 4) == 0);
+    HOME_CHECK(veh.order == ORDER_SENTRY_BOARD);
+
+    // ---- the radius width is read, not assumed -----------------------------
+    // A base at distance 1 narrows the scan to RadiusRange[1] == 9 tiles, and
+    // step 21 - offset (+4,0) - is outside it. The unit is on alert for exactly
+    // that tile, so a scan that did not narrow would take the shortcut there
+    // and answer with a different destination.
+    home_reset();
+    g_home_world.chassis[HOME_CH_LAND].range = 2;  // max_dist 4
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 4;                                    // dist 1
+    base.faction_id_current = 1;
+    g_home_world.tiles[home_tile(6, 2)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 6;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.waypoint_x[0] == 2);
+    HOME_CHECK(veh.waypoint_y[0] == 4);
+    // The narrowest scan of all is one tile wide, and it really is one tile:
+    // step 1 - offset (+1,-1) - is not walked.
+    home_reset();
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    g_home_world.base_count = 1;
+    base.x = 2;
+    base.y = 2;                                    // dist 0 -> RadiusRange[0] == 1
+    base.faction_id_current = 1;
+    g_home_world.tiles[home_tile(3, 1)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 3;
+    veh.waypoint_y[1] = 1;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);           // standing on the base
+
+    // ---- the radius distance is halved -------------------------------------
+    // A chassis of speed 1 with one road move already spent reaches exactly 1.
+    // The airbase on step 2 is (2 + 0) >> 1 == 1 away and the unit is on alert
+    // for it, so the shortcut fires and the earlier, nearer airbase on step 0
+    // is discarded. Left unhalved the distance would be 2, the shortcut would
+    // not fire, and step 0 would stand.
+    home_reset();
+    g_home_world.chassis[HOME_CH_LAND].speed = 1;
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    veh.moves_expended = 1;                        // max_dist 1
+    g_home_world.tiles[home_tile(2, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 4;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_MOVE_TO);
+    HOME_CHECK(veh.waypoint_x[0] == 4);
+    HOME_CHECK(veh.waypoint_y[0] == 2);
+
+    // The shortcut also stops the scan: step 0 is the unit's own tile, so an
+    // airbase there would win on distance if the scan had continued.
+    home_reset();
+    g_home_world.chassis[HOME_CH_LAND].range = 2;
+    g_home_world.tiles[home_tile(2, 2)].bit = BIT_AIRBASE;
+    g_home_world.tiles[home_tile(4, 2)].bit = BIT_AIRBASE;
+    veh.state = VSTATE_UNK_200;
+    veh.order_auto_type = ORDERA_ON_ALERT;
+    veh.waypoint_x[1] = 2;
+    veh.waypoint_y[1] = 2;
+    HOME_CHECK(action_home(0, 0) == 1);
+    HOME_CHECK(veh.order == ORDER_NONE);           // step 0 fires it immediately
+}
+
+#undef HOME_CHECK
+
 }  // namespace
 
 int main() {
     test_not_my_turn();
     test_stack_veh_boarding();
+    test_action_home();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

@@ -2585,7 +2585,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004CAA50,0x004CB302,2226,.text,?action_destroy@@YAXHHHH@Z,"void (__cdecl ?action_destroy@@YAXHHHH@Z)(int vehID, int, int xCoord, int yCoord)",0x004CAA50-0x004CB302,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,25,5
 0x004CB310,0x004CB57F,623,.text,?action_go_to@@YAXH@Z,void (__cdecl ?action_go_to@@YAXH@Z)(int vehID),0x004CB310-0x004CB57F,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,8,2
 0x004CB580,0x004CBA98,1304,.text,?action_road_to@@YAXH@Z,void (__cdecl ?action_road_to@@YAXH@Z)(int vehID),0x004CB580-0x004CBA98,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,13,2
-0x004CBAA0,0x004CC35F,2239,.text,?action_home@@YAHHH@Z,"int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)",0x004CBAA0-0x004CC35F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,8
+0x004CBAA0,0x004CC35F,2239,.text,?action_home@@YAHHH@Z,"int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)",0x004CBAA0-0x004CC35F,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:3185,Complete,?action_home@@YAHHH@Z,,source_complete,,,,6,8
 0x004CC360,0x004CD051,3313,.text,?action_airdrop@@YAHHHHH@Z,"int (__cdecl ?action_airdrop@@YAHHHHH@Z)(int vehID, int xCoord, int yCoord, int factionID)",0x004CC360-0x004CD051,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,28,3
 0x004CD060,0x004CD082,34,.text,?action_feature@@YAXXZ,,0x004CD060-0x004CD082,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x004CD090,0x004CD2ED,605,.text,?action_arty@@YAXHHH@Z,"void (__cdecl ?action_arty@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)",0x004CD090-0x004CD2ED,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,14,2
