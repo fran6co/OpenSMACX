@@ -1793,7 +1793,6 @@ P3,6220,0x005B3920,?setup_game@@YAXH@Z,2273,4,22,unrecovered,,,2,exact,exact,
 P0,1005520,0x005B4600,?social_set@@YAXH@Z,289,5,5,original_dependency,game_service,recover_social_model,2,exact,exact,
 P3,4521,0x005B5620,?social_select@@YAXH@Z,104,4,5,unrecovered,,,2,exact,exact,void (__cdecl ?social_select@@YAXH@Z)(int factionID)
 P3,2021,0x005B5A70,?unspot_stack@@YAXH@Z,85,2,0,unrecovered,,,2,exact,exact,void (__cdecl ?unspot_stack@@YAXH@Z)(int vehID)
-P2,6321,0x005B5AD0,?spot_loc@@YAXHHH@Z,821,6,3,unrecovered,,,2,exact,exact,"void (__cdecl ?spot_loc@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)"
 P3,10,0x005B5E10,sub_5b5e10,144,0,0,unrecovered,,,1,missing,start_only,
 P3,111,0x005B61A0,sub_5b61a0,185,0,1,unrecovered,,,1,missing,exact,int (__cdecl sub_5B61A0)(int vehID)
 P2,8121,0x005B6260,?spot_all@@YAXHH@Z,10370,6,21,unrecovered,,,2,exact,exact,"void (__cdecl ?spot_all@@YAXHH@Z)(uint32_t vehID, BOOL tgl)"

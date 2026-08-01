@@ -5550,6 +5550,8 @@ struct SpotWorld {
     int local_faction;
     uint32_t game_state;
     uint32_t dirty;
+    int base_count;
+    int veh_count;
 };
 
 SpotWorld g_spot_world;
@@ -5625,7 +5627,9 @@ class SpotSeams {
           players_(&PlayersData, g_spot_world.players_data),
           dirty_(&UnkBitfield1, &g_spot_world.dirty),
           bases_(&Bases, g_spot_world.bases),
-          vehs_(&Vehs, g_spot_world.vehs) { }
+          vehs_(&Vehs, g_spot_world.vehs),
+          base_count_(&BaseCurrentCount, &g_spot_world.base_count),
+          veh_count_(&VehCurrentCount, &g_spot_world.veh_count) { }
 
  private:
     ScopedSeam<Map *> tiles_;
@@ -5638,6 +5642,8 @@ class SpotSeams {
     ScopedSeam<uint32_t> dirty_;
     ScopedSeam<Base> bases_;
     ScopedSeam<Veh> vehs_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> veh_count_;
 };
 
 void test_spot_tile() {
@@ -5988,6 +5994,133 @@ void test_spot_stack() {
     PCHECK(spot_at(0, 0).visibility == 0x02);
 }
 
+/*
+ * spot_loc reaches base_at and veh_at, and both have an error path that logs
+ * and rebuilds the world's occupancy bits when a tile claims an occupant it
+ * cannot find. Every case below therefore sets BIT_BASE_IN_TILE and
+ * BIT_VEH_IN_TILE only on a tile that really does hold one, and keeps the two
+ * counts in step with the fixture, so the suite measures spot_loc rather than
+ * the recovery routines.
+ */
+void test_spot_loc() {
+    SpotSeams seams;
+
+    // ---- an empty tile: the tile is revealed and nothing else is -----------
+    spot_reset();
+    spot_at(6, 3).bit = BIT_RIVER;
+    spot_loc(6, 3, 5);
+    PCHECK(spot_at(6, 3).visibility == 0x20);
+    PCHECK(spot_at(6, 3).bit_visible[4] == BIT_RIVER);
+    PCHECK(spot_only_tile_written(6, 3));
+    PCHECK(g_spot_world.bases[0].visibility == 0);
+    PCHECK(g_spot_world.vehs[0].visibility == 0);
+
+    // ---- off the map: no tile, no base, no unit ----------------------------
+    const int off_map[4][2] = { {-1, 3}, {16, 3}, {6, -1}, {6, 8} };
+    for (int c = 0; c < 4; c++) {
+        spot_reset();
+        spot_loc(off_map[c][0], off_map[c][1], 5);
+        PCHECK(spot_map_untouched());
+        PCHECK(g_spot_world.bases[0].visibility == 0);
+        PCHECK(g_spot_world.vehs[0].visibility == 0);
+    }
+
+    // ---- a base on the tile ------------------------------------------------
+    spot_reset();
+    g_spot_world.base_count = 3;
+    g_spot_world.bases[0].x = 2;
+    g_spot_world.bases[0].y = 5;
+    g_spot_world.bases[1].x = 6;
+    g_spot_world.bases[1].y = 3;
+    g_spot_world.bases[1].population_size = 8;
+    g_spot_world.bases[2].x = 0;
+    g_spot_world.bases[2].y = 6;
+    spot_at(6, 3).bit = BIT_BASE_IN_TILE;
+    spot_loc(6, 3, 5);
+    PCHECK(g_spot_world.bases[1].visibility == 0x20);
+    PCHECK(g_spot_world.bases[1].faction_pop_size_intel[5] == 8);
+    PCHECK(spot_at(6, 3).visibility == 0x20);
+    PCHECK(spot_only_tile_written(6, 3));
+    // The bases either side of it are not the one that was found.
+    PCHECK(g_spot_world.bases[0].visibility == 0);
+    PCHECK(g_spot_world.bases[2].visibility == 0);
+
+    // ---- a base WINS: the unit stack under it is left alone ----------------
+    // This is the arm that returns. Without it the units would be spotted too.
+    spot_reset();
+    g_spot_world.base_count = 1;
+    g_spot_world.bases[0].x = 6;
+    g_spot_world.bases[0].y = 3;
+    g_spot_world.bases[0].population_size = 4;
+    g_spot_world.veh_count = 3;
+    for (int i = 0; i < 3; i++) {
+        g_spot_world.vehs[i].x = 6;
+        g_spot_world.vehs[i].y = 3;
+    }
+    {
+        const int chain[3] = {0, 1, 2};
+        spot_link(chain, 3);
+    }
+    spot_at(6, 3).bit = BIT_BASE_IN_TILE | BIT_VEH_IN_TILE;
+    spot_loc(6, 3, 5);
+    PCHECK(g_spot_world.bases[0].faction_pop_size_intel[5] == 4);
+    PCHECK(g_spot_world.vehs[0].visibility == 0);
+    PCHECK(g_spot_world.vehs[1].visibility == 0);
+    PCHECK(g_spot_world.vehs[2].visibility == 0);
+
+    // ---- a unit stack, no base ---------------------------------------------
+    // Entered at the middle unit, so the whole stack is only reached through
+    // spot_stack's climb; veh_at hands over the top of the stack.
+    spot_reset();
+    g_spot_world.veh_count = 12;
+    const int stack[3] = {11, 7, 2};
+    spot_link(stack, 3);
+    for (int i = 0; i < 3; i++) {
+        g_spot_world.vehs[stack[i]].x = 6;
+        g_spot_world.vehs[stack[i]].y = 3;
+        g_spot_world.vehs[stack[i]].flags = VFLAG_LURKER | VFLAG_INVISIBLE;
+    }
+    spot_at(6, 3).bit = BIT_VEH_IN_TILE;
+    spot_loc(6, 3, 5);
+    PCHECK(g_spot_world.vehs[11].visibility == 0x20);
+    PCHECK(g_spot_world.vehs[7].visibility == 0x20);
+    PCHECK(g_spot_world.vehs[2].visibility == 0x20);
+    for (int i = 0; i < 3; i++) {
+        PCHECK(g_spot_world.vehs[stack[i]].flags == 0);
+    }
+    PCHECK(spot_at(6, 3).visibility == 0x20);
+    PCHECK(spot_only_tile_written(6, 3));
+    // No base was touched, and nothing outside the stack was.
+    PCHECK(g_spot_world.bases[0].visibility == 0);
+    PCHECK(g_spot_world.vehs[0].visibility == 0);
+    PCHECK(g_spot_world.vehs[3].visibility == 0);
+
+    // A tile whose occupancy bit is clear reveals only the tile, even with the
+    // units sitting on it: base_at and veh_at both answer -1.
+    spot_reset();
+    g_spot_world.veh_count = 12;
+    spot_link(stack, 3);
+    for (int i = 0; i < 3; i++) {
+        g_spot_world.vehs[stack[i]].x = 6;
+        g_spot_world.vehs[stack[i]].y = 3;
+    }
+    spot_loc(6, 3, 5);
+    PCHECK(spot_at(6, 3).visibility == 0x20);
+    PCHECK(g_spot_world.vehs[2].visibility == 0);
+    PCHECK(g_spot_world.vehs[7].visibility == 0);
+    PCHECK(g_spot_world.vehs[11].visibility == 0);
+
+    // ---- the local faction's repaint hint travels through spot_loc ---------
+    spot_reset();
+    spot_loc(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0x400000);
+    PCHECK(g_spot_world.dirty == 1);
+    spot_reset();
+    spot_loc(6, 3, 4);
+    PCHECK(spot_at(6, 3).bit2 == 0);
+    PCHECK(g_spot_world.dirty == 0);
+}
+
 #undef PCHECK
 
 }  // namespace
@@ -6009,6 +6142,7 @@ int main() {
     test_spot_tile();
     test_spot_base();
     test_spot_stack();
+    test_spot_loc();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
