@@ -129,6 +129,22 @@ The working split that respects those constraints:
 - Keep proprietary runtime and tool data ignored under `.opensmacx/` and `build/`.
 - Local artifact paths must have no symlink components; configure-time and Python checks reject writes that could escape or alias another artifact.
 - Never commit or distribute generated assembly or object files.
+- Export aliases in `src/OpenSMACX.def` are append-only. The staged
+  `terranx_hybrid.exe` carries a frozen import table naming 462 symbols, so
+  renaming an alias makes `stage-hybrid-game` fail with `OpenSMACX.dll does not
+  export N imported symbols` even when the old name matched no IDB name and
+  nothing linked against it. Correcting a decoration means aliasing the old and
+  the new spelling to the same GCC symbol. Note also that `ctest` is not the
+  gate: staging runs before the tests, so all 62 can pass while the game can no
+  longer load the DLL. Run `tools/run_gate.py`.
+- A test must never write into the source tree, not even to restore what it
+  wrote. `tools/run_gate.py` runs both presets concurrently, so the other lane
+  reads those files while the test is mid-write. A test that appended one line
+  to `docs/recovery/functions.csv` and put it back made the debug lane read it
+  at **0 bytes** - measured 36 times in 40 s - and the lane died with
+  `analysis correlation and canonical inventory counts differ`. Nothing showed
+  in `git status`, because the file was restored. Copy the file into the test's
+  own temporary directory and patch `REPO_ROOT` at it.
 - Keep each eligible legacy island as a separate symbol and section so it can be replaced independently.
 - Do not revert unrelated worktree changes.
 - Check whether a header or source file already exists before generating one.
