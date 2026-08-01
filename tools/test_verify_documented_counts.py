@@ -1,80 +1,67 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
+import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import verify_documented_counts as counts
 
-
-FUNCTIONS = ("address,recovery_state\n"
-             "0x1,source_complete\n0x2,source_complete\n"
-             "0x3,unrecovered\n0x4,thunk\n0x5,external_library\n"
-             "0x6,original_dependency\n0x7,source_in_progress\n")
-
-LINE = ("- Current recovery state: {sc} `source_complete`, 1 "
-        "`original_dependency`, 1 `source_in_progress`, 1 `external_library`, "
-        "1 `thunk`, {un} `unrecovered`; more prose after.\n")
+PADDING = "filler paragraph.\n" * 100          # keeps the file over the floor
 
 
-class DocumentedCountsTests(unittest.TestCase):
+class RestatementTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.functions = self.root / "functions.csv"
-        self.functions.write_text(FUNCTIONS, encoding="utf-8")
 
-    def doc(self, text):
-        path = self.root / "AGENTS.md"
-        path.write_text(text, encoding="utf-8")
-        return path
-
-    def run_check(self, text):
-        import sys
-        from unittest import mock
-        argv = ["verify_documented_counts.py", "--doc", str(self.doc(text)),
-                "--functions", str(self.functions)]
+    def check(self, body):
+        doc = self.root / "AGENTS.md"
+        doc.write_text(body + PADDING, encoding="utf-8")
+        argv = ["verify_documented_counts.py", "--doc", str(doc)]
         with mock.patch.object(sys, "argv", argv):
             return counts.main()
 
-    def test_agreeing_counts_pass(self):
-        self.assertEqual(self.run_check(LINE.format(sc=2, un=1)), 0)
+    def test_a_document_with_no_counts_passes(self):
+        self.assertEqual(self.check("Run tools/recovery_metrics.py.\n"), 0)
 
-    def test_a_single_wrong_figure_fails(self):
-        self.assertEqual(self.run_check(LINE.format(sc=3, un=1)), 1)
-
-    def test_thousands_separators_are_understood(self):
-        # The real line writes 2,573 - a parser that choked would compare
-        # nothing and pass.
-        big = self.root / "big.csv"
-        big.write_text("address,recovery_state\n"
-                       + "".join(f"0x{i},source_complete\n" for i in range(1100))
-                       + "0x9,unrecovered\n0xa,thunk\n0xb,external_library\n"
-                         "0xc,original_dependency\n0xd,source_in_progress\n",
-                       encoding="utf-8")
-        self.functions = big
-        self.assertEqual(self.run_check(LINE.format(sc="1,100", un=1)), 0)
-        self.assertEqual(self.run_check(LINE.format(sc="1,101", un=1)), 1)
-
-    def test_a_missing_line_fails_rather_than_passing_vacuously(self):
-        self.assertEqual(self.run_check("nothing to see here\n"), 1)
-
-    def test_a_partial_line_fails_rather_than_comparing_a_subset(self):
-        # Matching two of six states and calling it clean is how a check
-        # survives a rename while verifying nothing.
+    def test_a_restated_count_fails(self):
         self.assertEqual(
-            self.run_check("- Current recovery state: 2 `source_complete`, "
-                           "1 `unrecovered` and nothing else.\n"), 1)
+            self.check("- state: 2,573 `source_complete`, 2,787 `unrecovered`.\n"),
+            1)
 
-    def test_the_committed_tree_agrees(self):
-        if not counts.DEFAULT_FUNCTIONS.is_file():
-            self.skipTest("docs/recovery/functions.csv is absent")
-        documented = counts.documented_counts(counts.DEFAULT_DOC)
-        self.assertIsNotNone(documented)
-        actual = counts.actual_counts(counts.DEFAULT_FUNCTIONS)
-        for state, said in documented.items():
-            self.assertEqual(said, actual[state], f"AGENTS.md {state}")
+    def test_a_single_restated_count_fails(self):
+        self.assertEqual(self.check("there are 28 `thunk` functions.\n"), 1)
+
+    def test_naming_a_state_without_a_number_is_allowed(self):
+        # Prose has to be able to talk about the states.
+        self.assertEqual(
+            self.check("A callee is resolved if it is `source_complete`, "
+                       "`external_library` or `thunk`.\n"), 0)
+
+    def test_a_number_near_an_unrelated_backtick_is_allowed(self):
+        self.assertEqual(
+            self.check("The 2,573 functions live in `docs/recovery/`.\n"), 0)
+
+    def test_a_truncated_document_fails_rather_than_passing(self):
+        doc = self.root / "AGENTS.md"
+        doc.write_text("tiny\n", encoding="utf-8")
+        argv = ["verify_documented_counts.py", "--doc", str(doc)]
+        with mock.patch.object(sys, "argv", argv):
+            self.assertEqual(counts.main(), 1)
+
+    def test_a_missing_document_fails(self):
+        argv = ["verify_documented_counts.py", "--doc",
+                str(self.root / "absent.md")]
+        with mock.patch.object(sys, "argv", argv):
+            self.assertEqual(counts.main(), 1)
+
+    def test_the_committed_agents_md_restates_nothing(self):
+        if not counts.DEFAULT_DOC.is_file():
+            self.skipTest("AGENTS.md is absent")
+        self.assertEqual(counts.restated_counts(counts.DEFAULT_DOC), [])
 
 
 if __name__ == "__main__":

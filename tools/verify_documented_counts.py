@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Fail when a hand-typed count in AGENTS.md disagrees with the generated data.
+"""Fail when AGENTS.md restates per-state recovery counts.
 
-AGENTS.md carries a "Current recovery state" line listing per-state function
-counts. It is typed by hand, so it rots, and the line itself admits as much:
-"These counts drift ... every figure on this line was wrong until 2026-07-29,
-five of them by more than 60%." Writing the warning down did not stop it - on
-2026-08-01 the line said 2,552 `source_complete` against an actual 2,573, and
-2,808 `unrecovered` against 2,787.
+AGENTS.md used to list the six per-state function counts by hand. They rotted
+twice: every figure was stale before 2026-07-29, and on 2026-08-01 the line
+said 2,552 `source_complete` against an actual 2,573 and 2,808 `unrecovered`
+against 2,787. The line's own defence was a sentence warning the reader it
+might be wrong, which is not a defence.
 
-A note telling the reader the number may be wrong is not a substitute for the
-number being right. This compares the documented figures against
-docs/recovery/functions.csv, which is generated, and names every disagreement.
+The first version of this check compared the figures and demanded they match.
+That was worse than it looked: EVERY recovery changes at least one of those
+counts, so pinning them would have forced every recovery to edit AGENTS.md - a
+file all of them share - which is precisely the coordination that worktree-
+isolated parallel batches exist to remove. Trading a rotting number for a new
+merge point is not a fix.
 
-Deliberately NOT solved by deleting the counts. They are load-bearing context -
-a reader sizing the remaining work needs them in the file they are already
-reading - so they stay, and drift becomes a failing test instead of a caveat.
+So the counts are gone from AGENTS.md, and this check keeps them gone. The
+numbers live in docs/recovery/summary.json, which is generated and already
+gate-checked, and in tools/recovery_metrics.py.
 """
 import argparse
 import csv
@@ -28,23 +30,25 @@ DEFAULT_DOC = REPO_ROOT / "AGENTS.md"
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 # "2,552 `source_complete`" / "28 `thunk`"
-COUNT_RE = re.compile(r"([\d,]+)\s+`([a-z_]+)`")
+# A leading digit is required: `source_complete`, `external_library` in prose
+# otherwise parses the separating comma as the number.
+COUNT_RE = re.compile(r"(\d[\d,]*)\s+`([a-z_]+)`")
 STATES = {"source_complete", "original_dependency", "source_in_progress",
           "external_library", "thunk", "unrecovered"}
 
 
-def documented_counts(doc_path):
-    """The figures on the 'Current recovery state' line, by state."""
+def restated_counts(doc_path):
+    """[(state, number)] for every per-state count restated in the document.
+
+    A count is a number immediately followed by a backticked state name - the
+    shape the removed line used. Prose may name a state, and may quote a
+    number; only the two adjacent are a restatement of generated data.
+    """
     text = doc_path.read_text(encoding="utf-8")
-    start = text.find("Current recovery state:")
-    if start < 0:
-        return None
-    # The claim runs to the end of the sentence that introduces it.
-    block = text[start:start + 600]
-    found = {}
-    for number, state in COUNT_RE.findall(block):
-        if state in STATES and state not in found:
-            found[state] = int(number.replace(",", ""))
+    found = []
+    for number, state in COUNT_RE.findall(text):
+        if state in STATES:
+            found.append((state, int(number.replace(",", ""))))
     return found
 
 
@@ -62,42 +66,36 @@ def main():
     parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
     arguments = parser.parse_args()
 
-    if not arguments.functions.is_file():
-        print(f"documented-counts: {arguments.functions} is absent, so this "
-              "check verified NOTHING", file=sys.stderr)
+    if not arguments.doc.is_file():
+        print(f"documented-counts: {arguments.doc} is absent, so this check "
+              "verified NOTHING", file=sys.stderr)
         return 1
 
-    documented = documented_counts(arguments.doc)
-    if not documented:
-        print("documented-counts: no 'Current recovery state:' line found in "
-              f"{arguments.doc}. If the line was removed deliberately, remove "
-              "this check with it; otherwise it has been renamed and this "
-              "check is now watching nothing.", file=sys.stderr)
-        return 1
-    # A parser that silently matched two of six states would pass forever.
-    missing = sorted(STATES - set(documented))
-    if missing:
-        print(f"documented-counts: only found {len(documented)} of "
-              f"{len(STATES)} states on that line; missing "
-              f"{', '.join(missing)}. Not comparing a subset and calling it "
-              "clean.", file=sys.stderr)
+    restated = restated_counts(arguments.doc)
+    if restated:
+        print(f"documented-counts: {arguments.doc.name} restates "
+              f"{len(restated)} per-state recovery count(s). Do not copy "
+              "generated numbers here:\n  every recovery changes at least one "
+              "of them, so this file would have to be edited by\n  every "
+              "recovery - and it is shared, so that is a merge point for every "
+              "parallel\n  batch. It also rotted twice when it was here "
+              "before.\n  Use tools/recovery_metrics.py or "
+              "docs/recovery/summary.json.", file=sys.stderr)
+        for state, number in restated:
+            print(f"    {number:,} `{state}`", file=sys.stderr)
         return 1
 
-    actual = actual_counts(arguments.functions)
-    wrong = [(state, documented[state], actual[state])
-             for state in sorted(documented) if documented[state] != actual[state]]
-    if wrong:
-        print("documented-counts: AGENTS.md disagrees with the generated "
-              "docs/recovery/functions.csv:", file=sys.stderr)
-        for state, said, is_ in wrong:
-            print(f"    {state:<22} says {said:>6,}   actually {is_:>6,}",
-                  file=sys.stderr)
-        print("  Update the line, or make it say something that cannot rot.",
+    # Not a vacuous pass: the document must exist and be substantial, or a
+    # truncated file would report clean forever.
+    size = arguments.doc.stat().st_size
+    if size < 1000:
+        print(f"documented-counts: {arguments.doc} is only {size} B; refusing "
+              "to report clean over a file that may be truncated.",
               file=sys.stderr)
         return 1
 
-    print(f"documented-counts: {len(documented)} states agree with "
-          f"{sum(actual.values()):,} catalogued functions")
+    print(f"documented-counts: {arguments.doc.name} restates no generated "
+          f"per-state count ({size:,} B scanned)")
     return 0
 
 
