@@ -224,16 +224,17 @@ gameplay tests keep a central `main()` list:
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery state: 2,573 `source_complete`, 280 `original_dependency`,
-  5 `source_in_progress`, 327 `external_library`, 28 `thunk`, 2,787
-  `unrecovered`; 3,136 ranked recovery candidates. **These counts no longer
-  drift silently: `documented-counts` compares this line against the generated
-  `docs/recovery/functions.csv` on every gate run and fails on any
-  disagreement.** They had drifted again by 2026-08-01 - 2,552 against 2,573,
-  2,808 against 2,787 - because the previous version of this line only warned
-  the reader that it might be wrong. `docs/recovery/summary.json` remains the
-  generated source of truth. Read the JSON rather than
-  this line when the number matters.
+- Current recovery state: **not restated here.** Run
+  `.opensmacx/venv/bin/python tools/recovery_metrics.py`, or read
+  `docs/recovery/summary.json`, which is generated and gate-checked.
+  This line used to carry the six per-state counts and they were wrong twice:
+  every figure was stale before 2026-07-29, and by 2026-08-01 the recovered
+  total was understated by 21 and the unrecovered total overstated by the same.
+  Copying them here made this file a second place the truth had to be
+  maintained, and **every recovery changes at least one of them** - so a check
+  that pinned them would have forced each recovery to edit this shared file,
+  which is exactly the coordination that parallel batches are meant to avoid.
+  `documented-counts` now fails if per-state counts are reintroduced.
 - Local legacy-island count: `candidate_count` in the manifest that
   `extract-legacy-leaves` writes. It moves with the size cap and with every
   recovery batch, so it is not restated here.
