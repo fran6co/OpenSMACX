@@ -556,8 +556,17 @@ class Harness:
         output pipe and CTest reads that pipe to EOF. See
         tools/run_windows_test.py.
         """
+        # -FS excludes the build-freshness setup fixture. CTest would otherwise
+        # pull it in automatically for any selected test that requires it, and
+        # a fixture failure turns the test into `***Not Run` - which this
+        # harness would read as the mutant being KILLED. A false kill is the
+        # one outcome worse than a false survivor, and the sweep already has a
+        # stronger check of its own: it compares the artifact's identity before
+        # and after the build and reports STALE when the binary was not
+        # replaced.
         status = self._run(
-            ["ctest", "--no-tests=error", "-R", self.test],
+            ["ctest", "--no-tests=error", "-FS", "build_fresh",
+             "-R", self.test],
             self.build_dir, self.test_timeout)
         if status == TIMEOUT:
             # subprocess's timeout kills CTest and nothing else, so the

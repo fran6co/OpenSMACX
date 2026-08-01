@@ -97,6 +97,10 @@ function(opensmacx_add_python_tool_test name test_file)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/${test_file}"
     )
+    # Recorded so build-freshness can be required by everything EXCEPT these.
+    # They run interpreted from the source tree and have no build product that
+    # can go stale, so a stale build directory does not invalidate them.
+    set_property(GLOBAL APPEND PROPERTY OPENSMACX_PYTHON_TOOL_TESTS ${name})
 endfunction()
 
 foreach(variable IN ITEMS
@@ -1269,9 +1273,29 @@ if(BUILD_TESTING)
     # dispatches through a vtable slot reads as a perfect leaf. Three were
     # picked as recovery targets on that basis.
     opensmacx_add_python_tool_test(indirect-call-site-tests test_indirect_call_sites.py)
+
+    # CTest never builds, so a green run can be a green run of the last build.
+    opensmacx_add_python_tool_test(build-freshness-tests test_verify_build_freshness.py)
     add_test(NAME export-signedness-audit
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/audit_export_signedness.py"
+            --check
+    )
+
+    # Four artifacts under docs/recovery/ are DERIVED, and promotion regenerates
+    # none of them. Each has a `--check`, but only the signedness one above was
+    # reachable from any build path: the tests registered for the other two
+    # exercise the tool's logic, not whether the COMMITTED file is still current.
+    # summary.json's shape split is computed from recovered-shapes.csv, so a
+    # stale one publishes a wrong split under a green gate. 0.43 s and 0.65 s.
+    add_test(NAME recovered-shapes-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/classify_recovered_shapes.py"
+            --check
+    )
+    add_test(NAME derived-prototypes-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_prototypes_from_names.py"
             --check
     )
 
@@ -1991,6 +2015,37 @@ if(MINGW AND BUILD_TESTING)
             --ctest-file "${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake"
     )
 
+    # CTest NEVER BUILDS. Twice this project reported "62/62 passed" against
+    # binaries a failed build had not replaced - once against a DLL that had
+    # failed to link - because the operator ran ctest after a build error and
+    # every executable from the previous build was still on disk.
+    #
+    # Per-binary freshness would not have caught it: no test executable links
+    # OpenSMACX.dll (they are all static), so on that day every test binary was
+    # legitimately current. The DLL is passed explicitly for that reason.
+    add_test(NAME build-freshness
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_build_freshness.py"
+            --build-dir "${CMAKE_CURRENT_BINARY_DIR}"
+            --ctest-file "${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake"
+            --ninja "${CMAKE_MAKE_PROGRAM}"
+            --also "$<TARGET_FILE:OpenSMACX>"
+    )
+    set_tests_properties(build-freshness PROPERTIES FIXTURES_SETUP build_fresh)
+
+    # A FIXTURES_SETUP, so a stale tree turns these into `***Not Run` instead of
+    # into passes - a stale PASS is the whole failure mode. Membership is
+    # derived by EXCLUSION so a new binary-backed test is guarded without anyone
+    # remembering to add it; the python tool tests are exempt because they run
+    # interpreted from the source tree and have no build product to go stale.
+    get_property(_opensmacx_all_tests DIRECTORY PROPERTY TESTS)
+    get_property(_opensmacx_tool_tests GLOBAL PROPERTY OPENSMACX_PYTHON_TOOL_TESTS)
+    list(REMOVE_ITEM _opensmacx_all_tests ${_opensmacx_tool_tests} build-freshness)
+    if(_opensmacx_all_tests)
+        set_tests_properties(${_opensmacx_all_tests}
+            PROPERTIES FIXTURES_REQUIRED build_fresh)
+    endif()
+
     add_custom_target(verify-recovery-batch
         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
             --parallel "${OPENSMACX_CTEST_JOBS}"
@@ -2003,6 +2058,13 @@ if(MINGW AND BUILD_TESTING)
             recovery-gameplay-tests
             lifted-oracle-fold-tests
             globals-diff-tests
+            # The gate RAN this without building it. It is registered in
+            # CTestTestfile.cmake and reachable from `all`, but it was in
+            # neither the explicit nor the order-only inputs of this edge, so
+            # the one path advertised as safe from stale binaries was launching
+            # one it never rebuilt. recovery-oracle-tests needs no line here -
+            # verify-recovery-oracles already pulls it in order-only.
+            oracle-fault-guard-tests
             assemble-legacy-leaves
             smoke-hybrid-game
         USES_TERMINAL
