@@ -423,6 +423,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not args.exe.exists():
+        # Reporting nothing is a fine answer to "measure this"; it is never an
+        # answer to "does the document still agree with the image". Without the
+        # separation --check exits 0 having compared nothing, and the exe is a
+        # gitignored proprietary artifact so that is the ordinary case on any
+        # checkout without the game. Latent today - nothing wires --check yet -
+        # and fixed before it is wired rather than after.
+        if args.check:
+            print("measure-exclusions: the pinned executable is not present at "
+                  "%s, so the document could not be compared against anything. "
+                  "This check verified NOTHING." % args.exe, file=sys.stderr)
+            return 2
         print("the pinned executable is not present at %s; nothing measured"
               % args.exe)
         return 0
