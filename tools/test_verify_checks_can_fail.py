@@ -6,6 +6,7 @@ matched nothing produced input identical to the real file, the check passed, and
 that was reported as the check being unable to fail. Both directions of that
 mistake are covered here - damage that does not damage, and a check that exits 0.
 """
+import sys
 import unittest
 
 import verify_checks_can_fail as harness
@@ -96,6 +97,81 @@ class RefusalTests(unittest.TestCase):
         source = harness.main.__doc__ or ""
         self.assertNotIn("skipped", source.lower().replace("skipped and", ""),
                          "main() must not treat skips as coverage")
+
+
+class MainLoopTests(unittest.TestCase):
+    """Drive main() itself. Nothing here did, and it showed.
+
+    Mutation-testing this tool against its own suite killed 0 of 30 mutants:
+    every test exercised a pure helper - substitute(), refusal_is_real(), the
+    CASES shape - and none ran the loop that decides anything. So every
+    perturbation of the scoring, the coverage contract and the exit status
+    survived, in the tool that certifies nine other checks can fail.
+    """
+
+    def drive(self, cases, covered):
+        import contextlib
+        import io
+        saved_cases, saved_covered = harness.CASES, harness.COVERED_CHECKS
+        harness.CASES, harness.COVERED_CHECKS = cases, covered
+        argv = sys.argv
+        sys.argv = ["verify_checks_can_fail.py"]
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as out, \
+                 contextlib.redirect_stderr(io.StringIO()) as err:
+                status = harness.main()
+            return status, out.getvalue() + err.getvalue()
+        finally:
+            harness.CASES, harness.COVERED_CHECKS = saved_cases, saved_covered
+            sys.argv = argv
+
+    @staticmethod
+    def refusing(workspace):
+        return [sys.executable, "-c",
+                "import sys; sys.stderr.write('it refused\\n'); sys.exit(1)"]
+
+    @staticmethod
+    def passing(workspace):
+        return [sys.executable, "-c", "pass"]
+
+    @staticmethod
+    def crashing(workspace):
+        return [sys.executable, "-c",
+                "import sys; sys.stderr.write('usage: x\\n'); sys.exit(2)"]
+
+    def test_a_refusing_check_is_reported_and_exits_zero(self):
+        status, output = self.drive(
+            (("demo", "a real refusal", self.refusing, "it refused"),), {"demo"})
+        self.assertEqual(0, status)
+        self.assertIn("1 damage case(s) refused", output)
+
+    def test_a_check_that_passes_on_damage_fails_the_run(self):
+        status, output = self.drive(
+            (("demo", "no refusal", self.passing, "anything"),), {"demo"})
+        self.assertEqual(1, status)
+        self.assertIn("exited 0", output)
+
+    def test_a_crashing_check_does_not_count_as_a_refusal(self):
+        # The audit's headline finding against this file: exit 2 from argparse
+        # scored identically to the check doing its job.
+        status, output = self.drive(
+            (("demo", "a usage error", self.crashing, "it refused"),), {"demo"})
+        self.assertEqual(1, status)
+        self.assertIn("failed to run", output)
+
+    def test_a_covered_check_with_no_case_that_ran_fails(self):
+        # The coverage contract: a check ships with a proof it can fail.
+        status, output = self.drive((), {"demo"})
+        self.assertEqual(1, status)
+        self.assertIn("unproven", output)
+
+    def test_a_skipped_case_does_not_satisfy_coverage(self):
+        def skipping(workspace):
+            raise harness.Skip("the artifact is absent")
+        status, output = self.drive(
+            (("demo", "skipped", skipping, "x"),), {"demo"})
+        self.assertEqual(1, status)
+        self.assertIn("unproven", output)
 
 
 if __name__ == "__main__":
