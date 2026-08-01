@@ -242,6 +242,39 @@ def damage_observability_census(workspace):
             "--census", str(census), "--functions", str(copy)]
 
 
+def damage_exception_object(workspace):
+    """An object carrying exception unwind data in the swept directory.
+
+    recovery-abi scored 77% survivors under mutation with no damage case at all,
+    which made its green the weakest on the board. Its actual job - refusing a
+    translation unit that lost -fno-exceptions - is testable in seconds by
+    hard-linking the real object directory and dropping one -fexceptions object
+    into the copy.
+    """
+    import subprocess as _sp
+    build = REPO_ROOT / "build" / "mingw-i686-debug"
+    objects = build / "CMakeFiles" / "OpenSMACX.dir" / "src"
+    alphanet = objects / "alphanet.cpp.obj"
+    if not objects.is_dir() or not alphanet.is_file():
+        raise Skip("no configured debug build directory")
+    compiler = shutil.which("i686-w64-mingw32-g++")
+    if not compiler:
+        raise Skip("no i686 mingw compiler on PATH")
+    copy = workspace / "objects"
+    _sp.run(["cp", "-al", str(objects), str(copy)], check=True)
+    source = workspace / "poison.cpp"
+    source.write_text("struct E{};\nint poison(int x){ if(x) throw E(); return x; }\n",
+                      encoding="utf-8")
+    done = _sp.run([compiler, "-m32", "-c", "-fexceptions", str(source),
+                    "-o", str(copy / "poison.cpp.obj")], capture_output=True)
+    if done.returncode != 0:
+        raise Skip("could not build an exception-carrying object")
+    return [PYTHON, str(TOOLS / "verify_recovery_abi.py"),
+            "--nm", "/usr/bin/i686-w64-mingw32-nm",
+            "--objdump", "/usr/bin/i686-w64-mingw32-objdump",
+            "--object", str(alphanet), "--object-dir", str(copy)]
+
+
 def damage_absent_signedness_image(workspace):
     """No executable, so nothing can be ranked. It used to print `0 <= 44`."""
     return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
@@ -281,6 +314,8 @@ CASES = (
      damage_blinded_wine_check, "expected at least"),
     ("exclusions-current", "a measured number disagreeing with the image",
      damage_stale_exclusions, "disagrees with the image"),
+    ("recovery-abi", "an object carrying exception unwind data",
+     damage_exception_object, "carries exception unwind data"),
     ("recovery-pipeline", "a pinned pipeline fact that no longer holds",
      damage_pipeline_golden, "answers changed"),
     ("observability-ratchet", "a recovery the census does not record",
@@ -304,6 +339,7 @@ COVERED_CHECKS = {
     "export-signedness-audit",
     "recovery-pipeline",
     "observability-ratchet",
+    "recovery-abi",
 }
 
 

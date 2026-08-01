@@ -393,7 +393,7 @@ check:
 | `verify_no_load_time_addresses` | 57% | 14 | yes |
 | `verify_recovery_metadata` | 60% | 24 | no |
 | `verify_tool_test_registration` | 67% | 10 | yes |
-| `verify_recovery_abi` | 77% | 8 | no |
+| `verify_recovery_abi` | 77% | 8 | **yes**, added after this table was written |
 | `verify_checks_can_fail` | 100% | 17 | n/a — it is the harness |
 | `verify_recovery_pipeline` | 100% | 7 | yes |
 
@@ -402,9 +402,17 @@ check:
 `verify_observability_ratchet` each refuse real damage AND have suites that
 observe most of their logic. When those pass, the property they name holds.
 
-**A green from `verify_recovery_abi` or `verify_recovery_metadata` is weakly
-supported.** No damage case, and two-thirds to three-quarters of their logic is
-unobserved by their own tests. They may well be correct; nothing here shows it.
+**`verify_recovery_abi` has been moved out of half of this group.** It now has
+a damage case: an object compiled `-fexceptions`, dropped into a hard-linked
+copy of the real object directory, which it refuses with `carries exception
+unwind data`. It is proven able to fail on the property it names, though 77% of
+its logic is still unobserved by its own tests.
+
+**A green from `verify_recovery_metadata` remains weakly supported.** It has no
+damage case because its comparison needs a full IDB regeneration - too heavy for
+a seconds-scale harness, and a cheaper stand-in exercising some other path would
+be the vacuous control this whole exercise exists to remove. 60% of its logic is
+unobserved. It may well be correct; nothing here shows it.
 
 **Read the 100% rows with care** — the metric is confounded for tools whose
 content is validated by RUNNING them rather than by unit tests. The survivors in

@@ -91,12 +91,12 @@ class RefusalTests(unittest.TestCase):
         self.assertEqual("", why)
 
     def test_skip_is_not_a_pass(self):
-        # A skipped case must not satisfy the coverage requirement, or an
-        # absent artifact silently becomes a clean run.
+        # This asserted on main().__doc__ - which is None, so the assertion was
+        # vacuous and stayed green under four of five mutations of the code it
+        # named. The behaviour is covered for real in
+        # MainLoopTests.test_a_skipped_case_does_not_satisfy_coverage; what is
+        # left here is the type contract that case depends on.
         self.assertTrue(issubclass(harness.Skip, Exception))
-        source = harness.main.__doc__ or ""
-        self.assertNotIn("skipped", source.lower().replace("skipped and", ""),
-                         "main() must not treat skips as coverage")
 
 
 class MainLoopTests(unittest.TestCase):
