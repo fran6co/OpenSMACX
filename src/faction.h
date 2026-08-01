@@ -551,6 +551,7 @@ extern uint32_t *DiploFrictionFactionIDWith;
 extern uint32_t *DiploFrictionFactionID;
 extern int *BestProtoForTrade;
 extern int *BestProtoToMention;
+extern int *PopupDialogFactionID;
 
 DLLEXPORT BOOL __cdecl is_alien_faction(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl is_human(uint32_t faction_id);

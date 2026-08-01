@@ -1597,6 +1597,7 @@ address,name,shape
 0x0053A150,?get_patience@@YAHHH@Z,straight_line
 0x0053A1C0,?energy_value@@YAHH@Z,loop
 0x0053A4A0,?scan_prototypes@@YAXHH@Z,loop
+0x0054ACC0,?suggest_plan@@YAHHH@Z,loop
 0x0054AFA0,?attack_from@@YAHHH@Z,loop
 0x0054CB50,?value_of_base@@YAHHHHHH@Z,loop
 0x00558FC0,?exec@BasePop@@QAEHP6AHXZ@Z,straight_line
