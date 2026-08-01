@@ -22,6 +22,7 @@ import argparse
 import csv
 import json
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -75,15 +76,46 @@ def read_rows(functions_path):
 
 
 def frontier_population(rows, callgraph_path):
+    """Unrecovered game functions whose callees are all already resolved.
+
+    THE CALLGRAPH IS AN EDGE LIST, NOT AN ADDRESS-KEYED MAP. This function used
+    to ask it for `graph[address]["callees"]`, a key shape the file has never
+    had, so every lookup returned [] and `all([])` was vacuously true. The seam
+    filter admitted every row it was given: it reported 2,786 functions, which
+    is exactly the unfiltered `unrecovered and game` count, where the answer is
+    949. Two published percentages were computed over 2.9x too many functions.
+
+    tools/recovery_frontier.py:65-68 already joined this correctly. This is that
+    code, and the lesson is the cheaper one: the correct implementation was in
+    the tree and a second was written instead of imported.
+
+    Addresses are compared as integers because the CSV and the callgraph do not
+    agree on spelling, and a string join between them fails silently in exactly
+    the same direction as the bug above - matching nothing, and calling it clean.
+    """
     graph = json.loads(callgraph_path.read_text(encoding="utf-8"))
+    if "edges" not in graph:
+        raise SystemExit(
+            f"{callgraph_path} has no 'edges' key. Without it every callee list "
+            f"is empty, the seam filter admits every row, and this tool reports "
+            f"a population it never actually filtered.")
+    by_source = defaultdict(set)
+    for edge in graph["edges"]:
+        by_source[int(edge["source"], 16)].add(int(edge["target"], 16))
+    state_of = {int(address, 16): row.get("recovery_state")
+                for address, row in rows.items()}
     out = []
     for address, row in rows.items():
         if row["recovery_state"] != "unrecovered" or row["binary_kind"] != "game":
             continue
-        callees = (graph.get(address) or {}).get("callees", [])
-        if all(rows.get(one, {}).get("recovery_state") in RESOLVED
-               for one in callees):
+        callees = by_source.get(int(address, 16), ())
+        if all(state_of.get(one) in RESOLVED for one in callees):
             out.append(row)
+    if len(out) == len(state_of):
+        raise SystemExit(
+            "the seam filter admitted every row, which means it filtered "
+            "nothing - refusing to publish a 'zero-callee-seam' population "
+            "that is really the whole catalogue.")
     return out
 
 

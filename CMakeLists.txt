@@ -1282,10 +1282,17 @@ if(BUILD_TESTING)
 
     # CTest never builds, so a green run can be a green run of the last build.
     opensmacx_add_python_tool_test(build-freshness-tests test_verify_build_freshness.py)
+    # --exe is passed explicitly rather than left to the tool's default. Ranking
+    # a disagreement as signed_divide means disassembling the original, and with
+    # no executable every finding stays `unranked` so that half of the ratchet
+    # compares 0 against 44 and can never fail. The tool now returns 2 rather
+    # than printing that as a pass, and naming the path here is what makes the
+    # dependency visible at the point of registration.
     add_test(NAME export-signedness-audit
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/audit_export_signedness.py"
             --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
 
     # Four artifacts under docs/recovery/ are DERIVED, and promotion regenerates
@@ -2044,7 +2051,7 @@ if(MINGW AND BUILD_TESTING)
     # exist only when cross-compiling; and the list is checked mechanically by
     # the wine-test-lock-check test below, because a wine-backed test MISSING
     # from it does not fail, it flakes.
-    foreach(_wine_locked_test IN ITEMS
+    set(OPENSMACX_WINE_LOCKED_TESTS
             recovery-leaf-tests
             recovery-leaf-tests-reversed
             recovery-gameplay-tests
@@ -2052,6 +2059,8 @@ if(MINGW AND BUILD_TESTING)
             oracle-fault-guard-tests
             lifted-oracle-fold-tests
             recovery-oracle)
+    list(LENGTH OPENSMACX_WINE_LOCKED_TESTS OPENSMACX_WINE_LOCKED_TEST_COUNT)
+    foreach(_wine_locked_test IN LISTS OPENSMACX_WINE_LOCKED_TESTS)
         if(TEST ${_wine_locked_test})
             set_tests_properties(${_wine_locked_test} PROPERTIES
                 RESOURCE_LOCK wineprefix)
@@ -2064,6 +2073,12 @@ if(MINGW AND BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_wine_test_locks.py"
             --ctest-file "${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake"
+            # Derived from the list above rather than typed, so the expectation
+            # cannot drift from it. Without this the check printed "verified
+            # NOTHING" and returned 0 whenever it matched no Wine-backed test -
+            # which is what a rename of the runner or of --wine-prefix looks
+            # like, and it is indistinguishable from a healthy native build.
+            --expect-at-least "${OPENSMACX_WINE_LOCKED_TEST_COUNT}"
     )
 
     # CTest NEVER BUILDS. Twice this project reported "62/62 passed" against
