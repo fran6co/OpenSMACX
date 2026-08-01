@@ -1380,6 +1380,24 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(tool-test-registration-tests
                                    test_verify_tool_test_registration.py)
 
+    # THE META-CHECK. Damages real repository content and requires each gate
+    # check to refuse it. Three of the thirteen checks added on 2026-07-31 could
+    # not fail, and every one of them passed its own unit tests - the controls
+    # each exercised the single input shape their author had in mind. A unit
+    # test asks whether a function returns the right value for a synthetic
+    # input; this asks whether the shipped check refuses real content that has
+    # been damaged.
+    #
+    # It also requires every check in its COVERED_CHECKS set to have a damage
+    # case that actually ran, so a new check ships with a proof it can fail
+    # rather than a promise. 9 cases across 7 checks in 3.8 s.
+    add_test(NAME checks-can-fail
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_checks_can_fail.py"
+    )
+    opensmacx_add_python_tool_test(checks-can-fail-tests
+                                   test_verify_checks_can_fail.py)
+
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
     # that safe - an unplanned command is still executed, and a command that
