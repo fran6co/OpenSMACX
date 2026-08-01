@@ -38,7 +38,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from generator_support import parse_body_ranges  # noqa: E402
+from generator_support import parse_body_ranges, read_bytes  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -188,15 +188,14 @@ def signed_arithmetic(exe_path):
     if not exe_path.is_file():
         return None
     image = pefile.PE(str(exe_path))
-    base = image.OPTIONAL_HEADER.ImageBase
 
+    # The shared reader rather than a ninth copy of the section walk. The local
+    # one bounded reads by Misc_VirtualSize alone, which is tighter than the
+    # raw-data extent and silently returned b"" for 14,063 bytes across six
+    # sections - no catalogued body among them, so this is a simplification and
+    # not a fix.
     def body(start, end):
-        for section in image.sections:
-            begin = base + section.VirtualAddress
-            if begin <= start < begin + section.Misc_VirtualSize:
-                offset = start - begin
-                return section.get_data()[offset:offset + (end - start)]
-        return b""
+        return read_bytes(image, start, end - start)
 
     decoder = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
     return body, decoder

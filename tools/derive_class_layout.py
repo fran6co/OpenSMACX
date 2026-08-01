@@ -50,6 +50,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pefile
+from generator_support import read_bytes  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM
 
@@ -119,11 +120,10 @@ class Image:
     def __init__(self, path: Path):
         self.pe = pefile.PE(str(path), fast_load=True)
         self.base = self.pe.OPTIONAL_HEADER.ImageBase
-        self.sections = [
-            (self.base + s.VirtualAddress,
-             self.base + s.VirtualAddress + max(s.Misc_VirtualSize, s.SizeOfRawData),
-             s.PointerToRawData)
-            for s in self.pe.sections]
+        # The precomputed section extent table went with read(): its only
+        # consumer was the private section walk that generator_support.read_bytes
+        # now does, and leaving it would be a second, unclamped description of
+        # the same geometry for the next reader to reach for.
         text = next(s for s in self.pe.sections
                     if s.Characteristics & 0x20000000)
         self.code = self.pe.__data__[
@@ -133,11 +133,11 @@ class Image:
         self.engine.detail = True
 
     def read(self, address: int, length: int) -> bytes:
-        for begin, end, raw in self.sections:
-            if begin <= address < end:
-                offset = raw + (address - begin)
-                return self.pe.__data__[offset:offset + length]
-        return b""
+        # The shared reader, which clamps to the section's raw data. The local
+        # walk this replaces did not, so a read starting near a section end ran
+        # into the next section's bytes and a read in the uninitialised .data
+        # tail returned .rsrc content presented as class layout.
+        return read_bytes(self.pe, address, length)
 
     def dword(self, address: int) -> int | None:
         data = self.read(address, 4)
