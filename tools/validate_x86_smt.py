@@ -65,6 +65,16 @@ def build_reference(source: Path, output: Path) -> Path:
          "-o", str(output)],
         capture_output=True, text=True)
     if done.returncode != 0:
+        # The include directory below is GENERATED, by
+        # tools/lift_whole_image.py, and is gitignored - so on a fresh tree the
+        # failure is a missing header reported as a compiler error, which reads
+        # like the encoding is broken rather than like a prerequisite is absent.
+        # Say which it is.
+        if "lifted_runtime.h" in done.stderr:
+            raise SystemExit(
+                "cannot build the reference harness: build/lifted/"
+                "lifted_runtime.h is absent. It is generated, not committed - "
+                "run tools/lift_whole_image.py first. Nothing was validated.")
         raise SystemExit(f"cannot build the reference harness:\n{done.stderr}")
     return output
 
@@ -138,8 +148,21 @@ def main(argv=None) -> int:
         # a property of the encoding, and must not read as agreement.
         print(f"WARNING: {skipped} case(s) were never validated")
     if not mismatches:
-        print(f"{len(x86_smt.SUPPORTED)} operation(s) agree on every checked "
-              f"bit of result and EFLAGS")
+        # The number CHECKED, not the number supported. Printing
+        # len(SUPPORTED) meant the success line was identical whether every
+        # operation had been validated or one had: adding an operation to
+        # SUPPORTED without teaching the reference harness gave "225 checked,
+        # 15 unsupported, 16 operation(s) agree" and exit 0.
+        operations = sorted({case[0] for case, expected
+                             in zip(cases, answers) if expected is not None})
+        print(f"{len(operations)} operation(s) agree on every checked bit of "
+              f"result and EFLAGS, over {checked} case(s)")
+        if skipped:
+            # An unvalidated width is a hole in the validation, not a property
+            # of the encoding. The warning above said so and then returned 0.
+            print(f"error: {skipped} case(s) were never validated, so this run "
+                  f"does not establish the encoding is correct", file=sys.stderr)
+            return 1
         return 0
 
     print(f"\n{len(mismatches)} DISAGREEMENT(S) - the encoding is not usable:")

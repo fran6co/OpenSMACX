@@ -19,15 +19,12 @@ numbers live in docs/recovery/summary.json, which is generated and already
 gate-checked, and in tools/recovery_metrics.py.
 """
 import argparse
-import csv
 import re
 import sys
-from collections import Counter
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DOC = REPO_ROOT / "AGENTS.md"
-DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 # "2,552 `source_complete`" / "28 `thunk`"
 # A leading digit is required: `source_complete`, `external_library` in prose
@@ -52,18 +49,9 @@ def restated_counts(doc_path):
     return found
 
 
-def actual_counts(functions_path):
-    counts = Counter()
-    with functions_path.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            counts[row["recovery_state"]] += 1
-    return counts
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC)
-    parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
     arguments = parser.parse_args()
 
     if not arguments.doc.is_file():
