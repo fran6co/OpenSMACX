@@ -1445,6 +1445,18 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(observability-tests
                                    test_measure_observability.py)
 
+    # The ratchet. 141 of 193 recovered functions of >=200 B are observed by
+    # nothing; writing 131 retroactive fixtures would halt the objective, so the
+    # debt is published and capped rather than paid off. A new recovery absent
+    # from the census fails, and the counts may fall but never rise. Compares
+    # two committed files and builds nothing.
+    add_test(NAME observability-ratchet
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_observability_ratchet.py"
+    )
+    opensmacx_add_python_tool_test(observability-ratchet-tests
+                                   test_verify_observability_ratchet.py)
+
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
     # that safe - an unplanned command is still executed, and a command that
