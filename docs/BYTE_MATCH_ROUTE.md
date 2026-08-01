@@ -198,6 +198,49 @@ signed too (`?set_fac@@YAXHHH@Z`, `?sea_coast@@YAHHH@Z`,
 over-declaration one level up, and a cast would have cemented it instead of
 leaving it visible.
 
+## How big is the class this found? 199 candidates, 44 of them sharp
+
+`bitmask` was found one function at a time. The class it belongs to can be
+counted without recompiling anything, because two *independent* records of the
+same signature already exist in the tree:
+
+* the catalogue's decorated name in `docs/recovery/functions.csv`, read out of
+  the SP3 IDB — `H` is `int`, `I` is `unsigned`;
+* the GCC symbol each `src/OpenSMACX.def` alias maps to, which the compiler
+  produced from the committed source — `i` is `int`, `j` is `unsigned`.
+
+Neither is derived from the other, so a disagreement is real evidence.
+`tools/audit_export_signedness.py` compares them:
+
+| | count |
+|---|---:|
+| exports comparable | 305 |
+| **parameter-signedness disagreements** | **199** |
+| — original contains `idiv`/`cdq` (signed divide) | **44** |
+| — original contains `sar`, no `idiv` | 61 |
+| — neither; bounded arithmetic only | 94 |
+
+**199 is a candidate population, not 199 bugs.** A disagreement only changes
+behaviour where the original does something signedness-sensitive *with that
+parameter*, and the ranking flags a function for containing signed arithmetic
+anywhere in its body. The 44 with a signed divide are where `bitmask` sat, and
+they are the ones worth reading.
+
+The audit must be keyed on the undecorated stem, not the decorated name. A
+wrong decoration is exactly the case being looked for, so the two names differ
+whenever there is something to find — keying on the full name matches 0 of 478
+aliases and reports a clean tree. That mistake was made and caught here.
+
+Two things this measurement settled. `?whose_territory@@YAHIIIPAHH@Z` is a
+confirmed member: the `.def` and the import table both say unsigned, the
+catalogue says signed. And the worry that a wrong decoration exports a name
+nothing imports is **refuted** — all 319 "unmatched" aliases are imported by
+the staged hybrid. `unmatched` means "no IDB *name* correspondence", not
+"dead"; nobody should go fixing them on that basis.
+
+`--check` refuses to let either count grow, so a new recovery cannot add to the
+class silently. Lower the baselines as candidates are resolved.
+
 ## Controls
 
 A byte-match checker that cannot fail proves nothing.

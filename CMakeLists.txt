@@ -1258,6 +1258,18 @@ if(BUILD_TESTING)
     # would carry a marker that lowers the metric while proving nothing.
     opensmacx_add_python_tool_test(signature-oracle-generator-tests test_generate_signature_oracles.py)
 
+    # A defect class no oracle here can see: the original divides signed and
+    # the recovery declared unsigned, which agree on every non-negative input.
+    # `bitmask` was found by byte-matching, not by any test. This compares the
+    # catalogue's decoration against the GCC symbol each .def alias maps to,
+    # and refuses to let the candidate population grow.
+    opensmacx_add_python_tool_test(export-signedness-audit-tests test_audit_export_signedness.py)
+    add_test(NAME export-signedness-audit
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/audit_export_signedness.py"
+            --check
+    )
+
     # The check itself, against the real table: `install_redirect` writes five
     # bytes with no regard for how long the function it replaces is, and 280 of
     # the wired redirects are shorter than that.
