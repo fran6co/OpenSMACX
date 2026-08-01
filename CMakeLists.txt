@@ -1314,6 +1314,18 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(documented-counts-tests test_verify_documented_counts.py)
 
+    # A tools/test_*.py runs only because this file names it, and nothing about
+    # an unregistered one looks wrong - it imports, it passes by hand, and the
+    # gate reports a clean sweep without it. Four sat unregistered before anyone
+    # noticed. The check distinguishes execution from mere reference: a test
+    # named only in a DEPENDS list is rebuilt when it changes and never run.
+    add_test(NAME tool-test-registration
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tool_test_registration.py"
+    )
+    opensmacx_add_python_tool_test(tool-test-registration-tests
+                                   test_verify_tool_test_registration.py)
+
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
     # that safe - an unplanned command is still executed, and a command that
