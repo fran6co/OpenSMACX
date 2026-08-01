@@ -113,6 +113,13 @@ enum VehPrototypeFlagBitfield {
     PROTO_ACTIVE = 0x1, // if this bit is zero, prototype has been retired
     PROTO_CUSTOM_NAME_SET = 0x2,
     PROTO_TYPED_COMPLETE = 0x4,
+    // Both are set by mention_prototypes (0x0053A230) and read by
+    // scan_prototypes (0x0053A4A0), which will not offer up a prototype that
+    // already carries the bit its treaty state cares about. 0x10 goes onto
+    // every prototype of the speaking faction once it has mentioned any of
+    // them; 0x20 goes onto the one mentioned to a pact partner.
+    PROTO_UNK_10 = 0x10,
+    PROTO_UNK_20 = 0x20,
 };
 
 enum VehOrders {

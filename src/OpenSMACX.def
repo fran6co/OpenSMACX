@@ -377,6 +377,7 @@ EXPORTS
     "?territory@@YAHHHHPAHPAH@Z" = _Z9territoryiiiPiS_
     "?rankings@@YAXH@Z" = _Z8rankingsi
     "?valid_patrol@@YAHHHH@Z" = _Z12valid_patroliii
+    "?scan_prototypes@@YAXHH@Z" = _Z15scan_prototypesii
     "?guard_check@@YAIII@Z" = _Z11guard_checkjj
     "?garrison_check@@YAII@Z" = _Z14garrison_checkj
     "?defensive_check@@YAII@Z" = _Z15defensive_checkj

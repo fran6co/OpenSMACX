@@ -1544,7 +1544,6 @@ P3,110,0x00539920,?pop_expire@@YAHXZ,65,0,1,unrecovered,,,1,exact,missing,
 P3,300,0x00539970,sub_539970,40,0,3,unrecovered,,,0,missing,missing,
 P1,20720,0x005399A0,?diplomacy_caption@@YAXHH@Z,459,20,7,unrecovered,,,2,exact,exact,
 P3,3020,0x0053A230,?mention_prototypes@@YAXHH@Z,614,2,10,unrecovered,,,2,exact,exact,
-P3,3220,0x0053A4A0,?scan_prototypes@@YAXHH@Z,724,3,2,unrecovered,,,2,exact,exact,
 P2,5221,0x0053A780,?contiguous@@YAHHHHH@Z,508,5,2,unrecovered,,,2,exact,exact,"int (__cdecl ?contiguous@@YAHHHHH@Z)(int factionID1, int factionID2, int region, int)"
 P2,14021,0x0053A980,?diplomacy_check@@YAXHHH@Z,6638,13,10,unrecovered,,,2,exact,exact,"void (__cdecl ?diplomacy_check@@YAXHHH@Z)(int factionID, int, int)"
 P3,1821,0x0053C370,?pact_withdraw@@YAHHH@Z,729,1,8,unrecovered,,,2,exact,exact,"int (__cdecl ?pact_withdraw@@YAHHH@Z)(int factionID1, int factionID2)"

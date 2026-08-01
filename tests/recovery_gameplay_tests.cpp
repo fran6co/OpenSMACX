@@ -9145,6 +9145,664 @@ void test_valid_patrol_air() {
 
 #undef VCHECK
 
+/*
+ * scan_prototypes (0x0053A4A0).
+ *
+ * The function publishes nothing but two prototype ids, so every assertion
+ * here is about WHICH prototype wins. That bounds what any fixture can see:
+ * a change that scales every score by the same factor cannot be observed at
+ * all, which is why the plan term's shift width is recorded as an equivalence
+ * in the Verification note rather than pinned here.
+ *
+ * Two prototype bands are under test - the viewer's 64 slots and the owner's
+ * 64 - and every slot outside them holds a live PLAN_OFFENSIVE prototype, the
+ * best-scoring plan there is. A scan that runs one slot too far in either
+ * direction therefore lands on something that takes the answer away from the
+ * prototype the case set up, instead of on a zeroed slot that could not.
+ */
+struct ScanWorld {
+    VehPrototype protos[320];
+    RulesChassis chassis[4];
+    RulesWeapon weapons[8];
+    RulesArmor armor[8];
+    RulesBasic rules;
+    PlayerData players_data[8];
+    BOOL expansion;
+    int best_trade;
+    int best_mention;
+};
+
+ScanWorld g_scan_world;
+
+// faction_id: the yardstick. Its prototypes cancel the owner's.
+const int SCAN_VIEWER = 1;
+// faction_id_with: the band actually scanned and scored.
+const int SCAN_OWNER = 3;
+
+const int SCAN_TOTAL_PROTOS = 320;
+
+int scan_id(int faction, int slot) {
+    return faction * MaxVehProtoFactionNum + slot;
+}
+
+VehPrototype &scan_at(int index) {
+    return g_scan_world.protos[index];
+}
+
+VehPrototype &scan_owned(int slot) {
+    return g_scan_world.protos[scan_id(SCAN_OWNER, slot)];
+}
+
+VehPrototype &scan_rival(int slot) {
+    return g_scan_world.protos[scan_id(SCAN_VIEWER, slot)];
+}
+
+void scan_reset() {
+    std::memset(&g_scan_world, 0, sizeof(g_scan_world));
+    g_scan_world.expansion = 1;   // keep arm_strat/weap_strat off their psi paths
+
+    // Chassis 0 and 1 are the same triad at different speeds; chassis 2 is a
+    // different triad at chassis 0's speed, so a triad mismatch can be set up
+    // without also changing the score.
+    g_scan_world.chassis[0].triad = TRIAD_LAND;
+    g_scan_world.chassis[0].speed = 0;
+    g_scan_world.chassis[1].triad = TRIAD_LAND;
+    g_scan_world.chassis[1].speed = 4;
+    g_scan_world.chassis[2].triad = TRIAD_SEA;
+    g_scan_world.chassis[2].speed = 0;
+    g_scan_world.chassis[3].triad = TRIAD_AIR;
+    g_scan_world.chassis[3].speed = 0;
+
+    // Weapon k is read two ways: Weapon[k].offense_rating scores it, and
+    // Armor[k].defense_rating is what arm_strat answers for it, because the
+    // original passes the weapon id to arm_strat.
+    g_scan_world.weapons[0].offense_rating = 0;
+    g_scan_world.weapons[1].offense_rating = 2;
+    g_scan_world.weapons[2].offense_rating = 3;
+    g_scan_world.weapons[3].offense_rating = 4;
+    g_scan_world.weapons[4].offense_rating = 2;
+    g_scan_world.armor[0].defense_rating = 0;
+    g_scan_world.armor[1].defense_rating = 2;
+    g_scan_world.armor[2].defense_rating = 2;
+    g_scan_world.armor[3].defense_rating = 3;
+    g_scan_world.armor[4].defense_rating = 1;
+    g_scan_world.armor[5].defense_rating = 100;   // only reachable through armor_id
+
+    for (int i = 0; i < SCAN_TOTAL_PROTOS; i++) {
+        int faction = i / MaxVehProtoFactionNum;
+        if (faction == SCAN_VIEWER || faction == SCAN_OWNER) {
+            continue;
+        }
+        VehPrototype &guard = g_scan_world.protos[i];
+        guard.flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+        guard.plan = PLAN_OFFENSIVE;   // outscores every case's own candidates
+        guard.chassis_id = 3;          // a triad no case uses
+        guard.weapon_id = 0;
+        guard.armor_id = 0;
+        guard.reactor_id = 0;
+    }
+}
+
+// A live, unremarkable prototype of the owning faction.
+void scan_live(int slot, int plan) {
+    VehPrototype &proto = scan_owned(slot);
+    proto.flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    proto.plan = (uint8_t)plan;
+    proto.chassis_id = 0;
+    proto.weapon_id = 1;
+    proto.armor_id = 1;
+    proto.reactor_id = 1;
+}
+
+// A live prototype of the viewer, shaped to match the owner's slot so it can
+// be pushed into or out of cancelling it one field at a time.
+void scan_live_rival(int slot, int plan) {
+    VehPrototype &rival = scan_rival(slot);
+    rival.flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    rival.plan = (uint8_t)plan;
+    rival.chassis_id = 0;
+    rival.weapon_id = 1;
+    rival.armor_id = 1;
+    rival.reactor_id = 1;
+}
+
+void scan_run() {
+    // Poison rather than clear: the entry stores are the only thing that can
+    // put -1 in these, and a zeroed pair would look like a plausible result.
+    g_scan_world.best_trade = 0x5A5A5A;
+    g_scan_world.best_mention = 0x5A5A5A;
+    scan_prototypes(SCAN_VIEWER, SCAN_OWNER);
+}
+
+#define SCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool scan_ok = (cond);                                          \
+        if (!scan_ok) {                                                       \
+            std::fprintf(stderr, "scan_prototypes: line %d: %s\n", __LINE__,  \
+                         #cond);                                              \
+        }                                                                     \
+        expect(scan_ok);                                                      \
+    } while (0)
+
+class ScanSeams {
+ public:
+    ScanSeams()
+        : protos_(&VehPrototypes, g_scan_world.protos),
+          chassis_(&Chassis, g_scan_world.chassis),
+          weapons_(&Weapon, g_scan_world.weapons),
+          armor_(&Armor, g_scan_world.armor),
+          rules_(&Rules, &g_scan_world.rules),
+          players_data_(&PlayersData, g_scan_world.players_data),
+          expansion_(&ExpansionEnabled, &g_scan_world.expansion),
+          trade_(&BestProtoForTrade, &g_scan_world.best_trade),
+          mention_(&BestProtoToMention, &g_scan_world.best_mention) { }
+
+ private:
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<RulesChassis> chassis_;
+    ScopedSeam<RulesWeapon> weapons_;
+    ScopedSeam<RulesArmor> armor_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<BOOL> expansion_;
+    ScopedSeam<int> trade_;
+    ScopedSeam<int> mention_;
+};
+
+void test_scan_prototypes_selection() {
+    ScanSeams seams;
+
+    // ---- nothing qualifies, and both answers are cleared -------------------
+    // The whole owner band is retired, so only the entry stores can move the
+    // poison.
+    scan_reset();
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+    SCHECK(g_scan_world.best_mention == -1);
+
+    // ---- one live prototype takes both answers -----------------------------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    // ---- both prototype flags are required, separately ---------------------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).flags = PROTO_ACTIVE;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+    scan_owned(5).flags = PROTO_TYPED_COMPLETE;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+    scan_owned(5).flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    // An unrelated flag does not disqualify it.
+    scan_owned(5).flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE | PROTO_CUSTOM_NAME_SET;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+
+    // ---- obsolescence is read against the OWNING faction's bit -------------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).obsolete_factions = (uint8_t)(1 << SCAN_OWNER);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+    // Every other faction's bit set, the owner's clear: still scanned.
+    scan_owned(5).obsolete_factions = (uint8_t)~(1 << SCAN_OWNER);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    // Including the viewer's own bit, which governs the rival loop instead.
+    scan_owned(5).obsolete_factions = (uint8_t)(1 << SCAN_VIEWER);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+
+    // ---- the plan term outranks everything else ----------------------------
+    // Slot 1 is the best possible unit on a worse plan; slot 2 is the worst
+    // possible unit on a better one, and slot 2 still wins.
+    scan_reset();
+    scan_live(1, PLAN_COMBAT);
+    scan_owned(1).weapon_id = 3;    // offense 4
+    scan_owned(1).armor_id = 3;     // defense 3
+    scan_owned(1).chassis_id = 1;   // speed 4
+    scan_live(2, PLAN_OFFENSIVE);
+    scan_owned(2).weapon_id = 0;
+    scan_owned(2).armor_id = 0;
+    scan_owned(2).chassis_id = 0;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 2));
+
+    // ---- weapon counts three, armour counts four ---------------------------
+    // Same plan, so the tie-break terms decide. Slot 1 is offense 4 and no
+    // armour: 12. Slot 2 is armour 3 and no weapon: also 12, and the tie goes
+    // to the lower slot.
+    scan_reset();
+    scan_live(1, PLAN_COMBAT);
+    scan_owned(1).weapon_id = 3;    // offense 4 -> 12
+    scan_owned(1).armor_id = 0;
+    scan_live(2, PLAN_COMBAT);
+    scan_owned(2).weapon_id = 0;
+    scan_owned(2).armor_id = 3;     // defense 3 -> 12
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 1));
+    // One more point of armour is worth four and breaks it.
+    scan_owned(2).armor_id = 4;
+    g_scan_world.armor[4].defense_rating = 4;   // 16
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 2));
+
+    // ---- chassis speed counts one ------------------------------------------
+    scan_reset();
+    scan_live(1, PLAN_COMBAT);
+    scan_owned(1).weapon_id = 1;    // offense 2 -> 6
+    scan_owned(1).armor_id = 0;
+    scan_owned(1).chassis_id = 0;   // speed 0
+    scan_live(2, PLAN_COMBAT);
+    scan_owned(2).weapon_id = 0;
+    scan_owned(2).armor_id = 0;
+    scan_owned(2).chassis_id = 1;   // speed 4
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 1));
+    g_scan_world.chassis[1].speed = 7;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 2));
+
+    // ---- ties go to the lower slot, in both orders -------------------------
+    scan_reset();
+    scan_live(9, PLAN_COMBAT);
+    scan_live(11, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 9));
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 9));
+
+    // ---- a score of zero never wins ----------------------------------------
+    // PLAN_NAVAL_TRANSPORT is exactly seven, so the plan term vanishes and a
+    // prototype with no weapon, no armour and no speed scores nothing.
+    scan_reset();
+    scan_live(5, PLAN_NAVAL_TRANSPORT);
+    scan_owned(5).weapon_id = 0;
+    scan_owned(5).armor_id = 0;
+    scan_owned(5).chassis_id = 0;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+    // One point of speed is enough.
+    g_scan_world.chassis[0].speed = 1;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+
+    // ---- the plan term is seven minus the plan ------------------------------
+    // One plan past PLAN_NAVAL_TRANSPORT the term goes negative, and a whole
+    // plan step is far more than any weapon, armour or speed can repay.
+    scan_reset();
+    scan_live(5, PLAN_COLONIZATION);
+    scan_owned(5).weapon_id = 3;
+    scan_owned(5).armor_id = 3;
+    scan_owned(5).chassis_id = 1;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+}
+
+void test_scan_prototypes_domination() {
+    ScanSeams seams;
+
+    // A cancelled prototype keeps a sixteenth of its score for the trade
+    // answer and loses the mention answer outright, so best_mention going to
+    // -1 while best_trade stays put is the signal that a rival cancelled it.
+    // ---- a matching rival with a better reactor cancels --------------------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    scan_rival(2).reactor_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    SCHECK(g_scan_world.best_mention == -1);
+    // A worse reactor does not.
+    scan_rival(2).reactor_id = 0;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    // ---- and a faster chassis cancels --------------------------------------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_rival(2).chassis_id = 1;   // same triad, speed 4 against speed 0
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    // The other way round it does not, even though the speeds still differ.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).chassis_id = 1;
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    // ---- a rival only counts if it is live, current, same plan, same triad -
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_rival(2).reactor_id = 2;   // would cancel
+    scan_rival(2).flags = PROTO_ACTIVE;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    scan_rival(2).flags = PROTO_TYPED_COMPLETE;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    scan_rival(2).flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    // Obsolete to the VIEWER, whose band this is.
+    scan_rival(2).obsolete_factions = (uint8_t)(1 << SCAN_VIEWER);
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    // Obsolete to the owner instead: that is the other loop's bit and does
+    // nothing here.
+    scan_rival(2).obsolete_factions = (uint8_t)~(1 << SCAN_VIEWER);
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    scan_rival(2).obsolete_factions = 0;
+    // A different plan.
+    scan_rival(2).plan = PLAN_DEFENSIVE;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    scan_rival(2).plan = PLAN_COMBAT;
+    // A different triad at the same speed.
+    scan_rival(2).chassis_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    scan_rival(2).chassis_id = 0;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+
+    // ---- the weapon-and-armour clause --------------------------------------
+    // Rival weapon 2 (offense 3, and Armor[2] answers 2) against owner weapon
+    // 1 (offense 2, and Armor[1] answers 2): strictly better on one, equal on
+    // the other, so it cancels.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_owned(5).weapon_id = 1;
+    scan_rival(2).weapon_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    // Equal on both cancels nothing: the clause needs a strict improvement.
+    scan_rival(2).weapon_id = 1;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    // Better weapon, worse armour: Armor[4] answers 1 against Armor[1]'s 2.
+    scan_rival(2).weapon_id = 4;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    // A slower rival is excused the whole clause even when strictly better.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).chassis_id = 1;   // speed 4
+    scan_owned(5).weapon_id = 1;
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_rival(2).chassis_id = 0;   // speed 0
+    scan_rival(2).weapon_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    // ---- arm_strat is handed the WEAPON id, both sides ---------------------
+    // A rival that is better armoured and identically armed changes nothing,
+    // because the armour field never reaches arm_strat.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).weapon_id = 1;
+    scan_owned(5).armor_id = 0;     // defense 0
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_rival(2).weapon_id = 1;
+    scan_rival(2).armor_id = 5;     // defense 100, and unreachable from here
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    // The mirror image: identical armour ids, and the rival's WEAPON id alone
+    // moves the armour half of the comparison.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).weapon_id = 4;    // offense 2, Armor[4] answers 1
+    scan_owned(5).armor_id = 1;
+    scan_live_rival(2, PLAN_COMBAT);
+    scan_rival(2).weapon_id = 1;    // offense 2, Armor[1] answers 2
+    scan_rival(2).armor_id = 1;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+
+    // ---- a cancelled prototype keeps a sixteenth of its score --------------
+    // Both slots are PLAN_NAVAL_TRANSPORT, so the plan term is zero and the
+    // shift works on numbers small enough to see. Slot 1 scores 1 and is not
+    // cancelled; slot 11 scores 20 and is, which is 1 after the shift - a tie
+    // that the lower slot keeps.
+    scan_reset();
+    g_scan_world.chassis[0].speed = 1;
+    g_scan_world.chassis[1].speed = 20;
+    g_scan_world.chassis[1].triad = TRIAD_SEA;   // no rival shares this triad
+    scan_live(1, PLAN_NAVAL_TRANSPORT);
+    scan_owned(1).weapon_id = 0;
+    scan_owned(1).armor_id = 0;
+    scan_owned(1).chassis_id = 0;   // speed 1
+    scan_live(11, PLAN_NAVAL_TRANSPORT);
+    scan_owned(11).weapon_id = 0;
+    scan_owned(11).armor_id = 0;
+    scan_owned(11).chassis_id = 1;  // speed 20
+    scan_live_rival(2, PLAN_NAVAL_TRANSPORT);
+    scan_rival(2).chassis_id = 1;   // TRIAD_SEA, speed 20: cancels slot 11 only
+    scan_rival(2).reactor_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 1));
+    // Nineteen shifts to 1 as well; twenty-one is where the tie would break if
+    // the shift were smaller.
+    g_scan_world.chassis[1].speed = 32;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 11));
+    // And a cancelled prototype scoring less than sixteen is worth nothing.
+    scan_reset();
+    g_scan_world.chassis[0].speed = 15;
+    scan_live(11, PLAN_NAVAL_TRANSPORT);
+    scan_owned(11).weapon_id = 0;
+    scan_owned(11).armor_id = 0;
+    scan_live_rival(2, PLAN_NAVAL_TRANSPORT);
+    scan_rival(2).reactor_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == -1);
+    g_scan_world.chassis[0].speed = 16;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 11));
+}
+
+void test_scan_prototypes_mention() {
+    ScanSeams seams;
+
+    PlayerData &viewer = g_scan_world.players_data[SCAN_VIEWER];
+    PlayerData &owner = g_scan_world.players_data[SCAN_OWNER];
+
+    // ---- the already-mentioned flags, and how a pact changes them ----------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).flags |= PROTO_UNK_10;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    SCHECK(g_scan_world.best_mention == -1);
+    // Under a pact only the second flag disqualifies.
+    viewer.diplo_treaties[SCAN_OWNER] = DTREATY_PACT;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    scan_owned(5).flags |= PROTO_UNK_20;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    // Without the pact, either flag is enough.
+    viewer.diplo_treaties[SCAN_OWNER] = 0;
+    scan_owned(5).flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE | PROTO_UNK_20;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    scan_owned(5).flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    // ---- the treaty is read one way round only -----------------------------
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_owned(5).flags |= PROTO_UNK_10;
+    owner.diplo_treaties[SCAN_VIEWER] = DTREATY_PACT;   // the reverse entry
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    owner.diplo_treaties[SCAN_VIEWER] = 0;
+    // A different faction's slot in the right row is not it either.
+    viewer.diplo_treaties[SCAN_VIEWER] = DTREATY_PACT;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    viewer.diplo_treaties[SCAN_VIEWER] = 0;
+    viewer.diplo_treaties[SCAN_OWNER] = DTREATY_PACT;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    // ---- which plans can be shown off --------------------------------------
+    // PLAN_RECONNAISANCE is refused in the middle of an otherwise allowed run,
+    // and everything past PLAN_NAVAL_SUPERIORITY is refused as well. Each case
+    // still takes the trade answer, which is what separates the two gates.
+    // The run stops at PLAN_NAVAL_TRANSPORT because one plan further the score
+    // itself goes negative and the trade answer disappears for a reason that
+    // has nothing to do with this gate.
+    for (int plan = PLAN_OFFENSIVE; plan <= PLAN_NAVAL_TRANSPORT; plan++) {
+        scan_reset();
+        g_scan_world.chassis[0].speed = 3;
+        scan_live(5, plan);
+        scan_run();
+        const bool mentionable = plan <= PLAN_NAVAL_SUPERIORITY
+            && plan != PLAN_RECONNAISANCE;
+        SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+        SCHECK(g_scan_world.best_mention
+               == (mentionable ? scan_id(SCAN_OWNER, 5) : -1));
+    }
+
+    // ---- a cancelled prototype is worth nothing, except in a vendetta ------
+    scan_reset();
+    scan_live(5, PLAN_DEFENSIVE);
+    scan_live_rival(2, PLAN_DEFENSIVE);
+    scan_rival(2).reactor_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+    SCHECK(g_scan_world.best_mention == -1);
+    viewer.diplo_treaties[SCAN_OWNER] = DTREATY_VENDETTA;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+    // The vendetta only rescues PLAN_DEFENSIVE.
+    scan_owned(5).plan = PLAN_COMBAT;
+    scan_rival(2).plan = PLAN_COMBAT;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+    // And it is the vendetta bit specifically, not any treaty at all.
+    scan_owned(5).plan = PLAN_DEFENSIVE;
+    scan_rival(2).plan = PLAN_DEFENSIVE;
+    viewer.diplo_treaties[SCAN_OWNER] = DTREATY_TREATY | DTREATY_TRUCE;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+
+    // ---- the mention answer scores the full value, not the trade value -----
+    // Slot 1 is a cancelled PLAN_DEFENSIVE unit in a vendetta, worth a
+    // sixteenth of five plan steps - 20480 - and slot 3 is an intact
+    // PLAN_NAVAL_SUPERIORITY unit worth one whole step, 65550. Slot 3 is
+    // therefore ahead on both answers, but only just: had the mention
+    // comparison reused slot 3's already-shifted trade value of 4096 it would
+    // have handed the mention to slot 1 while leaving the trade alone.
+    scan_reset();
+    viewer.diplo_treaties[SCAN_OWNER] = DTREATY_VENDETTA;
+    scan_live(1, PLAN_DEFENSIVE);
+    scan_live_rival(2, PLAN_DEFENSIVE);
+    scan_rival(2).reactor_id = 2;
+    scan_live(3, PLAN_NAVAL_SUPERIORITY);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 3));
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 3));
+    // Take slot 3 away and the vendetta-rescued slot 1 is what is left.
+    scan_owned(3).flags = 0;
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 1));
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 1));
+
+    // ---- the two answers are independent -----------------------------------
+    scan_reset();
+    scan_live(1, PLAN_OFFENSIVE);
+    scan_owned(1).flags |= PROTO_UNK_10;   // best score, never mentioned
+    scan_live(2, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 1));
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 2));
+}
+
+void test_scan_prototypes_bounds() {
+    ScanSeams seams;
+
+    // ---- the scanned band is exactly the owner's 64 slots ------------------
+    scan_reset();
+    scan_live(63, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 63));
+    scan_reset();
+    scan_live(0, PLAN_COMBAT);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 0));
+    // The slots on either side hold PLAN_OFFENSIVE prototypes that would win
+    // outright if the loop reached them, and it does not.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    SCHECK(scan_at(scan_id(SCAN_OWNER, -1)).plan == PLAN_OFFENSIVE);
+    SCHECK(scan_at(scan_id(SCAN_OWNER, MaxVehProtoFactionNum)).plan == PLAN_OFFENSIVE);
+    scan_run();
+    SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 5));
+
+    // ---- the rival band is exactly the viewer's 64 slots -------------------
+    // The one prototype that can cancel slot 5 is placed at the last rival
+    // slot, then one past each end of the band.
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_live_rival(63, PLAN_COMBAT);
+    scan_rival(63).reactor_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    scan_live_rival(0, PLAN_COMBAT);
+    scan_rival(0).reactor_id = 2;
+    scan_run();
+    SCHECK(g_scan_world.best_mention == -1);
+
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    {
+        VehPrototype &past = scan_at(scan_id(SCAN_VIEWER, MaxVehProtoFactionNum));
+        past.flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+        past.plan = PLAN_COMBAT;
+        past.chassis_id = 0;
+        past.weapon_id = 1;
+        past.armor_id = 1;
+        past.reactor_id = 2;
+    }
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+
+    scan_reset();
+    scan_live(5, PLAN_COMBAT);
+    {
+        VehPrototype &before = scan_at(scan_id(SCAN_VIEWER, -1));
+        before.flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+        before.plan = PLAN_COMBAT;
+        before.chassis_id = 0;
+        before.weapon_id = 1;
+        before.armor_id = 1;
+        before.reactor_id = 2;
+    }
+    scan_run();
+    SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
+}
+
+#undef SCHECK
+
 }  // namespace
 
 int main() {
@@ -9180,6 +9838,10 @@ int main() {
     test_valid_patrol_bounds();
     test_valid_patrol_sea();
     test_valid_patrol_air();
+    test_scan_prototypes_selection();
+    test_scan_prototypes_domination();
+    test_scan_prototypes_mention();
+    test_scan_prototypes_bounds();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
