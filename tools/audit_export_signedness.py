@@ -48,9 +48,13 @@ DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 # Recorded so a new recovery cannot quietly add to the population. Lower these
 # when candidates are resolved; the check refuses any increase.
 BASELINE = {"disagreements": 199, "signed_divide": 44}
-# 311 exports are comparable today. A run that compares far fewer has lost the
+# 314 exports are comparable today. A run that compares far fewer has lost the
 # .def or the catalogue, not the disagreements.
 COMPARISON_FLOOR = 300
+# All 199 findings rank today - 94 bounded, 61 signed_shift, 44 signed_divide.
+# A run that ranks far fewer has lost the ability to READ BODIES, which is the
+# half that produces signed_divide and the half COMPARISON_FLOOR cannot see.
+RANKED_FLOOR = 150
 
 MSVC = {'H': 'int', 'I': 'uint', 'J': 'long', 'K': 'ulong',
         'F': 'short', 'G': 'ushort', 'D': 'char', 'E': 'uchar',
@@ -233,10 +237,19 @@ def audit(functions_path, def_path, exe_path):
                 # SHORT of the body - so an `idiv` in an outlined cold block
                 # was invisible and the finding was ranked `unranked`.
                 mnemonics = set()
+                decoded = 0
                 for start, end in parse_body_ranges(row["body_ranges"]):
-                    mnemonics.update(one.mnemonic for one
-                                     in decoder.disasm(body(start, end), start))
-                if {"idiv", "cdq"} & mnemonics:
+                    for one in decoder.disasm(body(start, end), start):
+                        decoded += 1
+                        mnemonics.add(one.mnemonic)
+                if not decoded:
+                    # NOT `bounded`. An empty body_ranges column, an image the
+                    # address is not in, or a read that returned nothing all
+                    # land here, and calling that "bounded" reports a body
+                    # nobody looked at as benign - which took signed_divide to
+                    # 0 and printed `0 <= 44` as a pass.
+                    kind = "unranked"
+                elif {"idiv", "cdq"} & mnemonics:
                     kind = "signed_divide"
                 elif "sar" in mnemonics:
                     kind = "signed_shift"
@@ -311,6 +324,22 @@ def main():
             print(f"audit-export-signedness: compared only {compared} exports, "
                   f"below the floor of {COMPARISON_FLOOR}. An empty or "
                   "unparseable .def compares nothing and reports clean.",
+                  file=sys.stderr)
+            return 2
+        # AND THE OTHER HALF, which the floor above does not reach. `compared`
+        # counts the .def against the catalogue; signed_divide is produced by
+        # DISASSEMBLING each candidate, and that can yield nothing while the
+        # join is perfectly healthy. Blanking the body_ranges column of the
+        # derived functions.csv - a plausible regeneration bug, not sabotage -
+        # leaves 199 <= 199 intact and turns 44 into 0, printing the exact
+        # reassuring string this ratchet exists to prevent. Pointing --exe at a
+        # different image in the game directory does the same, at 43.
+        ranked = sum(1 for finding in findings if finding["kind"] != "unranked")
+        if ranked < RANKED_FLOOR:
+            print(f"audit-export-signedness: ranked only {ranked} of "
+                  f"{len(findings)} findings, below the floor of "
+                  f"{RANKED_FLOOR}. The bodies could not be read, so the "
+                  f"signed_divide ratchet compared against nothing.",
                   file=sys.stderr)
             return 2
         grew = []

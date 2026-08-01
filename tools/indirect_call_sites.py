@@ -110,9 +110,10 @@ def frontier_population(rows, callgraph_path):
     THE CALLGRAPH IS AN EDGE LIST, NOT AN ADDRESS-KEYED MAP. This function used
     to ask it for `graph[address]["callees"]`, a key shape the file has never
     had, so every lookup returned [] and `all([])` was vacuously true. The seam
-    filter admitted every row it was given: it reported 2,786 functions, which
-    is exactly the unfiltered `unrecovered and game` count, where the answer is
-    949. Two published percentages were computed over 2.9x too many functions.
+    filter admitted every row it was given: it reported the entire unfiltered
+    `unrecovered and game` count, where fewer than a third qualify. The exact
+    pair moves as recoveries land - 2,783 and 946 at the time of writing - so
+    re-derive rather than quoting these. Two published percentages were computed over 2.9x too many functions.
 
     tools/recovery_frontier.py:65-68 already joined this correctly. This is that
     code, and the lesson is the cheaper one: the correct implementation was in
@@ -140,11 +141,21 @@ def frontier_population(rows, callgraph_path):
         callees = by_source.get(int(address, 16), ())
         if all(state_of.get(one) in RESOLVED for one in callees):
             out.append(row)
-    if len(out) == len(state_of):
+    # Against the CANDIDATES, not the whole catalogue. Comparing with
+    # len(state_of) made this unreachable: `out` only ever receives rows that
+    # already passed the unrecovered-and-game filter, so its ceiling is 2,783
+    # while the threshold was 6,000. A dead safety net whose message claimed to
+    # guard the exact bug that motivated it.
+    candidates = sum(1 for row in rows.values()
+                     if row["recovery_state"] == "unrecovered"
+                     and row["binary_kind"] == "game")
+    # The floor keeps small fixtures out of it: with three rows and no edges,
+    # every candidate legitimately has no callee. With 2,783 it cannot.
+    if candidates >= 100 and len(out) == candidates:
         raise SystemExit(
-            "the seam filter admitted every row, which means it filtered "
-            "nothing - refusing to publish a 'zero-callee-seam' population "
-            "that is really the whole catalogue.")
+            f"the seam filter admitted all {candidates} candidates, which "
+            f"means it filtered nothing - refusing to publish a "
+            f"'zero-callee-seam' population that is really the unfiltered one.")
     return out
 
 

@@ -232,27 +232,33 @@ def damage_emptied_def(workspace):
 
 # Each entry: the gate check it defends, and a damage that must make it exit
 # non-zero. `check` must match the name used in COVERED_CHECKS below.
+# (check, description, damage, TEXT THE REFUSAL MUST CONTAIN).
+#
+# The fourth field is what stops a process failure counting as a refusal. It is
+# not decoration: every case here passes at least one flag that no add_test in
+# CMakeLists.txt passes, so an argparse usage error - exit 2, no work done -
+# used to score identically to the check doing its job.
 CASES = (
     ("load-time-addresses", "unpadded address at namespace scope",
-     damage_load_time_address),
+     damage_load_time_address, "dereferenced at load time"),
     ("tool-test-registration", "a test file CMake never executes",
-     damage_unregistered_tool_test),
+     damage_unregistered_tool_test, "never executed by CMake"),
     ("test-registration", "a gameplay case defined and not registered",
-     damage_dropped_gameplay_case),
+     damage_dropped_gameplay_case, "never registered"),
     ("documented-counts", "a per-state count restated by hand",
-     damage_restated_count),
+     damage_restated_count, "restates"),
     ("wine-test-lock-check", "a Wine test without the prefix lock",
-     damage_wine_lock),
+     damage_wine_lock, "without RESOURCE_LOCK"),
     ("wine-test-lock-check", "the runner renamed, blinding the check",
-     damage_blinded_wine_check),
+     damage_blinded_wine_check, "expected at least"),
     ("exclusions-current", "a measured number disagreeing with the image",
-     damage_stale_exclusions),
+     damage_stale_exclusions, "disagrees with the image"),
     ("recovery-pipeline", "a pinned pipeline fact that no longer holds",
-     damage_pipeline_golden),
+     damage_pipeline_golden, "answers changed"),
     ("export-signedness-audit", "no image, so nothing can be ranked",
-     damage_absent_signedness_image),
+     damage_absent_signedness_image, "verified NOTHING"),
     ("export-signedness-audit", "an empty .def comparing zero exports",
-     damage_emptied_def),
+     damage_emptied_def, "below the floor"),
 )
 
 # The gate checks this tool is responsible for. Adding a check here without
@@ -270,10 +276,44 @@ COVERED_CHECKS = {
 }
 
 
+# A refusal is a check saying no. These are the process saying it never ran.
+NOT_A_REFUSAL = ("usage:", "Traceback (most recent call last)")
+
+
 def run_case(check, description, build_damage, workspace):
     command = build_damage(workspace)
     done = subprocess.run(command, capture_output=True, text=True, timeout=600)
-    return done.returncode, (done.stderr or done.stdout).strip().splitlines()
+    output = (done.stderr or done.stdout).strip()
+    return done.returncode, output.splitlines(), output
+
+
+def refusal_is_real(status, output, expected):
+    """Did the check REFUSE, or did it merely fail to run?
+
+    A NON-ZERO EXIT IS NOT EVIDENCE, and reading it as evidence is the exact
+    defect this file exists to catch, committed inside this file. argparse exits
+    2 on an unrecognised flag, and 7 of the 8 checks here are invoked with at
+    least one flag no add_test in CMakeLists.txt passes - `--src`, `--cmake`,
+    `--tools`, `--suite`, `--doc`, `--document`, `--golden`, `--def-file`.
+    Renaming any of them would leave every ctest check green while its damage
+    case quietly became `ok (exit 2)` on a usage error. Demonstrated:
+
+        verify_no_load_time_addresses.py --renamed-flag /tmp
+        -> exit 2, first line `usage: ...`, scored `ok (counts as REFUSED)`
+
+    So a case now declares text its refusal must contain. A usage banner or a
+    traceback does not contain it, and neither counts however the process died.
+    """
+    if status == 0:
+        return False, "exited 0 on damaged input"
+    for marker in NOT_A_REFUSAL:
+        if output.startswith(marker) or f"\n{marker}" in output:
+            return False, (f"did not refuse - it failed to run ({marker!r}), "
+                           f"so this case proves nothing")
+    if expected and expected not in output:
+        return False, (f"exited {status} but its output does not contain "
+                       f"{expected!r}, so it may not be the intended refusal")
+    return True, ""
 
 
 def main():
@@ -283,12 +323,12 @@ def main():
     arguments = parser.parse_args()
 
     passed, skipped, failures = [], [], []
-    for index, (check, description, build_damage) in enumerate(CASES):
+    for index, (check, description, build_damage, expected) in enumerate(CASES):
         with tempfile.TemporaryDirectory(prefix="cancanfail-") as directory:
             workspace = Path(directory)
             try:
-                status, message = run_case(check, description, build_damage,
-                                           workspace)
+                status, message, output = run_case(check, description,
+                                                   build_damage, workspace)
             except Skip as reason:
                 skipped.append((check, description, str(reason)))
                 print(f"SKIP  {check}: {description} - {reason}")
@@ -298,10 +338,10 @@ def main():
                                  f"the damage case itself raised {error!r}"))
                 print(f"ERROR {check}: {description} - {error!r}")
                 continue
-        if status == 0:
-            failures.append((check, description,
-                             "the check exited 0 on damaged input"))
-            print(f"FAIL  {check}: {description} - EXITED 0 ON DAMAGE")
+        real, why = refusal_is_real(status, output, expected)
+        if not real:
+            failures.append((check, description, why))
+            print(f"FAIL  {check}: {description} - {why}")
         else:
             passed.append((check, description))
             print(f"ok    {check}: {description} (exit {status})")
