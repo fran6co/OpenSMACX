@@ -1171,7 +1171,6 @@ P3,100,0x004CD060,?action_feature@@YAXXZ,34,0,1,unrecovered,,,0,missing,missing,
 P3,3421,0x004CD090,?action_arty@@YAXHHH@Z,605,2,14,unrecovered,,,2,exact,exact,"void (__cdecl ?action_arty@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)"
 P3,2821,0x004CD2F0,?action_destruct@@YAXH@Z,481,2,8,unrecovered,,,2,exact,exact,void (__cdecl ?action_destruct@@YAXH@Z)(int vehID)
 P3,3621,0x004CD4E0,?action_oblit@@YAXHH@Z,445,3,6,unrecovered,,,2,exact,exact,"void (__cdecl ?action_oblit@@YAXHH@Z)(int vehID, int baseID)"
-P3,2521,0x004CD6A0,?valid_patrol@@YAHHHH@Z,899,2,5,unrecovered,,,2,exact,exact,"int (__cdecl ?valid_patrol@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)"
 P3,2121,0x004CDA30,?action_patrol@@YAXHHH@Z,186,2,1,unrecovered,,,2,exact,exact,"void (__cdecl ?action_patrol@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)"
 P3,2821,0x004CDAF0,?shoot_it@@YAHHHHHH@Z,1814,2,8,unrecovered,,,2,exact,exact,"int (__cdecl ?shoot_it@@YAHHHHHH@Z)(int factionID1, int factionID2, int xCoord, int yCoord, int)"
 P3,4321,0x004CE210,?action_tectonic@@YAXHHH@Z,1169,3,13,unrecovered,,,2,exact,exact,"void (__cdecl ?action_tectonic@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)"

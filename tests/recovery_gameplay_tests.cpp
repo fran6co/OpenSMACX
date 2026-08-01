@@ -8680,6 +8680,471 @@ void test_rankings_betrayal() {
 
 #undef KCHECK
 
+/*
+ * A self-contained world for valid_patrol().
+ *
+ * The same 16-by-8 map the territory and reset_territory fixtures use, and
+ * for the same reason. Everything is dry land in region 2 until a case says
+ * otherwise, and the three prototypes carry one chassis each so a case picks
+ * its triad by picking a unit.
+ *
+ * valid_patrol reaches base_at, base_on_sea, port_to_port and speed, and the
+ * last of those has a closure of its own - speed_proto, morale_veh,
+ * has_project. Two settings keep it decidable: every unit's home base is -1,
+ * which is what stops morale_veh walking into has_fac_built, and the secret
+ * projects are all SP_Unbuilt so has_project answers no. What speed() then
+ * returns is a fact about the fixture rather than about valid_patrol, so the
+ * air cases read it back and build the expected reach from it; a perturbed
+ * reach formula in the recovery still fails against that, because the test's
+ * copy of the formula is independent of the recovery's.
+ */
+struct PatrolWorld {
+    Map tiles[192];
+    Base bases[8];
+    Veh vehs[4];
+    VehPrototype protos[128];
+    RulesChassis chassis[9];
+    RulesWeapon weapons[8];
+    RulesBasic rules;
+    Player players[8];
+    PlayerData players_data[8];
+    int projects[MaxSecretProjectNum];
+    Continent continents[MaxContinentNum];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    int base_count;
+    int veh_count;
+    int base_find_dist;
+};
+
+PatrolWorld g_patrol_world;
+
+const int PATROL_LIVE = 64;
+
+Map &patrol_at(int x, int y) {
+    return g_patrol_world.tiles[PATROL_LIVE + (x >> 1) + y * 8];
+}
+
+void patrol_reset() {
+    std::memset(&g_patrol_world, 0, sizeof(g_patrol_world));
+    g_patrol_world.tiles_ptr = &g_patrol_world.tiles[PATROL_LIVE];
+    g_patrol_world.longitude = 8;
+    g_patrol_world.lon_bounds = 16;
+    g_patrol_world.lat_bounds = 8;
+    g_patrol_world.is_flat = 1;
+    g_patrol_world.rules.move_rate_roads = 1;
+    for (int i = 0; i < MaxSecretProjectNum; i++) {
+        g_patrol_world.projects[i] = SP_Unbuilt;
+    }
+    // EVERY tile of the array, not just the live window: a coordinate one past
+    // the map still lands inside the array, and giving it the same region as
+    // the live map means the bounds test is the only thing that can refuse it.
+    for (int i = 0; i < 192; i++) {
+        g_patrol_world.tiles[i].climate = 0x60;   // altitude 3: dry land
+        g_patrol_world.tiles[i].region = 2;
+    }
+    // One chassis per triad; the air chassis has a range, the others do not.
+    g_patrol_world.chassis[0].triad = TRIAD_LAND;
+    g_patrol_world.chassis[0].speed = 1;
+    g_patrol_world.chassis[1].triad = TRIAD_SEA;
+    g_patrol_world.chassis[1].speed = 4;
+    g_patrol_world.chassis[2].triad = TRIAD_AIR;
+    g_patrol_world.chassis[2].speed = 1;   // small, so a reach fits on the map
+    g_patrol_world.chassis[2].range = 8;
+    for (int i = 0; i < 3; i++) {
+        g_patrol_world.protos[MaxVehProtoFactionNum + i].chassis_id = (uint8_t)i;
+    }
+}
+
+// Unit 0, of the given triad, at the given tile. Home base -1 keeps morale_veh
+// out of the base facilities.
+void patrol_veh(int triad, int x, int y) {
+    Veh &veh = g_patrol_world.vehs[0];
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    veh.faction_id = 1;
+    veh.proto_id = (int16_t)(MaxVehProtoFactionNum + triad);
+    veh.home_base_id = -1;
+    g_patrol_world.veh_count = 1;
+}
+
+void patrol_base(int base_id, int x, int y) {
+    g_patrol_world.bases[base_id].x = (int16_t)x;
+    g_patrol_world.bases[base_id].y = (int16_t)y;
+    g_patrol_world.bases[base_id].faction_id_current = 1;
+    patrol_at(x, y).bit |= BIT_BASE_IN_TILE;
+    if (g_patrol_world.base_count <= base_id) {
+        g_patrol_world.base_count = base_id + 1;
+    }
+}
+
+void patrol_ocean(int x, int y, int region) {
+    patrol_at(x, y).climate = 0x40;   // below ALT_SHORE_LINE
+    patrol_at(x, y).region = (uint8_t)region;
+}
+
+#define VCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool patrol_ok = (cond);                                        \
+        if (!patrol_ok) {                                                     \
+            std::fprintf(stderr, "valid_patrol: line %d: %s\n", __LINE__,     \
+                         #cond);                                              \
+        }                                                                     \
+        expect(patrol_ok);                                                    \
+    } while (0)
+
+class PatrolSeams {
+ public:
+    PatrolSeams()
+        : tiles_(&MapTiles, &g_patrol_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_patrol_world.longitude),
+          lon_(&MapLongitudeBounds, &g_patrol_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_patrol_world.lat_bounds),
+          flat_(&MapIsFlat, &g_patrol_world.is_flat),
+          continents_(&Continents, g_patrol_world.continents),
+          bases_(&Bases, g_patrol_world.bases),
+          base_count_(&BaseCurrentCount, &g_patrol_world.base_count),
+          base_dist_(&BaseFindDist, &g_patrol_world.base_find_dist),
+          vehs_(&Vehs, g_patrol_world.vehs),
+          veh_count_(&VehCurrentCount, &g_patrol_world.veh_count),
+          protos_(&VehPrototypes, g_patrol_world.protos),
+          chassis_(&Chassis, g_patrol_world.chassis),
+          weapons_(&Weapon, g_patrol_world.weapons),
+          rules_(&Rules, &g_patrol_world.rules),
+          players_(&Players, g_patrol_world.players),
+          players_data_(&PlayersData, g_patrol_world.players_data),
+          projects_(&SecretProject,
+                    reinterpret_cast<BaseSecretProject *>(g_patrol_world.projects)) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<Continent> continents_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<RulesChassis> chassis_;
+    ScopedSeam<RulesWeapon> weapons_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<Player> players_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<BaseSecretProject> projects_;
+};
+
+void test_valid_patrol_bounds() {
+    PatrolSeams seams;
+
+    // ---- the tile the unit is already on is never a waypoint ---------------
+    patrol_reset();
+    patrol_veh(TRIAD_LAND, 6, 2);
+    VCHECK(!valid_patrol(0, 6, 2));
+    // Either coordinate differing is enough.
+    VCHECK(valid_patrol(0, 8, 2));
+    VCHECK(valid_patrol(0, 6, 4));
+
+    // ---- the four bounds ----------------------------------------------------
+    patrol_reset();
+    patrol_veh(TRIAD_LAND, 6, 2);
+    VCHECK(!valid_patrol(0, 6, -1));
+    VCHECK(valid_patrol(0, 6, 0));
+    VCHECK(!valid_patrol(0, 6, 8));
+    VCHECK(valid_patrol(0, 7, 7));
+    VCHECK(!valid_patrol(0, -1, 2));
+    VCHECK(valid_patrol(0, 0, 2));
+    VCHECK(!valid_patrol(0, 16, 2));
+    VCHECK(valid_patrol(0, 14, 2));
+
+    // ---- land compares regions ----------------------------------------------
+    patrol_reset();
+    patrol_veh(TRIAD_LAND, 6, 2);
+    patrol_at(10, 2).region = 3;
+    VCHECK(!valid_patrol(0, 10, 2));
+    VCHECK(valid_patrol(0, 12, 2));
+    // It is the unit's own tile on the other side of the comparison.
+    patrol_reset();
+    patrol_veh(TRIAD_LAND, 6, 2);
+    patrol_at(6, 2).region = 3;
+    patrol_at(10, 2).region = 3;
+    VCHECK(valid_patrol(0, 10, 2));
+    VCHECK(!valid_patrol(0, 12, 2));
+
+    // ---- a triad the table does not know is always allowed -----------------
+    patrol_reset();
+    patrol_veh(TRIAD_LAND, 6, 2);
+    g_patrol_world.chassis[0].triad = 3;
+    patrol_at(10, 2).region = 3;
+    VCHECK(valid_patrol(0, 10, 2));
+}
+
+void test_valid_patrol_sea() {
+    PatrolSeams seams;
+
+    // ---- open water at both ends falls back to the region comparison -------
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 6, 2);
+    patrol_at(10, 2).region = 3;
+    VCHECK(!valid_patrol(0, 10, 2));
+    VCHECK(valid_patrol(0, 12, 2));
+
+    // ---- two ports go through port_to_port ---------------------------------
+    // Both bases sit next to the same ocean region, so the water joins them.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 4, 2);
+    patrol_base(0, 4, 2);
+    patrol_base(1, 12, 2);
+    patrol_ocean(5, 1, 9);
+    patrol_ocean(13, 1, 9);
+    VCHECK(valid_patrol(0, 12, 2));
+    // Different oceans: no route.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 4, 2);
+    patrol_base(0, 4, 2);
+    patrol_base(1, 12, 2);
+    patrol_ocean(5, 1, 9);
+    patrol_ocean(13, 1, 10);
+    VCHECK(!valid_patrol(0, 12, 2));
+    // Landlocked at one end: no route either.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 4, 2);
+    patrol_base(0, 4, 2);
+    patrol_base(1, 12, 2);
+    patrol_ocean(5, 1, 9);
+    VCHECK(!valid_patrol(0, 12, 2));
+
+    // ---- a port and open water go through base_on_sea ----------------------
+    // The unit is in a base; the destination is a water tile of region 9,
+    // which that base touches.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 4, 2);
+    patrol_base(0, 4, 2);
+    patrol_ocean(5, 1, 9);
+    patrol_ocean(12, 2, 9);
+    VCHECK(valid_patrol(0, 12, 2));
+    // A destination in a water region the base does not touch.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 4, 2);
+    patrol_base(0, 4, 2);
+    patrol_ocean(5, 1, 9);
+    patrol_ocean(12, 2, 10);
+    VCHECK(!valid_patrol(0, 12, 2));
+    // Base id zero is still a base on BOTH sides of the port test. With the
+    // unit in base 1 and base 0 at the destination, the two ports are joined
+    // by ocean region 9 - while the base_on_sea fallback the other arm would
+    // take asks about the destination TILE's region, which is land, and
+    // fails. Only a test that admits id zero answers yes.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 4, 2);
+    patrol_base(0, 12, 2);
+    patrol_base(1, 4, 2);
+    patrol_ocean(5, 1, 9);
+    patrol_ocean(13, 1, 9);
+    VCHECK(valid_patrol(0, 12, 2));
+
+    // Base id zero at the destination is still a base: the sea branch tests
+    // it against zero with >=, unlike the air branch's landing-place test.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 12, 2);
+    patrol_ocean(12, 2, 9);
+    patrol_base(0, 4, 2);
+    patrol_at(4, 2).region = 3;      // so the region fallback would disagree
+    patrol_ocean(5, 1, 9);
+    VCHECK(valid_patrol(0, 4, 2));   // through base_on_sea, which succeeds
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 12, 2);
+    patrol_ocean(12, 2, 9);
+    patrol_base(0, 4, 2);
+    patrol_at(4, 2).region = 3;
+    patrol_ocean(5, 1, 10);
+    VCHECK(!valid_patrol(0, 4, 2));  // base_on_sea fails; no region fallback
+
+    // The mirror image: the unit is in open water and the destination is the
+    // port, so the base is asked about the UNIT's region.
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 12, 2);
+    patrol_ocean(12, 2, 9);
+    patrol_base(0, 4, 2);
+    patrol_ocean(5, 1, 9);
+    VCHECK(valid_patrol(0, 4, 2));
+    patrol_reset();
+    patrol_veh(TRIAD_SEA, 12, 2);
+    patrol_ocean(12, 2, 10);
+    patrol_base(0, 4, 2);
+    patrol_ocean(5, 1, 9);
+    VCHECK(!valid_patrol(0, 4, 2));
+}
+
+// Burn the turn's remaining movement to nothing and leave exactly `steps`
+// range steps of flight time, so the reachable distance is speed * steps
+// divided by move_rate_roads - which the fixture keeps at 1.
+void patrol_air_reach(int steps) {
+    g_patrol_world.vehs[0].moves_expended = 255;
+    g_patrol_world.vehs[0].terraforming_turns =
+        (uint8_t)(g_patrol_world.chassis[2].range - 1 - steps);
+}
+
+void test_valid_patrol_air() {
+    PatrolSeams seams;
+
+    // ---- a chassis with no range is unlimited ------------------------------
+    patrol_reset();
+    patrol_veh(TRIAD_AIR, 6, 2);
+    g_patrol_world.chassis[2].range = 0;
+    patrol_at(14, 6).region = 3;
+    VCHECK(valid_patrol(0, 14, 6));
+
+    // ---- with both ends a landing place, the whole reach is available ------
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_at(4, 2).bit |= BIT_AIRBASE;
+        patrol_air_reach(1);
+        int reach = (int)speed(0, false);
+        int x_ok = 4 + 2 * reach;
+        int x_bad = 4 + 2 * (reach + 1);
+        VCHECK(reach >= 1 && x_bad <= 14);
+        patrol_at(x_ok, 2).bit |= BIT_AIRBASE;
+        patrol_at(x_bad, 2).bit |= BIT_AIRBASE;
+        VCHECK(valid_patrol(0, x_ok, 2));
+        VCHECK(!valid_patrol(0, x_bad, 2));
+    }
+
+    // ---- half the reach when an end is NOT a landing place -----------------
+    // "Landing place" is base_at() != 0 or an airbase, and base_at() answers
+    // -1 on an empty tile - so empty ground is a landing place and the ONE
+    // thing that is not is a tile holding base id zero without an airbase.
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_base(0, 4, 2);           // base id zero, under the unit
+        patrol_air_reach(2);
+        int reach = (int)speed(0, false) * 2;
+        int half = reach / 2;
+        VCHECK(half >= 1 && 4 + 2 * (half + 1) <= 14);
+        VCHECK(valid_patrol(0, 4 + 2 * half, 2));
+        VCHECK(!valid_patrol(0, 4 + 2 * (half + 1), 2));
+        // An airbase on the same tile restores the whole reach.
+        patrol_at(4, 2).bit |= BIT_AIRBASE;
+        VCHECK(valid_patrol(0, 4 + 2 * (half + 1), 2));
+    }
+    // Base id one under the unit is a landing place, so the whole reach
+    // applies without any airbase - which is what makes the case above a
+    // statement about the id and not about bases in general.
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_base(0, 12, 6);          // occupies id zero somewhere else
+        patrol_base(1, 4, 2);
+        patrol_air_reach(2);
+        int reach = (int)speed(0, false) * 2;
+        int half = reach / 2;
+        VCHECK(valid_patrol(0, 4 + 2 * (half + 1), 2));
+    }
+    // And the far end: base id zero there, with the unit on open ground.
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_air_reach(2);
+        int reach = (int)speed(0, false) * 2;
+        int half = reach / 2;
+        int x_far = 4 + 2 * (half + 1);
+        VCHECK(valid_patrol(0, x_far, 2));   // empty ground: a landing place
+        patrol_base(0, x_far, 2);
+        VCHECK(!valid_patrol(0, x_far, 2));
+        patrol_at(x_far, 2).bit |= BIT_AIRBASE;
+        VCHECK(valid_patrol(0, x_far, 2));
+    }
+
+    // ---- the round-map wrap, on bit 0 of MapIsFlat -------------------------
+    // Fourteen columns apart is distance 7 the long way and 1 the short way.
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 0, 2);
+        patrol_at(0, 2).bit |= BIT_AIRBASE;
+        patrol_at(14, 2).bit |= BIT_AIRBASE;
+        patrol_air_reach(1);
+        int reach = (int)speed(0, false);
+        VCHECK(reach >= 1 && reach < 7);
+        VCHECK(!valid_patrol(0, 14, 2));
+        g_patrol_world.is_flat = 0;
+        VCHECK(valid_patrol(0, 14, 2));
+        g_patrol_world.is_flat = 2;         // even: still a round map
+        VCHECK(valid_patrol(0, 14, 2));
+        g_patrol_world.is_flat = 3;         // odd: flat again
+        VCHECK(!valid_patrol(0, 14, 2));
+    }
+
+    // ---- flight time already burned shortens the reach ---------------------
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_at(4, 2).bit |= BIT_AIRBASE;
+        patrol_at(6, 2).bit |= BIT_AIRBASE;
+        patrol_air_reach(1);
+        VCHECK(valid_patrol(0, 6, 2));      // distance 1, one step left
+        patrol_air_reach(0);
+        VCHECK(!valid_patrol(0, 6, 2));     // no steps left, reach 0
+    }
+
+    // ---- the turn's remaining movement is added ----------------------------
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_air_reach(0);                         // no flight time left
+        g_patrol_world.vehs[0].moves_expended = 0;   // but a full turn to spend
+        int sp = (int)speed(0, false);
+        VCHECK(sp >= 1 && 4 + 2 * (sp + 1) <= 14);
+        VCHECK(valid_patrol(0, 4 + 2 * sp, 2));
+        // One tile further is out of reach - unless the movement had been
+        // clamped up to 999 on its way in.
+        VCHECK(!valid_patrol(0, 4 + 2 * (sp + 1), 2));
+    }
+
+    // ---- and clamped at 999 ------------------------------------------------
+    // move_rate_roads of 200 with a chassis speed of 99 makes the turn's
+    // movement 19800, which the clamp cuts to 999 - a reach of 4 rather than
+    // 99. Only the clamp keeps the far tile out of range.
+    {
+        patrol_reset();
+        g_patrol_world.rules.move_rate_roads = 200;
+        g_patrol_world.chassis[2].speed = 99;
+        patrol_veh(TRIAD_AIR, 4, 2);
+        patrol_air_reach(0);
+        g_patrol_world.vehs[0].moves_expended = 0;
+        VCHECK((int)speed(0, false) >= 19800);
+        VCHECK(valid_patrol(0, 12, 2));    // distance 4, and the reach is 4
+        VCHECK(!valid_patrol(0, 14, 2));   // distance 5
+    }
+
+    // ---- the wrap arms strictly above MapLongitude -------------------------
+    // Twelve columns of bounds against a MapLongitude of 8: a delta of exactly
+    // 8 is not wrapped, and the long way is distance 4 while the short way
+    // would be 2.
+    {
+        patrol_reset();
+        patrol_veh(TRIAD_AIR, 0, 2);
+        g_patrol_world.is_flat = 0;
+        g_patrol_world.lon_bounds = 12;
+        int sp = (int)speed(0, false);
+        VCHECK(sp >= 1 && sp <= 2);
+        patrol_air_reach(2 / sp);
+        int reach = sp * (2 / sp);
+        VCHECK(reach >= 2 && reach <= 3);
+        VCHECK(!valid_patrol(0, 8, 2));    // delta 8: not wrapped, distance 4
+        VCHECK(valid_patrol(0, 10, 2));    // delta 10: wrapped to 2, distance 1
+    }
+}
+
+#undef VCHECK
+
 }  // namespace
 
 int main() {
@@ -8712,6 +9177,9 @@ int main() {
     test_rankings_history();
     test_rankings_publication();
     test_rankings_betrayal();
+    test_valid_patrol_bounds();
+    test_valid_patrol_sea();
+    test_valid_patrol_air();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
