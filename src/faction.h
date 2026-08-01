@@ -549,6 +549,8 @@ extern uint32_t *FactionRankingsUnk;
 extern int *DiploFriction;
 extern uint32_t *DiploFrictionFactionIDWith;
 extern uint32_t *DiploFrictionFactionID;
+extern int *BestProtoForTrade;
+extern int *BestProtoToMention;
 
 DLLEXPORT BOOL __cdecl is_alien_faction(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl is_human(uint32_t faction_id);
@@ -569,6 +571,7 @@ DLLEXPORT uint32_t __cdecl get_mood(int friction);
 DLLEXPORT uint32_t __cdecl reputation(uint32_t faction_id, uint32_t faction_id_with);
 DLLEXPORT int __cdecl get_patience(uint32_t faction_id_with, uint32_t faction_id);
 DLLEXPORT uint32_t __cdecl energy_value(uint32_t loan_principal);
+DLLEXPORT void __cdecl scan_prototypes(int faction_id, int faction_id_with);
 DLLEXPORT void __cdecl set_treaty(uint32_t faction_id, uint32_t faction_id_with, uint32_t treaty, 
                                   BOOL set);
 DLLEXPORT void __cdecl set_agenda(uint32_t faction_id, uint32_t faction_id_with, uint32_t agenda, 

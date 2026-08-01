@@ -45,6 +45,13 @@ uint32_t *FactionRankingsUnk = (uint32_t *)0x00945DD8; // [8]
 int *DiploFriction = (int *)0x0093FA74; // not always bounded, should it be 0-20?
 uint32_t *DiploFrictionFactionIDWith = (uint32_t *)0x0093FABC;
 uint32_t *DiploFrictionFactionID = (uint32_t *)0x0093FAC0;
+// Both are outputs of scan_prototypes() and both hold a prototype id or -1.
+// buy_tech (0x005401A0) reads the first, lazily recomputing it with
+// scan_prototypes when it is still negative, and turns it into a trade item
+// code by adding 0x61. mention_prototypes (0x0053A230) reads the second, which
+// is the prototype the speaking faction brags about.
+int *BestProtoForTrade = (int *)0x0093F804;
+int *BestProtoToMention = (int *)0x0093FA40;
 
 /*
 Purpose: Determine if the specified faction is a Progenitor alien faction (Caretakers / Usurpers).
@@ -380,6 +387,151 @@ uint32_t __cdecl energy_value(uint32_t loan_principal) {
         goodwill += ((weight >= 0) ? ((energy > weight) ? weight : energy) : 0) / divisor++;
     }
     return (goodwill + 4) / 5;
+}
+
+/*
+Purpose: Pick out the two prototypes of faction_id_with that are worth putting in front of
+         faction_id: the strongest one it owns, and the strongest one still worth bragging about.
+Original Offset: 0053A4A0
+Return Value: n/a
+Status: Complete
+
+Both answers are published as prototype ids in BestProtoForTrade and BestProtoToMention, and both
+start at -1 so a caller can tell "nothing qualifies" from "prototype zero". buy_tech reads the
+first only after checking it is negative, so this function is the producer for a cache rather than
+a query.
+
+The scan runs over faction_id_with's own 64 prototype slots and scores each live, non-obsolete one
+at
+
+  3 * Weapon[weapon].offense_rating
+  + 4 * (((7 - plan) << 14) + Armor[armor].defense_rating)
+  + Chassis[chassis].speed
+
+The plan term dominates: shifted 14 and then multiplied by 4 it is worth 65536 a step, so the
+ordering is really by plan first - PLAN_OFFENSIVE beating everything and PLAN_FUNGAL_MISSILE
+scoring below zero - with weapon, armour and speed only breaking ties inside a plan.
+
+The other half of the work is asking whether faction_id already owns something that makes the
+prototype unremarkable. Every one of ITS 64 slots is compared, and a rival counts only if it is
+live, not obsolete to faction_id, has the same plan and the same triad. Such a rival cancels the
+prototype if it has a better reactor, or a better chassis speed, or - at no worse speed - is at
+least as good on both weapon and armour and strictly better on one. The comparison uses
+weap_strat and arm_strat rather than the raw ratings, so faction_id's own weapon preferences
+decide it. That search stops at the first rival that cancels, and a cancelled prototype is not
+discarded: its score is divided by 16 and it still competes for BestProtoForTrade.
+
+Verification note: arm_strat is called on the WEAPON id, not the armour id, on both sides of the
+comparison. That is what the original does - the two calls at 0x0053A64E and 0x0053A65E read
+offset 0x25 of the prototype, the same field the weap_strat pair one instruction earlier reads,
+not the armour at 0x26 - and it is reproduced rather than corrected. It is not harmless: it makes
+the armour half of the domination test a second reading of the weapon, so a rival that is better
+armoured but no better armed does not cancel anything. Both calls read the same wrong field, so
+the test stays self-consistent and cannot be told apart from a correct one by a prototype pair
+whose weapon ids are equal.
+
+The mention answer is gated further. A prototype that already carries PROTO_UNK_20 is never
+mentioned to a pact partner, and outside a pact PROTO_UNK_10 disqualifies it as well - which is
+the "do not say the same thing twice" bookkeeping mention_prototypes writes. Its plan must be
+PLAN_NAVAL_SUPERIORITY or lower and must not be PLAN_RECONNAISANCE. Finally a cancelled prototype
+scores zero here, and therefore cannot win, UNLESS the two factions are in a vendetta and it is a
+PLAN_DEFENSIVE unit, in which case it keeps a sixteenth of its score - the one case where showing
+off a defender that is not your best still has a point.
+
+Verification note: the sweep against recovery-gameplay-tests kills 40 of 41 valid mutants twice
+over, and the survivor is an equivalence rather than a coverage hole. Raising
+best_mention_value's initial 0 to 1 changes nothing that any fixture could reach, because no
+mentionable prototype can score exactly 1: the gate admits only plans 0, 1, 2, 4, 5 and 6, whose
+plan term alone is at least 4 * (1 << 14) = 65536, and the weapon, armour and speed corrections
+are bounded by their int8/uint8 field ranges at 3*127 + 4*127 + 255 = 1144 above and -896 below.
+The one path that shrinks a mention score - the vendetta rescue - applies only to PLAN_DEFENSIVE,
+whose 327680 stays above 20424 after the shift. Every reachable mention score is therefore either
+at most 0, in which case both the 0 and the 1 refuse it, or at least 20424, in which case both
+accept it.
+
+Two more things the fixtures deliberately do not try to pin. The inner loop stops at the first
+rival that cancels, which cannot be observed at all: weap_strat and arm_strat have no side
+effects, and setting an already-clear flag clear again is the only thing the remaining iterations
+could do. And the plan term's shift width is invisible for the same reason the whole score is:
+nothing publishes it. Only two prototype ids leave this function, so any change that scales every
+score by one factor - which is what moving that shift does - reorders nothing, and the non-plan
+terms cannot bridge even half of the smallest plan step it produces until the width falls below
+eight.
+*/
+void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
+    *BestProtoForTrade = -1;
+    *BestProtoToMention = -1;
+    int best_trade_value = 0;
+    int best_mention_value = 0;
+    for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+        int proto_id = faction_id_with * MaxVehProtoFactionNum + i;
+        VehPrototype &proto = VehPrototypes[proto_id];
+        if (!(proto.flags & PROTO_ACTIVE) || !(proto.flags & PROTO_TYPED_COMPLETE)) {
+            continue;
+        }
+        if (proto.obsolete_factions & (1 << faction_id_with)) {
+            continue;
+        }
+        int value = 3 * Weapon[proto.weapon_id].offense_rating
+            + 4 * (((7 - proto.plan) << 14) + Armor[proto.armor_id].defense_rating)
+            + Chassis[proto.chassis_id].speed;
+        int unmatched = 1;
+        for (int j = 0; j < MaxVehProtoFactionNum && unmatched; j++) {
+            VehPrototype &rival = VehPrototypes[faction_id * MaxVehProtoFactionNum + j];
+            if (!(rival.flags & PROTO_ACTIVE) || !(rival.flags & PROTO_TYPED_COMPLETE)) {
+                continue;
+            }
+            if (rival.obsolete_factions & (1 << faction_id)) {
+                continue;
+            }
+            if (rival.plan != proto.plan) {
+                continue;
+            }
+            if (Chassis[rival.chassis_id].triad != Chassis[proto.chassis_id].triad) {
+                continue;
+            }
+            if (rival.reactor_id > proto.reactor_id) {
+                unmatched = 0;
+            }
+            if (Chassis[rival.chassis_id].speed > Chassis[proto.chassis_id].speed) {
+                unmatched = 0;
+            }
+            // Both arm_strat calls read the weapon id; see the note above.
+            int rival_weapon = weap_strat(rival.weapon_id, faction_id);
+            int proto_weapon = weap_strat(proto.weapon_id, faction_id);
+            int rival_armor = arm_strat(rival.weapon_id, faction_id);
+            int proto_armor = arm_strat(proto.weapon_id, faction_id);
+            if (Chassis[rival.chassis_id].speed >= Chassis[proto.chassis_id].speed
+                && rival_weapon >= proto_weapon && rival_armor >= proto_armor
+                && (rival_weapon > proto_weapon || rival_armor > proto_armor)) {
+                unmatched = 0;
+            }
+        }
+        int trade_value = unmatched ? value : (value >> 4);
+        if (trade_value > best_trade_value) {
+            best_trade_value = trade_value;
+            *BestProtoForTrade = proto_id;
+        }
+        uint32_t treaty = PlayersData[faction_id].diplo_treaties[faction_id_with];
+        if (treaty & DTREATY_PACT) {
+            if (proto.flags & PROTO_UNK_20) {
+                continue;
+            }
+        } else if (proto.flags & (PROTO_UNK_10 | PROTO_UNK_20)) {
+            continue;
+        }
+        if (proto.plan > PLAN_NAVAL_SUPERIORITY || proto.plan == PLAN_RECONNAISANCE) {
+            continue;
+        }
+        if (!unmatched) {
+            value = ((treaty & DTREATY_VENDETTA) && proto.plan == PLAN_DEFENSIVE)
+                ? (value >> 4) : 0;
+        }
+        if (value > best_mention_value) {
+            best_mention_value = value;
+            *BestProtoToMention = proto_id;
+        }
+    }
 }
 
 /*
