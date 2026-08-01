@@ -1307,6 +1307,13 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(documented-counts-tests test_verify_documented_counts.py)
 
+    # recovery-abi prefetches its objdump/nm calls in parallel, which is a
+    # speedup applied to a verifier. These cover the two properties that keep
+    # that safe - an unplanned command is still executed, and a command that
+    # fails while being speculatively prefetched is not cached - neither of
+    # which a passing gate would reveal.
+    opensmacx_add_python_tool_test(recovery-abi-tool-tests test_verify_recovery_abi.py)
+
     # The staged hybrid imports 462 names from OpenSMACX.dll and its import
     # table is frozen, so a removed or renamed .def alias breaks the game. That
     # is already enforced - but only by stage-hybrid-game, after a DLL build,
