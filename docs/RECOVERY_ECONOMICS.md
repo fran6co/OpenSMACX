@@ -267,10 +267,22 @@ running the suite once. That is what made asking it over the corpus feasible:
 
 | | functions | |
 |---|---:|---|
-| measured (≥200 B, `source_complete`) | **193** | 5 more would not compile wrecked and are excluded |
-| OBSERVED | 52 | at least one assertion depends on the body |
-| **UNOBSERVED** | **141 (73%)** | nothing distinguishes the body from a wrecked one |
-| …of those, with no oracle and no proof either | **131** | **96,550 B with no verification of any kind** |
+| measured (≥200 B, `source_complete`) | **215** | |
+| OBSERVED | 71 | at least one assertion depends on the body |
+| **UNOBSERVED** | **144 (67%)** | nothing distinguishes the body from a wrecked one |
+| not measurable | 9 | the maximal wreck will not compile |
+
+**The first figure published here was 141/193, i.e. 73%, and it was too
+pessimistic.** 25 functions were excluded as unmeasurable because their source
+compiles into three test executables — `buffer.cpp` reaches the gameplay, leaf
+*and* oracle suites — so `resolve_target` correctly refused to guess one. Giving
+the prober a `--target` override and pointing it at `recovery-leaf-tests`
+resolved 22 of them: **19 OBSERVED**, 3 unobserved, 3 that will not compile
+wrecked. That population was hiding real coverage rather than more debt.
+
+Recording them as UNOBSERVED to tidy the census would have published a worse
+number than reality with no way to discover the error. This is the second time
+in one day that refusing to guess was what made a correction possible.
 
 The largest are `?battle_compute@@YAXHHPAHPAHH@Z` (10,020 B),
 `?tech_val@@YAHHHH@Z` (4,133), `?read_rules@@YAHH@Z` (3,804),
