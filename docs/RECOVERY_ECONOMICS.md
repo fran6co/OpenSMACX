@@ -390,7 +390,7 @@ check:
 | `verify_observability_ratchet` | 43% | 11 | yes |
 | `audit_export_signedness` | 47% | 19 | yes, 2 cases |
 | `verify_redirect_patch_fit` | 54% | 13 | no |
-| `verify_no_load_time_addresses` | 57% | 14 | yes |
+| `verify_no_load_time_addresses` | **60%** | 17 | yes |
 | `verify_recovery_metadata` | 60% | 24 | no |
 | `verify_tool_test_registration` | **40%** | 14 | yes |
 | `verify_recovery_abi` | 77% | 8 | **yes**, added after this table was written |

@@ -99,6 +99,25 @@ class LoadTimeAddressTests(unittest.TestCase):
             "        *(int **)0x00669304;\n"
             "}\n"), [])
 
+    def test_a_small_literal_at_FILE_scope_is_not_an_address(self):
+        # The existing small-literal test puts it in a struct body, which the
+        # scope check skips for its own reasons - so it never exercises
+        # GAME_ADDRESS_FLOOR at all, and mutating the floor to 0 survived. At
+        # file scope only the floor can reject this.
+        self.assertEqual(
+            self.write("int *offset = *(int **)0x1DD70;\n"), [])
+
+    def test_the_floor_admits_the_image_base_itself(self):
+        # 0x00400000 IS a game address - the PE ImageBase. A floor nudged up by
+        # one would silently stop rejecting loads from the very first page.
+        found = self.write("int *p = *(int **)0x00400000;\n")
+        self.assertEqual(len(found), 1)
+
+    def test_the_floor_rejects_the_byte_below_the_image_base(self):
+        # And nudged down by one, the floor starts flagging displacements that
+        # are not addresses at all.
+        self.assertEqual(self.write("int *p = *(int **)0x3FFFFF;\n"), [])
+
     def test_the_committed_sources_are_clean(self):
         if not guard.DEFAULT_SRC.is_dir():
             self.skipTest("src/ is absent")
@@ -109,8 +128,11 @@ class LoadTimeAddressTests(unittest.TestCase):
         # Zero offenders over zero files would pass forever.
         if not guard.DEFAULT_SRC.is_dir():
             self.skipTest("src/ is absent")
-        self.assertGreater(len(list(guard.DEFAULT_SRC.glob("*.cpp))"))), -1)
+        # The line that used to be here globbed `*.cpp))` - a pattern matching
+        # nothing - and asserted its length was greater than -1, which is true
+        # of every list. A vacuous assertion guarding the non-vacuity check.
         self.assertGreaterEqual(len(list(guard.DEFAULT_SRC.glob("*.cpp"))), 100)
+        self.assertGreaterEqual(len(list(guard.DEFAULT_SRC.glob("*.h"))), 50)
 
 
 if __name__ == "__main__":
