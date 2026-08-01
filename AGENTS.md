@@ -121,9 +121,10 @@ directory, so lanes do not contend for it.
                                                # that is origin/<default>, which
                                                # here would drop local commits
     cd <path> && mkdir -p .opensmacx
-    cp -al <main>/.opensmacx/game .opensmacx/game    # hard links, not symlinks:
-    cp -al <main>/.opensmacx/venv .opensmacx/venv    # symlinked artifact paths
-                                                     # are rejected by the build
+    cp -al <main>/.opensmacx/game .opensmacx/game        # hard links, never
+    cp -al <main>/.opensmacx/venv .opensmacx/venv        # symlinks: symlinked
+    cp -al <main>/.opensmacx/analysis .opensmacx/analysis  # artifact paths are
+                                                     # rejected by the build
     cmake --preset mingw-i686-debug \
         -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
 

@@ -1297,6 +1297,14 @@ if(BUILD_TESTING)
     # AGENTS.md's "Current recovery state" line is typed by hand and had
     # drifted again by 2026-08-01. Its previous defence was a sentence warning
     # the reader it might be wrong, which is not a defence.
+    # recovery_gameplay_tests.cpp self-registers its cases, so the way to lose
+    # a test is now to write it and forget the GAMEPLAY_CASE line. Nothing else
+    # can see that: it compiles, and every remaining assertion still passes.
+    add_test(NAME test-registration
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_test_registration.py"
+    )
+
     opensmacx_add_python_tool_test(documented-counts-tests test_verify_documented_counts.py)
 
     # The staged hybrid imports 462 names from OpenSMACX.dll and its import

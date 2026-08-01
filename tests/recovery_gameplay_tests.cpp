@@ -78,6 +78,41 @@ class ScopedSeam {
     T *saved_;
 };
 
+/*
+ * Self-registration, so adding a test touches ONE place instead of two.
+ *
+ * main() used to call all 56 cases by name. That list was the only part of
+ * this file every recovery had to edit, and it is the one merge conflict where
+ * a careless resolution is SILENT: drop a line and the test simply stops
+ * running, while everything that remains still passes. Parallel recoveries in
+ * separate worktrees all collide here.
+ *
+ * Order is preserved exactly. Registration happens during static
+ * initialisation, which within a single translation unit runs in declaration
+ * order, and each GAMEPLAY_CASE sits immediately after its function - so the
+ * registry order is the declaration order, which was already identical to the
+ * old call order (verified: 56 declared, 56 called, same sequence).
+ */
+namespace {
+
+using GameplayCase = void (*)();
+
+std::vector<std::pair<const char *, GameplayCase>> &gameplay_cases() {
+    static std::vector<std::pair<const char *, GameplayCase>> cases;
+    return cases;
+}
+
+struct GameplayRegistrar {
+    GameplayRegistrar(const char *name, GameplayCase run) {
+        gameplay_cases().emplace_back(name, run);
+    }
+};
+
+}  // namespace
+
+#define GAMEPLAY_CASE(fn) \
+    namespace { const GameplayRegistrar registrar_##fn(#fn, fn); }
+
 void test_not_my_turn() {
     BOOL is_net = 0;
     uint8_t flags = 0;
@@ -137,6 +172,7 @@ void test_not_my_turn() {
     flags = 0xFF;
     expect(not_my_turn() == true);
 }
+GAMEPLAY_CASE(test_not_my_turn);
 
 
 /*
@@ -1013,6 +1049,7 @@ void test_stack_veh_boarding() {
     expect(stack_veh(0, 2) == 0);
     expect(g_stack_world.vehs[1].x == -2);
 }
+GAMEPLAY_CASE(test_stack_veh_boarding);
 
 
 /*
@@ -2222,6 +2259,7 @@ void test_action_home() {
     HOME_CHECK(action_home(0, 0) == 1);
     HOME_CHECK(veh.order == ORDER_NONE);           // step 0 fires it immediately
 }
+GAMEPLAY_CASE(test_action_home);
 
 #undef HOME_CHECK
 
@@ -2760,6 +2798,7 @@ void test_crop_yield() {
     g_yield_world.bases[0].event = BEVENT_BUMPER;
     YCHECK(crop_yield(YFACTION, -1, X, Y, 0) == 4);
 }
+GAMEPLAY_CASE(test_crop_yield);
 
 void test_mine_yield() {
     YieldSeams seams;
@@ -3087,6 +3126,7 @@ void test_mine_yield() {
     YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 0);
     YCHECK(mine_yield(YFACTION, -1, X, Y, 0) == 0);
 }
+GAMEPLAY_CASE(test_mine_yield);
 
 void test_energy_yield() {
     YieldSeams seams;
@@ -3577,6 +3617,7 @@ void test_energy_yield() {
     g_yield_world.energy_event = 1;
     YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 33);
 }
+GAMEPLAY_CASE(test_energy_yield);
 
 #undef YCHECK
 
@@ -4087,6 +4128,7 @@ void test_base_support_convoys() {
     base_support();
     SCHECK(g_support_world.forces_supported == 1);
 }
+GAMEPLAY_CASE(test_base_support_convoys);
 
 void test_base_support_maintenance() {
     SupportSeams seams;
@@ -4334,6 +4376,7 @@ void test_base_support_maintenance() {
     base_support();
     SCHECK(g_support_world.vehs[0].state == VSTATE_EXPLORE);
 }
+GAMEPLAY_CASE(test_base_support_maintenance);
 
 void test_base_support_pacifism() {
     SupportSeams seams;
@@ -4446,6 +4489,7 @@ void test_base_support_pacifism() {
     SCHECK(g_support_world.pacifism_count == 1);
     SCHECK((g_support_world.vehs[0].state & 0x600000) == VSTATE_PACIFISM_DRONE);
 }
+GAMEPLAY_CASE(test_base_support_pacifism);
 
 #undef SCHECK
 
@@ -4816,6 +4860,7 @@ void test_world_site_terrain() {
     sring(6).bit |= BIT_FUNGUS;
     SCHECK2(world_site(SITE_X, SITE_Y, false) == 4);
 }
+GAMEPLAY_CASE(test_world_site_terrain);
 
 void test_world_site_score() {
     SiteSeams seams;
@@ -5077,6 +5122,7 @@ void test_world_site_score() {
     g_site_world.is_flat = 3;
     SCHECK2(world_site(0, SITE_Y, false) == 4);
 }
+GAMEPLAY_CASE(test_world_site_score);
 
 #undef SCHECK2
 
@@ -5323,6 +5369,7 @@ void test_num_objectives_units() {
     // adds one of its own.
     OCHECK(num_objectives(OFACTION, false) == 2);
 }
+GAMEPLAY_CASE(test_num_objectives_units);
 
 void test_num_objectives_totals() {
     ObjSeams seams;
@@ -5521,6 +5568,7 @@ void test_num_objectives_totals() {
     g_obj_world.players_data[OFACTION].diplo_treaties[7] = DTREATY_PACT;
     OCHECK(num_objectives(OFACTION, true) == 9);
 }
+GAMEPLAY_CASE(test_num_objectives_totals);
 
 #undef OCHECK
 
@@ -5774,6 +5822,7 @@ void test_spot_tile() {
     spot_tile(6, 3, 3);
     PCHECK(spot_at(6, 3).bit2 == 0x400000);
 }
+GAMEPLAY_CASE(test_spot_tile);
 
 void test_spot_base() {
     SpotSeams seams;
@@ -5851,6 +5900,7 @@ void test_spot_base() {
     PCHECK(spot_at(6, 3).bit2 == 0x400000);
     PCHECK(g_spot_world.dirty == 1);
 }
+GAMEPLAY_CASE(test_spot_base);
 
 // Chain ids[0..n-1] into one stack, in order, and leave the ends terminated.
 void spot_link(const int *ids, int n) {
@@ -5994,6 +6044,7 @@ void test_spot_stack() {
     PCHECK(g_spot_world.vehs[1].visibility == 0);
     PCHECK(spot_at(0, 0).visibility == 0x02);
 }
+GAMEPLAY_CASE(test_spot_stack);
 
 /*
  * spot_loc reaches base_at and veh_at, and both have an error path that logs
@@ -6121,6 +6172,7 @@ void test_spot_loc() {
     PCHECK(spot_at(6, 3).bit2 == 0);
     PCHECK(g_spot_world.dirty == 0);
 }
+GAMEPLAY_CASE(test_spot_loc);
 
 #undef PCHECK
 
@@ -6461,6 +6513,7 @@ void test_reset_territory_ownership() {
     TCHECK(g_terr_world.players_data[0].unk_78[0] == 0);
     TCHECK(g_terr_world.continents[0].unk_3 == 0);
 }
+GAMEPLAY_CASE(test_reset_territory_ownership);
 
 void test_reset_territory_tallies() {
     TerrSeams seams;
@@ -6585,6 +6638,7 @@ void test_reset_territory_tallies() {
     // Faction zero never gets one, even though unclaimed tiles tally under it.
     TCHECK(g_terr_world.players_data[0].unk_82[0] == 0);
 }
+GAMEPLAY_CASE(test_reset_territory_tallies);
 
 void test_reset_territory_sites() {
     TerrSeams seams;
@@ -6754,6 +6808,7 @@ void test_reset_territory_sites() {
     reset_territory();
     TCHECK(g_terr_world.players_data[2].sites[0].priority == 0);  // untouched
 }
+GAMEPLAY_CASE(test_reset_territory_sites);
 
 #undef TCHECK
 
@@ -7006,6 +7061,7 @@ void test_territory_gates() {
     RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
     RCHECK(g_tres_world.players_data[1].flags == PFLAG_BEEN_ELECTED_GOVERNOR);
 }
+GAMEPLAY_CASE(test_territory_gates);
 
 void test_territory_shared_war() {
     TresSeams seams;
@@ -7135,6 +7191,7 @@ void test_territory_shared_war() {
     tres_share(3, 2);
     RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
 }
+GAMEPLAY_CASE(test_territory_shared_war);
 
 void test_territory_unit_filter() {
     TresSeams seams;
@@ -7253,6 +7310,7 @@ void test_territory_unit_filter() {
     RCHECK(territory(1, 2, 0, &base_id, &count) == 2);
     RCHECK(base_id == 0);
 }
+GAMEPLAY_CASE(test_territory_unit_filter);
 
 void test_territory_weight() {
     TresSeams seams;
@@ -7450,6 +7508,7 @@ void test_territory_weight() {
     g_tres_world.sunspots = 0;
     RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
 }
+GAMEPLAY_CASE(test_territory_weight);
 
 #undef RCHECK
 
@@ -7779,6 +7838,7 @@ void test_rankings_score() {
     rankings(0);
     KCHECK(g_rank_world.rankings_unk[1] == 406);
 }
+GAMEPLAY_CASE(test_rankings_score);
 
 void test_rankings_prototypes() {
     RankSeams seams;
@@ -7991,6 +8051,7 @@ void test_rankings_prototypes() {
     rankings(0);
     KCHECK(g_rank_world.rankings_unk[1] == 0);             // 30 / 98
 }
+GAMEPLAY_CASE(test_rankings_prototypes);
 
 void test_rankings_history() {
     RankSeams seams;
@@ -8044,6 +8105,7 @@ void test_rankings_history() {
         }
     }
 }
+GAMEPLAY_CASE(test_rankings_history);
 
 void test_rankings_publication() {
     RankSeams seams;
@@ -8262,6 +8324,7 @@ void test_rankings_publication() {
     KCHECK(g_rank_world.rank_unk1 == 0);
     KCHECK(g_rank_world.rank_unk2 == 0);
 }
+GAMEPLAY_CASE(test_rankings_publication);
 
 
 // Pick a seed whose first rnd(bound) lands inside [lo, hi), so a case can be
@@ -8678,6 +8741,7 @@ void test_rankings_betrayal() {
     KCHECK(g_rank_world.players_data[4].diplo_treaties[6]
            == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
 }
+GAMEPLAY_CASE(test_rankings_betrayal);
 
 #undef KCHECK
 
@@ -8885,6 +8949,7 @@ void test_valid_patrol_bounds() {
     patrol_at(10, 2).region = 3;
     VCHECK(valid_patrol(0, 10, 2));
 }
+GAMEPLAY_CASE(test_valid_patrol_bounds);
 
 void test_valid_patrol_sea() {
     PatrolSeams seams;
@@ -8982,6 +9047,7 @@ void test_valid_patrol_sea() {
     patrol_ocean(5, 1, 9);
     VCHECK(!valid_patrol(0, 4, 2));
 }
+GAMEPLAY_CASE(test_valid_patrol_sea);
 
 // Burn the turn's remaining movement to nothing and leave exactly `steps`
 // range steps of flight time, so the reachable distance is speed * steps
@@ -9143,6 +9209,7 @@ void test_valid_patrol_air() {
         VCHECK(valid_patrol(0, 10, 2));    // delta 10: wrapped to 2, distance 1
     }
 }
+GAMEPLAY_CASE(test_valid_patrol_air);
 
 #undef VCHECK
 
@@ -9444,6 +9511,7 @@ void test_scan_prototypes_selection() {
     scan_run();
     SCHECK(g_scan_world.best_trade == -1);
 }
+GAMEPLAY_CASE(test_scan_prototypes_selection);
 
 void test_scan_prototypes_domination() {
     ScanSeams seams;
@@ -9614,6 +9682,7 @@ void test_scan_prototypes_domination() {
     scan_run();
     SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 11));
 }
+GAMEPLAY_CASE(test_scan_prototypes_domination);
 
 void test_scan_prototypes_mention() {
     ScanSeams seams;
@@ -9734,6 +9803,7 @@ void test_scan_prototypes_mention() {
     SCHECK(g_scan_world.best_trade == scan_id(SCAN_OWNER, 1));
     SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 2));
 }
+GAMEPLAY_CASE(test_scan_prototypes_mention);
 
 void test_scan_prototypes_bounds() {
     ScanSeams seams;
@@ -9801,6 +9871,7 @@ void test_scan_prototypes_bounds() {
     scan_run();
     SCHECK(g_scan_world.best_mention == scan_id(SCAN_OWNER, 5));
 }
+GAMEPLAY_CASE(test_scan_prototypes_bounds);
 
 #undef SCHECK
 
@@ -9968,6 +10039,7 @@ void test_set_course_direct() {
     CCHECK(g_course_world.vehs[0].waypoint_x[0] == -999);
     CCHECK(g_course_world.vehs[0].waypoint_y[0] == -999);
 }
+GAMEPLAY_CASE(test_set_course_direct);
 
 void test_set_course_anchorage() {
     CourseSeams seams;
@@ -10047,6 +10119,7 @@ void test_set_course_anchorage() {
     course_run(10, 4);
     CCHECK(course_ordered(11, 1));
 }
+GAMEPLAY_CASE(test_set_course_anchorage);
 
 void test_set_course_base_and_wrap() {
     CourseSeams seams;
@@ -10129,6 +10202,7 @@ void test_set_course_base_and_wrap() {
     course_run(10, 2);
     CCHECK(course_ordered(11, 1));
 }
+GAMEPLAY_CASE(test_set_course_base_and_wrap);
 
 void test_set_course_edges() {
     CourseSeams seams;
@@ -10224,6 +10298,7 @@ void test_set_course_edges() {
     course_run(10, 4);
     CCHECK(course_idle());
 }
+GAMEPLAY_CASE(test_set_course_edges);
 
 #undef CCHECK
 
@@ -10385,6 +10460,7 @@ void test_good_sensor_gates() {
     sensor_at(SENSOR_X, SENSOR_Y).bit = 0;
     NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
 }
+GAMEPLAY_CASE(test_good_sensor_gates);
 
 void test_good_sensor_reasons() {
     SensorSeams seams;
@@ -10440,6 +10516,7 @@ void test_good_sensor_reasons() {
     sensor_at(14, 4).bit |= BIT_SENSOR_ARRAY;
     NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
 }
+GAMEPLAY_CASE(test_good_sensor_reasons);
 
 void test_good_sensor_existing() {
     SensorSeams seams;
@@ -10485,6 +10562,7 @@ void test_good_sensor_existing() {
     sensor_at(8, 2).bit |= BIT_SENSOR_ARRAY;
     NCHECK(!good_sensor(SENSOR_FACTION, 8, 6));
 }
+GAMEPLAY_CASE(test_good_sensor_existing);
 
 void test_good_sensor_terrain() {
     SensorSeams seams;
@@ -10564,6 +10642,7 @@ void test_good_sensor_terrain() {
     sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x40 | RAINFALL_MOIST);
     NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
 }
+GAMEPLAY_CASE(test_good_sensor_terrain);
 
 #undef NCHECK
 
@@ -10712,6 +10791,7 @@ void test_alt_ocean_bounds_and_centre() {
         OCHECK(alt_get_ocean_detail(8, 4, vertex, 0), 50);
     }
 }
+GAMEPLAY_CASE(test_alt_ocean_bounds_and_centre);
 
 void test_alt_ocean_edge_midpoints() {
     OceanSeams seams;
@@ -10781,6 +10861,7 @@ void test_alt_ocean_edge_midpoints() {
     g_ocean_world.is_flat = 1;
     OCHECK(alt_get_ocean_detail(15, 3, 2, 1), 10);
 }
+GAMEPLAY_CASE(test_alt_ocean_edge_midpoints);
 
 void test_alt_ocean_corner() {
     OceanSeams seams;
@@ -10933,6 +11014,7 @@ void test_alt_ocean_corner() {
     OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 32);
     OCHECK(alt_get_ocean_detail(8, 4, 0, 4), 25);
 }
+GAMEPLAY_CASE(test_alt_ocean_corner);
 
 void test_alt_ocean_shoreline() {
     OceanSeams seams;
@@ -11039,6 +11121,7 @@ void test_alt_ocean_shoreline() {
     g_ocean_world.is_flat = 1;
     OCHECK(alt_get_ocean_detail(0, 0, 0, 1), 2);   // 4 >> 1, no neighbour at all
 }
+GAMEPLAY_CASE(test_alt_ocean_shoreline);
 
 #undef OCHECK
 
@@ -12200,6 +12283,7 @@ void test_compute_odds() {
     odds_wrap_and_guards();
     odds_loop_edges();
 }
+GAMEPLAY_CASE(test_compute_odds);
 
 #undef OCHECK
 
@@ -12612,6 +12696,7 @@ void test_can_terraform_gates() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_gates);
 
 /*
  * Water. Deep water is only ever raised, the shelf is farmed, mined or
@@ -12865,6 +12950,7 @@ void test_can_terraform_sea() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_sea);
 
 /*
  * Land, fungus. The eco-damage-adjusted terrain value decides whether the
@@ -12923,6 +13009,7 @@ void test_can_terraform_land_fungus() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_land_fungus);
 
 /*
  * Land, the improvement cascade: solar, mine, farm, enricher, and what
@@ -13088,6 +13175,7 @@ void test_can_terraform_land_orders() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_land_orders);
 
 /*
  * Land, the two closing questions: plant a forest, or plant fungus. Both are
@@ -13283,6 +13371,7 @@ void test_can_terraform_land_plant() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_land_plant);
 
 /*
  * The land order cascade, one decision at a time.
@@ -13491,6 +13580,7 @@ void test_can_terraform_cascade() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_cascade);
 
 /*
  * plant_value, the score the two planting answers are weighed against. Every
@@ -13546,6 +13636,7 @@ void test_can_terraform_scoring() {
 
     CT_GUARDS();
 }
+GAMEPLAY_CASE(test_can_terraform_scoring);
 
 #undef CT_GUARDS
 #undef CTCHECK
@@ -13553,65 +13644,17 @@ void test_can_terraform_scoring() {
 }  // namespace
 
 int main() {
-    test_not_my_turn();
-    test_stack_veh_boarding();
-    test_action_home();
-    test_crop_yield();
-    test_mine_yield();
-    test_energy_yield();
-    test_base_support_convoys();
-    test_base_support_maintenance();
-    test_base_support_pacifism();
-    test_world_site_terrain();
-    test_world_site_score();
-    test_num_objectives_units();
-    test_num_objectives_totals();
-    test_spot_tile();
-    test_spot_base();
-    test_spot_stack();
-    test_spot_loc();
-    test_reset_territory_ownership();
-    test_reset_territory_tallies();
-    test_reset_territory_sites();
-    test_territory_gates();
-    test_territory_shared_war();
-    test_territory_unit_filter();
-    test_territory_weight();
-    test_rankings_score();
-    test_rankings_prototypes();
-    test_rankings_history();
-    test_rankings_publication();
-    test_rankings_betrayal();
-    test_valid_patrol_bounds();
-    test_valid_patrol_sea();
-    test_valid_patrol_air();
-    test_scan_prototypes_selection();
-    test_scan_prototypes_domination();
-    test_scan_prototypes_mention();
-    test_scan_prototypes_bounds();
-    test_set_course_direct();
-    test_set_course_anchorage();
-    test_set_course_base_and_wrap();
-    test_set_course_edges();
-    test_good_sensor_gates();
-    test_good_sensor_reasons();
-    test_good_sensor_existing();
-    test_good_sensor_terrain();
-    test_alt_ocean_bounds_and_centre();
-    test_alt_ocean_edge_midpoints();
-    test_alt_ocean_corner();
-    test_alt_ocean_shoreline();
-    test_compute_odds();
-    test_can_terraform_gates();
-    test_can_terraform_sea();
-    test_can_terraform_land_fungus();
-    test_can_terraform_land_orders();
-    test_can_terraform_land_plant();
-    test_can_terraform_cascade();
-    test_can_terraform_scoring();
+    for (const auto &entry : gameplay_cases()) {
+        entry.second();
+    }
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
     }
+    // Printed on every run so a refactor of this file can be proved neutral by
+    // comparing two runs, rather than by a number in a commit message that
+    // nobody can reproduce.
+    std::fprintf(stderr, "recovery-gameplay-tests: %lld assertions evaluated\n",
+                 recovery_fixtures::expect_evaluations());
     return failure_count() == 0 ? 0 : 1;
 }
