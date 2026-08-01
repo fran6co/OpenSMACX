@@ -150,6 +150,7 @@ EXPORTS
     "?climate_set@@YAXIIE@Z" = _Z11climate_setjjh
     "?alt_at@@YAHII@Z" = _Z6alt_atjj
     "?alt_detail_at@@YAHII@Z" = _Z13alt_detail_atjj
+    "?alt_get_ocean_detail@@YAHHHHH@Z" = _Z20alt_get_ocean_detailiiii
     "?alt_put_detail@@YAXIIE@Z" = _Z14alt_put_detailjjh
     "?owner_set@@YAXIIH@Z" = _Z9owner_setjji
     "?site_set@@YAXIIH@Z" = _Z8site_setjji

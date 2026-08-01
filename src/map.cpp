@@ -3237,3 +3237,217 @@ Status: Complete
 int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
     return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) / 2;
 }
+
+/*
+Purpose: Shore-edge detail for one corner of a tile whose scan found the coast.
+Original Offset: n/a
+Return Value: Detail value for the corner
+Status: Complete
+
+MSVC emitted each of the four occurrences as a four-entry jump table guarded by
+an unsigned `cmp corner, 3 / ja`, with the out-of-range arm falling through to
+the shared `return detail` after `detail` had already been loaded with 60. A
+corner outside 0..3 is therefore 60 rather than undefined, and a negative one
+takes the same arm because the compare is unsigned.
+
+The four tables hold only two distinct values between them, 57 at 00462684 and
+67 at 0046259F, and re-indexed by the direction the scan was looking in they
+collapse to one rule: coast above the corner reads 67, coast below it reads 57.
+That is the same 60 +7 / -3 shading the corner arm applies arithmetically.
+*/
+static int alt_shore_detail(int corner, int west, int north, int east, int south) {
+    switch (corner) {
+      case 0:
+        return west;
+      case 1:
+        return north;
+      case 2:
+        return east;
+      case 3:
+        return south;
+    }
+    return 60;
+}
+
+/*
+Purpose: Interpolate the rendered altitude detail at one point of a tile's
+         terrain polygon, so that the map renderer can slope the tile towards
+         its neighbours and break the contour at the water's edge.
+Original Offset: 00462190
+Return Value: Altitude detail, 0 to 79; 0 for a tile off the map
+Status: Complete
+
+`corner` selects one of the tile's four diamond corners - 0 west, 1 north,
+2 east, 3 south - and `point` selects which point of the polygon near that
+corner is being asked about:
+
+    point 0   the tile's own centre, so its own contour byte unaltered
+    point 1   the edge midpoint on one side of the corner
+    point 2   the corner itself
+    point 3   the edge midpoint on the other side
+
+and the value is the mean of the tiles that touch that point: one for the
+centre, two for an edge midpoint, four for a corner. Every term is clamped to
+0..79 before it is summed, and the mean is an arithmetic shift rather than a
+division because every term is then non-negative.
+
+The corner case applies the relief bias that gives the coast its lip: +7 when
+the tile above the corner is at ALT_BIT_SHORE_LINE or above, -3 when the tile
+below it is. Those two are CornerOffset[corner][1] and [corner][3], the same
+two tiles the two edge midpoints average against.
+
+The centre and edge-midpoint cases instead look for a shoreline crossing. The
+tile's own altitude decides which way round the test goes, and a crossing
+returns one of two fixed details, 57 or 67, chosen by corner - so a polygon
+point that straddles the waterline is pinned to a constant instead of being
+interpolated.
+
+An off-map neighbour contributes nothing but does not shrink the divisor, so a
+point on the edge of the map reads at half or a quarter depth. That is the
+original's arithmetic, not an omission here.
+
+Verification note: THE ORIGINAL BOUNDS-CHECKS `corner` IN ONE HALF OF ITSELF
+AND NOT THE OTHER. All four shore switches guard it with an unsigned
+`cmp / ja`, while `shl esi, 4` at 004622ED and `shl ebx, 4` at 0046239B index
+the sixteen-entry offset tables with no check at all, so `corner == 4` in the
+original reads the Y table as the X table and a negative one reads below the
+array. It is latent: the sole caller, MapWin::gen_terrain_poly, derives the
+argument from a value it has already reduced. This recovery reproduces the
+guarded half exactly and leaves the unguarded half as an out-of-range index
+rather than hard-coding the adjacent table, so an even `point` with a `corner`
+outside 0..3 is unreachable-and-unspecified here where it is
+unreachable-and-accidental there.
+
+Verification note: THE THREE-STEP SCAN IS TWO-THIRDS DEAD, in the original as
+much as here. Its body reads MapTiles, MapIsFlat and the two bounds and writes
+nothing, so an iteration that does not return is unobservable. It can only
+return on `point == 1 && i == 0` or `point == 3 && i == 2`, so iteration 1
+never returns for any input, iteration 2 never returns for point 1, iteration 0
+never returns for point 3, and for point 0 - or any point that is even and not
+2 - the entire loop cannot return at all. It is transcribed as written because
+it is what 004624BE through 0046256A and 004625AB through 00462657 execute.
+The sweep's two surviving `i < 3` -> `i <= 3` mutants are that fact: a fourth
+iteration matches neither `i == 0` nor `i == 2` and so cannot return either.
+
+Verification note: the scan's own direction arithmetic proves it further. The
+scan starts at `corner * 2 - 4` and (c*2-4) & 7 == (1 + c*2 + 3) & 7, so
+iteration 0 tests exactly the neighbour point 1 averaged against; likewise
+(c*2-2) & 7 == (3 + c*2 + 3) & 7, so iteration 2 tests point 3's. The scan
+never looks at a tile the average did not already read.
+
+Verification note: THE LOWER CLAMP ARMS CANNOT FIRE. `contour` is a uint8_t
+field, so the value fed to each `if (v < 0) v = 0;` is in 0..255 and the arm is
+unreachable; only the upper arm can act. The original tests it all the same
+(00462262, 004622A5, 0046235B), so fifteen mutants survive across the three
+sites - the `0 -> 1` and the drop of each `v = 0`, the `0 -> 1` in each
+`if (v < 0)`, and each `< -> <=`, which for v == 0 assigns 0 to a 0. The three
+`> -> >=` on the upper arm are equivalent for the same reason: they assign 79
+to a 79. The final clamp before the return is NOT in that class - point 2's -3
+can take the mean below zero and its +7 can take it past 79, and point 0
+returns a raw contour byte that can be up to 255 - but its own `0 -> 1` and
+`< -> <=` are still equivalent, because `detail == 0` returns 0 either way, and
+so is its `> -> >=` at 79.
+*/
+int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
+    if (!on_map(x, y)) {
+        return 0;
+    }
+    int detail;
+    if (!point) {
+        detail = site_tile(x, y)->contour;
+    } else if (point & 1) {
+        // An edge midpoint: this tile averaged with the one across that edge.
+        int dir = (point + corner * 2 + 3) & 7;
+        int x_edge = site_xrange(x + RadiusBaseX[dir]);
+        int y_edge = y + RadiusBaseY[dir];
+        detail = site_tile(x, y)->contour;
+        if (detail < 0) {
+            detail = 0;
+        } else if (detail > 79) {
+            detail = 79;
+        }
+        if (on_map(x_edge, y_edge)) {
+            int across = site_tile(x_edge, y_edge)->contour;
+            if (across < 0) {
+                across = 0;
+            } else if (across > 79) {
+                across = 79;
+            }
+            detail += across;
+        }
+        detail >>= 1;
+    } else {
+        // The corner itself: the four tiles that meet there.
+        detail = 0;
+        for (int i = 0; i < 4; i++) {
+            int x_meet = site_xrange(x + CornerOffsetX[corner][i]);
+            int y_meet = y + CornerOffsetY[corner][i];
+            if (!on_map(x_meet, y_meet)) {
+                continue;
+            }
+            int sample = site_tile(x_meet, y_meet)->contour;
+            if (sample < 0) {
+                sample = 0;
+            } else if (sample > 79) {
+                sample = 79;
+            }
+            detail += sample;
+        }
+        detail >>= 2;
+    }
+    if (point == 2) {
+        int x_above = site_xrange(x + CornerOffsetX[corner][1]);
+        int y_above = y + CornerOffsetY[corner][1];
+        if (on_map(x_above, y_above)
+            && (site_tile(x_above, y_above)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            detail += 7;
+        }
+        int x_below = site_xrange(x + CornerOffsetX[corner][3]);
+        int y_below = y + CornerOffsetY[corner][3];
+        if (on_map(x_below, y_below)
+            && (site_tile(x_below, y_below)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            detail -= 3;
+        }
+    } else if ((site_tile(x, y)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+        // Water looking for land.
+        int dir = corner * 2 - 4;
+        for (int i = 0; i < 3; i++, dir++) {
+            int x_scan = site_xrange(x + RadiusBaseX[dir & 7]);
+            int y_scan = y + RadiusBaseY[dir & 7];
+            if (!on_map(x_scan, y_scan)
+                || (site_tile(x_scan, y_scan)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+                continue;
+            }
+            if (point == 1 && i == 0) {
+                return alt_shore_detail(corner, 57, 67, 67, 57);
+            }
+            if (point == 3 && i == 2) {
+                return alt_shore_detail(corner, 67, 67, 57, 57);
+            }
+        }
+    } else {
+        // Land looking for water.
+        int dir = corner * 2 - 4;
+        for (int i = 0; i < 3; i++, dir++) {
+            int x_scan = site_xrange(x + RadiusBaseX[dir & 7]);
+            int y_scan = y + RadiusBaseY[dir & 7];
+            if (!on_map(x_scan, y_scan)
+                || (site_tile(x_scan, y_scan)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                continue;
+            }
+            if (point == 1 && i == 0) {
+                return alt_shore_detail(corner, 67, 57, 57, 67);
+            }
+            if (point == 3 && i == 2) {
+                return alt_shore_detail(corner, 57, 57, 67, 67);
+            }
+        }
+    }
+    if (detail < 0) {
+        return 0;
+    }
+    if (detail > 79) {
+        return 79;
+    }
+    return detail;
+}
