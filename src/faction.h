@@ -124,6 +124,7 @@ enum PlayerFlagsBitfield {
     PFLAG_MAP_REVEALED = 0x200,
     PFLAG_GENETIC_PLAGUE_INTRO = 0x400, // +1 to defense against after 1st time faction experiences
     PFLAG_BEEN_ELECTED_GOVERNOR = 0x8000, // used to determine whether #GOVERNOR has been displayed
+    PFLAG_UNK_10000 = 0x10000, // set by territory() once it has something to complain about
     PFLAG_UNK_20000 = 0x20000,
     PFLAG_STRAT_ATK_ENEMY_HQ = 0x200000,
     PFLAG_COOP_WITH_HUMAN = 0x400000,
@@ -571,6 +572,8 @@ DLLEXPORT uint32_t __cdecl has_agenda(uint32_t faction_id, uint32_t faction_id_w
                                       uint32_t agenda);
 DLLEXPORT BOOL __cdecl wants_to_attack(uint32_t faction_id, uint32_t faction_id_tgt,
                                        int faction_id_unk);
+DLLEXPORT int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_id_out,
+                                int *count_out);
 DLLEXPORT uint32_t __cdecl guard_check(uint32_t faction_id, uint32_t region);
 DLLEXPORT void __cdecl add_goal(uint32_t faction_id, int type, int priority, int x, int y, 
                                 int base_id);

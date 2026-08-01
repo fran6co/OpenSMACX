@@ -613,6 +613,178 @@ BOOL __cdecl wants_to_attack(uint32_t faction_id, uint32_t faction_id_tgt, int f
 }
 
 /*
+Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
+         faction's units, and mark those units so the rest of diplomacy can find them again.
+Original Offset: 0055EB80
+Return Value: Trespass weight; zero when there is nothing to complain about
+Status: Complete
+
+The two factions are asymmetric. faction_id owns the ground, faction_id_with owns the units,
+and every treaty read is PlayersData[faction_id].diplo_treaties[faction_id_with] - the owner's
+view of the trespasser, never the reverse. A pact or a vendetta makes the question moot and
+returns zero before anything is walked, and DTREATY_UNK_200 does the same unless bit 1 of
+flags overrides it, which is how the caller asks anyway.
+
+flags is two independent bits and neither is a mode:
+  - bit 0 arms everything after the raw count: the distance test, the count_out tally, the two
+    unit flag writes, and the weighting below. Without it the function only counts and marks.
+  - bit 1 suppresses the DTREATY_UNK_200 early return.
+
+region_shared is the "we are both fighting the same faction there" exemption, and it is
+computed per land region before any unit is looked at. A region is exempt when some third
+faction that BOTH sides hold a vendetta against has at least one base in it: the trespasser is
+plausibly there for the war rather than for the land. Faction zero - the native life faction -
+is never that third party, because the scan starts at 1. Two things switch the whole exemption
+off: DTREATY_WANT_REVENGE on the owner's side, and a trespasser whose integrity_blemishes has
+reached 5, at which point it has earned the complaint regardless of who else is at war.
+
+Only land is considered. A unit below ALT_SHORE_LINE is skipped before its region is read,
+which is what keeps the 64-entry land-region array in bounds - Map::region runs to 127 and
+water regions start at 64.
+
+Every unit of the trespasser gets VSTATE_UNK_400 cleared whether or not it is counted, so the
+flag means "counted by the most recent call" rather than "counted at some point". The units
+that survive every filter get it set again, plus VFLAG bits 0 and 1, and the LAST such unit's
+base is the one left in base_id_out.
+
+The weight is not the unit count. A qualifying unit is worth 1, plus 1 more if it is standing
+on improved terrain, plus - once the distance test has been passed - a further 5 if the two
+factions have a treaty and 1 if they do not, because a treaty partner's units deep inside your
+borders is the worse offence. The improved-terrain mask 0x81608850 is exactly mine, solar
+collector, bunker, farm, forest, condenser, thermal borehole and sensor array; it deliberately
+leaves out road, magtube, airbase, soil enricher and echelon mirror.
+
+That last increment is skipped entirely the first time a unit is seen while sunspots are down:
+VSTATE_UNK_800 is a once-per-unit grace flag, set on the quiet pass and honoured forever after.
+
+A unit further than vector_dist 2 from the base whose territory it is in is ignored, unless the
+owner already has a grievance (DTREATY_WANT_REVENGE, DTREATY_SHALL_BETRAY or DTREATY_UNK_800)
+or general diplomatic friction is above 12. The distance is doubled rather than halved -
+(dy + dx) & ~1 compared against 4 - which is vector_dist's numerator with its floor still in
+place, and the x term wraps on a round map exactly as x_dist does, testing bit 0 of MapIsFlat
+rather than the whole int the way reset_territory's own wrap does.
+
+Verification note: the region loop's UPPER bound is the one perturbation the suite cannot
+observe. Running it to 64 inclusive only adds a store to the word after region_shared, which no
+read in the body reaches: the altitude gate admits land only, land regions stop at 63, and a
+region of 64 or more would read past the array in the correct body just as it does in the
+mutant, so no fixture can distinguish them without reading uninitialised stack itself. The
+bound is pinned by the disassembly instead, twice over - `cmp esi, 0x40` at 0055ECAE, and the
+frame, where the array occupies exactly [ebp-118h] through [ebp-18h]. The loop's START, and the
+unit walk's upper bound, are both covered by paired fixtures.
+
+Verification note: base_id is deliberately left uninitialised. whose_territory only writes
+through the pointer when the observer is not the owner, so a call with faction_id ==
+faction_id_with that matches leaves whatever the previous unit's call stored - which is what
+the original does, having given the slot to region_shared's treaty temporary until the walk
+starts. No caller passes the same faction twice.
+*/
+int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_id_out,
+                      int *count_out) {
+    int weight = 0;
+    if (base_id_out) {
+        *base_id_out = -1;
+    }
+    if (count_out) {
+        *count_out = 0;
+    }
+    uint32_t treaty = PlayersData[faction_id].diplo_treaties[faction_id_with];
+    if (treaty & (DTREATY_PACT | DTREATY_VENDETTA)) {
+        return 0;
+    }
+    if (!(flags & 2) && treaty & DTREATY_UNK_200) {
+        return 0;
+    }
+    int region_shared[MaxRegionLandNum];
+    for (int region = 0; region < MaxRegionLandNum; region++) {
+        region_shared[region] = 0;
+        if (treaty & DTREATY_WANT_REVENGE) {
+            continue;
+        }
+        if (PlayersData[faction_id_with].integrity_blemishes >= 5) {
+            continue;
+        }
+        for (int other_id = 1; other_id < MaxPlayerNum; other_id++) {
+            if (other_id == faction_id || other_id == faction_id_with) {
+                continue;
+            }
+            if (!(PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_VENDETTA)) {
+                continue;
+            }
+            if (!(PlayersData[faction_id_with].diplo_treaties[other_id] & DTREATY_VENDETTA)) {
+                continue;
+            }
+            if (PlayersData[other_id].region_total_bases[region]) {
+                region_shared[region] = 1;
+                break;
+            }
+        }
+    }
+    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+        Veh &veh = Vehs[veh_id];
+        veh.state &= ~VSTATE_UNK_400;
+        if (veh.faction_id != (uint8_t)faction_id_with) {
+            continue;
+        }
+        uint32_t plan = VehPrototypes[veh.proto_id].plan;
+        if (plan > PLAN_COLONIZATION
+            && (plan != PLAN_SUPPLY_CONVOY || veh.order != ORDER_CONVOY)) {
+            continue;
+        }
+        Map *tile = map_loc(veh.x, veh.y);
+        if ((tile->climate & 0xE0) < (ALT_SHORE_LINE << 5)) {
+            continue;
+        }
+        if (region_shared[tile->region]) {
+            continue;
+        }
+        int base_id;
+        if (whose_territory(faction_id_with, veh.x, veh.y, &base_id, true) != faction_id) {
+            continue;
+        }
+        if (base_id < 0) {
+            continue;
+        }
+        if (base_id_out) {
+            *base_id_out = base_id;
+        }
+        veh.state |= VSTATE_UNK_400;
+        weight++;
+        if (map_loc(veh.x, veh.y)->bit & (BIT_MINE | BIT_SOLAR_TIDAL | BIT_BUNKER | BIT_FARM
+            | BIT_FOREST | BIT_CONDENSER | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY)) {
+            weight++;
+        }
+        if (!(flags & 1)) {
+            continue;
+        }
+        int x_delta = abs(Bases[base_id].x - veh.x);
+        if (!(*MapIsFlat & 1) && x_delta > (int)*MapLongitude) {
+            x_delta = *MapLongitudeBounds - x_delta;
+        }
+        if (((abs(Bases[base_id].y - veh.y) + x_delta) & ~1) > 4
+            && !(PlayersData[faction_id].diplo_treaties[faction_id_with]
+                & (DTREATY_WANT_REVENGE | DTREATY_SHALL_BETRAY | DTREATY_UNK_800))
+            && *DiploFriction <= 12) {
+            continue;
+        }
+        if (count_out && veh.flags & 1) {
+            (*count_out)++;
+        }
+        veh.flags |= 3;
+        if (!(veh.state & VSTATE_UNK_800) && *SunspotDuration <= 0) {
+            veh.state |= VSTATE_UNK_800;
+        } else {
+            weight += (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_TREATY)
+                ? 5 : 1;
+        }
+    }
+    if (weight) {
+        PlayersData[faction_id].flags |= PFLAG_UNK_10000;
+    }
+    return weight;
+}
+
+/*
 Purpose: Determine the ideal unit count to protect a faction's bases in the specified land region.
 Original Offset: 00560D50
 Return Value: Amount of non-offensive units needed to guard region

@@ -1612,6 +1612,7 @@ address,name,shape
 0x0055BBA0,?set_agenda@@YAXHHHH@Z,straight_line
 0x0055BC00,?spying@@YAHH@Z,straight_line
 0x0055BC80,?wants_to_attack@@YAHHHH@Z,loop
+0x0055EB80,?territory@@YAHHHHPAHPAH@Z,loop
 0x00560AD0,?go_to@@YAXHDHH@Z,straight_line
 0x00560B30,?garrison_check@@YAHH@Z,loop
 0x00560D30,?defensive_check@@YAHH@Z,straight_line

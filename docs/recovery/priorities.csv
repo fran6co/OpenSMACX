@@ -1616,7 +1616,6 @@ P3,1421,0x0055D2A0,?enemies_team_up@@YAXHHH@Z,389,1,4,unrecovered,,,2,exact,exac
 P3,3521,0x0055D430,?enemies_trade_tech@@YAXHH@Z,803,3,5,unrecovered,,,2,exact,exact,"void (__cdecl ?enemies_trade_tech@@YAXHH@Z)(int factionID, int)"
 P3,3220,0x0055D760,?enemies_treaty@@YAXHHH@Z,3088,2,12,unrecovered,,,2,exact,exact,
 P3,3320,0x0055E370,?encounter@@YAXHHHHHH@Z,2058,2,13,unrecovered,,,2,exact,exact,
-P3,4220,0x0055EB80,?territory@@YAHHHHPAHPAH@Z,862,4,2,unrecovered,,,2,exact,exact,
 P3,5121,0x0055EEE0,?atrocity@@YAXHHHH@Z,1391,4,11,unrecovered,,,2,exact,exact,"void (__cdecl ?atrocity@@YAXHHHH@Z)(int factionID1, int factionID2, int, int)"
 P3,2620,0x0055F450,?major_atrocity@@YAXHH@Z,794,2,6,unrecovered,,,2,exact,exact,
 P2,7420,0x0055F770,?break_treaty@@YAHHHH@Z,435,7,4,unrecovered,,,2,exact,exact,

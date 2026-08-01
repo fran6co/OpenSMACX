@@ -6756,6 +6756,702 @@ void test_reset_territory_sites() {
 
 #undef TCHECK
 
+/*
+ * A self-contained world for territory().
+ *
+ * Same 16-by-8 map as reset_territory's, for the same reason: MapLongitude 8
+ * with the live tiles in the middle third of a 192-entry array, so a walk that
+ * runs off the end lands somewhere the assertions can see.
+ *
+ * The scene tres_scene() builds is the one every case starts from: faction 1
+ * owns every tile through its base at (4, 2), and one ordinary combat unit of
+ * faction 2 stands at (6, 2), two tiles away. That unit is counted, which is
+ * what makes a case that expects zero evidence rather than an empty world.
+ *
+ * Three fixture settings exist to keep the callees decidable:
+ *
+ *  - Every tile is dry land (climate 0x60) in region 2, so region_at() and the
+ *    altitude gate answer the same way everywhere until a case changes one.
+ *  - SunspotDuration starts at 1. Sunspots down is a once-per-unit grace pass
+ *    that suppresses the weighting, so leaving them up is what lets the
+ *    ordinary weight be asserted at all.
+ *  - The five prototypes cover exactly the plans the filter distinguishes.
+ */
+struct TrespassWorld {
+    Map tiles[192];
+    Base bases[8];
+    Veh vehs[16];
+    VehPrototype protos[8];
+    // Nine faction rows: the ninth exists only to be poisoned, so a scan that
+    // runs one faction too far leaves a mark instead of reading whatever the
+    // fixture happens to store next.
+    PlayerData players_data[9];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    int base_count;
+    int base_find_dist;
+    int veh_count;
+    int sunspots;
+    int friction;
+    uint32_t game_state;
+};
+
+TrespassWorld g_tres_world;
+
+const int TRES_LIVE = 64;  // index of tile (0, 0) inside TrespassWorld::tiles
+
+Map &tres_at(int x, int y) {
+    return g_tres_world.tiles[TRES_LIVE + (x >> 1) + y * 8];
+}
+
+void tres_reset() {
+    std::memset(&g_tres_world, 0, sizeof(g_tres_world));
+    g_tres_world.tiles_ptr = &g_tres_world.tiles[TRES_LIVE];
+    g_tres_world.longitude = 8;
+    g_tres_world.lon_bounds = 16;
+    g_tres_world.lat_bounds = 8;
+    g_tres_world.is_flat = 1;
+    g_tres_world.sunspots = 1;
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            Map &tile = tres_at(x, y);
+            tile.climate = 0x60;  // altitude 3, arid: dry land
+            tile.region = 2;
+            tile.territory = -1;
+        }
+    }
+    g_tres_world.protos[0].plan = PLAN_OFFENSIVE;      // 0, well under the cut
+    g_tres_world.protos[1].plan = PLAN_COLONIZATION;   // 8, the last one allowed
+    g_tres_world.protos[2].plan = PLAN_TERRAFORMING;   // 9, the first refused
+    g_tres_world.protos[3].plan = PLAN_SUPPLY_CONVOY;  // 10, allowed while convoying
+    g_tres_world.protos[4].plan = PLAN_INFO_WARFARE;   // 11
+}
+
+void tres_claim(int faction_id) {
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            tres_at(x, y).territory = (int8_t)faction_id;
+        }
+    }
+}
+
+void tres_base(int base_id, int faction_id, int x, int y) {
+    g_tres_world.bases[base_id].x = (int16_t)x;
+    g_tres_world.bases[base_id].y = (int16_t)y;
+    g_tres_world.bases[base_id].faction_id_current = (uint8_t)faction_id;
+    if (g_tres_world.base_count <= base_id) {
+        g_tres_world.base_count = base_id + 1;
+    }
+}
+
+void tres_veh(int veh_id, int faction_id, int proto_id, int x, int y) {
+    Veh &veh = g_tres_world.vehs[veh_id];
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    veh.faction_id = (uint8_t)faction_id;
+    veh.proto_id = (int16_t)proto_id;
+    if (g_tres_world.veh_count <= veh_id) {
+        g_tres_world.veh_count = veh_id + 1;
+    }
+}
+
+void tres_scene() {
+    tres_reset();
+    tres_claim(1);
+    tres_base(0, 1, 4, 2);
+    tres_veh(0, 2, 0, 6, 2);
+}
+
+// Faction other_id is at vendetta with both 1 and 2 and holds a base in the
+// named region, which is the whole of the shared-war exemption.
+void tres_share(int other_id, int region) {
+    g_tres_world.players_data[1].diplo_treaties[other_id] |= DTREATY_VENDETTA;
+    g_tres_world.players_data[2].diplo_treaties[other_id] |= DTREATY_VENDETTA;
+    g_tres_world.players_data[other_id].region_total_bases[region] = 1;
+}
+
+#define RCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool tres_ok = (cond);                                          \
+        if (!tres_ok) {                                                       \
+            std::fprintf(stderr, "territory: line %d: %s\n", __LINE__,        \
+                         #cond);                                              \
+        }                                                                     \
+        expect(tres_ok);                                                      \
+    } while (0)
+
+class TresSeams {
+ public:
+    TresSeams()
+        : tiles_(&MapTiles, &g_tres_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_tres_world.longitude),
+          lon_(&MapLongitudeBounds, &g_tres_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_tres_world.lat_bounds),
+          flat_(&MapIsFlat, &g_tres_world.is_flat),
+          state_(&GameState, &g_tres_world.game_state),
+          players_(&PlayersData, g_tres_world.players_data),
+          bases_(&Bases, g_tres_world.bases),
+          base_count_(&BaseCurrentCount, &g_tres_world.base_count),
+          base_dist_(&BaseFindDist, &g_tres_world.base_find_dist),
+          vehs_(&Vehs, g_tres_world.vehs),
+          veh_count_(&VehCurrentCount, &g_tres_world.veh_count),
+          protos_(&VehPrototypes, g_tres_world.protos),
+          sunspots_(&SunspotDuration, &g_tres_world.sunspots),
+          friction_(&DiploFriction, &g_tres_world.friction) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<PlayerData> players_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<int> sunspots_;
+    ScopedSeam<int> friction_;
+};
+
+void test_territory_gates() {
+    TresSeams seams;
+    int base_id = 0;
+    int count = 0;
+
+    // ---- both outputs are cleared before anything can refuse --------------
+    // A pact answers zero, and it answers it before the unit walk: the stale
+    // mark on the unit is still there afterwards.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_PACT;
+    g_tres_world.vehs[0].state = VSTATE_UNK_400;
+    base_id = 0x5A5A;
+    count = 0x5A5A;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    RCHECK(base_id == -1);
+    RCHECK(count == 0);
+    RCHECK(g_tres_world.vehs[0].state == VSTATE_UNK_400);
+    RCHECK((g_tres_world.players_data[1].flags & PFLAG_UNK_10000) == 0);
+
+    // A vendetta is the other half of the same gate.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_VENDETTA;
+    base_id = 0x5A5A;
+    count = 0x5A5A;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    RCHECK(base_id == -1);
+    RCHECK(count == 0);
+
+    // ---- the ordinary trespass, which every zero above is measured against -
+    tres_scene();
+    base_id = 0x5A5A;
+    count = 0x5A5A;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK(base_id == 0);
+    RCHECK(count == 0);  // the unit does not carry VFLAG bit 0
+    RCHECK((g_tres_world.players_data[1].flags & PFLAG_UNK_10000) != 0);
+
+    // The gate is those two bits and no others: a truce passes through it.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_TRUCE;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // The treaty read is the owner's view of the trespasser. The reverse
+    // direction carries the pact here and is ignored.
+    tres_scene();
+    g_tres_world.players_data[2].diplo_treaties[1] = DTREATY_PACT | DTREATY_VENDETTA;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- DTREATY_UNK_200 refuses unless bit 1 of flags overrides it -------
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_UNK_200;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_UNK_200;
+    RCHECK(territory(1, 2, 3, &base_id, &count) == 2);
+    // Bit 1 alone: the override without the weighting the other bit arms.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_UNK_200;
+    RCHECK(territory(1, 2, 2, &base_id, &count) == 1);
+    // A neighbouring treaty bit is not that one.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_UNK_100;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- both outputs are optional ----------------------------------------
+    tres_scene();
+    RCHECK(territory(1, 2, 1, NULL, NULL) == 2);
+    tres_scene();
+    g_tres_world.vehs[0].flags = 1;
+    RCHECK(territory(1, 2, 1, NULL, NULL) == 2);
+    RCHECK(g_tres_world.vehs[0].flags == 3);
+
+    // ---- the flag is published only when there is something to publish ----
+    tres_scene();
+    g_tres_world.players_data[1].flags = PFLAG_BEEN_ELECTED_GOVERNOR;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK(g_tres_world.players_data[1].flags
+           == (PFLAG_BEEN_ELECTED_GOVERNOR | PFLAG_UNK_10000));
+    // Nothing found: the flag stays exactly as it was.
+    tres_scene();
+    g_tres_world.vehs[0].faction_id = 3;
+    g_tres_world.players_data[1].flags = PFLAG_BEEN_ELECTED_GOVERNOR;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    RCHECK(g_tres_world.players_data[1].flags == PFLAG_BEEN_ELECTED_GOVERNOR);
+}
+
+void test_territory_shared_war() {
+    TresSeams seams;
+    int base_id = 0;
+    int count = 0;
+
+    // ---- a common enemy with a base in the region exempts the trespass ----
+    tres_scene();
+    tres_share(3, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_400) == 0);
+    RCHECK(base_id == -1);
+
+    // Its bases are somewhere else: the exemption is per region, not global.
+    tres_scene();
+    tres_share(3, 3);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // The region read is the unit's tile, not a constant.
+    tres_scene();
+    tres_share(3, 3);
+    tres_at(6, 2).region = 3;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+
+    // ---- the scan runs 1 through 7 ----------------------------------------
+    // Faction zero is the native life faction and is never the third party.
+    tres_scene();
+    tres_share(0, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // Faction seven is.
+    tres_scene();
+    tres_share(7, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    // One row past the last faction, wired so a scan that reached it would
+    // exempt: diplo_treaties[8] is diplo_agenda[0], and the ninth PlayerData
+    // row carries the base.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_agenda[0] = DTREATY_VENDETTA;
+    g_tres_world.players_data[2].diplo_agenda[0] = DTREATY_VENDETTA;
+    g_tres_world.players_data[8].region_total_bases[2] = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- both sides must hold the vendetta --------------------------------
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[3] = DTREATY_VENDETTA;
+    g_tres_world.players_data[3].region_total_bases[2] = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    g_tres_world.players_data[2].diplo_treaties[3] = DTREATY_VENDETTA;
+    g_tres_world.players_data[3].region_total_bases[2] = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // And it is a vendetta, not any treaty bit.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[3] = DTREATY_TRUCE;
+    g_tres_world.players_data[2].diplo_treaties[3] = DTREATY_TRUCE;
+    g_tres_world.players_data[3].region_total_bases[2] = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- neither faction is its own third party ---------------------------
+    // The owner at vendetta with itself, with bases in the region, and the
+    // trespasser agreeing: still not an exemption.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[1] = DTREATY_VENDETTA;
+    g_tres_world.players_data[2].diplo_treaties[1] = DTREATY_VENDETTA;
+    g_tres_world.players_data[1].region_total_bases[2] = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- two ways to switch the whole exemption off -----------------------
+    // A trespasser with five blemishes has earned the complaint.
+    tres_scene();
+    tres_share(3, 2);
+    g_tres_world.players_data[2].integrity_blemishes = 4;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_share(3, 2);
+    g_tres_world.players_data[2].integrity_blemishes = 5;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_share(3, 2);
+    g_tres_world.players_data[2].integrity_blemishes = 6;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // The blemishes are the trespasser's, not the owner's.
+    tres_scene();
+    tres_share(3, 2);
+    g_tres_world.players_data[1].integrity_blemishes = 9;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    // An owner who wants revenge does not grant it either.
+    tres_scene();
+    tres_share(3, 2);
+    g_tres_world.players_data[1].diplo_treaties[2] |= DTREATY_WANT_REVENGE;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- the exemption is decided per region, for all 64 land regions -----
+    // Two units, one in an exempt region and one not.
+    tres_scene();
+    tres_share(3, 2);
+    tres_at(8, 2).region = 3;
+    tres_base(1, 1, 8, 2);  // whose_territory needs a base in region 3 as well
+    tres_veh(1, 2, 0, 8, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_400) == 0);
+    RCHECK((g_tres_world.vehs[1].state & VSTATE_UNK_400) != 0);
+    // The last land region is inside the sweep in both directions: exempt
+    // when the common enemy is there, and counted when it is not. Whichever
+    // way a bound that stopped one region short went - reading a slot the
+    // clear never wrote, whatever happened to be in it - one of these two
+    // fails.
+    tres_scene();
+    tres_at(6, 2).region = (uint8_t)(MaxRegionLandNum - 1);
+    tres_at(4, 2).region = (uint8_t)(MaxRegionLandNum - 1);
+    tres_share(3, MaxRegionLandNum - 1);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_at(6, 2).region = (uint8_t)(MaxRegionLandNum - 1);
+    tres_at(4, 2).region = (uint8_t)(MaxRegionLandNum - 1);
+    tres_share(3, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // Region zero the same way, for a sweep that started one region late.
+    tres_scene();
+    tres_at(6, 2).region = 0;
+    tres_at(4, 2).region = 0;
+    tres_share(3, 0);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_at(6, 2).region = 0;
+    tres_at(4, 2).region = 0;
+    tres_share(3, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+}
+
+void test_territory_unit_filter() {
+    TresSeams seams;
+    int base_id = 0;
+    int count = 0;
+
+    // ---- every unit is unmarked, counted or not ---------------------------
+    // Four units: one counted, one refused by its plan, one belonging to a
+    // third faction, one counted. All four lose VSTATE_UNK_400; the two that
+    // are counted get it straight back.
+    tres_scene();
+    tres_veh(1, 2, 2, 8, 2);   // plan 9
+    tres_veh(2, 3, 0, 10, 2);  // not the trespasser
+    tres_veh(3, 2, 0, 12, 2);
+    for (int i = 0; i < 4; i++) {
+        g_tres_world.vehs[i].state = 0xFFFFFFFFu;
+    }
+    RCHECK(territory(1, 2, 0, &base_id, &count) == 2);
+    RCHECK(g_tres_world.vehs[0].state == 0xFFFFFFFFu);
+    RCHECK(g_tres_world.vehs[1].state == 0xFFFFFBFFu);
+    RCHECK(g_tres_world.vehs[2].state == 0xFFFFFBFFu);
+    RCHECK(g_tres_world.vehs[3].state == 0xFFFFFFFFu);
+    // The unit past the end of the roster is never touched.
+    RCHECK(g_tres_world.vehs[4].state == 0);
+
+    // ---- the roster ends at VehCurrentCount --------------------------------
+    // Unit 1 is wired to qualify in every way, and left out of the count. A
+    // walk that ran one unit too far would count it and clear its mark.
+    tres_scene();
+    g_tres_world.vehs[1].x = 8;
+    g_tres_world.vehs[1].y = 2;
+    g_tres_world.vehs[1].faction_id = 2;
+    g_tres_world.vehs[1].proto_id = 0;
+    g_tres_world.vehs[1].state = 0xFFFFFFFFu;
+    RCHECK(g_tres_world.veh_count == 1);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK(g_tres_world.vehs[1].state == 0xFFFFFFFFu);
+
+    // ---- the plan filter ---------------------------------------------------
+    {
+        struct PlanCase {
+            int proto_id;
+            int order;
+            int expected;
+        };
+        const PlanCase plan_cases[] = {
+            {0, ORDER_NONE, 2},    // plan 0
+            {1, ORDER_NONE, 2},    // plan 8, the last one allowed
+            {2, ORDER_NONE, 0},    // plan 9, the first refused
+            {2, ORDER_CONVOY, 0},  // and convoying does not rescue it
+            {3, ORDER_CONVOY, 2},  // plan 10 while convoying
+            {3, ORDER_HOLD, 0},    // plan 10 otherwise
+            {3, ORDER_NONE, 0},
+            {4, ORDER_CONVOY, 0},  // plan 11
+        };
+        for (unsigned i = 0; i < sizeof(plan_cases) / sizeof(plan_cases[0]); i++) {
+            tres_scene();
+            g_tres_world.vehs[0].proto_id = (int16_t)plan_cases[i].proto_id;
+            g_tres_world.vehs[0].order = (int8_t)plan_cases[i].order;
+            RCHECK(territory(1, 2, 1, &base_id, &count) == plan_cases[i].expected);
+        }
+    }
+
+    // ---- only land, and only the altitude bits of climate ------------------
+    tres_scene();
+    tres_at(6, 2).climate = (ALT_SHORE_LINE << 5);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_at(6, 2).climate = (ALT_SHORE_LINE << 5) | 0x1F;  // rainfall and heat
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_at(6, 2).climate = ALT_BIT_OCEAN_SHELF;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_at(6, 2).climate = ALT_BIT_OCEAN_SHELF | 0x1F;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_at(6, 2).climate = ALT_BIT_3_LEVELS_ABOVE_SEA;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- the tile has to be the owner's ------------------------------------
+    tres_scene();
+    tres_at(6, 2).territory = 3;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_at(6, 2).territory = -1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    tres_scene();
+    tres_at(6, 2).territory = 0;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    // The owner's own units are not trespassing on it.
+    tres_scene();
+    g_tres_world.vehs[0].faction_id = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+
+    // ---- a claimed tile with no base in its region yields no base id -------
+    tres_scene();
+    tres_at(4, 2).region = 5;  // the base's own tile leaves region 2
+    base_id = 0x5A5A;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 0);
+    RCHECK(base_id == -1);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_400) == 0);
+
+    // ---- the last qualifying unit owns the reported base -------------------
+    tres_scene();
+    tres_base(1, 1, 14, 6);
+    tres_veh(0, 2, 0, 2, 2);
+    tres_veh(1, 2, 0, 14, 6);
+    RCHECK(territory(1, 2, 0, &base_id, &count) == 2);
+    RCHECK(base_id == 1);
+    // Same two units, met in the other order.
+    tres_scene();
+    tres_base(1, 1, 14, 6);
+    tres_veh(0, 2, 0, 14, 6);
+    tres_veh(1, 2, 0, 2, 2);
+    RCHECK(territory(1, 2, 0, &base_id, &count) == 2);
+    RCHECK(base_id == 0);
+}
+
+void test_territory_weight() {
+    TresSeams seams;
+    int base_id = 0;
+    int count = 0;
+
+    // ---- improved terrain is worth a second point --------------------------
+    {
+        const uint32_t improved[] = {
+            BIT_MINE, BIT_SOLAR_TIDAL, BIT_BUNKER, BIT_FARM,
+            BIT_FOREST, BIT_CONDENSER, BIT_THERMAL_BORE, BIT_SENSOR_ARRAY,
+        };
+        for (unsigned i = 0; i < sizeof(improved) / sizeof(improved[0]); i++) {
+            tres_scene();
+            tres_at(6, 2).bit = improved[i];
+            RCHECK(territory(1, 2, 1, &base_id, &count) == 3);
+        }
+        const uint32_t plain[] = {
+            BIT_ROAD, BIT_MAGTUBE, BIT_AIRBASE, BIT_SOIL_ENRICHER, BIT_ECH_MIRROR,
+        };
+        for (unsigned i = 0; i < sizeof(plain) / sizeof(plain[0]); i++) {
+            tres_scene();
+            tres_at(6, 2).bit = plain[i];
+            RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+        }
+    }
+
+    // ---- bit 0 of flags arms everything after the raw count ----------------
+    tres_scene();
+    g_tres_world.vehs[0].flags = 1;
+    count = 0x5A5A;
+    RCHECK(territory(1, 2, 0, &base_id, &count) == 1);
+    RCHECK(count == 0);
+    RCHECK(g_tres_world.vehs[0].flags == 1);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_400) != 0);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_800) == 0);
+    tres_scene();
+    g_tres_world.vehs[0].flags = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK(count == 1);
+    RCHECK(g_tres_world.vehs[0].flags == 3);
+
+    // ---- count_out counts only the units already carrying VFLAG bit 0 ------
+    tres_scene();
+    g_tres_world.vehs[0].flags = 0x8000;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK(count == 0);
+    RCHECK(g_tres_world.vehs[0].flags == 0x8003);
+    tres_scene();
+    g_tres_world.vehs[0].flags = 1;
+    tres_veh(1, 2, 0, 2, 2);
+    g_tres_world.vehs[1].flags = 1;
+    tres_veh(2, 2, 0, 8, 2);
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 6);
+    RCHECK(count == 2);
+
+    // ---- distance: (dy + dx) & ~1 against 4 --------------------------------
+    // Two tiles away, and four, are inside; six is not.
+    tres_scene();
+    tres_veh(0, 2, 0, 8, 2);  // dx 4
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_veh(0, 2, 0, 10, 2);  // dx 6
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    // The y term is an absolute value in both directions.
+    tres_scene();
+    tres_veh(0, 2, 0, 4, 6);  // dy 4, base below the unit
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_base(0, 1, 4, 6);
+    tres_veh(0, 2, 0, 4, 2);  // dy 4, base above the unit
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_base(0, 1, 4, 0);
+    tres_veh(0, 2, 0, 4, 6);  // dy 6
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    // The x term likewise.
+    tres_scene();
+    tres_base(0, 1, 8, 2);
+    tres_veh(0, 2, 0, 4, 2);  // dx -4
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // An odd sum is rounded down before the comparison. A base is never
+    // stored off the two-column grid in a real game, so this is the only way
+    // to reach an odd distance at all: (9, 2) and (4, 2) are the same tile
+    // apart as (8, 2) and (4, 2), which is what keeps base_find on it.
+    tres_scene();
+    tres_base(0, 1, 9, 2);
+    tres_veh(0, 2, 0, 4, 2);  // dx 5, rounded to 4
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_base(0, 1, 11, 2);
+    tres_veh(0, 2, 0, 4, 2);  // dx 7, rounded to 6
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+
+    // ---- a round map wraps the x term, on bit 0 of MapIsFlat ---------------
+    tres_scene();
+    tres_base(0, 1, 2, 2);
+    tres_veh(0, 2, 0, 14, 2);  // dx 12, or 4 the short way
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    tres_scene();
+    tres_base(0, 1, 2, 2);
+    tres_veh(0, 2, 0, 14, 2);
+    g_tres_world.is_flat = 0;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // Bit 0 is the whole test: an even value is a round map here, exactly as
+    // it is in reset_territory's own wrap and unlike x_dist's.
+    tres_scene();
+    tres_base(0, 1, 2, 2);
+    tres_veh(0, 2, 0, 14, 2);
+    g_tres_world.is_flat = 2;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    tres_base(0, 1, 2, 2);
+    tres_veh(0, 2, 0, 14, 2);
+    g_tres_world.is_flat = 3;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    // The wrap arms strictly above MapLongitude. At exactly MapLongitude the
+    // long way stands, and one tile further the short way wins.
+    tres_scene();
+    tres_base(0, 1, 2, 2);
+    tres_veh(0, 2, 0, 10, 2);  // dx 8
+    g_tres_world.is_flat = 0;
+    g_tres_world.lon_bounds = 12;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    tres_scene();
+    tres_base(0, 1, 2, 2);
+    tres_veh(0, 2, 0, 12, 2);  // dx 10, or 2 the short way
+    g_tres_world.is_flat = 0;
+    g_tres_world.lon_bounds = 12;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- three grievances and a friction threshold override the distance ---
+    {
+        const uint32_t grievance[] = {
+            DTREATY_WANT_REVENGE, DTREATY_SHALL_BETRAY, DTREATY_UNK_800,
+        };
+        for (unsigned i = 0; i < sizeof(grievance) / sizeof(grievance[0]); i++) {
+            tres_scene();
+            tres_veh(0, 2, 0, 10, 2);  // dx 6: outside
+            g_tres_world.players_data[1].diplo_treaties[2] = grievance[i];
+            RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+        }
+        // A neighbouring bit is not one of the three.
+        tres_scene();
+        tres_veh(0, 2, 0, 10, 2);
+        g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_UNK_100;
+        RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    }
+    tres_scene();
+    tres_veh(0, 2, 0, 10, 2);
+    g_tres_world.friction = 12;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    tres_scene();
+    tres_veh(0, 2, 0, 10, 2);
+    g_tres_world.friction = 13;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    // A unit inside the distance is counted whatever the friction is.
+    tres_scene();
+    g_tres_world.friction = 12;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- sunspots buy each unit one silent pass ----------------------------
+    tres_scene();
+    g_tres_world.sunspots = 0;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_800) != 0);
+    // Only once: the grace flag is honoured from then on.
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    tres_scene();
+    g_tres_world.sunspots = -1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+    // Sunspots up, and the flag is never set at all.
+    tres_scene();
+    g_tres_world.sunspots = 1;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+    RCHECK((g_tres_world.vehs[0].state & VSTATE_UNK_800) == 0);
+    // A unit that already carries the flag is weighted even while sunspots
+    // are down.
+    tres_scene();
+    g_tres_world.sunspots = 0;
+    g_tres_world.vehs[0].state = VSTATE_UNK_800;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 2);
+
+    // ---- a treaty partner's trespass is worth five, not one ----------------
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_TREATY;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 6);
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_TREATY;
+    tres_at(6, 2).bit = BIT_MINE;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 7);
+    // The five is not paid on the grace pass either.
+    tres_scene();
+    g_tres_world.players_data[1].diplo_treaties[2] = DTREATY_TREATY;
+    g_tres_world.sunspots = 0;
+    RCHECK(territory(1, 2, 1, &base_id, &count) == 1);
+}
+
+#undef RCHECK
+
 }  // namespace
 
 int main() {
@@ -6779,6 +7475,10 @@ int main() {
     test_reset_territory_ownership();
     test_reset_territory_tallies();
     test_reset_territory_sites();
+    test_territory_gates();
+    test_territory_shared_war();
+    test_territory_unit_filter();
+    test_territory_weight();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
