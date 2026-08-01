@@ -74,6 +74,51 @@ class WreckCandidateTests(unittest.TestCase):
             self.assertEqual(len(lines), len(wrecked))
 
 
+class ClassifyTests(unittest.TestCase):
+    """The OBSERVED/UNOBSERVED decision itself, which had no test at all.
+
+    It was rewritten to stop counting a crash as coverage - the change that
+    moved 9 functions out of OBSERVED and corrected a published number - and
+    mutating `done.returncode == 0` still survived every test. The decision that
+    produces the census had nothing pinning it.
+    """
+
+    class Harness:
+        test, build_dir = "suite", "/build"
+
+    def run_with(self, returncode=0, output="", timeout=False):
+        import subprocess
+        from unittest import mock
+
+        def fake(*args, **kwargs):
+            if timeout:
+                raise subprocess.TimeoutExpired(cmd="ctest", timeout=1)
+            return subprocess.CompletedProcess(
+                args=[], returncode=returncode, stdout=output, stderr="")
+
+        with mock.patch("subprocess.run", fake):
+            return prober.classify(self.Harness(), 5)
+
+    def test_a_passing_suite_means_nothing_observes_it(self):
+        self.assertEqual(prober.UNOBSERVED, self.run_with(returncode=0))
+
+    def test_an_assertion_failure_is_the_only_thing_that_counts_as_observed(self):
+        self.assertEqual(prober.OBSERVED,
+                         self.run_with(returncode=1, output="2 failure(s)\n"))
+
+    def test_a_fault_is_not_an_observation(self):
+        # The defect: a wrecked body that segfaults proves the code RUNS, and
+        # was being counted as proof something watches it.
+        self.assertEqual(
+            prober.CRASHED,
+            self.run_with(returncode=1,
+                          output="err:seh:NtRaiseException code c0000005\n"))
+
+    def test_a_hung_suite_is_not_an_observation_either(self):
+        # And must not abort the census, which it did for all 224 functions.
+        self.assertEqual(prober.CRASHED, self.run_with(timeout=True))
+
+
 class VerdictVocabularyTests(unittest.TestCase):
     def test_no_compile_is_not_one_of_the_measured_verdicts(self):
         # Folding NO-COMPILE into either verdict would report an unmeasurable
