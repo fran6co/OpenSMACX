@@ -718,3 +718,63 @@ class TrailingCommentMutantTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TargetDerivationTests(unittest.TestCase):
+    """--target defaulted to recovery-leaf-tests, which does not compile most
+    recovered sources. With the wrong target the build succeeds, the test exe
+    is never relinked, and every mutant is classified STALE - a printed tally
+    over a sweep that measured nothing."""
+
+    NINJA = (
+        "build CMakeFiles/recovery-gameplay-tests.dir/src/veh.cpp.obj: CXX\n"
+        "build CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: CXX\n"
+        "build CMakeFiles/recovery-leaf-tests.dir/src/font.cpp.obj: CXX\n"
+        "build CMakeFiles/recovery-gameplay-tests.dir/src/font.cpp.obj: CXX\n"
+        "build recovery-gameplay-tests.exe: LINK\n"
+        "build recovery-leaf-tests.exe: LINK\n"
+        "build OpenSMACX.dll: LINK\n")
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.build = Path(self.temporary.name)
+        (self.build / "build.ninja").write_text(self.NINJA, encoding="utf-8")
+
+    def args(self, source, target=None, test=None):
+        return argparse.Namespace(source=source, build_dir=str(self.build),
+                                  target=target, test=test)
+
+    def test_a_single_owner_is_derived(self):
+        args = self.args("src/veh.cpp")
+        self.assertIsNone(mutate_and_verify.resolve_target(args))
+        self.assertEqual(args.target, "recovery-gameplay-tests")
+        self.assertEqual(args.test, "recovery-gameplay-tests")
+
+    def test_the_dll_is_never_chosen(self):
+        # OpenSMACX.dir compiles veh.cpp too, and is not something to sweep.
+        self.assertEqual(
+            mutate_and_verify.targets_compiling(self.build, "src/veh.cpp"),
+            ["recovery-gameplay-tests"])
+
+    def test_two_owners_require_an_explicit_choice(self):
+        problem = mutate_and_verify.resolve_target(self.args("src/font.cpp"))
+        self.assertIsNotNone(problem)
+        self.assertIn("more than one", problem)
+
+    def test_the_historical_mistake_is_refused(self):
+        problem = mutate_and_verify.resolve_target(
+            self.args("src/veh.cpp", target="recovery-leaf-tests"))
+        self.assertIsNotNone(problem)
+        self.assertIn("does not compile", problem)
+        self.assertIn("recovery-gameplay-tests", problem)
+
+    def test_a_correct_explicit_target_is_accepted_and_fills_in_test(self):
+        args = self.args("src/veh.cpp", target="recovery-gameplay-tests")
+        self.assertIsNone(mutate_and_verify.resolve_target(args))
+        self.assertEqual(args.test, "recovery-gameplay-tests")
+
+    def test_no_owner_is_an_error_not_a_silent_default(self):
+        problem = mutate_and_verify.resolve_target(self.args("src/absent.cpp"))
+        self.assertIsNotNone(problem)
+        self.assertIn("nothing in", problem)
