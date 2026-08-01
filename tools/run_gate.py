@@ -128,6 +128,83 @@ def report(lane):
             print(f"  | {line.rstrip()}")
 
 
+# docs/recovery/ is the metadata every lane READS while the other lane runs. A
+# test that writes there - even one that puts the file back - can be read
+# mid-write by the other lane.
+METADATA_PREFIX = "docs/recovery/"
+
+
+def tracked_manifest(repository):
+    """path -> (mtime_ns, size) for every git-tracked file.
+
+    mtime, not content: the defect this catches restores what it wrote, so a
+    content hash sees nothing. On 2026-08-01 a unit test appended one line to
+    docs/recovery/functions.csv and put it back; `write_bytes` truncates first,
+    so the OTHER preset lane read the file at 0 BYTES - measured 36 times in
+    40 s - and died with "analysis correlation and canonical inventory counts
+    differ". Nothing showed in `git status`, `git diff` or `git bisect`, and it
+    cost three separate diagnoses.
+
+    Known gap, stated rather than assumed away: a restore via shutil.copy2
+    preserves mtime and would evade this.
+    """
+    try:
+        listing = subprocess.run(["git", "ls-files", "-z"], cwd=repository,
+                                 capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        # Degrade loudly. Returning {} silently would compare nothing against
+        # nothing and report a clean tree on every run, which is the failure
+        # this whole file exists to stop.
+        print("note: cannot list tracked files here, so the gate CANNOT tell "
+              "whether\n      committed metadata was written while it ran.")
+        return None
+    manifest = {}
+    for name in listing.stdout.split("\0"):
+        if not name:
+            continue
+        try:
+            info = (repository / name).stat()
+        except OSError:
+            continue
+        manifest[name] = (info.st_mtime_ns, info.st_size)
+    return manifest
+
+
+def report_tree_writes(before, after):
+    """Split verdict: metadata is a failure, everything else is a warning.
+
+    Another agent legitimately edits src/ and tests/ while a gate runs here, so
+    failing on those would make the gate flaky - and a flaky gate is worse than
+    no check. Nothing should be touching docs/recovery/ mid-gate.
+    """
+    if before is None or after is None:
+        return 0
+    touched = sorted(name for name, stamp in after.items()
+                     if name in before and before[name] != stamp)
+    if not touched:
+        return 0
+    metadata = [name for name in touched if name.startswith(METADATA_PREFIX)]
+    other = [name for name in touched if not name.startswith(METADATA_PREFIX)]
+    if other:
+        print(f"\nnote: {len(other)} tracked file(s) changed during the run "
+              f"(another agent editing is normal):")
+        for name in other[:5]:
+            print(f"    {name}")
+        if len(other) > 5:
+            print(f"    ... and {len(other) - 5} more")
+    if metadata:
+        print(f"\nSOURCE TREE WRITTEN DURING THE GATE: {len(metadata)} file(s) "
+              "under docs/recovery/ changed\nwhile the lanes were reading them. "
+              "A lane can read one of these mid-write - at\nzero bytes - and "
+              "fail with an error that names metadata and points nowhere.\n"
+              "Restoring the file afterwards does not help: this compares "
+              "mtime, and\n`git status` will look clean.")
+        for name in metadata:
+            print(f"    {name}")
+        return 1
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -150,6 +227,7 @@ def main():
 
     lanes = [Lane(preset, arguments.target, log_directory, repository)
              for preset in presets]
+    before = tracked_manifest(repository)
     started = time.monotonic()
     if arguments.serial or len(lanes) == 1:
         for lane in lanes:
@@ -169,11 +247,19 @@ def main():
                 time.sleep(POLL_SECONDS)
     wall = time.monotonic() - started
 
+    wrote_metadata = report_tree_writes(before, tracked_manifest(repository))
+
     failed = [lane.preset for lane in lanes if lane.returncode != 0]
     mode = "serially" if (arguments.serial or len(lanes) == 1) else "concurrently"
     total = sum(lane.elapsed for lane in lanes)
     print(f"\n{len(lanes)} lane(s) {mode}: wall {wall:.2f} s, "
           f"lane time {total:.2f} s")
+    if wrote_metadata and not failed:
+        # Green lanes over a tree that moved underneath them is exactly the
+        # combination that reads as success and is not.
+        print("GATE FAILED: the lanes passed, but committed metadata was "
+              "written while they ran")
+        return 1
     if failed:
         # Named, not counted: "1 of 2 failed" sends the reader to the wrong log.
         print(f"GATE FAILED: {', '.join(failed)}")

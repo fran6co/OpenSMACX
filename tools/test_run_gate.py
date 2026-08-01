@@ -44,7 +44,7 @@ class RunGateTest(unittest.TestCase):
         """outcomes: preset -> (returncode, log text). Returns (rc, stdout)."""
         starts = []
 
-        def fake_popen(command, cwd, stdout, stderr):
+        def fake_popen(command, cwd, stdout, stderr, **_ignored):
             preset = command[command.index("--preset") + 1]
             starts.append(preset)
             returncode, output = outcomes[preset]
@@ -54,6 +54,8 @@ class RunGateTest(unittest.TestCase):
             argv = ["run_gate.py", "--log-dir", directory] + argv
             with mock.patch("sys.argv", argv), \
                     mock.patch.object(subprocess, "Popen", fake_popen), \
+                    mock.patch.object(run_gate, "tracked_manifest",
+                                      lambda _repository: {}), \
                     mock.patch("sys.stdout", new_callable=_Capture) as out:
                 code = run_gate.main()
             return code, out.text, starts
@@ -100,7 +102,7 @@ class RunGateTest(unittest.TestCase):
     def test_serial_mode_starts_the_second_lane_after_the_first(self):
         order = []
 
-        def fake_popen(command, cwd, stdout, stderr):
+        def fake_popen(command, cwd, stdout, stderr, **_ignored):
             preset = command[command.index("--preset") + 1]
             order.append(f"start {preset}")
             process = FakeProcess(0, "100% tests passed out of 59\n", stdout)
@@ -117,6 +119,8 @@ class RunGateTest(unittest.TestCase):
             argv = ["run_gate.py", "--serial", "--log-dir", directory]
             with mock.patch("sys.argv", argv), \
                     mock.patch.object(subprocess, "Popen", fake_popen), \
+                    mock.patch.object(run_gate, "tracked_manifest",
+                                      lambda _repository: {}), \
                     mock.patch("sys.stdout", new_callable=_Capture):
                 self.assertEqual(0, run_gate.main())
         self.assertEqual(["start mingw-i686-debug", "wait mingw-i686-debug",
@@ -126,7 +130,7 @@ class RunGateTest(unittest.TestCase):
     def test_concurrent_mode_starts_both_lanes_before_either_finishes(self):
         order = []
 
-        def fake_popen(command, cwd, stdout, stderr):
+        def fake_popen(command, cwd, stdout, stderr, **_ignored):
             preset = command[command.index("--preset") + 1]
             order.append(f"start {preset}")
             process = FakeProcess(0, "100% tests passed out of 59\n", stdout,
@@ -144,6 +148,8 @@ class RunGateTest(unittest.TestCase):
             argv = ["run_gate.py", "--log-dir", directory]
             with mock.patch("sys.argv", argv), \
                     mock.patch.object(subprocess, "Popen", fake_popen), \
+                    mock.patch.object(run_gate, "tracked_manifest",
+                                      lambda _repository: {}), \
                     mock.patch.object(run_gate.time, "sleep", lambda _: None), \
                     mock.patch("sys.stdout", new_callable=_Capture):
                 self.assertEqual(0, run_gate.main())
@@ -157,7 +163,7 @@ class RunGateTest(unittest.TestCase):
         signature of `a.wait(); b.wait()` and hides the cost of concurrency."""
         clock = [0.0]
 
-        def fake_popen(command, cwd, stdout, stderr):
+        def fake_popen(command, cwd, stdout, stderr, **_ignored):
             preset = command[command.index("--preset") + 1]
             polls = 1 if preset == "mingw-i686-debug" else 5
             return FakeProcess(0, "100% tests passed out of 59\n", stdout,
@@ -169,6 +175,8 @@ class RunGateTest(unittest.TestCase):
             argv = ["run_gate.py", "--log-dir", directory]
             with mock.patch("sys.argv", argv), \
                     mock.patch.object(subprocess, "Popen", fake_popen), \
+                    mock.patch.object(run_gate, "tracked_manifest",
+                                      lambda _repository: {}), \
                     mock.patch.object(run_gate.time, "sleep",
                                       lambda seconds: clock.__setitem__(
                                           0, clock[0] + seconds)), \
@@ -208,3 +216,39 @@ class _Capture:
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TreeWriteDetectionTests(unittest.TestCase):
+    """The defect restores what it wrote, so only mtime can see it."""
+
+    def test_an_unchanged_tree_is_silent(self):
+        manifest = {"src/a.cpp": (1, 10), "docs/recovery/functions.csv": (2, 20)}
+        self.assertEqual(run_gate.report_tree_writes(manifest, dict(manifest)), 0)
+
+    def test_metadata_written_during_the_run_fails(self):
+        before = {"docs/recovery/functions.csv": (2, 20)}
+        after = {"docs/recovery/functions.csv": (3, 20)}   # restored, mtime moved
+        self.assertEqual(run_gate.report_tree_writes(before, after), 1)
+
+    def test_same_size_restored_content_is_still_caught(self):
+        # A content hash would see nothing here; that is the whole point.
+        before = {"docs/recovery/summary.json": (100, 512)}
+        after = {"docs/recovery/summary.json": (200, 512)}
+        self.assertEqual(run_gate.report_tree_writes(before, after), 1)
+
+    def test_a_source_edit_warns_but_does_not_fail(self):
+        # Another agent editing src/ mid-gate is normal here, and failing on it
+        # would make the gate flaky - worse than no check.
+        before = {"src/veh.cpp": (1, 10)}
+        after = {"src/veh.cpp": (2, 11)}
+        self.assertEqual(run_gate.report_tree_writes(before, after), 0)
+
+    def test_a_new_untracked_file_is_not_a_write(self):
+        before = {"src/a.cpp": (1, 10)}
+        after = {"src/a.cpp": (1, 10), "build/x.o": (5, 5)}
+        self.assertEqual(run_gate.report_tree_writes(before, after), 0)
+
+    def test_an_unlistable_tree_says_so_instead_of_reporting_clean(self):
+        # Returning an empty manifest would compare nothing with nothing and
+        # report a clean tree forever.
+        self.assertEqual(run_gate.report_tree_writes(None, {"a": (1, 1)}), 0)
