@@ -550,6 +550,7 @@ DLLEXPORT int __cdecl get_plan(uint32_t faction_id, uint32_t plan);
 void __cdecl spot_tile(int x, int y, int faction_id);
 DLLEXPORT void __cdecl spot_base(int base_id, int faction_id);
 DLLEXPORT void __cdecl spot_stack(int veh_id, int faction_id);
+DLLEXPORT void __cdecl spot_loc(int x, int y, int faction_id);
 DLLEXPORT BOOL __cdecl want_to_wake(uint32_t faction_id, uint32_t veh_id, int spotted_veh_id);
 DLLEXPORT void __cdecl wake_stack(int veh_id);
 DLLEXPORT void __cdecl stack_put(int veh_id, int x, int y);

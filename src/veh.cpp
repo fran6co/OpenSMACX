@@ -2053,6 +2053,45 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
 }
 
 /*
+Purpose: Reveal whatever occupies the specified location - the tile itself, and
+         then either the base standing on it or the whole unit stack - to the
+         specified faction.
+Original Offset: 005B5AD0
+Return Value: n/a
+Status: Complete
+
+821 bytes of original for six lines of source, because five of its six calls
+were inlined and only base_at and veh_at survive as calls in the image. What
+0x005B5AD0 to 0x005B5E04 actually contains, in order, is spot_tile at
+0x005B5AD0, base_at, spot_base at 0x005B5BA7, veh_at, and spot_stack at
+0x005B5CB4 - each one the whole of the corresponding function, instruction for
+instruction, including spot_base's and spot_stack's own inlined copies of
+spot_tile and spot_stack's inlined veh_top. Every one is now source-owned, so
+this is a transcription of the call sequence rather than a re-inlining of it.
+
+The evidence that these really are those functions and not merely similar code:
+the base arm carries spot_base's unconditional intel copy from Base+6 to
+Base+0Bh+faction and its SINGLE bounds test, while the unit arm carries
+spot_stack's DOUBLED bounds test and its veh_top climb - a difference between
+the two arms which has no reason to exist in one hand-written function and
+exactly one reason to exist in two inlined ones.
+
+A base wins outright: the unit arm is reached only when base_at answers -1, and
+the tile reveal happens first either way, whether or not anything stands on it.
+veh_at's own -1 is handed to spot_stack, which returns on a negative id, so
+there is no third arm.
+*/
+void __cdecl spot_loc(int x, int y, int faction_id) {
+    spot_tile(x, y, faction_id);
+    int base_id = base_at(x, y);
+    if (base_id >= 0) {
+        spot_base(base_id, faction_id);
+        return;
+    }
+    spot_stack(veh_at(x, y), faction_id);
+}
+
+/*
 Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
 Original Offset: 005B5EA0
