@@ -96,11 +96,39 @@ the test, not a defect in the body**.
 
 Two consequences for anyone optimising this:
 
-- **ccache does not help.** Every mutant is by construction a unique source
-  file, so it is a guaranteed cache miss. The unchanged ~94 other translation
-  units are not recompiled anyway. The one real case is repeated hardening
-  passes, where mutant *K*'s object is identical across passes.
-- **A faster linker does not help.** Linking is 0.09 s, under 4% of a mutant.
+- **ccache does not help — but not for the reason first given here.** The claim
+  was "a guaranteed cache miss". Measured 2026-08-01, a second fresh build
+  directory gets **170/170 hits**, so the hits happen; they are just worth
+  little, because compiling is not what a fresh build spends its time on. Cold
+  build 21 s, with a warm ccache 18 s: **3 s, 14%**. Not worth wiring.
+- **A faster linker does not help**, and this now rests on a current number
+  rather than the old 0.09 s: a one-file rebuild *and* link of the 5.4 MB
+  `recovery-gameplay-tests.exe` is **241 ms** end to end.
+
+### Re-measured 2026-08-01: the build is 11% of a mutant
+
+| step | time | share |
+|---|---:|---:|
+| rebuild one source file and link | 241 ms | 11% |
+| `ctest` run of that one target | 1,989 ms | **89%** |
+
+**Every optimisation proposed for this loop so far — ccache, a faster linker,
+sharding across lanes — attacks the 11%.** That is why each measured small. The
+test execution is the cost, and it is one Wine-launched executable.
+
+**A lane is far cheaper than recorded, and that correction cuts the other way.**
+"~7 s and ~2 GB" omitted the build a fresh lane needs. That build is **21 s**,
+not the minutes assumed when auto-sharding was deferred, so lane setup is ~30 s
+all-in and parallel across lanes — negligible against any sweep of minutes.
+
+**One number is unreconciled and must not be planned against.** This worktree
+measures **~2.2 s per mutant** (0.24 + 2.0). The 2026-08-01 batch reported
+~20 min for 55 mutants, i.e. **~21 s per mutant** — 10× apart. Extra hardening
+passes and `--confirm-survivors` re-runs account for some of it, not for an
+order of magnitude. Whether sharding is worth building depends entirely on
+which figure holds: at 21 s a 55-mutant sweep is 20 minutes and 4 lanes are
+clearly worth 30 s of setup; at 2.2 s it is two minutes and they are not.
+Measure a real sweep in the main tree before building anything.
 
 ## What was made faster, and by how much
 
