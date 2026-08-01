@@ -35,7 +35,16 @@ DIRECT_CALL_RE = re.compile(r"^    (test_[A-Za-z0-9_]+)\(\);$", re.MULTILINE)
 
 
 def audit(path):
-    text = path.read_text(encoding="utf-8")
+    return audit_text(path.read_text(encoding="utf-8"))
+
+
+def audit_text(text):
+    """Split from audit() so the parsing can be tested without a file.
+
+    Every branch below is about text shape - a definition, a registration, a
+    call at the top level of main() - and pinning them needed a temporary file
+    per case, which is why they were not pinned at all.
+    """
     defined = DEFINITION_RE.findall(text)
     registered = set(REGISTRATION_RE.findall(text))
     main_at = text.find("\nint main()")
