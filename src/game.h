@@ -132,6 +132,7 @@ extern int *LocalFaction;
 
 DLLEXPORT int __cdecl energy_limit(int);
 
+DLLEXPORT void __cdecl reset_territory();
 DLLEXPORT BOOL __cdecl not_my_turn();
 DLLEXPORT void __cdecl planetfall(uint32_t faction_id);
 DLLEXPORT void __cdecl clear_scenario();

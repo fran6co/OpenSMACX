@@ -257,8 +257,19 @@ func_graphic_win_map_colors *BufferOriginalMapColors =
 func_graphic_win_overlay_nonclient *GraphicWinOverlayNonclient =
     (func_graphic_win_overlay_nonclient *)0x005D6AC0;
 void **GraphicWinColorMapTable = reinterpret_cast<void **>(0x009B3390);
-func_graphic_win_invalidate_rect *GraphicWinInvalidateRect =
-    *reinterpret_cast<func_graphic_win_invalidate_rect **>(0x00669304);
+// USER32!InvalidateRect, read out of the executable's import table. This is
+// resolved on FIRST USE rather than by a dynamic initializer, because the
+// initializer runs in every binary that links this translation unit and only
+// one of them has anything mapped at 0x00669304. In the host test executables
+// the address lands past the end of the image, and whether the load faults
+// depends on what the loader happened to place after it - measured on
+// recovery-gameplay-tests, the same read survived at one binary size and took
+// the process down with an unhandled page fault before main at another. The
+// variable stays writable so tests can still rebind it; a test that installs
+// its own hook never reaches the resolve.
+func_graphic_win_invalidate_rect *GraphicWinInvalidateRect = nullptr;
+
+const uintptr_t GraphicWinInvalidateRectImport = 0x00669304;
 
 /*
 Purpose: Paint the window's surface in one colour. A window that is marked
@@ -388,6 +399,10 @@ void GraphicWin::redraw() {
     area.bottom += y_offset;
     // The window handle is read again here rather than reused from the guard
     // above, matching the original's second load at 0x005D5B43.
+    if (!GraphicWinInvalidateRect) {
+        GraphicWinInvalidateRect = *reinterpret_cast<func_graphic_win_invalidate_rect **>(
+            GraphicWinInvalidateRectImport);
+    }
     GraphicWinInvalidateRect(*WinHdcWindow, &area, FALSE);
 }
 

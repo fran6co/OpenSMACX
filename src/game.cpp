@@ -20,7 +20,9 @@
 #include "game.h"
 #include "alpha.h"
 #include "base.h"
+#include "faction.h"
 #include "general.h"
+#include "map.h"
 
 BOOL *ExpansionEnabled = (BOOL *)0x009A6488;
 uint32_t *GamePreferences = (uint32_t *)0x009A6490;
@@ -46,6 +48,213 @@ BOOL *IsMultiplayerNet = (BOOL *)0x0093F660; // DirectPlay - Serial, Modem, Inte
 BOOL *IsMultiplayerPBEM = (BOOL *)0x0093A95C; // HotSeat / PBEM
 uint8_t *NetTurnFlags = (uint8_t *)0x009A681C;
 int *NetTurnFaction = (int *)0x009A6820;
+
+/*
+Purpose: Wrap an x coordinate the way reset_territory() wraps it.
+Original Offset: n/a
+Return Value: Wrapped x
+Status: Complete
+
+xrange() at 0048BEE0 cannot stand in, for one bit. It tests the whole of
+MapIsFlat; reset_territory reads the low BYTE and tests bit zero
+(`mov cl, byte ptr [94988Ch] / test cl, 1`). The two agree on the 0 and 1 the
+game stores there and disagree on everything else, and the difference is in the
+original rather than in the transcription. world_site() at 005C4FD0 carries the
+same distinction as map.cpp's site_xrange().
+*/
+static int territory_xrange(int x) {
+    if (!(*MapIsFlat & 1)) {
+        if (x >= 0) {
+            if (x >= *MapLongitudeBounds) {
+                x -= *MapLongitudeBounds;
+            }
+        } else {
+            x += *MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
+Purpose: Recompute which faction owns each tile of the map, and rebuild every
+         per-faction and per-region tally that ownership feeds.
+Original Offset: 00523DD0
+Return Value: n/a
+Status: Complete
+
+Ownership is decided by proximity: the nearest base within
+Rules->territory_max_dist_base owns the tile, and an OCEAN tile halves that
+distance and is then overruled outright by any base in its own eight-tile
+ring - which is how coastal water ends up belonging to the base beside it
+rather than to a larger one further off. A tile with no base in range is
+unclaimed, which the map stores as -1.
+
+Everything else here is tallies. Six per-region arrays are zeroed for all eight
+factions before the walk, and the walk refills them:
+
+  - unk_79[region] counts tiles the faction can see in that region - or, for a
+    faction whose AI is running the objectives strategy, tiles carrying
+    BIT_SUPPLY_REMOVE instead. That substitution is what PFLAG_STRAT_SEARCH_-
+    OBJECTIVES selects, and it is a substitution rather than an addition.
+  - unk_78[region] counts tiles the faction owns; unclaimed tiles count for
+    faction zero.
+  - unk_80[region] counts owned tiles that are wet, not rocky and not fungus,
+    and unk_81[region] the subset of those already inside a base radius.
+  - unk_82[region] is the best world_site score the faction owns there, and
+    unk_83[region] the supply pods on its tiles.
+
+Continents[region] gets the same last two facts for the region as a whole, in
+unk_3 and pods, which is what those two field comments already say.
+
+The walk is the same shape as num_objectives': one Map entry per tile visited,
+never reset between rows, starting each row at `x = y & 1`. An empty row - one
+where the start is already past MapLongitudeBounds - does not advance the
+pointer at all.
+
+A tile inside a base radius is not scored as a site and is not asked to be: its
+score is taken as zero without reading val2. Elsewhere the stored score is used
+if there is one and world_site() is called and the answer cached with
+site_set() if there is not, so a full map walk costs at most one scoring pass
+per tile ever.
+
+The supply-pod arm ends in a site request, and its two branches are not
+symmetric. An owned tile asks only its owner; an unclaimed one asks every
+faction that has a base in the region, and each of those must additionally not
+already hold a site here and must have a base at between one and two times the
+territory distance - near enough to want it, far enough not to have it already.
+Both branches require the faction either to see the tile or to be an AI above
+difficulty 3, which is the standard "the AI is allowed to know" test.
+*/
+void __cdecl reset_territory() {
+    for (int faction_id = 0; faction_id < MaxPlayerNum; faction_id++) {
+        PlayerData &player = PlayersData[faction_id];
+        for (int region = 0; region < MaxContinentNum; region++) {
+            player.unk_80[region] = 0;
+            player.unk_78[region] = 0;
+            player.unk_79[region] = 0;
+            player.unk_81[region] = 0;
+            player.unk_83[region] = 0;
+            player.unk_82[region] = 0;
+        }
+    }
+    for (int region = 0; region < MaxContinentNum; region++) {
+        Continents[region].pods = 0;
+        Continents[region].unk_3 = 0;
+    }
+    Map *tile = *MapTiles;
+    for (int y = 0; y < *MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < *MapLongitudeBounds; x += 2, tile++) {
+            int region = tile->region;
+            for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+                uint32_t flags = PlayersData[faction_id].flags;
+                if (flags & PFLAG_STRAT_SEARCH_OBJECTIVES) {
+                    if (tile->bit & BIT_SUPPLY_REMOVE) {
+                        PlayersData[faction_id].unk_79[region]++;
+                    }
+                } else if (flags & PFLAG_MAP_REVEALED
+                    || tile->visibility & (1 << faction_id)) {
+                    PlayersData[faction_id].unk_79[region]++;
+                }
+            }
+            int owner = -1;
+            int base_id = base_find(x, y, -1, region, -1, -1);
+            BOOL is_ocean_tile = (tile->climate & 0xE0) < (ALT_SHORE_LINE << 5);
+            if (base_id >= 0) {
+                int max_dist = (int)Rules->territory_max_dist_base;
+                if (is_ocean_tile) {
+                    max_dist >>= 1;
+                }
+                if (*BaseFindDist < max_dist) {
+                    owner = Bases[base_id].faction_id_current;
+                }
+            }
+            if (is_ocean_tile) {
+                for (int i = 0; i < 9; i++) {
+                    int x_adj = territory_xrange(x + RadiusBaseX[i]);
+                    int y_adj = y + RadiusBaseY[i];
+                    if (!on_map(x_adj, y_adj)) {
+                        continue;
+                    }
+                    int adjacent_id = base_at(x_adj, y_adj);
+                    if (adjacent_id >= 0) {
+                        owner = Bases[adjacent_id].faction_id_current;
+                        break;
+                    }
+                }
+            }
+            if (owner != tile->territory) {
+                tile->bit2 |= 0x400000; // TODO: identify value
+                *UnkBitfield1 |= 1; // TODO: identify global + value
+            }
+            tile->territory = (int8_t)owner;
+            if (owner < 0) {
+                owner = 0;
+            }
+            PlayersData[owner].unk_78[region]++;
+            if (tile->climate & (RAINFALL_MOIST | RAINFALL_RAINY)) {
+                if ((tile->val3 & 0xC0) < (ROCKINESS_ROCKY << 6)
+                    && !(tile->bit & BIT_FUNGUS)) {
+                    PlayersData[owner].unk_80[region]++;
+                    if (tile->bit & BIT_BASE_RADIUS) {
+                        PlayersData[owner].unk_81[region]++;
+                    }
+                }
+            }
+            int site = 0;
+            if (!(tile->bit & BIT_BASE_RADIUS)) {
+                site = tile->val2 >> 4;
+                if (!site) {
+                    site = world_site(x, y, false);
+                    site_set(x, y, site);
+                }
+            }
+            int region_best = (int)Continents[region].unk_3;
+            if (site > region_best) {
+                region_best = site;
+            }
+            Continents[region].unk_3 = (uint32_t)region_best;
+            if (owner) {
+                int owner_best = PlayersData[owner].unk_82[region];
+                if (site > owner_best) {
+                    owner_best = site;
+                }
+                PlayersData[owner].unk_82[region] = (uint8_t)owner_best;
+            }
+            if (!goody_at(x, y)) {
+                continue;
+            }
+            Continents[region].pods++;
+            PlayersData[owner].unk_83[region]++;
+            if (owner) {
+                if (tile->visibility & (1 << owner)
+                    || (!is_human(owner) && *DiffLevelCurrent > 3)) {
+                    add_site(owner, 3, 1, x, y);
+                }
+                continue;
+            }
+            for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+                if (!PlayersData[faction_id].region_total_bases[region]) {
+                    continue;
+                }
+                if (!(tile->visibility & (1 << faction_id))
+                    && (is_human(faction_id) || *DiffLevelCurrent <= 3)) {
+                    continue;
+                }
+                if (at_site(faction_id, 3, x, y)) {
+                    continue;
+                }
+                if (base_find(x, y, faction_id, region, -1, -1) < 0) {
+                    continue;
+                }
+                int limit = (int)Rules->territory_max_dist_base;
+                if (*BaseFindDist < limit || *BaseFindDist > limit + limit) {
+                    continue;
+                }
+                add_site(faction_id, 3, 1, x, y);
+            }
+        }
+    }
+}
 
 /*
 Purpose: Determine whether the turn currently belongs to another faction in a

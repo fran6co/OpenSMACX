@@ -334,6 +334,7 @@ EXPORTS
     "?init@Path@@QAEXXZ" = _ZN4Path4initEv
     "?shutdown@Path@@QAEXXZ" = _ZN4Path8shutdownEv
     "?clear_scenario@@YAXXZ" = _Z14clear_scenariov
+    "?reset_territory@@YAXXZ" = _Z15reset_territoryv
     "?eligible@@YAHI@Z" = _Z8eligiblej
     "?council_votes@@YAII@Z" = _Z13council_votesj
     "?tech_is_preq@@YAHHHI@Z" = _Z12tech_is_preqiij
