@@ -484,3 +484,4 @@ EXPORTS
     "?kill_landmark@@YAXHH@Z" = _Z13kill_landmarkii
     "?world_alt_put_detail@@YAXII@Z" = _Z20world_alt_put_detailjj
     "?near_landmark@@YAHHH@Z" = _Z13near_landmarkii
+    "?alien_base@@YAHHHH@Z" = _Z10alien_baseiii
