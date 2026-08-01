@@ -1419,6 +1419,23 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(recovery-pipeline-tests
                                    test_verify_recovery_pipeline.py)
 
+    # Two gate checks that had no unit tests at all. checks-can-fail covers
+    # them end-to-end against the generated CTestTestfile and the real suite;
+    # these pin the branches those inputs do not happen to contain - the
+    # unquoted RESOURCE_LOCK spelling, a call before main(), the non-vacuity
+    # floor, and the absent-input refusals.
+    opensmacx_add_python_tool_test(wine-test-lock-tests
+                                   test_verify_wine_test_locks.py)
+    opensmacx_add_python_tool_test(test-registration-tests
+                                   test_verify_test_registration.py)
+
+    # command_runs_scenario_executable decides which PIDs stop_executable_
+    # processes signals. A false positive there does not fail a test - it kills
+    # something outside the build, which is what the never-issue-a-global-Wine-
+    # shutdown rule exists to prevent. The negative cases are the point: a
+    # command holding `<staged>.log`, a different token, a non-wine launcher.
+    opensmacx_add_python_tool_test(runtime-process-tests test_runtime_process.py)
+
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
     # that safe - an unplanned command is still executed, and a command that
