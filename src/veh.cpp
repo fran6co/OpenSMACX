@@ -160,6 +160,125 @@ void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native) {
 }
 
 /*
+Purpose: Check whether the specified unit could ever reach the given tile as a patrol waypoint.
+Original Offset: 004CD6A0
+Return Value: Is the waypoint reachable? true/false
+Status: Complete
+
+Three answers, one per triad, and the shared part is only the four bounds checks and the refusal
+to patrol to the tile the unit is already standing on.
+
+LAND compares regions, which is the cheap standing-in for "there is a land route".
+
+SEA asks the harbour question instead. A sea unit moves between ports, so what matters is whether
+the two ends are connected by water: two bases go through port_to_port, a base and open water
+through base_on_sea against the water's region, and open water at both ends falls back to the
+same region comparison land uses.
+
+AIR is a fuel calculation. A chassis with no range is unlimited and answers yes at once.
+Otherwise both ends are classified as a landing place or not, and the test is `base_at() != 0 ||
+airbase`. That is not `base_at() >= 0`: base_at answers -1 on an empty tile, so EMPTY GROUND
+counts as a landing place and the one thing that does not is a tile holding base id zero with no
+airbase on it. The fixture pins the distinction from both directions rather than assuming it is
+a transcription slip. The reachable distance is
+
+  (speed * (chassis range - terraforming_turns - 1) + moves left this turn) / move_rate_roads
+
+with the turn's remaining movement clamped into 0..999 first. terraforming_turns is the field
+air units keep their elapsed flight time in. The distance itself is the doubled vector_dist
+halved once - (|dy| + wrapped |dx|) >> 1 - and it must be within the reachable distance when both
+ends are landing places, or within half of it when either end is not, which is the fuel to get
+there and back.
+
+The x term wraps on a round map by testing bit 0 of MapIsFlat, the same reading reset_territory
+and territory() use rather than x_dist's whole-int one.
+
+Verification note: the sweep against recovery-gameplay-tests kills 46 of 52 valid mutants, and
+the six survivors are dead code or equivalences rather than untested behaviour.
+
+  - Both landing-place flags are set from a comparison and are therefore 0 or 1, so the `< 0`
+    pair at 0x004CD900 that returns false when BOTH are negative cannot fire. The original tests
+    them all the same and so does this. Three survivors.
+  - `moves_left < 0` against `<= 0` or `< 1` differ only at zero, where the clamp writes the zero
+    that is already there. Two survivors.
+  - `moves_left > 999` against `>= 999` differ only at 999, where the clamp writes the 999 that
+    is already there.
+*/
+int __cdecl valid_patrol(int veh_id, int x, int y) {
+    Veh &veh = Vehs[veh_id];
+    if (x == veh.x && y == veh.y) {
+        return false;
+    }
+    if (y < 0 || y >= *MapLatitudeBounds || x < 0 || x >= *MapLongitudeBounds) {
+        return false;
+    }
+    uint32_t triad = Chassis[VehPrototypes[veh.proto_id].chassis_id].triad;
+    if (triad == TRIAD_LAND) {
+        return map_loc(x, y)->region == map_loc(veh.x, veh.y)->region;
+    }
+    if (triad == TRIAD_SEA) {
+        int base_veh = base_at(veh.x, veh.y);
+        int base_dst = base_at(x, y);
+        if (base_veh >= 0) {
+            if (base_dst >= 0) {
+                return port_to_port(base_veh, base_dst) != 0;
+            }
+            return base_on_sea(base_veh, map_loc(x, y)->region) != 0;
+        }
+        if (base_dst >= 0) {
+            return base_on_sea(base_dst, map_loc(veh.x, veh.y)->region) != 0;
+        }
+        return map_loc(x, y)->region == map_loc(veh.x, veh.y)->region;
+    }
+    if (triad != TRIAD_AIR) {
+        return true;
+    }
+    uint32_t chassis_id = VehPrototypes[veh.proto_id].chassis_id;
+    if (!Chassis[chassis_id].range) {
+        return true;
+    }
+    int landing_veh;
+    if (base_at(veh.x, veh.y)) {
+        landing_veh = 1;
+    } else {
+        landing_veh = 0;
+        if (map_loc(veh.x, veh.y)->bit & BIT_AIRBASE) {
+            landing_veh = 1;
+        }
+    }
+    int landing_dst;
+    if (base_at(x, y)) {
+        landing_dst = 1;
+    } else {
+        landing_dst = 0;
+        if (map_loc(x, y)->bit & BIT_AIRBASE) {
+            landing_dst = 1;
+        }
+    }
+    if (landing_veh < 0 && landing_dst < 0) {
+        return false;
+    }
+    int moves_left = (int)speed(veh_id, false) - veh.moves_expended;
+    if (moves_left < 0) {
+        moves_left = 0;
+    } else if (moves_left > 999) {
+        moves_left = 999;
+    }
+    int reach = ((int)speed(veh_id, false)
+        * (Chassis[VehPrototypes[veh.proto_id].chassis_id].range - veh.terraforming_turns - 1)
+        + moves_left) / (int)Rules->move_rate_roads;
+    int x_delta = abs(x - veh.x);
+    if (!(*MapIsFlat & 1) && x_delta > (int)*MapLongitude) {
+        x_delta = *MapLongitudeBounds - x_delta;
+    }
+    int dist = (abs(y - veh.y) + x_delta) >> 1;
+    if (landing_veh && landing_dst) {
+        return dist <= reach;
+    }
+    return dist <= reach / 2;
+}
+
+/*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
 Original Offset: 00500320
 Return Value: Max range

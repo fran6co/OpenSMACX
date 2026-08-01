@@ -575,6 +575,7 @@ DLLEXPORT uint32_t __cdecl morale_veh(uint32_t veh_id, BOOL check_drone_riot,
 DLLEXPORT uint32_t __cdecl offense_proto(uint32_t proto_id, int veh_id_def, BOOL is_bombard);
 DLLEXPORT uint32_t __cdecl armor_proto(uint32_t proto_id, int veh_id_atk, BOOL is_bombard);
 DLLEXPORT uint32_t __cdecl speed_proto(uint32_t proto_id);
+DLLEXPORT int __cdecl valid_patrol(int veh_id, int x, int y);
 DLLEXPORT uint32_t __cdecl speed(uint32_t veh_id, BOOL skip_morale);
 DLLEXPORT uint32_t __cdecl veh_cargo(uint32_t veh_id);
 DLLEXPORT uint32_t __cdecl prototype_factor(uint32_t proto_id);

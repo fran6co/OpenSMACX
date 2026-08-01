@@ -1426,6 +1426,7 @@ address,name,shape
 0x004C9420,?terraform_cost@@YAHHHH@Z,straight_line
 0x004C9A50,?contribution@@YAHHH@Z,straight_line
 0x004CBAA0,?action_home@@YAHHH@Z,loop
+0x004CD6A0,?valid_patrol@@YAHHHH@Z,straight_line
 0x004D9DC0,?on_left_click@DipEdit@@QAEXHH@Z,straight_line
 0x004D9DD0,?on_redraw@DipEdit@@QAEXXZ,straight_line
 0x004E1F20,?editor_undo@Console@@QAEXXZ,straight_line
