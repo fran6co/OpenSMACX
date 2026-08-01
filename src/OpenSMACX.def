@@ -381,6 +381,7 @@ EXPORTS
     "?scan_prototypes@@YAXHH@Z" = _Z15scan_prototypesii
     "?set_course@@YAXHDHH@Z" = _Z10set_courseicii
     "?good_sensor@@YAHHHH@Z" = _Z11good_sensoriii
+    "?can_terraform@@YAHHHHHH@Z" = _Z13can_terraformiiiii
     "?guard_check@@YAIII@Z" = _Z11guard_checkjj
     "?garrison_check@@YAII@Z" = _Z14garrison_checkj
     "?defensive_check@@YAII@Z" = _Z15defensive_checkj
