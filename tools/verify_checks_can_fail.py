@@ -1,0 +1,311 @@
+#!/usr/bin/env python3
+"""Damage the real inputs and require each gate check to go red.
+
+WHY THIS EXISTS. On 2026-08-01 an audit of the 13 mechanical checks added the
+day before found three that could not fail:
+
+  * `verify_no_load_time_addresses` matched one of the four ways this tree
+    spells the construct it forbids, and never opened a header;
+  * `audit_export_signedness` printed `0 <= 44` whenever the executable was
+    absent, which is every checkout without the game;
+  * `indirect_call_sites` read an edge list as a map, so its filter admitted
+    every row it was given.
+
+Every one of them passed its own unit tests, had a docstring asserting what it
+guarded, and had a positive control. The controls were the problem: each tested
+the single input shape its author already had in mind, so they demonstrated the
+check fires on the bug that had already been found and nothing else.
+
+WHAT IS DIFFERENT HERE. A unit test asks whether a function returns the right
+value for a synthetic input. This asks whether the SHIPPED check, invoked the
+way CMake invokes it, refuses REAL repository content that has been damaged. The
+load-time defect is the proof of the distinction: its unit tests passed on
+three-line fixtures while `src/console.cpp` had contained an undetected spelling
+for weeks.
+
+THE PROPERTY THAT MATTERS MOST is the last one, and it is not a case at all:
+every gate check of this family must APPEAR in CASES. A new check with no damage
+case fails this tool. That converts the standing rule - "every assertion needs a
+positive control; damage the code, confirm it FAILS, revert, record the failure
+text" - from something a person must remember into something the gate enforces.
+
+A SKIP IS NOT A PASS. Cases needing artifacts a clean checkout lacks report as
+skipped and do not satisfy the coverage requirement for their check.
+"""
+import argparse
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+TOOLS = REPO_ROOT / "tools"
+PYTHON = sys.executable
+
+
+class Skip(Exception):
+    """A precondition is absent, so this case proves nothing. Never a pass."""
+
+
+def substitute(text, old, new, count=0):
+    """Replace, and refuse if the pattern was not there to replace.
+
+    THE FIRST RUN OF THIS TOOL CAUGHT ITS OWN AUTHOR WITH THIS. The wine-lock
+    case removed `RESOURCE_LOCK wineprefix`, but CMake generates
+    `RESOURCE_LOCK "wineprefix"` with quotes, so the substitution matched
+    nothing, the "damaged" input was identical to the real file, and the check
+    passed - which the harness reported as the check being unable to fail.
+
+    A damage case that does not damage is precisely the vacuous control this
+    tool exists to detect, so it must be impossible to write one by accident
+    here. Every substitution goes through this.
+    """
+    if old not in text:
+        raise Skip(f"damage pattern {old!r} is not present, so this case "
+                   f"would prove nothing")
+    return text.replace(old, new, count) if count else text.replace(old, new)
+
+
+def copy_tree(source, destination, patterns):
+    destination.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    for pattern in patterns:
+        for path in source.glob(pattern):
+            if path.is_file():
+                shutil.copy2(path, destination / path.name)
+                copied += 1
+    if not copied:
+        raise Skip(f"nothing matched {patterns} under {source}")
+    return destination
+
+
+# ---------------------------------------------------------------- damage cases
+
+def damage_load_time_address(workspace):
+    """A file-scope load through a fixed game address, indented inside a
+    namespace and written without the 0x00 padding - the two spellings the
+    check used to miss, in a copy of the real src/."""
+    source = copy_tree(REPO_ROOT / "src", workspace / "src", ("*.cpp", "*.h"))
+    victim = source / "console.cpp"
+    if not victim.is_file():
+        raise Skip("src/console.cpp is absent")
+    victim.write_text(
+        victim.read_text(encoding="utf-8", errors="replace")
+        + "\nnamespace {\n"
+          "  int *DamageProbe = *reinterpret_cast<int **>(0x669304);\n"
+          "}\n",
+        encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_no_load_time_addresses.py"),
+            "--src", str(source)]
+
+
+def damage_unregistered_tool_test(workspace):
+    """A tools/test_*.py that CMakeLists.txt never executes."""
+    tools = copy_tree(TOOLS, workspace / "tools", ("test_*.py",))
+    (tools / "test_zzz_damage_probe.py").write_text("", encoding="utf-8")
+    cmake = workspace / "CMakeLists.txt"
+    shutil.copy2(REPO_ROOT / "CMakeLists.txt", cmake)
+    return [PYTHON, str(TOOLS / "verify_tool_test_registration.py"),
+            "--cmake", str(cmake), "--tools", str(tools)]
+
+
+def damage_dropped_gameplay_case(workspace):
+    """A test defined and never registered, which is the silent merge loss."""
+    suite = REPO_ROOT / "tests" / "recovery_gameplay_tests.cpp"
+    if not suite.is_file():
+        raise Skip("the gameplay suite is absent")
+    text = suite.read_text(encoding="utf-8")
+    match = re.search(r"^GAMEPLAY_CASE\(test_[A-Za-z0-9_]+\);\n", text,
+                      re.MULTILINE)
+    if not match:
+        raise Skip("no GAMEPLAY_CASE registration to remove")
+    copy = workspace / "suite.cpp"
+    copy.write_text(text[:match.start()] + text[match.end():], encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_test_registration.py"),
+            "--suite", str(copy)]
+
+
+def damage_restated_count(workspace):
+    """A hand-typed per-state count back in AGENTS.md."""
+    document = REPO_ROOT / "AGENTS.md"
+    if not document.is_file():
+        raise Skip("AGENTS.md is absent")
+    copy = workspace / "AGENTS.md"
+    copy.write_text(
+        document.read_text(encoding="utf-8")
+        + "\n\nCurrent recovery state: 2,544 `source_complete` functions.\n",
+        encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_documented_counts.py"),
+            "--doc", str(copy)]
+
+
+def damage_wine_lock(workspace):
+    """A Wine-backed test that no longer holds the prefix lock."""
+    generated = REPO_ROOT / "build" / "mingw-i686-debug" / "CTestTestfile.cmake"
+    if not generated.is_file():
+        raise Skip("no configured debug build directory")
+    text = generated.read_text(encoding="utf-8")
+    expected = len(re.findall(r"/run_windows_test\.py", text))
+    if not expected:
+        raise Skip("no Wine-backed tests in this configuration")
+    copy = workspace / "CTestTestfile.cmake"
+    copy.write_text(substitute(text, 'RESOURCE_LOCK "wineprefix"', ""),
+                    encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_wine_test_locks.py"),
+            "--ctest-file", str(copy), "--expect-at-least", "1"]
+
+
+def damage_blinded_wine_check(workspace):
+    """The runner renamed, so the check matches nothing. It used to call that
+    'verified NOTHING' and return 0."""
+    generated = REPO_ROOT / "build" / "mingw-i686-debug" / "CTestTestfile.cmake"
+    if not generated.is_file():
+        raise Skip("no configured debug build directory")
+    text = generated.read_text(encoding="utf-8")
+    if "--wine-prefix" not in text:
+        raise Skip("no Wine-backed tests in this configuration")
+    copy = workspace / "CTestTestfile.cmake"
+    copy.write_text(substitute(text, "--wine-prefix", "--wineprefix"),
+                    encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_wine_test_locks.py"),
+            "--ctest-file", str(copy), "--expect-at-least", "1"]
+
+
+def damage_stale_exclusions(workspace):
+    """One number in the ```measured fence disagreeing with the image."""
+    document = REPO_ROOT / "docs" / "EXCLUSIONS.md"
+    exe = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
+    if not document.is_file() or not exe.is_file():
+        raise Skip("EXCLUSIONS.md or the pinned executable is absent")
+    text = document.read_text(encoding="utf-8")
+    match = re.search(r"^([a-z_.]+ = )(\d+)$", text, re.MULTILINE)
+    if not match:
+        raise Skip("no measured entry to perturb")
+    copy = workspace / "EXCLUSIONS.md"
+    copy.write_text(
+        text[:match.start()] + match.group(1) + str(int(match.group(2)) + 7)
+        + text[match.end():], encoding="utf-8")
+    return [PYTHON, str(TOOLS / "measure_exclusions.py"), "--check",
+            "--document", str(copy), "--exe", str(exe)]
+
+
+def damage_absent_signedness_image(workspace):
+    """No executable, so nothing can be ranked. It used to print `0 <= 44`."""
+    return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
+            "--exe", str(workspace / "absent.exe")]
+
+
+def damage_emptied_def(workspace):
+    """An empty .def compares zero exports and used to report within baseline."""
+    empty = workspace / "empty.def"
+    empty.write_text("", encoding="utf-8")
+    return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
+            "--def-file", str(empty),
+            "--exe", str(REPO_ROOT / ".opensmacx" / "game"
+                         / "terranx_original.exe")]
+
+
+# Each entry: the gate check it defends, and a damage that must make it exit
+# non-zero. `check` must match the name used in COVERED_CHECKS below.
+CASES = (
+    ("load-time-addresses", "unpadded address at namespace scope",
+     damage_load_time_address),
+    ("tool-test-registration", "a test file CMake never executes",
+     damage_unregistered_tool_test),
+    ("test-registration", "a gameplay case defined and not registered",
+     damage_dropped_gameplay_case),
+    ("documented-counts", "a per-state count restated by hand",
+     damage_restated_count),
+    ("wine-test-lock-check", "a Wine test without the prefix lock",
+     damage_wine_lock),
+    ("wine-test-lock-check", "the runner renamed, blinding the check",
+     damage_blinded_wine_check),
+    ("exclusions-current", "a measured number disagreeing with the image",
+     damage_stale_exclusions),
+    ("export-signedness-audit", "no image, so nothing can be ranked",
+     damage_absent_signedness_image),
+    ("export-signedness-audit", "an empty .def comparing zero exports",
+     damage_emptied_def),
+)
+
+# The gate checks this tool is responsible for. Adding a check here without
+# adding a case fails the run, which is the point: a check ships with a proof
+# that it can fail, or it does not ship.
+COVERED_CHECKS = {
+    "load-time-addresses",
+    "tool-test-registration",
+    "test-registration",
+    "documented-counts",
+    "wine-test-lock-check",
+    "exclusions-current",
+    "export-signedness-audit",
+}
+
+
+def run_case(check, description, build_damage, workspace):
+    command = build_damage(workspace)
+    done = subprocess.run(command, capture_output=True, text=True, timeout=600)
+    return done.returncode, (done.stderr or done.stdout).strip().splitlines()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--verbose", action="store_true",
+                        help="print the refusal text each check produced")
+    arguments = parser.parse_args()
+
+    passed, skipped, failures = [], [], []
+    for index, (check, description, build_damage) in enumerate(CASES):
+        with tempfile.TemporaryDirectory(prefix="cancanfail-") as directory:
+            workspace = Path(directory)
+            try:
+                status, message = run_case(check, description, build_damage,
+                                           workspace)
+            except Skip as reason:
+                skipped.append((check, description, str(reason)))
+                print(f"SKIP  {check}: {description} - {reason}")
+                continue
+            except Exception as error:  # a broken case is not a passing case
+                failures.append((check, description,
+                                 f"the damage case itself raised {error!r}"))
+                print(f"ERROR {check}: {description} - {error!r}")
+                continue
+        if status == 0:
+            failures.append((check, description,
+                             "the check exited 0 on damaged input"))
+            print(f"FAIL  {check}: {description} - EXITED 0 ON DAMAGE")
+        else:
+            passed.append((check, description))
+            print(f"ok    {check}: {description} (exit {status})")
+            if arguments.verbose and message:
+                print(f"        {message[0][:120]}")
+
+    proved = {check for check, _ in passed}
+    uncovered = sorted(COVERED_CHECKS - proved)
+    if uncovered:
+        print("\nchecks-can-fail: these checks have no damage case that "
+              "actually ran, so nothing here shows they can fail:",
+              file=sys.stderr)
+        for name in uncovered:
+            reason = next((why for check, _, why in skipped if check == name),
+                          "no case is declared for it")
+            print(f"    {name}  - {reason}", file=sys.stderr)
+        print("  Add a case to CASES, or explain in COVERED_CHECKS why the "
+              "check cannot be damaged mechanically.", file=sys.stderr)
+
+    if failures or uncovered:
+        print(f"\nchecks-can-fail: {len(failures)} check(s) did not refuse "
+              f"damaged input, {len(uncovered)} unproven", file=sys.stderr)
+        for check, description, why in failures:
+            print(f"    {check}: {description} - {why}", file=sys.stderr)
+        return 1
+
+    print(f"\nchecks-can-fail: {len(passed)} damage case(s) refused across "
+          f"{len(proved)} check(s), {len(skipped)} skipped")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
