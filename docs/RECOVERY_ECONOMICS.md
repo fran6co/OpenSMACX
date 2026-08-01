@@ -408,11 +408,33 @@ copy of the real object directory, which it refuses with `carries exception
 unwind data`. It is proven able to fail on the property it names, though 77% of
 its logic is still unobserved by its own tests.
 
-**A green from `verify_recovery_metadata` remains weakly supported.** It has no
-damage case because its comparison needs a full IDB regeneration - too heavy for
-a seconds-scale harness, and a cheaper stand-in exercising some other path would
-be the vacuous control this whole exercise exists to remove. 60% of its logic is
-unobserved. It may well be correct; nothing here shows it.
+**`verify_recovery_metadata` is proven able to fail too, and the reason given
+for not proving it was wrong.** The claim here was that its comparison needs a
+full IDB regeneration. It does not: the run reuses a cached canonical export
+(`.canonical-export-checkpoint.json`) and completes in seconds. Damaging one row
+of the committed catalogue produces
+
+    RuntimeError: regenerated functions.csv differs from committed
+    docs/recovery/functions.csv
+
+exit 1, with no IDB work at all. The control was run on 2026-08-01 and the
+catalogue restored and verified clean afterwards.
+
+It is NOT in `checks-can-fail`, and the reason is different from the one first
+given: the control has to damage the real `docs/recovery/functions.csv`, because
+the tool resolves that path itself and refuses a verify directory outside
+`build/`. Every other case in that harness works on copies, so that one would be
+the only case able to leave the repository damaged if it died mid-run. 60% of
+its logic remains unobserved by its unit tests.
+
+**One thing that fell out of testing it, worth knowing.** Pointing the tool at a
+verify directory whose regenerated output has been altered returns
+`cached (<hash>)` and exit 0 without comparing anything - the stamp is keyed on
+the manifest, so an unchanged manifest short-circuits the comparison. That is
+sound for the real threat, since drift in the COMMITTED metadata changes the
+manifest and busts the cache, which is exactly what the control above
+demonstrates. It is worth knowing that the cached path verifies nothing, because
+that is the shape of the defect this project found in the same tool yesterday.
 
 **Read the 100% rows with care** — the metric is confounded for tools whose
 content is validated by RUNNING them rather than by unit tests. The survivors in
