@@ -80,9 +80,17 @@ SOURCE_GLOBS = ("*.cpp", "*.h")
 # never match. The brace was therefore treated as opaque and every declaration
 # inside it skipped as function-body scope. src/scenario.cpp:400 is exactly such
 # a block, so this was blind to a real construct in the tree, which is the same
-# defect this file was rewritten to fix. Matching bare `extern` is safe because
-# the text examined is only ever the run immediately preceding a `{`.
-TRANSPARENT_BRACE = re.compile(r"\b(?:namespace|extern)\b[^;{}]*$")
+# defect this file was rewritten to fix.
+#
+# Parentheses are excluded, because `extern "C" void f() {` is also a run of
+# text ending in a brace and it IS a function body. Allowing them made
+# three live bodies - scenario.cpp:406, stringstruct.cpp:98,
+# oracle_fault_guard.cpp:70 - report as file scope, so the check began
+# rejecting the very remedy its failure message prescribes. The previous
+# commit asserted this could not happen "because the text examined is
+# only ever the run immediately preceding a `{`"; that run can contain a
+# parameter list.
+TRANSPARENT_BRACE = re.compile(r"\b(?:namespace|extern)\b[^;{}()]*$")
 
 
 def blank_comments_and_strings(text):
