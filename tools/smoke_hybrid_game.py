@@ -6,6 +6,7 @@ import os
 from pathlib import Path, PureWindowsPath
 import re
 import secrets
+import socket
 import subprocess
 import sys
 import time
@@ -19,6 +20,74 @@ from runtime_process import (
     stop_executable_processes,
 )
 from wine_runtime import find_wine
+
+
+X11_SOCKET_DIRECTORY = "/tmp/.X11-unix"
+
+
+def x_server_is_listening(display_number):
+    """True if an X server answers on this display's unix socket.
+
+    A socket connect rather than xdpyinfo, so the check needs nothing installed.
+    """
+    path = os.path.join(X11_SOCKET_DIRECTORY, f"X{display_number}")
+    if not os.path.exists(path):
+        return False
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
+            probe.settimeout(1.0)
+            probe.connect(path)
+        return True
+    except OSError:
+        return False
+
+
+def available_display_numbers():
+    try:
+        entries = os.listdir(X11_SOCKET_DIRECTORY)
+    except OSError:
+        return []
+    numbers = sorted(int(name[1:]) for name in entries
+                     if re.fullmatch(r"X\d+", name))
+    return [number for number in numbers if x_server_is_listening(number)]
+
+
+def resolve_display():
+    """Settle DISPLAY before the run, not sixty seconds into it.
+
+    The game is a Windows binary under Wine and it creates a window. With no
+    usable display, Wine loads every DLL, starts, and only then reports
+    `nodrv_CreateWindow: no driver could be loaded` - so the failure arrives
+    after the full --duration has elapsed, having proved nothing, and looks like
+    a recovery regression rather than a missing X server. That has cost a gate
+    cycle more than once, and the standing answer was a rule to remember. This
+    is the rule, mechanised.
+
+    An explicitly-set DISPLAY is always honoured, including a remote one, since
+    only the caller knows whether it is reachable. Otherwise a local server is
+    chosen - but never :0. That is conventionally the physical console, and a
+    gate run must not open a game window on somebody's actual desktop; if :0 is
+    all there is, say so and let the caller decide.
+    """
+    if os.name == "nt" or sys.platform == "darwin":
+        return None
+    existing = os.environ.get("DISPLAY", "").strip()
+    if existing:
+        return existing
+    candidates = [number for number in available_display_numbers() if number != 0]
+    if not candidates:
+        detail = ("only :0 is running, and this refuses to open a game window on "
+                  "the physical console"
+                  if x_server_is_listening(0)
+                  else f"no X server is listening in {X11_SOCKET_DIRECTORY}")
+        raise RuntimeError(
+            f"DISPLAY is unset and {detail}. The hybrid smoke run creates a "
+            f"window, so it cannot pass without one. Start a virtual display, "
+            f"or set DISPLAY explicitly if you intend to use :0.")
+    chosen = f":{candidates[0]}"
+    os.environ["DISPLAY"] = chosen
+    print(f"smoke-hybrid-game: DISPLAY was unset; using {chosen}")
+    return chosen
 
 
 FATAL_PATTERNS = (
@@ -314,6 +383,9 @@ def main():
             raise RuntimeError("a dedicated --wine-prefix is required")
         if not log_path.parent.is_dir() or not result_path.parent.is_dir():
             raise RuntimeError("log and result parent directories must exist")
+        # Before the prefix, the staging and the --duration wait: a missing
+        # display is the one precondition whose failure otherwise arrives last.
+        report["display"] = resolve_display()
         oracle_result_path = prepare_runtime_oracle_result_path(oracle_result_path)
         if os.name != "nt":
             prepare_owned_wine_prefix(wine_prefix, args.wine)

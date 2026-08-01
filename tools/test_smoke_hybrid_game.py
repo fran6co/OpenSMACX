@@ -11,6 +11,7 @@ from movie_skip import (
     configure_intro_movie_skip,
     restore_intro_movie_config,
 )
+import smoke_hybrid_game
 from smoke_hybrid_game import (
     analyze_diagnostics,
     parse_generated_verdicts,
@@ -380,6 +381,57 @@ terranx_hybrid.exe could not load imports
             (game_dir / "Alpha Centauri.ini").symlink_to(target)
             with self.assertRaisesRegex(RuntimeError, "invalid game configuration"):
                 configure_intro_movie_skip(game_dir, "token")
+
+
+class DisplayResolutionTests(unittest.TestCase):
+    """A missing DISPLAY must be settled up front, not after --duration.
+
+    Wine loads every DLL, starts the game, and only then reports
+    `nodrv_CreateWindow`, so the failure used to arrive 60 seconds in looking
+    like a recovery regression. The standing answer was "remember to export
+    DISPLAY=:1", which is the kind of rule that belongs in code.
+    """
+
+    def test_an_explicit_display_is_never_overridden(self):
+        # Only the caller knows whether a remote display is reachable.
+        with patch.dict("os.environ", {"DISPLAY": "remote.example:0"}):
+            self.assertEqual("remote.example:0",
+                             smoke_hybrid_game.resolve_display())
+
+    def test_an_unset_display_selects_a_listening_server(self):
+        with patch.dict("os.environ", {}, clear=False) as environment:
+            environment.pop("DISPLAY", None)
+            with patch.object(smoke_hybrid_game, "available_display_numbers",
+                              return_value=[1, 7]):
+                self.assertEqual(":1", smoke_hybrid_game.resolve_display())
+
+    def test_display_zero_is_never_chosen_automatically(self):
+        # :0 is conventionally the physical console. A gate run must not open a
+        # game window on somebody's desktop.
+        with patch.dict("os.environ", {}, clear=False) as environment:
+            environment.pop("DISPLAY", None)
+            with patch.object(smoke_hybrid_game, "available_display_numbers",
+                              return_value=[0]), \
+                 patch.object(smoke_hybrid_game, "x_server_is_listening",
+                              return_value=True):
+                with self.assertRaises(RuntimeError) as raised:
+                    smoke_hybrid_game.resolve_display()
+        self.assertIn("physical console", str(raised.exception))
+
+    def test_no_display_at_all_refuses_before_the_run(self):
+        with patch.dict("os.environ", {}, clear=False) as environment:
+            environment.pop("DISPLAY", None)
+            with patch.object(smoke_hybrid_game, "available_display_numbers",
+                              return_value=[]):
+                with patch.object(smoke_hybrid_game, "x_server_is_listening",
+                                  return_value=False):
+                    with self.assertRaises(RuntimeError):
+                        smoke_hybrid_game.resolve_display()
+
+    def test_a_socket_that_exists_but_is_dead_is_not_usable(self):
+        # /tmp/.X11-unix keeps entries for servers that have gone away; three
+        # such sockets are present on this host and none of them answer.
+        self.assertFalse(smoke_hybrid_game.x_server_is_listening(4242))
 
 
 if __name__ == "__main__":
