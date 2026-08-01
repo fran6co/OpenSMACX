@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -99,10 +100,26 @@ def mutants_for(path, limit):
 
 
 def run_tests(module, timeout):
+    # PYTHONDONTWRITEBYTECODE, because the alternative bit hard. Each mutant is
+    # written to the .py, imported, and reverted - but CPython caches the
+    # compiled MUTANT in __pycache__, and a later run whose source mtime and
+    # size happen to match reuses it. That left a mutated
+    # verify_wine_test_locks.pyc behind after a sweep, its unit test failed
+    # against source that was demonstrably correct, and the gate went red on a
+    # tree whose .py files were byte-identical to a green commit. Half an hour
+    # of a stale artifact pretending to be a defect.
+    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
     done = subprocess.run(
-        [sys.executable, "-m", "unittest", module],
+        [sys.executable, "-m", "unittest", module], env=environment,
         cwd=str(TOOLS), capture_output=True, text=True, timeout=timeout)
     return done.returncode == 0
+
+
+def discard_bytecode(path):
+    """Remove any cached compile of this module, mutated or not."""
+    cache = path.parent / "__pycache__"
+    for stale in cache.glob(f"{path.stem}.*.pyc"):
+        stale.unlink(missing_ok=True)
 
 
 def main():
@@ -158,6 +175,7 @@ def main():
                     killed += 1
         finally:
             path.write_text(original, encoding="utf-8")
+            discard_bytecode(path)
         measured = killed + survived
         results[path.name] = {
             "killed": killed, "survived": survived, "uncompilable": broken,
