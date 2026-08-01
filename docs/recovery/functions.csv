@@ -2760,7 +2760,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004E9B70,0x004E9CAD,317,.text,?base_nutrient@@YAXXZ,,0x004E9B70-0x004E9CAD,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:1466,Complete,?base_nutrient@@YAXXZ,,source_complete,,,,1,7
 0x004E9CB0,0x004EA1EF,1343,.text,?base_minerals@@YAXXZ,,0x004E9CB0-0x004EA1EF,game,frame;sp_ready;purged_ok,src/base.cpp:1499,Complete,?base_minerals@@YAXXZ,,source_complete,,,,2,7
 0x004EA1F0,0x004EA495,677,.text,?black_market@@YAHH@Z,,0x004EA1F0-0x004EA495,game,frame;sp_ready;purged_ok,src/base.cpp:1592,Complete,,,source_complete,,,,2,1
-0x004EA4A0,0x004EA533,147,.text,?psych_check@@YAXHPAHPAH@Z,"void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)",0x004EA4A0-0x004EA533,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:80,Complete,,,source_complete,,,,0,1
+0x004EA4A0,0x004EA533,147,.text,?psych_check@@YAXHPAHPAH@Z,"void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)",0x004EA4A0-0x004EA533,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:81,Complete,,,source_complete,,,,0,1
 0x004EA540,0x004EB481,3905,.text,?base_psych@@YAXXZ,,0x004EA540-0x004EB481,game,frame;sp_ready;purged_ok,src/base.cpp:1648,WIP,,,source_in_progress,,,,5,1
 0x004EB490,0x004EB551,193,.text,?base_rank@@YAHHH@Z,"int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)",0x004EB490-0x004EB551,game,frame;sp_ready;purged_ok,src/base.cpp:1744,Complete,,,source_complete,,,,2,1
 0x004EB560,0x004EC3A6,3654,.text,?base_energy@@YAXXZ,,0x004EB560-0x004EC3A6,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,6,7
@@ -2804,7 +2804,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00500250,0x00500288,56,.text,?veh_who@@YAHHH@Z,"int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)",0x00500250-0x00500288,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:1083,Complete,,,source_complete,,,,0,3
 0x00500290,0x005002DE,78,.text,?has_fac_built@@YA_NH@Z,bool (__cdecl ?has_fac_built@@YA_NH@Z)(int facilityID),0x00500290-0x005002DE,game,frame;sp_ready;purged_ok,src/base.cpp:1976,Complete,,,source_complete,,,,1,1
 0x005002E0,0x005002EF,15,.text,?base_project@@YAHH@Z,int (__cdecl ?base_project@@YAHH@Z)(int projectID),0x005002E0-0x005002EF,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2000,Complete,,,source_complete,,,,0,1
-0x005002F0,0x00500319,41,.text,?has_treaty@@YAHHHH@Z,"int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)",0x005002F0-0x00500319,game,frame;sp_ready;purged_ok,src/faction.cpp:93,Complete,,,source_complete,,,,0,4
+0x005002F0,0x00500319,41,.text,?has_treaty@@YAHHHH@Z,"int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)",0x005002F0-0x00500319,game,frame;sp_ready;purged_ok,src/faction.cpp:94,Complete,,,source_complete,,,,0,4
 0x00500320,0x0050037C,92,.text,?drop_range@@YAHH@Z,int (__cdecl ?drop_range@@YAHH@Z)(int factionID),0x00500320-0x0050037C,game,frame;sp_ready;purged_ok,src/veh.cpp:164,Complete,,,source_complete,,,,1,3
 0x00500380,0x005004EA,362,.text,sub_500380,,0x00500380-0x005004EA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x005004F0,0x00500518,40,.text,?planet_buster2@@YAHH@Z,int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID),0x005004F0-0x00500518,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:178,Complete,,,source_complete,,,,0,2
@@ -2836,8 +2836,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0050B8A0,0x0050B8CA,42,.text,?say_num@@YAXH@Z,,0x0050B8A0-0x0050B8CA,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,2,3
 0x0050B8D0,0x0050B8EF,31,.text,?POP3@@YAXPBDHHH@Z,,0x0050B8D0-0x0050B8EF,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x0050B8F0,0x0050B90A,26,.text,sub_50b8f0,,0x0050B8F0-0x0050B90A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
-0x0050B910,0x0050B92A,26,.text,?get_adjective@@YAHH@Z,int (__cdecl ?get_adjective@@YAHH@Z)(int factionID),0x0050B910-0x0050B92A,game,frame;sp_ready;purged_ok,src/faction.cpp:103,Complete,,,source_complete,,,,0,3
-0x0050B930,0x0050B964,52,.text,?get_noun@@YAHH@Z,int (__cdecl ?get_noun@@YAHH@Z)(int factionID),0x0050B930-0x0050B964,game,frame;sp_ready;purged_ok,src/faction.cpp:113,Complete,,,source_complete,,,,0,5
+0x0050B910,0x0050B92A,26,.text,?get_adjective@@YAHH@Z,int (__cdecl ?get_adjective@@YAHH@Z)(int factionID),0x0050B910-0x0050B92A,game,frame;sp_ready;purged_ok,src/faction.cpp:104,Complete,,,source_complete,,,,0,3
+0x0050B930,0x0050B964,52,.text,?get_noun@@YAHH@Z,int (__cdecl ?get_noun@@YAHH@Z)(int factionID),0x0050B930-0x0050B964,game,frame;sp_ready;purged_ok,src/faction.cpp:114,Complete,,,source_complete,,,,0,5
 0x0050B970,0x0050B991,33,.text,?popp@@YAHPBDPBDP6AHXZ@Z,,0x0050B970-0x0050B991,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x0050B9A0,0x0050B9B6,22,.text,?say_stats_3@@YAXH@Z,void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID),0x0050B9A0-0x0050B9B6,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1321,Complete,,,source_complete,,,,1,1
 0x0050B9C0,0x0050B9DE,30,.text,sub_50b9c0,,0x0050B9C0-0x0050B9DE,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
@@ -3102,7 +3102,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00538FE0,0x0053908F,193,.text,?checksum_file@@YAEPAD@Z,,0x00538FE0-0x0053908F;0x0065E450-0x0065E462,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,2
 0x00539090,0x005390B4,36,.text,?checksum@@YAEPADHE@Z,,0x00539090-0x005390B4,game,frame;sp_ready;purged_ok,src/general.cpp:882,Complete,,,source_complete,,,,0,2
 0x005390C0,0x00539157,151,.text,?checksum_password@@YAHPAD@Z,,0x005390C0-0x00539157,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:893,Complete,,,source_complete,,,,2,2
-0x00539160,0x00539193,51,.text,?auto_contact@@YAHXZ,,0x00539160-0x00539193,game,hidden;sp_ready;purged_ok,src/faction.cpp:124,Complete,?auto_contact@@YAHXZ,,source_complete,,,,0,3
+0x00539160,0x00539193,51,.text,?auto_contact@@YAHXZ,,0x00539160-0x00539193,game,hidden;sp_ready;purged_ok,src/faction.cpp:125,Complete,?auto_contact@@YAHXZ,,source_complete,,,,0,3
 0x005391A0,0x005391C0,32,.text,sub_5391a0,,0x005391A0-0x005391C0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005391C0,0x0053922A,106,.text,?net_treaty_on@@YAXHHHH@Z,,0x005391C0-0x0053922A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,4
 0x00539230,0x0053929A,106,.text,?net_treaty_off@@YAXHHHH@Z,,0x00539230-0x0053929A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,2
@@ -3124,16 +3124,16 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00539920,0x00539961,65,.text,?pop_expire@@YAHXZ,,0x00539920-0x00539961,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00539970,0x00539998,40,.text,sub_539970,,0x00539970-0x00539998,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x005399A0,0x00539B6B,459,.text,?diplomacy_caption@@YAXHH@Z,,0x005399A0-0x00539B6B,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,7,20
-0x00539B70,0x00539BF2,130,.text,?great_beelzebub@@YAHHH@Z,"BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)",0x00539B70-0x00539BF2,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:135,Complete,,,source_complete,,,,0,2
-0x00539C00,0x00539D3B,315,.text,?great_satan@@YAHHH@Z,,0x00539C00-0x00539D3B,game,frame;sp_ready;purged_ok,src/faction.cpp:157,Complete,,,source_complete,,,,2,20
-0x00539D40,0x00539E3E,254,.text,?aah_ooga@@YAHHH@Z,,0x00539D40-0x00539E3E,game,frame;sp_ready;purged_ok,src/faction.cpp:194,Complete,,,source_complete,,,,2,7
-0x00539E40,0x00539EE4,164,.text,?climactic_battle@@YAHXZ,,0x00539E40-0x00539EE4,game,sp_ready;purged_ok,src/faction.cpp:226,Complete,?climactic_battle@@YAHXZ,,source_complete,,,,2,7
-0x00539EF0,0x0053A022,306,.text,?at_climax@@YAHH@Z,,0x00539EF0-0x0053A022,game,frame;sp_ready;purged_ok,src/faction.cpp:253,Complete,,,source_complete,,,,3,6
-0x0053A030,0x0053A08D,93,.text,?cause_friction@@YAXHHH@Z,"void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)",0x0053A030-0x0053A08D,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:298,Complete,,,source_complete,,,,0,8
-0x0053A090,0x0053A0F5,101,.text,?get_mood@@YAHH@Z,int (__cdecl ?get_mood@@YAHH@Z)(int friction),0x0053A090-0x0053A0F5,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:312,Complete,,,source_complete,,,,0,3
-0x0053A100,0x0053A14D,77,.text,?reputation@@YAHHH@Z,,0x0053A100-0x0053A14D,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:343,Complete,,,source_complete,,,,0,4
-0x0053A150,0x0053A1B8,104,.text,?get_patience@@YAHHH@Z,"int (__cdecl ?get_patience@@YAHHH@Z)(int factionIDWith, int factionID)",0x0053A150-0x0053A1B8,game,frame;sp_ready;purged_ok,src/faction.cpp:354,Complete,,,source_complete,,,,0,1
-0x0053A1C0,0x0053A228,104,.text,?energy_value@@YAHH@Z,,0x0053A1C0-0x0053A228,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:371,Complete,,,source_complete,,,,0,1
+0x00539B70,0x00539BF2,130,.text,?great_beelzebub@@YAHHH@Z,"BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)",0x00539B70-0x00539BF2,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:136,Complete,,,source_complete,,,,0,2
+0x00539C00,0x00539D3B,315,.text,?great_satan@@YAHHH@Z,,0x00539C00-0x00539D3B,game,frame;sp_ready;purged_ok,src/faction.cpp:158,Complete,,,source_complete,,,,2,20
+0x00539D40,0x00539E3E,254,.text,?aah_ooga@@YAHHH@Z,,0x00539D40-0x00539E3E,game,frame;sp_ready;purged_ok,src/faction.cpp:195,Complete,,,source_complete,,,,2,7
+0x00539E40,0x00539EE4,164,.text,?climactic_battle@@YAHXZ,,0x00539E40-0x00539EE4,game,sp_ready;purged_ok,src/faction.cpp:227,Complete,?climactic_battle@@YAHXZ,,source_complete,,,,2,7
+0x00539EF0,0x0053A022,306,.text,?at_climax@@YAHH@Z,,0x00539EF0-0x0053A022,game,frame;sp_ready;purged_ok,src/faction.cpp:254,Complete,,,source_complete,,,,3,6
+0x0053A030,0x0053A08D,93,.text,?cause_friction@@YAXHHH@Z,"void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)",0x0053A030-0x0053A08D,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:299,Complete,,,source_complete,,,,0,8
+0x0053A090,0x0053A0F5,101,.text,?get_mood@@YAHH@Z,int (__cdecl ?get_mood@@YAHH@Z)(int friction),0x0053A090-0x0053A0F5,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:313,Complete,,,source_complete,,,,0,3
+0x0053A100,0x0053A14D,77,.text,?reputation@@YAHHH@Z,,0x0053A100-0x0053A14D,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:344,Complete,,,source_complete,,,,0,4
+0x0053A150,0x0053A1B8,104,.text,?get_patience@@YAHHH@Z,"int (__cdecl ?get_patience@@YAHHH@Z)(int factionIDWith, int factionID)",0x0053A150-0x0053A1B8,game,frame;sp_ready;purged_ok,src/faction.cpp:355,Complete,,,source_complete,,,,0,1
+0x0053A1C0,0x0053A228,104,.text,?energy_value@@YAHH@Z,,0x0053A1C0-0x0053A228,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:372,Complete,,,source_complete,,,,0,1
 0x0053A230,0x0053A496,614,.text,?mention_prototypes@@YAXHH@Z,,0x0053A230-0x0053A496,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,10,2
 0x0053A4A0,0x0053A774,724,.text,?scan_prototypes@@YAXHH@Z,,0x0053A4A0-0x0053A774,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,3
 0x0053A780,0x0053A97C,508,.text,?contiguous@@YAHHHHH@Z,"int (__cdecl ?contiguous@@YAHHHHH@Z)(int factionID1, int factionID2, int region, int)",0x0053A780-0x0053A97C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,5
@@ -3191,7 +3191,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00559160,0x00559192,50,.text,?get_insult_leader@@YAPADH@Z,int8* (__cdecl ?get_insult_leader@@YAPADH@Z)(int factionID),0x00559160-0x00559192,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x005591A0,0x005591BA,26,.text,?say_tech@@YAXHH@Z,,0x005591A0-0x005591BA,game,frame;hidden;sp_ready;purged_ok,src/technology.cpp:39,Complete,?say_tech@@YAXHH@Z,,source_complete,,,,1,2
 0x005591C0,0x005591DD,29,.text,?bad_reg@@YAHH@Z,,0x005591C0-0x005591DD,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:397,Complete,?bad_reg@@YAHH@Z,,source_complete,,,,0,1
-0x005591E0,0x00559209,41,.text,?has_agenda@@YAHHHH@Z,"int (__cdecl ?has_agenda@@YAHHHH@Z)(int factionID, int factionIDWith, int agenda)",0x005591E0-0x00559209,game,frame;sp_ready;purged_ok,src/faction.cpp:418,Complete,,,source_complete,,,,0,1
+0x005591E0,0x00559209,41,.text,?has_agenda@@YAHHHH@Z,"int (__cdecl ?has_agenda@@YAHHHH@Z)(int factionID, int factionIDWith, int agenda)",0x005591E0-0x00559209,game,frame;sp_ready;purged_ok,src/faction.cpp:419,Complete,,,source_complete,,,,0,1
 0x00559210,0x00559221,17,.text,sub_559210,,0x00559210-0x00559221,game,frame;sp_ready;purged_ok,src/leaf_recoveries.cpp:165,Complete,,,source_complete,,,,0,1
 0x00559230,0x00559246,22,.text,??__Eg_FONTQUEUE_VAL2@@YAXXZ,,0x00559230-0x00559246,game,sp_ready;purged_ok,src/init_thunks.cpp:4239,Complete,,,source_complete,,,,2,0
 0x00559250,0x0055925A,10,.text,??__Fg_FONTQUEUE_VAL2@@YAXXZ,,0x00559250-0x0055925A,game,sp_ready;purged_ok,src/atexit_thunks.cpp:4035,Complete,,,source_complete,,,,0,0
@@ -3209,10 +3209,10 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0055B820,0x0055B870,80,.text,?agenda_off@@YAXHHH@Z,,0x0055B820-0x0055B870,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,5
 0x0055B870,0x0055BA76,518,.text,?treaty_on@@YAXHHH@Z,,0x0055B870-0x0055BA76,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,33
 0x0055BA80,0x0055BB29,169,.text,?agenda_on@@YAXHHH@Z,,0x0055BA80-0x0055BB29,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,8
-0x0055BB30,0x0055BB98,104,.text,?set_treaty@@YAXHHHH@Z,,0x0055BB30-0x0055BB98,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:386,Complete,,,source_complete,,,,0,24
-0x0055BBA0,0x0055BBF1,81,.text,?set_agenda@@YAXHHHH@Z,"void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)",0x0055BBA0-0x0055BBF1,game,frame;sp_ready;purged_ok,src/faction.cpp:403,Complete,,,source_complete,,,,0,10
+0x0055BB30,0x0055BB98,104,.text,?set_treaty@@YAXHHHH@Z,,0x0055BB30-0x0055BB98,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:387,Complete,,,source_complete,,,,0,24
+0x0055BBA0,0x0055BBF1,81,.text,?set_agenda@@YAXHHHH@Z,"void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)",0x0055BBA0-0x0055BBF1,game,frame;sp_ready;purged_ok,src/faction.cpp:404,Complete,,,source_complete,,,,0,10
 0x0055BC00,0x0055BC7C,124,.text,?spying@@YAHH@Z,,0x0055BC00-0x0055BC7C,game,frame;sp_ready;purged_ok,src/spying_recovery.cpp:23,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,0,19
-0x0055BC80,0x0055C42B,1963,.text,?wants_to_attack@@YAHHHH@Z,"int (__cdecl ?wants_to_attack@@YAHHHH@Z)(uint32_t factionID, uint32_t factionIDTarget, int factionIDUnk)",0x0055BC80-0x0055C42B,game,frame;sp_ready;purged_ok,src/faction.cpp:428,Complete - testing,,wants_to_attack_,source_complete,,,,3,9
+0x0055BC80,0x0055C42B,1963,.text,?wants_to_attack@@YAHHHH@Z,"int (__cdecl ?wants_to_attack@@YAHHHH@Z)(uint32_t factionID, uint32_t factionIDTarget, int factionIDUnk)",0x0055BC80-0x0055C42B,game,frame;sp_ready;purged_ok,src/faction.cpp:429,Complete - testing,,wants_to_attack_,source_complete,,,,3,9
 0x0055C430,0x0055C726,758,.text,?comm_check@@YAXHH@Z,,0x0055C430-0x0055C726,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,5,1
 0x0055C730,0x0055C833,259,.text,?pact_attacks@@YAXHH@Z,,0x0055C730-0x0055C833,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x0055C840,0x0055CC9A,1114,.text,?enemies_war@@YAXHH@Z,,0x0055C840-0x0055CC9A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,9,1
@@ -3224,7 +3224,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0055D430,0x0055D753,803,.text,?enemies_trade_tech@@YAXHH@Z,"void (__cdecl ?enemies_trade_tech@@YAXHH@Z)(int factionID, int)",0x0055D430-0x0055D753,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,3
 0x0055D760,0x0055E370,3088,.text,?enemies_treaty@@YAXHHH@Z,,0x0055D760-0x0055E370,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,12,2
 0x0055E370,0x0055EB7A,2058,.text,?encounter@@YAXHHHHHH@Z,,0x0055E370-0x0055EB7A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,13,2
-0x0055EB80,0x0055EEDE,862,.text,?territory@@YAHHHHPAHPAH@Z,,0x0055EB80-0x0055EEDE,game,frame;sp_ready;purged_ok,src/faction.cpp:618,Complete,?territory@@YAHHHHPAHPAH@Z,,source_complete,,,,2,4
+0x0055EB80,0x0055EEDE,862,.text,?territory@@YAHHHHPAHPAH@Z,,0x0055EB80-0x0055EEDE,game,frame;sp_ready;purged_ok,src/faction.cpp:619,Complete,?territory@@YAHHHHPAHPAH@Z,,source_complete,,,,2,4
 0x0055EEE0,0x0055F44F,1391,.text,?atrocity@@YAXHHHH@Z,"void (__cdecl ?atrocity@@YAXHHHH@Z)(int factionID1, int factionID2, int, int)",0x0055EEE0-0x0055F44F,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,11,4
 0x0055F450,0x0055F76A,794,.text,?major_atrocity@@YAXHH@Z,,0x0055F450-0x0055F76A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,2
 0x0055F770,0x0055F923,435,.text,?break_treaty@@YAHHHH@Z,,0x0055F770-0x0055F923,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,7
@@ -3232,8 +3232,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00560AD0,0x00560B25,85,.text,?go_to@@YAXHDHH@Z,"void (__cdecl ?go_to@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)",0x00560AD0-0x00560B25,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1061,Complete,,,source_complete,,,,0,1
 0x00560B30,0x00560D30,512,.text,?garrison_check@@YAHH@Z,int (__cdecl ?garrison_check@@YAHH@Z)(int baseID),0x00560B30-0x00560D30,game,frame;sp_ready;purged_ok,src/base.cpp:2150,Complete,,,source_complete,,,,3,4
 0x00560D30,0x00560D4D,29,.text,?defensive_check@@YAHH@Z,int (__cdecl ?defensive_check@@YAHH@Z)(int baseID),0x00560D30-0x00560D4D,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2194,Complete,,,source_complete,,,,1,2
-0x00560D50,0x00560DC3,115,.text,?guard_check@@YAHHH@Z,"int (__cdecl ?guard_check@@YAHHH@Z)(int factionID, int region)",0x00560D50-0x00560DC3,game,frame;sp_ready;purged_ok,src/faction.cpp:789,Complete,,,source_complete,,,,0,1
-0x00560DD0,0x00561076,678,.text,?enemy_capabilities@@YAXH@Z,void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID),0x00560DD0-0x00561076,game,frame;sp_ready;purged_ok,src/faction.cpp:1740,Complete - testing / WIP,,,source_complete,,,,4,3
+0x00560D50,0x00560DC3,115,.text,?guard_check@@YAHHH@Z,"int (__cdecl ?guard_check@@YAHHH@Z)(int factionID, int region)",0x00560D50-0x00560DC3,game,frame;sp_ready;purged_ok,src/faction.cpp:790,Complete,,,source_complete,,,,0,1
+0x00560DD0,0x00561076,678,.text,?enemy_capabilities@@YAXH@Z,void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID),0x00560DD0-0x00561076,game,frame;sp_ready;purged_ok,src/faction.cpp:1984,Complete - testing / WIP,,,source_complete,,,,4,3
 0x00561080,0x00564888,14344,.text,?enemy_strategy@@YAXH@Z,void (__cdecl ?enemy_strategy@@YAXH@Z)(int factionID),0x00561080-0x00564888,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,42,2
 0x00564890,0x00564B82,754,.text,?set_course@@YAXHDHH@Z,"void (__cdecl ?set_course@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)",0x00564890-0x00564B82,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
 0x00564B90,0x00564D90,512,.text,?assemble_passengers@@YAXHHH@Z,"void (__cdecl ?assemble_passengers@@YAXHHH@Z)(int baseID, int, int)",0x00564B90-0x00564D90,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
@@ -3261,13 +3261,13 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00579960,0x00579998,56,.text,?veh_moves@@YAHH@Z,int (__cdecl ?veh_moves@@YAHH@Z)(int vehID),0x00579960-0x00579998,game,frame;sp_ready;purged_ok,src/veh.cpp:1094,Complete,,,source_complete,,,,1,1
 0x005799A0,0x005799F9,89,.text,?proto_power@@YAHH@Z,int (__cdecl ?proto_power@@YAHH@Z)(int vehID),0x005799A0-0x005799F9,game,frame;sp_ready;purged_ok,src/veh.cpp:1104,Complete,,,source_complete,,,,0,1
 0x00579A00,0x00579A30,48,.text,?is_port@@YAHHH@Z,"int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)",0x00579A00-0x00579A30,game,frame;sp_ready;purged_ok,src/base.cpp:2211,Complete,,,source_complete,,,,1,2
-0x00579A30,0x00579B64,308,.text,?add_goal@@YAXHHHHHH@Z,"void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)",0x00579A30-0x00579B64,game,frame;sp_ready;purged_ok,src/faction.cpp:812,Complete,,,source_complete,,,,0,12
-0x00579B70,0x00579CB5,325,.text,?add_site@@YAXHHHHH@Z,"void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)",0x00579B70-0x00579CB5,game,frame;sp_ready;purged_ok,src/faction.cpp:858,Complete,,,source_complete,,,,2,4
-0x00579CC0,0x00579D16,86,.text,?at_goal@@YAHHHHH@Z,"int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)",0x00579CC0-0x00579D16,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:904,Complete,,,source_complete,,,,0,5
-0x00579D20,0x00579D76,86,.text,?at_site@@YAHHHHH@Z,"int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)",0x00579D20-0x00579D76,game,frame;sp_ready;purged_ok,src/faction.cpp:920,Complete,,,source_complete,,,,0,2
-0x00579D80,0x00579DFC,124,.text,?wipe_goals@@YAXH@Z,void (__cdecl ?wipe_goals@@YAXH@Z)(int factionID),0x00579D80-0x00579DFC,game,frame;sp_ready;purged_ok,src/faction.cpp:936,Complete,,,source_complete,,,,1,1
-0x00579E00,0x00579E66,102,.text,?init_goals@@YAXH@Z,void (__cdecl ?init_goals@@YAXH@Z)(int factionID),0x00579E00-0x00579E66,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:961,Complete,,,source_complete,,,,0,1
-0x00579E70,0x00579F73,259,.text,?del_site@@YAXHHHHH@Z,"void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)",0x00579E70-0x00579F73,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:986,Complete,,,source_complete,,,,1,5
+0x00579A30,0x00579B64,308,.text,?add_goal@@YAXHHHHHH@Z,"void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)",0x00579A30-0x00579B64,game,frame;sp_ready;purged_ok,src/faction.cpp:813,Complete,,,source_complete,,,,0,12
+0x00579B70,0x00579CB5,325,.text,?add_site@@YAXHHHHH@Z,"void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)",0x00579B70-0x00579CB5,game,frame;sp_ready;purged_ok,src/faction.cpp:859,Complete,,,source_complete,,,,2,4
+0x00579CC0,0x00579D16,86,.text,?at_goal@@YAHHHHH@Z,"int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)",0x00579CC0-0x00579D16,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:905,Complete,,,source_complete,,,,0,5
+0x00579D20,0x00579D76,86,.text,?at_site@@YAHHHHH@Z,"int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)",0x00579D20-0x00579D76,game,frame;sp_ready;purged_ok,src/faction.cpp:921,Complete,,,source_complete,,,,0,2
+0x00579D80,0x00579DFC,124,.text,?wipe_goals@@YAXH@Z,void (__cdecl ?wipe_goals@@YAXH@Z)(int factionID),0x00579D80-0x00579DFC,game,frame;sp_ready;purged_ok,src/faction.cpp:937,Complete,,,source_complete,,,,1,1
+0x00579E00,0x00579E66,102,.text,?init_goals@@YAXH@Z,void (__cdecl ?init_goals@@YAXH@Z)(int factionID),0x00579E00-0x00579E66,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:962,Complete,,,source_complete,,,,0,1
+0x00579E70,0x00579F73,259,.text,?del_site@@YAXHHHHH@Z,"void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)",0x00579E70-0x00579F73,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:987,Complete,,,source_complete,,,,1,5
 0x00579F80,0x00579FE6,102,.text,?want_monolith@@YAHH@Z,int (__cdecl ?want_monolith@@YAHH@Z)(int vehID),0x00579F80-0x00579FE6,game,frame;sp_ready;purged_ok,src/veh.cpp:1118,Complete,,,source_complete,,,,1,2
 0x00579FF0,0x0057A042,82,.text,sub_579ff0,,0x00579FF0-0x0057A042,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0057A050,0x0057A659,1545,.text,?monolith@@YAXH@Z,void (__cdecl ?monolith@@YAXH@Z)(int vehID),0x0057A050-0x0057A659,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,17,2
@@ -3519,7 +3519,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0059E950,0x0059E973,35,.text,?prefs_use@@YAXXZ,,0x0059E950-0x0059E973,game,sp_ready;purged_ok,src/alpha.cpp:1444,Complete,?prefs_use@@YAXXZ,,source_complete,,,,0,6
 0x0059E980,0x0059EA73,243,.text,?vulnerable@@YAHHHH@Z,"int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)",0x0059E980-0x0059EA73,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2222,Complete,,,source_complete,,,,2,1
 0x0059EA80,0x0059EE42,962,.text,?mind_control@@YAHHHH@Z,"int (__cdecl ?mind_control@@YAHHHH@Z)(int baseID, int factionID, BOOL isCornerMarket)",0x0059EA80-0x0059EE42,game,frame;sp_ready;purged_ok,src/probe.cpp:45,Complete,,,source_complete,,,,7,2
-0x0059EE50,0x0059EEDD,141,.text,?corner_market@@YAHH@Z,int (__cdecl ?corner_market@@YAHH@Z)(int factionID),0x0059EE50-0x0059EEDD,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1012,Complete,,,source_complete,,,,1,2
+0x0059EE50,0x0059EEDD,141,.text,?corner_market@@YAHH@Z,int (__cdecl ?corner_market@@YAHH@Z)(int factionID),0x0059EE50-0x0059EEDD,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1013,Complete,,,source_complete,,,,1,2
 0x0059EEE0,0x0059F11E,574,.text,?success_rates@@YAHHHHH@Z,"int (__cdecl ?success_rates@@YAHHHHH@Z)(uint32_t id, uint32_t morale, uint32_t diffModifier, int baseID)",0x0059EEE0-0x0059F11E,game,frame;sp_ready;purged_ok,src/probe.cpp:123,Complete,,,source_complete,,,,4,1
 0x0059F120,0x005A5837,28292,.text,?probe@@YAHHHHH@Z,"int (__cdecl ?probe@@YAHHHHH@Z)(int vehID1, int baseID, int vehID2, int)",0x0059F120-0x005A5837;0x006613D0-0x00661B3D,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,120,2
 0x005A5880,0x005A58AA,42,.text,?say_label@@YAXH@Z,void (__cdecl ?say_label@@YAXH@Z)(int labelID),0x005A5880-0x005A58AA,game,frame;sp_ready;purged_ok,src/alpha.cpp:1524,Complete,?say_label@@YAXH@Z,,source_complete,,,,2,1
@@ -3546,7 +3546,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005A6AC0,0x005A9279,10169,.text,?game_data@@YAHPAUFILE@@H@Z,"int (__cdecl ?game_data@@YAHPAUFILE@@H@Z)(FILE* file, int)",0x005A6AC0-0x005A9279,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,18,2
 0x005A9280,0x005A94ED,621,.text,?map_data@@YAHPAUFILE@@HH@Z,"int (__cdecl ?map_data@@YAHPAUFILE@@HH@Z)(FILE* file, int, int)",0x005A9280-0x005A94ED,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,7,2
 0x005A94F0,0x005A96C3,467,.text,?save_daemon@@YAHPAD@Z,,0x005A94F0-0x005A96C3,game,frame;hidden;sp_ready;purged_ok,,,,save_daemon,original_dependency,,,,10,6
-0x005A96D0,0x005A9753,131,.text,?see_map_check@@YAXXZ,,0x005A96D0-0x005A9753,game,frame;sp_ready;purged_ok,src/faction.cpp:1033,Complete,?see_map_check@@YAXXZ,,source_complete,,,,1,2
+0x005A96D0,0x005A9753,131,.text,?see_map_check@@YAXXZ,,0x005A96D0-0x005A9753,game,frame;sp_ready;purged_ok,src/faction.cpp:1034,Complete,?see_map_check@@YAXXZ,,source_complete,,,,1,2
 0x005A9760,0x005A9B19,953,.text,?load_daemon@@YAHPADH@Z,"int (__cdecl ?load_daemon@@YAHPADH@Z)(int8* path, int* toggle)",0x005A9760-0x005A9B19,game,frame;sp_ready;purged_ok,,,,load_daemon,original_dependency,,,,17,3
 0x005A9B20,0x005A9C05,229,.text,?save_map_daemon@@YAHPAD@Z,,0x005A9B20-0x005A9C05,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,8,1
 0x005A9C10,0x005A9DAD,413,.text,?load_map_daemon@@YAHPAD@Z,,0x005A9C10-0x005A9DAD,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,10,2
@@ -3566,7 +3566,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005AC5A0,0x005AC62F,143,.text,?most_objectives@@YAHPAHPAH@Z,,0x005AC5A0-0x005AC62F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x005AC630,0x005AC67A,74,.text,?transcending@@YAHH@Z,int (__cdecl ?transcending@@YAHH@Z)(int factionID),0x005AC630-0x005AC67A,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2403,Complete,?transcending@@YAHH@Z,,source_complete,,,,0,0
 0x005AC680,0x005AC68F,15,.text,?ascending@@YAHH@Z,int (__cdecl ?ascending@@YAHH@Z)(int factionID),0x005AC680-0x005AC68F,game,hidden;sp_ready;purged_ok,src/base.cpp:2422,Complete,?ascending@@YAHH@Z,,source_complete,,,,0,4
-0x005AC690,0x005ACBD6,1350,.text,?rankings@@YAXH@Z,,0x005AC690-0x005ACBD6,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,7,3
+0x005AC690,0x005ACBD6,1350,.text,?rankings@@YAXH@Z,,0x005AC690-0x005ACBD6,game,frame;sp_ready;purged_ok,src/faction.cpp:1062,Complete,?rankings@@YAXH@Z,,source_complete,,,,7,3
 0x005ACBE0,0x005AD3AD,1997,.text,?compute_score@@YAXHPAHPAHH@Z,"void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)",0x005ACBE0-0x005AD3AD,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,6,4
 0x005AD3B0,0x005AD3BB,11,.text,?on_left_click@ReplayWin@@QAEXHH@Z,"void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)",0x005AD3B0-0x005AD3BB,game,hidden;sp_ready;purged_ok,src/delegation_thunks.cpp:973,Complete,,,source_complete,,,,0,0
 0x005AD3C0,0x005AD3CB,11,.text,?on_right_click@ReplayWin@@QAEXHH@Z,"void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)",0x005AD3C0-0x005AD3CB,game,hidden;sp_ready;purged_ok,src/delegation_thunks.cpp:988,Complete,,,source_complete,,,,0,0
@@ -3600,17 +3600,17 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005AEDE0,0x005B0412,5682,.text,?time_warp@@YAXXZ,,0x005AEDE0-0x005B0412,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,27,1
 0x005B0420,0x005B0A2C,1548,.text,?balance@@YAXXZ,,0x005B0420-0x005B0A2C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
 0x005B0A30,0x005B0D69,825,.text,?scenario_setup@@YAXXZ,,0x005B0A30-0x005B0D69,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,2
-0x005B0D70,0x005B0DF3,131,.text,?compute_faction_modifiers@@YAXH@Z,void (__cdecl ?compute_faction_modifiers@@YAXH@Z)(int factionID),0x005B0D70-0x005B0DF3,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1060,Complete,,,source_complete,,,,0,4
+0x005B0D70,0x005B0DF3,131,.text,?compute_faction_modifiers@@YAXH@Z,void (__cdecl ?compute_faction_modifiers@@YAXH@Z)(int factionID),0x005B0D70-0x005B0DF3,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1304,Complete,,,source_complete,,,,0,4
 0x005B0E00,0x005B337C,9596,.text,?setup_player@@YAHHHH@Z,"int (__cdecl ?setup_player@@YAHHHH@Z)(int8*, int protoID, int)",0x005B0E00-0x005B337C,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,37,4
 0x005B3380,0x005B38C6,1350,.text,?eliminate_player@@YAHHH@Z,,0x005B3380-0x005B38C6,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,17,8
 0x005B38D0,0x005B3919,73,.text,?clear_scenario@@YAXXZ,,0x005B38D0-0x005B3919,game,sp_ready;purged_ok,src/game.cpp:315,Complete,?clear_scenario@@YAXXZ,,source_complete,,,,0,1
 0x005B3920,0x005B4201,2273,.text,?setup_game@@YAXH@Z,,0x005B3920-0x005B4201,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,22,4
-0x005B4210,0x005B44C9,697,.text,?social_calc@@YAXPAHPAHHHH@Z,"void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)",0x005B4210-0x005B44C9,game,frame;sp_ready;purged_ok,src/faction.cpp:1078,Complete,,,source_complete,,,,1,7
-0x005B44D0,0x005B4550,128,.text,?social_upkeep@@YAXH@Z,void (__cdecl ?social_upkeep@@YAXH@Z)(int factionID),0x005B44D0-0x005B4550,game,frame;sp_ready;purged_ok,src/faction.cpp:1156,Complete,,,source_complete,,,,1,2
-0x005B4550,0x005B45F8,168,.text,?social_upheaval@@YAHHPAH@Z,"int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)",0x005B4550-0x005B45F8,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1174,Complete,,,source_complete,,,,0,2
+0x005B4210,0x005B44C9,697,.text,?social_calc@@YAXPAHPAHHHH@Z,"void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)",0x005B4210-0x005B44C9,game,frame;sp_ready;purged_ok,src/faction.cpp:1322,Complete,,,source_complete,,,,1,7
+0x005B44D0,0x005B4550,128,.text,?social_upkeep@@YAXH@Z,void (__cdecl ?social_upkeep@@YAXH@Z)(int factionID),0x005B44D0-0x005B4550,game,frame;sp_ready;purged_ok,src/faction.cpp:1400,Complete,,,source_complete,,,,1,2
+0x005B4550,0x005B45F8,168,.text,?social_upheaval@@YAHHPAH@Z,"int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)",0x005B4550-0x005B45F8,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1418,Complete,,,source_complete,,,,0,2
 0x005B4600,0x005B4721,289,.text,?social_set@@YAXH@Z,,0x005B4600-0x005B4721,game,frame;sp_ready;purged_ok,,,,social_set,original_dependency,,,,5,5
-0x005B4730,0x005B4786,86,.text,?society_avail@@YAHHHH@Z,"int (__cdecl ?society_avail@@YAHHHH@Z)(int socCategory, int socModel, int factionID)",0x005B4730-0x005B4786,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1200,Complete,,,source_complete,,,,1,5
-0x005B4790,0x005B5612,3714,.text,?social_ai@@YAXHHHHHPAH@Z,"void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)",0x005B4790-0x005B5612,game,frame;sp_ready;purged_ok,src/faction.cpp:1214,Complete - testing (likely has multiple issues due to length + complexity),,,source_complete,,,,7,2
+0x005B4730,0x005B4786,86,.text,?society_avail@@YAHHHH@Z,"int (__cdecl ?society_avail@@YAHHHH@Z)(int socCategory, int socModel, int factionID)",0x005B4730-0x005B4786,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1444,Complete,,,source_complete,,,,1,5
+0x005B4790,0x005B5612,3714,.text,?social_ai@@YAXHHHHHPAH@Z,"void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)",0x005B4790-0x005B5612,game,frame;sp_ready;purged_ok,src/faction.cpp:1458,Complete - testing (likely has multiple issues due to length + complexity),,,source_complete,,,,7,2
 0x005B5620,0x005B5688,104,.text,?social_select@@YAXH@Z,void (__cdecl ?social_select@@YAXH@Z)(int factionID),0x005B5620-0x005B5688,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,4
 0x005B5690,0x005B56F5,101,.text,?sort@@YAXHPAHPAH@Z,"void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)",0x005B5690-0x005B56F5,game,frame;sp_ready;purged_ok,src/general.cpp:1121,Complete,,,source_complete,,,,1,2
 0x005B5700,0x005B57CA,202,.text,sub_5b5700,,0x005B5700-0x005B57CA,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1957,Complete,,,source_complete,,,,1,1

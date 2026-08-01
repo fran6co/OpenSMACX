@@ -7452,6 +7452,1234 @@ void test_territory_weight() {
 
 #undef RCHECK
 
+/*
+ * A self-contained world for rankings().
+ *
+ * rankings() reaches five other recovered functions - num_objectives,
+ * has_tech, great_satan, climactic_battle, reputation and set_treaty - so the
+ * fixture has to make all of them decidable, not just the subject. Three
+ * settings do that and are what every case starts from:
+ *
+ *  - The secret projects are all SP_Unbuilt (-1). That is both what the score
+ *    loop wants and what keeps ascending() false, which is one of the three
+ *    arms of climactic_battle().
+ *  - No faction is human and VehCurrentCount is zero, so climactic_battle()
+ *    and num_objectives() both answer without touching anything else. Cases
+ *    that want a human or an objective say so.
+ *  - RULES_VICTORY_DIPLOMATIC is clear, so aah_ooga() returns zero
+ *    immediately, and current_num_bases is zero, so great_beelzebub() - and
+ *    therefore great_satan() - is false. That leaves target selection
+ *    entirely to the climactic-battle override, which a case can drive.
+ *
+ * Objective points are 1 and the two objective thresholds are 9000, which is
+ * the "no scenario objective victory" configuration; the scenario branch is
+ * reached by lowering one of them.
+ */
+struct RankWorld {
+    // Nine faction rows, 65 secret-project slots and one spare history entry:
+    // each last element exists only to be poisoned, so a loop that runs one
+    // too far leaves a mark instead of writing over the next field.
+    PlayerData players_data[9];
+    Base bases[8];
+    VehPrototype protos[MaxVehProtoNum + 1];
+    RulesWeapon weapons[32];
+    RulesTechnology technology[MaxTechnologyNum + 1];
+    RulesFacility facility[128];
+    int projects[MaxSecretProjectNum + 1];
+    uint8_t tech_achieved[MaxTechnologyNum + 1];
+    uint32_t rankings_unk[MaxPlayerNum + 1];
+    uint32_t faction_rankings[MaxPlayerNum + 1];
+    uint16_t history[MaxRankingHistoryTurns * MaxPlayerNum + MaxPlayerNum];
+    Veh vehs[4];
+    uint8_t faction_status[2];
+    uint32_t rank_unk1;
+    uint32_t rank_unk2;
+    uint32_t game_state;
+    uint32_t game_rules;
+    int turn;
+    int veh_count;
+    int base_count;
+    int base_find_dist;
+    int diff_level_current;
+    uint32_t obj_req_victory;
+    uint32_t obj_sudden_death;
+    uint32_t obj_achieve_pts;
+};
+
+RankWorld g_rank_world;
+
+const uint16_t RANK_POISON16 = 0x7777;
+
+void rank_reset() {
+    std::memset(&g_rank_world, 0, sizeof(g_rank_world));
+    for (int i = 0; i <= MaxSecretProjectNum; i++) {
+        g_rank_world.projects[i] = SP_Unbuilt;
+    }
+    g_rank_world.obj_req_victory = 9000;
+    g_rank_world.obj_sudden_death = 9000;
+    g_rank_world.obj_achieve_pts = 1;
+    g_rank_world.turn = 3;
+}
+
+// Every history slot the archive can reach, plus the one past it.
+void rank_poison_history() {
+    for (int i = 0; i < MaxRankingHistoryTurns * MaxPlayerNum + MaxPlayerNum; i++) {
+        g_rank_world.history[i] = RANK_POISON16;
+    }
+}
+
+void rank_alive(int faction_id) {
+    g_rank_world.faction_status[1] |= (uint8_t)(1 << faction_id);
+}
+
+void rank_human(int faction_id) {
+    g_rank_world.faction_status[0] |= (uint8_t)(1 << faction_id);
+}
+
+// A prototype the offense scan will consider, with the named weapon.
+void rank_proto(int proto_id, int weapon_id, int offense) {
+    g_rank_world.protos[proto_id].flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    g_rank_world.protos[proto_id].weapon_id = (uint8_t)weapon_id;
+    g_rank_world.weapons[weapon_id].offense_rating = (int8_t)offense;
+}
+
+#define KCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool rank_ok = (cond);                                          \
+        if (!rank_ok) {                                                       \
+            std::fprintf(stderr, "rankings: line %d: %s\n", __LINE__,         \
+                         #cond);                                              \
+        }                                                                     \
+        expect(rank_ok);                                                      \
+    } while (0)
+
+class RankSeams {
+ public:
+    RankSeams()
+        : players_(&PlayersData, g_rank_world.players_data),
+          bases_(&Bases, g_rank_world.bases),
+          protos_(&VehPrototypes, g_rank_world.protos),
+          weapons_(&Weapon, g_rank_world.weapons),
+          technology_(&Technology, g_rank_world.technology),
+          facility_(&Facility, g_rank_world.facility),
+          projects_(&SecretProject,
+                    reinterpret_cast<BaseSecretProject *>(g_rank_world.projects)),
+          achieved_(&GameTechAchieved, g_rank_world.tech_achieved),
+          unk_(&FactionRankingsUnk, g_rank_world.rankings_unk),
+          ranks_(&FactionRankings, g_rank_world.faction_rankings),
+          history_(&FactionRankingHistory, g_rank_world.history),
+          vehs_(&Vehs, g_rank_world.vehs),
+          veh_count_(&VehCurrentCount, &g_rank_world.veh_count),
+          base_count_(&BaseCurrentCount, &g_rank_world.base_count),
+          base_dist_(&BaseFindDist, &g_rank_world.base_find_dist),
+          status_(&FactionsStatus, g_rank_world.faction_status),
+          unk1_(&RankingFactionIDUnk1, &g_rank_world.rank_unk1),
+          unk2_(&RankingFactionIDUnk2, &g_rank_world.rank_unk2),
+          state_(&GameState, &g_rank_world.game_state),
+          rules_(&GameRules, &g_rank_world.game_rules),
+          turn_(&TurnCurrentNum, &g_rank_world.turn),
+          diff_(&DiffLevelCurrent, &g_rank_world.diff_level_current),
+          req_(&ObjectiveReqVictory, &g_rank_world.obj_req_victory),
+          sudden_(&ObjectivesSuddenDeathVictory, &g_rank_world.obj_sudden_death),
+          pts_(&ObjectiveAchievePts, &g_rank_world.obj_achieve_pts) { }
+
+ private:
+    ScopedSeam<PlayerData> players_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<RulesWeapon> weapons_;
+    ScopedSeam<RulesTechnology> technology_;
+    ScopedSeam<RulesFacility> facility_;
+    ScopedSeam<BaseSecretProject> projects_;
+    ScopedSeam<uint8_t> achieved_;
+    ScopedSeam<uint32_t> unk_;
+    ScopedSeam<uint32_t> ranks_;
+    ScopedSeam<uint16_t> history_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<uint8_t> status_;
+    ScopedSeam<uint32_t> unk1_;
+    ScopedSeam<uint32_t> unk2_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<uint32_t> rules_;
+    ScopedSeam<int> turn_;
+    ScopedSeam<int> diff_;
+    ScopedSeam<uint32_t> req_;
+    ScopedSeam<uint32_t> sudden_;
+    ScopedSeam<uint32_t> pts_;
+};
+
+void test_rankings_score() {
+    RankSeams seams;
+
+    // ---- faction zero is scored by nobody but still has its rank cleared ---
+    rank_reset();
+    for (int f = 0; f <= MaxPlayerNum; f++) {
+        g_rank_world.players_data[f].ranking = 0x5A;
+    }
+    rankings(1);
+    for (int f = 0; f < MaxPlayerNum; f++) {
+        KCHECK(g_rank_world.players_data[f].ranking != 0x5A);
+    }
+    KCHECK(g_rank_world.players_data[0].ranking == 0);
+    KCHECK(g_rank_world.players_data[MaxPlayerNum].ranking == 0x5A);
+    // Without the flag not one of them is touched.
+    rank_reset();
+    for (int f = 0; f <= MaxPlayerNum; f++) {
+        g_rank_world.players_data[f].ranking = 0x5A;
+    }
+    rankings(0);
+    for (int f = 0; f <= MaxPlayerNum; f++) {
+        KCHECK(g_rank_world.players_data[f].ranking == 0x5A);
+    }
+
+    // ---- an empty world scores nothing, and faction zero is never scored ---
+    rank_reset();
+    g_rank_world.rankings_unk[0] = 0x5A5A;
+    g_rank_world.players_data[0].pop_total = 1000;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[0] == 0x5A5A);  // untouched
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        KCHECK(g_rank_world.rankings_unk[f] == 0);   // not alive
+    }
+    // The row past the last faction is not scored either.
+    KCHECK(g_rank_world.rankings_unk[MaxPlayerNum] == 0);
+
+    // ---- population and the theory of everything, times four ---------------
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].pop_total = 7;
+    g_rank_world.players_data[1].theory_of_everything = 3;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 40);
+    // A faction that is not alive scores zero however big it is.
+    rank_reset();
+    g_rank_world.players_data[1].pop_total = 7;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+
+    // ---- the technology term ------------------------------------------------
+    // has_tech refuses tech 88, so 0 through 87 are the reachable ones.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.technology[5].growth_value = 1;
+    g_rank_world.technology[5].tech_value = 2;
+    g_rank_world.technology[5].wealth_value = 4;
+    g_rank_world.technology[5].power_value = 8;
+    g_rank_world.tech_achieved[5] = (uint8_t)(1 << 1);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 15);
+    // Technology zero is inside the sweep.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.technology[0].tech_value = 6;
+    g_rank_world.tech_achieved[0] = (uint8_t)(1 << 1);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 6);
+    // Not held: not counted.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.technology[5].growth_value = 1;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    // Held by another faction: not counted for this one.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.technology[5].growth_value = 16;
+    g_rank_world.tech_achieved[5] = (uint8_t)(1 << 2);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    // The last technology has_tech will answer for is 87, and the loop reaches
+    // it; the row past the table is never read.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.technology[MaxTechnologyNum - 2].power_value = 32;
+    g_rank_world.tech_achieved[MaxTechnologyNum - 2] = (uint8_t)(1 << 1);
+    g_rank_world.technology[MaxTechnologyNum].power_value = 64;
+    g_rank_world.tech_achieved[MaxTechnologyNum] = 0xFF;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 32);
+
+    // ---- ten per secret project standing in one of the faction's bases -----
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.bases[2].faction_id_current = 1;
+    g_rank_world.bases[3].faction_id_current = 4;
+    g_rank_world.projects[0] = 2;
+    g_rank_world.projects[1] = 3;
+    g_rank_world.projects[MaxSecretProjectNum - 1] = 2;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 20);
+    // Base zero is a base like any other: the guard is on the project slot
+    // being filled at all, and zero is a filled slot.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.bases[0].faction_id_current = 1;
+    g_rank_world.projects[4] = 0;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 10);
+    // One project slot past the end, wired to score: it must not be read.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.bases[2].faction_id_current = 1;
+    g_rank_world.projects[MaxSecretProjectNum] = 2;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    // An unbuilt project is not a base id.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.bases[0].faction_id_current = 1;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+
+    // ---- objectives times their point value --------------------------------
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].unk_101 = 3;
+    g_rank_world.obj_achieve_pts = 7;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 21);
+
+    // ---- the scenario branch: ten per objective and nothing else -----------
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].unk_101 = 3;
+    g_rank_world.players_data[1].pop_total = 100;
+    g_rank_world.obj_req_victory = 8999;
+    g_rank_world.obj_achieve_pts = 0;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 30);
+    // The sudden-death threshold is the other half of the same test.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].unk_101 = 3;
+    g_rank_world.players_data[1].pop_total = 100;
+    g_rank_world.obj_sudden_death = 8999;
+    g_rank_world.obj_achieve_pts = 0;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 30);
+    // Exactly 9000 is not below it.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].unk_101 = 3;
+    g_rank_world.players_data[1].pop_total = 100;
+    g_rank_world.obj_achieve_pts = 0;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 400);
+    // A point value in play takes the ordinary branch even below threshold.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].unk_101 = 3;
+    g_rank_world.players_data[1].pop_total = 100;
+    g_rank_world.obj_req_victory = 8999;
+    g_rank_world.obj_achieve_pts = 2;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 406);
+}
+
+void test_rankings_prototypes() {
+    RankSeams seams;
+
+    // ---- cost times active count, scaled by the weapon -----------------------
+    // A faction slot (>= 64) needs no technology at all.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 0;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 10);            // 40 / 4
+    // A negative rating halves it instead.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = -1;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 20);            // 40 / 2
+    // 99 or better takes the whole of it.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 99;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 40);
+    // Below 99 it is scaled by the best weapon in play, which is this one, so
+    // the ratio is exactly 1.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 40;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 40);   // the offense scan needs an ACTIVE, TYPED prototype
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 40);
+    // Half the best weapon rounds the ratio to one as well; a third rounds to
+    // zero, which is what makes the division observable.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 90);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);             // 30 / 90 == 0
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 90;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 30);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 120);           // (90 / 30) * 40
+
+    // ---- the count is skipped above 250 -------------------------------------
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 1;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.players_data[1].proto_id_active[70] = 250;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 62);            // 250 / 4
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 1;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.players_data[1].proto_id_active[70] = 251;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+
+    // ---- a predefined slot needs its prerequisite technology ---------------
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[63].cost = 4;
+    g_rank_world.protos[63].preq_tech = 5;
+    g_rank_world.players_data[1].proto_id_active[63] = 4;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[63].cost = 4;
+    g_rank_world.protos[63].preq_tech = 5;
+    g_rank_world.tech_achieved[5] = (uint8_t)(1 << 1);
+    g_rank_world.players_data[1].proto_id_active[63] = 4;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 4);             // 16 / 4
+    // Slot 64 is the first that skips the check entirely.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[64].cost = 4;
+    g_rank_world.protos[64].preq_tech = 5;
+    g_rank_world.players_data[1].proto_id_active[64] = 4;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 4);
+    // Slot zero is scored like the rest.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[0].cost = 4;
+    g_rank_world.protos[0].preq_tech = TechNone;   // has_tech answers yes
+    g_rank_world.players_data[1].proto_id_active[0] = 4;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 4);
+    // The slot past the last prototype is never read, and neither is the
+    // proto_id_active entry past the last - which is proto_id_queue[0], wired
+    // here so a walk one slot too long would score it.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[MaxVehProtoNum].cost = 100;
+    g_rank_world.protos[MaxVehProtoNum].preq_tech = TechNone;
+    g_rank_world.players_data[1].proto_id_queue[0] = 4;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    // The last real slot is reached.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[MaxVehProtoNum - 1].cost = 4;
+    g_rank_world.protos[MaxVehProtoNum - 1].weapon_id = 3;
+    g_rank_world.players_data[1].proto_id_active[MaxVehProtoNum - 1] = 4;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 4);
+
+    // ---- the best-weapon scan --------------------------------------------
+    // It only looks at faction slots 64 through 511, and only at prototypes
+    // that are both active and typed.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(63, 4, 90);          // below the scan's first slot
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 1200);          // best stayed 1
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(64, 4, 90);          // the scan's first slot
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(MaxVehProtoNum - 1, 4, 90);   // the scan's last slot
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);
+    // And the slot past it, wired the same way, is out of the scan's reach.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(MaxVehProtoNum, 4, 90);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 1200);          // best stayed 1
+    // Retired, or never typed: not scanned.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 90);
+    g_rank_world.protos[80].flags = PROTO_TYPED_COMPLETE;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 1200);
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 90);
+    g_rank_world.protos[80].flags = PROTO_ACTIVE;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 1200);
+    // A rating of 99 or more is not a candidate for "best" either.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 99);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 1200);
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.protos[70].cost = 5;
+    g_rank_world.protos[70].weapon_id = 3;
+    g_rank_world.weapons[3].offense_rating = 30;
+    g_rank_world.players_data[1].proto_id_active[70] = 8;
+    rank_proto(80, 4, 98);
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 0);             // 30 / 98
+}
+
+void test_rankings_history() {
+    RankSeams seams;
+
+    // ---- the archive is indexed faction + turn * 8 --------------------------
+    rank_reset();
+    rank_poison_history();
+    rank_alive(3);
+    g_rank_world.players_data[3].pop_total = 6;
+    g_rank_world.turn = 2;
+    rankings(0);
+    KCHECK(g_rank_world.history[3 + 2 * MaxPlayerNum] == 24);
+    // Every other faction of that turn is written too - with zero, which the
+    // poison can tell from "not written".
+    KCHECK(g_rank_world.history[1 + 2 * MaxPlayerNum] == 0);
+    KCHECK(g_rank_world.history[7 + 2 * MaxPlayerNum] == 0);
+    // Faction zero's slot is not.
+    KCHECK(g_rank_world.history[0 + 2 * MaxPlayerNum] == RANK_POISON16);
+    // Neither is the previous turn's row.
+    KCHECK(g_rank_world.history[3 + 1 * MaxPlayerNum] == RANK_POISON16);
+
+    // ---- sixteen bits, and it wraps ----------------------------------------
+    rank_reset();
+    rank_poison_history();
+    rank_alive(1);
+    g_rank_world.players_data[1].pop_total = 16400;   // * 4 == 65600
+    g_rank_world.turn = 0;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 65600);
+    KCHECK(g_rank_world.history[1] == 64);
+
+    // ---- the last archived turn is 999 -------------------------------------
+    rank_reset();
+    rank_poison_history();
+    rank_alive(1);
+    g_rank_world.players_data[1].pop_total = 1;
+    g_rank_world.turn = MaxRankingHistoryTurns - 1;
+    rankings(0);
+    KCHECK(g_rank_world.history[1 + (MaxRankingHistoryTurns - 1) * MaxPlayerNum] == 4);
+    rank_reset();
+    rank_poison_history();
+    rank_alive(1);
+    g_rank_world.players_data[1].pop_total = 1;
+    g_rank_world.turn = MaxRankingHistoryTurns;
+    rankings(0);
+    KCHECK(g_rank_world.rankings_unk[1] == 4);
+    for (int i = 0; i < MaxRankingHistoryTurns * MaxPlayerNum + MaxPlayerNum; i++) {
+        if (g_rank_world.history[i] != RANK_POISON16) {
+            KCHECK(false);
+            break;
+        }
+    }
+}
+
+void test_rankings_publication() {
+    RankSeams seams;
+
+    // ---- without the flag nothing is published -----------------------------
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].ranking = 0x5A;
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    g_rank_world.faction_rankings[3] = 0x5A;
+    rankings(0);
+    KCHECK(g_rank_world.players_data[1].ranking == 0x5A);
+    KCHECK(g_rank_world.faction_rankings[3] == 0x5A);
+    KCHECK(g_rank_world.rankings_unk[7] == 28);   // scores survive, unranked
+
+    // ---- with it, ranks run 7 down to 1 in score order ---------------------
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;   // 1 is worst, 7 is best
+    }
+    rankings(1);
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        KCHECK(g_rank_world.players_data[f].ranking == (uint32_t)f);
+        KCHECK(g_rank_world.faction_rankings[f] == (uint32_t)f);
+    }
+    KCHECK(g_rank_world.players_data[0].ranking == 0);
+    // Every ranked score is struck out.
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        KCHECK(g_rank_world.rankings_unk[f] == 0xFFFFFFFFu);
+    }
+    // Reversed, the order reverses with it.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = MaxPlayerNum - f;
+    }
+    rankings(1);
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        KCHECK(g_rank_world.players_data[f].ranking == (uint32_t)(MaxPlayerNum - f));
+    }
+
+    // ---- ties go to the FIRST faction holding the score --------------------
+    // The search keeps a candidate only on a strictly greater score, so an
+    // all-equal field is ranked in faction order, best first.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = 5;
+    }
+    rankings(1);
+    KCHECK(g_rank_world.players_data[1].ranking == 7);
+    KCHECK(g_rank_world.players_data[7].ranking == 1);
+
+    // ---- a field where nothing beats -1 awards the rank to faction zero ----
+    // No faction is alive, so every score is zero... which still beats -1.
+    // Strike them all out by hand instead: after seven passes the eighth
+    // candidate is faction zero.
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.players_data[1].pop_total = 1;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[1].ranking == 7);
+    // Faction 2 scored 0, which still beats -1, so it takes rank 6, and so on
+    // down; faction 7 takes rank 1 and nothing is left for faction 0.
+    KCHECK(g_rank_world.players_data[2].ranking == 6);
+    KCHECK(g_rank_world.players_data[7].ranking == 1);
+    KCHECK(g_rank_world.players_data[0].ranking == 0);
+
+    // ---- FactionRankings is filled only for the living ---------------------
+    rank_reset();
+    rank_alive(2);
+    rank_alive(5);
+    g_rank_world.players_data[2].pop_total = 9;
+    g_rank_world.players_data[5].pop_total = 4;
+    g_rank_world.faction_rankings[0] = 0x5A;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[2].ranking == 7);
+    KCHECK(g_rank_world.players_data[5].ranking == 6);
+    KCHECK(g_rank_world.faction_rankings[7] == 2);
+    KCHECK(g_rank_world.faction_rankings[6] == 5);
+    KCHECK(g_rank_world.faction_rankings[0] == 0);   // cleared, then not refilled
+    KCHECK(g_rank_world.faction_rankings[MaxPlayerNum] == 0);
+
+    // ---- the highest and lowest ranked humans ------------------------------
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    rank_human(2);
+    rank_human(6);
+    g_rank_world.rank_unk1 = 0x5A;
+    g_rank_world.rank_unk2 = 0x5A;
+    rankings(1);
+    KCHECK(g_rank_world.rank_unk1 == 6);   // rank 6, the highest-ranked human
+    KCHECK(g_rank_world.rank_unk2 == 2);   // rank 2, the lowest
+    // No human at all leaves both at zero rather than at their old values.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    g_rank_world.rank_unk1 = 0x5A;
+    g_rank_world.rank_unk2 = 0x5A;
+    rankings(1);
+    KCHECK(g_rank_world.rank_unk1 == 0);
+    KCHECK(g_rank_world.rank_unk2 == 0);
+    // A human at rank 7 is found by the descending search, and one at rank 0
+    // - faction zero's slot, which no living faction claims - by the
+    // ascending one.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    rank_human(7);
+    rank_human(0);
+    rankings(1);
+    KCHECK(g_rank_world.rank_unk1 == 7);
+    KCHECK(g_rank_world.rank_unk2 == 0);
+
+    // ---- the ranking pass runs exactly seven times -------------------------
+    // An eighth pass would find nothing left to beat -1, award rank 0 to
+    // faction zero and strike its score out, so faction zero's slot answers
+    // for the loop count.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    g_rank_world.rankings_unk[0] = 0x5A5A;
+    rankings(1);
+    KCHECK(g_rank_world.rankings_unk[0] == 0x5A5A);
+    KCHECK(g_rank_world.players_data[0].ranking == 0);
+
+    // ---- a field where every score is negative -----------------------------
+    // One technology worth -1 puts all seven factions below the -1 the search
+    // starts from, so no pass finds a candidate and every rank goes to the
+    // faction the search starts on.
+    rank_reset();
+    g_rank_world.technology[5].growth_value = -1;
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.tech_achieved[5] |= (uint8_t)(1 << f);
+    }
+    rankings(1);
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        KCHECK((int)g_rank_world.rankings_unk[f] == -1);
+        KCHECK(g_rank_world.players_data[f].ranking == 0);
+    }
+    KCHECK(g_rank_world.players_data[0].ranking == 1);   // the last pass wins
+
+    // ---- the search itself stops at faction seven --------------------------
+    // The row past the last faction is given the best score in the world.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    g_rank_world.rankings_unk[MaxPlayerNum] = 9999;
+    rankings(1);
+    KCHECK(g_rank_world.rankings_unk[MaxPlayerNum] == 9999);
+    KCHECK(g_rank_world.players_data[MaxPlayerNum].ranking == 0);
+    KCHECK(g_rank_world.players_data[7].ranking == 7);
+
+    // ---- the rank-to-faction table has exactly eight slots -----------------
+    // Slot eight carries a human faction id: neither the clear that precedes
+    // the table nor either of the two searches over it may reach it.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    rank_human(3);
+    g_rank_world.faction_rankings[MaxPlayerNum] = 3;
+    g_rank_world.rank_unk1 = 0x5A;
+    g_rank_world.rank_unk2 = 0x5A;
+    rankings(1);
+    KCHECK(g_rank_world.faction_rankings[MaxPlayerNum] == 3);   // not cleared
+    KCHECK(g_rank_world.rank_unk1 == 3);   // found at rank 3, not at slot 8
+    KCHECK(g_rank_world.rank_unk2 == 3);
+    // Rank zero is inside the descending search. The all-negative field above
+    // leaves every faction unranked, so the table's slot zero is the one that
+    // holds the last living faction, and a human there must still be found.
+    rank_reset();
+    g_rank_world.technology[5].growth_value = -1;
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.tech_achieved[5] |= (uint8_t)(1 << f);
+    }
+    rank_human(7);
+    g_rank_world.rank_unk1 = 0x5A;
+    rankings(1);
+    KCHECK(g_rank_world.faction_rankings[0] == 7);
+    KCHECK(g_rank_world.rank_unk1 == 7);
+
+    // Faction 5 is human but not alive, so it never reaches the table and
+    // both searches must come up empty - unless one of them runs one slot too
+    // far and finds the id parked in slot eight.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        if (f != 5) {
+            rank_alive(f);
+        }
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    rank_human(5);
+    g_rank_world.faction_rankings[MaxPlayerNum] = 5;
+    g_rank_world.rank_unk1 = 0x5A;
+    g_rank_world.rank_unk2 = 0x5A;
+    rankings(1);
+    KCHECK(g_rank_world.faction_rankings[MaxPlayerNum] == 5);
+    KCHECK(g_rank_world.rank_unk1 == 0);
+    KCHECK(g_rank_world.rank_unk2 == 0);
+}
+
+
+// Pick a seed whose first rnd(bound) lands inside [lo, hi), so a case can be
+// written against a known roll without depending on which generator the C
+// runtime ships. Returns 0 if no seed in range produced one, which the caller
+// asserts on rather than silently proceeding.
+unsigned rank_seed_rolling(int bound, int lo, int hi) {
+    for (unsigned seed = 1; seed < 5000; seed++) {
+        std::srand(seed);
+        int roll = std::rand() % bound;
+        if (roll >= lo && roll < hi) {
+            return seed;
+        }
+    }
+    return 0;
+}
+
+/*
+ * The great_satan route to a target, which is the only one that does not also
+ * make climactic_battle() true - and therefore the only one under which the
+ * climactic +4 is absent and the other two urge terms can be seen on their
+ * own.
+ *
+ * great_beelzebub wants a human faction sitting at rank 7 with more bases than
+ * max(4, (turn + 25) / 50) and either difficulty above DLVL_SPECIALIST or
+ * intense rivalry; great_satan then wants the turn past 100 and, with intense
+ * rivalry in force, compares 4 * FactionRankingsUnk[FactionRankings[7]]
+ * against 5 * FactionRankingsUnk[FactionRankings[6]] - both of which the
+ * ranking pass has already struck out to -1, so the unsigned product makes the
+ * comparison true.
+ */
+void rank_satan_scene(int target_id) {
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+        g_rank_world.players_data[f].pop_total = f;
+    }
+    g_rank_world.players_data[target_id].pop_total = 99;   // ranks 7th
+    rank_human(target_id);
+    g_rank_world.players_data[target_id].current_num_bases = 20;
+    g_rank_world.game_rules = RULES_INTENSE_RIVALRY;
+    g_rank_world.turn = 200;
+}
+
+void test_rankings_betrayal() {
+    RankSeams seams;
+
+    // ---- no target clears the state bit and stops --------------------------
+    rank_reset();
+    rank_alive(1);
+    g_rank_world.game_state = STATE_UNK_200 | STATE_DEBUG_MODE;
+    rankings(1);
+    KCHECK(g_rank_world.game_state == STATE_DEBUG_MODE);
+
+    // A climactic battle with no qualifying faction is still no target.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(3);
+    g_rank_world.players_data[3].corner_market_turn = 99;   // climactic
+    g_rank_world.players_data[3].diff_level = DLVL_LIBRARIAN;
+    g_rank_world.game_state = STATE_UNK_200;
+    rankings(1);
+    KCHECK(g_rank_world.game_state == 0);
+
+    // ---- difficulty four makes the human the target ------------------------
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(3);
+    g_rank_world.players_data[3].corner_market_turn = 99;
+    g_rank_world.players_data[3].diff_level = DLVL_THINKER;
+    rankings(1);
+    KCHECK(g_rank_world.game_state == STATE_UNK_200);
+    // So does intense rivalry at any difficulty.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(3);
+    g_rank_world.players_data[3].corner_market_turn = 99;
+    g_rank_world.game_rules = RULES_INTENSE_RIVALRY;
+    rankings(1);
+    KCHECK(g_rank_world.game_state == STATE_UNK_200);
+
+    // ---- the last qualifying faction wins the target -----------------------
+    // Two humans qualify; the one with the higher id is the target, which the
+    // betrayal it provokes reports.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(2);
+    rank_human(5);
+    g_rank_world.players_data[2].corner_market_turn = 99;
+    g_rank_world.players_data[2].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    // Faction 4 is an AI in a treaty with everyone, and hates both.
+    g_rank_world.players_data[4].diplo_treaties[2] = DTREATY_TREATY;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 1;             // bound == 256
+    g_rank_world.players_data[2].integrity_blemishes = 99;
+    g_rank_world.players_data[5].integrity_blemishes = 99;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5] & DTREATY_SHALL_BETRAY);
+    KCHECK(!(g_rank_world.players_data[4].diplo_treaties[2] & DTREATY_SHALL_BETRAY));
+
+    // ---- the roll ------------------------------------------------------------
+    // reputation 99 times difficulty 4 is 396, which beats every value
+    // rnd(256) can return, so this betrayal is certain.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[5].integrity_blemishes = 99;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 1;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    // Reputation zero and no bonus leaves the urge at zero, which no roll can
+    // fall below.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 1;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5] == DTREATY_TREATY);
+    // Reputation is the target's blemishes less what it has given this
+    // faction, so a gift of 99 cancels it.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[5].integrity_blemishes = 99;
+    g_rank_world.players_data[5].diplo_unk1[4] = 99;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 1;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5] == DTREATY_TREATY);
+    // Wanting revenge is worth 4, and difficulty 4 multiplies it to 16 - not
+    // enough against rnd(256), but enough against rnd(0), which is what an
+    // ai_fight of 2 and no vendettas produces.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[5].diplo_treaties[4] = DTREATY_WANT_REVENGE;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    // Shameless betrayal of humans is the other 4.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[4].flags_ext = PFLAGEXT_SHAMELESS_BETRAY_HUMANS;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    // A climactic battle is a third 4, and it is always in force here, so a
+    // bare treaty with an ai_fight of 2 already betrays.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    // Every vendetta against the target widens the roll by 256, and two of
+    // them put it back out of reach.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    g_rank_world.players_data[6].diplo_treaties[5] = DTREATY_VENDETTA;
+    g_rank_world.players_data[7].diplo_treaties[5] = DTREATY_VENDETTA;
+    rankings(1);
+    // urge is 16 against rnd(512): not certain, so assert only that the
+    // vendetta count reached the roll at all by widening it - the AI's own
+    // vendetta bit is untouched either way.
+    KCHECK(!(g_rank_world.players_data[6].diplo_treaties[5] & DTREATY_SHALL_BETRAY));
+
+    // ---- intense rivalry replaces the difficulty weight with five ----------
+    // Difficulty 0 would make the urge zero; five keeps it at 20.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.game_rules = RULES_INTENSE_RIVALRY;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+
+    // ---- who is eligible to betray -----------------------------------------
+    {
+        // ai_fight is set per case so that (vendetta_count - ai_fight + 2)
+        // stays zero and the roll is rnd(0), which is always 0 and therefore
+        // always below the urge of 16 this scene produces.
+        //
+        // DTREATY_SHALL_BETRAY is deliberately absent from this table. It is
+        // the one rejection this output cannot see: the only thing a betrayal
+        // does is OR that same bit in, so a faction that already carries it
+        // reads identically whether the roll ran or not. The 0xC01 rejection
+        // is covered by its other two bits instead.
+        struct TreatyCase {
+            uint32_t treaty;
+            int ai_fight;
+            bool betrays;
+        };
+        const TreatyCase treaty_cases[] = {
+            {DTREATY_TREATY, 2, true},
+            {DTREATY_TRUCE, 2, true},
+            {DTREATY_PACT, 2, false},                            // rejected by 0xC01
+            {DTREATY_PACT | DTREATY_TREATY, 2, false},           // and it rejects the pair
+            {DTREATY_COMMLINK, 2, false},                        // none of the three
+            {0, 2, false},
+            {DTREATY_TREATY | DTREATY_UNK_800, 2, false},
+            {DTREATY_TREATY | DTREATY_UNK_4000000, 2, false},
+            {DTREATY_TRUCE | DTREATY_VENDETTA, 3, true},         // vendetta is no bar
+        };
+        for (unsigned i = 0; i < sizeof(treaty_cases) / sizeof(treaty_cases[0]); i++) {
+            rank_reset();
+            for (int f = 1; f < MaxPlayerNum; f++) {
+                rank_alive(f);
+            }
+            rank_human(5);
+            g_rank_world.players_data[5].corner_market_turn = 99;
+            g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+            g_rank_world.players_data[4].diplo_treaties[5] = treaty_cases[i].treaty;
+            g_rank_world.players_data[4].ai_fight = treaty_cases[i].ai_fight;
+            rankings(1);
+            bool betrayed = (g_rank_world.players_data[4].diplo_treaties[5]
+                             & DTREATY_SHALL_BETRAY) != 0;
+            KCHECK(betrayed == treaty_cases[i].betrays);
+        }
+    }
+
+    // A human never betrays.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    rank_human(4);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5] == DTREATY_TREATY);
+
+    // ---- neither faction zero nor the row past the last is a betrayer ------
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[0].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[0].ai_fight = 2;
+    g_rank_world.players_data[MaxPlayerNum].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[MaxPlayerNum].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[0].diplo_treaties[5] == DTREATY_TREATY);
+    KCHECK(g_rank_world.players_data[MaxPlayerNum].diplo_treaties[5] == DTREATY_TREATY);
+
+    // ---- the vendetta tally decides how wide the roll is -------------------
+    // Three vendettas against the target and an ai_fight of 2 make the roll
+    // rnd(768); the urge here is 16, and a seed is chosen so the roll lands
+    // above it. A tally that missed any of the three would narrow the roll,
+    // and a tally that missed all of them would collapse it to rnd(0), which
+    // is always zero and always below 16.
+    {
+        unsigned seed = rank_seed_rolling(768, 20, 700);
+        KCHECK(seed != 0);
+        rank_reset();
+        for (int f = 1; f < MaxPlayerNum; f++) {
+            rank_alive(f);
+        }
+        rank_human(5);
+        g_rank_world.players_data[5].corner_market_turn = 99;
+        g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+        g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+        g_rank_world.players_data[4].ai_fight = 2;
+        g_rank_world.players_data[1].diplo_treaties[5] = DTREATY_VENDETTA;
+        g_rank_world.players_data[2].diplo_treaties[5] = DTREATY_VENDETTA;
+        g_rank_world.players_data[3].diplo_treaties[5] = DTREATY_VENDETTA;
+        std::srand(seed);
+        rankings(1);
+        KCHECK(g_rank_world.players_data[4].diplo_treaties[5] == DTREATY_TREATY);
+    }
+    // Faction zero's and the guard row's vendettas are not part of the tally:
+    // counting either would widen the roll from rnd(0) and lose the betrayal.
+    rank_reset();
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        rank_alive(f);
+    }
+    rank_human(5);
+    g_rank_world.players_data[5].corner_market_turn = 99;
+    g_rank_world.players_data[5].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[4].diplo_treaties[5] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    g_rank_world.players_data[0].diplo_treaties[5] = DTREATY_VENDETTA;
+    g_rank_world.players_data[MaxPlayerNum].diplo_treaties[5] = DTREATY_VENDETTA;
+    std::srand(rank_seed_rolling(256, 20, 250));
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[5]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+
+    // ---- the great_satan route -----------------------------------------------
+    // No climactic battle here, so the urge starts at zero and rnd(0) is zero:
+    // the comparison is strict, and nothing at all provokes a betrayal.
+    rank_satan_scene(6);
+    g_rank_world.players_data[4].diplo_treaties[6] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.game_state == STATE_UNK_200);   // there IS a target
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[6] == DTREATY_TREATY);
+    // The target really is the top-ranked faction: nobody else's treaties are
+    // consulted.
+    rank_satan_scene(6);
+    g_rank_world.players_data[4].diplo_treaties[6] = DTREATY_TREATY;
+    g_rank_world.players_data[4].diplo_treaties[2] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    g_rank_world.players_data[4].flags_ext = PFLAGEXT_SHAMELESS_BETRAY_HUMANS;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[6]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[2] == DTREATY_TREATY);
+    // Wanting revenge on its own, with no climactic battle to add to it.
+    rank_satan_scene(6);
+    g_rank_world.players_data[4].diplo_treaties[6] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    g_rank_world.players_data[6].diplo_treaties[4] = DTREATY_WANT_REVENGE;
+    rankings(1);
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[6]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    // And the weight the three terms are multiplied by: intense rivalry makes
+    // it five, so an urge of 4 becomes 20 and clears a roll seeded below it,
+    // where the unmultiplied 4 would not.
+    {
+        unsigned seed = rank_seed_rolling(256, 5, 19);
+        KCHECK(seed != 0);
+        rank_satan_scene(6);
+        g_rank_world.players_data[4].diplo_treaties[6] = DTREATY_TREATY;
+        g_rank_world.players_data[4].ai_fight = 1;      // rnd(256)
+        g_rank_world.players_data[4].flags_ext = PFLAGEXT_SHAMELESS_BETRAY_HUMANS;
+        std::srand(seed);
+        rankings(1);
+        KCHECK(g_rank_world.players_data[4].diplo_treaties[6]
+               == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+    }
+
+    // ---- the climactic override beats great_satan, and only from faction 1 -
+    // A great_satan target is in place; faction zero is human and at
+    // difficulty 4, and a climactic battle is on. The override scan starts at
+    // faction 1, so faction zero cannot claim the target - and if it did, a
+    // target of zero would clear the state bit instead of setting it.
+    // Intense rivalry is dropped for this one so the great_satan target does
+    // not also qualify for the override; RULES_VICTORY_CONQUEST and a turn
+    // past 250 keep great_satan true without it.
+    rank_satan_scene(6);
+    g_rank_world.game_rules = RULES_VICTORY_CONQUEST;
+    g_rank_world.players_data[6].diff_level = DLVL_TALENT;
+    g_rank_world.turn = 300;
+    rank_human(0);
+    g_rank_world.players_data[0].diff_level = DLVL_THINKER;
+    g_rank_world.players_data[6].corner_market_turn = 999;   // climactic
+    g_rank_world.players_data[4].diplo_treaties[6] = DTREATY_TREATY;
+    g_rank_world.players_data[4].ai_fight = 2;
+    rankings(1);
+    KCHECK(g_rank_world.game_state == STATE_UNK_200);
+    // Faction 6 is still the target, which its betrayal reports; an override
+    // that had reached faction zero would have cleared the bit instead.
+    KCHECK(g_rank_world.players_data[4].diplo_treaties[6]
+           == (uint32_t)(DTREATY_TREATY | DTREATY_SHALL_BETRAY));
+}
+
+#undef KCHECK
+
 }  // namespace
 
 int main() {
@@ -7479,6 +8707,11 @@ int main() {
     test_territory_shared_war();
     test_territory_unit_filter();
     test_territory_weight();
+    test_rankings_score();
+    test_rankings_prototypes();
+    test_rankings_history();
+    test_rankings_publication();
+    test_rankings_betrayal();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

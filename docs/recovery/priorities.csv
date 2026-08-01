@@ -1768,7 +1768,6 @@ P3,7420,0x005AB600,?load_map@@YAHXZ,1797,4,34,unrecovered,,,2,exact,entry_range,
 P3,2520,0x005ABB90,?save_map@@YAXXZ,401,1,15,unrecovered,,,2,exact,entry_range,
 P3,3021,0x005ABFF0,?get_rating@@YAHHH@Z,97,3,0,unrecovered,,,2,exact,exact,"int (__cdecl ?get_rating@@YAHHH@Z)(int factionID, int)"
 P3,2120,0x005AC5A0,?most_objectives@@YAHPAHPAH@Z,143,2,1,unrecovered,,,2,exact,exact,
-P3,3720,0x005AC690,?rankings@@YAXH@Z,1350,3,7,unrecovered,,,2,exact,exact,
 P3,4621,0x005ACBE0,?compute_score@@YAXHPAHPAHH@Z,1997,4,6,unrecovered,,,2,exact,exact,"void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)"
 P3,10,0x005AD470,sub_5ad470,80,0,0,unrecovered,,,1,missing,start_only,
 P3,10,0x005AD500,sub_5ad500,96,0,0,unrecovered,,,1,missing,start_only,

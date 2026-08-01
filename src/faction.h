@@ -524,6 +524,7 @@ constexpr int MaxReputeNum = 8;
 constexpr int MaxMightNum = 7;
 constexpr int MaxBonusNameNum = 41;
 constexpr int MaxPlayerNum = 8;
+constexpr int MaxRankingHistoryTurns = 1000;
 constexpr int MaxGoalsNum = 75;
 constexpr int MaxSitesNum = 25;
 
@@ -538,6 +539,10 @@ extern PlayerData *PlayersData;
 extern FactionArt *FactionsArt;
 extern uint8_t *FactionsStatus;
 extern uint32_t *FactionRankings;
+// Per-turn archive of every faction's power score, written by rankings() for the first
+// MaxRankingHistoryTurns turns and indexed faction + turn * MaxPlayerNum. Sixteen bits per
+// entry, which is why a score above 65535 wraps in the graph and not in the ranking.
+extern uint16_t *FactionRankingHistory;
 extern uint32_t *RankingFactionIDUnk1;
 extern uint32_t *RankingFactionIDUnk2;
 extern uint32_t *FactionRankingsUnk;
@@ -574,6 +579,7 @@ DLLEXPORT BOOL __cdecl wants_to_attack(uint32_t faction_id, uint32_t faction_id_
                                        int faction_id_unk);
 DLLEXPORT int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_id_out,
                                 int *count_out);
+DLLEXPORT void __cdecl rankings(int apply_ranks);
 DLLEXPORT uint32_t __cdecl guard_check(uint32_t faction_id, uint32_t region);
 DLLEXPORT void __cdecl add_goal(uint32_t faction_id, int type, int priority, int x, int y, 
                                 int base_id);

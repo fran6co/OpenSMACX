@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2566,
+      "source_complete": 2567,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2794
+      "unrecovered": 2793
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,9 +67,9 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 211652,
-          "functions": 2566,
-          "percent_of_lift_scope_bytes": 8.78
+          "bytes": 213002,
+          "functions": 2567,
+          "percent_of_lift_scope_bytes": 8.84
         },
         "source_in_progress": {
           "bytes": 13083,
@@ -82,9 +82,9 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 1997385,
-          "functions": 2794,
-          "percent_of_lift_scope_bytes": 82.87
+          "bytes": 1996035,
+          "functions": 2793,
+          "percent_of_lift_scope_bytes": 82.81
         }
       },
       "catalogued": {
@@ -103,39 +103,39 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2198665,
+        "bytes": 2197315,
         "direction": "must go down",
-        "functions": 3107,
+        "functions": 3106,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
-        "percent_of_lift_scope_bytes": 91.22
+        "percent_of_lift_scope_bytes": 91.16
       },
       "proven_recovered": {
         "bytes": 7879,
         "denominator": "recovered",
         "functions": 89,
         "meaning": "recovered bytes an oracle has executed against the original and found to agree",
-        "percent_of_recovered_bytes": 3.72
+        "percent_of_recovered_bytes": 3.7
       },
       "recovered": {
-        "bytes": 211652,
-        "functions": 2566,
-        "percent_of_lift_scope_bytes": 8.78
+        "bytes": 213002,
+        "functions": 2567,
+        "percent_of_lift_scope_bytes": 8.84
       },
       "unproven_by_shape": {
         "loop": {
-          "bytes": 123705,
-          "functions": 447,
-          "percent_of_unproven_bytes": 60.71
+          "bytes": 125055,
+          "functions": 448,
+          "percent_of_unproven_bytes": 60.97
         },
         "seam_forwarding": {
           "bytes": 14707,
           "functions": 761,
-          "percent_of_unproven_bytes": 7.22
+          "percent_of_unproven_bytes": 7.17
         },
         "straight_line": {
           "bytes": 64829,
           "functions": 1257,
-          "percent_of_unproven_bytes": 31.81
+          "percent_of_unproven_bytes": 31.6
         },
         "x87": {
           "bytes": 532,
@@ -144,12 +144,12 @@
         }
       },
       "unproven_recovered": {
-        "bytes": 203773,
+        "bytes": 205123,
         "denominator": "recovered",
         "direction": "must go down",
-        "functions": 2477,
+        "functions": 2478,
         "meaning": "recovered bytes never executed against the original: declared complete, never demonstrated equivalent",
-        "percent_of_recovered_bytes": 96.28
+        "percent_of_recovered_bytes": 96.3
       }
     },
     "total": 6000,
@@ -166,8 +166,8 @@
     "source_directory": "src"
   },
   "redirects": {
-    "definitions": 476,
-    "exact_name_matches": 157,
+    "definitions": 477,
+    "exact_name_matches": 158,
     "unmatched": [
       {
         "location": "src/OpenSMACX.def:49",
@@ -202,15 +202,15 @@
         "name": "?abstract_set@@YAXIIE@Z"
       },
       {
-        "location": "src/OpenSMACX.def:447",
+        "location": "src/OpenSMACX.def:448",
         "name": "?add_bat@@YAXIHPBD@Z"
       },
       {
-        "location": "src/OpenSMACX.def:418",
+        "location": "src/OpenSMACX.def:419",
         "name": "?add_goal@@YAXIHHHHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:419",
+        "location": "src/OpenSMACX.def:420",
         "name": "?add_site@@YAXIHHHH@Z"
       },
       {
@@ -230,7 +230,7 @@
         "name": "?alt_put_detail@@YAXIIE@Z"
       },
       {
-        "location": "src/OpenSMACX.def:472",
+        "location": "src/OpenSMACX.def:473",
         "name": "?alt_set_both@@YAXIII@Z"
       },
       {
@@ -254,19 +254,19 @@
         "name": "?armor_val@@YAHIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:461",
+        "location": "src/OpenSMACX.def:462",
         "name": "?at_climax@@YAHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:420",
+        "location": "src/OpenSMACX.def:421",
         "name": "?at_goal@@YAHIHHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:421",
+        "location": "src/OpenSMACX.def:422",
         "name": "?at_site@@YAHIHHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:469",
+        "location": "src/OpenSMACX.def:470",
         "name": "?attack_from@@YAHII@Z"
       },
       {
@@ -282,7 +282,7 @@
         "name": "?base_find@@YAHHHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:388",
+        "location": "src/OpenSMACX.def:389",
         "name": "?base_first@@YAXI@Z"
       },
       {
@@ -302,11 +302,11 @@
         "name": "?base_project@@YAHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:467",
+        "location": "src/OpenSMACX.def:468",
         "name": "?base_queue@@YAHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:466",
+        "location": "src/OpenSMACX.def:467",
         "name": "?base_rank@@YAHIH@Z"
       },
       {
@@ -354,7 +354,7 @@
         "name": "?bitmask@@YAXIPAI0@Z"
       },
       {
-        "location": "src/OpenSMACX.def:384",
+        "location": "src/OpenSMACX.def:385",
         "name": "?black_market@@YAIH@Z"
       },
       {
@@ -362,7 +362,7 @@
         "name": "?bonus_at@@YAIIIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:390",
+        "location": "src/OpenSMACX.def:391",
         "name": "?breed_mod@@YAIII@Z"
       },
       {
@@ -374,7 +374,7 @@
         "name": "?can_arty@@YAHIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:448",
+        "location": "src/OpenSMACX.def:449",
         "name": "?cause_friction@@YAXIIH@Z"
       },
       {
@@ -414,11 +414,11 @@
         "name": "?code_set@@YAXIII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:460",
+        "location": "src/OpenSMACX.def:461",
         "name": "?compute_faction_modifiers@@YAXI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:429",
+        "location": "src/OpenSMACX.def:430",
         "name": "?continent@Path@@QAEXIII@Z"
       },
       {
@@ -430,11 +430,11 @@
         "name": "?convoy@@YAHII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:383",
+        "location": "src/OpenSMACX.def:384",
         "name": "?corner_market@@YAII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:458",
+        "location": "src/OpenSMACX.def:459",
         "name": "?cost_factor@@YAHIIH@Z"
       },
       {
@@ -450,35 +450,35 @@
         "name": "?create@Filemap@@QAEPAXPBDIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:394",
+        "location": "src/OpenSMACX.def:395",
         "name": "?danger@@YAXPBD0HHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:398",
+        "location": "src/OpenSMACX.def:399",
         "name": "?default_prefs2@@YAIXZ"
       },
       {
-        "location": "src/OpenSMACX.def:397",
+        "location": "src/OpenSMACX.def:398",
         "name": "?default_prefs@@YAIXZ"
       },
       {
-        "location": "src/OpenSMACX.def:400",
+        "location": "src/OpenSMACX.def:401",
         "name": "?default_rules@@YAIXZ"
       },
       {
-        "location": "src/OpenSMACX.def:399",
+        "location": "src/OpenSMACX.def:400",
         "name": "?default_warn@@YAIXZ"
       },
       {
-        "location": "src/OpenSMACX.def:457",
+        "location": "src/OpenSMACX.def:458",
         "name": "?defense_value@@YAIIIIIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:380",
+        "location": "src/OpenSMACX.def:381",
         "name": "?defensive_check@@YAII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:424",
+        "location": "src/OpenSMACX.def:425",
         "name": "?del_site@@YAXIHHHH@Z"
       },
       {
@@ -494,7 +494,7 @@
         "name": "?eligible@@YAHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:452",
+        "location": "src/OpenSMACX.def:453",
         "name": "?energy_value@@YAII@Z"
       },
       {
@@ -522,7 +522,7 @@
         "name": "?filefind_set_alternative@@YAXPBD@Z"
       },
       {
-        "location": "src/OpenSMACX.def:473",
+        "location": "src/OpenSMACX.def:474",
         "name": "?find_landmark@@YAHHHI@Z"
       },
       {
@@ -542,7 +542,7 @@
         "name": "?game_year@@YAIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:379",
+        "location": "src/OpenSMACX.def:380",
         "name": "?garrison_check@@YAII@Z"
       },
       {
@@ -566,15 +566,15 @@
         "name": "?get_adjective@@YAPADI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:444",
+        "location": "src/OpenSMACX.def:445",
         "name": "?get_basic_defense@@YAHIHIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:443",
+        "location": "src/OpenSMACX.def:444",
         "name": "?get_basic_offense@@YAHIHIHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:449",
+        "location": "src/OpenSMACX.def:450",
         "name": "?get_mood@@YAIH@Z"
       },
       {
@@ -582,11 +582,11 @@
         "name": "?get_noun@@YAPADI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:451",
+        "location": "src/OpenSMACX.def:452",
         "name": "?get_patience@@YAHII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:407",
+        "location": "src/OpenSMACX.def:408",
         "name": "?get_plan@@YAHII@Z"
       },
       {
@@ -606,15 +606,15 @@
         "name": "?goody_at@@YAIII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:455",
+        "location": "src/OpenSMACX.def:456",
         "name": "?great_beelzebub@@YAHIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:456",
+        "location": "src/OpenSMACX.def:457",
         "name": "?great_satan@@YAHIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:378",
+        "location": "src/OpenSMACX.def:379",
         "name": "?guard_check@@YAIII@Z"
       },
       {
@@ -622,7 +622,7 @@
         "name": "?has_abil@@YAHII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:471",
+        "location": "src/OpenSMACX.def:472",
         "name": "?has_agenda@@YAIIII@Z"
       },
       {
@@ -646,15 +646,15 @@
         "name": "?has_tech@@YAHHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:440",
+        "location": "src/OpenSMACX.def:441",
         "name": "?has_treaty@@YAIIII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:438",
+        "location": "src/OpenSMACX.def:439",
         "name": "?header_check@@YAXPADPAU_iobuf@@@Z"
       },
       {
-        "location": "src/OpenSMACX.def:439",
+        "location": "src/OpenSMACX.def:440",
         "name": "?header_write@@YAXPBDPAU_iobuf@@@Z"
       },
       {
@@ -718,11 +718,11 @@
         "name": "?init_font_class@Font@@SAHPAV1@@Z"
       },
       {
-        "location": "src/OpenSMACX.def:423",
+        "location": "src/OpenSMACX.def:424",
         "name": "?init_goals@@YAXI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:405",
+        "location": "src/OpenSMACX.def:406",
         "name": "?invasions@@YAXI@Z"
       },
       {
@@ -802,7 +802,7 @@
         "name": "?log_say_hex@@YAXPBDHHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:459",
+        "location": "src/OpenSMACX.def:460",
         "name": "?make_base_unique@@YAXI@Z"
       },
       {
@@ -834,11 +834,11 @@
         "name": "?memrchr@@YAPBDPBD0D@Z"
       },
       {
-        "location": "src/OpenSMACX.def:427",
+        "location": "src/OpenSMACX.def:428",
         "name": "?merge@Path@@QAEXII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:385",
+        "location": "src/OpenSMACX.def:386",
         "name": "?mind_control@@YAHIIH@Z"
       },
       {
@@ -846,7 +846,7 @@
         "name": "?morale_alien@@YAIHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:389",
+        "location": "src/OpenSMACX.def:390",
         "name": "?morale_mod@@YAIIII@Z"
       },
       {
@@ -866,7 +866,7 @@
         "name": "?naval_base@@YAHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:474",
+        "location": "src/OpenSMACX.def:475",
         "name": "?new_landmark@@YAHHHPBD@Z"
       },
       {
@@ -914,7 +914,7 @@
         "name": "?planet_buster@@YAIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:437",
+        "location": "src/OpenSMACX.def:438",
         "name": "?planetfall@@YAXI@Z"
       },
       {
@@ -966,7 +966,7 @@
         "name": "?psi_factor@@YAHHIHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:470",
+        "location": "src/OpenSMACX.def:471",
         "name": "?psych_check@@YAXIPAH0@Z"
       },
       {
@@ -986,7 +986,7 @@
         "name": "?put@Strings@@QAEPADPBD@Z"
       },
       {
-        "location": "src/OpenSMACX.def:414",
+        "location": "src/OpenSMACX.def:415",
         "name": "?quick_zoc@@YAXIIIHHPAH0@Z"
       },
       {
@@ -1026,7 +1026,7 @@
         "name": "?release_modal@Time@@QAEXXZ"
       },
       {
-        "location": "src/OpenSMACX.def:450",
+        "location": "src/OpenSMACX.def:451",
         "name": "?reputation@@YAIII@Z"
       },
       {
@@ -1054,11 +1054,11 @@
         "name": "?say_hex@Log@@QAEXPBD0HHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:442",
+        "location": "src/OpenSMACX.def:443",
         "name": "?say_morale@@YAXIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:441",
+        "location": "src/OpenSMACX.def:442",
         "name": "?say_morale@@YAXPADIH@Z"
       },
       {
@@ -1094,7 +1094,7 @@
         "name": "?search_index@TextIndex@@QAEHPBD0@Z"
       },
       {
-        "location": "src/OpenSMACX.def:454",
+        "location": "src/OpenSMACX.def:455",
         "name": "?set_agenda@@YAXIIIH@Z"
       },
       {
@@ -1114,7 +1114,7 @@
         "name": "?set_fac_announced@@YAXIIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:404",
+        "location": "src/OpenSMACX.def:405",
         "name": "?set_language@@YAXI@Z"
       },
       {
@@ -1126,7 +1126,7 @@
         "name": "?set_name@BaseButton@@QAEHPBD@Z"
       },
       {
-        "location": "src/OpenSMACX.def:453",
+        "location": "src/OpenSMACX.def:454",
         "name": "?set_treaty@@YAXIIIH@Z"
       },
       {
@@ -1142,15 +1142,15 @@
         "name": "?sleep@@YAXI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:462",
+        "location": "src/OpenSMACX.def:463",
         "name": "?social_calc@@YAXPAUSocialCategory@@PAUSocialEffect@@IHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:464",
+        "location": "src/OpenSMACX.def:465",
         "name": "?social_upheaval@@YAIIPAUSocialCategory@@@Z"
       },
       {
-        "location": "src/OpenSMACX.def:463",
+        "location": "src/OpenSMACX.def:464",
         "name": "?social_upkeep@@YAXI@Z"
       },
       {
@@ -1158,7 +1158,7 @@
         "name": "?society_avail@@YAHHHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:465",
+        "location": "src/OpenSMACX.def:466",
         "name": "?sort@@YAXIPAH0@Z"
       },
       {
@@ -1170,7 +1170,7 @@
         "name": "?speed_proto@@YAII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:381",
+        "location": "src/OpenSMACX.def:382",
         "name": "?stack_check@@YAHHIHHH@Z"
       },
       {
@@ -1206,7 +1206,7 @@
         "name": "?string@Text@@QAEPADXZ"
       },
       {
-        "location": "src/OpenSMACX.def:396",
+        "location": "src/OpenSMACX.def:397",
         "name": "?success_rates@@YAHIIHH@Z"
       },
       {
@@ -1270,7 +1270,7 @@
         "name": "?temp_set@@YAXIIE@Z"
       },
       {
-        "location": "src/OpenSMACX.def:395",
+        "location": "src/OpenSMACX.def:396",
         "name": "?terraform_cost@@YAIHHI@Z"
       },
       {
@@ -1278,7 +1278,7 @@
         "name": "?terrain_avail@@YAHIHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:428",
+        "location": "src/OpenSMACX.def:429",
         "name": "?territory@Path@@QAEXIIHH@Z"
       },
       {
@@ -1318,7 +1318,7 @@
         "name": "?using_set@@YAXIIH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:475",
+        "location": "src/OpenSMACX.def:476",
         "name": "?valid_landmark@@YAHIIH@Z"
       },
       {
@@ -1338,7 +1338,7 @@
         "name": "?veh_clear@@YAXIHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:445",
+        "location": "src/OpenSMACX.def:446",
         "name": "?veh_cost@@YAIIHPAH@Z"
       },
       {
@@ -1382,15 +1382,15 @@
         "name": "?veh_who@@YAHII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:382",
+        "location": "src/OpenSMACX.def:383",
         "name": "?vulnerable@@YAHIHH@Z"
       },
       {
-        "location": "src/OpenSMACX.def:406",
+        "location": "src/OpenSMACX.def:407",
         "name": "?want_monolith@@YAHI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:411",
+        "location": "src/OpenSMACX.def:412",
         "name": "?want_to_wake@@YAHIIH@Z"
       },
       {
@@ -1414,15 +1414,15 @@
         "name": "?width@Font@@QAEHPADI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:422",
+        "location": "src/OpenSMACX.def:423",
         "name": "?wipe_goals@@YAXI@Z"
       },
       {
-        "location": "src/OpenSMACX.def:477",
+        "location": "src/OpenSMACX.def:478",
         "name": "?world_alt_put_detail@@YAXII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:391",
+        "location": "src/OpenSMACX.def:392",
         "name": "?worm_mod@@YAIII@Z"
       },
       {
@@ -1434,7 +1434,7 @@
         "name": "?zoc_move@@YAIIII@Z"
       },
       {
-        "location": "src/OpenSMACX.def:425",
+        "location": "src/OpenSMACX.def:426",
         "name": "?zoc_path@Path@@QAEHIII@Z"
       },
       {
@@ -1448,14 +1448,14 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2512,
-    "matched_function_starts": 2512,
-    "unique_addresses": 2512,
+    "annotations": 2513,
+    "matched_function_starts": 2513,
+    "unique_addresses": 2513,
     "unmatched_addresses": []
   },
   "source_bindings": {
     "by_kind": {
-      "data": 559,
+      "data": 560,
       "function": 351
     },
     "items": [
@@ -6806,11 +6806,20 @@
         "type": "uint32_t *"
       },
       {
-        "address": "0x009A650C",
+        "address": "0x009A68AC",
         "function": "",
         "function_address": "",
         "kind": "data",
         "location": "src/faction.cpp:41",
+        "symbol": "FactionRankingHistory",
+        "type": "uint16_t *"
+      },
+      {
+        "address": "0x009A650C",
+        "function": "",
+        "function_address": "",
+        "kind": "data",
+        "location": "src/faction.cpp:42",
         "symbol": "RankingFactionIDUnk1",
         "type": "uint32_t *"
       },
@@ -6819,7 +6828,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/faction.cpp:42",
+        "location": "src/faction.cpp:43",
         "symbol": "RankingFactionIDUnk2",
         "type": "uint32_t *"
       },
@@ -6828,7 +6837,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/faction.cpp:43",
+        "location": "src/faction.cpp:44",
         "symbol": "FactionRankingsUnk",
         "type": "uint32_t *"
       },
@@ -6837,7 +6846,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/faction.cpp:44",
+        "location": "src/faction.cpp:45",
         "symbol": "DiploFriction",
         "type": "int *"
       },
@@ -6846,7 +6855,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/faction.cpp:45",
+        "location": "src/faction.cpp:46",
         "symbol": "DiploFrictionFactionIDWith",
         "type": "uint32_t *"
       },
@@ -6855,7 +6864,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/faction.cpp:46",
+        "location": "src/faction.cpp:47",
         "symbol": "DiploFrictionFactionID",
         "type": "uint32_t *"
       },
@@ -9651,6 +9660,6 @@
       }
     ],
     "matched_function_starts": 351,
-    "total": 910
+    "total": 911
   }
 }

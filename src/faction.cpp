@@ -38,6 +38,7 @@ RulesMight *Might = (RulesMight *)0x0094C558;
 RulesBonusName *BonusName = (RulesBonusName *)0x009461A8;
 uint8_t *FactionsStatus = (uint8_t *)0x009A64E8;
 uint32_t *FactionRankings = (uint32_t *)0x009A64EC; // [8]
+uint16_t *FactionRankingHistory = (uint16_t *)0x009A68AC; // [1000][8]
 uint32_t *RankingFactionIDUnk1 = (uint32_t *)0x009A650C;
 uint32_t *RankingFactionIDUnk2 = (uint32_t *)0x009A6510;
 uint32_t *FactionRankingsUnk = (uint32_t *)0x00945DD8; // [8]
@@ -1051,6 +1052,249 @@ void __cdecl see_map_check() {
                     PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
                 }
             }
+        }
+    }
+}
+
+/*
+Purpose: Rescore every faction's power, and optionally publish the ranking order that scoring
+         implies plus the betrayals the new order provokes.
+Original Offset: 005AC690
+Return Value: n/a
+Status: Complete
+
+Two jobs behind one flag. The scoring pass always runs; `apply_ranks` adds the publication - the
+1 to 7 ordering in PlayerData::ranking, the FactionRankings index, the highest and lowest live
+factions, and a per-faction roll to turn on the leader. turn_upkeep passes 1.
+
+SCORING, per faction 1 through 7. Faction zero is native life: its ranking is cleared and it is
+never scored. A faction not alive scores zero. A scenario with an objective victory in play and
+no per-objective point value scores ten per objective and stops there. Otherwise the score is
+
+  4 * (pop_total + theory_of_everything)
+  + for each technology held, its growth + tech + wealth + power values
+  + 10 per secret project standing in one of its bases
+  + num_objectives * ObjectiveAchievePts
+  + for each prototype, a value built from cost * how many are active
+
+and the prototype term is the interesting one. The count is skipped above 250, which leaves
+251-255 as sentinels rather than counts. A weapon with no offensive rating is worth a quarter of
+cost * count, a negative rating half, and a rating of 99 or more the whole of it; anything else
+is scaled by rating / the best weapon the factions have between them. That best is computed once
+before the faction loop by scanning the 448 faction-owned prototype slots - 64 through 511 - for
+the largest offense rating below 99 on a prototype that is both PROTO_ACTIVE and
+PROTO_TYPED_COMPLETE, and it starts at 1 so the division can never be by zero.
+
+The score is also archived: for the first 1000 turns its low 16 bits go into
+FactionRankingHistory, indexed faction + turn * 8.
+
+PUBLICATION. Ranks are handed out highest score first, 7 down to 1, and the winner's score is
+struck out with -1 so the next pass finds the next one. A pass where nothing beats -1 awards the
+rank to faction 0, which is how a dead or all-negative field terminates. FactionRankings is then
+the inverse map, rank to faction, filled only for living factions; RankingFactionIDUnk1 and
+RankingFactionIDUnk2 are the highest- and lowest-ranked HUMAN factions. The two FactionsStatus
+bytes are read separately throughout - [1] is the alive bitfield and [0] the human one - and the
+human byte is read in both directions: the ranked-human search wants the bit set, and the
+betrayal roll skips any faction that has it.
+
+Then the target: the top-ranked faction if great_satan says so, overridden during a climactic
+battle by the last live faction on difficulty 4 or above (or any live faction under intense
+rivalry). No target clears STATE_UNK_200 and returns. A target sets it, counts how many of the
+seven hold a vendetta against it, and rolls once per faction: reputation, plus 4 each for a
+climactic battle, for PFLAG_UNK_20 in flags_ext and for wanting revenge, all multiplied by the
+target's difficulty level - or by 5 flat under intense rivalry - against
+rnd((vendetta_count - ai_fight + 2) * 256). Winning the roll sets DTREATY_SHALL_BETRAY.
+
+Verification note: the sweep against recovery-gameplay-tests kills 100 of 109 valid mutants. The
+nine survivors are all dead code or equivalences, not untested behaviour:
+
+  - The technology loop tests `tech_id < MaxTechnologyNum` inside a loop whose own bound is
+    MaxTechnologyNum, so the `: 4` arm at 0x005AC78D cannot be taken. That accounts for two
+    survivors, the guard and its constant. It is transcribed rather than folded away because it
+    is what the original does.
+  - Widening that loop's own bound reaches tech 89, which has_tech refuses on its own bound of
+    MaxTechnologyNum - 1, so the extra pass scores nothing.
+  - `offense >= best_offense` against `>` differs only when they are equal, where the assignment
+    is a no-op.
+  - `offense < 0` against `< 1` or `<= 0` differ only at zero, which the preceding `!offense` has
+    already taken.
+  - The rank-to-faction index loop starting at 0 writes faction zero's id into a slot the clear
+    two lines above has just zeroed, and any live faction sharing that rank overwrites it
+    afterwards, so the extra pass cannot be seen. Widening its bound - and the climactic
+    override's - to faction 8 reaches is_alive(8) and is_human(8), which read bit 8 of a
+    one-byte status field and are therefore always false.
+
+The betrayal filter carries a third piece of dead code that the sweep does not reach: it requires
+DTREATY_TREATY or DTREATY_TRUCE, then rejects DTREATY_PACT, DTREATY_SHALL_BETRAY and
+DTREATY_UNK_800 together (`test eax, 0xC01` at 0x005ACAC0), so by the time DTREATY_UNK_4000000 is
+tested at 0x005ACACB the DTREATY_UNK_800 half of its condition (`test ah, 8` at 0x005ACAD2) is
+already known false and the arm always continues. Separately, DTREATY_SHALL_BETRAY's own
+rejection is the one filter no fixture can observe: the only effect a betrayal has is to OR that
+same bit in, so a faction already carrying it reads identically either way.
+*/
+void __cdecl rankings(int apply_ranks) {
+    int best_offense = 1;
+    for (int proto_id = MaxVehProtoFactionNum; proto_id < MaxVehProtoNum; proto_id++) {
+        if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
+            && VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE) {
+            int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+            if (offense >= best_offense && offense < 99) {
+                best_offense = offense;
+            }
+        }
+    }
+    for (int faction_id = 0; faction_id < MaxPlayerNum; faction_id++) {
+        if (apply_ranks) {
+            PlayersData[faction_id].ranking = 0;
+        }
+        if (!faction_id) {
+            continue;
+        }
+        int score;
+        if (!is_alive(faction_id)) {
+            score = 0;
+        } else if ((*ObjectiveReqVictory < 9000 || *ObjectivesSuddenDeathVictory < 9000)
+            && !*ObjectiveAchievePts) {
+            score = num_objectives(faction_id, false) * 10;
+        } else {
+            score = (PlayersData[faction_id].pop_total
+                + PlayersData[faction_id].theory_of_everything) * 4;
+            for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+                if (has_tech(tech_id, faction_id)) {
+                    score += (tech_id < MaxTechnologyNum)
+                        ? Technology[tech_id].growth_value + Technology[tech_id].tech_value
+                            + Technology[tech_id].wealth_value + Technology[tech_id].power_value
+                        : 4;
+                }
+            }
+            const int *projects = reinterpret_cast<const int *>(SecretProject);
+            for (int i = 0; i < MaxSecretProjectNum; i++) {
+                if (projects[i] >= 0
+                    && Bases[projects[i]].faction_id_current == (uint8_t)faction_id) {
+                    score += 10;
+                }
+            }
+            score += num_objectives(faction_id, false) * (int)*ObjectiveAchievePts;
+            for (int proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
+                if (proto_id < MaxVehProtoFactionNum
+                    && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id)) {
+                    continue;
+                }
+                uint32_t active = PlayersData[faction_id].proto_id_active[proto_id];
+                if (active > 250) {
+                    continue;
+                }
+                int value = VehPrototypes[proto_id].cost * (int)active;
+                if (!value) {
+                    continue;
+                }
+                int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+                if (!offense) {
+                    score += value / 4;
+                } else if (offense < 0) {
+                    score += value / 2;
+                } else if (offense >= 99) {
+                    score += value;
+                } else {
+                    score += (offense / best_offense) * value;
+                }
+            }
+        }
+        FactionRankingsUnk[faction_id] = (uint32_t)score;
+        if (*TurnCurrentNum < MaxRankingHistoryTurns) {
+            FactionRankingHistory[faction_id + *TurnCurrentNum * MaxPlayerNum] = (uint16_t)score;
+        }
+    }
+    if (!apply_ranks) {
+        return;
+    }
+    for (int rank = MaxPlayerNum - 1; rank > 0; rank--) {
+        int best_faction = 0;
+        int best_score = -1;
+        for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            if ((int)FactionRankingsUnk[faction_id] > best_score) {
+                best_faction = faction_id;
+                best_score = (int)FactionRankingsUnk[faction_id];
+            }
+        }
+        FactionRankingsUnk[best_faction] = (uint32_t)-1;
+        PlayersData[best_faction].ranking = (uint32_t)rank;
+    }
+    for (int rank = 0; rank < MaxPlayerNum; rank++) {
+        FactionRankings[rank] = 0;
+    }
+    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+        if (is_alive(faction_id)) {
+            FactionRankings[PlayersData[faction_id].ranking] = (uint32_t)faction_id;
+        }
+    }
+    uint32_t humans = FactionsStatus[0];
+    *RankingFactionIDUnk1 = 0;
+    *RankingFactionIDUnk2 = 0;
+    for (int rank = MaxPlayerNum - 1; rank >= 0; rank--) {
+        if (humans & (1 << FactionRankings[rank])) {
+            *RankingFactionIDUnk1 = FactionRankings[rank];
+            break;
+        }
+    }
+    for (int rank = 0; rank < MaxPlayerNum; rank++) {
+        if (humans & (1 << FactionRankings[rank])) {
+            *RankingFactionIDUnk2 = FactionRankings[rank];
+            break;
+        }
+    }
+    int target_id = great_satan(FactionRankings[MaxPlayerNum - 1], false)
+        ? (int)FactionRankings[MaxPlayerNum - 1] : 0;
+    if (climactic_battle()) {
+        for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            if (is_human(faction_id)
+                && (PlayersData[faction_id].diff_level >= 4
+                    || *GameRules & RULES_INTENSE_RIVALRY)) {
+                target_id = faction_id;
+            }
+        }
+    }
+    if (!target_id) {
+        *GameState &= ~STATE_UNK_200;
+        return;
+    }
+    *GameState |= STATE_UNK_200;
+    int vendetta_count = 0;
+    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+        if (PlayersData[faction_id].diplo_treaties[target_id] & DTREATY_VENDETTA) {
+            vendetta_count++;
+        }
+    }
+    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+        if (is_human(faction_id)) {
+            continue;
+        }
+        uint32_t treaty = PlayersData[faction_id].diplo_treaties[target_id];
+        if (!(treaty & (DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE))) {
+            continue;
+        }
+        if (treaty & (DTREATY_PACT | DTREATY_SHALL_BETRAY | DTREATY_UNK_800)) {
+            continue;
+        }
+        if (treaty & DTREATY_UNK_4000000 && !(treaty & DTREATY_UNK_800)) {
+            continue;
+        }
+        int weight = (*GameRules & RULES_INTENSE_RIVALRY)
+            ? 5 : PlayersData[target_id].diff_level;
+        int urge = (int)reputation(target_id, faction_id);
+        if (climactic_battle()) {
+            urge += 4;
+        }
+        if (PlayersData[faction_id].flags_ext & PFLAGEXT_SHAMELESS_BETRAY_HUMANS) {
+            urge += 4;
+        }
+        if (PlayersData[target_id].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE) {
+            urge += 4;
+        }
+        urge *= weight;
+        int bound = (vendetta_count - PlayersData[faction_id].ai_fight + 2) * 256;
+        if ((int)rnd(bound, NULL) < urge) {
+            set_treaty(faction_id, target_id, DTREATY_SHALL_BETRAY, true);
         }
     }
 }
