@@ -1564,6 +1564,7 @@ address,name,shape
 0x0051DF40,?on_nc_hittest@thunk1_Console@@QAEXHH@Z,loop
 0x0051DF50,??_Gthunk2_Console@@UAEPAXI@Z,loop
 0x0051DF70,??3AlphaMenu@@SAXPAXI@Z,loop
+0x00523DD0,?reset_territory@@YAXXZ,loop
 0x0052AD30,?council_votes@@YAHH@Z,loop
 0x0052AE20,?eligible@@YAHH@Z,loop
 0x0052DAC0,??__Eg_CURSOR_SPRITES@@YAXXZ,seam_forwarding

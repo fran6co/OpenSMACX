@@ -6123,6 +6123,639 @@ void test_spot_loc() {
 
 #undef PCHECK
 
+/*
+ * A self-contained world for reset_territory.
+ *
+ * 16 columns by 8 rows - MapLongitude 8 - so the linear walk visits exactly 64
+ * tiles and every one of them can be asserted over. The live map is again the
+ * middle third of a 192-entry array, so a walk that runs past its last row
+ * lands somewhere the assertions can see.
+ *
+ * Three fixture settings exist to make the callees decidable:
+ *
+ *  - GameRules carries RULES_NO_UNITY_SCATTERING, which takes goody_at()
+ *    straight to its bitfield answer instead of its position hash, so a pod is
+ *    exactly BIT_UNK_4000000 and nothing else is.
+ *  - Every tile starts with val2 = 0x10, i.e. a stored site score of 1. That
+ *    keeps world_site() out of the cases that are not about it; the cases that
+ *    are clear the nibble deliberately.
+ *  - territory_max_dist_base is 2 rather than the default 8, so one base claims
+ *    nine tiles of a 64-tile map instead of most of it.
+ */
+struct TerrWorld {
+    Map tiles[192];
+    Base bases[8];
+    // Nine faction rows and 129 continents: the last of each exists only to be
+    // poisoned, so a loop bound that runs one too far leaves a mark instead of
+    // writing over whatever the fixture happens to store next.
+    PlayerData players_data[9];
+    Continent continents[MaxContinentNum + 1];
+    RulesBasic rules;
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t map_rand_seed;
+    uint32_t game_rules;
+    uint32_t game_state;
+    int diff_level;
+    int base_count;
+    int base_find_dist;
+    uint8_t faction_status[2];
+    uint32_t dirty;
+    int turn;
+};
+
+TerrWorld g_terr_world;
+
+const int TERR_LIVE = 64;  // index of tile (0, 0) inside TerrWorld::tiles
+
+Map &terr_at(int x, int y) {
+    return g_terr_world.tiles[TERR_LIVE + (x >> 1) + y * 8];
+}
+
+void terr_reset() {
+    std::memset(&g_terr_world, 0, sizeof(g_terr_world));
+    g_terr_world.tiles_ptr = &g_terr_world.tiles[TERR_LIVE];
+    g_terr_world.longitude = 8;
+    g_terr_world.lon_bounds = 16;
+    g_terr_world.lat_bounds = 8;
+    g_terr_world.is_flat = 1;
+    g_terr_world.game_rules = RULES_NO_UNITY_SCATTERING;
+    g_terr_world.diff_level = 1;
+    g_terr_world.rules.territory_max_dist_base = 2;
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            Map &tile = terr_at(x, y);
+            tile.climate = 0x60;      // altitude 3, arid: dry land
+            tile.territory = -1;      // unclaimed, so a no-change run is quiet
+            tile.val2 = 0x10;         // stored site score of 1
+        }
+    }
+}
+
+// Put a base of the given faction on the map, wired so base_at() finds it
+// rather than taking its bit-error path.
+void terr_base(int base_id, int faction_id, int x, int y) {
+    g_terr_world.bases[base_id].x = (int16_t)x;
+    g_terr_world.bases[base_id].y = (int16_t)y;
+    g_terr_world.bases[base_id].faction_id_current = (uint8_t)faction_id;
+    terr_at(x, y).bit |= BIT_BASE_IN_TILE;
+    if (g_terr_world.base_count <= base_id) {
+        g_terr_world.base_count = base_id + 1;
+    }
+}
+
+const uint16_t TERR_POISON16 = 0x7777;
+const uint8_t TERR_POISON8 = 0x77;
+
+/*
+ * Fill every array the clear is supposed to reach with a sentinel, and every
+ * array it is NOT supposed to reach - the one below unk_78, the one above
+ * unk_83, the row past the last faction, the entry past the last region - with
+ * a different one. Without this the clear is unobservable: the fixture starts
+ * at zero, so a run that skips it agrees with a run that performs it.
+ */
+void terr_poison_tallies() {
+    for (int f = 0; f < 9; f++) {
+        PlayerData &player = g_terr_world.players_data[f];
+        for (int r = 0; r < MaxContinentNum; r++) {
+            player.unk_78[r] = TERR_POISON16;
+            player.unk_79[r] = TERR_POISON16;
+            player.unk_80[r] = TERR_POISON16;
+            player.unk_81[r] = TERR_POISON16;
+            player.unk_82[r] = TERR_POISON8;
+            player.unk_83[r] = TERR_POISON8;
+            player.unk_77[r] = 0x6666;          // immediately below unk_78
+            player.region_base_plan[r] = 0x55;  // immediately above unk_83
+        }
+    }
+    for (int r = 0; r <= MaxContinentNum; r++) {
+        g_terr_world.continents[r].unk_3 = 9;
+        g_terr_world.continents[r].pods = 9;
+        g_terr_world.continents[r].tile_count = 0x1234;
+    }
+}
+
+int terr_owned_count(int faction_id) {
+    int total = 0;
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            if (terr_at(x, y).territory == (int8_t)faction_id) {
+                total++;
+            }
+        }
+    }
+    return total;
+}
+
+#define TCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool terr_ok = (cond);                                          \
+        if (!terr_ok) {                                                       \
+            std::fprintf(stderr, "reset_territory: line %d: %s\n", __LINE__,  \
+                         #cond);                                              \
+        }                                                                     \
+        expect(terr_ok);                                                      \
+    } while (0)
+
+class TerrSeams {
+ public:
+    TerrSeams()
+        : tiles_(&MapTiles, &g_terr_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_terr_world.longitude),
+          lon_(&MapLongitudeBounds, &g_terr_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_terr_world.lat_bounds),
+          flat_(&MapIsFlat, &g_terr_world.is_flat),
+          seed_(&MapRandSeed, &g_terr_world.map_rand_seed),
+          rules_flags_(&GameRules, &g_terr_world.game_rules),
+          state_(&GameState, &g_terr_world.game_state),
+          diff_(&DiffLevelCurrent, &g_terr_world.diff_level),
+          players_(&PlayersData, g_terr_world.players_data),
+          continents_(&Continents, g_terr_world.continents),
+          bases_(&Bases, g_terr_world.bases),
+          base_count_(&BaseCurrentCount, &g_terr_world.base_count),
+          base_dist_(&BaseFindDist, &g_terr_world.base_find_dist),
+          status_(&FactionsStatus, g_terr_world.faction_status),
+          dirty_(&UnkBitfield1, &g_terr_world.dirty),
+          rules_(&Rules, &g_terr_world.rules),
+          turn_(&TurnCurrentNum, &g_terr_world.turn) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> seed_;
+    ScopedSeam<uint32_t> rules_flags_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<int> diff_;
+    ScopedSeam<PlayerData> players_;
+    ScopedSeam<Continent> continents_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<uint8_t> status_;
+    ScopedSeam<uint32_t> dirty_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<int> turn_;
+};
+
+void test_reset_territory_ownership() {
+    TerrSeams seams;
+
+    // ---- an empty world: every tile unclaimed, and nothing reported dirty ---
+    terr_reset();
+    reset_territory();
+    TCHECK(terr_owned_count(-1) == 64);
+    TCHECK(g_terr_world.dirty == 0);
+    TCHECK(g_terr_world.players_data[0].unk_78[0] == 64);
+    TCHECK(g_terr_world.players_data[1].unk_78[0] == 0);
+    // Site 1 everywhere, no pods.
+    TCHECK(g_terr_world.continents[0].unk_3 == 1);
+    TCHECK(g_terr_world.continents[0].pods == 0);
+
+    // ---- one base claims by proximity --------------------------------------
+    // territory_max_dist_base is 2, so the nine tiles at vector_dist 0 or 1
+    // from (4, 2) are claimed and nothing else is.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    reset_territory();
+    TCHECK(terr_owned_count(2) == 9);
+    TCHECK(terr_owned_count(-1) == 55);
+    TCHECK(terr_at(4, 2).territory == 2);
+    TCHECK(terr_at(3, 1).territory == 2);
+    TCHECK(terr_at(6, 2).territory == 2);
+    TCHECK(terr_at(4, 4).territory == 2);
+    TCHECK(terr_at(6, 4).territory == -1);   // vector_dist exactly 2
+    TCHECK(terr_at(8, 2).territory == -1);
+    TCHECK(g_terr_world.players_data[2].unk_78[0] == 9);
+    TCHECK(g_terr_world.players_data[0].unk_78[0] == 55);
+    // Nine tiles changed owner, so the repaint hint is up.
+    TCHECK(g_terr_world.dirty == 1);
+    TCHECK(terr_at(4, 2).bit2 == 0x400000);
+    TCHECK(terr_at(8, 2).bit2 == 0);
+    // Running it again over the answer it just wrote changes nothing and
+    // reports nothing dirty: the hint is on the CHANGE, not on the claim.
+    g_terr_world.dirty = 0;
+    terr_at(4, 2).bit2 = 0;
+    reset_territory();
+    TCHECK(terr_owned_count(2) == 9);
+    TCHECK(g_terr_world.dirty == 0);
+    TCHECK(terr_at(4, 2).bit2 == 0);
+    // The tallies are rebuilt from scratch each time, not accumulated.
+    TCHECK(g_terr_world.players_data[2].unk_78[0] == 9);
+
+    // ---- an ocean tile halves the distance ---------------------------------
+    // (6, 4) is at vector_dist 2 from (4, 2) and has no base in its own ring,
+    // which is the only place the two rules can be told apart: every tile at
+    // vector_dist 1 from a base is also in that base's ring.
+    terr_reset();
+    g_terr_world.rules.territory_max_dist_base = 4;
+    terr_base(0, 2, 4, 2);
+    reset_territory();
+    TCHECK(terr_at(6, 4).territory == 2);    // land: 2 is inside 4
+    terr_reset();
+    g_terr_world.rules.territory_max_dist_base = 4;
+    terr_base(0, 2, 4, 2);
+    terr_at(6, 4).climate = 0x40;            // ALT_OCEAN_SHELF: ocean
+    reset_territory();
+    TCHECK(terr_at(6, 4).territory == -1);   // ocean: 2 is not inside 4 >> 1
+
+    // ---- and an adjacent base overrules the distance entirely --------------
+    // The last RadiusBase entry is (0, 0), so an ocean tile with a base
+    // standing on it claims it through the ring even when the halved distance
+    // has already refused it: territory_max_dist_base 1 halves to 0 and
+    // `dist < 0` is false at distance 0.
+    terr_reset();
+    g_terr_world.rules.territory_max_dist_base = 1;
+    terr_base(0, 5, 7, 3);
+    terr_at(7, 3).climate = 0x40;
+    reset_territory();
+    TCHECK(terr_at(7, 3).territory == 5);
+    // The same holds one tile out, at RadiusBase offset (-1, 1).
+    terr_reset();
+    g_terr_world.rules.territory_max_dist_base = 1;
+    terr_base(0, 5, 7, 3);
+    terr_at(6, 4).climate = 0x40;
+    reset_territory();
+    TCHECK(terr_at(6, 4).territory == 5);
+    // On LAND the ring is not consulted at all, and vector_dist 1 is not
+    // inside a distance of 1.
+    terr_reset();
+    g_terr_world.rules.territory_max_dist_base = 1;
+    terr_base(0, 5, 7, 3);
+    reset_territory();
+    TCHECK(terr_at(7, 3).territory == 5);    // the base's own tile, distance 0
+    TCHECK(terr_at(6, 4).territory == -1);
+    // The ring overrules a claim proximity already made, rather than only
+    // filling in an unclaimed tile.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_base(1, 5, 5, 1);                   // adjacent to (4, 2) itself
+    terr_at(4, 2).climate = 0x40;
+    reset_territory();
+    TCHECK(terr_at(4, 2).territory == 5);
+
+    // ---- a base of faction ZERO claims like any other ----------------------
+    // The ownership base_find passes -1 as its faction_id_2, which excludes
+    // nothing. A zero there would exclude exactly the faction-zero bases.
+    terr_reset();
+    terr_base(0, 0, 4, 2);
+    reset_territory();
+    TCHECK(terr_at(4, 2).territory == 0);
+    TCHECK(terr_at(3, 1).territory == 0);
+    TCHECK(terr_at(8, 2).territory == -1);
+
+    // ---- the six tallies are CLEARED, not accumulated into -----------------
+    terr_reset();
+    terr_poison_tallies();
+    // A ninth faction row that would tally every tile if the loops reached it.
+    g_terr_world.players_data[8].flags = PFLAG_MAP_REVEALED;
+    terr_base(0, 2, 4, 2);
+    reset_territory();
+    // Exactly the answer a clean world gives.
+    TCHECK(g_terr_world.players_data[2].unk_78[0] == 9);
+    TCHECK(g_terr_world.players_data[0].unk_78[0] == 55);
+    TCHECK(g_terr_world.players_data[0].unk_78[1] == 0);
+    TCHECK(g_terr_world.players_data[0].unk_79[0] == 0);
+    TCHECK(g_terr_world.players_data[7].unk_79[3] == 0);
+    TCHECK(g_terr_world.players_data[0].unk_80[0] == 0);
+    TCHECK(g_terr_world.players_data[0].unk_81[0] == 0);
+    TCHECK(g_terr_world.players_data[0].unk_82[0] == 0);
+    TCHECK(g_terr_world.players_data[0].unk_83[0] == 0);
+    TCHECK(g_terr_world.players_data[2].unk_82[0] == 1);
+    TCHECK(g_terr_world.continents[0].unk_3 == 1);
+    TCHECK(g_terr_world.continents[0].pods == 0);
+    TCHECK(g_terr_world.continents[3].unk_3 == 0);
+    TCHECK(g_terr_world.continents[3].pods == 0);
+    // The arrays either side of the six are not in the clear.
+    TCHECK(g_terr_world.players_data[0].unk_77[0] == 0x6666);
+    TCHECK(g_terr_world.players_data[0].region_base_plan[0] == 0x55);
+    TCHECK(g_terr_world.players_data[7].region_base_plan[127] == 0x55);
+    TCHECK(g_terr_world.continents[3].tile_count == 0x1234);
+    // Nor is the row past the last faction, nor the entry past the last
+    // region: every one of the four loops stops one short of them.
+    TCHECK(g_terr_world.players_data[8].unk_78[0] == TERR_POISON16);
+    TCHECK(g_terr_world.players_data[8].unk_79[0] == TERR_POISON16);
+    TCHECK(g_terr_world.players_data[8].unk_80[127] == TERR_POISON16);
+    TCHECK(g_terr_world.players_data[8].unk_82[127] == TERR_POISON8);
+    TCHECK(g_terr_world.continents[MaxContinentNum].unk_3 == 9);
+    TCHECK(g_terr_world.continents[MaxContinentNum].pods == 9);
+
+    // ---- the walk's shape --------------------------------------------------
+    // One Map entry per tile visited, never reset between rows. On an odd
+    // width an odd row visits one tile fewer, so the walk covers 60 rather
+    // than 64 and the last four entries are never reached.
+    terr_reset();
+    g_terr_world.lon_bounds = 15;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[0].unk_78[0] == 60);
+    // A zero-height map walks nothing at all.
+    terr_reset();
+    g_terr_world.lat_bounds = 0;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[0].unk_78[0] == 0);
+    TCHECK(g_terr_world.continents[0].unk_3 == 0);
+}
+
+void test_reset_territory_tallies() {
+    TerrSeams seams;
+
+    // ---- the visibility tally, and the three ways into it ------------------
+    // Faction 2 sees four tiles.
+    terr_reset();
+    terr_at(0, 0).visibility = 0x04;
+    terr_at(2, 0).visibility = 0x04;
+    terr_at(4, 0).visibility = 0x0C;
+    terr_at(6, 0).visibility = 0x04;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[2].unk_79[0] == 4);
+    TCHECK(g_terr_world.players_data[3].unk_79[0] == 1);
+    TCHECK(g_terr_world.players_data[1].unk_79[0] == 0);
+    // Faction zero is outside the loop, which starts at one.
+    terr_reset();
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            terr_at(x, y).visibility = 0xFF;
+        }
+    }
+    reset_territory();
+    TCHECK(g_terr_world.players_data[0].unk_79[0] == 0);
+    TCHECK(g_terr_world.players_data[1].unk_79[0] == 64);
+    TCHECK(g_terr_world.players_data[7].unk_79[0] == 64);
+    // A revealed map counts every tile without any visibility bit.
+    terr_reset();
+    g_terr_world.players_data[3].flags = PFLAG_MAP_REVEALED;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[3].unk_79[0] == 64);
+    TCHECK(g_terr_world.players_data[2].unk_79[0] == 0);
+    // The objectives strategy SUBSTITUTES a different question: it counts
+    // BIT_SUPPLY_REMOVE tiles and stops counting visible ones.
+    terr_reset();
+    g_terr_world.players_data[3].flags =
+        PFLAG_STRAT_SEARCH_OBJECTIVES | PFLAG_MAP_REVEALED;
+    terr_at(0, 0).bit = BIT_SUPPLY_REMOVE;
+    terr_at(2, 0).bit = BIT_SUPPLY_REMOVE;
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            terr_at(x, y).visibility = 0xFF;
+        }
+    }
+    reset_territory();
+    TCHECK(g_terr_world.players_data[3].unk_79[0] == 2);
+    TCHECK(g_terr_world.players_data[2].unk_79[0] == 64);
+
+    // ---- the quality tallies -----------------------------------------------
+    // Wet, not rocky, no fungus. Everything else in the fixture is arid.
+    terr_reset();
+    terr_at(0, 0).climate = 0x60 | RAINFALL_MOIST;
+    terr_at(2, 0).climate = 0x60 | RAINFALL_RAINY;
+    terr_at(4, 0).climate = 0x60 | RAINFALL_MOIST;
+    terr_at(4, 0).val3 = ROCKINESS_ROCKY << 6;         // rocky: not counted
+    terr_at(6, 0).climate = 0x60 | RAINFALL_MOIST;
+    terr_at(6, 0).val3 = ROCKINESS_ROLLING << 6;       // rolling: counted
+    terr_at(8, 0).climate = 0x60 | RAINFALL_MOIST;
+    terr_at(8, 0).bit = BIT_FUNGUS;                    // fungus: not counted
+    terr_at(10, 0).climate = 0x60 | RAINFALL_MOIST;
+    terr_at(10, 0).bit = BIT_BASE_RADIUS;              // counted, and again
+    reset_territory();
+    TCHECK(g_terr_world.players_data[0].unk_80[0] == 4);
+    TCHECK(g_terr_world.players_data[0].unk_81[0] == 1);
+    // They follow the owner, not faction zero.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).climate = 0x60 | RAINFALL_MOIST;
+    terr_at(4, 2).bit |= BIT_BASE_RADIUS;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[2].unk_80[0] == 1);
+    TCHECK(g_terr_world.players_data[2].unk_81[0] == 1);
+    TCHECK(g_terr_world.players_data[0].unk_80[0] == 0);
+
+    // ---- everything is indexed by the tile's own region --------------------
+    terr_reset();
+    terr_at(0, 0).region = 7;
+    terr_at(2, 0).region = 7;
+    terr_at(0, 0).climate = 0x60 | RAINFALL_MOIST;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[0].unk_78[7] == 2);
+    TCHECK(g_terr_world.players_data[0].unk_78[0] == 62);
+    TCHECK(g_terr_world.players_data[0].unk_80[7] == 1);
+    TCHECK(g_terr_world.players_data[0].unk_80[0] == 0);
+    TCHECK(g_terr_world.continents[7].unk_3 == 1);
+
+    // ---- the site score ----------------------------------------------------
+    // A tile already inside a base radius is not scored at all, and its zero
+    // is what the region maximum sees.
+    terr_reset();
+    for (int y = 0; y < 8; y++) {
+        for (int x = y & 1; x < 16; x += 2) {
+            terr_at(x, y).bit = BIT_BASE_RADIUS;
+        }
+    }
+    reset_territory();
+    TCHECK(g_terr_world.continents[0].unk_3 == 0);
+    // The stored score is used when there is one; the maximum over the region
+    // is what lands in the Continent.
+    terr_reset();
+    terr_at(0, 0).val2 = 0x70;
+    terr_at(2, 0).val2 = 0x30;
+    reset_territory();
+    TCHECK(g_terr_world.continents[0].unk_3 == 7);
+    TCHECK(terr_at(0, 0).val2 == 0x70);            // untouched, not rescored
+    // A stored score of zero is computed and CACHED with site_set, so the
+    // nibble is written back.
+    terr_reset();
+    terr_at(0, 0).val2 = 0x00;
+    reset_territory();
+    TCHECK((terr_at(0, 0).val2 >> 4) != 0);
+    TCHECK(g_terr_world.continents[0].unk_3 == (terr_at(0, 0).val2 >> 4u));
+    TCHECK((terr_at(0, 0).val2 & 0x0F) == 0);      // low nibble preserved
+    // The owner's per-region best is the maximum of its OWN tiles only.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).val2 = 0x50;
+    terr_at(0, 0).val2 = 0xF0;                     // unclaimed, and higher
+    reset_territory();
+    TCHECK(g_terr_world.players_data[2].unk_82[0] == 5);
+    TCHECK(g_terr_world.continents[0].unk_3 == 15);
+    // Faction zero never gets one, even though unclaimed tiles tally under it.
+    TCHECK(g_terr_world.players_data[0].unk_82[0] == 0);
+}
+
+void test_reset_territory_sites() {
+    TerrSeams seams;
+
+    // ---- supply pods are counted per region and per owner ------------------
+    terr_reset();
+    terr_at(0, 0).bit = BIT_UNK_4000000;
+    terr_at(2, 0).bit = BIT_UNK_4000000;
+    terr_at(4, 0).bit = BIT_UNK_4000000 | BIT_SUPPLY_REMOVE;  // already opened
+    reset_territory();
+    TCHECK(g_terr_world.continents[0].pods == 2);
+    TCHECK(g_terr_world.players_data[0].unk_83[0] == 2);
+
+    // ---- an owned pod asks its owner for a site ----------------------------
+    // The owner must be able to see the tile, or be an AI above difficulty 3.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).bit |= BIT_UNK_4000000;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[2].unk_83[0] == 1);
+    TCHECK(!at_site(2, 3, 4, 2));                  // invisible, easy AI: no
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).bit |= BIT_UNK_4000000;
+    terr_at(4, 2).visibility = 0x04;
+    reset_territory();
+    TCHECK(at_site(2, 3, 4, 2));
+    TCHECK(g_terr_world.players_data[2].sites[0].priority == 1);
+    TCHECK(!at_site(1, 3, 4, 2));                  // and only for the owner
+    // An unseen tile still reaches the site list for an AI above difficulty 3.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).bit |= BIT_UNK_4000000;
+    g_terr_world.diff_level = 4;
+    reset_territory();
+    TCHECK(at_site(2, 3, 4, 2));
+    // ... but not for a human faction, whatever the difficulty.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).bit |= BIT_UNK_4000000;
+    g_terr_world.diff_level = 4;
+    g_terr_world.faction_status[0] = 0x04;         // faction 2 is human
+    reset_territory();
+    TCHECK(!at_site(2, 3, 4, 2));
+    // ... and difficulty 3 is not ABOVE 3, which is where the edge is.
+    terr_reset();
+    terr_base(0, 2, 4, 2);
+    terr_at(4, 2).bit |= BIT_UNK_4000000;
+    g_terr_world.diff_level = 3;
+    reset_territory();
+    TCHECK(!at_site(2, 3, 4, 2));
+
+    // ---- an unclaimed pod asks every faction with a base in the region -----
+    // Faction 2's base at (2, 0) is vector_dist 4 from the pod at (8, 0):
+    // that is at least territory_max_dist_base of 2 and at most twice it,
+    // which is the window that arm requires. Faction 3 has no base in the
+    // region and is not asked at all.
+    terr_reset();
+    terr_base(0, 2, 2, 0);
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    g_terr_world.players_data[3].region_total_bases[0] = 0;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    reset_territory();
+    TCHECK(terr_at(8, 0).territory == -1);         // genuinely unclaimed
+    TCHECK(at_site(2, 3, 8, 0));
+    TCHECK(!at_site(3, 3, 8, 0));
+    // Without the region base count the faction is skipped outright.
+    terr_reset();
+    terr_base(0, 2, 2, 0);
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    reset_territory();
+    TCHECK(!at_site(2, 3, 8, 0));
+    // Nor is an unseen tile offered on an easy difficulty; 3 is not above 3.
+    terr_reset();
+    terr_base(0, 2, 2, 0);
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    g_terr_world.diff_level = 3;
+    reset_territory();
+    TCHECK(!at_site(2, 3, 8, 0));
+    g_terr_world.diff_level = 4;
+    reset_territory();
+    TCHECK(at_site(2, 3, 8, 0));
+
+    // ---- the loop's own two ends -------------------------------------------
+    // It starts at faction ONE. Faction zero holds a base in the region and
+    // can see the tile, and is still never asked.
+    terr_reset();
+    terr_base(0, 0, 2, 0);
+    g_terr_world.players_data[0].region_total_bases[0] = 1;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    reset_territory();
+    TCHECK(terr_at(8, 0).territory == -1);
+    TCHECK(!at_site(0, 3, 8, 0));
+    // ... and it stops at faction SEVEN. The synthetic ninth row - which the
+    // game has no such faction for - is given a base in the region and a base
+    // of its own inside the window, so reaching it would leave a mark.
+    terr_reset();
+    terr_base(0, 2, 2, 0);
+    terr_base(1, 8, 14, 0);
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    g_terr_world.players_data[8].region_total_bases[0] = 1;
+    g_terr_world.diff_level = 4;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    reset_territory();
+    TCHECK(at_site(2, 3, 8, 0));
+    TCHECK(g_terr_world.players_data[8].sites[0].type == 0);
+
+    // ---- the inner base_find asks for THIS faction's bases only ------------
+    // A faction-zero base one tile from the pod is nearer than faction two's,
+    // and would take BaseFindDist below the window if it were allowed to
+    // match. It also owns the tile, and owner zero still takes the
+    // every-faction branch.
+    terr_reset();
+    terr_base(0, 2, 2, 0);
+    terr_base(1, 0, 6, 0);
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    reset_territory();
+    TCHECK(terr_at(8, 0).territory == 0);
+    TCHECK(at_site(2, 3, 8, 0));
+
+    // ---- the window's lower edge is inclusive ------------------------------
+    // A base at exactly territory_max_dist_base still asks for the site; the
+    // tile it is that far from is not one it has claimed.
+    terr_reset();
+    terr_base(0, 2, 6, 2);                         // vector_dist 2 from (8, 0)
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    reset_territory();
+    TCHECK(terr_at(8, 0).territory == -1);
+    TCHECK(at_site(2, 3, 8, 0));
+    // Too close: a base within territory_max_dist_base of the pod would have
+    // claimed the region already, so no site is requested.
+    terr_reset();
+    terr_base(0, 2, 6, 0);                         // vector_dist 1 from (8, 0)
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    reset_territory();
+    TCHECK(terr_at(8, 0).territory == 2);
+    // Too far: beyond twice the distance and it is somebody else's problem.
+    terr_reset();
+    terr_base(0, 2, 0, 0);
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    terr_at(14, 6).bit = BIT_UNK_4000000;
+    terr_at(14, 6).visibility = 0xFF;
+    reset_territory();
+    TCHECK(!at_site(2, 3, 14, 6));
+    // Already holding a site here: not asked again. The pre-installed site
+    // carries priority 0, which add_site would raise to 1 if it ever ran, so
+    // the assertion can tell the guard from its absence.
+    terr_reset();
+    terr_base(0, 2, 2, 0);
+    g_terr_world.players_data[2].region_total_bases[0] = 1;
+    terr_at(8, 0).bit = BIT_UNK_4000000;
+    terr_at(8, 0).visibility = 0xFF;
+    g_terr_world.players_data[2].sites[0].type = 3;
+    g_terr_world.players_data[2].sites[0].priority = 0;
+    g_terr_world.players_data[2].sites[0].x = 8;
+    g_terr_world.players_data[2].sites[0].y = 0;
+    reset_territory();
+    TCHECK(g_terr_world.players_data[2].sites[0].priority == 0);  // untouched
+}
+
+#undef TCHECK
+
 }  // namespace
 
 int main() {
@@ -6143,6 +6776,9 @@ int main() {
     test_spot_base();
     test_spot_stack();
     test_spot_loc();
+    test_reset_territory_ownership();
+    test_reset_territory_tallies();
+    test_reset_territory_sites();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

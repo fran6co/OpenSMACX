@@ -1447,7 +1447,6 @@ P3,1620,0x00522F00,?do_fungal_towers@@YAXXZ,477,1,6,unrecovered,,,2,exact,exact,
 P2,16821,0x005230E0,?interlude@@YAXHPADHH@Z,3142,15,18,unrecovered,,,2,exact,entry_range,"void (__cdecl ?interlude@@YAXHPADHH@Z)(int interludeID, int8* lpszInput, int popupInitType, int)"
 P3,500,0x00523B50,?ascent@@YAXXZ,264,0,5,unrecovered,,,0,missing,missing,
 P3,2020,0x00523C60,?set_time_controls@@YAXXZ,361,2,0,unrecovered,,,2,exact,exact,
-P2,11720,0x00523DD0,?reset_territory@@YAXXZ,1074,11,7,unrecovered,,,2,exact,exact,
 P3,300,0x00524210,?climactic_changes@@YAXXZ,176,0,3,unrecovered,,,0,missing,missing,
 P3,210,0x005242C0,sub_5242c0,87,0,2,unrecovered,,,1,missing,exact,
 P3,0,0x00524320,sub_524320,27,0,0,unrecovered,,,0,missing,missing,

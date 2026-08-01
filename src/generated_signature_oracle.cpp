@@ -3577,7 +3577,7 @@ static bool verify_Console_update_data_00514880() {
 }
 
 // ?not_my_turn@@YAHXZ  (44 B)
-// recovered in src/game.cpp:53
+// recovered in src/game.cpp:262
 static bool verify_not_my_turn_0052dc70() {
     typedef int (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x0052DC70U);
@@ -4049,7 +4049,7 @@ static bool verify_desktop_update_0058ee50() {
 }
 
 // ?fill@GraphicWin@@QAEXH@Z  (246 B)
-// recovered in src/graphicwin.cpp:267
+// recovered in src/graphicwin.cpp:278
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5250() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -4330,7 +4330,7 @@ static bool verify_GraphicWin_fill_005d5440() {
 }
 
 // ?redraw@GraphicWin@@QAEXXZ  (244 B)
-// recovered in src/graphicwin.cpp:335
+// recovered in src/graphicwin.cpp:346
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_redraw_005d5a70() {
     typedef void (__thiscall *Callable)(void *);
