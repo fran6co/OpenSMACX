@@ -1,6 +1,6 @@
 {
- "baseline_unmeasured": 31,
- "baseline_unobserved": 141,
+ "baseline_unmeasured": 9,
+ "baseline_unobserved": 144,
  "functions": {
   "0x004066C0": {
    "name": "sub_4066c0",
@@ -18,7 +18,7 @@
   "0x00406E60": {
    "name": "??1Scroll@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
+   "reason": "the maximal wreck would not compile",
    "size": 248,
    "verdict": "NOT-MEASURED"
   },
@@ -47,16 +47,14 @@
   "0x004C6120": {
    "name": "??1Sound@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 205,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x004C6280": {
    "name": "?load@Sound@@QAEHPBD@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 225,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x004C66E0": {
    "name": "??0Wave@@QAE@XZ",
@@ -1276,79 +1274,69 @@
   "0x005D4CF0": {
    "name": "??0GraphicWin@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 230,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005D4EF0": {
    "name": "?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 443,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005D5250": {
    "name": "?fill@GraphicWin@@QAEXH@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 246,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005D5A70": {
    "name": "?redraw@GraphicWin@@QAEXXZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 244,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005D7210": {
    "name": "??0Buffer@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
+   "reason": "the maximal wreck would not compile",
    "size": 530,
    "verdict": "NOT-MEASURED"
   },
   "0x005D7470": {
    "name": "?close@Buffer@@QAEXXZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 501,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005D8000": {
    "name": "?set_clip@Buffer@@QAEHPAURECT@@@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 499,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005DCF40": {
    "name": "?write_l@Buffer@@QAEHPADPAURECT@@H@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 214,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005DD130": {
    "name": "?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 282,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005DE8F0": {
    "name": "?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 290,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005EB3D0": {
    "name": "??0Win@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 621,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x005FCA30": {
    "name": "?do_non_input@@YAXXZ",
@@ -1381,37 +1369,33 @@
   "0x00605370": {
    "name": "?close@Scroll@@QAEXXZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 350,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x00606C50": {
    "name": "?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 590,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x00606F30": {
    "name": "??0BaseButton@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 291,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x006070C0": {
    "name": "?close@BaseButton@@QAEXXZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
+   "reason": "the maximal wreck would not compile",
    "size": 208,
    "verdict": "NOT-MEASURED"
   },
   "0x00607210": {
    "name": "?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 322,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x00608E10": {
    "name": "??1Dialog@@QAE@XZ",
@@ -1422,23 +1406,20 @@
   "0x00618F40": {
    "name": "?init@Font@@QAEHPADHH@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 390,
-   "verdict": "NOT-MEASURED"
+   "verdict": "UNOBSERVED"
   },
   "0x006190D0": {
    "name": "?init@Font@@QAEHPADPADHH@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 348,
-   "verdict": "NOT-MEASURED"
+   "verdict": "UNOBSERVED"
   },
   "0x00619370": {
    "name": "?find_line_break_l@Font@@QAEHPADPAHH@Z",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 567,
-   "verdict": "NOT-MEASURED"
+   "verdict": "UNOBSERVED"
   },
   "0x00628430": {
    "name": "?open_read@Filemap@@QAEHPADH@Z",
@@ -1461,23 +1442,20 @@
   "0x0062BA80": {
    "name": "??0AutoSound@@QAE@XZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 360,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x0062BBF0": {
    "name": "?close@AutoSound@@QAEXXZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 333,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   },
   "0x0062BDD0": {
    "name": "?close2@AutoSound@@QAEXXZ",
    "other": [],
-   "reason": "source compiles into more than one test executable",
    "size": 333,
-   "verdict": "NOT-MEASURED"
+   "verdict": "OBSERVED"
   }
  },
  "measured_on": "2026-08-01",

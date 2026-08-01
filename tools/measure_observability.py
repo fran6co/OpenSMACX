@@ -122,6 +122,10 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=600.0)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--sources", nargs="*")
+    parser.add_argument("--target",
+                        help="test executable to build and run, for sources "
+                             "compiled into more than one; without it those "
+                             "functions cannot be measured at all")
     arguments = parser.parse_args()
 
     rows = {r["address"].lower(): r for r in
@@ -167,7 +171,16 @@ def main() -> int:
         resolution = argparse.Namespace(
             build_dir=arguments.build_dir, target=None, test=None,
             source=str(path))
-        problem = mutation.resolve_target(resolution)
+        if arguments.target:
+            # 25 recovered functions live in sources compiled into three test
+            # executables each - buffer.cpp reaches gameplay, leaf AND oracle -
+            # so resolve_target correctly refuses to guess and they were simply
+            # unmeasurable. A function is observed if ANY suite observes it, so
+            # the caller names one and the runs are unioned.
+            resolution.target = resolution.test = arguments.target
+            problem = None
+        else:
+            problem = mutation.resolve_target(resolution)
         if problem or not resolution.target:
             print(f"  skipped {row['address']}: {problem or 'no target'}",
                   flush=True)
