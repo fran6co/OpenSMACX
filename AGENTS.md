@@ -49,7 +49,7 @@ against it, never to trust directly.
    leaf** — `callgraph.json` records only direct `call rel32`, so a body that
    dispatches through `call dword ptr [edx+0x64]` reads as a perfect leaf with
    every callee resolved. Measured over the zero-callee-seam population,
-   **42.9% of functions and 32.7% of bytes contain a call site the callgraph
+   **43.0% of functions and 32.7% of bytes contain a call site the callgraph
    never counted**, so its seam counts are a lower bound rather than an
    estimate. (The 35.7%/50.7% published here on 2026-08-01 was measured over a
    population its own seam filter never filtered — `callgraph.json` is an edge

@@ -37,6 +37,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from generator_support import parse_body_ranges  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_DEF = REPO_ROOT / "src" / "OpenSMACX.def"
@@ -226,10 +229,14 @@ def audit(functions_path, def_path, exe_path):
         if disassembler:
             body, decoder = disassembler
             try:
-                start = int(row["address"], 16)
-                end = int(row["end_address"], 16)
-                mnemonics = {one.mnemonic
-                             for one in decoder.disasm(body(start, end), start)}
+                # Every span, not address..end_address. 416 catalogued
+                # functions are split, and for all 416 the contiguous read is
+                # SHORT of the body - so an `idiv` in an outlined cold block
+                # was invisible and the finding was ranked `unranked`.
+                mnemonics = set()
+                for start, end in parse_body_ranges(row["body_ranges"]):
+                    mnemonics.update(one.mnemonic for one
+                                     in decoder.disasm(body(start, end), start))
                 if {"idiv", "cdq"} & mnemonics:
                     kind = "signed_divide"
                 elif "sar" in mnemonics:

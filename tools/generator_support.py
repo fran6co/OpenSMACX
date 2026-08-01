@@ -208,3 +208,40 @@ def identifier_of_global(name: str) -> str:
     """
     text = name[2:] if name.startswith("g_") else name
     return re.sub(r"__+", "_", text.lower())
+
+
+def parse_body_ranges(value: str):
+    """A function's spans, which are NOT `address .. end_address`.
+
+    416 of the 6,000 catalogued functions are split, and for every one of them
+    the entry-to-end_address span is SHORT of the real body - the cold blocks
+    were outlined to 0x0065xxxx. The worst measured case is
+    `?base_production@@YAXXZ` at 0x004F07E0, whose second span
+    0x0065C8A0-0x0065D0D6 holds 2,102 bytes that a contiguous read never sees.
+    Anything scanning for a property of the body - a signed divide, an indirect
+    call - therefore answers over part of it and reports a false negative.
+
+    Five near-copies of this parser already exist in tools/, differing in
+    whether they sort, merge or validate. This is the canonical one for new
+    callers: it validates, sorts and merges, so overlapping spans cannot make a
+    scanner count the same instruction twice. The five are deliberately NOT
+    migrated here - they are behaviourally distinct and consolidating them is a
+    change that needs its own before-and-after.
+    """
+    ranges = []
+    for item in (value or "").split(";"):
+        item = item.strip()
+        if not item:
+            continue
+        start, _, end = item.partition("-")
+        start_value, end_value = int(start, 0), int(end, 0)
+        if end_value <= start_value:
+            raise ValueError(f"invalid function body range: {item!r}")
+        ranges.append((start_value, end_value))
+    merged = []
+    for start, end in sorted(ranges):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged

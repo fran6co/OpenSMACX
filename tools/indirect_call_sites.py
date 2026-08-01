@@ -25,6 +25,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from generator_support import parse_body_ranges  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_CALLGRAPH = REPO_ROOT / "docs" / "recovery" / "callgraph.json"
@@ -64,6 +67,28 @@ def indirect_sites(body, decoder, start, end):
         if operand.startswith("0x"):
             continue
         found.append((one.address, f"{one.mnemonic} {operand}"))
+    return found
+
+
+def body_spans(row):
+    """Every span of this function, falling back to the contiguous read.
+
+    416 catalogued functions are split and for all 416 `end_address` stops
+    short of the real body - the cold blocks were outlined to 0x0065xxxx, up to
+    2,102 bytes away. Scanning only the first span answers "does this function
+    dispatch indirectly?" over part of it, and a miss there is a false LEAF,
+    which is the exact error this tool exists to prevent.
+    """
+    spans = parse_body_ranges(row.get("body_ranges", ""))
+    if spans:
+        return spans
+    return [(int(row["address"], 16), int(row["end_address"], 16))]
+
+
+def scan_row(body, decoder, row):
+    found = []
+    for start, end in body_spans(row):
+        found.extend(indirect_sites(body, decoder, start, end))
     return found
 
 
@@ -148,8 +173,7 @@ def main():
                 print(f"{key}: not in the catalogue", file=sys.stderr)
                 worst = 2
                 continue
-            sites = indirect_sites(body, decoder, int(row["address"], 16),
-                                   int(row["end_address"], 16))
+            sites = scan_row(body, decoder, row)
             print(f"{row['address']} {row['name']}  "
                   f"callgraph callees {row.get('call_target_count', '?')}")
             if not sites:
@@ -164,12 +188,14 @@ def main():
     with_indirect = without = 0
     bytes_with = bytes_total = 0
     for row in population:
-        start, end = int(row["address"], 16), int(row["end_address"], 16)
-        size = end - start
-        if not body(start, end):
+        spans = body_spans(row)
+        # The real size, summed over the spans - not end_address - address,
+        # which understates every split body.
+        size = sum(end - start for start, end in spans)
+        if not any(body(start, end) for start, end in spans):
             continue
         bytes_total += size
-        if indirect_sites(body, decoder, start, end):
+        if scan_row(body, decoder, row):
             with_indirect += 1
             bytes_with += size
         else:

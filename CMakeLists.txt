@@ -1295,6 +1295,50 @@ if(BUILD_TESTING)
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
 
+    # THE REST OF THE DERIVED ARTIFACTS, wired 2026-08-01. Each of these four
+    # tools had exactly one mention in this file and it was the TEST file, not
+    # the tool - so the tests exercised the tool's logic while nothing ever
+    # asked whether the committed output was still current. The comment below
+    # diagnosed precisely this and then wired two of six.
+    #
+    # Measured before wiring, because a check that cannot fail is worse than no
+    # check: each was damaged and each refused. proven.csv with a row removed,
+    # generated_signature_oracle.cpp with a comment edited, class-size-bounds.csv
+    # with a row removed, and EXCLUSIONS.md with one number in the ```measured
+    # fence changed - all four exit 1. Costs 0.05 s, 0.09 s, 0.24 s and 1.92 s,
+    # none of them near the 12.3 s critical path.
+    #
+    # These WILL go red when a generator's committed output lags a source edit -
+    # that is the entire point, and it has already happened once today: adding
+    # two #include lines to game.cpp moved a function two lines and staled the
+    # generated provenance comment. Regenerate and commit the output with the
+    # change that caused it.
+    add_test(NAME proven-functions-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_proven_functions.py"
+            --check
+    )
+    add_test(NAME signature-oracles-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_signature_oracles.py"
+            --check
+    )
+    add_test(NAME class-size-bounds-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_class_size_bounds.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # --exe named explicitly for the same reason as the signedness audit: with
+    # no image this compares the document against nothing, and it now returns 2
+    # rather than reporting that as agreement.
+    add_test(NAME exclusions-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/measure_exclusions.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+
     # Four artifacts under docs/recovery/ are DERIVED, and promotion regenerates
     # none of them. Each has a `--check`, but only the signedness one above was
     # reachable from any build path: the tests registered for the other two
