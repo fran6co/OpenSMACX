@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2575,
+      "source_complete": 2576,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2785
+      "unrecovered": 2784
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,9 +67,9 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 224038,
-          "functions": 2575,
-          "percent_of_lift_scope_bytes": 9.29
+          "bytes": 224600,
+          "functions": 2576,
+          "percent_of_lift_scope_bytes": 9.32
         },
         "source_in_progress": {
           "bytes": 13083,
@@ -82,9 +82,9 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 1984999,
-          "functions": 2785,
-          "percent_of_lift_scope_bytes": 82.35
+          "bytes": 1984437,
+          "functions": 2784,
+          "percent_of_lift_scope_bytes": 82.33
         }
       },
       "catalogued": {
@@ -103,39 +103,39 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2186279,
+        "bytes": 2185717,
         "direction": "must go down",
-        "functions": 3098,
+        "functions": 3097,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
-        "percent_of_lift_scope_bytes": 90.71
+        "percent_of_lift_scope_bytes": 90.68
       },
       "proven_recovered": {
         "bytes": 7879,
         "denominator": "recovered",
         "functions": 89,
         "meaning": "recovered bytes an oracle has executed against the original and found to agree",
-        "percent_of_recovered_bytes": 3.52
+        "percent_of_recovered_bytes": 3.51
       },
       "recovered": {
-        "bytes": 224038,
-        "functions": 2575,
-        "percent_of_lift_scope_bytes": 9.29
+        "bytes": 224600,
+        "functions": 2576,
+        "percent_of_lift_scope_bytes": 9.32
       },
       "unproven_by_shape": {
         "loop": {
-          "bytes": 135192,
-          "functions": 455,
-          "percent_of_unproven_bytes": 62.54
+          "bytes": 135754,
+          "functions": 456,
+          "percent_of_unproven_bytes": 62.64
         },
         "seam_forwarding": {
           "bytes": 14707,
           "functions": 761,
-          "percent_of_unproven_bytes": 6.8
+          "percent_of_unproven_bytes": 6.79
         },
         "straight_line": {
           "bytes": 65728,
           "functions": 1258,
-          "percent_of_unproven_bytes": 30.41
+          "percent_of_unproven_bytes": 30.33
         },
         "x87": {
           "bytes": 532,
@@ -144,12 +144,12 @@
         }
       },
       "unproven_recovered": {
-        "bytes": 216159,
+        "bytes": 216721,
         "denominator": "recovered",
         "direction": "must go down",
-        "functions": 2486,
+        "functions": 2487,
         "meaning": "recovered bytes never executed against the original: declared complete, never demonstrated equivalent",
-        "percent_of_recovered_bytes": 96.48
+        "percent_of_recovered_bytes": 96.49
       }
     },
     "total": 6000,
@@ -166,8 +166,8 @@
     "source_directory": "src"
   },
   "redirects": {
-    "definitions": 485,
-    "exact_name_matches": 166,
+    "definitions": 486,
+    "exact_name_matches": 167,
     "unmatched": [
       {
         "location": "src/OpenSMACX.def:49",
@@ -1448,9 +1448,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2521,
-    "matched_function_starts": 2521,
-    "unique_addresses": 2521,
+    "annotations": 2522,
+    "matched_function_starts": 2522,
+    "unique_addresses": 2522,
     "unmatched_addresses": []
   },
   "source_bindings": {

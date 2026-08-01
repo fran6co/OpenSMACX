@@ -1626,6 +1626,7 @@ address,name,shape
 0x00564EB0,?good_sensor@@YAHHHH@Z,loop
 0x00565320,?can_terraform@@YAHHHHHH@Z,loop
 0x00565F20,?compute_odds@@YAHHHHHH@Z,loop
+0x005665D0,?alien_base@@YAHHHH@Z,loop
 0x0056B320,?get_there@@YAHHHH@Z,straight_line
 0x0056B480,?coast_or_border@@YAHHHHHH@Z,loop
 0x00579770,?rnd@@YAHHPAD@Z,straight_line
