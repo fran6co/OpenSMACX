@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for tools/generate_leaf_manifest.py."""
 
+from pathlib import Path
 import os
 import sys
 import tempfile
@@ -139,3 +140,45 @@ class RealTreeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UnregisteredCaseTests(unittest.TestCase):
+    """The manifest counts LEAF_CASE lines, so a case that is written and never
+    registered is invisible: the derived count and the run-time assertion agree
+    with each other and the test never runs."""
+
+    def test_a_defined_but_unregistered_case_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = family_file(directory, "alpha",
+                               "void test_registered() {}\n"
+                               "LEAF_CASE(LEAF_APPEND, test_registered);\n"
+                               "void test_forgotten() {}\n")
+            with self.assertRaises(gen.ManifestError) as caught:
+                gen.rows_for([path])
+            self.assertIn("test_forgotten", str(caught.exception))
+            self.assertNotIn("test_registered", str(caught.exception))
+
+    def test_a_fully_registered_family_is_accepted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = family_file(directory, "alpha",
+                               "void test_a() {}\nLEAF_CASE(LEAF_APPEND, test_a);\n"
+                               "void test_b() {}\nLEAF_CASE(LEAF_APPEND, test_b);\n")
+            self.assertEqual(gen.rows_for([path]), [("alpha", 2)])
+
+    def test_registering_without_defining_is_left_to_the_compiler(self):
+        # A LEAF_CASE naming a function that does not exist does not link, and
+        # the counting fixtures elsewhere in this file rely on being allowed to.
+        with tempfile.TemporaryDirectory() as directory:
+            path = family_file(directory, "alpha",
+                               "LEAF_CASE(LEAF_APPEND, test_declared_elsewhere);\n")
+            self.assertEqual(gen.rows_for([path]), [("alpha", 1)])
+
+    def test_the_real_leaf_tree_has_no_unregistered_case(self):
+        import glob
+        sources = sorted(glob.glob(str(
+            Path(gen.__file__).resolve().parent.parent / "tests" / "leaf"
+            / "*_tests.cpp")))
+        if not sources:
+            self.skipTest("tests/leaf is absent")
+        rows = gen.rows_for(sources)
+        self.assertEqual(sum(count for _, count in rows), 229)

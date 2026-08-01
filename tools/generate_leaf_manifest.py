@@ -26,6 +26,12 @@ import sys
 # disagreement, so this pattern stays deliberately literal.
 LEAF_CASE_RE = re.compile(r"^LEAF_CASE\(", re.MULTILINE)
 
+# Counting registrations alone cannot see a case that was written and never
+# registered, so the two sets are compared against each other.
+TEST_DEF_RE = re.compile(r"^void (test_[A-Za-z0-9_]+)\s*\(\s*\)", re.MULTILINE)
+LEAF_CASE_NAME_RE = re.compile(
+    r"^LEAF_CASE\([^,]+,\s*([A-Za-z0-9_]+)\s*\)", re.MULTILINE)
+
 LEAF_FAMILY_RE = re.compile(
     r"^#define\s+LEAF_FAMILY\s+\"([A-Za-z0-9_]+)\"\s*$", re.MULTILINE)
 
@@ -95,6 +101,24 @@ def rows_for(paths):
                 f"{path}: family {family!r} is already registered by "
                 f"{seen[family]}; two files cannot share a family name")
         seen[family] = path
+        # A case is counted by its LEAF_CASE line, so a `void test_x()` that
+        # was never registered is invisible: the derived count and the runtime
+        # assertion agree with each other, and the test simply never runs. That
+        # is the failure this whole manifest exists to prevent, one level down -
+        # both sides agreeing because neither looked. 229 == 229 today; nothing
+        # kept it that way.
+        defined = set(TEST_DEF_RE.findall(text))
+        registered = set(LEAF_CASE_NAME_RE.findall(text))
+        unregistered = sorted(defined - registered)
+        if unregistered:
+            raise ManifestError(
+                f"{path}: defined but never registered, so it would not run: "
+                + ", ".join(unregistered)
+                + " - add LEAF_CASE(LEAF_APPEND, <name>); for each")
+        # Only this direction is checked. A LEAF_CASE naming a function that
+        # does not exist fails to compile, so the compiler already covers it -
+        # and minimal fixtures that register names without defining them are
+        # legitimate. Unregistered-but-defined is the half nothing else sees.
         rows.append((family, len(LEAF_CASE_RE.findall(text))))
     rows.sort()
     return rows
