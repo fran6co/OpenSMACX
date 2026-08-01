@@ -1,6 +1,6 @@
 {
- "baseline_unmeasured": 9,
- "baseline_unobserved": 144,
+ "baseline_unmeasured": 18,
+ "baseline_unobserved": 143,
  "functions": {
   "0x004066C0": {
    "name": "sub_4066c0",
@@ -77,8 +77,9 @@
   "0x004C6CE0": {
    "name": "?load@Wave@@QAEHXZ",
    "other": [],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 204,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x004C7670": {
    "name": "??1Ambience@@QAE@XZ",
@@ -90,8 +91,9 @@
   "0x004C8460": {
    "name": "??0Ambience@@QAE@XZ",
    "other": [],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 230,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x004C9420": {
    "name": "?terraform_cost@@YAHHHH@Z",
@@ -227,8 +229,9 @@
    "other": [
     "named-in-tests"
    ],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 1530,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x004E9B70": {
    "name": "?base_nutrient@@YAXXZ",
@@ -367,8 +370,9 @@
    "other": [
     "generated-oracle"
    ],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 259,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x00523DD0": {
    "name": "?reset_territory@@YAXXZ",
@@ -651,14 +655,16 @@
   "0x0058FD90": {
    "name": "?unlock@SquareLock@@QAEXH@Z",
    "other": [],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 231,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x0058FE80": {
    "name": "?lock@SquareLock@@QAEHHHHH@Z",
    "other": [],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 232,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x00590300": {
    "name": "?lock@Lock@@QAEHHHHHHHH@Z",
@@ -1009,8 +1015,9 @@
    "other": [
     "named-in-tests"
    ],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 270,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x005BFFA0": {
    "name": "?veh_lift@@YAXH@Z",
@@ -1025,8 +1032,9 @@
    "other": [
     "named-in-tests"
    ],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 284,
-   "verdict": "OBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x005C02D0": {
    "name": "?veh_clear@@YAXHHH@Z",
@@ -1130,8 +1138,9 @@
    "other": [
     "named-in-tests"
    ],
+   "reason": "the wrecked body faulted or hung; nothing observed it via an assertion",
    "size": 1509,
-   "verdict": "UNOBSERVED"
+   "verdict": "NOT-MEASURED"
   },
   "0x005C55C0": {
    "name": "?world_analysis@@YAXXZ",

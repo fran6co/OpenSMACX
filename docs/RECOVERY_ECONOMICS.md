@@ -267,10 +267,10 @@ running the suite once. That is what made asking it over the corpus feasible:
 
 | | functions | |
 |---|---:|---|
-| measured (≥200 B, `source_complete`) | **215** | |
-| OBSERVED | 71 | at least one assertion depends on the body |
-| **UNOBSERVED** | **144 (67%)** | nothing distinguishes the body from a wrecked one |
-| not measurable | 9 | the maximal wreck will not compile |
+| measured (≥200 B, `source_complete`) | **206** | |
+| OBSERVED | 63 | an assertion depends on the body |
+| **UNOBSERVED** | **143 (69%)** | nothing distinguishes the body from a wrecked one |
+| not measurable | 18 | the wreck faulted, hung, or would not compile |
 
 **The first figure published here was 141/193, i.e. 73%, and it was too
 pessimistic.** 25 functions were excluded as unmeasurable because their source
@@ -289,8 +289,14 @@ The largest are `?battle_compute@@YAXHHPAHPAHH@Z` (10,020 B),
 `?read_faction@@YAXPAUPlayer@@H@Z` (3,739) and `?social_ai@@YAXHHHHHPAH@Z`
 (3,714).
 
-> **THESE COUNTS ARE BOUNDS, NOT MEASUREMENTS, and the error runs the
-> reassuring way.** A third audit found that `measure_observability.py` scores
+> **THE BOUNDS ARE NOW MEASUREMENTS, and the correction went the way the audit
+> predicted.** OBSERVED required only a non-zero exit, so a wrecked body that
+> FAULTED counted as observed with no assertion involved. Separating the two -
+> the suite prints its own failure tally when an assertion catches something,
+> and a fault prints none - moved **9 functions out of OBSERVED**, about 15% of
+> it. A fault proves the body RUNS; it never proved anything watches it.
+>
+> The earlier note, kept because the prediction was right: A third audit found that `measure_observability.py` scores
 > OBSERVED on ANY non-zero exit from the test binary, because
 > `mutate_and_verify.Harness.check()` returns FAILED for a segfault, an abort
 > and an assertion failure alike. A wrecked body that FAULTS - a nulled vtable

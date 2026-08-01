@@ -42,6 +42,7 @@ import argparse
 import csv
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -99,6 +100,48 @@ def wreck_candidates(lines, by_line):
         if len(order) == 1:
             return
         order = order[:len(order) // 2]
+
+
+CRASHED = "CRASHED"
+
+# The suite prints its own tally when an assertion fails. A body that faults
+# instead - a nulled vtable literal, a zeroed divisor - produces no tally at all.
+ASSERTION_REPORT = re.compile(r"\b\d+ failure\(s\)|\bfailures?:\s*\d+", re.I)
+
+
+def classify(harness, timeout):
+    """OBSERVED only when an ASSERTION failed, never when the body faulted.
+
+    check() returns FAILED for a segfault, an abort and an assertion failure
+    alike, so scoring any non-zero exit as OBSERVED counted a crash as coverage.
+    That made every published OBSERVED an upper bound and every UNOBSERVED a
+    lower bound - the error running the reassuring way, in numbers already
+    committed to a document.
+
+    A wrecked body that faults proves the code RUNS. It does not prove any
+    assertion examined it, and those are different claims. So the suite's own
+    failure tally decides: present means an assertion caught it, absent means
+    the process died before reporting and nothing was learned.
+    """
+    try:
+        done = subprocess.run(
+            ["ctest", "--no-tests=error", "--output-on-failure",
+             "-FS", "build_fresh", "-R", harness.test],
+            cwd=str(harness.build_dir), capture_output=True, text=True,
+            timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # A wreck can hang the suite - a zeroed loop bound will do it - and the
+        # suite then reports no assertion tally, so nothing was learned about
+        # whether anything observes this body. Not OBSERVED, and emphatically
+        # not a reason to abandon the census: letting this propagate is the
+        # identical defect fixed in verify_check_tests_observe earlier the same
+        # day, written again here in a different file within the hour.
+        return CRASHED
+    if done.returncode == 0:
+        return UNOBSERVED
+    if ASSERTION_REPORT.search(done.stdout + done.stderr):
+        return OBSERVED
+    return CRASHED
 
 
 def other_verification(row, tests_text, oracle_text, proven):
@@ -200,8 +243,7 @@ def main() -> int:
                 if status == mutation.STALE:
                     verdict = STALE
                 else:
-                    verdict = (UNOBSERVED if harness.check() == mutation.PASSED
-                               else OBSERVED)
+                    verdict = classify(harness, arguments.timeout)
                 break
         finally:
             path.write_text(original, encoding="utf-8")
@@ -220,7 +262,7 @@ def main() -> int:
         counts[item["verdict"]] = counts.get(item["verdict"], 0) + 1
     measured = counts.get(OBSERVED, 0) + counts.get(UNOBSERVED, 0)
     print("\nobservability:")
-    for verdict in (OBSERVED, UNOBSERVED, NO_COMPILE, STALE):
+    for verdict in (OBSERVED, UNOBSERVED, CRASHED, NO_COMPILE, STALE):
         if counts.get(verdict):
             print(f"  {verdict:12} {counts[verdict]}")
     if measured:
