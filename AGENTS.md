@@ -80,6 +80,14 @@ against it, never to trust directly.
    the order is **promote → classify → promote**. Promotion does not run
    `tools/classify_recovered_shapes.py`, and `summary.json` is computed from
    the `recovered-shapes.csv` it writes.
+   Promotion does not run the other three derived artifacts either. All four
+   take `--check`, which is cheaper than a gate lane, so run all four:
+   `classify_recovered_shapes.py`, `generate_signature_oracles.py`,
+   `export_proven_functions.py`, `derive_prototypes_from_names.py`.
+   `src/generated_signature_oracle.cpp` is the one that surprises people: it
+   records `// recovered in src/<file>:<line>`, so inserting a body **above**
+   a function it verifies — in the same file, without touching that function —
+   makes it stale and fails `signature-oracle-generator-tests` in *both* lanes.
 6. `tools/run_gate.py` - `verify-recovery-batch` in **both** presets, run
    concurrently, one log per lane; then
    `tools/mutate_and_verify.py <source> --address <addr>`
