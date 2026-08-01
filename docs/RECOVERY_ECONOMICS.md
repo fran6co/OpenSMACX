@@ -289,6 +289,17 @@ The largest are `?battle_compute@@YAXHHPAHPAHH@Z` (10,020 B),
 `?read_faction@@YAXPAUPlayer@@H@Z` (3,739) and `?social_ai@@YAXHHHHHPAH@Z`
 (3,714).
 
+> **THESE COUNTS ARE BOUNDS, NOT MEASUREMENTS, and the error runs the
+> reassuring way.** A third audit found that `measure_observability.py` scores
+> OBSERVED on ANY non-zero exit from the test binary, because
+> `mutate_and_verify.Harness.check()` returns FAILED for a segfault, an abort
+> and an assertion failure alike. A wrecked body that FAULTS - a nulled vtable
+> literal, a zeroed divisor - therefore counts as observed with no assertion
+> having examined it. So **71 OBSERVED is an upper bound and 144 UNOBSERVED a
+> lower bound**: the real coverage is no better than stated and may be worse.
+> Fixing it means having `check()` report why the run failed and scoring only an
+> assertion failure as OBSERVED. Until then, do not quote 67% as a measurement.
+
 **The instrument was validated in both directions before these numbers were
 believed**, because a prober that can only say UNOBSERVED is a broken tool that
 looks like a dramatic finding: `?repair_phase@@YAXH@Z` kills 118 of 126 mutants
