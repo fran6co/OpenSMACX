@@ -15461,6 +15461,719 @@ GAMEPLAY_CASE(test_alien_base_selection);
 
 #undef ABCHECK
 
+/*
+ * suggest_plan (0x0054ACC0): the base two factions are told to attack together.
+ *
+ * battle_plans (0x0054B1C0) is the only caller, and it asks twice with the
+ * arguments swapped, so the fixtures do the same rather than assuming one side
+ * is the player. Everything the body reaches is real - region_at, x_dist, both
+ * vector_dist overloads and both base_find overloads run against this world -
+ * so the numbers below are hand-derived from the disassembly and then asserted,
+ * not read back out of a run.
+ *
+ * Three things about the world are easy to get wrong and silent when wrong:
+ *
+ *   - x_target and base_id_atk_target must start at -1, not at the zero a
+ *     memset leaves. Zero is a real tile and base 0 is a real base, and the
+ *     body branches on both being negative.
+ *   - the map is 16x8 with MapLongitude 8, so a tile index is (x >> 1) + y * 8
+ *     and MapTiles is aimed at the middle of a 192-entry array. Two adjacent
+ *     even/odd x share one tile, and therefore one region.
+ *   - the candidate has to be VISIBLE to the first faction. Bases[i].visibility
+ *     is a faction bitfield, and a zeroed one hides every base from everyone.
+ */
+struct PlanWorld {
+    Map tiles[192];
+    Base bases[8];
+    PlayerData players_data[MaxPlayerNum];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    int base_count;
+    int base_find_dist;
+    int popup_faction;
+};
+
+PlanWorld g_plan_world;
+PlanWorld g_plan_saved;
+
+const int SP_LIVE = 64;                 // MapTiles aims here
+const int SP_REGION = 2;                // the region almost everything is in
+const int SP_REGION_FAR = 7;            // the pocket used for the penalty tests
+const int SP_PLANNER = 1;               // the faction whose plan is drawn up
+const int SP_PARTNER = 2;               // the other side of the conversation
+const int SP_ENEMY = 3;                 // owns the bases worth attacking
+const int SP_NEUTRAL = 0;               // at war with nobody, deliberately id 0
+const int SP_DIST_SENTINEL = 0x5A5A5A5A;
+const int SP_POPUP_SENTINEL = 0x3C3C3C3C;
+const unsigned SP_SEEN_BY_BOTH = (1u << SP_PLANNER) | (1u << SP_PARTNER);
+
+Map &sp_at(int x, int y) {
+    return g_plan_world.tiles[SP_LIVE + (x >> 1) + y * 8];
+}
+
+void sp_reset() {
+    std::memset(&g_plan_world, 0, sizeof(g_plan_world));
+    g_plan_world.tiles_ptr = &g_plan_world.tiles[SP_LIVE];
+    g_plan_world.longitude = 8;
+    g_plan_world.lon_bounds = 16;
+    g_plan_world.lat_bounds = 8;
+    g_plan_world.is_flat = 1;           // no x wrapping unless a test asks
+    g_plan_world.base_find_dist = SP_DIST_SENTINEL;
+    g_plan_world.popup_faction = SP_POPUP_SENTINEL;
+    for (int i = 0; i < 192; i++) {
+        g_plan_world.tiles[i].region = (uint8_t)SP_REGION;
+    }
+    for (int f = 0; f < MaxPlayerNum; f++) {
+        g_plan_world.players_data[f].x_target = -1;
+        g_plan_world.players_data[f].y_target = -1;
+        g_plan_world.players_data[f].base_id_atk_target = -1;
+    }
+}
+
+void sp_place_base(int base_id, int x, int y, int faction_id, unsigned visibility) {
+    Base &base = g_plan_world.bases[base_id];
+    base.x = (int16_t)x;
+    base.y = (int16_t)y;
+    base.faction_id_current = (uint8_t)faction_id;
+    base.visibility = (uint8_t)visibility;
+    if (g_plan_world.base_count <= base_id) {
+        g_plan_world.base_count = base_id + 1;
+    }
+}
+
+void sp_declare_war(int faction_id, int against) {
+    g_plan_world.players_data[faction_id].diplo_treaties[against] |= DTREATY_VENDETTA;
+}
+
+void sp_set_war_aim(int faction_id, int x, int y) {
+    g_plan_world.players_data[faction_id].x_target = x;
+    g_plan_world.players_data[faction_id].y_target = y;
+}
+
+/*
+ * The default two-sided war. One enemy base both factions can see, one base
+ * each for the planner and the partner, one region, no war aim:
+ *
+ *   base 0  enemy   (8, 4)   planner reach 5, partner reach 3, cost 8
+ *   base 1  planner (2, 0)
+ *   base 2  partner (12, 6)
+ */
+void sp_standard_world() {
+    sp_reset();
+    sp_place_base(0, 8, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(1, 2, 0, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 12, 6, SP_PARTNER, 1u << SP_PARTNER);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+}
+
+void sp_snapshot() {
+    std::memcpy(&g_plan_saved, &g_plan_world, sizeof(g_plan_world));
+}
+
+// BaseFindDist and the popup faction are the two published outputs. Everything
+// else has to come back untouched.
+bool sp_only_published_changed() {
+    PlanWorld now;
+    std::memcpy(&now, &g_plan_world, sizeof(now));
+    now.base_find_dist = g_plan_saved.base_find_dist;
+    now.popup_faction = g_plan_saved.popup_faction;
+    return std::memcmp(&now, &g_plan_saved, sizeof(now)) == 0;
+}
+
+#define SPCHECK(cond)                                                         \
+    do {                                                                      \
+        const bool plan_ok = (cond);                                          \
+        if (!plan_ok) {                                                       \
+            std::fprintf(stderr, "suggest_plan: line %d: %s\n", __LINE__,     \
+                         #cond);                                              \
+        }                                                                     \
+        expect(plan_ok);                                                      \
+    } while (0)
+
+class PlanSeams {
+ public:
+    PlanSeams()
+        : tiles_(&MapTiles, &g_plan_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_plan_world.longitude),
+          lon_(&MapLongitudeBounds, &g_plan_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_plan_world.lat_bounds),
+          flat_(&MapIsFlat, &g_plan_world.is_flat),
+          bases_(&Bases, g_plan_world.bases),
+          base_count_(&BaseCurrentCount, &g_plan_world.base_count),
+          base_dist_(&BaseFindDist, &g_plan_world.base_find_dist),
+          players_data_(&PlayersData, g_plan_world.players_data),
+          popup_(&PopupDialogFactionID, &g_plan_world.popup_faction) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<int> popup_;
+};
+
+void test_suggest_plan_eligibility() {
+    PlanSeams seams;
+
+    // ---- nothing to suggest, and the popup faction is published anyway ----
+    // The write happens before the base count is even read, which is what
+    // makes it safe for battle_plans to open a popup on a -1 answer.
+    sp_standard_world();
+    g_plan_world.base_count = 0;
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+    SPCHECK(g_plan_world.popup_faction == SP_PARTNER);
+    SPCHECK(g_plan_world.base_find_dist == SP_DIST_SENTINEL);   // no search ran
+    SPCHECK(sp_only_published_changed());
+
+    // It is the SECOND argument that is published, both ways round.
+    sp_standard_world();
+    suggest_plan(SP_PARTNER, SP_PLANNER);
+    SPCHECK(g_plan_world.popup_faction == SP_PLANNER);
+
+    // ---- the ordinary answer ---------------------------------------------
+    sp_standard_world();
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 3);        // partner reach, published
+    SPCHECK(g_plan_world.popup_faction == SP_PARTNER);
+    SPCHECK(sp_only_published_changed());
+
+    // ---- both factions have to be at vendetta already --------------------
+    // Neither gate reaches a search, so BaseFindDist is still the sentinel:
+    // that is how the fixture tells "skipped" from "searched and found none".
+    sp_standard_world();
+    g_plan_world.players_data[SP_PLANNER].diplo_treaties[SP_ENEMY] = 0;
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+    SPCHECK(g_plan_world.base_find_dist == SP_DIST_SENTINEL);
+    SPCHECK(sp_only_published_changed());
+
+    sp_standard_world();
+    g_plan_world.players_data[SP_PARTNER].diplo_treaties[SP_ENEMY] = 0;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+    SPCHECK(g_plan_world.base_find_dist == SP_DIST_SENTINEL);
+
+    // Any other treaty bit is not a vendetta.
+    sp_standard_world();
+    g_plan_world.players_data[SP_PLANNER].diplo_treaties[SP_ENEMY] =
+        DTREATY_TREATY | DTREATY_COMMLINK | DTREATY_WANT_REVENGE;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+
+    // ---- only the first faction's sight matters --------------------------
+    sp_standard_world();
+    g_plan_world.bases[0].visibility = (uint8_t)(1u << SP_PARTNER);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+    SPCHECK(g_plan_world.base_find_dist == SP_DIST_SENTINEL);
+
+    sp_standard_world();
+    g_plan_world.bases[0].visibility = (uint8_t)(1u << SP_PLANNER);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+
+    // ---- neither party's own base is ever the suggestion -----------------
+    sp_standard_world();
+    g_plan_world.bases[0].faction_id_current = (uint8_t)SP_PLANNER;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+
+    sp_standard_world();
+    g_plan_world.bases[0].faction_id_current = (uint8_t)SP_PARTNER;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+}
+GAMEPLAY_CASE(test_suggest_plan_eligibility);
+
+/*
+ * Three candidates whose two reach terms are deliberately traded off against
+ * each other, so that changing how the terms are weighted changes the answer:
+ *
+ *   base 0  enemy (8, 4)    planner 5, partner 3
+ *   base 3  enemy (2, 2)    planner 1, partner 8
+ *   base 4  enemy (12, 4)   planner 8, partner 1
+ */
+void sp_traded_world() {
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(4, 12, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+}
+
+void test_suggest_plan_reach_weighting() {
+    PlanSeams seams;
+
+    // ---- no war aim: the two reaches count once each ---------------------
+    //   base 0  5 + 3 = 8      base 3  1 + 8 = 9      base 4  8 + 1 = 9
+    sp_traded_world();
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 1);        // base 4 was examined last
+    SPCHECK(sp_only_published_changed());
+
+    // ---- a war aim doubles the FIRST faction's reach, not the partner's --
+    // The aim sits at (5, 3), which is two tiles from base 0 and two from
+    // base 3, so the distance term is equal for those two and only the
+    // doubling can decide between them:
+    //   base 0  4 + 5*2 + 3 = 17     base 3  4 + 1*2 + 8 = 14
+    //   base 4  10 + 8*2 + 1 = 27
+    sp_traded_world();
+    sp_set_war_aim(SP_PLANNER, 5, 3);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 3);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+
+    // The partner's own aim is never read.
+    sp_traded_world();
+    sp_set_war_aim(SP_PARTNER, 5, 3);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+
+    // ---- and the distance to the aim is worth twice the tile count -------
+    // With the aim on base 0's own tile the distance term is the only thing
+    // separating it from base 3, which is nearer its own faction:
+    //   base 0  0 + 10 + 3 = 13     base 3  10 + 2 + 8 = 20
+    //   base 4  6 + 16 + 1 = 23
+    sp_traded_world();
+    sp_set_war_aim(SP_PLANNER, 8, 4);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+}
+GAMEPLAY_CASE(test_suggest_plan_reach_weighting);
+
+/*
+ * A pocket of a second region along y == 4, x < 8, holding one candidate and
+ * optionally a base for each faction. Everything else stays in region 2.
+ *
+ *   base 0  enemy   (14, 0)  region 2   planner 9, partner 5, cost 14
+ *   base 1  planner (2, 0)   region 2
+ *   base 2  partner (12, 6)  region 2
+ *   base 3  enemy   (4, 4)   region 7   the candidate under test
+ *   base 4  planner (0, 4)   region 7   present only when planner_has_reach
+ *   base 5  partner (2, 4)   region 7   present only when partner_has_reach
+ */
+void sp_pocket_world(bool planner_has_reach, bool partner_has_reach) {
+    sp_reset();
+    for (int x = 0; x < 8; x += 2) {
+        sp_at(x, 4).region = (uint8_t)SP_REGION_FAR;
+    }
+    sp_place_base(0, 14, 0, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(1, 2, 0, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 12, 6, SP_PARTNER, 1u << SP_PARTNER);
+    sp_place_base(3, 4, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    if (planner_has_reach) {
+        sp_place_base(4, 0, 4, SP_PLANNER, 1u << SP_PLANNER);
+    }
+    if (partner_has_reach) {
+        sp_place_base(5, 2, 4, SP_PARTNER, 1u << SP_PARTNER);
+    }
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+}
+
+void test_suggest_plan_penalties() {
+    PlanSeams seams;
+
+    // ---- control: a base both factions can reach in its own region -------
+    //   base 0  9 + 5 = 14        base 3  3 + 1 = 4
+    sp_pocket_world(true, true);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 3);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+    SPCHECK(sp_only_published_changed());
+
+    // ---- the planner owns nothing in that region: 1024 -------------------
+    // The search is redone without the region restriction, finds the base at
+    // (2, 0) three tiles away, and the answer costs 1024 more than that.
+    //   base 0  14        base 3  (3 + 1024) + 1 = 1028
+    sp_pocket_world(false, true);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+
+    // ---- the partner owns nothing there: 256, a quarter of the price -----
+    //   base 0  14        base 3  3 + (6 + 256) = 265
+    sp_pocket_world(true, false);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 262);
+
+    // ---- a base outside the war aim's region: 512 ------------------------
+    // The aim is at (12, 0), one tile from base 0 and seven from base 3, so
+    // without the region penalty base 3 would still be the cheaper answer:
+    //   base 0  2 + 0 + 9*2 + 5 = 25
+    //   base 3  14 + 512 + 3*2 + 1 = 533   (21 without the penalty)
+    sp_pocket_world(true, true);
+    sp_set_war_aim(SP_PLANNER, 12, 0);
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+}
+GAMEPLAY_CASE(test_suggest_plan_penalties);
+
+void test_suggest_plan_unreachable_ceiling() {
+    PlanSeams seams;
+
+    // A base neither faction can reach at all is not suggested, because its
+    // cost passes the 9999 the comparison starts at. Both searches fail, so
+    // both keep base_find's own 9999 seed and add their penalty on top:
+    //   (9999 + 1024) + (9999 + 256) = 21278
+    sp_reset();
+    sp_place_base(0, 8, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);
+    SPCHECK(g_plan_world.base_find_dist == 10255);
+    SPCHECK(sp_only_published_changed());
+
+    // ...unless it is the base the planner has already declared for, which is
+    // returned without ever being compared against anything.
+    sp_reset();
+    sp_place_base(0, 8, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+    g_plan_world.players_data[SP_PLANNER].base_id_atk_target = 0;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+}
+GAMEPLAY_CASE(test_suggest_plan_unreachable_ceiling);
+
+void test_suggest_plan_declared_target() {
+    PlanSeams seams;
+
+    // base 0 costs 8 and comes first; base 3 costs 9.
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 8);        // base 3 was examined last
+    SPCHECK(sp_only_published_changed());
+
+    // A declared target wins even though it is dearer and later.
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    g_plan_world.players_data[SP_PLANNER].base_id_atk_target = 3;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 3);
+
+    // It is the FIRST faction's declaration. The partner's is never read.
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    g_plan_world.players_data[SP_PARTNER].base_id_atk_target = 3;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+
+    // The return is immediate: base 3 is never examined, so the published
+    // distance is base 0's partner reach and not base 3's.
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    g_plan_world.players_data[SP_PLANNER].base_id_atk_target = 0;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 3);
+
+    // A declaration the gates reject is not honoured: base 1 belongs to the
+    // planner, so the loop skips it before the comparison can fire.
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    g_plan_world.players_data[SP_PLANNER].base_id_atk_target = 1;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+
+    // ...and neither is one the planner cannot see.
+    sp_standard_world();
+    sp_place_base(3, 2, 2, SP_ENEMY, 1u << SP_PARTNER);
+    g_plan_world.players_data[SP_PLANNER].base_id_atk_target = 3;
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+}
+GAMEPLAY_CASE(test_suggest_plan_declared_target);
+
+/*
+ * Both searches are told "this faction only" and "no visibility filter" by the
+ * four -1 arguments the original pushes. Two worlds make those four arguments
+ * load-bearing, because in an ordinary world dropping either is invisible.
+ *
+ * sp_neutral_world puts a base belonging to a faction that is party to nothing
+ * next to the second candidate: relaxing "this faction only" to "faction 0 as
+ * well" then makes that candidate the cheaper one.
+ *
+ *   base 0  enemy   (8, 4)   planner 5, partner 3, cost 8
+ *   base 1  planner (2, 0)
+ *   base 2  partner (12, 6)
+ *   base 3  enemy   (6, 6)   planner 5, partner 4, cost 9
+ *   base 4  neutral (4, 6)   one tile from base 3, three from base 0
+ */
+void sp_neutral_world() {
+    sp_standard_world();
+    sp_place_base(3, 6, 6, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(4, 4, 6, SP_NEUTRAL, 0xFFu);
+}
+
+/*
+ * sp_hidden_reach_world gives each faction two bases: a near one that no
+ * faction 0 can see and a far one that it can. Relaxing "no visibility filter"
+ * to "faction 0 must see it" drops the near base out of both searches, and the
+ * near bases are placed so that costs the two candidates different amounts.
+ *
+ *   base 0  enemy   (8, 4)   planner 1 (near) / 7 (far), partner 1 / 6, cost 2
+ *   base 1  planner (8, 2)   near, visible to faction 1 only
+ *   base 2  partner (8, 6)   near, visible to faction 2 only
+ *   base 3  enemy   (2, 2)   planner 4 (near) / 2 (far), partner 5 / 3, cost 5
+ *   base 4  planner (0, 0)   far, visible to faction 0 as well
+ *   base 5  partner (0, 6)   far, visible to faction 0 as well
+ */
+void sp_hidden_reach_world() {
+    sp_reset();
+    sp_place_base(0, 8, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(1, 8, 2, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 8, 6, SP_PARTNER, 1u << SP_PARTNER);
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(4, 0, 0, SP_PLANNER, (1u << SP_PLANNER) | (1u << SP_NEUTRAL));
+    sp_place_base(5, 0, 6, SP_PARTNER, (1u << SP_PARTNER) | (1u << SP_NEUTRAL));
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+}
+
+void test_suggest_plan_search_scope() {
+    PlanSeams seams;
+
+    // A faction that is party to nothing owns bases too, and neither search
+    // may count them.
+    sp_neutral_world();
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 4);        // base 3's partner reach
+    SPCHECK(sp_only_published_changed());
+
+    // The neutral base is not a candidate either: nobody is at vendetta with
+    // its owner, so it never reaches a cost at all.
+    SPCHECK(g_plan_world.players_data[SP_PLANNER].diplo_treaties[SP_NEUTRAL] == 0);
+
+    // Neither search may drop a base merely because faction 0 cannot see it.
+    sp_hidden_reach_world();
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 3);        // base 3's partner reach
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_search_scope);
+
+void test_suggest_plan_tie_keeps_the_first() {
+    PlanSeams seams;
+
+    // Two candidates that cost exactly the same. The comparison is strict, so
+    // the earlier base id stays.
+    //   base 0  (8, 4)  5 + 3 = 8        base 3  (4, 0)  1 + 7 = 8
+    sp_standard_world();
+    sp_place_base(3, 4, 0, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);
+    SPCHECK(g_plan_world.base_find_dist == 7);
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_tie_keeps_the_first);
+
+/*
+ * A war aim standing on column zero. `x_target >= 0` is the "is there an aim"
+ * test, and column zero is a real tile, so a body that asked for a positive
+ * x_target would treat this faction as having no aim at all.
+ *
+ * Both candidates sit outside the aim tile's region, so the 512 lands on both
+ * and cancels; what separates them is the doubling and the distance term, and
+ * the two are only one point apart:
+ *
+ *   base 0  enemy   (4, 0)  region 2   2*3 + 512 + 5*2 + 1 = 529
+ *   base 1  planner (11, 0) region 2   base 0's reach, 5
+ *   base 2  partner (4, 2)  region 2   base 0's reach, 1
+ *   base 3  enemy   (0, 2)  region 7   2*1 + 512 + 1*2 + 12 = 528  <- wins
+ *   base 4  planner (0, 4)  region 7   base 3's reach, 1
+ *   base 5  partner (15, 6) region 7   base 3's reach, 12
+ *
+ * The regions are what keep the four reaches independent: each search is
+ * restricted to the candidate's own region, so base 0 cannot see base 3's
+ * neighbours and vice versa.
+ */
+void test_suggest_plan_zero_war_aim() {
+    PlanSeams seams;
+
+    sp_reset();
+    sp_at(0, 0).region = 9;                     // the aim tile, its own region
+    sp_at(0, 2).region = (uint8_t)SP_REGION_FAR;
+    sp_at(0, 4).region = (uint8_t)SP_REGION_FAR;
+    sp_at(15, 6).region = (uint8_t)SP_REGION_FAR;
+    sp_place_base(0, 4, 0, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(1, 11, 0, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 4, 2, SP_PARTNER, 1u << SP_PARTNER);
+    sp_place_base(3, 0, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(4, 0, 4, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(5, 15, 6, SP_PARTNER, 1u << SP_PARTNER);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+    sp_set_war_aim(SP_PLANNER, 0, 0);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 3);
+    SPCHECK(g_plan_world.base_find_dist == 12);
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_zero_war_aim);
+
+/*
+ * base_find answers with a base id, and base id 0 is a real base. A search
+ * that landed on it is a success, so the test for failure has to be strictly
+ * negative. These two worlds put the successful answer AT id 0 for one
+ * candidate and elsewhere for the other, so treating zero as a failure
+ * penalises exactly one of them.
+ */
+void test_suggest_plan_base_zero_is_found() {
+    PlanSeams seams;
+
+    // The planner's nearest base is base 0 for the near candidate and base 4
+    // for the far one.
+    //   base 0  planner (12, 2)     base 1  partner (12, 6)
+    //   base 2  enemy   (12, 4)  reach 1 (via base 0) + 1 = 2   <- wins
+    //   base 3  enemy   (2, 2)   reach 1 (via base 4) + 8 = 9
+    //   base 4  planner (2, 0)
+    sp_reset();
+    sp_place_base(0, 12, 2, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(1, 12, 6, SP_PARTNER, 1u << SP_PARTNER);
+    sp_place_base(2, 12, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(4, 2, 0, SP_PLANNER, 1u << SP_PLANNER);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 2);
+    SPCHECK(g_plan_world.base_find_dist == 8);
+    SPCHECK(sp_only_published_changed());
+
+    // The same shape with the partner owning base 0.
+    sp_reset();
+    sp_place_base(0, 12, 2, SP_PARTNER, 1u << SP_PARTNER);
+    sp_place_base(1, 12, 6, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 12, 4, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(3, 2, 2, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(4, 2, 0, SP_PARTNER, 1u << SP_PARTNER);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 2);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_base_zero_is_found);
+
+void test_suggest_plan_unrestricted_retry() {
+    PlanSeams seams;
+
+    // One candidate, in a region the planner owns nothing in. The retry
+    // without the region restriction is what keeps its cost under the ceiling
+    // at all: base_find's own 9999 seed plus 1024 would put it out of reach.
+    //   base 3  (3 + 1024) + 1 = 1028, against a ceiling of 9999
+    sp_pocket_world(false, true);
+    g_plan_world.bases[0].visibility = 0;       // leave base 3 the only candidate
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 3);
+    SPCHECK(g_plan_world.base_find_dist == 1);
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_unrestricted_retry);
+
+/*
+ * The ceiling is exactly 9999 and the comparison against it is strict.
+ *
+ * No 16x8 world can produce a cost anywhere near 9999 - the reachable costs
+ * are either under about 1300 or over 10000 - so this one wraps instead. With
+ * a round map one tile wide, x_dist answers MapLongitudeBounds minus the
+ * separation, which puts the planner's only base an arbitrary distance away
+ * while every coordinate stays small enough to index a real tile.
+ *
+ *   bounds 13332  ->  x_dist 13330  ->  reach 9997  ->  cost 9998, suggested
+ *   bounds 13333  ->  x_dist 13331  ->  reach 9998  ->  cost 9999, refused
+ */
+void sp_wrapped_ceiling_world(int longitude_bounds) {
+    sp_reset();
+    g_plan_world.is_flat = 0;                   // round map: x_dist wraps
+    g_plan_world.longitude = 1;
+    g_plan_world.lon_bounds = longitude_bounds;
+    sp_place_base(0, 0, 0, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(1, 2, 0, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 1, 0, SP_PARTNER, 1u << SP_PARTNER);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+}
+
+void test_suggest_plan_cost_ceiling_boundary() {
+    PlanSeams seams;
+
+    sp_wrapped_ceiling_world(13332);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);      // 9998 < 9999
+    SPCHECK(g_plan_world.base_find_dist == 1);
+    SPCHECK(sp_only_published_changed());
+
+    sp_wrapped_ceiling_world(13333);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);     // 9999 is not
+    SPCHECK(g_plan_world.base_find_dist == 1);
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_cost_ceiling_boundary);
+
+/*
+ * Every constant in the cost, pinned to its exact value.
+ *
+ * The mutation harness only ever rewrites a literal to zero, so killing all of
+ * its mutants shows each term is PRESENT, not that it has the right value:
+ * measured, writing 511 for the region penalty passed the whole suite. This
+ * pair fixes that for all of them at once by putting the total on the ceiling
+ * with every term switched on - distance, region penalty, doubled planner
+ * reach with its unreachable surcharge, and the partner's surcharge:
+ *
+ *   2*1 + 512 + (3588 + 1024)*2 + (dist + 256)
+ *
+ * The two worlds differ only in the partner's base, one tile further out, and
+ * that one tile is what moves the total across the boundary:
+ *
+ *   partner at (0, 6)   reach 4   total 9998   suggested
+ *   partner at (0, 7)   reach 5   total 9999   refused
+ *
+ * Adding one to any constant now refuses the first world and taking one away
+ * suggests the second, so neither direction can pass unnoticed. The round
+ * one-tile-wide map is again what makes a five-figure reach reachable while
+ * every coordinate still indexes a real tile.
+ */
+void sp_pinned_constants_world(int partner_y) {
+    sp_reset();
+    g_plan_world.is_flat = 0;
+    g_plan_world.longitude = 1;
+    g_plan_world.lon_bounds = 4786;
+    // With MapLongitude 1 a tile index is (x >> 1) + y, so sp_at() does not
+    // apply here and the four tiles that matter are addressed directly.
+    g_plan_world.tiles[SP_LIVE + 2].region = 9;             // (0, 2), the aim
+    g_plan_world.tiles[SP_LIVE + 1].region = 5;             // (2, 0), planner
+    g_plan_world.tiles[SP_LIVE + partner_y].region = 5;     // (0, partner_y)
+    sp_place_base(0, 0, 0, SP_ENEMY, SP_SEEN_BY_BOTH);
+    sp_place_base(1, 2, 0, SP_PLANNER, 1u << SP_PLANNER);
+    sp_place_base(2, 0, partner_y, SP_PARTNER, 1u << SP_PARTNER);
+    sp_declare_war(SP_PLANNER, SP_ENEMY);
+    sp_declare_war(SP_PARTNER, SP_ENEMY);
+    sp_set_war_aim(SP_PLANNER, 0, 2);
+}
+
+void test_suggest_plan_constants_are_exact() {
+    PlanSeams seams;
+
+    sp_pinned_constants_world(6);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == 0);      // 9998
+    SPCHECK(g_plan_world.base_find_dist == 260);             // 4 + 256
+    SPCHECK(sp_only_published_changed());
+
+    sp_pinned_constants_world(7);
+    sp_snapshot();
+    SPCHECK(suggest_plan(SP_PLANNER, SP_PARTNER) == -1);     // 9999
+    SPCHECK(g_plan_world.base_find_dist == 261);             // 5 + 256
+    SPCHECK(sp_only_published_changed());
+}
+GAMEPLAY_CASE(test_suggest_plan_constants_are_exact);
+
+#undef SPCHECK
+
 }  // namespace
 
 /*
