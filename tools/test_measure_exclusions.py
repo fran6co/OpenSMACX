@@ -324,5 +324,33 @@ class LiveImageTests(unittest.TestCase):
         self.assertEqual([], measurer.compare(measured, declared))
 
 
+class MissingExecutableTests(unittest.TestCase):
+    """"Nothing measured" is an answer to `measure`, never to `--check`.
+
+    The exe-absent guard sat before the --check branch and returned 0, so
+    `--check` could report success having compared the document against nothing.
+    The pinned executable is a gitignored proprietary artifact, so that is the
+    ordinary state of any checkout without the game. Latent - nothing wires
+    --check yet - and covered here so it stays fixed until something does.
+    """
+
+    def run_main(self, *argv):
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()), \
+             contextlib.redirect_stderr(io.StringIO()) as errors:
+            status = measurer.main(list(argv))
+        return status, errors.getvalue()
+
+    def test_check_refuses_when_the_executable_is_absent(self):
+        status, errors = self.run_main("--check", "--exe", "/nonexistent/x.exe")
+        self.assertEqual(2, status)
+        self.assertIn("verified NOTHING", errors)
+
+    def test_plain_measurement_still_reports_nothing_and_succeeds(self):
+        status, _ = self.run_main("--exe", "/nonexistent/x.exe")
+        self.assertEqual(0, status)
+
+
 if __name__ == "__main__":
     unittest.main()
