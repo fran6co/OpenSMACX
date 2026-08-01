@@ -100,7 +100,7 @@ class FrontierPopulationTests(unittest.TestCase):
 
     It did not. It asked the callgraph for `graph[address]["callees"]`, but the
     file is an edge list, so every lookup returned [] and `all([])` admitted the
-    entire unrecovered population - 2,784 rows where 947 qualify. Nothing here
+    entire unrecovered population - 2,783 rows where 946 qualify. Nothing here
     covered this function, and the two percentages published from it were wrong
     by a factor of 2.9 in the population.
     """
