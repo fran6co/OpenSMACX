@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 from unittest import mock
@@ -358,17 +359,28 @@ class VerifyRecoveryMetadataTests(unittest.TestCase):
              verify_recovery_metadata.CORRELATE_TOOL])
 
     def test_manifest_changes_when_committed_output_changes(self):
+        # On a COPY, never on docs/recovery/functions.csv itself. This test
+        # used to append to the committed file and restore it, and
+        # `write_bytes` truncates before it rewrites 1.2 MB. tools/run_gate.py
+        # runs both presets at once and the other lane reads that file, so it
+        # could read it EMPTY: measured here, a reader saw 0 bytes 36 times in
+        # 40 s against 12 runs of this one test. The lane then died with
+        # "analysis correlation and canonical inventory counts differ" - a red
+        # gate, a clean tree, and no cause anywhere in the diff.
+        root = (self.root / "repo").resolve()
+        (root / "docs" / "recovery").mkdir(parents=True)
+        committed = verify_recovery_metadata.REPO_ROOT / "docs" / "recovery"
+        for name in verify_recovery_metadata.COMPARED_OUTPUTS:
+            shutil.copyfile(committed / name, root / "docs" / "recovery" / name)
+        # manifest_lines also hashes the source tree; the real one is only read.
+        (root / "src").symlink_to(verify_recovery_metadata.REPO_ROOT / "src")
+        functions = root / "docs" / "recovery" / "functions.csv"
         idb = self.root / "test.idb"
         idb.write_bytes(b"idb-bytes")
-        baseline = verify_recovery_metadata.manifest_lines(idb)
-        functions = (verify_recovery_metadata.REPO_ROOT / "docs" / "recovery" /
-                     "functions.csv")
-        original = functions.read_bytes()
-        try:
-            functions.write_bytes(original + b"#drift\n")
+        with mock.patch.object(verify_recovery_metadata, "REPO_ROOT", root):
+            baseline = verify_recovery_metadata.manifest_lines(idb)
+            functions.write_bytes(functions.read_bytes() + b"#drift\n")
             drifted = verify_recovery_metadata.manifest_lines(idb)
-        finally:
-            functions.write_bytes(original)
         self.assertNotEqual(baseline, drifted)
 
     def test_missing_input_raises(self):
