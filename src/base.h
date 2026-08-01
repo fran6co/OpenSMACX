@@ -578,3 +578,4 @@ DLLEXPORT BOOL __cdecl redundant(int facility_id, uint32_t faction_id);
 DLLEXPORT BOOL __cdecl facility_avail(uint32_t facility_id, uint32_t faction_id, int base_id,
                                       int queue_count);
 DLLEXPORT int __cdecl facility_offset(LPCSTR facil_search);
+DLLEXPORT int __cdecl suggest_plan(int faction_id, int faction_id_2);

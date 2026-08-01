@@ -486,3 +486,4 @@ EXPORTS
     "?near_landmark@@YAHHH@Z" = _Z13near_landmarkii
     "?repair_phase@@YAXH@Z" = _Z12repair_phasei
     "?alien_base@@YAHHHH@Z" = _Z10alien_baseiii
+    "?suggest_plan@@YAHHH@Z" = _Z12suggest_planii
