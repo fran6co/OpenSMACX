@@ -393,7 +393,7 @@ check:
 | `verify_no_load_time_addresses` | **60%** | 17 | yes |
 | `verify_recovery_metadata` | 60% | 24 | no |
 | `verify_tool_test_registration` | **40%** | 14 | yes |
-| `verify_recovery_abi` | 77% | 8 | **yes**, added after this table was written |
+| `verify_recovery_abi` | **50%** | 10 | **yes**, added after this table was written |
 | `verify_checks_can_fail` | 100% | 17 | n/a — it is the harness |
 | `verify_recovery_pipeline` | 100% | 7 | yes |
 
