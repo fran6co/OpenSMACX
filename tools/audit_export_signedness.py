@@ -342,6 +342,22 @@ def main():
                   f"signed_divide ratchet compared against nothing.",
                   file=sys.stderr)
             return 2
+        # A FALL IS AS SUSPICIOUS AS A RISE, and the floor above cannot see
+        # why. Truncating every body_ranges span to four bytes leaves `ranked`
+        # pinned at 199 - a body decoding one instruction is classified
+        # `bounded` - while signed_divide goes to 0. Three consecutive versions
+        # of this ratchet printed `0 <= 44` on exit 0 because each guarded the
+        # count of findings rather than the count of the KIND the number names.
+        # Nothing legitimately removes 44 signed divides from the original's
+        # bytes; only a broken read does.
+        if counts["signed_divide"] < BASELINE["signed_divide"]:
+            print(f"audit-export-signedness: signed_divide FELL from "
+                  f"{BASELINE['signed_divide']} to {counts['signed_divide']}. "
+                  f"The original's bytes did not change, so the bodies were not "
+                  f"read. If a candidate was genuinely resolved, lower BASELINE "
+                  f"deliberately.", file=sys.stderr)
+            return 2
+
         grew = []
         if len(findings) > BASELINE["disagreements"]:
             grew.append(f"disagreements {len(findings)} > "
