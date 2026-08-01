@@ -23,6 +23,8 @@
 #include "faction.h"
 #include "general.h"
 #include "map.h"
+#include "mapwin.h" // draw_tile
+#include "veh.h"
 
 BOOL *ExpansionEnabled = (BOOL *)0x009A6488;
 uint32_t *GamePreferences = (uint32_t *)0x009A6490;
@@ -346,4 +348,268 @@ void __cdecl say_year(LPSTR output) {
     char year[80];
     _itoa_s(game_year(*TurnCurrentNum), year, 80, 10);
     strcat_s(output, 80, year);
+}
+
+/*
+Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
+         damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
+Original Offset: 00526030
+Return Value: n/a
+Status: Complete
+
+TWO PASSES OVER THE UNIT TABLE, NOT ONE. The first heals; the second redraws. They cannot be
+folded together, because the first pass can retire a Fungal Tower's owner (below) and the second
+pass filters on the faction byte the first one may have just rewritten.
+
+WHAT "REPAIR RATE" MEANS. The rate is a count of repair points, and the damage actually removed is
+`reactor_id * rate` - a Fission unit (reactor 1) removes one point per rate step, a Singularity
+unit (reactor 4) removes four. The rate starts at 1 and is added to:
+
+  +1  standing in your own territory
+  +1  a land unit in a bunker, or an air unit on an airbase
+  +1  standing in any base that is not rioting
+  x2  a land transport carrying a unit with the Repair ability, at sea or under Sentry/Board
+
+and it is replaced outright by the current damage - a full heal - when the base has the matching
+repair facility for the unit's triad (Command Center / Naval Yard / Aerospace Complex) or the
+faction holds the matching secret project (Command Nexus / Maritime Control Center / Cloudbase
+Academy); when a native-life unit sits in a base whose faction has any lifecycle bonus at all
+(`breed_mod`); or, anywhere on the map, when the faction holds the Nano Factory.
+
+Native life in fungus is the one rate bonus that is not additive: it sets the rate to 2 rather
+than incrementing it, and it is skipped entirely for a Fungal Tower.
+
+MINIMUM DAMAGE. A unit in the field - non-native faction, not in a base, no repair unit in its
+stack, no Nano Factory - cannot be healed below `reactor_id * 2`. Native life in fungus, and
+anyone in fungus whose faction holds the Xenoempathy Dome, are exempt; the Dome additionally adds
+one more reactor's worth of healing.
+
+Verification note: three tests in this body can never take their false branch and are transcribed
+rather than deleted. NONE of them is a mutation-sweep survivor, and the distinction is worth
+keeping straight: a test that is constant-true still yields a mutant that is not, so "unreachable"
+here is a statement about faithfulness to the original, not a coverage gap being excused.
+
+  - `owner >= 0` after `owner < MaxPlayerNum`, in both passes. This is `base_who()` inlined
+    (0x00526152 and 0x00526755); the nibble is masked to 0xF before it is asked, so the sign test
+    is constant. can_terraform carries the identical dead half for the identical reason. Mutating
+    it to `> 0` is NOT constant - a base owned by faction 0 separates them - and the fixtures
+    cover that in both passes.
+  - `if (min_damage)` at 0x005265AF. min_damage is `reactor_id * 2`, so the guard is false exactly
+    when reactor_id is zero - and with reactor_id zero every statement it guards is a no-op
+    (`min_damage` is already 0 and the Dome adds `reactor_id`). The branch is in the original;
+    removing it changes nothing, and the harness derives no mutant from it because it carries
+    neither a literal nor a comparison.
+  - `veh_top()` returning negative. The original inlines the stack walk here rather than calling
+    0x00579920, because veh.cpp is a different translation unit; its `veh_id < 0` guard
+    (0x005264A2) and the `top < 0` test that follows (0x005264CC) are both dead, since the
+    argument is this loop's own index. Calling veh_top() rather than re-transcribing the walk is
+    exact: the walk at 0x005264A8-0x005264C6 is instruction-for-instruction that function. The
+    `stack_id >= 0` this leaves behind is still killable, and killed: unit 0 is a real unit.
+
+The two mutants that DO survive are equivalences rather than gaps. Swapping the `facility_id` and
+`project_id` declarations reorders two uninitialised locals that are both assigned before either
+is read. Turning `repaired >= damage` into `repaired > damage` changes only the case where they
+are already equal, where the guarded statement assigns a variable to itself.
+
+Bug note: the Fungal Tower's owner is reset to faction 0 (the native-life AI) on every repair
+phase of whichever faction currently owns it, at 0x005261AF, BEFORE the second pass filters on
+the faction byte. A captured Fungal Tower therefore reverts to Planet and is then skipped by its
+captor's own redraw pass in the same call. Transcribed as written.
+*/
+void __cdecl repair_phase(int faction_id) {
+    PlayersData[faction_id].sat_odp_deployed = 0;
+    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+        if (Vehs[veh_id].faction_id != faction_id) {
+            continue;
+        }
+        int x = Vehs[veh_id].x;
+        int y = Vehs[veh_id].y;
+        uint8_t damage_before = Vehs[veh_id].dmg_incurred;
+        Vehs[veh_id].unk_6 = 0;
+        Vehs[veh_id].moves_expended = 0;
+        Vehs[veh_id].state &= ~(VSTATE_UNK_2 | VSTATE_UNK_2000 | VSTATE_CRAWLING);
+        Vehs[veh_id].flags &= (uint16_t)~VFLAG_UNK_1000;
+        // One unit in four each turn, cycling by unit id so the whole table is covered every
+        // fourth turn rather than all at once.
+        if (!((*TurnCurrentNum + veh_id) & 3)) {
+            Vehs[veh_id].state &= ~VSTATE_UNK_800;
+            uint16_t flags = Vehs[veh_id].flags;
+            if (flags & VFLAG_UNK_2) {
+                flags &= (uint16_t)~VFLAG_UNK_2;
+            } else {
+                flags &= (uint16_t)~VFLAG_UNK_1;
+            }
+            Vehs[veh_id].flags = flags;
+        }
+        // "Hold 10" stores its countdown in the first waypoint's y; plain Hold stores zero there
+        // and so never expires.
+        if (Vehs[veh_id].order == ORDER_SENTRY_BOARD || Vehs[veh_id].order == ORDER_HOLD) {
+            int16_t countdown = Vehs[veh_id].waypoint_y[0];
+            if (countdown) {
+                countdown--;
+                Vehs[veh_id].waypoint_y[0] = countdown;
+                if (!countdown) {
+                    Vehs[veh_id].order = ORDER_NONE;
+                }
+            }
+        }
+        if (Vehs[veh_id].state & VSTATE_UNK_8) {
+            Map *tile = map_loc(x, y);
+            BOOL is_sheltered = false;
+            if (tile->bit & BIT_BASE_IN_TILE) {
+                int owner = (int)owner_at(x, y);
+                if (owner < MaxPlayerNum && owner >= 0) {
+                    is_sheltered = true;
+                }
+            }
+            if (!is_sheltered) {
+                uint32_t triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
+                if (triad == TRIAD_LAND && (tile->bit & BIT_BUNKER)) {
+                    is_sheltered = true;
+                } else if (triad == TRIAD_AIR && (tile->bit & BIT_AIRBASE)) {
+                    is_sheltered = true;
+                }
+            }
+            if (is_sheltered) {
+                Vehs[veh_id].state &= ~VSTATE_UNK_8;
+            }
+        }
+        if (Vehs[veh_id].proto_id == BSC_FUNGAL_TOWER) {
+            Vehs[veh_id].faction_id = 0;  // see the bug note above
+        }
+        int proto_id = Vehs[veh_id].proto_id;
+        if (proto_id == BSC_BATTLE_OGRE_MK1 || proto_id == BSC_BATTLE_OGRE_MK2
+            || proto_id == BSC_BATTLE_OGRE_MK3) {
+            continue;  // the Unity Ogres never repair
+        }
+        if (proto_id != BSC_FUNGAL_TOWER && (Vehs[veh_id].state & VSTATE_UNK_4)) {
+            continue;
+        }
+        if (!Vehs[veh_id].dmg_incurred) {
+            continue;
+        }
+        int repair_rate = 1;
+        if (proto_id != BSC_FUNGAL_TOWER) {
+            if (get_proto_offense_rating(proto_id) < 0 && proto_id < MaxVehProtoFactionNum) {
+                Map *tile = map_loc(x, y);
+                if ((tile->bit & BIT_FUNGUS) && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+                    repair_rate = 2;  // native life regenerates in fungus
+                }
+            }
+            if (whose_territory(faction_id, x, y, NULL, false) == faction_id) {
+                repair_rate++;
+            }
+            uint32_t triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+            if (triad == TRIAD_AIR && (map_loc(x, y)->bit & BIT_AIRBASE)) {
+                repair_rate++;
+            }
+            if (triad == TRIAD_LAND && (map_loc(x, y)->bit & BIT_BUNKER)) {
+                repair_rate++;
+            }
+        }
+        int base_id = base_at(x, y);
+        if (base_id >= 0 && !(Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE)) {
+            repair_rate++;
+            if (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0
+                && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
+                // Native life is healed outright by any base whose owner has a lifecycle bonus,
+                // and the bonus is the base owner's rather than the unit owner's.
+                if (breed_mod(base_id, Bases[base_id].faction_id_current)) {
+                    repair_rate = Vehs[veh_id].dmg_incurred;
+                }
+            } else {
+                uint32_t triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
+                int facility_id;
+                int project_id;
+                if (triad == TRIAD_SEA) {
+                    facility_id = FAC_NAVAL_YARD;
+                    project_id = SP_MARITIME_CONTROL_CENTER;
+                } else if (triad == TRIAD_AIR) {
+                    facility_id = FAC_AEROSPACE_COMPLEX;
+                    project_id = SP_CLOUDBASE_ACADEMY;
+                } else {
+                    facility_id = FAC_COMMAND_CENTER;
+                    project_id = SP_COMMAND_NEXUS;
+                }
+                if (has_fac_built(facility_id, base_id) || has_project(project_id, faction_id)) {
+                    repair_rate = Vehs[veh_id].dmg_incurred;
+                }
+            }
+        }
+        BOOL has_repair_bay = false;
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND
+            && veh_cargo(veh_id)
+            && (Vehs[veh_id].order == ORDER_SENTRY_BOARD
+                || altitude_at(x, y) < ALT_BIT_SHORE_LINE)) {
+            for (int stack_id = veh_top(veh_id); stack_id >= 0;
+                stack_id = Vehs[stack_id].next_veh_id_stack) {
+                if (stack_id != veh_id && has_abil(Vehs[stack_id].proto_id, ABL_REPAIR)) {
+                    has_repair_bay = true;
+                }
+            }
+            if (has_repair_bay) {
+                repair_rate *= 2;
+            }
+        }
+        if (has_project(SP_NANO_FACTORY, faction_id)) {
+            repair_rate = Vehs[veh_id].dmg_incurred;
+        }
+        int reactor_id = VehPrototypes[Vehs[veh_id].proto_id].reactor_id;
+        int repair_total = reactor_id * repair_rate;
+        int min_damage = 0;
+        if (faction_id && !has_repair_bay && base_id < 0
+            && !has_project(SP_NANO_FACTORY, faction_id)) {
+            min_damage = reactor_id * 2;
+            if (min_damage) {
+                Map *tile = map_loc(x, y);
+                if ((tile->bit & BIT_FUNGUS) && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+                    if (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0
+                        && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
+                        min_damage = 0;
+                    }
+                    if (has_project(SP_XENOEMPATYH_DOME, faction_id)) {
+                        min_damage = 0;
+                        repair_total += reactor_id;
+                    }
+                }
+            }
+        }
+        int damage = Vehs[veh_id].dmg_incurred;
+        int repaired = range(damage - repair_total, min_damage, 999);
+        if (repaired >= damage) {
+            repaired = damage;  // repairing never adds damage
+        }
+        Vehs[veh_id].dmg_incurred = (uint8_t)repaired;
+        // Wake a human player's sentry once it is as healed as it is going to get, but only in
+        // the open: a land unit at sea is aboard a transport and stays boarded.
+        if (Vehs[veh_id].dmg_incurred <= min_damage && is_human(faction_id)
+            && Vehs[veh_id].order == ORDER_SENTRY_BOARD
+            && Vehs[veh_id].dmg_incurred != damage_before) {
+            if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_LAND
+                || altitude_at(x, y) >= ALT_BIT_SHORE_LINE) {
+                Vehs[veh_id].order = ORDER_NONE;
+            }
+        }
+    }
+    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+        int veh_faction_id = Vehs[veh_id].faction_id;
+        if (veh_faction_id != faction_id) {
+            continue;
+        }
+        int x = Vehs[veh_id].x;
+        int y = Vehs[veh_id].y;
+        Map *tile = map_loc(x, y);
+        if (tile->bit & BIT_BASE_IN_TILE) {
+            int owner = (int)owner_at(x, y);
+            if (owner < MaxPlayerNum && owner >= 0) {
+                continue;  // the base's own draw covers it
+            }
+        }
+        if (veh_faction_id != *LocalFaction
+            && !(Vehs[veh_id].visibility & (1 << *LocalFaction))) {
+            continue;
+        }
+        draw_tile(x, y, -1);
+    }
+    do_all_draws();
 }

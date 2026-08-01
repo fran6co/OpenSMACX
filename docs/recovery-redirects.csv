@@ -1478,6 +1478,7 @@ address,kind
 0x0051DF50,jump
 0x0051DF70,jump
 0x00525AF4,jump
+0x00526030,jump
 0x0052AB6D,call
 0x0052AC4A,call
 0x0052DAC0,jump

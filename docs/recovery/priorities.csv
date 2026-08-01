@@ -1455,7 +1455,6 @@ P3,820,0x00524460,Demo__init,859,0,8,unrecovered,,,2,exact,entry_range,
 P3,2121,0x005247B0,?generators@@YAHHPAH@Z,178,2,1,unrecovered,,,2,exact,exact,"int (__cdecl ?generators@@YAHHPAH@Z)(int factionID, int* count)"
 P2,7320,0x00524870,?end_of_game@@YAHH@Z,4015,5,23,unrecovered,,,2,exact,exact,
 P3,4820,0x005258C0,?turn_upkeep@@YAXXZ,1901,2,28,unrecovered,,,2,exact,exact,
-P3,1821,0x00526030,?repair_phase@@YAXH@Z,1913,1,8,unrecovered,,,2,exact,exact,void (__cdecl ?repair_phase@@YAXH@Z)(int factionID)
 P3,1821,0x005267B0,?allocate_energy@@YAXH@Z,1715,1,8,unrecovered,,,2,exact,exact,void (__cdecl ?allocate_energy@@YAXH@Z)(int factionID)
 P3,1621,0x00526E70,?production_phase@@YAXH@Z,1045,1,6,unrecovered,,,2,exact,exact,void (__cdecl ?production_phase@@YAXH@Z)(int factionID)
 P3,3820,0x00527290,?faction_upkeep@@YAXH@Z,796,2,18,unrecovered,,,2,exact,exact,

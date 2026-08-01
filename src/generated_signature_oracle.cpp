@@ -3577,7 +3577,7 @@ static bool verify_Console_update_data_00514880() {
 }
 
 // ?not_my_turn@@YAHXZ  (44 B)
-// recovered in src/game.cpp:262
+// recovered in src/game.cpp:264
 static bool verify_not_my_turn_0052dc70() {
     typedef int (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x0052DC70U);

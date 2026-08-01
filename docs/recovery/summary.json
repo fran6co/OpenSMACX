@@ -16,10 +16,10 @@
     "by_recovery_state": {
       "external_library": 327,
       "original_dependency": 280,
-      "source_complete": 2574,
+      "source_complete": 2575,
       "source_in_progress": 5,
       "thunk": 28,
-      "unrecovered": 2786
+      "unrecovered": 2785
     },
     "bytes": {
       "by_binary_kind": {
@@ -67,9 +67,9 @@
           "percent_of_lift_scope_bytes": 7.8
         },
         "source_complete": {
-          "bytes": 222125,
-          "functions": 2574,
-          "percent_of_lift_scope_bytes": 9.22
+          "bytes": 224038,
+          "functions": 2575,
+          "percent_of_lift_scope_bytes": 9.29
         },
         "source_in_progress": {
           "bytes": 13083,
@@ -82,9 +82,9 @@
           "percent_of_lift_scope_bytes": 0.01
         },
         "unrecovered": {
-          "bytes": 1986912,
-          "functions": 2786,
-          "percent_of_lift_scope_bytes": 82.43
+          "bytes": 1984999,
+          "functions": 2785,
+          "percent_of_lift_scope_bytes": 82.35
         }
       },
       "catalogued": {
@@ -103,39 +103,39 @@
         "functions": 327
       },
       "machine_carried": {
-        "bytes": 2188192,
+        "bytes": 2186279,
         "direction": "must go down",
-        "functions": 3099,
+        "functions": 3098,
         "meaning": "in-scope bytes whose behaviour is still supplied by machine-derived code rather than recovered source",
-        "percent_of_lift_scope_bytes": 90.78
+        "percent_of_lift_scope_bytes": 90.71
       },
       "proven_recovered": {
         "bytes": 7879,
         "denominator": "recovered",
         "functions": 89,
         "meaning": "recovered bytes an oracle has executed against the original and found to agree",
-        "percent_of_recovered_bytes": 3.55
+        "percent_of_recovered_bytes": 3.52
       },
       "recovered": {
-        "bytes": 222125,
-        "functions": 2574,
-        "percent_of_lift_scope_bytes": 9.22
+        "bytes": 224038,
+        "functions": 2575,
+        "percent_of_lift_scope_bytes": 9.29
       },
       "unproven_by_shape": {
         "loop": {
-          "bytes": 133279,
-          "functions": 454,
-          "percent_of_unproven_bytes": 62.21
+          "bytes": 135192,
+          "functions": 455,
+          "percent_of_unproven_bytes": 62.54
         },
         "seam_forwarding": {
           "bytes": 14707,
           "functions": 761,
-          "percent_of_unproven_bytes": 6.86
+          "percent_of_unproven_bytes": 6.8
         },
         "straight_line": {
           "bytes": 65728,
           "functions": 1258,
-          "percent_of_unproven_bytes": 30.68
+          "percent_of_unproven_bytes": 30.41
         },
         "x87": {
           "bytes": 532,
@@ -144,12 +144,12 @@
         }
       },
       "unproven_recovered": {
-        "bytes": 214246,
+        "bytes": 216159,
         "denominator": "recovered",
         "direction": "must go down",
-        "functions": 2485,
+        "functions": 2486,
         "meaning": "recovered bytes never executed against the original: declared complete, never demonstrated equivalent",
-        "percent_of_recovered_bytes": 96.45
+        "percent_of_recovered_bytes": 96.48
       }
     },
     "total": 6000,
@@ -166,8 +166,8 @@
     "source_directory": "src"
   },
   "redirects": {
-    "definitions": 484,
-    "exact_name_matches": 165,
+    "definitions": 485,
+    "exact_name_matches": 166,
     "unmatched": [
       {
         "location": "src/OpenSMACX.def:49",
@@ -1448,9 +1448,9 @@
     ]
   },
   "source_annotations": {
-    "annotations": 2520,
-    "matched_function_starts": 2520,
-    "unique_addresses": 2520,
+    "annotations": 2521,
+    "matched_function_starts": 2521,
+    "unique_addresses": 2521,
     "unmatched_addresses": []
   },
   "source_bindings": {
@@ -6954,7 +6954,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:27",
+        "location": "src/game.cpp:29",
         "symbol": "ExpansionEnabled",
         "type": "BOOL *"
       },
@@ -6963,7 +6963,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:28",
+        "location": "src/game.cpp:30",
         "symbol": "GamePreferences",
         "type": "uint32_t *"
       },
@@ -6972,7 +6972,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:29",
+        "location": "src/game.cpp:31",
         "symbol": "GameMorePreferences",
         "type": "uint32_t *"
       },
@@ -6981,7 +6981,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:30",
+        "location": "src/game.cpp:32",
         "symbol": "GameWarnings",
         "type": "uint32_t *"
       },
@@ -6990,7 +6990,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:31",
+        "location": "src/game.cpp:33",
         "symbol": "GameRules",
         "type": "uint32_t *"
       },
@@ -6999,7 +6999,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:32",
+        "location": "src/game.cpp:34",
         "symbol": "GameState",
         "type": "uint32_t *"
       },
@@ -7008,7 +7008,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:33",
+        "location": "src/game.cpp:35",
         "symbol": "DiffLevelCurrent",
         "type": "int *"
       },
@@ -7017,7 +7017,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:34",
+        "location": "src/game.cpp:36",
         "symbol": "TurnCurrentNum",
         "type": "int *"
       },
@@ -7026,7 +7026,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:35",
+        "location": "src/game.cpp:37",
         "symbol": "ObjectiveReqVictory",
         "type": "uint32_t *"
       },
@@ -7035,7 +7035,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:36",
+        "location": "src/game.cpp:38",
         "symbol": "ObjectivesSuddenDeathVictory",
         "type": "uint32_t *"
       },
@@ -7044,7 +7044,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:37",
+        "location": "src/game.cpp:39",
         "symbol": "ObjectiveAchievePts",
         "type": "uint32_t *"
       },
@@ -7053,7 +7053,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:38",
+        "location": "src/game.cpp:40",
         "symbol": "VictoryAchieveBonusPts",
         "type": "uint32_t *"
       },
@@ -7062,7 +7062,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:39",
+        "location": "src/game.cpp:41",
         "symbol": "MissionYearCurrent",
         "type": "uint32_t *"
       },
@@ -7071,7 +7071,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:40",
+        "location": "src/game.cpp:42",
         "symbol": "StartingMissionYear",
         "type": "uint32_t *"
       },
@@ -7080,7 +7080,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:41",
+        "location": "src/game.cpp:43",
         "symbol": "EndingMissionYear",
         "type": "uint32_t *"
       },
@@ -7089,7 +7089,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:42",
+        "location": "src/game.cpp:44",
         "symbol": "TectonicDetonationCount",
         "type": "uint32_t *"
       },
@@ -7098,7 +7098,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:43",
+        "location": "src/game.cpp:45",
         "symbol": "SunspotDuration",
         "type": "int *"
       },
@@ -7107,7 +7107,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:44",
+        "location": "src/game.cpp:46",
         "symbol": "MountPlanetX",
         "type": "uint32_t *"
       },
@@ -7116,7 +7116,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:45",
+        "location": "src/game.cpp:47",
         "symbol": "MountPlanetY",
         "type": "uint32_t *"
       },
@@ -7125,7 +7125,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:46",
+        "location": "src/game.cpp:48",
         "symbol": "DustCloudDuration",
         "type": "int *"
       },
@@ -7134,7 +7134,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:47",
+        "location": "src/game.cpp:49",
         "symbol": "IsMultiplayerNet",
         "type": "BOOL *"
       },
@@ -7143,7 +7143,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:48",
+        "location": "src/game.cpp:50",
         "symbol": "IsMultiplayerPBEM",
         "type": "BOOL *"
       },
@@ -7152,7 +7152,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:49",
+        "location": "src/game.cpp:51",
         "symbol": "NetTurnFlags",
         "type": "uint8_t *"
       },
@@ -7161,7 +7161,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/game.cpp:50",
+        "location": "src/game.cpp:52",
         "symbol": "NetTurnFaction",
         "type": "int *"
       },

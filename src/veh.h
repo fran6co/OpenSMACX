@@ -173,6 +173,11 @@ enum VehOrdersAutoType {
 };
 
 enum VehFlagsBitfield {
+    // repair_phase (00526030) ages these two one unit in four each turn: bit 2 is cleared if it
+    // is set, otherwise bit 1 is, so the pair is a two-step countdown rather than two independent
+    // flags. What it counts down to is not recovered.
+    VFLAG_UNK_1 = 0x1,
+    VFLAG_UNK_2 = 0x2,
     VFLAG_PROBE_PACT_OPERATIONS = 0x4,
     VFLAG_IS_OBJECTIVE = 0x20,
     VFLAG_LURKER = 0x40,
@@ -180,6 +185,7 @@ enum VehFlagsBitfield {
     VFLAG_START_RAND_MONOLITH = 0x100,
     VFLAG_START_RAND_FUNGUS = 0x200,
     VFLAG_INVISIBLE = 0x400,
+    VFLAG_UNK_1000 = 0x1000, // cleared for every one of a faction's units by repair_phase
 };
 
 enum VehStateBitfield {
