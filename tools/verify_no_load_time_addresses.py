@@ -72,7 +72,17 @@ SOURCE_GLOBS = ("*.cpp", "*.h")
 
 # `namespace {`, `namespace foo {` and `extern "C" {` do not introduce a scope
 # that delays initialisation; every other brace does.
-TRANSPARENT_BRACE = re.compile(r'\b(?:namespace\b|extern\s*"C")[^;{}]*$')
+#
+# THE STRING LITERAL IS NOT MATCHABLE HERE, and requiring it made this blind.
+# The text searched is the output of blank_comments_and_strings, which replaces
+# a literal's contents AND ITS QUOTES with spaces to preserve offsets - so
+# `extern "C" {` arrives as `extern     {` and an `extern\s*"C"` alternative can
+# never match. The brace was therefore treated as opaque and every declaration
+# inside it skipped as function-body scope. src/scenario.cpp:400 is exactly such
+# a block, so this was blind to a real construct in the tree, which is the same
+# defect this file was rewritten to fix. Matching bare `extern` is safe because
+# the text examined is only ever the run immediately preceding a `{`.
+TRANSPARENT_BRACE = re.compile(r"\b(?:namespace|extern)\b[^;{}]*$")
 
 
 def blank_comments_and_strings(text):

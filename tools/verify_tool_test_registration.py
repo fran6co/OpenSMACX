@@ -21,6 +21,19 @@ A file named ONLY in a `DEPENDS` list is NOT registered. That is the trap this
 check is really for: DEPENDS makes CMake rebuild when the test changes, so the
 reference looks like registration and reads like registration, while the test
 never executes. Grepping for the filename would call that a pass.
+
+FOUR OF THE FIVE WAYS A REGISTRATION STOPS EXECUTING ARE CAUGHT. Measured by
+disabling one real registration five different ways: deletion, a `#` line
+comment, a `#[[ ]]` block, `DISABLED TRUE`, and `if(FALSE)`. The first version
+of this check caught only deletion and reported "all executed by CMake" for the
+other four. Comments and DISABLED are handled now.
+
+`if(FALSE) ... endif()` IS NOT, and saying so is better than implying otherwise:
+recognising it means evaluating CMake conditionals, which is a CMake interpreter
+rather than a regex, and a half-done version would be blind to `if(0)`,
+`if(SOMETHING_FALSE)` and every variable that happens to be empty. Nothing in
+this tree is wrapped that way and `git log -S` finds no history of it. If that
+changes, this check will not notice.
 """
 import argparse
 import re
@@ -38,9 +51,44 @@ PYTHON_COMMAND = re.compile(
     r"\"[^\"]*?/tools/(test_\S+?\.py)\"")
 
 
+CMAKE_BLOCK_COMMENT = re.compile(r"#\[\[.*?\]\]", re.DOTALL)
+CMAKE_LINE_COMMENT = re.compile(r"(?m)#(?!\[\[).*$")
+DISABLED_TEST = re.compile(
+    r"set_tests_properties\(\s*\"?([\w-]+)\"?[^)]*\bDISABLED\s+(?:TRUE|ON|1)\b",
+    re.IGNORECASE | re.DOTALL)
+
+
+def strip_cmake_comments(text):
+    """A commented-out registration is not a registration.
+
+    Matching the raw file counted `# opensmacx_add_python_tool_test(...)` as
+    executing the test. Measured against five ways of disabling one real
+    registration, the unstripped check caught ONE - deletion - and reported
+    `68 test files, all executed by CMake` for a line comment, a `#[[ ]]` block,
+    an `if(FALSE)` wrapper and `DISABLED TRUE`. Two of those are handled here
+    and one below; see the note in main() for the one that is not.
+    """
+    return CMAKE_LINE_COMMENT.sub("", CMAKE_BLOCK_COMMENT.sub("", text))
+
+
 def executed_tests(cmake_text):
-    return (set(HELPER_CALL.findall(cmake_text))
-            | set(PYTHON_COMMAND.findall(cmake_text)))
+    live = strip_cmake_comments(cmake_text)
+    disabled = {name.lower() for name in DISABLED_TEST.findall(live)}
+    executed = set(HELPER_CALL.findall(live)) | set(
+        PYTHON_COMMAND.findall(live))
+    if not disabled:
+        return executed
+    # A DISABLED test still appears as a registration; CTest just never runs
+    # it, which is the same outcome as never registering it.
+    still_run = set()
+    for match in re.finditer(
+            r"opensmacx_add_python_tool_test\(\s*([\w-]+)\s+(test_\S+?\.py)\s*\)",
+            live):
+        if match.group(1).lower() in disabled:
+            executed.discard(match.group(2))
+        else:
+            still_run.add(match.group(2))
+    return executed
 
 
 def mentioned_tests(cmake_text):

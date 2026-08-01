@@ -49,12 +49,14 @@ against it, never to trust directly.
    leaf** — `callgraph.json` records only direct `call rel32`, so a body that
    dispatches through `call dword ptr [edx+0x64]` reads as a perfect leaf with
    every callee resolved. Measured over the zero-callee-seam population,
-   **43.0% of functions and 32.7% of bytes contain a call site the callgraph
+   **43.0% of functions and 32.8% of bytes contain a call site the callgraph
    never counted**, so its seam counts are a lower bound rather than an
    estimate. (The 35.7%/50.7% published here on 2026-08-01 was measured over a
    population its own seam filter never filtered — `callgraph.json` is an edge
    list and the filter read it as an address-keyed map, so `all([])` admitted
-   every unrecovered row. 2,784 functions were measured where 947 qualify.) Run `tools/indirect_call_sites.py --address <addr>` before
+   every unrecovered row. 2,783 functions were measured where 946 qualify.
+   Re-derive with `tools/indirect_call_sites.py --frontier`; these move as
+   recoveries land, and they are prose that nothing checks.) Run `tools/indirect_call_sites.py --address <addr>` before
    accepting any candidate; `?hline@Buffer@@`, `?vline@Buffer@@` and
    `?fill@Buffer@@` were all selected as leaves before it existed. An indirect
    site is a call to *look at*, not automatically a seam.

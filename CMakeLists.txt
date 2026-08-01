@@ -1390,7 +1390,7 @@ if(BUILD_TESTING)
     #
     # It also requires every check in its COVERED_CHECKS set to have a damage
     # case that actually ran, so a new check ships with a proof it can fail
-    # rather than a promise. 9 cases across 7 checks in 3.8 s.
+    # rather than a promise. 10 cases across 8 checks in under 5 s.
     add_test(NAME checks-can-fail
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_checks_can_fail.py"
