@@ -1795,6 +1795,7 @@ address,name,shape
 0x005ABEC0,?wipe_undo@@YAXXZ,loop
 0x005ABF20,?auto_undo@@YAXXZ,loop
 0x005AC060,?is_objective@@YAHH@Z,loop
+0x005AC110,?num_objectives@@YAHHH@Z,loop
 0x005AC630,?transcending@@YAHH@Z,loop
 0x005AC680,?ascending@@YAHH@Z,straight_line
 0x005AD3B0,?on_left_click@ReplayWin@@QAEXHH@Z,straight_line
