@@ -64,6 +64,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 from find_constant_returns import declared_arity  # noqa: E402
+# The same read, with the two guards this file's own copy omitted: a section
+# whose virtual size exceeds its raw size has an uninitialised tail that is
+# NOT in the file, and reading it returns whatever follows in the image -
+# measured over the .data BSS tail, the local copy returned .rsrc and .reloc
+# content 60 times and computed an offset past EOF 722 times, where this
+# returns b"" every time. Identical on all 6,000 catalogue rows, because
+# every catalogued body lives in .text or _selfmod.
+from generator_support import read_bytes as body_bytes  # noqa: E402
 from capstone import (CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP,  # noqa: E402
                       CS_MODE_32, Cs)
 from capstone.x86 import (X86_OP_IMM, X86_OP_MEM, X86_OP_REG,  # noqa: E402
@@ -131,17 +139,6 @@ def implementation_files(source_dir: Path) -> dict[int, str]:
 def load_rows(functions_csv: Path) -> list[dict]:
     with functions_csv.open() as handle:
         return list(csv.DictReader(handle))
-
-
-def body_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
-    base = pe.OPTIONAL_HEADER.ImageBase
-    for section in pe.sections:
-        begin = base + section.VirtualAddress
-        end = begin + max(section.Misc_VirtualSize, section.SizeOfRawData)
-        if begin <= address < end:
-            offset = section.PointerToRawData + (address - begin)
-            return pe.__data__[offset:offset + length]
-    return b""
 
 
 def image_span(pe: pefile.PE) -> tuple[int, int]:
