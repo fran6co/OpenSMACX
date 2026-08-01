@@ -109,9 +109,17 @@ def run_tests(module, timeout):
     # tree whose .py files were byte-identical to a green commit. Half an hour
     # of a stale artifact pretending to be a defect.
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
-    done = subprocess.run(
-        [sys.executable, "-m", "unittest", module], env=environment,
-        cwd=str(TOOLS), capture_output=True, text=True, timeout=timeout)
+    try:
+        done = subprocess.run(
+            [sys.executable, "-m", "unittest", module], env=environment,
+            cwd=str(TOOLS), capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # A mutant that hangs the suite is DETECTED, not a reason to abandon
+        # the sweep. Mutating a loop bound in the brace scanner does exactly
+        # this, and letting it propagate cost a completed run over 14 tools -
+        # every result lost to one hung subprocess, which is the same shape as
+        # a sweep that reports a tally for the functions it did not skip.
+        return False
     return done.returncode == 0
 
 
