@@ -1298,6 +1298,17 @@ if(BUILD_TESTING)
     # drifted again by 2026-08-01. Its previous defence was a sentence warning
     # the reader it might be wrong, which is not a defence.
     opensmacx_add_python_tool_test(documented-counts-tests test_verify_documented_counts.py)
+
+    # The staged hybrid imports 462 names from OpenSMACX.dll and its import
+    # table is frozen, so a removed or renamed .def alias breaks the game. That
+    # is already enforced - but only by stage-hybrid-game, after a DLL build,
+    # ImportAdder under Wine and an assembled image, which is why 62/62 once
+    # passed against a DLL the game could not load. Seconds, from git, here.
+    opensmacx_add_python_tool_test(def-append-only-tests test_verify_def_append_only.py)
+    add_test(NAME def-append-only
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_def_append_only.py"
+    )
     add_test(NAME documented-counts
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_documented_counts.py"
