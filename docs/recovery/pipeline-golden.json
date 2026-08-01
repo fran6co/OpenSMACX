@@ -1,0 +1,183 @@
+{
+  "0x004F07E0": {
+    "binary_kind": "game",
+    "caller_count": 1,
+    "callgraph_callees": 90,
+    "contiguous_bytes": 14328,
+    "indirect_call_sites": 13,
+    "name": "?base_production@@YAXXZ",
+    "recovery_state": "unrecovered",
+    "return_purges": [
+      0
+    ],
+    "size": 16430,
+    "span_bytes": 16430,
+    "span_count": 2,
+    "unresolved_callees": [
+      "0x00403BA0",
+      "0x00403BE0",
+      "0x004048A0",
+      "0x00406380",
+      "0x004064D0",
+      "0x00406A90",
+      "0x0044C9E0",
+      "0x0046AEF0",
+      "0x0046B190",
+      "0x00476EE0",
+      "0x00476FE0",
+      "0x00477100",
+      "0x00477440",
+      "0x00477540",
+      "0x00477640",
+      "0x00477740",
+      "0x00477840",
+      "0x004779D0",
+      "0x0048C0A0",
+      "0x0048C650",
+      "0x004E5250",
+      "0x004E5FE0",
+      "0x004E80B0",
+      "0x004EB560",
+      "0x004F0460",
+      "0x005230E0",
+      "0x005247B0",
+      "0x0057F4B0",
+      "0x00592A80",
+      "0x005B3380",
+      "0x005BE530",
+      "0x005C03D0",
+      "0x005E2480",
+      "0x005E3890",
+      "0x00600F00",
+      "0x006015B0",
+      "0x00601980",
+      "0x00602600",
+      "0x0060E740",
+      "0x00610120",
+      "0x00611A20"
+    ],
+    "why_on_the_slate": "split body - 2,102 B of it live in an outlined cold span"
+  },
+  "0x00526030": {
+    "binary_kind": "game",
+    "caller_count": 1,
+    "callgraph_callees": 8,
+    "contiguous_bytes": 1913,
+    "indirect_call_sites": 0,
+    "name": "?repair_phase@@YAXH@Z",
+    "recovery_state": "source_complete",
+    "return_purges": [
+      0
+    ],
+    "size": 1913,
+    "span_bytes": 1913,
+    "span_count": 1,
+    "unresolved_callees": [],
+    "why_on_the_slate": "recently recovered, 8 callees, no indirect sites"
+  },
+  "0x0054ACC0": {
+    "binary_kind": "game",
+    "caller_count": 1,
+    "callgraph_callees": 3,
+    "contiguous_bytes": 733,
+    "indirect_call_sites": 0,
+    "name": "?suggest_plan@@YAHHH@Z",
+    "recovery_state": "source_complete",
+    "return_purges": [
+      0
+    ],
+    "size": 733,
+    "span_bytes": 733,
+    "span_count": 1,
+    "unresolved_callees": [],
+    "why_on_the_slate": "free function, mangled name pins two int arguments"
+  },
+  "0x00565320": {
+    "binary_kind": "game",
+    "caller_count": 3,
+    "callgraph_callees": 6,
+    "contiguous_bytes": 3070,
+    "indirect_call_sites": 0,
+    "name": "?can_terraform@@YAHHHHHH@Z",
+    "recovery_state": "source_complete",
+    "return_purges": [
+      0
+    ],
+    "size": 3070,
+    "span_bytes": 3070,
+    "span_count": 1,
+    "unresolved_callees": [],
+    "why_on_the_slate": "the largest body recovered; 267 mutants"
+  },
+  "0x005665D0": {
+    "binary_kind": "game",
+    "caller_count": 1,
+    "callgraph_callees": 4,
+    "contiguous_bytes": 562,
+    "indirect_call_sites": 0,
+    "name": "?alien_base@@YAHHHH@Z",
+    "recovery_state": "source_complete",
+    "return_purges": [
+      0
+    ],
+    "size": 562,
+    "span_bytes": 562,
+    "span_count": 1,
+    "unresolved_callees": [],
+    "why_on_the_slate": "recovered, single caller, zero seams"
+  },
+  "0x0059EEE0": {
+    "binary_kind": "game",
+    "caller_count": 1,
+    "callgraph_callees": 4,
+    "contiguous_bytes": 574,
+    "indirect_call_sites": 0,
+    "name": "?success_rates@@YAHHHHH@Z",
+    "recovery_state": "source_complete",
+    "return_purges": [
+      0
+    ],
+    "size": 574,
+    "span_bytes": 574,
+    "span_count": 1,
+    "unresolved_callees": [],
+    "why_on_the_slate": "recovered and observed by nothing - see RECOVERY_ECONOMICS"
+  },
+  "0x005B4790": {
+    "binary_kind": "game",
+    "caller_count": 2,
+    "callgraph_callees": 7,
+    "contiguous_bytes": 3714,
+    "indirect_call_sites": 0,
+    "name": "?social_ai@@YAXHHHHHPAH@Z",
+    "recovery_state": "source_complete",
+    "return_purges": [
+      0
+    ],
+    "size": 3714,
+    "span_bytes": 3714,
+    "span_count": 1,
+    "unresolved_callees": [
+      "0x00581260",
+      "0x005B4600"
+    ],
+    "why_on_the_slate": "3,714 B, the largest unobserved recovery"
+  },
+  "0x005E10C0": {
+    "binary_kind": "game",
+    "caller_count": 1,
+    "callgraph_callees": 0,
+    "contiguous_bytes": 654,
+    "indirect_call_sites": 2,
+    "name": "?hline@Buffer@@QAEXHHHHHHHH@Z",
+    "recovery_state": "unrecovered",
+    "return_purges": [
+      32
+    ],
+    "size": 654,
+    "span_bytes": 654,
+    "span_count": 1,
+    "unresolved_callees": [],
+    "why_on_the_slate": "dispatches through a vtable slot; reads as a perfect leaf"
+  }
+}
