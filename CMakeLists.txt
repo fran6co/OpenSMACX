@@ -1436,6 +1436,15 @@ if(BUILD_TESTING)
     # command holding `<staged>.log`, a different token, a non-wine launcher.
     opensmacx_add_python_tool_test(runtime-process-tests test_runtime_process.py)
 
+    # measure_observability.py answers "does anything watch this function" for
+    # one build per function instead of ~152, which is what made asking it over
+    # the whole corpus possible at all. Deliberately NOT registered as a gate
+    # test: a full run is ~30 minutes against a 107 s lane. Only its unit tests
+    # run here; the corpus figure belongs in docs/RECOVERY_ECONOMICS.md, where
+    # it is dated, because it moves as fixtures are written.
+    opensmacx_add_python_tool_test(observability-tests
+                                   test_measure_observability.py)
+
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
     # that safe - an unplanned command is still executed, and a command that

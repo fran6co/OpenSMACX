@@ -257,6 +257,55 @@ Measured 2026-08-01. A random sample of **eight** recovered functions of ≥200 
 single mutant, including mutants that delete a whole statement. Over the sample,
 **102 of 1,217 mutants die — 8.4%**.
 
+### The whole population, measured 2026-08-01
+
+The sample was then replaced by a census. `tools/measure_observability.py` asks
+the weaker question — *does anything observe this at all* — for **one build per
+function** instead of ~152, by wrecking every perturbable line at once and
+running the suite once. That is what made asking it over the corpus feasible:
+~30 minutes rather than ~8 hours.
+
+| | functions | |
+|---|---:|---|
+| measured (≥200 B, `source_complete`) | **193** | 5 more would not compile wrecked and are excluded |
+| OBSERVED | 52 | at least one assertion depends on the body |
+| **UNOBSERVED** | **141 (73%)** | nothing distinguishes the body from a wrecked one |
+| …of those, with no oracle and no proof either | **131** | **96,550 B with no verification of any kind** |
+
+The largest are `?battle_compute@@YAXHHPAHPAHH@Z` (10,020 B),
+`?tech_val@@YAHHHH@Z` (4,133), `?read_rules@@YAHH@Z` (3,804),
+`?read_faction@@YAXPAUPlayer@@H@Z` (3,739) and `?social_ai@@YAXHHHHHPAH@Z`
+(3,714).
+
+**The instrument was validated in both directions before these numbers were
+believed**, because a prober that can only say UNOBSERVED is a broken tool that
+looks like a dramatic finding: `?repair_phase@@YAXH@Z` kills 118 of 126 mutants
+and is reported OBSERVED; `?social_ai@@YAXHHHHHPAH@Z` kills 0 of 709 and is
+reported UNOBSERVED.
+
+It also finds coverage a name grep cannot. `sub_5b5700`, `?is_sensor@@YAHHH@Z`
+and the `Dialog`/`Dialogs`/`Wave` destructors are named in no test and come back
+OBSERVED, because they are reached through a caller. That is why the 72%
+stem-matching estimate is an upper bound and this 73% census is not the same
+number arrived at twice.
+
+### THE DEBT IS HISTORICAL, WHICH IS THE ONLY GOOD NEWS HERE
+
+The three functions recovered on 2026-08-01, re-swept under the strengthened
+constant operator:
+
+| function | killed | |
+|---|---:|---|
+| `?repair_phase@@YAXH@Z` | 118/126 | 94% |
+| `?alien_base@@YAHHHH@Z` | 46/49 | 94% |
+| `?suggest_plan@@YAHHH@Z` | 57/61 | 93% |
+
+So the current process produces observed recoveries; it is the accumulated
+corpus that is unwatched. That distinction decides the response. Blocking
+progress on ~131 retroactive fixtures would stop the objective dead, and it is
+not warranted — but the count must be published and must not be allowed to grow,
+which is the same ratchet shape as `BASELINE` in `audit_export_signedness.py`.
+
 Each of the five was checked three ways before being called unobserved: named by
 no file under `tests/`, absent from `src/generated_signature_oracle.cpp`, and
 absent from `docs/recovery/proven.csv`. `src/veh.cpp` compiles into exactly one
