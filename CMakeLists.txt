@@ -1146,12 +1146,22 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(compiled-recovery-extractor-tests
         test_extract_compiled_recovery.py)
 
-    # The Z3 x86 encoding. These tests do NOT establish that it is correct -
-    # tools/validate_x86_smt.py does, by driving the encoding and lifted_x86.h
-    # with the same states and requiring bit-for-bit agreement, and six
-    # deliberately damaged encodings were all caught by it. What is pinned here
-    # is what validation cannot reach: that the formulas are symbolic, since a
-    # prover never sees a concrete state.
+    # The Z3 x86 encoding. These tests do NOT establish that it is correct.
+    # tools/validate_x86_smt.py is what does that, by driving the encoding and
+    # lifted_x86.h with the same states and requiring bit-for-bit agreement;
+    # six deliberately damaged encodings were all caught by it.
+    #
+    # BUT NOTHING RUNS IT, INCLUDING THIS FILE. It is not registered as a test
+    # and cannot be: its reference harness includes build/lifted/
+    # lifted_runtime.h, which tools/lift_whole_image.py generates and which is
+    # gitignored, so a gate lane has no way to build it. On a tree without that
+    # header it now says so instead of emitting a compiler error that reads
+    # like an encoding fault. The agreement above is therefore a RECORDED PAST
+    # RESULT, not a standing guarantee, and this comment used to claim
+    # otherwise in the present tense.
+    #
+    # What IS pinned here is what validation cannot reach: that the formulas
+    # are symbolic, since a prover never sees a concrete state.
     opensmacx_add_python_tool_test(x86-smt-encoding-tests test_x86_smt.py)
 
     # The only place in this repository where a function's ABI is written down
