@@ -224,12 +224,15 @@ gameplay tests keep a central `main()` list:
 - Game functions: 5,627.
 - Library functions: 338.
 - Thunks: 35.
-- Current recovery state: 2,552 `source_complete`, 280 `original_dependency`,
-  5 `source_in_progress`, 327 `external_library`, 28 `thunk`, 2,808
-  `unrecovered`; 3,136 ranked recovery candidates. **These counts drift.
-  `docs/recovery/summary.json` is the generated source of truth and
-  `verify-recovery-metadata` checks it; every figure on this line was wrong
-  until 2026-07-29, five of them by more than 60%.** Read the JSON rather than
+- Current recovery state: 2,573 `source_complete`, 280 `original_dependency`,
+  5 `source_in_progress`, 327 `external_library`, 28 `thunk`, 2,787
+  `unrecovered`; 3,136 ranked recovery candidates. **These counts no longer
+  drift silently: `documented-counts` compares this line against the generated
+  `docs/recovery/functions.csv` on every gate run and fails on any
+  disagreement.** They had drifted again by 2026-08-01 - 2,552 against 2,573,
+  2,808 against 2,787 - because the previous version of this line only warned
+  the reader that it might be wrong. `docs/recovery/summary.json` remains the
+  generated source of truth. Read the JSON rather than
   this line when the number matters.
 - Local legacy-island count: `candidate_count` in the manifest that
   `extract-legacy-leaves` writes. It moves with the size cap and with every

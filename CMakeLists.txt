@@ -1288,6 +1288,25 @@ if(BUILD_TESTING)
     # exercise the tool's logic, not whether the COMMITTED file is still current.
     # summary.json's shape split is computed from recovered-shapes.csv, so a
     # stale one publishes a wrong split under a green gate. 0.43 s and 0.65 s.
+    # AGENTS.md's "Current recovery state" line is typed by hand and had
+    # drifted again by 2026-08-01. Its previous defence was a sentence warning
+    # the reader it might be wrong, which is not a defence.
+    opensmacx_add_python_tool_test(documented-counts-tests test_verify_documented_counts.py)
+    add_test(NAME documented-counts
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_documented_counts.py"
+    )
+
+    # A fixed game address dereferenced at load time faults before main() in
+    # the host test binaries once the image grows past the mapped range - so
+    # merely ADDING TESTS crashes an unrelated binary, and the fault is
+    # attributed to whichever commit grew it.
+    opensmacx_add_python_tool_test(load-time-address-tests test_verify_no_load_time_addresses.py)
+    add_test(NAME load-time-addresses
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_no_load_time_addresses.py"
+    )
+
     add_test(NAME recovered-shapes-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/classify_recovered_shapes.py"
