@@ -299,6 +299,47 @@ def statements_interact(first: str, second: str) -> bool:
     return bool(word(first_base, second_rhs) or word(second_base, first_rhs))
 
 
+def constant_replacements(literal: str, value: int, suffix: str):
+    """The perturbations of one integer literal, widest-blast-radius first.
+
+    ZERO IS NOT ENOUGH, and this is the hole it left. Until 2026-08-01 the only
+    mutant was `0` (or `1` for a zero), so "all mutants killed" proved every
+    constant was PRESENT AND NON-ZERO - never that it held the right value.
+    Measured on a tree whose sweep read 42/42 killed: changing a region penalty
+    from `512` to `511` passed the entire suite. That applies to every constant
+    in every recovery this harness has certified, and the project's own
+    documentation treats a clean sweep as the bar.
+
+    So each literal now also moves by one in each direction. An off-by-one is
+    the perturbation a fixture is likeliest to be blind to, because a test built
+    from the same reading of the disassembly as the code tends to exercise the
+    interior of a range rather than its edge - which is exactly where a wrong
+    boundary hides.
+
+    The base is preserved: `0x200` becomes `0x201`, not `513`. Recovered code
+    spells bitmasks and offsets in hex, and a decimal mutant of one is harder to
+    read in a survivor report than the thing it came from.
+
+    Zero yields `1` only. `-1` would be a sign change rather than an off-by-one,
+    and on the unsigned literals this codebase is full of it wraps to a value
+    that reads as an unrelated defect.
+    """
+    hexadecimal = literal[:2] in ("0x", "0X")
+
+    def spell(number):
+        return (f"0x{number:X}" if hexadecimal else str(number)) + suffix
+
+    if value == 0:
+        return [spell(1)]
+    # `1` collapses two of these onto `0`; dedupe in order so the report does
+    # not list the same mutant twice.
+    ordered = []
+    for candidate in (spell(0), spell(value + 1), spell(value - 1)):
+        if candidate not in ordered:
+            ordered.append(candidate)
+    return ordered
+
+
 def changes_subscript_value(line: str, start: int, end: int,
                             replacement: str) -> bool:
     """Reject constant mutants that leave a simple array index unchanged.
@@ -496,18 +537,19 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
         for match in INT_LITERAL.finditer(code_line):
             literal = match.group(0)
             value = int(match.group(1), 0)
-            replacement = ("1" if value == 0 else "0") + match.group(2)
-            if not changes_subscript_value(
-                    line, match.start(), match.end(), replacement):
-                continue
-            mutated_line = (
-                line[:match.start()] + replacement + line[match.end():])
-            if mutated_line == line or mutated_line in emitted_constant_lines:
-                continue
-            emitted_constant_lines.add(mutated_line)
-            emit(index + 1, "constant",
-                 f"`{literal}` -> `{replacement}` in `{stripped}`",
-                 lines[:index] + [mutated_line] + lines[index + 1:])
+            for replacement in constant_replacements(literal, value,
+                                                     match.group(2)):
+                if not changes_subscript_value(
+                        line, match.start(), match.end(), replacement):
+                    continue
+                mutated_line = (
+                    line[:match.start()] + replacement + line[match.end():])
+                if mutated_line == line or mutated_line in emitted_constant_lines:
+                    continue
+                emitted_constant_lines.add(mutated_line)
+                emit(index + 1, "constant",
+                     f"`{literal}` -> `{replacement}` in `{stripped}`",
+                     lines[:index] + [mutated_line] + lines[index + 1:])
 
         # 3. Invert a comparison. Catches untested boundaries. Template angle
         #    brackets are not comparisons; rewriting them only burns a build.

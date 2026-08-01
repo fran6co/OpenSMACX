@@ -690,6 +690,57 @@ class CodeExtentTests(unittest.TestCase):
         self.assertEqual(self.extent(line), len(line))
 
 
+class OffByOneConstantTests(unittest.TestCase):
+    """A killed mutant must mean the constant is RIGHT, not merely non-zero.
+
+    Until 2026-08-01 the only constant mutant was `0`, so a clean sweep proved
+    every literal was present and non-zero and nothing more. Demonstrated on a
+    tree whose sweep read 42/42 killed: changing a region penalty from 512 to
+    511 passed the whole suite. Every recovery this harness has certified
+    inherits that gap, which is why the operator is not optional.
+    """
+
+    def test_a_constant_moves_by_one_in_both_directions(self):
+        self.assertEqual(
+            ["0", "513", "511"],
+            mutate_and_verify.constant_replacements("512", 512, ""))
+
+    def test_the_off_by_one_that_slipped_through_is_now_generated(self):
+        self.assertIn(
+            "511", mutate_and_verify.constant_replacements("512", 512, ""))
+
+    def test_hexadecimal_stays_hexadecimal(self):
+        # Recovered code spells masks and offsets in hex; a decimal mutant is
+        # harder to match against the literal it came from in a survivor report.
+        self.assertEqual(
+            ["0x0", "0x201", "0x1FF"],
+            mutate_and_verify.constant_replacements("0x200", 512, ""))
+
+    def test_a_suffix_is_carried_onto_every_mutant(self):
+        # Dropping the suffix changes the expression's type as well as its
+        # value, which is a different perturbation than the one intended.
+        self.assertEqual(
+            ["0u", "2u"],
+            mutate_and_verify.constant_replacements("1u", 1, "u"))
+
+    def test_zero_yields_one_and_not_minus_one(self):
+        # -1 is a sign change, not an off-by-one, and on the unsigned literals
+        # this codebase is full of it wraps into an unrelated-looking defect.
+        self.assertEqual(
+            ["1"], mutate_and_verify.constant_replacements("0", 0, ""))
+
+    def test_a_line_yields_all_three_mutants_end_to_end(self):
+        lines = ["void f() {", "    int penalty = 512;", "}"]
+        function = mutate_and_verify.Function(
+            address="0x00400000", start=1, end=2)
+        constants = [one.description
+                     for one in mutate_and_verify.build_mutants(lines, function)
+                     if one.operator == "constant"]
+        self.assertEqual(3, len(constants))
+        self.assertTrue(any("`511`" in one for one in constants),
+                        f"no off-by-one-down mutant in {constants}")
+
+
 class TrailingCommentMutantTests(unittest.TestCase):
     """End to end through build_mutants, which is what the sweep calls."""
 
@@ -707,8 +758,14 @@ class TrailingCommentMutantTests(unittest.TestCase):
     def test_a_real_literal_on_the_same_line_still_mutates(self):
         both = self.mutants_for(["    total = 8;  // entry 4 is (0,0)"])
         constants = [one for one in both if one.operator == "constant"]
-        self.assertEqual(len(constants), 1)
-        self.assertIn("`8`", constants[0].description)
+        # Three now, not one: zero plus both off-by-ones. Every one of them must
+        # come from the code's `8` and none from the comment's `4`.
+        self.assertEqual(3, len(constants))
+        for mutant in constants:
+            self.assertIn("`8` ->", mutant.description)
+        self.assertEqual(
+            {"`8` -> `0`", "`8` -> `9`", "`8` -> `7`"},
+            {one.description.split(" in ")[0] for one in constants})
 
     def test_a_comparison_inside_a_trailing_comment_is_not_inverted(self):
         mutants = self.mutants_for(["    call();  // true when a >= b"])
