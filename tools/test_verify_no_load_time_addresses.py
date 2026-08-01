@@ -26,6 +26,59 @@ class LoadTimeAddressTests(unittest.TestCase):
     def test_the_c_style_spelling_is_caught(self):
         self.assertEqual(len(self.write("int *p = *(int **)0x00669304;\n")), 1)
 
+    # THE THREE SPELLINGS THIS GUARD USED TO MISS. It required `0x00` plus
+    # exactly six digits at column zero, so it caught one of four ways the tree
+    # already writes the construct and reported clean over the rest.
+    def test_an_unpadded_address_is_caught(self):
+        self.assertEqual(
+            len(self.write("int *p = *reinterpret_cast<int **>(0x669304);\n")), 1)
+
+    def test_an_unpadded_c_style_address_is_caught(self):
+        self.assertEqual(len(self.write("int *p = *(int **)0x669304;\n")), 1)
+
+    def test_a_declaration_indented_inside_a_namespace_is_caught(self):
+        # File scope, but not column zero - which is every declaration in the
+        # anonymous namespaces src/dllmain.cpp and the oracles are built from.
+        found = self.write(
+            "namespace {\n"
+            "  int *p = *reinterpret_cast<int **>(0x00669304);\n"
+            "}\n")
+        self.assertEqual(len(found), 1)
+
+    def test_a_header_is_scanned(self):
+        # offenders() globbed *.cpp only, so 129 headers were never read.
+        (self.root / "b.h").write_text(
+            "inline int *p = *reinterpret_cast<int **>(0x00669304);\n",
+            encoding="utf-8")
+        self.assertEqual(len(guard.offenders(self.root)), 1)
+
+    def test_a_small_literal_is_a_field_offset_not_an_address(self):
+        # Loosening the digit count alone fires on src/console.cpp:330, where
+        # `+ 0x1DD70` is a struct displacement. Below the PE ImageBase it is not
+        # a game address and cannot fault at load time.
+        self.assertEqual(self.write(
+            "struct S { int *q = *(int **)0x1DD70; };\n"), [])
+
+    def test_a_function_body_at_namespace_depth_is_still_allowed(self):
+        # Allowing indentation must not flag the remedy this tool recommends:
+        # resolve the address on first use, inside the function.
+        self.assertEqual(self.write(
+            "namespace {\n"
+            "  void resolve() {\n"
+            "    int *p = *reinterpret_cast<int **>(0x00669304);\n"
+            "    (void)p;\n"
+            "  }\n"
+            "}\n"), [])
+
+    def test_a_brace_inside_a_comment_does_not_open_a_scope(self):
+        # The comments in src/ carry disassembly with unbalanced braces; if they
+        # counted, everything after one would look like function scope and the
+        # guard would go quiet.
+        found = self.write(
+            "// the original does { push ebp\n"
+            "int *p = *reinterpret_cast<int **>(0x00669304);\n")
+        self.assertEqual(len(found), 1)
+
     # The three shapes that must NOT fire; a guard that flags these would be
     # unusable, because the codebase is built on fixed addresses.
     def test_taking_the_address_without_loading_is_allowed(self):

@@ -70,6 +70,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ctest-file", required=True,
                         help="generated CTestTestfile.cmake to check")
+    # The two cases the old code could not tell apart, separated by making the
+    # caller state which one it is in. A native MinGW-on-Windows build really
+    # does have zero Wine-backed tests; a cross build has seven, and zero there
+    # means this check stopped matching rather than that the locks are fine.
+    #
+    # Deliberately "at least" and not "exactly": blinding shows up as a count
+    # BELOW the expectation, while legitimately adding an eighth Wine test must
+    # not turn the gate red for a number that was only ever a floor.
+    parser.add_argument("--expect-at-least", type=int, default=0,
+                        help="fail if fewer than this many Wine-backed tests "
+                             "are found; 0 means a build that may have none")
     arguments = parser.parse_args()
 
     path = Path(arguments.ctest_file)
@@ -77,10 +88,17 @@ def main():
         print(f"error: {path} does not exist", file=sys.stderr)
         return 2
     wine_backed, locked = parse(path.read_text(encoding="utf-8"))
+    if len(wine_backed) < arguments.expect_at_least:
+        print(f"error: found {len(wine_backed)} test(s) running {RUNNER} in "
+              f"{path}, expected at least {arguments.expect_at_least}. Either "
+              f"a Wine-backed test was removed, or this check has been blinded "
+              f"- it matches on the literal strings '/{RUNNER}' and "
+              f"'--wine-prefix', and renaming either makes it see nothing while "
+              f"still reporting success. If the removal is intended, lower "
+              f"--expect-at-least where it is registered.", file=sys.stderr)
+        return 1
     if not wine_backed:
-        # Not a pass. A configuration with no Wine-backed test at all is
-        # possible (a native build), but so is a rename that made this check
-        # match nothing, and the two must not look alike.
+        # Reachable only when the caller said zero is legitimate.
         print(f"no test in {path} runs {RUNNER}; this check verified NOTHING")
         return 0
     missing = [name for name in wine_backed if name not in locked]

@@ -45,6 +45,9 @@ DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 # Recorded so a new recovery cannot quietly add to the population. Lower these
 # when candidates are resolved; the check refuses any increase.
 BASELINE = {"disagreements": 199, "signed_divide": 44}
+# 311 exports are comparable today. A run that compares far fewer has lost the
+# .def or the catalogue, not the disagreements.
+COMPARISON_FLOOR = 300
 
 MSVC = {'H': 'int', 'I': 'uint', 'J': 'long', 'K': 'ulong',
         'F': 'short', 'G': 'ushort', 'D': 'char', 'E': 'uchar',
@@ -278,6 +281,32 @@ def main():
             print(f"      {arguments_text}")
 
     if arguments.check:
+        # BOTH HALVES OF THIS RATCHET CAN READ AS A PASS HAVING MEASURED
+        # NOTHING, and one of them printed a reassuring `0 <= 44` to prove it.
+        #
+        #   - signed_divide is ranked by disassembling the original. With no
+        #     executable, or with capstone/pefile unimportable, signed_arithmetic
+        #     returns None, every finding stays `unranked`, and the second
+        #     comparison becomes 0 > 44 - permanently false.
+        #   - the first comparison is over whatever the .def yielded. An empty
+        #     or unparseable .def gives `exports compared: 0` and 0 > 199.
+        #
+        # Neither is hypothetical: the default --exe is a proprietary artifact
+        # that is gitignored, so any checkout without the game reaches the first
+        # one, and a configure that does not set -DOPENSMACX_PYTHON reaches the
+        # second. A ratchet that cannot fail is not a ratchet.
+        if signed_arithmetic(arguments.exe) is None:
+            print("audit-export-signedness: the original executable or the "
+                  f"disassembler is unavailable ({arguments.exe}), so nothing "
+                  "could be ranked and the signed_divide ratchet could not "
+                  "fail. This check verified NOTHING.", file=sys.stderr)
+            return 2
+        if compared < COMPARISON_FLOOR:
+            print(f"audit-export-signedness: compared only {compared} exports, "
+                  f"below the floor of {COMPARISON_FLOOR}. An empty or "
+                  "unparseable .def compares nothing and reports clean.",
+                  file=sys.stderr)
+            return 2
         grew = []
         if len(findings) > BASELINE["disagreements"]:
             grew.append(f"disagreements {len(findings)} > "

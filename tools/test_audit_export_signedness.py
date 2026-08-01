@@ -129,5 +129,48 @@ class CommittedTreeTests(unittest.TestCase):
         self.assertGreaterEqual(self.compared, 300)
 
 
+class RatchetCannotPassVacuouslyTests(unittest.TestCase):
+    """--check must not report `within baseline` having measured nothing.
+
+    Both halves could. signed_divide is ranked by disassembling the original, so
+    with no executable every finding stayed `unranked` and the comparison was a
+    permanent 0 > 44; and the disagreement count is over whatever the .def
+    yielded, so an empty one gave `exports compared: 0` and 0 > 199. The default
+    --exe is a gitignored proprietary artifact, so the first was reachable from
+    any checkout without the game.
+    """
+
+    def run_check(self, *extra):
+        import contextlib
+        import io
+        import sys
+        argv = sys.argv
+        sys.argv = ["audit_export_signedness.py", "--check", *extra]
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), \
+                 contextlib.redirect_stderr(io.StringIO()) as errors:
+                status = audit.main()
+            return status, errors.getvalue()
+        finally:
+            sys.argv = argv
+
+    def test_a_missing_executable_refuses_instead_of_passing(self):
+        status, errors = self.run_check("--exe", "/nonexistent/terranx.exe")
+        self.assertEqual(2, status)
+        self.assertIn("verified NOTHING", errors)
+
+    def test_an_empty_def_file_refuses_instead_of_passing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            empty = Path(directory) / "empty.def"
+            empty.write_text("", encoding="utf-8")
+            status, errors = self.run_check("--def-file", str(empty))
+        self.assertEqual(2, status)
+        self.assertIn("below the floor", errors)
+
+    def test_the_floor_is_below_the_real_population(self):
+        # A floor above the real count would fail every honest run instead.
+        self.assertLess(audit.COMPARISON_FLOOR, 311)
+
+
 if __name__ == "__main__":
     unittest.main()

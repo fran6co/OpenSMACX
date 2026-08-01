@@ -95,5 +95,62 @@ class CommittedImageTests(unittest.TestCase):
         self.assertEqual(self.scan("0x0053A4A0"), [])
 
 
+class FrontierPopulationTests(unittest.TestCase):
+    """The seam filter must actually filter.
+
+    It did not. It asked the callgraph for `graph[address]["callees"]`, but the
+    file is an edge list, so every lookup returned [] and `all([])` admitted the
+    entire unrecovered population - 2,784 rows where 947 qualify. Nothing here
+    covered this function, and the two percentages published from it were wrong
+    by a factor of 2.9 in the population.
+    """
+
+    def rows(self):
+        # 0x2000 is the candidate; 0x3000 is a resolved callee, 0x4000 is not.
+        return {
+            "0x00002000": {"address": "0x00002000", "size": "10",
+                           "recovery_state": "unrecovered", "binary_kind": "game"},
+            "0x00005000": {"address": "0x00005000", "size": "10",
+                           "recovery_state": "unrecovered", "binary_kind": "game"},
+            "0x00003000": {"address": "0x00003000", "size": "10",
+                           "recovery_state": "source_complete", "binary_kind": "game"},
+            "0x00004000": {"address": "0x00004000", "size": "10",
+                           "recovery_state": "unrecovered", "binary_kind": "game"},
+        }
+
+    def write_graph(self, payload):
+        path = Path(self.enterContext(
+            __import__("tempfile").TemporaryDirectory())) / "callgraph.json"
+        path.write_text(__import__("json").dumps(payload), encoding="utf-8")
+        return path
+
+    def test_a_function_with_an_unrecovered_callee_is_excluded(self):
+        graph = self.write_graph({"edges": [
+            {"source": "0x00002000", "target": "0x00003000"},
+            {"source": "0x00005000", "target": "0x00004000"},
+        ]})
+        selected = {row["address"]
+                    for row in sites.frontier_population(self.rows(), graph)}
+        # 0x5000 calls an unrecovered function, so it must NOT qualify - that is
+        # the whole job, and before the fix it appeared anyway. 0x2000 calls only
+        # a source_complete one and 0x4000 has no callees at all, so both do.
+        self.assertNotIn("0x00005000", selected)
+        self.assertEqual({"0x00002000", "0x00004000"}, selected)
+
+    def test_an_edge_list_read_as_a_map_would_admit_everything(self):
+        # The exact regression: no edge names 0x5000's unrecovered callee, so a
+        # lookup that finds nothing must not be read as "no seams".
+        graph = self.write_graph({"edges": []})
+        selected = sites.frontier_population(self.rows(), graph)
+        self.assertEqual(3, len(selected))  # the three unrecovered game rows
+        self.assertLess(len(selected), len(self.rows()),
+                        "admitting every row means the filter filtered nothing")
+
+    def test_a_callgraph_without_edges_refuses_rather_than_admitting_all(self):
+        graph = self.write_graph({"function_count": 3})
+        with self.assertRaises(SystemExit):
+            sites.frontier_population(self.rows(), graph)
+
+
 if __name__ == "__main__":
     unittest.main()
