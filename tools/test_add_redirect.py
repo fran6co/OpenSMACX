@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import inspect
 import unittest
 from unittest import mock
 
@@ -184,3 +185,38 @@ class VerifyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CallKindRefusalTests(unittest.TestCase):
+    """`--kind call` was accepted, recorded in the CSV, and then inserted into
+    the JUMP table, because add_spec took no kind and only ever scanned and
+    appended within the jump-table region. The two tables are not
+    interchangeable - call_specs[] holds interior call sites, specs[] holds
+    function starts - so that installs a five-byte jump into the middle of a
+    function and nothing downstream disagrees."""
+
+    def test_call_kind_is_refused(self):
+        with self.assertRaises(ValueError) as caught:
+            add_redirect.add_spec(0x004E9550, "some_symbol", "call")
+        message = str(caught.exception)
+        self.assertIn("--kind call", message)
+        self.assertIn("call_specs[]", message)
+
+    def test_the_refusal_happens_before_any_file_is_read_or_written(self):
+        # It must not partially apply. Refusing after the dllmain read would
+        # still be safe today, but the guard belongs ahead of every side effect.
+        before = add_redirect.DLLMAIN.read_bytes()
+        with self.assertRaises(ValueError):
+            add_redirect.add_spec(0x004E9550, "some_symbol", "call")
+        self.assertEqual(before, add_redirect.DLLMAIN.read_bytes())
+
+    def test_jump_is_still_the_default(self):
+        import inspect
+        signature = inspect.signature(add_redirect.add_spec)
+        self.assertEqual(signature.parameters["kind"].default, "jump")
+
+    def test_main_passes_the_kind_through(self):
+        # The defect was precisely that main() recorded args.kind in the CSV
+        # and then called add_spec without it.
+        source = inspect.getsource(add_redirect.main)
+        self.assertIn("add_spec(address, args.symbol, args.kind)", source)

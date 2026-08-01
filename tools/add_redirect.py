@@ -118,7 +118,32 @@ def add_csv_row(address: int, kind: str) -> Edit:
     return Edit(REDIRECT_CSV, original)
 
 
-def add_spec(address: int, symbol: str) -> Edit:
+def add_spec(address: int, symbol: str, kind: str = "jump") -> Edit:
+    """Insert a RedirectSpec. JUMP TABLE ONLY - see the refusal below.
+
+    `--kind call` was accepted and recorded in the CSV, and then ignored here:
+    this function took no kind, scanned only up to CALL_TABLE, and inserted at
+    JUMP_TABLE_END. There is no code path in this tool that writes call_specs[].
+    So a call-kind redirect landed among the function-start jumps, and the two
+    tables are not interchangeable - the comment below says so itself: the call
+    table "holds interior call sites and not function starts". Installing a
+    five-byte jump at an interior call site corrupts control flow, and nothing
+    downstream would have said so; the CSV would read `call` and agree.
+
+    It also bumped RedirectCount, leaving CallRedirectCount untouched.
+
+    The two committed call entries were added by hand. Until this tool can do it
+    - insert into call_specs[] and bump CallRedirectCount, neither of which it
+    attempts - `--kind call` is refused rather than silently mishandled.
+    """
+    if kind != "jump":
+        raise ValueError(
+            f"--kind {kind} is not implemented: this tool only writes the jump "
+            f"table (function starts). It previously accepted --kind call, "
+            f"recorded it in the CSV, and inserted the spec into the JUMP table "
+            f"anyway, which installs a five-byte jump at an interior call site. "
+            f"Add call-site redirects to call_specs[] in src/dllmain.cpp by "
+            f"hand and bump CallRedirectCount, as the two existing ones were.")
     original = DLLMAIN.read_text()
     token = f"0x{address:08X}"
     if f"            {token},\n" in original:
@@ -214,7 +239,7 @@ def main() -> int:
     edits: list[Edit] = []
     try:
         edits.append(add_csv_row(address, args.kind))
-        edits.append(add_spec(address, args.symbol))
+        edits.append(add_spec(address, args.symbol, args.kind))
         signatures_before = SIGNATURES.read_text()
         edits.append(Edit(SIGNATURES, signatures_before))
         regenerate_signatures()
