@@ -45,7 +45,17 @@ against it, never to trust directly.
 ### The per-recovery loop, concretely
 
 1. `tools/disasm.py` the target and every callee; classify each call as
-   source-owned or original-dependency; confirm the SEH prologue targets
+   source-owned or original-dependency. **A callee count of 0 does not mean
+   leaf** — `callgraph.json` records only direct `call rel32`, so a body that
+   dispatches through `call dword ptr [edx+0x64]` reads as a perfect leaf with
+   every callee resolved. Measured over the zero-callee-seam population,
+   **35.7% of functions and 50.7% of bytes contain a call site the callgraph
+   never counted**, so its seam counts are a lower bound rather than an
+   estimate. Run `tools/indirect_call_sites.py --address <addr>` before
+   accepting any candidate; `?hline@Buffer@@`, `?vline@Buffer@@` and
+   `?fill@Buffer@@` were all selected as leaves before it existed. An indirect
+   site is a call to *look at*, not automatically a seam.
+   Then confirm the SEH prologue targets
    `__CxxFrameHandler` at `0x00644FD6`, which is safe to omit. Every game
    frame in this image does; the fifteen that do not are CRT (see the closing
    section), so a prologue naming anything else means you are reading library

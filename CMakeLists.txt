@@ -1264,6 +1264,11 @@ if(BUILD_TESTING)
     # catalogue's decoration against the GCC symbol each .def alias maps to,
     # and refuses to let the candidate population grow.
     opensmacx_add_python_tool_test(export-signedness-audit-tests test_audit_export_signedness.py)
+
+    # The callgraph records only direct `call rel32`, so a function that
+    # dispatches through a vtable slot reads as a perfect leaf. Three were
+    # picked as recovery targets on that basis.
+    opensmacx_add_python_tool_test(indirect-call-site-tests test_indirect_call_sites.py)
     add_test(NAME export-signedness-audit
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/audit_export_signedness.py"
