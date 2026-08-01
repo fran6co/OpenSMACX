@@ -536,7 +536,15 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
         emitted_constant_lines = set()
         for match in INT_LITERAL.finditer(code_line):
             literal = match.group(0)
-            value = int(match.group(1), 0)
+            try:
+                value = int(match.group(1), 0)
+            except ValueError:
+                # Not every run of digits is a literal this can perturb. `08`
+                # in a date is the case that surfaced it - Python rejects a
+                # leading-zero decimal under base 0 - and the whole sweep died
+                # on one comment rather than skipping one token. A literal that
+                # cannot be parsed cannot be meaningfully mutated either way.
+                continue
             for replacement in constant_replacements(literal, value,
                                                      match.group(2)):
                 if not changes_subscript_value(
