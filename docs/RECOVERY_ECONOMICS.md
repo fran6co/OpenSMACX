@@ -365,3 +365,63 @@ recovered functions for which **at least one mutant dies**. Unlike a name grep
 it cannot be satisfied by a test that merely mentions a symbol. It costs one
 sweep per function, so it wants computing incrementally as recoveries land
 rather than retroactively over the whole corpus.
+
+
+## Which green results mean what, measured 2026-08-01
+
+Three adversarial audits found 12 defects in this project's own checks, so "the
+gate is green" is not by itself evidence. But it is not uniformly weak either,
+and the difference is measurable. Two independent properties were measured per
+check:
+
+- **proven able to fail** — `checks-can-fail` damages real repository content
+  and requires the check to refuse it with its own expected wording;
+- **its own tests observe it** — `verify_check_tests_observe` mutates the check
+  and runs that check's suite. A surviving mutant is a piece of the check no
+  test watches. Lower is better.
+
+| check | survivors | tests | proven able to fail |
+|---|---:|---:|---|
+| `verify_wine_test_locks` | 12% | 11 | yes, 2 cases |
+| `verify_documented_counts` | 25% | 8 | yes |
+| `verify_def_append_only` | 29% | 9 | no |
+| `verify_build_freshness` | 33% | 11 | no |
+| `verify_test_registration` | 42% | 10 | yes |
+| `verify_observability_ratchet` | 43% | 11 | yes |
+| `audit_export_signedness` | 47% | 19 | yes, 2 cases |
+| `verify_redirect_patch_fit` | 54% | 13 | no |
+| `verify_no_load_time_addresses` | 57% | 14 | yes |
+| `verify_recovery_metadata` | 60% | 24 | no |
+| `verify_tool_test_registration` | 67% | 10 | yes |
+| `verify_recovery_abi` | 77% | 8 | no |
+| `verify_checks_can_fail` | 100% | 17 | n/a — it is the harness |
+| `verify_recovery_pipeline` | 100% | 7 | yes |
+
+**A green from the top group is well supported.** `verify_wine_test_locks`,
+`verify_documented_counts`, `verify_test_registration` and
+`verify_observability_ratchet` each refuse real damage AND have suites that
+observe most of their logic. When those pass, the property they name holds.
+
+**A green from `verify_recovery_abi` or `verify_recovery_metadata` is weakly
+supported.** No damage case, and two-thirds to three-quarters of their logic is
+unobserved by their own tests. They may well be correct; nothing here shows it.
+
+**Read the 100% rows with care** — the metric is confounded for tools whose
+content is validated by RUNNING them rather than by unit tests. The survivors in
+`verify_checks_can_fail` are helper defaults and the bodies of its damage cases,
+which its gate invocation exercises directly. That was misread once as "its
+tests are vacuous" within minutes of the instrument being built.
+
+**The honest summary.** The instruments are not correct - 12 known defects, and
+the rate at which new ones are introduced has not measurably fallen. They are
+demonstrably effective: on the day this was written they caught a stale binary
+passing as fresh, a staled generated provenance comment, a vacuous damage case,
+an unregistered test file, a wrong constant surviving a clean sweep, 141
+unobserved recoveries, a `parse_body_ranges` regression, five census entries
+evading both ratchets, holes in tests written hours earlier, 90 mutants scored
+STALE rather than clean, a merge that broke the build, a missing X display, and
+a red tree promoted to master. Thirteen real catches against twelve defects.
+
+So: do not read a green gate as proof. Read the table - some greens are
+evidence, some are only an absence of complaint, and now it is written down
+which is which.
