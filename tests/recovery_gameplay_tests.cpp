@@ -5078,6 +5078,450 @@ void test_world_site_score() {
 
 #undef SCHECK2
 
+/*
+ * A self-contained world for num_objectives.
+ *
+ * Eleven scenario victory conditions add into one total and each is gated by
+ * its own bit, so almost every case here sets exactly one bit of GameRules or
+ * GameState and asserts one number. The banked count the total STARTS from -
+ * PlayerData.unk_101 - is left at zero except where a case names it, which
+ * makes every other number a delta from nothing.
+ *
+ * The map is eight columns by four rows, MapLongitude 4, which packs to four
+ * Map entries per row and sixteen in total; the two map walks step one entry
+ * per tile without resetting between rows, so the fixture has to agree with
+ * that packing exactly, and it does.
+ *
+ * Technology is left zeroed, which makes has_tech() answer on GameTechAchieved
+ * alone for ids 0 to 87 and refuse id 88 as 'Transcendent Thought'.
+ */
+struct ObjWorld {
+    Map tiles[32];
+    Base bases[6];
+    Veh vehs[8];
+    PlayerData players_data[9];
+    RulesTechnology technology[MaxTechnologyNum];
+    uint8_t tech_achieved[MaxTechnologyNum];
+    BaseSecretProject projects;
+    uint8_t faction_status[4];
+    Map *tiles_ptr;
+    int veh_count;
+    int base_count;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t game_rules;
+    uint32_t game_state;
+    uint32_t scn_vict_facility;
+};
+
+ObjWorld g_obj_world;
+
+const int OFACTION = 1;
+
+Map &otile(int x, int y) { return g_obj_world.tiles[(x >> 1) + y * 4]; }
+
+void obj_reset() {
+    std::memset(&g_obj_world, 0, sizeof(g_obj_world));
+    std::memset(&g_obj_world.projects, 0xFF, sizeof(g_obj_world.projects));
+    g_obj_world.tiles_ptr = g_obj_world.tiles;
+    g_obj_world.longitude = 4;
+    g_obj_world.lon_bounds = 8;
+    g_obj_world.lat_bounds = 4;
+    g_obj_world.is_flat = 1;
+    g_obj_world.faction_status[1] = 0xFF;   // every faction alive
+    g_obj_world.scn_vict_facility = FAC_RECYCLING_TANKS;
+}
+
+// A base of `owner` at (x, y), with the map bit base_at() insists on.
+Base &obj_base(int base_id, int owner, int x, int y) {
+    Base &base = g_obj_world.bases[base_id];
+    base.faction_id_current = (uint8_t)owner;
+    base.x = (int16_t)x;
+    base.y = (int16_t)y;
+    otile(x, y).bit |= BIT_BASE_IN_TILE;
+    if (base_id >= g_obj_world.base_count) {
+        g_obj_world.base_count = base_id + 1;
+    }
+    return base;
+}
+
+// An objective-flagged unit of the subject faction at (x, y).
+Veh &obj_veh(int x, int y) {
+    Veh &veh = g_obj_world.vehs[g_obj_world.veh_count++];
+    veh.faction_id = (uint8_t)OFACTION;
+    veh.flags = VFLAG_IS_OBJECTIVE;
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    return veh;
+}
+
+void obj_give_fac(Base &base, uint32_t facility) {
+    int offset;
+    int mask;
+    bitmask(facility, &offset, &mask);
+    base.facilities_built[offset] |= (uint8_t)mask;
+}
+
+#define OCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool obj_ok = (cond);                                           \
+        if (!obj_ok) {                                                        \
+            std::fprintf(stderr, "num_objectives: line %d: %s\n", __LINE__,   \
+                         #cond);                                              \
+        }                                                                     \
+        expect(obj_ok);                                                       \
+    } while (0)
+
+class ObjSeams {
+ public:
+    ObjSeams()
+        : tiles_(&MapTiles, &g_obj_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_obj_world.longitude),
+          lon_(&MapLongitudeBounds, &g_obj_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_obj_world.lat_bounds),
+          flat_(&MapIsFlat, &g_obj_world.is_flat),
+          rules_(&GameRules, &g_obj_world.game_rules),
+          state_(&GameState, &g_obj_world.game_state),
+          bases_(&Bases, g_obj_world.bases),
+          base_count_(&BaseCurrentCount, &g_obj_world.base_count),
+          vehs_(&Vehs, g_obj_world.vehs),
+          veh_count_(&VehCurrentCount, &g_obj_world.veh_count),
+          players_data_(&PlayersData, g_obj_world.players_data),
+          technology_(&Technology, g_obj_world.technology),
+          achieved_(&GameTechAchieved, g_obj_world.tech_achieved),
+          projects_(&SecretProject, &g_obj_world.projects),
+          status_(&FactionsStatus, g_obj_world.faction_status),
+          facility_(&ScnVictFacilityObj, &g_obj_world.scn_vict_facility) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> rules_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<RulesTechnology> technology_;
+    ScopedSeam<uint8_t> achieved_;
+    ScopedSeam<BaseSecretProject> projects_;
+    ScopedSeam<uint8_t> status_;
+    ScopedSeam<uint32_t> facility_;
+};
+
+void test_num_objectives_units() {
+    ObjSeams seams;
+
+    // ---- an eliminated faction scores nothing, whatever it holds -----------
+    obj_reset();
+    g_obj_world.players_data[OFACTION].unk_101 = 7;
+    OCHECK(num_objectives(OFACTION, false) == 7);
+    g_obj_world.faction_status[1] = (uint8_t)~(1 << OFACTION);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    // It is entry ONE of the status pair - entry zero says human, not alive.
+    obj_reset();
+    g_obj_world.players_data[OFACTION].unk_101 = 7;
+    g_obj_world.faction_status[0] = 0;
+    OCHECK(num_objectives(OFACTION, false) == 7);
+
+    // ---- with neither unit rule set, an objective unit counts by itself ----
+    obj_reset();
+    obj_veh(0, 0);
+    obj_veh(2, 0);
+    OCHECK(num_objectives(OFACTION, false) == 2);
+    g_obj_world.vehs[1].flags = 0;                    // not an objective unit
+    OCHECK(num_objectives(OFACTION, false) == 1);
+    g_obj_world.vehs[1].flags = VFLAG_IS_OBJECTIVE;
+    g_obj_world.vehs[1].faction_id = OFACTION + 1;    // not our unit
+    OCHECK(num_objectives(OFACTION, false) == 1);
+    // The flag is 0x20 and not a neighbouring one.
+    g_obj_world.vehs[1].faction_id = OFACTION;
+    g_obj_world.vehs[1].flags = VFLAG_LURKER;
+    OCHECK(num_objectives(OFACTION, false) == 1);
+
+    // A unit one past the count is not walked.
+    obj_reset();
+    obj_veh(0, 0);
+    {
+        Veh &beyond = g_obj_world.vehs[g_obj_world.veh_count];
+        beyond.faction_id = (uint8_t)OFACTION;
+        beyond.flags = VFLAG_IS_OBJECTIVE;
+    }
+    OCHECK(num_objectives(OFACTION, false) == 1);
+
+    // ---- reaching a friendly HQ base ---------------------------------------
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE;
+    obj_base(0, OFACTION, 0, 0);
+    obj_veh(0, 0);
+    OCHECK(num_objectives(OFACTION, false) == 0);     // no headquarters
+    obj_give_fac(g_obj_world.bases[0], FAC_HEADQUARTERS);
+    OCHECK(num_objectives(OFACTION, false) == 1);
+    // A neighbouring facility id is not the headquarters.
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE;
+    obj_base(0, OFACTION, 0, 0);
+    obj_veh(0, 0);
+    obj_give_fac(g_obj_world.bases[0], FAC_CHILDREN_CRECHE);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    // Off a base entirely.
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE;
+    obj_base(0, OFACTION, 0, 0);
+    obj_give_fac(g_obj_world.bases[0], FAC_HEADQUARTERS);
+    obj_veh(2, 0);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+
+    // ---- somebody else's base, and the pact that redeems it ----------------
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE;
+    obj_base(0, OFACTION + 1, 0, 0);
+    obj_give_fac(g_obj_world.bases[0], FAC_HEADQUARTERS);
+    obj_veh(0, 0);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.players_data[OFACTION].diplo_treaties[OFACTION + 1] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, false) == 0);     // no cooperative victory
+    g_obj_world.game_rules |= RULES_VICTORY_COOPERATIVE;
+    OCHECK(num_objectives(OFACTION, false) == 1);
+    // A treaty is not a pact.
+    g_obj_world.players_data[OFACTION].diplo_treaties[OFACTION + 1] = DTREATY_TREATY;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    // The treaty row is the SUBJECT faction's, indexed by the base's owner.
+    g_obj_world.players_data[OFACTION].diplo_treaties[OFACTION + 1] = 0;
+    g_obj_world.players_data[OFACTION + 1].diplo_treaties[OFACTION] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+
+    // ---- reaching an OBJECTIVE base, which outranks the headquarters rule --
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_OBJ_BASE
+        | RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE;
+    obj_base(0, OFACTION, 0, 0);
+    obj_give_fac(g_obj_world.bases[0], FAC_HEADQUARTERS);
+    obj_veh(0, 0);
+    OCHECK(num_objectives(OFACTION, false) == 0);     // a headquarters is not enough
+    // Flagging the base counts twice: once for the unit that reached it and
+    // once for the base itself in the loop below.
+    g_obj_world.bases[0].event = BEVENT_OBJECTIVE;
+    OCHECK(num_objectives(OFACTION, false) == 2);
+    // ... and is_objective's other three routes reach it too.
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_OBJ_BASE;
+    obj_base(0, OFACTION, 0, 0);
+    obj_veh(0, 0);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ;
+    obj_give_fac(g_obj_world.bases[0], FAC_RECYCLING_TANKS);
+    // The facility route also turns on the base-facility count below, which
+    // adds one of its own.
+    OCHECK(num_objectives(OFACTION, false) == 2);
+}
+
+void test_num_objectives_totals() {
+    ObjSeams seams;
+
+    // ---- bases, their population, and which of them are objectives ---------
+    obj_reset();
+    obj_base(0, OFACTION, 0, 0).population_size = 3;
+    obj_base(1, OFACTION, 2, 0).population_size = 5;
+    obj_base(2, OFACTION + 1, 4, 0).population_size = 9;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_POPULATION_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 8);     // not the other faction's
+    g_obj_world.bases[0].event = BEVENT_OBJECTIVE;
+    OCHECK(num_objectives(OFACTION, false) == 9);
+    g_obj_world.game_rules = RULES_SCN_VICT_ALL_BASE_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 10);    // both of ours now
+    g_obj_world.game_state = 0;
+    OCHECK(num_objectives(OFACTION, false) == 2);
+
+    // A base one past the count is not walked either.
+    obj_reset();
+    g_obj_world.game_rules = RULES_SCN_VICT_ALL_BASE_COUNT_OBJ;
+    obj_base(0, OFACTION, 0, 0);
+    {
+        Base &beyond = g_obj_world.bases[g_obj_world.base_count];
+        beyond.faction_id_current = (uint8_t)OFACTION;
+        beyond.event = BEVENT_OBJECTIVE;
+    }
+    OCHECK(num_objectives(OFACTION, false) == 1);
+
+    // ---- technologies, and the field added after them ----------------------
+    obj_reset();
+    g_obj_world.tech_achieved[3] = 1 << OFACTION;
+    g_obj_world.tech_achieved[4] = 1 << OFACTION;
+    g_obj_world.tech_achieved[5] = 1 << (OFACTION + 1);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_TECH_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 2);
+    g_obj_world.tech_achieved[0] = 1 << OFACTION;     // the scan starts at zero
+    OCHECK(num_objectives(OFACTION, false) == 3);
+    g_obj_world.tech_achieved[0] = 0;
+    g_obj_world.players_data[OFACTION].theory_of_everything = 6;
+    OCHECK(num_objectives(OFACTION, false) == 8);
+    // The last technology id is 'Transcendent Thought' and has_tech refuses it.
+    g_obj_world.tech_achieved[MaxTechnologyNum - 1] = 1 << OFACTION;
+    OCHECK(num_objectives(OFACTION, false) == 8);
+    g_obj_world.tech_achieved[MaxTechnologyNum - 2] = 1 << OFACTION;
+    OCHECK(num_objectives(OFACTION, false) == 9);
+
+    // ---- energy credits -----------------------------------------------------
+    obj_reset();
+    g_obj_world.players_data[OFACTION].energy_reserves = 42;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_CREDITS_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 42);
+
+    // ---- bases holding the scenario's nominated facility -------------------
+    obj_reset();
+    obj_base(0, OFACTION, 0, 0);
+    obj_base(1, OFACTION, 2, 0);
+    obj_base(2, OFACTION + 1, 4, 0);
+    obj_give_fac(g_obj_world.bases[0], FAC_RECYCLING_TANKS);
+    obj_give_fac(g_obj_world.bases[2], FAC_RECYCLING_TANKS);
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 1);     // ours only
+    obj_give_fac(g_obj_world.bases[1], FAC_RECYCLING_TANKS);
+    OCHECK(num_objectives(OFACTION, false) == 2);
+    // A base one past the count is not walked.
+    {
+        Base &beyond = g_obj_world.bases[g_obj_world.base_count];
+        beyond.faction_id_current = (uint8_t)OFACTION;
+        obj_give_fac(beyond, FAC_RECYCLING_TANKS);
+    }
+    OCHECK(num_objectives(OFACTION, false) == 2);
+    // A facility id at or above the repeating range is refused rather than
+    // indexed - and refused even when the base really does hold it.
+    obj_give_fac(g_obj_world.bases[0], FacilityRepStart);
+    g_obj_world.scn_vict_facility = FacilityRepStart;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.scn_vict_facility = FacilityRepStart - 1;
+    OCHECK(num_objectives(OFACTION, false) == 0);     // nobody has that one
+
+    // ---- terrain enhancements over owned territory -------------------------
+    obj_reset();
+    g_obj_world.tiles[0].territory = OFACTION;
+    g_obj_world.tiles[0].bit = BIT_ROAD | BIT_MINE | BIT_FARM;
+    g_obj_world.tiles[1].territory = OFACTION;
+    g_obj_world.tiles[1].bit = BIT_RIVER | BIT_BASE_IN_TILE;   // neither counts
+    g_obj_world.tiles[2].territory = OFACTION + 1;
+    g_obj_world.tiles[2].bit = BIT_ROAD | BIT_MINE;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 3);
+    // All twelve bits of the mask, one at a time, against three that are not.
+    const uint32_t counted[12] = {
+        BIT_ROAD, BIT_MAGTUBE, BIT_MINE, BIT_SOLAR_TIDAL, BIT_BUNKER, BIT_FARM,
+        BIT_AIRBASE, BIT_FOREST, BIT_CONDENSER, BIT_ECH_MIRROR,
+        BIT_THERMAL_BORE, BIT_SENSOR_ARRAY };
+    for (int k = 0; k < 12; k++) {
+        obj_reset();
+        g_obj_world.game_state = STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ;
+        g_obj_world.tiles[0].territory = OFACTION;
+        g_obj_world.tiles[0].bit = counted[k];
+        OCHECK(num_objectives(OFACTION, false) == 1);
+    }
+    const uint32_t ignored[3] = { BIT_BASE_IN_TILE, BIT_SOIL_ENRICHER,
+                                  BIT_SUPPLY_POD };
+    for (int k = 0; k < 3; k++) {
+        obj_reset();
+        g_obj_world.game_state = STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ;
+        g_obj_world.tiles[0].territory = OFACTION;
+        g_obj_world.tiles[0].bit = ignored[k];
+        OCHECK(num_objectives(OFACTION, false) == 0);
+    }
+    // The walk is one Map per tile across all four rows, sixteen in total.
+    obj_reset();
+    g_obj_world.game_state = STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ;
+    for (int k = 0; k < 16; k++) {
+        g_obj_world.tiles[k].territory = OFACTION;
+        g_obj_world.tiles[k].bit = BIT_ROAD;
+    }
+    g_obj_world.tiles[16].territory = OFACTION;       // one past the last row
+    g_obj_world.tiles[16].bit = BIT_ROAD;
+    OCHECK(num_objectives(OFACTION, false) == 16);
+    // Odd rows start at x == 1, so an ODD width visits one tile fewer on them.
+    g_obj_world.lon_bounds = 7;
+    OCHECK(num_objectives(OFACTION, false) == 14);
+
+    // ---- plain territory ----------------------------------------------------
+    obj_reset();
+    for (int k = 0; k < 16; k++) {
+        g_obj_world.tiles[k].territory = (int8_t)((k < 5 || k == 15) ? OFACTION : -1);
+    }
+    g_obj_world.tiles[16].territory = OFACTION;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_state = STATE_SCN_VICT_TERRITORY_COUNT_OBJ;
+    // Six: the first row's four, one in the second, and the very last tile,
+    // which is only reached because the walk starts at row zero.
+    OCHECK(num_objectives(OFACTION, false) == 6);
+    // The same odd-width asymmetry as the enhancement walk.
+    for (int k = 0; k < 16; k++) {
+        g_obj_world.tiles[k].territory = (int8_t)OFACTION;
+    }
+    OCHECK(num_objectives(OFACTION, false) == 16);
+    g_obj_world.lon_bounds = 7;
+    OCHECK(num_objectives(OFACTION, false) == 14);
+
+    // ---- secret projects the faction owns -----------------------------------
+    obj_reset();
+    obj_base(0, OFACTION, 0, 0);
+    obj_base(1, OFACTION + 1, 2, 0);
+    g_obj_world.projects.human_genome_project = 0;
+    g_obj_world.projects.command_nexus = 1;
+    g_obj_world.projects.weather_paradigm = 0;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+    g_obj_world.game_rules = RULES_SCN_VICT_SP_COUNT_OBJ;
+    OCHECK(num_objectives(OFACTION, false) == 2);
+    // An unbuilt project is -1 and is not indexed.
+    g_obj_world.projects.human_genome_project = SP_Unbuilt;
+    g_obj_world.projects.weather_paradigm = SP_Destroyed;
+    OCHECK(num_objectives(OFACTION, false) == 0);
+
+    // ---- the one-deep recursion over pact partners --------------------------
+    obj_reset();
+    g_obj_world.players_data[OFACTION].unk_101 = 1;
+    g_obj_world.players_data[2].unk_101 = 4;
+    g_obj_world.players_data[3].unk_101 = 8;
+    g_obj_world.players_data[OFACTION].diplo_treaties[2] = DTREATY_PACT;
+    g_obj_world.players_data[OFACTION].diplo_treaties[3] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, true) == 1);      // no cooperative victory
+    g_obj_world.game_rules = RULES_VICTORY_COOPERATIVE;
+    OCHECK(num_objectives(OFACTION, true) == 13);
+    OCHECK(num_objectives(OFACTION, false) == 1);     // the flag gates it
+    // A partner's own partners are NOT added: the recursion passes false.
+    g_obj_world.players_data[2].diplo_treaties[3] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, true) == 13);
+    // A dead partner contributes nothing, and the faction never counts itself.
+    g_obj_world.faction_status[1] = (uint8_t)~(1 << 3);
+    OCHECK(num_objectives(OFACTION, true) == 5);
+    obj_reset();
+    g_obj_world.game_rules = RULES_VICTORY_COOPERATIVE;
+    g_obj_world.players_data[OFACTION].unk_101 = 1;
+    g_obj_world.players_data[OFACTION].diplo_treaties[OFACTION] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, true) == 1);
+    // Faction zero is outside the loop, which starts at one.
+    obj_reset();
+    g_obj_world.game_rules = RULES_VICTORY_COOPERATIVE;
+    g_obj_world.players_data[0].unk_101 = 9;
+    g_obj_world.players_data[OFACTION].diplo_treaties[0] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, true) == 0);
+    // ... and faction seven is inside it.
+    obj_reset();
+    g_obj_world.game_rules = RULES_VICTORY_COOPERATIVE;
+    g_obj_world.players_data[7].unk_101 = 9;
+    g_obj_world.players_data[OFACTION].diplo_treaties[7] = DTREATY_PACT;
+    OCHECK(num_objectives(OFACTION, true) == 9);
+}
+
+#undef OCHECK
+
 }  // namespace
 
 int main() {
@@ -5092,6 +5536,8 @@ int main() {
     test_base_support_pacifism();
     test_world_site_terrain();
     test_world_site_score();
+    test_num_objectives_units();
+    test_num_objectives_totals();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

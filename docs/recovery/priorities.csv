@@ -1769,7 +1769,6 @@ P3,8420,0x005AAAB0,?load_game@@YAHHH@Z,3414,3,54,unrecovered,,,2,exact,entry_ran
 P3,7420,0x005AB600,?load_map@@YAHXZ,1797,4,34,unrecovered,,,2,exact,entry_range,
 P3,2520,0x005ABB90,?save_map@@YAXXZ,401,1,15,unrecovered,,,2,exact,entry_range,
 P3,3021,0x005ABFF0,?get_rating@@YAHHH@Z,97,3,0,unrecovered,,,2,exact,exact,"int (__cdecl ?get_rating@@YAHHH@Z)(int factionID, int)"
-P2,9521,0x005AC110,?num_objectives@@YAHHH@Z,1161,9,5,unrecovered,,,2,exact,exact,"int (__cdecl ?num_objectives@@YAHHH@Z)(int factionID, int)"
 P3,2120,0x005AC5A0,?most_objectives@@YAHPAHPAH@Z,143,2,1,unrecovered,,,2,exact,exact,
 P3,3720,0x005AC690,?rankings@@YAXH@Z,1350,3,7,unrecovered,,,2,exact,exact,
 P3,4621,0x005ACBE0,?compute_score@@YAXHPAHPAHH@Z,1997,4,6,unrecovered,,,2,exact,exact,"void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)"

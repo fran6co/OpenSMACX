@@ -2259,6 +2259,145 @@ BOOL __cdecl is_objective(uint32_t base_id) {
 }
 
 /*
+Purpose: Count how far the specified faction has got towards the scenario's
+         objectives.
+Original Offset: 005AC110
+Return Value: Objective count, or zero for an eliminated faction
+Status: Complete
+
+Eleven separate scenario victory conditions add into one running total, each
+gated by its own bit in GameRules or GameState, and a twelfth term - the count
+the faction has already banked - is where the total starts. Nothing here is
+cumulative across calls: the caller reads the return value.
+
+The original inlines is_objective() (0x005AC060) at the objective-base test.
+That is written as the call it was: the inlined sequence is instruction for
+instruction the recovered body, down to has_fac()'s `>= FacilityRepStart`
+guard appearing as `cmp eax, 0x41` and its zero queue_count folding the call to
+has_fac_built(). The same holds for is_alive() at the entry and
+has_fac_built(FAC_HEADQUARTERS) at the second unit test.
+
+`unk_101` and `theory_of_everything` are read here under names that do not
+describe what they hold; the offsets - 8324 and 872 into PlayerData - are what
+the original reads, and neither field has a writer this recovery located.
+*/
+int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
+    if (!is_alive(faction_id)) {
+        return 0;
+    }
+    int total = PlayersData[faction_id].unk_101;
+    // Objective units that have reached a base that qualifies.
+    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+        Veh *veh = &Vehs[veh_id];
+        if (veh->faction_id != faction_id || !(veh->flags & VFLAG_IS_OBJECTIVE)) {
+            continue;
+        }
+        int base_id;
+        if (*GameRules & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_OBJ_BASE) {
+            base_id = base_at(veh->x, veh->y);
+            if (base_id < 0 || !is_objective(base_id)) {
+                continue;
+            }
+        } else {
+            if (!(*GameRules & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE)) {
+                total++; // neither condition is set: the unit itself counts
+                continue;
+            }
+            base_id = base_at(veh->x, veh->y);
+            if (base_id < 0 || !has_fac_built(FAC_HEADQUARTERS, base_id)) {
+                continue;
+            }
+        }
+        int owner = Bases[base_id].faction_id_current;
+        if (owner == faction_id) {
+            total++;
+        } else if ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)
+            && (*GameRules & RULES_VICTORY_COOPERATIVE)) {
+            total++; // a pact partner's base counts under 'One For All'
+        }
+    }
+    // Population, and bases that are objectives in their own right.
+    for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+        if (Bases[base_id].faction_id_current != faction_id) {
+            continue;
+        }
+        if (*GameState & STATE_SCN_VICT_POPULATION_COUNT_OBJ) {
+            total += Bases[base_id].population_size;
+        }
+        if (!(*GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ)
+            && !(Bases[base_id].event & BEVENT_OBJECTIVE)) {
+            continue;
+        }
+        total++;
+    }
+    if (*GameState & STATE_SCN_VICT_TECH_COUNT_OBJ) {
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+            if (has_tech(tech_id, faction_id)) {
+                total++;
+            }
+        }
+        total += PlayersData[faction_id].theory_of_everything;
+    }
+    if (*GameState & STATE_SCN_VICT_CREDITS_COUNT_OBJ) {
+        total += PlayersData[faction_id].energy_reserves;
+    }
+    if (*GameState & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
+        for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+            if (Bases[base_id].faction_id_current == faction_id
+                && (int)*ScnVictFacilityObj < FacilityRepStart
+                && has_fac_built(*ScnVictFacilityObj, base_id)) {
+                total++;
+            }
+        }
+    }
+    /*
+    * Both map walks step one Map along per tile visited rather than indexing,
+    * because a row holds only every other x and the rows pack together; the
+    * pointer is not reset between rows.
+    */
+    if (*GameState & STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ) {
+        Map *tile = *MapTiles;
+        for (int y = 0; y < *MapLatitudeBounds; y++) {
+            for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+                if (tile->territory == faction_id) {
+                    total += bit_count(tile->bit & 0x81E4885C);
+                }
+                tile++;
+            }
+        }
+    }
+    if (*GameState & STATE_SCN_VICT_TERRITORY_COUNT_OBJ) {
+        Map *tile = *MapTiles;
+        for (int y = 0; y < *MapLatitudeBounds; y++) {
+            for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+                if (tile->territory == faction_id) {
+                    total++;
+                }
+                tile++;
+            }
+        }
+    }
+    if (*GameRules & RULES_SCN_VICT_SP_COUNT_OBJ) {
+        for (int i = 0; i < MaxSecretProjectNum; i++) {
+            int base_id = base_project(i);
+            if (base_id >= 0 && Bases[base_id].faction_id_current == faction_id) {
+                total++;
+            }
+        }
+    }
+    // One recursion deep only: the pact partners are asked with the flag off.
+    if (count_pact_factions && (*GameRules & RULES_VICTORY_COOPERATIVE)) {
+        for (int other_id = 1; other_id < MaxPlayerNum; other_id++) {
+            if (other_id != faction_id
+                && (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT)) {
+                total += num_objectives(other_id, false);
+            }
+        }
+    }
+    return total;
+}
+
+/*
 Purpose: Check if specified faction is currently building Ascent to Transcendence. This code isn't
          used by original game. There was also a bug where it compares to a non-negative queue id.
 Original Offset: 005AC630
