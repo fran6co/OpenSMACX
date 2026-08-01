@@ -2,6 +2,7 @@
 
 import argparse
 import re
+from pathlib import Path
 import subprocess
 import sys
 from typing import NoReturn
@@ -33,6 +34,12 @@ def main():
     parser.add_argument("--nm", required=True)
     parser.add_argument("--objdump", required=True)
     parser.add_argument("--object", required=True)
+    parser.add_argument("--object-dir",
+                        help="sweep every *.obj here for exception machinery, "
+                             "instead of relying on a hand-kept --*-object list")
+    parser.add_argument("--object-floor", type=int, default=100,
+                        help="refuse to report clean over fewer objects than "
+                             "this; an empty directory sweeps nothing")
     # Brought under the -fno-exceptions sweep below, which iterates every
     # argument whose name ends in "object". The generated oracle gained a
     # setjmp/longjmp fault guard, and the guarantee that it introduces no
@@ -82,16 +89,36 @@ def main():
     # Any object growing an .eh_frame or a personality/unwind import means a
     # translation unit lost -fno-exceptions and could raise where the original
     # could not.
-    for name, value in sorted(vars(args).items()):
-        if not name.endswith("object") or not value:
-            continue
-        described = name.replace("_", " ")
+    # Sweep the BUILD OUTPUT, not a hand-kept list. This loop used to visit
+    # only the objects named by a `--*-object` flag in CMakeLists.txt - 35 of
+    # them, against 137 the DLL actually compiles. The other 102 translation
+    # units could lose -fno-exceptions and grow an .eh_frame with nothing
+    # noticing, and adding a source file did not add it here, so the coverage
+    # shrank as a proportion every time the project grew.
+    swept = []
+    if args.object_dir:
+        directory = Path(args.object_dir)
+        if not directory.is_dir():
+            fail(f"--object-dir {directory} is not a directory, so this check "
+                 f"verified NOTHING")
+        swept = sorted(directory.rglob("*.obj"))
+        if len(swept) < args.object_floor:
+            fail(f"--object-dir {directory} holds {len(swept)} objects, fewer "
+                 f"than the floor of {args.object_floor}. An empty or wrong "
+                 f"directory sweeps nothing and reports clean.")
+    named = [(name.replace("_", " "), value)
+             for name, value in sorted(vars(args).items())
+             if name.endswith("object") and value and name != "object_dir"]
+    for described, value in named + [(str(p.name), str(p)) for p in swept]:
         sections = run([args.objdump, "-h", value])
         if re.search(r"\.eh_frame\b", sections):
             fail(f"{described} carries exception unwind data")
         undefined = run([args.nm, "-u", value])
         if re.search(r"__gxx_personality|_Unwind_|CxxFrameHandler", undefined):
             fail(f"{described} imports exception handling support")
+    if swept:
+        print(f"recovery-abi: swept {len(swept)} built objects for exception "
+              f"machinery, plus {len(named)} named")
 
     headers = run([args.objdump, "-f", args.object])
     if "file format pe-i386" not in headers:

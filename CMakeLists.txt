@@ -961,6 +961,12 @@ if(BUILD_TESTING)
                 --nm "${CMAKE_NM}"
                 --objdump "${CMAKE_OBJDUMP}"
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
+                # Sweep what the DLL actually built. The --*-object flags below
+                # are a hand-kept list of 35; the DLL compiles 137, so 102
+                # translation units could lose -fno-exceptions unnoticed, and
+                # adding a source file never added it to the list.
+                --object-dir
+                "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src"
                 --generated-signature-oracle-object
                 "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/generated_signature_oracle.cpp.obj"
             --oracle-fault-guard-object
