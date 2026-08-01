@@ -9803,6 +9803,429 @@ void test_scan_prototypes_bounds() {
 
 #undef SCHECK
 
+/*
+ * set_course (0x00564890).
+ *
+ * The whole observable is the order the unit ends up carrying, so every case
+ * here poisons the order first and then asks either "which tile was it sent
+ * to" or "was it left alone". The map is the same 16x8 window the patrol
+ * fixtures use: tiles are addressed by game coordinates and only tiles whose
+ * x and y share a parity are real, exactly as the packed map intends.
+ */
+struct CourseWorld {
+    Map tiles[192];
+    Base bases[8];
+    Veh vehs[4];
+    VehPrototype protos[128];
+    Continent continents[MaxContinentNum];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    int base_count;
+    int veh_count;
+    int base_find_dist;
+};
+
+CourseWorld g_course_world;
+
+const int COURSE_LIVE = 64;
+const int COURSE_TYPE = 5;
+
+Map &course_at(int x, int y) {
+    return g_course_world.tiles[COURSE_LIVE + (x >> 1) + y * 8];
+}
+
+void course_land(int x, int y, int region) {
+    course_at(x, y).climate = 0x80;   // one level above sea
+    course_at(x, y).region = (uint8_t)region;
+}
+
+void course_water(int x, int y, int region) {
+    course_at(x, y).climate = 0x40;   // below ALT_BIT_SHORE_LINE
+    course_at(x, y).region = (uint8_t)region;
+}
+
+void course_reset() {
+    std::memset(&g_course_world, 0, sizeof(g_course_world));
+    g_course_world.tiles_ptr = &g_course_world.tiles[COURSE_LIVE];
+    g_course_world.longitude = 8;
+    g_course_world.lon_bounds = 16;
+    g_course_world.lat_bounds = 8;
+    g_course_world.is_flat = 1;
+    // Every tile of the array, live window or not, is dry land of region 2.
+    // A candidate one row off the map therefore fails only the bounds test.
+    for (int i = 0; i < 192; i++) {
+        g_course_world.tiles[i].climate = 0x80;
+        g_course_world.tiles[i].region = 2;
+    }
+    Veh &veh = g_course_world.vehs[0];
+    veh.x = 0;
+    veh.y = 0;
+    veh.faction_id = 1;
+    veh.proto_id = 0;
+    veh.home_base_id = -1;
+    g_course_world.veh_count = 1;
+    g_course_world.protos[0].plan = PLAN_COMBAT;
+}
+
+void course_run(int x, int y) {
+    Veh &veh = g_course_world.vehs[0];
+    veh.order = ORDER_HOLD;
+    veh.move_to_ai_type = 0x77;
+    veh.waypoint_x[0] = -999;
+    veh.waypoint_y[0] = -999;
+    set_course(0, (char)COURSE_TYPE, x, y);
+}
+
+bool course_ordered(int x, int y) {
+    const Veh &veh = g_course_world.vehs[0];
+    return veh.order == ORDER_MOVE_TO && veh.move_to_ai_type == COURSE_TYPE
+        && veh.waypoint_x[0] == x && veh.waypoint_y[0] == y;
+}
+
+bool course_idle() {
+    return g_course_world.vehs[0].order == ORDER_HOLD;
+}
+
+#define CCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool course_ok = (cond);                                        \
+        if (!course_ok) {                                                     \
+            std::fprintf(stderr, "set_course: line %d: %s\n", __LINE__,       \
+                         #cond);                                              \
+        }                                                                     \
+        expect(course_ok);                                                    \
+    } while (0)
+
+class CourseSeams {
+ public:
+    CourseSeams()
+        : tiles_(&MapTiles, &g_course_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_course_world.longitude),
+          lon_(&MapLongitudeBounds, &g_course_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_course_world.lat_bounds),
+          flat_(&MapIsFlat, &g_course_world.is_flat),
+          continents_(&Continents, g_course_world.continents),
+          bases_(&Bases, g_course_world.bases),
+          base_count_(&BaseCurrentCount, &g_course_world.base_count),
+          base_dist_(&BaseFindDist, &g_course_world.base_find_dist),
+          vehs_(&Vehs, g_course_world.vehs),
+          veh_count_(&VehCurrentCount, &g_course_world.veh_count),
+          protos_(&VehPrototypes, g_course_world.protos) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<Continent> continents_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<VehPrototype> protos_;
+};
+
+void test_set_course_direct() {
+    CourseSeams seams;
+
+    // ---- the direct answer needs the same region AND an afloat unit --------
+    // Destination (10,4) is land of the unit's own region 5, so the region
+    // halves of the two branches agree and only the unit's own altitude
+    // decides. On land it searches and finds the anchorage at (12,4); afloat
+    // it hands the destination straight to go_to.
+    course_reset();
+    course_land(0, 0, 5);
+    course_land(10, 4, 5);
+    course_water(12, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+    course_water(0, 0, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(10, 4));
+    // ALT_BIT_SHORE_LINE itself is already ashore.
+    course_at(0, 0).climate = 0x60;
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+
+    // ---- and a differing region searches however afloat the unit is --------
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 5);
+    course_run(10, 4);   // (10,4) is land of region 2
+    CCHECK(course_ordered(12, 4));
+
+    // ---- nothing qualifies, and the unit is left exactly as it was ---------
+    course_reset();
+    course_water(0, 0, 5);
+    course_run(10, 4);
+    CCHECK(course_idle());
+    CCHECK(g_course_world.vehs[0].waypoint_x[0] == -999);
+    CCHECK(g_course_world.vehs[0].waypoint_y[0] == -999);
+}
+
+void test_set_course_anchorage() {
+    CourseSeams seams;
+
+    // ---- an anchorage must be water, and in the unit's own region ----------
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 7);   // water, but a region the unit cannot be in
+    course_run(10, 4);
+    CCHECK(course_idle());
+    course_water(12, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+    course_land(12, 4, 5);    // right region, wrong element
+    course_run(10, 4);
+    CCHECK(course_idle());
+
+    // ---- ties keep the earlier candidate, and only a strict gain moves it --
+    // (12,4) is radius offset 2 and (8,4) is offset 6, and with the map
+    // otherwise solid both front eight tiles of region 2.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 5);
+    course_water(8, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+    // Take one neighbour away from the earlier candidate and the later one
+    // overtakes it.
+    course_water(14, 4, 9);   // not region 5, so not itself a candidate
+    course_run(10, 4);
+    CCHECK(course_ordered(8, 4));
+    // Put it back and the tie returns.
+    course_land(14, 4, 2);
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+
+    // ---- a neighbour must be land, of the DESTINATION's region, unbased ----
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 5);
+    course_water(8, 4, 5);
+    // Land, but the anchorage's own region rather than the destination's.
+    course_land(14, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(8, 4));
+    course_land(14, 4, 2);
+    // A base owned by a faction takes the neighbour out of the count.
+    course_at(14, 4).bit |= BIT_BASE_IN_TILE;
+    course_at(14, 4).val2 = 1;
+    course_run(10, 4);
+    CCHECK(course_ordered(8, 4));
+    // An unoccupied owner nibble is not a base as far as base_who is
+    // concerned, and the neighbour counts again.
+    course_at(14, 4).val2 = 0xF;
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+
+    // ---- the bar the first candidate has to clear --------------------------
+    // (11,1) is radius offset 13 and touches none of the destination's own
+    // tile, so with the destination given a region of its own it fronts
+    // nothing at all. A land destination refuses a frontage of zero; a water
+    // destination accepts it, which is the only way a unit can be sent to open
+    // sea.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(11, 1, 5);
+    course_land(10, 4, 9);
+    course_run(10, 4);
+    CCHECK(course_idle());
+    course_water(10, 4, 9);
+    course_run(10, 4);
+    CCHECK(course_ordered(11, 1));
+    // One tile of the destination's region next to the anchorage lifts it over
+    // the land destination's bar as well.
+    course_land(10, 4, 9);
+    course_land(12, 2, 9);   // a neighbour of (11,1)
+    course_run(10, 4);
+    CCHECK(course_ordered(11, 1));
+}
+
+void test_set_course_base_and_wrap() {
+    CourseSeams seams;
+
+    // ---- a unit inside a base asks base_on_sea instead ----------------------
+    // The anchorage is region 7, which is not the unit's region 2, so the only
+    // thing that can admit it is the base's own coastline.
+    course_reset();
+    course_land(0, 0, 2);
+    course_at(0, 0).bit |= BIT_BASE_IN_TILE;
+    g_course_world.bases[0].x = 0;
+    g_course_world.bases[0].y = 0;
+    g_course_world.bases[0].faction_id_current = 1;
+    g_course_world.base_count = 1;
+    course_water(12, 4, 7);
+    course_run(10, 4);
+    CCHECK(course_idle());
+    // Give the base a stretch of region 7 water beside it and the same
+    // anchorage is accepted.
+    course_water(2, 0, 7);
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+    // A different sea beside the base does not admit a region 7 anchorage.
+    course_water(2, 0, 8);
+    course_run(10, 4);
+    CCHECK(course_idle());
+    // Without the base the unit's own region decides again, and region 2 is
+    // not region 7.
+    course_at(0, 0).bit &= ~(uint32_t)BIT_BASE_IN_TILE;
+    g_course_world.base_count = 0;
+    course_water(2, 0, 7);
+    course_run(10, 4);
+    CCHECK(course_idle());
+
+    // ---- x wraps on bit zero of MapIsFlat, not on the whole word -----------
+    // Two is the value that separates the two readings: xrange() would call it
+    // flat and leave x alone, and this reads bit zero and wraps.
+    course_reset();
+    g_course_world.is_flat = 2;
+    course_water(0, 0, 5);
+    course_water(0, 4, 5);
+    course_run(14, 4);   // radius offset 2 puts a candidate at x = 16
+    CCHECK(course_ordered(0, 4));
+    // Genuinely flat, and the same candidate is off the map instead.
+    g_course_world.is_flat = 1;
+    course_run(14, 4);
+    CCHECK(course_idle());
+
+    // ---- the candidate's own bounds ----------------------------------------
+    // Radius offset 16 is (1,3), which from (10,4) puts the only anchorage on
+    // the last row of the map. Taking that row away is what refuses it, and
+    // nothing else about the tile changes.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(11, 7, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(11, 7));
+    g_course_world.lat_bounds = 7;
+    course_run(10, 4);
+    CCHECK(course_idle());
+
+    // Radius offset 14 is (3,-1), three columns east of the destination.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(13, 3, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(13, 3));
+    g_course_world.lon_bounds = 13;
+    course_run(10, 4);
+    CCHECK(course_idle());
+
+    // And the low side. Radius offset 1 is (1,-1): from row zero it is off the
+    // top of the map, and from row two it is an ordinary anchorage.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(11, -1, 5);
+    course_run(10, 0);
+    CCHECK(course_idle());
+    course_water(11, 1, 5);
+    course_run(10, 2);
+    CCHECK(course_ordered(11, 1));
+}
+
+void test_set_course_edges() {
+    CourseSeams seams;
+
+    // ---- ALT_BIT_SHORE_LINE itself is land, on all three readings ----------
+    // The destination: at exactly the shore line the bar is zero and a
+    // frontage of zero is refused; one step lower it is water, the bar is
+    // minus one, and the same anchorage is accepted.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(11, 1, 5);   // radius offset 13, touching none of (10,4)
+    course_land(10, 4, 9);
+    course_at(10, 4).climate = 0x60;
+    course_run(10, 4);
+    CCHECK(course_idle());
+    course_at(10, 4).climate = 0x40;
+    course_run(10, 4);
+    CCHECK(course_ordered(11, 1));
+
+    // The anchorage: at exactly the shore line it is ashore and unusable.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 5);
+    course_at(12, 4).climate = 0x60;
+    course_run(10, 4);
+    CCHECK(course_idle());
+    course_at(12, 4).climate = 0x40;
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+
+    // A neighbour: at exactly the shore line it is land and it counts.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 5);
+    course_water(8, 4, 5);
+    course_at(14, 4).climate = 0x60;
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));   // eight each, and the earlier one keeps it
+    course_at(14, 4).climate = 0x40;
+    course_run(10, 4);
+    CCHECK(course_ordered(8, 4));    // seven against eight
+
+    // ---- faction zero owns bases too ---------------------------------------
+    // base_who answers 0 there, which is still a base. Only the 0xF nibble
+    // means nobody.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(12, 4, 5);
+    course_water(8, 4, 5);
+    course_at(14, 4).bit |= BIT_BASE_IN_TILE;
+    course_at(14, 4).val2 = 0;
+    course_run(10, 4);
+    CCHECK(course_ordered(8, 4));
+
+    // ---- the first radius offset is the destination's own tile -------------
+    // A unit ashore in the destination's region cannot take the direct branch,
+    // and the destination itself - offset zero - is the anchorage it finds.
+    course_reset();
+    course_land(0, 0, 5);
+    course_water(10, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(10, 4));
+
+    // ---- and the twenty-first is outside the radius ------------------------
+    // Radius offset 21 would be (4,0). Four columns east is unreachable; two
+    // columns east is offset 2 and is reached.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(14, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_idle());
+    course_land(14, 4, 2);
+    course_water(12, 4, 5);
+    course_run(10, 4);
+    CCHECK(course_ordered(12, 4));
+
+    // ---- the first neighbour offset counts ---------------------------------
+    // Every neighbour of (11,1) except (12,0) - RadiusBase entry zero - is put
+    // in a region the destination does not share, so the whole frontage rests
+    // on that one tile.
+    course_reset();
+    course_water(0, 0, 5);
+    course_water(11, 1, 5);
+    course_land(13, 1, 3);
+    course_land(12, 2, 3);
+    course_land(11, 3, 3);
+    course_land(10, 2, 3);
+    course_land(9, 1, 3);
+    course_land(10, 0, 3);
+    course_run(10, 4);
+    CCHECK(course_ordered(11, 1));
+    course_land(12, 0, 3);
+    course_run(10, 4);
+    CCHECK(course_idle());
+}
+
+#undef CCHECK
+
 }  // namespace
 
 int main() {
@@ -9842,6 +10265,10 @@ int main() {
     test_scan_prototypes_domination();
     test_scan_prototypes_mention();
     test_scan_prototypes_bounds();
+    test_set_course_direct();
+    test_set_course_anchorage();
+    test_set_course_base_and_wrap();
+    test_set_course_edges();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

@@ -1192,6 +1192,131 @@ void __cdecl go_to(uint32_t veh_id, uint8_t type, int x, int y) {
 }
 
 /*
+Purpose: Wrap an x coordinate on a round map, as set_course does it.
+Original Offset: n/a
+Return Value: Wrapped x
+Status: Complete
+
+xrange() at 0048BEE0 cannot stand in, for one bit: it tests the whole of MapIsFlat while
+set_course reads the low BYTE and tests bit zero (`mov cl, byte ptr [94988Ch] / test cl, 1`),
+the same reading valid_patrol above and reset_territory use. The two agree on the 0 and 1 the
+game stores there and disagree on everything else.
+*/
+static int course_xrange(int x) {
+    if (!(*MapIsFlat & 1)) {
+        if (x >= 0) {
+            if (x >= *MapLongitudeBounds) {
+                x -= *MapLongitudeBounds;
+            }
+        } else {
+            x += *MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
+Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
+         next to it that fronts the most of the destination's own landmass.
+Original Offset: 00564890
+Return Value: n/a
+Status: Complete
+
+The direct answer comes first and is narrow: only when the destination is in the SAME region as
+the unit AND the unit is itself afloat - its own tile below ALT_BIT_SHORE_LINE - does this hand
+the coordinates straight to go_to. Anything else is a crossing, and the rest of the body picks
+where to cross to.
+
+The candidates are the 21 tiles of the destination's base radius, and each must be water. Which
+water is decided by what the unit is sitting in: a unit inside a base asks base_on_sea whether
+that base touches the candidate's sea region, and a unit at sea requires the candidate to be in
+its own region. That is the reachability test, and it is the only one - nothing here checks
+distance or fuel.
+
+Each surviving candidate is then scored by FRONTAGE: how many of its eight neighbours are land,
+belong to the DESTINATION's region, and hold no base. Land is the same ALT_BIT_SHORE_LINE line
+read the other way round, the region is the destination's rather than the candidate's, and the
+base test is base_who() - which answers -1 both for an empty tile and for a base tile whose owner
+nibble is 0xF, so only a real faction-owned base takes a neighbour out of the count.
+
+The best frontage wins, and the starting bar depends on the destination itself: zero when the
+destination is land, minus one when it is water. A water destination therefore accepts an
+anchorage that fronts NOTHING, which is what lets a unit be sent to open sea at all; a land
+destination will not move the unit unless some anchorage fronts at least one tile of it.
+
+Ties keep the earlier candidate, and every improvement re-issues the order, so the unit ends up
+aimed at the last candidate that strictly beat everything before it.
+
+The x wrap is course_xrange above rather than xrange(), for the one bit that separates them.
+
+Verification note: the sweep against recovery-gameplay-tests kills 28 of 30 valid mutants twice
+over, and both survivors are equivalences rather than untested behaviour.
+
+  - Widening the neighbour loop to nine reaches RadiusBase entry 8, which is (0, 0) - the
+    anchorage itself. Three lines earlier the anchorage was required to be below
+    ALT_BIT_SHORE_LINE, and a neighbour is required to be at or above it, so that iteration can
+    never reach the count no matter what the map holds.
+  - Swapping `best_frontage = frontage;` with the go_to call behind it. go_to writes Veh fields
+    and reads Vehs and VehPrototypes; the assignment reads a local the callee cannot name and
+    writes a local the callee cannot see. Neither statement observes the other's effect, in
+    either order.
+*/
+void __cdecl set_course(int veh_id, char type, int x, int y) {
+    Veh &veh = Vehs[veh_id];
+    int veh_region = map_loc(veh.x, veh.y)->region;
+    int base_id = base_at(veh.x, veh.y);
+    Map *destination = map_loc(x, y);
+    int dst_region = destination->region;
+    if (veh_region == dst_region
+        && (map_loc(veh.x, veh.y)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+        go_to(veh_id, type, x, y);
+        return;
+    }
+    int best_frontage = ((destination->climate & 0xE0) >= ALT_BIT_SHORE_LINE) ? 0 : -1;
+    for (int i = 0; i < 21; i++) {   // the destination's own base radius
+        int x_radius = course_xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (!on_map(x_radius, y_radius)) {
+            continue;
+        }
+        Map *anchorage = map_loc(x_radius, y_radius);
+        if ((anchorage->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            continue;
+        }
+        if (base_id >= 0) {
+            if (!base_on_sea(base_id, anchorage->region)) {
+                continue;
+            }
+        } else if (anchorage->region != veh_region) {
+            continue;
+        }
+        int frontage = 0;
+        for (int j = 0; j < 8; j++) {
+            int x_adj = course_xrange(x_radius + RadiusBaseX[j]);
+            int y_adj = y_radius + RadiusBaseY[j];
+            if (!on_map(x_adj, y_adj)) {
+                continue;
+            }
+            Map *shore = map_loc(x_adj, y_adj);
+            if ((shore->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+                continue;
+            }
+            if (shore->region != dst_region) {
+                continue;
+            }
+            if (base_who(x_adj, y_adj) >= 0) {
+                continue;
+            }
+            frontage++;
+        }
+        if (frontage > best_frontage) {
+            best_frontage = frontage;
+            go_to(veh_id, type, x_radius, y_radius);
+        }
+    }
+}
+
+/*
 Purpose: Get the unit on the top of the stack.
 Original Offset: 00579920
 Return Value: Unit id if found, otherwise -1

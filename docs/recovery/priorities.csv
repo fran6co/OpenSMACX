@@ -1619,7 +1619,6 @@ P3,2620,0x0055F450,?major_atrocity@@YAXHH@Z,794,2,6,unrecovered,,,2,exact,exact,
 P2,7420,0x0055F770,?break_treaty@@YAHHHH@Z,435,7,4,unrecovered,,,2,exact,exact,
 P3,2521,0x0055F930,?enemy_diplomacy@@YAXH@Z,4509,1,15,unrecovered,,,2,exact,exact,void (__cdecl ?enemy_diplomacy@@YAXH@Z)(int factionID)
 P3,6221,0x00561080,?enemy_strategy@@YAXH@Z,14344,2,42,unrecovered,,,2,exact,exact,void (__cdecl ?enemy_strategy@@YAXH@Z)(int factionID)
-P3,2221,0x00564890,?set_course@@YAXHDHH@Z,754,2,2,unrecovered,,,2,exact,exact,"void (__cdecl ?set_course@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)"
 P3,1421,0x00564B90,?assemble_passengers@@YAXHHH@Z,512,1,4,unrecovered,,,2,exact,exact,"void (__cdecl ?assemble_passengers@@YAXHHH@Z)(int baseID, int, int)"
 P3,2421,0x00564D90,?can_convoy@@YAHHH@Z,282,2,4,unrecovered,,,2,exact,exact,"int (__cdecl ?can_convoy@@YAHHH@Z)(int xCoord, int yCoord)"
 P3,2521,0x00564EB0,?good_sensor@@YAHHHH@Z,679,2,5,unrecovered,,,2,exact,exact,"int (__cdecl ?good_sensor@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)"
