@@ -214,6 +214,34 @@ def damage_pipeline_golden(workspace):
             "--golden", str(copy)]
 
 
+def damage_observability_census(workspace):
+    """A recovery of >=200 B that the census does not record.
+
+    This is the shape a new recovery hits: land the function, forget to measure
+    whether anything observes it. Damaging the CATALOGUE rather than the census
+    is deliberate - it is the direction a real recovery arrives from.
+    """
+    census = REPO_ROOT / "docs" / "recovery" / "observability.json"
+    functions = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+    if not census.is_file() or not functions.is_file():
+        raise Skip("the census or the catalogue is absent")
+    import csv as _csv
+    rows = list(_csv.DictReader(functions.open(newline="", encoding="utf-8-sig")))
+    if not rows:
+        raise Skip("the catalogue is empty")
+    planted = dict(rows[0])
+    planted.update({"address": "0x00ABCDEF", "name": "?planted@@YAXXZ",
+                    "size": "999", "recovery_state": "source_complete",
+                    "binary_kind": "game"})
+    copy = workspace / "functions.csv"
+    with copy.open("w", newline="", encoding="utf-8") as handle:
+        writer = _csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows + [planted])
+    return [PYTHON, str(TOOLS / "verify_observability_ratchet.py"),
+            "--census", str(census), "--functions", str(copy)]
+
+
 def damage_absent_signedness_image(workspace):
     """No executable, so nothing can be ranked. It used to print `0 <= 44`."""
     return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
@@ -255,6 +283,8 @@ CASES = (
      damage_stale_exclusions, "disagrees with the image"),
     ("recovery-pipeline", "a pinned pipeline fact that no longer holds",
      damage_pipeline_golden, "answers changed"),
+    ("observability-ratchet", "a recovery the census does not record",
+     damage_observability_census, "not in the census"),
     ("export-signedness-audit", "no image, so nothing can be ranked",
      damage_absent_signedness_image, "verified NOTHING"),
     ("export-signedness-audit", "an empty .def comparing zero exports",
@@ -273,6 +303,7 @@ COVERED_CHECKS = {
     "exclusions-current",
     "export-signedness-audit",
     "recovery-pipeline",
+    "observability-ratchet",
 }
 
 
