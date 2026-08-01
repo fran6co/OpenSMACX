@@ -50,7 +50,10 @@ class RatchetTests(unittest.TestCase):
         argv = sys.argv
         sys.argv = ["verify_observability_ratchet.py",
                     "--census", str(census_path),
-                    "--functions", str(functions), "--floor", str(floor)]
+                    "--functions", str(functions), "--floor", str(floor),
+                    # These fixtures hold two functions; the production
+                    # live-floor of 100 exists for the real catalogue.
+                    "--live-floor", "1"]
         try:
             with contextlib.redirect_stdout(io.StringIO()) as out, \
                  contextlib.redirect_stderr(io.StringIO()) as err:
@@ -109,6 +112,68 @@ class RatchetTests(unittest.TestCase):
             sys.argv = argv
         self.assertEqual(1, status)
         self.assertIn("verified NOTHING", err.getvalue())
+
+
+class EvasionTests(unittest.TestCase):
+    """Three ways this check was made to pass while proving nothing.
+
+    All three were found by attacking it within minutes of writing it, which is
+    the honest reason they are here rather than a hypothetical hardening pass.
+    """
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def run_with(self, census_data, live, extra=()):
+        census_path = self.root / "observability.json"
+        census_path.write_text(json.dumps(census_data), encoding="utf-8")
+        functions = self.root / "functions.csv"
+        with functions.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=COLUMNS)
+            writer.writeheader()
+            for address in live:
+                writer.writerow({"address": address, "name": "?f@@YAXXZ",
+                                 "size": "300",
+                                 "recovery_state": "source_complete",
+                                 "binary_kind": "game"})
+        argv = sys.argv
+        sys.argv = ["verify_observability_ratchet.py",
+                    "--census", str(census_path), "--functions", str(functions),
+                    "--floor", "2", "--live-floor", "1", *extra]
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as out, \
+                 contextlib.redirect_stderr(io.StringIO()) as err:
+                status = ratchet.main()
+            return status, out.getvalue() + err.getvalue()
+        finally:
+            sys.argv = argv
+
+    def test_a_census_cannot_raise_its_own_min_size(self):
+        # It used to: min_size 99999 put every live function out of scope and
+        # the check printed "0 live functions all present" and exited 0.
+        data = census({"0x1": entry("OBSERVED"), "0x2": entry("OBSERVED")}, 0)
+        data["min_size"] = 99999
+        status, output = self.run_with(data, ["0x1", "0x2"])
+        self.assertEqual(1, status)
+        self.assertIn("cannot shrink", output)
+
+    def test_an_empty_live_population_is_not_a_pass(self):
+        data = census({"0x1": entry("OBSERVED"), "0x2": entry("OBSERVED")}, 0)
+        status, output = self.run_with(data, [], extra=("--live-floor", "1"))
+        self.assertEqual(1, status)
+        self.assertIn("verified NOTHING", output)
+
+    def test_an_unknown_verdict_is_refused(self):
+        # "UNOBSERVD" is neither unobserved nor not-measured nor observed, so
+        # both ratchets skipped it and the entry sailed through. This guard
+        # found five real NO-COMPILE entries in the committed census when it
+        # was first switched on.
+        data = census({"0x1": entry("OBSERVED"), "0x2": entry("UNOBSERVD")}, 0)
+        status, output = self.run_with(data, ["0x1", "0x2"])
+        self.assertEqual(1, status)
+        self.assertIn("does not know", output)
 
 
 class CommittedCensusTests(unittest.TestCase):

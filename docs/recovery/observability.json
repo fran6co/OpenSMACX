@@ -1,12 +1,13 @@
 {
- "baseline_unmeasured": 26,
+ "baseline_unmeasured": 31,
  "baseline_unobserved": 141,
  "functions": {
   "0x004066C0": {
    "name": "sub_4066c0",
    "other": [],
+   "reason": "the maximal wreck would not compile",
    "size": 365,
-   "verdict": "NO-COMPILE"
+   "verdict": "NOT-MEASURED"
   },
   "0x00406910": {
    "name": "??1Dialogs@@QAE@XZ",
@@ -84,8 +85,9 @@
   "0x004C7670": {
    "name": "??1Ambience@@QAE@XZ",
    "other": [],
+   "reason": "the maximal wreck would not compile",
    "size": 273,
-   "verdict": "NO-COMPILE"
+   "verdict": "NOT-MEASURED"
   },
   "0x004C8460": {
    "name": "??0Ambience@@QAE@XZ",
@@ -1109,8 +1111,9 @@
   "0x005C2B40": {
    "name": "?build_hills@@YAXH@Z",
    "other": [],
+   "reason": "the maximal wreck would not compile",
    "size": 360,
-   "verdict": "NO-COMPILE"
+   "verdict": "NOT-MEASURED"
   },
   "0x005C3680": {
    "name": "?world_riverbeds@@YAXXZ",
@@ -1362,16 +1365,18 @@
   "0x005FDF80": {
    "name": "?make_index@TextIndex@@QAEXPAD@Z",
    "other": [],
+   "reason": "the maximal wreck would not compile",
    "size": 429,
-   "verdict": "NO-COMPILE"
+   "verdict": "NOT-MEASURED"
   },
   "0x006005D0": {
    "name": "?filefind_get@@YAHPAD@Z",
    "other": [
     "named-in-tests"
    ],
+   "reason": "the maximal wreck would not compile",
    "size": 387,
-   "verdict": "NO-COMPILE"
+   "verdict": "NOT-MEASURED"
   },
   "0x00605370": {
    "name": "?close@Scroll@@QAEXXZ",
