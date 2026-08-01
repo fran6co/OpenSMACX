@@ -375,6 +375,7 @@ EXPORTS
     "?tech_rate@@YAII@Z" = _Z9tech_ratej
     "?wants_prototype@@YAHII@Z" = _Z15wants_prototypejj
     "?territory@@YAHHHHPAHPAH@Z" = _Z9territoryiiiPiS_
+    "?rankings@@YAXH@Z" = _Z8rankingsi
     "?guard_check@@YAIII@Z" = _Z11guard_checkjj
     "?garrison_check@@YAII@Z" = _Z14garrison_checkj
     "?defensive_check@@YAII@Z" = _Z15defensive_checkj
