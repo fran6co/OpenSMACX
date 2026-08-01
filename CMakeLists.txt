@@ -1398,6 +1398,27 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(checks-can-fail-tests
                                    test_verify_checks_can_fail.py)
 
+    # A RECOVERY RUN, CODIFIED. Recovering a function means asking the tools a
+    # fixed sequence of questions - body spans, callees, indirect sites, the
+    # bytes purged on return, seam resolution - whose answers are deterministic
+    # functions of the pinned image and the committed catalogue. The authoring
+    # in the middle is not automatable; everything around it is, and nothing
+    # checked that a tool change left those answers alone.
+    #
+    # Eight functions, each on the slate for a shape that has broken something
+    # here before: a split body whose cold span holds 2,102 B, a body that
+    # dispatches through a vtable and reads as a perfect leaf, a thiscall whose
+    # purge excludes `this`, and recovered/unrecovered pairs. Damaging
+    # parse_body_ranges to return one span is caught as
+    # `span_bytes 16430 -> 14328`.
+    add_test(NAME recovery-pipeline
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_pipeline.py"
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    opensmacx_add_python_tool_test(recovery-pipeline-tests
+                                   test_verify_recovery_pipeline.py)
+
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
     # that safe - an unplanned command is still executed, and a command that

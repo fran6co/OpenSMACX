@@ -191,6 +191,29 @@ def damage_stale_exclusions(workspace):
             "--document", str(copy), "--exe", str(exe)]
 
 
+def damage_pipeline_golden(workspace):
+    """A pinned pipeline fact that no longer matches what the tools derive.
+
+    Damaging the golden rather than a tool is deliberate: it exercises the
+    comparison without needing to break and restore a module the rest of this
+    run imports.
+    """
+    golden = REPO_ROOT / "docs" / "recovery" / "pipeline-golden.json"
+    exe = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
+    if not golden.is_file() or not exe.is_file():
+        raise Skip("the golden or the pinned executable is absent")
+    text = golden.read_text(encoding="utf-8")
+    match = re.search(r'"span_bytes": (\d+)', text)
+    if not match:
+        raise Skip("no span_bytes entry to perturb")
+    copy = workspace / "pipeline-golden.json"
+    copy.write_text(
+        text[:match.start()] + f'"span_bytes": {int(match.group(1)) + 1}'
+        + text[match.end():], encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_recovery_pipeline.py"),
+            "--golden", str(copy)]
+
+
 def damage_absent_signedness_image(workspace):
     """No executable, so nothing can be ranked. It used to print `0 <= 44`."""
     return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
@@ -224,6 +247,8 @@ CASES = (
      damage_blinded_wine_check),
     ("exclusions-current", "a measured number disagreeing with the image",
      damage_stale_exclusions),
+    ("recovery-pipeline", "a pinned pipeline fact that no longer holds",
+     damage_pipeline_golden),
     ("export-signedness-audit", "no image, so nothing can be ranked",
      damage_absent_signedness_image),
     ("export-signedness-audit", "an empty .def comparing zero exports",
@@ -241,6 +266,7 @@ COVERED_CHECKS = {
     "wine-test-lock-check",
     "exclusions-current",
     "export-signedness-audit",
+    "recovery-pipeline",
 }
 
 
