@@ -43,7 +43,26 @@ inline int &failure_count() {
     return failures;
 }
 
+/*
+ * Assertions EVALUATED, not assertions passed. This exists so that a refactor
+ * of the suites can be proved neutral: run the binary before and after, and
+ * require the two totals to be identical. A test that stops running, or a loop
+ * that stops iterating, moves this number even though every remaining
+ * assertion still passes.
+ *
+ * It is committed and printed on every run deliberately. The leaf-test split
+ * proved its own neutrality with a count of 17,409,009 evaluations, and that
+ * proof is now unreproducible: the counter was instrumented, read once and
+ * thrown away, so no commit contains it and `git log -S` finds nothing. A
+ * proof nobody can re-run is a claim.
+ */
+inline long long &expect_evaluations() {
+    static long long evaluated = 0;
+    return evaluated;
+}
+
 inline void expect(bool condition) {
+    ++expect_evaluations();
     if (!condition) {
         ++failure_count();
     }
