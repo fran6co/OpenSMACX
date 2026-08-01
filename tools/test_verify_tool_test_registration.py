@@ -125,6 +125,52 @@ class EndToEndTests(unittest.TestCase):
         self.assertIn("do not exist", errors)
 
 
+class DisabledSpellingTests(unittest.TestCase):
+    """The spellings CMake accepts for DISABLED, and the group it extracts.
+
+    Mutation-testing this tool against its own suite left 67% of mutants alive,
+    and two of the survivors were real: the `1` in `DISABLED\\s+(?:TRUE|ON|1)`
+    could be changed to 0 or 2 unnoticed, and `match.group(1)` could become
+    `group(0)` unnoticed. The suite only ever exercised `DISABLED TRUE`, so
+    every other spelling CMake honours was untested and the name extraction was
+    never pinned at all.
+    """
+
+    def cmake_with(self, spelling):
+        return ("opensmacx_add_python_tool_test(demo-tests test_demo.py)\n"
+                f'set_tests_properties("demo-tests" PROPERTIES {spelling})\n')
+
+    def test_every_spelling_cmake_accepts_disables_the_test(self):
+        for spelling in ("DISABLED TRUE", "DISABLED ON", "DISABLED 1",
+                         "DISABLED true", "DISABLED On"):
+            with self.subTest(spelling=spelling):
+                self.assertEqual(
+                    set(), guard.executed_tests(self.cmake_with(spelling)),
+                    f"{spelling} should disable the test")
+
+    def test_disabled_false_does_not_disable_it(self):
+        # The reverse matters as much: a check that treats DISABLED FALSE as
+        # disabled would hide a test that really does run.
+        for spelling in ("DISABLED FALSE", "DISABLED OFF", "DISABLED 0"):
+            with self.subTest(spelling=spelling):
+                self.assertEqual(
+                    {"test_demo.py"},
+                    guard.executed_tests(self.cmake_with(spelling)), spelling)
+
+    def test_the_disabled_name_is_taken_from_the_right_capture_group(self):
+        # group(0) is the whole match, so a mutation to it silently stops any
+        # test from ever being recognised as disabled.
+        text = ("opensmacx_add_python_tool_test(alpha-tests test_alpha.py)\n"
+                "opensmacx_add_python_tool_test(beta-tests test_beta.py)\n"
+                'set_tests_properties("beta-tests" PROPERTIES DISABLED TRUE)\n')
+        self.assertEqual({"test_alpha.py"}, guard.executed_tests(text))
+
+    def test_a_property_block_naming_another_test_does_not_disable_this_one(self):
+        text = ("opensmacx_add_python_tool_test(alpha-tests test_alpha.py)\n"
+                'set_tests_properties("other-tests" PROPERTIES DISABLED TRUE)\n')
+        self.assertEqual({"test_alpha.py"}, guard.executed_tests(text))
+
+
 class CommittedTreeTests(unittest.TestCase):
     def test_the_repository_is_clean(self):
         self.assertEqual([], [
