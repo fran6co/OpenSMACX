@@ -235,3 +235,61 @@ functions were written to behave.
   Revisit only if the flat-cost model wins.
 - **Seam-relief as a track.** 969 zero-seam functions / 216,328 B are authorable
   now, which is 53–68 agent-days before a seam binds on anything.
+
+## Most of what has been recovered is not watched by anything
+
+Measured 2026-08-01. A random sample of **eight** recovered functions of ≥200 B
+(seed 20260801, so it re-draws identically) was re-swept with
+`tools/mutate_and_verify.py`:
+
+| function | bytes | killed | survived |
+|---|---:|---:|---:|
+| `?social_ai@@YAXHHHHHPAH@Z` | 3,714 | **0/709** | 709 |
+| `?sensors@Path@@QAEHHPAHPAH@Z` | 1,418 | **0/114** | 114 |
+| `?make_proto@@YAXHHHHHH@Z` | 1,321 | **0/170** | 170 |
+| `?set_course@@YAXHDHH@Z` | 754 | 33/43 | 10 |
+| `?suggest_plan@@YAHHH@Z` | 733 | 57/61 | 4 |
+| `?success_rates@@YAHHHHH@Z` | 574 | **0/77** | 77 |
+| `?base_making@@YAHHH@Z` | 258 | **0/30** | 30 |
+| `sub_5b5700` | 202 | 12/13 | 1 |
+
+**Five of the eight are observed by nothing.** No assertion anywhere kills a
+single mutant, including mutants that delete a whole statement. Over the sample,
+**102 of 1,217 mutants die — 8.4%**.
+
+Each of the five was checked three ways before being called unobserved: named by
+no file under `tests/`, absent from `src/generated_signature_oracle.cpp`, and
+absent from `docs/recovery/proven.csv`. `src/veh.cpp` compiles into exactly one
+test executable, so no second suite could have been covering the two functions
+there.
+
+**Do not read this as an artifact of the off-by-one operator added the same
+day.** A function nothing observes kills nothing under any operator, and the
+previous zero-only version would have reported the same. Re-running the harness
+over already-landed work is simply the first time the question was asked.
+
+**And do not substitute a name grep for the sweep.** `sub_5b5700` is named in no
+test and still scores 12/13, because it is reached through a caller. A
+stem-matching estimate puts 162 of 224 recovered functions ≥200 B (72%) beyond
+the reach of any test, oracle or proof; that is an UPPER BOUND on what is
+unobserved, and the measured 5/8 is the number with evidence behind it.
+
+### Why this belongs in an economics document
+
+`machine_carried` counts bytes that have source. It does not ask whether
+anything observes that source, so **the objective can be driven to zero with
+most of the corpus unwatched**. That is permitted — proof here is explicitly
+opportunistic and never a gate on progress — but it has never been priced.
+
+The honest reading is that a recovery has two costs, and the published rate
+covers one of them. The functions in this sample that ARE observed
+(`set_course`, `suggest_plan`, `sub_5b5700`) each carry a hand-written fixture;
+the five that are not were authored and wired without one. Whatever
+bytes-per-agent-hour figure is quoted, it is a blend of those two populations,
+and the cheaper one delivers source that no assertion checks.
+
+A mechanical companion metric would fix this: the count and byte total of
+recovered functions for which **at least one mutant dies**. Unlike a name grep
+it cannot be satisfied by a test that merely mentions a symbol. It costs one
+sweep per function, so it wants computing incrementally as recoveries land
+rather than retroactively over the whole corpus.
