@@ -603,3 +603,4 @@ DLLEXPORT BOOL __cdecl is_missile(uint32_t veh_id);
 DLLEXPORT int __cdecl action_home(int veh_id, int flags);
 DLLEXPORT int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def,
                                   int base_id);
+DLLEXPORT int __cdecl alien_base(int veh_id, int x, int y);

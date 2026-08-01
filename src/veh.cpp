@@ -4006,3 +4006,87 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
     }
     return value;
 }
+
+/*
+Purpose: Choose which base a native life form standing on the specified tile should head for.
+Original Offset: 005665D0
+Return Value: Base id of the most attractive target, or -1 when there is none
+Status: Complete
+
+WHAT THE SCORE MEANS. The comparison variable is a cost, not a merit: the loop keeps the LOWEST
+value, seeded at 9999, and the winner is published in BaseFindDist for the caller. The cost is the
+radiating distance from the unit to the base, scaled by 32 and then divided by that base's own
+mineral plus energy intake plus 32, so a productive base pulls a worm from further away. Three
+adjustments follow, each of which the original applies as a whole doubling or halving:
+
+  - an Alien Artifact standing in the base halves the cost. stack_check type 2 counts units in the
+    tile's stack whose prototype PLAN is PLAN_ALIEN_ARTIFACT, so this is literally "something is
+    sitting there that Planet wants back".
+  - the unit's own home base halves it again. Native life gets a home base when a faction breeds
+    it, and this is what makes a bred worm drift back toward the base that made it.
+  - a base whose owner runs a positive PLANET rating and has no eco damage DOUBLES it. That is the
+    in-game promise that a green faction is left alone, expressed as a cost the worm has to pay.
+
+Verification note: the third test compares Veh+0x26 against the base's owner. veh.h names that
+byte order_auto_type, and on this path the original is reading it as a faction id rather than as
+an order type - base.cpp reads the same byte as a resource id for convoys, so the field is already
+known to be multi-purpose. Transcribed as the original reads it rather than corrected.
+
+REACHABILITY. The region test only applies to a native standing on LAND. Water bodies are numbered
+from MaxRegionLandNum upward (see the region notes in map.h), so a unit already at sea reaches
+every base and the test is skipped - which is the whole reason it is written as a bound and not as
+an equality. On land, the base has to share the unit's region, except for a Sealurk - prototype
+14, the only native the loop names - which may also take a base that merely touches the region it
+is standing in, and base_on_sea answers that.
+
+Verification note: stack_check's fifth argument survives a mutation sweep and always will. Type 2
+reads cond1 and cond2 and never looks at cond3, so the -1 the original pushes for it cannot be
+observed by any fixture. The fourth argument is observable and is covered - the artifact unit in
+the fixture carries a non-zero faction precisely so that turning that -1 into 0 changes the count.
+
+The original inlines region_at (0x00500220), x_dist (0x00579790) and the two-argument vector_dist
+(0x004F8090); each inlined copy is instruction-for-instruction the standalone body, so they are
+called here. One consequence is visible in the disassembly and worth recording: the inlined
+map_loc halves x with SAR, while the exported map_loc that region_at reaches takes uint32_t and
+would halve it with SHR. The two agree on every non-negative x, and alien_move at 0x005668A0 -
+the only caller - passes a unit's own sign-extended coordinates.
+*/
+int __cdecl alien_base(int veh_id, int x, int y) {
+    int best_value = 9999;
+    *BaseFindDist = 9999;
+    int base_id_best = -1;
+    const int region = region_at(x, y);
+    for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+        Base &base = Bases[base_id];
+        if (Vehs[veh_id].proto_id == BSC_SEALURK) {
+            if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)
+                && !base_on_sea(base_id, region)) {
+                continue;
+            }
+        } else if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)) {
+            continue;
+        }
+        int value = vector_dist(x_dist(x, base.x), abs(y - base.y)) * 32
+            / (base.mineral_intake_2 + base.energy_intake_2 + 32);
+        if (stack_check(veh_at(base.x, base.y), 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
+            value /= 2;
+        }
+        if (Vehs[veh_id].home_base_id == base_id) {
+            value /= 2;
+        }
+        if (Vehs[veh_id].order_auto_type != base.faction_id_current
+            && PlayersData[base.faction_id_current].soc_effect_active.planet > 0
+            && !base.eco_damage) {
+            value *= 2;
+        }
+        if (value <= best_value) {
+            best_value = value;
+            base_id_best = base_id;
+        }
+    }
+    if (base_id_best < 0) {
+        return base_id_best;
+    }
+    *BaseFindDist = best_value;
+    return base_id_best;
+}

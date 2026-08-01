@@ -13641,6 +13641,408 @@ GAMEPLAY_CASE(test_can_terraform_scoring);
 #undef CT_GUARDS
 #undef CTCHECK
 
+/*
+ * alien_base (0x005665D0): which base a native life form heads for.
+ *
+ * The subject is deliberately unit 3 rather than unit 0, so an implementation
+ * that read Vehs[0] instead of Vehs[veh_id] would be caught rather than
+ * accidentally right. Unit 5 is loaded with the opposite of everything the
+ * subject wants for the same reason.
+ *
+ * Everything the body reaches is real: region_at, x_dist, vector_dist,
+ * base_on_sea, veh_at and stack_check all run against this world, so the
+ * fixture has to satisfy them. Three consequences are worth stating because
+ * they are easy to get wrong and silent when wrong:
+ *
+ *   - every unit's next/prev stack links start at -1. Zeroed links make
+ *     veh_top() walk from unit 0 to unit 0 forever.
+ *   - BIT_VEH_IN_TILE is set only where a unit actually stands. veh_at()
+ *     falls through to log_say() for a tile that claims a unit and has none.
+ *   - the map is 16x8 with MapLongitude 8, so a tile index is (x >> 1) + y * 8
+ *     and MapTiles is aimed at the middle of a 192-entry array.
+ */
+struct AlienWorld {
+    Map tiles[192];
+    Base bases[8];
+    Veh vehs[8];
+    VehPrototype protos[16];
+    PlayerData players_data[MaxPlayerNum];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    int base_count;
+    int base_find_dist;
+    int veh_count;
+};
+
+AlienWorld g_alien_world;
+AlienWorld g_alien_saved;
+
+const int AB_LIVE = 64;                 // MapTiles aims here
+const int AB_VEH = 3;                   // the subject, deliberately not zero
+const int AB_DECOY_VEH = 5;             // holds the opposite of every subject field
+const int AB_X = 0;                     // where the subject stands
+const int AB_Y = 0;
+const int AB_REGION = 2;                // the region the subject stands in
+const int AB_BASE_X = 14;               // the reference base
+const int AB_BASE_Y = 6;
+const int AB_FACTION = 1;
+const int AB_DIST_SENTINEL = 0x5A5A5A5A;
+
+Map &ab_at(int x, int y) {
+    return g_alien_world.tiles[AB_LIVE + (x >> 1) + y * 8];
+}
+
+Base &ab_base(int base_id) {
+    return g_alien_world.bases[base_id];
+}
+
+void ab_reset() {
+    std::memset(&g_alien_world, 0, sizeof(g_alien_world));
+    g_alien_world.tiles_ptr = &g_alien_world.tiles[AB_LIVE];
+    g_alien_world.longitude = 8;
+    g_alien_world.lon_bounds = 16;
+    g_alien_world.lat_bounds = 8;
+    g_alien_world.is_flat = 1;          // no x wrapping unless a test asks for it
+    g_alien_world.base_find_dist = AB_DIST_SENTINEL;
+    g_alien_world.veh_count = 8;
+    for (int i = 0; i < 192; i++) {
+        g_alien_world.tiles[i].climate = 0x80;   // dry land, well above the shore line
+        g_alien_world.tiles[i].region = (uint8_t)AB_REGION;
+    }
+    for (int i = 0; i < 8; i++) {
+        Veh &veh = g_alien_world.vehs[i];
+        veh.x = -1;
+        veh.y = -1;
+        veh.next_veh_id_stack = -1;
+        veh.prev_veh_id_stack = -1;
+        veh.home_base_id = -1;
+        veh.proto_id = (int16_t)BSC_MIND_WORMS;
+    }
+    // The decoy wants everything the subject does not.
+    g_alien_world.vehs[AB_DECOY_VEH].proto_id = (int16_t)BSC_SEALURK;
+    g_alien_world.vehs[AB_DECOY_VEH].home_base_id = 0;
+    g_alien_world.vehs[AB_DECOY_VEH].order_auto_type = (uint8_t)AB_FACTION;
+    g_alien_world.protos[BSC_ALIEN_ARTIFACT].plan = (uint8_t)PLAN_ALIEN_ARTIFACT;
+    g_alien_world.protos[BSC_MIND_WORMS].plan = (uint8_t)PLAN_COMBAT;
+    g_alien_world.protos[BSC_SEALURK].plan = (uint8_t)PLAN_COMBAT;
+    g_alien_world.protos[BSC_SPORE_LAUNCHER].plan = (uint8_t)PLAN_COMBAT;
+}
+
+// A base of `faction` at (x, y). Intakes stay zero, so the divisor is 32.
+void ab_place_base(int base_id, int x, int y, int faction_id) {
+    Base &base = ab_base(base_id);
+    base.x = (int16_t)x;
+    base.y = (int16_t)y;
+    base.faction_id_current = (uint8_t)faction_id;
+    if (g_alien_world.base_count <= base_id) {
+        g_alien_world.base_count = base_id + 1;
+    }
+}
+
+// A unit standing on a tile, with the map bit veh_at() insists on.
+//
+// The faction is deliberately NOT zero. stack_check's type 2 reads cond2 as
+// "only units of this faction", and the -1 the original passes means "any".
+// With a zero-faction unit in the stack, replacing that -1 with 0 counts the
+// unit anyway and the mutation is invisible; with faction 3 it is not.
+void ab_place_unit(int veh_id, int x, int y, int proto_id) {
+    Veh &veh = g_alien_world.vehs[veh_id];
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    veh.proto_id = (int16_t)proto_id;
+    veh.faction_id = 3;
+    ab_at(x, y).bit |= BIT_VEH_IN_TILE;
+}
+
+void ab_snapshot() {
+    std::memcpy(&g_alien_saved, &g_alien_world, sizeof(g_alien_world));
+}
+
+// Everything except the one published output has to come back untouched.
+bool ab_only_dist_changed() {
+    AlienWorld now;
+    std::memcpy(&now, &g_alien_world, sizeof(now));
+    now.base_find_dist = g_alien_saved.base_find_dist;
+    return std::memcmp(&now, &g_alien_saved, sizeof(now)) == 0;
+}
+
+#define ABCHECK(cond)                                                         \
+    do {                                                                      \
+        const bool alien_ok = (cond);                                         \
+        if (!alien_ok) {                                                      \
+            std::fprintf(stderr, "alien_base: line %d: %s\n", __LINE__,       \
+                         #cond);                                              \
+        }                                                                     \
+        expect(alien_ok);                                                     \
+    } while (0)
+
+class AlienSeams {
+ public:
+    AlienSeams()
+        : tiles_(&MapTiles, &g_alien_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_alien_world.longitude),
+          lon_(&MapLongitudeBounds, &g_alien_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_alien_world.lat_bounds),
+          flat_(&MapIsFlat, &g_alien_world.is_flat),
+          bases_(&Bases, g_alien_world.bases),
+          base_count_(&BaseCurrentCount, &g_alien_world.base_count),
+          base_dist_(&BaseFindDist, &g_alien_world.base_find_dist),
+          vehs_(&Vehs, g_alien_world.vehs),
+          protos_(&VehPrototypes, g_alien_world.protos),
+          veh_count_(&VehCurrentCount, &g_alien_world.veh_count),
+          players_data_(&PlayersData, g_alien_world.players_data) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<PlayerData> players_data_;
+};
+
+void test_alien_base_reachability() {
+    AlienSeams seams;
+
+    // ---- no bases at all -----------------------------------------------
+    // The 9999 seed is published on the way IN, so a caller that reads
+    // BaseFindDist after a failed search sees 9999 and not the sentinel.
+    ab_reset();
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+    ABCHECK(g_alien_world.base_find_dist == 9999);
+
+    // ---- one base in the unit's own region ------------------------------
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_snapshot();
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    ABCHECK(ab_only_dist_changed());
+
+    // ---- a base in another region is unreachable ------------------------
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_at(AB_BASE_X, AB_BASE_Y).region = 3;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+    ABCHECK(g_alien_world.base_find_dist == 9999);
+
+    // ---- the bound is the land/water split, and it is exactly 64 --------
+    // 63 is still land, so the region still has to match; 64 and above is a
+    // unit already at sea, which reaches everything.
+    ab_at(AB_X, AB_Y).region = 63;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+    ab_at(AB_X, AB_Y).region = 64;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ab_at(AB_X, AB_Y).region = 65;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+
+    // ---- a Sealurk may also take a base that touches its own water ------
+    // (12,6) is one of the eight tiles base_on_sea() looks at from (14,6).
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_at(AB_BASE_X, AB_BASE_Y).region = 3;
+    ab_at(12, 6).climate = 0x20;                     // below the shore line
+    ab_at(12, 6).region = (uint8_t)AB_REGION;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);   // a worm still cannot
+    g_alien_world.vehs[AB_VEH].proto_id = (int16_t)BSC_SEALURK;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    // Neighbouring prototype ids are not Sealurks.
+    g_alien_world.vehs[AB_VEH].proto_id = (int16_t)BSC_UNITY_FOIL;      // 13
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+    g_alien_world.vehs[AB_VEH].proto_id = (int16_t)BSC_SPORE_LAUNCHER;  // 15
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+
+    // ---- and only where the water really is the unit's own region -------
+    g_alien_world.vehs[AB_VEH].proto_id = (int16_t)BSC_SEALURK;
+    ab_at(12, 6).region = 5;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+    ab_at(12, 6).region = (uint8_t)AB_REGION;
+    ab_at(12, 6).climate = 0x80;                     // dry land again
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+}
+GAMEPLAY_CASE(test_alien_base_reachability);
+
+void test_alien_base_scoring() {
+    AlienSeams seams;
+
+    // ---- the divisor is the base's own mineral and energy intake --------
+    // Driven to 2 rather than left near 32, because a small divisor is what
+    // makes each of the three terms individually visible in the quotient.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_base(0).mineral_intake_2 = -20;
+    ab_base(0).energy_intake_2 = -10;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 192);    // 12 * 32 / 2
+    ab_base(0).mineral_intake_2 = 0;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 17);     // 384 / 22
+    ab_base(0).mineral_intake_2 = -20;
+    ab_base(0).energy_intake_2 = 0;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 32);     // 384 / 12
+    // A productive base pulls from further: bigger intake, smaller cost.
+    ab_base(0).mineral_intake_2 = 16;
+    ab_base(0).energy_intake_2 = 0;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 8);      // 384 / 48
+
+    // ---- an Alien Artifact in the base halves the cost ------------------
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_place_unit(1, AB_BASE_X, AB_BASE_Y, BSC_ALIEN_ARTIFACT);
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 6);
+    // It is the PLAN that counts, not the prototype id.
+    g_alien_world.protos[BSC_ALIEN_ARTIFACT].plan = (uint8_t)PLAN_COMBAT;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    // And the tile it has to be standing on is the BASE's, not the unit's.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_place_unit(1, AB_X, AB_Y, BSC_ALIEN_ARTIFACT);
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+
+    // ---- the unit's own home base halves it -----------------------------
+    // Two bases, so the halving has to be applied to the one whose id the
+    // unit actually names rather than to whichever base is being looked at.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_place_base(1, 2, 6, AB_FACTION);
+    ab_base(1).mineral_intake_2 = -22;                // 5 * 32 / 10 = 16
+    g_alien_world.vehs[AB_VEH].home_base_id = -1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    g_alien_world.vehs[AB_VEH].home_base_id = 0;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 6);
+    g_alien_world.vehs[AB_VEH].home_base_id = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 1);
+    ABCHECK(g_alien_world.base_find_dist == 8);       // 16 halved beats 12
+
+    // ---- both halvings compose ------------------------------------------
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_place_unit(1, AB_BASE_X, AB_BASE_Y, BSC_ALIEN_ARTIFACT);
+    g_alien_world.vehs[AB_VEH].home_base_id = 0;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 3);
+
+    // ---- a green faction with a clean base is left alone ----------------
+    // All three conditions have to hold before the cost doubles.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    g_alien_world.players_data[AB_FACTION].soc_effect_active.planet = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 24);
+    // A Planet rating of zero or below is not green enough.
+    g_alien_world.players_data[AB_FACTION].soc_effect_active.planet = 0;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    g_alien_world.players_data[AB_FACTION].soc_effect_active.planet = -1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    // Eco damage forfeits it.
+    g_alien_world.players_data[AB_FACTION].soc_effect_active.planet = 1;
+    ab_base(0).eco_damage = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    ab_base(0).eco_damage = 0;
+    // So does the unit's own Veh+0x26 matching the base's owner.
+    g_alien_world.vehs[AB_VEH].order_auto_type = (uint8_t)AB_FACTION;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    g_alien_world.vehs[AB_VEH].order_auto_type = (uint8_t)(AB_FACTION + 1);
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 24);
+    // The Planet rating read is the BASE OWNER's, not the subject's or 0's.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, 4);
+    g_alien_world.players_data[AB_FACTION].soc_effect_active.planet = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    g_alien_world.players_data[4].soc_effect_active.planet = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 24);
+    // ... and it is soc_effect_active, not the pending or base copies.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    g_alien_world.players_data[AB_FACTION].soc_effect_pending.planet = 1;
+    g_alien_world.players_data[AB_FACTION].soc_effect_temp.planet = 1;
+    g_alien_world.players_data[AB_FACTION].soc_effect_base.planet = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+}
+GAMEPLAY_CASE(test_alien_base_scoring);
+
+void test_alien_base_selection() {
+    AlienSeams seams;
+
+    // ---- equal costs: the LAST base wins --------------------------------
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_place_base(1, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 1);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    // A worse second base leaves the first standing, and the published
+    // distance is the WINNER's rather than the last one looked at.
+    ab_base(1).mineral_intake_2 = -8;                 // 384 / 24 = 16
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 12);
+    ab_base(1).mineral_intake_2 = 16;                 // 384 / 48 = 8
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 1);
+    ABCHECK(g_alien_world.base_find_dist == 8);
+
+    // ---- 9999 is a real ceiling, not just a seed ------------------------
+    // A round map with a very wide wrap is the only way to drive the cost
+    // that high on a map this size: x_dist answers MapLongitudeBounds minus
+    // the separation once the separation passes MapLongitude.
+    ab_reset();
+    g_alien_world.is_flat = 0;
+    g_alien_world.lon_bounds = 13342;                 // x_dist -> 13332
+    ab_place_base(0, 10, 0, AB_FACTION);
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);     // exactly 9999, taken
+    ABCHECK(g_alien_world.base_find_dist == 9999);
+    g_alien_world.lon_bounds = 13344;                 // x_dist -> 13334
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);    // 10000, refused
+    ABCHECK(g_alien_world.base_find_dist == 9999);
+    // Flat again and the wrap does not happen at all, so the base is close.
+    g_alien_world.is_flat = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 7);       // vector_dist(10, 0)
+
+    // ---- the unit read is the one that was asked for --------------------
+    // Unit 5 carries a Sealurk prototype, home base 0 and an order_auto_type
+    // equal to the base owner; none of it may leak into unit 3's answer.
+    ab_reset();
+    ab_place_base(0, AB_BASE_X, AB_BASE_Y, AB_FACTION);
+    ab_at(AB_BASE_X, AB_BASE_Y).region = 3;
+    g_alien_world.players_data[AB_FACTION].soc_effect_active.planet = 1;
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == -1);
+    ABCHECK(alien_base(AB_DECOY_VEH, AB_X, AB_Y) == -1);   // no water either
+    ab_at(AB_BASE_X, AB_BASE_Y).region = (uint8_t)AB_REGION;
+    ab_snapshot();
+    ABCHECK(alien_base(AB_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 24);           // doubled, not halved
+    ABCHECK(ab_only_dist_changed());
+    ABCHECK(alien_base(AB_DECOY_VEH, AB_X, AB_Y) == 0);
+    ABCHECK(g_alien_world.base_find_dist == 6);            // halved, not doubled
+}
+GAMEPLAY_CASE(test_alien_base_selection);
+
+#undef ABCHECK
+
 }  // namespace
 
 int main() {
