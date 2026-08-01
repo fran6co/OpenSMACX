@@ -15,48 +15,41 @@ separately -- a mutant that never built has proven nothing.
 
 Exit status is 0 only when every valid mutant was killed.
 
-SHARDING, because this is the slowest thing in a recovery. A sweep is one
-rebuild-and-run per mutant, strictly serial, and mutant count scales with
-function size -- measured at roughly one per 18-22 bytes, so ~90 for a 1.5 KB
-body and ~103 for a 2.2 KB one. At ~3.5 s each that is five to six minutes per
-pass, and hardening a new test runs several passes. It dominates.
+SHARDING EXISTS AND IS ALMOST CERTAINLY NOT WORTH IT. `--shard I/N` splits the
+mutants across N workers, and the numbers that justified it were wrong.
 
-The mutants are INDEPENDENT of one another. They are serial only because they
-all write the same source file and the same binary. `--shard I/N` splits them,
-so N workers can sweep one function together. Measured 2026-07-31 on
-?stack_veh@@YAHHH@Z, 88 mutants:
+Measured 2026-08-01 on ?can_terraform@@YAHHHHHH@Z, the largest function
+recovered to date (3,070 B):
 
-    serial, one build directory        313 s
-    four shards, four lanes             99 s     3.16x, 79% efficiency
+    186 mutants, one build directory, serial      154 s     0.83 s per mutant
 
-with byte-identical verdicts -- the same 75 killed, the same 2 survivors.
+So a full sweep of the biggest body in the campaign is two and a half minutes.
+Earlier figures in this file claimed ~3.5 s per mutant and a 3.16x win at four
+lanes; a batch report claimed ~21 s per mutant. Both are retired. Where the
+time actually goes, measured the same day: rebuilding one file and relinking is
+241 ms, and the ctest run is 1,989 ms - so the BUILD is 11% of a mutant and the
+test execution is 89%. Sharding parallelises the 11%.
 
-EACH WORKER NEEDS ITS OWN SOURCE TREE. This script edits the source in place
-and reverts afterwards, so shards sharing a tree would overwrite each other's
-mutations and score nonsense. A lane costs about seven seconds to build and
-2 GB of disk:
+If you shard anyway, EACH WORKER NEEDS ITS OWN SOURCE TREE, because this script
+edits the source in place and reverts afterwards, so shards sharing a tree
+overwrite each other's mutations and score nonsense:
 
     git archive HEAD | tar -x -C "$S" --one-top-level=lane$i
     mkdir -p "$S/lane$i/.opensmacx"
     cp -al <repo>/.opensmacx/game "$S/lane$i/.opensmacx/game"   # hard links
-    cd "$S/lane$i" && cmake -S . -B build -G Ninja \
-        --toolchain cmake/toolchains/mingw-i686.cmake
-    cmake --build build --target <suite> -j4
+    cd "$S/lane$i" && cmake --preset mingw-i686-debug \
+        -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
 
 Hard links, not a symlink: the build refuses a symlinked OPENSMACX_GAME_DIR and
-refuses one outside the lane's own ignored root, and hard links satisfy both at
-no cost. The Wine prefix is already ${CMAKE_CURRENT_BINARY_DIR}/wineprefix, so
-per-lane build directories isolate it for free.
+refuses one outside the lane's own ignored root. The Wine prefix is already
+${CMAKE_CURRENT_BINARY_DIR}/wineprefix, so per-lane build directories isolate
+it for free. A lane's build is 21 s, not the seven seconds recorded before.
 
 A SHARD IS NOT A SWEEP, and the run says so on every invocation. Each shard
 prints its own tally, and `survived 0` from one shard looks exactly like a clean
 full sweep. All N shards must run and their survivors be unioned before a
 function has been swept; exit status from one shard means only that its own
 share was killed.
-
-Disk binds before CPU: at ~2 GB per lane, four lanes is a comfortable default
-and the per-mutant cost had risen only 3.5 s -> 4.5 s at that width, so it was
-not yet saturated.
 """
 
 from __future__ import annotations
@@ -80,7 +73,13 @@ CONTROL_PREFIXES = (
     "continue", "goto", "static_assert", "#", "//", "/*", "*", "}", "{",
 )
 
-FUNCTION_HEADER = re.compile(r"Original Offset:\s*([0-9A-Fa-f]{6,8})")
+# `0x` is accepted. Without it the annotation `Original Offset: 0x00565320`
+# matched nothing, so the function was skipped and the sweep reported a
+# tally for the OTHER functions in the file - a clean-looking run that
+# never touched the body being recovered. Cost one aborted sweep on
+# can_terraform. Being liberal here is right: the annotation is written by
+# hand, and both spellings mean the same address.
+FUNCTION_HEADER = re.compile(r"Original Offset:\s*(?:0[xX])?([0-9A-Fa-f]{6,8})")
 # The trailing group captures a C integer suffix. Without it the `(?![\w.])`
 # guard treated the `U` of `1U` as a word character and refused the whole
 # match, so every suffixed literal in the recovered sources - the `+ 1U` /

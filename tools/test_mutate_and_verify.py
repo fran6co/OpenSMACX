@@ -778,3 +778,31 @@ class TargetDerivationTests(unittest.TestCase):
         problem = mutate_and_verify.resolve_target(self.args("src/absent.cpp"))
         self.assertIsNotNone(problem)
         self.assertIn("nothing in", problem)
+
+
+class OriginalOffsetSpellingTests(unittest.TestCase):
+    """`Original Offset: 0x00565320` matched nothing, so the function was
+    skipped and the sweep reported a tally for the OTHER functions in the file
+    - a clean-looking run that never touched the body being recovered."""
+
+    def test_bare_hex_is_accepted(self):
+        m = mutate_and_verify.FUNCTION_HEADER.search("Original Offset: 00565320")
+        self.assertEqual(m.group(1), "00565320")
+
+    def test_an_0x_prefix_is_accepted(self):
+        m = mutate_and_verify.FUNCTION_HEADER.search("Original Offset: 0x00565320")
+        self.assertIsNotNone(m, "the 0x spelling silently skips the function")
+        self.assertEqual(m.group(1), "00565320")
+
+    def test_an_uppercase_prefix_is_accepted(self):
+        m = mutate_and_verify.FUNCTION_HEADER.search("Original Offset:0X00565320")
+        self.assertEqual(m.group(1), "00565320")
+
+    def test_both_spellings_find_the_same_function(self):
+        bare = "/*\nOriginal Offset: 006343D0\n*/\nvoid f() {\n    a = 1;\n}\n"
+        prefixed = bare.replace("006343D0", "0x006343D0")
+        self.assertEqual(
+            [f.address for f in
+             mutate_and_verify.parse_functions(bare.splitlines(keepends=True))],
+            [f.address for f in
+             mutate_and_verify.parse_functions(prefixed.splitlines(keepends=True))])
