@@ -10566,6 +10566,481 @@ void test_good_sensor_terrain() {
 
 #undef NCHECK
 
+/*
+ * alt_get_ocean_detail (0x00462190).
+ *
+ * The map is 16 columns by 8 rows, which is 8 tiles per row once the x
+ * coordinate is halved, and the subject tile is (8,4) - far enough from every
+ * edge that a case has to opt in to the wrap. The eight neighbours of (8,4) in
+ * RadiusBase order are listed below, because every direction assertion here is
+ * really a claim about which of those eight was read.
+ *
+ * The live 8x8 window sits at tiles[64], so tiles[0..63] and tiles[128..191]
+ * are poison: land at contour 200, which clamps to 79. Neither value can
+ * appear legitimately, tiles[128] is exactly one past the last valid index,
+ * and any bounds check that stops holding therefore changes an answer instead
+ * of reading a convenient zero.
+ */
+struct OceanWorld {
+    Map tiles[192];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+};
+
+OceanWorld g_ocean_world;
+
+const int OCEAN_LIVE = 64;
+
+// The eight neighbours of (8,4), in RadiusBaseX/RadiusBaseY order.
+const int OCEAN_NB_X[8] = { 9, 10, 9, 8, 7, 6, 7, 8 };
+const int OCEAN_NB_Y[8] = { 3,  4, 5, 6, 5, 4, 3, 2 };
+
+Map &ocean_at(int x, int y) {
+    return g_ocean_world.tiles[OCEAN_LIVE + (x >> 1) + y * 8];
+}
+
+void ocean_reset() {
+    std::memset(&g_ocean_world, 0, sizeof(g_ocean_world));
+    for (int i = 0; i < 192; i++) {
+        g_ocean_world.tiles[i].contour = 200;
+        g_ocean_world.tiles[i].climate = ALT_BIT_3_LEVELS_ABOVE_SEA;
+    }
+    for (int i = OCEAN_LIVE; i < OCEAN_LIVE + 64; i++) {
+        g_ocean_world.tiles[i].contour = 4;
+        g_ocean_world.tiles[i].climate = ALT_BIT_OCEAN_TRENCH;
+    }
+    g_ocean_world.tiles_ptr = &g_ocean_world.tiles[OCEAN_LIVE];
+    g_ocean_world.longitude = 8;
+    g_ocean_world.lon_bounds = 16;
+    g_ocean_world.lat_bounds = 8;
+    g_ocean_world.is_flat = 1;
+}
+
+// Every live tile above the shore line, for the branch that looks for water.
+void ocean_reset_land() {
+    ocean_reset();
+    for (int i = OCEAN_LIVE; i < OCEAN_LIVE + 64; i++) {
+        g_ocean_world.tiles[i].climate = ALT_BIT_1_LEVEL_ABOVE_SEA;
+    }
+}
+
+void ocean_land(int x, int y) {
+    ocean_at(x, y).climate = ALT_BIT_1_LEVEL_ABOVE_SEA;
+}
+
+void ocean_water(int x, int y) {
+    ocean_at(x, y).climate = ALT_BIT_OCEAN_TRENCH;
+}
+
+#define OCHECK(expr, want)                                                    \
+    do {                                                                      \
+        const int ocean_got = (expr);                                         \
+        const int ocean_want = (want);                                        \
+        if (ocean_got != ocean_want) {                                        \
+            std::fprintf(stderr,                                              \
+                         "alt_get_ocean_detail: line %d: %s = %d, want %d\n", \
+                         __LINE__, #expr, ocean_got, ocean_want);             \
+        }                                                                     \
+        expect(ocean_got == ocean_want);                                      \
+    } while (0)
+
+class OceanSeams {
+ public:
+    OceanSeams()
+        : tiles_(&MapTiles, &g_ocean_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_ocean_world.longitude),
+          lon_(&MapLongitudeBounds, &g_ocean_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_ocean_world.lat_bounds),
+          flat_(&MapIsFlat, &g_ocean_world.is_flat) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+};
+
+void test_alt_ocean_bounds_and_centre() {
+    OceanSeams seams;
+
+    // ---- the four arms of the entry guard, in the order it tests them -----
+    ocean_reset();
+    ocean_at(8, 4).contour = 50;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 0), 50);
+    OCHECK(alt_get_ocean_detail(8, -1, 0, 0), 0);
+    OCHECK(alt_get_ocean_detail(8, 8, 0, 0), 0);
+    OCHECK(alt_get_ocean_detail(-1, 4, 0, 0), 0);
+    OCHECK(alt_get_ocean_detail(16, 4, 0, 0), 0);
+    // The last tile inside each bound still answers, so the guard is refusing
+    // for the right reason rather than refusing everything.
+    ocean_at(15, 7).contour = 33;
+    OCHECK(alt_get_ocean_detail(15, 7, 0, 0), 33);
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 0), 4);
+
+    // ---- point 0 is the tile's own contour, clamped only at the top -------
+    ocean_at(8, 4).contour = 79;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 0), 79);
+    ocean_at(8, 4).contour = 80;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 0), 79);
+    ocean_at(8, 4).contour = 200;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 0), 79);
+    ocean_at(8, 4).contour = 0;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 0), 0);
+
+    // ---- and no vertex and no coast can change it ------------------------
+    ocean_reset();
+    ocean_at(8, 4).contour = 50;
+    for (int i = 0; i < 8; i++) {
+        ocean_land(OCEAN_NB_X[i], OCEAN_NB_Y[i]);
+    }
+    for (int vertex = 0; vertex < 4; vertex++) {
+        OCHECK(alt_get_ocean_detail(8, 4, vertex, 0), 50);
+    }
+    // The same with the subject on land and every neighbour water, which is
+    // the other side of the branch the scan takes.
+    ocean_reset_land();
+    ocean_at(8, 4).contour = 50;
+    for (int i = 0; i < 8; i++) {
+        ocean_water(OCEAN_NB_X[i], OCEAN_NB_Y[i]);
+    }
+    for (int vertex = 0; vertex < 4; vertex++) {
+        OCHECK(alt_get_ocean_detail(8, 4, vertex, 0), 50);
+    }
+}
+
+void test_alt_ocean_edge_midpoints() {
+    OceanSeams seams;
+
+    // Which neighbour each (vertex, point) pair averages against. Getting any
+    // one of these wrong is the failure this table exists to catch.
+    struct EdgeCase {
+        int vertex;
+        int point;
+        int x;
+        int y;
+    };
+    static const EdgeCase edges[] = {
+        { 0, 1, 7, 5 }, { 1, 1, 7, 3 }, { 2, 1, 9, 3 }, { 3, 1, 9, 5 },
+        { 0, 3, 7, 3 }, { 1, 3, 9, 3 }, { 2, 3, 9, 5 }, { 3, 3, 7, 5 },
+    };
+    for (int c = 0; c < 8; c++) {
+        const EdgeCase &e = edges[c];
+        ocean_reset();
+        // Every neighbour reads zero except the one that should be used, so a
+        // misdirected read halves the subject alone and shows up as 20.
+        for (int i = 0; i < 8; i++) {
+            ocean_at(OCEAN_NB_X[i], OCEAN_NB_Y[i]).contour = 0;
+        }
+        ocean_at(8, 4).contour = 40;
+        ocean_at(e.x, e.y).contour = 20;
+        OCHECK(alt_get_ocean_detail(8, 4, e.vertex, e.point), 30);
+    }
+
+    // ---- both terms are clamped before the mean --------------------------
+    ocean_reset();
+    ocean_at(8, 4).contour = 40;
+    ocean_at(7, 5).contour = 200;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 59);
+    ocean_reset();
+    ocean_at(8, 4).contour = 200;
+    ocean_at(7, 5).contour = 0;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 39);
+
+    // ---- the mean truncates rather than rounds ---------------------------
+    ocean_reset();
+    ocean_at(8, 4).contour = 41;
+    ocean_at(7, 5).contour = 20;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 30);
+
+    // ---- an off-map neighbour is dropped, and the subject is still halved -
+    ocean_reset();
+    ocean_at(8, 0).contour = 41;
+    OCHECK(alt_get_ocean_detail(8, 0, 1, 1), 20);
+    ocean_at(8, 0).contour = 200;
+    OCHECK(alt_get_ocean_detail(8, 0, 1, 1), 39);
+
+    // ---- the round map wraps in both directions --------------------------
+    ocean_reset();
+    g_ocean_world.is_flat = 0;
+    ocean_at(0, 0).contour = 30;
+    ocean_at(15, 1).contour = 50;   // (0,0) + (-1,+1) wraps to (15,1)
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 1), 40);
+    g_ocean_world.is_flat = 1;
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 1), 15);
+
+    ocean_reset();
+    g_ocean_world.is_flat = 0;
+    ocean_at(15, 3).contour = 20;
+    ocean_at(0, 2).contour = 60;    // (15,3) + (+1,-1) wraps to (0,2)
+    OCHECK(alt_get_ocean_detail(15, 3, 2, 1), 40);
+    g_ocean_world.is_flat = 1;
+    OCHECK(alt_get_ocean_detail(15, 3, 2, 1), 10);
+}
+
+void test_alt_ocean_corner() {
+    OceanSeams seams;
+
+    // ---- each vertex averages its own four tiles -------------------------
+    ocean_reset();
+    ocean_at(8, 4).contour = 32;
+    ocean_at(9, 3).contour = 8;
+    ocean_at(10, 4).contour = 12;
+    ocean_at(9, 5).contour = 16;
+    ocean_at(8, 6).contour = 20;
+    ocean_at(7, 5).contour = 24;
+    ocean_at(6, 4).contour = 28;
+    ocean_at(7, 3).contour = 36;
+    ocean_at(8, 2).contour = 40;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 30);   // (6,4) (7,3) (8,4) (7,5)
+    OCHECK(alt_get_ocean_detail(8, 4, 1, 2), 29);   // (7,3) (8,2) (9,3) (8,4)
+    OCHECK(alt_get_ocean_detail(8, 4, 2, 2), 17);   // (8,4) (9,3) (10,4) (9,5)
+    OCHECK(alt_get_ocean_detail(8, 4, 3, 2), 23);   // (7,5) (8,4) (9,5) (8,6)
+
+    // ---- every term is clamped, and the mean truncates -------------------
+    ocean_reset();
+    ocean_at(6, 4).contour = 200;
+    ocean_at(7, 3).contour = 200;
+    ocean_at(8, 4).contour = 200;
+    ocean_at(7, 5).contour = 200;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 79);   // 4 * 79 >> 2
+    // One clamped term among three zeros, so the clamp is visible through the
+    // mean instead of being masked by the clamp on the return.
+    ocean_at(6, 4).contour = 0;
+    ocean_at(7, 3).contour = 0;
+    ocean_at(8, 4).contour = 0;
+    ocean_at(7, 5).contour = 200;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 19);   // 79 >> 2, not 200 >> 2
+    ocean_at(6, 4).contour = 10;
+    ocean_at(7, 3).contour = 10;
+    ocean_at(8, 4).contour = 10;
+    ocean_at(7, 5).contour = 11;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 10);   // 41 >> 2
+    // A sum three short of a multiple of four, so the accumulator starting
+    // anywhere but zero shows.
+    ocean_at(7, 5).contour = 13;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 10);   // 43 >> 2, and 44 >> 2 is 11
+
+    // ---- the relief bias comes from [vertex][1] and [vertex][3] only -----
+    ocean_reset();
+    ocean_at(6, 4).contour = 10;
+    ocean_at(7, 3).contour = 20;
+    ocean_at(8, 4).contour = 30;
+    ocean_at(7, 5).contour = 40;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 25);
+    ocean_land(7, 3);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 32);   // +7
+    ocean_land(7, 5);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 29);   // +7 -3
+    ocean_water(7, 3);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 22);   // -3
+    ocean_water(7, 5);
+    // The other two tiles of the corner carry no bias at all.
+    ocean_land(6, 4);
+    ocean_land(8, 4);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 25);
+
+    // ---- the altitude test is the top three bits, and takes 0x60 exactly --
+    ocean_reset();
+    ocean_at(6, 4).contour = 10;
+    ocean_at(7, 3).contour = 20;
+    ocean_at(8, 4).contour = 30;
+    ocean_at(7, 5).contour = 40;
+    ocean_at(7, 3).climate = 0x5F;                  // masks to 0x40
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 25);
+    ocean_at(7, 3).climate = 0x7F;                  // masks to ALT_BIT_SHORE_LINE
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 32);
+    ocean_at(7, 3).climate = ALT_BIT_OCEAN_SHELF;   // one step below
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 25);
+    ocean_at(7, 3).climate = ALT_BIT_SHORE_LINE;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 32);
+    // The tile below the corner takes the same boundary for its -3.
+    ocean_at(7, 3).climate = ALT_BIT_OCEAN_TRENCH;
+    ocean_at(7, 5).climate = ALT_BIT_OCEAN_SHELF;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 25);
+    ocean_at(7, 5).climate = ALT_BIT_SHORE_LINE;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 22);
+
+    // ---- corner 1, where the two shaded tiles do not alias in x ----------
+    // At corner 0 from (8,4) the column-0 and column-1 tiles both halve to
+    // the same index, so a bias reading the wrong column is invisible. At
+    // corner 1 they do not: [1][1] is (8,2) and [1][0] would be (7,2),
+    // [1][3] is (8,4) and [1][0] would be (7,4).
+    ocean_reset();
+    ocean_at(7, 3).contour = 10;
+    ocean_at(8, 2).contour = 20;
+    ocean_at(9, 3).contour = 30;
+    ocean_at(8, 4).contour = 40;
+    OCHECK(alt_get_ocean_detail(8, 4, 1, 2), 25);
+    ocean_land(8, 2);                               // the tile above corner 1
+    OCHECK(alt_get_ocean_detail(8, 4, 1, 2), 32);
+    ocean_land(8, 4);                               // the tile below it
+    OCHECK(alt_get_ocean_detail(8, 4, 1, 2), 29);
+    ocean_water(8, 2);
+    OCHECK(alt_get_ocean_detail(8, 4, 1, 2), 22);
+
+    // ---- the bias can take the mean outside 0..79, and it is clamped -----
+    ocean_reset();
+    ocean_at(6, 4).contour = 79;
+    ocean_at(7, 3).contour = 79;
+    ocean_at(8, 4).contour = 79;
+    ocean_at(7, 5).contour = 79;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 79);
+    ocean_land(7, 3);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 79);   // 86 clamped
+    ocean_reset();
+    ocean_at(6, 4).contour = 12;
+    ocean_at(7, 3).contour = 12;
+    ocean_at(8, 4).contour = 12;
+    ocean_at(7, 5).contour = 12;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 12);
+    ocean_land(7, 5);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 9);    // -3 is visible
+    ocean_at(6, 4).contour = 0;
+    ocean_at(7, 3).contour = 0;
+    ocean_at(8, 4).contour = 0;
+    ocean_at(7, 5).contour = 0;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 0);    // -3 clamped up
+
+    // ---- off-map corner tiles are skipped, and so are their biases -------
+    ocean_reset();
+    ocean_at(0, 0).contour = 40;
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 2), 10);   // one term of four
+    ocean_land(15, 1);
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 2), 10);   // still off the flat map
+
+    // ---- the round map wraps the corner sample too -----------------------
+    ocean_reset();
+    g_ocean_world.is_flat = 0;
+    ocean_at(14, 0).contour = 8;    // (0,0) + (-2, 0)
+    ocean_at(0, 0).contour = 12;
+    ocean_at(15, 1).contour = 20;   // (0,0) + (-1,+1)
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 2), 10);   // (15,-1) is still off it
+    ocean_land(15, 1);
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 2), 7);    // and now it biases
+
+    // ---- an even point that is not 2 takes the mean without the bias -----
+    ocean_reset();
+    ocean_at(6, 4).contour = 10;
+    ocean_at(7, 3).contour = 20;
+    ocean_at(8, 4).contour = 30;
+    ocean_at(7, 5).contour = 40;
+    ocean_land(7, 3);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 32);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 4), 25);
+}
+
+void test_alt_ocean_shoreline() {
+    OceanSeams seams;
+
+    struct CoastCase {
+        int vertex;
+        int point;
+        int x;
+        int y;
+        int water_side;
+        int land_side;
+    };
+    // The tile each (vertex, point) pair scans, and the two fixed details it
+    // answers with - one for a water tile finding land, one for a land tile
+    // finding water. The two are always the other one of 57 and 67.
+    static const CoastCase coast[] = {
+        { 0, 1, 7, 5, 57, 67 },
+        { 1, 1, 7, 3, 67, 57 },
+        { 2, 1, 9, 3, 67, 57 },
+        { 3, 1, 9, 5, 57, 67 },
+        { 0, 3, 7, 3, 67, 57 },
+        { 1, 3, 9, 3, 67, 57 },
+        { 2, 3, 9, 5, 57, 67 },
+        { 3, 3, 7, 5, 57, 67 },
+    };
+    for (int c = 0; c < 8; c++) {
+        const CoastCase &k = coast[c];
+        ocean_reset();
+        ocean_land(k.x, k.y);
+        OCHECK(alt_get_ocean_detail(8, 4, k.vertex, k.point), k.water_side);
+        ocean_reset_land();
+        ocean_water(k.x, k.y);
+        OCHECK(alt_get_ocean_detail(8, 4, k.vertex, k.point), k.land_side);
+    }
+
+    // ---- the middle step of the scan can never answer --------------------
+    ocean_reset();
+    ocean_at(8, 4).contour = 40;
+    ocean_at(7, 5).contour = 20;
+    ocean_at(7, 3).contour = 60;
+    ocean_land(6, 4);                 // vertex 0, scan step 1
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 30);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 3), 50);
+    // ---- and neither can the step the other point owns -------------------
+    ocean_reset();
+    ocean_at(8, 4).contour = 40;
+    ocean_at(7, 5).contour = 20;
+    ocean_land(7, 3);                 // vertex 0, scan step 2, which is point 3's
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 30);
+    ocean_reset();
+    ocean_at(8, 4).contour = 40;
+    ocean_at(7, 3).contour = 60;
+    ocean_land(7, 5);                 // vertex 0, scan step 0, which is point 1's
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 3), 50);
+
+    // ---- the corner never enters the scan --------------------------------
+    ocean_reset();
+    ocean_at(6, 4).contour = 10;
+    ocean_at(7, 3).contour = 20;
+    ocean_at(8, 4).contour = 30;
+    ocean_at(7, 5).contour = 40;
+    ocean_land(6, 4);
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 2), 25);
+
+    // ---- the coast tile itself is tested at ALT_BIT_SHORE_LINE exactly ---
+    ocean_reset();
+    ocean_at(7, 5).climate = ALT_BIT_OCEAN_SHELF;   // one step below, no coast
+    ocean_at(8, 4).contour = 40;
+    ocean_at(7, 5).contour = 20;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 30);
+    ocean_at(7, 5).climate = ALT_BIT_SHORE_LINE;    // at it, and it is coast
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 57);
+    // And the land branch draws the same line: a neighbour exactly at the
+    // shore line is still land, so it is not the water this branch wants.
+    ocean_reset_land();
+    ocean_at(7, 5).climate = ALT_BIT_SHORE_LINE;
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 4);
+    ocean_at(7, 5).climate = ALT_BIT_OCEAN_SHELF;   // now it is water
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 67);
+
+    // ---- the subject's own altitude picks the branch, at 0x60 exactly ----
+    ocean_reset();
+    ocean_land(7, 5);
+    ocean_at(8, 4).climate = ALT_BIT_OCEAN_SHELF;   // 0x40, still water
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 57);
+    ocean_at(8, 4).climate = ALT_BIT_SHORE_LINE;    // 0x60, now land
+    // The land branch wants water at step 0 and finds land, so it falls
+    // through to the mean of two tiles that both read 4.
+    OCHECK(alt_get_ocean_detail(8, 4, 0, 1), 4);
+
+    // ---- a vertex outside 0..3 answers 60, and the compare is unsigned ---
+    ocean_reset();
+    ocean_land(7, 5);                 // vertex 4 scans direction 4, the same tile
+    OCHECK(alt_get_ocean_detail(8, 4, 4, 1), 60);
+    ocean_reset();
+    ocean_land(9, 5);                 // vertex -1 scans direction 2
+    OCHECK(alt_get_ocean_detail(8, 4, -1, 1), 60);
+
+    // ---- the scan wraps on a round map -----------------------------------
+    ocean_reset();
+    g_ocean_world.is_flat = 0;
+    ocean_land(15, 1);                // (0,0) + (-1,+1) wraps to (15,1)
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 1), 57);
+    g_ocean_world.is_flat = 1;
+    OCHECK(alt_get_ocean_detail(0, 0, 0, 1), 2);   // 4 >> 1, no neighbour at all
+}
+
+#undef OCHECK
+
 }  // namespace
 
 int main() {
@@ -10613,6 +11088,10 @@ int main() {
     test_good_sensor_reasons();
     test_good_sensor_existing();
     test_good_sensor_terrain();
+    test_alt_ocean_bounds_and_centre();
+    test_alt_ocean_edge_midpoints();
+    test_alt_ocean_corner();
+    test_alt_ocean_shoreline();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

@@ -230,6 +230,33 @@ const int RadiusOffsetY[] = {
     -7,  -8,  -9, -10, -11, -12, -13, -14, -15, };
 const uint32_t ElevDetail[] = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200 };
 
+/*
+ * The four map tiles that meet at each corner of a tile's rendered diamond,
+ * as offsets from that tile. The first index is the corner: 0 is west, 1
+ * north, 2 east, 3 south. Within a row the order is constant relative to the
+ * corner point, so element [c][1] is always the tile above it and [c][3]
+ * always the tile below - which is what alt_get_ocean_detail() reads when it
+ * shades a corner.
+ *
+ * Read from 00685EA0 and 00685EE0. Each address is referenced seven times in
+ * .text: three times by alt_get_ocean_detail() at 00462190, twice by its
+ * caller MapWin::gen_terrain_poly (00463FBB and 00464584) and twice more
+ * between 004700DA and 004708E2, so the name has to serve the renderer rather
+ * than just the one function.
+ */
+const int CornerOffsetX[4][4] = {
+    { -2, -1,  0, -1 },
+    { -1,  0,  1,  0 },
+    {  0,  1,  2,  1 },
+    { -1,  0,  1,  0 },
+};
+const int CornerOffsetY[4][4] = {
+    {  0, -1,  0,  1 },
+    { -1, -2, -1,  0 },
+    {  0, -1,  0,  1 },
+    {  1,  0,  1,  2 },
+};
+
 extern int *MapLongitudeBounds; // x
 extern int *MapLatitudeBounds; // y
 extern uint32_t *MapRandSeed;
@@ -296,6 +323,7 @@ DLLEXPORT void __cdecl alt_set_both(uint32_t x, uint32_t y, uint32_t altitude_na
 DLLEXPORT int __cdecl alt_at(uint32_t x, uint32_t y);
 DLLEXPORT int __cdecl altitude_at(uint32_t x, uint32_t y);
 DLLEXPORT int __cdecl alt_detail_at(uint32_t x, uint32_t y);
+DLLEXPORT int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point);
 DLLEXPORT void __cdecl alt_put_detail(uint32_t x, uint32_t y, uint8_t detail);
 DLLEXPORT uint32_t __cdecl owner_at(uint32_t x, uint32_t y);
 DLLEXPORT void __cdecl owner_set(uint32_t x, uint32_t y, int faction_id);

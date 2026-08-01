@@ -582,7 +582,6 @@ P3,2121,0x0045F950,_WinMain@16,459,1,11,unrecovered,,,2,exact,exact,"int (__stdc
 P3,2121,0x0045FB20,?menu_init@MainMenu@@QAEHXZ,4784,1,11,unrecovered,,,2,exact,exact,int (__thiscall ?menu_init@MainMenu@@QAEHXZ)(MainMenu* this)
 P2,16721,0x00460DD0,?check@MainMenu@@QAEXH@Z,4782,15,17,unrecovered,,,2,exact,exact,"void (__thiscall ?check@MainMenu@@QAEXH@Z)(MainMenu* this, int vehID)"
 P3,10,0x004620C0,sub_4620c0,196,0,0,unrecovered,,,1,missing,exact,
-P3,1020,0x00462190,?alt_get_ocean_detail@@YAHHHHH@Z,1289,1,0,unrecovered,,,2,exact,exact,
 P0,1007621,0x004626E0,??0MapWin@@QAE@H@Z,584,7,6,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, BOOL)"
 P2,12121,0x00462870,?clear@MapWin@@QAEXH@Z,233,12,1,unrecovered,,,2,exact,exact,"void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)"
 P3,3121,0x00462980,?calculate_dimensions@MapWin@@QAEXXZ,1402,3,1,unrecovered,,,2,exact,exact,void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)

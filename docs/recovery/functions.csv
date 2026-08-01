@@ -1596,7 +1596,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00462080,0x00462098,24,.text,??__Eg_MAPWIN@@YAXXZ,,0x00462080-0x00462098,game,sp_ready;purged_ok,src/init_thunks.cpp:3898,Complete,,,source_complete,,,,2,0
 0x004620A0,0x004620B4,20,.text,??__Fg_MAPWIN@@YAXXZ,,0x004620A0-0x004620B4,game,hidden;sp_ready;purged_ok,src/guarded_teardowns.cpp:117,Complete,,,source_complete,,,,1,0
 0x004620C0,0x00462184,196,.text,sub_4620c0,,0x004620C0-0x00462184,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x00462190,0x00462699,1289,.text,?alt_get_ocean_detail@@YAHHHHH@Z,,0x00462190-0x00462699,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
+0x00462190,0x00462699,1289,.text,?alt_get_ocean_detail@@YAHHHHH@Z,,0x00462190-0x00462699,game,frame;sp_ready;purged_ok,src/map.cpp:3276,Complete,?alt_get_ocean_detail@@YAHHHHH@Z,,source_complete,,,,0,1
 0x004626E0,0x00462868,584,.text,??0MapWin@@QAE@H@Z,"void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, BOOL)",0x004626E0-0x00462868;0x00655860-0x00655920,game,frame;sp_ready;purged_ok,,,,MapWinCtorTarget,original_dependency,,,,6,7
 0x00462870,0x00462959,233,.text,?clear@MapWin@@QAEXH@Z,"void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)",0x00462870-0x00462959,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,12
 0x00462960,0x0046296C,12,.text,?UNK1@MapWin@@QAEHXZ,int (__thiscall ?UNK1@MapWin@@QAEHXZ)(MapWin* this),0x00462960-0x0046296C,game,hidden;sp_ready;purged_ok,src/mapwin.cpp:294,Complete,,,source_complete,,,,0,0

@@ -1006,6 +1006,7 @@ address,name,shape
 0x0045F940,??__Fg_JACKAL_FONT@@YAXXZ,seam_forwarding
 0x00462080,??__Eg_MAPWIN@@YAXXZ,seam_forwarding
 0x004620A0,??__Fg_MAPWIN@@YAXXZ,straight_line
+0x00462190,?alt_get_ocean_detail@@YAHHHHH@Z,loop
 0x00462960,?UNK1@MapWin@@QAEHXZ,straight_line
 0x00462970,?UNK2@MapWin@@QAEHXZ,straight_line
 0x00467960,?UNK3@MapWin@@QAEXXZ,straight_line
