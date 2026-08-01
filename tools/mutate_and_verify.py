@@ -365,6 +365,68 @@ def declares_name_used_later(lines: list[str], index: int, end: int) -> bool:
     return any(pattern.search(lines[later]) for later in range(index + 1, end))
 
 
+OBJECT_RE_TEMPLATE = r"CMakeFiles/([A-Za-z0-9_.-]+)\.dir/[^ :|]*{name}\.obj"
+LINKED_EXE_RE = re.compile(r"^build ([A-Za-z0-9_.-]+)\.exe\s*:", re.MULTILINE)
+
+
+def targets_compiling(build_dir: Path, source: str) -> list[str]:
+    """Test executables whose object list contains this source file.
+
+    Ninja names every object `CMakeFiles/<target>.dir/<path>.obj`, so which
+    binaries compile a file is a fact in build.ninja rather than something the
+    caller should have to remember. Only targets that link an `.exe` are
+    returned - the DLL compiles most of these sources too and is not a thing to
+    run a mutation sweep against.
+    """
+    manifest = Path(build_dir) / "build.ninja"
+    if not manifest.is_file():
+        return []
+    text = manifest.read_text(encoding="utf-8", errors="replace")
+    pattern = re.compile(
+        OBJECT_RE_TEMPLATE.format(name=re.escape(Path(source).name)))
+    compiling = {match.group(1) for match in pattern.finditer(text)}
+    executables = {match.group(1) for match in LINKED_EXE_RE.finditer(text)}
+    return sorted(compiling & executables)
+
+
+def resolve_target(args) -> str | None:
+    """Fill in --target/--test from the source, or explain why it cannot.
+
+    Returns an error string, or None on success. The failure this replaces was
+    silent in the way that matters: with the wrong target the build succeeds,
+    the test executable is never relinked, and every mutant is classified
+    STALE - a tally printed over a sweep that measured nothing.
+    """
+    candidates = targets_compiling(args.build_dir, args.source)
+    if args.target is None:
+        if not candidates:
+            return (f"nothing in {args.build_dir}/build.ninja compiles "
+                    f"{args.source} into a test executable. Configure the "
+                    f"preset first, or pass --target/--test explicitly if this "
+                    f"source really is built somewhere else.")
+        if len(candidates) > 1:
+            return (f"{args.source} is compiled into more than one test "
+                    f"executable: {', '.join(candidates)}. Pass --target and "
+                    f"--test to choose; sweeping the wrong one measures the "
+                    f"wrong binary.")
+        args.target = candidates[0]
+        if args.test is None:
+            args.test = candidates[0]
+        print(f"target: {args.target} (derived - it is the test executable "
+              f"that compiles {args.source})")
+        return None
+    # Explicit. Contradicting the build graph is the error the default made.
+    if candidates and args.target not in candidates:
+        return (f"--target {args.target} does not compile {args.source}; "
+                f"{' or '.join(candidates)} does. Sweeping {args.target} "
+                f"rebuilds a binary this source is not part of, so every "
+                f"mutant would be reported STALE and nothing would be "
+                f"measured.")
+    if args.test is None:
+        args.test = args.target
+    return None
+
+
 def code_extent(line: str) -> int:
     """Index at which the compiled part of `line` ends, before any comment.
 
@@ -636,8 +698,13 @@ def main() -> int:
                              "and its own --build-dir: this script mutates the "
                              "source in place, so shards sharing a tree would "
                              "overwrite each other. See the module docstring.")
-    parser.add_argument("--target", default="recovery-leaf-tests")
-    parser.add_argument("--test", default="recovery-leaf-tests")
+    # No default. The old one was `recovery-leaf-tests`, which does not compile
+    # src/veh.cpp, src/base.cpp, src/map.cpp, src/general.cpp, src/faction.cpp
+    # or src/terraforming.cpp - so a sweep of any of those returned STALE for
+    # every mutant and measured nothing, while printing a tally. Both are
+    # derived from the source file below; pass them only to override.
+    parser.add_argument("--target", default=None)
+    parser.add_argument("--test", default=None)
     parser.add_argument("--address", action="append", default=[],
                         help="restrict to these Original Offset values (repeatable)")
     parser.add_argument("--operator", action="append", default=[],
@@ -658,6 +725,13 @@ def main() -> int:
     source = Path(args.source).resolve()
     if not source.is_file():
         print(f"error: {source} is not a file", file=sys.stderr)
+        return 2
+
+    # Before anything is built, because the alternative is a full sweep that
+    # reports STALE for every mutant and proves nothing.
+    problem = resolve_target(args)
+    if problem:
+        print(f"error: {problem}", file=sys.stderr)
         return 2
 
     original = source.read_text()
