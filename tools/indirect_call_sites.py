@@ -26,7 +26,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from generator_support import parse_body_ranges  # noqa: E402
+from generator_support import parse_body_ranges, read_bytes  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -37,18 +37,22 @@ RESOLVED = {"source_complete", "external_library", "thunk"}
 
 
 def load_image(exe_path):
+    """The image and a body reader, both from the shared implementation.
+
+    This used to carry its own section walk, bounded by Misc_VirtualSize alone.
+    That is a TIGHTER bound than generator_support.read_bytes uses - it stops at
+    the virtual size where a section's raw data can extend past it - and it
+    silently returned b"" for 14,063 bytes across six sections. No catalogued
+    body lives there, so nothing was wrong today; it was one more copy of a read
+    that exists in eight places with three incompatible semantics, and this is
+    the one place the difference was pure loss.
+    """
     import capstone
     import pefile
     image = pefile.PE(str(exe_path))
-    base = image.OPTIONAL_HEADER.ImageBase
 
     def body(start, end):
-        for section in image.sections:
-            begin = base + section.VirtualAddress
-            if begin <= start < begin + section.Misc_VirtualSize:
-                offset = start - begin
-                return section.get_data()[offset:offset + (end - start)]
-        return b""
+        return read_bytes(image, start, end - start)
 
     return body, capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 

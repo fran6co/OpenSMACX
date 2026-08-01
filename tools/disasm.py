@@ -25,7 +25,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import pefile  # noqa: E402
+import pefile
+
+from generator_support import read_bytes  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -63,15 +65,26 @@ def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int |
 
 
 def read_range(pe: pefile.PE, start: int, length: int) -> bytes:
-    base = pe.OPTIONAL_HEADER.ImageBase
-    rva = start - base
-    for section in pe.sections:
-        begin = section.VirtualAddress
-        end = begin + max(section.Misc_VirtualSize, section.SizeOfRawData)
-        if begin <= rva < end:
-            offset = section.PointerToRawData + (rva - begin)
-            return pe.__data__[offset:offset + length]
-    raise ValueError(f"0x{start:08X} is outside every section")
+    """Bytes at a virtual address, raising rather than inventing them.
+
+    The shared reader does the section walk. The local copy this replaces was
+    UNCLAMPED: it computed a file offset and sliced `length` bytes without
+    checking the read stayed inside the section's raw data, so a read starting
+    near a section end - or anywhere in the 3.25 MB of .data that has no bytes
+    on disk - returned whatever followed in the file. This tool is the project's
+    ground truth for arity, so silently decoding .rsrc content as a function
+    body is the worst place in the tree for that.
+
+    The raise is kept and now covers the uninitialised case too: read_bytes
+    returns b"" both for an address outside every section and for one inside a
+    section but past its raw data, and neither is something to disassemble.
+    """
+    data = read_bytes(pe, start, length)
+    if not data:
+        raise ValueError(
+            f"0x{start:08X} is outside every section, or inside one that has "
+            f"no bytes on disk there")
+    return data
 
 
 def annotate(mnemonic: str, operand: str,
