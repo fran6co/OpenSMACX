@@ -13641,7 +13641,1449 @@ GAMEPLAY_CASE(test_can_terraform_scoring);
 #undef CT_GUARDS
 #undef CTCHECK
 
+/*
+ * repair_phase (0x00526030).
+ *
+ * The turn-start pass that resets per-unit state, heals damaged units and
+ * redraws the tiles they stand on. Everything it reaches is a pointer global,
+ * so the whole world is rebindable and no fixed address is ever touched.
+ *
+ * FIVE THINGS ABOUT THIS FIXTURE ARE LOAD-BEARING.
+ *
+ *  - draw_tile is a RECORDING STAND-IN defined at the bottom of this file,
+ *    not the real body from src/mapwin.cpp. Linking mapwin.cpp here would drag
+ *    the MapWin/Console object graph into this target for a function whose own
+ *    slot walk is already covered by recovery-leaf-tests. The stand-in is what
+ *    makes the second pass observable at all: without it the only evidence
+ *    that pass runs is that it does not crash.
+ *
+ *  - do_all_draws IS the real body from src/temp.cpp. It writes *MsgStatus and
+ *    calls do_video/check_net/do_net, so all four are seamed - MsgStatus at a
+ *    fixed address would fault, and the three function pointers still point at
+ *    the original image. Counting the three calls is how "do_all_draws ran
+ *    exactly once, at the end" is asserted.
+ *
+ *  - The MAP WINDOW starts at tiles[RP_LIVE]; everything before it is poisoned
+ *    with every terrain bit set and a base owner of 0, so an off-by-one in the
+ *    map index turns a bare tile into a sheltered, fungus-covered base tile.
+ *
+ *  - PROTOTYPE IDS ARE NOT INTERCHANGEABLE. 16, 17, 18 and 19 are the Unity
+ *    Ogres and the Fungal Tower, which the body special-cases by id, so no
+ *    other case may borrow them. RP_PROTO_PSI_CUSTOM is deliberately at 64 -
+ *    one past MaxVehProtoFactionNum - so the two `proto_id < 64` guards fail
+ *    for a prototype that is otherwise identical to RP_PROTO_PSI.
+ *
+ *  - Guard rows one past every live index (a unit, a prototype, a base and a
+ *    faction) are poisoned and asserted untouched after each group, so a
+ *    stride error in any of the four index computations is visible.
+ */
+struct RepairWorld {
+    Veh vehs[16];
+    VehPrototype protos[68];
+    RulesChassis chassis[4];
+    RulesWeapon weapons[4];
+    Map tiles[128];
+    Base bases[6];
+    BaseSecretProject projects;
+    PlayerData players_data[MaxPlayerNum + 1];
+    uint8_t factions_status[2];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    int veh_current_count;
+    int base_current_count;
+    int turn_current;
+    int local_faction;
+    uint32_t game_state;
+    uint32_t msg_status;
+};
+
+RepairWorld g_rp_world;
+
+// draw_tile's recorder. The stand-in itself is defined after this namespace
+// closes, because game.cpp needs it at external linkage.
+struct RepairDrawCall {
+    int x;
+    int y;
+    int draw_type;
+};
+std::vector<RepairDrawCall> g_rp_draw_calls;
+
+// do_draw's three seams, counted rather than ignored so that "do_all_draws was
+// reached" is an assertion instead of an assumption.
+int g_rp_do_video_calls;
+int g_rp_check_net_calls;
+int g_rp_do_net_calls;
+
+void *rp_do_video() {
+    g_rp_do_video_calls++;
+    return NULL;
+}
+
+void *rp_check_net() {
+    g_rp_check_net_calls++;
+    return NULL;
+}
+
+void *rp_do_net() {
+    g_rp_do_net_calls++;
+    return NULL;
+}
+
+const int RP_LIVE = 64;              // the live map window starts here, 8x8 tiles
+const int RP_FACTION = 1;            // territory 0 reads as "unowned", so 1 is the floor
+const int RP_OTHER = 3;
+const int RP_X = 8;                  // the subject tile
+const int RP_Y = 4;
+const int RP_BASE_X = 2;             // the base tile
+const int RP_BASE_Y = 2;
+const uint8_t RP_POISON = 0x77;
+
+const uint8_t RP_ALT_LAND = 0x80;    // ALT_BIT_1_LEVEL_ABOVE_SEA: not ocean, fungus-eligible
+const uint8_t RP_ALT_SHORE = 0x60;   // ALT_BIT_SHORE_LINE: the exact edge of "is ocean"
+const uint8_t RP_ALT_SHELF = 0x40;   // ALT_BIT_OCEAN_SHELF: ocean, still fungus-eligible
+const uint8_t RP_ALT_DEEP = 0x20;    // ALT_BIT_OCEAN: below the fungus-regeneration floor
+
+const uint8_t RP_CHASSIS_LAND = 0;
+const uint8_t RP_CHASSIS_SEA = 1;
+const uint8_t RP_CHASSIS_AIR = 2;
+const uint8_t RP_CHASSIS_ODD = 3;    // triad 7: no branch names it, so it is the default arm
+
+const uint8_t RP_WPN_CONVENTIONAL = 0;   // offense 4
+const uint8_t RP_WPN_PSI = 1;            // offense -1
+const uint8_t RP_WPN_ZERO = 2;           // offense 0, ie. not negative
+
+const int RP_PROTO_LAND = 0;
+const int RP_PROTO_SEA = 1;
+const int RP_PROTO_AIR = 2;
+const int RP_PROTO_PSI = 3;
+const int RP_PROTO_TRANSPORT = 4;
+const int RP_PROTO_REPAIR = 5;
+const int RP_PROTO_ODD_TRIAD = 6;
+const int RP_PROTO_ZERO_OFFENSE = 7;
+const int RP_PROTO_PSI_CUSTOM = 64;      // one past MaxVehProtoFactionNum
+const int RP_PROTO_GUARD = 67;
+
+const int RP_VEH_GUARD = 15;
+const int RP_BASE_GUARD = 5;
+
+Map &rp_at(int x, int y) {
+    return g_rp_world.tiles[RP_LIVE + (x >> 1) + y * 8];
+}
+
+Veh &rp_veh(int veh_id) {
+    return g_rp_world.vehs[veh_id];
+}
+
+void rp_build_project(int project_id, int base_id) {
+    (&g_rp_world.projects.human_genome_project)[project_id] = base_id;
+}
+
+void rp_give_fac(int base_id, uint32_t facility_id) {
+    int offset;
+    int mask;
+    bitmask(facility_id, &offset, &mask);
+    g_rp_world.bases[base_id].facilities_built[offset] |= (uint8_t)mask;
+}
+
+void rp_reset() {
+    std::memset(&g_rp_world, 0, sizeof(g_rp_world));
+    // -1 in every slot: no secret project is built anywhere.
+    std::memset(&g_rp_world.projects, 0xFF, sizeof(g_rp_world.projects));
+    g_rp_draw_calls.clear();
+    g_rp_do_video_calls = 0;
+    g_rp_check_net_calls = 0;
+    g_rp_do_net_calls = 0;
+
+    g_rp_world.tiles_ptr = &g_rp_world.tiles[RP_LIVE];
+    g_rp_world.longitude = 8;
+    g_rp_world.lon_bounds = 16;
+    g_rp_world.lat_bounds = 8;
+    g_rp_world.local_faction = RP_FACTION;
+    // Omniscient view keeps whose_territory off its treaty path, so the answer
+    // is the tile's own territory byte and nothing else.
+    g_rp_world.game_state = STATE_OMNISCIENT_VIEW;
+    g_rp_world.factions_status[0] = 0;   // nobody is human unless a case says so
+    g_rp_world.msg_status = RP_POISON;
+
+    for (int k = 0; k < RP_LIVE; k++) {
+        g_rp_world.tiles[k].climate = RP_ALT_LAND;
+        g_rp_world.tiles[k].bit = 0xFFFFFFFF;
+        g_rp_world.tiles[k].val2 = 0;            // a base owned by faction 0
+        g_rp_world.tiles[k].territory = (int8_t)RP_FACTION;
+    }
+    for (int k = RP_LIVE; k < 128; k++) {
+        Map &tile = g_rp_world.tiles[k];
+        tile.climate = RP_ALT_LAND;
+        tile.bit = 0;
+        tile.val2 = 0x0F;                        // 15: no owner
+        tile.territory = -1;                     // unclaimed
+    }
+
+    g_rp_world.chassis[RP_CHASSIS_LAND].triad = TRIAD_LAND;
+    g_rp_world.chassis[RP_CHASSIS_SEA].triad = TRIAD_SEA;
+    g_rp_world.chassis[RP_CHASSIS_AIR].triad = TRIAD_AIR;
+    g_rp_world.chassis[RP_CHASSIS_ODD].triad = 7;
+
+    g_rp_world.weapons[RP_WPN_CONVENTIONAL].offense_rating = 4;
+    g_rp_world.weapons[RP_WPN_PSI].offense_rating = -1;
+    g_rp_world.weapons[RP_WPN_ZERO].offense_rating = 0;
+    g_rp_world.weapons[3].offense_rating = 0x7F;
+
+    for (int i = 0; i < RP_PROTO_GUARD; i++) {
+        g_rp_world.protos[i].chassis_id = RP_CHASSIS_LAND;
+        g_rp_world.protos[i].weapon_id = RP_WPN_CONVENTIONAL;
+        g_rp_world.protos[i].reactor_id = 1;
+    }
+    g_rp_world.protos[RP_PROTO_SEA].chassis_id = RP_CHASSIS_SEA;
+    g_rp_world.protos[RP_PROTO_AIR].chassis_id = RP_CHASSIS_AIR;
+    g_rp_world.protos[RP_PROTO_PSI].weapon_id = RP_WPN_PSI;
+    g_rp_world.protos[RP_PROTO_PSI_CUSTOM].weapon_id = RP_WPN_PSI;
+    g_rp_world.protos[RP_PROTO_TRANSPORT].carry_capacity = 4;
+    g_rp_world.protos[RP_PROTO_REPAIR].ability_flags = ABL_REPAIR;
+    g_rp_world.protos[RP_PROTO_ODD_TRIAD].chassis_id = RP_CHASSIS_ODD;
+    g_rp_world.protos[RP_PROTO_ZERO_OFFENSE].weapon_id = RP_WPN_ZERO;
+
+    // Guard rows, one past every live index.
+    g_rp_world.protos[RP_PROTO_GUARD].reactor_id = RP_POISON;
+    g_rp_world.protos[RP_PROTO_GUARD].chassis_id = RP_CHASSIS_ODD;
+    g_rp_world.players_data[MaxPlayerNum].sat_odp_deployed = 0x7777;
+    g_rp_world.bases[RP_BASE_GUARD].state = 0xFFFFFFFF;
+    g_rp_world.bases[RP_BASE_GUARD].x = (int16_t)RP_X;
+    g_rp_world.bases[RP_BASE_GUARD].y = (int16_t)RP_Y;
+    std::memset(g_rp_world.bases[RP_BASE_GUARD].facilities_built, 0xFF,
+                sizeof(g_rp_world.bases[RP_BASE_GUARD].facilities_built));
+
+    for (int i = 0; i < 16; i++) {
+        Veh &veh = g_rp_world.vehs[i];
+        veh.faction_id = (uint8_t)RP_OTHER;
+        veh.proto_id = RP_PROTO_LAND;
+        veh.next_veh_id_stack = -1;
+        veh.prev_veh_id_stack = -1;
+    }
+    Veh &guard = g_rp_world.vehs[RP_VEH_GUARD];
+    guard.faction_id = (uint8_t)RP_FACTION;   // ours, and still must not be touched
+    guard.dmg_incurred = RP_POISON;
+    guard.state = 0xFFFFFFFF;
+    guard.moves_expended = RP_POISON;
+    guard.unk_6 = RP_POISON;
+}
+
+// Run one repair phase with the per-call observers cleared, so RP_GUARDS can
+// assert that the draw pump ran exactly once for THIS call rather than for the
+// whole case.
+void rp_run(int faction_id) {
+    g_rp_draw_calls.clear();
+    g_rp_do_video_calls = 0;
+    g_rp_check_net_calls = 0;
+    g_rp_do_net_calls = 0;
+    g_rp_world.msg_status = RP_POISON;
+    repair_phase(faction_id);
+}
+
+// Put one of our units on the map. Leaves it undamaged, orderless and unstacked.
+void rp_place(int veh_id, int proto_id, int x, int y) {
+    Veh &veh = g_rp_world.vehs[veh_id];
+    veh.faction_id = (uint8_t)RP_FACTION;
+    veh.proto_id = (int16_t)proto_id;
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    veh.state = 0;
+    veh.flags = 0;
+    veh.order = ORDER_NONE;
+    veh.dmg_incurred = 0;
+    veh.visibility = 0;
+    veh.next_veh_id_stack = -1;
+    veh.prev_veh_id_stack = -1;
+    if (g_rp_world.veh_current_count <= veh_id) {
+        g_rp_world.veh_current_count = veh_id + 1;
+    }
+}
+
+void rp_make_base(int base_id, int x, int y, int faction_id) {
+    Base &base = g_rp_world.bases[base_id];
+    base.x = (int16_t)x;
+    base.y = (int16_t)y;
+    base.faction_id_current = (uint8_t)faction_id;
+    base.state = 0;
+    Map &tile = rp_at(x, y);
+    tile.bit |= BIT_BASE_IN_TILE;
+    tile.val2 = (uint8_t)((tile.val2 & 0xF0) | (faction_id & 0xF));
+    if (g_rp_world.base_current_count <= base_id) {
+        g_rp_world.base_current_count = base_id + 1;
+    }
+}
+
+class RepairSeams {
+ public:
+    RepairSeams()
+        : vehs_(&Vehs, g_rp_world.vehs),
+          protos_(&VehPrototypes, g_rp_world.protos),
+          chassis_(&Chassis, g_rp_world.chassis),
+          weapons_(&Weapon, g_rp_world.weapons),
+          tiles_(&MapTiles, &g_rp_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_rp_world.longitude),
+          lon_(&MapLongitudeBounds, &g_rp_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_rp_world.lat_bounds),
+          bases_(&Bases, g_rp_world.bases),
+          base_count_(&BaseCurrentCount, &g_rp_world.base_current_count),
+          projects_(&SecretProject, &g_rp_world.projects),
+          players_data_(&PlayersData, g_rp_world.players_data),
+          status_(&FactionsStatus, g_rp_world.factions_status),
+          veh_count_(&VehCurrentCount, &g_rp_world.veh_current_count),
+          turn_(&TurnCurrentNum, &g_rp_world.turn_current),
+          local_(&LocalFaction, &g_rp_world.local_faction),
+          state_(&GameState, &g_rp_world.game_state),
+          msg_(&MsgStatus, &g_rp_world.msg_status),
+          video_(&do_video, rp_do_video),
+          net_check_(&check_net, rp_check_net),
+          net_(&do_net, rp_do_net) { }
+
+ private:
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<RulesChassis> chassis_;
+    ScopedSeam<RulesWeapon> weapons_;
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<BaseSecretProject> projects_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<uint8_t> status_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<int> turn_;
+    ScopedSeam<int> local_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<uint32_t> msg_;
+    ScopedSeam<func_msg> video_;
+    ScopedSeam<func_msg> net_check_;
+    ScopedSeam<func_msg> net_;
+};
+
+#define RPCHECK(cond)                                                         \
+    do {                                                                      \
+        const bool rp_ok = (cond);                                            \
+        if (!rp_ok) {                                                         \
+            std::fprintf(stderr, "repair_phase: line %d: %s\n", __LINE__,     \
+                         #cond);                                              \
+        }                                                                     \
+        expect(rp_ok);                                                        \
+    } while (0)
+
+// The four guard rows, plus the two facts that hold for every call: the draw
+// pump always runs to completion, and it runs exactly once.
+#define RP_GUARDS()                                                                       \
+    do {                                                                                  \
+        RPCHECK(g_rp_world.players_data[MaxPlayerNum].sat_odp_deployed == 0x7777u);       \
+        RPCHECK(g_rp_world.protos[RP_PROTO_GUARD].reactor_id == RP_POISON);               \
+        RPCHECK(g_rp_world.bases[RP_BASE_GUARD].state == 0xFFFFFFFFu);                    \
+        RPCHECK(g_rp_world.vehs[RP_VEH_GUARD].dmg_incurred == RP_POISON);                 \
+        RPCHECK(g_rp_world.vehs[RP_VEH_GUARD].state == 0xFFFFFFFFu);                      \
+        RPCHECK(g_rp_world.vehs[RP_VEH_GUARD].moves_expended == RP_POISON);               \
+        RPCHECK(g_rp_world.msg_status == 0);                                              \
+        RPCHECK(g_rp_do_video_calls == 1);                                                \
+        RPCHECK(g_rp_check_net_calls == 1);                                               \
+        RPCHECK(g_rp_do_net_calls == 1);                                                  \
+    } while (0)
+
+void test_repair_phase_turn_reset() {
+    RepairSeams seams;
+
+    // ---- the ODP counter, and only this faction's --------------------------
+    rp_reset();
+    g_rp_world.players_data[0].sat_odp_deployed = 6;
+    g_rp_world.players_data[RP_FACTION].sat_odp_deployed = 5;
+    g_rp_world.players_data[RP_OTHER].sat_odp_deployed = 7;
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_world.players_data[RP_FACTION].sat_odp_deployed == 0);
+    RPCHECK(g_rp_world.players_data[0].sat_odp_deployed == 6);
+    RPCHECK(g_rp_world.players_data[RP_OTHER].sat_odp_deployed == 7);
+    RP_GUARDS();
+
+    // A different faction id lands on a different row, which is the only check
+    // the 8396-byte stride gets.
+    rp_reset();
+    g_rp_world.players_data[RP_FACTION].sat_odp_deployed = 5;
+    g_rp_world.players_data[RP_OTHER].sat_odp_deployed = 7;
+    rp_run(RP_OTHER);
+    RPCHECK(g_rp_world.players_data[RP_OTHER].sat_odp_deployed == 0);
+    RPCHECK(g_rp_world.players_data[RP_FACTION].sat_odp_deployed == 5);
+    RP_GUARDS();
+
+    // ---- the unconditional per-unit resets, and the faction filter ---------
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(1).faction_id = (uint8_t)RP_OTHER;
+    for (int i = 0; i < 2; i++) {
+        rp_veh(i).unk_6 = 9;
+        rp_veh(i).moves_expended = 9;
+        rp_veh(i).state = 0xFFFFFFFF;
+        rp_veh(i).flags = 0xFFFF;
+    }
+    g_rp_world.turn_current = 1;   // (1 + 0) & 3 != 0, so no ageing this turn
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).unk_6 == 0);
+    RPCHECK(rp_veh(0).moves_expended == 0);
+    // Exactly three state bits go, and no others.
+    RPCHECK(rp_veh(0).state == (0xFFFFFFFFu
+                                & ~(uint32_t)(VSTATE_UNK_2 | VSTATE_UNK_2000 | VSTATE_CRAWLING)));
+    RPCHECK(rp_veh(0).flags == (uint16_t)(0xFFFF & ~VFLAG_UNK_1000));
+    // The other faction's unit is not touched at all.
+    RPCHECK(rp_veh(1).unk_6 == 9);
+    RPCHECK(rp_veh(1).moves_expended == 9);
+    RPCHECK(rp_veh(1).state == 0xFFFFFFFFu);
+    RPCHECK(rp_veh(1).flags == 0xFFFF);
+    RP_GUARDS();
+
+    // ---- one unit in four ages, chosen by (turn + unit id) -----------------
+    for (int turn = 0; turn < 4; turn++) {
+        rp_reset();
+        for (int i = 0; i < 4; i++) {
+            rp_place(i, RP_PROTO_LAND, RP_X, RP_Y);
+            rp_veh(i).state = VSTATE_UNK_800;
+        }
+        g_rp_world.turn_current = turn;
+        rp_run(RP_FACTION);
+        for (int i = 0; i < 4; i++) {
+            const bool aged = ((turn + i) & 3) == 0;
+            RPCHECK(rp_veh(i).state == (aged ? 0u : (uint32_t)VSTATE_UNK_800));
+        }
+        RP_GUARDS();
+    }
+
+    // A negative turn counter still selects by the low two bits rather than by
+    // sign: -1 + 1 is 0.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).state = VSTATE_UNK_800;
+    rp_veh(1).state = VSTATE_UNK_800;
+    g_rp_world.turn_current = -1;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).state == (uint32_t)VSTATE_UNK_800);
+    RPCHECK(rp_veh(1).state == 0);
+    RP_GUARDS();
+
+    // ---- the two-step flag countdown ---------------------------------------
+    // Bit 2 first, bit 1 only once bit 2 is already clear, and nothing else in
+    // the word moves.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).flags = (uint16_t)(VFLAG_UNK_1 | VFLAG_UNK_2 | VFLAG_LURKER);
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).flags == (uint16_t)(VFLAG_UNK_1 | VFLAG_LURKER));
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).flags == (uint16_t)VFLAG_LURKER);
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).flags == (uint16_t)VFLAG_LURKER);
+    RP_GUARDS();
+
+    // Bit 2 alone: bit 1 stays clear rather than being set.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).flags = (uint16_t)VFLAG_UNK_2;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).flags == 0);
+    RP_GUARDS();
+
+    // Bit 1 alone goes on the first ageing turn, because bit 2 is already down.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).flags = (uint16_t)VFLAG_UNK_1;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).flags == 0);
+    RP_GUARDS();
+
+    // The 0x1000 clear happens every turn, not only on the ageing one, and it
+    // happens before the countdown reads the word.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).flags = (uint16_t)(VFLAG_UNK_1000 | VFLAG_UNK_2);
+    g_rp_world.turn_current = 1;   // not an ageing turn for unit 0
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).flags == (uint16_t)VFLAG_UNK_2);
+    RP_GUARDS();
+
+    // ---- the Hold / Sentry countdown ---------------------------------------
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(2, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(3, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).order = ORDER_SENTRY_BOARD;
+    rp_veh(0).waypoint_y[0] = 2;
+    rp_veh(1).order = ORDER_HOLD;
+    rp_veh(1).waypoint_y[0] = 1;
+    rp_veh(2).order = ORDER_CONVOY;      // any other order is left alone
+    rp_veh(2).waypoint_y[0] = 5;
+    rp_veh(3).order = ORDER_HOLD;
+    rp_veh(3).waypoint_y[0] = 0;         // plain Hold never expires
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).waypoint_y[0] == 1);
+    RPCHECK(rp_veh(0).order == ORDER_SENTRY_BOARD);
+    RPCHECK(rp_veh(1).waypoint_y[0] == 0);
+    RPCHECK(rp_veh(1).order == ORDER_NONE);
+    RPCHECK(rp_veh(2).waypoint_y[0] == 5);
+    RPCHECK(rp_veh(2).order == ORDER_CONVOY);
+    RPCHECK(rp_veh(3).waypoint_y[0] == 0);
+    RPCHECK(rp_veh(3).order == ORDER_HOLD);
+    // The countdown is on the first waypoint's y, not its x.
+    RPCHECK(rp_veh(0).waypoint_x[0] == 0);
+    RP_GUARDS();
+
+    // A negative countdown is decremented too - the test is against zero, not
+    // against a sign - so it walks away from expiry rather than towards it.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).order = ORDER_HOLD;
+    rp_veh(0).waypoint_y[0] = -1;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).waypoint_y[0] == -2);
+    RPCHECK(rp_veh(0).order == ORDER_HOLD);
+    RP_GUARDS();
+
+    // ---- the loop bound ----------------------------------------------------
+    // Unit 1 is ours and on the map, but past the count, so nothing reaches it.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).moves_expended = 9;
+    rp_veh(1).moves_expended = 9;
+    g_rp_world.veh_current_count = 1;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).moves_expended == 0);
+    RPCHECK(rp_veh(1).moves_expended == 9);
+    RPCHECK(g_rp_draw_calls.size() == 1);
+    RP_GUARDS();
+
+    // A zero count runs neither pass but still pumps the draws.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).moves_expended = 9;
+    g_rp_world.veh_current_count = 0;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).moves_expended == 9);
+    RPCHECK(g_rp_draw_calls.empty());
+    RP_GUARDS();
+}
+GAMEPLAY_CASE(test_repair_phase_turn_reset);
+
+void test_repair_phase_shelter() {
+    RepairSeams seams;
+
+    // Every case here leaves the unit undamaged, so the body stops at the
+    // damage test and the shelter decision is the only thing observed.
+    struct Shelter {
+        int proto_id;
+        uint32_t tile_bit;
+        uint8_t owner;
+        bool cleared;
+        const char *why;
+    };
+    const Shelter cases[] = {
+        { RP_PROTO_LAND, 0,               0x0F, false, "bare land tile" },
+        { RP_PROTO_LAND, BIT_BASE_IN_TILE, 3,   true,  "somebody's base" },
+        { RP_PROTO_LAND, BIT_BASE_IN_TILE, 0,   true,  "faction 0's base" },
+        { RP_PROTO_LAND, BIT_BASE_IN_TILE, 7,   true,  "the last valid owner" },
+        { RP_PROTO_LAND, BIT_BASE_IN_TILE, 8,   false, "owner 8 is out of range" },
+        { RP_PROTO_LAND, BIT_BASE_IN_TILE, 0x0F, false, "the unowned nibble" },
+        { RP_PROTO_LAND, BIT_BUNKER,      0x0F, true,  "a land unit in a bunker" },
+        { RP_PROTO_SEA,  BIT_BUNKER,      0x0F, false, "a sea unit in a bunker" },
+        { RP_PROTO_AIR,  BIT_BUNKER,      0x0F, false, "an air unit in a bunker" },
+        { RP_PROTO_AIR,  BIT_AIRBASE,     0x0F, true,  "an air unit on an airbase" },
+        { RP_PROTO_LAND, BIT_AIRBASE,     0x0F, false, "a land unit on an airbase" },
+        { RP_PROTO_SEA,  BIT_AIRBASE,     0x0F, false, "a sea unit on an airbase" },
+        { RP_PROTO_ODD_TRIAD, BIT_BUNKER, 0x0F, false, "triad 7 shelters nowhere" },
+        { RP_PROTO_ODD_TRIAD, BIT_AIRBASE, 0x0F, false, "triad 7 shelters nowhere" },
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        rp_reset();
+        rp_place(0, cases[i].proto_id, RP_X, RP_Y);
+        rp_veh(0).state = VSTATE_UNK_8 | VSTATE_UNK_10000;
+        rp_at(RP_X, RP_Y).bit = cases[i].tile_bit;
+        rp_at(RP_X, RP_Y).val2 = cases[i].owner;
+        rp_run(RP_FACTION);
+        const uint32_t expected = cases[i].cleared
+            ? (uint32_t)VSTATE_UNK_10000
+            : (uint32_t)(VSTATE_UNK_8 | VSTATE_UNK_10000);
+        if (rp_veh(0).state != expected) {
+            std::fprintf(stderr, "repair_phase shelter: %s\n", cases[i].why);
+        }
+        RPCHECK(rp_veh(0).state == expected);
+        RP_GUARDS();
+    }
+
+    // Without the bit there is no shelter decision to make, and a bunker tile
+    // does not set it.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).state = VSTATE_UNK_10000;
+    rp_at(RP_X, RP_Y).bit = BIT_BUNKER;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).state == (uint32_t)VSTATE_UNK_10000);
+    RP_GUARDS();
+
+    // The tile read is the unit's own, not tile zero: the same unit one tile
+    // away from the bunker is not sheltered.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).state = VSTATE_UNK_8;
+    rp_at(RP_X, RP_Y + 1).bit = BIT_BUNKER;
+    rp_at(RP_X + 2, RP_Y).bit = BIT_BUNKER;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).state == (uint32_t)VSTATE_UNK_8);
+    rp_at(RP_X, RP_Y).bit = BIT_BUNKER;
+    rp_veh(0).state = VSTATE_UNK_8;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).state == 0);
+    RP_GUARDS();
+}
+GAMEPLAY_CASE(test_repair_phase_shelter);
+
+void test_repair_phase_skips() {
+    RepairSeams seams;
+
+    // ---- the three Unity Ogres never repair --------------------------------
+    for (int proto_id = BSC_BATTLE_OGRE_MK1; proto_id <= BSC_BATTLE_OGRE_MK3; proto_id++) {
+        rp_reset();
+        rp_place(0, proto_id, RP_X, RP_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_veh(0).moves_expended = 9;
+        rp_run(RP_FACTION);
+        RPCHECK(rp_veh(0).dmg_incurred == 100);
+        RPCHECK(rp_veh(0).moves_expended == 0);   // the resets above still ran
+        RP_GUARDS();
+    }
+
+    // The prototype either side of the Ogre block does repair, so the three
+    // comparisons are bounded rather than a range.
+    for (int proto_id = 15; proto_id <= 20; proto_id++) {
+        if (proto_id == BSC_FUNGAL_TOWER) {
+            continue;   // covered separately below
+        }
+        rp_reset();
+        rp_place(0, proto_id, RP_X, RP_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_run(RP_FACTION);
+        const bool is_ogre = proto_id >= BSC_BATTLE_OGRE_MK1 && proto_id <= BSC_BATTLE_OGRE_MK3;
+        RPCHECK(rp_veh(0).dmg_incurred == (is_ogre ? 100 : 99));
+        RP_GUARDS();
+    }
+
+    // ---- VSTATE_UNK_4 blocks repair, except for a Fungal Tower -------------
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_veh(0).state = VSTATE_UNK_4;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 100);
+    RP_GUARDS();
+
+    rp_reset();
+    rp_place(0, BSC_FUNGAL_TOWER, RP_X, RP_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_veh(0).state = VSTATE_UNK_4;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // ---- an undamaged unit stops before the rate is ever computed ----------
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).dmg_incurred = 0;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 0);
+    RP_GUARDS();
+
+    // ---- the Fungal Tower loses its owner ----------------------------------
+    // It also skips the whole rate section, so a tower on its own fungus in its
+    // own territory still repairs at rate 1 rather than at 2 + 1.
+    rp_reset();
+    rp_place(0, BSC_FUNGAL_TOWER, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_PSI, RP_X, RP_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_veh(1).dmg_incurred = 100;
+    rp_at(RP_X, RP_Y).bit = BIT_FUNGUS;
+    rp_at(RP_X, RP_Y).territory = (int8_t)RP_FACTION;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).faction_id == 0);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);    // rate 1
+    RPCHECK(rp_veh(1).faction_id == (uint8_t)RP_FACTION);
+    RPCHECK(rp_veh(1).dmg_incurred == 97);    // rate 2 in fungus, +1 for territory
+    // The tower is retired before the redraw pass filters on the faction byte,
+    // so only the native-life unit is drawn. See the bug note on the recovery.
+    RPCHECK(g_rp_draw_calls.size() == 1);
+    RP_GUARDS();
+}
+GAMEPLAY_CASE(test_repair_phase_skips);
+
+void test_repair_phase_rate() {
+    RepairSeams seams;
+
+    // Every case in this group is a unit in the open with reactor 1 and 100
+    // damage, so the damage removed IS the repair rate.
+    struct Rate {
+        int proto_id;
+        uint32_t tile_bit;
+        uint8_t climate;
+        int territory;
+        int removed;
+        const char *why;
+    };
+    const Rate cases[] = {
+        { RP_PROTO_LAND, 0,           RP_ALT_LAND,  -1, 1, "bare tile" },
+        { RP_PROTO_LAND, 0,           RP_ALT_LAND,   1, 2, "own territory" },
+        { RP_PROTO_LAND, 0,           RP_ALT_LAND,   2, 1, "someone else's territory" },
+        { RP_PROTO_LAND, BIT_BUNKER,  RP_ALT_LAND,  -1, 2, "land unit in a bunker" },
+        { RP_PROTO_LAND, BIT_BUNKER,  RP_ALT_LAND,   1, 3, "bunker and territory stack" },
+        { RP_PROTO_LAND, BIT_AIRBASE, RP_ALT_LAND,  -1, 1, "land unit on an airbase" },
+        { RP_PROTO_AIR,  BIT_AIRBASE, RP_ALT_LAND,  -1, 2, "air unit on an airbase" },
+        { RP_PROTO_AIR,  BIT_BUNKER,  RP_ALT_LAND,  -1, 1, "air unit in a bunker" },
+        { RP_PROTO_SEA,  BIT_BUNKER,  RP_ALT_SHELF, -1, 1, "sea unit in a bunker" },
+        { RP_PROTO_SEA,  BIT_AIRBASE, RP_ALT_SHELF, -1, 1, "sea unit on an airbase" },
+        { RP_PROTO_PSI,  BIT_FUNGUS,  RP_ALT_LAND,  -1, 2, "native life in land fungus" },
+        { RP_PROTO_PSI,  BIT_FUNGUS,  RP_ALT_SHELF, -1, 2, "native life in shelf fungus" },
+        { RP_PROTO_PSI,  BIT_FUNGUS,  RP_ALT_DEEP,  -1, 1, "fungus too deep to regenerate" },
+        { RP_PROTO_PSI,  0,           RP_ALT_LAND,  -1, 1, "native life, no fungus" },
+        { RP_PROTO_LAND, BIT_FUNGUS,  RP_ALT_LAND,  -1, 1, "a conventional unit in fungus" },
+        { RP_PROTO_ZERO_OFFENSE, BIT_FUNGUS, RP_ALT_LAND, -1, 1, "offense 0 is not psi" },
+        { RP_PROTO_PSI_CUSTOM, BIT_FUNGUS, RP_ALT_LAND, -1, 1, "prototype 64 is not predefined" },
+        { RP_PROTO_PSI,  BIT_FUNGUS,  RP_ALT_LAND,   1, 3, "the fungus rate is a floor, not a term" },
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        rp_reset();
+        rp_place(0, cases[i].proto_id, RP_X, RP_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_at(RP_X, RP_Y).bit = cases[i].tile_bit;
+        rp_at(RP_X, RP_Y).climate = cases[i].climate;
+        rp_at(RP_X, RP_Y).territory = (int8_t)cases[i].territory;
+        rp_run(RP_FACTION);
+        if (rp_veh(0).dmg_incurred != (uint8_t)(100 - cases[i].removed)) {
+            std::fprintf(stderr, "repair_phase rate: %s\n", cases[i].why);
+        }
+        RPCHECK(rp_veh(0).dmg_incurred == (uint8_t)(100 - cases[i].removed));
+        RP_GUARDS();
+    }
+
+    // Territory zero reads as unowned, so faction 0 can never claim the bonus
+    // and neither can anyone standing on it.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).faction_id = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_at(RP_X, RP_Y).territory = 0;
+    rp_run(0);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // The reactor is the multiplier on the whole rate, not an addend.
+    for (int reactor = 0; reactor <= 4; reactor++) {
+        rp_reset();
+        rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_at(RP_X, RP_Y).bit = BIT_BUNKER;
+        rp_at(RP_X, RP_Y).territory = (int8_t)RP_FACTION;    // rate 3
+        g_rp_world.protos[RP_PROTO_LAND].reactor_id = (uint8_t)reactor;
+        rp_run(RP_FACTION);
+        RPCHECK(rp_veh(0).dmg_incurred == (uint8_t)(100 - 3 * reactor));
+        RP_GUARDS();
+    }
+}
+GAMEPLAY_CASE(test_repair_phase_rate);
+
+void test_repair_phase_base() {
+    RepairSeams seams;
+
+    // A base adds one, and rioting takes it away again.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_place(0, RP_PROTO_LAND, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);   // 1 + 1
+    RP_GUARDS();
+
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    g_rp_world.bases[0].state = BSTATE_DRONE_RIOTS_ACTIVE;
+    rp_place(0, RP_PROTO_LAND, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);   // the base contributes nothing
+    RP_GUARDS();
+
+    // The base found is the one on the unit's tile, not base zero.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_make_base(1, RP_X, RP_Y, RP_FACTION);
+    rp_give_fac(1, FAC_COMMAND_CENTER);
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 0);
+    RP_GUARDS();
+
+    // ---- the triad's own repair facility, and its secret project -----------
+    struct Facility {
+        int proto_id;
+        uint32_t facility_id;
+        int project_id;
+        bool heals;
+        const char *why;
+    };
+    const Facility cases[] = {
+        { RP_PROTO_LAND, FAC_COMMAND_CENTER,    -1, true,  "land: Command Center" },
+        { RP_PROTO_LAND, FAC_NAVAL_YARD,        -1, false, "land: Naval Yard is the wrong one" },
+        { RP_PROTO_LAND, FAC_AEROSPACE_COMPLEX, -1, false, "land: Aerospace is the wrong one" },
+        { RP_PROTO_SEA,  FAC_NAVAL_YARD,        -1, true,  "sea: Naval Yard" },
+        { RP_PROTO_SEA,  FAC_COMMAND_CENTER,    -1, false, "sea: Command Center is wrong" },
+        { RP_PROTO_AIR,  FAC_AEROSPACE_COMPLEX, -1, true,  "air: Aerospace Complex" },
+        { RP_PROTO_AIR,  FAC_NAVAL_YARD,        -1, false, "air: Naval Yard is wrong" },
+        { RP_PROTO_ODD_TRIAD, FAC_COMMAND_CENTER, -1, true, "triad 7 falls to Command Center" },
+        { RP_PROTO_LAND, 0, SP_COMMAND_NEXUS,           true,  "land: Command Nexus" },
+        { RP_PROTO_LAND, 0, SP_MARITIME_CONTROL_CENTER, false, "land: the wrong project" },
+        { RP_PROTO_SEA,  0, SP_MARITIME_CONTROL_CENTER, true,  "sea: Maritime Control Center" },
+        { RP_PROTO_SEA,  0, SP_COMMAND_NEXUS,           false, "sea: the wrong project" },
+        { RP_PROTO_AIR,  0, SP_CLOUDBASE_ACADEMY,       true,  "air: Cloudbase Academy" },
+        { RP_PROTO_AIR,  0, SP_COMMAND_NEXUS,           false, "air: the wrong project" },
+        { RP_PROTO_ODD_TRIAD, 0, SP_COMMAND_NEXUS,      true,  "triad 7 falls to Command Nexus" },
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        rp_reset();
+        rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+        if (cases[i].facility_id) {
+            rp_give_fac(0, cases[i].facility_id);
+        }
+        if (cases[i].project_id >= 0) {
+            rp_build_project(cases[i].project_id, 0);
+        }
+        rp_place(0, cases[i].proto_id, RP_BASE_X, RP_BASE_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_run(RP_FACTION);
+        const uint8_t expected = cases[i].heals ? 0 : 98;
+        if (rp_veh(0).dmg_incurred != expected) {
+            std::fprintf(stderr, "repair_phase base: %s\n", cases[i].why);
+        }
+        RPCHECK(rp_veh(0).dmg_incurred == expected);
+        RP_GUARDS();
+    }
+
+    // The project has to be held by the unit's faction, not merely built.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_make_base(1, RP_X, RP_Y, RP_OTHER);
+    rp_build_project(SP_COMMAND_NEXUS, 1);
+    rp_place(0, RP_PROTO_LAND, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);
+    RP_GUARDS();
+
+    // ---- native life is healed by the BASE OWNER's lifecycle bonus ---------
+    // The base's own Centauri Preserve is enough on its own.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+    rp_give_fac(0, FAC_CENTAURI_PRESERVE);
+    rp_place(0, RP_PROTO_PSI, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 0);
+    RP_GUARDS();
+
+    // ...and the faction breed_mod is asked about is the BASE OWNER, not the
+    // unit's owner. Only breed_mod's has_project() terms depend on the faction
+    // at all - its facility terms are faction-blind - so a project is the only
+    // fixture that can tell the two arguments apart. Pholus Mutagen sits in a
+    // base belonging to the third faction, so the unit's own faction does not
+    // hold it, and native life of faction 1 is still healed outright.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+    rp_build_project(SP_PHOLUS_MUTAGEN, 0);
+    rp_place(0, RP_PROTO_PSI, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 0);
+    RP_GUARDS();
+
+    // The same project in a base the third faction does NOT own buys nothing,
+    // which is what makes the case above an assertion about the argument
+    // rather than about the project existing.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+    rp_make_base(1, RP_X, RP_Y, RP_FACTION);
+    rp_build_project(SP_PHOLUS_MUTAGEN, 1);
+    rp_place(0, RP_PROTO_PSI, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);
+    RP_GUARDS();
+
+    // Without the bonus the base is worth its ordinary single point, and the
+    // Command Center it does have is not consulted for native life.
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+    rp_give_fac(0, FAC_COMMAND_CENTER);
+    rp_place(0, RP_PROTO_PSI, RP_BASE_X, RP_BASE_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);
+    RP_GUARDS();
+
+    // ---- which prototypes count as native life -----------------------------
+    // A base carrying a lifecycle bonus and NO repair facility heals native
+    // life outright and nobody else, so each of the two guards is asked over a
+    // prototype differing from the native one in exactly the way it tests.
+    struct Native {
+        int proto_id;
+        bool is_native;
+        const char *why;
+    };
+    const Native natives[] = {
+        { RP_PROTO_PSI,          true,  "offense -1 and predefined" },
+        { RP_PROTO_ZERO_OFFENSE, false, "offense 0 is not negative" },
+        { RP_PROTO_LAND,         false, "offense 4 is not negative" },
+        { RP_PROTO_PSI_CUSTOM,   false, "prototype 64 is one past predefined" },
+    };
+    for (size_t i = 0; i < sizeof(natives) / sizeof(natives[0]); i++) {
+        rp_reset();
+        rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+        rp_give_fac(0, FAC_CENTAURI_PRESERVE);
+        rp_place(0, natives[i].proto_id, RP_BASE_X, RP_BASE_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_run(RP_FACTION);
+        const uint8_t expected = natives[i].is_native ? 0 : 98;
+        if (rp_veh(0).dmg_incurred != expected) {
+            std::fprintf(stderr, "repair_phase native: %s\n", natives[i].why);
+        }
+        RPCHECK(rp_veh(0).dmg_incurred == expected);
+        RP_GUARDS();
+    }
+
+    // The same four in a base with the land repair facility and no lifecycle
+    // bonus, where every answer is the other way round.
+    for (size_t i = 0; i < sizeof(natives) / sizeof(natives[0]); i++) {
+        rp_reset();
+        rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+        rp_give_fac(0, FAC_COMMAND_CENTER);
+        rp_place(0, natives[i].proto_id, RP_BASE_X, RP_BASE_Y);
+        rp_veh(0).dmg_incurred = 100;
+        rp_run(RP_FACTION);
+        RPCHECK(rp_veh(0).dmg_incurred == (natives[i].is_native ? 98 : 0));
+        RP_GUARDS();
+    }
+}
+GAMEPLAY_CASE(test_repair_phase_base);
+
+void test_repair_phase_stack_and_projects() {
+    RepairSeams seams;
+
+    // ---- a land transport with a repair unit aboard doubles the rate -------
+    // At sea, so the transport is genuinely carrying rather than escorting.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);   // rate 1, doubled
+    RP_GUARDS();
+
+    // The same stack without the ability heals at the plain rate, and the
+    // minimum-damage floor comes back with it.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // The transport does not count itself: a repair-capable transport alone in
+    // its stack gets nothing.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_TRANSPORT].ability_flags = ABL_REPAIR;
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // The walk starts at the TOP of the stack, so a repair unit above the
+    // transport is found as readily as one below it.
+    rp_reset();
+    rp_place(0, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(1).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(1).dmg_incurred == 98);
+    RP_GUARDS();
+
+    // ---- the three gates on the doubling -----------------------------------
+    // On land, and not under Sentry/Board: no doubling.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // On land, under Sentry/Board: doubling.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).order = ORDER_SENTRY_BOARD;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);
+    RP_GUARDS();
+
+    // Carrying nothing: no doubling, even at sea with a repair unit stacked.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // The sea gate is the shore line exactly: a shore-line tile is ashore, so
+    // the transport is escorting rather than carrying and nothing doubles.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHORE;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // One altitude step below it, the same stack doubles.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 98);
+    RP_GUARDS();
+
+    // A sea transport is not a land transport.
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_TRANSPORT].chassis_id = RP_CHASSIS_SEA;
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // ---- the Nano Factory heals everything, everywhere ---------------------
+    rp_reset();
+    rp_make_base(1, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_build_project(SP_NANO_FACTORY, 1);
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);      // in the open, nowhere near it
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 0);
+    RP_GUARDS();
+
+    // Held by somebody else, it does nothing - and the field floor is back.
+    rp_reset();
+    rp_make_base(1, RP_BASE_X, RP_BASE_Y, RP_OTHER);
+    rp_build_project(SP_NANO_FACTORY, 1);
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).dmg_incurred = 100;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 99);
+    RP_GUARDS();
+
+    // ---- the Xenoempathy Dome: one more reactor, and no floor --------------
+    // Reactor 2 in fungus. Without the Dome the floor is 4 and the unit stops
+    // there; with it the floor is gone and a third reactor's worth comes off.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_at(RP_X, RP_Y).bit = BIT_FUNGUS;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 4);    // range(3, 4, 999)
+    RP_GUARDS();
+
+    rp_reset();
+    rp_make_base(1, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_build_project(SP_XENOEMPATYH_DOME, 1);
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_at(RP_X, RP_Y).bit = BIT_FUNGUS;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 1);    // 5 - (2 * 1 + 2), floor 0
+    RP_GUARDS();
+
+    // The Dome only applies in fungus.
+    rp_reset();
+    rp_make_base(1, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_build_project(SP_XENOEMPATYH_DOME, 1);
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 4);
+    RP_GUARDS();
+
+    // ...and not in fungus too deep for it.
+    rp_reset();
+    rp_make_base(1, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    rp_build_project(SP_XENOEMPATYH_DOME, 1);
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_at(RP_X, RP_Y).bit = BIT_FUNGUS;
+    rp_at(RP_X, RP_Y).climate = RP_ALT_DEEP;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 4);
+    RP_GUARDS();
+}
+GAMEPLAY_CASE(test_repair_phase_stack_and_projects);
+
+void test_repair_phase_damage_math() {
+    RepairSeams seams;
+
+    // ---- the minimum damage a unit in the field keeps ----------------------
+    // Reactor 2 gives a floor of 4, and the unit walks down to it and stops.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 10;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 8);
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 6);
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 4);
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 4);
+    RP_GUARDS();
+
+    // Below the floor already: repairing must never ADD damage. Without the
+    // final `if (repaired >= damage)` this unit would come out at 4.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 3;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 3);
+    RP_GUARDS();
+
+    // The floor is lifted by each of the four exemptions in turn.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_veh(0).faction_id = 0;                    // faction 0 has no floor
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(0);
+    RPCHECK(rp_veh(0).dmg_incurred == 3);
+    RP_GUARDS();
+
+    rp_reset();
+    rp_make_base(0, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+    g_rp_world.bases[0].state = BSTATE_DRONE_RIOTS_ACTIVE;   // no base bonus, but still a base
+    rp_place(0, RP_PROTO_LAND, RP_BASE_X, RP_BASE_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 3);
+    RP_GUARDS();
+
+    rp_reset();
+    rp_place(0, RP_PROTO_TRANSPORT, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_REPAIR, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).climate = RP_ALT_SHELF;
+    rp_veh(0).next_veh_id_stack = 1;
+    rp_veh(1).prev_veh_id_stack = 0;
+    g_rp_world.protos[RP_PROTO_TRANSPORT].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 1);        // rate 2, reactor 2, no floor
+    RP_GUARDS();
+
+    rp_reset();
+    rp_place(0, RP_PROTO_PSI, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).bit = BIT_FUNGUS;
+    g_rp_world.protos[RP_PROTO_PSI].reactor_id = 2;
+    rp_veh(0).dmg_incurred = 5;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 1);        // native life in fungus keeps no floor
+    RP_GUARDS();
+
+    // Reactor 0 makes both the removal and the floor zero, so nothing moves.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.protos[RP_PROTO_LAND].reactor_id = 0;
+    rp_veh(0).dmg_incurred = 7;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 7);
+    RP_GUARDS();
+
+    // ---- the exact edges of the two floor exemptions -----------------------
+    // Reactor 2 against 4 damage: the floor is 4 and the unit cannot move at
+    // all unless an exemption lifts it, and it reaches zero only if that
+    // exemption is a real zero.
+    struct Floor {
+        int proto_id;
+        uint32_t tile_bit;
+        uint8_t climate;
+        bool dome;
+        uint8_t expected;
+        const char *why;
+    };
+    const Floor floors[] = {
+        { RP_PROTO_LAND, BIT_FUNGUS, RP_ALT_LAND,  false, 4, "no exemption at all" },
+        { RP_PROTO_PSI,  BIT_FUNGUS, RP_ALT_LAND,  false, 0, "native life in land fungus" },
+        { RP_PROTO_PSI,  BIT_FUNGUS, RP_ALT_SHELF, false, 0, "the shelf is shallow enough" },
+        { RP_PROTO_PSI,  BIT_FUNGUS, RP_ALT_DEEP,  false, 4, "below the shelf it is not" },
+        { RP_PROTO_PSI,  0,          RP_ALT_LAND,  false, 4, "native life needs the fungus" },
+        { RP_PROTO_ZERO_OFFENSE, BIT_FUNGUS, RP_ALT_LAND, false, 4, "offense 0 is not native" },
+        { RP_PROTO_PSI_CUSTOM,   BIT_FUNGUS, RP_ALT_LAND, false, 4, "prototype 64 is not native" },
+        { RP_PROTO_LAND, BIT_FUNGUS, RP_ALT_LAND,  true,  0, "the Dome, in land fungus" },
+        { RP_PROTO_LAND, BIT_FUNGUS, RP_ALT_SHELF, true,  0, "the Dome, on the shelf" },
+        { RP_PROTO_LAND, BIT_FUNGUS, RP_ALT_DEEP,  true,  4, "the Dome, too deep" },
+        { RP_PROTO_LAND, 0,          RP_ALT_LAND,  true,  4, "the Dome needs the fungus" },
+    };
+    for (size_t i = 0; i < sizeof(floors) / sizeof(floors[0]); i++) {
+        rp_reset();
+        if (floors[i].dome) {
+            rp_make_base(1, RP_BASE_X, RP_BASE_Y, RP_FACTION);
+            rp_build_project(SP_XENOEMPATYH_DOME, 1);
+        }
+        rp_place(0, floors[i].proto_id, RP_X, RP_Y);
+        g_rp_world.protos[floors[i].proto_id].reactor_id = 2;
+        rp_at(RP_X, RP_Y).bit = floors[i].tile_bit;
+        rp_at(RP_X, RP_Y).climate = floors[i].climate;
+        rp_veh(0).dmg_incurred = 4;
+        rp_run(RP_FACTION);
+        if (rp_veh(0).dmg_incurred != floors[i].expected) {
+            std::fprintf(stderr, "repair_phase floor: %s\n", floors[i].why);
+        }
+        RPCHECK(rp_veh(0).dmg_incurred == floors[i].expected);
+        RP_GUARDS();
+    }
+
+    // ---- waking a human player's sentry ------------------------------------
+    struct Wake {
+        int proto_id;
+        uint8_t climate;
+        bool human;
+        int order;
+        uint8_t damage;
+        bool woken;
+        const char *why;
+    };
+    const Wake cases[] = {
+        { RP_PROTO_LAND, RP_ALT_LAND,  true,  ORDER_SENTRY_BOARD, 3, true,  "land unit ashore" },
+        { RP_PROTO_LAND, RP_ALT_SHELF, true,  ORDER_SENTRY_BOARD, 3, false, "land unit aboard" },
+        { RP_PROTO_LAND, RP_ALT_SHORE, true,  ORDER_SENTRY_BOARD, 3, true,  "the shore line is ashore" },
+        { RP_PROTO_SEA,  RP_ALT_SHELF, true,  ORDER_SENTRY_BOARD, 3, true,  "sea unit at sea" },
+        { RP_PROTO_AIR,  RP_ALT_SHELF, true,  ORDER_SENTRY_BOARD, 3, true,  "air unit at sea" },
+        { RP_PROTO_LAND, RP_ALT_LAND,  false, ORDER_SENTRY_BOARD, 3, false, "an AI is not woken" },
+        { RP_PROTO_LAND, RP_ALT_LAND,  true,  ORDER_HOLD,         3, false, "Hold is not Sentry" },
+        { RP_PROTO_LAND, RP_ALT_LAND,  true,  ORDER_SENTRY_BOARD, 2, false, "already at the floor" },
+        { RP_PROTO_LAND, RP_ALT_LAND,  true,  ORDER_SENTRY_BOARD, 9, false, "still above the floor" },
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        rp_reset();
+        rp_place(0, cases[i].proto_id, RP_X, RP_Y);
+        rp_at(RP_X, RP_Y).climate = cases[i].climate;
+        g_rp_world.factions_status[0] = cases[i].human ? (uint8_t)(1 << RP_FACTION) : 0;
+        rp_veh(0).order = (int8_t)cases[i].order;
+        rp_veh(0).waypoint_y[0] = 0;
+        rp_veh(0).dmg_incurred = cases[i].damage;
+        rp_run(RP_FACTION);
+        const int expected = cases[i].woken ? ORDER_NONE : cases[i].order;
+        if (rp_veh(0).order != expected) {
+            std::fprintf(stderr, "repair_phase wake: %s\n", cases[i].why);
+        }
+        RPCHECK(rp_veh(0).order == expected);
+        RP_GUARDS();
+    }
+
+    // The "damage actually changed" test is separate from the floor test: a
+    // unit already resting on the floor is not woken, but one that reaches it
+    // this turn is.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.factions_status[0] = (uint8_t)(1 << RP_FACTION);
+    rp_veh(0).order = ORDER_SENTRY_BOARD;
+    rp_veh(0).dmg_incurred = 3;
+    rp_run(RP_FACTION);
+    RPCHECK(rp_veh(0).dmg_incurred == 2);
+    RPCHECK(rp_veh(0).order == ORDER_NONE);
+    RP_GUARDS();
+}
+GAMEPLAY_CASE(test_repair_phase_damage_math);
+
+void test_repair_phase_redraw() {
+    RepairSeams seams;
+
+    // ---- what the second pass draws, and with which arguments --------------
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, 4, 6);
+    rp_place(2, RP_PROTO_LAND, 4, 6);
+    rp_veh(2).faction_id = (uint8_t)RP_OTHER;
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.size() == 2);
+    if (g_rp_draw_calls.size() == 2) {
+        RPCHECK(g_rp_draw_calls[0].x == RP_X);
+        RPCHECK(g_rp_draw_calls[0].y == RP_Y);
+        RPCHECK(g_rp_draw_calls[0].draw_type == -1);
+        RPCHECK(g_rp_draw_calls[1].x == 4);
+        RPCHECK(g_rp_draw_calls[1].y == 6);
+        RPCHECK(g_rp_draw_calls[1].draw_type == -1);
+    }
+    RP_GUARDS();
+
+    // A unit standing in somebody's base is not drawn; the base's own draw
+    // covers the tile.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).bit = BIT_BASE_IN_TILE;
+    rp_at(RP_X, RP_Y).val2 = RP_OTHER;
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.empty());
+    RP_GUARDS();
+
+    // The base-tile skip needs BOTH the bit and an owner in range.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).val2 = RP_OTHER;   // an owner nibble without the bit
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.size() == 1);
+    RP_GUARDS();
+
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).bit = BIT_BASE_IN_TILE;
+    rp_at(RP_X, RP_Y).val2 = 0x0F;       // the bit without an owner in range
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.size() == 1);
+    RP_GUARDS();
+
+    // A base owned by faction 0 is still a base: the owner test in the redraw
+    // pass is a RANGE, and its lower half is not a truth test.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).bit = BIT_BASE_IN_TILE;
+    rp_at(RP_X, RP_Y).val2 = 0;
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.empty());
+    RP_GUARDS();
+
+    // Owner 8 is one past the last faction, so that tile IS drawn.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_at(RP_X, RP_Y).bit = BIT_BASE_IN_TILE;
+    rp_at(RP_X, RP_Y).val2 = 8;
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.size() == 1);
+    RP_GUARDS();
+
+    // ---- the local player's view ------------------------------------------
+    // Somebody else's turn: the tile is only redrawn if the local player can
+    // see the unit.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.local_faction = RP_OTHER;
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.empty());
+    RP_GUARDS();
+
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.local_faction = RP_OTHER;
+    rp_veh(0).visibility = (uint8_t)(1 << RP_OTHER);
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.size() == 1);
+    RP_GUARDS();
+
+    // A visibility bit for the wrong faction is not the local player's.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    g_rp_world.local_faction = RP_OTHER;
+    rp_veh(0).visibility = (uint8_t)~(1 << RP_OTHER);
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.empty());
+    RP_GUARDS();
+
+    // The draw pass runs even when the repair pass changed nothing, and the
+    // pump runs exactly once regardless of how many tiles were drawn.
+    rp_reset();
+    rp_place(0, RP_PROTO_LAND, RP_X, RP_Y);
+    rp_place(1, RP_PROTO_LAND, 6, 2);
+    rp_place(2, RP_PROTO_LAND, 10, 0);
+    rp_run(RP_FACTION);
+    RPCHECK(g_rp_draw_calls.size() == 3);
+    RP_GUARDS();
+}
+GAMEPLAY_CASE(test_repair_phase_redraw);
+
+#undef RP_GUARDS
+#undef RPCHECK
+
 }  // namespace
+
+/*
+ * The recording stand-in for draw_tile, which src/mapwin.h declares and
+ * repair_phase's second pass calls.
+ *
+ * src/mapwin.cpp is deliberately NOT linked into this target. Its body walks
+ * the eight-slot MapWin table and dispatches through the still-original
+ * MapWin::draw_radius, so linking it would pull the MapWin/Console object
+ * graph in here for no verification gain - that slot walk is already covered
+ * by recovery-leaf-tests. Recording the arguments instead is what makes the
+ * second pass observable at all.
+ *
+ * Defined outside the anonymous namespace because game.cpp has to link
+ * against it; the recorder it appends to is declared with the repair_phase
+ * fixtures above.
+ */
+void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
+    RepairDrawCall call;
+    call.x = x_coord;
+    call.y = y_coord;
+    call.draw_type = draw_type;
+    g_rp_draw_calls.push_back(call);
+}
+
 
 int main() {
     for (const auto &entry : gameplay_cases()) {
