@@ -403,6 +403,8 @@ EXPORTS
     "?invasions@@YAXI@Z" = _Z9invasionsj
     "?want_monolith@@YAHI@Z" = _Z13want_monolithj
     "?get_plan@@YAHII@Z" = _Z8get_planjj
+    "?spot_base@@YAXHH@Z" = _Z9spot_baseii
+    "?spot_stack@@YAXHH@Z" = _Z10spot_stackii
     "?want_to_wake@@YAHIIH@Z" = _Z12want_to_wakejji
     "?wake_stack@@YAXH@Z" = _Z10wake_stacki
     "?site_radius@@YAXHHH@Z" = _Z11site_radiusiii

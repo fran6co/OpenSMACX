@@ -1823,6 +1823,9 @@ address,name,shape
 0x005B4730,?society_avail@@YAHHHH@Z,straight_line
 0x005B4790,?social_ai@@YAXHHHHHPAH@Z,loop
 0x005B5690,?sort@@YAXHPAHPAH@Z,loop
+0x005B5700,sub_5b5700,straight_line
+0x005B57D0,?spot_base@@YAXHH@Z,straight_line
+0x005B58E0,?spot_stack@@YAXHH@Z,loop
 0x005B5EA0,?want_to_wake@@YAHHHH@Z,straight_line
 0x005B6060,?wake_stack@@YAXH@Z,loop
 0x005B8AF0,?stack_put@@YAXHHH@Z,loop

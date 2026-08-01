@@ -46,6 +46,7 @@
 #include "../src/base.h"
 #include "../src/general.h"
 #include "../src/technology.h"
+#include "../src/temp.h"
 #include "recovery_fixtures.h"
 
 using recovery_fixtures::expect;
@@ -5522,6 +5523,473 @@ void test_num_objectives_totals() {
 
 #undef OCHECK
 
+/*
+ * A self-contained world for the spot_*() family.
+ *
+ * The map is 16 columns by 8 rows - MapLongitude 8, because two adjacent x
+ * share one tile index - so the 64 live tiles fit inside an array a case can
+ * assert over in full.
+ *
+ * MapTiles is aimed at the MIDDLE third of a 192-entry array, which is what
+ * makes the bounds tests mean something. spot_tile() computes its tile index
+ * before it would fault, so a mutant that drops the on_map() guard writes at
+ * index -6 for y == -1 and index 66 for y == 8; both land inside the guard
+ * thirds, where spot_world_untouched() sees them, instead of outside the
+ * object where the behaviour would be undefined and the suite might still
+ * pass.
+ */
+struct SpotWorld {
+    Map tiles[192];
+    Base bases[8];
+    Veh vehs[16];
+    PlayerData players_data[8];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    int local_faction;
+    uint32_t game_state;
+    uint32_t dirty;
+};
+
+SpotWorld g_spot_world;
+
+const int SPOT_LIVE = 64;  // index of tile (0, 0) inside SpotWorld::tiles
+
+// The tile the live map addresses for (x, y).
+Map &spot_at(int x, int y) {
+    return g_spot_world.tiles[SPOT_LIVE + (x >> 1) + y * 8];
+}
+
+void spot_reset() {
+    std::memset(&g_spot_world, 0, sizeof(g_spot_world));
+    g_spot_world.tiles_ptr = &g_spot_world.tiles[SPOT_LIVE];
+    g_spot_world.longitude = 8;
+    g_spot_world.lon_bounds = 16;
+    g_spot_world.lat_bounds = 8;
+    g_spot_world.local_faction = 3;
+    for (int i = 0; i < 16; i++) {
+        g_spot_world.vehs[i].next_veh_id_stack = -1;
+        g_spot_world.vehs[i].prev_veh_id_stack = -1;
+    }
+}
+
+// True when no byte of any of the 192 map entries has been written.
+bool spot_map_untouched() {
+    const uint8_t *raw = reinterpret_cast<const uint8_t *>(g_spot_world.tiles);
+    for (size_t i = 0; i < sizeof(g_spot_world.tiles); i++) {
+        if (raw[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// True when the only map entry written is the one the live map holds for
+// (x, y). Catches a stride or sign error that lands on a neighbour.
+bool spot_only_tile_written(int x, int y) {
+    const Map *subject = &spot_at(x, y);
+    for (int i = 0; i < 192; i++) {
+        const Map *entry = &g_spot_world.tiles[i];
+        if (entry == subject) {
+            continue;
+        }
+        const uint8_t *raw = reinterpret_cast<const uint8_t *>(entry);
+        for (size_t k = 0; k < sizeof(Map); k++) {
+            if (raw[k] != 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+#define PCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool spot_ok = (cond);                                          \
+        if (!spot_ok) {                                                       \
+            std::fprintf(stderr, "spot: line %d: %s\n", __LINE__, #cond);     \
+        }                                                                     \
+        expect(spot_ok);                                                      \
+    } while (0)
+
+class SpotSeams {
+ public:
+    SpotSeams()
+        : tiles_(&MapTiles, &g_spot_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_spot_world.longitude),
+          lon_(&MapLongitudeBounds, &g_spot_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_spot_world.lat_bounds),
+          local_(&LocalFaction, &g_spot_world.local_faction),
+          state_(&GameState, &g_spot_world.game_state),
+          players_(&PlayersData, g_spot_world.players_data),
+          dirty_(&UnkBitfield1, &g_spot_world.dirty),
+          bases_(&Bases, g_spot_world.bases),
+          vehs_(&Vehs, g_spot_world.vehs) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<int> local_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<PlayerData> players_;
+    ScopedSeam<uint32_t> dirty_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<Veh> vehs_;
+};
+
+void test_spot_tile() {
+    SpotSeams seams;
+
+    // The strides the original encodes as `imul 0x134` and `imul 0x34`. Every
+    // indexed assertion below is only as good as these two.
+    spot_reset();
+    PCHECK(sizeof(Map) == 44);
+    PCHECK(sizeof(Base) == 0x134);
+    PCHECK(sizeof(Veh) == 0x34);
+
+    // ---- the bounds guard, one edge at a time ------------------------------
+    // Each of these four would write inside the 192-entry array if the guard
+    // were not there, so a survivor here is a real miss and not a crash.
+    const int off_map[4][2] = { {-1, 2}, {16, 2}, {4, -1}, {4, 8} };
+    for (int c = 0; c < 4; c++) {
+        spot_reset();
+        spot_tile(off_map[c][0], off_map[c][1], 3);
+        PCHECK(spot_map_untouched());
+        PCHECK(g_spot_world.dirty == 0);
+    }
+    // ... and the four coordinates just inside those edges are all revealed.
+    const int on_edge[4][2] = { {0, 2}, {15, 2}, {4, 0}, {4, 7} };
+    for (int c = 0; c < 4; c++) {
+        spot_reset();
+        spot_tile(on_edge[c][0], on_edge[c][1], 3);
+        PCHECK(spot_at(on_edge[c][0], on_edge[c][1]).visibility == 0x08);
+        PCHECK(spot_only_tile_written(on_edge[c][0], on_edge[c][1]));
+    }
+
+    // ---- the plain reveal, by a faction that is not the local one ----------
+    spot_reset();
+    spot_at(6, 3).bit = BIT_FUNGUS | BIT_RIVER;
+    spot_at(6, 3).bit2 = BIT2_MESA;
+    spot_at(6, 3).visibility = 0x02;
+    spot_tile(6, 3, 5);
+    PCHECK(spot_at(6, 3).visibility == 0x22);           // 0x02 kept, 1 << 5 added
+    PCHECK(spot_at(6, 3).bit2 == BIT2_MESA);            // no dirty bit: not local
+    PCHECK(g_spot_world.dirty == 0);
+    PCHECK(spot_at(6, 3).bit_visible[4] == (BIT_FUNGUS | BIT_RIVER));  // synch_bit
+    PCHECK(spot_at(6, 3).bit_visible[3] == 0);
+    PCHECK(spot_only_tile_written(6, 3));
+
+    // Faction zero gets the visibility bit but no remembered terrain: the
+    // faction-1 index in synch_bit() is why the whole call is skipped.
+    spot_reset();
+    spot_at(6, 3).bit = BIT_FUNGUS;
+    spot_tile(6, 3, 0);
+    PCHECK(spot_at(6, 3).visibility == 0x01);
+    for (int k = 0; k < 7; k++) {
+        PCHECK(spot_at(6, 3).bit_visible[k] == 0);
+    }
+
+    // ---- two adjacent x share one tile, an odd x is not a different tile ---
+    spot_reset();
+    spot_tile(6, 3, 1);
+    PCHECK(spot_at(6, 3).visibility == 0x02);
+    spot_tile(7, 3, 2);
+    PCHECK(spot_at(6, 3).visibility == 0x06);
+    PCHECK(spot_only_tile_written(6, 3));
+    // The row stride is MapLongitude, not MapLongitudeBounds: (0, 1) is the
+    // eighth entry, not the sixteenth.
+    spot_reset();
+    spot_tile(0, 1, 1);
+    PCHECK(g_spot_world.tiles[SPOT_LIVE + 8].visibility == 0x02);
+    PCHECK(spot_only_tile_written(0, 1));
+
+    // ---- the local faction's first-sight repaint hint ----------------------
+    spot_reset();
+    spot_at(6, 3).bit2 = BIT2_MESA;
+    g_spot_world.dirty = 0x80;
+    spot_tile(6, 3, 3);                                  // 3 is the local faction
+    PCHECK(spot_at(6, 3).bit2 == (BIT2_MESA | 0x400000)); // ORed in, not assigned
+    PCHECK(g_spot_world.dirty == 0x81);                   // ORed in, not assigned
+    PCHECK(spot_at(6, 3).visibility == 0x08);
+
+    // Already visible to the local faction: the reveal still happens, the hint
+    // does not.
+    spot_reset();
+    spot_at(6, 3).visibility = 0x08;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).visibility == 0x08);
+    PCHECK(spot_at(6, 3).bit2 == 0);
+    PCHECK(g_spot_world.dirty == 0);
+    // The test is against the SUBJECT faction's bit, not any other faction's.
+    spot_reset();
+    spot_at(6, 3).visibility = 0x04;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0x400000);
+    PCHECK(g_spot_world.dirty == 1);
+
+    // Not the local faction: no hint even on first sight.
+    spot_reset();
+    spot_tile(6, 3, 4);
+    PCHECK(spot_at(6, 3).bit2 == 0);
+    PCHECK(g_spot_world.dirty == 0);
+
+    // Omniscient view suppresses the hint; a different GameState bit does not.
+    spot_reset();
+    g_spot_world.game_state = STATE_OMNISCIENT_VIEW;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0);
+    PCHECK(g_spot_world.dirty == 0);
+    PCHECK(spot_at(6, 3).visibility == 0x08);
+    spot_reset();
+    g_spot_world.game_state = STATE_DEBUG_MODE;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0x400000);
+
+    // A revealed map suppresses the hint, and the flag is read from the
+    // SUBJECT faction's row; a different faction's flag does not suppress it.
+    spot_reset();
+    g_spot_world.players_data[3].flags = PFLAG_MAP_REVEALED;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0);
+    PCHECK(g_spot_world.dirty == 0);
+    PCHECK(spot_at(6, 3).visibility == 0x08);
+    spot_reset();
+    g_spot_world.players_data[2].flags = PFLAG_MAP_REVEALED;
+    g_spot_world.players_data[4].flags = PFLAG_MAP_REVEALED;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0x400000);
+    // A different PlayerData flag does not suppress it either.
+    spot_reset();
+    g_spot_world.players_data[3].flags = PFLAG_GENETIC_PLAGUE_INTRO;
+    spot_tile(6, 3, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0x400000);
+}
+
+void test_spot_base() {
+    SpotSeams seams;
+
+    // The ordinary sighting: visibility bit, remembered population, and the
+    // tile the base stands on.
+    spot_reset();
+    g_spot_world.bases[2].x = 6;
+    g_spot_world.bases[2].y = 3;
+    g_spot_world.bases[2].population_size = 9;
+    g_spot_world.bases[2].visibility = 0x02;
+    spot_at(6, 3).bit = BIT_BASE_IN_TILE;
+    spot_base(2, 5);
+    PCHECK(g_spot_world.bases[2].visibility == 0x22);
+    PCHECK(g_spot_world.bases[2].faction_pop_size_intel[5] == 9);
+    PCHECK(spot_at(6, 3).visibility == 0x20);
+    PCHECK(spot_at(6, 3).bit_visible[4] == BIT_BASE_IN_TILE);
+    PCHECK(spot_only_tile_written(6, 3));
+    // Only that faction's intel slot is written.
+    for (int k = 0; k < 8; k++) {
+        PCHECK(k == 5 || g_spot_world.bases[2].faction_pop_size_intel[k] == 0);
+    }
+    // And no neighbouring base row is touched.
+    PCHECK(g_spot_world.bases[1].visibility == 0);
+    PCHECK(g_spot_world.bases[3].visibility == 0);
+
+    // The remembered size is the size at the moment of sighting, and it is
+    // copied on EVERY sighting, not only the first.
+    spot_reset();
+    g_spot_world.bases[2].x = 6;
+    g_spot_world.bases[2].y = 3;
+    g_spot_world.bases[2].population_size = 4;
+    spot_base(2, 5);
+    PCHECK(g_spot_world.bases[2].faction_pop_size_intel[5] == 4);
+    g_spot_world.bases[2].population_size = 7;
+    spot_base(2, 5);
+    PCHECK(g_spot_world.bases[2].faction_pop_size_intel[5] == 7);
+
+    // A destroyed base carries a negative size; the copy is a byte move and
+    // does not interpret it.
+    spot_reset();
+    g_spot_world.bases[2].x = 6;
+    g_spot_world.bases[2].y = 3;
+    g_spot_world.bases[2].population_size = -3;
+    spot_base(2, 1);
+    PCHECK(g_spot_world.bases[2].faction_pop_size_intel[1] == 0xFD);
+
+    // A base off the map: the base fields are still written, the tile is not.
+    spot_reset();
+    g_spot_world.bases[2].x = -1;
+    g_spot_world.bases[2].y = -1;
+    g_spot_world.bases[2].population_size = 6;
+    spot_base(2, 5);
+    PCHECK(g_spot_world.bases[2].visibility == 0x20);
+    PCHECK(g_spot_world.bases[2].faction_pop_size_intel[5] == 6);
+    PCHECK(spot_map_untouched());
+
+    // The base id indexes with the real 0x134 stride: base 7 is the last row
+    // of the fixture and base 0 the first.
+    spot_reset();
+    g_spot_world.bases[7].x = 2;
+    g_spot_world.bases[7].y = 5;
+    g_spot_world.bases[7].population_size = 2;
+    spot_base(7, 1);
+    PCHECK(g_spot_world.bases[7].faction_pop_size_intel[1] == 2);
+    PCHECK(spot_at(2, 5).visibility == 0x02);
+    PCHECK(g_spot_world.bases[6].visibility == 0);
+
+    // The local faction's first sight of a base still raises the repaint hint,
+    // because the tile reveal is the same call.
+    spot_reset();
+    g_spot_world.bases[0].x = 6;
+    g_spot_world.bases[0].y = 3;
+    spot_base(0, 3);
+    PCHECK(spot_at(6, 3).bit2 == 0x400000);
+    PCHECK(g_spot_world.dirty == 1);
+}
+
+// Chain ids[0..n-1] into one stack, in order, and leave the ends terminated.
+void spot_link(const int *ids, int n) {
+    for (int i = 0; i < n; i++) {
+        g_spot_world.vehs[ids[i]].prev_veh_id_stack =
+            (int16_t)(i == 0 ? -1 : ids[i - 1]);
+        g_spot_world.vehs[ids[i]].next_veh_id_stack =
+            (int16_t)(i == n - 1 ? -1 : ids[i + 1]);
+    }
+}
+
+void test_spot_stack() {
+    SpotSeams seams;
+
+    // A negative id returns before anything is read.
+    spot_reset();
+    spot_stack(-1, 3);
+    PCHECK(spot_map_untouched());
+    spot_stack(-9, 3);
+    PCHECK(spot_map_untouched());
+
+    // A lone unit: its tile is revealed and its own visibility bit set.
+    spot_reset();
+    g_spot_world.vehs[4].x = 6;
+    g_spot_world.vehs[4].y = 3;
+    g_spot_world.vehs[4].visibility = 0x02;
+    spot_at(6, 3).bit = BIT_VEH_IN_TILE;
+    spot_stack(4, 5);
+    PCHECK(g_spot_world.vehs[4].visibility == 0x22);
+    PCHECK(spot_at(6, 3).visibility == 0x20);
+    PCHECK(spot_at(6, 3).bit_visible[4] == BIT_VEH_IN_TILE);
+    PCHECK(spot_only_tile_written(6, 3));
+    PCHECK(g_spot_world.vehs[3].visibility == 0);
+    PCHECK(g_spot_world.vehs[5].visibility == 0);
+
+    // A stack of three entered at the MIDDLE unit. The climb up
+    // prev_veh_id_stack is what makes the other two visible; the coordinates
+    // used for the tile are the NAMED unit's, not the top one's.
+    spot_reset();
+    const int chain[3] = {9, 4, 12};
+    spot_link(chain, 3);
+    g_spot_world.vehs[9].x = 0;
+    g_spot_world.vehs[9].y = 0;
+    g_spot_world.vehs[4].x = 6;
+    g_spot_world.vehs[4].y = 3;
+    g_spot_world.vehs[12].x = 2;
+    g_spot_world.vehs[12].y = 5;
+    spot_stack(4, 5);
+    PCHECK(g_spot_world.vehs[9].visibility == 0x20);
+    PCHECK(g_spot_world.vehs[4].visibility == 0x20);
+    PCHECK(g_spot_world.vehs[12].visibility == 0x20);
+    PCHECK(spot_only_tile_written(6, 3));
+
+    // Entered at the bottom: the descent alone reaches nothing above, so the
+    // climb has to have happened.
+    spot_reset();
+    spot_link(chain, 3);
+    spot_stack(12, 1);
+    PCHECK(g_spot_world.vehs[9].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[4].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[12].visibility == 0x02);
+    // Entered at the top: the descent covers the whole stack.
+    spot_reset();
+    spot_link(chain, 3);
+    spot_stack(9, 1);
+    PCHECK(g_spot_world.vehs[9].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[4].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[12].visibility == 0x02);
+    // A unit outside the stack keeps its own state.
+    PCHECK(g_spot_world.vehs[0].visibility == 0);
+    PCHECK(g_spot_world.vehs[11].visibility == 0);
+
+    // The climb stops at a NEGATIVE prev, not at a false one: a stack whose
+    // top is unit zero must still be climbed all the way, which `> 0` or
+    // `>= 1` would not do.
+    spot_reset();
+    const int from_zero[3] = {0, 4, 12};
+    spot_link(from_zero, 3);
+    spot_stack(12, 1);
+    PCHECK(g_spot_world.vehs[0].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[4].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[12].visibility == 0x02);
+    // ... and the descent likewise runs to a negative next, through unit zero
+    // sitting in the middle of a stack.
+    spot_reset();
+    const int through_zero[3] = {4, 0, 12};
+    spot_link(through_zero, 3);
+    spot_stack(4, 1);
+    PCHECK(g_spot_world.vehs[4].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[0].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[12].visibility == 0x02);
+
+    // Lurking and invisibility are cleared for every unit in the stack, and
+    // only those two bits.
+    spot_reset();
+    spot_link(chain, 3);
+    for (int i = 0; i < 3; i++) {
+        g_spot_world.vehs[chain[i]].flags =
+            VFLAG_LURKER | VFLAG_INVISIBLE | VFLAG_IS_OBJECTIVE
+            | VFLAG_START_RAND_FUNGUS;
+    }
+    spot_stack(4, 1);
+    for (int i = 0; i < 3; i++) {
+        PCHECK(g_spot_world.vehs[chain[i]].flags
+               == (VFLAG_IS_OBJECTIVE | VFLAG_START_RAND_FUNGUS));
+    }
+    // Faction zero leaves them alone - and still sets visibility.
+    spot_reset();
+    spot_link(chain, 3);
+    for (int i = 0; i < 3; i++) {
+        g_spot_world.vehs[chain[i]].flags = VFLAG_LURKER | VFLAG_INVISIBLE;
+    }
+    spot_stack(4, 0);
+    for (int i = 0; i < 3; i++) {
+        PCHECK(g_spot_world.vehs[chain[i]].flags
+               == (VFLAG_LURKER | VFLAG_INVISIBLE));
+        PCHECK(g_spot_world.vehs[chain[i]].visibility == 0x01);
+    }
+
+    // A unit off the map: the tile is left alone, the stack is still marked.
+    spot_reset();
+    spot_link(chain, 3);
+    g_spot_world.vehs[4].x = -1;
+    g_spot_world.vehs[4].y = 9;
+    spot_stack(4, 1);
+    PCHECK(spot_map_untouched());
+    PCHECK(g_spot_world.vehs[9].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[12].visibility == 0x02);
+
+    // The 0x34 stride, at both ends of the fixture.
+    spot_reset();
+    g_spot_world.vehs[15].x = 2;
+    g_spot_world.vehs[15].y = 5;
+    spot_stack(15, 1);
+    PCHECK(g_spot_world.vehs[15].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[14].visibility == 0);
+    PCHECK(spot_at(2, 5).visibility == 0x02);
+    spot_reset();
+    spot_stack(0, 1);
+    PCHECK(g_spot_world.vehs[0].visibility == 0x02);
+    PCHECK(g_spot_world.vehs[1].visibility == 0);
+    PCHECK(spot_at(0, 0).visibility == 0x02);
+}
+
+#undef PCHECK
+
 }  // namespace
 
 int main() {
@@ -5538,6 +6006,9 @@ int main() {
     test_world_site_score();
     test_num_objectives_units();
     test_num_objectives_totals();
+    test_spot_tile();
+    test_spot_base();
+    test_spot_stack();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
