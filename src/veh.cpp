@@ -1952,7 +1952,108 @@ int __cdecl get_plan(uint32_t faction_id, uint32_t plan) {
 }
 
 /*
-Purpose: Determine if the specified unit wants to wake up based on certain conditions and 
+Purpose: Reveal the specified tile to the specified faction and keep the
+         faction's remembered copy of the tile's terrain bits in step with it.
+Original Offset: 005B5700
+Return Value: n/a
+Status: Complete
+
+The image gives this function no symbol - the catalogue calls it sub_5b5700 -
+so spot_tile is this recovery's name for it, chosen because it is the tile-level
+member of the spot_*() family that surrounds it (005B57D0 spot_base, 005B58E0
+spot_stack, 005B5AD0 spot_loc). Every one of those three carries this body
+inlined verbatim, which is how it was identified: the one catalogued call site
+is not the only place the bytes appear.
+
+The dirty-tile arm is deliberately narrow. It fires only for the LOCAL faction,
+only the first time that faction sees the tile, and not at all under omniscient
+view or once the faction's map has been revealed outright - four conditions
+which between them mean it is the interactive map's repaint hint rather than
+game state. `bit2 |= 0x400000` and `*UnkBitfield1 |= 1` are the same pair
+climate_set() sets at 00591A80 and carry the same unidentified meaning.
+*/
+void __cdecl spot_tile(int x, int y, int faction_id) {
+    if (!on_map(x, y)) {
+        return;
+    }
+    Map *tile = map_loc(x, y);
+    if (faction_id == *LocalFaction && !(tile->visibility & (1 << faction_id))
+        && !(*GameState & STATE_OMNISCIENT_VIEW)
+        && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
+        tile->bit2 |= 0x400000; // TODO: identify value
+        *UnkBitfield1 |= 1; // TODO: identify global + value
+    }
+    tile->visibility |= (uint8_t)(1 << faction_id);
+    synch_bit(x, y, faction_id);
+}
+
+/*
+Purpose: Reveal the specified base, and the tile it stands on, to the specified
+         faction.
+Original Offset: 005B57D0
+Return Value: n/a
+Status: Complete
+
+The population size is copied into the faction's intel slot at the moment of
+sighting rather than read live, so a faction that loses sight of a base keeps
+the size it last saw. The copy is unconditional: it happens again on every
+sighting whether or not the visibility bit was already set.
+
+There is no bounds check on base_id. All eight call sites pass an id that came
+out of base_at() or a bounded loop.
+*/
+void __cdecl spot_base(int base_id, int faction_id) {
+    Base *base = &Bases[base_id];
+    base->visibility |= (uint8_t)(1 << faction_id);
+    base->faction_pop_size_intel[faction_id] = base->population_size;
+    spot_tile(base->x, base->y, faction_id);
+}
+
+/*
+Purpose: Reveal the whole of the specified unit's stack, and the tile it stands
+         on, to the specified faction.
+Original Offset: 005B58E0
+Return Value: n/a
+Status: Complete
+
+Two separate walks over two separate things. The tile is revealed once, from the
+coordinates of the unit that was named; the visibility bit is then set on every
+unit in the stack, found by climbing prev_veh_id_stack to the top and descending
+next_veh_id_stack from there. The named unit need not be the top one, which is
+why the climb exists. A negative id reveals no tile and marks no unit.
+
+The original's `and word [veh+8], 0FBBFh` is written as the two named bits it
+clears: 0xFBBF is exactly ~(VFLAG_LURKER | VFLAG_INVISIBLE) in sixteen bits, so
+being seen stops a unit lurking and stops it being invisible. It is skipped for
+faction zero, and only for faction zero; nothing else here distinguishes
+factions.
+
+The climb is veh_top() at 00579920, inlined, and is written as the call it was.
+0x005B59F9 to 0x005B5A2A is that function instruction for instruction: the same
+`test eax, eax / jl` for a negative id, the same `lea eax+eax*2 / lea eax+ecx*4`
+stride, the same `movsx` of prev_veh_id_stack, the same loop. The negative test
+that follows the climb is therefore not a dead branch on the climb's output - it
+is the caller reading veh_top()'s -1 - and it is the `id >= 0` below.
+
+The original tests on_map() twice before revealing the tile: once for the guard
+written out below, and once inside the inlined spot_tile(). It is a pure
+predicate over two globals and the same two coordinates, so the second test
+cannot disagree with the first.
+*/
+void __cdecl spot_stack(int veh_id, int faction_id) {
+    if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        spot_tile(Vehs[veh_id].x, Vehs[veh_id].y, faction_id);
+    }
+    for (int id = veh_top(veh_id); id >= 0; id = Vehs[id].next_veh_id_stack) {
+        Vehs[id].visibility |= (uint8_t)(1 << faction_id);
+        if (faction_id) {
+            Vehs[id].flags &= (uint16_t)~(VFLAG_LURKER | VFLAG_INVISIBLE);
+        }
+    }
+}
+
+/*
+Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
 Original Offset: 005B5EA0
 Return Value: Does unit want to wake? true/false
