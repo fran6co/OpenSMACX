@@ -11041,6 +11041,1167 @@ void test_alt_ocean_shoreline() {
 
 #undef OCHECK
 
+// =====================================================================================
+
+/*
+ * compute_odds (0x00565F20).
+ *
+ * The whole world is rebindable through ScopedSeam, so the fixed 0x00952828 /
+ * 0x009AB868 / 0x0096C9E0 addresses are never touched.
+ *
+ * TWO THINGS ABOUT THE SHAPE OF THIS FIXTURE ARE LOAD-BEARING.
+ *
+ * The Veh array carries an entry BELOW index zero. veh_at() answers -1 for a
+ * tile with no unit and the original then reads Vehs[-1].faction_id without
+ * checking, so `Vehs` is seamed at vehs[1] and vehs[0] is where that read
+ * lands. Without the extra slot the read would go off the front of the struct
+ * and the bug could not be exercised at all, let alone poisoned.
+ *
+ * Nothing is memset to a usable value and left there. Every table is POISONED
+ * first and then only the entries under test are written, because a zero
+ * fixture cannot tell `region_base_plan[region]` from `region_base_plan[0]`,
+ * nor `PlayersData[1]` from `PlayersData[0]`. Rows 0 and 2 of PlayersData exist
+ * only to be poisoned, so a wrong 8396-byte stride reads a wrong answer instead
+ * of a plausible zero; prototype 128 exists only to be poisoned, so the
+ * drop-pod scan's `i < MaxVehProtoFactionNum` bound is a real bound; and the
+ * Veh, Map and VehPrototype guards one past the last valid index are asserted
+ * unchanged by the purity check at the end.
+ *
+ * compute_odds writes nothing, anywhere. The last section proves that with a
+ * whole-fixture memcmp rather than by spot-checking fields.
+ */
+
+const int ODDS_VEH_COUNT = 12;
+const int ODDS_PROTO_COUNT = 129;   // 0..127 live, 128 is the guard one past faction 1
+const int ODDS_TILE_COUNT = 65;     // 0..63 live, 64 is the guard
+const int ODDS_LONGITUDE = 8;
+const int ODDS_LON_BOUNDS = 16;
+const int ODDS_LAT_BOUNDS = 8;
+
+const int ODDS_FACTION = 1;         // the attacking faction; PlayersData[0] and [2] are poison
+const int ODDS_ENEMY = 2;           // the defender's faction
+const int ODDS_STRANGER = 3;        // a third party, never ours
+
+const int ODDS_DEF_X = 8;
+const int ODDS_DEF_Y = 4;
+
+const int16_t ODDS_POISON16 = 0x7777;
+const uint8_t ODDS_POISON8 = 0x77;
+
+// Unit ids.
+const int VEH_ATK = 1;              // never placed on the map; only its prototype is read
+const int VEH_DEF = 2;
+const int VEH_STACK_A = 3;
+const int VEH_STACK_B = 4;
+const int VEH_NEIGH_A = 5;
+const int VEH_NEIGH_B = 6;
+const int VEH_NEIGH_C = 7;
+const int VEH_NEIGH_D = 8;
+const int VEH_NEIGH_E = 9;
+
+// Chassis ids.
+const uint8_t CHS_LAND = 0;         // TRIAD_LAND, not a missile
+const uint8_t CHS_SEA = 1;          // TRIAD_SEA,  not a missile
+const uint8_t CHS_AIR = 2;          // TRIAD_AIR,  not a missile
+const uint8_t CHS_MSL = 3;          // TRIAD_AIR,  missile
+const int ODDS_CHASSIS_COUNT = 5;   // [4] is the guard
+
+// Weapon ids.
+const uint8_t WPN_UNARMED = 0;      // offense_rating 0, so get_offense_rating() answers 0
+const uint8_t WPN_ARMED = 1;        // offense_rating 4
+const int ODDS_WEAPON_COUNT = 3;    // [2] is the guard
+
+// Prototype ids. 0..63 belong to faction 0, 64..127 to faction 1, 128 is the guard.
+const int P_DEF = 2;                // cost 20, PLAN_COMBAT, armed, land
+const int P_STACK = 3;              // cost 12, PLAN_COMBAT, armed, land
+const int P_ARTIFACT = 4;           // cost  5, PLAN_ALIEN_ARTIFACT, UNARMED
+const int P_TERRA = 5;              // cost  5, PLAN_TERRAFORMING, UNARMED
+const int P_TRANSPORT = 6;          // cost  8, PLAN_NAVAL_TRANSPORT - the >= 7 rule
+const int P_DEF_AIR = 7;            // cost 20, PLAN_COMBAT, armed, AIR
+const int P_NEIGH_LAND = 8;         // cost 10, PLAN_COMBAT, armed, land
+const int P_NEIGH_SEA = 9;          // cost 10, PLAN_COMBAT, armed, sea
+const int P_DROP_LOW = 63;          // faction 0's last slot - one BELOW the scan
+const int P_ATK_LAND = 64;          // cost 10, PLAN_DEFENSIVE, land
+const int P_ATK_SEA = 65;           // cost 10, PLAN_DEFENSIVE, sea
+const int P_ATK_AIR = 66;           // cost 10, PLAN_DEFENSIVE, air
+const int P_ATK_MSL = 67;           // cost 10, PLAN_DEFENSIVE, missile
+const int P_ATK_AS = 68;            // cost 10, PLAN_AIR_SUPERIORITY, land
+const int P_ATK_AIROFF = 69;        // cost 10, PLAN_OFFENSIVE, air
+const int P_ATK_MSLOFF = 70;        // cost 10, PLAN_OFFENSIVE, missile
+const int P_DROP = 71;              // the drop-pod design the scan is meant to find
+const int P_DROP_HIGH = 127;        // faction 1's last slot - the last one scanned
+const int P_DROP_GUARD = 128;       // one PAST the scan
+
+struct OddsWorld {
+    // Index 0 is Vehs[-1]; 1..ODDS_VEH_COUNT are the live ids; the last is the
+    // guard one past the end. See the note above.
+    Veh vehs[1 + ODDS_VEH_COUNT + 1];
+    VehPrototype protos[ODDS_PROTO_COUNT];
+    RulesChassis chassis[ODDS_CHASSIS_COUNT];
+    RulesWeapon weapons[ODDS_WEAPON_COUNT];
+    Map tiles[ODDS_TILE_COUNT];
+    Base bases[2];
+    Player players[3];
+    PlayerData players_data[3];   // [0] and [2] exist only to be poisoned
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    int veh_count;
+    int base_count;
+    BOOL expansion;
+    // veh_at()'s diagnostic path is never taken by these fixtures - every tile
+    // that carries BIT_VEH_IN_TILE holds a unit inside VehCurrentCount. The
+    // three seams exist so that a fixture mistake writes here instead of into
+    // an unmapped fixed address.
+    BOOL veh_bit_error;
+    uint32_t game_state;
+    BOOL is_net;
+};
+
+OddsWorld g_odds_world;
+
+// veh_id -1 is the underflow slot the veh_at bug reads; ODDS_VEH_COUNT is the guard.
+Veh &odds_veh(int veh_id) {
+    return g_odds_world.vehs[1 + veh_id];
+}
+
+Map &odds_tile(int x, int y) {
+    return g_odds_world.tiles[(x >> 1) + y * ODDS_LONGITUDE];
+}
+
+PlayerData &odds_player(int faction_id) {
+    return g_odds_world.players_data[faction_id];
+}
+
+void odds_reset() {
+    std::memset(&g_odds_world, 0, sizeof(g_odds_world));
+    g_odds_world.tiles_ptr = g_odds_world.tiles;
+    g_odds_world.longitude = ODDS_LONGITUDE;
+    g_odds_world.lon_bounds = ODDS_LON_BOUNDS;
+    g_odds_world.lat_bounds = ODDS_LAT_BOUNDS;
+    g_odds_world.is_flat = 1;
+    g_odds_world.veh_count = ODDS_VEH_COUNT;   // the guard slot is outside the roster
+    g_odds_world.base_count = 0;               // no base until a case builds one
+    g_odds_world.expansion = 0;                // keeps is_alien_faction() out of has_abil
+
+    // ---- units: every slot off the map, unstacked, and owned by nobody we ----
+    // ---- ever ask about. The underflow slot and the guard get the same. ------
+    for (int i = -1; i <= ODDS_VEH_COUNT; i++) {
+        Veh &veh = odds_veh(i);
+        veh.x = ODDS_POISON16;
+        veh.y = ODDS_POISON16;
+        veh.proto_id = (int16_t)P_DEF;
+        veh.faction_id = (uint8_t)ODDS_STRANGER;
+        veh.order = (int8_t)ODDS_POISON8;
+        veh.flags = (uint16_t)0;
+        veh.prev_veh_id_stack = -1;   // a zero here makes veh_top() spin forever
+        veh.next_veh_id_stack = -1;
+    }
+
+    // ---- prototypes: poison first, then only the ones under test ------------
+    // chassis_id and weapon_id stay INSIDE their tables even when poisoned, so a
+    // misindexed read lands on the poison entry rather than off the end of the
+    // fixture. cost and plan carry 0x77, which is >= PLAN_NAVAL_TRANSPORT and
+    // matches neither PLAN_ALIEN_ARTIFACT nor PLAN_TERRAFORMING.
+    for (int i = 0; i < ODDS_PROTO_COUNT; i++) {
+        VehPrototype &proto = g_odds_world.protos[i];
+        proto.chassis_id = CHS_MSL;
+        proto.weapon_id = WPN_ARMED;
+        proto.cost = ODDS_POISON8;
+        proto.plan = ODDS_POISON8;
+        proto.flags = 0;
+        proto.ability_flags = 0;
+    }
+    g_odds_world.chassis[CHS_LAND].triad = TRIAD_LAND;
+    g_odds_world.chassis[CHS_SEA].triad = TRIAD_SEA;
+    g_odds_world.chassis[CHS_AIR].triad = TRIAD_AIR;
+    g_odds_world.chassis[CHS_MSL].triad = TRIAD_AIR;
+    g_odds_world.chassis[CHS_MSL].missile = 1;
+    g_odds_world.chassis[4].triad = ODDS_POISON8;     // the guard
+    g_odds_world.chassis[4].missile = 1;
+    g_odds_world.weapons[WPN_UNARMED].offense_rating = 0;
+    g_odds_world.weapons[WPN_ARMED].offense_rating = 4;
+    g_odds_world.weapons[2].offense_rating = (int8_t)0x77;   // the guard
+
+    struct Spec { int id; uint8_t chassis; uint8_t weapon; uint8_t cost; uint8_t plan; };
+    static const Spec specs[] = {
+        { P_DEF,        CHS_LAND, WPN_ARMED,   20, PLAN_COMBAT },
+        { P_STACK,      CHS_LAND, WPN_ARMED,   12, PLAN_COMBAT },
+        { P_ARTIFACT,   CHS_LAND, WPN_UNARMED,  5, PLAN_ALIEN_ARTIFACT },
+        { P_TERRA,      CHS_LAND, WPN_UNARMED,  5, PLAN_TERRAFORMING },
+        { P_TRANSPORT,  CHS_SEA,  WPN_UNARMED,  8, PLAN_NAVAL_TRANSPORT },
+        { P_DEF_AIR,    CHS_AIR,  WPN_ARMED,   20, PLAN_COMBAT },
+        { P_NEIGH_LAND, CHS_LAND, WPN_ARMED,   10, PLAN_COMBAT },
+        { P_NEIGH_SEA,  CHS_SEA,  WPN_ARMED,   10, PLAN_COMBAT },
+        { P_ATK_LAND,   CHS_LAND, WPN_ARMED,   10, PLAN_DEFENSIVE },
+        { P_ATK_SEA,    CHS_SEA,  WPN_ARMED,   10, PLAN_DEFENSIVE },
+        { P_ATK_AIR,    CHS_AIR,  WPN_ARMED,   10, PLAN_DEFENSIVE },
+        { P_ATK_MSL,    CHS_MSL,  WPN_ARMED,   10, PLAN_DEFENSIVE },
+        { P_ATK_AS,     CHS_LAND, WPN_ARMED,   10, PLAN_AIR_SUPERIORITY },
+        { P_ATK_AIROFF, CHS_AIR,  WPN_ARMED,   10, PLAN_OFFENSIVE },
+        { P_ATK_MSLOFF, CHS_MSL,  WPN_ARMED,   10, PLAN_OFFENSIVE },
+    };
+    for (int i = 0; i < (int)(sizeof(specs) / sizeof(specs[0])); i++) {
+        VehPrototype &proto = g_odds_world.protos[specs[i].id];
+        proto.chassis_id = specs[i].chassis;
+        proto.weapon_id = specs[i].weapon;
+        proto.cost = specs[i].cost;
+        proto.plan = specs[i].plan;
+    }
+
+    // ---- the map: dry land one level above sea, all one region --------------
+    for (int i = 0; i < ODDS_TILE_COUNT; i++) {
+        g_odds_world.tiles[i].climate = 0x80;   // altitude 4, not ocean
+        g_odds_world.tiles[i].region = 3;
+        g_odds_world.tiles[i].bit = 0;
+    }
+    g_odds_world.tiles[ODDS_TILE_COUNT - 1].region = ODDS_POISON8;   // the guard tile
+    g_odds_world.tiles[ODDS_TILE_COUNT - 1].climate = 0x20;
+
+    // ---- bases: none, and nowhere near a real coordinate --------------------
+    for (int i = 0; i < 2; i++) {
+        g_odds_world.bases[i].x = -9999;
+        g_odds_world.bases[i].y = -9999;
+    }
+
+    // ---- factions: rows 0 and 2 are poison, row 1 is the one under test -----
+    for (int f = 0; f < 3; f++) {
+        PlayerData &player = odds_player(f);
+        const bool live = (f == ODDS_FACTION);
+        player.flags = live ? 0u : 0x80000u;
+        for (int r = 0; r < 128; r++) {
+            player.region_base_plan[r] = ODDS_POISON8;
+        }
+        // Region 3 is the one every live tile carries. A wrong faction stride
+        // reads 2 here and turns the "our ground" bonus off, or turns the
+        // two-thirds tail on, either of which the assertions below catch.
+        player.region_base_plan[3] = live ? 0 : 2;
+        for (int p = 0; p < MaxVehProtoNum; p++) {
+            player.proto_id_active[p] = live ? 0 : 0xFF;
+        }
+        for (int g = 0; g < MaxGoalsNum; g++) {
+            player.goals[g].type = -1;
+            player.goals[g].x = -9999;
+            player.goals[g].y = -9999;
+        }
+    }
+}
+
+// Put a unit on the map and light the tile bit veh_at() insists on.
+void odds_place(int veh_id, int proto_id, int faction_id, int x, int y) {
+    Veh &veh = odds_veh(veh_id);
+    veh.x = (int16_t)x;
+    veh.y = (int16_t)y;
+    veh.proto_id = (int16_t)proto_id;
+    veh.faction_id = (uint8_t)faction_id;
+    veh.order = ORDER_NONE;
+    veh.flags = 0;
+    odds_tile(x, y).bit |= BIT_VEH_IN_TILE;
+}
+
+// Link ids[0..count) into one stack, top first.
+void odds_link(const int *ids, int count) {
+    for (int k = 0; k < count; k++) {
+        odds_veh(ids[k]).prev_veh_id_stack = (int16_t)(k ? ids[k - 1] : -1);
+        odds_veh(ids[k]).next_veh_id_stack = (int16_t)(k + 1 < count ? ids[k + 1] : -1);
+    }
+}
+
+// The attacker is never on the map; only its prototype is ever read.
+void odds_attacker(int proto_id) {
+    odds_veh(VEH_ATK).proto_id = (int16_t)proto_id;
+    odds_veh(VEH_ATK).faction_id = (uint8_t)ODDS_FACTION;
+}
+
+// A lone defender of the enemy faction at the standard tile.
+void odds_defender(int proto_id) {
+    odds_place(VEH_DEF, proto_id, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+}
+
+void odds_goal(int slot, int type, int x, int y) {
+    Goal &goal = odds_player(ODDS_FACTION).goals[slot];
+    goal.type = (int16_t)type;
+    goal.x = x;
+    goal.y = y;
+}
+
+void odds_make_ocean(int x, int y) {
+    odds_tile(x, y).climate = 0x20;   // altitude 1, below ALT_BIT_SHORE_LINE
+}
+
+// A design this faction could actually drop out of the sky.
+void odds_drop_design(int proto_id) {
+    g_odds_world.protos[proto_id].flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    g_odds_world.protos[proto_id].ability_flags = ABL_DROP_POD;
+    g_odds_world.protos[proto_id].chassis_id = CHS_AIR;
+    g_odds_world.protos[proto_id].weapon_id = WPN_ARMED;
+    g_odds_world.protos[proto_id].cost = 10;
+    g_odds_world.protos[proto_id].plan = PLAN_COMBAT;
+    odds_player(ODDS_FACTION).proto_id_active[proto_id] = 1;
+}
+
+#define OCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool odds_ok = (cond);                                          \
+        if (!odds_ok) {                                                       \
+            std::fprintf(stderr, "compute_odds: line %d: %s\n", __LINE__,     \
+                         #cond);                                              \
+        }                                                                     \
+        expect(odds_ok);                                                      \
+    } while (0)
+
+class OddsSeams {
+ public:
+    OddsSeams()
+        : vehs_(&Vehs, &g_odds_world.vehs[1]),
+          protos_(&VehPrototypes, g_odds_world.protos),
+          chassis_(&Chassis, g_odds_world.chassis),
+          weapons_(&Weapon, g_odds_world.weapons),
+          tiles_(&MapTiles, &g_odds_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_odds_world.longitude),
+          lon_(&MapLongitudeBounds, &g_odds_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_odds_world.lat_bounds),
+          flat_(&MapIsFlat, &g_odds_world.is_flat),
+          players_data_(&PlayersData, g_odds_world.players_data),
+          players_(&Players, g_odds_world.players),
+          bases_(&Bases, g_odds_world.bases),
+          base_count_(&BaseCurrentCount, &g_odds_world.base_count),
+          veh_count_(&VehCurrentCount, &g_odds_world.veh_count),
+          expansion_(&ExpansionEnabled, &g_odds_world.expansion),
+          bit_error_(&VehBitError, &g_odds_world.veh_bit_error),
+          state_(&GameState, &g_odds_world.game_state),
+          net_(&IsMultiplayerNet, &g_odds_world.is_net) { }
+
+ private:
+    ScopedSeam<Veh> vehs_;
+    ScopedSeam<VehPrototype> protos_;
+    ScopedSeam<RulesChassis> chassis_;
+    ScopedSeam<RulesWeapon> weapons_;
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<Player> players_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> veh_count_;
+    ScopedSeam<BOOL> expansion_;
+    ScopedSeam<BOOL> bit_error_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<BOOL> net_;
+};
+
+/*
+ * The cost basis: the one-fifth blend out in the field, the Alien Artifact
+ * half, the flat cost on a base tile, and the only real division in the body.
+ */
+void odds_basis() {
+    // A lone 20-cost defender, a 10-cost attacker, no base and no goal.
+    // ((20 - 20) / 5 + 20) * 7 = 140, / 10 = 14.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+
+    // A second unit in the stack counts at one FIFTH, and the fifth truncates:
+    // ((32 - 20) / 5 + 20) * 7 = 154, / 10 = 15. A /4 would give 23*7/10 = 16.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+
+    // Three: ((44 - 20) / 5 + 20) * 7 = 168, / 10 = 16.
+    odds_place(VEH_STACK_B, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A, VEH_STACK_B }; odds_link(ids, 3); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 16);
+
+    // The fifth's sign correction is real code, not dead: a stack whose prev
+    // and next chains disagree totals LESS than the defender's own cost.
+    // veh_top(DEF) walks up to STACK_A, whose next is -1, so the sum is 12.
+    // (12 - 20) / 5 truncates toward zero to -1, not down to -2:
+    // (-1 + 20) * 7 = 133, / 10 = 13.  Floor division would give 12.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    odds_veh(VEH_DEF).prev_veh_id_stack = (int16_t)VEH_STACK_A;
+    odds_veh(VEH_STACK_A).prev_veh_id_stack = -1;
+    odds_veh(VEH_STACK_A).next_veh_id_stack = -1;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 13);
+
+    // An Alien Artifact anywhere in the stack adds half, BEFORE the division by
+    // the attacker's cost: ((25 - 20) / 5 + 20) = 21, * 7 = 147, * 3 / 2 = 220,
+    // / 10 = 22. The 3/2 truncates - 441 / 2 is 220, not 221.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_ARTIFACT, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 22);
+
+    // Any other non-combat plan is not an artifact: the same 21 * 7 = 147 now
+    // goes straight to the division, 147 / 10 = 14.
+    g_odds_world.protos[P_ARTIFACT].plan = PLAN_TERRAFORMING;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    g_odds_world.protos[P_ARTIFACT].plan = PLAN_ALIEN_ARTIFACT;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 22);
+
+    // ---- a base tile ignores the stack entirely -----------------------------
+    // Same two-unit stack, but base_id 0: 20 * 7 = 140, / 10 = 14, where the
+    // field branch answered 15. The tile is ocean so the domain bonus below
+    // cannot fire, and the stack is two armed units so the garrison rule
+    // cannot either.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+
+    // ---- the division by the attacker's cost truncates ----------------------
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    g_odds_world.protos[P_ATK_LAND].cost = 3;      // 140 / 3 = 46, not 47
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 46);
+    g_odds_world.protos[P_ATK_LAND].cost = 1;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 140);
+    g_odds_world.protos[P_ATK_LAND].cost = 200;    // 140 / 200 = 0
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 0);
+
+    // ---- base_id strictly below -1 asks base_at for the answer --------------
+    // No base bit on the tile: base_at answers -1 and the field branch runs.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -2) == 15);
+
+    // Now give the tile a real base. base_at answers 0 and the base branch runs.
+    g_odds_world.bases[0].x = (int16_t)ODDS_DEF_X;
+    g_odds_world.bases[0].y = (int16_t)ODDS_DEF_Y;
+    g_odds_world.bases[0].faction_id_current = (uint8_t)ODDS_ENEMY;
+    g_odds_world.base_count = 1;
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).bit |= BIT_BASE_IN_TILE;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -2) == 14);
+
+    // -1 asserts there is no base and is NOT a lookup request, even with the
+    // base sitting right there.
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    // Anything below -1 is, though.
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -37) == 14);
+}
+
+/*
+ * The multipliers that run before the triad fork: the non-combat defender, the
+ * "our ground" three halves, the goal gate, the domain match, the thin
+ * garrison, and the objective flag.
+ */
+void odds_multipliers() {
+    // ---- a defender whose plan is PLAN_NAVAL_TRANSPORT or later doubles -----
+    // 8 * 7 = 56, / 10 = 5, then doubled to 10.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_TRANSPORT);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 10);
+    g_odds_world.protos[P_TRANSPORT].plan = PLAN_NAVAL_SUPERIORITY;   // 6, one below
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 5);
+    g_odds_world.protos[P_TRANSPORT].plan = PLAN_COLONIZATION;        // 8, above
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 10);
+
+    // ---- an offensive or combat LAND attacker on an unplanned region --------
+    // Base value 15; 15 * 3 / 2 truncates to 22, not 23.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    g_odds_world.protos[P_ATK_LAND].plan = PLAN_COMBAT;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 22);
+    g_odds_world.protos[P_ATK_LAND].plan = PLAN_OFFENSIVE;            // the other side
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 22);
+    g_odds_world.protos[P_ATK_LAND].plan = PLAN_DEFENSIVE;            // one past
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+
+    // Any region plan at all takes it away, and the plan is read from THIS
+    // faction's row - rows 0 and 2 both carry 2 for region 3.
+    g_odds_world.protos[P_ATK_LAND].plan = PLAN_COMBAT;
+    odds_player(ODDS_FACTION).region_base_plan[3] = 1;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    odds_player(ODDS_FACTION).region_base_plan[3] = 0;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 22);
+    // The region comes from the DEFENDER's tile, not from index zero.
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).region = 9;
+    odds_player(ODDS_FACTION).region_base_plan[9] = 4;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).region = 3;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 22);
+
+    // And a sea attacker never gets it.
+    g_odds_world.protos[P_ATK_LAND].chassis_id = CHS_SEA;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+
+    // ---- the goal gate ------------------------------------------------------
+    // Off the map's declared goals, neither the domain bonus nor the garrison
+    // rule is reachable for a field target.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_goal(0, AI_GOAL_ATTACK, ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);   // land on land
+    odds_goal(0, AI_GOAL_DEFEND, ODDS_DEF_X, ODDS_DEF_Y);                // wrong type
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_goal(0, AI_GOAL_ATTACK, ODDS_DEF_X + 1, ODDS_DEF_Y);            // wrong tile
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_goal(MaxGoalsNum - 1, AI_GOAL_ATTACK, ODDS_DEF_X, ODDS_DEF_Y);  // the last slot
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+
+    // ---- the domain match ---------------------------------------------------
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_goal(0, AI_GOAL_ATTACK, ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);   // land / land
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);   // land / water
+    odds_attacker(P_ATK_SEA);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);   // sea  / water
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).climate = 0x80;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);   // sea  / land
+    // ALT_BIT_SHORE_LINE itself is land.
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).climate = 0x60;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).climate = 0x40;                    // one below
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+    // Air is excluded from the bonus even when the domains "match".
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_goal(0, AI_GOAL_ATTACK, ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+
+    // ---- the thin garrison, which the domain bonus returns before ----------
+    // Ocean tile with a land attacker, so the domain never matches and the
+    // else branch is reached. One armed defender: 1 - 0 <= 1, doubled.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    // Two armed defenders: 2 - 0 > 1, not doubled.
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // Two units, one of them unarmed: 2 - 1 <= 1, doubled again. This is the
+    // only pair that moves the type-19 count without moving the type-1 count.
+    g_odds_world.protos[P_STACK].weapon_id = WPN_UNARMED;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    // Three, two of them unarmed: 3 - 2 <= 1.
+    odds_place(VEH_STACK_B, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A, VEH_STACK_B }; odds_link(ids, 3); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    // Three, one unarmed: 3 - 1 > 1.
+    g_odds_world.protos[P_STACK].weapon_id = WPN_ARMED;
+    odds_veh(VEH_STACK_B).proto_id = (int16_t)P_ARTIFACT;   // unarmed
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // The garrison rule needs the base. Declaring the tile an attack goal
+    // opens the same gate, but the field branch reaches only the domain test -
+    // which a land attacker over water cannot pass - so the thin garrison here
+    // buys nothing. The field basis returns as well: the stack is now
+    // 20 + 12 + 5 = 37, ((37 - 20) / 5 + 20) = 23, * 7 = 161, and the artifact
+    // in it takes that to 161 * 3 / 2 = 241, / 10 = 24.
+    odds_goal(0, AI_GOAL_ATTACK, ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 24);
+}
+
+/*
+ * The objective flag, kept separate because it is the only x4 in the body.
+ */
+void odds_objective() {
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_veh(VEH_DEF).flags = VFLAG_IS_OBJECTIVE;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 56);   // x4, not x2
+    odds_veh(VEH_DEF).flags = VFLAG_LURKER;                              // a neighbouring bit
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_veh(VEH_DEF).flags = VFLAG_PROBE_PACT_OPERATIONS;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    odds_veh(VEH_DEF).flags = (uint16_t)(VFLAG_IS_OBJECTIVE | VFLAG_LURKER | VFLAG_INVISIBLE);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 56);
+    // It is the defender's flag, not the attacker's.
+    odds_veh(VEH_DEF).flags = 0;
+    odds_veh(VEH_ATK).flags = VFLAG_IS_OBJECTIVE;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+}
+
+/*
+ * The air branch: the missile over open water, the terraformer block, the
+ * eight-neighbour scan, the tenth-of-active threshold and the drop-pod scan.
+ */
+void odds_air() {
+    // ---- a missile aimed at open water away from a base --------------------
+    // ((32 - 20) / 5 + 20) * 7 = 154, / 10 = 15, doubled to 30.
+    odds_reset();
+    odds_attacker(P_ATK_MSL);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 30);
+    // Not a missile: no bonus.
+    odds_attacker(P_ATK_AIR);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    // A missile over land: no bonus.
+    odds_attacker(P_ATK_MSL);
+    odds_tile(ODDS_DEF_X, ODDS_DEF_Y).climate = 0x80;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    // A missile over water WITH a base: no bonus. The base branch also drops
+    // the stack from the basis, so 20 * 7 / 10 = 14, and the garrison is two
+    // armed units so the earlier rule cannot fire either.
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+
+    // ---- the terraformer block ---------------------------------------------
+    // ((25 - 20) / 5 + 20) * 7 = 147, / 10 = 14, then x2 for not being a
+    // missile = 28.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_TERRA, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+    // No terraformer in the stack and the whole block is skipped: 14.
+    g_odds_world.protos[P_TERRA].plan = PLAN_SUPPLY_CONVOY;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    g_odds_world.protos[P_TERRA].plan = PLAN_TERRAFORMING;
+    // A missile does NOT get the not-a-missile half of it: back to 14, and the
+    // open-water half cannot fire on land.
+    odds_attacker(P_ATK_MSL);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    // Over water the missile gets the earlier open-water bonus instead: 28.
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+
+    // The unnamed 0x80000 player flag, over water only, and read from THIS
+    // faction's row - rows 0 and 2 both carry the bit.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_TERRA, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_player(ODDS_FACTION).flags = 0x80000;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);   // land, no bonus
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 56);   // water + flag
+    odds_player(ODDS_FACTION).flags = 0x40000;                           // a neighbouring bit
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+    odds_player(ODDS_FACTION).flags = 0xFFFFFFFFu;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 56);
+
+    // The two terraform orders, on the DEFENDER, each double once. They are two
+    // independent tests in the original and a unit can only hold one value, so
+    // the two doublings can never both apply.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_TERRA, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+    odds_veh(VEH_DEF).order = ORDER_DRILL_AQUIFIER;      // 19, one below
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+    odds_veh(VEH_DEF).order = ORDER_TERRAFORM_UP;        // 20
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 56);
+    odds_veh(VEH_DEF).order = ORDER_TERRAFORM_DOWN;      // 21
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 56);
+    odds_veh(VEH_DEF).order = ORDER_TERRAFORM_LEVEL;     // 22, one above
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 28);
+    // It is read from the defender, and only inside the terraformer block.
+    odds_veh(VEH_DEF).order = ORDER_TERRAFORM_UP;
+    g_odds_world.protos[P_TERRA].plan = PLAN_SUPPLY_CONVOY;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+}
+
+/*
+ * The air branch's eight-neighbour scan and the drop-pod scan behind it.
+ *
+ * The standing setup: an air attacker, a base on the defender's tile, and a
+ * two-unit armed garrison so the earlier thin-garrison rule stays off. The
+ * basis is 20 * 7 / 10 = 14 in every case here.
+ */
+void odds_air_neighbours() {
+    // No friendly neighbour: 14.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+
+    // A friendly LAND unit next door doubles it, once.
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    // Two of them still only double once - the loop breaks on the first.
+    odds_place(VEH_NEIGH_B, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X - 1, ODDS_DEF_Y - 1);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+
+    // A friendly SEA unit is not land, and does not.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_SEA, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // A LAND unit belonging to somebody else does not either.
+    odds_veh(VEH_NEIGH_A).proto_id = (int16_t)P_NEIGH_LAND;
+    odds_veh(VEH_NEIGH_A).faction_id = (uint8_t)ODDS_ENEMY;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    odds_veh(VEH_NEIGH_A).faction_id = (uint8_t)ODDS_FACTION;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    // Two tiles away is not a neighbour: (12,4) is outside RadiusBase.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 4, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // Nor is the defender's own tile - RadiusBase entry 8 is (0,0) and the loop
+    // stops at 8, so it is never read.
+    //
+    // Moving the unit by hand leaves BIT_VEH_IN_TILE behind on (12,4), which is
+    // deliberate and safe here because (12,4) is not one of the eight. Keep it
+    // that way: veh_at() answers a tile that carries the bit and holds no unit
+    // by falling through to log_say() and rebuild_base_bits(), which would pass
+    // quietly while writing diagnostics rather than fail. Clear the bit if any
+    // later edit brings that tile inside the radius.
+    odds_veh(VEH_NEIGH_A).x = (int16_t)ODDS_DEF_X;
+    odds_veh(VEH_NEIGH_A).y = (int16_t)ODDS_DEF_Y;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+
+    // ---- the unchecked veh_at() answer of -1 --------------------------------
+    // BUG, reproduced not corrected: veh_at answers -1 for an empty tile and
+    // the original reads Vehs[-1].faction_id from it. The slot below vehs[0]
+    // exists so that read lands inside the fixture; it is poisoned with a
+    // faction that is not ours, so the loop skips.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(odds_veh(-1).faction_id == (uint8_t)ODDS_STRANGER);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // Make the underflow slot answer OUR faction and the comparison now passes
+    // for every empty neighbour, so stack_check(-1, ...) really is called. It
+    // answers zero because veh_top(-1) is -1, which is why the defect is quiet
+    // rather than fatal - and why only a fixture that can see the read at all
+    // can say so.
+    odds_veh(-1).faction_id = (uint8_t)ODDS_FACTION;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    OCHECK(odds_veh(-1).faction_id == (uint8_t)ODDS_FACTION);   // and nothing wrote to it
+
+    // ---- the tenth-of-active threshold, and the drop-pod scan --------------
+    // Garrison is 2. proto_id_active[attacker] / 10 + 1 must be at least 2, so
+    // 9 gives 1 and refuses while 10 gives 2 and admits.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_drop_design(P_DROP);
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_AIR] = 9;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);    // scan refused
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_AIR] = 10;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);    // scan admitted
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_AIR] = 19;           // still 1 + 1
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+    // A one-unit garrison passes the threshold with a zero count, but it also
+    // trips the thin-garrison rule, so the value is 14 x2 x2 x2 = 112.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);   // keeps the domain bonus off
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_drop_design(P_DROP);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 112);
+
+    // ---- what disqualifies a drop-pod design -------------------------------
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_AIR] = 10;
+    odds_drop_design(P_DROP);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+    g_odds_world.protos[P_DROP].flags = PROTO_TYPED_COMPLETE;          // retired
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    g_odds_world.protos[P_DROP].flags = PROTO_ACTIVE;                  // not typed
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    g_odds_world.protos[P_DROP].flags = PROTO_ACTIVE | PROTO_TYPED_COMPLETE;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+    odds_player(ODDS_FACTION).proto_id_active[P_DROP] = 0;             // none in service
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    odds_player(ODDS_FACTION).proto_id_active[P_DROP] = 1;
+    g_odds_world.protos[P_DROP].ability_flags = ABL_AIR_SUPERIORITY;   // wrong ability
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    g_odds_world.protos[P_DROP].ability_flags = ABL_DROP_POD | ABL_AAA;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+
+    // ---- the scan's bounds, which is what the guard prototype is for -------
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_AIR] = 10;
+    odds_drop_design(P_DROP_HIGH);            // 127, the last slot faction 1 owns
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+    g_odds_world.protos[P_DROP_HIGH].flags = 0;
+    odds_drop_design(P_DROP_GUARD);           // 128, one past the sixty-four
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    g_odds_world.protos[P_DROP_GUARD].flags = 0;
+    odds_drop_design(P_DROP_LOW);             // 63, one below - faction 0's slot
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    g_odds_world.protos[P_DROP_LOW].flags = 0;
+    odds_drop_design(P_ATK_LAND);             // 64, faction 1's first
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+
+    // A missile attacker doubles a second time for the same drop-pod design.
+    odds_reset();
+    odds_attacker(P_ATK_MSL);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_MSL] = 10;
+    odds_drop_design(P_DROP);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 112);
+
+    // None of this happens off a base tile.
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+}
+
+/*
+ * The non-air branch: the accumulated neighbour count, the divide-by-garrison
+ * doubling loop, the zero-defender guard and the million clamp.
+ *
+ * The standing setup puts the defender on an OCEAN base tile with a land
+ * attacker, so the domain bonus never matches and the two-unit garrison keeps
+ * the thin-garrison rule off. The basis is 20 * 7 / 10 = 14 throughout.
+ */
+void odds_ground() {
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);   // no neighbours
+
+    // Two land units next door against a two-unit garrison: 2 > 2 is false.
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_place(VEH_NEIGH_B, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X - 1, ODDS_DEF_Y - 1);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+
+    // Three: 3 > 2 doubles once, then 1 > 2 stops.
+    odds_place(VEH_NEIGH_C, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 1, ODDS_DEF_Y + 1);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+
+    // Five: 5 > 2 doubles, 3 > 2 doubles, 1 > 2 stops. Two of them share a
+    // tile, which proves the count is accumulated across the whole stack and
+    // across all eight neighbours rather than stopping at the first.
+    odds_place(VEH_NEIGH_D, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_place(VEH_NEIGH_E, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    { const int ids[] = { VEH_NEIGH_A, VEH_NEIGH_D, VEH_NEIGH_E }; odds_link(ids, 3); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+
+    // Sea units next door contribute nothing to a LAND count.
+    g_odds_world.protos[P_NEIGH_LAND].chassis_id = CHS_SEA;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    g_odds_world.protos[P_NEIGH_LAND].chassis_id = CHS_LAND;
+
+    // ---- a garrison of zero skips the loop entirely ------------------------
+    // Both defenders get a plan outside {DEFENSIVE, RECONNAISANCE, COMBAT} and
+    // below PLAN_NAVAL_TRANSPORT, so nothing else moves. Without the guard the
+    // subtraction would never terminate.
+    g_odds_world.protos[P_DEF].plan = PLAN_AIR_SUPERIORITY;
+    g_odds_world.protos[P_STACK].plan = PLAN_AIR_SUPERIORITY;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // PLAN_RECONNAISANCE is in the set and brings the loop back.
+    g_odds_world.protos[P_DEF].plan = PLAN_RECONNAISANCE;
+    g_odds_world.protos[P_STACK].plan = PLAN_DEFENSIVE;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+
+    // ---- the million clamp, at its exact boundary --------------------------
+    // odds 500000 gives 20 * 500000 / 10 = 1000000 exactly, which is NOT below
+    // the clamp, so the loop refuses to run even with five attackers.
+    g_odds_world.protos[P_DEF].plan = PLAN_COMBAT;
+    g_odds_world.protos[P_STACK].plan = PLAN_COMBAT;
+    OCHECK(compute_odds(500000, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 1000000);
+    // One less: 20 * 499999 / 10 = 999998 is below it, so the loop doubles
+    // exactly once and the next test stops it.
+    OCHECK(compute_odds(499999, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 1999996);
+
+    // ---- the ground branch needs the base ----------------------------------
+    // Field tile, same five neighbours, and none of it runs. The basis returns
+    // to the field blend: ((32 - 20) / 5 + 20) * 7 / 10 = 15.
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+}
+
+/*
+ * The tail: the air-superiority halving and the offensive-air thirds.
+ */
+void odds_tail() {
+    // ---- an air-superiority attacker ---------------------------------------
+    // Basis 15, halved to 7 - and 15 / 2 truncates, so 7 rather than 8.
+    odds_reset();
+    odds_attacker(P_ATK_AS);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 7);
+    // An airborne target is what it is for, and keeps its full value.
+    odds_veh(VEH_DEF).proto_id = (int16_t)P_DEF_AIR;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    // So does an unarmed one - there is nothing there to intercept.
+    odds_veh(VEH_DEF).proto_id = (int16_t)P_DEF;
+    g_odds_world.protos[P_DEF].weapon_id = WPN_UNARMED;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 15);
+    g_odds_world.protos[P_DEF].weapon_id = WPN_ARMED;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 7);
+    // The two tests are on the DEFENDER's chassis and weapon, not the
+    // attacker's - the attacker here is a land unit with no air chassis at all.
+    OCHECK(g_odds_world.protos[P_ATK_AS].chassis_id == CHS_LAND);
+
+    // ---- a plain offensive air unit ----------------------------------------
+    // Basis 14; a third of it is 4, and two thirds is 9. Neither is a rounding
+    // of the other, so the divisor and the numerator are both pinned.
+    odds_reset();
+    odds_attacker(P_ATK_AIROFF);
+    odds_defender(P_DEF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 4);
+    odds_player(ODDS_FACTION).region_base_plan[3] = 2;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 9);
+    odds_player(ODDS_FACTION).region_base_plan[3] = 1;     // one below
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 4);
+    odds_player(ODDS_FACTION).region_base_plan[3] = 3;     // one above
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 4);
+    odds_player(ODDS_FACTION).region_base_plan[3] = 0;
+
+    // A missile is exempt.
+    odds_attacker(P_ATK_MSLOFF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    // So is any air unit whose plan is not PLAN_OFFENSIVE.
+    odds_attacker(P_ATK_AIR);                              // PLAN_DEFENSIVE
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    g_odds_world.protos[P_ATK_AIR].plan = PLAN_COMBAT;     // still not zero
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 14);
+    // And so is a PLAN_OFFENSIVE unit that is not airborne. This one also
+    // collects the "our ground" three halves on the way past, 14 -> 21.
+    odds_attacker(P_ATK_LAND);
+    g_odds_world.protos[P_ATK_LAND].plan = PLAN_OFFENSIVE;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 21);
+
+    // The air-superiority test comes FIRST: an air-superiority attacker that is
+    // also airborne and not a missile still takes the halving, never a third.
+    odds_reset();
+    odds_attacker(P_ATK_AS);
+    g_odds_world.protos[P_ATK_AS].chassis_id = CHS_AIR;
+    odds_defender(P_DEF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 7);
+}
+
+/*
+ * The round-map wrap, both ways, and the fixture guards.
+ */
+void odds_wrap_and_guards() {
+    // ---- the negative wrap --------------------------------------------------
+    // The defender sits at x 0. RadiusBase entry 5 is (-2, 0), which is off the
+    // left edge on a flat map and 14 on a round one. The friendly land stack is
+    // at 14, so the neighbour bonus fires only when the map is round.
+    // Entry 4 is (-1, 1) -> 15 on a round map, and that tile stays empty, so it
+    // cannot supply the bonus first.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_place(VEH_DEF, P_DEF, ODDS_ENEMY, 0, 4);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, 0, 4);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, 14, 4);
+    g_odds_world.is_flat = 1;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    g_odds_world.is_flat = 0;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    // Only bit zero of MapIsFlat is read, exactly as course_xrange does it.
+    g_odds_world.is_flat = 2;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+    g_odds_world.is_flat = 3;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+
+    // ---- the positive wrap --------------------------------------------------
+    // The defender at x 14; entry 1 is (2, 0), which is 16 - off the right edge
+    // on a flat map and 0 on a round one.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_place(VEH_DEF, P_DEF, ODDS_ENEMY, 14, 4);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, 14, 4);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, 0, 4);
+    g_odds_world.is_flat = 1;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    g_odds_world.is_flat = 0;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+
+    // ---- the top and bottom edges are never wrapped ------------------------
+    // A defender on row 0: entry 0 is (1, -1) and entry 7 is (0, -2), both off
+    // the map whatever MapIsFlat says.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_place(VEH_DEF, P_DEF, ODDS_ENEMY, 8, 0);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, 8, 0);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, 8, ODDS_LAT_BOUNDS - 2);
+    g_odds_world.is_flat = 0;
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    // But a real neighbour on row 2 still counts.
+    odds_place(VEH_NEIGH_B, P_NEIGH_LAND, ODDS_FACTION, 8, 2);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+
+    // ---- the faction stride -------------------------------------------------
+    // Every value the body reads out of PlayersData is read at 8396 bytes per
+    // faction. Rows 0 and 2 carry the opposite of every one of them, so a wrong
+    // stride cannot answer correctly by accident. Asking for faction 0 or 2
+    // with the same units therefore gives a DIFFERENT answer, and that is the
+    // whole point of them being poisoned rather than zeroed.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    g_odds_world.protos[P_ATK_LAND].plan = PLAN_COMBAT;   // arms the region rule
+    odds_defender(P_DEF);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, -1) == 21);   // plan 0 -> x3/2
+    OCHECK(compute_odds(7, 0, VEH_ATK, VEH_DEF, -1) == 14);              // plan 2 -> no
+    OCHECK(compute_odds(7, 2, VEH_ATK, VEH_DEF, -1) == 14);
+
+    // ---- compute_odds writes nothing, anywhere -----------------------------
+    // A whole-fixture comparison rather than a spot check: this covers the
+    // underflow slot, the guard unit one past the roster, the guard prototype,
+    // the guard tile and the two poison faction rows in one assertion.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_TERRA, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 2, ODDS_DEF_Y);
+    odds_veh(VEH_DEF).order = ORDER_TERRAFORM_UP;
+    odds_player(ODDS_FACTION).proto_id_active[P_ATK_AIR] = 10;
+    odds_drop_design(P_DROP);
+    odds_goal(0, AI_GOAL_ATTACK, ODDS_DEF_X, ODDS_DEF_Y);
+    {
+        static OddsWorld before;
+        std::memcpy(&before, &g_odds_world, sizeof(OddsWorld));
+        const int answer = compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0);
+        OCHECK(std::memcmp(&before, &g_odds_world, sizeof(OddsWorld)) == 0);
+        // The one case that stacks five of the doublings at once:
+        //   20 * 7 / 10                                          =  14
+        //   x2  garrison of 2 units, one of them unarmed         =  28
+        //   x2  a terraformer in the stack, attacker not missile =  56
+        //   x2  the defender's ORDER_TERRAFORM_UP                = 112
+        //   x2  a friendly land stack next door                  = 224
+        //   x2  the faction owns an active drop-pod design       = 448
+        OCHECK(answer == 448);
+    }
+    // And the guards still hold their poison, stated separately so a failure
+    // names the slot rather than the whole struct.
+    OCHECK(odds_veh(ODDS_VEH_COUNT).x == ODDS_POISON16);
+    OCHECK(odds_veh(ODDS_VEH_COUNT).faction_id == (uint8_t)ODDS_STRANGER);
+    OCHECK(g_odds_world.protos[P_DROP_GUARD].cost == ODDS_POISON8);
+    OCHECK(g_odds_world.tiles[ODDS_TILE_COUNT - 1].region == ODDS_POISON8);
+    OCHECK(g_odds_world.chassis[4].triad == ODDS_POISON8);
+    OCHECK(g_odds_world.weapons[2].offense_rating == (int8_t)0x77);
+    OCHECK(odds_player(0).region_base_plan[3] == 2);
+    OCHECK(odds_player(2).region_base_plan[3] == 2);
+}
+
+/*
+ * The ends of the two eight-step neighbour loops, and the census the drop-pod
+ * gate shares with the thin-garrison rule.
+ *
+ * The first sweep left four mutants of these alive because no case reached
+ * them: none put a friendly unit on RadiusBase entry 0, which is (+1,-1), and
+ * none made the noncombat census answer anything but zero.
+ */
+void odds_loop_edges() {
+    // ---- the air loop reads RadiusBase entry 0 -----------------------------
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 1, ODDS_DEF_Y - 1);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+
+    // ---- and so does the ground loop ---------------------------------------
+    // Three of them stacked on that one tile, because the ground rule counts
+    // rather than breaks and the garrison it divides by is two.
+    odds_reset();
+    odds_attacker(P_ATK_LAND);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_STACK, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A }; odds_link(ids, 2); }
+    odds_make_ocean(ODDS_DEF_X, ODDS_DEF_Y);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 14);
+    odds_place(VEH_NEIGH_A, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 1, ODDS_DEF_Y - 1);
+    odds_place(VEH_NEIGH_B, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 1, ODDS_DEF_Y - 1);
+    odds_place(VEH_NEIGH_C, P_NEIGH_LAND, ODDS_FACTION, ODDS_DEF_X + 1, ODDS_DEF_Y - 1);
+    { const int ids[] = { VEH_NEIGH_A, VEH_NEIGH_B, VEH_NEIGH_C }; odds_link(ids, 3); }
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 28);
+
+    // ---- the census the two garrison rules share ---------------------------
+    // One armed defender and two unarmed passengers. Three minus two is one,
+    // which is the thin-garrison threshold and also the drop-pod threshold
+    // when the faction has none of the attacker's prototype in service, so a
+    // noncombat count that answers zero loses BOTH doublings at once.
+    odds_reset();
+    odds_attacker(P_ATK_AIR);
+    odds_defender(P_DEF);
+    odds_place(VEH_STACK_A, P_ARTIFACT, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    odds_place(VEH_STACK_B, P_ARTIFACT, ODDS_ENEMY, ODDS_DEF_X, ODDS_DEF_Y);
+    { const int ids[] = { VEH_DEF, VEH_STACK_A, VEH_STACK_B }; odds_link(ids, 3); }
+    odds_drop_design(P_DROP);
+    OCHECK(compute_odds(7, ODDS_FACTION, VEH_ATK, VEH_DEF, 0) == 56);
+}
+
+void test_compute_odds() {
+    OddsSeams seams;
+    odds_basis();
+    odds_multipliers();
+    odds_objective();
+    odds_air();
+    odds_air_neighbours();
+    odds_ground();
+    odds_tail();
+    odds_wrap_and_guards();
+    odds_loop_edges();
+}
+
+#undef OCHECK
+
 }  // namespace
 
 int main() {
@@ -11092,6 +12253,7 @@ int main() {
     test_alt_ocean_edge_midpoints();
     test_alt_ocean_corner();
     test_alt_ocean_shoreline();
+    test_compute_odds();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

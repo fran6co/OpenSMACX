@@ -1622,7 +1622,6 @@ P3,1421,0x00564B90,?assemble_passengers@@YAXHHH@Z,512,1,4,unrecovered,,,2,exact,
 P3,2421,0x00564D90,?can_convoy@@YAHHH@Z,282,2,4,unrecovered,,,2,exact,exact,"int (__cdecl ?can_convoy@@YAHHH@Z)(int xCoord, int yCoord)"
 P3,210,0x00565160,sub_565160,442,0,2,unrecovered,,,1,missing,exact,
 P3,3621,0x00565320,?can_terraform@@YAHHHHHH@Z,3070,3,6,unrecovered,,,2,exact,exact,"int (__cdecl ?can_terraform@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int, int baseID)"
-P3,2521,0x00565F20,?compute_odds@@YAHHHHHH@Z,1708,2,5,unrecovered,,,2,exact,exact,"int (__cdecl ?compute_odds@@YAHHHHHH@Z)(int, int factionID, int vehID1, int vehID2, int)"
 P3,1421,0x005665D0,?alien_base@@YAHHHH@Z,562,1,4,unrecovered,,,2,exact,exact,"int (__cdecl ?alien_base@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)"
 P3,3721,0x00566810,?alien_move@@YAHH@Z,4265,1,27,unrecovered,,,2,exact,exact,int (__cdecl ?alien_move@@YAHH@Z)(int vehID)
 P3,3221,0x005678C0,?air_power@@YAHHHHPAH0@Z,12254,1,22,unrecovered,,,2,exact,exact,"int (__cdecl ?air_power@@YAHHHHPAH0@Z)(int vehID, int, int, int*, int*)"

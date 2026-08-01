@@ -3767,3 +3767,242 @@ int __cdecl action_home(int veh_id, int flags) {
     }
     return true;
 }
+
+/*
+Purpose: Weight the raw odds of an attack by how badly the faction's AI wants that particular
+         stack dead. The odds arrive already computed by battle_fight; everything here is a
+         strategic multiplier on top of them.
+Original Offset: 00565F20
+Return Value: Weighted attack odds
+Status: Complete
+
+THE BASIS is what the target is worth divided by what the attacker costs. Out in the field the
+defender's own prototype cost counts in full and the rest of its stack counts at ONE FIFTH, so a
+stack of ten is worth roughly three of them; an Alien Artifact anywhere in that stack adds half
+again. On a base tile the stack is ignored and only the defender's own cost is used, because the
+garrison gets its own rule below. Either way the result is divided by the attacker's prototype
+cost, which is what makes this a cost-effectiveness number rather than a value.
+
+EVERYTHING AFTER THAT IS A DOUBLING, and they compose:
+
+  x2   the defender's plan is PLAN_NAVAL_TRANSPORT or later, i.e. it cannot fight back
+  x3/2 an offensive or combat LAND attacker, on a region this faction has no base plan for
+  x2   the attacker's domain matches the tile - a sea unit over water or a land unit over land,
+       never an air unit - but only for a base tile or a declared AI_GOAL_ATTACK goal
+  x2   a base tile whose garrison is one real combat unit or fewer (total minus the ones with no
+       offense rating); mutually exclusive with the domain bonus, which returns first
+  x4   the unit carries VFLAG_IS_OBJECTIVE
+
+then one of two branches on the attacker's triad.
+
+AN AIR ATTACKER additionally gets x2 for a missile aimed at open water away from a base; and, if
+the stack is TERRAFORMING, x2 for not being a missile, x2 over water when the faction carries
+player flag 0x80000, and x2 again for each of the two terraform orders. On a base tile it looks
+at the eight neighbours for a friendly stack containing LAND units - something already in place
+to take the base - and doubles once for the first one it finds. Then, if the garrison is no
+larger than a tenth of the faction's active count of this attacker's prototype plus one, it
+scans this faction's sixty-four prototype slots for an active, typed, in-service design with
+ABL_DROP_POD, and doubles for it - twice if the attacker is a missile.
+
+ANY OTHER ATTACKER on a base tile counts LAND units across all eight neighbouring friendly
+stacks and doubles once per whole garrison's worth of them, stopping at a million.
+
+THE TAIL undoes some of it. An air-superiority attacker aimed at something that is neither
+airborne nor armed is worth HALF; a plain PLAN_OFFENSIVE air unit that is not a missile is worth
+a THIRD, or two thirds where the region's base plan is 2, because it is expected to be doing
+something else.
+
+Bug notes, reproduced rather than corrected:
+
+  - veh_at() answers -1 for a tile with no unit, and both neighbour loops read
+    Vehs[veh_id].faction_id from that -1 without checking. The address is fifty-two bytes below
+    Vehs[0], four bytes inside Reactor, and it is compared against a live faction id. The read
+    is preserved exactly - writing it through the same Vehs pointer lands on the same byte.
+  - The division by the attacker's prototype cost is a bare idiv with no zero guard.
+  - The two terraform-order tests are two independent ifs in the original, not an else-if. They
+    are mutually exclusive in practice because `order` holds one value, so this is a shape
+    difference only, and it is transcribed as written.
+  - The `while` below terminates only because `defenders` is known nonzero; the guard is the
+    original's, not an addition.
+
+The x wrap is course_xrange() rather than xrange(), for the one bit that separates them: the
+original reads the low BYTE of MapIsFlat and tests bit zero (`mov cl, byte ptr [94988Ch] /
+test cl, 1`), exactly as set_course and reset_territory do.
+
+Verification note: eighteen mutants survive the sweep and every one is an equivalence that can be
+read off another recovered body.
+
+SIXTEEN ARE ARGUMENTS stack_check DOES NOT LOOK AT. Its recovered switch takes cond1, cond2 and
+cond3 but each arm reads only some of them, and the -1 in an unread slot is therefore free:
+type 1, type 16 and type 19 read cond1 alone, so their cond2 and cond3 are dead - two survivors
+each at the stack cost, the two thin-garrison censuses, the drop-pod censuses and the defender
+count; type 2 and type 3 read cond1 and cond2, so their cond3 is dead - one survivor each at the
+artifact test, the terraforming test and the two neighbour counts. The original passes -1 in all
+of them and so does this, because the call is the same call.
+
+THE OTHER TWO ARE THE NINTH RADIUSBASE ENTRY. Both neighbour loops stop at eight, and mutating
+`i < 8` to `i <= 8` adds entry eight, which is (0,0) - the tile under attack. The stack there is
+the defender's, and a tile in this game holds one faction's units, so
+Vehs[veh_at(x_def, y_def)].faction_id is the defender's faction and the loop's
+`!= faction_id` skips it for any caller that is attacking rather than reinforcing. Every other
+tile of the ring is separately covered, including entry 0, which the first sweep found untested.
+
+A NOTE ON THE SWEEP ITSELF, because it cost a pass to work out: the mutation harness perturbs
+digits inside trailing comments as well as in code. A `// RadiusBase entry 8 is (0,0) ...` note
+on the `for` line produced four unkillable survivors that read exactly like real coverage holes.
+The comment is now on its own line and carries no digits.
+*/
+int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def, int base_id) {
+    const int x_def = Vehs[veh_id_def].x;
+    const int y_def = Vehs[veh_id_def].y;
+    const int triad_atk = Chassis[VehPrototypes[Vehs[veh_id_atk].proto_id].chassis_id].triad;
+    const int plan_atk = VehPrototypes[Vehs[veh_id_atk].proto_id].plan;
+    if (base_id < -1) {
+        // Strictly below -1 asks for the lookup; -1 asserts there is no base here.
+        base_id = base_at(x_def, y_def);
+    }
+    const int region_plan =
+        PlayersData[faction_id].region_base_plan[map_loc(x_def, y_def)->region];
+
+    int value;
+    if (base_id < 0) {
+        const int cost_def = VehPrototypes[Vehs[veh_id_def].proto_id].cost;
+        // The rest of the stack counts at one fifth; the defender itself counts in full.
+        value = ((stack_check(veh_id_def, 7, -1, -1, -1) - cost_def) / 5 + cost_def) * odds;
+        if (stack_check(veh_id_def, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
+            value = value * 3 / 2;
+        }
+    } else {
+        value = VehPrototypes[Vehs[veh_id_def].proto_id].cost * odds;
+    }
+    value /= VehPrototypes[Vehs[veh_id_atk].proto_id].cost;
+
+    if (VehPrototypes[Vehs[veh_id_def].proto_id].plan >= PLAN_NAVAL_TRANSPORT) {
+        value *= 2;   // it cannot fight back
+    }
+    if (plan_atk <= PLAN_COMBAT && !region_plan && triad_atk == TRIAD_LAND) {
+        value = value * 3 / 2;
+    }
+    if (base_id >= 0 || at_goal(faction_id, AI_GOAL_ATTACK, x_def, y_def)) {
+        if ((triad_atk == TRIAD_SEA) == (is_ocean(x_def, y_def) != 0) && triad_atk != TRIAD_AIR) {
+            value *= 2;   // the attacker's own domain, and this returns before the next rule
+        } else if (base_id >= 0) {
+            const int noncombat = stack_check(veh_id_def, 19, -1, -1, -1);
+            const int total = stack_check(veh_id_def, 1, -1, -1, -1);
+            if (total - noncombat <= 1) {
+                value *= 2;   // one real defender or none
+            }
+        }
+    }
+    if (Vehs[veh_id_def].flags & VFLAG_IS_OBJECTIVE) {
+        value *= 4;
+    }
+
+    if (triad_atk == TRIAD_AIR) {
+        if (is_proto_missile(Vehs[veh_id_atk].proto_id)
+            && is_ocean(x_def, y_def) && base_id < 0) {
+            value *= 2;
+        }
+        if (stack_check(veh_id_def, 2, PLAN_TERRAFORMING, -1, -1)) {
+            if (!is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+                value *= 2;
+            }
+            if (is_ocean(x_def, y_def) && (PlayersData[faction_id].flags & 0x80000)) {
+                value *= 2;   // unnamed player flag; PlayerFlagsBitfield skips this bit
+            }
+            // Two separate tests in the original, not an else-if; `order` cannot be both.
+            if (Vehs[veh_id_def].order == ORDER_TERRAFORM_UP) {
+                value *= 2;
+            }
+            if (Vehs[veh_id_def].order == ORDER_TERRAFORM_DOWN) {
+                value *= 2;
+            }
+        }
+        if (base_id >= 0) {
+            for (int i = 0; i < 8; i++) {
+                // The ninth RadiusBase entry is the tile itself and is never reached.
+                const int x_radius = course_xrange(x_def + RadiusBaseX[i]);
+                const int y_radius = y_def + RadiusBaseY[i];
+                if (!on_map(x_radius, y_radius)) {
+                    continue;
+                }
+                const int veh_id = veh_at(x_radius, y_radius);
+                // Unchecked -1: see the bug note. Preserved deliberately.
+                if (Vehs[veh_id].faction_id != faction_id) {
+                    continue;
+                }
+                if (stack_check(veh_id, 3, TRIAD_LAND, -1, -1)) {
+                    value *= 2;   // somebody is already on the ground next to it
+                    break;
+                }
+            }
+            const int noncombat = stack_check(veh_id_def, 19, -1, -1, -1);
+            const int total = stack_check(veh_id_def, 1, -1, -1, -1);
+            const int proto_atk = Vehs[veh_id_atk].proto_id;
+            if (total - noncombat
+                <= PlayersData[faction_id].proto_id_active[proto_atk] / 10 + 1) {
+                for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+                    const int proto_id = faction_id * MaxVehProtoFactionNum + i;
+                    if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
+                        continue;
+                    }
+                    if (!(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
+                        continue;
+                    }
+                    if (!PlayersData[faction_id].proto_id_active[proto_id]) {
+                        continue;
+                    }
+                    if (!has_abil(proto_id, ABL_DROP_POD)) {
+                        continue;
+                    }
+                    value *= 2;
+                    if (is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+                        value *= 2;
+                    }
+                    break;
+                }
+            }
+        }
+    } else if (base_id >= 0) {
+        int attackers = 0;
+        for (int i = 0; i < 8; i++) {
+            const int x_radius = course_xrange(x_def + RadiusBaseX[i]);
+            const int y_radius = y_def + RadiusBaseY[i];
+            if (!on_map(x_radius, y_radius)) {
+                continue;
+            }
+            const int veh_id = veh_at(x_radius, y_radius);
+            // Unchecked -1 here too.
+            if (Vehs[veh_id].faction_id != faction_id) {
+                continue;
+            }
+            attackers += stack_check(veh_id, 3, TRIAD_LAND, -1, -1);
+        }
+        const int defenders = stack_check(veh_id_def, 16, -1, -1, -1);
+        if (defenders) {   // without this the subtraction below never terminates
+            while (attackers > defenders && value < 1000000) {
+                value *= 2;
+                attackers -= defenders;
+            }
+        }
+    }
+
+    if (plan_atk == PLAN_AIR_SUPERIORITY) {
+        const int proto_def = Vehs[veh_id_def].proto_id;
+        if (Chassis[VehPrototypes[proto_def].chassis_id].triad == TRIAD_AIR) {
+            return value;   // an interceptor doing its job
+        }
+        if (!Weapon[VehPrototypes[proto_def].weapon_id].offense_rating) {
+            return value;   // nothing there to intercept anything
+        }
+        return value / 2;
+    }
+    if (triad_atk == TRIAD_AIR && plan_atk == PLAN_OFFENSIVE
+        && !is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+        if (region_plan == 2) {
+            return value * 2 / 3;
+        }
+        return value / 3;
+    }
+    return value;
+}

@@ -385,6 +385,7 @@ EXPORTS
     "?garrison_check@@YAII@Z" = _Z14garrison_checkj
     "?defensive_check@@YAII@Z" = _Z15defensive_checkj
     "?stack_check@@YAHHIHHH@Z" = _Z11stack_checkijiii
+    "?compute_odds@@YAHHHHHH@Z" = _Z12compute_oddsiiiii
     "?vulnerable@@YAHIHH@Z" = _Z10vulnerablejii
     "?corner_market@@YAII@Z" = _Z13corner_marketj
     "?black_market@@YAIH@Z" = _Z12black_marketi
