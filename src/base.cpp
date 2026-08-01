@@ -2006,6 +2006,98 @@ int __cdecl base_project(uint32_t project_id) {
 }
 
 /*
+Purpose: Suggest the base the specified pair of factions should agree to attack together.
+Original Offset: 0054ACC0
+Return Value: Base id of the suggested target, or -1 if the pair has no shared target
+Status: Complete
+
+WHO THE TWO PARAMETERS ARE. battle_plans (0x0054B1C0) is the only caller and it asks this twice,
+once each way round, so neither parameter is "the AI" and neither is "the player": faction_id is
+the side whose plan is being drawn up and faction_id_2 is the other side of the conversation. A
+base is eligible only when BOTH factions are already at vendetta with its owner, so this proposes
+a joint target within a war that exists rather than a war to start, and only when faction_id can
+actually see the base.
+
+THE NUMBER IS A COST, NOT A SCORE. The loop keeps the LOWEST value and seeds it at 9999. It is
+assembled from three terms:
+
+  - where the war already is. When faction_id holds a target tile (x_target >= 0) the cost opens
+    at twice the radiating distance from that tile to the base, plus 512 when the base is not even
+    in the same region as the tile.
+  - how far the base sits from faction_id's own territory: BaseFindDist after searching for its
+    nearest base in the SAME region as the candidate. Owning nothing in that region repeats the
+    search unrestricted and adds 1024, the price of an amphibious war. This whole term is doubled
+    when faction_id already holds a target tile, so a faction with a war in progress is pulled
+    harder toward what it can reach than one starting fresh.
+  - the same distance for faction_id_2, penalised 256 instead of 1024 and never doubled. The
+    partner's convenience counts, at a quarter of the weight.
+
+AN EXISTING PLAN WINS OUTRIGHT. If faction_id has already named a base in base_id_atk_target, that
+base is returned the moment the loop reaches it, whatever it costs and whatever was cheaper
+earlier. The suggestion machinery only decides while nothing has been decided.
+
+Verification note: the visibility test transcribes a disjunct that cannot fire. The original
+re-tests "base owner == faction_id" at 0x0054AD52 before consulting Bases[i].visibility, exactly as
+the six-argument base_find does, but the loop already skipped that base at 0x0054AD00. It is kept
+because it is what the image does, and it is still covered: inverting the comparison stops the
+body skipping bases faction_id cannot see, which the fixtures observe.
+
+Verification note: three sites the image inlines are written here as calls, each of which is
+instruction-for-instruction the standalone body in the image - x_dist (0x00579790) and the
+two-argument vector_dist (0x004F8090), reached together through the four-argument vector_dist, and
+region_at (0x00500220), which the original expands three separate times. The inlined map_loc
+halves x with SAR where the exported region_at takes uint32_t and would use SHR; the two agree for
+every non-negative coordinate, which is all a base or a target tile can hold.
+*/
+int __cdecl suggest_plan(int faction_id, int faction_id_2) {
+    *PopupDialogFactionID = faction_id_2;
+    int lowest_cost = 9999;
+    int base_id_best = -1;
+    for (int i = 0; i < *BaseCurrentCount; i++) {
+        int faction_id_base = Bases[i].faction_id_current;
+        if (faction_id_base == faction_id || faction_id_base == faction_id_2) {
+            continue;
+        }
+        if (!(PlayersData[faction_id].diplo_treaties[faction_id_base] & DTREATY_VENDETTA)
+            || !(PlayersData[faction_id_2].diplo_treaties[faction_id_base] & DTREATY_VENDETTA)) {
+            continue;
+        }
+        if (faction_id_base != faction_id && !((1 << faction_id) & Bases[i].visibility)) {
+            continue;
+        }
+        int cost = 0;
+        if (PlayersData[faction_id].x_target >= 0) {
+            int x_target = PlayersData[faction_id].x_target;
+            int y_target = PlayersData[faction_id].y_target;
+            cost = 2 * vector_dist(x_target, y_target, Bases[i].x, Bases[i].y);
+            if (region_at(Bases[i].x, Bases[i].y) != region_at(x_target, y_target)) {
+                cost += 512;
+            }
+        }
+        if (base_find(Bases[i].x, Bases[i].y, faction_id, region_at(Bases[i].x, Bases[i].y),
+                      -1, -1) < 0) {
+            base_find(Bases[i].x, Bases[i].y, faction_id);
+            *BaseFindDist += 1024;
+        }
+        cost += *BaseFindDist * ((PlayersData[faction_id].x_target >= 0) ? 2 : 1);
+        if (base_find(Bases[i].x, Bases[i].y, faction_id_2, region_at(Bases[i].x, Bases[i].y),
+                      -1, -1) < 0) {
+            base_find(Bases[i].x, Bases[i].y, faction_id_2);
+            *BaseFindDist += 256;
+        }
+        cost += *BaseFindDist;
+        if (PlayersData[faction_id].base_id_atk_target == i) {
+            return i;
+        }
+        if (cost < lowest_cost) {
+            lowest_cost = cost;
+            base_id_best = i;
+        }
+    }
+    return base_id_best;
+}
+
+/*
 Purpose: Determine the faction's best base to attack the specified base from.
 Original Offset: 0054AFA0
 Return Value: Base id to attack from or 0 
