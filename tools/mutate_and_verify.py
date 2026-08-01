@@ -365,6 +365,38 @@ def declares_name_used_later(lines: list[str], index: int, end: int) -> bool:
     return any(pattern.search(lines[later]) for later in range(index + 1, end))
 
 
+def code_extent(line: str) -> int:
+    """Index at which the compiled part of `line` ends, before any comment.
+
+    Quote-aware: `"http://host"` and `'/'` both contain a slash pair that is not
+    a comment, and treating them as one would silently drop real mutants, which
+    is the worse direction to err in.
+
+    A whole-line `//` is already skipped by the caller, but a TRAILING comment
+    was not, and its digits and operators compile to nothing - so perturbing
+    them yields a mutant that behaves identically to the original, survives
+    every test, and reads as a coverage hole. One `// RadiusBase entry 8 is
+    (0,0)` on a `for` line produced four such phantoms (commit 2db61f0), and a
+    genuine survivor was hiding among them.
+    """
+    quote = None
+    index = 0
+    while index < len(line):
+        char = line[index]
+        if quote is not None:
+            if char == "\\":
+                index += 2
+                continue
+            if char == quote:
+                quote = None
+        elif char in "\"'":
+            quote = char
+        elif char == "/" and line[index:index + 2] in ("//", "/*"):
+            return index
+        index += 1
+    return len(line)
+
+
 def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
     """Derive mechanical perturbations of one function body."""
     mutants: list[Mutant] = []
@@ -392,9 +424,15 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
             emit(index + 1, "drop-statement", f"drop `{stripped}`",
                  lines[:index] + lines[index + 1:])
 
+        # Everything a trailing comment contains is invisible to the compiler,
+        # so blank it - length-preserving, because every match offset below is
+        # used to slice the ORIGINAL line.
+        extent = code_extent(line)
+        code_line = line[:extent] + " " * (len(line) - extent)
+
         # 2. Perturb a constant. Catches fixtures driving unobservable state.
         emitted_constant_lines = set()
-        for match in INT_LITERAL.finditer(line):
+        for match in INT_LITERAL.finditer(code_line):
             literal = match.group(0)
             value = int(match.group(1), 0)
             replacement = ("1" if value == 0 else "0") + match.group(2)
@@ -414,7 +452,8 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
         #    brackets are not comparisons; rewriting them only burns a build.
         #    The blanking must preserve length, because the match offset is
         #    used to slice the *original* line.
-        comparable = TEMPLATE_ANGLE.sub(lambda m: " " * len(m.group(0)), line)
+        comparable = TEMPLATE_ANGLE.sub(lambda m: " " * len(m.group(0)),
+                                        code_line)
         for pattern, target in COMPARISONS:
             match = pattern.search(comparable)
             if match:
@@ -765,6 +804,27 @@ def main() -> int:
             print(f"  {mutant.address}:{mutant.line_number} [{mutant.operator}] "
                   f"{mutant.description}")
     print("=" * 72)
+    # Zero measured mutants is NO SIGNAL, and must not exit 0. An empty sweep
+    # prints `killed 0/0`, an empty survivor list and a clean exit, which reads
+    # exactly like total coverage - the same confusion the per-operator block
+    # above exists to break, one level up. A body whose only statement is a
+    # guard clause carries no literal and no comparison, so nothing is
+    # generated; HANDOVER.md already calls that "no signal, not a clean sweep",
+    # and the commit that follows says "swept, 0 survivors".
+    measured = len(result.killed) + len(result.survived)
+    if measured == 0:
+        if shard:
+            # Legitimate: N above the mutant count leaves some shards empty.
+            # Still not a pass - the sweep is unmeasured until all N have run
+            # and their survivors are unioned.
+            print("NO SIGNAL: this shard measured no mutant. That is expected "
+                  "when N\nexceeds the mutant count, but it is not coverage. "
+                  "The function is\nunswept until every shard has run.")
+        else:
+            print("NO SIGNAL: not one mutant was measured, so this run proves "
+                  "NOTHING\nabout the body. `killed 0/0` is not a clean sweep. "
+                  "Check that the\noperators can see this function at all.")
+        return 1
     # A STALE mutant fails the run as surely as a survivor does. Not because the
     # recovery is wrong - nothing was learned about it either way - but because
     # "N/N killed" must never be printable over a sweep that silently skipped

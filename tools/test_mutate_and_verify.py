@@ -564,9 +564,16 @@ class HarnessClassificationTest(unittest.TestCase):
         self.assertEqual(0, code)
 
     def test_uncompilable_mutant_is_not_counted_as_killed(self):
-        code, _ = self._run([self.PASSED, self.FAILED, self.PASSED],
-                            [self.PASSED])
-        self.assertEqual(0, code)
+        code, restored = self._run([self.PASSED, self.FAILED, self.PASSED],
+                                   [self.PASSED])
+        # Still true, and still the point of the name: the mutant that would
+        # not compile is never counted as a kill, and the source is restored.
+        self.assertEqual(SOURCE, restored)
+        # The exit code changed with the NO SIGNAL rule, and the new value is
+        # the correct one. The only mutant here never compiled, so the run
+        # measured nothing: `killed 0/0` and exit 0 is exactly the shape that
+        # becomes "swept, 0 survivors" in a commit message.
+        self.assertEqual(1, code)
 
     def test_failing_baseline_aborts(self):
         code, _ = self._run([self.PASSED], [self.FAILED])
@@ -644,6 +651,69 @@ class ShardTests(unittest.TestCase):
                 seen.extend(n for n in range(88) if n % total == offset)
             self.assertEqual(sorted(seen), list(range(88)),
                              f"shards of {count} do not partition 88 mutants")
+
+
+class CodeExtentTests(unittest.TestCase):
+    """A trailing comment must not be mutated; real code must not be lost."""
+
+    def extent(self, line):
+        return mutate_and_verify.code_extent(line)
+
+    def test_trailing_comment_is_excluded(self):
+        line = "    for (int i = 0; i < 8; i++) {  // RadiusBase entry 8 is (0,0)"
+        self.assertEqual(self.extent(line), line.index("//"))
+
+    def test_block_comment_is_excluded(self):
+        line = "    total += 3;  /* was 4 before the 1999 patch */"
+        self.assertEqual(self.extent(line), line.index("/*"))
+
+    def test_a_line_with_no_comment_is_untouched(self):
+        line = "    total = base * 2 + 7;"
+        self.assertEqual(self.extent(line), len(line))
+
+    # The dangerous direction: cutting a line short silently DROPS real
+    # mutants, and the sweep then reports coverage it never had.
+    def test_slashes_inside_a_string_are_not_a_comment(self):
+        line = '    log("http://host/path 8");'
+        self.assertEqual(self.extent(line), len(line))
+
+    def test_a_character_literal_slash_is_not_a_comment(self):
+        line = "    if (c == '/') { count = 2; }"
+        self.assertEqual(self.extent(line), len(line))
+
+    def test_division_is_not_a_comment(self):
+        line = "    value = total / 8 / 2;"
+        self.assertEqual(self.extent(line), len(line))
+
+    def test_escaped_quote_does_not_end_the_string(self):
+        line = r'    log("a \" b // still string 4");'
+        self.assertEqual(self.extent(line), len(line))
+
+
+class TrailingCommentMutantTests(unittest.TestCase):
+    """End to end through build_mutants, which is what the sweep calls."""
+
+    def mutants_for(self, body):
+        lines = ["void f() {", *body, "}"]
+        function = mutate_and_verify.Function(
+            address="0x00400000", start=1, end=len(lines) - 1)
+        return mutate_and_verify.build_mutants(lines, function)
+
+    def test_digits_in_a_trailing_comment_produce_no_mutant(self):
+        only_comment = self.mutants_for(["    call();  // entry 8 is (0,0)"])
+        self.assertEqual(
+            [one for one in only_comment if one.operator == "constant"], [])
+
+    def test_a_real_literal_on_the_same_line_still_mutates(self):
+        both = self.mutants_for(["    total = 8;  // entry 4 is (0,0)"])
+        constants = [one for one in both if one.operator == "constant"]
+        self.assertEqual(len(constants), 1)
+        self.assertIn("`8`", constants[0].description)
+
+    def test_a_comparison_inside_a_trailing_comment_is_not_inverted(self):
+        mutants = self.mutants_for(["    call();  // true when a >= b"])
+        self.assertEqual(
+            [one for one in mutants if one.operator == "comparison"], [])
 
 
 if __name__ == "__main__":
