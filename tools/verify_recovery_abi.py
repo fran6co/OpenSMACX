@@ -1,15 +1,114 @@
 #!/usr/bin/env python3
 
 import argparse
+import concurrent.futures
+import os
 import re
 from pathlib import Path
 import subprocess
 import sys
 from typing import NoReturn
 
+# WHY THIS FILE PREFETCHES.
+#
+# Measured on the debug preset: this check was 49.36 s of a 47-second gate lane
+# - the whole critical path, and every recovery pays it twice, once per preset.
+# 46.2 s of that was user CPU inside serial subprocesses.
+#
+# The obvious suspect was wrong, and the wrong answer is worth recording. The
+# 137-object -fno-exceptions sweep looks like the expensive part because it is
+# 274 processes, but it measures 3.7 s. The cost is the THIRTY-THREE full
+# `objdump -d` disassemblies below: each one disassembles an entire translation
+# unit - up to 2.3 MB - so that a regex can pull one function body out of it,
+# and they average 1.4 s.
+#
+# Those calls are pure functions of a file on disk, so they parallelise with no
+# reordering hazard. Rather than restructure 2,400 lines of linear checks into
+# concurrent blocks - the kind of refactor that silently drops a check, which is
+# the exact defect class this file exists to catch - the checks stay linear and
+# untouched, and `run()` becomes a cache that is filled in parallel first.
+#
+# TWO PROPERTIES MAKE THIS SAFE TO DO TO A VERIFIER:
+#
+#  1. A cache miss is not an error. Any command the plan failed to anticipate is
+#     executed on demand exactly as before, so the verdict cannot change - only
+#     the wall clock. Under-planning is slow, never wrong.
+#  2. A prefetch failure is not a verdict. If a speculatively-issued command
+#     fails, the exception is discarded and nothing is cached, so the real call
+#     re-runs it and raises where it always did.
+#
+# The plan is read out of THIS FILE'S OWN SOURCE, so it cannot go stale: adding
+# a `run([args.objdump, ...])` line anywhere below adds it to the prefetch
+# automatically. A shape the scanner fails to recognise degrades to property 1.
+
+_CACHE = {}
+_EXECUTED_ON_DEMAND = 0
+
+
+def _execute(command):
+    return subprocess.run(command, check=True, text=True, capture_output=True).stdout
+
 
 def run(command):
-    return subprocess.run(command, check=True, text=True, capture_output=True).stdout
+    """Return this command's stdout, from the prefetch cache when possible."""
+    global _EXECUTED_ON_DEMAND
+    key = tuple(command)
+    if key in _CACHE:
+        return _CACHE[key]
+    _EXECUTED_ON_DEMAND += 1
+    result = _execute(command)
+    _CACHE[key] = result
+    return result
+
+
+# `run([args.objdump, "-d", "-r", "-C", args.autosound_object])`, tolerating the
+# line breaks black-style wrapping puts inside the call.
+_COMMAND_SHAPE = re.compile(
+    r"run\(\s*\[\s*args\.(?P<tool>objdump|nm)\s*,\s*"
+    r"(?P<flags>(?:\"[^\"]*\"\s*,\s*)*)"
+    r"args\.(?P<name>[a-z_]+)\s*\]")
+
+
+def plan_prefetch(args, swept):
+    """Every command the checks below are going to ask for, in no order.
+
+    Over-planning is harmless and under-planning only costs time, so this
+    deliberately guesses rather than proving; see the note at the top.
+    """
+    commands = []
+    source = Path(__file__).read_text(encoding="utf-8")
+    for match in _COMMAND_SHAPE.finditer(source):
+        name = match.group("name")
+        if name == "object_dir":
+            continue
+        value = getattr(args, name, None)
+        if not value:
+            continue
+        tool = args.objdump if match.group("tool") == "objdump" else args.nm
+        flags = re.findall(r"\"([^\"]*)\"", match.group("flags"))
+        commands.append([tool, *flags, str(value)])
+    # The sweep loop reaches its files through a local, so no source shape names
+    # them; it always asks these two questions of every object it visits.
+    named = [value for name, value in vars(args).items()
+             if name.endswith("object") and value and name != "object_dir"]
+    for value in [str(p) for p in swept] + [str(v) for v in named]:
+        commands.append([args.objdump, "-h", value])
+        commands.append([args.nm, "-u", value])
+    unique = {tuple(command): command for command in commands}
+    return list(unique.values())
+
+
+def prefetch(commands, workers):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        pending = {pool.submit(_execute, command): command
+                   for command in commands}
+        for future in concurrent.futures.as_completed(pending):
+            try:
+                _CACHE[tuple(pending[future])] = future.result()
+            except Exception:
+                # Property 2: speculation never decides anything. The real call
+                # re-runs this command and raises there if it genuinely fails.
+                pass
 
 
 def fail(message) -> NoReturn:
@@ -40,6 +139,13 @@ def main():
     parser.add_argument("--object-floor", type=int, default=100,
                         help="refuse to report clean over fewer objects than "
                              "this; an empty directory sweeps nothing")
+    # Parallel by default - an agent should not have to remember a flag to get
+    # the fast path. Capped rather than cpu_count() because two gate lanes run
+    # concurrently, each already at `ctest --parallel 8`.
+    parser.add_argument("--jobs", type=int,
+                        default=min(8, os.cpu_count() or 1),
+                        help="workers used to prefetch objdump/nm output; "
+                             "1 disables prefetching entirely")
     # Brought under the -fno-exceptions sweep below, which iterates every
     # argument whose name ends in "object". The generated oracle gained a
     # setjmp/longjmp fault guard, and the guarantee that it introduces no
@@ -106,6 +212,9 @@ def main():
             fail(f"--object-dir {directory} holds {len(swept)} objects, fewer "
                  f"than the floor of {args.object_floor}. An empty or wrong "
                  f"directory sweeps nothing and reports clean.")
+    if args.jobs > 1:
+        prefetch(plan_prefetch(args, swept), args.jobs)
+
     named = [(name.replace("_", " "), value)
              for name, value in sorted(vars(args).items())
              if name.endswith("object") and value and name != "object_dir"]
@@ -2483,6 +2592,12 @@ def main():
                 f"scenario turn-advance instruction {actual!r} does not match {pattern!r}")
     if not re.search(r"dir32\s+\.bss", turn_body):
         fail("scenario turn-advance comparison lacks its .bss relocation")
+
+    # Printed so that a prefetch plan which has drifted out of step with the
+    # checks shows up as a number rather than as an unexplained slowdown. A
+    # large on-demand count is a performance bug, never a correctness one.
+    print(f"recovery-abi: {len(_CACHE)} tool invocations, "
+          f"{_EXECUTED_ON_DEMAND} executed on demand at {args.jobs} job(s)")
 
 
 if __name__ == "__main__":
