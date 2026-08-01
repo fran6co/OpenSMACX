@@ -51,12 +51,12 @@
   "format_version": 1,
   "inputs": {
     "binding_classifications_sha256": "7185cd1b0d0d57baef47761ca8a4a61a8e4c402d1f8278402d856d396d041dca",
-    "canonical_inventory_sha256": "b49638ba882f297adf3c475ab8e86466e8362af9961ff5afc7f420e7ece12303",
-    "canonical_summary_sha256": "7c28857b9b5174b8edc0a925c8d65462b739027306b7f79188e7d4532f0155c5"
+    "canonical_inventory_sha256": "c5fc5413812a9ddd34d2e46ecbecda2af29ded3fdbf61f672cb3dccfd8731bfb",
+    "canonical_summary_sha256": "d07650e4b65e9344fcd2553b41fb2f5b28626ef85b3eef37be827e0b3a1d3289"
   },
   "outputs": {
-    "analysis_correlation_sha256": "3a8b0fc7114658bb14a019ef6c7dfcd46a6c60b7c4788c27bd6615eb4bcbe5b0",
-    "priorities_sha256": "cf4497b00bb40ee2a22d3e59230e3b75caa4a4d9a2d9b02ff1b92d3e5557ddd2"
+    "analysis_correlation_sha256": "f29343c77f11a1ce3d4392347463f757ed80d34e011aafb8e8e21e7d4f4cd284",
+    "priorities_sha256": "e476f57bb229d4f994c2c7866b475d9db47e8cfd82f5c958baa02e61fc45f8e1"
   },
   "priorities": {
     "bindings_by_category": {
@@ -72,9 +72,9 @@
       "P0": 328,
       "P1": 34,
       "P2": 257,
-      "P3": 2496
+      "P3": 2495
     },
     "original_dependencies": 328,
-    "total": 3115
+    "total": 3114
   }
 }

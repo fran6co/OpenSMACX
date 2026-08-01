@@ -46,6 +46,7 @@
 #include "../src/base.h"
 #include "../src/general.h"
 #include "../src/technology.h"
+#include "../src/terraforming.h"
 #include "../src/temp.h"
 #include "recovery_fixtures.h"
 
@@ -12202,6 +12203,1353 @@ void test_compute_odds() {
 
 #undef OCHECK
 
+/*
+ * can_terraform (0x00565320).
+ *
+ * The subject tile is always (8,4) and the faction is always 1. There are two
+ * base worlds, because the body splits on altitude and shares almost nothing
+ * across the split: ct_reset() lays down arid flat land one level above the
+ * shore line, ct_make_ocean() rewrites the same map as ocean shelf.
+ *
+ * FIVE THINGS ABOUT THE FIXTURE ARE LOAD-BEARING.
+ *
+ *  - `Bases` is seamed to &bases[1], NOT &bases[0], exactly as YieldWorld does
+ *    it. can_terraform guards every Bases[] read with base_id >= 0, but it
+ *    calls crop_yield(faction, -1, x, y, 0), and crop_yield's aquafarm read is
+ *    unguarded. bases[0] is the Bases[-1] entry and is left poisoned.
+ *
+ *  - EVERY Terraforming[] entry carries a DIFFERENT prerequisite technology,
+ *    40 + 2*i on land and 41 + 2*i at sea, and the faction starts holding NONE
+ *    of them. A wrong index or a swapped land/sea field therefore asks about a
+ *    technology the faction does not have and the answer changes, instead of
+ *    coinciding with the right one. Index MaxTerrainNum - one past the last
+ *    valid action - is the GUARD: its two technologies are the only ones the
+ *    faction always holds, so a read one entry past the end turns a refusal
+ *    into an order.
+ *
+ *  - The tiles OUTSIDE the 8x8 live window are poisoned with every bit set and
+ *    an ocean-shelf altitude, so a dropped on_map() guard in the base-radius
+ *    census counts improvements that are not there.
+ *
+ *  - Every Base except the live one is poisoned with all three planning bits,
+ *    all facilities and a nonsense surplus; bases[9] is the guard one past the
+ *    last id any case uses, and is asserted untouched.
+ *
+ *  - MapRandSeed is 0, which keeps bonus_at() off its pseudo-random path, so a
+ *    resource bonus is decided by BIT_NUTRIENT_RSC / BIT_MINERAL_RSC /
+ *    BIT_ENERGY_RSC alone and is exact rather than positional.
+ */
+struct CtWorld {
+    Map tiles[192];
+    Base bases[10];
+    PlayerData players_data[9];
+    Player players[9];
+    RulesResourceinfo resource_info[MaxResourceInfoNum];
+    RulesTerraforming terraforming[MaxTerrainNum + 1];
+    RulesBasic rules;
+    BaseSecretProject projects;
+    RulesTechnology technology[MaxTechnologyNum];
+    uint8_t tech_achieved[MaxTechnologyNum];
+    uint8_t factions_status[2];
+    Map *tiles_ptr;
+    Base *base_current;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t map_rand_seed;
+    uint32_t game_rules;
+    uint32_t game_state;
+    uint32_t preferences;
+    uint32_t more_preferences;
+    int turn_current;
+    int local_faction;
+    BOOL expansion;
+    int dust_cloud;
+    int restricted;
+    int base_square_energy;
+    int governor;
+    int energy_event;
+    int energy_event_selector;
+};
+
+CtWorld g_ct_world;
+
+const int CT_LIVE = 64;          // the live window starts here; 64 tiles follow
+const int CT_FACTION = 1;        // has_tech() refuses faction 0, so 1 is the floor
+const int CT_X = 8;
+const int CT_Y = 4;
+const int CT_POISON = 0x77;
+const int CT_TECH_THREE_NUTRIENTS = 5;
+
+// Terraforming[i]'s two prerequisites. Distinct per entry and per field.
+int ct_preq(int terraform_id) { return 40 + 2 * terraform_id; }
+int ct_preq_sea(int terraform_id) { return 41 + 2 * terraform_id; }
+
+const uint8_t CT_ALT_LAND = 0x60;    // ALT_BIT_SHORE_LINE, alt level 3, elev 1
+const uint8_t CT_ALT_SHELF = 0x40;   // ALT_BIT_OCEAN_SHELF
+const uint8_t CT_ALT_DEEP = 0x20;    // ALT_BIT_OCEAN
+
+// Position-independent resource bonuses; see the fixture note.
+const uint32_t CT_BONUS_NUTRIENT = BIT_RSC_BONUS | BIT_NUTRIENT_RSC;
+const uint32_t CT_BONUS_MINERAL = BIT_RSC_BONUS | BIT_NUTRIENT_RSC | BIT_MINERAL_RSC;
+const uint32_t CT_BONUS_ENERGY = BIT_RSC_BONUS | BIT_NUTRIENT_RSC | BIT_ENERGY_RSC;
+
+Map &ct_at(int x, int y) {
+    return g_ct_world.tiles[CT_LIVE + (x >> 1) + y * 8];
+}
+
+Map &ct_subject() { return ct_at(CT_X, CT_Y); }
+
+Base &ct_base(int base_id) { return g_ct_world.bases[base_id + 1]; }
+
+void ct_grant(int tech_id) {
+    g_ct_world.tech_achieved[tech_id] = (uint8_t)(1 << CT_FACTION);
+}
+
+void ct_give_fac(int base_id, uint32_t facility) {
+    int offset;
+    int mask;
+    bitmask(facility, &offset, &mask);
+    ct_base(base_id).facilities_built[offset] |= (uint8_t)mask;
+}
+
+void ct_make_human() {
+    g_ct_world.factions_status[0] = (uint8_t)(1 << CT_FACTION);
+}
+
+void ct_reset() {
+    std::memset(&g_ct_world, 0, sizeof(g_ct_world));
+    std::memset(&g_ct_world.projects, 0xFF, sizeof(g_ct_world.projects));
+    g_ct_world.tiles_ptr = &g_ct_world.tiles[CT_LIVE];
+    g_ct_world.base_current = &g_ct_world.bases[1];
+    g_ct_world.longitude = 8;
+    g_ct_world.lon_bounds = 16;
+    g_ct_world.lat_bounds = 8;
+    g_ct_world.is_flat = 1;
+    g_ct_world.map_rand_seed = 0;
+    g_ct_world.game_state = STATE_OMNISCIENT_VIEW;  // whose_territory reports the real owner
+    g_ct_world.turn_current = 100;                  // past the < 50 plant bonus
+    g_ct_world.local_faction = CT_FACTION;
+    g_ct_world.governor = -1;
+
+    // Poison the whole map, then lay the live window down over it. An off-map
+    // read lands on a tile with every improvement on it.
+    for (int k = 0; k < 192; k++) {
+        g_ct_world.tiles[k].climate = CT_ALT_SHELF;
+        g_ct_world.tiles[k].bit = 0xFFFFFFFF;
+        g_ct_world.tiles[k].territory = (int8_t)0x7;
+    }
+    for (int k = 0; k < 64; k++) {
+        Map &tile = g_ct_world.tiles[CT_LIVE + k];
+        tile.climate = CT_ALT_LAND;   // arid, flat, one level above the shore
+        tile.bit = 0;
+        tile.bit2 = 0;
+        tile.val2 = 0;
+        tile.val3 = 0;
+        tile.territory = (int8_t)CT_FACTION;
+    }
+
+    // Every base poisoned; the live one (id 0) then cleared.
+    for (int b = 0; b < 10; b++) {
+        Base &base = g_ct_world.bases[b];
+        base.x = (int16_t)0x777;
+        base.y = (int16_t)0x777;
+        base.state = 0xFFFFFFFF;
+        base.eco_damage = CT_POISON;
+        base.nutrient_surplus = CT_POISON;
+        std::memset(base.facilities_built, 0xFF, sizeof(base.facilities_built));
+    }
+    Base &live = ct_base(0);
+    live.x = (int16_t)CT_X;
+    live.y = (int16_t)CT_Y;
+    live.state = 0;
+    live.eco_damage = 0;
+    live.nutrient_surplus = 0;
+    std::memset(live.facilities_built, 0, sizeof(live.facilities_built));
+
+    // Distinct prerequisites, none of them held. The guard one past the end is
+    // the only entry whose technologies the faction always has.
+    for (int i = 0; i <= MaxTerrainNum; i++) {
+        g_ct_world.terraforming[i].preq_tech = ct_preq(i);
+        g_ct_world.terraforming[i].preq_tech_sea = ct_preq_sea(i);
+    }
+    ct_grant(ct_preq(MaxTerrainNum));
+    ct_grant(ct_preq_sea(MaxTerrainNum));
+
+    // Poison every resource row, then pin the three the subject and crop_yield
+    // actually read so the comparisons below stay legible.
+    for (int i = 0; i < MaxResourceInfoNum; i++) {
+        g_ct_world.resource_info[i].nutrients = 40 + 3 * i;
+        g_ct_world.resource_info[i].minerals = 41 + 3 * i;
+        g_ct_world.resource_info[i].energy = 42 + 3 * i;
+    }
+    g_ct_world.resource_info[RSCINFO_FOREST_SQ].nutrients = 2;
+    g_ct_world.resource_info[RSCINFO_FOREST_SQ].minerals = 3;
+    g_ct_world.resource_info[RSCINFO_FOREST_SQ].energy = 4;   // forest_value = 9
+    g_ct_world.resource_info[RSCINFO_IMPROVED_LAND].nutrients = 1;
+    g_ct_world.resource_info[RSCINFO_BONUS_SQ].nutrients = 2;
+
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = -1;   // the alphax.txt default
+    g_ct_world.rules.tech_three_nutrients_sqr = CT_TECH_THREE_NUTRIENTS;
+
+    // fungus_value = 3 by default; poisoned rather than zero so that a dropped
+    // term in the three-way sum is visible.
+    g_ct_world.players_data[CT_FACTION].tech_fungus_nutrient = 1;
+    g_ct_world.players_data[CT_FACTION].tech_fungus_mineral = 1;
+    g_ct_world.players_data[CT_FACTION].tech_fungus_energy = 1;
+
+    // The guard element one past the last faction id. A stride error in the
+    // PlayersData arithmetic reads this and every answer moves.
+    g_ct_world.players_data[8].tech_fungus_nutrient = 0x7777;
+    g_ct_world.players_data[8].tech_fungus_mineral = 0x7777;
+    g_ct_world.players_data[8].tech_fungus_energy = 0x7777;
+    g_ct_world.players_data[8].ai_growth = 1;
+    g_ct_world.players_data[8].ai_fight = -1;
+    for (int t = 0; t < 8; t++) {
+        g_ct_world.players_data[8].diplo_treaties[t] = 0x77777777;
+    }
+}
+
+// Turn the live window into ocean shelf.
+void ct_make_ocean() {
+    for (int k = 0; k < 64; k++) {
+        g_ct_world.tiles[CT_LIVE + k].climate = CT_ALT_SHELF;
+    }
+}
+
+void ct_set_forest_value(int nutrients, int minerals, int energy) {
+    g_ct_world.resource_info[RSCINFO_FOREST_SQ].nutrients = nutrients;
+    g_ct_world.resource_info[RSCINFO_FOREST_SQ].minerals = minerals;
+    g_ct_world.resource_info[RSCINFO_FOREST_SQ].energy = energy;
+}
+
+void ct_set_fungus_value(int total) {
+    g_ct_world.players_data[CT_FACTION].tech_fungus_nutrient = total;
+    g_ct_world.players_data[CT_FACTION].tech_fungus_mineral = 0;
+    g_ct_world.players_data[CT_FACTION].tech_fungus_energy = 0;
+}
+
+#define CTCHECK(cond)                                                         \
+    do {                                                                      \
+        const bool ct_ok = (cond);                                            \
+        if (!ct_ok) {                                                         \
+            std::fprintf(stderr, "can_terraform: line %d: %s\n", __LINE__,    \
+                         #cond);                                              \
+        }                                                                     \
+        expect(ct_ok);                                                        \
+    } while (0)
+
+// Every poison guard, checked at the end of each case group. can_terraform
+// writes nothing, so any change here is a stray store.
+#define CT_GUARDS()                                                                   \
+    do {                                                                              \
+        CTCHECK(g_ct_world.terraforming[MaxTerrainNum].preq_tech                      \
+                == ct_preq(MaxTerrainNum));                                           \
+        CTCHECK(g_ct_world.terraforming[MaxTerrainNum].preq_tech_sea                  \
+                == ct_preq_sea(MaxTerrainNum));                                       \
+        CTCHECK(g_ct_world.players_data[8].tech_fungus_nutrient == 0x7777);           \
+        CTCHECK(g_ct_world.players_data[8].diplo_treaties[7] == 0x77777777u);         \
+        CTCHECK(g_ct_world.bases[9].nutrient_surplus == CT_POISON);                   \
+        CTCHECK(g_ct_world.bases[9].state == 0xFFFFFFFFu);                            \
+        CTCHECK(g_ct_world.tiles[0].bit == 0xFFFFFFFFu);                              \
+        CTCHECK(g_ct_world.tiles[191].bit == 0xFFFFFFFFu);                            \
+    } while (0)
+
+class CtSeams {
+ public:
+    CtSeams()
+        : tiles_(&MapTiles, &g_ct_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_ct_world.longitude),
+          lon_(&MapLongitudeBounds, &g_ct_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_ct_world.lat_bounds),
+          flat_(&MapIsFlat, &g_ct_world.is_flat),
+          seed_(&MapRandSeed, &g_ct_world.map_rand_seed),
+          game_rules_(&GameRules, &g_ct_world.game_rules),
+          game_state_(&GameState, &g_ct_world.game_state),
+          prefs_(&GamePreferences, &g_ct_world.preferences),
+          more_prefs_(&GameMorePreferences, &g_ct_world.more_preferences),
+          turn_(&TurnCurrentNum, &g_ct_world.turn_current),
+          local_(&LocalFaction, &g_ct_world.local_faction),
+          status_(&FactionsStatus, g_ct_world.factions_status),
+          bases_(&Bases, &g_ct_world.bases[1]),
+          base_current_(&BaseCurrent, &g_ct_world.base_current),
+          projects_(&SecretProject, &g_ct_world.projects),
+          resource_(&ResourceInfo, g_ct_world.resource_info),
+          terraforming_(&Terraforming, g_ct_world.terraforming),
+          rules_(&Rules, &g_ct_world.rules),
+          players_data_(&PlayersData, g_ct_world.players_data),
+          players_(&Players, g_ct_world.players),
+          technology_(&Technology, g_ct_world.technology),
+          achieved_(&GameTechAchieved, g_ct_world.tech_achieved),
+          expansion_(&ExpansionEnabled, &g_ct_world.expansion),
+          dust_(&DustCloudDuration, &g_ct_world.dust_cloud),
+          restricted_(&TileYieldRestricted, &g_ct_world.restricted),
+          base_energy_(&BaseSquareEnergy, &g_ct_world.base_square_energy),
+          governor_(&GovernorFaction, &g_ct_world.governor),
+          energy_event_(&GlobalEnergyEventState, &g_ct_world.energy_event),
+          selector_(&UnkGlobal0093A934, &g_ct_world.energy_event_selector) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> seed_;
+    ScopedSeam<uint32_t> game_rules_;
+    ScopedSeam<uint32_t> game_state_;
+    ScopedSeam<uint32_t> prefs_;
+    ScopedSeam<uint32_t> more_prefs_;
+    ScopedSeam<int> turn_;
+    ScopedSeam<int> local_;
+    ScopedSeam<uint8_t> status_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<Base *> base_current_;
+    ScopedSeam<BaseSecretProject> projects_;
+    ScopedSeam<RulesResourceinfo> resource_;
+    ScopedSeam<RulesTerraforming> terraforming_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<Player> players_;
+    ScopedSeam<RulesTechnology> technology_;
+    ScopedSeam<uint8_t> achieved_;
+    ScopedSeam<BOOL> expansion_;
+    ScopedSeam<int> dust_;
+    ScopedSeam<int> restricted_;
+    ScopedSeam<int> base_energy_;
+    ScopedSeam<int> governor_;
+    ScopedSeam<int> energy_event_;
+    ScopedSeam<int> selector_;
+};
+
+/*
+ * The fixture's own arithmetic, pinned before anything depends on it. If
+ * crop_yield() or bonus_at() ever move, these fail first and the rest of the
+ * file stops lying about why.
+ */
+void test_can_terraform_gates() {
+    CtSeams seams;
+
+    // ---- fixture self-check -------------------------------------------------
+    ct_reset();
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 0);      // arid flat land
+    CTCHECK(bonus_at(CT_X, CT_Y, 0) == 0);                        // no bonus bit, seed 0
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 1);
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 2);
+    ct_reset();
+    ct_subject().bit = CT_BONUS_NUTRIENT;
+    CTCHECK(bonus_at(CT_X, CT_Y, 0) == 1);
+    ct_subject().bit = CT_BONUS_MINERAL;
+    CTCHECK(bonus_at(CT_X, CT_Y, 0) == 2);
+    ct_subject().bit = CT_BONUS_ENERGY;
+    CTCHECK(bonus_at(CT_X, CT_Y, 0) == 3);
+
+    // ---- a base in the tile refuses, for owners 0..7 only -------------------
+    // The three-nutrients technology is granted so that the refusal is
+    // OBSERVABLE. BIT_BASE_IN_TILE with an owner in range also sends crop_yield
+    // down its base-square arm, which returns ResourceInfo[RSCINFO_BASE_SQ]
+    // rather than the terrain's own nutrients - 43 here. Without the technology
+    // that large crop fails the farm gate on its own, so a body that forgot to
+    // refuse would answer ORDER_NONE anyway and every mutant of the guard would
+    // look equivalent. With it, not refusing means ORDER_FARM.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().bit |= BIT_BASE_IN_TILE;
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 43);  // the base-square arm
+    ct_subject().val2 = 0;                       // owner 0 is still an owner
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().val2 = 7;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().val2 = 8;                       // 8 is out of the 0..7 range
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().val2 = 0xF;                     // unoccupied
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().val2 = 0xF0;                    // only the low nibble is the owner, so 0
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // And without the bit the nibble is not consulted at all.
+    ct_subject().bit = 0;
+    ct_subject().val2 = 1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+
+    // ---- foreign territory needs a pact -------------------------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_subject().territory = 2;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.players_data[CT_FACTION].diplo_treaties[2] = DTREATY_PACT;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    g_ct_world.players_data[CT_FACTION].diplo_treaties[2] = DTREATY_TREATY;  // not a pact
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // whose_territory answers -1 for an unowned tile, and -1 is not "foreign".
+    ct_subject().territory = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().territory = -1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    // Our own territory never asks about treaties.
+    ct_subject().territory = (int8_t)CT_FACTION;
+    g_ct_world.players_data[CT_FACTION].diplo_treaties[CT_FACTION] = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+
+    // ---- a monolith refuses --------------------------------------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_subject().bit |= BIT_MONOLITH;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- an existing forest worth more than the terrain refuses --------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_subject().bit |= BIT_FOREST;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);  // value 2 <= 9
+    ct_set_forest_value(0, 0, 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);  // value 2 > 0
+
+    CT_GUARDS();
+}
+
+/*
+ * Water. Deep water is only ever raised, the shelf is farmed, mined or
+ * harnessed, and fungus on the shelf is removed.
+ */
+void test_can_terraform_sea() {
+    CtSeams seams;
+
+    // ---- below the shelf, only ORDER_TERRAFORM_UP ---------------------------
+    ct_reset();
+    ct_make_ocean();
+    ct_subject().climate = CT_ALT_DEEP;
+    ct_grant(ct_preq_sea(TERRA_FARM));            // irrelevant down here
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_grant(ct_preq_sea(TERRA_RAISE_LAND));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_TERRAFORM_UP);
+    // Scenario rules can forbid it outright, through terrain_avail.
+    g_ct_world.game_rules = RULES_SCN_NO_TERRAFORMING;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.game_rules = 0;
+    // Fungus in deep water is not "fungus": the altitude test is on the tile.
+    ct_subject().bit |= BIT_FUNGUS;
+    ct_grant(ct_preq_sea(TERRA_REMOVE_FUNGUS));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_TERRAFORM_UP);
+
+    // ---- fungus on the shelf ------------------------------------------------
+    ct_reset();
+    ct_make_ocean();
+    ct_subject().bit |= BIT_FUNGUS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);  // no technology
+    ct_grant(ct_preq_sea(TERRA_REMOVE_FUNGUS));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_REMOVE_FUNGUS);
+    // The land prerequisite is NOT the one consulted - see the bug note.
+    ct_reset();
+    ct_make_ocean();
+    ct_subject().bit |= BIT_FUNGUS;
+    ct_grant(ct_preq(TERRA_REMOVE_FUNGUS));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // Fungus worth four or more is left alone.
+    ct_reset();
+    ct_make_ocean();
+    ct_subject().bit |= BIT_FUNGUS;
+    ct_grant(ct_preq_sea(TERRA_REMOVE_FUNGUS));
+    ct_set_fungus_value(3);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_REMOVE_FUNGUS);
+    ct_set_fungus_value(4);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // A human has to have asked for automatic fungus removal.
+    ct_set_fungus_value(3);
+    ct_make_human();
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.more_preferences = MPREF_AUTO_FORMER_REMOVE_FUNGUS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_REMOVE_FUNGUS);
+
+    // ---- a thermal borehole on the shelf refuses before anything else -------
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_FARM));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().bit |= BIT_THERMAL_BORE;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // An echelon mirror is "special" but is not the bit that refuses here.
+    ct_subject().bit = BIT_ECH_MIRROR;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+
+    // ---- the kelp farm and its enricher upgrade -----------------------------
+    ct_reset();
+    ct_make_ocean();
+    ct_subject().bit |= BIT_FARM;
+    ct_grant(ct_preq_sea(TERRA_FARM));            // already farmed, so this does nothing
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_grant(ct_preq_sea(TERRA_SOIL_ENR));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().bit |= BIT_SOIL_ENRICHER;        // already upgraded
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the two base planning bits, and the nutrient-effect rule -----------
+    // No 0x2000: the mining platform is only reached by the tail, which wants a
+    // nutrient surplus above one.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_MINE));
+    ct_base(0).state = BSTATE_UNK_4000;
+    ct_base(0).nutrient_surplus = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_base(0).state = BSTATE_UNK_4000 | BSTATE_UNK_2000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+
+    // 0x1000 picks the tidal harness ahead of everything the tail would do.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_MINE));
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;   // suppresses the third rule
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 2;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    ct_base(0).state = BSTATE_UNK_1000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+
+    // The third rule: a hungry base with the negative nutrient effect harnesses.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 0;              // below two
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;
+    ct_base(0).nutrient_surplus = 0;
+    // Now the third rule is off; the census still says harness, because the
+    // seeded mine count is 0 and the missing platform technology adds one.
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+
+    // ---- the base-radius census, and both MapIsFlat states ------------------
+    // The base sits at x == 0. Three of its radius offsets are negative, and on
+    // a round map they wrap onto column 14/15 where the harnesses are; on a flat
+    // map they fall off the edge and are not counted.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));     // deliberately NOT the platform
+    ct_base(0).x = 0;
+    ct_base(0).y = 4;
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 2;              // above one, so the third rule is off
+    ct_at(14, 4).bit |= BIT_SOLAR_TIDAL;          // radius offset 6  (-2, 0)
+    ct_at(14, 6).bit |= BIT_SOLAR_TIDAL;          // radius offset 11 (-2, +2)
+    ct_at(14, 2).bit |= BIT_SOLAR_TIDAL;          // radius offset 12 (-2, -2)
+    g_ct_world.is_flat = 1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    g_ct_world.is_flat = 0;                       // round: the three now count
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    // Only the low bit of MapIsFlat is read.
+    g_ct_world.is_flat = 2;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    g_ct_world.is_flat = 3;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    // The census only counts water. Raising those three above the shore line
+    // takes them out of it again.
+    g_ct_world.is_flat = 0;
+    ct_at(14, 4).climate = CT_ALT_LAND;
+    ct_at(14, 6).climate = CT_ALT_LAND;
+    ct_at(14, 2).climate = CT_ALT_LAND;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+
+    // ---- the tail mine, and what stops it -----------------------------------
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_MINE));
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 2;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    ct_base(0).nutrient_surplus = 1;              // not above one
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_base(0).nutrient_surplus = 2;
+    ct_base(0).state = BSTATE_UNK_4000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_base(0).state = 0;
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;   // the surplus stops mattering
+    ct_base(0).nutrient_surplus = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    // With no base at all the surplus branch cannot fire, so only the rule can.
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = -1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- an improvement already on the tile skips the whole block -----------
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_MINE));
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    ct_subject().bit = BIT_MINE;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = BIT_SOLAR_TIDAL;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = BIT_CONDENSER;             // "special"
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = 0;
+    ct_subject().bit2 = BIT2_VOLCANO;             // the volcano's own tile is special
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit2 = BIT2_VOLCANO | BIT2_UNK_80000000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    ct_subject().bit2 = BIT2_VOLCANO | 0x01000000u;   // a nonzero landmark code
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+
+    // ---- the three tests of the hungry-base rule, one at a time -------------
+    // The census behind it has to be made to REFUSE first, or it answers
+    // harness on its own and the rule above it cannot be seen.
+    // (10,4) is radius offset 2 from a base at (8,4) and (6,4) is offset 6;
+    // no other offset in 0..20 lands on either tile at row 4.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));     // deliberately NOT the platform
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 0;              // below two
+    ct_at(10, 4).bit |= BIT_SOLAR_TIDAL;
+    ct_at(6, 4).bit |= BIT_SOLAR_TIDAL;           // census: 1 + 1 > 2 is false
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    ct_base(0).nutrient_surplus = 2;              // no longer hungry
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+
+    // The negative nutrient effect is the third of the three, and it is asked
+    // for strictly - zero does not satisfy it.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;
+    ct_base(0).state = BSTATE_UNK_4000;           // the first of the three, so it holds
+    ct_base(0).nutrient_surplus = 0;
+    ct_at(10, 4).bit |= BIT_SOLAR_TIDAL;          // census: 0 + 1 > 1 is false
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = -1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+
+    // ---- the census seed, and the mines it counts ---------------------------
+    // The seeded one mine is the whole margin here: without it the tally ties
+    // at zero and the tail builds a platform instead.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_MINE));
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 2;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    // With the effect non-negative the seed is zero, and one counted mine puts
+    // the tally back over the line.
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    ct_at(10, 4).bit |= BIT_MINE;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+
+    // ---- the census bounds, at both ends ------------------------------------
+    // The base moves to column zero so the subject tile is outside its radius
+    // and cannot pollute the tally. Offset 0 is the base's own tile (2,4),
+    // offset 2 is (4,4) and offset 21 - the first one PAST the twenty-one - is
+    // (6,4). Each of the three is reachable by exactly one offset at row 4.
+    ct_reset();
+    ct_make_ocean();
+    ct_grant(ct_preq_sea(TERRA_SOLAR_TIDAL));
+    ct_base(0).x = 2;
+    ct_base(0).y = 4;
+    ct_base(0).state = 0;
+    ct_base(0).nutrient_surplus = 2;
+    ct_at(2, 4).bit |= BIT_SOLAR_TIDAL;           // offset 0
+    ct_at(4, 4).bit |= BIT_SOLAR_TIDAL;           // offset 2
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);   // 2 > 2 false
+    ct_at(2, 4).bit &= ~(uint32_t)BIT_SOLAR_TIDAL;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    ct_at(6, 4).bit |= BIT_SOLAR_TIDAL;           // offset 21, outside the loop
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+
+    CT_GUARDS();
+}
+
+/*
+ * Land, fungus. The eco-damage-adjusted terrain value decides whether the
+ * fungus is worth more than what is under it.
+ */
+void test_can_terraform_land_fungus() {
+    CtSeams seams;
+
+    // ---- no base: only the technology and the preference matter -------------
+    ct_reset();
+    ct_subject().bit |= BIT_FUNGUS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_grant(ct_preq_sea(TERRA_REMOVE_FUNGUS));   // the SEA field, on land - see the bug note
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_REMOVE_FUNGUS);
+    ct_reset();
+    ct_subject().bit |= BIT_FUNGUS;
+    ct_grant(ct_preq(TERRA_REMOVE_FUNGUS));       // the land field is never read
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- a base weighs eco damage against the terrain -----------------------
+    // value is elev 1 + rainfall 0 + rockiness 0 + 1 == 2, fungus_value is 3.
+    ct_reset();
+    ct_subject().bit |= BIT_FUNGUS;
+    ct_grant(ct_preq_sea(TERRA_REMOVE_FUNGUS));
+    ct_base(0).eco_damage = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);   // 0/2 + 2 <= 3
+    ct_base(0).eco_damage = 3;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);   // 3/2 + 2 == 3
+    ct_base(0).eco_damage = 4;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_REMOVE_FUNGUS);  // 2 + 2 > 3
+    // The division truncates towards zero, so 5 is still 2.
+    ct_base(0).eco_damage = 5;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_REMOVE_FUNGUS);
+    // A cheaper fungus is removed with no eco damage at all.
+    ct_base(0).eco_damage = 0;
+    ct_set_fungus_value(1);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_REMOVE_FUNGUS);  // 0 + 2 > 1
+    ct_set_fungus_value(2);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 2 <= 2
+
+    // ---- the human preference gate ------------------------------------------
+    ct_reset();
+    ct_subject().bit |= BIT_FUNGUS;
+    ct_grant(ct_preq_sea(TERRA_REMOVE_FUNGUS));
+    ct_make_human();
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.more_preferences = MPREF_AUTO_FORMER_REMOVE_FUNGUS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_REMOVE_FUNGUS);
+    // A different bit of the same word is not the one that is read.
+    g_ct_world.more_preferences = MPREF_AUTO_FORMER_BUILD_SENSORS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // Another faction's bit does not make this one human.
+    g_ct_world.factions_status[0] = (uint8_t)(1 << (CT_FACTION + 1));
+    g_ct_world.more_preferences = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_REMOVE_FUNGUS);
+
+    CT_GUARDS();
+}
+
+/*
+ * Land, the improvement cascade: solar, mine, farm, enricher, and what
+ * force_improve changes about all four.
+ */
+void test_can_terraform_land_orders() {
+    CtSeams seams;
+
+    // ---- the farm, and the crop gate in front of it -------------------------
+    ct_reset();
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_grant(ct_preq(TERRA_FARM));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    // Rocky ground is never farmed.
+    ct_subject().val3 = 0x80;                     // ROCKINESS_ROCKY
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().val3 = 0x40;                     // ROCKINESS_ROLLING is fine
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().val3 = 0;
+    // A thermal borehole, an echelon mirror or the volcano tile each refuse.
+    ct_subject().bit = BIT_THERMAL_BORE;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = BIT_ECH_MIRROR;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = 0;
+    ct_subject().bit2 = BIT2_VOLCANO;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit2 = BIT2_VOLCANO | BIT2_UNK_80000000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_subject().bit2 = 0;
+    // Two crop already, without the "three nutrients" technology and without a
+    // nutrient bonus, and the farm is not worth building.
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);   // crop 2
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    // A nutrient bonus opens the same gate without the technology.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    ct_subject().bit = CT_BONUS_MINERAL;          // bonus 2, not 1
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = CT_BONUS_NUTRIENT;         // bonus 1 opens it
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+
+    // ---- rainfall only decides when an order has already been chosen --------
+    // With nothing chosen the farm is forced regardless of rainfall, so the
+    // `rainfall < 2` arm needs a solar collector standing in front of it.
+    // force_improve supplies one, and the nutrient bonus keeps the crop above
+    // the "build a farm instead" threshold independently of the rainfall.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().bit = CT_BONUS_NUTRIENT;         // bonus 1, crop == rainfall + 2
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_SOLAR_COLLECTOR);
+    ct_subject().climate = CT_ALT_LAND;           // arid; crop is still 2
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_FARM);
+
+    // ---- the mine ------------------------------------------------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().val3 = 0x80;                     // rocky
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().bit = CT_BONUS_MINERAL;          // bonus 2
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().bit = CT_BONUS_ENERGY;           // bonus 3, through the rolling rule
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().bit = CT_BONUS_NUTRIENT;         // bonus 1 is not a reason to mine
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // Without the technology, rock is not enough.
+    ct_reset();
+    ct_subject().val3 = 0x80;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the solar collector -------------------------------------------------
+    // elev is 1 and rockiness flat, so the ordinary rule needs neither.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);   // crop 1
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().val3 = 0x40;                     // rolling
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_SOLAR_COLLECTOR);
+    ct_subject().val3 = 0;
+    ct_subject().climate = (uint8_t)(0x80 | RAINFALL_MOIST);          // elev 2
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_SOLAR_COLLECTOR);
+    // Rolling but no crop at all, and the rule fails again.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().val3 = 0x40;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);   // crop 0 < 1
+    // force_improve takes the marginal answer.
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_SOLAR_COLLECTOR);
+    // It is not a licence to ignore the technology.
+    ct_reset();
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_NONE);
+
+    // ---- force_improve on an existing farm ----------------------------------
+    // has_farm plus force_improve plus the solar technology says harness it.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().bit = BIT_FARM;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_SOLAR_COLLECTOR);
+    // With the mine technology instead, the same shape says mine it.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().bit = BIT_FARM;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_MINE);
+
+    // ---- the soil enricher ---------------------------------------------------
+    // A crop of one is below the gate, and only force_improve gets past it.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOIL_ENR));
+    ct_subject().bit = BIT_FARM;                  // arid, crop 0 + 1 == 1
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_FARM);
+    // Two crop is above it, and no force is needed.
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);   // 2 + 1, clipped to 2
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    // Already enriched, so there is nothing to build.
+    ct_subject().bit = BIT_FARM | BIT_SOIL_ENRICHER;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // And nothing to enrich without a farm.
+    ct_subject().bit = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // Without the technology the whole block is skipped.
+    ct_reset();
+    ct_subject().bit = BIT_FARM;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_NONE);
+
+    // ---- the base planning bits on land -------------------------------------
+    // 0x2000 plus the mine technology, with crop enough to want one.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);   // crop 2
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_base(0).state = BSTATE_UNK_2000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    // One crop is not enough for either half of that rule.
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);   // crop 1
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    // 0x1000 plus the solar technology.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);   // crop 1
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_base(0).state = BSTATE_UNK_1000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    // A base id of -1 never reads a Base, so the same case answers nothing.
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    CT_GUARDS();
+}
+
+/*
+ * Land, the two closing questions: plant a forest, or plant fungus. Both are
+ * decided by plant_value against a yardstick, and plant_value is where the base
+ * planning bits, the tree farms and the turn number all land.
+ */
+void test_can_terraform_land_plant() {
+    CtSeams seams;
+
+    // ---- the forest, and forest_value ---------------------------------------
+    // plant_value is elev 1 + rainfall 0 + rockiness 0 + 1 == 2.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);  // 2 < 9
+    ct_set_forest_value(2, 0, 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);          // 2 < 2
+    ct_set_forest_value(3, 0, 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);  // 2 < 3
+    // Rock, an existing mine and an existing forest each refuse.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_subject().val3 = 0x80;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().val3 = 0x40;                     // rolling is allowed
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);
+    ct_subject().val3 = 0;
+    ct_subject().bit = BIT_MINE;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = BIT_CONDENSER;             // "special"
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = 0;
+    ct_subject().bit2 = BIT2_VOLCANO;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit2 = 0;
+    // A tile that already has a farm is never forested: the guard behind
+    // has_farm asks for elev == 0, which cannot happen above the shore line.
+    ct_subject().bit = BIT_FARM;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the human preference, and the local faction ------------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_make_human();
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.preferences = PREF_AUTO_FORMER_PLANT_FORESTS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);
+    g_ct_world.local_faction = CT_FACTION + 1;    // somebody else is at the keyboard
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.local_faction = CT_FACTION;
+    g_ct_world.preferences = PREF_AUTO_FORMER_BUILD_ADV;   // the neighbouring bit
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the two forest facilities move forest_value ------------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(1, 0, 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 2 < 1
+    ct_give_fac(0, FAC_TREE_FARM);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 2 < 2
+    ct_give_fac(0, FAC_HYBRID_FOREST);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 2 < 4
+    // The hybrid forest is worth two on its own.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(1, 0, 0);
+    ct_give_fac(0, FAC_HYBRID_FOREST);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 2 < 3
+    // And neither counts without a base.
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the growth-only AI plan is worth one more forest -------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(2, 0, 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);          // 2 < 2
+    g_ct_world.players_data[CT_FACTION].ai_growth = 1;
+    g_ct_world.players_data[CT_FACTION].ai_fight = -1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);  // 2 < 3
+    // Any of the other three plans, or a non-negative ai_fight, cancels it.
+    g_ct_world.players_data[CT_FACTION].ai_power = 1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.players_data[CT_FACTION].ai_power = 0;
+    g_ct_world.players_data[CT_FACTION].ai_wealth = 1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.players_data[CT_FACTION].ai_wealth = 0;
+    g_ct_world.players_data[CT_FACTION].ai_tech = 1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.players_data[CT_FACTION].ai_tech = 0;
+    g_ct_world.players_data[CT_FACTION].ai_fight = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.players_data[CT_FACTION].ai_fight = -1;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);
+    // A human never gets it either.
+    ct_make_human();
+    g_ct_world.preferences = PREF_AUTO_FORMER_PLANT_FORESTS;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the base planning bits inside plant_value --------------------------
+    // 0x4000 with no rainfall takes one off.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(2, 0, 0);
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 2 < 2
+    ct_base(0).state = BSTATE_UNK_4000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 1 < 2
+    // 0x2000 takes one off flat ground.
+    ct_base(0).state = BSTATE_UNK_2000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 1 < 2
+    ct_subject().val3 = 0x40;                     // rolling, so nothing comes off
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 3 < 2
+    ct_subject().val3 = 0;
+    // 0x1000 adds one two levels up.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(4, 0, 0);
+    ct_subject().climate = 0x80;                  // elev 2, plant_value 3
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 3 < 4
+    ct_base(0).state = BSTATE_UNK_1000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 4 < 4
+    // Neither planning bit set, and an existing harness adds one instead.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(3, 0, 0);
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 2 < 3
+    ct_subject().bit = BIT_SOLAR_TIDAL;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 3 < 3
+    ct_base(0).state = BSTATE_UNK_2000;           // 0x6000 present, so no harness bonus
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 1 < 3
+
+    // ---- the early-turn bonus on rolling, rainy ground ----------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    ct_subject().val3 = 0x40;                     // rolling; plant_value 1+1+1+1 == 4
+    ct_set_forest_value(5, 0, 0);
+    g_ct_world.turn_current = 100;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);  // 4 < 5
+    g_ct_world.turn_current = 49;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);          // 5 < 5
+    g_ct_world.turn_current = 50;                 // the boundary is exclusive
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);
+    // Arid ground does not get it whatever the turn.
+    g_ct_world.turn_current = 10;
+    ct_subject().climate = CT_ALT_LAND;
+    ct_set_forest_value(4, 0, 0);                 // plant_value 1+0+1+1 == 3
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);  // 3 < 4
+
+    // ---- planting fungus, which can override a forest -----------------------
+    ct_reset();
+    ct_set_fungus_value(3);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);   // no technology
+    ct_grant(ct_preq(TERRA_PLANT_FUNGUS));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);   // 3 < 3 is false
+    ct_set_fungus_value(4);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);  // 3 < 4
+    // A human is never told to plant fungus.
+    ct_make_human();
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    g_ct_world.factions_status[0] = 0;
+    // A special tile is not planted either, and the increment does not happen.
+    ct_subject().bit = BIT_CONDENSER;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    ct_subject().bit = 0;
+    // Rocky ground costs one more, or two more when it is already mined.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_PLANT_FUNGUS));
+    ct_subject().val3 = 0x80;                     // rocky; plant_value 1+0+2+1 == 4
+    ct_set_fungus_value(7);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);  // 4+1+1 < 7
+    ct_subject().bit = BIT_MINE;                  // the rocky surcharge doubles
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);          // 4+2+1 == 7
+    ct_set_fungus_value(8);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);  // 7 < 8
+    // Fungus wins over a forest the same terrain would otherwise get.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_grant(ct_preq(TERRA_PLANT_FUNGUS));
+    ct_set_forest_value(9, 0, 0);
+    ct_set_fungus_value(3);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FOREST);
+    ct_set_fungus_value(4);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);
+    // And over an order the cascade already chose.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_grant(ct_preq(TERRA_PLANT_FUNGUS));
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+    ct_set_fungus_value(4);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);
+
+    CT_GUARDS();
+}
+
+/*
+ * The land order cascade, one decision at a time.
+ *
+ * Everything here exists to make ONE comparison decide the answer, which the
+ * broader cases in test_can_terraform_land_orders() cannot do because several
+ * rules agree on ORDER_MINE and shadow each other. Two shadowing facts are
+ * worth stating once, because most of the setup below is arranged around them:
+ *
+ *  - `if (bonus == 2 || rockiness == ROCKINESS_ROCKY) order = ORDER_MINE;` runs
+ *    FIRST inside the mine block, so a mineral bonus or rocky ground puts
+ *    ORDER_MINE on the board before any of the flag logic executes, and every
+ *    later write in that block also writes ORDER_MINE. Nothing after it can be
+ *    seen while either holds.
+ *  - `rolling_rule` and `farm_rule` are not answers. `rolling_rule` is visible
+ *    only through `if (bonus == 3) order = ORDER_MINE`, and `farm_rule` only
+ *    through the force_improve-on-a-farm rule. A case that wants to see either
+ *    flag has to supply the thing that reads it.
+ */
+void test_can_terraform_cascade() {
+    CtSeams seams;
+
+    // ---- rolling_rule, seen through the energy bonus ------------------------
+    // Energy bonus, flat, one crop: the worked total is two, so the else arm
+    // sets neither flag and nothing answers.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().bit = CT_BONUS_ENERGY;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 1);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+    // A non-negative nutrient effect takes the rolling arm instead, and the
+    // energy bonus then answers. This is the only reader of rolling_rule.
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+    // Arid instead of moist drops the worked total to one, which reaches the
+    // rolling arm the other way.
+    g_ct_world.rules.tgl_nutrient_effect_with_mine = -1;
+    ct_subject().climate = CT_ALT_LAND;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_MINE);
+
+    // ---- farm_rule, seen through force_improve on a farm --------------------
+    // Two worked is one short of the threshold, so no flag and no answer.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_subject().bit = BIT_FARM;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 2);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_NONE);
+    // Three worked clears it. The technology is needed only to stop crop_yield
+    // clipping the third nutrient away.
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 3);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_MINE);
+    // And without the force there is nothing to read the flag with.
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);
+
+    // ---- the solar rule's crop threshold, which a farm raises ---------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().bit = BIT_FARM;
+    ct_subject().val3 = 0x40;                     // rolling, so the rule is in play
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 1);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);   // 1 < 2
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 2);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_SOLAR_COLLECTOR);
+
+    // ---- the base's harness rule, both halves of its disjunction ------------
+    // No farm, no crop, one level up: neither half holds.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_base(0).state = BSTATE_UNK_1000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);   // one crop
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    ct_subject().climate = 0x80;                  // two levels up, no crop
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_SOLAR_COLLECTOR);
+    // A farm raises the crop half of it out of reach again.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_base(0).state = BSTATE_UNK_1000;
+    ct_subject().bit = BIT_FARM;                  // one crop, threshold two
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+
+    // ---- the base's mine rule: the crop test, isolated ----------------------
+    // A nutrient bonus lifts the crop to two while leaving the tile arid, which
+    // is what keeps `wants_mine` false and the crop test alone on the board.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_base(0).state = BSTATE_UNK_2000;
+    ct_subject().bit = CT_BONUS_NUTRIENT;
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 2);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    // A farm raises that threshold from two to three.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_base(0).state = BSTATE_UNK_2000;
+    ct_subject().bit = BIT_FARM;                  // one crop, threshold three
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+
+    // ---- the base's mine rule: wants_mine, term by term ---------------------
+    // Arid flat with a farm and no bonus: every term of wants_mine is false.
+    // Turning any one of them on answers, and the mineral-bonus term cannot be
+    // tested here because that bonus answers two statements earlier.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_MINE));
+    ct_base(0).state = BSTATE_UNK_2000;
+    ct_subject().bit = BIT_FARM;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);   // rainfall term
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_MINE);
+    // Two levels up takes the elevation clause of that term away again.
+    ct_subject().climate = (uint8_t)(0x80 | RAINFALL_MOIST);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);
+
+    // ---- value, and the forest it is weighed against ------------------------
+    // A forested tile that also carries a farm: the enricher bonus to `value`
+    // is the single point that keeps it off the "not worth touching" answer.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOIL_ENR));
+    ct_set_forest_value(2, 0, 0);
+    ct_subject().bit = BIT_FARM | BIT_FOREST;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);   // value 3 > 2
+    // The weighing is inclusive: equal is not worth touching.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    ct_set_forest_value(2, 0, 0);
+    ct_subject().bit = BIT_FOREST;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);   // value 2 == 2
+
+    // ---- crop_yield is asked about NO base ----------------------------------
+    // Base zero carries a bumper harvest. Asking crop_yield about it instead of
+    // about nobody would add one nutrient and close the farm gate.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_base(0).event = BEVENT_BUMPER;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 1);
+    CTCHECK(crop_yield(CT_FACTION, 0, CT_X, CT_Y, 0) == 2);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_FARM);
+
+    // ---- the farm block's three-way choice ----------------------------------
+    // A solar collector is standing, the base wants a farm, and it is rainy, so
+    // the closing `rainfall < 2` cannot rescue the answer. Only the base's own
+    // planning bit turns the collector into a farm here.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    ct_base(0).state = BSTATE_UNK_4000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_FARM);
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_SOLAR_COLLECTOR);
+    // Without the base the same tile keeps the collector, and a forest tile -
+    // whose crop is the forest yield rather than the rainfall - lets the crop
+    // test be moved on its own.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FARM));
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_set_forest_value(1, 0, 0);
+    ct_subject().bit = BIT_FOREST;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 1);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_FARM);   // crop 1 < 2
+    ct_set_forest_value(2, 0, 0);
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 2);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, -1) == ORDER_SOLAR_COLLECTOR);
+
+    // ---- the enricher's gate, and the base bit behind it --------------------
+    // A collector is already chosen, so the fallback at the bottom of the
+    // enricher block cannot fire and only the base's planning bit can enrich.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOIL_ENR));
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    ct_subject().bit = BIT_FARM;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 3);
+    ct_base(0).state = BSTATE_UNK_4000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_FARM);
+    ct_base(0).state = 0;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_SOLAR_COLLECTOR);
+    // One crop is below the gate entirely, so the base bit is never reached.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOIL_ENR));
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().bit = BIT_FARM;                  // arid, one crop
+    ct_base(0).state = BSTATE_UNK_4000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_SOLAR_COLLECTOR);
+    // Exactly two crop is inside the gate only with the three-nutrients rule.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOIL_ENR));
+    ct_grant(ct_preq(TERRA_SOLAR_TIDAL));
+    ct_subject().bit = BIT_FARM;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(crop_yield(CT_FACTION, -1, CT_X, CT_Y, 0) == 2);
+    ct_base(0).state = BSTATE_UNK_4000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_SOLAR_COLLECTOR);
+    ct_grant(CT_TECH_THREE_NUTRIENTS);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 1, 0) == ORDER_FARM);
+
+    CT_GUARDS();
+}
+
+/*
+ * plant_value, the score the two planting answers are weighed against. Every
+ * case here moves it by exactly one and puts the yardstick on the boundary, so
+ * the answer flips on the single adjustment under test.
+ */
+void test_can_terraform_scoring() {
+    CtSeams seams;
+
+    // ---- the enricher bonus, visible only through fungus --------------------
+    // A farmed tile can never be forested, so the forest yardstick is no use
+    // here and the fungus one has to carry it.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_SOIL_ENR));
+    ct_grant(ct_preq(TERRA_PLANT_FUNGUS));
+    ct_subject().bit = BIT_FARM;
+    ct_set_fungus_value(4);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);       // 4 < 4
+    ct_set_fungus_value(5);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);
+
+    // ---- the rainfall adjustment behind BSTATE_UNK_4000 ---------------------
+    // Moist is neither wet enough to add nor dry enough to subtract.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(4, 0, 0);
+    ct_base(0).state = BSTATE_UNK_4000;
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_MOIST);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 3 < 4
+    // Rainy adds one.
+    ct_set_forest_value(5, 0, 0);
+    ct_subject().climate = (uint8_t)(CT_ALT_LAND | RAINFALL_RAINY);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 5 < 5
+
+    // ---- the elevation adjustment behind BSTATE_UNK_1000 --------------------
+    // One level up is neither high enough to add nor zero, which cannot happen.
+    ct_reset();
+    ct_grant(ct_preq(TERRA_FOREST));
+    ct_set_forest_value(3, 0, 0);
+    ct_base(0).state = BSTATE_UNK_1000;
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_PLANT_FOREST);   // 2 < 3
+    ct_set_forest_value(2, 0, 0);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, 0) == ORDER_NONE);           // 2 < 2
+
+    // ---- the rocky surcharge on planting fungus -----------------------------
+    ct_reset();
+    ct_grant(ct_preq(TERRA_PLANT_FUNGUS));
+    ct_subject().val3 = 0x80;                     // rocky, plant_value four
+    ct_set_fungus_value(6);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_NONE);          // 6 < 6
+    ct_set_fungus_value(7);
+    CTCHECK(can_terraform(CT_FACTION, CT_X, CT_Y, 0, -1) == ORDER_PLANT_FUNGUS);  // 6 < 7
+
+    CT_GUARDS();
+}
+
+#undef CT_GUARDS
+#undef CTCHECK
+
 }  // namespace
 
 int main() {
@@ -12254,6 +13602,13 @@ int main() {
     test_alt_ocean_corner();
     test_alt_ocean_shoreline();
     test_compute_odds();
+    test_can_terraform_gates();
+    test_can_terraform_sea();
+    test_can_terraform_land_fungus();
+    test_can_terraform_land_orders();
+    test_can_terraform_land_plant();
+    test_can_terraform_cascade();
+    test_can_terraform_scoring();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());
