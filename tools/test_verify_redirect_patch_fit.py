@@ -11,6 +11,7 @@ read from the wrong place.
 from __future__ import annotations
 
 import sys
+import pathlib
 import unittest
 from pathlib import Path
 
@@ -69,6 +70,36 @@ class TableParsingTests(unittest.TestCase):
 
 class OverrunTests(unittest.TestCase):
     """The check itself, and the shapes it must not cry wolf over."""
+
+    def test_function_starts_reads_hex_addresses_from_the_catalogue(self):
+        # Nothing called function_starts(), so `int(row["address"], 16)` was
+        # unexercised: base 15 and base 17 both survived every test. Base 0
+        # happens to be EQUIVALENT here because every address carries the 0x
+        # prefix, which is worth saying rather than chasing.
+        import csv as _csv
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "functions.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = _csv.DictWriter(handle, fieldnames=["address", "name"])
+                writer.writeheader()
+                writer.writerow({"address": "0x005EE130", "name": "?b@@YAXXZ"})
+                writer.writerow({"address": "0x004011AF", "name": "?a@@YAXXZ"})
+            starts = guard.function_starts(path)
+        # Sorted numerically, not as strings, and parsed as hexadecimal - 0x1AF
+        # is 431, which no other base yields.
+        self.assertEqual([0x004011AF, 0x005EE130], starts)
+
+    def test_an_empty_catalogue_is_refused_rather_than_passing(self):
+        # An empty list of starts makes every redirect look like it fits.
+        import csv as _csv
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "functions.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                _csv.DictWriter(handle, fieldnames=["address", "name"]).writeheader()
+            with self.assertRaises(SystemExit):
+                guard.function_starts(path)
 
     def test_a_one_byte_function_padded_to_a_slot_is_fine(self):
         # ??1FileBox: a bare `ret` with the next function 16 bytes away. The
