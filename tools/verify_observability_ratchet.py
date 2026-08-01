@@ -39,12 +39,20 @@ DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 UNOBSERVED = "UNOBSERVED"
 NOT_MEASURED = "NOT-MEASURED"
+OBSERVED = "OBSERVED"
+KNOWN_VERDICTS = frozenset({OBSERVED, UNOBSERVED, NOT_MEASURED})
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--census", type=Path, default=DEFAULT_CENSUS)
     parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
+    parser.add_argument("--max-min-size", type=int, default=200,
+                        help="the largest min_size a census may declare; it "
+                             "cannot shrink its own required population")
+    parser.add_argument("--live-floor", type=int, default=100,
+                        help="refuse to report clean over fewer live functions "
+                             "than this")
     parser.add_argument("--floor", type=int, default=150,
                         help="refuse to report clean over fewer recorded "
                              "functions than this")
@@ -56,8 +64,21 @@ def main():
         return 1
     census = json.loads(arguments.census.read_text(encoding="utf-8"))
     recorded = census.get("functions", {})
-    minimum = int(census.get("min_size", 200))
     baseline = int(census.get("baseline_unobserved", 0))
+
+    # THE CENSUS DOES NOT GET TO DECIDE WHAT IT MUST CONTAIN. min_size used to
+    # be read straight out of it, so a census declaring `"min_size": 99999`
+    # made every live function fall outside the population and the check
+    # reported "0 live functions all present" and exited 0. It announced its own
+    # vacuity and passed anyway - the defect this whole day has been about, in a
+    # check written to enforce against it.
+    minimum = int(census.get("min_size", arguments.max_min_size))
+    if minimum > arguments.max_min_size:
+        print(f"observability-ratchet: the census declares min_size "
+              f"{minimum}, above the permitted {arguments.max_min_size}. A "
+              f"census cannot shrink the population it is required to cover.",
+              file=sys.stderr)
+        return 1
 
     if len(recorded) < arguments.floor:
         print(f"observability-ratchet: the census holds {len(recorded)} "
@@ -70,6 +91,33 @@ def main():
                 if row["recovery_state"] == "source_complete"
                 and row["binary_kind"] == "game"
                 and int(row["size"]) >= minimum}
+
+    # And a second, independent way the population can vanish: the catalogue
+    # itself. Zero live functions is not a clean run, it is no run.
+    if len(live) < arguments.live_floor:
+        print(f"observability-ratchet: only {len(live)} live recovered "
+              f"function(s) of >={minimum} B, below the floor of "
+              f"{arguments.live_floor}. There is nothing here to ratchet, so "
+              f"this check verified NOTHING.", file=sys.stderr)
+        return 1
+
+    # EVERY VERDICT MUST BE ONE THIS TOOL KNOWS. Both ratchets below count by
+    # equality, so a verdict of "UNOBSERVD" is neither unobserved nor
+    # not-measured nor observed: it evades both totals and the entry sails
+    # through. One typo - or one deliberate one - is all it takes to land an
+    # unobserved recovery, which is the single thing this check exists to stop.
+    unknown = sorted(address for address, entry in recorded.items()
+                     if entry.get("verdict") not in KNOWN_VERDICTS)
+    if unknown:
+        print(f"observability-ratchet: {len(unknown)} census entr(ies) carry a "
+              f"verdict this tool does not know, so they are counted by "
+              f"neither ratchet:", file=sys.stderr)
+        for address in unknown[:10]:
+            print(f"    {address}  {recorded[address].get('verdict')!r}  "
+                  f"{recorded[address].get('name', '?')}", file=sys.stderr)
+        print(f"  Permitted: {', '.join(sorted(KNOWN_VERDICTS))}",
+              file=sys.stderr)
+        return 1
 
     missing = sorted(set(live) - set(recorded),
                      key=lambda a: -int(live[a]["size"]))
