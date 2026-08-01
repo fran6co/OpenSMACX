@@ -25,6 +25,7 @@
 #include "path.h"
 #include "random.h"
 #include "strings.h"
+#include "technology.h"
 #include "veh.h"
 
 int *MapLongitudeBounds = (int *)0x00949870;
@@ -1414,6 +1415,32 @@ int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
 }
 
 /*
+Purpose: Wrap an x coordinate on a round map, as world_site() and good_sensor() do it.
+Original Offset: n/a
+Return Value: Wrapped x
+Status: Complete
+
+xrange() at 0048BEE0 cannot stand in, for one bit. It tests the whole of
+MapIsFlat while these two read the low BYTE and test bit zero
+(`mov cl, byte ptr [94988Ch] / test cl, 1`). The two agree on the 0 and 1 the
+game stores there and disagree on everything else, and the difference is in the
+original rather than in the transcription. game.cpp's territory_xrange() carries
+the same distinction for reset_territory().
+*/
+static int site_xrange(int x) {
+    if (!(*MapIsFlat & 1)) {
+        if (x >= 0) {
+            if (x >= *MapLongitudeBounds) {
+                x -= *MapLongitudeBounds;
+            }
+        } else {
+            x += *MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
 Purpose: Check whether there is a sensor available in the specified tile.
 Original Offset: 005BF010
 Return Value: 0 (no sensor), 1 (sensor array via terraforming), 2 (Geosynchronous Survey Pod)
@@ -1436,6 +1463,139 @@ int __cdecl is_sensor(uint32_t x, uint32_t y) {
         }
     }
     return 0; // No sensor found
+}
+
+/*
+Purpose: Check whether a sensor array is worth building on the specified tile.
+Original Offset: 00564EB0
+Return Value: Is the tile a good sensor site? true/false
+Status: Complete
+
+Three questions in order, and every one of them can answer no on its own.
+
+WHO OWNS IT. The tile must already be the faction's own territory, and if it is fungus at
+ALT_BIT_OCEAN_SHELF or above the faction must hold Rules->tech_improve_fungus_sqr - the same
+technology that lets it work a fungus square at all, at offset 0x3C of RulesBasic.
+
+IS IT WANTED. The 25 tiles of the surrounding radius are scanned. Any one of them that already
+carries a sensor standing on the faction's own territory answers no outright, which is what stops
+sensors being stacked on top of each other. Then, for the NINE innermost tiles only, three
+independent reasons to want one are collected as bits of a mask:
+
+  1 - the tile is not the faction's own territory. A sensor on the border is worth having.
+  2 - one of the nine holds a base of this faction.
+  4 - that base has no sensor anywhere in its own 25-tile radius.
+
+A mask of zero answers no. Nothing here weighs the three against each other; any one will do, and
+2 without 4 is reachable because the base's radius is larger than the nine tiles just searched.
+
+Note that bit 2 is set once per qualifying base and bit 4 is decided per base, so a second base
+without cover sets 4 even when the first one had it. The original tests the flags only for being
+nonzero, so this is a distinction without a difference, and it is reproduced as written.
+
+IS THE TILE FREE. A resource bonus, a base, a monolith, a condenser, a thermal borehole, a mine or
+a solar collector each answer no, because the sensor would displace something already there. What
+is left answers yes when it is ROCKY, or when it is arid - neither RAINFALL_RAINY nor
+RAINFALL_MOIST - which are the tiles worth least as terrain. Anything else answers yes only if it
+is fungus at ALT_BIT_OCEAN_SHELF or above, and no otherwise.
+
+Verification note: the sweep against recovery-gameplay-tests kills 23 of 31 valid mutants twice
+over, and the eight survivors are two proven equivalences rather than untested behaviour.
+
+BIT 4 CANNOT CHANGE THE ANSWER, and neither can the 25-tile search that decides it. Seven
+survivors are that one fact: the `25 -> 0`, `0 -> 1` and `< -> <=` mutants of the inner loop, the
+inverted territory comparison inside it, the dropped `base_covered = true`, the dropped
+`reasons |= 4` and its `4 -> 0`. The proof is short. `reasons` is written in exactly three places
+and read in exactly one, `if (!reasons)`. Bit 4 is set only inside the block that has already
+executed `reasons |= 2` two statements earlier, so every state in which bit 4 could be set is
+already nonzero, and nothing distinguishes 6 from 2. The whole cover search is therefore dead as
+far as the return value goes - in the original as much as here, since this is a transcription of
+what 0x00564FEE through 0x00565076 does.
+
+It is kept because it is what the original executes, and because it is not quite side-effect
+free: is_sensor falls through to base_find, which writes *BaseFindDist. That write is overwritten
+again by every later on-map iteration of the OUTER loop, so it survives the call only when the
+base sits in the inner nine and every remaining radius tile is off the map - which no fixture
+here builds and which changes nothing this function returns either way.
+
+The eighth survivor is bonus_at's third argument. The parameter is declared UNUSED in
+map.cpp:00592030's recovery and read nowhere in its body, so 0 and 1 are the same call. The
+original passes 0 and so does this.
+*/
+int __cdecl good_sensor(int faction_id, int x, int y) {
+    if (whose_territory(faction_id, x, y, NULL, false) != faction_id) {
+        return false;
+    }
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_FUNGUS && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF
+        && !has_tech(Rules->tech_improve_fungus_sqr, faction_id)) {
+        return false;
+    }
+    int reasons = 0;
+    for (int i = 0; i < 25; i++) {
+        int x_radius = site_xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (!on_map(x_radius, y_radius)) {
+            continue;
+        }
+        if (is_sensor(x_radius, y_radius)
+            && whose_territory(faction_id, x_radius, y_radius, NULL, false) == faction_id) {
+            return false;
+        }
+        if (i >= 9) {   // the inner ring only, from here down
+            continue;
+        }
+        int base_id = base_at(x_radius, y_radius);
+        if (base_id >= 0 && Bases[base_id].faction_id_current == faction_id) {
+            reasons |= 2;
+            BOOL base_covered = false;
+            for (int j = 0; j < 25; j++) {
+                int x_base = site_xrange(x_radius + RadiusOffsetX[j]);
+                int y_base = y_radius + RadiusOffsetY[j];
+                if (!on_map(x_base, y_base)) {
+                    continue;
+                }
+                if (is_sensor(x_base, y_base)
+                    && whose_territory(faction_id, x_base, y_base, NULL, false) == faction_id) {
+                    base_covered = true;
+                    break;
+                }
+            }
+            if (!base_covered) {
+                reasons |= 4;
+            }
+        }
+        if (whose_territory(faction_id, x_radius, y_radius, NULL, false) != faction_id) {
+            reasons |= 1;
+        }
+    }
+    if (!reasons) {
+        return false;
+    }
+    if (bonus_at(x, y, 0)) {
+        return false;
+    }
+    Map *site = map_loc(x, y);
+    if (base_who(x, y) >= 0) {
+        return false;
+    }
+    uint32_t bit = site->bit;
+    if (bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE)) {
+        return false;
+    }
+    if (bit & (BIT_MINE | BIT_SOLAR_TIDAL)) {
+        return false;
+    }
+    if ((site->val3 & 0xC0) > TERRAIN_BIT_ROLLING) {
+        return true;   // rocky
+    }
+    if (!(site->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) {
+        return true;   // arid
+    }
+    if (!(bit & BIT_FUNGUS)) {
+        return false;
+    }
+    return (site->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF;
 }
 
 /*
@@ -1884,30 +2044,6 @@ checked, so a negative x reaches the shift.
 */
 static Map *site_tile(int x, int y) {
     return &(*MapTiles)[(x >> 1) + y * (int)*MapLongitude];
-}
-
-/*
-Purpose: Wrap an x coordinate the way world_site() wraps it.
-Original Offset: n/a
-Return Value: Wrapped x
-Status: Complete
-
-xrange() cannot stand in either, for one bit: this tests the LOW BIT of
-MapIsFlat where xrange() tests the whole value. The two agree on the 0/1 the
-game stores there and disagree on anything else, and the difference is in the
-original, not in the transcription.
-*/
-static int site_xrange(int x) {
-    if (!(*MapIsFlat & 1)) {
-        if (x >= 0) {
-            if (x >= *MapLongitudeBounds) {
-                x -= *MapLongitudeBounds;
-            }
-        } else {
-            x += *MapLongitudeBounds;
-        }
-    }
-    return x;
 }
 
 /*
