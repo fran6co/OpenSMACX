@@ -110,14 +110,41 @@ against it, never to trust directly.
 
 ### Parallel recovery across agents
 
-Multiple recoveries can run at once, but only the analysis-and-drafting phase
-parallelizes. Do **not** use git worktrees for this: a fresh worktree has no
-`.opensmacx/` and no `build/`, so it cannot disassemble, build, or gate. The
-build directories and the marker-protected Wine prefix are single-instance
-shared resources, so wiring, building, the two-preset gate, mutation sweeps,
-and commits are serial by construction.
+**Worktrees do work, and the objection recorded here was wrong.** It said a
+fresh worktree "has no `.opensmacx/` and no `build/`, so it cannot disassemble,
+build, or gate". True, and both are fixed in seconds. Measured 2026-08-01: a
+worktree set up by the recipe below built clean in **21 s** and ran the full
+suite **69/69**, including the Wine-backed tests — the prefix is per build
+directory, so lanes do not contend for it.
 
-The working split that respects those constraints:
+    git worktree add <path> -b <branch> HEAD   # HEAD, not the default base:
+                                               # that is origin/<default>, which
+                                               # here would drop local commits
+    cd <path> && mkdir -p .opensmacx
+    cp -al <main>/.opensmacx/game .opensmacx/game    # hard links, not symlinks:
+    cp -al <main>/.opensmacx/venv .opensmacx/venv    # symlinked artifact paths
+                                                     # are rejected by the build
+    cmake --preset mingw-i686-debug \
+        -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
+
+That last flag is not optional. Without it CMake takes `/usr/bin/python3`, which
+lacks `pefile`, and the oracle extraction fails partway through a build.
+
+**What actually conflicts, measured over the last eight recovery commits.** Every
+one touches the same eight files plus one or two unique `src/*.cpp`:
+
+| files | kind | on merge |
+|---|---|---|
+| `docs/recovery/` × 6 | derived, 1.2 MB each | **never merge** — `merge=binary` in `.gitattributes` refuses the text merge; take either side and promote → classify → promote |
+| `src/OpenSMACX.def` | append-only | ordinary conflict, one line each |
+| `tests/recovery_gameplay_tests.cpp` | append-only monolith | ordinary conflict, **except** the `main()` call list, where a careless resolution silently drops a test |
+
+Conflicts are fine and expected — different batches work on different functions.
+Only two cases are not: a 6,000-row CSV that cannot be resolved by reading, and a
+call list where a bad resolution loses coverage without failing anything.
+
+The drafting/integration split below is still the safe default while the
+gameplay tests keep a central `main()` list:
 
 - **Fan out** one agent per independent target. Each reads `AGENTS.md` and the
   companion docs, runs `tools/disasm.py` (read-only over the shared pinned
