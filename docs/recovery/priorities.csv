@@ -1621,7 +1621,6 @@ P3,2521,0x0055F930,?enemy_diplomacy@@YAXH@Z,4509,1,15,unrecovered,,,2,exact,exac
 P3,6221,0x00561080,?enemy_strategy@@YAXH@Z,14344,2,42,unrecovered,,,2,exact,exact,void (__cdecl ?enemy_strategy@@YAXH@Z)(int factionID)
 P3,1421,0x00564B90,?assemble_passengers@@YAXHHH@Z,512,1,4,unrecovered,,,2,exact,exact,"void (__cdecl ?assemble_passengers@@YAXHHH@Z)(int baseID, int, int)"
 P3,2421,0x00564D90,?can_convoy@@YAHHH@Z,282,2,4,unrecovered,,,2,exact,exact,"int (__cdecl ?can_convoy@@YAHHH@Z)(int xCoord, int yCoord)"
-P3,2521,0x00564EB0,?good_sensor@@YAHHHH@Z,679,2,5,unrecovered,,,2,exact,exact,"int (__cdecl ?good_sensor@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)"
 P3,210,0x00565160,sub_565160,442,0,2,unrecovered,,,1,missing,exact,
 P3,3621,0x00565320,?can_terraform@@YAHHHHHH@Z,3070,3,6,unrecovered,,,2,exact,exact,"int (__cdecl ?can_terraform@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int, int baseID)"
 P3,2521,0x00565F20,?compute_odds@@YAHHHHHH@Z,1708,2,5,unrecovered,,,2,exact,exact,"int (__cdecl ?compute_odds@@YAHHHHHH@Z)(int, int factionID, int vehID1, int vehID2, int)"

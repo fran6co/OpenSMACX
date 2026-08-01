@@ -10226,6 +10226,346 @@ void test_set_course_edges() {
 
 #undef CCHECK
 
+/*
+ * good_sensor (0x00564EB0).
+ *
+ * The subject tile is always (8,4) and the faction is always 1. Every tile of
+ * the map starts as the faction's own arid land, which is the shape the
+ * terrain tail says yes to, so a case only has to say what it changes.
+ */
+struct SensorWorld {
+    Map tiles[192];
+    Base bases[8];
+    RulesTechnology technology[MaxTechnologyNum];
+    uint8_t tech_achieved[MaxTechnologyNum];
+    RulesBasic rules;
+    PlayerData players_data[8];
+    Map *tiles_ptr;
+    uint32_t longitude;
+    int lon_bounds;
+    int lat_bounds;
+    BOOL is_flat;
+    uint32_t rand_seed;
+    uint32_t game_state;
+    uint32_t game_rules;
+    int base_count;
+    int base_find_dist;
+};
+
+SensorWorld g_sensor_world;
+
+const int SENSOR_LIVE = 64;
+const int SENSOR_FACTION = 1;
+const int SENSOR_X = 8;
+const int SENSOR_Y = 4;
+const int SENSOR_FUNGUS_TECH = 5;
+
+Map &sensor_at(int x, int y) {
+    return g_sensor_world.tiles[SENSOR_LIVE + (x >> 1) + y * 8];
+}
+
+void sensor_reset() {
+    std::memset(&g_sensor_world, 0, sizeof(g_sensor_world));
+    g_sensor_world.tiles_ptr = &g_sensor_world.tiles[SENSOR_LIVE];
+    g_sensor_world.longitude = 8;
+    g_sensor_world.lon_bounds = 16;
+    g_sensor_world.lat_bounds = 8;
+    g_sensor_world.is_flat = 1;
+    g_sensor_world.rand_seed = 0;   // keeps bonus_at off its random path
+    g_sensor_world.rules.tech_improve_fungus_sqr = SENSOR_FUNGUS_TECH;
+    for (int i = 0; i < 192; i++) {
+        // Dry land, one level above sea, owned by the faction under test.
+        g_sensor_world.tiles[i].climate = 0x80;
+        g_sensor_world.tiles[i].region = 2;
+        g_sensor_world.tiles[i].territory = (int8_t)SENSOR_FACTION;
+    }
+}
+
+// The cheapest of the three reasons to want a sensor: one tile of the inner
+// ring belongs to nobody. (10,4) is radius offset 2.
+void sensor_give_reason() {
+    sensor_at(10, 4).territory = 0;
+}
+
+// A base of the faction under test, with the map bit base_at insists on.
+void sensor_base(int base_id, int x, int y, int faction_id) {
+    g_sensor_world.bases[base_id].x = (int16_t)x;
+    g_sensor_world.bases[base_id].y = (int16_t)y;
+    g_sensor_world.bases[base_id].faction_id_current = (uint8_t)faction_id;
+    sensor_at(x, y).bit |= BIT_BASE_IN_TILE;
+    sensor_at(x, y).val2 = (uint8_t)faction_id;
+    if (g_sensor_world.base_count <= base_id) {
+        g_sensor_world.base_count = base_id + 1;
+    }
+}
+
+void sensor_grant_fungus_tech() {
+    g_sensor_world.tech_achieved[SENSOR_FUNGUS_TECH] = (uint8_t)(1 << SENSOR_FACTION);
+}
+
+#define NCHECK(cond)                                                          \
+    do {                                                                      \
+        const bool sensor_ok = (cond);                                        \
+        if (!sensor_ok) {                                                     \
+            std::fprintf(stderr, "good_sensor: line %d: %s\n", __LINE__,      \
+                         #cond);                                              \
+        }                                                                     \
+        expect(sensor_ok);                                                    \
+    } while (0)
+
+class SensorSeams {
+ public:
+    SensorSeams()
+        : tiles_(&MapTiles, &g_sensor_world.tiles_ptr),
+          longitude_(&MapLongitude, &g_sensor_world.longitude),
+          lon_(&MapLongitudeBounds, &g_sensor_world.lon_bounds),
+          lat_(&MapLatitudeBounds, &g_sensor_world.lat_bounds),
+          flat_(&MapIsFlat, &g_sensor_world.is_flat),
+          seed_(&MapRandSeed, &g_sensor_world.rand_seed),
+          state_(&GameState, &g_sensor_world.game_state),
+          rules_bits_(&GameRules, &g_sensor_world.game_rules),
+          bases_(&Bases, g_sensor_world.bases),
+          base_count_(&BaseCurrentCount, &g_sensor_world.base_count),
+          base_dist_(&BaseFindDist, &g_sensor_world.base_find_dist),
+          rules_(&Rules, &g_sensor_world.rules),
+          players_data_(&PlayersData, g_sensor_world.players_data),
+          technology_(&Technology, g_sensor_world.technology),
+          achieved_(&GameTechAchieved, g_sensor_world.tech_achieved) { }
+
+ private:
+    ScopedSeam<Map *> tiles_;
+    ScopedSeam<uint32_t> longitude_;
+    ScopedSeam<int> lon_;
+    ScopedSeam<int> lat_;
+    ScopedSeam<BOOL> flat_;
+    ScopedSeam<uint32_t> seed_;
+    ScopedSeam<uint32_t> state_;
+    ScopedSeam<uint32_t> rules_bits_;
+    ScopedSeam<Base> bases_;
+    ScopedSeam<int> base_count_;
+    ScopedSeam<int> base_dist_;
+    ScopedSeam<RulesBasic> rules_;
+    ScopedSeam<PlayerData> players_data_;
+    ScopedSeam<RulesTechnology> technology_;
+    ScopedSeam<uint8_t> achieved_;
+};
+
+void test_good_sensor_gates() {
+    SensorSeams seams;
+
+    // ---- the tile has to be the faction's own territory --------------------
+    sensor_reset();
+    sensor_give_reason();
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).territory = 0;      // unowned
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).territory = 2;      // someone else's
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).territory = -1;
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- fungus above the shelf needs the fungus technology ----------------
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(SENSOR_X, SENSOR_Y).bit |= BIT_FUNGUS;
+    sensor_at(SENSOR_X, SENSOR_Y).climate = 0x80;     // altitude well above 0x40
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_grant_fungus_tech();
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // Below the shelf the technology is not asked for at all.
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(SENSOR_X, SENSOR_Y).bit |= BIT_FUNGUS;
+    sensor_at(SENSOR_X, SENSOR_Y).climate = 0x20;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).climate = 0x40;     // exactly the shelf
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // And without the fungus bit the altitude is irrelevant.
+    sensor_at(SENSOR_X, SENSOR_Y).bit = 0;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+}
+
+void test_good_sensor_reasons() {
+    SensorSeams seams;
+
+    // ---- with no reason at all the answer is no ----------------------------
+    // Every tile is the faction's own and there is no base anywhere.
+    sensor_reset();
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- reason 1: a tile of the inner ring is not ours --------------------
+    sensor_reset();
+    sensor_at(10, 4).territory = 0;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // The subject's own tile is radius offset zero and is ours by definition,
+    // so it never supplies the reason.
+    sensor_reset();
+    sensor_at(6, 4).territory = 0;   // radius offset 6
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // Outside the inner nine it does not count.
+    sensor_reset();
+    sensor_at(10, 2).territory = 0;   // radius offset 9
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(8, 2).territory = 0;    // radius offset 8
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- reasons 2 and 4: our base in the inner ring, and its own cover ----
+    sensor_reset();
+    sensor_base(0, 10, 4, SENSOR_FACTION);
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // A base of another faction supplies nothing.
+    sensor_reset();
+    sensor_base(0, 10, 4, 2);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // Outside the inner nine it supplies nothing either.
+    sensor_reset();
+    sensor_base(0, 10, 2, SENSOR_FACTION);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- the base's own radius is searched for a sensor --------------------
+    // (14,4) is radius offset 21 from the base at (10,4) and six columns from
+    // the subject, so it is inside the base's search and outside the subject's.
+    sensor_reset();
+    sensor_base(0, 10, 4, SENSOR_FACTION);
+    sensor_at(14, 4).bit |= BIT_SENSOR_ARRAY;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));   // reason 2 alone
+    // That sensor only counts as cover while it stands on our territory.
+    sensor_at(14, 4).territory = 0;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- a covered base of another faction still supplies nothing ----------
+    sensor_reset();
+    sensor_base(0, 10, 4, 2);
+    sensor_at(14, 4).bit |= BIT_SENSOR_ARRAY;
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+}
+
+void test_good_sensor_existing() {
+    SensorSeams seams;
+
+    // ---- an existing friendly sensor anywhere in the radius refuses --------
+    sensor_reset();
+    sensor_give_reason();
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).bit |= BIT_SENSOR_ARRAY;   // offset 0
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // The search runs the whole 25, not just the nine the reasons use.
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(12, 4).bit |= BIT_SENSOR_ARRAY;   // radius offset 21
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(8, 0).bit |= BIT_SENSOR_ARRAY;    // radius offset 24, the last
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // A sensor on someone else's territory does not refuse.
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(12, 4).bit |= BIT_SENSOR_ARRAY;
+    sensor_at(12, 4).territory = 2;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // Neither does one off the map: (8,-4) is radius offset 24 from (8,0).
+    sensor_reset();
+    sensor_at(10, 0).territory = 0;   // the reason, in the inner ring
+    sensor_at(8, -4).bit |= BIT_SENSOR_ARRAY;
+    sensor_at(8, -4).territory = (int8_t)SENSOR_FACTION;
+    NCHECK(good_sensor(SENSOR_FACTION, 8, 0));
+
+    // Nor one at radius offset 25, which is outside the search. (1,-5) is the
+    // first offset past the twenty-five, and from row six it is on the map.
+    sensor_reset();
+    sensor_at(10, 6).territory = 0;   // the reason
+    sensor_at(9, 1).bit |= BIT_SENSOR_ARRAY;
+    NCHECK(good_sensor(SENSOR_FACTION, 8, 6));
+    // Offset 24 from the same tile is (0,-4), and that one is inside it.
+    sensor_at(8, 2).bit |= BIT_SENSOR_ARRAY;
+    NCHECK(!good_sensor(SENSOR_FACTION, 8, 6));
+}
+
+void test_good_sensor_terrain() {
+    SensorSeams seams;
+
+    // ---- a resource bonus refuses ------------------------------------------
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(SENSOR_X, SENSOR_Y).bit |= BIT_RSC_BONUS;
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- a base on the tile itself refuses ---------------------------------
+    sensor_reset();
+    sensor_give_reason();
+    sensor_base(0, SENSOR_X, SENSOR_Y, SENSOR_FACTION);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // The 0xF owner nibble is nobody, and base_who lets it through.
+    sensor_at(SENSOR_X, SENSOR_Y).val2 = 0xF;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // Faction zero owns bases too, and base_who answering 0 is still a base.
+    // The reason has to come from the border here, because a base belonging to
+    // somebody else supplies none.
+    sensor_reset();
+    sensor_give_reason();
+    sensor_base(0, SENSOR_X, SENSOR_Y, 0);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- the five improvements that would be displaced ---------------------
+    const uint32_t displaced[] = {
+        BIT_MONOLITH, BIT_CONDENSER, BIT_THERMAL_BORE, BIT_MINE, BIT_SOLAR_TIDAL,
+    };
+    for (int i = 0; i < 5; i++) {
+        sensor_reset();
+        sensor_give_reason();
+        NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+        sensor_at(SENSOR_X, SENSOR_Y).bit |= displaced[i];
+        NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    }
+    // A neighbouring improvement is not this tile's problem.
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(10, 4).bit |= BIT_MONOLITH;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- rocky says yes even when the terrain is otherwise good ------------
+    sensor_reset();
+    sensor_give_reason();
+    sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x80 | RAINFALL_RAINY);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));   // moist, no fungus
+    sensor_at(SENSOR_X, SENSOR_Y).val3 = 0x80;                  // rocky
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).val3 = TERRAIN_BIT_ROLLING;   // not rocky enough
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).val3 = 0xC0;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    // The other six bits of the field are not part of the answer.
+    sensor_at(SENSOR_X, SENSOR_Y).val3 = 0x3F;
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- arid says yes, and either rainfall bit takes that away ------------
+    sensor_reset();
+    sensor_give_reason();
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));    // 0x80, arid
+    sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x80 | RAINFALL_MOIST);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x80 | RAINFALL_RAINY);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+
+    // ---- and fungus rescues a moist tile, above the shelf only -------------
+    sensor_reset();
+    sensor_give_reason();
+    sensor_grant_fungus_tech();
+    sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x80 | RAINFALL_MOIST);
+    sensor_at(SENSOR_X, SENSOR_Y).bit |= BIT_FUNGUS;
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x20 | RAINFALL_MOIST);
+    NCHECK(!good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+    sensor_at(SENSOR_X, SENSOR_Y).climate = (uint8_t)(0x40 | RAINFALL_MOIST);
+    NCHECK(good_sensor(SENSOR_FACTION, SENSOR_X, SENSOR_Y));
+}
+
+#undef NCHECK
+
 }  // namespace
 
 int main() {
@@ -10269,6 +10609,10 @@ int main() {
     test_set_course_anchorage();
     test_set_course_base_and_wrap();
     test_set_course_edges();
+    test_good_sensor_gates();
+    test_good_sensor_reasons();
+    test_good_sensor_existing();
+    test_good_sensor_terrain();
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
                      failure_count());

@@ -1621,6 +1621,7 @@ address,name,shape
 0x00560D50,?guard_check@@YAHHH@Z,straight_line
 0x00560DD0,?enemy_capabilities@@YAXH@Z,loop
 0x00564890,?set_course@@YAXHDHH@Z,loop
+0x00564EB0,?good_sensor@@YAHHHH@Z,loop
 0x0056B320,?get_there@@YAHHHH@Z,straight_line
 0x0056B480,?coast_or_border@@YAHHHHHH@Z,loop
 0x00579770,?rnd@@YAHHPAD@Z,straight_line

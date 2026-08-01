@@ -348,6 +348,7 @@ DLLEXPORT int __cdecl radius_move(int x_radius_off, int y_radius_off, int range)
 DLLEXPORT  int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range);
 DLLEXPORT int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst);
 DLLEXPORT int __cdecl is_sensor(uint32_t x, uint32_t y);
+DLLEXPORT int __cdecl good_sensor(int faction_id, int x, int y);
 DLLEXPORT BOOL __cdecl has_temple(int faction_id);
 DLLEXPORT void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both);
 DLLEXPORT void __cdecl world_raise_alt(int x, int y);
