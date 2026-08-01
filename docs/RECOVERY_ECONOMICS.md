@@ -10,23 +10,50 @@ otherwise. Where a number is derived rather than observed it says so.
 
 ## The measured rate
 
-Five zero-seam functions were recovered end to end, each timed:
+Eleven zero-seam functions were recovered end to end. The first three rows were
+timed by hand; the rest are commit-to-commit intervals, which is the harsher
+measure because it charges every recovery for its own integration:
 
 | function | bytes | s/byte | commit |
 |---|---:|---:|---|
 | `?stack_veh@@YAHHH@Z` | 1,583 | 2.27 | `0bbe844` |
 | `?action_home@@YAHH@Z` | 2,239 | 1.08 | `748220c` |
 | `crop_yield` + `mine_yield` + `energy_yield` | 3,905 | 0.97 | `004393d` |
+| `?base_support@@YAXXZ` | 1,530 | 0.46\* | `a02d8cb` |
+| `?world_site@@YAHHHH@Z` | 1,509 | 1.29 | `5616b33` |
+| `?num_objectives@@YAHHH@Z` | 1,161 | 0.76 | `460fa52` |
+| the three `spot_*` leaves | 845 | 2.31 | `8849bcc` |
+| `?spot_loc@@YAXHHHH@Z` | 821 | 0.54 | `cc19992` |
+| `?reset_territory@@YAXXZ` | 1,074 | 1.56 | `5ad12fa` |
 
-`stack_veh` was first-of-kind and carries the learning cost. **Steady state is
-≈1.0 s/byte, or ≈3,600 B/agent-hour.**
+\* understated: its analysis overlapped an unrelated commit that landed between.
+
+`stack_veh` was first-of-kind and carries the learning cost. Over all eleven,
+**14,667 B in 17,397 s = 1.19 s/byte, or ≈3,030 B/agent-hour.** The earlier
+five-function figure of ≈1.0 s/byte was optimistic by about 20%, and the spread
+per function is 0.5–2.3 s/byte — do not price a single function from the mean.
+
+### Blockers are a cost line, not an anomaly
+
+Recovering flushes out defects in already-committed code, and paying for them is
+part of the rate. Two of the nine commits in one run were blockers found this
+way, costing **2,984 s — 15% of that run's total**:
+
+| blocker | cost | what it was |
+|---|---:|---|
+| `205a230` | 1,964 s | a `.def` rename broke `stage-hybrid-game`; the staged exe's import table is frozen |
+| `8b67ada` | 1,020 s | a test truncated a committed CSV to 0 bytes under the other gate lane |
+
+Charging those to the bytes gives **1.39 s/byte all-in**. That is the number to
+plan with; 1.19 is the number to compare authoring approaches with.
 
 ### What that does not license
 
-Those five were the *easiest available*: zero seams, every callee already
+Those eleven were the *easiest available*: zero seams, every callee already
 `source_complete`, prototypes in hand, 1–4 kB. That population is the zero-seam
-frontier — 969 functions / 216,328 B — which at this rate is about 60
-agent-hours. **The remaining ~2 MB has no measurement of any kind.** It is
+frontier — 969 functions / 216,328 B — which at 1.19 s/byte is **72 agent-hours,
+or 84 with blockers charged in**. (The earlier estimate of ~60 h came from the
+optimistic 1.0 figure.) **The remaining ~2 MB has no measurement of any kind.** It is
 seam-bearing, contains a 170-function SCC with no leaf by construction, and
 941 functions reach DirectDraw/DirectPlay/DirectSound (see
 [EXCLUSIONS.md](EXCLUSIONS.md)). Publish the frontier figure; do not extrapolate
