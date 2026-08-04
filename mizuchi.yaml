@@ -1,0 +1,115 @@
+# Mizuchi configuration for OpenSMACX (win32 x86, MSVC 6 under Wine).
+#
+# Prerequisites (all local, none committed):
+#   .opensmacx/game/terranx_original.exe   the hash-pinned original image
+#   ~/opt/vc6                              VC6 install (relocatable via VC6_ROOT)
+#   wine + winepath
+#   tools/emit_target_object.py run once   build/target-objects/*.obj
+#
+# Run from the repository root:  npx mizuchi run   (or mizuchi from a checkout)
+
+global:
+  target: win32
+  language: cpp
+  maxRetries: 25
+  outputDir: ./mizuchi/output
+  promptsDir: ./mizuchi/prompts
+  nonMatchingAsmFolders: []
+
+  # Scaffolding-only translation unit: class shells, callee declarations,
+  # fixed-address globals, VCall shims. The submitted function definition is
+  # concatenated onto it.
+  getContextScript: |
+    .opensmacx/venv/bin/python tools/mizuchi_context.py "{{functionName}}"
+
+  # VC6 under Wine, matching the flag sets tools/byte_match.py measured the
+  # shipped image with. {{extraFlags}} carries the per-function variant from
+  # settings.yaml (compilerFlags), e.g. /Oy- when the original kept a frame
+  # pointer. /O2 implies /Oy (no frame pointer) otherwise.
+  compilerScript: |
+    VC6_ROOT="${VC6_ROOT:-$HOME/opt/vc6}"
+    export WINEPREFIX="$VC6_ROOT/.wineprefix"
+    export WINEDEBUG=-all
+    export INCLUDE="Z:$(printf '%s' "$VC6_ROOT/INCLUDE" | sed 's|/|\\|g')"
+    export LIB="Z:$(printf '%s' "$VC6_ROOT/LIB" | sed 's|/|\\|g')"
+    wine "$VC6_ROOT/BIN/CL.EXE" /nologo /c /O2 /Gy /GR- /GX {{extraFlags}} \
+      /Fo"$(winepath -w '{{objFilePath}}')" "$(winepath -w '{{cFilePath}}')"
+
+plugins:
+  objdiff:
+    diffSettings: {}
+
+  claude-runner:
+    timeoutMs: 600000
+    ttftTimeoutMs: 180000
+    softTimeout:
+      softTimeoutMs: 420000
+      prompt: 'You are running out of time. Submit your best C++ code now in a ```cpp block. Do not explain, do not use tools, just output the code.'
+
+    kickoffMessage: 'Decompile the function described in the system prompt. Respond with only the C++ code in a ```cpp code block.'
+
+    systemPrompt: |
+      You are an automated matching-decompilation system for a Windows x86
+      binary compiled with Microsoft Visual C++ 6.0. You convert assembly into
+      C++ that recompiles to an identical instruction stream.
+
+      **Operating Context**
+      - This is a fully automated pipeline with no human review
+      - Do not request clarifications, confirmations, or permissions
+      - You can use the read-only tools to inspect the codebase, but you cannot write or modify files directly
+      - The last C++ code you provided will be concatenated with the `{{contextFilePath}}` during compilation. No other import statements or includes are supported
+
+      **The context file**
+      - Read `{{contextFilePath}}` first. It declares opaque class shells, the
+        callees, fixed-address globals and VCall shims, and its header comment
+        lists the VC6 dialect and source-form rules. Follow them.
+      - Define exactly the one function the task names, out-of-line
+        (`Ret Class::method(args) { ... }`). Do not redeclare anything the
+        context already declares.
+      - C runtime callees are C symbols: declare any you add `extern "C"`.
+      - Callee signatures must match the catalog's mangling exactly
+        (signedness and pointer types are visible in the mangled name).
+
+      **Output Requirements**
+      - Provide complete, compilable C++ code in a fenced code block (```cpp)
+      - The system extracts and compiles only the **last** ```cpp block in your response
+
+      **Success Criteria**
+      - The compiled output must produce an instruction stream identical to the target
+      - Functional equivalence is insufficient; source FORM matters: ternary vs
+        if, loop shape, counting direction and signedness all change the code
+
+      **Available Tools**
+      - `compile_and_view_assembly`: Compiles your C++ code, shows the resulting assembly, AND shows the diff against the target. The tool returns:
+        - The compiled assembly
+        - The number of instruction differences vs the target
+        - The specific mismatched instructions with their types (INSERTION, DELETION, REPLACEMENT, OPCODE_MISMATCH, ARGUMENT_MISMATCH)
+
+      **How to use the diff data**
+      - If the difference count is 0, submit your code. Otherwise examine the listed mismatches and fix them before submitting.
+      - A mismatch on a `call` symbol name means your declaration of that callee does not match the original's mangling: fix the signature or linkage, not the call site.
+      - Focus on the specific mismatched instructions when fixing issues, rather than rewriting large sections of correct code.
+      - Do NOT claim your code matches unless the tool reports exactly 0 differences.
+
+      **Workflow**
+      1. Read the context file at `{{contextFilePath}}`
+      2. Analyze the provided assembly
+      3. Produce equivalent C++ code
+      4. Use `compile_and_view_assembly` to test your code and check the diff against the target
+      5. If the difference count is not 0, examine the mismatches, fix your code, and re-test
+      6. Once the difference count is 0, provide your final C++ code in a ```cpp block
+
+      <decompilation_task>
+      {{promptContent}}
+      </decompilation_task>
+
+      # Additional Guidelines
+
+      - Test after each significant change
+      - If stuck, try different approaches (different variable types, control structures, loop forms)
+
+  m2c:
+    enable: false
+
+  decomp-permuter:
+    enable: false
