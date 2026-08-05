@@ -63,6 +63,7 @@ import pefile  # noqa: E402
 import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
                                read_bytes)
+from mizuchi_declfix import decode_signature  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -347,6 +348,17 @@ class Signature:
         # to 1,306 before the count caught it.
         self.params = split_params(match.group("params"))
         self.is_method = self.convention == "__thiscall"
+        if not self.is_method and MANGLED_METHOD.match(self.mangled) \
+                and self.params and "this" in self.params[0]:
+            # `QAA` is a PUBLIC __cdecl MEMBER function, and 80 of them are
+            # catalogued. Keying "is this a method" off __thiscall alone sent
+            # every one down the free-function path, where the name
+            # `?fill_func@AlphaMenu@@QAAH...` is not an identifier, so it was
+            # renamed `fn_<address>` and emitted as a free function - a symbol
+            # no target object holds. Both conditions are required: 93 free
+            # functions take a parameter honestly NAMED `this`, and they have
+            # no class in the mangled name.
+            self.is_method = True
         self.klass = ""
         self.method = ""
         self.kind = "free"
@@ -388,6 +400,24 @@ class Signature:
                 # is simply not a C identifier.
                 self.method = f"fn_{int(row['address'], 16):08x}"
 
+        # THE MANGLED NAME OUTRANKS THE PROTOTYPE'S SPELLING OF A TYPE. The
+        # derived prototypes are written in IDA's alphabet on purpose
+        # (`derive_prototypes_from_names.SCALAR_SPELLING`, so derived rows parse
+        # like recorded ones), and that alphabet collapses types MSVC keeps
+        # apart: `char` and `signed char` both become `int8`, `long` and `int`
+        # both become `int`. Those mangle differently - D vs C, J vs H - so a
+        # body compiled from the IDA spelling emits `PAC` where the target
+        # holds `PAD`, and the two objects share no symbol at all. 108 of the
+        # 264 unpairable `?`-mangled rows were exactly this and nothing else.
+        #
+        # Only when the count agrees: `decode_signature` reads scalars and
+        # pointers to them, and returns None on a user-defined type, so a
+        # disagreement here means it read a different signature than the
+        # prototype describes rather than a better spelling of the same one.
+        decoded = decode_signature(self.mangled)
+        if decoded is not None and len(decoded[1]) == len(self.params):
+            self.returns, self.params = decoded[0], list(decoded[1])
+
         # C or C++ linkage, and with it the symbol both objects must carry.
         # A catalogued name that is not `?`-mangled was never a C++ symbol:
         # emitting it with C++ linkage makes CL invent `?sub_5e3650@@YGHH@Z`,
@@ -416,6 +446,17 @@ class Signature:
             recovery_symbols.symbol_for(
                 self.mangled, int(row["address"], 16), self.convention,
                 self.params, self.method)
+
+    def member_convention(self) -> str:
+        """The convention a MEMBER declaration has to spell, or ''.
+
+        `__thiscall` is the default for a member and VC6 rejects the keyword
+        outright (C4234), so it is never written. `__cdecl` on a member is not
+        the default and must be written, or CL mangles `QAE` where the target
+        holds `QAA`.
+        """
+        return "" if self.convention == "__thiscall" \
+            else f"{self.convention} "
 
     def argument_list(self) -> str:
         return ", ".join(f"{text} a{index}"
@@ -536,18 +577,28 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # subject was worth 38% compile rate: a callee taking `RECT *` is declared
     # before anything declares `RECT`, and CL stops at the first one.
     wanted = set(signature.referenced_types())
+    if signature.is_method:
+        # `referenced_types` drops the subject's own class, which is right for
+        # deciding what to DECLARE and wrong for deciding what to forward-
+        # declare: a zero-argument method like `?update_zorder@Win@@QAAXXZ`
+        # never mentions `Win` in its own signature, while a callee declaration
+        # above it does.
+        wanted.add(signature.klass)
     for entries in methods_by_class.values():
         for entry in entries:
             wanted |= entry.referenced_types()
             wanted.add(entry.klass)
-    defined = set(methods_by_class) | ({signature.klass} if signature.is_method
-                                       else set())
-    # A type DEFINED below must not also be forward-declared with the other
-    # class-key: VC6 warns C4099 and the two spellings read as different types
-    # to a reader.
-    for name in sorted(wanted - defined):
+    # EVERYTHING referenced is forward-declared, including classes defined
+    # further down. `struct X;` before `struct X { ... };` is legal and is what
+    # keeps a callee declaration that takes `Win *` from preceding the
+    # definition of `Win` - which it does whenever the SUBJECT owns that class,
+    # and which used to be a C2065 the moment `Win`'s methods started being
+    # recognised as methods. Excluding them was a guard against C4099, the
+    # class/struct-key mismatch warning, and that cannot fire now that both the
+    # forward declaration and the definition say `struct`.
+    for name in sorted(wanted):
         lines.append(f"struct {name};")
-    if wanted - defined:
+    if wanted:
         lines.append("")
 
     if declarations or methods_by_class:
@@ -564,9 +615,9 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             elif entry.kind == "dtor":
                 body.append(f"    ~{klass}();")
             else:
-                body.append(f"    {entry.returns} {entry.method}"
-                            f"({', '.join(entry.params)});")
-        lines.append(f"class {klass} {{ public:")
+                body.append(f"    {entry.returns} {entry.member_convention()}"
+                            f"{entry.method}({', '.join(entry.params)});")
+        lines.append(f"struct {klass} {{")
         lines.extend(sorted(set(body)))
         lines.append("};")
     for text in sorted(set(d for d in declarations if d)):
@@ -602,13 +653,19 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # The subject.
     own = methods_by_class.get(signature.klass, [])
     if signature.is_method:
-        lines.append(f"class {signature.klass} {{ public:")
+        # `struct`, not `class`: MSVC encodes the two differently in a mangled
+        # name - `PAUSprite@@` against `PAVSprite@@` - and the catalogue holds
+        # `U` over `V` by 503 to 61. Emitting `class` made every function
+        # taking one of these as a parameter mangle to a name no target object
+        # holds. It also settles the C4099 the forward declarations above
+        # warned about, since those already say `struct`.
+        lines.append(f"struct {signature.klass} {{")
         seen = set()
         for entry in own:
             if entry.method == signature.method:
                 continue
-            text = (f"    {entry.returns} {entry.method}"
-                    f"({', '.join(entry.params)});")
+            text = (f"    {entry.returns} {entry.member_convention()}"
+                    f"{entry.method}({', '.join(entry.params)});")
             if entry.kind == "ctor":
                 text = f"    {signature.klass}({', '.join(entry.params)});"
             elif entry.kind == "dtor":
@@ -621,7 +678,8 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         elif signature.kind == "dtor":
             lines.append(f"    ~{signature.klass}();")
         else:
-            lines.append(f"    {signature.returns} {signature.method}"
+            lines.append(f"    {signature.returns} "
+                         f"{signature.member_convention()}{signature.method}"
                          f"({', '.join(signature.params)});")
         lines.append("};")
         lines.append("")
@@ -634,8 +692,8 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         elif signature.kind == "dtor":
             head = f"{signature.klass}::~{signature.klass}()"
         else:
-            head = (f"{signature.returns} {signature.klass}::"
-                    f"{signature.method}({arguments})")
+            head = (f"{signature.returns} {signature.member_convention()}"
+                    f"{signature.klass}::{signature.method}({arguments})")
     else:
         if scaffolding_only:
             return "\n".join(lines)
