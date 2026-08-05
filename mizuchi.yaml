@@ -14,7 +14,7 @@ global:
   maxRetries: 25
   # Parallel agent sessions (each with its own cache file). Raise or lower
   # depending on quota headroom; the programmatic phase is off anyway here.
-  concurrency: 2
+  concurrency: 10
   outputDir: ./mizuchi/output
   promptsDir: ./mizuchi/prompts
   # Function -> target object map produced by tools/emit_target_object.py
@@ -106,6 +106,7 @@ plugins:
       - The compiled output must produce an instruction stream identical to the target
       - Functional equivalence is insufficient; source FORM matters: ternary vs
         if, loop shape, counting direction and signedness all change the code
+      - Do NOT use inline assembly (`__asm` / `asm`) — it pastes the original bytes instead of decompiling and will be rejected. Derive real C++ that the compiler turns into the matching assembly.
 
       **Available Tools**
       - `compile_and_view_assembly`: Compiles your C++ code, shows the resulting assembly, AND shows the diff against the target. The tool returns:
