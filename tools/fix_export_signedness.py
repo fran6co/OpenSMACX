@@ -143,6 +143,82 @@ def rewrite_signature(line: str, wants: dict, want_return: str | None) -> str:
     return head + "(" + ",".join(params) + tail
 
 
+def rewrite_wrapped(lines: list, brace_index: int, wants: dict,
+                    want_return: str | None) -> tuple:
+    """Rewrite a signature that wraps across lines, preserving the line count.
+
+    Collapsing the wrap into one line would be far simpler and is not safe:
+    functions.csv records every body by `src/foo.cpp:LINE`, so removing lines
+    shifts every catalogued location below it in that file. Each parameter is
+    therefore edited in the line it actually occupies.
+
+    Returns (first line index, rewritten lines).
+    """
+    # Find the signature block in BOTH directions. A definition anchors on its
+    # opening brace and may have opened its parameter list lines earlier; a
+    # header declaration anchors on the line holding `(` and may not close it
+    # until lines later. Handling only the first case left every wrapped
+    # DECLARATION refused while its definition was rewritten.
+    start = brace_index
+    while start > 0 and "(" not in lines[start]:
+        start -= 1
+    if "(" not in lines[start]:
+        raise Refused("no parameter list near the signature")
+    stop = max(start, brace_index)
+    while stop < len(lines) - 1 and lines[start:stop + 1].count(")") == 0 and \
+            "\n".join(lines[start:stop + 1]).count("(") > "\n".join(lines[start:stop + 1]).count(")"):
+        stop += 1
+    while stop < len(lines) - 1 and \
+            "\n".join(lines[start:stop + 1]).count("(") > "\n".join(lines[start:stop + 1]).count(")"):
+        stop += 1
+
+    block = lines[start:stop + 1]
+    joined = "\n".join(block)
+    open_paren = joined.find("(")
+    close_paren = joined.rfind(")")
+    if close_paren <= open_paren:
+        raise Refused("unbalanced parameter list across the wrap")
+
+    # Walk the parameter list once, recording each parameter's character span
+    # in `joined` so the edit lands in the right physical line.
+    spans, depth, begin = [], 0, open_paren + 1
+    for index in range(open_paren + 1, close_paren):
+        ch = joined[index]
+        if ch in "(<[":
+            depth += 1
+        elif ch in ")>]":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            spans.append((begin, index))
+            begin = index + 1
+    spans.append((begin, close_paren))
+
+    offset = 0
+    if "__fastcall" in joined and len(spans) >= 2:
+        first = joined[spans[0][0]:spans[0][1]].replace(" ", "").replace("\n", "")
+        second = joined[spans[1][0]:spans[1][1]].replace(" ", "").replace("\n", "")
+        if first in ("void*", "void*self") and second == "void*":
+            offset = 2
+
+    edits = []
+    for index, want in wants.items():
+        position = index + offset
+        if position >= len(spans):
+            raise Refused(f"argument {index} beyond the {len(spans) - offset} parameters declared")
+        low, high = spans[position]
+        edits.append((low, high, retype(joined[low:high], want)))
+    if want_return:
+        edits.append((0, open_paren, retype(joined[:open_paren], want_return)))
+
+    for low, high, replacement in sorted(edits, reverse=True):
+        joined = joined[:low] + replacement + joined[high:]
+
+    rewritten = joined.split("\n")
+    if len(rewritten) != len(block):
+        raise Refused("rewrite changed the line count")
+    return start, rewritten
+
+
 def definition_line(address: int) -> tuple:
     """(path, line index) of the definition, from the catalogue - not guessed.
 
@@ -230,13 +306,13 @@ def apply_finding(finding: dict, dry_run: bool) -> str:
     for path, index in targets:
         lines = path.read_text().splitlines()
         try:
-            rewritten = rewrite_signature(lines[index], finding["wants"],
-                                          finding.get("want_return"))
+            block_start, block = rewrite_wrapped(lines, index, finding["wants"],
+                                                 finding.get("want_return"))
         except Refused as error:
             raise Refused(f"{path.name}:{index + 1}: {error}")
-        if rewritten == lines[index]:
+        if block == lines[block_start:block_start + len(block)]:
             continue
-        lines[index] = rewritten
+        lines[block_start:block_start + len(block)] = block
         if not dry_run:
             path.write_text("\n".join(lines) + "\n")
         changed.append(f"{path.name}:{index + 1}")

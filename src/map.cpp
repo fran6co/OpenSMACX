@@ -98,7 +98,7 @@ Original Offset: 004E3EF0
 Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
 Status: Complete
 */
-int __cdecl whose_territory(uint32_t faction_id, uint32_t x, uint32_t y, int *base_id, 
+int __cdecl whose_territory(int faction_id, int x, int y, int *base_id, 
                             BOOL ignore_comm) {
     int owner = map_loc(x, y)->territory;
     if (owner <= 0) {
@@ -444,8 +444,8 @@ Original Offset: 0056B480
 Return Value: Is point A considered a border or coast? true/false
 Status: Complete
 */
-BOOL __cdecl coast_or_border(uint32_t x_point_a, uint32_t y_point_a, uint32_t x_point_b, 
-                             uint32_t y_point_b, uint32_t faction_id) {
+BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b, 
+                             int y_point_b, int faction_id) {
     if ((int)faction_id != whose_territory(faction_id, x_point_a, y_point_a, NULL, false)) {
         return false; // faction doesn't control point A
     }

@@ -1483,7 +1483,7 @@ Original Offset: 005B4210
 Return Value: n/a
 Status: Complete
 */
-void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, uint32_t faction_id,
+void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int faction_id,
     BOOL UNUSED(toggle), BOOL is_quick_calc) {
     ZeroMemory(effect, sizeof(SocialEffect));
     for (int cat = 0; cat < MaxSocialCatNum; cat++) {
@@ -1619,7 +1619,7 @@ Original Offset: 005B4790
 Return Value: n/a
 Status: Complete - testing (likely has multiple issues due to length + complexity)
 */
-void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int wealth_val, 
+void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val, 
                        int power_val, SocialCategory *output) {
     // setup
     int fight_val;
