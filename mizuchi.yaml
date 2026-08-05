@@ -12,6 +12,9 @@ global:
   target: win32
   language: cpp
   maxRetries: 25
+  # Parallel agent sessions (each with its own cache file). Raise or lower
+  # depending on quota headroom; the programmatic phase is off anyway here.
+  concurrency: 2
   outputDir: ./mizuchi/output
   promptsDir: ./mizuchi/prompts
   # Function -> target object map produced by tools/emit_target_object.py
