@@ -10,10 +10,13 @@ mizuchi/asm/nonmatching/, marked with the MANGLED name:
     func_end ?name@@...@Z
 
 Matching dumps: for functions already recovered into src/ (catalog
-source_locations), one .s file into mizuchi/asm/matchings/, marked with
-the PLAIN name the C++ definition uses (method name, or Class / ~Class
-for constructors / destructors), so the indexer can pair the definition
-it finds in src/ with its assembly.
+source_locations), one .s file into mizuchi/asm/matchings/, also marked
+with the mangled name. Alongside them, mizuchi/source-map.json pairs each
+recovered definition with its symbol BY LOCATION ({file, line, name}),
+because source names do not match mangled symbol names (methods vs
+?method@Class@@..., deleting destructors, operator delete, plain sub_
+names). The Mizuchi indexer uses the source map to attach the C++ code
+to the right symbol without parsing mangling.
 
 Call/jmp targets that are catalogued get a '; =name' annotation so the
 indexer can build the call graph.
@@ -25,7 +28,7 @@ committed (the mizuchi/ tree is gitignored).
 from __future__ import annotations
 
 import argparse
-import re
+import json
 import sys
 from pathlib import Path
 
@@ -40,29 +43,7 @@ from generator_support import parse_body_ranges  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUT = REPO_ROOT / "mizuchi" / "asm" / "nonmatching"
 DEFAULT_MATCHING_OUT = REPO_ROOT / "mizuchi" / "asm" / "matchings"
-
-METHOD_NAME = re.compile(r"^\?([^@?]+)@")
-CONSTRUCTOR_NAME = re.compile(r"^\?\?0([^@]+)@@")
-DESTRUCTOR_NAME = re.compile(r"^\?\?1([^@]+)@@")
-
-
-def plain_name(mangled: str) -> str | None:
-    """The name a C++ definition of this symbol uses in src/, or None.
-
-    ?method@Class@@... -> method, ??0Class@@... -> Class (constructor),
-    ??1Class@@... -> ~Class (destructor). Operators and other specials
-    (??2, ??_...) have no plain spelling this simple and are skipped.
-    """
-    match = METHOD_NAME.match(mangled)
-    if match:
-        return match.group(1)
-    match = CONSTRUCTOR_NAME.match(mangled)
-    if match:
-        return match.group(1)
-    match = DESTRUCTOR_NAME.match(mangled)
-    if match:
-        return f"~{match.group(1)}"
-    return None
+DEFAULT_SOURCE_MAP = REPO_ROOT / "mizuchi" / "source-map.json"
 
 
 def dump_one(pe: pefile.PE, engine: Cs, address: int, row: dict[str, str],
@@ -91,6 +72,7 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--matching-out", type=Path, default=DEFAULT_MATCHING_OUT)
+    parser.add_argument("--source-map", type=Path, default=DEFAULT_SOURCE_MAP)
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     arguments = parser.parse_args()
 
@@ -105,6 +87,7 @@ def main() -> int:
     arguments.matching_out.mkdir(parents=True, exist_ok=True)
 
     written = skipped = matching = 0
+    source_map = []
     for address, row in sorted(functions.items()):
         if not row.get("name") or not row.get("body_ranges"):
             skipped += 1
@@ -117,21 +100,27 @@ def main() -> int:
             continue
         written += 1
 
-        # Recovered functions also get a matching dump keyed by the plain
-        # name, so the indexer pairs the src/ definition with its assembly.
+        # Recovered functions also get a matching dump (mangled-name marker,
+        # so the db identity and the asm lookup agree) plus a source-map entry
+        # pairing the definition's recorded location with the symbol.
         source_location = (row.get("source_locations") or "").strip()
         if source_location.startswith("src/"):
-            name = plain_name(row["name"])
-            if name:
-                try:
-                    dump_one(pe, engine, address, row, functions,
-                             arguments.matching_out, marker=name)
-                    matching += 1
-                except ValueError:
-                    pass
+            try:
+                dump_one(pe, engine, address, row, functions, arguments.matching_out)
+                matching += 1
+            except ValueError:
+                pass
+            file_part, _, line_part = source_location.partition(":")
+            if line_part.isdigit():
+                source_map.append({"file": file_part, "line": int(line_part),
+                                   "name": row["name"]})
+
+    arguments.source_map.parent.mkdir(parents=True, exist_ok=True)
+    arguments.source_map.write_text(json.dumps(source_map, indent=2) + "\n")
 
     print(f"wrote {written} dump(s) into {arguments.out}, skipped {skipped}")
     print(f"wrote {matching} matching dump(s) into {arguments.matching_out}")
+    print(f"wrote {len(source_map)} source-map entry(ies) into {arguments.source_map}")
     return 0
 
 
