@@ -45,6 +45,7 @@ import pefile  # noqa: E402
 
 import byte_match  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
+import mizuchi_writeback as writeback  # noqa: E402
 from byte_match_census import FIELDS, LEDGER  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -196,11 +197,21 @@ def collect(reverify: bool = False) -> int:
     shared = byte_match.shared_span_index(byte_match.load_rows())
     ledger = read_ledger()
 
-    units = sorted(WORK_ROOT.glob("*/unit.cpp"))
-    if not units:
-        print(f"no units under {WORK_ROOT}")
+    # Two sources, and the second is the one that must not be skipped. A body
+    # under docs/recovery/matched/ is the ONLY committed copy of that recovery,
+    # and its unit is rebuilt from the current emitter every time - so a
+    # scaffolding change that stops it verifying has to surface here as a
+    # ledger regression rather than as a tracked file nobody re-reads.
+    units = [(int(unit.parent.name, 16), unit.read_text, "unit")
+             for unit in sorted(WORK_ROOT.glob("*/unit.cpp"))]
+    stored = [(int(body.stem, 16), body, "stored")
+              for body in sorted(writeback.MATCHED_DIR.glob("*.cpp"))]
+    if not units and not stored:
+        print(f"no units under {WORK_ROOT} and nothing under "
+              f"{writeback.MATCHED_DIR}")
         return 0
-    print(f"re-verifying {len(units)} units (agent reports are not evidence)")
+    print(f"re-verifying {len(units)} units and {len(stored)} stored bodies "
+          f"(agent reports are not evidence)")
 
     # Hoisted: this used to re-read the 1.2 MB catalogue once PER UNIT, which
     # is 194 parses of 6,000 rows to answer 194 questions.
@@ -220,23 +231,42 @@ def collect(reverify: bool = False) -> int:
     # wants and a routine collect does not.
     settled = {address for address, row in ledger.items()
                if row.get("tier") == "BYTE_EXACT"} if not reverify else set()
+    derived = emit.load_derived()
+    callees = emit.load_callees()
+    pe_fast = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+    subjects = units + stored
     tiers, regressions = collections.Counter(), []
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         skipped = 0
-        for index, unit in enumerate(units, start=1):
-            address = int(unit.parent.name, 16)
+        for index, (address, source, kind) in enumerate(subjects, start=1):
             key = f"0x{address:08X}"
             if key in settled:
                 skipped += 1
                 continue
             row = functions.get(address, {})
+            if kind == "unit":
+                text = source()
+            else:
+                # A stored body is a DEFINITION, not a unit: the scaffolding
+                # around it is regenerated rather than committed, because it is
+                # derived from the pinned executable.
+                try:
+                    text = writeback.build_unit(
+                        address, writeback.read_matched_body(source),
+                        functions, callees, derived, pe_fast)
+                except emit.Unsettled as error:
+                    tiers["REFUSED"] += 1
+                    if ledger.get(key, {}).get("tier", "") in MATCHED:
+                        regressions.append((key, "BYTE_EXACT",
+                                            f"no scaffolding: {error}"))
+                    continue
             outcome = byte_match.match_function(
                 pe, catalogue, shared, address,
-                unit.read_text(), work, byte_match.MEASURED_FLAGS,
+                text, work, byte_match.MEASURED_FLAGS,
                 f"v{address:08x}")
             if index % 25 == 0:
-                print(f"  {index}/{len(units)}", flush=True)
+                print(f"  {index}/{len(subjects)}", flush=True)
             tier = outcome.get("tier", "NO_COMPILE")
             was = ledger.get(key, {}).get("tier", "")
             if was in MATCHED and tier not in MATCHED:
@@ -261,7 +291,8 @@ def collect(reverify: bool = False) -> int:
     write_ledger(ledger)
     print(f"\nmeasured tiers: {dict(tiers)}")
     matched = sum(tiers[t] for t in MATCHED if t in tiers)
-    print(f"matched {matched}/{len(units)}")
+    print(f"matched {matched}/{len(subjects) - skipped} measured "
+          f"({skipped} already settled)")
     if regressions:
         print("\nREGRESSIONS - these matched before and do not now:")
         for key, was, now in regressions:
