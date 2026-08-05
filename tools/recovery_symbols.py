@@ -255,6 +255,45 @@ def empty_destructor_arguments(mangled: str) -> str:
     return f"{mangled[:DESTRUCTOR.match(mangled).end()]}XZ"
 
 
+UDT_NAME = re.compile(r"([UVT])([A-Za-z_]\w*)@@")
+# `fn_00483810` / `m_004483c0`: what the emitter mints when a
+# catalogued name is not a C identifier.
+SYNTHETIC_IDENTIFIER = re.compile(r"^(?:fn|m)_([0-9a-f]{8})$")
+
+
+def substitute_name(mangled: str, identifier: str) -> str:
+    """Re-point a mangled name at the identifier the source will actually use.
+
+    14 catalogued names are not C identifiers at all - `??__Eg_BOOM_BUFFERS1`
+    is a dynamic initialiser and `??__F...` an atexit thunk, both minted by
+    the compiler for a global it constructs. The emitter already substitutes
+    `fn_<address>` for them, because refusing cost 60+ rows and the spelling
+    reaches no comparison. The TARGET object kept the original, so the two
+    objects had no name in common and none of the 14 could ever pair.
+
+    Only the name is replaced; the type encoding after the qualifier chain is
+    the part that has to stay exact, and it does.
+    """
+    mangled = (mangled or "").strip()
+    if not MANGLED.match(mangled) \
+            or not SYNTHETIC_IDENTIFIER.match(identifier or ""):
+        # ONLY a synthesised identifier, because only those were substituted.
+        # Accepting any name rewrote every constructor and destructor: the
+        # emitter calls a ctor's method `StringStruct`, and splicing that in
+        # turned `??0StringStruct@@QAE@H@Z` into `?StringStruct@@QAE@H@Z`,
+        # which is not a constructor and pairs with nothing. 51 rows that had
+        # been pairing stopped, which is how it was caught.
+        return mangled
+    split = mangled.find("@@")
+    if split == -1:
+        return mangled
+    qualifiers = mangled[1:split].split("@")
+    if qualifiers and qualifiers[0] == identifier:
+        return mangled
+    qualifiers[0] = identifier
+    return f"?{'@'.join(qualifiers)}{mangled[split:]}"
+
+
 def compress_backrefs(mangled: str) -> str:
     """The argument list as CL writes it: a repeated type becomes its index.
 
@@ -289,21 +328,43 @@ def compress_backrefs(mangled: str) -> str:
     if not tokens:
         return mangled
 
+    # TWO tables, both counting from 0 and both read off a real VC6 object.
+    #
+    #   types  a whole argument type written before becomes its index:
+    #          `?f4@@YAXPAD0PAH1@Z` for (char*, char*, int*, int*).
+    #   names  an identifier written before - the function's own name is 0,
+    #          its class 1, then each new type name - becomes its index
+    #          INSIDE the type: `?update@GraphicWin@@QAEXHHHHPAU1@@Z`.
+    #
+    # The type table wins when both could apply, which
+    # `?f3@@YAXPAUSprite@@PAUGraphicWin@@0@Z` shows: the repeat is the whole
+    # type, so it is `0` rather than a name back-reference.
+    names = [part for part in head[1:-2].split("@") if part]
     seen, out = [], []
-    for token in tokens[1:]:                 # token 0 is the RETURN type
-        if len(token) > 1 and token in seen:
+    for position, token in enumerate(tokens):
+        if position and len(token) > 1 and token in seen:
             out.append(str(seen.index(token)))
             continue
-        if len(token) > 1 and len(seen) < 10:
-            seen.append(token)
+        original = token
+
+        def _name(match):
+            key, identifier = match.group(1), match.group(2)
+            if identifier in names:
+                return f"{key}{names.index(identifier)}@"
+            if len(names) < 10:
+                names.append(identifier)
+            return match.group(0)
+
+        token = UDT_NAME.sub(_name, token)
+        if position and len(original) > 1 and len(seen) < 10:
+            seen.append(original)
         out.append(token)
-    rebuilt = tokens[0] + "".join(out)
+    rebuilt = "".join(out)
     if rebuilt == body:
         return mangled
     return f"{head}{tail[:prefix_length]}{rebuilt}{terminator}Z"
 
 
-SYNTHETIC_IDENTIFIER = re.compile(r"^(?:fn|m)_([0-9a-f]{8})$")
 
 
 def undecorate(symbol: str) -> str:

@@ -93,17 +93,17 @@ class SymbolResolver:
 
     def _resolve(self, address: int, row: dict[str, str]) -> str:
         name = (row.get("name") or "").strip()
-        if name.startswith("?"):
-            # Compressed, not verbatim: the catalogue writes a repeated
-            # argument type out in full and CL writes its back-reference
-            # index, so a verbatim `?f@@YAXPAHPAH@Z` in the target pairs with
-            # nothing. Returning early here is what kept the source side's
-            # compression from reaching this side.
-            return recovery_symbols.compress_backrefs(
-                recovery_symbols.empty_destructor_arguments(name))
         try:
+            # The Signature decides for EVERY row, `?`-mangled included. It
+            # used to short-circuit here and return the catalogued name, which
+            # is what kept the source side's back-reference compression and
+            # its `fn_<address>` substitution from ever reaching this side.
             return Signature(row, self._derived, self._pe).symbol
         except Unsettled:
+            if name.startswith("?"):
+                # No signature to compute from, so normalise what there is.
+                return recovery_symbols.compress_backrefs(
+                    recovery_symbols.empty_destructor_arguments(name))
             # The same shape `emit_translation_unit.declare_callee` falls back
             # to when a signature will not settle: `extern "C" int name();`,
             # which is __cdecl and so decorates without an argument count.
