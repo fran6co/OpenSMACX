@@ -43,5 +43,5 @@ constexpr int MaxProposalNum = 11;
 
 extern RulesProposal *Proposal;
 
-DLLEXPORT uint32_t __cdecl council_votes(uint32_t faction_id);
-DLLEXPORT BOOL __cdecl eligible(uint32_t faction_id);
+DLLEXPORT int __cdecl council_votes(int faction_id);
+DLLEXPORT BOOL __cdecl eligible(int faction_id);

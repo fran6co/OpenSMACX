@@ -50,7 +50,7 @@ Original Offset: 0057CE50
 Return Value: Is a tech leap possible? true/false
 Status: Complete
 */
-BOOL __cdecl valid_tech_leap(uint32_t tech_id, uint32_t faction_id) {
+BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
     int preq_1 = Technology[tech_id].preq_tech_1;
     if (preq_1 >= 0 && !(has_tech(Technology[preq_1].preq_tech_1, faction_id)
         && has_tech(Technology[preq_1].preq_tech_2, faction_id))) {
@@ -172,7 +172,7 @@ Original Offset: 005B9FE0
 Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
 Status: Complete
 */
-int __cdecl tech_category(uint32_t tech_id) {
+int __cdecl tech_category(int tech_id) {
     uint32_t category = 0;
     int compare = Technology[tech_id].growth_value;
     if (Technology[tech_id].tech_value > compare) {
@@ -193,7 +193,7 @@ Original Offset: 005BAC20
 Return Value: Is tech available to faction? true/false
 Status: Complete
 */
-BOOL __cdecl tech_avail(uint32_t tech_id, int faction_id) {
+BOOL __cdecl tech_avail(int tech_id, int faction_id) {
     if (has_tech(tech_id, faction_id) || tech_id >= MaxTechnologyNum || (!*ExpansionEnabled
         && (tech_id == TECH_PRPSYCH || tech_id == TECH_FLDMOD || tech_id == TECH_ADAPDOC
             || tech_id == TECH_ADAPECO || tech_id == TECH_BIOADAP || tech_id == TECH_SENTRES
@@ -214,7 +214,7 @@ Original Offset: 005BAE60
 Return Value: n/a
 Status: Complete
 */
-void __cdecl tech_effects(uint32_t faction_id) {
+void __cdecl tech_effects(int faction_id) {
     PlayersData[faction_id].tech_commerce_bonus = Players[faction_id].rule_commerce;
     PlayersData[faction_id].tech_fungus_nutrient = 0;
     PlayersData[faction_id].tech_fungus_mineral = 0;
@@ -273,7 +273,7 @@ Original Offset: 005BCB60
 Return Value: Is preqTechID prerequisite of parentTechID? true/false
 Status: Complete
 */
-BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, uint32_t range) {
+BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
     if (preq_tech_id < 0 || parent_tech_id < 0) {
         return false;
     }
@@ -295,7 +295,7 @@ Original Offset: 005BCBE0
 Return Value: Value of techID to the specified faction
 Status: Complete
 */
-int __cdecl tech_val(uint32_t tech_id, int faction_id, BOOL simple_calc) {
+int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
     if (tech_id == 9999) {
         return 2;
     }
@@ -531,7 +531,7 @@ Original Offset: 005BDC10
 Return Value: techID or -1
 Status: Complete
 */
-int __cdecl tech_ai(uint32_t faction_id) {
+int __cdecl tech_ai(int faction_id) {
     int tech_id = -1;
     int search = -999;
     BOOL is_human_player = is_human(faction_id);
@@ -565,7 +565,7 @@ Original Offset: 005BDD70
 Return Value: power_value or 0 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_mil(uint32_t tech_id) {
+int __cdecl tech_mil(int tech_id) {
     // TODO: why only this one returns 0 with other three returning 1? typo/bug?
     return (tech_id >= MaxTechnologyNum) ? 0 : *(&Technology[tech_id].power_value);
 }
@@ -576,7 +576,7 @@ Original Offset: 005BDD90
 Return Value: tech_value or 1 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_tech(uint32_t tech_id) {
+int __cdecl tech_tech(int tech_id) {
     return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].tech_value);
 }
 
@@ -586,7 +586,7 @@ Original Offset: 005BDDC0
 Return Value: wealth_value or 1 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_infra(uint32_t tech_id) {
+int __cdecl tech_infra(int tech_id) {
     return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].wealth_value);
 }
 
@@ -596,7 +596,7 @@ Original Offset: 005BDDF0
 Return Value: growth_value or 1 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_colonize(uint32_t tech_id) {
+int __cdecl tech_colonize(int tech_id) {
     return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].growth_value);
 }
 
@@ -606,7 +606,7 @@ Original Offset: 005BE6B0
 Return Value: tech rate/cost
 Status: Complete
 */
-uint32_t __cdecl tech_rate(uint32_t faction_id) {
+int __cdecl tech_rate(int faction_id) {
     if (PlayersData[faction_id].tech_cost >= 0) {
         return PlayersData[faction_id].tech_cost; // already set
     }

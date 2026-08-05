@@ -90,8 +90,8 @@ constexpr int MaxTerrainNum = 20;
 
 extern RulesTerraforming *Terraforming;
 
-DLLEXPORT uint32_t __cdecl terraform_cost(int x, int y, uint32_t faction_id);
-DLLEXPORT uint32_t __cdecl contribution(uint32_t veh_id, uint32_t terraform_id);
-DLLEXPORT BOOL __cdecl terrain_avail(uint32_t terraform_id, BOOL is_sea, int faction_id);
+DLLEXPORT int __cdecl terraform_cost(int x, int y, int faction_id);
+DLLEXPORT int __cdecl contribution(int veh_id, int terraform_id);
+DLLEXPORT BOOL __cdecl terrain_avail(int terraform_id, BOOL is_sea, int faction_id);
 DLLEXPORT int __cdecl can_terraform(int faction_id, int x, int y, int force_improve,
                                    int base_id);

@@ -556,22 +556,22 @@ extern int *PopupDialogFactionID;
 DLLEXPORT BOOL __cdecl is_alien_faction(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl is_human(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl is_alive(uint32_t faction_id);
-DLLEXPORT void __cdecl psych_check(uint32_t faction_id, int *drones, int *talents);
+DLLEXPORT void __cdecl psych_check(int faction_id, int *drones, int *talents);
 DLLEXPORT uint32_t __cdecl has_treaty(uint32_t faction_id, uint32_t faction_id_with, 
                                       uint32_t treaties);
 DLLEXPORT LPSTR __cdecl get_adjective(uint32_t faction_id);
 DLLEXPORT LPSTR __cdecl get_noun(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl auto_contact();
-DLLEXPORT BOOL __cdecl great_beelzebub(uint32_t faction_id, BOOL is_aggressive);
-DLLEXPORT BOOL __cdecl great_satan(uint32_t faction_id, BOOL is_aggressive);
+DLLEXPORT BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive);
+DLLEXPORT BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive);
 DLLEXPORT uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id);
 DLLEXPORT BOOL __cdecl climactic_battle();
-DLLEXPORT BOOL __cdecl at_climax(uint32_t faction_id);
-DLLEXPORT void __cdecl cause_friction(uint32_t faction_id, uint32_t faction_id_with, int friction);
+DLLEXPORT BOOL __cdecl at_climax(int faction_id);
+DLLEXPORT void __cdecl cause_friction(int faction_id, int faction_id_with, int friction);
 DLLEXPORT uint32_t __cdecl get_mood(int friction);
-DLLEXPORT uint32_t __cdecl reputation(uint32_t faction_id, uint32_t faction_id_with);
-DLLEXPORT int __cdecl get_patience(uint32_t faction_id_with, uint32_t faction_id);
-DLLEXPORT uint32_t __cdecl energy_value(uint32_t loan_principal);
+DLLEXPORT int __cdecl reputation(int faction_id, int faction_id_with);
+DLLEXPORT int __cdecl get_patience(int faction_id_with, int faction_id);
+DLLEXPORT int __cdecl energy_value(int loan_principal);
 DLLEXPORT void __cdecl scan_prototypes(int faction_id, int faction_id_with);
 DLLEXPORT void __cdecl set_treaty(uint32_t faction_id, uint32_t faction_id_with, uint32_t treaty, 
                                   BOOL set);
@@ -584,23 +584,23 @@ DLLEXPORT BOOL __cdecl wants_to_attack(uint32_t faction_id, uint32_t faction_id_
 DLLEXPORT int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_id_out,
                                 int *count_out);
 DLLEXPORT void __cdecl rankings(int apply_ranks);
-DLLEXPORT uint32_t __cdecl guard_check(uint32_t faction_id, uint32_t region);
+DLLEXPORT int __cdecl guard_check(int faction_id, int region);
 DLLEXPORT void __cdecl add_goal(uint32_t faction_id, int type, int priority, int x, int y, 
                                 int base_id);
-DLLEXPORT void __cdecl add_site(uint32_t faction_id, int type, int priority, int x, int y);
-DLLEXPORT BOOL __cdecl at_goal(uint32_t faction_id, int type, int x, int y);
-DLLEXPORT BOOL __cdecl at_site(uint32_t faction_id, int type, int x, int y);
-DLLEXPORT void __cdecl wipe_goals(uint32_t faction_id);
-DLLEXPORT void __cdecl init_goals(uint32_t faction_id);
-DLLEXPORT void __cdecl del_site(uint32_t faction_id, int type, int x, int y, int proximity);
-DLLEXPORT uint32_t __cdecl corner_market(uint32_t faction_id);
+DLLEXPORT void __cdecl add_site(int faction_id, int type, int priority, int x, int y);
+DLLEXPORT BOOL __cdecl at_goal(int faction_id, int type, int x, int y);
+DLLEXPORT BOOL __cdecl at_site(int faction_id, int type, int x, int y);
+DLLEXPORT void __cdecl wipe_goals(int faction_id);
+DLLEXPORT void __cdecl init_goals(int faction_id);
+DLLEXPORT void __cdecl del_site(int faction_id, int type, int x, int y, int proximity);
+DLLEXPORT int __cdecl corner_market(int faction_id);
 DLLEXPORT void __cdecl see_map_check();
-DLLEXPORT void __cdecl compute_faction_modifiers(uint32_t faction_id);
+DLLEXPORT void __cdecl compute_faction_modifiers(int faction_id);
 DLLEXPORT void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, 
                                    uint32_t faction_id, BOOL toggle, BOOL is_quick_calc);
-DLLEXPORT void __cdecl social_upkeep(uint32_t faction_id);
+DLLEXPORT void __cdecl social_upkeep(int faction_id);
 DLLEXPORT uint32_t __cdecl social_upheaval(uint32_t faction_id, SocialCategory *category_new);
-DLLEXPORT BOOL __cdecl society_avail(int soc_category, int soc_model, uint32_t faction_id);
+DLLEXPORT BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 DLLEXPORT void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int wealth_val, 
                                  int power_val, SocialCategory *output);
 DLLEXPORT void __cdecl enemy_capabilities(uint32_t faction_id);

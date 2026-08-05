@@ -38,7 +38,7 @@ Original Offset: 005FA8A0
 Return Value: n/a
 Status: Complete
 */
-void Spot::init(uint32_t count) {
+void Spot::init(int count) {
     shutdown();
     spots_ = (SpotInternal *)mem_get(count * sizeof(SpotInternal));
     if (spots_) {

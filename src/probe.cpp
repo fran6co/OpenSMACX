@@ -32,7 +32,7 @@ Original Offset: 0050C4B0
 Return Value: Energy
 Status: Complete
 */
-int __cdecl steal_energy(uint32_t base_id) {
+int __cdecl steal_energy(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     int energy = PlayersData[faction_id].energy_reserves;
     return (energy <= 0) ? 0 
@@ -46,7 +46,7 @@ Original Offset: 0059EA80
 Return Value: Mind control cost
 Status: Complete
 */
-int __cdecl mind_control(uint32_t base_id, uint32_t faction_id, BOOL is_corner_market) {
+int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     uint32_t target_faction_id = Bases[base_id].faction_id_current;
     int target_x = Bases[base_id].x;
     int target_y = Bases[base_id].y;
@@ -124,7 +124,7 @@ Original Offset: 0059EEE0
 Return Value: Success rate of probe
 Status: Complete
 */
-int __cdecl success_rates(uint32_t id, uint32_t morale, int diff_modifier, int base_id) {
+int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
     char probe_chances[25];
     int success_rate;
     if (diff_modifier < 0) {

@@ -28,7 +28,7 @@ Original Offset: 0052AD30
 Return Value: Faction vote count
 Status: Complete
 */
-uint32_t __cdecl council_votes(uint32_t faction_id) {
+int __cdecl council_votes(int faction_id) {
     if (is_alien_faction(faction_id)) {
         return 0;
     }
@@ -62,7 +62,7 @@ Original Offset: 0052AE20
 Return Value: Is the leader eligible (top two vote totals)? true/false
 Status: Complete
 */
-BOOL __cdecl eligible(uint32_t faction_id) {
+BOOL __cdecl eligible(int faction_id) {
     if (is_alien_faction(faction_id)) {
         return false;
     }

@@ -34,7 +34,7 @@ Original Offset: 004C9420
 Return Value: Credit cost
 Status: Complete
 */
-uint32_t __cdecl terraform_cost(int x, int y, uint32_t faction_id) {
+int __cdecl terraform_cost(int x, int y, int faction_id) {
     uint32_t alt = alt_at(x, y);
     int cost = abs((int)alt - 3);
     cost += 2;
@@ -77,7 +77,7 @@ Original Offset: 004C9A50
 Return Value: Terraforming speed
 Status: Complete
 */
-uint32_t __cdecl contribution(uint32_t veh_id, uint32_t terraform_id) {
+int __cdecl contribution(int veh_id, int terraform_id) {
     uint32_t rate = has_abil(Vehs[veh_id].proto_id, ABL_SUPER_TERRAFORMER) ? 4 : 2;
     if (terraform_id == (ORDER_REMOVE_FUNGUS - 4) || terraform_id == (ORDER_PLANT_FUNGUS - 4)) {
         if (has_project(SP_XENOEMPATYH_DOME, Vehs[veh_id].faction_id)) {
@@ -95,7 +95,7 @@ Original Offset: 005BAB40
 Return Value: Is terrain enhancement available to faction? true/false
 Status: Complete
 */
-BOOL __cdecl terrain_avail(uint32_t terraform_id, BOOL is_sea, int faction_id) {
+BOOL __cdecl terrain_avail(int terraform_id, BOOL is_sea, int faction_id) {
     int preq_tech = *(&Terraforming[terraform_id].preq_tech + is_sea);
     if (preq_tech < TechNone || ((terraform_id == TERRA_RAISE_LAND
         || terraform_id == TERRA_LOWER_LAND) && *GameRules & RULES_SCN_NO_TERRAFORMING)) {
