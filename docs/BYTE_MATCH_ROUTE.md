@@ -120,6 +120,57 @@ Neither `/Ox` nor `/Ob0` changes the emitted code on these five — the objects
 differ outside `.text` only — so `/O2` and `/Ox` cannot be told apart here and
 this measurement does not choose between them.
 
+### `/Oy-` IS NOT A PROPERTY OF THE IMAGE — corrected 2026-08-02
+
+Everything above is right about these five functions and **wrong as a statement
+about the executable**, which is how it has been read since.
+
+The reasoning was: all five diverged at instruction #0, `push` against `mov`;
+`/O2` implies `/Oy`; the shipped image keeps its frame pointers; therefore
+`/Oy-` is part of the shipped build's settings. The first three clauses are
+true. The fourth does not follow, because "the shipped image keeps its frame
+pointers" was generalised from five functions that happen to have one.
+
+Measured over the 3,062 remaining targets whose prologue is readable:
+
+| targets | prologue | `/Oy-` |
+|---:|---|---|
+| 1,518 | opens `push ebp; mov ebp, esp` | correct |
+| **1,544** | does not | **wrong — it forces a frame the original has not** |
+
+So a fixed `/Oy-` is correct for **49%** of the population and *guarantees* a
+divergence at instruction #0 for the other 51%. That failure looks exactly like
+the 0/5 run recorded above, with the sign flipped: `original 'mov' vs rebuilt
+'push'`. Three of the first six functions put through the generalised pipeline
+failed that way, which is what prompted the measurement.
+
+The right reading is that **the frame pointer is a per-function property**, not
+a build flag this project can pin once. VC6 omits the frame pointer under `/Oy`
+where it can and keeps it where it must, and the image reflects that mixture.
+
+`tools/byte_match.py` therefore compiles each subject under **both** flag sets
+and keeps the better verdict. One compile is 44 ms, so trying both costs less
+than any rule for choosing between them, and it cannot be wrong the way a rule
+read off the prologue could be. The five cases above still select `/Oy- /GX`
+and still score 4/5, so this changes nothing that was measured — only what was
+concluded from it.
+
+### `/GX` is required, and free — measured 2026-08-02
+
+387 bodies in this image register a `__CxxFrameHandler` frame at `0x00644FD6`,
+and 416 carry extra `body_ranges` spans. Those spans are **not** jump tables:
+all 448 decode fully as code, and 387 end in the ten-byte
+`mov eax, <FuncInfo>; jmp __CxxFrameHandler` thunk. They are MSVC's C++ EH
+unwind funclets, gathered by the linker into `0x0065xxxx–0x0066xxxx`.
+
+`/GX` reproduces them exactly — a `.text$x` COMDAT holding the same
+`lea ecx,[ebp-N]; jmp <dtor>` chain plus the handler thunk, with `.xdata$x`
+carrying the FuncInfo — and changes nothing on the five non-EH cases, which
+score 4/5 with and without it. It is therefore part of the default flag set.
+
+This retires the earlier expectation that EH-framed functions were out of
+scope for the route.
+
 `/O1` is worth recording as a refutation rather than a near miss: it leaves
 `× 10000` as a single `imul` where the original expanded it into `lea`s, and it
 diverges on all five by instruction #3–#4. The shipped build was optimised for
@@ -240,6 +291,68 @@ the staged hybrid. `unmatched` means "no IDB *name* correspondence", not
 
 `--check` refuses to let either count grow, so a new recovery cannot add to the
 class silently. Lower the baselines as candidates are resolved.
+
+## The one class that does not match: register allocation
+
+Measured 2026-08-02 over eleven functions written from scratch by fan-out
+agents against `tools/emit_translation_unit.py` scaffolding and verified by
+`tools/byte_match.py`:
+
+| size | tier | attempts |
+|---:|---|---:|
+| 5, 8, 65, 65, 66 B | `BYTE_EXACT` | 1–3 |
+| 260 B | `BYTE_EXACT` | 5 |
+| 161 B | `MNEMONIC_ONLY` | 12 |
+| 264 B | `MISMATCH`, 94.4% | 16 |
+| 269 B | `MISMATCH`, 96.5% | 14 |
+| 401 B | `MISMATCH` | 18 |
+| 1,187 B | `MISMATCH`, 95.6% | 13 |
+
+**6 of 11 reached `BYTE_EXACT`, and 4 of the 5 that did not failed for the same
+reason**: the original dedicates a callee-saved register — `ebx`, `edi`, or
+`ebp` used as a seventh general register — that the recompile does not, so the
+divergence lands in the *prologue* on a missing `push` and every later
+instruction shifts. All four are 94–97% mnemonic-identical; the bodies are
+right and the allocation is not.
+
+**Difficulty tracks register pressure, not size.** A 260-byte body with nine
+calls, virtual dispatch and nested branching matched in five attempts, while a
+161-byte one did not match in twelve. Size only correlates because larger
+bodies tend to hold more live values. A size-ceiling conclusion was published
+here for one turn on two data points and the 260 B result refuted it.
+
+### Two levers, both refuted, so they are not retried
+
+* **Compilation-unit context does NOT affect allocation.** The hypothesis was
+  that the original's decisions depended on being compiled alongside its
+  siblings, which a single-function unit cannot reproduce. Compiling the
+  260 B subject alone and again beside an unrelated loop function produces a
+  **byte-identical** 260-byte subject. VC6's allocator is intra-procedural
+  here, so compiling recovered bodies together buys nothing.
+* **`register` is ignored.** At `/O2`, a loop with `acc`, `step` and the
+  induction variable all declared `register` compiles to the **same 33 bytes**
+  as the unannotated version. The keyword is no lever on this compiler at this
+  optimisation level.
+
+* **Source restructuring does not steer it either, and this is the strongest
+  of the three.** On `?veh_turn@Console@@QAEHXZ` (1,065 B) VC6 puts `this` in
+  `EDI` and the recurring zero in `EBX`; the original does the opposite, which
+  also forces `cmp byte, bl` where the original uses `test al, al`, because
+  `EDI` has no 8-bit sub-register. **Five** distinct restructurings — reordering
+  the zero-initialisations against the first field write, unifying every literal
+  `0` into one named variable, inlining the `self` local, replacing a ternary
+  with `if`/`else`, and deleting three scratch locals — produced
+  **byte-identical rebuilds**. A 12-instruction truncation then placed `this` in
+  a *third* register, `ESI`, once it was the only value live across calls.
+
+  So the assignment is a function of the whole body's shape, and the source
+  neighbourhood around it is flat: there is no local edit that moves it. That
+  is a much stronger statement than "attempts failed", and it is why this class
+  should not be attacked one body at a time.
+
+Both of the first two were measured in about two minutes; the third cost eight
+compiles and settled the question. Each would have been expensive to pursue on
+intuition.
 
 ## Controls
 
