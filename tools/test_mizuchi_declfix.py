@@ -31,9 +31,44 @@ class DecodeSignatureTest(unittest.TestCase):
     def test_rejects_c_linkage_names(self):
         self.assertIsNone(decode_signature("_free"))
 
-    def test_bails_on_struct_pointers(self):
-        # Out of scope for the MVP: the honest mismatch stays visible.
-        self.assertIsNone(decode_signature("?f@@YAXPAUSpot@@@Z"))
+    def test_decodes_a_struct_pointer(self):
+        # Used to be out of scope, and the emitter then fell back to the
+        # prototype's spelling of the type - which is where `player_data` was
+        # emitted for `PlayerData` and the symbol stopped matching.
+        self.assertEqual(("void", ["Spot *"]),
+                         decode_signature("?f@@YAXPAUSpot@@@Z"))
+
+    def test_the_qualifier_chain_closes_at_the_first_double_at(self):
+        # `PAUSprite@@` carries a `@@` of its own, so splitting on the LAST
+        # one read the argument list as the class qualifier and returned None
+        # for every signature with a struct parameter.
+        self.assertEqual(("void", ["Sprite *", "GraphicWin *", "int"]),
+                         decode_signature(
+                             "?draw@@YAXPAUSprite@@PAUGraphicWin@@H@Z"))
+
+    def test_a_class_key_decodes_the_same_as_a_struct_key(self):
+        # The emitted unit declares every one of them `struct`.
+        self.assertEqual(decode_signature("?f@@YAXPAUSpot@@@Z"),
+                         decode_signature("?f@@YAXPAVSpot@@@Z"))
+
+    def test_const_survives_the_pointer(self):
+        # 25 rows are string arguments the catalogue spells `PBD`; dropping
+        # the `B` emitted `char *` where the target holds `const char *`.
+        self.assertEqual(("int", ["const char *"]),
+                         decode_signature("?f@@YAHPBD@Z"))
+
+    def test_a_back_reference_repeats_the_earlier_argument(self):
+        self.assertEqual(("int", ["const char *", "const char *", "int"]),
+                         decode_signature("?POP2@@YAHPBD0H@Z"))
+
+    def test_the_return_type_takes_no_back_reference_slot(self):
+        # Slot 0 is the first ARGUMENT. Counting the return type would make
+        # `0` resolve to the wrong type in every signature that returns one.
+        self.assertEqual(("int *", ["char *", "char *"]),
+                         decode_signature("?f@@YAPAHPAD0@Z"))
+
+    def test_a_back_reference_with_no_slot_is_refused(self):
+        self.assertIsNone(decode_signature("?f@@YAXH0@Z"))
 
 
 class FixDeclarationsTest(unittest.TestCase):

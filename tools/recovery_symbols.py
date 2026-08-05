@@ -191,9 +191,116 @@ def symbol_for(name: str, address: int, convention: str = CDECL,
     everything else.
     """
     if MANGLED.match((name or "").strip()):
-        return name.strip()
+        return compress_backrefs(empty_destructor_arguments(name.strip()))
     return decorate(identifier or fallback_identifier(name, address),
                     convention, parameters)
+
+
+# One-character argument codes. These are never back-referenced by MSVC.
+PRIMITIVE = set("XDCEFGHIJKMNOZ")
+# `P`/`Q`/`R`/`S` are pointers, `A`/`B` references; each is followed by a CV
+# code and then the pointee. `U`/`V`/`T` open a user-defined type that runs to
+# `@@`.
+INDIRECTION = set("PQRSAB")
+USER_DEFINED = set("UVT")
+
+
+def _argument_tokens(text: str):
+    """Split a mangled argument list into whole type tokens, or None.
+
+    None means "not recognised", and every caller treats that as "change
+    nothing". A tokeniser that guesses would produce a symbol that is wrong in
+    a new way rather than leaving one that is wrong in a known way.
+    """
+    tokens, index = [], 0
+    while index < len(text):
+        start = index
+        while index < len(text) and text[index] in INDIRECTION:
+            index += 1                       # P, PA, PAP, AAV ...
+            if index < len(text) and text[index] in "ABCD":
+                index += 1                   # the CV code
+        if index >= len(text):
+            return None
+        code = text[index]
+        if code.isdigit():                   # already a back-reference
+            index += 1
+        elif code in USER_DEFINED:
+            close = text.find("@@", index)
+            if close == -1:
+                return None
+            index = close + 2
+        elif code in PRIMITIVE:
+            index += 1
+        elif code == "_":                    # _J, _K, _N, _W
+            index += 2
+        else:
+            return None
+        tokens.append(text[start:index])
+    return tokens
+
+
+DESTRUCTOR = re.compile(r"^\?\?1[A-Za-z_]\w*@@[A-Z]{3}@")
+
+
+def empty_destructor_arguments(mangled: str) -> str:
+    """A destructor's argument list, as C++ can actually spell it.
+
+    `??1StringStruct@@QAE@H@Z` is catalogued with a parameter. A destructor
+    has none, CL writes `@XZ`, and the target object held `@H@Z` - so the one
+    row in this state could never pair however the body was written.
+    """
+    mangled = (mangled or "").strip()
+    if not DESTRUCTOR.match(mangled) or not mangled.endswith("Z"):
+        return mangled
+    return f"{mangled[:DESTRUCTOR.match(mangled).end()]}XZ"
+
+
+def compress_backrefs(mangled: str) -> str:
+    """The argument list as CL writes it: a repeated type becomes its index.
+
+    MSVC never spells the same composite argument type twice. The second
+    `PAH` in `?f@@QAEXPAHPAH@Z` is written `0`, and the catalogue does not do
+    this - its names come from a demangle/remangle round trip that expands
+    them - so 37 rows had a target object holding a name the compiler will
+    never emit. Primitives (`H`, `D`, `X`) are one character and are never
+    back-referenced; only tokens longer than that take a slot.
+
+    Anything this cannot parse is returned unchanged.
+    """
+    mangled = (mangled or "").strip()
+    if not MANGLED.match(mangled) or not mangled.endswith("Z"):
+        return mangled
+    # `?name@Class@@<qualifier+convention><return><args>@Z`. The qualifier
+    # chain closes at the FIRST `@@`, not the last: a `PAUSprite@@` ARGUMENT
+    # contains one too, and splitting on the last put the class qualifier
+    # inside the argument list.
+    split = mangled.find("@@")
+    if split == -1:
+        return mangled
+    head, tail = mangled[:split + 2], mangled[split + 2:]
+    prefix_length = 2 if tail.startswith("Y") else 3
+    if len(tail) <= prefix_length + 1:
+        return mangled
+    body = tail[prefix_length:-1]            # drop the trailing `Z`
+    terminator = ""
+    if body.endswith("@"):                   # `@Z` closes an argument list
+        body, terminator = body[:-1], "@"
+    tokens = _argument_tokens(body)
+    if not tokens:
+        return mangled
+
+    seen, out = [], []
+    for token in tokens[1:]:                 # token 0 is the RETURN type
+        if len(token) > 1 and token in seen:
+            out.append(str(seen.index(token)))
+            continue
+        if len(token) > 1 and len(seen) < 10:
+            seen.append(token)
+        out.append(token)
+    rebuilt = tokens[0] + "".join(out)
+    if rebuilt == body:
+        return mangled
+    return f"{head}{tail[:prefix_length]}{rebuilt}{terminator}Z"
 
 
 SYNTHETIC_IDENTIFIER = re.compile(r"^(?:fn|m)_([0-9a-f]{8})$")
