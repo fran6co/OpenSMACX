@@ -57,6 +57,13 @@ class DecodeSignatureTest(unittest.TestCase):
         self.assertEqual(("int", ["const char *"]),
                          decode_signature("?f@@YAHPBD@Z"))
 
+    def test_a_const_pointer_is_not_a_pointer_to_const(self):
+        # Measured against VC6: `Palette *const` gives `QAV1@` and
+        # `const Palette *` gives `PBV1@`. Decoding `Q` as a plain pointer
+        # emitted `PAV1@`, which pairs with neither.
+        self.assertEqual(("int", ["Palette *const"]),
+                         decode_signature("?__as@Palette@@QAEHQAUPalette@@@Z"))
+
     def test_a_back_reference_repeats_the_earlier_argument(self):
         self.assertEqual(("int", ["const char *", "const char *", "int"]),
                          decode_signature("?POP2@@YAHPBD0H@Z"))

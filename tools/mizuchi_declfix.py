@@ -108,7 +108,13 @@ def _decode_type(text: str, index: int, seen: list | None = None):
         base, next_index = _decode_type(text, next_index, seen)
         if base is None:
             return None, index
-        return f"{const}{base} {'&' if char == 'A' else '*'}", next_index
+        # `Q` is the POINTER itself being const, which is a different type
+        # from `PB` (a pointer to const) and mangles differently. Measured
+        # against VC6: `Palette *const` gives `QAV1@` and `const Palette *`
+        # gives `PBV1@`. Decoding both as `*` emitted `PAV1@` for the one row
+        # that takes a const pointer, which pairs with neither.
+        indirection = {"A": "&", "Q": "*const"}.get(char, "*")
+        return f"{const}{base} {indirection}", next_index
     # Function pointers (P6), member pointers, templates: still out of scope.
     return None, index
 

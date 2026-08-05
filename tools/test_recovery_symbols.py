@@ -193,6 +193,55 @@ class BackReferenceTest(unittest.TestCase):
             self.assertEqual(name, rs.compress_backrefs(name), name)
 
 
+class MemberAccessTest(unittest.TestCase):
+    """The access code says member or free, and it is the only side that can.
+
+    8 catalogued prototypes for `QAG` and `QAA` members - the `Win` window-
+    procedure family - simply omit the receiver, so reading membership off
+    the prototype sent every one down the free-function path.
+    """
+
+    def test_a_public_nonstatic_member_receives_this(self):
+        for name in ("?on_key_down@NetWin@@QAEHH@Z",      # Q + thiscall
+                     "?adjust_menus@Win@@QAGHPAX@Z",      # Q + stdcall
+                     "?OnPaint@Win@@QAA_NPAX@Z"):         # Q + cdecl
+            self.assertTrue(rs.is_nonstatic_member(name), name)
+
+    def test_a_virtual_and_a_private_member_do_too(self):
+        self.assertTrue(rs.is_nonstatic_member("?f@Buffer@@UAEXXZ"))
+        self.assertTrue(rs.is_nonstatic_member("?f@Buffer@@AAEXXZ"))
+
+    def test_a_static_member_does_not(self):
+        # It carries a class in the name and still takes no receiver.
+        self.assertFalse(rs.is_nonstatic_member("?f@Buffer@@SAXH@Z"))
+
+    def test_a_free_function_does_not_even_in_a_namespace(self):
+        self.assertFalse(rs.is_nonstatic_member("?POP@@YAXHHH@Z"))
+        self.assertFalse(rs.is_nonstatic_member("?f@ns@@YAXXZ"))
+
+    def test_an_unmangled_name_does_not(self):
+        for name in ("sub_401520", "_WinMain@16", ""):
+            self.assertFalse(rs.is_nonstatic_member(name), name)
+
+
+class ConventionTest(unittest.TestCase):
+    def test_each_convention_code_is_read(self):
+        self.assertEqual(rs.THISCALL, rs.convention_of("?f@C@@QAEXXZ"))
+        self.assertEqual(rs.CDECL, rs.convention_of("?f@C@@QAAXXZ"))
+        self.assertEqual(rs.STDCALL, rs.convention_of("?f@C@@QAGXXZ"))
+        self.assertEqual(rs.CDECL, rs.convention_of("?f@@YAXXZ"))
+        self.assertEqual(rs.STDCALL, rs.convention_of("?f@@YGXXZ"))
+
+    def test_a_static_member_has_no_cv_code_to_skip(self):
+        # `?f@C@@SAXH@Z` is `SA` + `X` + `H`, so reading three characters of
+        # prefix swallowed the return type of every static member.
+        self.assertEqual(rs.CDECL, rs.convention_of("?f@C@@SAXH@Z"))
+
+    def test_a_name_with_no_convention_to_read_says_so(self):
+        for name in ("sub_401520", "_WinMain@16", ""):
+            self.assertEqual("", rs.convention_of(name), name)
+
+
 class ClassKeyTest(unittest.TestCase):
     """MSVC mangles a struct `U` and a class `V`, and they never pair.
 

@@ -90,8 +90,26 @@ class SignatureTests(unittest.TestCase):
             tool.Signature(row(prototype="this is not a prototype"), {})
 
     def test_no_prototype_anywhere_is_refused_without_the_binary(self):
+        # A DISASSEMBLER LABEL, which states nothing about the signature. A
+        # mangled name states all of it, and is read instead of refused.
         with self.assertRaises(tool.Unsettled):
-            tool.Signature(row(prototype=""), {})
+            tool.Signature(row(name="sub_401000", prototype=""), {})
+
+    def test_a_mangled_name_is_read_when_there_is_no_prototype(self):
+        # 48 rows are in this state. The name is what the LINKER wrote from
+        # the real declaration; the fallback it replaces could only offer N
+        # ints guessed from a `ret`, and cannot tell __stdcall from
+        # __thiscall at all because the two write the purge byte identically.
+        signature = tool.Signature(
+            row(name="?draw@Texture@@QAEXPAUVert@@H@Z", prototype=""), {})
+        self.assertEqual("__thiscall", signature.convention)
+        self.assertEqual(["Vert *", "int"], signature.params)
+        self.assertEqual("Texture", signature.klass)
+        self.assertTrue(signature.inferred)
+
+    def test_a_name_carrying_a_type_that_does_not_decode_is_refused(self):
+        with self.assertRaises(tool.Unsettled):
+            tool.Signature(row(name="?f@@YAXP6AXXZ@Z", prototype=""), {})
 
 
 class LinkageTests(unittest.TestCase):

@@ -301,6 +301,26 @@ def named_types(text: str) -> set:
             if word not in BUILTIN}
 
 
+def prototype_from_name(mangled: str) -> str:
+    """The prototype the MANGLED NAME states, in the catalogue's own grammar.
+
+    The linker wrote this name from the real declaration, so it is the best
+    evidence there is for a row the catalogue has no prototype for - better
+    than the body's `ret`, which gives an argument COUNT and nothing else.
+
+    Empty when the name is not mangled or carries a type this cannot decode;
+    the caller then falls back to the `ret`.
+    """
+    decoded = decode_signature(mangled)
+    convention = recovery_symbols.convention_of(mangled)
+    if decoded is None or not convention:
+        return ""
+    returns, params = decoded
+    # `this` is deliberately absent: it is not in the mangled argument list
+    # either, and `Signature` reads membership off the access code.
+    return f"{returns} ({convention} {mangled})({', '.join(params)})"
+
+
 def prototype_from_ret(pe, row: dict) -> str:
     """A signature read out of the body's own `ret N`, for rows with no other.
 
@@ -441,6 +461,16 @@ class Signature:
         if not prototype:
             entry = derived.get(int(row["address"], 16))
             prototype = (entry or {}).get("prototype", "").strip()
+        if not prototype:
+            # THE NAME BEFORE THE RET. 48 rows have no prototype anywhere and
+            # a mangled name that decodes completely, and the name is direct
+            # evidence where the `ret` is an inference: it gives the return
+            # type, every argument type and the convention outright, while
+            # `prototype_from_ret` can only offer N ints and cannot tell
+            # __stdcall from __thiscall at all, because the two write the
+            # purge byte identically.
+            prototype = prototype_from_name(row.get("name") or "")
+            self.inferred = bool(prototype)
         if not prototype and pe is not None:
             prototype = prototype_from_ret(pe, row)
             self.inferred = bool(prototype)
@@ -461,24 +491,29 @@ class Signature:
         # to 1,306 before the count caught it.
         self.params = split_params(match.group("params"))
         self.is_method = self.convention == "__thiscall"
-        if not self.is_method and MANGLED_METHOD.match(self.mangled) \
-                and self.params and "this" in self.params[0]:
-            # `QAA` is a PUBLIC __cdecl MEMBER function, and 80 of them are
-            # catalogued. Keying "is this a method" off __thiscall alone sent
-            # every one down the free-function path, where the name
-            # `?fill_func@AlphaMenu@@QAAH...` is not an identifier, so it was
-            # renamed `fn_<address>` and emitted as a free function - a symbol
-            # no target object holds. Both conditions are required: 93 free
-            # functions take a parameter honestly NAMED `this`, and they have
-            # no class in the mangled name.
-            self.is_method = True
+        if not self.is_method:
+            # `QAA` is a PUBLIC __cdecl MEMBER function and `QAG` a __stdcall
+            # one; 88 of them are catalogued. Keying "is this a method" off
+            # __thiscall alone sent every one down the free-function path,
+            # where the name `?fill_func@AlphaMenu@@QAAH...` is not an
+            # identifier, so it was renamed `fn_<address>` and emitted as a
+            # free function - a symbol no target object holds.
+            #
+            # THE NAME DECIDES, not the prototype: the access code says
+            # non-static member outright, and 8 prototypes for these - the
+            # `Win` window-procedure family - simply leave the receiver out.
+            # A prototype that DOES carry `this` still counts, for the rows
+            # whose access code this cannot read; 93 free functions take a
+            # parameter honestly named `this`, and MANGLED_METHOD rejects
+            # them because they have no class in the name.
+            self.is_method = recovery_symbols.is_nonstatic_member(self.mangled) \
+                or bool(MANGLED_METHOD.match(self.mangled) and self.params
+                        and "this" in self.params[0])
         self.klass = ""
         self.method = ""
         self.kind = "free"
 
         if self.is_method:
-            if not self.params or "this" not in self.params[0]:
-                raise Unsettled("__thiscall prototype has no `this` parameter")
             # The CLASS COMES FROM THE MANGLED NAME, not from the receiver's
             # declared type. They disagree on 50 rows - the prototype for
             # `?on_mouse_move@BaseWin@@QAEXHH@Z` says `Win* this`, because the
@@ -488,14 +523,27 @@ class Signature:
             found = (MANGLED_CTOR.match(self.mangled)
                      or MANGLED_DTOR.match(self.mangled)
                      or MANGLED_METHOD.match(self.mangled))
-            self.klass = (found.group("cls") if found
-                          else self.params[0].replace("*", " ").split()[0])
+            receiver = bool(self.params) and "this" in self.params[0]
+            if found:
+                self.klass = found.group("cls")
+            elif receiver:
+                self.klass = self.params[0].replace("*", " ").split()[0]
+            else:
+                # `sub_5cb050`: a __thiscall prototype with no `this` and no
+                # class in the name, so there is nothing to name the class
+                # after but this tool's imagination - and an invented class is
+                # half of a symbol no target object can hold.
+                raise Unsettled("__thiscall prototype has no `this` parameter "
+                                "and no class in the name")
             # Drop EVERY parameter naming the receiver, not only the first.
             # Four catalogued prototypes carry `this` beyond position 0, and
             # leaving one in emits `Caviar* this a1` - a literal keyword in the
-            # parameter list, which agents were deleting by hand.
+            # parameter list, which agents were deleting by hand. A prototype
+            # that never mentions the receiver keeps all of its parameters:
+            # the mangled argument list does not count `this` either.
             self.params = [parameter_type(strip_receiver_token(p))
-                           for p in self.params[1:]]
+                           for p in (self.params[1:] if receiver
+                                     else self.params)]
             if MANGLED_CTOR.match(self.mangled):
                 self.kind, self.method = "ctor", self.klass
             elif MANGLED_DTOR.match(self.mangled):

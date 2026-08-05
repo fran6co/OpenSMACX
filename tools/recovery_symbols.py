@@ -147,6 +147,53 @@ def spelling(name: str) -> Spelling:
     return Spelling("c", "", "", -1)
 
 
+# The access code that opens the type list of a `?name@Class@@...` name.
+# MSVC pairs them off (near/far), and only the NON-STATIC members receive a
+# `this`: `Q` public, `A` private, `I` protected, `E`/`U`/`M` their virtual
+# forms, `G`/`O`/`W` their thunks. `C`/`K`/`S` are the STATIC members, which
+# carry a class in the name and take no receiver at all, and `Y`/`Z` are free
+# functions.
+NONSTATIC_MEMBER = set("ABEFGHIJMNOPQRUVWX")
+MEMBER_ACCESS = re.compile(r"^\?[\w_]+@[\w_]+@@([A-Z])")
+
+
+# The calling convention, one character after the access and CV codes. The
+# second of each pair is the `__far` form, which a 32-bit image never uses but
+# which costs nothing to read.
+CONVENTION_CODE = {"A": CDECL, "B": CDECL, "E": THISCALL, "F": THISCALL,
+                   "G": STDCALL, "H": STDCALL, "I": FASTCALL, "J": FASTCALL}
+# `Y`/`Z` free, `C`/`K`/`S` static members: no CV code, so the convention is
+# one character earlier than for a non-static member.
+NO_CV_CODE = set("YZCDKLST")
+
+
+def convention_of(mangled: str) -> str:
+    """The calling convention the mangled name states, or ''.
+
+    Direct evidence, unlike `prototype_from_ret`, which can only tell
+    __stdcall from __thiscall by a purge byte the two write identically.
+    """
+    parsed = _split_signature(mangled)
+    if parsed is None:
+        return ""
+    prefix = parsed[1]
+    return CONVENTION_CODE.get(prefix[-1], "")
+
+
+def is_nonstatic_member(mangled: str) -> bool:
+    """Does this name belong to a member function that receives a `this`?
+
+    The NAME says so outright, and it is the only side that can be trusted
+    to: 8 catalogued prototypes for `QAG` and `QAA` members - the `Win`
+    window-procedure family - simply omit the receiver, and reading
+    membership off the prototype instead sent every one of them down the
+    free-function path, where the name is not an identifier, so it was
+    renamed `fn_<address>` and emitted with a symbol no target object holds.
+    """
+    found = MEMBER_ACCESS.match((mangled or "").strip())
+    return bool(found) and found.group(1) in NONSTATIC_MEMBER
+
+
 def argument_bytes(parameters: Sequence[str]) -> int:
     """Stack bytes MSVC counts into a __stdcall/__fastcall decoration."""
     total = 0
@@ -322,7 +369,10 @@ def _split_signature(mangled: str):
     if split == -1:
         return None
     head, tail = mangled[:split + 2], mangled[split + 2:]
-    prefix_length = 2 if tail.startswith("Y") else 3
+    # A free function and a STATIC member carry no CV code between the access
+    # and the convention: `?f@C@@SAXH@Z` is `SA` + `X` + `H`, so reading three
+    # characters here swallowed the return type of every static member.
+    prefix_length = 2 if tail[:1] in NO_CV_CODE else 3
     if len(tail) <= prefix_length + 1:
         return None
     body = tail[prefix_length:-1]            # drop the trailing `Z`
