@@ -23,6 +23,12 @@ import path from 'node:path';
 
 const PY = path.join('.opensmacx', 'venv', 'bin', 'python');
 
+// Splicing the matched body into src/ is the step that makes a match a
+// recovery. Set MIZUCHI_WRITE_BACK=0 to gate on byte_match and ratchet the
+// ledger without editing the tree - useful when sweeping a batch to find out
+// what matches before deciding what to land.
+const WRITE_BACK_TO_SRC = process.env.MIZUCHI_WRITE_BACK !== '0';
+
 // Runs inside the worktree; imports the project's own tools so the verdict
 // and the ledger update use the canonical logic, not a copy of it.
 const GATE_SCRIPT = `
@@ -164,19 +170,44 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
 
   // 3. Gate through byte_match and ratchet the ledger, in the worktree.
   const gatePath = path.join(os.tmpdir(), `mizuchi-gate-${hex}.py`);
+  const bodyPath = path.join(os.tmpdir(), `mizuchi-body-${hex}.cpp`);
   fs.writeFileSync(gatePath, GATE_SCRIPT);
+  fs.writeFileSync(bodyPath, `${generatedCode.trim()}\n`);
   let stdout;
   let gateError = null;
+  let writeback = null;
+  let writebackError = null;
   try {
     stdout = execFileSync(PY, [gatePath, `0x${hex}`, unitPath], {
       cwd: worktreePath,
       encoding: 'utf-8',
     });
+
+    // 4. The recovery only LANDS when the body is in src/. The gate proved
+    //    the text is byte-exact but left it in build/, which is gitignored and
+    //    wiped by a clean. The writeback splices it into the catalogued span
+    //    and re-verifies from src/ - it reverts itself rather than leave a
+    //    half-applied edit, so a failure here is reported and does not block
+    //    the ledger commit the gate earned.
+    if (WRITE_BACK_TO_SRC && JSON.parse(stdout.trim().split('\n').pop()).tier === 'BYTE_EXACT') {
+      try {
+        const out = execFileSync(
+          PY,
+          ['tools/mizuchi_writeback.py', `0x${hex}`, bodyPath, '--json'],
+          { cwd: worktreePath, encoding: 'utf-8' },
+        );
+        writeback = JSON.parse(out.trim().split('\n').pop());
+      } catch (error) {
+        const detail = error.stdout ? error.stdout.toString().trim() : '';
+        writebackError = detail || error.stderr?.toString().trim() || error.message;
+      }
+    }
   } catch (error) {
     gateError = error;
     stdout = error.stdout ? error.stdout.toString() : '';
   } finally {
     fs.rmSync(gatePath, { force: true });
+    fs.rmSync(bodyPath, { force: true });
 
     // Restore the worktree so the commit carries only the ledger: revert
     // overwritten tracked tools, delete copied ones, drop the exe symlink.
@@ -207,8 +238,37 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
     `byte_match: BYTE_EXACT (${gate.original_bytes} B original, ${gate.rebuilt_bytes} B rebuilt)`,
   );
 
-  return {
-    filesModified: [path.join(worktreePath, 'docs', 'recovery', 'byte-match.csv')],
-    summary: `byte_match BYTE_EXACT for 0x${hex} ${functionName}; ledger ratcheted`,
-  };
+  const filesModified = [path.join(worktreePath, 'docs', 'recovery', 'byte-match.csv')];
+  let summary = `byte_match BYTE_EXACT for 0x${hex} ${functionName}; ledger ratcheted`;
+
+  if (writebackError) {
+    // Reported, not thrown. The writeback restores every file it touched
+    // before failing, so the tree is clean and the BYTE_EXACT verdict is
+    // still worth banking - it is evidence that survives the next attempt.
+    helpers.log(`writeback REFUSED, src/ unchanged: ${writebackError}`);
+    summary += '; src/ writeback refused';
+  } else if (writeback) {
+    for (const file of writeback.files_modified) {
+      filesModified.push(path.join(worktreePath, file));
+    }
+    helpers.log(
+      `wrote body into ${writeback.source_location} ` +
+        `(${writeback.lines_replaced} -> ${writeback.lines_written} lines), ` +
+        `re-verified BYTE_EXACT from src/`,
+    );
+    if (writeback.line_delta !== 0) {
+      // The catalogues this tool patches are the ones Mizuchi itself reads.
+      // docs/recovery/summary.json and the metadata caches are regenerated
+      // from the IDB, and saying so beats letting them drift unremarked.
+      helpers.log(
+        `catalogued line numbers below the edit shifted by ${writeback.line_delta}; ` +
+          `run tools/verify_recovery_metadata.py to regenerate the derived catalogues`,
+      );
+    }
+    summary += `; body written into ${writeback.source_location}`;
+  } else if (!WRITE_BACK_TO_SRC) {
+    helpers.log('MIZUCHI_WRITE_BACK=0: src/ left unchanged');
+  }
+
+  return { filesModified, summary };
 }

@@ -1051,6 +1051,15 @@ if(BUILD_TESTING)
     # mismatch into a match, and they run everywhere.
     opensmacx_add_python_tool_test(msvc6-byte-match-tests test_msvc6_byte_match.py)
 
+    # The writeback is the only tool in this tree that edits src/ from a line
+    # number, and every way its splice can go wrong leaves a file that still
+    # looks right in review: a swallowed doc comment, an orphaned brace, a
+    # deleted `Status: Complete`. These run without Wine because the half they
+    # pin - the editing, the catalogue line shift, the restore-on-refusal - is
+    # the half that mutates the tree.
+    opensmacx_add_python_tool_test(mizuchi-writeback-tests
+                                   test_mizuchi_writeback.py)
+
     opensmacx_add_python_tool_test(generator-support-tests test_generator_support.py)
 
     opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)
