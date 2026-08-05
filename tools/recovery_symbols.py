@@ -225,10 +225,20 @@ def _argument_tokens(text: str):
         if code.isdigit():                   # already a back-reference
             index += 1
         elif code in USER_DEFINED:
-            close = text.find("@@", index)
-            if close == -1:
-                return None
-            index = close + 2
+            if index + 1 < len(text) and text[index + 1].isdigit():
+                # `PAV1@`: the TYPE is written out but its NAME is a back-
+                # reference, so it closes on ONE `@`. Requiring two made the
+                # whole tokeniser return None for any name already in this
+                # form - which is most of the catalogue's class parameters -
+                # and every caller then changed nothing at all.
+                index += 3
+                if text[index - 1] != "@":
+                    return None
+            else:
+                close = text.find("@@", index)
+                if close == -1:
+                    return None
+                index = close + 2
         elif code in PRIMITIVE:
             index += 1
         elif code == "_":                    # _J, _K, _N, _W
@@ -294,6 +304,119 @@ def substitute_name(mangled: str, identifier: str) -> str:
     return f"?{'@'.join(qualifiers)}{mangled[split:]}"
 
 
+def _split_signature(mangled: str):
+    """`(head, convention prefix, type list, terminator)`, or None.
+
+    `?name@Class@@<qualifier+convention><return><args>@Z`. The qualifier chain
+    closes at the FIRST `@@`, not the last: a `PAUSprite@@` ARGUMENT contains
+    one too, and splitting on the last put the class qualifier inside the
+    argument list.
+
+    None means "not recognised", and every caller treats that as "change
+    nothing".
+    """
+    mangled = (mangled or "").strip()
+    if not MANGLED.match(mangled) or not mangled.endswith("Z"):
+        return None
+    split = mangled.find("@@")
+    if split == -1:
+        return None
+    head, tail = mangled[:split + 2], mangled[split + 2:]
+    prefix_length = 2 if tail.startswith("Y") else 3
+    if len(tail) <= prefix_length + 1:
+        return None
+    body = tail[prefix_length:-1]            # drop the trailing `Z`
+    terminator = ""
+    if body.endswith("@"):                   # `@Z` closes an argument list
+        body, terminator = body[:-1], "@"
+    return head, tail[:prefix_length], body, terminator
+
+
+def _name_table(head: str) -> list:
+    """The identifiers already written when the type list starts.
+
+    Slot 0 is the function's own name and slot 1 its class, which is why
+    `?update@GraphicWin@@QAEXHHHHPAU1@@Z` says `1`.
+    """
+    return [part for part in head[1:-2].split("@") if part]
+
+
+# `U`/`V` in a TYPE: `PAUSprite@@` written out, `PAV1@` back-referenced.
+CLASS_KEY = re.compile(r"([UV])(?:([A-Za-z_]\w*)@@|(\d)@)")
+KEY_CHARACTER = {"struct": "U", "class": "V"}
+
+
+def _rewrite_class_keys(mangled: str, keys: dict):
+    """`(name with the keys rewritten, class names used as types)`.
+
+    The scan is per TOKEN and never over the whole name: an access qualifier
+    is a bare run of letters, so `?f@X@@UAEXPAUFoo@@@Z` offers `U` +
+    `AEXPAUFoo` + `@@` to the same pattern and it matches - swallowing the
+    real use and inventing a class called `AEXPAUFoo`. Classes whose own name
+    starts with `U` or `V` self-match in the head for the same reason
+    (`Vector@@` reads as `V` + `ector`).
+    """
+    parsed = _split_signature(mangled)
+    if parsed is None:
+        return mangled, []
+    head, prefix, body, terminator = parsed
+    tokens = _argument_tokens(body)
+    if not tokens:
+        return mangled, []
+    names, subjects = _name_table(head), []
+
+    def _key(match):
+        key, written, index = match.groups()
+        if written:
+            subject = written
+            if len(names) < 10:
+                names.append(written)
+        elif int(index) < len(names):
+            subject = names[int(index)]
+        else:
+            return match.group(0)
+        subjects.append(subject)
+        return KEY_CHARACTER.get(keys.get(subject, ""), key) + match.group(0)[1:]
+
+    rebuilt = "".join(CLASS_KEY.sub(_key, token) for token in tokens)
+    if rebuilt == body:
+        return mangled, subjects
+    return f"{head}{prefix}{rebuilt}{terminator}Z", subjects
+
+
+def class_key_uses(mangled: str) -> list:
+    """Every class named by a TYPE in this signature, back-references resolved.
+
+    `?draw@Buffer@@QAEHPAV1@HHH@Z` passes `Buffer *`, and slot 1 is the
+    enclosing class, so reading only the written-out `V<Name>@@` form misses
+    most real uses.
+    """
+    return _rewrite_class_keys(mangled, {})[1]
+
+
+def canonicalise_class_keys(mangled: str, keys: dict) -> str:
+    """Spell every struct/class key the way the SOURCE will declare it.
+
+    MSVC mangles a struct `U` and a class `V`, so the two objects have to
+    agree - and six classes disagree with THEMSELVES in the catalogue
+    (`Buffer` is `U` 49 times and `V` 17), which no tally can resolve because
+    the linker had exactly one answer and some of those rows are simply
+    wrong. The original's answer is also unrecoverable: the image carries no
+    RTTI and no embedded mangled strings, so nothing in it says which key
+    `Buffer` was declared with.
+
+    It does not have to. BOTH objects are ours - the target object's symbol
+    is already a computed choice rather than a quotation, the same way the
+    1,179 disassembler labels get a decoration - so the key only has to be
+    the same on both sides. `emit_translation_unit.class_keys` picks it, this
+    writes it into the target, and the disagreement stops mattering.
+
+    Only the key character changes; the identifier, the indirection and the
+    back-reference indices are untouched.
+    """
+    return _rewrite_class_keys(mangled, keys or {})[0]
+
+
 def compress_backrefs(mangled: str) -> str:
     """The argument list as CL writes it: a repeated type becomes its index.
 
@@ -307,23 +430,10 @@ def compress_backrefs(mangled: str) -> str:
     Anything this cannot parse is returned unchanged.
     """
     mangled = (mangled or "").strip()
-    if not MANGLED.match(mangled) or not mangled.endswith("Z"):
+    parsed = _split_signature(mangled)
+    if parsed is None:
         return mangled
-    # `?name@Class@@<qualifier+convention><return><args>@Z`. The qualifier
-    # chain closes at the FIRST `@@`, not the last: a `PAUSprite@@` ARGUMENT
-    # contains one too, and splitting on the last put the class qualifier
-    # inside the argument list.
-    split = mangled.find("@@")
-    if split == -1:
-        return mangled
-    head, tail = mangled[:split + 2], mangled[split + 2:]
-    prefix_length = 2 if tail.startswith("Y") else 3
-    if len(tail) <= prefix_length + 1:
-        return mangled
-    body = tail[prefix_length:-1]            # drop the trailing `Z`
-    terminator = ""
-    if body.endswith("@"):                   # `@Z` closes an argument list
-        body, terminator = body[:-1], "@"
+    head, prefix, body, terminator = parsed
     tokens = _argument_tokens(body)
     if not tokens:
         return mangled
@@ -339,7 +449,7 @@ def compress_backrefs(mangled: str) -> str:
     # The type table wins when both could apply, which
     # `?f3@@YAXPAUSprite@@PAUGraphicWin@@0@Z` shows: the repeat is the whole
     # type, so it is `0` rather than a name back-reference.
-    names = [part for part in head[1:-2].split("@") if part]
+    names = _name_table(head)
     seen, out = [], []
     for position, token in enumerate(tokens):
         if position and len(token) > 1 and token in seen:
@@ -362,7 +472,7 @@ def compress_backrefs(mangled: str) -> str:
     rebuilt = "".join(out)
     if rebuilt == body:
         return mangled
-    return f"{head}{tail[:prefix_length]}{rebuilt}{terminator}Z"
+    return f"{head}{prefix}{rebuilt}{terminator}Z"
 
 
 

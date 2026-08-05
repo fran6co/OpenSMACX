@@ -122,6 +122,19 @@ class DuplicateMemberTest(unittest.TestCase):
             "struct Popup {\n    int do_menu(char *, int, int);\n};",
             fix_declarations(text, []))
 
+    def test_a_class_body_is_deduplicated_as_well_as_a_struct(self):
+        # A type with methods is emitted `class X { public:`, which matches
+        # neither the `struct ` prefix nor the trailing `{` this used to look
+        # for - so the C2535 it exists to prevent came back for every one of
+        # the 152 classes.
+        text = ("class Popup { public:\n"
+                "    int do_menu(char *, int, int);\n"
+                "    int do_menu(char *, int, int);\n"
+                "};")
+        self.assertEqual(
+            "class Popup { public:\n    int do_menu(char *, int, int);\n};",
+            fix_declarations(text, []))
+
     def test_a_real_overload_set_survives(self):
         text = ("struct Popup {\n"
                 "    int do_menu(char *, int, int);\n"

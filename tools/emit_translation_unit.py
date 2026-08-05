@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
 import json
 import re
 import sys
@@ -119,50 +120,68 @@ BUILTIN = {
 # preprocessor directive (`error C2014`), which cost 26 units.
 ANONYMOUS_TYPE = re.compile(r"#\d+")
 
-# `PAUSprite@@` against `PAVBuffer@@`: MSVC encodes a struct as `U` and a class
-# as `V`, and they mangle differently, so a declaration has to use the key the
-# ORIGINAL used. `struct` is right 8 times in 9 across this image and wrong for
-# `Buffer` and `Palette` - 51 functions - so the key is counted per class out
-# of the catalogue rather than assumed for all of them.
-CLASS_KEY = re.compile(r"([UV])(?:([A-Za-z_]\w*)@@|(\d)@)")
-
 
 def class_keys(functions: dict) -> dict:
-    """{class name: 'struct' | 'class'}, tallied over every catalogued name.
+    """{class name: 'struct' | 'class'} - a class if it has methods.
 
-    A repeated NAME is written as its index - `?draw@Buffer@@QAEHPAV1@HHH@Z`
-    passes `Buffer *`, and slot 1 is the enclosing class - so the tally has to
-    resolve those too. Counting only the written-out `V<Name>@@` form left
-    `Buffer` looking like a struct on the strength of one spelling while every
-    real use said `PAV1@`.
+    MSVC encodes a struct `U` and a class `V`, and they mangle differently, so
+    the two objects have to agree on the key. The catalogue cannot settle it:
+    six classes disagree with THEMSELVES there (`Buffer` is `U` 49 times and
+    `V` 17), and neither can the image, which carries no RTTI and no embedded
+    mangled strings. A tally was tried and only bought the majority of each
+    argument; the minority stayed unpairable.
+
+    It does not have to be settled, because BOTH objects are ours. The target
+    object's symbol is a computed choice already - the 1,179 disassembler
+    labels get a decoration nothing in the image ever carried - so the key
+    only has to be the SAME on both sides, and `recovery_symbols
+    .canonicalise_class_keys` writes whatever this returns into the target.
+
+    Which leaves it a naming convention, so it follows the ordinary one: a
+    type with methods is a class, a type that is only data is a struct. 152
+    catalogued types have methods; `RECT`, `_GUID` and the rest of the plain
+    data stay structs.
     """
-    tally = {}
+    keys = {}
     for row in functions.values():
         name = row.get("name") or ""
-        split = name.find("@@")
-        if not name.startswith("?") or split == -1:
+        if not name.startswith("?"):
             continue
-        table = [part for part in name[1:split].split("@") if part]
-        for key, written, index in CLASS_KEY.findall(name):
-            if written:
-                subject = written
-                if len(table) < 10:
-                    table.append(written)
-            elif int(index) < len(table):
-                subject = table[int(index)]
-            else:
-                continue
-            counts = tally.setdefault(subject, {"U": 0, "V": 0})
-            counts[key] += 1
-    # A pure majority. `src/`'s own headers were tried as a tiebreak and are
-    # WORSE: they say `class Sprite` while the catalogue says `U` 60 times to
-    # `V` twice, so the header would trade 60 pairings for 2. Six classes
-    # disagree with themselves in the catalogue - Buffer 49/17, Font 28/19 -
-    # and that is a defect in the catalogue rather than a question the emitter
-    # can answer, because the linker had exactly one answer and some of those
-    # rows are simply wrong. The majority is what pairs the most of them.
-    return {name: ("class" if counts["V"] > counts["U"] else "struct")
-            for name, counts in tally.items()}
+        for pattern in (MANGLED_CTOR, MANGLED_DTOR, MANGLED_METHOD):
+            found = pattern.match(name)
+            if found:
+                keys[found.group("cls")] = "class"
+                break
+        else:
+            # `??_G<Class>@@`, `??4<Class>@@` and the rest of the operator and
+            # compiler-generated family, whose qualifier chain the three
+            # patterns above do not describe. The class is still the second
+            # link in the chain when there is one.
+            split = name.find("@@")
+            chain = [part for part in name[1:split].split("@") if part] \
+                if split != -1 else []
+            if len(chain) >= 2:
+                keys[chain[1]] = "class"
+    # Everything referenced only as a type, and never as a receiver, is data.
+    # Naming every one of them matters as much as the choice does: a type
+    # missing from this map is declared `struct` by the emitter and left
+    # however the catalogue spelled it in the target, which is the same
+    # disagreement in a quieter form.
+    for row in functions.values():
+        for subject in recovery_symbols.class_key_uses(row.get("name") or ""):
+            keys.setdefault(subject, "struct")
+    keys.pop("", None)
+    return keys
+
+
+@functools.lru_cache(maxsize=1)
+def catalogue_class_keys() -> dict:
+    """`class_keys` over the real catalogue, read once.
+
+    One table for the whole process. Two callers computing their own from
+    different inputs is exactly the failure this map exists to prevent.
+    """
+    return class_keys(load_functions())
 
 
 # `int (__thiscall ?add@X@@QAEHH@Z)(X* this, int)`
@@ -411,7 +430,12 @@ def vtable_shim(slots: list) -> str:
 
 
 class Signature:
-    def __init__(self, row: dict, derived: dict, pe=None):
+    def __init__(self, row: dict, derived: dict, pe=None, keys: dict = None):
+        # `keys` is {class: 'struct'|'class'}, and it has to be the SAME map
+        # the unit is emitted from - it decides half the mangled symbol. The
+        # default reads the catalogue, so a caller that forgets to pass one
+        # still lands on the same answer the emitter will.
+        self._keys = catalogue_class_keys() if keys is None else keys
         prototype = (row.get("prototype") or "").strip()
         self.inferred = False
         if not prototype:
@@ -552,9 +576,15 @@ class Signature:
             self.mangled, int(row["address"], 16), self.convention,
             self.params, self.method) if self.linkage == "c" else \
             recovery_symbols.compress_backrefs(
-                recovery_symbols.substitute_name(
-                    recovery_symbols.empty_destructor_arguments(self.mangled),
-                    self.method.lstrip("~")))
+                # Before compression, so a written-out `PAVBuffer@@` is still
+                # there to be re-keyed; what compression leaves behind is a
+                # digit that carries no key of its own.
+                recovery_symbols.canonicalise_class_keys(
+                    recovery_symbols.substitute_name(
+                        recovery_symbols.empty_destructor_arguments(
+                            self.mangled),
+                        self.method.lstrip("~")),
+                    self._keys))
 
     def member_convention(self) -> str:
         """The convention a MEMBER declaration has to spell, or ''.
@@ -593,7 +623,8 @@ def unsettled_identifier(row: dict) -> str:
         row.get("name") or "", int(row["address"], 16))
 
 
-def declare_callee(row: dict, derived: dict, pe=None) -> str:
+def declare_callee(row: dict, derived: dict, pe=None,
+                   keys: dict = None) -> str:
     """A callee as a bare declaration. Never a definition.
 
     A definition would be INLINED, and the original did not inline it, so the
@@ -601,7 +632,7 @@ def declare_callee(row: dict, derived: dict, pe=None) -> str:
     holding two external `.text` symbols for the same reason.
     """
     try:
-        signature = Signature(row, derived, pe)
+        signature = Signature(row, derived, pe, keys)
     except Unsettled:
         # 30% of callee targets have no prototype. A declaration with unknown
         # arity is still better than none: the body will not compile without
@@ -641,14 +672,15 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # `class X { public:` and `struct X {` differ only in default access,
         # and the key has to agree between the forward declaration and the
         # definition or VC6 warns C4099 - but it also has to agree with the
-        # ORIGINAL, because `U` and `V` mangle differently.
+        # TARGET object, because `U` and `V` mangle differently. Both sides
+        # read `class_keys`, which is what makes that true by construction.
         key = keys.get(name, "struct")
         if not opening:
             return f"{key} {name};"
         return f"{key} {name} {{ public:" if key == "class" else \
             f"{key} {name} {{"
 
-    signature = Signature(row, derived, pe)
+    signature = Signature(row, derived, pe, keys)
     refusal = recovery_symbols.UNDEFINABLE.get(signature.method) \
         if signature.linkage == "c" else None
     if refusal:
@@ -684,15 +716,15 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         if callee is None or target == address:
             continue
         try:
-            callee_signature = Signature(callee, derived, pe)
+            callee_signature = Signature(callee, derived, pe, keys)
         except Unsettled:
-            declarations.append(declare_callee(callee, derived, pe))
+            declarations.append(declare_callee(callee, derived, pe, keys))
             continue
         if callee_signature.is_method:
             methods_by_class.setdefault(callee_signature.klass, []).append(
                 callee_signature)
         else:
-            declarations.append(declare_callee(callee, derived, pe))
+            declarations.append(declare_callee(callee, derived, pe, keys))
 
     # Forward declarations for every non-builtin type named ANYWHERE in this
     # unit, not just in the subject's own signature. Scoping this to the
@@ -889,7 +921,7 @@ KEYWORDS = {"struct", "class", "extern", "public", "private", "static",
             "enum", "inline", "virtual", "namespace", "using"}
 
 
-def repair(text: str, compile_once, rounds: int = 4):
+def repair(text: str, compile_once, rounds: int = 4, keys: dict = None):
     """Add forward declarations until CL stops asking, or give up and say so.
 
     Predicting which identifiers in a signature are TYPES cannot be done
@@ -931,7 +963,12 @@ def repair(text: str, compile_once, rounds: int = 4):
         if not names:
             return text, added, output
         added.extend(sorted(names))
-        insert = "\n".join(f"struct {name};" for name in sorted(names))
+        # The key has to agree with `class_keys`, or a type this loop
+        # discovers is declared `struct` while the target object holds
+        # the `V` the source would have emitted for a class.
+        table = catalogue_class_keys() if keys is None else keys
+        insert = "\n".join(f"{table.get(name, 'struct')} {name};"
+                           for name in sorted(names))
         marker = "typedef unsigned char uint8_t;\n"
         text = text.replace(marker, marker + "\n" + insert + "\n", 1)
     return text, added, "still undeclared after repair rounds"
