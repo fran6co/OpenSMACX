@@ -47,7 +47,8 @@ import recovery_symbols  # noqa: E402
 
 from disasm import DEFAULT_EXE, annotate, load_functions, read_range  # noqa: E402
 from emit_target_object import SymbolResolver  # noqa: E402
-from emit_translation_unit import Unsettled, emit, load_callees, load_derived  # noqa: E402
+from emit_translation_unit import (Unsettled, class_keys, emit,  # noqa: E402
+                                   load_callees, load_derived)
 from generator_support import parse_body_ranges  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -295,7 +296,7 @@ def main() -> int:
     pe = pefile.PE(str(arguments.exe), fast_load=True)
     derived = load_derived()
     callees = load_callees()
-    symbols = SymbolResolver(derived, pe)
+    symbols = SymbolResolver(derived, pe, class_keys(functions))
 
     written = 0
     for address in addresses:

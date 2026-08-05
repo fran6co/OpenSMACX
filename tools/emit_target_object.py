@@ -9,11 +9,14 @@ produced, close enough for objdiff to pair instructions:
   * `.text` holds the function's bytes, read from the hash-pinned
     executable over the catalogued body ranges.
   * The function symbol carries the name the RECOVERED SOURCE will make CL
-    emit, which is the catalogued name for the 4,821 `?`-mangled functions
-    and a computed C decoration for the 1,179 that were only ever labelled
-    by a disassembler. `tools/recovery_symbols.py` decides, once, for both
-    sides: a target object holding `sub_5e3650` pairs with nothing, because
-    no MSVC declaration emits an undecorated name.
+    emit, which is NOT always the catalogued one: 1,179 functions were only
+    ever labelled by a disassembler and get a computed C decoration, and 341
+    of the `?`-mangled names are spelled in a way CL never emits - an
+    expanded back-reference, or a struct key for a type the source declares
+    a class. `tools/recovery_symbols.py` decides, once, for both sides: a
+    target object holding `sub_5e3650` pairs with nothing, because no MSVC
+    declaration emits an undecorated name, and one holding `PAUBuffer@@`
+    pairs with nothing if the source says `class Buffer`.
   * Every `call`/`jmp` whose target is catalogued becomes an
     IMAGE_REL_I386_REL32 relocation against an undefined external symbol
     with the target's mangled name, and the rel32 field is zeroed - the
@@ -52,8 +55,9 @@ from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 
 import recovery_symbols  # noqa: E402
 from disasm import DEFAULT_EXE, load_functions, read_range  # noqa: E402
-from emit_translation_unit import (Signature, Unsettled, load_derived,  # noqa: E402
-                                   unsettled_identifier)
+from emit_translation_unit import (Signature, Unsettled,  # noqa: E402
+                                   catalogue_class_keys, class_keys,
+                                   load_derived, unsettled_identifier)
 from generator_support import parse_body_ranges  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -83,8 +87,11 @@ class SymbolResolver:
     the unit tests and any caller with no executable to hand get.
     """
 
-    def __init__(self, derived: dict, pe=None):
+    def __init__(self, derived: dict, pe=None, keys: dict = None):
         self._derived, self._pe, self._cache = derived, pe, {}
+        # The struct/class key map the recovered source is emitted from. Half
+        # the mangled symbol, so the two sides have to read the same one.
+        self._keys = keys
 
     def of(self, address: int, row: dict[str, str]) -> str:
         if address not in self._cache:
@@ -98,12 +105,15 @@ class SymbolResolver:
             # used to short-circuit here and return the catalogued name, which
             # is what kept the source side's back-reference compression and
             # its `fn_<address>` substitution from ever reaching this side.
-            return Signature(row, self._derived, self._pe).symbol
+            return Signature(row, self._derived, self._pe, self._keys).symbol
         except Unsettled:
             if name.startswith("?"):
                 # No signature to compute from, so normalise what there is.
                 return recovery_symbols.compress_backrefs(
-                    recovery_symbols.empty_destructor_arguments(name))
+                    recovery_symbols.canonicalise_class_keys(
+                        recovery_symbols.empty_destructor_arguments(name),
+                        self._keys if self._keys is not None
+                        else catalogue_class_keys()))
             # The same shape `emit_translation_unit.declare_callee` falls back
             # to when a signature will not settle: `extern "C" int name();`,
             # which is __cdecl and so decorates without an argument count.
@@ -228,7 +238,7 @@ def main() -> int:
 
     pe = pefile.PE(str(args.exe), fast_load=True)
     args.out.mkdir(parents=True, exist_ok=True)
-    symbols = SymbolResolver(load_derived(), pe)
+    symbols = SymbolResolver(load_derived(), pe, class_keys(functions))
 
     symbol_map = {}
     disagreements = []

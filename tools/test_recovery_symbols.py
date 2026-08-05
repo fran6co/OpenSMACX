@@ -193,6 +193,69 @@ class BackReferenceTest(unittest.TestCase):
             self.assertEqual(name, rs.compress_backrefs(name), name)
 
 
+class ClassKeyTest(unittest.TestCase):
+    """MSVC mangles a struct `U` and a class `V`, and they never pair.
+
+    The catalogue cannot settle which one a type was declared with - six
+    classes disagree with themselves there - and neither can the image, which
+    carries no RTTI and no embedded mangled strings. It does not have to:
+    both objects are ours, so the key only has to be the same on both sides.
+    """
+
+    KEYS = {"Buffer": "class", "Sprite": "class", "RECT": "struct"}
+
+    def test_a_written_out_key_takes_the_declared_one(self):
+        self.assertEqual(
+            "?tile@Buffer@@QAEHPAVSprite@@H@Z",
+            rs.canonicalise_class_keys("?tile@Buffer@@QAEHPAUSprite@@H@Z",
+                                       self.KEYS))
+
+    def test_a_back_referenced_key_is_rewritten_too(self):
+        # `PAV1@` names the enclosing class through the name table, and 31 of
+        # the 40 unpaired rows were in exactly this form.
+        self.assertEqual(
+            "?draw@Buffer@@QAEHPAV1@HHH@Z",
+            rs.canonicalise_class_keys("?draw@Buffer@@QAEHPAU1@HHH@Z",
+                                       self.KEYS))
+
+    def test_a_declared_struct_is_spelled_back_as_one(self):
+        self.assertEqual(
+            "?f@@YAXPAURECT@@@Z",
+            rs.canonicalise_class_keys("?f@@YAXPAVRECT@@@Z", self.KEYS))
+
+    def test_a_type_the_map_does_not_name_is_left_alone(self):
+        for name in ("?f@@YAXPAUFoo@@@Z", "?f@@YAXPAVFoo@@@Z"):
+            self.assertEqual(name,
+                             rs.canonicalise_class_keys(name, self.KEYS))
+
+    def test_an_access_qualifier_is_not_a_class_key(self):
+        # `U` opens a PUBLIC VIRTUAL member, and `UAEXPAUBuffer@@` offers
+        # `U` + `AEXPAUBuffer` + `@@` to the same pattern. Scanning the whole
+        # name matched that, swallowed the real use, and invented a class.
+        self.assertEqual(
+            "?f@X@@UAEXPAVBuffer@@@Z",
+            rs.canonicalise_class_keys("?f@X@@UAEXPAUBuffer@@@Z", self.KEYS))
+
+    def test_a_class_whose_own_name_starts_with_the_key_is_not_a_use(self):
+        # `Vector@@` in the qualifier chain reads as `V` + `ector` + `@@`.
+        self.assertEqual(["Buffer"],
+                         rs.class_key_uses("?f@Vector@@QAEXPAUBuffer@@@Z"))
+
+    def test_a_use_is_reported_through_its_back_reference(self):
+        self.assertEqual(["Buffer"],
+                         rs.class_key_uses("?draw@Buffer@@QAEHPAU1@HHH@Z"))
+
+    def test_anything_unparseable_is_returned_unchanged(self):
+        for name in ("_sub_401520@4", "sub_401520", "?weird@@YA", ""):
+            self.assertEqual(name,
+                             rs.canonicalise_class_keys(name, self.KEYS), name)
+            self.assertEqual([], rs.class_key_uses(name), name)
+
+    def test_an_empty_map_changes_nothing(self):
+        name = "?draw@Buffer@@QAEHPAU1@HHH@Z"
+        self.assertEqual(name, rs.canonicalise_class_keys(name, {}))
+
+
 class SubstituteNameTest(unittest.TestCase):
     """14 catalogued names are not C identifiers and never can be.
 

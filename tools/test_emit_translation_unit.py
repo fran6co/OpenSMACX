@@ -361,5 +361,55 @@ class NamedTypeTests(unittest.TestCase):
             self.assertIn(word, tool.KEYWORDS | tool.BUILTIN)
 
 
+class ClassKeyTests(unittest.TestCase):
+    """Which types are emitted `class` and which `struct`.
+
+    The key is half the mangled symbol, and the catalogue cannot settle it:
+    six classes disagree with themselves there. Neither can the image - no
+    RTTI, no embedded mangled strings. Both objects are ours, so the answer
+    only has to be the SAME on both sides, which makes it a naming
+    convention: a type with methods is a class, a type that is only data is a
+    struct.
+    """
+
+    def keys(self, *names):
+        return tool.class_keys({index: {"name": name}
+                                for index, name in enumerate(names)})
+
+    def test_a_type_with_a_catalogued_method_is_a_class(self):
+        self.assertEqual({"Buffer": "class"},
+                         self.keys("?draw@Buffer@@QAEHH@Z"))
+
+    def test_a_constructor_names_a_class_too(self):
+        self.assertEqual("class", self.keys("??0Sprite@@QAE@XZ")["Sprite"])
+
+    def test_a_compiler_generated_member_still_names_its_class(self):
+        # `??_G<...>@Buffer@@` is a scalar deleting destructor, and none of
+        # the three ordinary patterns describe its qualifier chain.
+        self.assertEqual("class",
+                         self.keys("??_Gthunk@Buffer@@UAEPAXI@Z")["Buffer"])
+
+    def test_a_type_only_ever_passed_is_a_struct(self):
+        self.assertEqual({"f": "class", "RECT": "struct"},
+                         self.keys("?f@f@@QAEXPAURECT@@@Z"))
+
+    def test_every_type_the_catalogue_names_gets_an_answer(self):
+        # A type MISSING from the map is declared `struct` by the emitter and
+        # left however the catalogue spelled it in the target - the same
+        # disagreement in a quieter form.
+        keys = self.keys("?f@@YAXPAVSprite@@@Z")
+        self.assertEqual({"Sprite": "struct"}, keys)
+
+    def test_the_receiver_wins_over_a_bare_use(self):
+        keys = self.keys("?f@@YAXPAUSprite@@@Z", "?draw@Sprite@@QAEXXZ")
+        self.assertEqual("class", keys["Sprite"])
+
+    def test_a_class_whose_name_starts_with_a_key_is_not_a_phantom(self):
+        # `Vector@@` reads as `V` + `ector` + `@@` to a whole-name scan, which
+        # invented classes called `ector`, `ideo` and `nwind` - and each one
+        # consumed a name-table slot, shifting every later back-reference.
+        self.assertNotIn("ector", self.keys("?f@Vector@@QAEXPAURECT@@@Z"))
+
+
 if __name__ == "__main__":
     unittest.main()

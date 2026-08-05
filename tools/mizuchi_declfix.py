@@ -210,7 +210,10 @@ def _drop_duplicate_members(lines: list[str]) -> list[str]:
     out, seen, depth = [], set(), 0
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith("struct ") and stripped.endswith("{"):
+        if stripped.startswith(("struct ", "class ")) and "{" in stripped:
+            # `class X { public:` as well as `struct X {`: a type with methods
+            # is emitted as a class, and matching only the struct spelling let
+            # the C2535 this exists to prevent back into every one of them.
             depth, seen = depth + 1, set()
         elif stripped == "};" and depth:
             depth -= 1
