@@ -252,6 +252,54 @@ INDIRECTION = set("PQRSAB")
 USER_DEFINED = set("UVT")
 
 
+FUNCTION_POINTER = "P6"
+
+
+def _end_of_type(text: str, index: int):
+    """The index just past ONE encoded type, or None if it is unrecognised."""
+    if index >= len(text):
+        return None
+    if text[index:index + 2] == FUNCTION_POINTER:
+        # `P6<conv><return><arguments>@Z`, and the arguments close the way a
+        # top-level list does: `XZ` when there are none, `@Z` otherwise.
+        index = _end_of_type(text, index + 3)
+        if index is None:
+            return None
+        if text[index:index + 2] == "XZ":
+            return index + 2
+        while index < len(text) and text[index] != "@":
+            index = _end_of_type(text, index)
+            if index is None:
+                return None
+        return index + 2 if text[index:index + 2] == "@Z" else None
+    while index < len(text) and text[index] in INDIRECTION:
+        if text[index:index + 2] == FUNCTION_POINTER:
+            return _end_of_type(text, index)     # a POINTER to one
+        index += 1                               # P, PA, PAP, AAV ...
+        if index < len(text) and text[index] in "ABCD":
+            index += 1                           # the CV code
+    if index >= len(text):
+        return None
+    code = text[index]
+    if code.isdigit():                           # already a back-reference
+        return index + 1
+    if code in USER_DEFINED:
+        if text[index + 1:index + 2].isdigit():
+            # `PAV1@`: the TYPE is written out but its NAME is a back-
+            # reference, so it closes on ONE `@`. Requiring two made the
+            # whole tokeniser return None for any name already in this form -
+            # which is most of the catalogue's class parameters - and every
+            # caller then changed nothing at all.
+            return index + 3 if text[index + 2:index + 3] == "@" else None
+        close = text.find("@@", index)
+        return close + 2 if close != -1 else None
+    if code in PRIMITIVE:
+        return index + 1
+    if code == "_":                              # _J, _K, _N, _W
+        return index + 2
+    return None
+
+
 def _argument_tokens(text: str):
     """Split a mangled argument list into whole type tokens, or None.
 
@@ -261,39 +309,23 @@ def _argument_tokens(text: str):
     """
     tokens, index = [], 0
     while index < len(text):
-        start = index
-        while index < len(text) and text[index] in INDIRECTION:
-            index += 1                       # P, PA, PAP, AAV ...
-            if index < len(text) and text[index] in "ABCD":
-                index += 1                   # the CV code
-        if index >= len(text):
+        end = _end_of_type(text, index)
+        if end is None:
             return None
-        code = text[index]
-        if code.isdigit():                   # already a back-reference
-            index += 1
-        elif code in USER_DEFINED:
-            if index + 1 < len(text) and text[index + 1].isdigit():
-                # `PAV1@`: the TYPE is written out but its NAME is a back-
-                # reference, so it closes on ONE `@`. Requiring two made the
-                # whole tokeniser return None for any name already in this
-                # form - which is most of the catalogue's class parameters -
-                # and every caller then changed nothing at all.
-                index += 3
-                if text[index - 1] != "@":
-                    return None
-            else:
-                close = text.find("@@", index)
-                if close == -1:
-                    return None
-                index = close + 2
-        elif code in PRIMITIVE:
-            index += 1
-        elif code == "_":                    # _J, _K, _N, _W
-            index += 2
-        else:
-            return None
-        tokens.append(text[start:index])
+        tokens.append(text[index:end])
+        index = end
     return tokens
+
+
+def _split_function_pointer(token: str):
+    """`P6AXPAD@Z` -> (`P6A`, [`X`, `PAD`], `@Z`), or None."""
+    if not token.startswith(FUNCTION_POINTER):
+        return None
+    terminator = "XZ" if token.endswith("XZ") and not token.endswith("@XZ")         else "@Z"
+    inner = _argument_tokens(token[3:-len(terminator)])
+    if inner is None:
+        return None
+    return token[:3], inner, terminator
 
 
 DESTRUCTOR = re.compile(r"^\?\?1[A-Za-z_]\w*@@[A-Z]{3}@")
@@ -500,26 +532,41 @@ def compress_backrefs(mangled: str) -> str:
     # `?f3@@YAXPAUSprite@@PAUGraphicWin@@0@Z` shows: the repeat is the whole
     # type, so it is `0` rather than a name back-reference.
     names = _name_table(head)
-    seen, out = [], []
-    for position, token in enumerate(tokens):
-        if position and len(token) > 1 and token in seen:
-            out.append(str(seen.index(token)))
-            continue
-        original = token
 
-        def _name(match):
-            key, identifier = match.group(1), match.group(2)
-            if identifier in names:
-                return f"{key}{names.index(identifier)}@"
-            if len(names) < 10:
-                names.append(identifier)
-            return match.group(0)
+    def _name(match):
+        key, identifier = match.group(1), match.group(2)
+        if identifier in names:
+            return f"{key}{names.index(identifier)}@"
+        if len(names) < 10:
+            names.append(identifier)
+        return match.group(0)
 
-        token = UDT_NAME.sub(_name, token)
-        if position and len(original) > 1 and len(seen) < 10:
-            seen.append(original)
-        out.append(token)
-    rebuilt = "".join(out)
+    def _rewrite(items, seen, is_return):
+        out = []
+        for position, token in enumerate(items):
+            # The RETURN type takes no slot: `?g@@YAPAHPAH@Z` returns `int *`
+            # and takes one, and compressing the argument against the return
+            # would emit `?g@@YAPAH0@Z`.
+            eligible = not (is_return and position == 0)
+            if eligible and len(token) > 1 and token in seen:
+                out.append(str(seen.index(token)))
+                continue
+            original, split = token, _split_function_pointer(token)
+            if split is not None:
+                # A CALLBACK's own argument list shares the enclosing table:
+                # `?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z` is written
+                # `...PAD0HP6AX0@Z@Z`, where the `0` inside the callback
+                # refers to the `char *` two arguments earlier.
+                opening, inner, closing = split
+                token = opening + "".join(_rewrite(inner, seen, True)) + closing
+            else:
+                token = UDT_NAME.sub(_name, token)
+            if eligible and len(original) > 1 and len(seen) < 10:
+                seen.append(original)
+            out.append(token)
+        return out
+
+    rebuilt = "".join(_rewrite(tokens, [], True))
     if rebuilt == body:
         return mangled
     return f"{head}{prefix}{rebuilt}{terminator}Z"
