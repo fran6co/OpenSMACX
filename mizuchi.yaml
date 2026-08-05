@@ -133,14 +133,18 @@ plugins:
         the whole body (an extra `push ebx`/`push edi` in the prologue), it had
         enough register pressure to do so. That is a hard case.
       - Carry-flag accumulation (`shr X,1` followed by `adc acc,0`, or `sbb`)
-        is NOT reachable from the obvious C. Measured on 13 spellings of a
-        bit-count loop — do-while, while, for, shift-in-condition, extract to a
-        temp before shifting, `%2`, `if (v&1) c++` — across all four flag sets:
-        every one emits `and`/`add`/`shr` or `test`/`je`/`inc`, none emits
-        `adc`. If the target uses this idiom, you cannot reach it by re-rolling
-        arithmetic. Get the rest of the body as close as possible, submit your
-        best, and do not spend attempts searching for a spelling that produces
-        `adc`.
+        appears to be unreachable from C++ with this compiler. Measured over
+        ~340 compilations: 13 spellings of a bit-count loop (do-while, while,
+        for, shift-in-condition, extract-to-temp-before-shifting, `%2`,
+        `if (v&1) c++`, and variants) crossed with 6 optimisation levels
+        (/O1 /O2 /Ox /Og /Ot /Os), 4 processor targets (default /G5 /G6 /GB),
+        /Oi on and off, and both frame-pointer settings. Every one emits
+        `and`/`add`/`shr` or `test`/`je`/`inc`. None emits `adc` or `sbb`.
+        A target body built from this idiom was most likely hand-written
+        assembly in the original source, which is why no C++ reproduces it.
+        Do NOT spend attempts hunting a spelling — get the rest of the body as
+        close as you can, submit your best, and say in your final message that
+        the residual difference is a carry-flag idiom.
 
       **Available Tools**
       - `compile_and_view_assembly`: Compiles your C++ code, shows the resulting assembly, AND shows the diff against the target. The tool returns:
