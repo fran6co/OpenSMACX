@@ -1072,6 +1072,14 @@ if(BUILD_TESTING)
     # shows up as a `call` mismatch the agent cannot fix from the call site.
     opensmacx_add_python_tool_test(target-object-emitter-tests
                                    test_emit_target_object.py)
+
+    # The symbol both objects have to carry. objdiff looks ONE name up on each
+    # side, so a decoration rule off by an underscore or by four bytes of
+    # argument count does not produce a wrong diff - it produces no diff at
+    # all, on every affected function at once, which reads as "nothing has
+    # matched yet". 1,179 catalogued functions were in exactly that state.
+    opensmacx_add_python_tool_test(recovery-symbol-tests
+                                   test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
 
     # The writeback is the only tool in this tree that edits src/ from a line

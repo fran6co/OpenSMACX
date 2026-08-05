@@ -60,6 +60,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 
+import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
                                read_bytes)
 
@@ -224,8 +225,17 @@ def prototype_from_ret(pe, row: dict) -> str:
     engine = Cs(CS_ARCH_X86, CS_MODE_32)
     purges = {one.op_str for one in engine.disasm(data, low)
               if one.mnemonic == "ret"}
-    if len(purges) != 1:
+    if len(purges) > 1:
+        # Two different purges in one body is not an arity, it is a
+        # contradiction - usually a span covering more than one function.
+        # Picking either would be a guess that changes emitted bytes.
         return ""
+    if not purges:
+        # 76 bodies leave through a tail `jmp` and never execute a `ret` at
+        # all, so there is no purge byte to read. That is the same state of
+        # knowledge a bare `ret` leaves - caller-pop, arity unknowable - and
+        # they were the entire remaining "no scaffolding at all" population.
+        return "int (__cdecl X)()"
     text = purges.pop()
     if not text:
         return "int (__cdecl X)()"          # floor: arity unknowable from bytes
@@ -378,6 +388,35 @@ class Signature:
                 # is simply not a C identifier.
                 self.method = f"fn_{int(row['address'], 16):08x}"
 
+        # C or C++ linkage, and with it the symbol both objects must carry.
+        # A catalogued name that is not `?`-mangled was never a C++ symbol:
+        # emitting it with C++ linkage makes CL invent `?sub_5e3650@@YGHH@Z`,
+        # which no target object holds. See tools/recovery_symbols.py.
+        constraint = recovery_symbols.spelling(self.mangled)
+        self.linkage = "c++" if (self.is_method or constraint.linkage == "c++") \
+            else "c"
+        if self.linkage == "c++" and constraint.linkage == "c":
+            # A `__thiscall` prototype under a name the linker never carried:
+            # the unit would be emitted as a class method, and CL would mangle
+            # the class and method THIS TOOL invented into a symbol no target
+            # object can hold. One row is in this state (`j_??1Ambience...`).
+            # Refusing says so; emitting would produce a prompt that cannot
+            # match however good the body is.
+            raise Unsettled(
+                f"__thiscall under the undecorated name {self.mangled!r}: the "
+                "emitted C++ symbol would name a synthesised class")
+        if self.linkage == "c":
+            self.method = constraint.identifier or self.method
+            # The decoration outranks the inferred convention: `_WinMain@16`
+            # says __stdcall outright, while `prototype_from_ret` only guesses
+            # it from a purge byte that __thiscall writes identically.
+            if constraint.convention:
+                self.convention = constraint.convention
+        self.symbol = self.mangled if self.linkage == "c++" else \
+            recovery_symbols.symbol_for(
+                self.mangled, int(row["address"], 16), self.convention,
+                self.params, self.method)
+
     def argument_list(self) -> str:
         return ", ".join(f"{text} a{index}"
                          for index, text in enumerate(self.params, start=1)) \
@@ -393,6 +432,17 @@ class Signature:
 
 # ------------------------------------------------------------------ emission
 
+def unsettled_identifier(row: dict) -> str:
+    """What a callee whose signature will not settle is called in the source.
+
+    Shared with `emit_target_object`, which has to write the same name into the
+    relocation - a declaration and a relocation that spell the same function
+    differently is the failure this whole path exists to avoid.
+    """
+    return recovery_symbols.fallback_identifier(
+        row.get("name") or "", int(row["address"], 16))
+
+
 def declare_callee(row: dict, derived: dict, pe=None) -> str:
     """A callee as a bare declaration. Never a definition.
 
@@ -407,11 +457,23 @@ def declare_callee(row: dict, derived: dict, pe=None) -> str:
         # arity is still better than none: the body will not compile without
         # something to call, and a wrong arity shows up as a mismatch rather
         # than as a silent pass.
-        name = re.sub(r"\W", "_", row.get("name") or "")
+        name = unsettled_identifier(row)
+        if name in recovery_symbols.COMPILER_DECLARED:
+            return ""
         return f"extern \"C\" int {name}();  // arity unknown"
     if signature.is_method:
         return ""      # emitted with its class
-    return (f"{signature.returns} {signature.convention} "
+    if signature.linkage == "c" and \
+            signature.method in recovery_symbols.COMPILER_DECLARED:
+        # CL declares this one itself. A second C-linkage declaration is
+        # `error C2733`, and it took the whole unit down with it.
+        return ""
+    # `extern "C"` is what makes the call site reference `_sub_5e3650@8` rather
+    # than a C++ mangling of it, which is the name the target object's
+    # relocation carries. Without it every call to an undecorated function
+    # reads as a diff in a body that is otherwise byte-exact.
+    linkage = "extern \"C\" " if signature.linkage == "c" else ""
+    return (f"{linkage}{signature.returns} {signature.convention} "
             f"{signature.method}({', '.join(signature.params) or ''});")
 
 
@@ -424,6 +486,10 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     if row is None:
         raise Unsettled(f"0x{address:08X} is not a catalogued function")
     signature = Signature(row, derived, pe)
+    refusal = recovery_symbols.UNDEFINABLE.get(signature.method) \
+        if signature.linkage == "c" else None
+    if refusal:
+        raise Unsettled(f"{signature.method} cannot be defined: {refusal}")
 
     spans = parse_body_ranges(row.get("body_ranges") or "")
     globals_touched = absolute_operands(pe, spans) if spans else {}
@@ -575,7 +641,12 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             return "\n".join(lines)
         arguments = ", ".join(f"{text} a{index}" for index, text
                               in enumerate(signature.params, start=1))
-        head = (f"{signature.returns} {signature.convention} "
+        # `extern "C"` on a name the disassembler invented is not cosmetic: it
+        # is what makes CL emit the symbol the target object carries. Dropping
+        # it leaves the two objects with no name in common and objdiff reports
+        # a missing symbol rather than a diff. See tools/recovery_symbols.py.
+        linkage = "extern \"C\" " if signature.linkage == "c" else ""
+        head = (f"{linkage}{signature.returns} {signature.convention} "
                 f"{signature.method}({arguments})")
 
     # A placeholder return, so the SKELETON COMPILES BEFORE THE BODY EXISTS.

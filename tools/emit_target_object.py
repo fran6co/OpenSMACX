@@ -8,7 +8,12 @@ produced, close enough for objdiff to pair instructions:
 
   * `.text` holds the function's bytes, read from the hash-pinned
     executable over the catalogued body ranges.
-  * The function symbol carries the catalogued mangled name.
+  * The function symbol carries the name the RECOVERED SOURCE will make CL
+    emit, which is the catalogued name for the 4,821 `?`-mangled functions
+    and a computed C decoration for the 1,179 that were only ever labelled
+    by a disassembler. `tools/recovery_symbols.py` decides, once, for both
+    sides: a target object holding `sub_5e3650` pairs with nothing, because
+    no MSVC declaration emits an undecorated name.
   * Every `call`/`jmp` whose target is catalogued becomes an
     IMAGE_REL_I386_REL32 relocation against an undefined external symbol
     with the target's mangled name, and the rel32 field is zeroed - the
@@ -24,7 +29,9 @@ branch destinations on this side and as symbols on the recovered side, so
 a diff there is expected noise until the target gets catalogued.
 
 The output feeds Mizuchi's per-prompt `targetObjectPath`, and the optional
-`--symbol-map` JSON (mangled name -> object path) feeds its `symbolMapPath`.
+`--symbol-map` JSON (symbol -> object path) feeds its `symbolMapPath`. That
+file is also how `mizuchi-integrator.mjs` gets from a symbol back to an
+address, since each object is named for the address it holds.
 
 Output is derived from proprietary bytes: local analysis only, never
 committed.
@@ -43,7 +50,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pefile  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 
+import recovery_symbols  # noqa: E402
 from disasm import DEFAULT_EXE, load_functions, read_range  # noqa: E402
+from emit_translation_unit import (Signature, Unsettled, load_derived,  # noqa: E402
+                                   unsettled_identifier)
 from generator_support import parse_body_ranges  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -62,8 +72,42 @@ def read_spans(pe: pefile.PE, body_ranges: str) -> bytes:
     return bytes(out)
 
 
+class SymbolResolver:
+    """The symbol each catalogued function will carry, resolved once.
+
+    Reading a prototype out of a `ret` disassembles the body, and a whole-
+    catalogue run asks for the same popular callee hundreds of times, so the
+    answers are memoised by address.
+
+    Without a resolver this falls back to the catalogued name, which is what
+    the unit tests and any caller with no executable to hand get.
+    """
+
+    def __init__(self, derived: dict, pe=None):
+        self._derived, self._pe, self._cache = derived, pe, {}
+
+    def of(self, address: int, row: dict[str, str]) -> str:
+        if address not in self._cache:
+            self._cache[address] = self._resolve(address, row)
+        return self._cache[address]
+
+    def _resolve(self, address: int, row: dict[str, str]) -> str:
+        name = (row.get("name") or "").strip()
+        if name.startswith("?"):
+            return name
+        try:
+            return Signature(row, self._derived, self._pe).symbol
+        except Unsettled:
+            # The same shape `emit_translation_unit.declare_callee` falls back
+            # to when a signature will not settle: `extern "C" int name();`,
+            # which is __cdecl and so decorates without an argument count.
+            return recovery_symbols.decorate(unsettled_identifier(row),
+                                             recovery_symbols.CDECL)
+
+
 def call_relocations(text: bytearray, address: int,
-                     functions: dict[int, dict[str, str]]):
+                     functions: dict[int, dict[str, str]],
+                     symbols: SymbolResolver | None = None):
     """REL32 relocations for catalogued call/jmp targets.
 
     Zeroes each rel32 field in place so objdiff's implicit addend reads 0,
@@ -81,7 +125,7 @@ def call_relocations(text: bytearray, address: int,
         row = functions.get(target)
         if not row or not row.get("name"):
             continue
-        name = row["name"]
+        name = symbols.of(target, row) if symbols else row["name"]
         off = insn.address - address + 1
         relocs.append((off, name, IMAGE_REL_I386_REL32))
         externals.add(name)
@@ -130,13 +174,14 @@ def build_coff(text: bytes, fn_name: str, relocs, externals) -> bytes:
 
 
 def emit_one(pe: pefile.PE, address: int, row: dict[str, str],
-             functions: dict[int, dict[str, str]], out_dir: Path) -> Path:
-    name = row["name"]
+             functions: dict[int, dict[str, str]], out_dir: Path,
+             symbols: SymbolResolver | None = None) -> tuple[Path, str]:
+    name = symbols.of(address, row) if symbols else row["name"]
     text = bytearray(read_spans(pe, row["body_ranges"]))
-    relocs, externals = call_relocations(text, address, functions)
+    relocs, externals = call_relocations(text, address, functions, symbols)
     obj_path = out_dir / f"{address:08x}.obj"
     obj_path.write_bytes(build_coff(bytes(text), name, relocs, externals))
-    return obj_path
+    return obj_path, name
 
 
 def main() -> int:
@@ -177,8 +222,10 @@ def main() -> int:
 
     pe = pefile.PE(str(args.exe), fast_load=True)
     args.out.mkdir(parents=True, exist_ok=True)
+    symbols = SymbolResolver(load_derived(), pe)
 
     symbol_map = {}
+    disagreements = []
     emitted = skipped = 0
     for address in addresses:
         row = functions.get(address)
@@ -186,7 +233,8 @@ def main() -> int:
             skipped += 1
             continue
         try:
-            obj_path = emit_one(pe, address, row, functions, args.out)
+            obj_path, symbol = emit_one(pe, address, row, functions, args.out,
+                                        symbols)
         except ValueError as exc:
             print(f"skip 0x{address:08X} {row.get('name')}: {exc}", file=sys.stderr)
             skipped += 1
@@ -195,7 +243,10 @@ def main() -> int:
             mapped = str(obj_path.relative_to(REPO_ROOT))
         except ValueError:
             mapped = str(obj_path)
-        symbol_map[row["name"]] = mapped
+        symbol_map[symbol] = mapped
+        note = recovery_symbols.disagreement(row["name"], symbol)
+        if note:
+            disagreements.append(f"0x{address:08X} {note}")
         emitted += 1
 
     if args.symbol_map:
@@ -204,6 +255,17 @@ def main() -> int:
         print(f"wrote {args.symbol_map} ({len(symbol_map)} entries)")
 
     print(f"emitted {emitted} object(s) into {args.out}, skipped {skipped}")
+    if disagreements:
+        # Both objects still carry the SAME symbol, so nothing fails to pair.
+        # What each of these says is that the recovered signature contradicts
+        # the decoration the binary itself carries - a wrong arity or a wrong
+        # convention - which is worth reading rather than swallowing.
+        print(f"{len(disagreements)} recovered signature(s) contradict the "
+              f"catalogued decoration:")
+        for line in disagreements[:20]:
+            print(f"    {line}")
+        if len(disagreements) > 20:
+            print(f"    ... and {len(disagreements) - 20} more")
     return 0
 
 

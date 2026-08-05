@@ -47,6 +47,50 @@ class CallRelocationsTest(unittest.TestCase):
         self.assertEqual([], relocs)
 
 
+class SymbolResolverTest(unittest.TestCase):
+    """The relocation has to name what the RECOVERED SOURCE will emit.
+
+    A `call sub_401520` relocated against the catalogued label pairs with
+    nothing, because the recovered unit declares that callee `extern "C"` and
+    CL writes `_sub_401520@4`. The mismatch shows up as a `call` diff inside a
+    body that is otherwise byte-exact, and no edit to the call site fixes it.
+    """
+
+    LABEL = {"address": "0x00401520", "name": "sub_401520",
+             "prototype": "int (__stdcall sub_401520)(int)",
+             "size": "16", "body_ranges": "0x00401520-0x00401530"}
+    MANGLED = {"address": "0x00500000", "name": "?known@@YAXXZ",
+               "prototype": "void (__cdecl ?known@@YAXXZ)()",
+               "size": "16", "body_ranges": "0x00500000-0x00500010"}
+
+    def test_a_label_resolves_to_its_c_decoration(self):
+        resolver = eto.SymbolResolver({})
+        self.assertEqual("_sub_401520@4",
+                         resolver.of(0x00401520, self.LABEL))
+
+    def test_a_mangled_name_resolves_to_itself(self):
+        resolver = eto.SymbolResolver({})
+        self.assertEqual("?known@@YAXXZ", resolver.of(0x00500000, self.MANGLED))
+
+    def test_an_unsettled_row_gets_the_declaration_the_emitter_writes(self):
+        # `declare_callee` falls back to `extern "C" int name();` - __cdecl,
+        # so no argument count. Both sides have to make the same guess.
+        resolver = eto.SymbolResolver({})
+        row = dict(self.LABEL, prototype="")
+        self.assertEqual("_sub_401520", resolver.of(0x00401520, row))
+
+    def test_the_relocation_carries_the_resolved_symbol(self):
+        rel32 = 0x00401520 - (0x00400000 + 5)
+        text = bytearray(b"\xe8" + struct.pack("<i", rel32) + b"\xc3")
+        relocs, externals = eto.call_relocations(
+            text, 0x00400000, {0x00401520: self.LABEL},
+            eto.SymbolResolver({}))
+
+        self.assertEqual(["_sub_401520@4"], externals)
+        self.assertEqual([(1, "_sub_401520@4", eto.IMAGE_REL_I386_REL32)],
+                         relocs)
+
+
 class BuildCoffTest(unittest.TestCase):
     def test_layout_header_section_text_relocs_symtab_strings(self):
         text = b"\xe8\x00\x00\x00\x00\xc3"

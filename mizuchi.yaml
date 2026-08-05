@@ -17,7 +17,11 @@ global:
   concurrency: 10
   outputDir: ./mizuchi/output
   promptsDir: ./mizuchi/prompts
-  # Function -> target object map produced by tools/emit_target_object.py
+  # Symbol -> target object map produced by tools/emit_target_object.py. The
+  # key is the symbol both objects carry, which for a function only ever named
+  # by a disassembler is a computed C decoration (`_sub_5e3650@8`) rather than
+  # the catalogued label - see tools/recovery_symbols.py. The integrator reads
+  # this file to get from a symbol back to an address.
   symbolMapPath: build/target-objects/symbol-map.json
   # Source-definition -> symbol pairing produced by tools/emit_asm_dumps.py
   sourceMapPath: mizuchi/source-map.json
@@ -101,6 +105,11 @@ plugins:
       - Define exactly the one function the task names, out-of-line
         (`Ret Class::method(args) { ... }`). Do not redeclare anything the
         context already declares.
+      - Use the definition head the task gives you VERBATIM, including
+        `extern "C"` where it appears. That keyword is what makes the compiler
+        emit the symbol the target object carries; drop it and the two objects
+        share no symbol at all, and you get "symbol not found" instead of a
+        diff, however correct the body is.
       - C runtime callees are C symbols: declare any you add `extern "C"`.
       - Callee signatures must match the catalog's mangling exactly
         (signedness and pointer types are visible in the mangled name).

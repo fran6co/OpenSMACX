@@ -4,8 +4,14 @@
 For each chosen function this writes one Mizuchi prompt directory:
 
     <out>/<hex>/prompt.md      the decompilation task
-    <out>/<hex>/settings.yaml  functionName (mangled), targetObjectPath,
-                               asm, compilerFlags
+    <out>/<hex>/settings.yaml  functionName, targetObjectPath, asm,
+                               compilerFlags
+
+`functionName` is the SYMBOL, which is not always the catalogued name:
+Mizuchi looks that one string up in the compiled object and in the target
+object alike, and the 1,179 functions a disassembler labelled had no symbol
+at all until one was computed for both sides. tools/recovery_symbols.py
+computes it.
 
 The target object is the COFF synthesised by tools/emit_target_object.py
 (run it first). compilerFlags carries the per-function flag variant the
@@ -13,7 +19,8 @@ original image measurably used: the prologue `push ebp; mov ebp, esp`
 (55 8B EC) means the function kept a frame pointer, so it compiled with
 /Oy-; otherwise /O2 already omitted the frame and no flag is added. /O1
 variants are not detectable from the prologue; retry with /O1 if a body
-will not match under /O2.
+will not match under /O2. `/Oi-` is added for the 14 CRT intrinsics the
+catalogue holds, which CL otherwise refuses to let a unit define at all.
 
 The Ghidra decompilation, when the headless cache has one, is included as
 a hypothesis to confirm against the disassembly - AGENTS.md's rule that
@@ -36,7 +43,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pefile  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 
+import recovery_symbols  # noqa: E402
+
 from disasm import DEFAULT_EXE, annotate, load_functions, read_range  # noqa: E402
+from emit_target_object import SymbolResolver  # noqa: E402
 from emit_translation_unit import Unsettled, emit, load_callees, load_derived  # noqa: E402
 from generator_support import parse_body_ranges  # noqa: E402
 
@@ -172,14 +182,26 @@ disassembly above before trusting it.
 
 def write_prompt(out_dir: Path, address: int, row: dict[str, str],
                  pe: pefile.PE, functions: dict, derived: dict,
-                 callees: dict, existing: tuple[str, str] | None = None) -> None:
+                 callees: dict, existing: tuple[str, str] | None = None,
+                 symbols: SymbolResolver | None = None) -> None:
     name = row["name"]
+    # `functionName` is looked up in BOTH objects, so it is the symbol rather
+    # than the catalogued label - they differ for every function a
+    # disassembler named. tools/recovery_symbols.py settles which.
+    symbol = symbols.of(address, row) if symbols else name
     size = int(row["size"])
     asm = disassemble(pe, address, row["body_ranges"], functions)
     head = signature_head(address, functions, derived, callees, pe)
 
     first_bytes = read_range(pe, address, min(3, size))
-    flags = "/Oy-" if first_bytes == FRAME_PROLOGUE else ""
+    flags = ["/Oy-"] if first_bytes == FRAME_PROLOGUE else []
+    if recovery_symbols.spelling(name).identifier in recovery_symbols.INTRINSIC:
+        # The catalogue holds the statically-linked CRT, so `strlen` and its
+        # siblings are functions to RECOVER - and `/O2` implies `/Oi`, under
+        # which CL refuses to let a unit define one at all (C2169). Nothing
+        # else in these units expands to an intrinsic, so switching them off
+        # changes no other byte.
+        flags.append("/Oi-")
 
     ghidra = ghidra_hypothesis(address)
     ghidra_section = GHIDRA_SECTION.format(ghidra=ghidra.rstrip()) if ghidra else ""
@@ -199,11 +221,11 @@ def write_prompt(out_dir: Path, address: int, row: dict[str, str],
     (prompt_dir / "prompt.md").write_text(prompt)
 
     settings = [
-        f'functionName: "{name}"',
+        f'functionName: "{symbol}"',
         f'targetObjectPath: "build/target-objects/{address:08x}.obj"',
     ]
     if flags:
-        settings.append(f'compilerFlags: "{flags}"')
+        settings.append(f'compilerFlags: "{" ".join(flags)}"')
     settings.append("asm: |")
     settings.append(yaml_block(asm))
     (prompt_dir / "settings.yaml").write_text("\n".join(settings) + "\n")
@@ -273,6 +295,7 @@ def main() -> int:
     pe = pefile.PE(str(arguments.exe), fast_load=True)
     derived = load_derived()
     callees = load_callees()
+    symbols = SymbolResolver(derived, pe)
 
     written = 0
     for address in addresses:
@@ -287,7 +310,7 @@ def main() -> int:
             existing = (tier, code)
         try:
             write_prompt(arguments.out, address, row, pe, functions, derived,
-                         callees, existing)
+                         callees, existing, symbols)
         except (Unsettled, ValueError) as error:
             print(f"skip 0x{address:08X} {row.get('name')}: {error}", file=sys.stderr)
             continue
