@@ -69,5 +69,41 @@ class FixDeclarationsTest(unittest.TestCase):
         self.assertEqual(text, fix_declarations(text, [{"name": ""}]))
 
 
+class DuplicateMemberTest(unittest.TestCase):
+    """Rewriting is per-callee, so two overloads can land on the same text.
+
+    C++ calls that `error C2535: member function already defined or declared`
+    and refuses the whole unit. It surfaced when the emitter began decoding
+    types out of mangled names: `?do_menu@Popup@@...PAD...` and its `PBD`
+    sibling both became `(char *, int, int)`.
+    """
+
+    def test_an_exact_twin_inside_a_struct_is_dropped(self):
+        text = ("struct Popup {\n"
+                "    int do_menu(char *, int, int);\n"
+                "    int do_menu(char *, int, int);\n"
+                "};")
+        self.assertEqual(
+            "struct Popup {\n    int do_menu(char *, int, int);\n};",
+            fix_declarations(text, []))
+
+    def test_a_real_overload_set_survives(self):
+        text = ("struct Popup {\n"
+                "    int do_menu(char *, int, int);\n"
+                "    int do_menu(int);\n"
+                "};")
+        self.assertEqual(text, fix_declarations(text, []))
+
+    def test_two_structs_do_not_share_a_seen_set(self):
+        # The same member name in two classes is not a duplicate.
+        text = ("struct A {\n    void close();\n};\n"
+                "struct B {\n    void close();\n};")
+        self.assertEqual(text, fix_declarations(text, []))
+
+    def test_declarations_outside_any_struct_are_untouched(self):
+        text = "int f(int);\nint f(int);"
+        self.assertEqual(text, fix_declarations(text, []))
+
+
 if __name__ == "__main__":
     unittest.main()

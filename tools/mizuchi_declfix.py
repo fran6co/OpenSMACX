@@ -153,7 +153,35 @@ def fix_declarations(scaffold: str, callees: list[dict]) -> str:
         base = name[1:name.index("@")]
         _fix_declaration(lines, base, returns, params)
 
-    return "\n".join(lines)
+    return "\n".join(_drop_duplicate_members(lines))
+
+
+def _drop_duplicate_members(lines: list[str]) -> list[str]:
+    """Remove a member declaration this pass turned into a twin of another.
+
+    Rewriting is per-callee and each callee is decoded independently, so two
+    overloads the catalogue spells differently - `PAD` against `PBD`, `H`
+    against `J` - can both land on the same text. C++ calls that
+    `error C2535: member function already defined or declared` and refuses the
+    whole unit. That is how it was found: a unit that used to compile stopped
+    the moment the emitter began decoding types out of mangled names.
+
+    Only exact duplicates, and only inside one struct body, so a genuine
+    overload set is left alone.
+    """
+    out, seen, depth = [], set(), 0
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("struct ") and stripped.endswith("{"):
+            depth, seen = depth + 1, set()
+        elif stripped == "};" and depth:
+            depth -= 1
+        elif depth and stripped.endswith(";"):
+            if stripped in seen:
+                continue
+            seen.add(stripped)
+        out.append(line)
+    return out
 
 
 def _fix_declaration(lines: list[str], base: str, returns: str,

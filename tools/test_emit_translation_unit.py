@@ -148,6 +148,78 @@ class LinkageTests(unittest.TestCase):
                               "(Ambience* this)"), {})
 
 
+class MangledTypeTests(unittest.TestCase):
+    """The mangled name outranks the prototype's SPELLING of a type.
+
+    `derive_prototypes_from_names` writes IDA's alphabet on purpose, and that
+    alphabet collapses types MSVC keeps apart: `char` and `signed char` both
+    become `int8`, `long` and `int` both become `int`. They mangle differently
+    - D vs C, J vs H - so a body compiled from the IDA spelling emits a symbol
+    no target object holds. 108 of 264 unpairable rows were only this.
+    """
+
+    def test_int8_becomes_char_when_the_name_says_D(self):
+        signature = tool.Signature(
+            row(name="?amovie_project@@YAXPAD@Z",
+                prototype="void (__cdecl ?amovie_project@@YAXPAD@Z)(int8*)"),
+            {})
+        self.assertEqual(["char *"], signature.params)
+
+    def test_int_becomes_unsigned_long_when_the_name_says_K(self):
+        signature = tool.Signature(
+            row(name="?create_device@Midi_Device@@QAEHK@Z",
+                prototype="int (__thiscall ?create_device@Midi_Device@@QAEHK@Z)"
+                          "(Midi_Device* this, unsigned int)"), {})
+        self.assertEqual(["unsigned long"], signature.params)
+
+    def test_a_disagreeing_arity_leaves_the_prototype_alone(self):
+        # `decode_signature` returns None on a user-defined type, and a count
+        # that differs means it read a different signature rather than a better
+        # spelling of the same one.
+        signature = tool.Signature(
+            row(name="?f@@YAXPAD@Z",
+                prototype="void (__cdecl ?f@@YAXPAD@Z)(int8*, int)"), {})
+        self.assertEqual(["int8*", "int"], signature.params)
+
+
+class MemberFunctionTests(unittest.TestCase):
+    def test_a_cdecl_member_is_a_member(self):
+        """`QAA` is a public __cdecl MEMBER, and 80 of them are catalogued.
+
+        Keying `is_method` off __thiscall alone sent every one down the
+        free-function path, where the mangled name is not an identifier, so it
+        was renamed `fn_<address>` and emitted as a free function."""
+        signature = tool.Signature(
+            row(address="0x00403AF0",
+                name="?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z",
+                prototype="int (__cdecl ?fill_func@AlphaMenu@@QAAHPAUGraphic"
+                          "Win@@HPAURECT@@@Z)(AlphaMenu* this, GraphicWin*, "
+                          "int, RECT*)"), {})
+        self.assertTrue(signature.is_method)
+        self.assertEqual("AlphaMenu", signature.klass)
+        self.assertEqual("fill_func", signature.method)
+        self.assertEqual("__cdecl ", signature.member_convention(),
+                         "__cdecl on a member is not the default and has to "
+                         "be spelled, or CL mangles QAE where the target "
+                         "holds QAA")
+
+    def test_thiscall_never_spells_its_convention(self):
+        # VC6 rejects the keyword outright (C4234) and it is the default.
+        signature = tool.Signature(
+            row(name="?add@StringStruct@@QAEHH@Z",
+                prototype="int (__thiscall ?add@StringStruct@@QAEHH@Z)"
+                          "(StringStruct* this, int)"), {})
+        self.assertEqual("", signature.member_convention())
+
+    def test_a_free_function_with_a_parameter_named_this_stays_free(self):
+        # 93 of them exist. Both conditions are required: a class in the
+        # mangled name AND a receiver-looking first parameter.
+        signature = tool.Signature(
+            row(name="?bitmask@@YAXPAH@Z",
+                prototype="void (__cdecl ?bitmask@@YAXPAH@Z)(int* this)"), {})
+        self.assertFalse(signature.is_method)
+
+
 class CalleeDeclarationTests(unittest.TestCase):
     def test_an_undecorated_callee_is_declared_extern_c(self):
         # Without it the call site references a C++ mangling of the name while
