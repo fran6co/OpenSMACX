@@ -232,6 +232,22 @@ def write_prompt(out_dir: Path, address: int, row: dict[str, str],
     (prompt_dir / "settings.yaml").write_text("\n".join(settings) + "\n")
 
 
+def symbol_owners(functions: dict, symbols: SymbolResolver) -> dict:
+    """{symbol: [address, ...]} over the whole catalogue.
+
+    More than one address under a symbol is a catalogue defect rather than
+    something the emitter can resolve, and it has to be caught HERE: by the
+    time Mizuchi hands a symbol back, there is no way to tell which of the
+    two rows it meant.
+    """
+    owners = {}
+    for address, row in functions.items():
+        if not row.get("name") or not row.get("body_ranges"):
+            continue
+        owners.setdefault(symbols.of(address, row), []).append(address)
+    return owners
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -297,12 +313,27 @@ def main() -> int:
     derived = load_derived()
     callees = load_callees()
     symbols = SymbolResolver(derived, pe, class_keys(functions))
+    claimed = symbol_owners(functions, symbols)
 
     written = 0
     for address in addresses:
         row = functions.get(address)
         if not row or not row.get("name") or not row.get("body_ranges"):
             print(f"skip 0x{address:08X}: not catalogued with a body", file=sys.stderr)
+            continue
+        rival = [other for other in claimed.get(symbols.of(address, row), ())
+                 if other != address]
+        if rival:
+            # TWO CATALOGUED ROWS, ONE SYMBOL. A linked image cannot hold
+            # that, so one of the two names is wrong - and every tool here
+            # resolves a subject BY symbol, so the prompt for the loser would
+            # be handed the winner's context, target object and assembly. The
+            # agent would work against another function's bytes and never
+            # know. `?get@NetFifo@@` is the only pair, 229 bytes against 173.
+            print(f"skip 0x{address:08X} {row['name']}: its symbol is also "
+                  f"claimed by {', '.join(f'0x{o:08X}' for o in rival)}, so a "
+                  f"prompt for it would resolve to the other function",
+                  file=sys.stderr)
             continue
         existing = None
         code = existing_code.get(row["name"])

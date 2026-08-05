@@ -20,6 +20,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -34,6 +37,8 @@ from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+SYMBOL_MAP = REPO_ROOT / "build" / "target-objects" / "symbol-map.json"
+OBJECT_ADDRESS = re.compile(r"([0-9a-f]{8})\.obj$")
 
 
 def load_functions() -> dict[int, dict[str, str]]:
@@ -49,6 +54,23 @@ def load_functions() -> dict[int, dict[str, str]]:
     return table
 
 
+@functools.lru_cache(maxsize=1)
+def symbol_map() -> dict:
+    """{symbol: address} from `build/target-objects/symbol-map.json`.
+
+    The map is {symbol: object path} and every object is named for the
+    address it holds, so the address comes out of the filename.
+    """
+    if not SYMBOL_MAP.is_file():
+        return {}
+    out = {}
+    for symbol, path in json.loads(SYMBOL_MAP.read_text()).items():
+        found = OBJECT_ADDRESS.search(path)
+        if found:
+            out[symbol] = int(found.group(1), 16)
+    return out
+
+
 def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int | None]:
     """Accept a hex address, a catalogued name, or a recovery symbol.
 
@@ -57,6 +79,15 @@ def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int |
     functions a disassembler named is a decoration of the label rather than
     the label itself. `_sub_5e3650@4` has to find the same row `sub_5e3650`
     does, or the context emitter refuses every prompt the change enables.
+
+    A C++ symbol needs the same treatment and cannot be undecorated back:
+    `?POP2@@YAHPBD0H@Z` is the catalogued `?POP2@@YAHPBDPBDH@Z` with its
+    back-references compressed, and `?init@AlphaMenu@@QAEHPAVWin@@@Z` is the
+    same name with the struct key the source declares. 221 of the 2,783
+    unrecovered rows are in that state. Rather than invert the transforms,
+    this reads the symbol map `emit_target_object` writes - the same file
+    `mizuchi-integrator.mjs` resolves through, so both directions agree by
+    construction. Missing or stale, it just falls through to the name.
     """
     try:
         address = int(text, 16)
@@ -67,7 +98,9 @@ def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int |
                 address = candidate
                 break
         else:
-            address = recovery_symbols.address_in(text)
+            address = symbol_map().get(text)
+            if address is None:
+                address = recovery_symbols.address_in(text)
             if address is None or address not in functions:
                 raise ValueError(
                     f"{text} is neither a hex address nor a known name")
