@@ -94,7 +94,13 @@ class SymbolResolver:
     def _resolve(self, address: int, row: dict[str, str]) -> str:
         name = (row.get("name") or "").strip()
         if name.startswith("?"):
-            return name
+            # Compressed, not verbatim: the catalogue writes a repeated
+            # argument type out in full and CL writes its back-reference
+            # index, so a verbatim `?f@@YAXPAHPAH@Z` in the target pairs with
+            # nothing. Returning early here is what kept the source side's
+            # compression from reaching this side.
+            return recovery_symbols.compress_backrefs(
+                recovery_symbols.empty_destructor_arguments(name))
         try:
             return Signature(row, self._derived, self._pe).symbol
         except Unsettled:
@@ -226,6 +232,7 @@ def main() -> int:
 
     symbol_map = {}
     disagreements = []
+    collisions = []
     emitted = skipped = 0
     for address in addresses:
         row = functions.get(address)
@@ -243,6 +250,15 @@ def main() -> int:
             mapped = str(obj_path.relative_to(REPO_ROOT))
         except ValueError:
             mapped = str(obj_path)
+        if symbol in symbol_map:
+            # Two catalogued rows claiming one symbol. A linked image cannot
+            # contain that, so one of the two names is wrong in the catalogue -
+            # and the symbol map is keyed by symbol, so the second row silently
+            # replaces the first and the integrator resolves that symbol to
+            # whichever address won. Saying so beats a count that quietly
+            # disagrees with the object count.
+            collisions.append(f"0x{address:08X} {row['name']} and "
+                              f"{symbol_map[symbol]} both claim {symbol}")
         symbol_map[symbol] = mapped
         note = recovery_symbols.disagreement(row["name"], symbol)
         if note:
@@ -255,6 +271,8 @@ def main() -> int:
         print(f"wrote {args.symbol_map} ({len(symbol_map)} entries)")
 
     print(f"emitted {emitted} object(s) into {args.out}, skipped {skipped}")
+    for line in collisions:
+        print(f"    COLLISION: {line}")
     if disagreements:
         # Both objects still carry the SAME symbol, so nothing fails to pair.
         # What each of these says is that the recovered signature contradicts

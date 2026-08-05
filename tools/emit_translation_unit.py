@@ -82,7 +82,13 @@ typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
 typedef unsigned short uint16;
-typedef signed char int8;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
 typedef unsigned char uint8;
 """
 
@@ -101,7 +107,17 @@ BUILTIN = {
     # was being emitted for every __thiscall method whose receiver parameter
     # reached the type scan.
     "this",
+    # Neither is a calling convention. A function-pointer parameter carries one
+    # inside its type text, the type scan read it as an identifier, and
+    # `struct __cdecl;` is a syntax error that took 179 units with it - every
+    # declaration after it in the file.
+    "__cdecl", "__stdcall", "__thiscall", "__fastcall", "__declspec",
 }
+
+# IDA writes an anonymous type it could not name as `#120`. There is no C++
+# spelling for it, and emitting one puts a `#` mid-line where CL expects a
+# preprocessor directive (`error C2014`), which cost 26 units.
+ANONYMOUS_TYPE = re.compile(r"#\d+")
 
 # `int (__thiscall ?add@X@@QAEHH@Z)(X* this, int)`
 PROTOTYPE_RE = re.compile(
@@ -167,6 +183,33 @@ def strip_receiver_token(text: str) -> str:
     be spelled with a keyword. So the token is removed and the parameter kept.
     """
     return re.sub(r"\bthis\b", "", text).strip()
+
+
+def parameter_type(text: str) -> str:
+    """A parameter's TYPE, with the name IDA recorded beside it removed.
+
+    The catalogue writes `int8* lpString`, and the emitter appends its own
+    `a2`, so the declaration reads `int8* lpString a2` - two identifiers where
+    one belongs (`error C2146`, 35 units). A trailing word is a name only when
+    it is not itself part of the type, so `unsigned int` and `char *` survive.
+
+    A function-pointer type is left whole: its trailing token is `)`, and any
+    identifier inside it belongs to the pointee's own parameter list.
+
+    `__thiscall` is stripped from one, because VC6 rejects the keyword on a
+    free function pointer outright (`error C4234`, 16 units) - the same
+    restriction the VCall shim exists to work around. The pointer is still one
+    stack slot and still mangles the same, so nothing byte-visible moves.
+    """
+    text = ANONYMOUS_TYPE.sub("void", text).strip()
+    text = re.sub(r"\b__thiscall\s*", "", text)
+    if text.endswith(")") or "(" in text:
+        return text.strip()
+    words = text.split()
+    if len(words) > 1 and re.fullmatch(r"[A-Za-z_]\w*", words[-1]) \
+            and words[-1] not in BUILTIN:
+        return " ".join(words[:-1])
+    return text
 
 
 def split_params(text: str) -> list:
@@ -340,7 +383,7 @@ class Signature:
             raise Unsettled(f"prototype not parseable: {prototype!r}")
 
         self.mangled = row["name"]
-        self.returns = match.group("ret").strip()
+        self.returns = parameter_type(match.group("ret"))
         self.convention = match.group("conv")
         # NOT stripped yet: the receiver check below reads the `this` token,
         # so removing it first makes every __thiscall prototype look like it
@@ -366,16 +409,32 @@ class Signature:
         if self.is_method:
             if not self.params or "this" not in self.params[0]:
                 raise Unsettled("__thiscall prototype has no `this` parameter")
-            self.klass = self.params[0].replace("*", " ").split()[0]
+            # The CLASS COMES FROM THE MANGLED NAME, not from the receiver's
+            # declared type. They disagree on 50 rows - the prototype for
+            # `?on_mouse_move@BaseWin@@QAEXHH@Z` says `Win* this`, because the
+            # receiver is spelled as the base it is used through - and the
+            # class is half of the symbol, so the name is the only side of that
+            # disagreement that can be right.
+            found = (MANGLED_CTOR.match(self.mangled)
+                     or MANGLED_DTOR.match(self.mangled)
+                     or MANGLED_METHOD.match(self.mangled))
+            self.klass = (found.group("cls") if found
+                          else self.params[0].replace("*", " ").split()[0])
             # Drop EVERY parameter naming the receiver, not only the first.
             # Four catalogued prototypes carry `this` beyond position 0, and
             # leaving one in emits `Caviar* this a1` - a literal keyword in the
             # parameter list, which agents were deleting by hand.
-            self.params = [strip_receiver_token(p) for p in self.params[1:]]
+            self.params = [parameter_type(strip_receiver_token(p))
+                           for p in self.params[1:]]
             if MANGLED_CTOR.match(self.mangled):
                 self.kind, self.method = "ctor", self.klass
             elif MANGLED_DTOR.match(self.mangled):
                 self.kind, self.method = "dtor", f"~{self.klass}"
+                # A destructor takes no arguments, whatever the catalogue
+                # recorded. `??1StringStruct@@QAE@H@Z` carries one, and C++
+                # cannot express that: CL writes `@XZ` and the target object
+                # holds `@H@Z`, so the two never pair.
+                self.params = []
             else:
                 found = MANGLED_METHOD.match(self.mangled)
                 # Same reasoning as the free-function fallback below: the
@@ -387,7 +446,8 @@ class Signature:
         else:
             # A `__cdecl`/`__stdcall` parameter may still be NAMED `this`; it
             # is a real argument there, so keep it and drop only the keyword.
-            self.params = [strip_receiver_token(p) for p in self.params]
+            self.params = [parameter_type(strip_receiver_token(p))
+                           for p in self.params]
             found = MANGLED_FREE.match(self.mangled)
             self.method = found.group("name") if found else self.mangled
             if not re.match(r"^[A-Za-z_]\w*$", self.method):
@@ -442,10 +502,11 @@ class Signature:
             # it from a purge byte that __thiscall writes identically.
             if constraint.convention:
                 self.convention = constraint.convention
-        self.symbol = self.mangled if self.linkage == "c++" else \
-            recovery_symbols.symbol_for(
-                self.mangled, int(row["address"], 16), self.convention,
-                self.params, self.method)
+        self.symbol = recovery_symbols.symbol_for(
+            self.mangled, int(row["address"], 16), self.convention,
+            self.params, self.method) if self.linkage == "c" else \
+            recovery_symbols.compress_backrefs(
+                recovery_symbols.empty_destructor_arguments(self.mangled))
 
     def member_convention(self) -> str:
         """The convention a MEMBER declaration has to spell, or ''.

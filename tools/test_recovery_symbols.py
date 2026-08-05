@@ -120,6 +120,52 @@ class DisagreementTest(unittest.TestCase):
         self.assertEqual("", rs.disagreement("?f@@YAXXZ", "?f@@YAXXZ"))
 
 
+class BackReferenceTest(unittest.TestCase):
+    """CL never spells the same composite argument type twice.
+
+    The catalogue does: its names come from a demangle/remangle round trip
+    that expands the back-references, so 37 target objects held a name the
+    compiler will never emit. Every expectation here was read off a real VC6
+    object, not from the ABI document.
+    """
+
+    def test_a_repeated_pointer_becomes_its_index(self):
+        self.assertEqual(
+            "?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAH0@Z",
+            rs.compress_backrefs(
+                "?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z"))
+
+    def test_the_index_counts_slots_not_positions(self):
+        # `PAD` takes slot 0 and `PAH` slot 1, so the repeat is `1`.
+        self.assertEqual("?UNK2@Datalink@@QAEXPADPAH1@Z",
+                         rs.compress_backrefs("?UNK2@Datalink@@QAEXPADPAHPAH@Z"))
+
+    def test_a_user_defined_type_takes_a_slot_too(self):
+        # And its own `@@` must not be mistaken for the end of the qualifier
+        # chain, which is why the split is on the FIRST `@@`.
+        self.assertEqual(
+            "?f@@YAXPAUSprite@@0@Z",
+            rs.compress_backrefs("?f@@YAXPAUSprite@@PAUSprite@@@Z"))
+
+    def test_a_primitive_is_never_back_referenced(self):
+        for name in ("?on_key_down@NetWin@@QAEHH@Z", "?POP@@YAXHHH@Z"):
+            self.assertEqual(name, rs.compress_backrefs(name), name)
+
+    def test_the_return_type_is_not_a_slot(self):
+        # `?g@@YAPAHPAH@Z` returns `int *` and takes one; compressing the
+        # argument against the RETURN type would emit `?g@@YAPAH0@Z`.
+        self.assertEqual("?g@@YAPAHPAH@Z",
+                         rs.compress_backrefs("?g@@YAPAHPAH@Z"))
+
+    def test_an_already_compressed_name_is_left_alone(self):
+        self.assertEqual("?help_create_link@@YAXPAD00@Z",
+                         rs.compress_backrefs("?help_create_link@@YAXPAD00@Z"))
+
+    def test_anything_unparseable_is_returned_unchanged(self):
+        for name in ("_sub_401520@4", "sub_401520", "?weird@@YA", ""):
+            self.assertEqual(name, rs.compress_backrefs(name), name)
+
+
 class UndecorateTest(unittest.TestCase):
     """The way back: Mizuchi hands these tools the symbol, not the label."""
 

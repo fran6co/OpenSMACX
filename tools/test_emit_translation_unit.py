@@ -110,7 +110,10 @@ class LinkageTests(unittest.TestCase):
                 prototype="void (__cdecl ?bitmask@@YAXHPAHPAH@Z)"
                           "(int, int *, int *)"), {})
         self.assertEqual("c++", signature.linkage)
-        self.assertEqual("?bitmask@@YAXHPAHPAH@Z", signature.symbol)
+        # Compressed: CL never spells the same composite argument type twice,
+        # so the second `PAH` is written `0`. The catalogued name is the
+        # uncompressed form, which the compiler will never emit.
+        self.assertEqual("?bitmask@@YAXHPAH0@Z", signature.symbol)
 
     def test_a_disassembler_label_gets_c_linkage_and_a_decorated_symbol(self):
         signature = tool.Signature(

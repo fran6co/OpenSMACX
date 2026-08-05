@@ -61,29 +61,55 @@ CRT_SIGNATURES = {
 }
 
 
-def _decode_type(text: str, index: int):
+USER_DEFINED_NAME = re.compile(r"[A-Za-z_]\w*")
+
+
+def _decode_type(text: str, index: int, seen: list | None = None):
     """One encoded type starting at `index`; returns (spelling, next index)
-    or (None, index) when the encoding is out of scope."""
+    or (None, index) when the encoding is out of scope.
+
+    `seen` is the back-reference table - the composite argument types already
+    written out, in order. MSVC writes the second occurrence of one as its
+    index, so without the table `?f@@YAXPAD0@Z` decodes one parameter and a
+    dead `0`. Passing None disables them, which is what a caller decoding a
+    lone type outside an argument list wants.
+    """
     if index >= len(text):
         return None, index
     char = text[index]
+    if char.isdigit():
+        slot = int(char)
+        if seen is None or slot >= len(seen):
+            return None, index
+        return seen[slot], index + 1
     if char in SCALAR:
         return SCALAR[char], index + 1
     if char == "_":
         if index + 1 < len(text) and text[index + 1] == "N":
             return "bool", index + 2
         return None, index
-    if char == "P":
-        # Pointer: P, an optional near/const qualifier, then the pointee.
+    if char in "UVT":
+        # A struct, class or union, named up to `@@`. Both keys decode to the
+        # bare name: the emitted unit declares every one of them `struct`,
+        # which is what `PAU` asks for and what the catalogue holds 8 to 1.
+        found = USER_DEFINED_NAME.match(text, index + 1)
+        if not found or not text.startswith("@@", found.end()):
+            return None, index
+        return found.group(0), found.end() + 2
+    if char in "PQA":
+        # Pointer (P/Q) or reference (A), a CV code, then the pointee. `B` is
+        # the const one, and dropping it emitted `char *` where the target
+        # holds `PBD` - 25 rows, all of them string arguments.
         next_index = index + 1
-        if next_index < len(text) and text[next_index] in "AB":
+        const = ""
+        if next_index < len(text) and text[next_index] in "ABCD":
+            const = "const " if text[next_index] in "BD" else ""
             next_index += 1
-        base, next_index = _decode_type(text, next_index)
+        base, next_index = _decode_type(text, next_index, seen)
         if base is None:
             return None, index
-        return base + " *", next_index
-    # Struct/class pointers (PAU/PAV), references, function pointers (P6),
-    # member pointers: out of scope for the MVP.
+        return f"{const}{base} {'&' if char == 'A' else '*'}", next_index
+    # Function pointers (P6), member pointers, templates: still out of scope.
     return None, index
 
 
@@ -96,10 +122,15 @@ def decode_signature(mangled: str):
     """
     if not mangled.startswith("?"):
         return None
-    parts = mangled.split("@@")
-    if len(parts) < 2:
+    # The qualifier chain closes at the FIRST `@@`, not the last. Splitting on
+    # the last worked only while no argument was a user-defined type, because
+    # `PAUSprite@@` carries one too - so every signature with a struct
+    # parameter decoded its own argument list as the class qualifier and came
+    # back None.
+    split = mangled.find("@@")
+    if split == -1:
         return None
-    tail = parts[-1]
+    tail = mangled[split + 2:]
     if not tail.endswith("Z"):
         return None
     tail = tail[:-1]
@@ -115,13 +146,20 @@ def decode_signature(mangled: str):
     if returns is None:
         return None
 
-    params = []
+    # The back-reference table covers ARGUMENTS only; the return type takes no
+    # slot, which is why it is decoded above with no table.
+    params, seen = [], []
     while index < len(body) and body[index] != "@":
         if body[index] == "X" and (index + 1 >= len(body) or body[index + 1] in "@Z"):
             break  # (void)
-        param, index = _decode_type(body, index)
+        start = index
+        param, index = _decode_type(body, index, seen)
         if param is None:
             return None
+        # A slot is taken by any type written as more than one character, and
+        # never by a back-reference standing in for one already recorded.
+        if index - start > 1 and len(seen) < 10:
+            seen.append(param)
         params.append(param)
 
     return returns, params
