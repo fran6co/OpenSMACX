@@ -167,10 +167,16 @@ def verify(address: int, location: str) -> dict:
     functions = emit.load_functions()
     callees = emit.load_callees()
     body = census.extract_body(location)
-    for needle, why in census.REFUSE_SUBSTRINGS:
-        if needle in body:
-            return {"tier": "REFUSED", "refusal_reason": why}
 
+    # No content policy here. This used to run the census's REFUSE_SUBSTRINGS
+    # over the body, which rejected `__asm` and `std::` before compiling. Both
+    # are the census's business, not this tool's: the census is a measurement
+    # that must be comparable across thousands of bodies, so it excludes shapes
+    # it cannot compile under BOTH toolchains. A writeback has exactly one
+    # question — is what is now in src/ still byte-exact — and the compiler
+    # answers it. A body that cannot compile comes back NO_COMPILE and gets
+    # reverted for that reason, which is a fact about the code rather than a
+    # substring match on it.
     pe_fast = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
     try:
         scaffolding = emit.emit(address, functions, emit.load_derived(), callees,
