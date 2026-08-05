@@ -1066,6 +1066,14 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/byte_match_fanout.py" --check)
 
+    # The COFF target emitter and the callee-declaration repair, both of which
+    # objdiff pairs symbols through: a target object with the wrong symbol name
+    # produces a diff against nothing, and a callee VC6 re-mangles differently
+    # shows up as a `call` mismatch the agent cannot fix from the call site.
+    opensmacx_add_python_tool_test(target-object-emitter-tests
+                                   test_emit_target_object.py)
+    opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
+
     # The writeback is the only tool in this tree that edits src/ from a line
     # number, and every way its splice can go wrong leaves a file that still
     # looks right in review: a swallowed doc comment, an orphaned brace, a
