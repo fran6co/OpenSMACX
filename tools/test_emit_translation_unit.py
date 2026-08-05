@@ -447,6 +447,24 @@ class ScaffoldCompilesTests(unittest.TestCase):
                     prototype="int (__thiscall sub_5CB050)(char *, int)"), {})
 
 
+class CollisionRenameTest(unittest.TestCase):
+    """Two catalogued rows, one symbol - the loser is renamed, not refused.
+
+    `?get@NetFifo@@QAEHPAXPAIPAHPAI@Z` at 0x00633F70 compresses to
+    `?get@NetFifo@@QAEHPAXPAIPAH1@Z`, which 0x00633D90 is catalogued as
+    outright: 173 bytes and 229, one symbol. Every tool resolves a subject BY
+    symbol, so the loser would have been handed the winner's context, target
+    object and assembly.
+    """
+
+    def test_the_higher_address_gives_up_the_catalogued_spelling(self):
+        self.assertIn(0x00633F70, tool.renamed_for_collision())
+        self.assertNotIn(0x00633D90, tool.renamed_for_collision())
+
+    def test_nothing_else_in_the_catalogue_collides(self):
+        self.assertEqual({0x00633F70}, set(tool.renamed_for_collision()))
+
+
 class ClassKeyTests(unittest.TestCase):
     """Which types are emitted `class` and which `struct`.
 

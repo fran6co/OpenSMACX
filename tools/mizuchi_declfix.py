@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import re
 
+import recovery_symbols
+
 # Measured on cl 12.00.8168: the spelling that re-mangles to each code.
 SCALAR = {
     "X": "void",
@@ -180,7 +182,11 @@ def decode_signature(mangled: str):
 
     # Free functions spell the convention as Y<letter> (?name@@YA...); class
     # methods carry a 3-char qualifier+convention prefix (?name@Class@@QAE...).
-    skip = 2 if tail.startswith("Y") else 3
+    # A STATIC member has no CV code either, so it is two like a free one:
+    # `??3AlphaMovie@@SAXPAXI@Z` is `SA` + `X` + `PAX` + `I`, and reading
+    # three swallowed the void return and dropped the first argument, so all
+    # 47 of them were emitted returning `void *` and taking one parameter.
+    skip = 2 if tail[:1] in recovery_symbols.NO_CV_CODE else 3
     if len(tail) <= skip:
         return None
     body = tail[skip:]
