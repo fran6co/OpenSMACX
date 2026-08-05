@@ -170,7 +170,7 @@ Original Offset: 004C6DB0
 Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
-int Wave::load(int a1, int a2) {
+int Wave::load(int a1, uint32_t a2) {
     typedef void(__thiscall * load_fn)(Wave *self, int a1, int a2);
     typedef int(__thiscall * follow_fn)(Wave *self);
 

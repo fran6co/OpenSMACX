@@ -64,7 +64,7 @@ Original Offset: 004B3FD0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_morale(LPSTR morale_output, uint32_t veh_id, int faction_id_vs_native) {
+void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_native) {
     // TODO: Look into inconsistencies related to morale display
     uint32_t morale = morale_veh(veh_id, false, faction_id_vs_native);
     uint32_t faction_id = Vehs[veh_id].faction_id;
@@ -155,7 +155,7 @@ Original Offset: 004B43C0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native) {
+void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
     say_morale(stringTemp->str, veh_id, faction_id_vs_native);
 }
 
@@ -1073,7 +1073,7 @@ Original Offset: 005044D0
 Return Value: Unit id of the best defender
 Status: Complete - testing
 */
-uint32_t __cdecl best_defender(uint32_t veh_id_def, int veh_id_atk, BOOL check_artillery) {
+uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) {
     int offense = veh_id_atk >= 0 
         ? get_basic_offense(veh_id_atk, veh_id_def, false, false, false) : 8;
     int x_def = Vehs[veh_id_def].x;
@@ -1537,7 +1537,7 @@ Original Offset: 0057D7D0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_stats_3(LPSTR stat, uint32_t proto_id) {
+void __cdecl say_stats_3(LPSTR stat, int proto_id) {
     std::string output;
     int off_rating = get_proto_offense_rating(proto_id);
     if (off_rating >= 0) {
@@ -1566,7 +1566,7 @@ Original Offset: 0050B9A0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_stats_3(uint32_t proto_id) {
+void __cdecl say_stats_3(int proto_id) {
     say_stats_3(stringTemp->str, proto_id);
 }
 
@@ -2968,7 +2968,7 @@ Original Offset: 005BFFA0
 Return Value: Unit id
 Status: Complete
 */
-int __cdecl veh_lift(uint32_t veh_id) {
+int __cdecl veh_lift(int veh_id) {
     BOOL prev_stack_exists = false;
     int16_t prev_veh_id = Vehs[veh_id].prev_veh_id_stack;
     int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
@@ -2999,7 +2999,7 @@ Original Offset: 005C0080
 Return Value: Unit id (1st param), doesn't seem to be used
 Status: Complete
 */
-int __cdecl veh_drop(uint32_t veh_id, int x, int y) {
+int __cdecl veh_drop(int veh_id, int x, int y) {
     int veh_id_dest = veh_at(x, y);
     Vehs[veh_id].next_veh_id_stack = (int16_t)veh_id_dest;
     Vehs[veh_id].prev_veh_id_stack = -1;

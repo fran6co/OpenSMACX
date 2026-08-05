@@ -29,7 +29,7 @@ Original Offset: 00618F40
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
-int Font::init(LPCSTR font_name, int height, uint32_t style) {
+int Font::init(LPCSTR font_name, int height, int style) {
     if (!font_name) {
         return 3;
     }
@@ -82,7 +82,7 @@ Original Offset: 006190D0
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
-int Font::init(LPCSTR file, LPCSTR font_name, int height, uint32_t style) {
+int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
     close();
     if (!file || !font_name) {
         return 16;

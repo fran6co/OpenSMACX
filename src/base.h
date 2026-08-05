@@ -518,7 +518,7 @@ extern int *GovernorFaction; // elected Planetary Governor; see the note in base
 extern int *GlobalEnergyEventState; // energy tripling state driven by random_events
 extern int *UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
-DLLEXPORT BOOL __cdecl has_fac(int facility_id, uint32_t base_id, int queue_count);
+DLLEXPORT BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
 DLLEXPORT void __cdecl set_base(int base_id);
 DLLEXPORT void __cdecl say_base(LPSTR base_str, int base_id);
 DLLEXPORT int __cdecl base_at(int x, int y);
@@ -529,7 +529,7 @@ DLLEXPORT int __cdecl base_find(int x, int y, int faction_id, int region, int fa
 DLLEXPORT uint32_t  __cdecl best_specialist();
 DLLEXPORT void __cdecl name_base(uint32_t faction_id, LPSTR name_out, BOOL is_final, 
                                  BOOL is_sea_base);
-DLLEXPORT void __cdecl base_mark(uint32_t base_id);
+DLLEXPORT void __cdecl base_mark(int base_id);
 DLLEXPORT int __cdecl cost_factor(int faction_id, int rsc_type, int base_id);
 DLLEXPORT int __cdecl base_making(int production_id, int base_id);
 DLLEXPORT int __cdecl base_lose_minerals(int base_id, int production_id);

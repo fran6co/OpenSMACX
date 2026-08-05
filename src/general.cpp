@@ -778,7 +778,7 @@ Original Offset: 00538FB0
 Return Value: n/a
 Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.
 */
-void __cdecl my_srand(uint32_t reseed) {
+void __cdecl my_srand(int reseed) {
     log_say("Reseed to", reseed, 0, 0);
     srand(reseed);
     _srand(reseed);

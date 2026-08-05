@@ -108,7 +108,7 @@ Original Offset: 00421670
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
-BOOL __cdecl has_fac(int facility_id, uint32_t base_id, int queue_count) {
+BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
     if (facility_id >= FacilityRepStart) {
         return false;
     }
@@ -204,7 +204,7 @@ Original Offset: 004E3C60
 Return Value: Base id or -1 if not found
 Status: Complete
 */
-int __cdecl base_find(int x, int y, uint32_t faction_id) {
+int __cdecl base_find(int x, int y, int faction_id) {
     if (*BaseCurrentCount <= 0) {
         return -1;
     }
@@ -397,7 +397,7 @@ Original Offset: 004E4350
 Return Value: n/a
 Status: Complete - testing
 */
-void __cdecl base_mark(uint32_t base_id) {
+void __cdecl base_mark(int base_id) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     int x_radius = 0;
@@ -1977,7 +1977,7 @@ Original Offset: 00500290
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
-BOOL __cdecl has_fac_built(uint32_t facility_id) {
+BOOL __cdecl has_fac_built(int facility_id) {
     return (facility_id >= FacilityRepStart) ? false
         : has_fac_built(facility_id, *BaseIDCurrentSelected);
 }

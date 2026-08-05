@@ -34,7 +34,7 @@ Original Offset: 00625770
 Return Value: Random unsigned integer within bounds
 Status: Complete
 */
-uint32_t Random::get(uint32_t min, uint32_t max) {
+uint32_t Random::get(int min, int max) {
     if (static_cast<int32_t>(min) > static_cast<int32_t>(max)) {
         uint32_t temp = min;
         min = max;

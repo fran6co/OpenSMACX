@@ -375,7 +375,7 @@ Original Offset: 00586050
 Return Value: n/a
 Status: Complete
 */
-void __cdecl read_faction(uint32_t player_id) {
+void __cdecl read_faction(int player_id) {
     if (player_id) {
         read_faction(&Players[player_id], 0);
         load_faction_art(player_id);

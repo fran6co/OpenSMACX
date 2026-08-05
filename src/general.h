@@ -57,7 +57,7 @@ DLLEXPORT void __cdecl filefind_set_alternative(LPCSTR path);
 DLLEXPORT LPSTR __cdecl filefind_get(LPCSTR file_name);
 DLLEXPORT int __cdecl bit_count(int bitfield);
 DLLEXPORT uint32_t __cdecl bit_count_signed(int bitfield);
-DLLEXPORT void __cdecl my_srand(uint32_t reseed);
+DLLEXPORT void __cdecl my_srand(int reseed);
 DLLEXPORT void __cdecl swap(int *var1, int *var2);
 DLLEXPORT void __cdecl swap(uint8_t *var1, uint8_t *var2);
 DLLEXPORT int __cdecl fixed_div(int numerator, int denominator);

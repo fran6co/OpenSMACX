@@ -189,7 +189,7 @@ Original Offset: 004C5A80
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
-int __fastcall wave_in_device_set_codec_redirect(void *self, void *, int a1) {
+int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x14);
     if (member == nullptr) {
@@ -243,7 +243,7 @@ Original Offset: 004C77D0
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_switch_type_redirect(void *self, void *, int a1) {
+int __fastcall midi_set_switch_type_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -261,7 +261,7 @@ Original Offset: 004C7800
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
-int __fastcall midi_add_switch_range_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_add_switch_range_redirect(void *self, void *, uint32_t a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -279,7 +279,7 @@ Original Offset: 004C7830
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_nswitch_threads_redirect(void *self, void *, int a1) {
+int __fastcall midi_set_nswitch_threads_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -297,7 +297,7 @@ Original Offset: 004C7860
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, int a2, int a3) {
+int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, uint32_t a2, uint32_t a3) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -315,7 +315,7 @@ Original Offset: 004C7890
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_map_patch_2_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_map_patch_2_redirect(void *self, void *, int a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -333,7 +333,7 @@ Original Offset: 004C78E0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_clear_patch_redirect(void *self, void *, int a1) {
+int __fastcall midi_clear_patch_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -369,7 +369,7 @@ Original Offset: 004C7930
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_track_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_set_track_redirect(void *self, void *, uint32_t a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -387,7 +387,7 @@ Original Offset: 004C7960
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_mute_track_redirect(void *self, void *, int a1) {
+int __fastcall midi_mute_track_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -405,7 +405,7 @@ Original Offset: 004C7990
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_unmute_track_redirect(void *self, void *, int a1) {
+int __fastcall midi_unmute_track_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -423,7 +423,7 @@ Original Offset: 004C79C0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, uint32_t a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -441,7 +441,7 @@ Original Offset: 004C79F0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, int a1) {
+int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -459,7 +459,7 @@ Original Offset: 004C7A20
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_play_trackset_redirect(void *self, void *, int a1) {
+int __fastcall midi_play_trackset_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -477,7 +477,7 @@ Original Offset: 004C7A50
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_xpose_trackset_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_xpose_trackset_redirect(void *self, void *, uint32_t a1, int a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -495,7 +495,7 @@ Original Offset: 004C7A80
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_stop_trackset_redirect(void *self, void *, int a1) {
+int __fastcall midi_stop_trackset_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -531,7 +531,7 @@ Original Offset: 004C7B00
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_active_range_lo_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_set_active_range_lo_redirect(void *self, void *, uint32_t a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -549,7 +549,7 @@ Original Offset: 004C7B30
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_active_range_hi_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_set_active_range_hi_redirect(void *self, void *, uint32_t a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -567,7 +567,7 @@ Original Offset: 004C7B60
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_remove_active_trackset_redirect(void *self, void *, int a1) {
+int __fastcall midi_remove_active_trackset_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -585,7 +585,7 @@ Original Offset: 004C7B90
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
-int __fastcall midi_get_trackset_redirect(void *self, void *, int a1) {
+int __fastcall midi_get_trackset_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -621,7 +621,7 @@ Original Offset: 004C7BD0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_load_patch_redirect(void *self, void *, int a1) {
+int __fastcall midi_load_patch_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -639,7 +639,7 @@ Original Offset: 004C7C00
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_unload_patch_redirect(void *self, void *, int a1) {
+int __fastcall midi_unload_patch_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -657,7 +657,7 @@ Original Offset: 004C7C30
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_patch_redirect(void *self, void *, int a1, int a2) {
+int __fastcall midi_set_patch_redirect(void *self, void *, uint32_t a1, uint32_t a2) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -675,7 +675,7 @@ Original Offset: 004C7D50
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
-int __fastcall midi_set_tempo_redirect(void *self, void *, int a1) {
+int __fastcall midi_set_tempo_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -693,7 +693,7 @@ Original Offset: 004C7E80
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
-int __fastcall midi_get_time_redirect(void *self, void *, int a1) {
+int __fastcall midi_get_time_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
@@ -729,7 +729,7 @@ Original Offset: 004C7EC0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
-int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, int a1) {
+int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, uint32_t a1) {
     void *const member = *reinterpret_cast<void **>(
         static_cast<uint8_t *>(self) + 0x3c);
     if (member == nullptr) {
