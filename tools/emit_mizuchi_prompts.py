@@ -138,8 +138,8 @@ is insufficient, the generated machine code must be identical.
 ## Rules
 
 - Reproduce the instruction stream: source FORM matters (ternary vs if,
-  loop shape, counting direction, signedness). The context file's header
-  comment lists the known VC6 source-form rules.
+  loop shape, counting direction, signedness). The known VC6 source-form
+  rules are in the system prompt.
 - Output the complete function definition in a single ```cpp block.
 - SHOW THE ENTIRE CODE WITHOUT CROPPING.
 """

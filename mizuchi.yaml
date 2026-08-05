@@ -89,8 +89,8 @@ plugins:
 
       **The context file**
       - Read `{{contextFilePath}}` first. It declares opaque class shells, the
-        callees, fixed-address globals and VCall shims, and its header comment
-        lists the VC6 dialect and source-form rules. Follow them.
+        callees, fixed-address globals and VCall shims. The VC6 dialect and
+        source-form rules are below in this prompt, not in that file.
       - Define exactly the one function the task names, out-of-line
         (`Ret Class::method(args) { ... }`). Do not redeclare anything the
         context already declares.
@@ -107,6 +107,40 @@ plugins:
       - Functional equivalence is insufficient; source FORM matters: ternary vs
         if, loop shape, counting direction and signedness all change the code
       - Do NOT use inline assembly (`__asm` / `asm`) — it pastes the original bytes instead of decompiling and will be rejected. Derive real C++ that the compiler turns into the matching assembly.
+
+      **VC6 dialect**
+      - Must compile under BOTH cl 12.00.8168 and i686-w64-mingw32-g++ -std=c++11.
+      - Avoid: auto, nullptr, constexpr, static_assert, enum class, range-for,
+        lambdas, long long, <cstdint>, and declaring `int i` twice in one
+        function (VC6 leaks for-scope). static_cast/reinterpret_cast are fine
+        and are the right spelling.
+
+      **Source-form rules** — each learned by an agent that lost attempts to it.
+      They are here so you do not rediscover them:
+      - A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+        swapped; `if (x) {...}` gives `je`.
+      - VC6 NEVER hoists a same-polarity guard's body out of line. To get two
+        special cases branching FAR away, write them negated and NESTED —
+        `if (a != X) { if (a != Y) { return D; } ...; }` — not as sequential
+        guard clauses, which inline each body instead.
+      - VC6 rejects `__thiscall` on a free function pointer (C4234). For an
+        indirect virtual call use the generated VCall shim in the context file;
+        for a thiscall function POINTER, take a member-function pointer of a
+        dummy class instead of spelling the convention.
+      - Loop form is visible: while / do-while / for lower differently, and so
+        does counting up versus down.
+      - If the original dedicates a callee-saved register to a constant across
+        the whole body (an extra `push ebx`/`push edi` in the prologue), it had
+        enough register pressure to do so. That is a hard case.
+      - Carry-flag accumulation (`shr X,1` followed by `adc acc,0`, or `sbb`)
+        is NOT reachable from the obvious C. Measured on 13 spellings of a
+        bit-count loop — do-while, while, for, shift-in-condition, extract to a
+        temp before shifting, `%2`, `if (v&1) c++` — across all four flag sets:
+        every one emits `and`/`add`/`shr` or `test`/`je`/`inc`, none emits
+        `adc`. If the target uses this idiom, you cannot reach it by re-rolling
+        arithmetic. Get the rest of the body as close as possible, submit your
+        best, and do not spend attempts searching for a spelling that produces
+        `adc`.
 
       **Available Tools**
       - `compile_and_view_assembly`: Compiles your C++ code, shows the resulting assembly, AND shows the diff against the target. The tool returns:
