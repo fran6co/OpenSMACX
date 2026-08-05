@@ -10,6 +10,8 @@ FUNCTIONS = {
     0x00618F30: {"name": "?UNK1@Font@@QAEHHHHH@Z", "size": "8"},
     0x005D4510: {"name": "??0Buffer@@QAE@XZ", "size": "530"},
     0x00400000: {"name": "", "size": ""},
+    0x005E3650: {"name": "sub_5e3650", "size": "64"},
+    0x00401C80: {"name": "SessionStruct::SessionStruct", "size": "96"},
 }
 
 
@@ -24,9 +26,29 @@ class ResolveTest(unittest.TestCase):
         address, _ = disasm.resolve("??0Buffer@@QAE@XZ", FUNCTIONS)
         self.assertEqual(0x005D4510, address)
 
+    def test_accepts_the_recovery_symbol_of_a_disassembler_label(self):
+        # Mizuchi's {{functionName}} carries the symbol both objects share,
+        # and for these rows that is a decoration of the catalogued label.
+        # Without this the context emitter refuses every such prompt.
+        for symbol in ("_sub_5e3650", "_sub_5e3650@8", "@sub_5e3650@8"):
+            address, _ = disasm.resolve(symbol, FUNCTIONS)
+            self.assertEqual(0x005E3650, address, symbol)
+
+    def test_accepts_a_synthesised_identifier_by_its_address(self):
+        # `SessionStruct::SessionStruct` is not spellable, so the emitter mints
+        # `fn_00401c80` from the address - which is the only way back.
+        address, _ = disasm.resolve("_fn_00401c80@4", FUNCTIONS)
+        self.assertEqual(0x00401C80, address)
+
     def test_rejects_something_that_is_neither(self):
         with self.assertRaises(ValueError):
             disasm.resolve("Buffer::Buffer", FUNCTIONS)
+
+    def test_rejects_a_symbol_naming_nothing_catalogued(self):
+        with self.assertRaises(ValueError):
+            disasm.resolve("_sub_999999@4", FUNCTIONS)
+        with self.assertRaises(ValueError):
+            disasm.resolve("_fn_00999999", FUNCTIONS)
 
     def test_reports_no_size_for_an_uncatalogued_address(self):
         address, size = disasm.resolve("0x00777777", FUNCTIONS)

@@ -96,7 +96,23 @@ print(json.dumps({"tier": tier, "note": outcome.get("note", ""),
 sys.exit(0 if tier in fanout.MATCHED else 1)
 `;
 
+// `functionName` is the SYMBOL both objects carry, which for the 4,821
+// `?`-mangled functions is the catalogued name and for the 1,179 a
+// disassembler labelled is a C decoration of it - `_sub_5e3650@4` for
+// `sub_5e3650`. The symbol map is the authority (tools/emit_target_object.py
+// writes it, and mizuchi.yaml already points at it), because its object path
+// carries the address; the catalogue lookup stays as the fallback for a tree
+// with no target objects emitted yet.
 function resolveAddress(projectRoot, functionName) {
+  const mapPath = path.join(projectRoot, 'build', 'target-objects', 'symbol-map.json');
+  if (fs.existsSync(mapPath)) {
+    const objectPath = JSON.parse(fs.readFileSync(mapPath, 'utf-8'))[functionName];
+    const found = objectPath && /([0-9a-f]{8})\.obj$/.exec(objectPath);
+    if (found) {
+      return parseInt(found[1], 16);
+    }
+  }
+
   const csvPath = path.join(projectRoot, 'docs', 'recovery', 'functions.csv');
   const lines = fs.readFileSync(csvPath, 'utf-8').split('\n');
   const header = lines[0].split(',');
@@ -113,7 +129,7 @@ function resolveAddress(projectRoot, functionName) {
       return parseInt(cols[addressIdx], 16);
     }
   }
-  throw new Error(`Function ${functionName} not found in docs/recovery/functions.csv`);
+  throw new Error(`Function ${functionName} not found in the symbol map or docs/recovery/functions.csv`);
 }
 
 export async function integrate({ functionName, generatedCode, worktreePath, projectRoot, helpers }) {

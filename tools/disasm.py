@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile
 
+import recovery_symbols  # noqa: E402
 from generator_support import read_bytes  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 
@@ -49,16 +50,27 @@ def load_functions() -> dict[int, dict[str, str]]:
 
 
 def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int | None]:
-    """Accept a hex address or a mangled name; return (address, size)."""
+    """Accept a hex address, a catalogued name, or a recovery symbol.
+
+    The third case is what Mizuchi hands these tools now: `{{functionName}}`
+    carries the symbol both objects are made to share, which for the 1,179
+    functions a disassembler named is a decoration of the label rather than
+    the label itself. `_sub_5e3650@4` has to find the same row `sub_5e3650`
+    does, or the context emitter refuses every prompt the change enables.
+    """
     try:
         address = int(text, 16)
     except ValueError:
+        wanted = {text, recovery_symbols.undecorate(text)}
         for candidate, row in functions.items():
-            if row.get("name") == text:
+            if row.get("name") in wanted:
                 address = candidate
                 break
         else:
-            raise ValueError(f"{text} is neither a hex address nor a known name")
+            address = recovery_symbols.address_in(text)
+            if address is None or address not in functions:
+                raise ValueError(
+                    f"{text} is neither a hex address nor a known name")
     row = functions.get(address)
     size = int(row["size"]) if row and row.get("size") else None
     return address, size
