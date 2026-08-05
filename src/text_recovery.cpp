@@ -37,9 +37,6 @@ TextState *state(Text *text) {
 Text::Text()
     : current_pos_(nullptr), text_file_(nullptr), buffer_get_(nullptr), buffer_item_(nullptr) {
     file_name_[0] = 0;
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Text::Text(size_t size)
@@ -49,20 +46,10 @@ Text::Text(size_t size)
     if (buffer_get_) {
         buffer_item_ = static_cast<LPSTR>(mem_get(size));
     }
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
-#if defined(__GNUC__) && defined(__i386__)
-__attribute__((naked))
-#endif
 Text::~Text() noexcept(false) {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__("jmp __ZN4Text8shutdownEv");
-#else
     shutdown();
-#endif
 }
 
 void __cdecl text_txt() { // 005FD400

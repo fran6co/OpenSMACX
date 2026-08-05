@@ -26,16 +26,9 @@ uint32_t *ScrollCloseDynamicDefaults = (uint32_t *)0x009B8DE0;
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef int (__thiscall func_scroll_init)(
     Scroll *, int, int, int, int, Win *, int, int);
 typedef uint32_t (__thiscall *func_noarg_virtual)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 func_scroll_init *ScrollOriginalInit = (func_scroll_init *)0x006054D0;
 
@@ -87,13 +80,6 @@ uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
         call eax
         mov result, eax
     }
-#elif defined(__GNUC__) && defined(__i386__)
-    uintptr_t self_bits = reinterpret_cast<uintptr_t>(self);
-    __asm__ volatile (
-        "call *%2"
-        : "=a" (result), "+c" (self_bits)
-        : "r" (redraw_bits)
-        : "edx", "memory", "cc");
 #else
     typedef uint32_t (*RedrawProc)(void *);
     result = reinterpret_cast<RedrawProc>(
@@ -159,14 +145,6 @@ uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
         idiv divisor
         mov quotient, eax
     }
-#elif defined(__GNUC__) && defined(__i386__)
-    LONG remainder;
-    __asm__ volatile (
-        "cltd\n\t"
-        "idivl %3"
-        : "=&a" (quotient), "=&d" (remainder)
-        : "0" (dividend), "rm" (divisor)
-        : "cc");
 #else
     quotient = dividend / divisor;
 #endif

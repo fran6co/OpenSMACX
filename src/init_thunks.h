@@ -79,16 +79,9 @@ extern func_thiscall_teardown *TimeInitCtor;
 extern func_thiscall_teardown *WaveDeviceInitCtor;
 extern func_thiscall_teardown *WaveInitCtor;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_opaque_ctor_i)(void *object, int a0);
 typedef void(__thiscall func_opaque_ctor_iii)(void *object, int a0, int a1,
                                               int a2);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // Opaque-storage construction seams. These globals' classes
 // are not modelled in source, so the thunk hands the storage

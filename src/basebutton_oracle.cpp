@@ -48,15 +48,8 @@ constexpr uintptr_t BaseButtonCloseAddress = 0x006070C0U;
 constexpr uintptr_t FlatButtonCloseAddress = 0x00607DA0U;
 constexpr uintptr_t FlatButtonDestructorAddress = 0x00406880U;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef uint32_t (__thiscall *OriginalBaseNoArg)(BaseButton *);
 typedef uint32_t (__thiscall *OriginalFlatNoArg)(FlatButton *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 template <typename Fixture>
 void write_field(Fixture &fixture, size_t offset, uint32_t value) {

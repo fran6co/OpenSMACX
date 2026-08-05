@@ -240,13 +240,6 @@ struct TutShowRecord {
 
 TutShowRecord g_tut_show;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall observe_tut_win_show(void *self, void *window,
                                     const char *text, int x, int y,
@@ -260,11 +253,6 @@ int __thiscall observe_tut_win_show(void *self, void *window,
     return 0;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 }  // namespace
 
@@ -634,13 +622,6 @@ void reset_button_lifecycle_capture(uint8_t *base) {
     std::memset(time_close_targets, 0, sizeof(time_close_targets));
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall graphic_win_stub_buffer_destructor(void *target) {
     if (button_lifecycle_capture) {
@@ -659,11 +640,6 @@ void __thiscall graphic_win_stub_win_destructor(void *target) {
         (graphic_win_stub_record.sequence << 4) | 1;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void test_graphic_win_destructor() {
     static_assert(sizeof(GraphicWin) == 0xA14,
@@ -751,13 +727,6 @@ uint32_t graphic_win_field(void *self, size_t offset) {
     return value;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall graphic_win_stub_win_close(void *target) {
     GraphicWinCloseStubRecord &record = graphic_win_close_stub_record;
@@ -816,11 +785,6 @@ uint32_t __thiscall graphic_win_stub_release(void *target, uint32_t flags) {
     return 0x7B3D19E5U;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 namespace {
 
@@ -861,13 +825,6 @@ void *g_hook_object;
 // recursion would paint twice.
 GraphicWin *g_hook_reenters;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall observe_fill_color(void *self, int color) {
     g_gw_fill = {self, color, g_gw_fill.calls + 1};
@@ -913,11 +870,6 @@ void *__thiscall parent_says_transparent(void *self) { return self; }
 
 void *__thiscall parent_says_opaque(void *) { return nullptr; }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void __cdecl observe_paint_hook() {
     ++g_hook_calls;
@@ -1274,13 +1226,6 @@ int g_init_nonclient_out_width;
 
 int g_init_nonclient_out_height;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall init_stub_win_close(void *) {
     ++g_init_rec.close_win_calls;
@@ -1344,11 +1289,6 @@ int __thiscall init_stub_surface(void *self, int width, int height, int third,
     return g_init_surface_result;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 // The eleven table slots, each a distinct sentinel so the slot-to-field map is
 // pinned exactly rather than up to a permutation.
@@ -1651,13 +1591,6 @@ ButtonInitRecord g_button_rec;
 
 void **g_button_close_installs;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 uint32_t __thiscall button_stub_close(void *self) {
     ++g_button_rec.close_calls;
@@ -1685,11 +1618,6 @@ void __thiscall button_stub_show_other(void *self, int arg) {
     // Distinguishable from the first table's entry by the recorded vtable.
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 }  // namespace
 
@@ -2528,13 +2456,6 @@ void list_box_record(int kind, const void *target) {
     std::memcpy(&event.dialog_vptr, list_box_obj + list_box_dialog_disp, 4);
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 // GraphicWin::close's two sub-seams and the Dialog::close seam, all recording.
 void __thiscall list_box_win_close_probe(void *self) { list_box_record(1, self); }
@@ -2543,11 +2464,6 @@ void __thiscall list_box_buffer_close_probe(void *self) { list_box_record(2, sel
 
 void __thiscall list_box_dialog_close_probe(Dialog *self) { list_box_record(3, self); }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 // Controlled default tables, so every defaulted field is a distinct sentinel.
 uint32_t list_box_static_defaults[4];

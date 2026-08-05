@@ -24,9 +24,6 @@
 class DLLEXPORT Log {
  public:
   Log() : log_file_(nullptr), is_disabled_(false) {
-#if defined(__GNUC__) && defined(__i386__)
-      __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
   } // 00625FB0
   Log(LPCSTR input) : log_file_(nullptr) { // 00625FC0
       if (input) {
@@ -37,9 +34,6 @@ class DLLEXPORT Log {
               reset();
           }
       }
-#if defined(__GNUC__) && defined(__i386__)
-      __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
   }
   ~Log() {
       if (log_file_) {

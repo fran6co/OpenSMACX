@@ -40,9 +40,6 @@ void AutoSound::construct() {
     for (size_t index = 4; index < 37; ++index) {
         object[index + 1] = defaults[index];
     }
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {

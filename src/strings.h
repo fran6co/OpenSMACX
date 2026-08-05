@@ -24,9 +24,6 @@
 class DLLEXPORT Strings : Heap {
  public:
   Strings() : is_populated_(false) {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
   } // 006168D0
   ~Strings() { Heap::shutdown(); }     // 006169C0
 

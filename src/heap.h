@@ -29,9 +29,6 @@ class DLLEXPORT Heap {
     current_ = nullptr;
     base_size_ = 0;
     free_size_ = 0;
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
   } // 005D4560
   ~Heap() {
     if (base_) {
@@ -42,9 +39,6 @@ class DLLEXPORT Heap {
     current_ = nullptr;
     base_size_ = 0;
     free_size_ = 0;
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "r"(this) : "memory");
-#endif
   } // 005D4580
 
   void shutdown();

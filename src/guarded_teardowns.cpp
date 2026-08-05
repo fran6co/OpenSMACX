@@ -59,16 +59,9 @@ func_thiscall_teardown *TeardownTarget0051D9F0 =
     (func_thiscall_teardown *)0x0051D9F0;
 func_thiscall_teardown *TeardownTarget005D4DD0 =
     (func_thiscall_teardown *)0x005D4DD0;
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 void __thiscall sprite_close_default(void *object) {
     static_cast<Sprite *>(object)->close();
 }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 func_thiscall_teardown *TeardownTarget005E3820 = &sprite_close_default;
 
 /*

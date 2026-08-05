@@ -101,15 +101,8 @@ void __fastcall datalink_close_redirect(Datalink *self, void *);
 // yet source-owned; every help_* forwarder below dispatches through it
 // against the fixed-address Datalink singleton, so both the exec entry point
 // and the singleton object are seams here rather than baked-in literals.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_datalink_exec)(void *datalink, unsigned int topic,
                                             int index);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_datalink_exec *DatalinkExec;
 
 // The Datalink singleton the forwarders dispatch against - plain data, not a

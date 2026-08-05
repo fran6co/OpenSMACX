@@ -40,17 +40,10 @@ constexpr size_t ClientLeftOffset = 0x14C;
 constexpr size_t ClientTopOffset = 0x150;
 constexpr size_t MaximumDepth = 3;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // GCC emits the correct ECX ABI for this raw thiscall pointer but warns
 // because it is not a C++ member-pointer type.
 typedef uint32_t (__thiscall *OriginalNoArg)(Win *);
 typedef void (__thiscall *OriginalCoordinates)(Win *, int *, int *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 template <typename T>
 void write_object(WinFixture &fixture, size_t offset, const T &value) {

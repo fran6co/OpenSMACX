@@ -98,17 +98,6 @@ extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) 
     return self->seek_id(id);
 }
 
-#ifdef __GNUC__
-int __fastcall string_struct_seek_id_redirect(StringStruct *, void *, int) {
-    __asm__(
-        "pushl 4(%esp)\n\t"
-        "pushl %ecx\n\t"
-        "call _string_struct_seek_id_source\n\t"
-        "addl $8, %esp\n\t"
-        "cmpl %eax, %eax\n\t"
-        "ret $4\n\t");
-}
-#else
 __declspec(naked) int __fastcall string_struct_seek_id_redirect(
         StringStruct *, void *, int) {
     __asm {
@@ -120,19 +109,11 @@ __declspec(naked) int __fastcall string_struct_seek_id_redirect(
         ret 4
     }
 }
-#endif
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_entry_visitor)(void *, void *);
 typedef void(__thiscall func_scalar_deleting_destructor)(void *, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // MSVC reaches these destructors through the virtual-base displacement stored
 // in the object's second vtable slot: the displacement selects a subobject

@@ -34,16 +34,9 @@
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef uint32_t (__thiscall *OriginalConstructor)(void *);
 typedef uint32_t (__thiscall *OriginalPaletteGet)(
     Palette *, RGBQUAD *, int, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 constexpr uintptr_t AutoSoundConstructorAddress = 0x0062BA80U;
 constexpr uintptr_t WinConstructorAddress = 0x005EB3D0U;

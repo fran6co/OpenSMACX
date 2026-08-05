@@ -36,14 +36,7 @@ int __fastcall alpha_net_who_to_idx_redirect(
 
 void __fastcall alpha_net_close_redirect(AlphaNet *self, void *);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The legacy body tail-jumps into Net::close with this unchanged; that body
 // is 570 bytes with three call targets and remains an original dependency.
 typedef void(__thiscall func_net_close)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_net_close *NetCloseOriginal;

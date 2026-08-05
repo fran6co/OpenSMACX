@@ -69,14 +69,7 @@ int __cdecl spying(int subject) {
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef int(__cdecl *OriginalSpying)(int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 }  // namespace
 

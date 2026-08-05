@@ -246,13 +246,6 @@ int g_tw_result;
 // 0x005DC7D3. Only write_cent_l's rectangle overload can observe it.
 Buffer *g_tw_clear_font_of;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall observe_raw_write(Buffer *self, LPSTR text, int x, int y,
                                  int len) {
@@ -286,11 +279,6 @@ int __thiscall poison_text_width(Buffer *, LPSTR, size_t) {
     return 0;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 // A Font shaped just enough for these writers: font_obj_ at 0x08 is the
 // initialised flag they guard on, height_ at 0x10 drives vertical centring.

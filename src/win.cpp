@@ -108,9 +108,6 @@ void Win::construct() {
     object[0x17C / 4] = 1;
     object[0x180 / 4] = 1;
     object[0x1A0 / 4] = 2;
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Win *__fastcall win_construct_redirect(Win *self, void *) {
@@ -454,14 +451,7 @@ HWND *WinHdcWindow = reinterpret_cast<HWND *>(0x009B7B28);
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef long(__stdcall *func_win_surface_slot)(void *, void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 constexpr size_t WinSurfaceGetDCSlot = 0x44;
 constexpr size_t WinSurfaceReleaseDCSlot = 0x68;

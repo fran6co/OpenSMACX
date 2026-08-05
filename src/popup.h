@@ -179,15 +179,8 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 // forty-five entry popup wave bank with its last-played index beside it,
 // the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
 // that plays effect 0x38 after wave 0x10.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef int(__thiscall func_popup_wave_query)(Wave *wave);
 typedef void(__thiscall func_popup_fx_play)(FX *fx, int effect);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 typedef unsigned long(__stdcall func_popup_time_source)(void);
 
 extern uint32_t *PopupWaveFlags;

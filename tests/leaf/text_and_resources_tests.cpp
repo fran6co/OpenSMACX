@@ -16,15 +16,8 @@ void __cdecl menu_proc_fixture(int) {}
 namespace {
 int g_menu_repaints;
 int g_menu_poisons;
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 void __thiscall menu_observe_repaint(void *) { ++g_menu_repaints; }
 void __thiscall menu_poison_repaint(void *) { ++g_menu_poisons; }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 }  // namespace
 
 void test_menu_accessors() {

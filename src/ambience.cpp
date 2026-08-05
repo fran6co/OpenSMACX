@@ -422,10 +422,6 @@ void Ambience::construct() {
     bytes[0x54] |= 1;
     object[0x00 / 4] = 0x0066E664;
     SoundSetType(reinterpret_cast<Wave *>(this), 5);
-#if defined(__GNUC__) && defined(__i386__)
-    // The legacy constructor leaves the instance pointer in EAX.
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {

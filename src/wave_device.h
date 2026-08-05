@@ -126,14 +126,7 @@ static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes")
 // The list-insert helper add_to_group threads new waves through: not yet
 // source-owned, so it stays a rebindable dependency. Its receiver is the
 // address of the group's head field.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_wave_group_insert)(void *group_head, Wave *wave);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_wave_group_insert *WaveDeviceGroupInsert;
 
 // The device factory/destroy hooks: two more function-pointer slots beside

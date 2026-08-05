@@ -73,12 +73,7 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted, void *);
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
 int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);
-#ifdef __GNUC__
-int __fastcall string_struct_seek_id_redirect(StringStruct *self, void *, int id)
-    __attribute__((naked));
-#else
 int __fastcall string_struct_seek_id_redirect(StringStruct *self, void *, int id);
-#endif
 
 /*
  * StringList - the string list whose two-stage teardown at 0x004066C0 is

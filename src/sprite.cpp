@@ -48,10 +48,6 @@ Sprite::Sprite() {
     *reinterpret_cast<volatile uint8_t *>(
         reinterpret_cast<uint8_t *>(this) + 0x08) = 9;
     ordered[0x28 / 4] = 0;
-#if defined(__GNUC__) && defined(__i386__)
-    // The legacy constructor leaves the instance pointer in EAX.
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {

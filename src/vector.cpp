@@ -19,9 +19,6 @@ Original Offset: 006343C0
 Status: Complete
 */
 Vector::Vector() : values_{} {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 /*
@@ -43,29 +40,6 @@ Status: Complete
 */
 void Vector::__mi(Vector &output, Vector &right) {
     uint32_t results[3] = {};
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__(
-        "flds %1\n\t"
-        "fsubs %2\n\t"
-        "fstps %0"
-        : "=m"(results[0])
-        : "m"(values_[0]), "m"(right.values_[0])
-        : "st", "memory");
-    __asm__ __volatile__(
-        "flds %1\n\t"
-        "fsubs %2\n\t"
-        "fstps %0"
-        : "=m"(results[1])
-        : "m"(values_[1]), "m"(right.values_[1])
-        : "st", "memory");
-    __asm__ __volatile__(
-        "flds %1\n\t"
-        "fsubs %2\n\t"
-        "fstps %0"
-        : "=m"(results[2])
-        : "m"(values_[2]), "m"(right.values_[2])
-        : "st", "memory");
-#else
     for (size_t index = 0; index < 3; ++index) {
         float left_value;
         float right_value;
@@ -75,7 +49,6 @@ void Vector::__mi(Vector &output, Vector &right) {
         result = left_value - right_value;
         std::memcpy(&results[index], &result, sizeof(result));
     }
-#endif
     volatile uint32_t *ordered_output = output.values_;
     ordered_output[0] = results[0];
     ordered_output[1] = results[1];
@@ -88,20 +61,6 @@ Original Offset: 00634480
 Status: Complete
 */
 void Vector::__apl(Vector &right) {
-#if defined(__GNUC__) && defined(__i386__)
-#define OPENSMACX_VECTOR_ADD(INDEX) \
-    __asm__ __volatile__( \
-        "flds %1\n\t" \
-        "fadds %0\n\t" \
-        "fstps %0" \
-        : "+m"(values_[INDEX]) \
-        : "m"(right.values_[INDEX]) \
-        : "st", "memory")
-    OPENSMACX_VECTOR_ADD(0);
-    OPENSMACX_VECTOR_ADD(1);
-    OPENSMACX_VECTOR_ADD(2);
-#undef OPENSMACX_VECTOR_ADD
-#else
     for (size_t index = 0; index < 3; ++index) {
         float left_value;
         float right_value;
@@ -110,7 +69,6 @@ void Vector::__apl(Vector &right) {
         left_value += right_value;
         std::memcpy(&values_[index], &left_value, sizeof(left_value));
     }
-#endif
 }
 
 /*
@@ -119,20 +77,6 @@ Original Offset: 006344B0
 Status: Complete
 */
 void Vector::__ami(Vector &right) {
-#if defined(__GNUC__) && defined(__i386__)
-#define OPENSMACX_VECTOR_SUBTRACT(INDEX) \
-    __asm__ __volatile__( \
-        "flds %0\n\t" \
-        "fsubs %1\n\t" \
-        "fstps %0" \
-        : "+m"(values_[INDEX]) \
-        : "m"(right.values_[INDEX]) \
-        : "st", "memory")
-    OPENSMACX_VECTOR_SUBTRACT(0);
-    OPENSMACX_VECTOR_SUBTRACT(1);
-    OPENSMACX_VECTOR_SUBTRACT(2);
-#undef OPENSMACX_VECTOR_SUBTRACT
-#else
     for (size_t index = 0; index < 3; ++index) {
         float left_value;
         float right_value;
@@ -141,7 +85,6 @@ void Vector::__ami(Vector &right) {
         left_value -= right_value;
         std::memcpy(&values_[index], &left_value, sizeof(left_value));
     }
-#endif
 }
 
 /*
@@ -150,27 +93,12 @@ Original Offset: 00634670
 Status: Complete
 */
 void Vector::scale(Vector &output, float scalar) {
-#if defined(__GNUC__) && defined(__i386__)
-#define OPENSMACX_VECTOR_SCALE(INDEX) \
-    __asm__ __volatile__( \
-        "flds %1\n\t" \
-        "fmuls %0\n\t" \
-        "fstps %0" \
-        : "+m"(values_[INDEX]) \
-        : "m"(scalar) \
-        : "st", "memory")
-    OPENSMACX_VECTOR_SCALE(0);
-    OPENSMACX_VECTOR_SCALE(1);
-    OPENSMACX_VECTOR_SCALE(2);
-#undef OPENSMACX_VECTOR_SCALE
-#else
     for (size_t index = 0; index < 3; ++index) {
         float value;
         std::memcpy(&value, &values_[index], sizeof(value));
         value *= scalar;
         std::memcpy(&values_[index], &value, sizeof(value));
     }
-#endif
     volatile uint32_t *ordered_output = output.values_;
     volatile const uint32_t *ordered_source = values_;
     ordered_output[0] = ordered_source[0];
@@ -221,34 +149,6 @@ void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {
     uint32_t *const left_values = reinterpret_cast<uint32_t *>(left);
     uint32_t *const right_values = reinterpret_cast<uint32_t *>(right);
     uint32_t *const output_values = reinterpret_cast<uint32_t *>(output);
-#if defined(__GNUC__) && defined(__i386__)
-    // Component zero loads the right operand first while the others load the
-    // left operand first. The differential oracle cannot distinguish the two
-    // orders - x87 NaN propagation returns the operand with the larger
-    // significand, which is commutative - so this mirrors the original for
-    // faithfulness rather than for any observed behavioural difference.
-    __asm__ __volatile__(
-        "flds %1\n\t"
-        "fadds %2\n\t"
-        "fstps %0"
-        : "=m"(output_values[0])
-        : "m"(right_values[0]), "m"(left_values[0])
-        : "st", "memory");
-    __asm__ __volatile__(
-        "flds %1\n\t"
-        "fadds %2\n\t"
-        "fstps %0"
-        : "=m"(output_values[1])
-        : "m"(left_values[1]), "m"(right_values[1])
-        : "st", "memory");
-    __asm__ __volatile__(
-        "flds %1\n\t"
-        "fadds %2\n\t"
-        "fstps %0"
-        : "=m"(output_values[2])
-        : "m"(left_values[2]), "m"(right_values[2])
-        : "st", "memory");
-#else
     for (size_t index = 0; index < 3; ++index) {
         float left_value;
         float right_value;
@@ -258,5 +158,4 @@ void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {
         result = left_value + right_value;
         std::memcpy(&output_values[index], &result, sizeof(result));
     }
-#endif
 }

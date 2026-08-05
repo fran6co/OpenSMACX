@@ -124,10 +124,6 @@ extern void **ConsoleMapWinSlot;  // 0x007D3C3C, holds the current MapWin *
 
 void __fastcall console_update_data_redirect(Console *self, void *, int a1);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // focus walks the eight map-window slots and, for the primary window only,
 // runs the console cursor and the survey-overlay latch first. Four of its
 // callees are still original bodies, so each gets a rebindable seam. Nothing
@@ -150,9 +146,6 @@ typedef int(__thiscall func_console_map_win_focus)(void *map_win, int x_coord,
                                                    int y_coord);
 typedef void(__thiscall func_console_map_win_draw_map)(void *map_win,
                                                        int draw_type);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 // ?flush_input@@YAXXZ at 0x005FD120 - __cdecl, no arguments - drains the queued
 // input once the focus walk actually moved the primary view. Still original; it
 // pumps the message loop through check_net.

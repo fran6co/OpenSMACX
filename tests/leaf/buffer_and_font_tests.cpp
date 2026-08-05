@@ -41,23 +41,11 @@ long __stdcall hdc_probe_release_dc(void *surface, void *handle) {
     return hdc_probe.release_status;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall hdc_probe_buffer_virtual(void *) {
     ++hdc_probe.error_calls;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void test_buffer_hdc_protocol() {
     alignas(Buffer) uint8_t storage[sizeof(Buffer) + 32];
@@ -993,13 +981,6 @@ struct SpriteDrawProbe {
 
 SpriteDrawProbe sprite_draw_probe = {};
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall sprite_draw_probe_body(
         Sprite *self, Buffer *buffer, int a, int b, int c) {
@@ -1015,11 +996,6 @@ int __thiscall sprite_draw_probe_body(
     return sprite_draw_probe.result;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void test_sprite_draw_origin() {
     alignas(Sprite) uint8_t storage[sizeof(Sprite) + 32];
@@ -1098,13 +1074,6 @@ int __cdecl wrapper_probe_update_cursor(Win *window, int flag) {
     return 0;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall wrapper_probe_text_width(Buffer *self, LPSTR text, size_t length) {
     ++wrapper_probe.width_calls;
@@ -1114,11 +1083,6 @@ int __thiscall wrapper_probe_text_width(Buffer *self, LPSTR text, size_t length)
     return wrapper_probe.width_result;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void test_win_set_cursor() {
     alignas(Win) uint8_t storage[sizeof(Win) + 32];
@@ -1233,24 +1197,12 @@ struct TeardownProbe {
 
 TeardownProbe teardown_probe = {};
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall teardown_probe_net_close(void *self) {
     ++teardown_probe.net_close_calls;
     teardown_probe.net_close_self = self;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 int __cdecl teardown_probe_update_screen(RECT *rect, Win *window) {
     ++teardown_probe.update_calls;

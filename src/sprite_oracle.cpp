@@ -25,16 +25,9 @@ using SpriteFixture = runtime_oracle::Fixture<Sprite>;
 const runtime_oracle::ClassSpec SpriteSpec = {
     sizeof(Sprite), sizeof(uintptr_t), 0, nullptr, 0};
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // GCC emits the correct ECX ABI for this raw thiscall pointer but warns
 // because it is not a C++ member-pointer type.
 typedef uint32_t (__thiscall *OriginalNoArg)(Sprite *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 int FreeCalls = 0;
 void *FreeTargets[4] = {};
@@ -174,14 +167,7 @@ bool run_sprite_oracle_suite() {
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void (__thiscall *OriginalClose)(Sprite *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 constexpr uintptr_t SpriteCloseAddress = 0x005E3820U;
 

@@ -85,18 +85,11 @@ void __fastcall tut_win_soc_rect_redirect(
 void __fastcall tut_win_des_rect_redirect(
     TutWin *self, void *, RECT *rect, int *x, int *y);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.
 typedef int(__thiscall func_tut_win_show)(void *self, void *window,
                                           const char *text, int x, int y,
                                           void *sprite, int flag, int a7,
                                           int a8);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_tut_win_show *TutWinOriginalShow;
 
 void __fastcall tut_win_do_base_redirect(

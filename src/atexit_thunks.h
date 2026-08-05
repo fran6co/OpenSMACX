@@ -44,14 +44,7 @@ class Wave;
  * dependency instead of a direct call.
  */
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_wave_destructor)(Wave *wave);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_wave_destructor *WaveOriginalDestructor;
 
 #include "vector_teardown.h"
