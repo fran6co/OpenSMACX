@@ -1060,6 +1060,13 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(mizuchi-writeback-tests
                                    test_mizuchi_writeback.py)
 
+    # The scaffolding emitter. Its coverage went 38% -> 98% over the fan-out
+    # population and every step was a defect, including a repair regex pinned
+    # to wording CL does not use - which matched nothing and returned a
+    # byte-identical compile rate. These pin the repaired behaviour.
+    opensmacx_add_python_tool_test(emit-translation-unit-tests
+                                   test_emit_translation_unit.py)
+
     opensmacx_add_python_tool_test(generator-support-tests test_generator_support.py)
 
     opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)

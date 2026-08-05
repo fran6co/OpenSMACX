@@ -210,6 +210,63 @@ def identifier_of_global(name: str) -> str:
     return re.sub(r"__+", "_", text.lower())
 
 
+IMAGE_LOW, IMAGE_HIGH = 0x00400000, 0x00A10000
+
+
+def absolute_operands(pe, spans, image=(IMAGE_LOW, IMAGE_HIGH)):
+    """{address: [instruction addresses that reference it]} over `spans`.
+
+    Every generator that needs "which fixed globals does this body touch" has
+    been growing its own copy of this walk. `generate_global_arith.py` matches
+    `^dword ptr \\[(0x[0-9a-f]+)\\]$` against `op_str` inside a transcriber that
+    raises on any opcode outside a seven-instruction set, so it is not callable
+    as a library; `extract_legacy_leaves.py` and `find_leaf_testable.py` each
+    carry a third and fourth. This is the shared one.
+
+    TWO SHAPES, both wanted, and the difference matters to the caller:
+
+      * a MEMORY operand with no base register and a displacement inside the
+        image - the global is dereferenced;
+      * an IMMEDIATE inside the image that is not a branch target - the address
+        is used as a VALUE.
+
+    The index register is deliberately NOT required to be zero. Requiring it
+    missed exactly the shape that matters most: four global arrays written as
+    `[eax*4 + 0x6970ac]` were reported as touching no global at all, and a
+    fixture built on that answer writes through an unmapped address instead of
+    failing an assertion.
+
+    Branch targets are excluded by capstone GROUP rather than by mnemonic name.
+    Excluding only "call" and "jmp" leaves every conditional branch in, so a
+    `je` to a label inside the same function reads as a fixed-address binding -
+    noise that made four of eighteen entries wrong in the scanner this was
+    lifted from.
+    """
+    from capstone import (CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32,
+                          Cs)
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM
+
+    engine = Cs(CS_ARCH_X86, CS_MODE_32)
+    engine.detail = True
+    low, high = image
+    found = {}
+    for start, end in spans:
+        data = read_bytes(pe, start, end - start)
+        if not data:
+            continue
+        for one in engine.disasm(data, start):
+            for operand in one.operands:
+                if (operand.type == X86_OP_MEM and operand.mem.base == 0
+                        and low <= operand.mem.disp < high):
+                    found.setdefault(operand.mem.disp, []).append(one.address)
+                elif (operand.type == X86_OP_IMM
+                      and not one.group(CS_GRP_JUMP)
+                      and not one.group(CS_GRP_CALL)
+                      and low <= operand.imm < high):
+                    found.setdefault(operand.imm, []).append(one.address)
+    return found
+
+
 def parse_body_ranges(value: str):
     """A function's spans, which are NOT `address .. end_address`.
 
