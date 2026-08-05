@@ -26,6 +26,8 @@ committed.
 from __future__ import annotations
 
 import argparse
+import csv
+import json
 import sys
 from pathlib import Path
 
@@ -40,8 +42,31 @@ from generator_support import parse_body_ranges  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GHIDRA_DIR = REPO_ROOT / "build" / "ghidra-decompile"
+LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+MIZUCHI_DB = REPO_ROOT / "mizuchi-db.json"
 
 FRAME_PROLOGUE = b"\x55\x8b\xec"
+
+
+def load_ledger() -> dict[int, dict[str, str]]:
+    """byte-match.csv keyed by address (int)."""
+    if not LEDGER.is_file():
+        return {}
+    out = {}
+    for row in csv.DictReader(LEDGER.open()):
+        try:
+            out[int(row["address"], 16)] = row
+        except (KeyError, ValueError):
+            continue
+    return out
+
+
+def load_existing_code() -> dict[str, str]:
+    """Recovered C++ code keyed by mangled name, from the Mizuchi index."""
+    if not MIZUCHI_DB.is_file():
+        return {}
+    db = json.loads(MIZUCHI_DB.read_text())
+    return {f["name"]: f["cCode"] for f in db.get("decompFunctions", []) if f.get("cCode")}
 
 
 def disassemble(pe: pefile.PE, address: int, body_ranges: str,
@@ -109,7 +134,7 @@ is insufficient, the generated machine code must be identical.
 {asm}
 ```
 
-{ghidra_section}
+{existing_section}{ghidra_section}
 ## Rules
 
 - Reproduce the instruction stream: source FORM matters (ternary vs if,
@@ -117,6 +142,19 @@ is insufficient, the generated machine code must be identical.
   comment lists the known VC6 source-form rules.
 - Output the complete function definition in a single ```cpp block.
 - SHOW THE ENTIRE CODE WITHOUT CROPPING.
+"""
+
+EXISTING_SECTION = """## Existing recovery (NOT byte-exact — fix it)
+
+This function has already been reversed into src/, but it does not yet
+recompile to a byte-identical instruction stream (last verdict: {tier}).
+Start from this code and repair it rather than starting from scratch. Keep
+what is correct; change only what the diff demands.
+
+```cpp
+{code}
+```
+
 """
 
 GHIDRA_SECTION = """## Ghidra decompilation (hypothesis only)
@@ -134,7 +172,7 @@ disassembly above before trusting it.
 
 def write_prompt(out_dir: Path, address: int, row: dict[str, str],
                  pe: pefile.PE, functions: dict, derived: dict,
-                 callees: dict) -> None:
+                 callees: dict, existing: tuple[str, str] | None = None) -> None:
     name = row["name"]
     size = int(row["size"])
     asm = disassemble(pe, address, row["body_ranges"], functions)
@@ -146,8 +184,14 @@ def write_prompt(out_dir: Path, address: int, row: dict[str, str],
     ghidra = ghidra_hypothesis(address)
     ghidra_section = GHIDRA_SECTION.format(ghidra=ghidra.rstrip()) if ghidra else ""
 
+    existing_section = ""
+    if existing:
+        tier, code = existing
+        existing_section = EXISTING_SECTION.format(tier=tier, code=code.rstrip())
+
     prompt = PROMPT_TEMPLATE.format(name=name, address=address, size=size,
                                     head=head, asm=asm,
+                                    existing_section=existing_section,
                                     ghidra_section=ghidra_section)
 
     prompt_dir = out_dir / f"{address:08x}"
@@ -173,11 +217,22 @@ def main() -> int:
                         help="hex addresses or mangled names")
     parser.add_argument("--unrecovered", type=int, default=0, metavar="N",
                         help="pick the first N unrecovered functions instead")
+    parser.add_argument("--not-byte-exact", action="store_true",
+                        help="pick recovered functions whose last byte-match verdict "
+                             "is not BYTE_EXACT (seeded with their existing src/ code)")
+    parser.add_argument("--tier", default="",
+                        help="with --not-byte-exact: comma-separated ledger tiers to "
+                             "include (e.g. MISMATCH or MISMATCH,NO_COMPILE); default all")
+    parser.add_argument("--limit", type=int, default=0, metavar="N",
+                        help="with --not-byte-exact: cap the number of prompts")
     parser.add_argument("--out", type=Path, default=REPO_ROOT / "mizuchi" / "prompts")
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     arguments = parser.parse_args()
 
     functions = load_functions()
+    ledger = load_ledger()
+    existing_code = load_existing_code() if arguments.not_byte_exact else {}
+
     if arguments.subjects:
         addresses = []
         for text in arguments.subjects:
@@ -193,12 +248,27 @@ def main() -> int:
                           file=sys.stderr)
                     return 1
             addresses.append(address)
+    elif arguments.not_byte_exact:
+        wanted = {t.strip() for t in arguments.tier.split(",") if t.strip()}
+        picked = []
+        for address, row in sorted(functions.items()):
+            if not (row.get("source_locations") or "").startswith("src/"):
+                continue
+            tier = (ledger.get(address) or {}).get("tier") or "NOT_IN_LEDGER"
+            if tier == "BYTE_EXACT":
+                continue
+            if wanted and tier not in wanted:
+                continue
+            picked.append(address)
+            if arguments.limit and len(picked) >= arguments.limit:
+                break
+        addresses = picked
     elif arguments.unrecovered:
         addresses = [address for address, row in sorted(functions.items())
                      if row.get("recovery_state") == "unrecovered"
                      and row.get("name")][:arguments.unrecovered]
     else:
-        parser.error("give subjects or --unrecovered N")
+        parser.error("give subjects, --unrecovered N, or --not-byte-exact")
 
     pe = pefile.PE(str(arguments.exe), fast_load=True)
     derived = load_derived()
@@ -210,14 +280,20 @@ def main() -> int:
         if not row or not row.get("name") or not row.get("body_ranges"):
             print(f"skip 0x{address:08X}: not catalogued with a body", file=sys.stderr)
             continue
+        existing = None
+        code = existing_code.get(row["name"])
+        if code:
+            tier = (ledger.get(address) or {}).get("tier") or "NOT_IN_LEDGER"
+            existing = (tier, code)
         try:
             write_prompt(arguments.out, address, row, pe, functions, derived,
-                         callees)
+                         callees, existing)
         except (Unsettled, ValueError) as error:
             print(f"skip 0x{address:08X} {row.get('name')}: {error}", file=sys.stderr)
             continue
         written += 1
-        print(f"wrote {arguments.out / f'{address:08x}'}")
+        print(f"wrote {arguments.out / f'{address:08x}'}"
+              + ("  [seeded with existing recovery]" if existing else ""))
 
     print(f"{written} prompt(s) written to {arguments.out}")
     return 0
