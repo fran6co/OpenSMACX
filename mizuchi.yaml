@@ -16,6 +16,8 @@ global:
   promptsDir: ./mizuchi/prompts
   # Function -> target object map produced by tools/emit_target_object.py
   symbolMapPath: build/target-objects/symbol-map.json
+  # Source-definition -> symbol pairing produced by tools/emit_asm_dumps.py
+  sourceMapPath: mizuchi/source-map.json
   # Assembly dumps produced by tools/emit_asm_dumps.py (for the Atlas index)
   nonMatchingAsmFolders:
     - mizuchi/asm/nonmatching
