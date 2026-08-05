@@ -273,7 +273,7 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
     }
     // Two destinations: a catalogued span in src/, or - for every function
     // the agent loop actually works on, none of which has one - the tracked
-    // store under docs/recovery/matched/. The location says which.
+    // store under src/recovered/. The location says which.
     helpers.log(
       `wrote body into ${writeback.source_location} ` +
         `(${writeback.lines_replaced} -> ${writeback.lines_written} lines), ` +
