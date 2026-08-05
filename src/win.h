@@ -213,16 +213,9 @@ extern HWND *WinHdcWindow;
 
 int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The cursor refresh this setter triggers is a 2528-byte body with six call
 // targets, still an original dependency. Tests rebind this seam.
 typedef int(__cdecl func_win_update_cursor)(Win *, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_win_update_cursor *WinUpdateCursorOriginal;
 
 void __cdecl win_clear_bubble_text_redirect();
@@ -233,17 +226,10 @@ extern int *WinBubbleActive;
 extern int *WinBubbleCompanion;
 extern RECT *WinBubbleRect;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // Both refresh bodies remain original dependencies: update_screen is 383
 // bytes with four call targets, flip 1223 bytes with fourteen.
 typedef int(__cdecl func_win_update_screen)(RECT *, Win *);
 typedef void(__cdecl func_win_flip)(RECT *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_win_update_screen *WinUpdateScreenOriginal;
 extern func_win_flip *WinFlipOriginal;
 

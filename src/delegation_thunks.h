@@ -36,10 +36,6 @@
  * class header.
  */
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The delegate is entered on the MEMBER, not on the thunk's
 // own object, so every one of these is __thiscall with the
 // member as its receiver.
@@ -47,9 +43,6 @@ typedef int(__thiscall func_delegation_0)(void *);
 typedef int(__thiscall func_delegation_1)(void *, int);
 typedef int(__thiscall func_delegation_2)(void *, int, int);
 typedef int(__thiscall func_delegation_3)(void *, int, int, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int a2);
 void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a2);

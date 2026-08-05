@@ -33,15 +33,8 @@ using BufferFixture = runtime_oracle::Fixture<Buffer>;
 const runtime_oracle::ClassSpec BufferSpec = {
     sizeof(Buffer), sizeof(uintptr_t), 0, nullptr, 0};
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef uint32_t (__thiscall *OriginalNoArg)(Buffer *);
 typedef void (__thiscall *OriginalOneArg)(Buffer *, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // A stand-in DirectDraw surface. Locking never touches real video memory: the
 // probe reports a fixed pitch and data pointer so both sides observe identical

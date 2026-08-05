@@ -156,15 +156,8 @@ void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2);
 // from the doubly-linked wave chain whose end slots the two chain seams name.
 // Which end is "head" is inferred from the unlink shape (the slot written
 // when the 0x44 neighbour is null); nothing else pins the labels.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef int(__thiscall func_wave_device_pull_from_group)(void *device,
                                                          Wave *wave);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 typedef void(__cdecl func_operator_delete)(void *block);
 typedef void(__cdecl func_wave_device_release)(void *device);
 extern func_wave_device_pull_from_group *WaveDevicePullFromGroup;
@@ -184,16 +177,9 @@ extern Wave **WaveChainTail;
 // WaveOperatorNew and its typedef now live in "vector_teardown.h" above -
 // the seam outgrew this header once GraphicWin::init needed it too.
 extern uint32_t *WaveDeviceGroupVolumes;
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef int(__thiscall func_wave_device_is_group_disabled)(void *device,
                                                            uint32_t slot);
 typedef int(__thiscall func_wave_original_load)(Wave *wave);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled;
 extern func_wave_original_load *WaveOriginalLoad;
 
@@ -205,24 +191,10 @@ extern func_wave_original_load *WaveOriginalLoad;
 typedef int(__cdecl func_wave_device_create)(void **device_slot,
                                              const char *fname, int mode);
 extern func_wave_device_create **WaveDeviceCreateSlot;
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef int(__thiscall func_sound_original_load)(Wave *wave,
                                                  const char *fname);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_sound_original_load *SoundOriginalLoad;
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_sound_set_type)(Wave *wave, uint32_t type);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_sound_set_type *SoundSetType;
 
 void __fastcall wave_dtor_redirect(Wave *self, void *);

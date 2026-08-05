@@ -36,13 +36,6 @@ int g_adjustor_calls;
 
 int g_adjustor_args[4];
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall observe_adjustor_i_i(void *self, int arg0) {
     g_adjustor_seen = self;
@@ -109,11 +102,6 @@ void __thiscall observe_adjustor_v_pi(void *self, void *arg0, int arg1) {
     g_adjustor_args[1] = static_cast<int>(arg1);
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 struct AdjustorCase_i_i {
     int (__fastcall *thunk)(void *, void *, int);
@@ -394,13 +382,6 @@ void __cdecl observe_deleting_free(void *block) {
     ++g_deleting_free_calls;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall observe_deleting_dtor(void *self) {
     g_deleting_dtor_seen = self;
@@ -421,11 +402,6 @@ void *__thiscall observe_deleting_forward_nullary(void *self) {
     return &g_deleting_forward_calls;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 typedef void *(__fastcall *DeletingBody)(void *, void *,
                                          unsigned int);
@@ -666,13 +642,6 @@ DelegationProbe g_delegation_probe;
 
 constexpr int DelegationAnswer = 0x7A7A5A5A;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 int __thiscall delegation_observe_0(void *self) {
     ++g_delegation_probe.calls;
@@ -703,11 +672,6 @@ int __thiscall delegation_poison(void *) {
     return 0;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 int call_plain(const PlainDelegationCase &entry, void *self,
                const int (&args)[3]) {
@@ -967,13 +931,6 @@ void *g_guarded_seen[2];
 
 int g_guarded_index;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 uint32_t g_guarded_order;
 
@@ -1007,11 +964,6 @@ void __thiscall observe_guarded_step_1(void *object) {
     }
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 }  // namespace
 
@@ -2140,13 +2092,6 @@ void *g_init_constructed;
 
 int g_init_ctor_calls;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall observe_init_ctor(void *object) {
     g_init_constructed = object;
@@ -2156,11 +2101,6 @@ void __thiscall observe_init_ctor(void *object) {
     g_init_atexit_calls_at_ctor = g_init_atexit_calls;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void *g_init_vector_array;
 
@@ -2190,13 +2130,6 @@ int g_init_dtor_sentinel;
 
 int g_init_opaque_args[4];
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall observe_opaque_ctor_i(void *object, int a0) {
     g_init_constructed = object;
@@ -2214,11 +2147,6 @@ void __thiscall observe_opaque_ctor_iii(void *object, int a0, int a1, int a2) {
     g_init_atexit_calls_at_ctor = g_init_atexit_calls;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 }  // namespace
 

@@ -12,9 +12,6 @@ Time::Time()
       unk_1_(0),
       resolution_(5),
       unk_2_(0) {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Time::~Time() {

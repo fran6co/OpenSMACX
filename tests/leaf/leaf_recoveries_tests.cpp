@@ -98,13 +98,6 @@ uint32_t __fastcall scroll_close_right_probe(void *self, void *) {
 
 namespace {
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 }  // namespace
 
@@ -126,11 +119,6 @@ void __thiscall scroll_close_buffer_probe(void *self) {
 
 namespace {
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void write_scroll_close_expected(uint8_t *expected,
                                  const uint32_t fixed[11],

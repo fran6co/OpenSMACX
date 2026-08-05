@@ -23,14 +23,7 @@ using ListFixture = runtime_oracle::Fixture<StringStruct>;
 const runtime_oracle::ClassSpec ListSpec = {
     sizeof(StringStruct), sizeof(uintptr_t), 0, nullptr, 0};
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void (__thiscall *OriginalNoArg)(StringStruct *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 struct Probe {
     int visits;
@@ -226,14 +219,7 @@ bool verify_close() {
         {3, -1, true},
         {3, 0, false},
     };
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
     typedef void (__thiscall *OriginalClose)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
     // Both the base close and the derived two-stage close share the same
     // fixture shape; only the entry address, adjustor and expected primary
     // table differ.

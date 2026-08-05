@@ -76,10 +76,6 @@ extern func_net_message_data *NetDaemonMessageData;
 // `mov esi, ecx`), so the adapter forwards without displacement.
 uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // NetDaemon::synch itself is not recovered - 4,905 bytes with its own call
 // targets, so it remains an original dependency. The fourteen synch_*
 // forwarders below all funnel into it, loading the same daemon at 0x0093CD90
@@ -88,9 +84,6 @@ uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *);
 typedef void(__thiscall func_net_daemon_synch)(void *daemon, int16_t opcode,
                                                int a, int b, int c, char *text,
                                                int d, int16_t flags);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_net_daemon_synch *NetDaemonSynch;
 
 DLLEXPORT void __cdecl synch_veh(int id);

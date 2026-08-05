@@ -5,9 +5,6 @@ Filemap::Filemap()
     : map_view_addr_(nullptr),
       file_(INVALID_HANDLE_VALUE),
       file_map_(nullptr) {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Filemap::~Filemap() {
@@ -21,10 +18,6 @@ Filemap::~Filemap() {
     }
     if (file_ != INVALID_HANDLE_VALUE) {
         CloseHandle(file_);
-#if defined(__GNUC__) && defined(__i386__)
-        *reinterpret_cast<HANDLE volatile *>(&file_) = nullptr;
-#else
         file_ = nullptr;
-#endif
     }
 }

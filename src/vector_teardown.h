@@ -24,14 +24,7 @@
  * own translation unit with no further dependencies, and each caller carries
  * its own per-element teardown seam.
  */
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_thiscall_teardown)(void *object);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 typedef void(__stdcall func_vector_dtor_iterator)(
     void *array, unsigned int element_size, int count,
     func_thiscall_teardown *teardown);

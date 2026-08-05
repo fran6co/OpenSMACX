@@ -65,10 +65,6 @@ namespace {
 // each runs the recovered construction on the object the
 // thunk names. The hybrid executes these; leaf tests
 // rebind the seams to recorders instead.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 void __thiscall ambienceinitctor_default(void *object) {
     static_cast<Ambience *>(object)->construct();
 }
@@ -108,9 +104,6 @@ void __thiscall wavedeviceinitctor_default(void *object) {
 void __thiscall waveinitctor_default(void *object) {
     new (object) Wave();
 }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 }  // namespace
 

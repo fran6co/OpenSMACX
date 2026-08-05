@@ -84,10 +84,6 @@ bool equivalent(const ScrollFixture &legacy, const ScrollFixture &source,
         legacy_result, source_result, legacy_trace, source_trace);
 }
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // GCC emits the correct ECX/stack ABI for these raw thiscall pointers but
 // warns because they are not C++ member-pointer types.
 typedef uint32_t (__thiscall *OriginalNoArg)(Scroll *);
@@ -99,9 +95,6 @@ typedef uint32_t (__thiscall *OriginalAxisInit)(
     Scroll *, int, int, int, Win *, int);
 typedef uint32_t (__thiscall *OriginalSprites)(
     Scroll *, Sprite *, Sprite *, Sprite *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 struct ScrollCloseButtonTrace {
     uint32_t calls;
@@ -114,10 +107,6 @@ struct ScrollCloseButtonTrace {
 Scroll *ScrollCloseTraceBase = nullptr;
 ScrollCloseButtonTrace ScrollCloseButtons = {};
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 uint32_t __thiscall trace_scroll_button_close(void *self) {
     const uint32_t call = ScrollCloseButtons.calls++;
     if (call >= ARRAYSIZE(ScrollCloseButtons.self_offsets)) {
@@ -136,9 +125,6 @@ uint32_t __thiscall trace_scroll_button_close(void *self) {
            sizeof(uint32_t));
     return 0xC1050000U ^ ScrollCloseButtons.self_offsets[call];
 }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 void prepare_close_fixture(ScrollFixture &fixture, uintptr_t *win_vtable,
                            uintptr_t *left_vtable,

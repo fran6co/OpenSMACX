@@ -64,9 +64,6 @@ void BaseButton::construct() {
     object[0xA98 / 4] = dynamic[1];
     object[0xAA4 / 4] = 0;
     object[0xAA0 / 4] = fixed[4];
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 BaseButton *__fastcall base_button_construct_redirect(
@@ -371,15 +368,8 @@ void __fastcall base_button_set_text_color3_redirect(
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_button_refresh_slot)(void *);
 typedef void(__thiscall func_parent_notify_slot)(void *, int, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // Both dispatches read the live vtable of whatever object is actually there
 // rather than going through a C++ virtual call, so no table this toolchain
@@ -469,15 +459,8 @@ void __fastcall base_button_on_key_up_redirect(
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef uint32_t(__thiscall func_button_init_close_slot)(void *);
 typedef void(__thiscall func_button_init_show_slot)(void *, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // Both dispatches read the live vtable of whatever object is actually there
 // rather than going through a C++ virtual call, so a FlatButton entering this

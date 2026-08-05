@@ -23,9 +23,6 @@
 class DLLEXPORT Random {
  public:
   Random() : seed_(0) {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
   } // 00625730
   ~Random() {
     *reinterpret_cast<uint32_t volatile *>(&seed_) = 0;

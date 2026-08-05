@@ -12,10 +12,6 @@
 // Several of these fixtures are __thiscall free functions, which GCC warns
 // about on every translation unit that reads this header.  The original file
 // silenced the same warning around the same declarations.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 
 extern LPSTR filefind_get_result;
 
@@ -354,8 +350,5 @@ extern int g_tex_free_calls;
 
 void *observe_texture_free(void *p);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 #endif  // OPENSMACX_TESTS_LEAF_LEAF_SHARED_H

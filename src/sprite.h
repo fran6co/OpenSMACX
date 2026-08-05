@@ -74,17 +74,10 @@ int __fastcall sprite_draw_redirect(
 extern int *SpriteDrawOriginX;
 extern int *SpriteDrawOriginY;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The four-argument overload this one wraps is a 3225-byte body with eleven
 // call targets, still an original dependency. Tests rebind this seam.
 typedef int(__thiscall func_sprite_draw_original)(
     Sprite *, Buffer *, int, int, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_sprite_draw_original *SpriteDrawOriginal;
 
 int __fastcall sprite_unk1_redirect(

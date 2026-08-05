@@ -34,14 +34,7 @@ constexpr size_t TraceOffsets[] = {
     0x134, 0x138, 0x9CC, 0xA08, 0xA0C, 0xA10,
 };
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef uint32_t(__thiscall *OriginalNoArg)(GraphicWin *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 struct FakeReleaseObject {
     uintptr_t *vtable;
@@ -51,19 +44,12 @@ int ReleaseCalls = 0;
 void *ReleaseTarget = nullptr;
 uint32_t ReleaseFlags = 0;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 uint32_t __thiscall recording_release(void *target, uint32_t flags) {
     ++ReleaseCalls;
     ReleaseTarget = target;
     ReleaseFlags = flags;
     return 0x7B3D19E5U;
 }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 void write_field(GraphicWinFixture &fixture, size_t offset, uint32_t value) {
     memcpy(fixture.storage + runtime_oracle::CanarySize + offset,

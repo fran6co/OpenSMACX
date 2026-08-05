@@ -197,10 +197,6 @@ int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect);
 
 int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The four-argument line primitives at 0x005E1A80 (hline) and 0x005E1BF0
 // (vline) are clipped pixel writers, still original dependencies. The
 // recovered box outline reaches them through these seams; tests rebind them.
@@ -208,31 +204,17 @@ int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
 // deliberately discards - the original zeroes EAX after the last call
 // (`xor eax, eax` at 0x005E327A).
 typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_buffer_line *BufferHLine;
 extern func_buffer_line *BufferVLine;
 
 int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
                                    int color1, int color2);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The measured overload this one wraps is a 578-byte body with three call
 // targets, still an original dependency. Tests rebind this seam.
 typedef int(__thiscall func_buffer_text_width_measured)(Buffer *, LPSTR, size_t);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_buffer_text_width_measured *BufferTextWidthMeasured;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // The 835-byte multi-font raster writer at 0x005DCAE0 is the real glyph
 // emitter behind every length-limited text entry point, and is still an
 // original dependency. All four recovered writers reach it through this seam;
@@ -242,9 +224,6 @@ extern func_buffer_text_width_measured *BufferTextWidthMeasured;
 // they emit nothing.
 typedef int(__thiscall func_buffer_write_multi_font_raw_l)(Buffer *, LPSTR,
                                                            int, int, int);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_buffer_write_multi_font_raw_l *BufferWriteMultiFontRawL;
 
 int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,

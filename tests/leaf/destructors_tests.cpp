@@ -32,13 +32,6 @@ uint32_t __fastcall scroll_dtor_right_vclose(void *self, void *) {
     return 0;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall scroll_dtor_win_close(void *self) {
     scroll_dtor_record(3, self);
@@ -56,11 +49,6 @@ void __thiscall scroll_dtor_win_destructor(void *self) {
     scroll_dtor_record(6, self);
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 void *scroll_dtor_free_probe(void *block) {
     scroll_dtor_record(7, block);

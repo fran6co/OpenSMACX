@@ -497,28 +497,6 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
     }
 }
 
-#ifdef __GNUC__
-__attribute__((naked)) void scenario_human_turn_trampoline() {
-    __asm__ __volatile__(
-        "movl %edi, 0x23d24(%esi)\n\t"
-        "pushfl\n\t"
-        "pushal\n\t"
-        "pushl %esi\n\t"
-        "call _scenario_human_turn_ready\n\t"
-        "addl $4, %esp\n\t"
-        "cmpl $0, _ScenarioTrampolineAction\n\t"
-        "jne 1f\n\t"
-        "popal\n\t"
-        "popfl\n\t"
-        "pushl $0x0051418f\n\t"
-        "ret\n\t"
-        "1:\n\t"
-        "popal\n\t"
-        "popfl\n\t"
-        "pushl $0x005147b9\n\t"
-        "ret\n\t");
-}
-#else
 __declspec(naked) void scenario_human_turn_trampoline() {
     __asm {
         mov dword ptr [esi + 023D24h], edi
@@ -540,31 +518,7 @@ __declspec(naked) void scenario_human_turn_trampoline() {
         ret
     }
 }
-#endif
 
-#ifdef __GNUC__
-__attribute__((naked)) void scenario_turn_advance_trampoline() {
-    __asm__ __volatile__(
-        "pushfl\n\t"
-        "pushal\n\t"
-        "pushl 4(%ebp)\n\t"
-        "call _scenario_turn_advanced\n\t"
-        "addl $4, %esp\n\t"
-        "cmpl $0, _ScenarioTurnAdvanceAction\n\t"
-        "jne 1f\n\t"
-        "popal\n\t"
-        "popfl\n\t"
-        "pushl $0x00525af9\n\t"
-        "pushl $0x0046fb10\n\t"
-        "ret\n\t"
-        "1:\n\t"
-        "popal\n\t"
-        "popfl\n\t"
-        "movl $0x005282ce, 4(%ebp)\n\t"
-        "pushl $0x00526026\n\t"
-        "ret\n\t");
-}
-#else
 __declspec(naked) void scenario_turn_advance_trampoline() {
     __asm {
         pushfd
@@ -587,7 +541,6 @@ __declspec(naked) void scenario_turn_advance_trampoline() {
         ret
     }
 }
-#endif
 
 int __cdecl scenario_top_menu(int mode) {
     if (!configure_scenario()) {

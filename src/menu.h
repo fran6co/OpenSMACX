@@ -41,16 +41,9 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
  /*
   * Menu class
   */
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // Slot 0xF8 of the Menu's OWN vtable: the repaint the flag operations end on.
 // It takes no arguments and its result is discarded.
 typedef void(__thiscall func_menu_repaint)(void *self);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 class DLLEXPORT Menu : GraphicWin {
  public:

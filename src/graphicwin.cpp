@@ -26,10 +26,6 @@
 const uint32_t GraphicWinPrimaryVtable = 0x0066FC50;
 const uint32_t GraphicWinBufferVtable = 0x0066FC48;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 void __thiscall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
     // the original body at 0x005D7410.
@@ -39,9 +35,6 @@ void __thiscall buffer_subobject_destructor(void *self) {
 void __thiscall buffer_subobject_close(void *self) {
     reinterpret_cast<Buffer *>(self)->close();
 }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 func_subobject_destructor *BufferSubobjectDestructor = &buffer_subobject_destructor;
 func_subobject_destructor *WinOriginalDestructor =
@@ -75,9 +68,6 @@ void GraphicWin::construct() {
         object[offset / 4] = 0;
     }
     object[0xA0C / 4] = *GraphicWinFieldA0CDefault;
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 GraphicWin *__fastcall graphic_win_construct_redirect(
@@ -112,15 +102,8 @@ int graphic_win_destructor_probe_order() { return Probe.order; }
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef uint32_t(__thiscall *func_scalar_deleting_destructor)(
     void *, uint32_t);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 }  // namespace
 
@@ -237,18 +220,11 @@ int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
     return self->fill(x1, y1, x2, y2, color);
 }
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // Slot 0xF4 on the parent's vtable. The stock body at 0x004042B0 is
 // `mov eax, ecx; ret`, so a non-null parent answers with itself.
 typedef void *(__thiscall func_graphic_win_parent_query)(void *);
 // Virtual slot 0x30, the window's own paint.
 typedef void(__thiscall func_graphic_win_paint)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 func_graphic_win_buffer_fill_color *BufferOriginalFillColor =
     (func_graphic_win_buffer_fill_color *)0x005DFB50;

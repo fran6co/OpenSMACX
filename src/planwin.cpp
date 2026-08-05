@@ -62,14 +62,7 @@ namespace {
 // blink dispatches through the virtual base's own vtable rather than a C++
 // virtual call, so no vtable this toolchain lays out can disagree with the
 // original's. Slot 0x30 is read from whatever object is actually there.
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_base_vtable_slot)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 constexpr size_t PlanWinBlinkSlot = 0x30;
 

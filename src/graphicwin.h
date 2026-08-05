@@ -71,15 +71,8 @@ int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
 static_assert(sizeof(GraphicWin) == 0xA14,
               "GraphicWin layout must match the legacy ABI");
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef void(__thiscall func_subobject_destructor)(void *);
 typedef void(__thiscall func_subobject_close)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // The Buffer subobject destructor is source-owned; the seam stays bindable so
 // tests outside the hybrid process can substitute it. The Win subobject
@@ -116,10 +109,6 @@ void *graphic_win_destructor_probe_buffer_target();
 void *graphic_win_destructor_probe_win_target();
 int graphic_win_destructor_probe_order();
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // Buffer::fill(int) at 0x005DFB50 (ret 4) paints the whole surface in one
 // colour; Buffer::map_colors at 0x005DA330 (ret 0x14) remaps a region through
 // a translation table. Both are still original bodies. The fill's extents are
@@ -131,9 +120,6 @@ typedef int(__thiscall func_graphic_win_map_colors)(void *, int, int, int, int,
                                                     void *);
 // GraphicWin::overlay_nonclient 0x005D6AC0 (ret 4) repaints the frame.
 typedef void(__thiscall func_graphic_win_overlay_nonclient)(void *, RECT *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_graphic_win_buffer_fill_color *BufferOriginalFillColor;
 extern func_graphic_win_map_colors *BufferOriginalMapColors;
 extern func_graphic_win_overlay_nonclient *GraphicWinOverlayNonclient;
@@ -156,10 +142,6 @@ void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
                                                 int color);
 void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *);
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 // GraphicWin::init's four remaining original dependencies. Win::init at
 // 0x005EBD80 (ret 0x24) is the 2285-byte window-creation body,
 // GraphicWin::compute_min_size at 0x005D7030 (bare ret) is 272 bytes of frame
@@ -171,9 +153,6 @@ typedef int(__thiscall func_win_init)(void *, int, int, int, int, LPSTR, int,
 typedef void(__thiscall func_graphic_win_compute_min_size)(void *);
 typedef void(__thiscall func_win_nonclient_to_client)(void *, int *, int *);
 typedef int(__thiscall func_buffer_init)(void *, int, int, int, void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 extern func_win_init *WinOriginalInit;
 extern func_graphic_win_compute_min_size *GraphicWinOriginalComputeMinSize;
 extern func_win_nonclient_to_client *WinOriginalNonclientToClient;

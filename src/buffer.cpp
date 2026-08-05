@@ -128,9 +128,6 @@ void Buffer::construct() {
             entry += 4;
         }
     }
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__("" : : "a"(this) : "memory");
-#endif
 }
 
 Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
@@ -262,15 +259,8 @@ void __cdecl buffer_close_class_redirect() {
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef long(__stdcall *func_surface_lock)(void *, void *, void *, uint32_t, void *);
 typedef long(__stdcall *func_surface_unlock)(void *, void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 // DDSURFACEDESC fields the lock path consumes.
 constexpr size_t SurfaceDescriptorSize = 0x6C;
@@ -394,10 +384,6 @@ func_sprite_free *BufferFree = (func_sprite_free *)0x00644EF2;
 
 namespace {
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
 typedef long(__stdcall *func_surface_unlock_slot)(void *, void *);
 typedef long(__stdcall *func_surface_get_dc_slot)(void *, void *);
 typedef long(__stdcall *func_clipper_set_list_slot)(void *, void *, unsigned long);
@@ -405,9 +391,6 @@ typedef long(__stdcall *func_surface_set_clipper_slot)(void *, void *);
 typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
 typedef unsigned long(__stdcall *func_com_release)(void *);
 typedef void(__thiscall *func_buffer_virtual)(void *);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 constexpr size_t OwnedAllocationBase = 0x4BC;
 constexpr size_t OwnedAllocationCount = 20;

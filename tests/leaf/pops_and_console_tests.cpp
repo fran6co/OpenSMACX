@@ -2314,13 +2314,6 @@ void *g_focus_cursor_installs;
 
 void **g_focus_table_slot0;
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wattributes"
-
-#endif
 
 void __thiscall focus_stub_cursor_next(void *console, int x, int y) {
     ++g_focus_rec.cursor_calls;
@@ -2358,11 +2351,6 @@ void __cdecl focus_stub_flush_input(void) {
     g_focus_rec.sequence = g_focus_rec.sequence * 16 + 4;
 }
 
-#if defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
 
 // A MapWin stand-in reaching only as far as the two dwords focus reads.
 constexpr size_t FocusWindowBytes = 0x1DD80;
