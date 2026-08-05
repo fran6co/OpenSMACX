@@ -532,7 +532,7 @@ DLLEXPORT void __cdecl name_base(uint32_t faction_id, LPSTR name_out, BOOL is_fi
 DLLEXPORT void __cdecl base_mark(int base_id);
 DLLEXPORT int __cdecl cost_factor(int faction_id, int rsc_type, int base_id);
 DLLEXPORT int __cdecl base_making(int production_id, int base_id);
-DLLEXPORT int __cdecl base_lose_minerals(int base_id, int production_id);
+DLLEXPORT int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id) production_id);
 DLLEXPORT void __cdecl set_fac(int facility_id, int base_id, BOOL set);
 DLLEXPORT BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id);
 DLLEXPORT void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set);
@@ -573,7 +573,7 @@ DLLEXPORT int __cdecl vulnerable(int faction_id, int x, int y);
 DLLEXPORT BOOL __cdecl is_objective(int base_id);
 DLLEXPORT int __cdecl num_objectives(int faction_id, BOOL count_pact_factions);
 DLLEXPORT BOOL __cdecl transcending(int faction_id);
-DLLEXPORT BOOL __cdecl ascending(int faction_id);
+DLLEXPORT BOOL __cdecl ascending(int UNUSED(faction_id) faction_id);
 DLLEXPORT BOOL __cdecl redundant(int facility_id, int faction_id);
 DLLEXPORT BOOL __cdecl facility_avail(uint32_t facility_id, uint32_t faction_id, int base_id,
                                       int queue_count);

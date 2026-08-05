@@ -45,7 +45,7 @@ class DLLEXPORT Time {
   // eventually make atomic for thread safety
   static Time *TimeModal;
   static int TimeInitCount;
-  static void TimerProc(HWND hwnd, uint32_t msg, UINT_PTR id_timer, DWORD elapsed);
+  static void TimerProc(HWND UNUSED(hwnd) hwnd, uint32_t msg, UINT_PTR id_timer, DWORD elapsed);
   static void MultimediaProc(uint32_t timer_id, uint32_t msg, DWORD_PTR dw_user, DWORD_PTR dw1,
                              DWORD_PTR dw2);
   static int __cdecl init_class();  // 00616880
