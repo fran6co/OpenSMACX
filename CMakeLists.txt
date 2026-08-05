@@ -1051,6 +1051,21 @@ if(BUILD_TESTING)
     # mismatch into a match, and they run everywhere.
     opensmacx_add_python_tool_test(msvc6-byte-match-tests test_msvc6_byte_match.py)
 
+    # The general oracle the experiment was extracted into. Same reasoning, and
+    # one addition: it pins that the SHAPE_EXACT tier can actually FIRE. Its
+    # first draft kept non-relocated immediates, which made it nearly redundant
+    # with BYTE_EXACT and therefore almost unable to fire at all - a tier that
+    # never fires is indistinguishable from one that cannot.
+    opensmacx_add_python_tool_test(byte-match-tests test_byte_match.py)
+
+    # Exact matches are kept in a committed ledger and may rise but never fall.
+    # This check is compiler-free: it reads the ledger and the checked-in floor,
+    # so CI can enforce the result even though the VC6 recompile oracle itself
+    # is local-only. Similarity tiers are diagnostics and do not advance it.
+    add_test(NAME byte-match-ratchet
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/byte_match_fanout.py" --check)
+
     # The writeback is the only tool in this tree that edits src/ from a line
     # number, and every way its splice can go wrong leaves a file that still
     # looks right in review: a swallowed doc comment, an orphaned brace, a
