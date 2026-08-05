@@ -35,7 +35,7 @@ Original Offset: 004C51A0
 Return Value: 0, always
 Status: Complete
 */
-int Wave_Device::fade(int) {
+int Wave_Device::fade(uint32_t) {
     return 0;
 }
 

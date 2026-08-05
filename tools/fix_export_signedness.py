@@ -86,19 +86,32 @@ def split_params(text: str) -> list:
     return out
 
 
-def retype(param: str, want_pointer: bool) -> str:
-    """Rewrite one parameter's type to signed, or refuse."""
-    for spelling in UNSIGNED:
-        # Match the type as a whole word so `uint32_t*` and `uint32_t x` both hit
-        # and a name containing the spelling does not.
+SIGNED_SPELLINGS = ("int32_t", "signed int", "int")
+UNSIGNED_SPELLINGS = ("uint32_t", "unsigned int", "unsigned long", "unsigned", "uint")
+
+
+def retype(param: str, want: str = "signed") -> str:
+    """Rewrite one parameter's type to the wanted signedness, or refuse.
+
+    Direction matters. The export audit only ever reported unsigned recoveries
+    of signed originals, so the first version could only widen that way. The
+    corpus-wide audit finds 35 argument corrections running the OTHER way -
+    ?fade@Wave_Device@@QAEHI@Z and ?load@Wave@@QAEHPADK@Z take unsigned in the
+    binary and int in the recovery - and fixing only one direction would leave
+    those permanently wrong.
+    """
+    have = UNSIGNED_SPELLINGS if want == "signed" else SIGNED_SPELLINGS
+    replacement = SIGNED if want == "signed" else "uint32_t"
+    for spelling in have:
         pattern = rf"(^|[^A-Za-z0-9_]){re.escape(spelling)}(?![A-Za-z0-9_])"
         if re.search(pattern, param):
-            return re.sub(pattern, rf"\g<1>{SIGNED}", param, count=1)
-    raise Refused(f"no unsigned spelling in parameter {param.strip()!r}")
+            return re.sub(pattern, rf"\g<1>{replacement}", param, count=1)
+    raise Refused(f"no {'unsigned' if want == 'signed' else 'signed'} spelling "
+                  f"in parameter {param.strip()!r}")
 
 
-def rewrite_signature(line: str, indices: list, want_return: bool) -> str:
-    """Rewrite the flagged parameters (and optionally the return type) of one signature."""
+def rewrite_signature(line: str, wants: dict, want_return: str | None) -> str:
+    """Rewrite the flagged parameters (and optionally the return type)."""
     open_paren = line.find("(")
     close_paren = line.rfind(")")
     if open_paren == -1 or close_paren == -1 or close_paren < open_paren:
@@ -109,13 +122,23 @@ def rewrite_signature(line: str, indices: list, want_return: bool) -> str:
     if params and params[0].strip() in ("void", ""):
         params = []
 
-    for index in indices:
-        if index >= len(params):
-            raise Refused(f"argument {index} beyond the {len(params)} parameters declared")
-        params[index] = retype(params[index], want_pointer=False)
+    # A __thiscall method's catalogued body is its __fastcall redirect, which
+    # spells out `self` and the empty slot. The audit strips that pair before
+    # comparing, so its indices are two short of the source's.
+    offset = 0
+    if "__fastcall" in line and len(params) >= 2:
+        first, second = params[0].replace(" ", ""), params[1].replace(" ", "")
+        if first in ("void*", "void*self") and second == "void*":
+            offset = 2
+
+    for index, want in sorted(wants.items()):
+        position = index + offset
+        if position >= len(params):
+            raise Refused(f"argument {index} beyond the {len(params) - offset} parameters declared")
+        params[position] = retype(params[position], want)
 
     if want_return:
-        head = retype(head, want_pointer=False)
+        head = retype(head, want_return)
 
     return head + "(" + ",".join(params) + tail
 
@@ -192,14 +215,12 @@ def declaration_line(name: str) -> tuple:
     return hits[0]
 
 
-def apply_finding(finding: dict, want_return: bool, dry_run: bool) -> str:
-    name = demangled_name(finding["original"])
-    indices = [a["index"] for a in finding["arguments"]]
+def apply_finding(finding: dict, dry_run: bool) -> str:
+    """finding: {address, name (decorated), wants {index: signedness}, want_return}."""
+    name = demangled_name(finding["name"])
     address = int(finding["address"], 16)
 
-    targets = []
-    path, index = definition_line(address)
-    targets.append((path, index))
+    targets = [definition_line(address)]
     try:
         targets.append(declaration_line(name))
     except Refused:
@@ -209,7 +230,8 @@ def apply_finding(finding: dict, want_return: bool, dry_run: bool) -> str:
     for path, index in targets:
         lines = path.read_text().splitlines()
         try:
-            rewritten = rewrite_signature(lines[index], indices, want_return)
+            rewritten = rewrite_signature(lines[index], finding["wants"],
+                                          finding.get("want_return"))
         except Refused as error:
             raise Refused(f"{path.name}:{index + 1}: {error}")
         if rewritten == lines[index]:
@@ -220,34 +242,71 @@ def apply_finding(finding: dict, want_return: bool, dry_run: bool) -> str:
         changed.append(f"{path.name}:{index + 1}")
 
     if not changed:
-        raise Refused("signature already signed, or no textual change needed")
+        raise Refused("signature already agrees, or no textual change needed")
     return ", ".join(changed)
+
+
+def _wide_findings() -> list:
+    """Normalise audit_recovered_signatures output, which covers 85% not 12%."""
+    import audit_recovered_signatures as wide
+    from mizuchi_declfix import decode_signature
+
+    compared, findings, _ = wide.audit(wide.FUNCTIONS)
+    out = []
+    for finding in findings:
+        wants = {}
+        for argument in finding["arguments"]:
+            sign = wide.signedness(argument["original"])
+            if sign:
+                wants[argument["index"]] = sign
+        if not wants:
+            continue
+        # The audit reports arguments only; the return type is read here.
+        want_return = None
+        decoded = decode_signature(finding["name"])
+        signature = wide.definition_signature(finding["location"])
+        if decoded and signature:
+            want = wide.signedness(decoded[0])
+            head = signature[:signature.find("(")]
+            got = wide.signedness(head.split()[-2] if len(head.split()) > 1 else "")
+            if want and got and want != got:
+                want_return = want
+        out.append({"address": finding["address"], "name": finding["name"],
+                    "wants": wants, "want_return": want_return})
+    return compared, out
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--wide", action="store_true",
+                        help="use audit_recovered_signatures (85% coverage, both directions)")
     parser.add_argument("--limit", type=int, default=0)
     arguments = parser.parse_args()
 
-    compared, findings = audit.audit(audit.DEFAULT_FUNCTIONS, audit.DEFAULT_DEF,
-                                     audit.DEFAULT_EXE)
-    print(f"{compared} exports compared, {len(findings)} disagreements")
+    if arguments.wide:
+        compared, findings = _wide_findings()
+    else:
+        compared, raw = audit.audit(audit.DEFAULT_FUNCTIONS, audit.DEFAULT_DEF,
+                                    audit.DEFAULT_EXE)
+        findings = [{"address": f["address"], "name": f["original"],
+                     "wants": {a["index"]: "signed" for a in f["arguments"]},
+                     "want_return": "signed" if _return_differs(f["original"], f["alias"]) else None}
+                    for f in raw]
+    print(f"{compared} signatures compared, {len(findings)} disagreements")
     if arguments.limit:
         findings = findings[:arguments.limit]
 
     applied, refused = 0, []
     for finding in findings:
-        original, alias = finding["original"], finding["alias"]
-        want_return = _return_differs(original, alias)
         try:
-            where = apply_finding(finding, want_return, arguments.dry_run)
+            where = apply_finding(finding, arguments.dry_run)
         except Refused as error:
-            refused.append(f"{original}: {error}")
+            refused.append(f"{finding['name']}: {error}")
             continue
         applied += 1
-        print(f"  {'would fix' if arguments.dry_run else 'fixed'} {demangled_name(original):32s} {where}")
+        print(f"  {'would fix' if arguments.dry_run else 'fixed'} {demangled_name(finding['name']):32s} {where}")
 
     print(f"\n{applied} corrected, {len(refused)} refused")
     for line in refused[:20]:

@@ -135,7 +135,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
  Return Value: TBD
  Status: WIP
 */
-int Path::move(uint32_t veh_id, int faction_id) {
+int Path::move(int veh_id, int faction_id) {
     int veh_faction_id = Vehs[veh_id].faction_id;
     uint32_t flags = 0xC0;
     if (veh_faction_id != faction_id_) {
@@ -397,7 +397,7 @@ void Path::continents() {
  Return Value: true/false
  Status: Complete - testing
 */
-BOOL Path::sensors(uint32_t faction_id, int *x_sensor, int *y_sensor) {
+BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     BOOL has_sensor = true;
     ZeroMemory(map_table_, *MapArea * 4);
     x_dst_ = -1;

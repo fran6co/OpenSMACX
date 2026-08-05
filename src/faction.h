@@ -559,8 +559,8 @@ DLLEXPORT BOOL __cdecl is_alive(uint32_t faction_id);
 DLLEXPORT void __cdecl psych_check(int faction_id, int *drones, int *talents);
 DLLEXPORT uint32_t __cdecl has_treaty(uint32_t faction_id, uint32_t faction_id_with, 
                                       uint32_t treaties);
-DLLEXPORT LPSTR __cdecl get_adjective(uint32_t faction_id);
-DLLEXPORT LPSTR __cdecl get_noun(uint32_t faction_id);
+DLLEXPORT LPSTR __cdecl get_adjective(int faction_id);
+DLLEXPORT LPSTR __cdecl get_noun(int faction_id);
 DLLEXPORT BOOL __cdecl auto_contact();
 DLLEXPORT BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive);
 DLLEXPORT BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive);
@@ -599,9 +599,9 @@ DLLEXPORT void __cdecl compute_faction_modifiers(int faction_id);
 DLLEXPORT void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, 
                                    uint32_t faction_id, BOOL toggle, BOOL is_quick_calc);
 DLLEXPORT void __cdecl social_upkeep(int faction_id);
-DLLEXPORT uint32_t __cdecl social_upheaval(uint32_t faction_id, SocialCategory *category_new);
+DLLEXPORT uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new);
 DLLEXPORT BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 DLLEXPORT void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int wealth_val, 
                                  int power_val, SocialCategory *output);
-DLLEXPORT void __cdecl enemy_capabilities(uint32_t faction_id);
+DLLEXPORT void __cdecl enemy_capabilities(int faction_id);
 DLLEXPORT void __cdecl enemy_capabilities_t(uint32_t faction_id);

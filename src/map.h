@@ -333,7 +333,7 @@ DLLEXPORT void __cdecl region_set(int x, int y, uint8_t region);
 DLLEXPORT uint32_t __cdecl using_at(uint32_t x, uint32_t y);
 DLLEXPORT void __cdecl using_set(int x, int y, int faction_id);
 DLLEXPORT uint32_t __cdecl lock_at(uint32_t x, uint32_t y);
-DLLEXPORT void __cdecl lock_set(uint32_t x, uint32_t y, uint32_t faction_id);
+DLLEXPORT void __cdecl lock_set(int x, int y, int faction_id);
 DLLEXPORT BOOL __cdecl lock_map(int x, int y, int faction_id);
 DLLEXPORT void __cdecl unlock_map(int x, int y, int faction_id);
 DLLEXPORT uint32_t __cdecl rocky_at(uint32_t x, uint32_t y);
@@ -368,7 +368,7 @@ DLLEXPORT BOOL __cdecl map_init();
 DLLEXPORT void __cdecl map_wipe();
 DLLEXPORT BOOL __cdecl map_write(FILE *map_file);
 DLLEXPORT BOOL __cdecl map_read(FILE *map_file);
-DLLEXPORT uint8_t __cdecl abstract_at(uint32_t x, uint32_t y);
+DLLEXPORT uint8_t __cdecl abstract_at(int x, int y);
 DLLEXPORT void __cdecl abstract_set(int x, int y, uint8_t region);
 DLLEXPORT void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int x_dst,
                                  int y_dst, int *x_zoc, int *y_zoc);
@@ -382,8 +382,8 @@ DLLEXPORT void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_bot
 DLLEXPORT void __cdecl world_raise_alt(int x, int y);
 DLLEXPORT void __cdecl world_lower_alt(int x, int y);
 DLLEXPORT void __cdecl brush(int x, int y, int altitude);
-DLLEXPORT void __cdecl paint_land(int x, int y, uint32_t altitude, uint32_t radius);
-DLLEXPORT void __cdecl build_continent(uint32_t size);
+DLLEXPORT void __cdecl paint_land(int x, int y, int altitude, int radius);
+DLLEXPORT void __cdecl build_continent(int size);
 DLLEXPORT void __cdecl build_hills(int altitude);
 DLLEXPORT void __cdecl world_riverbeds();
 DLLEXPORT BOOL __cdecl world_validate();

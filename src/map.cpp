@@ -695,7 +695,7 @@ Original Offset: 00591C50
 Return Value: n/a
 Status: Complete
 */
-void __cdecl lock_set(uint32_t x, uint32_t y, uint32_t faction_id) {
+void __cdecl lock_set(int x, int y, int faction_id) {
     Map *tile = map_loc(x, y);
     tile->val3 &= 0xC7;
     tile->val3 |= (faction_id & 7) << 3;
@@ -1312,7 +1312,7 @@ Original Offset: 00591210
 Return Value: Abstract value (region)
 Status: Complete
 */
-uint8_t __cdecl abstract_at(uint32_t x, uint32_t y) {
+uint8_t __cdecl abstract_at(int x, int y) {
     return (*MapAbstract)[(x >> 1) + y * (*MapAbstractLongBounds >> 1)];
 }
 
@@ -1774,7 +1774,7 @@ Original Offset: 005C27F0
 Return Value: n/a
 Status: Complete - testing
 */
-void __cdecl paint_land(int x, int y, uint32_t altitude, uint32_t radius) {
+void __cdecl paint_land(int x, int y, int altitude, int radius) {
     *BrushVal2 = 0;
     for (int i = 0; i < 2000 && *BrushVal2 < radius; i++) {
         int search = -1;
@@ -1805,7 +1805,7 @@ Original Offset: 005C28F0
 Return Value: n/a
 Status: Complete - testing
 */
-void __cdecl build_continent(uint32_t size) {
+void __cdecl build_continent(int size) {
     for (uint32_t i = 0; i < *MapArea; i++) {
         (*MapTiles)[i].region = 0;
     }

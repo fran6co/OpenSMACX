@@ -120,7 +120,7 @@ Original Offset: 0050B910
 Return Value: Faction name adjective
 Status: Complete
 */
-LPSTR __cdecl get_adjective(uint32_t faction_id) {
+LPSTR __cdecl get_adjective(int faction_id) {
     return Players[faction_id].adj_name_faction;
 }
 
@@ -130,7 +130,7 @@ Original Offset: 0050B930
 Return Value: Faction noun
 Status: Complete
 */
-LPSTR __cdecl get_noun(uint32_t faction_id) {
+LPSTR __cdecl get_noun(int faction_id) {
     parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     return Players[faction_id].noun_faction;
 }
@@ -590,7 +590,7 @@ Original Offset: 0055BC80
 Return Value: Does the faction want to attack target? true/false
 Status: Complete - testing
 */
-BOOL __cdecl wants_to_attack(uint32_t faction_id, uint32_t faction_id_tgt, int faction_id_unk) {
+BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_unk) {
     uint32_t peace_faction_id = 0;
     BOOL unk_tgl = false;
     if (Players[faction_id].rule_flags & RFLAG_ALIEN
@@ -1579,7 +1579,7 @@ Original Offset: 005B4550
 Return Value: Social upheaval cost
 Status: Complete
 */
-uint32_t __cdecl social_upheaval(uint32_t faction_id, SocialCategory *category_new) {
+uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
     uint32_t change_count = 0;
     for (int i = 0; i < MaxSocialCatNum; i++) {
         if (*(&category_new->politics + i) != 
@@ -2145,7 +2145,7 @@ Original Offset: 00560DD0
 Return Value: n/a
 Status: Complete - testing / WIP
 */
-void __cdecl enemy_capabilities(uint32_t faction_id) {
+void __cdecl enemy_capabilities(int faction_id) {
     BOOL has_worms = veh_avail(BSC_MIND_WORMS, faction_id, -1);
     PlayersData[faction_id].best_psi_offense = has_worms 
         ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
