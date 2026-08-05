@@ -14,7 +14,21 @@ global:
   maxRetries: 25
   outputDir: ./mizuchi/output
   promptsDir: ./mizuchi/prompts
-  nonMatchingAsmFolders: []
+  # Function -> target object map produced by tools/emit_target_object.py
+  symbolMapPath: build/target-objects/symbol-map.json
+  # Assembly dumps produced by tools/emit_asm_dumps.py (for the Atlas index)
+  nonMatchingAsmFolders:
+    - mizuchi/asm/nonmatching
+  # The matched-C scan resolves assembly through compiled objects this project
+  # does not have, so keep every C/C++ tree out of it; all functions enter the
+  # index through the assembly dumps above.
+  excludeFromScan:
+    - src
+    - tests
+    - tools
+    - build
+    - docs
+    - cmake
 
   # Scaffolding-only translation unit: class shells, callee declarations,
   # fixed-address globals, VCall shims. The submitted function definition is
