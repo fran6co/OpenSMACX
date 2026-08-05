@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import json
+import pathlib
+import tempfile
 import unittest
 from unittest import mock
 
@@ -102,6 +105,43 @@ class ReadRangeTest(unittest.TestCase):
         image = self.make_image(virtual=0x1000, raw=0x400, size=0x200)
         with self.assertRaises(ValueError):
             disasm.read_range(image, 0x00500000, 4)
+
+
+class SymbolMapResolutionTest(unittest.TestCase):
+    """A C++ symbol cannot be undecorated back into its catalogued name.
+
+    `?POP2@@YAHPBD0H@Z` is `?POP2@@YAHPBDPBDH@Z` with its back-references
+    compressed and `?init@AlphaMenu@@QAEHPAVWin@@@Z` is the same name with
+    the struct key the source declares. 221 of the 2,783 unrecovered rows
+    are in that state, and the context emitter refused every one of them
+    until `resolve` learned to read the symbol map.
+    """
+
+    def setUp(self):
+        self.functions = {0x00405140: {"address": "0x00405140", "size": "64",
+                                       "name": "?POP2@@YAHPBDPBDH@Z"}}
+        disasm.symbol_map.cache_clear()
+        self.addCleanup(disasm.symbol_map.cache_clear)
+
+    def test_a_symbol_resolves_through_the_map(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "symbol-map.json"
+            path.write_text(json.dumps(
+                {"?POP2@@YAHPBD0H@Z": "build/target-objects/00405140.obj"}))
+            with mock.patch.object(disasm, "SYMBOL_MAP", path):
+                address, _ = disasm.resolve("?POP2@@YAHPBD0H@Z",
+                                            self.functions)
+        self.assertEqual(0x00405140, address)
+
+    def test_the_catalogued_name_still_wins_without_a_map(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = pathlib.Path(tmp) / "absent.json"
+            with mock.patch.object(disasm, "SYMBOL_MAP", missing):
+                address, _ = disasm.resolve("?POP2@@YAHPBDPBDH@Z",
+                                            self.functions)
+                self.assertEqual(0x00405140, address)
+                with self.assertRaises(ValueError):
+                    disasm.resolve("?POP2@@YAHPBD0H@Z", self.functions)
 
 
 if __name__ == "__main__":
