@@ -319,7 +319,7 @@ Original Offset: 005010C0
 Return Value: Defense terrain value
 Status: Complete
 */
-uint32_t __cdecl defense_value(uint32_t faction_id, uint32_t x, uint32_t y, uint32_t veh_id_def, 
+uint32_t __cdecl defense_value(int faction_id, int x, int y, int veh_id_def, 
                                int veh_id_atk) {
     if (is_ocean(x, y) || base_who(x, y) >= 0) {
         return 2;
@@ -439,7 +439,7 @@ Original Offset: 005015B0
 Return Value: Basic offense
 Status: Complete
 */
-int __cdecl get_basic_offense(uint32_t veh_id_atk, int veh_id_def, uint32_t psi_combat_type, 
+int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_type, 
                               BOOL is_bombard, BOOL unk_tgl) { // art/duel related? Is off of def?
     uint32_t faction_id_atk = Vehs[veh_id_atk].faction_id;
     uint32_t proto_id_atk = Vehs[veh_id_atk].proto_id;
@@ -501,7 +501,7 @@ Original Offset: 00501940
 Return Value: Basic defense
 Status: Complete
 */
-int __cdecl get_basic_defense(uint32_t veh_id_def, int veh_id_atk, uint32_t psi_combat_type,
+int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_type,
                               BOOL is_bombard) {
     uint32_t faction_id_def = Vehs[veh_id_def].faction_id;
     uint32_t proto_id_def = Vehs[veh_id_def].proto_id;
@@ -1810,8 +1810,8 @@ Original Offset: 00593510
 Return Value: Movement cost
 Status: Complete
 */
-int __cdecl hex_cost(int proto_id, int faction_id, uint32_t x_src, uint32_t y_src, uint32_t x_dst,
-                     uint32_t y_dst, BOOL toggle) {
+int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_dst,
+                     int y_dst, BOOL toggle) {
     uint32_t bit_dst = bit_at(x_dst, y_dst);
     if (is_ocean(x_dst, y_dst)) {
         if (bit_dst & BIT_FUNGUS && altitude_at(x_dst, y_dst) == ALT_BIT_OCEAN_SHELF
@@ -1903,8 +1903,8 @@ Original Offset: 005A5A60
 Return Value: Cost of prototype
 Status: Complete
 */
-uint32_t __cdecl proto_cost(uint32_t chassis_id, uint32_t weapon_id, uint32_t armor_id, 
-                            uint32_t ability, uint32_t reactor_id) {
+uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id, 
+                            int ability, int reactor_id) {
     uint8_t weap_cost = Weapon[weapon_id].cost;
     // PB check: moved to start vs after 1st triad checks in original > no difference in logic
     if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
@@ -2034,8 +2034,8 @@ Original Offset: 005A5D40
 Return Value: n/a
 Status: Complete
 */
-void __cdecl make_proto(int proto_id, uint32_t chassis_id, uint32_t weapon_id, uint32_t armor_id, 
-                        uint32_t ability, uint32_t reactor_id) {
+void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_id, 
+                        int ability, int reactor_id) {
     int unk_local_1 = 0; // TODO: Identify
     if (proto_id >= MaxVehProtoFactionNum) {
         BOOL cond1 = false;

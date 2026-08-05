@@ -2133,8 +2133,8 @@ Original Offset: 0054CB50
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
-int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
-                          uint32_t overmatch_deg, BOOL tgl) {
+int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res, 
+                          int overmatch_deg, BOOL tgl) {
     if (base_id < 0) {
         return -1;
     }
@@ -2563,7 +2563,7 @@ Original Offset: 005BA0E0
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */
-BOOL __cdecl facility_avail(uint32_t facility_id, uint32_t faction_id, int base_id, 
+BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id, 
                             int queue_count) {
     // initial checks
     if (!facility_id || (facility_id == FAC_SKUNKWORKS && *DiffLevelCurrent <= DLVL_SPECIALIST)
