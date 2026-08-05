@@ -63,6 +63,11 @@ CRT_SIGNATURES = {
 
 USER_DEFINED_NAME = re.compile(r"[A-Za-z_]\w*")
 
+# `P6<conv>`: the convention a function-pointer type carries.
+FUNCTION_POINTER_CONVENTION = {"A": "__cdecl", "G": "__stdcall",
+                              "I": "__fastcall",
+                              "E": "__thiscall"}
+
 
 def _decode_type(text: str, index: int, seen: list | None = None):
     """One encoded type starting at `index`; returns (spelling, next index)
@@ -96,6 +101,38 @@ def _decode_type(text: str, index: int, seen: list | None = None):
         if not found or not text.startswith("@@", found.end()):
             return None, index
         return found.group(0), found.end() + 2
+    if char == "P" and text[index + 1:index + 2] == "6":
+        # A FUNCTION POINTER: `P6<conv><ret><args>@Z`. Returning None here
+        # made `decode_signature` give up on the WHOLE signature, so 15 rows
+        # that pass a callback kept the prototype's spelling of every OTHER
+        # argument - and the prototype writes `char *` where the name says
+        # `PBD`, a different symbol. They only surfaced once the units began
+        # compiling; before that they failed earlier and never got this far.
+        convention = FUNCTION_POINTER_CONVENTION.get(text[index + 2:index + 3])
+        if convention is None:
+            return None, index
+        inner = index + 3
+        returns, inner = _decode_type(text, inner, None)
+        if returns is None:
+            return None, index
+        # A nested argument list keeps its own back-reference table.
+        params, nested = [], []
+        while inner < len(text) and text[inner] != "@":
+            if text[inner] == "X" and text[inner + 1:inner + 2] in ("@", "Z"):
+                inner += 1
+                break                        # (void)
+            start = inner
+            param, inner = _decode_type(text, inner, nested)
+            if param is None:
+                return None, index
+            if inner - start > 1 and len(nested) < 10:
+                nested.append(param)
+            params.append(param)
+        if text[inner:inner + 1] == "@":
+            inner += 1
+        if text[inner:inner + 1] != "Z":
+            return None, index
+        return f"{returns} ({convention} *)({', '.join(params)})", inner + 1
     if char in "PQA":
         # Pointer (P/Q) or reference (A), a CV code, then the pointee. `B` is
         # the const one, and dropping it emitted `char *` where the target
@@ -115,7 +152,7 @@ def _decode_type(text: str, index: int, seen: list | None = None):
         # that takes a const pointer, which pairs with neither.
         indirection = {"A": "&", "Q": "*const"}.get(char, "*")
         return f"{const}{base} {indirection}", next_index
-    # Function pointers (P6), member pointers, templates: still out of scope.
+    # Member pointers and templates: still out of scope.
     return None, index
 
 

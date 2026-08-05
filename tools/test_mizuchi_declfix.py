@@ -64,6 +64,22 @@ class DecodeSignatureTest(unittest.TestCase):
         self.assertEqual(("int", ["Palette *const"]),
                          decode_signature("?__as@Palette@@QAEHQAUPalette@@@Z"))
 
+    def test_a_function_pointer_parameter_decodes(self):
+        # Giving up on this returned None for the WHOLE signature, so every
+        # OTHER argument kept the prototype's spelling - `char *` where the
+        # name says `PBD`, which is a different symbol. 15 rows.
+        self.assertEqual(
+            ("int", ["const char *", "const char *", "int (__cdecl *)()"]),
+            decode_signature("?popp@@YAHPBDPBDP6AHXZ@Z"))
+
+    def test_a_function_pointer_keeps_its_own_convention_and_arguments(self):
+        self.assertEqual(
+            ("void", ["void (__cdecl *)(char *)", "int"]),
+            decode_signature("?tech_heck@@YAXP6AXPAD@ZH@Z"))
+        self.assertEqual(
+            ("void", ["int (__stdcall *)(char *, char *)", "int"]),
+            decode_signature("?f@@YAXP6GHPAD0@ZH@Z"))
+
     def test_a_back_reference_repeats_the_earlier_argument(self):
         self.assertEqual(("int", ["const char *", "const char *", "int"]),
                          decode_signature("?POP2@@YAHPBD0H@Z"))

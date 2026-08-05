@@ -104,6 +104,9 @@ BUILTIN = {
     # `struct int8;` and then use it as a type, which agents were patching by
     # hand on every affected function.
     "int8", "uint8", "int16", "uint16", "int32", "uint32",
+    # CL declares `size_t` itself with no header included, so forward-
+    # declaring it is `error C2371: redefinition; different basic types`.
+    "size_t",
     # `this` is a keyword, never a type. `struct this;` is a syntax error and
     # was being emitted for every __thiscall method whose receiver parameter
     # reached the type scan.
@@ -119,6 +122,43 @@ BUILTIN = {
 # spelling for it, and emitting one puts a `#` mid-line where CL expects a
 # preprocessor directive (`error C2014`), which cost 26 units.
 ANONYMOUS_TYPE = re.compile(r"#\d+")
+
+# Win32 types that are NOT structs. Forward-declaring one as `struct HRESULT;`
+# and then using it by value is `error C2027: use of undefined type`, or
+# `C2526: C linkage function cannot return C++ class 'HRESULT'` when it is a
+# return type - 17 units, all of them a DirectDraw or CRT import.
+#
+# The spellings are the Win32 headers' own, so they keep both their size and
+# their mangling. Safe to choose here because NONE of these names appears
+# inside a catalogued mangled name: counted over all 6,000, the only Windows
+# types that do are the real structs - `RECT` 92, `FILE` 9, `_GUID` 2,
+# `PALETTEENTRY` 2, `WINDOWPOS` 2, `RGBQUAD` 1, `DPNAME` 1 - and those stay
+# forward-declared, which is what their `PAURECT@@` asks for.
+NOT_A_STRUCT = {
+    "BOOL": "int", "CHAR": "char", "WCHAR": "unsigned short",
+    "BYTE": "unsigned char", "WORD": "unsigned short",
+    "UINT": "unsigned int", "DWORD": "unsigned long", "LONG": "long",
+    "ULONG": "unsigned long", "LCID": "unsigned long",
+    "LPARAM": "long", "WPARAM": "unsigned int", "LRESULT": "long",
+    "UINT_PTR": "unsigned int", "ULONG_PTR": "unsigned long",
+    "SIZE_T": "unsigned int", "HRESULT": "long",
+    "LPSTR": "char *", "LPCSTR": "const char *",
+    "PVOID": "void *", "LPVOID": "void *", "LPCVOID": "const void *",
+    "LPBYTE": "unsigned char *", "LPWORD": "unsigned short *",
+    "LPGUID": "struct _GUID *",
+    "PEXCEPTION_RECORD": "struct _EXCEPTION_RECORD *",
+    "FARPROC": "int (__stdcall *)()",
+    # Handles are opaque pointers. `void *` rather than the headers'
+    # `struct HWND__ *` because nothing here needs them distinct and the
+    # mangling reaches no comparison.
+    # `HCURSOR` is deliberately ABSENT: `?set_cursor@Win@@QAEHPAUHCURSOR@@@Z`
+    # mangles it as a struct, so a typedef here emits `PAPAX` and loses the
+    # one row that uses it. Checked the same way for every name in this table
+    # rather than by inspection - it is the only clash, and it was found by
+    # the pairing count dropping by one.
+    "HANDLE": "void *", "HWND": "void *", "HINSTANCE": "void *",
+    "HIC": "void *", "LPDIRECTDRAW": "void *",
+}
 
 
 def class_keys(functions: dict) -> dict:
@@ -299,6 +339,25 @@ def named_types(text: str) -> set:
     """Identifiers in a type expression that are not builtins."""
     return {word for word in re.findall(r"[A-Za-z_]\w*", text)
             if word not in BUILTIN}
+
+
+# `int (__cdecl *)()`, `void (__cdecl *)(int8*)`: the pointer declarator a
+# parameter NAME has to go inside, not after.
+POINTER_DECLARATOR = re.compile(r"(\(\s*(?:__\w+\s+)?\*(?:\s*\*)*)\s*\)")
+
+
+def named_parameter(text: str, name: str) -> str:
+    """`int (__cdecl *)()` and `a2` -> `int (__cdecl *a2)()`.
+
+    C declarator syntax puts the name INSIDE the parentheses for a function
+    pointer. Appending it - `int (__cdecl *)() a2` - is
+    `error C2146: syntax error : missing ')' before identifier 'a2'`, and 45
+    of the 154 units that would not compile were exactly that, one per
+    function-pointer parameter. Everything else just takes the name after.
+    """
+    if POINTER_DECLARATOR.search(text):
+        return POINTER_DECLARATOR.sub(rf"\1{name})", text, count=1)
+    return f"{text} {name}"
 
 
 def prototype_from_name(mangled: str) -> str:
@@ -513,6 +572,29 @@ class Signature:
         self.method = ""
         self.kind = "free"
 
+        if self.is_method and self.convention == "__thiscall" \
+                and len(self.params) == 1 \
+                and "this" not in self.params[0] \
+                and not (MANGLED_CTOR.match(self.mangled)
+                         or MANGLED_DTOR.match(self.mangled)
+                         or MANGLED_METHOD.match(self.mangled)):
+            # ONE ARGUMENT IN ECX AND NOTHING ON THE STACK, which is what IDA
+            # means by `int (__thiscall sub_5CB050)(LPSTR pszFileName)` for a
+            # function with no class: the single argument is the register one.
+            # VC6 rejects `__thiscall` on a free function (C4234), and
+            # `__fastcall` with one argument puts it in the same register and
+            # cleans the same empty stack. Measured, not assumed - a
+            # __thiscall member and a __fastcall free function over the same
+            # body compile to the identical 22 bytes,
+            # `8a1133c084d2740d0fbed203c28a51014184d275f3c3`, while __cdecl
+            # loads from the stack instead.
+            #
+            # Only for EXACTLY one parameter. With two, __thiscall passes the
+            # second on the stack and __fastcall passes it in EDX, and the two
+            # stop being the same function.
+            self.convention = recovery_symbols.FASTCALL
+            self.is_method = False
+
         if self.is_method:
             # The CLASS COMES FROM THE MANGLED NAME, not from the receiver's
             # declared type. They disagree on 50 rows - the prototype for
@@ -646,7 +728,7 @@ class Signature:
             else f"{self.convention} "
 
     def argument_list(self) -> str:
-        return ", ".join(f"{text} a{index}"
+        return ", ".join(named_parameter(text, f"a{index}")
                          for index, text in enumerate(self.params, start=1)) \
             or "void" if self.params else ""
 
@@ -758,7 +840,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     ]
 
     # Callee declarations.
-    declarations, methods_by_class = [], {}
+    declarations, methods_by_class, free_callees = [], {}, []
     for target in callees.get(address, []):
         callee = functions.get(target)
         if callee is None or target == address:
@@ -772,6 +854,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             methods_by_class.setdefault(callee_signature.klass, []).append(
                 callee_signature)
         else:
+            free_callees.append(callee_signature)
             declarations.append(declare_callee(callee, derived, pe, keys))
 
     # Forward declarations for every non-builtin type named ANYWHERE in this
@@ -790,6 +873,13 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         for entry in entries:
             wanted |= entry.referenced_types()
             wanted.add(entry.klass)
+    # A FREE callee's types too. This loop had the method callees and the
+    # subject and not these, so `int in_box(int, int, RECT *);` was emitted
+    # above anything that declares `RECT` - 103 of the 154 units that would
+    # not compile, all of them a C2061 or a C2065 on the first such line. The
+    # comment above already claimed "anywhere in this unit"; now it is true.
+    for entry in free_callees:
+        wanted |= entry.referenced_types()
     # EVERYTHING referenced is forward-declared, including classes defined
     # further down. `struct X;` before `struct X { ... };` is legal and is what
     # keeps a callee declaration that takes `Win *` from preceding the
@@ -799,7 +889,9 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # class/struct-key mismatch warning, and that cannot fire now that both the
     # forward declaration and the definition say `struct`.
     for name in sorted(wanted):
-        lines.append(declare(name, opening=False))
+        spelling = NOT_A_STRUCT.get(name)
+        lines.append(f"typedef {named_parameter(spelling, name)};" if spelling
+                     else declare(name, opening=False))
     if wanted:
         lines.append("")
 
@@ -887,8 +979,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.append("")
         if scaffolding_only:
             return "\n".join(lines)
-        arguments = ", ".join(f"{text} a{index}" for index, text
-                              in enumerate(signature.params, start=1))
+        arguments = signature.argument_list()
         if signature.kind == "ctor":
             head = f"{signature.klass}::{signature.klass}({arguments})"
         elif signature.kind == "dtor":
@@ -899,8 +990,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     else:
         if scaffolding_only:
             return "\n".join(lines)
-        arguments = ", ".join(f"{text} a{index}" for index, text
-                              in enumerate(signature.params, start=1))
+        arguments = signature.argument_list()
         # `extern "C"` on a name the disassembler invented is not cosmetic: it
         # is what makes CL emit the symbol the target object carries. Dropping
         # it leaves the two objects with no name in common and objdiff reports

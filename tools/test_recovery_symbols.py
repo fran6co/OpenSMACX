@@ -188,6 +188,25 @@ class BackReferenceTest(unittest.TestCase):
         self.assertEqual("?f4@@YAXPAD0PAH1@Z",
                          rs.compress_backrefs("?f4@@YAXPADPADPAHPAH@Z"))
 
+    def test_a_callback_shares_the_enclosing_back_reference_table(self):
+        # Read off a real VC6 object: the `0` INSIDE the callback refers to
+        # the `char *` two arguments earlier. The tokeniser used to refuse
+        # any name containing `P6`, so this one was left uncompressed and was
+        # the last symbol in the catalogue the two objects disagreed on.
+        self.assertEqual(
+            "?load@StringList@@QAEHPAD0HP6AX0@Z@Z",
+            rs.compress_backrefs(
+                "?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z"))
+
+    def test_a_callbacks_own_arguments_compress_against_each_other(self):
+        self.assertEqual(
+            "?g@M@@QAEXPADP6GH00@Z@Z",
+            rs.compress_backrefs("?g@M@@QAEXPADP6GHPADPAD@Z@Z"))
+
+    def test_a_callback_taking_nothing_is_left_alone(self):
+        self.assertEqual("?f@L@@QAEHPADP6AHXZ@Z",
+                         rs.compress_backrefs("?f@L@@QAEHPADP6AHXZ@Z"))
+
     def test_anything_unparseable_is_returned_unchanged(self):
         for name in ("_sub_401520@4", "sub_401520", "?weird@@YA", ""):
             self.assertEqual(name, rs.compress_backrefs(name), name)

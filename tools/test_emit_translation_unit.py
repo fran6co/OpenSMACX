@@ -108,8 +108,10 @@ class SignatureTests(unittest.TestCase):
         self.assertTrue(signature.inferred)
 
     def test_a_name_carrying_a_type_that_does_not_decode_is_refused(self):
+        # A POINTER TO MEMBER (`P8C@@AEXXZ`), which is still out of scope.
+        # A function pointer used to be the example here and is not any more.
         with self.assertRaises(tool.Unsettled):
-            tool.Signature(row(name="?f@@YAXP6AXXZ@Z", prototype=""), {})
+            tool.Signature(row(name="?f@@YAXP8C@@AEXXZ@Z", prototype=""), {})
 
 
 class LinkageTests(unittest.TestCase):
@@ -377,6 +379,72 @@ class NamedTypeTests(unittest.TestCase):
         the failure without fixing it."""
         for word in ("return", "static", "const", "public"):
             self.assertIn(word, tool.KEYWORDS | tool.BUILTIN)
+
+
+class ScaffoldCompilesTests(unittest.TestCase):
+    """The four reasons 154 emitted units would not compile at all.
+
+    Each was read off CL rather than guessed: the units were recompiled one
+    at a time and the first error of each grouped by code.
+    """
+
+    def test_a_function_pointer_parameter_is_named_inside_its_declarator(self):
+        # `int (__cdecl *)() a2` is C2146. 45 units, one per such parameter.
+        self.assertEqual("int (__cdecl *a2)()",
+                         tool.named_parameter("int (__cdecl *)()", "a2"))
+        self.assertEqual("void (__cdecl *a1)(int8*)",
+                         tool.named_parameter("void (__cdecl *)(int8*)", "a1"))
+
+    def test_a_pointer_to_a_function_pointer_too(self):
+        self.assertEqual("void (__stdcall * *a1)(int)",
+                         tool.named_parameter("void (__stdcall * *)(int)",
+                                              "a1"))
+
+    def test_an_ordinary_parameter_takes_the_name_after_it(self):
+        for text in ("int", "Win*", "char *", "const char *"):
+            self.assertEqual(f"{text} a1", tool.named_parameter(text, "a1"))
+
+    def test_an_array_declarator_is_handled_the_same_way(self):
+        self.assertEqual("int (*a1)[10]",
+                         tool.named_parameter("int (*)[10]", "a1"))
+
+    def test_a_win32_scalar_is_a_typedef_and_never_a_struct(self):
+        # `struct HRESULT;` then used by value is C2027, or C2526 when it is
+        # a C-linkage return type.
+        for name in ("HRESULT", "LPSTR", "LPCSTR", "CHAR", "BOOL", "DWORD"):
+            self.assertIn(name, tool.NOT_A_STRUCT, name)
+
+    def test_a_win32_struct_is_left_to_be_forward_declared(self):
+        # These DO appear inside catalogued mangled names - `PAURECT@@` 92
+        # times - so a typedef would change the symbol.
+        for name in ("RECT", "FILE", "_GUID", "PALETTEENTRY", "WINDOWPOS",
+                     "RGBQUAD", "DPNAME"):
+            self.assertNotIn(name, tool.NOT_A_STRUCT, name)
+
+    def test_size_t_is_never_declared(self):
+        # CL declares it itself; `struct size_t;` is C2371, 18 units.
+        self.assertIn("size_t", tool.BUILTIN)
+
+    def test_a_one_argument_thiscall_with_no_class_is_fastcall(self):
+        # IDA means "the single argument is the register one". VC6 rejects
+        # __thiscall on a free function (C4234); __fastcall with one argument
+        # uses the same register and cleans the same empty stack, and the two
+        # compile to identical bytes.
+        signature = tool.Signature(
+            row(address="0x005CB050", name="sub_5cb050",
+                prototype="int (__thiscall sub_5CB050)(LPSTR pszFileName)"),
+            {})
+        self.assertEqual("__fastcall", signature.convention)
+        self.assertFalse(signature.is_method)
+        self.assertEqual("@sub_5cb050@4", signature.symbol)
+
+    def test_two_arguments_is_still_refused(self):
+        # __thiscall puts the second on the stack and __fastcall puts it in
+        # EDX, so they stop being the same function.
+        with self.assertRaises(tool.Unsettled):
+            tool.Signature(
+                row(name="sub_5cb050",
+                    prototype="int (__thiscall sub_5CB050)(char *, int)"), {})
 
 
 class ClassKeyTests(unittest.TestCase):
