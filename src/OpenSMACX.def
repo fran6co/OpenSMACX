@@ -144,7 +144,8 @@ EXPORTS
     "?filefind_cd_drive_letter@@YADXZ" = _Z24filefind_cd_drive_letterv
     "?filefind_set_alternative@@YAXPBD@Z" = _Z24filefind_set_alternativePKc
     "?filefind_get@@YAPADPBD@Z" = _Z12filefind_getPKc
-    "?bit_count@@YAII@Z" = _Z9bit_countj
+    "?bit_count@@YAII@Z" = _Z9bit_counti
+    "?bit_count@@YAHH@Z" = _Z9bit_counti
     "?x_dist@@YAHHH@Z" = _Z6x_distii
     "?temp_set@@YAXIIE@Z" = _Z8temp_setjjh
     "?climate_set@@YAXIIE@Z" = _Z11climate_setjjh

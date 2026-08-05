@@ -55,7 +55,7 @@ DLLEXPORT BOOL __cdecl jackal_version_check(LPCSTR version);
 DLLEXPORT char __cdecl filefind_cd_drive_letter();
 DLLEXPORT void __cdecl filefind_set_alternative(LPCSTR path);
 DLLEXPORT LPSTR __cdecl filefind_get(LPCSTR file_name);
-DLLEXPORT uint32_t __cdecl bit_count(uint32_t bitfield);
+DLLEXPORT int __cdecl bit_count(int bitfield);
 DLLEXPORT uint32_t __cdecl bit_count_signed(int bitfield);
 DLLEXPORT void __cdecl my_srand(uint32_t reseed);
 DLLEXPORT void __cdecl swap(int *var1, int *var2);
