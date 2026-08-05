@@ -64,7 +64,7 @@ DLLEXPORT int __cdecl fixed_div(int numerator, int denominator);
 DLLEXPORT const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
 DLLEXPORT int __cdecl quick_root(int input);
 DLLEXPORT void __cdecl bitmask(int input, int *offset, int *mask);
-DLLEXPORT uint8_t __cdecl checksum(uint8_t *input, int length, uint8_t seed);
+DLLEXPORT uint8_t __cdecl checksum(char *input, int length, uint8_t seed);
 DLLEXPORT uint32_t __cdecl checksum_password(LPCSTR password);
 DLLEXPORT uint32_t __cdecl rnd(int bounds, LPSTR input);
 DLLEXPORT void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3);
