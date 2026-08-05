@@ -94,6 +94,84 @@ class SignatureTests(unittest.TestCase):
             tool.Signature(row(prototype=""), {})
 
 
+class LinkageTests(unittest.TestCase):
+    """Which linkage the subject gets, which decides the emitted SYMBOL.
+
+    objdiff looks one name up in both objects. A `?`-mangled row reproduces its
+    catalogued name through the C++ compiler, so it needs nothing. A row a
+    disassembler named has no such loop: emitted with C++ linkage it becomes
+    `?sub_5e3650@@YGHH@Z`, which no target object holds, and the run reports a
+    missing symbol rather than a diff. That was the state of 1,179 rows.
+    """
+
+    def test_a_mangled_row_keeps_cxx_linkage_and_its_own_name(self):
+        signature = tool.Signature(
+            row(name="?bitmask@@YAXHPAHPAH@Z",
+                prototype="void (__cdecl ?bitmask@@YAXHPAHPAH@Z)"
+                          "(int, int *, int *)"), {})
+        self.assertEqual("c++", signature.linkage)
+        self.assertEqual("?bitmask@@YAXHPAHPAH@Z", signature.symbol)
+
+    def test_a_disassembler_label_gets_c_linkage_and_a_decorated_symbol(self):
+        signature = tool.Signature(
+            row(address="0x005E3650", name="sub_5e3650",
+                prototype="int (__stdcall sub_5e3650)(int, int)"), {})
+        self.assertEqual("c", signature.linkage)
+        self.assertEqual("_sub_5e3650@8", signature.symbol)
+
+    def test_a_decorated_name_reproduces_itself_through_the_source(self):
+        signature = tool.Signature(
+            row(address="0x0045F950", name="_WinMain@16",
+                prototype="int (__stdcall _WinMain@16)"
+                          "(int, int, char *, int)"), {})
+        self.assertEqual("WinMain", signature.method,
+                         "the source spells the UNDECORATED identifier")
+        self.assertEqual("_WinMain@16", signature.symbol)
+
+    def test_the_decoration_outranks_an_inferred_convention(self):
+        # `_WinMain@16` says __stdcall outright. A prototype read out of a
+        # purge byte cannot tell __stdcall from __thiscall, so the name wins.
+        signature = tool.Signature(
+            row(address="0x0045F950", name="_WinMain@16",
+                prototype="int (__cdecl _WinMain@16)(int, int, char *, int)"),
+            {})
+        self.assertEqual("__stdcall", signature.convention)
+
+    def test_a_thiscall_under_an_undecorated_name_is_refused(self):
+        # The unit would be emitted as a method of a class this tool invented,
+        # and CL would mangle that class into a symbol no target object can
+        # hold. Refusing says so; emitting produces an unmatchable prompt.
+        with self.assertRaises(tool.Unsettled):
+            tool.Signature(
+                row(address="0x004483C0", name="j_??1Ambience@@QAE@XZ",
+                    prototype="void (__thiscall j_??1Ambience@@QAE@XZ)"
+                              "(Ambience* this)"), {})
+
+
+class CalleeDeclarationTests(unittest.TestCase):
+    def test_an_undecorated_callee_is_declared_extern_c(self):
+        # Without it the call site references a C++ mangling of the name while
+        # the target object's relocation carries the C decoration, so every
+        # call to one of these reads as a diff in an otherwise exact body.
+        text = tool.declare_callee(
+            row(address="0x005E3650", name="sub_5e3650",
+                prototype="int (__stdcall sub_5e3650)(int)"), {})
+        self.assertTrue(text.startswith('extern "C" '), text)
+
+    def test_a_mangled_callee_is_not_declared_extern_c(self):
+        text = tool.declare_callee(
+            row(name="?bitmask@@YAXHPAHPAH@Z",
+                prototype="void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int)"), {})
+        self.assertFalse(text.startswith('extern "C" '), text)
+
+    def test_a_name_cl_declares_itself_is_left_alone(self):
+        # A second C-linkage declaration of `atexit` is C2733, and it took the
+        # whole unit down with it - 9 units, measured.
+        self.assertEqual("", tool.declare_callee(
+            row(address="0x00645398", name="_atexit",
+                prototype="int (__cdecl _atexit)(int)"), {}))
+
+
 class SplitParamsTests(unittest.TestCase):
     def test_it_splits_at_top_level_only(self):
         self.assertEqual(tool.split_params("int, char *"), ["int", "char *"])
