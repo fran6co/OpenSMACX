@@ -161,9 +161,61 @@ class BackReferenceTest(unittest.TestCase):
         self.assertEqual("?help_create_link@@YAXPAD00@Z",
                          rs.compress_backrefs("?help_create_link@@YAXPAD00@Z"))
 
+    def test_a_repeated_NAME_becomes_its_index_inside_the_type(self):
+        # A second table, separate from the type one: the function's own name
+        # is 0, its class 1, then each new type name. `GraphicWin` is already
+        # 1 when it turns up as a parameter.
+        self.assertEqual(
+            "?update@GraphicWin@@QAEXHHHHPAU1@@Z",
+            rs.compress_backrefs(
+                "?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z"))
+
+    def test_a_new_name_is_written_out_and_takes_the_next_slot(self):
+        self.assertEqual(
+            "?up2@GraphicWin@@QAEXPAURECT@@PAU1@@Z",
+            rs.compress_backrefs(
+                "?up2@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z"))
+
+    def test_the_type_table_wins_over_the_name_table(self):
+        # The third argument repeats the FIRST whole type, so it is `0` rather
+        # than a name back-reference into `Sprite`.
+        self.assertEqual(
+            "?f3@@YAXPAUSprite@@PAUGraphicWin@@0@Z",
+            rs.compress_backrefs(
+                "?f3@@YAXPAUSprite@@PAUGraphicWin@@PAUSprite@@@Z"))
+
+    def test_two_type_slots_are_numbered_independently(self):
+        self.assertEqual("?f4@@YAXPAD0PAH1@Z",
+                         rs.compress_backrefs("?f4@@YAXPADPADPAHPAH@Z"))
+
     def test_anything_unparseable_is_returned_unchanged(self):
         for name in ("_sub_401520@4", "sub_401520", "?weird@@YA", ""):
             self.assertEqual(name, rs.compress_backrefs(name), name)
+
+
+class SubstituteNameTest(unittest.TestCase):
+    """14 catalogued names are not C identifiers and never can be.
+
+    `??__Eg_BOOM_BUFFERS1@@YAXXZ` is a dynamic initialiser and `??__F...` an
+    atexit thunk, both minted by the compiler for a global it constructs. The
+    emitter substitutes `fn_<address>`; the target object kept the original,
+    so the two had no name in common and none of them could pair.
+    """
+
+    def test_the_name_is_replaced_and_the_types_are_not(self):
+        self.assertEqual(
+            "?fn_004838b0@@YAXXZ",
+            rs.substitute_name("??__Fg_NEWTECHWIN_SPRITES@@YAXXZ",
+                               "fn_004838b0"))
+
+    def test_a_class_qualifier_survives(self):
+        self.assertEqual(
+            "?m_00401000@Buffer@@UAEPAXI@Z",
+            rs.substitute_name("??_Gthunk@Buffer@@UAEPAXI@Z", "m_00401000"))
+
+    def test_a_name_that_did_not_change_is_left_alone(self):
+        for name in ("?on_key_down@NetWin@@QAEHH@Z", "_sub_401520", ""):
+            self.assertEqual(name, rs.substitute_name(name, "on_key_down"))
 
 
 class UndecorateTest(unittest.TestCase):

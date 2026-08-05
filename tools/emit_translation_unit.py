@@ -119,6 +119,52 @@ BUILTIN = {
 # preprocessor directive (`error C2014`), which cost 26 units.
 ANONYMOUS_TYPE = re.compile(r"#\d+")
 
+# `PAUSprite@@` against `PAVBuffer@@`: MSVC encodes a struct as `U` and a class
+# as `V`, and they mangle differently, so a declaration has to use the key the
+# ORIGINAL used. `struct` is right 8 times in 9 across this image and wrong for
+# `Buffer` and `Palette` - 51 functions - so the key is counted per class out
+# of the catalogue rather than assumed for all of them.
+CLASS_KEY = re.compile(r"([UV])(?:([A-Za-z_]\w*)@@|(\d)@)")
+
+
+def class_keys(functions: dict) -> dict:
+    """{class name: 'struct' | 'class'}, tallied over every catalogued name.
+
+    A repeated NAME is written as its index - `?draw@Buffer@@QAEHPAV1@HHH@Z`
+    passes `Buffer *`, and slot 1 is the enclosing class - so the tally has to
+    resolve those too. Counting only the written-out `V<Name>@@` form left
+    `Buffer` looking like a struct on the strength of one spelling while every
+    real use said `PAV1@`.
+    """
+    tally = {}
+    for row in functions.values():
+        name = row.get("name") or ""
+        split = name.find("@@")
+        if not name.startswith("?") or split == -1:
+            continue
+        table = [part for part in name[1:split].split("@") if part]
+        for key, written, index in CLASS_KEY.findall(name):
+            if written:
+                subject = written
+                if len(table) < 10:
+                    table.append(written)
+            elif int(index) < len(table):
+                subject = table[int(index)]
+            else:
+                continue
+            counts = tally.setdefault(subject, {"U": 0, "V": 0})
+            counts[key] += 1
+    # A pure majority. `src/`'s own headers were tried as a tiebreak and are
+    # WORSE: they say `class Sprite` while the catalogue says `U` 60 times to
+    # `V` twice, so the header would trade 60 pairings for 2. Six classes
+    # disagree with themselves in the catalogue - Buffer 49/17, Font 28/19 -
+    # and that is a defect in the catalogue rather than a question the emitter
+    # can answer, because the linker had exactly one answer and some of those
+    # rows are simply wrong. The majority is what pairs the most of them.
+    return {name: ("class" if counts["V"] > counts["U"] else "struct")
+            for name, counts in tally.items()}
+
+
 # `int (__thiscall ?add@X@@QAEHH@Z)(X* this, int)`
 PROTOTYPE_RE = re.compile(
     r"^\s*(?P<ret>.+?)\s*\(\s*(?P<conv>__\w+)\s+(?P<name>\S+)\s*\)\s*"
@@ -506,7 +552,9 @@ class Signature:
             self.mangled, int(row["address"], 16), self.convention,
             self.params, self.method) if self.linkage == "c" else \
             recovery_symbols.compress_backrefs(
-                recovery_symbols.empty_destructor_arguments(self.mangled))
+                recovery_symbols.substitute_name(
+                    recovery_symbols.empty_destructor_arguments(self.mangled),
+                    self.method.lstrip("~")))
 
     def member_convention(self) -> str:
         """The convention a MEMBER declaration has to spell, or ''.
@@ -587,6 +635,19 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     row = functions.get(address)
     if row is None:
         raise Unsettled(f"0x{address:08X} is not a catalogued function")
+    keys = class_keys(functions)
+
+    def declare(name: str, opening: bool) -> str:
+        # `class X { public:` and `struct X {` differ only in default access,
+        # and the key has to agree between the forward declaration and the
+        # definition or VC6 warns C4099 - but it also has to agree with the
+        # ORIGINAL, because `U` and `V` mangle differently.
+        key = keys.get(name, "struct")
+        if not opening:
+            return f"{key} {name};"
+        return f"{key} {name} {{ public:" if key == "class" else \
+            f"{key} {name} {{"
+
     signature = Signature(row, derived, pe)
     refusal = recovery_symbols.UNDEFINABLE.get(signature.method) \
         if signature.linkage == "c" else None
@@ -658,7 +719,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # class/struct-key mismatch warning, and that cannot fire now that both the
     # forward declaration and the definition say `struct`.
     for name in sorted(wanted):
-        lines.append(f"struct {name};")
+        lines.append(declare(name, opening=False))
     if wanted:
         lines.append("")
 
@@ -678,7 +739,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             else:
                 body.append(f"    {entry.returns} {entry.member_convention()}"
                             f"{entry.method}({', '.join(entry.params)});")
-        lines.append(f"struct {klass} {{")
+        lines.append(declare(klass, opening=True))
         lines.extend(sorted(set(body)))
         lines.append("};")
     for text in sorted(set(d for d in declarations if d)):
@@ -720,7 +781,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # taking one of these as a parameter mangle to a name no target object
         # holds. It also settles the C4099 the forward declarations above
         # warned about, since those already say `struct`.
-        lines.append(f"struct {signature.klass} {{")
+        lines.append(declare(signature.klass, opening=True))
         seen = set()
         for entry in own:
             if entry.method == signature.method:
