@@ -254,6 +254,10 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("subjects", nargs="*",
                         help="hex addresses or mangled names")
+    parser.add_argument("--all", action="store_true",
+                        help="every catalogued function with a body, whatever "
+                             "its state or last verdict; recovered ones are "
+                             "seeded with their existing src/ code")
     parser.add_argument("--unrecovered", type=int, default=0, metavar="N",
                         help="pick the first N unrecovered functions instead")
     parser.add_argument("--not-byte-exact", action="store_true",
@@ -270,7 +274,8 @@ def main() -> int:
 
     functions = load_functions()
     ledger = load_ledger()
-    existing_code = load_existing_code() if arguments.not_byte_exact else {}
+    existing_code = load_existing_code() \
+        if (arguments.not_byte_exact or arguments.all) else {}
 
     if arguments.subjects:
         addresses = []
@@ -287,6 +292,12 @@ def main() -> int:
                           file=sys.stderr)
                     return 1
             addresses.append(address)
+    elif arguments.all:
+        # EVERYTHING, byte-exact included. A body that already matches costs
+        # one compile to confirm and nothing else, which is cheaper than
+        # maintaining a second opinion about which rows are worth revisiting.
+        addresses = [address for address, row in sorted(functions.items())
+                     if row.get("name") and row.get("body_ranges")]
     elif arguments.not_byte_exact:
         wanted = {t.strip() for t in arguments.tier.split(",") if t.strip()}
         picked = []
@@ -307,7 +318,8 @@ def main() -> int:
                      if row.get("recovery_state") == "unrecovered"
                      and row.get("name")][:arguments.unrecovered]
     else:
-        parser.error("give subjects, --unrecovered N, or --not-byte-exact")
+        parser.error("give subjects, --all, --unrecovered N, "
+                     "or --not-byte-exact")
 
     pe = pefile.PE(str(arguments.exe), fast_load=True)
     derived = load_derived()
