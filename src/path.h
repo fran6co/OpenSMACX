@@ -30,16 +30,16 @@ class DLLEXPORT Path {
   void shutdown();
   int get(uint32_t x, uint32_t y);
   void set(uint32_t x, uint32_t y, int val);
-  int zoc_path(uint32_t x, uint32_t y, uint32_t faction_id);
+  int zoc_path(int x, uint32_t y, uint32_t faction_id);
   int find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int faction_id, int unk1, 
            int unk2);
   int move(uint32_t veh_id, int faction_id);
   void make_abstract();
-  void merge(uint32_t region_old, uint32_t region_new);
-  void territory(uint32_t x, uint32_t y, int region, int faction_id);
-  void continent(uint32_t x, uint32_t y, uint32_t region);
+  void merge(int region_old, uint32_t region_new);
+  void territory(int x, uint32_t y, int region, int faction_id);
+  void continent(int x, uint32_t y, uint32_t region);
   void continents();
-  BOOL sensors(uint32_t faction_id, int *x_sensor, int *y_sensor);
+  BOOL sensors(int faction_id, int *x_sensor, int *y_sensor);
 
  private:
   int *map_table_;

@@ -48,7 +48,7 @@ class DLLEXPORT Heap {
   } // 005D4580
 
   void shutdown();
-  void squeeze(int toggle);
+  void squeeze(int UNUSED(toggle) toggle);
   BOOL init(size_t req_size);
   LPVOID get(size_t req_size);
   // additional functions to assist with encapsulation
