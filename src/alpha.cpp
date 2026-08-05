@@ -749,7 +749,7 @@ Original Offset: 005871D0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl noun_item(uint32_t *gender, BOOL *plurality) {
+void __cdecl noun_item(int *gender, BOOL *plurality) {
     LPSTR noun = text_item();
     *gender = 0; // defaults to male ('m' || 'M')
     *plurality = false; // defaults to singular ('1')
@@ -1515,7 +1515,7 @@ Original Offset: 00627100
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_language(uint32_t language) {
+void __cdecl set_language(int language) {
     *Language = language;
 }
 

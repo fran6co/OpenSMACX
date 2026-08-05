@@ -197,7 +197,7 @@ Original Offset: 00625E30
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
-int __cdecl parse_num(uint32_t id, int value) {
+int __cdecl parse_num(int id, int value) {
     if (id > 9) {
         return 3;
     }
@@ -211,7 +211,7 @@ Original Offset: 00625E50
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
-int __cdecl parse_say(uint32_t id, int input, int gender, int pluralality) {
+int __cdecl parse_say(int id, int input, int gender, int pluralality) {
     if (id > 9) {
         return 3;
     }
@@ -233,7 +233,7 @@ Original Offset: 00625EC0
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
-int __cdecl parse_says(uint32_t id, LPCSTR input, int gender, int pluralality) {
+int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
     if (!input || id > 9) {
         return 3;
     }
@@ -883,7 +883,7 @@ Original Offset: 00539090
 Return Value: Checksum
 Status: Complete
 */
-uint8_t __cdecl checksum(uint8_t *buffer, uint32_t size, uint8_t seed) {
+uint8_t __cdecl checksum(uint8_t *buffer, int size, uint8_t seed) {
     while (size--) seed ^= *buffer++;
     return seed;
 }
@@ -1122,7 +1122,7 @@ Original Offset: 005B5690
 Return Value: n/a
 Status: Complete
 */
-void __cdecl sort(uint32_t count, int *id, int *value) {
+void __cdecl sort(int count, int *id, int *value) {
     int bounds = count - 1;
     BOOL has_swapped;
     do {

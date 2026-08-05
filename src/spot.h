@@ -27,7 +27,7 @@ class DLLEXPORT Spot {
 
   void clear(); // 005FA820
   void shutdown();
-  void init(uint32_t count);
+  void init(int count);
   void replace(int position, int type, int left, int top, int length, int width);
   int add(int position, int type, int left, int top, int length, int width);
   int add(int position, int type, RECT *rect);

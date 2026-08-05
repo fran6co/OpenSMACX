@@ -97,7 +97,7 @@ Original Offset: 004EA4A0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl psych_check(uint32_t faction_id, int *drones, int *talents) {
+void __cdecl psych_check(int faction_id, int *drones, int *talents) {
     *drones = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
     *talents = (((*drones + 2) * (PlayersData[faction_id].soc_effect_pending.efficiency < 0 ? 4
         : PlayersData[faction_id].soc_effect_pending.efficiency + 4) * *MapAreaSqRoot) / 56) / 2;
@@ -110,7 +110,7 @@ Original Offset: 005002F0
 Return Value: Treaty status between the two factions, generally treated as a boolean
 Status: Complete
 */
-uint32_t __cdecl has_treaty(uint32_t faction_id, uint32_t faction_id_with, uint32_t treaty) {
+int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
     return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;
 }
 
@@ -152,7 +152,7 @@ Original Offset: 00539B70
 Return Value: Is faction minor threat? true/false
 Status: Complete
 */
-BOOL __cdecl great_beelzebub(uint32_t faction_id, BOOL is_aggressive) {
+BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
     if (is_human(faction_id) && FactionRankings[7] == faction_id) {
         uint32_t bases_threat = (*TurnCurrentNum + 25) / 50;
         if (bases_threat < 4) {
@@ -174,7 +174,7 @@ Original Offset: 00539C00
 Return Value: Is the specified faction a threat? true/false
 Status: Complete
 */
-BOOL __cdecl great_satan(uint32_t faction_id, BOOL is_aggressive) {
+BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
     if (great_beelzebub(faction_id, is_aggressive)) {
         BOOL has_intense_riv = (*GameRules & RULES_INTENSE_RIVALRY);
         if (*TurnCurrentNum <= ((has_intense_riv ? 0 
@@ -270,7 +270,7 @@ Original Offset: 00539EF0
 Return Value: Is AI faction at climax? true/false
 Status: Complete
 */
-BOOL __cdecl at_climax(uint32_t faction_id) {
+BOOL __cdecl at_climax(int faction_id) {
     if (is_human(faction_id) || *GameState & STATE_UNK_1 || *DiffLevelCurrent == DLVL_CITIZEN
         || !climactic_battle()) {
         return false;
@@ -315,7 +315,7 @@ Original Offset: 0053A030
 Return Value: n/a
 Status: Complete
 */
-void __cdecl cause_friction(uint32_t faction_id, uint32_t faction_id_with, int friction) {
+void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
     uint32_t *diplo_friction = &PlayersData[faction_id].diplo_friction[faction_id_with];
     *diplo_friction = range(*diplo_friction + friction, 0, 20);
     if (*DiploFrictionFactionID == faction_id && *DiploFrictionFactionIDWith == faction_id_with) {
@@ -360,7 +360,7 @@ Original Offset: 0053A100
 Return Value: Bad reputation
 Status: Complete
 */
-uint32_t __cdecl reputation(uint32_t faction_id, uint32_t faction_id_with) {
+int __cdecl reputation(int faction_id, int faction_id_with) {
     return range(PlayersData[faction_id].integrity_blemishes
         - PlayersData[faction_id].diplo_unk1[faction_id_with], 0, 99);
 }
@@ -371,7 +371,7 @@ Original Offset: 0053A150
 Return Value: Patience
 Status: Complete
 */
-int __cdecl get_patience(uint32_t faction_id_with, uint32_t faction_id) {
+int __cdecl get_patience(int faction_id_with, int faction_id) {
     if (has_treaty(faction_id, faction_id_with, DTREATY_VENDETTA)) {
         return 1;
     }
@@ -388,7 +388,7 @@ Original Offset: 0053A1C0
 Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */
-uint32_t __cdecl energy_value(uint32_t loan_principal) {
+int __cdecl energy_value(int loan_principal) {
     uint32_t goodwill = 0;
     uint32_t divisor = 2;
     for (int weight = 10, energy = loan_principal / 5; energy > 0; energy -= weight, weight = 20) {
@@ -548,7 +548,7 @@ Original Offset: 0055BB30
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_treaty(uint32_t faction_id, uint32_t faction_id_with, uint32_t treaty, BOOL set) {
+void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL set) {
     if (set) {
         PlayersData[faction_id].diplo_treaties[faction_id_with] |= treaty;
         if (treaty & DTREATY_UNK_40) {
@@ -565,7 +565,7 @@ Original Offset: 0055BBA0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_agenda(uint32_t faction_id, uint32_t faction_id_with, uint32_t agenda, BOOL set) {
+void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda, BOOL set) {
     if (set) {
         PlayersData[faction_id].diplo_agenda[faction_id_with] |= agenda;
     } else {
@@ -580,7 +580,7 @@ Original Offset: 005591E0
 Return Value: Agenda status between the two factions, generally treated as a boolean
 Status: Complete
 */
-uint32_t __cdecl has_agenda(uint32_t faction_id, uint32_t faction_id_with, uint32_t agenda) {
+int __cdecl has_agenda(int faction_id, int faction_id_with, int agenda) {
     return PlayersData[faction_id].diplo_agenda[faction_id_with] & agenda;
 }
 
@@ -951,7 +951,7 @@ Original Offset: 00560D50
 Return Value: Amount of non-offensive units needed to guard region
 Status: Complete
 */
-uint32_t __cdecl guard_check(uint32_t faction_id, uint32_t region) {
+int __cdecl guard_check(int faction_id, int region) {
     if (region >= MaxRegionLandNum) {
         return 0;
     }
@@ -974,7 +974,7 @@ Original Offset: 00579A30
 Return Value: n/a
 Status:  Complete
 */
-void __cdecl add_goal(uint32_t faction_id, int type, int priority, int x, int y, int base_id) {
+void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int base_id) {
     if (!on_map(x, y)) {
         return;
     }
@@ -1020,7 +1020,7 @@ Original Offset: 00579B70
 Return Value: n/a
 Status: Complete
 */
-void __cdecl add_site(uint32_t faction_id, int type, int priority, int x, int y) {
+void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
     if ((x ^ y) & 1 && *GameState & STATE_DEBUG_MODE) {
         danger("Bad SITE", "", x, y, type);
     }
@@ -1066,7 +1066,7 @@ Original Offset: 00579CC0
 Return Value: Does the specific goal exist for the faction at tile? true/false
 Status: Complete
 */
-BOOL __cdecl at_goal(uint32_t faction_id, int type, int x, int y) {
+BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
     for (int i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
         if (goals.x == x && goals.y == y && goals.type == type) {
@@ -1082,7 +1082,7 @@ Original Offset: 00579D20
 Return Value: Does specific site exist for faction at tile? true/false
 Status: Complete
 */
-BOOL __cdecl at_site(uint32_t faction_id, int type, int x, int y) {
+BOOL __cdecl at_site(int faction_id, int type, int x, int y) {
     for (int i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         if (sites.x == x && sites.y == y && sites.type == type) {
@@ -1098,7 +1098,7 @@ Original Offset: 00579D80
 Return Value: n/a
 Status: Complete
 */
-void __cdecl wipe_goals(uint32_t faction_id) {
+void __cdecl wipe_goals(int faction_id) {
     for (int i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
         int16_t priority = goals.priority;
@@ -1123,7 +1123,7 @@ Original Offset: 00579E00
 Return Value: n/a
 Status: Complete
 */
-void __cdecl init_goals(uint32_t faction_id) {
+void __cdecl init_goals(int faction_id) {
     for (int i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
         goals.type = -1;
@@ -1148,7 +1148,7 @@ Original Offset: 00579E70
 Return Value: n/a
 Status: Complete
 */
-void __cdecl del_site(uint32_t faction_id, int type, int x, int y, int proximity) {
+void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
     for (int i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         if (sites.type == type) {
@@ -1174,7 +1174,7 @@ Original Offset: 0059EE50
 Return Value: Cost to corner the Global Energy Market
 Status: Complete
 */
-uint32_t __cdecl corner_market(uint32_t faction_id) {
+int __cdecl corner_market(int faction_id) {
     int cost = 0;
     for (int i = 0; i < *BaseCurrentCount; i++) {
         uint32_t target_faction_id = Bases[i].faction_id_current;
@@ -1465,7 +1465,7 @@ Original Offset: 005B0D70
 Return Value: n/a
 Status: Complete
 */
-void __cdecl compute_faction_modifiers(uint32_t faction_id) {
+void __cdecl compute_faction_modifiers(int faction_id) {
     ZeroMemory(&PlayersData[faction_id].soc_effect_base, sizeof(SocialEffect));
     int count = Players[faction_id].faction_bonus_count;
     for (int i = 0; i < count; i++) {
@@ -1561,7 +1561,7 @@ Original Offset: 005B44D0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl social_upkeep(uint32_t faction_id) {
+void __cdecl social_upkeep(int faction_id) {
     for (int i = 0; i < MaxSocialCatNum; i++) {
         *(&PlayersData[faction_id].soc_category_active.politics + i) =
             *(&PlayersData[faction_id].soc_category_pending.politics + i);
@@ -1605,7 +1605,7 @@ Original Offset: 005B4730
 Return Value: Is social category/model available to faction? true/false
 Status: Complete
 */
-BOOL __cdecl society_avail(int soc_category, int soc_model, uint32_t faction_id) {
+BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
     if (Players[faction_id].soc_anti_ideology_category == soc_category
         && Players[faction_id].soc_anti_ideology_model == soc_model) {
         return false;

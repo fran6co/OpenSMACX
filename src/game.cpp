@@ -286,7 +286,7 @@ Original Offset: 00589180
 Return Value: n/a
 Status: Complete
 */
-void __cdecl planetfall(uint32_t faction_id) {
+void __cdecl planetfall(int faction_id) {
     parse_set(Players[faction_id].is_leader_female, false);
     parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
     parse_says(2, Players[faction_id].title_leader, -1, -1);

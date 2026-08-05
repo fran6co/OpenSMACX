@@ -133,7 +133,7 @@ Original Offset: 004E39D0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_base(uint32_t base_id) {
+void __cdecl set_base(int base_id) {
     *BaseIDCurrentSelected = base_id;
     *BaseCurrent = &Bases[base_id];
 }
@@ -293,7 +293,7 @@ Original Offset: 004E4090
 Return Value: n/a
 Status: Complete
 */
-void __cdecl name_base(uint32_t faction_id, LPSTR name_out, BOOL is_final, BOOL is_sea_base) {
+void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_sea_base) {
     if (is_sea_base && !text_open(Players[faction_id].filename, "WATERBASES")) {
         uint32_t offset_sea = PlayersData[faction_id].base_sea_name_offset + 1;
         if (offset_sea > 1) {
@@ -428,7 +428,7 @@ Original Offset: 004E4430
 Return Value: Cost factor
 Status: Complete
 */
-int __cdecl cost_factor(uint32_t faction_id, uint32_t rsc_type, int base_id) {
+int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     const uint32_t diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
     uint32_t factor = is_human(faction_id) ? 10 : diff_cost_base[*DiffLevelCurrent]
         - great_satan(FactionRankings[7], false)
@@ -492,7 +492,7 @@ Original Offset: 004E4700
 Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
-int __cdecl base_making(int production_id, uint32_t base_id) {
+int __cdecl base_making(int production_id, int base_id) {
     uint32_t retool = Rules->retool_strictness;
     int skn_off = facility_offset("Skunkworks");
     if ((has_fac_built(FAC_SKUNKWORKS, base_id) // has Skunkworks
@@ -535,7 +535,7 @@ Original Offset: 004E4810
 Return Value: Minerals that would be lost or 0 if not applicable.
 Status: Complete
 */
-int __cdecl base_lose_minerals(uint32_t base_id, int UNUSED(production_id)) {
+int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     int min_accum;
     if (Rules->retool_pct_pen_prod_chg && is_human(Bases[base_id].faction_id_current)
         && base_making(Bases[base_id].production_id_last, base_id)
@@ -554,7 +554,7 @@ Original Offset: 004E48B0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_fac(uint32_t facility_id, uint32_t base_id, BOOL set) {
+void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
     int offset;
     int mask;
     bitmask(facility_id, &offset, &mask);
@@ -603,7 +603,7 @@ Original Offset: 004E4AA0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl base_first(uint32_t base_id) {
+void __cdecl base_first(int base_id) {
     int priority = -1;
     uint32_t proto_id = BSC_SCOUT_PATROL;
     uint32_t faction_id = Bases[base_id].faction_id_current;
@@ -639,7 +639,7 @@ Original Offset: 004E6400
 Return Value: Morale bonus modifier
 Status: Complete
 */
-uint32_t __cdecl morale_mod(uint32_t base_id, uint32_t faction_id, uint32_t triad) {
+int __cdecl morale_mod(int base_id, int faction_id, int triad) {
     uint32_t morale_modifier = 0;
     if (triad == TRIAD_LAND) {
         if (has_fac_built(FAC_COMMAND_CENTER, base_id) 
@@ -673,7 +673,7 @@ Original Offset: 004E65C0
 Return Value: Lifecycle bonus
 Status: Complete
 */
-uint32_t __cdecl breed_mod(uint32_t base_id, uint32_t faction_id) {
+int __cdecl breed_mod(int base_id, int faction_id) {
     uint32_t lifecycle_modifier = has_project(SP_XENOEMPATYH_DOME, faction_id) ? 1 : 0;
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
         lifecycle_modifier++;
@@ -703,7 +703,7 @@ Original Offset: 004E6740
 Return Value: Native life modifier count
 Status: Complete
 */
-uint32_t __cdecl worm_mod(uint32_t base_id, uint32_t faction_id) {
+int __cdecl worm_mod(int base_id, int faction_id) {
     uint32_t worm_modifier_count = breed_mod(base_id, faction_id);
     if (Players[faction_id].rule_psi) {
         worm_modifier_count++;
@@ -1745,7 +1745,7 @@ Original Offset: 004EB490
 Return Value: Base id for the specified rank position or -1 for invalid requests
 Status: Complete
 */
-int __cdecl base_rank(uint32_t faction_id, int rank_position) {
+int __cdecl base_rank(int faction_id, int rank_position) {
     if (rank_position < 0) { // Added parameter bounds check
         return -1;
     }
@@ -1772,7 +1772,7 @@ Original Offset: 004EEF80
 Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
 Status: Complete
 */
-uint32_t __cdecl pop_goal_fac(uint32_t base_id) {
+int __cdecl pop_goal_fac(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
     int pop = Bases[base_id].population_size - limit_mod + Players[faction_id].rule_population;
@@ -1792,7 +1792,7 @@ Original Offset: 004EF090
 Return Value: Goal population
 Status: Complete
 */
-uint32_t __cdecl pop_goal(uint32_t base_id) {
+int __cdecl pop_goal(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
     int goal = (36 - Bases[base_id].population_size) / 6 + Bases[base_id].population_size;
@@ -1822,7 +1822,7 @@ Original Offset: 004F06E0
 Return Value: Is there a valid item in queue to be built? true/false
 Status: Complete
 */
-BOOL __cdecl base_queue(uint32_t base_id) {
+BOOL __cdecl base_queue(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     while (Bases[base_id].queue_size) {
         int queue_prod_id = Bases[base_id].queue_production_id[0];
@@ -1874,7 +1874,7 @@ Original Offset: 004F6510
 Return Value: Facility maintenance cost
 Status: Complete
 */
-uint32_t __cdecl fac_maint(uint32_t facility_id, uint32_t faction_id) {
+int __cdecl fac_maint(int facility_id, int faction_id) {
     if (facility_id == FAC_COMMAND_CENTER) {
         int reactor = best_reactor(faction_id);
         int diff_factor = (PlayersData[faction_id].diff_level + 1) / 2;
@@ -1942,7 +1942,7 @@ Original Offset: 004F7FE0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl make_base_unique(uint32_t base_id) {
+void __cdecl make_base_unique(int base_id) {
     purge_spaces(Bases[base_id].name_string); // added to remove extraneous whitespace
     uint32_t found = 0;
     std::string core_unique_name;
@@ -1966,7 +1966,7 @@ Original Offset: 004F80D0
 Return Value: Does faction have Secret Project? true/false
 Status: Complete
 */
-BOOL __cdecl has_project(uint32_t project_id, uint32_t faction_id) {
+BOOL __cdecl has_project(int project_id, int faction_id) {
     int base_id = base_project(project_id);
     return (base_id < 0) ? false : (Bases[base_id].faction_id_current == faction_id);
 }
@@ -2001,7 +2001,7 @@ Original Offset: 005002E0
 Return Value: Base id, if not built (-1) or destroyed (-2)
 Status: Complete
 */
-int __cdecl base_project(uint32_t project_id) {
+int __cdecl base_project(int project_id) {
     return *(&SecretProject->human_genome_project + project_id);
 }
 
@@ -2103,7 +2103,7 @@ Original Offset: 0054AFA0
 Return Value: Base id to attack from or 0 
 Status: Complete
 */
-int __cdecl attack_from(uint32_t base_id_to_atk, uint32_t faction_id) {
+int __cdecl attack_from(int base_id_to_atk, int faction_id) {
     uint32_t region_src = region_at(Bases[base_id_to_atk].x, Bases[base_id_to_atk].y);
     int base_id_atk_from = 0; // TODO: eventually change this to -1 and add handling to the return
     int search = 9999;        // value to prevent the edge case of base id 0 being incorrect target
@@ -2243,7 +2243,7 @@ Original Offset: 00560B30
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
-uint32_t __cdecl garrison_check(uint32_t base_id) {
+int __cdecl garrison_check(int base_id) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     uint32_t faction_id = Bases[base_id].faction_id_current;
@@ -2287,7 +2287,7 @@ Original Offset: 00560D30
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
-uint32_t __cdecl defensive_check(uint32_t base_id) {
+int __cdecl defensive_check(int base_id) {
     uint32_t defenses = garrison_check(base_id);
     if (defenses > 5) {
         defenses--;
@@ -2304,7 +2304,7 @@ Original Offset: 00579A00
 Return Value: Is base a port? true/false
 Status: Complete
 */
-BOOL __cdecl is_port(uint32_t base_id, BOOL is_base_radius) {
+BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {
     return is_coast(Bases[base_id].x, Bases[base_id].y, is_base_radius);
 }
 
@@ -2315,7 +2315,7 @@ Original Offset: 0059E980
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
 */
-int __cdecl vulnerable(uint32_t faction_id, int x, int y) {
+int __cdecl vulnerable(int faction_id, int x, int y) {
     int dist = 12; // default value for no bases or no HQ
     for (int i = 0; i < *BaseCurrentCount; i++) {
         if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
@@ -2332,7 +2332,7 @@ Original Offset: 005AC060
 Return Value: Is base an objective? true/false
 Status: Complete
 */
-BOOL __cdecl is_objective(uint32_t base_id) {
+BOOL __cdecl is_objective(int base_id) {
     if (*GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ || Bases[base_id].event & BEVENT_OBJECTIVE) {
         return true;
     }
@@ -2525,7 +2525,7 @@ Original Offset: 005BA030
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
-BOOL __cdecl redundant(int facility_id, uint32_t faction_id) {
+BOOL __cdecl redundant(int facility_id, int faction_id) {
     uint32_t project_id;
     switch (facility_id) {
       case FAC_NAVAL_YARD:

@@ -284,7 +284,7 @@ Original Offset: 00500320
 Return Value: Max range
 Status: Complete
 */
-uint32_t __cdecl drop_range(uint32_t faction_id) {
+int __cdecl drop_range(int faction_id) {
     if (!has_tech(Rules->tech_orb_insert_sans_spc_elev, faction_id) // default 'Graviton Theory'
         && !has_project(SP_SPACE_ELEVATOR, faction_id)) {
         return Rules->max_airdrop_sans_orb_insert;
@@ -415,7 +415,7 @@ Original Offset: 00501500
 Return Value: Psi factor
 Status: Complete
 */
-int __cdecl psi_factor(int combat_ratio, uint32_t faction_id, BOOL is_attack, BOOL is_fungal_twr) {
+int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack, BOOL is_fungal_twr) {
     int rule_psi = Players[faction_id].rule_psi;
     int factor = rule_psi ? ((rule_psi + 100) * combat_ratio) / 100 : combat_ratio;
     if (is_attack) {
@@ -581,7 +581,7 @@ Original Offset: 00501D50
 Return Value: n/a
 Status: Complete
 */
-void __cdecl add_bat(uint32_t type, int modifier, LPCSTR display_str) {
+void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
     // TODO: Revise global offsets once all references are decompiled.
     uint32_t offset = VehBattleModCount[type];
     if (modifier && offset < 4) {
@@ -1153,7 +1153,7 @@ Original Offset: 00506490
 Return Value: n/a
 Status: Complete
 */
-void __cdecl invasions(uint32_t base_id) {
+void __cdecl invasions(int base_id) {
     uint32_t faction_id_base = Bases[base_id].faction_id_current;
     int16_t base_x = Bases[base_id].x;
     int16_t base_y = Bases[base_id].y;
@@ -1181,7 +1181,7 @@ Original Offset: 00560AD0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl go_to(uint32_t veh_id, uint8_t type, int x, int y) {
+void __cdecl go_to(int veh_id, uint8_t type, int x, int y) {
     Vehs[veh_id].order = ORDER_MOVE_TO;
     Vehs[veh_id].move_to_ai_type = type;
     Vehs[veh_id].waypoint_x[0] = (int16_t)x;
@@ -1339,7 +1339,7 @@ Original Offset: 00579960
 Return Value: Remaining moves
 Status: Complete
 */
-uint32_t __cdecl veh_moves(uint32_t veh_id) {
+int __cdecl veh_moves(int veh_id) {
     return range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999);
 }
 
@@ -1349,7 +1349,7 @@ Original Offset: 005799A0
 Return Value: Power
 Status: Complete
 */
-uint32_t __cdecl proto_power(uint32_t veh_id) {
+int __cdecl proto_power(int veh_id) {
     int proto_id = Vehs[veh_id].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
         return 1;
@@ -1363,7 +1363,7 @@ Original Offset: 00579F80
 Return Value: Is unit eligible for a monolith morale upgrade? true/false
 Status: Complete
 */
-BOOL __cdecl want_monolith(uint32_t veh_id) {
+BOOL __cdecl want_monolith(int veh_id) {
     if (!(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)
         && morale_veh(veh_id, true, 0) < MORALE_ELITE && Vehs[veh_id].morale < MORALE_ELITE
         && get_offense_rating(veh_id)) {
@@ -1378,7 +1378,7 @@ Original Offset: 0057D270
 Return Value: Armor strategy
 Status: Complete
 */
-int __cdecl arm_strat(uint32_t armor_id, uint32_t faction_id) {
+int __cdecl arm_strat(int armor_id, int faction_id) {
     if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
         return 1;
     }
@@ -1397,7 +1397,7 @@ Original Offset: 0057D2E0
 Return Value: Weapon strategy
 Status: Complete
 */
-int __cdecl weap_strat(uint32_t weapon_id, uint32_t faction_id) {
+int __cdecl weap_strat(int weapon_id, int faction_id) {
     if (!ExpansionEnabled && (weapon_id == WPN_RESONANCE_LASER || weapon_id == WPN_RESONANCE_BOLT
         || weapon_id == WPN_STRING_DISRUPTOR))
         return 1;
@@ -1416,7 +1416,7 @@ Original Offset: 0057D360
 Return Value: Weapon value
 Status: Complete
 */
-int __cdecl weap_val(uint32_t proto_id, uint32_t faction_id) {
+int __cdecl weap_val(int proto_id, int faction_id) {
     return weap_strat(VehPrototypes[proto_id].weapon_id, faction_id);
 }
 
@@ -1426,7 +1426,7 @@ Original Offset: 0057D3F0
 Return Value: Armor value
 Status: Complete
 */
-int __cdecl arm_val(uint32_t armor_id, int faction_id) {
+int __cdecl arm_val(int armor_id, int faction_id) {
     return ((faction_id >= 0) ? arm_strat(armor_id, faction_id) : Armor[armor_id].defense_rating)
         * 2;
 }
@@ -1437,7 +1437,7 @@ Original Offset: 0057D480
 Return Value: Armor value
 Status: Complete
 */
-int __cdecl armor_val(uint32_t proto_id, int faction_id) {
+int __cdecl armor_val(int proto_id, int faction_id) {
     return arm_val(VehPrototypes[proto_id].armor_id, faction_id);
 }
 
@@ -1447,7 +1447,7 @@ Original Offset: 0057D510
 Return Value: Transport capacity
 Status: Complete
 */
-uint32_t __cdecl transport_val(uint32_t chassis_id, uint32_t ability, uint32_t reactor_id) {
+int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
     uint32_t transport = Chassis[chassis_id].cargo;
     if (Chassis[chassis_id].triad == TRIAD_SEA) {
         transport *= reactor_id;
@@ -1577,7 +1577,7 @@ Original Offset: 0057D8E0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_stats_2(LPSTR stat, uint32_t proto_id) {
+void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     std::string output;
     int off_rating = get_proto_offense_rating(proto_id);
     if (off_rating >= 0) {
@@ -1616,7 +1616,7 @@ Original Offset: 0057DAA0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_stats(LPSTR stat, uint32_t proto_id, LPSTR custom_spacer) {
+void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     std::string output;
     uint8_t plan = VehPrototypes[proto_id].plan;
     uint8_t chas = VehPrototypes[proto_id].chassis_id;
@@ -1879,7 +1879,7 @@ Original Offset: 005A59B0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl veh_put(uint32_t veh_id, int x, int y) {
+void __cdecl veh_put(int veh_id, int x, int y) {
     veh_drop(veh_lift(veh_id), x, y);
 }
 
@@ -1889,7 +1889,7 @@ Original Offset: 005A59E0
 Return Value: Unit health
 Status: Complete
 */
-uint32_t __cdecl veh_health(uint32_t veh_id) {
+int __cdecl veh_health(int veh_id) {
     int proto_id = Vehs[veh_id].proto_id;
     int health = VehPrototypes[proto_id].plan != PLAN_ALIEN_ARTIFACT
         ? range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10 : 1;
@@ -2023,7 +2023,7 @@ Original Offset: 005A5D00
 Return Value: Base cost of the prototype
 Status: Complete
 */
-uint32_t __cdecl base_cost(uint32_t proto_id) {
+int __cdecl base_cost(int proto_id) {
     return proto_cost(VehPrototypes[proto_id].chassis_id, VehPrototypes[proto_id].weapon_id,
         VehPrototypes[proto_id].armor_id, 0, VehPrototypes[proto_id].reactor_id);
 }
@@ -2180,7 +2180,7 @@ Original Offset: 005AED50
 Return Value: Prototype id or -1 if not found
 Status: Complete
 */
-int __cdecl get_plan(uint32_t faction_id, uint32_t plan) {
+int __cdecl get_plan(int faction_id, int plan) {
     for (int i = 0; i < 128; i++) {
         uint32_t proto_id = (i < MaxVehProtoFactionNum) ? i
             : (faction_id * MaxVehProtoFactionNum) + i - MaxVehProtoFactionNum;
@@ -2342,7 +2342,7 @@ Original Offset: 005B5EA0
 Return Value: Does unit want to wake? true/false
 Status: Complete
 */
-BOOL __cdecl want_to_wake(uint32_t faction_id, uint32_t veh_id, int spotted_veh_id) {
+BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
     int base_faction_id;
     uint32_t triad = get_triad(veh_id);
     uint32_t veh_faction_id = Vehs[veh_id].faction_id;
@@ -2436,7 +2436,7 @@ Original Offset: 005B8B60
 Return Value: n/a
 Status: Complete
 */
-void __cdecl stack_sort(uint32_t veh_id) {
+void __cdecl stack_sort(int veh_id) {
     int16_t x = Vehs[veh_id].x;
     int16_t y = Vehs[veh_id].y;
     int next_veh_id = veh_top(veh_id);
@@ -2461,7 +2461,7 @@ Original Offset: 005B8C90
 Return Value: n/a
 Status: Complete
 */
-void __cdecl stack_sort_2(uint32_t veh_id) {
+void __cdecl stack_sort_2(int veh_id) {
     int16_t x = Vehs[veh_id].x;
     int16_t y = Vehs[veh_id].y;
     int next_veh_id = veh_top(veh_id);
@@ -2668,7 +2668,7 @@ Original Offset: 005B9580
 Return Value: Dependent on type parameter
 Status: Complete
 */
-int __cdecl stack_check(int veh_id, uint32_t type, int cond1, int cond2, int cond3) {
+int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
     int retn_val = 0;
     uint32_t plan;
     uint32_t chas;
@@ -2807,7 +2807,7 @@ Original Offset: 005BA910
 Return Value: Is unit available to faction/base? true/false
 Status: Complete
 */
-BOOL __cdecl veh_avail(uint32_t proto_id, uint32_t faction_id, int base_id) {
+BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
     if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
         || (VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))) {
         return false;
@@ -2852,7 +2852,7 @@ Original Offset: 005BE100
 Return Value: Does faction want prototype? true/false
 Status: Complete
 */
-BOOL __cdecl wants_prototype(uint32_t proto_id, uint32_t faction_id) {
+BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
     uint32_t flags = VehPrototypes[proto_id].flags;
     if (!(flags & PROTO_ACTIVE) || !(flags & PROTO_TYPED_COMPLETE)) {
         return false;
@@ -2927,7 +2927,7 @@ Original Offset: 005BF1F0
 Return Value: Does prototype have ability? true/false
 Status: Complete
 */
-BOOL __cdecl has_abil(uint32_t proto_id, uint32_t ability_id) {
+BOOL __cdecl has_abil(int proto_id, int ability_id) {
     if ((int)proto_id < 0) { 
         // TODO: Remove eventually, temp workaround fix for bug in base_build
         //       that incorrectly uses negative queue id
@@ -3030,7 +3030,7 @@ Original Offset: 005C01A0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl sleep(uint32_t veh_id) {
+void __cdecl sleep(int veh_id) {
     Vehs[veh_id].order = ORDER_SENTRY_BOARD;
     Vehs[veh_id].waypoint_x[0] = -1;
     Vehs[veh_id].waypoint_y[0] = 0;
@@ -3082,7 +3082,7 @@ Original Offset: 005C02D0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl veh_clear(uint32_t veh_id, int proto_id, uint32_t faction_id) {
+void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
     Vehs[veh_id].x = -4;
     Vehs[veh_id].y = -4;
     Vehs[veh_id].year_end_lurking = 0;
@@ -3121,7 +3121,7 @@ Original Offset: 005C0DB0
 Return Value: Has artillery ability? true/false
 Status: Complete
 */
-BOOL __cdecl can_arty(uint32_t proto_id, BOOL sea_triad_retn) {
+BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
     if ((get_proto_offense_rating(proto_id) <= 0 || get_proto_defense_rating(proto_id) < 0)
         && proto_id != BSC_SPORE_LAUNCHER) {
         return false;
@@ -3143,7 +3143,7 @@ Original Offset: 005C0E40
 Return Value: Morale value
 Status: Complete
 */
-uint32_t __cdecl morale_veh(uint32_t veh_id, BOOL check_drone_riot, int faction_id_vs_native) {
+int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_native) {
     uint32_t faction_id = Vehs[veh_id].faction_id;
     if (!faction_id) {
         return morale_alien(veh_id, faction_id_vs_native);
@@ -3207,7 +3207,7 @@ Original Offset: 005C1150
 Return Value: Prototype's offense
 Status: Complete
 */
-uint32_t __cdecl offense_proto(uint32_t proto_id, int veh_id_def, BOOL is_bombard) {
+int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
     uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;
     if (Weapon[weapon_id].mode == WPN_MODE_INFOWAR && veh_id_def >= 0
         && VehPrototypes[Vehs[veh_id_def].proto_id].plan == PLAN_INFO_WARFARE) {
@@ -3239,7 +3239,7 @@ Original Offset: 005C1290
 Return Value: Prototype's defense
 Status: Complete
 */
-uint32_t __cdecl armor_proto(uint32_t proto_id, int veh_id_atk, BOOL is_bombard) {
+int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
     if (Weapon[VehPrototypes[proto_id].weapon_id].mode == WPN_MODE_INFOWAR && veh_id_atk >= 0
         && VehPrototypes[Vehs[veh_id_atk].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe defending against another probe
@@ -3262,7 +3262,7 @@ Original Offset: 005C13B0
 Return Value: Prototype's speed on roads
 Status: Complete
 */
-uint32_t __cdecl speed_proto(uint32_t proto_id) {
+int __cdecl speed_proto(int proto_id) {
     if (proto_id == BSC_FUNGAL_TOWER) {
         return 0; // cannot move
     }
@@ -3308,7 +3308,7 @@ Original Offset: 005C1540
 Return Value: Speed
 Status: Complete
 */
-uint32_t __cdecl speed(uint32_t veh_id, BOOL skip_morale) {
+int __cdecl speed(int veh_id, BOOL skip_morale) {
     uint32_t proto_id = Vehs[veh_id].proto_id;
     if (proto_id == BSC_FUNGAL_TOWER) { // moved this check to top vs bottom, same logic
         return 0; // cannot move
@@ -3346,7 +3346,7 @@ Original Offset: 005C1760
 Return Value: Cargo capacity
 Status: Complete
 */
-uint32_t __cdecl veh_cargo(uint32_t veh_id) {
+int __cdecl veh_cargo(int veh_id) {
     uint32_t proto_id = Vehs[veh_id].proto_id;
     uint32_t cargo = VehPrototypes[proto_id].carry_capacity;
     return (cargo && proto_id < MaxVehProtoFactionNum && (get_proto_offense_rating(proto_id) < 0 
@@ -3360,7 +3360,7 @@ Original Offset: 005C17D0
 Return Value: Percent extra prototype cost
 Status: Complete
 */
-uint32_t __cdecl prototype_factor(uint32_t proto_id) {
+int __cdecl prototype_factor(int proto_id) {
     uint32_t faction_id = proto_id / MaxVehProtoFactionNum;
     if (Players[faction_id].rule_flags & RFLAG_FREEPROTO
         || PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
@@ -3385,7 +3385,7 @@ Original Offset: 005C1850
 Return Value: Mineral cost
 Status: Complete
 */
-uint32_t __cdecl veh_cost(uint32_t proto_id, int base_id, BOOL *has_proto_cost) {
+int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
     uint32_t cost = VehPrototypes[proto_id].cost;
     if (base_id >= 0 && proto_id < MaxVehProtoFactionNum // bug fix: added base_id bounds check
         && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)
@@ -3415,7 +3415,7 @@ Original Offset: 005C1C40
 Return Value: Can the specified unit disembark? true/false
 Status: Complete
 */
-BOOL __cdecl veh_jail(uint32_t veh_id) {
+BOOL __cdecl veh_jail(int veh_id) {
     if (get_triad(veh_id) == TRIAD_LAND && Vehs[veh_id].order == ORDER_SENTRY_BOARD
         && Vehs[veh_id].waypoint_x[0] >= 0 && get_triad(Vehs[veh_id].waypoint_x[0]) == TRIAD_AIR
         && (!(bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & BIT_BASE_IN_TILE)
@@ -3433,7 +3433,7 @@ Original Offset: 005C1D20
 Return Value: n/a
 Status: Complete
 */
-void __cdecl veh_skip(uint32_t veh_id) {
+void __cdecl veh_skip(int veh_id) {
     // TODO Bug: Due to size of moves_expended, speeds over 255 will be incorrect. The speed()
     //           function can return a value from 1-999. Eventually increase size to 16 bits.
     Vehs[veh_id].moves_expended = (uint8_t)speed(veh_id, false);
@@ -3445,7 +3445,7 @@ Original Offset: 005C1D50
 Return Value: Fake unit id (2048)
 Status: Complete
 */
-int __cdecl veh_fake(int proto_id, uint32_t faction_id) {
+int __cdecl veh_fake(int proto_id, int faction_id) {
     veh_clear(2048, proto_id, faction_id);
     return 2048;
 }
@@ -3456,7 +3456,7 @@ Original Offset: 005C1D70
 Return Value: Unit id (doesn't look to be used on return)
 Status: Complete
 */
-int __cdecl veh_wake(uint32_t veh_id) {
+int __cdecl veh_wake(int veh_id) {
     uint8_t order = Vehs[veh_id].order;
     uint32_t state = Vehs[veh_id].state;
     if (order >= ORDER_FARM && order < ORDER_MOVE_TO && !(state & VSTATE_CRAWLING)) {

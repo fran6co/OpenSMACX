@@ -88,7 +88,7 @@ void Path::set(uint32_t x, uint32_t y, int val) {
  Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
  Status: Complete
 */
-int Path::zoc_path(uint32_t x, uint32_t y, uint32_t faction_id) {
+int Path::zoc_path(int x, int y, int faction_id) {
     if (bit_at(x, y) & BIT_BASE_IN_TILE && owner_at(x, y) < 8) {
         return 0;
     }
@@ -199,7 +199,7 @@ void Path::make_abstract() {
  Return Value: n/a
  Status: Complete
 */
-void Path::merge(uint32_t region_old, uint32_t region_new) {
+void Path::merge(int region_old, int region_new) {
     Continents[region_new].tile_count += Continents[region_old].tile_count;
     Continents[region_old].tile_count = 0;
     for (uint32_t i = 0; i < *MapArea; i++) {
@@ -216,7 +216,7 @@ void Path::merge(uint32_t region_old, uint32_t region_new) {
  Return Value: n/a
  Status: Complete
 */
-void Path::territory(uint32_t x, uint32_t y, int UNUSED(region), int faction_id) {
+void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
     if (is_ocean(x, y)) {
         return; // skip ocean terrain
     }
@@ -249,7 +249,7 @@ void Path::territory(uint32_t x, uint32_t y, int UNUSED(region), int faction_id)
  Return Value: n/a
  Status: Complete
 */
-void Path::continent(uint32_t x, uint32_t y, uint32_t region) {
+void Path::continent(int x, int y, int region) {
     Continents[region].tile_count = 0;
     index1_ = 0; 
     index2_ = 0;

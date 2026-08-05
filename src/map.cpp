@@ -123,7 +123,7 @@ Original Offset: 004E3FA0
 Return Value: Base id or -1
 Status: Complete
 */
-int __cdecl base_territory(uint32_t faction_id, uint32_t x, uint32_t y) {
+int __cdecl base_territory(int faction_id, int x, int y) {
     int base_id;
     int owner = whose_territory(faction_id, x, y, &base_id, false);
     if (owner >= 0 && (uint32_t)owner != faction_id && (is_human(faction_id) || is_human(owner))
@@ -139,7 +139,7 @@ Original Offset: 004ECB90
 Return Value: Quality of terrain, lower is better (0-2)
 Status: Complete
 */
-uint32_t __cdecl crappy(uint32_t x, uint32_t y) {
+int __cdecl crappy(int x, int y) {
     uint32_t poor_quality = 0;
     uint32_t rainfall = climate_at(x, y);
     if (rainfall == RAINFALL_ARID) {
@@ -194,7 +194,7 @@ Original Offset: 0050DDC0
 Return Value: Is there a path? true/false
 Status: Complete
 */
-BOOL __cdecl sea_coast(uint32_t region_dst, uint32_t region_src) {
+BOOL __cdecl sea_coast(int region_dst, int region_src) {
     int offset;
     int mask;
     bitmask(region_src & RegionBounds, &offset, &mask);
@@ -208,7 +208,7 @@ Original Offset: 0050DE00
 Return Value: Sea coasts valid path count
 Status: Complete
 */
-uint32_t __cdecl sea_coasts(uint32_t region_src) {
+int __cdecl sea_coasts(int region_src) {
     uint32_t sea_coast_count = 0;
     for (int i = 1; i < RegionBounds; i++) {
         if (sea_coast(i, region_src)) {
@@ -226,7 +226,7 @@ Original Offset: 0050DE50
 Return Value: Is base connected to specified sea region? true/false
 Status: Complete
 */
-BOOL __cdecl base_on_sea(uint32_t base_id, uint32_t region_sea) {
+BOOL __cdecl base_on_sea(int base_id, int region_sea) {
     region_sea &= RegionBounds;
     if (region_sea >= RegionBounds) { // change to equals since already bounded?
         return false; // skips poles (land or ocean)
@@ -257,7 +257,7 @@ Original Offset: 0050DF30
 Return Value: Ocean region or -1 if landlocked
 Status: Complete
 */
-int __cdecl base_coast(uint32_t base_id) {
+int __cdecl base_coast(int base_id) {
     int region = -1;
     int val = 0;
     int x = Bases[base_id].x;
@@ -283,7 +283,7 @@ Original Offset: 0050E030
 Return Value: Is port and coastal region accessible by water to each other? true/false
 Status: Complete
 */
-BOOL __cdecl port_to_coast(uint32_t base_id, uint32_t region) {
+BOOL __cdecl port_to_coast(int base_id, int region) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     if (region_at(x, y) == region) {
@@ -308,7 +308,7 @@ Original Offset: 0050E160
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
-BOOL __cdecl port_to_port(uint32_t base_id_src, uint32_t base_id_dst) {
+BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
     int x = Bases[base_id_src].x;
     int y = Bases[base_id_src].y;
     int last_region = -1;
@@ -335,7 +335,7 @@ Original Offset: 0050E310
 Return Value: Should base build naval transports? true/false
 Status: Complete
 */
-BOOL __cdecl transport_base(uint32_t base_id) {
+BOOL __cdecl transport_base(int base_id) {
     int region = base_coast(base_id);
     if (region < 0) {
         return false;
@@ -352,7 +352,7 @@ Original Offset: 0050E3C0
 Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
-BOOL __cdecl naval_base(uint32_t base_id) {
+BOOL __cdecl naval_base(int base_id) {
     if (base_coast(base_id) < 0 || *BaseCurrentCount <= 0) {
         return false;
     }
@@ -373,7 +373,7 @@ Original Offset: 0050E5C0
 Return Value: Is a convoy route possible? true/false
 Status: Complete
 */
-BOOL __cdecl convoy(uint32_t veh_id, uint32_t base_id) {
+BOOL __cdecl convoy(int veh_id, int base_id) {
     int home_base_id = Vehs[veh_id].home_base_id;
     if (home_base_id < 0 || base_id == (uint32_t)home_base_id) {
         return false;
@@ -409,7 +409,7 @@ Original Offset: 0056B320
 Return Value: Can unit reach tile? true/false
 Status: Complete
 */
-BOOL __cdecl get_there(uint32_t veh_id, uint32_t x_dst, uint32_t y_dst) {
+BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst) {
     uint32_t triad = get_triad(veh_id);
     if (triad == TRIAD_AIR) {
         return true;
@@ -489,7 +489,7 @@ Original Offset: 00591AD0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl temp_set(uint32_t x, uint32_t y, uint8_t temperature) {
+void __cdecl temp_set(int x, int y, uint8_t temperature) {
     Map *tile = map_loc(x, y);
     tile->climate &= 0xF8;
     tile->climate |= temperature & 7;
@@ -511,7 +511,7 @@ Original Offset: 00591A80
 Return Value: n/a
 Status: Complete
 */
-void __cdecl climate_set(uint32_t x, uint32_t y, uint8_t rainfall) {
+void __cdecl climate_set(int x, int y, uint8_t rainfall) {
     Map *tile = map_loc(x, y);
     tile->climate &= 0xE7;
     tile->climate |= (rainfall & 3) << 3;
@@ -525,7 +525,7 @@ Original Offset: 005919C0
 Return Value: Elevation (bounded to: -3000 to 3500)
 Status: Complete
 */
-int __cdecl elev_at(uint32_t x, uint32_t y) {
+int __cdecl elev_at(int x, int y) {
     uint32_t contour = alt_detail_at(x, y);
     int elev = 50 * (contour - ElevDetail[3] - *MapSeaLevel);
     elev += (contour <= ElevDetail[alt_at(x, y)]) ? 10 
@@ -539,7 +539,7 @@ Original Offset: 005918A0
 Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
 Status: Complete
 */
-uint32_t __cdecl alt_natural(uint32_t x, uint32_t y) {
+int __cdecl alt_natural(int x, int y) {
     uint32_t contour = alt_detail_at(x, y) - *MapSeaLevel;
     uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
     while (contour < AltNatural[natural] && natural) {
@@ -555,7 +555,7 @@ Original Offset: 005918F0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl alt_set_both(uint32_t x, uint32_t y, uint32_t altitude_natural) {
+void __cdecl alt_set_both(int x, int y, int altitude_natural) {
     alt_set(x, y, altitude_natural);
     if (alt_natural(x, y) != altitude_natural) {
         alt_put_detail(x, y, (uint8_t)(AltNatural[altitude_natural] + *MapSeaLevel
@@ -569,7 +569,7 @@ Original Offset: 00500150
 Return Value: Altitude
 Status: Complete
 */
-int __cdecl alt_at(uint32_t x, uint32_t y) {
+int __cdecl alt_at(int x, int y) {
     return map_loc(x, y)->climate >> 5;
 }
 
@@ -589,7 +589,7 @@ Original Offset: 00500180
 Return Value: Altitude detail
 Status: Complete
 */
-int __cdecl alt_detail_at(uint32_t x, uint32_t y) {
+int __cdecl alt_detail_at(int x, int y) {
     return map_loc(x, y)->contour;
 }
 
@@ -599,7 +599,7 @@ Original Offset: 00591260
 Return Value: n/a
 Status: Complete
 */
-void __cdecl alt_put_detail(uint32_t x, uint32_t y, uint8_t detail) {
+void __cdecl alt_put_detail(int x, int y, uint8_t detail) {
     map_loc(x, y)->contour = detail;
 }
 
@@ -619,7 +619,7 @@ Original Offset: 00591B10
 Return Value: n/a
 Status: Complete
 */
-void __cdecl owner_set(uint32_t x, uint32_t y, int faction_id) {
+void __cdecl owner_set(int x, int y, int faction_id) {
     Map *tile = map_loc(x, y);
     tile->val2 &= 0xF0;
     tile->val2 |= faction_id & 0xF;
@@ -631,7 +631,7 @@ Original Offset: 00591B50
 Return Value: n/a
 Status: Complete
 */
-void __cdecl site_set(uint32_t x, uint32_t y, int site) {
+void __cdecl site_set(int x, int y, int site) {
     Map *tile = map_loc(x, y);
     tile->val2 &= 0x0F;
     tile->val2 |= site << 4;
@@ -643,7 +643,7 @@ Original Offset: 00500220
 Return Value: Region
 Status: Complete
 */
-uint32_t __cdecl region_at(uint32_t x, uint32_t y) {
+int __cdecl region_at(int x, int y) {
     return map_loc(x, y)->region;
 }
 
@@ -653,7 +653,7 @@ Original Offset: 00591B90
 Return Value: n/a
 Status: Complete
 */
-void __cdecl region_set(uint32_t x, uint32_t y, uint8_t region) {
+void __cdecl region_set(int x, int y, uint8_t region) {
     map_loc(x, y)->region = region;
 }
 
@@ -673,7 +673,7 @@ Original Offset: 00591C10
 Return Value: n/a
 Status: Complete
 */
-void __cdecl using_set(uint32_t x, uint32_t y, int faction_id) {
+void __cdecl using_set(int x, int y, int faction_id) {
     Map *tile = map_loc(x, y);
     tile->val3 &= 0xF8;
     tile->val3 |= faction_id & 7;
@@ -707,7 +707,7 @@ Original Offset: 00591C90
 Return Value: True if already locked by another faction, otherwise false
 Status: Complete
 */
-BOOL __cdecl lock_map(uint32_t x, uint32_t y, uint32_t faction_id) {
+BOOL __cdecl lock_map(int x, int y, int faction_id) {
     uint32_t lock_id = lock_at(x, y);
     if (lock_id != faction_id) {
         if (lock_id) {
@@ -724,7 +724,7 @@ Original Offset: 00591CF0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl unlock_map(uint32_t x, uint32_t y, uint32_t faction_id) {
+void __cdecl unlock_map(int x, int y, int faction_id) {
     if (lock_at(x, y) == faction_id) {
         map_loc(x, y)->val3 &= 0xC7;
     }
@@ -746,7 +746,7 @@ Original Offset: 00591BC0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl rocky_set(uint32_t x, uint32_t y, uint8_t rocky) {
+void __cdecl rocky_set(int x, int y, uint8_t rocky) {
     Map *tile = map_loc(x, y);
     tile->val3 &= 0x3F;
     tile->val3 |= rocky << 6;
@@ -760,7 +760,7 @@ Original Offset: 005001B0
 Return Value: Bitfield
 Status: Complete
 */
-uint32_t __cdecl bit_at(uint32_t x, uint32_t y) {
+int __cdecl bit_at(int x, int y) {
     return map_loc(x, y)->bit;
 }
 
@@ -770,7 +770,7 @@ Original Offset: 00591D30
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bit_put(uint32_t x, uint32_t y, uint32_t bit) {
+void __cdecl bit_put(int x, int y, int bit) {
     map_loc(x, y)->bit = bit;
 }
 
@@ -780,7 +780,7 @@ Original Offset: 00591D60
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bit_set(uint32_t x, uint32_t y, uint32_t bit, BOOL set) {
+void __cdecl bit_set(int x, int y, int bit, BOOL set) {
     if (set) {
         map_loc(x, y)->bit |= bit;
     } else {
@@ -804,7 +804,7 @@ Original Offset: 00591DB0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bit2_set(uint32_t x, uint32_t y, uint32_t bit2, BOOL set) {
+void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
     if (set) {
         map_loc(x, y)->bit2 |= bit2;
     } else {
@@ -828,7 +828,7 @@ Original Offset: 00591E00
 Return Value: n/a
 Status: Complete
 */
-void __cdecl code_set(uint32_t x, uint32_t y, uint32_t code) {
+void __cdecl code_set(int x, int y, int code) {
     Map *tile = map_loc(x, y);
     tile->bit2 &= 0xFFFFFF;
     tile->bit2 |= code << 24;
@@ -841,7 +841,7 @@ Original Offset: 00591E50
 Return Value: n/a
 Status: Complete
 */
-void __cdecl synch_bit(uint32_t x, uint32_t y, uint32_t faction_id) {
+void __cdecl synch_bit(int x, int y, int faction_id) {
     if (faction_id) {
         map_loc(x, y)->bit_visible[faction_id - 1] = bit_at(x, y);
     }
@@ -898,7 +898,7 @@ Original Offset: 00592030
 Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
 Status: Complete
 */
-uint32_t __cdecl bonus_at(uint32_t x, uint32_t y, int UNUSED(unk_val)) {
+int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     uint32_t bit = bit_at(x, y);
     uint32_t alt = alt_at(x, y);
     BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
@@ -931,7 +931,7 @@ Original Offset: 00592140
 Return Value: 0 (no supply pod), 1 (standard supply pod), 2 (unity pod?)
 Status: Complete
 */
-uint32_t __cdecl goody_at(uint32_t x, uint32_t y) {
+int __cdecl goody_at(int x, int y) {
     uint32_t bit = bit_at(x, y);
     if (bit & (BIT_SUPPLY_REMOVE | BIT_MONOLITH)) {
         return 0; // nothing, supply pod already opened or monolith
@@ -978,7 +978,7 @@ Original Offset: 00592550
 Return Value: Landmark offset or -1 if none found
 Status: Complete
 */
-int __cdecl find_landmark(int x, int y, uint32_t radius_range_offset) {
+int __cdecl find_landmark(int x, int y, int radius_range_offset) {
     int radius = RadiusRange[radius_range_offset];
     for (int i = 0; i < radius; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
@@ -1019,7 +1019,7 @@ Original Offset: 00592650
 Return Value: Does the faction have control of the tile to set a landmark? true/false
 Status: Complete
 */
-BOOL __cdecl valid_landmark(uint32_t x, uint32_t y, int faction_id) {
+BOOL __cdecl valid_landmark(int x, int y, int faction_id) {
     int terr_faction_id = *IsMultiplayerNet ? map_loc(x, y)->territory 
         : whose_territory(faction_id, x, y, NULL, false);
     if (terr_faction_id == faction_id) {
@@ -1075,7 +1075,7 @@ Original Offset: 005001E0
 Return Value: Is tile ocean? true/false
 Status: Complete
 */
-BOOL __cdecl is_ocean(uint32_t x, uint32_t y) {
+BOOL __cdecl is_ocean(int x, int y) {
     return altitude_at(x, y) < ALT_BIT_SHORE_LINE;
 }
 
@@ -1085,7 +1085,7 @@ Original Offset: 00500250
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
-int __cdecl veh_who(uint32_t x, uint32_t y) {
+int __cdecl veh_who(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & BIT_VEH_IN_TILE) {
         uint32_t owner = tile->val2 & 0xF;
@@ -1160,7 +1160,7 @@ Original Offset: 00579840
 Return Value: Is tile visible/known to faction? true/false
 Status: Complete
 */
-BOOL __cdecl is_known(uint32_t x, uint32_t y, uint32_t faction_id) {
+BOOL __cdecl is_known(int x, int y, int faction_id) {
     return (PlayersData[faction_id].flags & PFLAG_MAP_REVEALED
         || map_loc(x, y)->visibility & (1 << faction_id));
 }
@@ -1171,7 +1171,7 @@ Original Offset: 005798A0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
-int __cdecl base_who(uint32_t x, uint32_t y) {
+int __cdecl base_who(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & BIT_BASE_IN_TILE) {
         uint32_t owner = tile->val2 & 0xF;
@@ -1188,7 +1188,7 @@ Original Offset: 005798E0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
-int __cdecl anything_at(uint32_t x, uint32_t y) {
+int __cdecl anything_at(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
         uint32_t owner = tile->val2 & 0xF;
@@ -1322,7 +1322,7 @@ Original Offset: 00591230
 Return Value: n/a
 Status: Complete
 */
-void __cdecl abstract_set(uint32_t x, uint32_t y, uint8_t region) {
+void __cdecl abstract_set(int x, int y, uint8_t region) {
     (*MapAbstract)[(x >> 1) + y * (*MapAbstractLongBounds >> 1)] = region;
 }
 
@@ -1446,7 +1446,7 @@ Original Offset: 005BF010
 Return Value: 0 (no sensor), 1 (sensor array via terraforming), 2 (Geosynchronous Survey Pod)
 Status: Complete
 */
-int __cdecl is_sensor(uint32_t x, uint32_t y) {
+int __cdecl is_sensor(int x, int y) {
     if (bit_at(x, y) & BIT_SENSOR_ARRAY) {
         return 1; // Sensor Array built in tile
     }
@@ -2309,7 +2309,7 @@ Original Offset: 005C58C0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl world_alt_put_detail(uint32_t x, uint32_t y) {
+void __cdecl world_alt_put_detail(int x, int y) {
     alt_put_detail(x, y, (uint8_t)AltNatural[3]);
 }
 
@@ -3143,7 +3143,7 @@ Original Offset: 005C89F0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
-uint32_t __cdecl zoc_any(int x, int y, uint32_t faction_id) {
+int __cdecl zoc_any(int x, int y, int faction_id) {
     for (uint32_t i = 0; i < 8; i++) {
         int x_radius = xrange(x + RadiusBaseX[i]);
         int y_radius = y + RadiusBaseY[i];
@@ -3164,7 +3164,7 @@ Original Offset: 005C8AC0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
-uint32_t __cdecl zoc_veh(int x, int y, uint32_t faction_id) {
+int __cdecl zoc_veh(int x, int y, int faction_id) {
     uint32_t ret = 0;
     for (uint32_t i = 0; i < 8; i++) {
         int x_radius = xrange(x + RadiusBaseX[i]);
@@ -3189,7 +3189,7 @@ Original Offset: 005C8BA0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
-uint32_t __cdecl zoc_sea(int x, int y, uint32_t faction_id) {
+int __cdecl zoc_sea(int x, int y, int faction_id) {
     BOOL is_ocean_tile = is_ocean(x, y);
     for (uint32_t i = 0; i < 8; i++) {
         int x_radius = xrange(x + RadiusBaseX[i]);
@@ -3219,7 +3219,7 @@ Original Offset: 005C8D40
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
-uint32_t __cdecl zoc_move(uint32_t x, uint32_t y, uint32_t faction_id) {
+int __cdecl zoc_move(int x, int y, int faction_id) {
     int owner;
     if (!(bit_at(x, y) & BIT_BASE_IN_TILE)
         || ((owner = owner_at(x, y)), owner >= 8 || owner < 0)) {
