@@ -187,7 +187,7 @@ class WritebackTest(WritebackFixture):
 
 
 class MatchedStoreTest(WritebackFixture):
-    """A match with no `src/` home lands in the store instead of being lost.
+    """A match with no owner lands in the store instead of being lost.
 
     Every one of the 2,783 unrecovered rows - the entire population the agent
     loop works on - has no `source_locations`. Refusing them meant the ledger
@@ -197,12 +197,12 @@ class MatchedStoreTest(WritebackFixture):
 
     def setUp(self):
         super().setUp()
-        self.matched = self.root / "docs" / "recovery" / "matched"
+        self.matched = self.root / "src" / "recovered"
         self.enterContext(mock.patch.object(tool, "MATCHED_DIR", self.matched))
         self.functions[FIRST]["source_locations"] = ""
         self.functions[FIRST]["name"] = "sub_601b80"
 
-    def test_a_body_with_no_src_home_is_stored_and_src_is_untouched(self):
+    def test_a_body_with_no_owner_is_stored_and_the_owning_file_is_untouched(self):
         before = self.source.read_text()
         result = self.writeback("extern \"C\" int __cdecl sub_601b80()\n"
                                 "{\n    return 0;\n}\n")
@@ -211,19 +211,28 @@ class MatchedStoreTest(WritebackFixture):
         self.assertTrue(stored.is_file())
         self.assertIn("return 0;", stored.read_text())
         self.assertEqual(result["source_location"],
-                         "docs/recovery/matched/00601b80.cpp")
+                         "src/recovered/00601b80.cpp")
         self.assertTrue(result["verified"])
         self.assertEqual(self.source.read_text(), before,
-                         "landing must not touch src/")
+                         "landing must not edit a file that owns something else")
 
-    def test_the_stored_file_carries_its_address_and_a_readme(self):
+    def test_the_stored_file_says_what_it_is(self):
         self.writeback("extern \"C\" int __cdecl sub_601b80() { return 0; }\n")
         stored = (self.matched / "00601b80.cpp").read_text()
         self.assertIn("0x00601B80", stored)
         self.assertIn("sub_601b80", stored)
-        self.assertIn("NOT product source", stored)
-        readme = (self.matched / "README.md").read_text()
-        self.assertIn("no `src/` home", readme)
+        # It lives under src/ now, so "this is not compiled" has to be on the
+        # file itself rather than inferable from the directory it sits in.
+        self.assertIn("OPENSMACX_SOURCES", stored)
+
+    def test_the_store_is_not_in_the_build(self):
+        # The guard behind every claim in that header: CMakeLists names each
+        # compiled file by hand, so a new .cpp under src/ is inert. If a glob
+        # over src/ is ever added, this fails and the header starts lying.
+        cmake = (Path(__file__).resolve().parent.parent
+                 / "CMakeLists.txt").read_text()
+        self.assertNotIn("GLOB", cmake.split("OPENSMACX_SOURCES")[1][:4000])
+        self.assertNotIn("src/recovered", cmake)
 
     def test_the_header_is_stripped_when_the_body_is_read_back(self):
         # `verify` is handed what is ON DISK, so the provenance comment must

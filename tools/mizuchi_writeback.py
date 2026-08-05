@@ -22,14 +22,13 @@ change is the consequence of refusing: the match was simply lost, so a run
 could spend a day proving thousands of bodies byte-exact and commit nothing but
 ledger rows. So those bodies are now written to
 
-    docs/recovery/matched/<address>.cpp
+    src/recovered/<address>.cpp
 
-one file per function, named for the address. Read `matched/README.md` for what
-that directory is and is not. It is not product source and does not pretend to
-be: it is the emitter's verification style, which `AGENTS.md` deliberately
-keeps out of `src/`. It is the difference between banking the work and losing
-it, and it is what the later phase - the one that writes these in the tree's
-own style, against real headers - will start from.
+one file per function, named for the address. It sits under `src/` because it
+is source rather than documentation, and in its own directory because it is
+not yet PRODUCT source: `OPENSMACX_SOURCES` lists every compiled file by hand
+and does not list these, so nothing here reaches the build until someone
+rewrites it in the tree's own style. `src/recovered/README.md` says the rest.
 
 `source_locations` is NOT updated to point at the store. That field means
 "placed in the tree as product source", and `export_recovery_inventory` reads
@@ -97,15 +96,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 LEDGER_CSV = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
 SOURCE_MAP = REPO_ROOT / "mizuchi" / "source-map.json"
-MATCHED_DIR = REPO_ROOT / "docs" / "recovery" / "matched"
+MATCHED_DIR = REPO_ROOT / "src" / "recovered"
 
 MATCHED_HEADER = """\
 // 0x{address:08X}  {name}  ->  {symbol}
 //
-// A byte-exact Mizuchi match with no `src/` home. NOT product source: this is
-// the emitter's verification style, and moving it into the tree is a later
-// phase. See README.md beside this file. Re-verified in bulk by
-// tools/byte_match_fanout.py --collect.
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 """
 
 
@@ -275,7 +274,7 @@ def verify(address: int, body: str) -> dict:
 
 
 def land(address: int, row: dict, code: str, check: bool = True) -> dict:
-    """Commit a match that has no `src/` home, under `docs/recovery/matched/`.
+    """Commit a match that has no `src/` home, under `src/recovered/`.
 
     Choosing a file, a position and an include set in `src/` is still not this
     tool's decision - that is why this is a separate directory rather than a
@@ -290,7 +289,6 @@ def land(address: int, row: dict, code: str, check: bool = True) -> dict:
     path = matched_path(address)
     existed = path.read_text() if path.is_file() else None
     MATCHED_DIR.mkdir(parents=True, exist_ok=True)
-    write_matched_readme()
     name = row.get("name", "")
     path.write_text(MATCHED_HEADER.format(
         address=address, name=name,
@@ -301,10 +299,7 @@ def land(address: int, row: dict, code: str, check: bool = True) -> dict:
     result = {"address": f"0x{address:08X}", "name": name,
               "source_location": relative, "lines_replaced": 0,
               "lines_written": len(replacement.splitlines()), "line_delta": 0,
-              "files_modified": [relative,
-                                 str((MATCHED_DIR / "README.md")
-                                     .relative_to(REPO_ROOT))],
-              "verified": False}
+              "files_modified": [relative], "verified": False}
     if not check:
         return result
 
@@ -324,52 +319,6 @@ def land(address: int, row: dict, code: str, check: bool = True) -> dict:
             f"reverted, nothing changed")
     result["verified"] = True
     return result
-
-
-def write_matched_readme() -> None:
-    """Say what this directory is, once, rather than in every file's header."""
-    readme = MATCHED_DIR / "README.md"
-    if readme.is_file():
-        return
-    readme.write_text(MATCHED_README)
-
-
-MATCHED_README = """\
-# Matched bodies with no `src/` home
-
-One file per function, named for its address, holding a body Mizuchi proved
-byte-exact against the pinned original.
-
-## Why they are here and not in `src/`
-
-`docs/recovery/functions.csv` gives these functions no `source_locations`:
-nothing in the tree owns them, so there is no catalogued span to splice and no
-file to append to. Choosing one - a file, a position, an include set, a place
-in the class - is a recovery decision, and `tools/mizuchi_writeback.py` does
-not make it. Before this directory existed the consequence was that the body
-was thrown away: the ledger recorded BYTE_EXACT and the text stayed in
-gitignored `build/byte-match/`, so a `git clean` undid a day of proving.
-
-## What they are NOT
-
-Product source. These are written in the style
-`tools/emit_translation_unit.py` emits for verification - opaque class shells,
-fixed-address globals, offset casts - which `AGENTS.md` deliberately keeps out
-of `src/`, where recovered code is written to BEHAVE. A file here compiles
-against generated scaffolding, not against the project's headers.
-
-Moving one into the tree, in the tree's own style, with a leaf test, is the
-per-recovery loop in `AGENTS.md`. This directory is what that work starts
-from, not a substitute for it.
-
-## Keeping them honest
-
-`tools/byte_match_fanout.py --collect` re-verifies every file here the same
-way it re-verifies the fan-out work area: it rebuilds the unit from the
-current emitter and re-measures against the original. A body that stops
-verifying because the scaffolding changed shows up as a ledger regression
-rather than as a stale file nobody reads.
-"""
 
 
 def splice(address: int, row: dict, location: str, code: str,

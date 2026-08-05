@@ -198,7 +198,7 @@ def collect(reverify: bool = False) -> int:
     ledger = read_ledger()
 
     # Two sources, and the second is the one that must not be skipped. A body
-    # under docs/recovery/matched/ is the ONLY committed copy of that recovery,
+    # under src/recovered/ is the ONLY committed copy of that recovery,
     # and its unit is rebuilt from the current emitter every time - so a
     # scaffolding change that stops it verifying has to surface here as a
     # ledger regression rather than as a tracked file nobody re-reads.
