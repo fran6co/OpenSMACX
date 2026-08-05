@@ -66,6 +66,13 @@ plugins:
     timeoutMs: 600000
     ttftTimeoutMs: 180000
 
+    # Inline assembly is ALLOWED here. The image contains hand-written __asm
+    # (see the carry-flag rule in the system prompt): those bodies cannot be
+    # reached from C++ at any flag setting, so a hard rejection would make them
+    # permanently unmatchable. The prompt discourages it instead, which is the
+    # right shape for "usually wrong, occasionally the only answer".
+    rejectInlineAsm: false
+
     # Model used for decompilation (default: claude-sonnet-4-6).
     # Subscription auth: Claude Code aliases (opus, sonnet, haiku) or an
     # exact ID from https://api.anthropic.com/v1/models.
@@ -106,7 +113,16 @@ plugins:
       - The compiled output must produce an instruction stream identical to the target
       - Functional equivalence is insufficient; source FORM matters: ternary vs
         if, loop shape, counting direction and signedness all change the code
-      - Do NOT use inline assembly (`__asm` / `asm`) — it pastes the original bytes instead of decompiling and will be rejected. Derive real C++ that the compiler turns into the matching assembly.
+      - Prefer real C++ over inline assembly, strongly. `__asm` pastes the
+        original instructions rather than deriving them, so a body written that
+        way proves nothing about the source and cannot be maintained. Reach for
+        C++ first, and keep reaching: most differences that look like they need
+        assembly are source FORM, not instruction selection.
+      - `__asm` is permitted only as a last resort, for a target idiom the
+        compiler provably cannot emit — the carry-flag case below is the known
+        example. If you use it, use it for the smallest possible span, leave the
+        rest as ordinary C++, and say in your final message which instructions
+        you had to write by hand and why C++ could not produce them.
 
       **VC6 dialect**
       - Must compile under BOTH cl 12.00.8168 and i686-w64-mingw32-g++ -std=c++11.
@@ -142,9 +158,10 @@ plugins:
         `and`/`add`/`shr` or `test`/`je`/`inc`. None emits `adc` or `sbb`.
         A target body built from this idiom was most likely hand-written
         assembly in the original source, which is why no C++ reproduces it.
-        Do NOT spend attempts hunting a spelling — get the rest of the body as
-        close as you can, submit your best, and say in your final message that
-        the residual difference is a carry-flag idiom.
+        Do NOT spend attempts hunting a spelling. Get the rest of the body as
+        close as you can in ordinary C++; this is the one case where a small
+        `__asm` block for the carry sequence is the right answer rather than a
+        shortcut. Say which instructions you wrote by hand.
 
       **Available Tools**
       - `compile_and_view_assembly`: Compiles your C++ code, shows the resulting assembly, AND shows the diff against the target. The tool returns:
