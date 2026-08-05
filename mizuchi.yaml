@@ -134,7 +134,7 @@ plugins:
         you had to write by hand and why C++ could not produce them.
 
       **VC6 dialect**
-      - Must compile under BOTH cl 12.00.8168 and i686-w64-mingw32-g++ -std=c++11.
+      - cl 12.00.8168 is the compiler. Nothing else has to accept your code.
       - Avoid: auto, nullptr, constexpr, static_assert, enum class, range-for,
         lambdas, long long, <cstdint>, and declaring `int i` twice in one
         function (VC6 leaks for-scope). static_cast/reinterpret_cast are fine
