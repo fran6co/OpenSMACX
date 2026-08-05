@@ -189,7 +189,11 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
     //    and re-verifies from src/ - it reverts itself rather than leave a
     //    half-applied edit, so a failure here is reported and does not block
     //    the ledger commit the gate earned.
-    if (WRITE_BACK_TO_SRC && JSON.parse(stdout.trim().split('\n').pop()).tier === 'BYTE_EXACT') {
+    //    The verdict is re-read rather than threaded out of the try, and read
+    //    defensively: a parse failure here must not surface as a gate failure
+    //    on a gate that actually passed.
+    const verdict = stdout.trim().split('\n').pop();
+    if (WRITE_BACK_TO_SRC && verdict.includes('"BYTE_EXACT"')) {
       try {
         const out = execFileSync(
           PY,
