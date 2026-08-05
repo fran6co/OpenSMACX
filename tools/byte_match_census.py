@@ -83,13 +83,14 @@ FIELDS = ("address", "name", "source_location", "generated", "size",
           "note", "refusal_reason")
 
 
-def extract_body(source: str) -> str:
-    """The committed recovery verbatim, from its catalogued line to its `}`.
+def body_span(source: str):
+    """(path, lines, start, end) for a catalogued `src/foo.cpp:123` location.
 
-    `functions.csv` points at a line inside the doc comment that precedes the
-    definition, so the extract usually opens mid-comment; it is re-opened with
-    `/*` rather than trimmed, because trimming would make this tool decide
-    where a body starts.
+    `end` is INCLUSIVE and indexes the closing brace's line; both indices are
+    0-based into `lines`. Split out of `extract_body` so a writer can replace
+    exactly the span this reader compiles - `tools/mizuchi_writeback.py` puts a
+    byte-exact Mizuchi match back into `src/`, and it must not carry a second
+    opinion about where a body ends.
 
     Measured over all 2,518 rows carrying a source location: every one extracts,
     every one ends in `}`, none has a brace inside a string or char literal, and
@@ -102,17 +103,26 @@ def extract_body(source: str) -> str:
     path = REPO_ROOT / path_part
     lines = path.read_text().splitlines()
     start = int(line_part) - 1
-    depth, opened, out = 0, False, []
-    for line in lines[start:]:
-        out.append(line)
+    depth, opened = 0, False
+    for offset, line in enumerate(lines[start:]):
         depth += line.count("{") - line.count("}")
         if "{" in line:
             opened = True
         if opened and depth <= 0:
-            break
-    else:
-        raise ValueError(f"{source}: no closing brace within the file")
-    text = "\n".join(out) + "\n"
+            return path, lines, start, start + offset
+    raise ValueError(f"{source}: no closing brace within the file")
+
+
+def extract_body(source: str) -> str:
+    """The committed recovery verbatim, from its catalogued line to its `}`.
+
+    `functions.csv` points at a line inside the doc comment that precedes the
+    definition, so the extract usually opens mid-comment; it is re-opened with
+    `/*` rather than trimmed, because trimming would make this tool decide
+    where a body starts.
+    """
+    _, lines, start, end = body_span(source)
+    text = "\n".join(lines[start:end + 1]) + "\n"
     if "*/" in text.split("{", 1)[0]:
         text = "/*\n" + text
     return text
