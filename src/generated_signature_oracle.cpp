@@ -691,7 +691,7 @@ static bool verify_StringStruct_current_entry_00402530() {
 }
 
 // ?passover_callback@@YAXXZ  (10 B)
-// recovered in src/guarded_teardowns.cpp:104
+// recovered in src/guarded_teardowns.cpp:97
 static bool verify_passover_callback_004456a0() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x004456A0U);
@@ -1543,7 +1543,7 @@ static bool verify_NetWin_UNK5_00483820() {
 }
 
 // ?blink@PlanWin@@QAEXXZ  (43 B)
-// recovered in src/planwin.cpp:89
+// recovered in src/planwin.cpp:82
 // staged receiver: PlanWin, 0x22A64 B, zero-filled, size pinned
 static bool verify_PlanWin_blink_0048bc20() {
     typedef void (__thiscall *Callable)(void *);
@@ -4049,7 +4049,7 @@ static bool verify_desktop_update_0058ee50() {
 }
 
 // ?fill@GraphicWin@@QAEXH@Z  (246 B)
-// recovered in src/graphicwin.cpp:278
+// recovered in src/graphicwin.cpp:254
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5250() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -4185,7 +4185,7 @@ static bool verify_GraphicWin_fill_005d5250() {
 }
 
 // ?fill@GraphicWin@@QAEHHHHHH@Z  (39 B)
-// recovered in src/graphicwin.cpp:223
+// recovered in src/graphicwin.cpp:206
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5440() {
     typedef int (__thiscall *Callable)(void *, int, int, int, int, int);
@@ -4330,7 +4330,7 @@ static bool verify_GraphicWin_fill_005d5440() {
 }
 
 // ?redraw@GraphicWin@@QAEXXZ  (244 B)
-// recovered in src/graphicwin.cpp:346
+// recovered in src/graphicwin.cpp:322
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_redraw_005d5a70() {
     typedef void (__thiscall *Callable)(void *);
@@ -4456,7 +4456,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
 }
 
 // ?set_text_color@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:162
+// recovered in src/buffer.cpp:159
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_005dacb0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -4592,7 +4592,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
 }
 
 // ?set_text_color2@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:175
+// recovered in src/buffer.cpp:172
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color2_005dace0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -4728,7 +4728,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
 }
 
 // ?set_text_color3@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:188
+// recovered in src/buffer.cpp:185
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color3_005dad10() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -4864,7 +4864,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
 }
 
 // ?set_text_color_hyper@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:201
+// recovered in src/buffer.cpp:198
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_hyper_005dad40() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -5000,7 +5000,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
 }
 
 // ?text_height@Buffer@@QAEHXZ  (37 B)
-// recovered in src/buffer.cpp:750
+// recovered in src/buffer.cpp:733
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_height_005dca80() {
     typedef int (__thiscall *Callable)(void *);
@@ -5135,7 +5135,7 @@ static bool verify_Buffer_text_height_005dca80() {
 }
 
 // ?text_line_height@Buffer@@QAEHXZ  (43 B)
-// recovered in src/buffer.cpp:368
+// recovered in src/buffer.cpp:358
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_line_height_005dcab0() {
     typedef int (__thiscall *Callable)(void *);
@@ -5270,7 +5270,7 @@ static bool verify_Buffer_text_line_height_005dcab0() {
 }
 
 // ?clear_links@Buffer@@QAEXXZ  (68 B)
-// recovered in src/buffer.cpp:951
+// recovered in src/buffer.cpp:934
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_clear_links_005def90() {
     typedef void (__thiscall *Callable)(void *);
@@ -5396,7 +5396,7 @@ static bool verify_Buffer_clear_links_005def90() {
 }
 
 // ?get_data@Buffer@@QAEHXZ  (119 B)
-// recovered in src/buffer.cpp:285
+// recovered in src/buffer.cpp:275
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_data_005e3373() {
     typedef int (__thiscall *Callable)(void *);
@@ -5531,7 +5531,7 @@ static bool verify_Buffer_get_data_005e3373() {
 }
 
 // ?free_data@Buffer@@QAEXH@Z  (88 B)
-// recovered in src/buffer.cpp:330
+// recovered in src/buffer.cpp:320
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_free_data_005e34a3() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -5667,7 +5667,7 @@ static bool verify_Buffer_free_data_005e34a3() {
 }
 
 // ?get_hdc@Buffer@@QAEHXZ  (89 B)
-// recovered in src/buffer.cpp:633
+// recovered in src/buffer.cpp:616
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_hdc_005e3503() {
     typedef int (__thiscall *Callable)(void *);
@@ -5802,7 +5802,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
 }
 
 // ?release_hdc@Buffer@@QAEXH@Z  (96 B)
-// recovered in src/buffer.cpp:667
+// recovered in src/buffer.cpp:650
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_release_hdc_005e3563() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -5938,7 +5938,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
 }
 
 // ?set_cursor@Win@@QAEHH@Z  (62 B)
-// recovered in src/win.cpp:549
+// recovered in src/win.cpp:539
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_cursor_005ec7c0() {
     typedef int (__thiscall *Callable)(void *, int);
@@ -6083,7 +6083,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
 }
 
 // ?UNK3@Win@@QAEHH@Z  (54 B)
-// recovered in src/win.cpp:897
+// recovered in src/win.cpp:887
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK3_005ece80() {
     typedef int (__thiscall *Callable)(void *, int);
@@ -6228,7 +6228,7 @@ static bool verify_Win_UNK3_005ece80() {
 }
 
 // ?move@Win@@QAEHHH@Z  (167 B)
-// recovered in src/win.cpp:165
+// recovered in src/win.cpp:162
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_move_005ed7d0() {
     typedef int (__thiscall *Callable)(void *, int, int);
@@ -6373,7 +6373,7 @@ static bool verify_Win_move_005ed7d0() {
 }
 
 // ?set_vert_pos@Win@@QAEXH@Z  (23 B)
-// recovered in src/win.cpp:813
+// recovered in src/win.cpp:803
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_pos_005ee030() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -6509,7 +6509,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
 }
 
 // ?get_vert_pos@Win@@QAEHXZ  (20 B)
-// recovered in src/win.cpp:246
+// recovered in src/win.cpp:243
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_get_vert_pos_005ee050() {
     typedef int (__thiscall *Callable)(void *);
@@ -6644,7 +6644,7 @@ static bool verify_Win_get_vert_pos_005ee050() {
 }
 
 // ?set_horz_pos@Win@@QAEXH@Z  (23 B)
-// recovered in src/win.cpp:826
+// recovered in src/win.cpp:816
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_pos_005ee070() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -6780,7 +6780,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
 }
 
 // ?get_horz_pos@Win@@QAEHXZ  (20 B)
-// recovered in src/win.cpp:263
+// recovered in src/win.cpp:260
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_get_horz_pos_005ee090() {
     typedef int (__thiscall *Callable)(void *);
@@ -6915,7 +6915,7 @@ static bool verify_Win_get_horz_pos_005ee090() {
 }
 
 // ?set_vert_range@Win@@QAEXHH@Z  (28 B)
-// recovered in src/win.cpp:839
+// recovered in src/win.cpp:829
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_range_005ee0b0() {
     typedef void (__thiscall *Callable)(void *, int, int);
@@ -7051,7 +7051,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
 }
 
 // ?set_horz_range@Win@@QAEXHH@Z  (28 B)
-// recovered in src/win.cpp:852
+// recovered in src/win.cpp:842
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_range_005ee0d0() {
     typedef void (__thiscall *Callable)(void *, int, int);
@@ -7187,7 +7187,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
 }
 
 // ?set_vert_paging@Win@@QAEXH@Z  (23 B)
-// recovered in src/win.cpp:280
+// recovered in src/win.cpp:277
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_paging_005ee0f0() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -7323,7 +7323,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
 }
 
 // ?set_horz_paging@Win@@QAEXH@Z  (23 B)
-// recovered in src/win.cpp:291
+// recovered in src/win.cpp:288
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_paging_005ee110() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -7459,7 +7459,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
 }
 
 // ?UNK8@Win@@QAEXH@Z  (39 B)
-// recovered in src/win.cpp:678
+// recovered in src/win.cpp:668
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK8_005ee130() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -7595,7 +7595,7 @@ static bool verify_Win_UNK8_005ee130() {
 }
 
 // ?UNK9@Win@@QAEXH@Z  (39 B)
-// recovered in src/win.cpp:694
+// recovered in src/win.cpp:684
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK9_005ee160() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -7731,7 +7731,7 @@ static bool verify_Win_UNK9_005ee160() {
 }
 
 // ?sync_palette@Win@@QAEXXZ  (52 B)
-// recovered in src/win.cpp:787
+// recovered in src/win.cpp:777
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_sync_palette_005f2c60() {
     typedef void (__thiscall *Callable)(void *);
@@ -7857,7 +7857,7 @@ static bool verify_Win_sync_palette_005f2c60() {
 }
 
 // ?is_dialog_focus@Win@@QAEHXZ  (63 B)
-// recovered in src/win.cpp:421
+// recovered in src/win.cpp:418
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_is_dialog_focus_005f2ca0() {
     typedef int (__thiscall *Callable)(void *);
@@ -7992,7 +7992,7 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
 }
 
 // ?is_visible@Win@@QAEHXZ  (38 B)
-// recovered in src/win.cpp:175
+// recovered in src/win.cpp:172
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_is_visible_005f7e90() {
     typedef int (__thiscall *Callable)(void *);
@@ -11152,7 +11152,7 @@ static bool verify_Menu_requested_height_005fc6a0() {
 }
 
 // ?do_sound@@YAXXZ  (3 B)
-// recovered in src/autosound.cpp:144
+// recovered in src/autosound.cpp:141
 static bool verify_do_sound_005fd2b0() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x005FD2B0U);
@@ -13038,7 +13038,7 @@ static bool verify_BasePop_UNK4_006051a0() {
 }
 
 // ?set_range@Scroll@@QAEXHH@Z  (93 B)
-// recovered in src/scroll.cpp:316
+// recovered in src/scroll.cpp:294
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_range_006059b0() {
     typedef void (__thiscall *Callable)(void *, int, int);
@@ -13174,7 +13174,7 @@ static bool verify_Scroll_set_range_006059b0() {
 }
 
 // ?set_button_color@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:338
+// recovered in src/scroll.cpp:316
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_button_color_00605a10() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -13310,7 +13310,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
 }
 
 // ?set_bevel_thickness@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:354
+// recovered in src/scroll.cpp:332
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_thickness_00605a50() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -13446,7 +13446,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
 }
 
 // ?set_bevel_upper@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:370
+// recovered in src/scroll.cpp:348
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_upper_00605a90() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -13582,7 +13582,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
 }
 
 // ?set_bevel_lower@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:386
+// recovered in src/scroll.cpp:364
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_lower_00605ad0() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -13718,7 +13718,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
 }
 
 // ?set_border_color@Scroll@@QAEXH@Z  (100 B)
-// recovered in src/scroll.cpp:431
+// recovered in src/scroll.cpp:409
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_border_color_00605b10() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -13854,7 +13854,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
 }
 
 // ?set_bar_thickness@Scroll@@QAEXH@Z  (96 B)
-// recovered in src/scroll.cpp:402
+// recovered in src/scroll.cpp:380
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bar_thickness_00605b80() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -13990,7 +13990,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
 }
 
 // ?set_pos@Scroll@@QAEXH@Z  (106 B)
-// recovered in src/scroll.cpp:512
+// recovered in src/scroll.cpp:490
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_pos_00605d20() {
     typedef void (__thiscall *Callable)(void *, int);
@@ -14126,7 +14126,7 @@ static bool verify_Scroll_set_pos_00605d20() {
 }
 
 // ?set_thumb_rect@Scroll@@QAEXXZ  (88 B)
-// recovered in src/scroll.cpp:653
+// recovered in src/scroll.cpp:631
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_thumb_rect_00606ea0() {
     typedef void (__thiscall *Callable)(void *);
@@ -14252,7 +14252,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
 }
 
 // ?set_text_color@BaseButton@@QAEXHHHH@Z  (61 B)
-// recovered in src/basebutton.cpp:315
+// recovered in src/basebutton.cpp:312
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color_00607360() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -14388,7 +14388,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
 }
 
 // ?set_text_color2@BaseButton@@QAEXHHHH@Z  (61 B)
-// recovered in src/basebutton.cpp:335
+// recovered in src/basebutton.cpp:332
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color2_006073a0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -14524,7 +14524,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
 }
 
 // ?set_text_color3@BaseButton@@QAEXHHHH@Z  (61 B)
-// recovered in src/basebutton.cpp:347
+// recovered in src/basebutton.cpp:344
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color3_006073e0() {
     typedef void (__thiscall *Callable)(void *, int, int, int, int);
@@ -14660,7 +14660,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
 }
 
 // ?set@BaseButton@@QAEXH@Z  (61 B)
-// recovered in src/basebutton.cpp:395
+// recovered in src/basebutton.cpp:385
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_00607c80() {
     typedef void (__thiscall *Callable)(void *, int);
