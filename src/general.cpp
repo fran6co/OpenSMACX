@@ -750,8 +750,8 @@ Original Offset: 0050BA30
 Return Value: Bit count
 Status: Complete
 */
-uint32_t __cdecl bit_count(uint32_t bitfield) {
-    uint32_t count;
+int __cdecl bit_count(int bitfield) {
+    int count;
     for (count = 0; bitfield; count++) {
         bitfield &= bitfield - 1; // clear the least significant bit set
     }
