@@ -883,7 +883,7 @@ Original Offset: 00539090
 Return Value: Checksum
 Status: Complete
 */
-uint8_t __cdecl checksum(uint8_t *buffer, int size, uint8_t seed) {
+uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
     while (size--) seed ^= *buffer++;
     return seed;
 }

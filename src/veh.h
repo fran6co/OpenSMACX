@@ -527,7 +527,7 @@ DLLEXPORT void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offen
                                       int *defense_out, int combat_type);
 DLLEXPORT uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
 DLLEXPORT void __cdecl invasions(int base_id);
-DLLEXPORT void __cdecl go_to(int veh_id, uint8_t type, int x, int y);
+DLLEXPORT void __cdecl go_to(int veh_id, char type, int x, int y);
 DLLEXPORT void __cdecl set_course(int veh_id, char type, int x, int y);
 DLLEXPORT int __cdecl veh_top(int veh_id);
 DLLEXPORT int __cdecl veh_moves(int veh_id);

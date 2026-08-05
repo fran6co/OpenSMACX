@@ -489,7 +489,7 @@ Original Offset: 00591AD0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl temp_set(int x, int y, uint8_t temperature) {
+void __cdecl temp_set(int x, int y, int temperature) {
     Map *tile = map_loc(x, y);
     tile->climate &= 0xF8;
     tile->climate |= temperature & 7;
@@ -511,7 +511,7 @@ Original Offset: 00591A80
 Return Value: n/a
 Status: Complete
 */
-void __cdecl climate_set(int x, int y, uint8_t rainfall) {
+void __cdecl climate_set(int x, int y, int rainfall) {
     Map *tile = map_loc(x, y);
     tile->climate &= 0xE7;
     tile->climate |= (rainfall & 3) << 3;
@@ -599,7 +599,7 @@ Original Offset: 00591260
 Return Value: n/a
 Status: Complete
 */
-void __cdecl alt_put_detail(int x, int y, uint8_t detail) {
+void __cdecl alt_put_detail(int x, int y, int detail) {
     map_loc(x, y)->contour = detail;
 }
 
@@ -653,7 +653,7 @@ Original Offset: 00591B90
 Return Value: n/a
 Status: Complete
 */
-void __cdecl region_set(int x, int y, uint8_t region) {
+void __cdecl region_set(int x, int y, int region) {
     map_loc(x, y)->region = region;
 }
 
@@ -746,7 +746,7 @@ Original Offset: 00591BC0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl rocky_set(int x, int y, uint8_t rocky) {
+void __cdecl rocky_set(int x, int y, int rocky) {
     Map *tile = map_loc(x, y);
     tile->val3 &= 0x3F;
     tile->val3 |= rocky << 6;

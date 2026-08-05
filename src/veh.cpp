@@ -1181,7 +1181,7 @@ Original Offset: 00560AD0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl go_to(int veh_id, uint8_t type, int x, int y) {
+void __cdecl go_to(int veh_id, char type, int x, int y) {
     Vehs[veh_id].order = ORDER_MOVE_TO;
     Vehs[veh_id].move_to_ai_type = type;
     Vehs[veh_id].waypoint_x[0] = (int16_t)x;
