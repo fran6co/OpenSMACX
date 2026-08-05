@@ -107,6 +107,42 @@ class ReadRangeTest(unittest.TestCase):
             disasm.read_range(image, 0x00500000, 4)
 
 
+class ExactNameWinsTest(unittest.TestCase):
+    """`__exit` is a catalogued row AND the decoration of the row `_exit`.
+
+    CL decorates source `exit` to `_exit` and source `_exit` to `__exit`, so
+    both are real and distinct. Trying the exact name and the undecorated one
+    together as a set let whichever came first in the catalogue win.
+    """
+
+    FUNCTIONS = {0x00644DFF: {"address": "0x00644DFF", "size": "17",
+                              "name": "_exit"},
+                 0x00644E10: {"address": "0x00644E10", "size": "16",
+                              "name": "__exit"}}
+
+    def setUp(self):
+        disasm.symbol_map.cache_clear()
+        self.addCleanup(disasm.symbol_map.cache_clear)
+
+    def test_each_resolves_to_its_own_row(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = pathlib.Path(tmp) / "absent.json"
+            with mock.patch.object(disasm, "SYMBOL_MAP", missing):
+                self.assertEqual(0x00644E10,
+                                 disasm.resolve("__exit", self.FUNCTIONS)[0])
+                self.assertEqual(0x00644DFF,
+                                 disasm.resolve("_exit", self.FUNCTIONS)[0])
+
+    def test_a_decoration_with_no_row_of_its_own_still_undecorates(self):
+        functions = {0x005E3650: {"address": "0x005E3650", "size": "32",
+                                  "name": "sub_5e3650"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = pathlib.Path(tmp) / "absent.json"
+            with mock.patch.object(disasm, "SYMBOL_MAP", missing):
+                self.assertEqual(0x005E3650,
+                                 disasm.resolve("_sub_5e3650@8", functions)[0])
+
+
 class SymbolMapResolutionTest(unittest.TestCase):
     """A C++ symbol cannot be undecorated back into its catalogued name.
 

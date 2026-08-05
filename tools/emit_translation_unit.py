@@ -215,6 +215,38 @@ def class_keys(functions: dict) -> dict:
 
 
 @functools.lru_cache(maxsize=1)
+def renamed_for_collision() -> frozenset:
+    """Addresses whose catalogued name is ALSO another row's symbol.
+
+    `?get@NetFifo@@QAEHPAXPAIPAHPAI@Z` at 0x00633F70 compresses to
+    `?get@NetFifo@@QAEHPAXPAIPAH1@Z`, which is what 0x00633D90 is catalogued
+    as outright - two different functions, 173 bytes and 229, under one
+    symbol. A linked image cannot hold that, so one of the two names is
+    wrong, and there is nothing here that can say which.
+
+    Every tool resolves a subject BY symbol, so the loser would be handed the
+    winner's context, target object and assembly and the agent would work
+    against another function's bytes. Renaming it is the same device the
+    emitter already uses for the 908 names that are not identifiers: the
+    symbol is ours, it only has to be unique and agreed on both sides. The
+    lowest address keeps the catalogued spelling, so the choice is stable
+    across runs.
+    """
+    keys = catalogue_class_keys()
+    owners = {}
+    for address, row in load_functions().items():
+        name = (row.get("name") or "").strip()
+        if not name.startswith("?"):
+            continue
+        symbol = recovery_symbols.compress_backrefs(
+            recovery_symbols.canonicalise_class_keys(
+                recovery_symbols.empty_destructor_arguments(name), keys))
+        owners.setdefault(symbol, []).append(address)
+    return frozenset(address for group in owners.values() if len(group) > 1
+                     for address in sorted(group)[1:])
+
+
+@functools.lru_cache(maxsize=1)
 def catalogue_class_keys() -> dict:
     """`class_keys` over the real catalogue, read once.
 
@@ -643,6 +675,12 @@ class Signature:
                 self.kind = "method"
                 self.method = (found.group("method") if found
                                else f"m_{int(row['address'], 16):08x}")
+                if int(row["address"], 16) in renamed_for_collision():
+                    # Another row is catalogued under the symbol this name
+                    # compresses to. Both sides take the synthesised name, so
+                    # the two objects still agree and the subject stops
+                    # resolving to somebody else.
+                    self.method = f"m_{int(row['address'], 16):08x}"
         else:
             # A `__cdecl`/`__stdcall` parameter may still be NAMED `this`; it
             # is a real argument there, so keep it and drop only the keyword.
@@ -1004,8 +1042,12 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # subject - 11 of the first 48 failures measured - and "did it compile"
     # stops being a usable signal for whether the scaffolding is right, which
     # is the only question this tool is asked.
+    # The `*` is stripped only to recognise a scalar BY NAME below. Testing
+    # for void on the stripped text made `void *` read as `void`, so the 70
+    # scalar deleting destructors - `??_GAlphaMovie@@UAEPAXI@Z` returns one -
+    # got no return and no scaffold that compiled.
     returns = signature.returns.replace("*", "").strip()
-    if signature.kind in ("ctor", "dtor") or returns == "void":
+    if signature.kind in ("ctor", "dtor") or signature.returns.strip() == "void":
         placeholder = []
     elif "*" in signature.returns:
         placeholder = ["    return 0;  // PLACEHOLDER - replace with the body"]

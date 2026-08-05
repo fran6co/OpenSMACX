@@ -92,18 +92,24 @@ def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int |
     try:
         address = int(text, 16)
     except ValueError:
-        wanted = {text, recovery_symbols.undecorate(text)}
-        for candidate, row in functions.items():
-            if row.get("name") in wanted:
-                address = candidate
-                break
-        else:
+        # IN THIS ORDER. The exact name and the undecorated one used to be
+        # tried together as a set, and whichever row came first in the
+        # catalogue won: `__exit` is a real catalogued row AND the decoration
+        # of the row named `_exit` (CL decorates source `exit` to `_exit` and
+        # source `_exit` to `__exit`), so the symbol for one resolved to the
+        # other. An exact name beats a reconstructed one.
+        by_name = {row.get("name"): candidate
+                   for candidate, row in functions.items()}
+        address = by_name.get(text)
+        if address is None:
             address = symbol_map().get(text)
-            if address is None:
-                address = recovery_symbols.address_in(text)
-            if address is None or address not in functions:
-                raise ValueError(
-                    f"{text} is neither a hex address nor a known name")
+        if address is None:
+            address = by_name.get(recovery_symbols.undecorate(text))
+        if address is None:
+            address = recovery_symbols.address_in(text)
+        if address is None or address not in functions:
+            raise ValueError(
+                f"{text} is neither a hex address nor a known name")
     row = functions.get(address)
     size = int(row["size"]) if row and row.get("size") else None
     return address, size
