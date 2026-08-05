@@ -127,3 +127,13 @@ plugins:
 
   decomp-permuter:
     enable: false
+
+  # Post-match gate: re-verify the match against the pinned executable with
+  # tools/byte_match.py and ratchet docs/recovery/byte-match.csv. Only a
+  # BYTE_EXACT verdict is integrated (see mizuchi-integrator.mjs).
+  integrator:
+    enable: true
+    integratorModule: ./mizuchi-integrator.mjs
+    autoAction: commit
+    commitMessageTemplate: 'recovery: byte-exact {{functionName}} via Mizuchi'
+    branchTemplate: 'mizuchi/{{functionName}}'
