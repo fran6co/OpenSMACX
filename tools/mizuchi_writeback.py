@@ -1,12 +1,42 @@
 #!/usr/bin/env python3
-"""Put a byte-exact Mizuchi match back into `src/`, or refuse and change nothing.
+"""Land a byte-exact Mizuchi match in a tracked file, or refuse and change nothing.
 
 The Mizuchi pipeline ends at a verdict: `mizuchi-integrator.mjs` gates a match
 through `byte_match.py` and ratchets the ledger row. That records that a
 BYTE_EXACT body EXISTS, but leaves it in `build/byte-match/<hex>/unit.cpp` -
 a build artefact, gitignored, wiped by a clean. The recovery only lands when
-the body is in `src/`, and doing that by hand for every match is the step that
+the body is committed, and doing that by hand for every match is the step that
 does not scale.
+
+TWO DESTINATIONS, because the catalogue holds two populations.
+
+A function with a `src/` `source_locations` has a file that owns it and a
+catalogued span to replace. That is the splice below, and it is the whole
+original purpose of this tool.
+
+A function WITHOUT one has never been placed in the tree, and every one of the
+2,783 unrecovered rows is in that state - which is to say the entire population
+the agent loop works on. Choosing a file, a position and an include set for a
+recovery is a decision this tool does not make; that has not changed. What DID
+change is the consequence of refusing: the match was simply lost, so a run
+could spend a day proving thousands of bodies byte-exact and commit nothing but
+ledger rows. So those bodies are now written to
+
+    docs/recovery/matched/<address>.cpp
+
+one file per function, named for the address. Read `matched/README.md` for what
+that directory is and is not. It is not product source and does not pretend to
+be: it is the emitter's verification style, which `AGENTS.md` deliberately
+keeps out of `src/`. It is the difference between banking the work and losing
+it, and it is what the later phase - the one that writes these in the tree's
+own style, against real headers - will start from.
+
+`source_locations` is NOT updated to point at the store. That field means
+"placed in the tree as product source", and `export_recovery_inventory` reads
+`Status: Complete` through it to set `recovery_state` while
+`audit_recovered_signatures` reads it to compare signatures. Pointing it at a
+verification artefact would make both of them report something that is not
+true. The filename is the index instead.
 
 WHAT IT REPLACES, AND WHAT IT KEEPS. `functions.csv` points at a line inside
 the doc comment that precedes the definition, so the catalogued span covers
@@ -67,6 +97,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 LEDGER_CSV = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
 SOURCE_MAP = REPO_ROOT / "mizuchi" / "source-map.json"
+MATCHED_DIR = REPO_ROOT / "docs" / "recovery" / "matched"
+
+MATCHED_HEADER = """\
+// 0x{address:08X}  {name}  ->  {symbol}
+//
+// A byte-exact Mizuchi match with no `src/` home. NOT product source: this is
+// the emitter's verification style, and moving it into the tree is a later
+// phase. See README.md beside this file. Re-verified in bulk by
+// tools/byte_match_fanout.py --collect.
+"""
 
 
 class Refused(Exception):
@@ -147,8 +187,51 @@ def shift_source_map(path: Path, source_file: str, after: int, delta: int) -> bo
     return changed
 
 
-def verify(address: int, location: str) -> dict:
-    """Re-extract from `src/` and demand BYTE_EXACT of what is now on disk.
+def matched_path(address: int) -> Path:
+    """Where a match with no `src/` home is kept. Named for the address.
+
+    One file per function is deliberate: `docs/recovery/` is `merge=binary` in
+    `.gitattributes` precisely because every recovery rewrites the same shared
+    catalogues and two branches always collide there. Two branches landing two
+    different functions here touch no common file at all.
+    """
+    return MATCHED_DIR / f"{address:08x}.cpp"
+
+
+def read_matched_body(path: Path) -> str:
+    """The definition out of a stored file, without its provenance header.
+
+    The header is the leading `//` run and nothing else, so a body that opens
+    with its own comment is not confused for one: the split is at the first
+    line that is not a `//` comment, and everything from there is the body.
+    """
+    lines = path.read_text().splitlines()
+    index = 0
+    while index < len(lines) and (not lines[index].strip()
+                                  or lines[index].lstrip().startswith("//")):
+        index += 1
+    return "\n".join(lines[index:]).strip() + "\n"
+
+
+def build_unit(address: int, body: str, functions: dict, callees: dict,
+               derived: dict, pe_fast) -> str:
+    """Scaffolding + declfix + body: the unit the integrator's gate compiled.
+
+    Split out so `byte_match_fanout --collect` can rebuild a stored body's unit
+    with ITS hoisted catalogue and PE reader rather than re-parsing both per
+    file. Raises `emit.Unsettled` when there is no scaffolding to build on.
+    """
+    from mizuchi_declfix import fix_declarations
+
+    scaffolding = emit.emit(address, functions, derived, callees, pe_fast,
+                            scaffolding_only=True)
+    callee_rows = [functions[target] for target in callees.get(address, [])
+                   if target in functions]
+    return fix_declarations(scaffolding, callee_rows) + "\n" + body
+
+
+def verify(address: int, body: str) -> dict:
+    """Rebuild the unit around a body READ BACK FROM DISK and re-measure it.
 
     The unit is assembled the way `mizuchi_context.py` assembles the one the
     integrator gated - scaffolding, then `mizuchi_declfix`, then the body -
@@ -158,34 +241,30 @@ def verify(address: int, location: str) -> dict:
     the census recipe here would refuse writebacks whose gate had just passed,
     and the refusal would be an artefact of the check rather than of the code.
     The ONLY difference from the gate is where the body came from, which is
-    exactly the thing under test.
+    exactly the thing under test - so the caller reads it off disk AFTER the
+    write rather than passing the text it was handed. Passing the input back in
+    would make this check assert that the tool was given what it was given.
     """
     import pefile  # imported here so a --no-verify run needs no PE reader
 
-    from mizuchi_declfix import fix_declarations
-
     functions = emit.load_functions()
     callees = emit.load_callees()
-    body = census.extract_body(location)
 
     # No content policy here. This used to run the census's REFUSE_SUBSTRINGS
     # over the body, which rejected `__asm` and `std::` before compiling. Both
     # are the census's business, not this tool's: the census is a measurement
     # that must be comparable across thousands of bodies, so it excludes shapes
     # it cannot compile under BOTH toolchains. A writeback has exactly one
-    # question — is what is now in src/ still byte-exact — and the compiler
+    # question — is what is now on disk still byte-exact — and the compiler
     # answers it. A body that cannot compile comes back NO_COMPILE and gets
     # reverted for that reason, which is a fact about the code rather than a
     # substring match on it.
     pe_fast = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
     try:
-        scaffolding = emit.emit(address, functions, emit.load_derived(), callees,
-                                pe_fast, scaffolding_only=True)
+        unit = build_unit(address, body, functions, callees,
+                          emit.load_derived(), pe_fast)
     except emit.Unsettled as error:
         return {"tier": "REFUSED", "refusal_reason": f"no scaffolding: {error}"}
-    callee_rows = [functions[target] for target in callees.get(address, [])
-                   if target in functions]
-    unit = fix_declarations(scaffolding, callee_rows) + "\n" + body
 
     pe = pefile.PE(str(byte_match.DEFAULT_EXE))
     catalogue = byte_match.load_rows()
@@ -195,19 +274,106 @@ def verify(address: int, location: str) -> dict:
                                          Path(tmp), "", f"w{address:08x}")
 
 
-def writeback(target: str, code: str, check: bool = True) -> dict:
-    functions = emit.load_functions()
-    address = resolve_address(target, functions)
-    row = functions.get(address)
-    if row is None:
-        raise Refused(f"0x{address:08X} is not a catalogued function")
-    location = (row.get("source_locations") or "").split(";")[0].strip()
-    if not location.startswith("src/"):
-        raise Refused(
-            f"0x{address:08X} {row.get('name', '')} has no src/ source_locations; "
-            f"it has never been placed in the tree, and choosing a file, a "
-            f"position and an include set for it is not this tool's decision")
+def land(address: int, row: dict, code: str, check: bool = True) -> dict:
+    """Commit a match that has no `src/` home, under `docs/recovery/matched/`.
 
+    Choosing a file, a position and an include set in `src/` is still not this
+    tool's decision - that is why this is a separate directory rather than a
+    guess at one. What it stops being is a reason to throw the body away.
+    """
+    replacement = code.strip()
+    if not replacement:
+        raise Refused("matched code is empty")
+
+    import recovery_symbols  # noqa: E402 - only needed for the header line
+
+    path = matched_path(address)
+    existed = path.read_text() if path.is_file() else None
+    MATCHED_DIR.mkdir(parents=True, exist_ok=True)
+    write_matched_readme()
+    name = row.get("name", "")
+    path.write_text(MATCHED_HEADER.format(
+        address=address, name=name,
+        symbol=recovery_symbols.symbol_for(name, address)) + "\n"
+        + replacement + "\n")
+
+    relative = str(path.relative_to(REPO_ROOT))
+    result = {"address": f"0x{address:08X}", "name": name,
+              "source_location": relative, "lines_replaced": 0,
+              "lines_written": len(replacement.splitlines()), "line_delta": 0,
+              "files_modified": [relative,
+                                 str((MATCHED_DIR / "README.md")
+                                     .relative_to(REPO_ROOT))],
+              "verified": False}
+    if not check:
+        return result
+
+    verdict = verify(address, read_matched_body(path))
+    if verdict.get("tier") != "BYTE_EXACT":
+        # Same rule as the splice: a store holding a body that does not verify
+        # is worse than an empty one, because the ledger says it matched.
+        if existed is None:
+            path.unlink()
+        else:
+            path.write_text(existed)
+        raise Refused(
+            f"body in {relative} verifies as {verdict.get('tier')} rather than "
+            f"BYTE_EXACT "
+            f"({verdict.get('note') or verdict.get('refusal_reason') or ''}"
+            f" first divergence #{verdict.get('first_divergence', '?')}); "
+            f"reverted, nothing changed")
+    result["verified"] = True
+    return result
+
+
+def write_matched_readme() -> None:
+    """Say what this directory is, once, rather than in every file's header."""
+    readme = MATCHED_DIR / "README.md"
+    if readme.is_file():
+        return
+    readme.write_text(MATCHED_README)
+
+
+MATCHED_README = """\
+# Matched bodies with no `src/` home
+
+One file per function, named for its address, holding a body Mizuchi proved
+byte-exact against the pinned original.
+
+## Why they are here and not in `src/`
+
+`docs/recovery/functions.csv` gives these functions no `source_locations`:
+nothing in the tree owns them, so there is no catalogued span to splice and no
+file to append to. Choosing one - a file, a position, an include set, a place
+in the class - is a recovery decision, and `tools/mizuchi_writeback.py` does
+not make it. Before this directory existed the consequence was that the body
+was thrown away: the ledger recorded BYTE_EXACT and the text stayed in
+gitignored `build/byte-match/`, so a `git clean` undid a day of proving.
+
+## What they are NOT
+
+Product source. These are written in the style
+`tools/emit_translation_unit.py` emits for verification - opaque class shells,
+fixed-address globals, offset casts - which `AGENTS.md` deliberately keeps out
+of `src/`, where recovered code is written to BEHAVE. A file here compiles
+against generated scaffolding, not against the project's headers.
+
+Moving one into the tree, in the tree's own style, with a leaf test, is the
+per-recovery loop in `AGENTS.md`. This directory is what that work starts
+from, not a substitute for it.
+
+## Keeping them honest
+
+`tools/byte_match_fanout.py --collect` re-verifies every file here the same
+way it re-verifies the fan-out work area: it rebuilds the unit from the
+current emitter and re-measures against the original. A body that stops
+verifying because the scaffolding changed shows up as a ledger regression
+rather than as a stale file nobody reads.
+"""
+
+
+def splice(address: int, row: dict, location: str, code: str,
+           check: bool = True) -> dict:
     path, lines, start, end = census.body_span(location)
     source_file = location.rpartition(":")[0]
     offset = split_definition(lines[start:end + 1])
@@ -236,7 +402,7 @@ def writeback(target: str, code: str, check: bool = True) -> dict:
     if not check:
         return result
 
-    verdict = verify(address, location)
+    verdict = verify(address, census.extract_body(location))
     if verdict.get("tier") != "BYTE_EXACT":
         # Restore everything. A half-applied writeback is worse than none: the
         # body would read as recovered while the pointers around it moved.
@@ -252,6 +418,19 @@ def writeback(target: str, code: str, check: bool = True) -> dict:
             f"reverted, nothing changed")
     result["verified"] = True
     return result
+
+
+def writeback(target: str, code: str, check: bool = True) -> dict:
+    """Land a match wherever it belongs: the `src/` span, or the store."""
+    functions = emit.load_functions()
+    address = resolve_address(target, functions)
+    row = functions.get(address)
+    if row is None:
+        raise Refused(f"0x{address:08X} is not a catalogued function")
+    location = (row.get("source_locations") or "").split(";")[0].strip()
+    if location.startswith("src/"):
+        return splice(address, row, location, code, check)
+    return land(address, row, code, check)
 
 
 def main() -> int:

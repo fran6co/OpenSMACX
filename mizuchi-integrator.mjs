@@ -265,16 +265,19 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
     // Reported, not thrown. The writeback restores every file it touched
     // before failing, so the tree is clean and the BYTE_EXACT verdict is
     // still worth banking - it is evidence that survives the next attempt.
-    helpers.log(`writeback REFUSED, src/ unchanged: ${writebackError}`);
-    summary += '; src/ writeback refused';
+    helpers.log(`writeback REFUSED, nothing written: ${writebackError}`);
+    summary += '; writeback refused';
   } else if (writeback) {
     for (const file of writeback.files_modified) {
       filesModified.push(path.join(worktreePath, file));
     }
+    // Two destinations: a catalogued span in src/, or - for every function
+    // the agent loop actually works on, none of which has one - the tracked
+    // store under docs/recovery/matched/. The location says which.
     helpers.log(
       `wrote body into ${writeback.source_location} ` +
         `(${writeback.lines_replaced} -> ${writeback.lines_written} lines), ` +
-        `re-verified BYTE_EXACT from src/`,
+        `re-verified BYTE_EXACT from disk`,
     );
     if (writeback.line_delta !== 0) {
       // The catalogues this tool patches are the ones Mizuchi itself reads.

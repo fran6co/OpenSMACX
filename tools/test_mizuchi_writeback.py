@@ -61,7 +61,11 @@ FIRST = 0x00601B80
 SECOND = 0x00601C00
 
 
-class WritebackTest(unittest.TestCase):
+class WritebackFixture(unittest.TestCase):
+    """A tree with two catalogued bodies and the three catalogues that point
+    at them. Shared by the splice tests and the store tests; it carries no
+    test methods of its own so neither set runs twice."""
+
     def setUp(self):
         self.root = Path(self.enterContext(
             __import__("tempfile").TemporaryDirectory()))
@@ -121,6 +125,8 @@ class WritebackTest(unittest.TestCase):
         with mock.patch.object(tool, "verify", return_value={"tier": tier}):
             return tool.writeback(target, code)
 
+
+class WritebackTest(WritebackFixture):
     def test_replaces_the_definition_and_keeps_the_doc_comment(self):
         result = self.writeback("void BasePop::set_loc(int x, int y) {\n"
                                 "    loc_a_ = x;\n    loc_b_ = y;\n}\n")
@@ -170,14 +176,6 @@ class WritebackTest(unittest.TestCase):
                  self.ledger_csv.read_text(), self.source_map.read_text())
         self.assertEqual(before, after)
 
-    def test_a_function_with_no_src_location_is_refused_untouched(self):
-        self.functions[FIRST]["source_locations"] = ""
-        before = self.source.read_text()
-        with self.assertRaises(tool.Refused) as caught:
-            self.writeback("void BasePop::set_loc(int, int) {}\n")
-        self.assertIn("never been placed", str(caught.exception))
-        self.assertEqual(self.source.read_text(), before)
-
     def test_an_empty_submission_is_refused(self):
         with self.assertRaises(tool.Refused):
             self.writeback("   \n\n")
@@ -186,6 +184,91 @@ class WritebackTest(unittest.TestCase):
         result = self.writeback("void BasePop::set_loc(int x, int y) {\n}\n",
                                 target="?set_loc@BasePop@@QAEXHH@Z")
         self.assertEqual(result["address"], "0x00601B80")
+
+
+class MatchedStoreTest(WritebackFixture):
+    """A match with no `src/` home lands in the store instead of being lost.
+
+    Every one of the 2,783 unrecovered rows - the entire population the agent
+    loop works on - has no `source_locations`. Refusing them meant the ledger
+    recorded BYTE_EXACT while the body stayed in gitignored `build/`, so a
+    `git clean` undid the proving. These pin the other destination.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.matched = self.root / "docs" / "recovery" / "matched"
+        self.enterContext(mock.patch.object(tool, "MATCHED_DIR", self.matched))
+        self.functions[FIRST]["source_locations"] = ""
+        self.functions[FIRST]["name"] = "sub_601b80"
+
+    def test_a_body_with_no_src_home_is_stored_and_src_is_untouched(self):
+        before = self.source.read_text()
+        result = self.writeback("extern \"C\" int __cdecl sub_601b80()\n"
+                                "{\n    return 0;\n}\n")
+
+        stored = self.matched / "00601b80.cpp"
+        self.assertTrue(stored.is_file())
+        self.assertIn("return 0;", stored.read_text())
+        self.assertEqual(result["source_location"],
+                         "docs/recovery/matched/00601b80.cpp")
+        self.assertTrue(result["verified"])
+        self.assertEqual(self.source.read_text(), before,
+                         "landing must not touch src/")
+
+    def test_the_stored_file_carries_its_address_and_a_readme(self):
+        self.writeback("extern \"C\" int __cdecl sub_601b80() { return 0; }\n")
+        stored = (self.matched / "00601b80.cpp").read_text()
+        self.assertIn("0x00601B80", stored)
+        self.assertIn("sub_601b80", stored)
+        self.assertIn("NOT product source", stored)
+        readme = (self.matched / "README.md").read_text()
+        self.assertIn("no `src/` home", readme)
+
+    def test_the_header_is_stripped_when_the_body_is_read_back(self):
+        # `verify` is handed what is ON DISK, so the provenance comment must
+        # not reach the compiler as part of the definition.
+        self.writeback("extern \"C\" int __cdecl sub_601b80() { return 0; }\n")
+        body = tool.read_matched_body(self.matched / "00601b80.cpp")
+        self.assertTrue(body.startswith("extern"), body)
+        self.assertNotIn("NOT product source", body)
+
+    def test_a_body_opening_with_its_own_comment_survives_the_strip(self):
+        self.writeback("// why this shape\nextern \"C\" int __cdecl "
+                       "sub_601b80() { return 0; }\n")
+        body = tool.read_matched_body(self.matched / "00601b80.cpp")
+        self.assertIn("extern", body)
+
+    def test_a_failed_verification_leaves_no_file_behind(self):
+        with self.assertRaises(tool.Refused) as caught:
+            self.writeback("extern \"C\" int __cdecl sub_601b80() "
+                           "{ return 1; }\n", tier="MISMATCH")
+        self.assertIn("MISMATCH", str(caught.exception))
+        self.assertFalse((self.matched / "00601b80.cpp").exists(),
+                         "a store holding a body that does not verify is "
+                         "worse than an empty one")
+
+    def test_a_failed_verification_restores_a_previous_body(self):
+        self.writeback("extern \"C\" int __cdecl sub_601b80() { return 0; }\n")
+        good = (self.matched / "00601b80.cpp").read_text()
+        with self.assertRaises(tool.Refused):
+            self.writeback("extern \"C\" int __cdecl sub_601b80() "
+                           "{ return 1; }\n", tier="MISMATCH")
+        self.assertEqual((self.matched / "00601b80.cpp").read_text(), good)
+
+    def test_source_locations_is_not_pointed_at_the_store(self):
+        # It means "placed in the tree as product source", and both
+        # `export_recovery_inventory` and `audit_recovered_signatures` read it
+        # that way. Pointing it here would make them describe an artefact.
+        self.writeback("extern \"C\" int __cdecl sub_601b80() { return 0; }\n")
+        self.assertEqual(self.functions[FIRST]["source_locations"], "")
+        locations = self.locations(self.functions_csv, "source_locations")
+        self.assertEqual(locations["0x00601B80"], "src/basepop.cpp:3")
+
+    def test_an_empty_submission_is_still_refused(self):
+        with self.assertRaises(tool.Refused):
+            self.writeback("   \n\n")
+        self.assertFalse(self.matched.exists())
 
 
 class SplitDefinitionTest(unittest.TestCase):
