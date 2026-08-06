@@ -1082,6 +1082,9 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(idb-member-tests test_export_idb_members.py)
 
+    opensmacx_add_python_tool_test(hypothesis-layout-tests
+                                   test_emit_hypothesis_layouts.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
@@ -1408,6 +1411,14 @@ if(BUILD_TESTING)
     add_test(NAME idb-members-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_idb_members.py"
+            --check
+    )
+    # Both inputs - idb-members.csv and thinker-members.csv - are committed, so
+    # this reproduces byte-for-byte on a clean checkout with no IDB, no wine
+    # and no external analysis present.
+    add_test(NAME hypothesis-layouts-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/emit_hypothesis_layouts.py"
             --check
     )
     add_test(NAME verified-layouts-current

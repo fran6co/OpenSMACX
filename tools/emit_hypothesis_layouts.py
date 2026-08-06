@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+"""Declare the classes the binary has and `src/` does not.
+
+51 classes own unrecovered functions and `src/` declares none of them: 213
+functions whose agent is handed an opaque shell and told nothing about the
+receiver. Between them the IDA database and the Thinker mod describe 83 such
+classes, covering 154 of those functions.
+
+A partial declaration is knowledge. The type exists, some members have names
+and offsets, and the rest is storage - and none of it can contradict anything,
+because none of these classes has a pinned size to contradict.
+
+WHAT THIS DOES NOT DO. It writes no `static_assert`. A compile-time size
+assertion is believed by everything downstream and checked by nothing, so it
+stays behind `derive_class_layout.py --score-csv` at zero wrong, and these
+sizes are hypotheses: the IDB's accumulate from member sizes, so a member
+nobody entered shifts every member after it - `PullDown` records one member of
+0xa14 against a true 0xf40. `class_layouts.pinned_layouts()` reads only classes
+carrying that assertion, so nothing here can reach an agent as a proved layout
+or slip into `verified-layouts.txt` by verifying against itself.
+
+EVERY MEMBER IS RAW STORAGE, never another class by value. `BaseButton`'s
+first member is 0xa14 bytes and that is a `GraphicWin`, but emitting it as one
+would make this header's classes depend on each other's definitions and on
+emission order. That is not a hypothetical cost: by-value layout members broke
+675 units once and alphabetical emission order broke 77 more. A byte array
+holds the same offsets and depends on nothing.
+
+WHERE THE MEMBERS COME FROM. The IDB for coverage, Thinker for names where the
+two describe the same offset - Thinker's offsets are explicit in its headers
+rather than accumulated, and its field meanings have been validated for years
+by the mod working. Neither source's text enters the repository; both are read
+through committed or ignored offset/name CSVs.
+"""
+
+from __future__ import annotations
+
+import argparse
+import collections
+import csv
+import keyword
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import class_layouts  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SRC = REPO_ROOT / "src"
+IDB_MEMBERS = REPO_ROOT / "docs" / "recovery" / "idb-members.csv"
+# The committed reduction, not the ignored working copy under
+# .opensmacx/external-analysis/. Both hold the same thing - a struct name, a
+# field name, an offset and a size - and the policy that keeps Thinker's TEXT
+# out of the repository has never covered extracted offsets and names, which is
+# also why functions.csv and ida9-functions.csv are committed. Reading the
+# ignored copy would make this generator's output depend on a file a clean
+# checkout does not have, so `--check` would fail for everyone but its author.
+THINKER = REPO_ROOT / "docs" / "recovery" / "thinker-members.csv"
+THINKER_LOCAL = (REPO_ROOT / ".opensmacx" / "external-analysis" /
+                 "thinker-layout-hypotheses.csv")
+FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+OUTPUT = SRC / "hypothesis_layouts.h"
+
+SCOPE_RE = re.compile(r"^\?{1,2}[~\w@]*?@(\w+)@@")
+PLACEHOLDER = re.compile(r"^(field_[0-9A-Fa-f]+|unk\w*|gap\w*|pad\w*|_?\d+|)$")
+IDENTIFIER = re.compile(r"^[A-Za-z_]\w*$")
+
+
+def declared_in_src() -> set:
+    names = set()
+    for header in sorted(SRC.glob("*.h")):
+        if header.name == OUTPUT.name:
+            continue
+        for name, _, _ in class_layouts.class_bodies(
+                header.read_text(errors="ignore")):
+            names.add(name)
+    return names
+
+
+def idb_members() -> dict:
+    """{class: [(offset, name, size)]} in offset order."""
+    found = collections.defaultdict(list)
+    if not IDB_MEMBERS.is_file():
+        return found
+    with IDB_MEMBERS.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            found[row["class"]].append(
+                (int(row["offset"], 16), row["name"], int(row["size"])))
+    for members in found.values():
+        members.sort()
+    return found
+
+
+def thinker_members() -> dict:
+    """{struct: {offset: (name, size)}}. Sizes the reducer could not work out
+    arrive empty and are kept only for their NAME, never for layout."""
+    found = collections.defaultdict(dict)
+    if not THINKER.is_file():
+        return found
+    with THINKER.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                offset = int(row["offset"], 16)
+            except (ValueError, KeyError, TypeError):
+                continue
+            try:
+                size = int(row["size"])
+            except (ValueError, KeyError, TypeError):
+                size = 0
+            found[row["struct"]][offset] = (row["field"], size)
+    return found
+
+
+def regenerate_thinker() -> int:
+    """Refresh the committed reduction from the ignored working copy."""
+    if not THINKER_LOCAL.is_file():
+        print(f"SKIP: {THINKER_LOCAL} is absent; run "
+              f"tools/correlate_thinker_layouts.py first.")
+        return 0
+    with THINKER_LOCAL.open(newline="", encoding="utf-8-sig") as handle:
+        rows = list(csv.DictReader(handle))
+    rows.sort(key=lambda row: (row["struct"],
+                               int(row["offset"], 16) if row["offset"] else 0,
+                               row["field"]))
+    with THINKER.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle, fieldnames=["struct", "offset", "field", "size"],
+            lineterminator="\n")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row[key] for key in
+                             ("struct", "offset", "field", "size")})
+    print(f"{len(rows)} Thinker field(s) -> {THINKER}")
+    return 0
+
+
+def owns_functions() -> collections.Counter:
+    owned = collections.Counter()
+    if not FUNCTIONS.is_file():
+        return owned
+    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            match = SCOPE_RE.match(row.get("name") or "")
+            if match:
+                owned[match.group(1)] += 1
+    return owned
+
+
+def storage(size: int, name: str) -> str:
+    """A member declaration holding exactly `size` bytes and nothing else.
+
+    Never another class by value: see the module docstring. 1, 2 and 4 get the
+    integer of that width because that is what the tree writes for a scalar
+    member; anything else is a byte array, which is honest about the fact that
+    the only thing known here is how much room it takes.
+    """
+    if size == 1:
+        return f"uint8_t {name};"
+    if size == 2:
+        return f"uint16_t {name};"
+    if size == 4:
+        return f"uint32_t {name};"
+    return f"uint8_t {name}[0x{size:X}];"
+
+
+def member_name(raw: str, offset: int, taken: set) -> str:
+    """The source's name when it says anything, else the tree's own idiom.
+
+    `src/` names a member it has an offset for and nothing else `field_9E8_`,
+    where the hex IS the offset, so a placeholder from either source is
+    rewritten into that shape rather than carried across as `field_9E8`.
+    """
+    name = raw.strip()
+    if (not IDENTIFIER.match(name) or keyword.iskeyword(name)
+            or PLACEHOLDER.match(name)):
+        name = f"field_{offset:X}_"
+    elif not name.endswith("_"):
+        name = f"{name}_"
+    while name in taken:
+        name = f"{name}_"
+    taken.add(name)
+    return name
+
+
+def layout_for(name: str, idb: dict, thinker: dict) -> tuple:
+    """([(offset, name, size)], provenance) - the members to declare.
+
+    The IDB carries every member or none, so it decides the shape. Thinker
+    supplies a NAME wherever it describes the same offset and the IDB left a
+    placeholder there; where the IDB has nothing at all, Thinker's own prefix
+    is used and the gaps between its offsets become padding.
+    """
+    if name in idb:
+        members, source = list(idb[name]), "the IDB"
+        named = thinker.get(name, {})
+        improved = 0
+        for index, (offset, member, size) in enumerate(members):
+            candidate = named.get(offset)
+            if (candidate and PLACEHOLDER.match(member)
+                    and not PLACEHOLDER.match(candidate[0])):
+                members[index] = (offset, candidate[0], size)
+                improved += 1
+        if improved:
+            source = f"the IDB, {improved} name(s) from Thinker"
+        return members, source
+
+    # Thinker only: explicit offsets, a prefix rather than a whole struct, so
+    # the space between two it names has to be declared as padding or every
+    # offset after a gap would be wrong.
+    members, cursor = [], 0
+    for offset in sorted(thinker.get(name, {})):
+        member, size = thinker[name][offset]
+        if offset < cursor:
+            continue
+        if offset > cursor:
+            members.append((cursor, "", offset - cursor))
+        if size <= 0:
+            continue
+        members.append((offset, member, size))
+        cursor = offset + size
+    return members, "Thinker"
+
+
+def render(names: list, idb: dict, thinker: dict,
+           owned: collections.Counter) -> str:
+    lines = [
+        "/*",
+        " * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.",
+        " * Copyright (C) 2013-2021 Brendan Casey",
+        " *",
+        " * OpenSMACX is free software: you can redistribute it and / or modify",
+        " * it under the terms of the GNU General Public License as published by",
+        " * the Free Software Foundation, either version 3 of the License, or",
+        " * (at your option) any later version.",
+        " *",
+        " * OpenSMACX is distributed in the hope that it will be useful,",
+        " * but WITHOUT ANY WARRANTY; without even the implied warranty of",
+        " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the",
+        " * GNU General Public License for more details.",
+        " *",
+        " * You should have received a copy of the GNU General Public License",
+        " * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.",
+        " */",
+        "#pragma once",
+        "",
+        "/*",
+        " * GENERATED by tools/emit_hypothesis_layouts.py. Do not edit; edit the",
+        " * generator, or promote a class out of this file into one of its own.",
+        " *",
+        " * Classes the binary has and the rest of src/ does not declare. Their",
+        " * offsets come from the IDA database and the Thinker mod, and they are",
+        " * HYPOTHESES: no member here is proved against the image.",
+        " *",
+        " * There is deliberately no static_assert. A compile-time size assertion",
+        " * is believed by everything downstream and checked by nothing, so it",
+        " * needs derive_class_layout.py --score-csv at zero wrong first - and",
+        " * these sizes cannot pass it. The IDB's offsets ACCUMULATE from member",
+        " * sizes, so one member nobody entered shifts every member after it:",
+        " * PullDown records a single member of 0xa14 against a true 0xf40.",
+        " *",
+        " * Because there is no assertion, class_layouts.pinned_layouts() does not",
+        " * read these, so none of them can reach an agent as a proved layout or",
+        " * enter verified-layouts.txt by verifying against itself.",
+        " *",
+        " * Every member is raw storage rather than another class by value.",
+        " * BaseButton's first member is 0xa14 bytes and is a GraphicWin, but",
+        " * declaring it as one would make these classes depend on each other and",
+        " * on emission order - by-value layout members once broke 675 units and",
+        " * alphabetical order 77 more. A byte array holds the same offsets and",
+        " * depends on nothing.",
+        " */",
+        "",
+        '#include "stdafx.h"',
+        "",
+    ]
+
+    for name in names:
+        members, provenance = layout_for(name, idb, thinker)
+        if not members:
+            continue
+        total = max((offset + size for offset, _, size in members), default=0)
+        functions = owned.get(name, 0)
+        # The user's rule for this tree: methods make it a class, data alone
+        # makes it a struct. These carry no method declarations, so the binary
+        # is what is asked - does anything dispatch on this receiver?
+        keyword_ = "class" if functions else "struct"
+        real = sum(1 for _, member, _ in members
+                   if member and not PLACEHOLDER.match(member))
+        lines.append(f"/* 0x{total:X} bytes, {len(members)} member(s), "
+                     f"{real} named. From {provenance}."
+                     + (f" {functions} function(s) in the image." if functions
+                        else "")
+                     + " */")
+        lines.append(f"{keyword_} {name} {{")
+        if keyword_ == "class":
+            lines.append(" public:")
+        taken = set()
+        for offset, member, size in members:
+            if size <= 0:
+                continue
+            lines.append(
+                f"  {storage(size, member_name(member, offset, taken))}"
+                f"  // 0x{offset:X}")
+        lines.append("};")
+        lines.append("")
+    return "\n".join(lines) + "\n" if lines else ""
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--out", type=Path, default=OUTPUT)
+    parser.add_argument("--check", action="store_true",
+                        help="fail if the committed header is stale")
+    parser.add_argument("--refresh-thinker", action="store_true",
+                        help="rebuild docs/recovery/thinker-members.csv from "
+                             "the ignored working copy")
+    args = parser.parse_args(argv)
+
+    if args.refresh_thinker:
+        return regenerate_thinker()
+
+    idb, thinker = idb_members(), thinker_members()
+    if not idb and not thinker:
+        print("SKIP: neither idb-members.csv nor the Thinker hypothesis CSV "
+              "is present.")
+        return 0
+
+    declared = declared_in_src()
+    names = sorted((set(idb) | set(thinker)) - declared)
+    owned = owns_functions()
+    text = render(names, idb, thinker, owned)
+
+    if args.check:
+        current = args.out.read_text() if args.out.is_file() else ""
+        if current != text:
+            print(f"{args.out.name} is stale; regenerate it", file=sys.stderr)
+            return 1
+        print(f"hypothesis layouts: {len(names)} classes (up to date)")
+        return 0
+
+    args.out.write_text(text)
+    unrecovered = sum(1 for name in names if owned.get(name))
+    print(f"{len(names)} classes src/ did not declare -> {args.out}")
+    print(f"    {unrecovered} of them own functions in the image")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
