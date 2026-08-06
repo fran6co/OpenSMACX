@@ -920,9 +920,21 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     for entry in free_callees:
         wanted |= entry.referenced_types()
     # A supplied layout names types of its own - `StringStructEntry *head_` -
-    # and they have to be declared before the class that holds them.
+    # and they have to be declared before the class that holds them. To a
+    # FIXPOINT: a layout supplied for a type that is itself only pointed at
+    # brings its own references, and stopping after one round left
+    # `StringStructEntry` undeclared inside `StringList`'s layout - nine
+    # units, and the sweep is the only thing that saw it.
     for klass in [signature.klass] + list(methods_by_class):
         wanted |= class_layouts.referenced_types(klass)
+    while True:
+        grown = set(wanted)
+        for name in list(wanted):
+            grown |= class_layouts.referenced_types(name)
+        grown -= BUILTIN
+        if grown == wanted:
+            break
+        wanted = grown
     # EVERYTHING referenced is forward-declared, including classes defined
     # further down. `struct X;` before `struct X { ... };` is legal and is what
     # keeps a callee declaration that takes `Win *` from preceding the
@@ -937,6 +949,22 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
                      else declare(name, opening=False))
     if wanted:
         lines.append("")
+
+    # A type a supplied layout POINTS AT gets its layout too, when `src/`
+    # proves one. Without this the agent has `StringStructEntry *current_`
+    # and an incomplete type behind it, so it can reach the field only as
+    # `reinterpret_cast<int *>(current_)[1]` - which is what the first
+    # recovery of the run actually wrote, next to a perfectly good `head_`.
+    # Layouts never hold a member by value, so a forward declaration above is
+    # enough for these to be defined in any order.
+    defined_later = {signature.klass} | set(methods_by_class)
+    for name in sorted(wanted - defined_later):
+        layout = class_layouts.declaration_for(name)
+        if layout:
+            lines.append(declare(name, opening=True))
+            lines.extend(layout)
+            lines.append("};")
+            lines.append("")
 
     if declarations or methods_by_class:
         lines.append("// ---- callees, declared and never defined "
