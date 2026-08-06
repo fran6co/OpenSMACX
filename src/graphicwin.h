@@ -56,7 +56,7 @@ class DLLEXPORT GraphicWin : Win {
   uint32_t field_9FC_;
   uint32_t field_A00_;
   uint32_t field_A04_;
-  uint32_t field_A08_;
+  uint32_t poCanvas_;
   uint32_t field_A0C_;
   uint32_t field_A10_;
 };
