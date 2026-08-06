@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "wave.h"
 #include "wave_device.h"
 #include <cstring>
@@ -43,8 +44,8 @@ namespace {
 // The wrapped device is driven through its own vtable; enable and disable call
 // two adjacent slots on it. A raw dispatch is used because the device is an
 // opaque object with no source-owned type.
-typedef void(__thiscall *device_vfn)(void *device);
-typedef int(__thiscall *device_query_vfn)(void *device);
+typedef void (OriginalObject::*device_vfn)();
+typedef int (OriginalObject::*device_query_vfn)();
 
 void *wrapped_device(Wave_Device *self) {
     return *reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(self) + 0x14);
@@ -55,7 +56,7 @@ void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
     if (device) {
         uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
         device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + vtable_offset);
-        fn(device);
+        (ORIGINAL(device)->*fn)();
     }
 }
 
@@ -72,13 +73,13 @@ int query_wrapped_device(Wave_Device *self, int vtable_offset,
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
     device_query_vfn fn =
         *reinterpret_cast<device_query_vfn *>(vtable + vtable_offset);
-    return fn(device);
+    return (ORIGINAL(device)->*fn)();
 }
 
 // The one-argument members of the family. The original passes the argument
 // straight through and, where it returns at all, answers a fixed value when no
 // device is wrapped.
-typedef int(__thiscall *device_arg_vfn)(void *device, int a1);
+typedef int (OriginalObject::*device_arg_vfn)(int a1);
 
 int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
                               int no_device_result = 0) {
@@ -392,7 +393,7 @@ int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *,
     return self->get_group_volume(a1);
 }
 
-func_wave_group_insert *WaveDeviceGroupInsert = (func_wave_group_insert *)0x004C5BF0;
+func_wave_group_insert WaveDeviceGroupInsert = original_method<func_wave_group_insert>(0x004C5BF0);
 
 /*
 Purpose: Put a wave into one of the sixteen groups. The list-insert helper
@@ -407,7 +408,7 @@ int Wave_Device::add_to_group(unsigned int a1, Wave *a2) {
     if (a1 > 0xF || !a2) {
         return 0xA;
     }
-    WaveDeviceGroupInsert(&groups_[a1].head, a2);
+    (ORIGINAL(&groups_[a1].head)->*WaveDeviceGroupInsert)(a2);
     // The slot field is private to Wave and written here by offset, exactly
     // as the original stores through [wave+0x68].
     *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a2) + 0x68) =
@@ -553,7 +554,7 @@ Status: Complete
 */
 void Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {
     if (device_14_) {
-        typedef void(__thiscall * device_fn)(void *device, unsigned long a1, char *a2, unsigned long a3);
+        typedef void (OriginalObject::*device_fn)(unsigned long a1, char *a2, unsigned long a3);
         (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x1c))(
             device_14_, a1, a2, a3);
@@ -573,7 +574,7 @@ Status: Complete
 */
 int Wave_Device::start_raw_dump(char *a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, char *a1);
+        typedef int (OriginalObject::*device_fn)(char *a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x50))(
             device_14_, a1);
@@ -594,7 +595,7 @@ Status: Complete
 */
 int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, EAX_REVERB_PROPERTIES *a1);
+        typedef int (OriginalObject::*device_fn)(EAX_REVERB_PROPERTIES *a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x7c))(
             device_14_, a1);
@@ -615,7 +616,7 @@ Status: Complete
 */
 int Wave_Device::set_eax(unsigned long a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, unsigned long a1);
+        typedef int (OriginalObject::*device_fn)(unsigned long a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x78))(
             device_14_, a1);
@@ -636,7 +637,7 @@ Status: Complete
 */
 int Wave_Device::set_eax_mix(float a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float a1);
+        typedef int (OriginalObject::*device_fn)(float a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x80))(
             device_14_, a1);
@@ -657,7 +658,7 @@ Status: Complete
 */
 int Wave_Device::set_listener_position(float a1, float a2, float a3) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float a1, float a2, float a3);
+        typedef int (OriginalObject::*device_fn)(float a1, float a2, float a3);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x88))(
             device_14_, a1, a2, a3);
@@ -678,7 +679,7 @@ Status: Complete
 */
 int Wave_Device::get_listener_position(float *a1, float *a2, float *a3) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float *a1, float *a2, float *a3);
+        typedef int (OriginalObject::*device_fn)(float *a1, float *a2, float *a3);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x8c))(
             device_14_, a1, a2, a3);
@@ -699,7 +700,7 @@ Status: Complete
 */
 int Wave_Device::set_listener_xpos(float a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float a1);
+        typedef int (OriginalObject::*device_fn)(float a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x90))(
             device_14_, a1);
@@ -720,7 +721,7 @@ Status: Complete
 */
 int Wave_Device::get_listener_xpos(float *a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float *a1);
+        typedef int (OriginalObject::*device_fn)(float *a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x94))(
             device_14_, a1);
@@ -741,7 +742,7 @@ Status: Complete
 */
 int Wave_Device::set_listener_ypos(float a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float a1);
+        typedef int (OriginalObject::*device_fn)(float a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x98))(
             device_14_, a1);
@@ -762,7 +763,7 @@ Status: Complete
 */
 int Wave_Device::get_listener_ypos(float *a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float *a1);
+        typedef int (OriginalObject::*device_fn)(float *a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x9c))(
             device_14_, a1);
@@ -783,7 +784,7 @@ Status: Complete
 */
 int Wave_Device::set_listener_zpos(float a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float a1);
+        typedef int (OriginalObject::*device_fn)(float a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0xa0))(
             device_14_, a1);
@@ -804,7 +805,7 @@ Status: Complete
 */
 int Wave_Device::get_listener_zpos(float *a1) {
     if (device_14_) {
-        typedef int(__thiscall * device_fn)(void *device, float *a1);
+        typedef int (OriginalObject::*device_fn)(float *a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0xa4))(
             device_14_, a1);
@@ -1107,15 +1108,13 @@ Return Value: 0, or whichever stage's error came first
 Status: Complete
 */
 int Wave_Device::init(void *a1, unsigned long a2) {
-    typedef int(__thiscall * own_mode_fn)(Wave_Device *self,
-                                          unsigned long mode);
+    typedef int (OriginalObject::*own_mode_fn)(unsigned long mode);
     const int staged = (*reinterpret_cast<own_mode_fn *>(
         *reinterpret_cast<uint8_t **>(this) + 0))(this, a2);
     if (staged) {
         return staged;
     }
-    typedef int(__thiscall * device_init_fn)(void *device, void *a1,
-                                             unsigned long a2);
+    typedef int (OriginalObject::*device_init_fn)(void *a1, unsigned long a2);
     const int result = (*reinterpret_cast<device_init_fn *>(
         *reinterpret_cast<uint8_t **>(device_14_) + 0xC))(device_14_, a1, a2);
     if (result) {
@@ -1145,7 +1144,7 @@ void Wave_Device::release() {
         return;
     }
     {
-        typedef void(__thiscall * device_down_fn)(void *device);
+        typedef void (OriginalObject::*device_down_fn)();
         (*reinterpret_cast<device_down_fn *>(
             *reinterpret_cast<uint8_t **>(device_14_) + 0x10))(device_14_);
     }
@@ -1159,10 +1158,10 @@ void __fastcall wave_device_release_redirect(Wave_Device *self, void *) {
     self->release();
 }
 
-func_thiscall_teardown *WaveControlGroupOriginalCtor =
-    (func_thiscall_teardown *)0x004C5490;
-func_thiscall_teardown *WaveControlGroupOriginalDtor =
-    (func_thiscall_teardown *)0x004C5B80;
+func_thiscall_teardown WaveControlGroupOriginalCtor =
+    original_method<func_thiscall_teardown>(0x004C5490);
+func_thiscall_teardown WaveControlGroupOriginalDtor =
+    original_method<func_thiscall_teardown>(0x004C5B80);
 
 /*
 Purpose: Construct one control group: the list fields - head, tail, cursor,
@@ -1264,7 +1263,7 @@ Wave_Device::~Wave_Device() {
     {
         void *const device = self->device_14_;
         if (device) {
-            typedef void(__thiscall * device_down_fn)(void *device);
+            typedef void (OriginalObject::*device_down_fn)();
             (*reinterpret_cast<device_down_fn *>(
                 *reinterpret_cast<uint8_t **>(device) + 0x10))(device);
         }

@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "stdafx.h"
+#include "original_seam.h"
 
 class Buffer;  // forward declaration
 
@@ -76,9 +77,8 @@ extern int *SpriteDrawOriginY;
 
 // The four-argument overload this one wraps is a 3225-byte body with eleven
 // call targets, still an original dependency. Tests rebind this seam.
-typedef int(__thiscall func_sprite_draw_original)(
-    Sprite *, Buffer *, int, int, int);
-extern func_sprite_draw_original *SpriteDrawOriginal;
+typedef int (OriginalObject::*func_sprite_draw_original)(Buffer *, int, int, int);
+extern func_sprite_draw_original SpriteDrawOriginal;
 
 int __fastcall sprite_unk1_redirect(
     Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g);

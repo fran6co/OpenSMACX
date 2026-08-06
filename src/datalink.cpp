@@ -16,9 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "datalink.h"
 
-func_datalink_exec *DatalinkExec = (func_datalink_exec *)0x00429180;
+func_datalink_exec DatalinkExec = original_method<func_datalink_exec>(0x00429180);
 // Unclassified data seam: the Datalink singleton object, not a call target.
 void *DatalinkMain = reinterpret_cast<void *>(0x00703EA0);
 
@@ -266,7 +267,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_tech(int id) {
-    DatalinkExec(DatalinkMain, 0xE, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0xE, id);
 }
 
 /*
@@ -276,7 +277,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_weapon(int id) {
-    DatalinkExec(DatalinkMain, 0x6, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0x6, id);
 }
 
 /*
@@ -286,7 +287,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_armor(int id) {
-    DatalinkExec(DatalinkMain, 0x7, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0x7, id);
 }
 
 /*
@@ -296,7 +297,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_chassis(int id) {
-    DatalinkExec(DatalinkMain, 0x4, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0x4, id);
 }
 
 /*
@@ -306,7 +307,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_facility(int id) {
-    DatalinkExec(DatalinkMain, 0xA, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0xA, id);
 }
 
 /*
@@ -316,7 +317,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_abil(int id) {
-    DatalinkExec(DatalinkMain, 0x8, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0x8, id);
 }
 
 /*
@@ -326,7 +327,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_social(int id) {
-    DatalinkExec(DatalinkMain, 0xC, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0xC, id);
 }
 
 /*
@@ -336,7 +337,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_faction(int id) {
-    DatalinkExec(DatalinkMain, 0xF, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0xF, id);
 }
 
 /*
@@ -346,7 +347,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_veh(int id) {
-    DatalinkExec(DatalinkMain, 0x3, id);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(0x3, id);
 }
 
 /*
@@ -358,7 +359,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_topic(unsigned int topic, int index) {
-    DatalinkExec(DatalinkMain, topic, index);
+    (ORIGINAL(DatalinkMain)->*DatalinkExec)(topic, index);
 }
 
 /*

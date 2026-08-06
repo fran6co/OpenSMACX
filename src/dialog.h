@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "font.h"
 #include "heap.h"
 
@@ -146,12 +148,12 @@ extern Font **DialogDefaultFonts;
 
 // Every teardown that reaches the still-original Dialog::close (0x00608F50)
 // binds it through this signature; RadioButton/CheckBox/ListBox share it.
-typedef void (__thiscall func_dialog_close)(Dialog *);
+typedef void (OriginalObject::*func_dialog_close)();
 typedef void(__cdecl func_operator_delete)(void *block);
 
 // ~Dialog's own body reaches Dialog::close through a rebindable seam, and the
 // scalar deleting destructor frees through the executable's operator delete.
-extern func_dialog_close *DialogOriginalClose;          // default 0x00608F50
+extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
 extern func_operator_delete *DialogOperatorDelete;      // default 0x0064557F
 
 // Virtual tables the destructor stages. The Dialog primary table and the

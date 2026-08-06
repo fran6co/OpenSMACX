@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "basebutton_oracle.h"
 
 #include "basebutton.h"
@@ -48,8 +49,8 @@ constexpr uintptr_t BaseButtonCloseAddress = 0x006070C0U;
 constexpr uintptr_t FlatButtonCloseAddress = 0x00607DA0U;
 constexpr uintptr_t FlatButtonDestructorAddress = 0x00406880U;
 
-typedef uint32_t (__thiscall *OriginalBaseNoArg)(BaseButton *);
-typedef uint32_t (__thiscall *OriginalFlatNoArg)(FlatButton *);
+typedef uint32_t (OriginalObject::*OriginalBaseNoArg)();
+typedef uint32_t (OriginalObject::*OriginalFlatNoArg)();
 
 template <typename Fixture>
 void write_field(Fixture &fixture, size_t offset, uint32_t value) {

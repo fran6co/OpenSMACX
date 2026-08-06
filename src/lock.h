@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
  /*
   * Lock class
   *
@@ -67,14 +69,13 @@ extern uint32_t *LockEnableMask;
 
 // SquareLock::unlock is 231 bytes of coordinate wrapping over several
 // globals and is not recovered; unlock forwards each record entry to it.
-typedef void (__thiscall func_square_lock_unlock)(void *entry, int slot);
-extern func_square_lock_unlock *LockSquareUnlock;
+typedef void (OriginalObject::*func_square_lock_unlock)(int slot);
+extern func_square_lock_unlock LockSquareUnlock;
 
 // SquareLock::lock owns the same map-coordinate logic as unlock and is not
 // recovered; add_lock forwards one record entry to it.
-typedef int (__thiscall func_square_lock_lock)(void *entry, int a1, int a2,
-                                               int a3, int a4);
-extern func_square_lock_lock *LockSquareLock;
+typedef int (OriginalObject::*func_square_lock_lock)(int a1, int a2, int a3, int a4);
+extern func_square_lock_lock LockSquareLock;
 
 // current_server reports whether this machine is the game server; not
 // recovered, so check_global_2 reaches it through a rebindable seam.

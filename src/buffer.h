@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "font.h"
 #include "spot.h"
 #include "sprite.h"
@@ -144,9 +146,8 @@ constexpr size_t BufferSurfaceUnlockSlot = 0x80;
 
 // The seven-argument copy is the real blitter and is not recovered yet, so the
 // convenience overload reaches it through a seam.
-typedef int (__thiscall func_buffer_copy_full)(void *, Buffer *, int, int,
-                                               int, int, int, int);
-extern func_buffer_copy_full *BufferCopyFull;
+typedef int (OriginalObject::*func_buffer_copy_full)(Buffer *, int, int, int, int, int, int);
+extern func_buffer_copy_full BufferCopyFull;
 
 int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
                                     int xCoord, int yCoord,
@@ -203,17 +204,17 @@ int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
 // Both are thiscall voids (ret 0x10) whose EAX residue the box body
 // deliberately discards - the original zeroes EAX after the last call
 // (`xor eax, eax` at 0x005E327A).
-typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
-extern func_buffer_line *BufferHLine;
-extern func_buffer_line *BufferVLine;
+typedef void (OriginalObject::*func_buffer_line)(int, int, int, int);
+extern func_buffer_line BufferHLine;
+extern func_buffer_line BufferVLine;
 
 int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
                                    int color1, int color2);
 
 // The measured overload this one wraps is a 578-byte body with three call
 // targets, still an original dependency. Tests rebind this seam.
-typedef int(__thiscall func_buffer_text_width_measured)(Buffer *, LPSTR, size_t);
-extern func_buffer_text_width_measured *BufferTextWidthMeasured;
+typedef int (OriginalObject::*func_buffer_text_width_measured)(LPSTR, size_t);
+extern func_buffer_text_width_measured BufferTextWidthMeasured;
 
 // The 835-byte multi-font raster writer at 0x005DCAE0 is the real glyph
 // emitter behind every length-limited text entry point, and is still an
@@ -222,9 +223,8 @@ extern func_buffer_text_width_measured *BufferTextWidthMeasured;
 // the original ends `mov eax, edi` at 0x005DCE18, handing back the advanced
 // pen position, which is why the scalar writers return the incoming x when
 // they emit nothing.
-typedef int(__thiscall func_buffer_write_multi_font_raw_l)(Buffer *, LPSTR,
-                                                           int, int, int);
-extern func_buffer_write_multi_font_raw_l *BufferWriteMultiFontRawL;
+typedef int (OriginalObject::*func_buffer_write_multi_font_raw_l)(LPSTR, int, int, int);
+extern func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL;
 
 int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
                                        int x_coord, int y_coord, int len);

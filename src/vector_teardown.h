@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
 /*
  * The CRT's vector destructor iterator: walk an array, calling one teardown
  * per element. Several recovered teardowns dispatch through it - the atexit
@@ -24,10 +26,10 @@
  * own translation unit with no further dependencies, and each caller carries
  * its own per-element teardown seam.
  */
-typedef void(__thiscall func_thiscall_teardown)(void *object);
+typedef void (OriginalObject::*func_thiscall_teardown)();
 typedef void(__stdcall func_vector_dtor_iterator)(
     void *array, unsigned int element_size, int count,
-    func_thiscall_teardown *teardown);
+    func_thiscall_teardown teardown);
 extern func_vector_dtor_iterator *VectorDtorIterator;
 
 // Its construction-side companion: walk an array calling one constructor per
@@ -35,7 +37,7 @@ extern func_vector_dtor_iterator *VectorDtorIterator;
 // but passed faithfully).
 typedef void(__stdcall func_vector_ctor_iterator)(
     void *array, unsigned int element_size, int count,
-    func_thiscall_teardown *ctor, func_thiscall_teardown *dtor);
+    func_thiscall_teardown ctor, func_thiscall_teardown dtor);
 extern func_vector_ctor_iterator *VectorCtorIterator;
 
 // The game's own operator new, ??2@YAPAXI@Z at 0x0064558A - a 14-byte

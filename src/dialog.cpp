@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "dialog.h"
 #include "stringstruct.h"
 
@@ -248,7 +249,7 @@ int __cdecl dialog_set_def_dialog_font_redirect(
     return Dialog::set_def_dialog_font(font1, font2, font3);
 }
 
-func_dialog_close *DialogOriginalClose = (func_dialog_close *)0x00608F50;
+func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 func_operator_delete *DialogOperatorDelete =
     (func_operator_delete *)0x0064557F;
 
@@ -287,7 +288,7 @@ mutant is equivalent by construction.
 void Dialog::destroy() {
     volatile uint32_t *const object = reinterpret_cast<volatile uint32_t *>(this);
     object[0x000 / 4] = DialogPrimaryVtable;
-    DialogOriginalClose(this);
+    (ORIGINAL(this)->*DialogOriginalClose)();
 
     // The derived-close chain at 0x004066C0, inlined by the original: each
     // stage resolves the virtual-base slot through the list's own vbtable at

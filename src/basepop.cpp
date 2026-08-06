@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "basepop.h"
 #include "dialogs.h"
 #include <cstring>
@@ -356,8 +357,8 @@ void __cdecl base_pop_fallout_redirect() {
     BasePop::fallout();
 }
 
-func_set_state_flag *CheckBoxOriginalSetStateFlag =
-    (func_set_state_flag *)0x0060ECE0;
+func_set_state_flag CheckBoxOriginalSetStateFlag =
+    original_method<func_set_state_flag>(0x0060ECE0);
 
 /*
 Purpose: Set the popup's embedded check box, at 0x2228, to the given state.
@@ -366,8 +367,7 @@ Return Value: n/a
 Status: Complete
 */
 void BasePop::write_check(long value) {
-    CheckBoxOriginalSetStateFlag(reinterpret_cast<uint8_t *>(this) + 0x2228,
-                                 value);
+    (ORIGINAL(reinterpret_cast<uint8_t *>(this) + 0x2228)->*CheckBoxOriginalSetStateFlag)(value);
 }
 
 void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value) {
@@ -404,7 +404,7 @@ void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width) {
     self->set_width(width);
 }
 
-func_base_pop_exec *BasePopExec = (func_base_pop_exec *)0x00602600;
+func_base_pop_exec BasePopExec = original_method<func_base_pop_exec>(0x00602600);
 
 /*
 Purpose: Run the popup modally with no completion callback.
@@ -413,7 +413,7 @@ Return Value: the exec result
 Status: Complete
 */
 int BasePop::exec() {
-    return BasePopExec(this, 0, nullptr);
+    return (ORIGINAL(this)->*BasePopExec)(0, nullptr);
 }
 
 /*
@@ -423,7 +423,7 @@ Return Value: the exec result
 Status: Complete
 */
 int BasePop::exec(int (__cdecl *callback)()) {
-    return BasePopExec(this, 0, callback);
+    return (ORIGINAL(this)->*BasePopExec)(0, callback);
 }
 
 int __fastcall base_pop_exec_void_redirect(BasePop *self, void *) {

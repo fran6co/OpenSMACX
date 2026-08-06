@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "general.h"
 #include "wave.h"
 
@@ -116,8 +117,8 @@ Status: Complete
 int Wave::unload() {
     // Both dispatches read the live vtable pointer at run time rather than
     // being declared virtual, so neither can disagree with the original layout.
-    typedef int(__thiscall * device_unload_fn)(void *device);
-    typedef void(__thiscall * wave_vfn)(Wave *self);
+    typedef int (OriginalObject::*device_unload_fn)();
+    typedef void (OriginalObject::*wave_vfn)();
 
     int result = 0;
     if (device_) {
@@ -156,7 +157,7 @@ void Wave::set_pitch(int a1) {
     }
     pitch_ = pitch;
     if (device_) {
-        typedef void(__thiscall * set_pitch_fn)(void *device, int pitch);
+        typedef void (OriginalObject::*set_pitch_fn)(int pitch);
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         (*reinterpret_cast<set_pitch_fn *>(device_vtable + 0x98))(device_, pitch);
     }
@@ -171,8 +172,8 @@ Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
 int Wave::load(int a1, uint32_t a2) {
-    typedef void(__thiscall * load_fn)(Wave *self, int a1, int a2);
-    typedef int(__thiscall * follow_fn)(Wave *self);
+    typedef void (OriginalObject::*load_fn)(int a1, int a2);
+    typedef int (OriginalObject::*follow_fn)();
 
     uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
     (*reinterpret_cast<load_fn *>(vtable + 0x88))(this, a1, a2);
@@ -226,7 +227,7 @@ int Wave::is_playing() {
     // The device answers through its live vtable rather than a C++ virtual
     // call, and it is the receiver of that call - the original loads it into
     // ecx first, then dispatches on `[[ecx]+0x5C]`.
-    typedef int(__thiscall * device_is_playing_fn)(void *device);
+    typedef int (OriginalObject::*device_is_playing_fn)();
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_is_playing_fn *>(
@@ -263,7 +264,7 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::play(int a1) {
-    typedef int(__thiscall * device_play_fn)(void *device, int a1);
+    typedef int (OriginalObject::*device_play_fn)(int a1);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_play_fn *>(device_vtable + 0x94))(
@@ -289,7 +290,7 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::is_hwbuffer() {
-    typedef int(__thiscall * device_fn)(void *device);
+    typedef int (OriginalObject::*device_fn)();
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xC8))(device_);
@@ -309,7 +310,7 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_time(uint32_t a1) {
-    typedef int(__thiscall * device_fn)(void *device, uint32_t a1);
+    typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xB4))(device_,
@@ -330,7 +331,7 @@ Return Value: the device's answer, or -1 when no device is wrapped
 Status: Complete
 */
 int Wave::get_current_marker() {
-    typedef int(__thiscall * device_fn)(void *device);
+    typedef int (OriginalObject::*device_fn)();
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xB8))(device_);
@@ -350,7 +351,7 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_game_hwnd() {
-    typedef int(__thiscall * device_fn)(void *device);
+    typedef int (OriginalObject::*device_fn)();
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0x3C))(device_);
@@ -370,7 +371,7 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_ndevices() {
-    typedef int(__thiscall * device_fn)(void *device);
+    typedef int (OriginalObject::*device_fn)();
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xBC))(device_);
@@ -413,7 +414,7 @@ Status: Complete
 int Wave::set_reverb_mix(float a1) {
     reverb_mix_ = a1;
     if (device_) {
-        typedef int(__thiscall * device_fn)(void *device, float a1);
+        typedef int (OriginalObject::*device_fn)(float a1);
         return (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0xE0))(device_, a1);
     }
@@ -433,7 +434,7 @@ Return Value: the device's answer, or 0 when no device is wrapped (the
 Status: Complete
 */
 int Wave::is_3d() {
-    typedef int(__thiscall * device_fn)(void *device);
+    typedef int (OriginalObject::*device_fn)();
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xDC))(device_);
@@ -455,8 +456,7 @@ Return Value: the device's answer, or 1 when no device is wrapped
 Status: Complete
 */
 int Wave::get_device_description(char *a1, int a2, int a3) {
-    typedef int(__thiscall * device_fn)(void *device, char *a1, int a2,
-                                        int a3);
+    typedef int (OriginalObject::*device_fn)(char *a1, int a2, int a3);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xC0))(
@@ -481,8 +481,7 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_position3d(float a1, float a2, float a3) {
-    typedef int(__thiscall * device_fn)(void *device, float a1, float a2,
-                                        float a3);
+    typedef int (OriginalObject::*device_fn)(float a1, float a2, float a3);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xCC))(
@@ -504,7 +503,7 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_xpos(float a1) {
-    typedef int(__thiscall * device_fn)(void *device, float a1);
+    typedef int (OriginalObject::*device_fn)(float a1);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xD0))(device_,
@@ -525,7 +524,7 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_ypos(float a1) {
-    typedef int(__thiscall * device_fn)(void *device, float a1);
+    typedef int (OriginalObject::*device_fn)(float a1);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xD4))(device_,
@@ -546,7 +545,7 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_zpos(float a1) {
-    typedef int(__thiscall * device_fn)(void *device, float a1);
+    typedef int (OriginalObject::*device_fn)(float a1);
     if (device_) {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (*reinterpret_cast<device_fn *>(device_vtable + 0xD8))(device_,
@@ -571,7 +570,7 @@ Return Value: n/a
 Status: Complete
 */
 void Wave::set_attrib(uint32_t a1) {
-    typedef int(__thiscall * device_fn)(void *device, uint32_t a1);
+    typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (a1 & 2) {
         field_30_ = 1;
     }
@@ -616,7 +615,7 @@ Status: Complete
 int Wave::get_attrib() {
     int result = 0;
     if (device_) {
-        typedef int(__thiscall * device_fn)(void *device);
+        typedef int (OriginalObject::*device_fn)();
         result = (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x70))(device_);
     }
@@ -650,8 +649,8 @@ int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
 }
 
 uint32_t *WaveDeviceGroupVolumes = reinterpret_cast<uint32_t *>(0x0090D9A0);
-func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled = (func_wave_device_is_group_disabled *)0x004C5460;
-func_wave_original_load *WaveOriginalLoad = (func_wave_original_load *)0x004C6CE0;
+func_wave_device_is_group_disabled WaveDeviceIsGroupDisabled = original_method<func_wave_device_is_group_disabled>(0x004C5460);
+func_wave_original_load WaveOriginalLoad = original_method<func_wave_original_load>(0x004C6CE0);
 
 /*
 Purpose: Set the wave's volume. The low seven bits of the argument are stored
@@ -677,7 +676,7 @@ void Wave::set_volume(int a1) {
             group));
     }
     if (device_) {
-        typedef void(__thiscall * device_fn)(void *device, int level);
+        typedef void (OriginalObject::*device_fn)(int level);
         (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, level);
     }
@@ -733,24 +732,23 @@ int Wave::play() {
     int result = 0;
     if (group_slot_ < 0x10) {
         if (static_cast<uint8_t>(
-                WaveDeviceIsGroupDisabled(WaveDeviceGlobal, group_slot_))) {
+                (ORIGINAL(WaveDeviceGlobal)->*WaveDeviceIsGroupDisabled)(group_slot_))) {
             return 0x14;
         }
         if (flags_54_ & 0x10) {
-            typedef void(__thiscall * wave_volume_fn)(Wave *self,
-                                                      uint32_t volume);
+            typedef void (OriginalObject::*wave_volume_fn)(uint32_t volume);
             (*reinterpret_cast<wave_volume_fn *>(
                 *reinterpret_cast<uint8_t **>(this) + 0x40))(this, volume_);
         }
     }
     if (device_) {
-        typedef int(__thiscall * device_start_fn)(void *device);
+        typedef int (OriginalObject::*device_start_fn)();
         result = (*reinterpret_cast<device_start_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x1C))(device_);
     } else if (flags_54_ & 0x10) {
-        WaveOriginalLoad(this);
+        (ORIGINAL(this)->*WaveOriginalLoad)();
         if (device_) {
-            typedef int(__thiscall * device_start_fn)(void *device);
+            typedef int (OriginalObject::*device_start_fn)();
             result = (*reinterpret_cast<device_start_fn *>(
                 *reinterpret_cast<uint8_t **>(device_) + 0x1C))(device_);
         }
@@ -772,7 +770,7 @@ int __fastcall wave_play_empty_redirect(Wave *self, void *) {
 
 func_wave_device_create **WaveDeviceCreateSlot =
     reinterpret_cast<func_wave_device_create **>(0x0090DB24);
-func_sound_original_load *SoundOriginalLoad = (func_sound_original_load *)0x004C6280;
+func_sound_original_load SoundOriginalLoad = original_method<func_sound_original_load>(0x004C6280);
 
 /*
 Purpose: Load the wave from its remembered filename. With no wrapped device
@@ -807,7 +805,7 @@ int Wave::load() {
         attribs |= 1;
     }
     {
-        typedef int(__thiscall * wave_query_fn)(Wave *self);
+        typedef int (OriginalObject::*wave_query_fn)();
         if ((*reinterpret_cast<wave_query_fn *>(
                 *reinterpret_cast<uint8_t **>(this) + 0x58))(this)) {
             attribs |= 2;
@@ -830,15 +828,15 @@ int Wave::load() {
         attribs |= 0x100;
     }
     {
-        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (*reinterpret_cast<device_attrib_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, attribs);
     }
-    const int loaded = SoundOriginalLoad(this, fname);
+    const int loaded = (ORIGINAL(this)->*SoundOriginalLoad)(fname);
     if (loaded) {
         return loaded;
     }
-    typedef int(__thiscall * device_length_fn)(void *device);
+    typedef int (OriginalObject::*device_length_fn)();
     ms_length_ = (*reinterpret_cast<device_length_fn *>(
         *reinterpret_cast<uint8_t **>(device_) + 0xC4))(device_);
     return 0;
@@ -880,18 +878,18 @@ int Wave::reload() {
         attribs |= 1;
     }
     {
-        typedef int(__thiscall * wave_query_fn)(Wave *self);
+        typedef int (OriginalObject::*wave_query_fn)();
         if ((*reinterpret_cast<wave_query_fn *>(
                 *reinterpret_cast<uint8_t **>(this) + 0x58))(this)) {
             attribs |= 2;
         }
     }
     {
-        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (*reinterpret_cast<device_attrib_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, attribs);
     }
-    typedef int(__thiscall * device_reload_fn)(void *device);
+    typedef int (OriginalObject::*device_reload_fn)();
     const int reloaded = (*reinterpret_cast<device_reload_fn *>(
         *reinterpret_cast<uint8_t **>(device_) + 0x84))(device_);
     if (reloaded) {
@@ -900,12 +898,12 @@ int Wave::reload() {
     if (!(field_40_ & 1)) {
         field_40_ |= 1;
         {
-            typedef void(__thiscall * wave_vfn)(Wave *self);
+            typedef void (OriginalObject::*wave_vfn)();
             (*reinterpret_cast<wave_vfn *>(
                 *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
         }
         if (field_30_) {
-            typedef void(__thiscall * device_loop_fn)(void *device, int on);
+            typedef void (OriginalObject::*device_loop_fn)(int on);
             (*reinterpret_cast<device_loop_fn *>(
                 *reinterpret_cast<uint8_t **>(device_) + 0x48))(device_, 1);
         }
@@ -944,11 +942,11 @@ int Wave::dyna_load(char *a1) {
     const int attribs = (*reinterpret_cast<int(__thiscall **)(Wave *)>(
         *reinterpret_cast<uint8_t **>(this) + 0x70))(this);
     {
-        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C))(
             device_, attribs);
     }
-    typedef void(__thiscall * wave_vfn)(Wave *self);
+    typedef void (OriginalObject::*wave_vfn)();
     (*reinterpret_cast<wave_vfn *>(
         *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
     return created;
@@ -987,7 +985,7 @@ int Wave::load(const char *a1) {
         attribs |= 1;
     }
     {
-        typedef int(__thiscall * wave_query_fn)(Wave *self);
+        typedef int (OriginalObject::*wave_query_fn)();
         if ((*reinterpret_cast<wave_query_fn *>(
                 *reinterpret_cast<uint8_t **>(this) + 0x58))(this)) {
             attribs |= 2;
@@ -1001,30 +999,30 @@ int Wave::load(const char *a1) {
         attribs |= 0x80;
     }
     {
-        typedef void(__thiscall * device_attrib_fn)(void *device, int attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (*reinterpret_cast<device_attrib_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, attribs);
     }
-    const int loaded = SoundOriginalLoad(this, a1);
+    const int loaded = (ORIGINAL(this)->*SoundOriginalLoad)(a1);
     if (loaded) {
         return loaded;
     }
     {
-        typedef int(__thiscall * device_length_fn)(void *device);
+        typedef int (OriginalObject::*device_length_fn)();
         ms_length_ = (*reinterpret_cast<device_length_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0xC4))(device_);
     }
     {
-        typedef void(__thiscall * device_level_fn)(void *device, uint32_t v);
+        typedef void (OriginalObject::*device_level_fn)(uint32_t v);
         (*reinterpret_cast<device_level_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, volume_);
     }
     {
-        typedef void(__thiscall * device_pitch_fn)(void *device, int pitch);
+        typedef void (OriginalObject::*device_pitch_fn)(int pitch);
         (*reinterpret_cast<device_pitch_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x98))(device_, pitch_);
     }
-    typedef void(__thiscall * device_pan_fn)(void *device, uint32_t v);
+    typedef void (OriginalObject::*device_pan_fn)(uint32_t v);
     (*reinterpret_cast<device_pan_fn *>(
         *reinterpret_cast<uint8_t **>(device_) + 0x44))(device_, field_8_);
     return 0;
@@ -1034,7 +1032,7 @@ int __fastcall wave_load_fname_redirect(Wave *self, void *, const char *a1) {
     return self->load(a1);
 }
 
-func_sound_set_type *SoundSetType = (func_sound_set_type *)0x004C61E0;
+func_sound_set_type SoundSetType = original_method<func_sound_set_type>(0x004C61E0);
 
 /*
 Purpose: Build the wave. The original constructs in the same three vtable
@@ -1073,7 +1071,7 @@ Wave::Wave() {
     pad_55_[1] = 0;
     pad_55_[2] = 0;
     field_40_ |= 4;
-    SoundSetType(this, 1);
+    (ORIGINAL(this)->*SoundSetType)(1);
     pitch_ = 0;
     reverb_mix_ = 1.0f;
     group_slot_ = 0x10;
@@ -1134,8 +1132,7 @@ void Wave::init(char *a1, uint32_t a2) {
                     (*reinterpret_cast<int(__thiscall **)(Wave *)>(
                         *reinterpret_cast<uint8_t **>(this) + 0x70))(this);
                 {
-                    typedef void(__thiscall * device_attrib_fn)(void *device,
-                                                                int attribs);
+                    typedef void (OriginalObject::*device_attrib_fn)(int attribs);
                     (*reinterpret_cast<device_attrib_fn *>(
                         device_vtable + 0x6C))(device_, attribs);
                 }
@@ -1144,8 +1141,7 @@ void Wave::init(char *a1, uint32_t a2) {
             }
         }
         if (device_) {
-            typedef void(__thiscall * device_mode_fn)(void *device,
-                                                      uint32_t mode);
+            typedef void (OriginalObject::*device_mode_fn)(uint32_t mode);
             (*reinterpret_cast<device_mode_fn *>(
                 *reinterpret_cast<uint8_t **>(device_) + 0x6C))(device_, a2);
         }
@@ -1198,7 +1194,7 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 // allocated it; the release hook is an indirect call on the slot at 0x0090DB28
 // guarded by the dword at 0x0090DB7C; the chain end slots are the dwords the
 // unlink falls back to when a neighbour is null.
-func_wave_device_pull_from_group *WaveDevicePullFromGroup = (func_wave_device_pull_from_group *)0x004C5280;
+func_wave_device_pull_from_group WaveDevicePullFromGroup = original_method<func_wave_device_pull_from_group>(0x004C5280);
 void *WaveDeviceGlobal = reinterpret_cast<void *>(0x0090D978);
 func_operator_delete *WaveOperatorDelete = (func_operator_delete *)0x0064557F;
 func_wave_device_release **WaveDeviceReleaseSlot =
@@ -1233,7 +1229,7 @@ Wave::~Wave() {
     Wave volatile *const self = this;
     self->vtable_storage_ = 0x0066E44C;
     if (self->group_slot_ < 0x10) {
-        WaveDevicePullFromGroup(WaveDeviceGlobal, this);
+        (ORIGINAL(WaveDeviceGlobal)->*WaveDevicePullFromGroup)(this);
     }
     void *const block = self->fname_;
     if (block) {

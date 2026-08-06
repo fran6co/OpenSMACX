@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "planwin.h"
 #include "mapwin.h"
 #include <cstring>
@@ -62,7 +63,7 @@ namespace {
 // blink dispatches through the virtual base's own vtable rather than a C++
 // virtual call, so no vtable this toolchain lays out can disagree with the
 // original's. Slot 0x30 is read from whatever object is actually there.
-typedef void(__thiscall func_base_vtable_slot)(void *);
+typedef void (OriginalObject::*func_base_vtable_slot)();
 
 constexpr size_t PlanWinBlinkSlot = 0x30;
 

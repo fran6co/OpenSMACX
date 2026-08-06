@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
@@ -68,20 +70,17 @@ void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a
 // BaseWin embeds an interface subobject at 0xA14; these four are reached
 // through its vtable, so their `this` points there and is adjusted back to
 // the BaseWin before dispatching to iface_click, which is not recovered.
-typedef void (__thiscall func_base_win_iface_click)(BaseWin *self, int a1,
-                                                    int a2, int button,
-                                                    int is_double);
-extern func_base_win_iface_click *BaseWinIfaceClick;
+typedef void (OriginalObject::*func_base_win_iface_click)(int a1, int a2, int button, int is_double);
+extern func_base_win_iface_click BaseWinIfaceClick;
 
 // draw_supported is not recovered.
-typedef void (__thiscall func_base_win_draw_supported)(BaseWin *self, int a1);
-extern func_base_win_draw_supported *BaseWinDrawSupported;
+typedef void (OriginalObject::*func_base_win_draw_supported)(int a1);
+extern func_base_win_draw_supported BaseWinDrawSupported;
 
 // The shared click handler these three forward to is not recovered. Unlike
 // the iface_click family, these carry no this-adjustment.
-typedef void (__thiscall func_base_win_click)(BaseWin *self, int a1, int a2,
-                                             int button, int is_double);
-extern func_base_win_click *BaseWinClick;
+typedef void (OriginalObject::*func_base_win_click)(int a1, int a2, int button, int is_double);
+extern func_base_win_click BaseWinClick;
 
 void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2);

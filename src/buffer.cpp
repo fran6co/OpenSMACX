@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "buffer.h"
 #include "font.h"
 #include "palette.h"
@@ -390,7 +391,7 @@ typedef long(__stdcall *func_clipper_set_list_slot)(void *, void *, unsigned lon
 typedef long(__stdcall *func_surface_set_clipper_slot)(void *, void *);
 typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
 typedef unsigned long(__stdcall *func_com_release)(void *);
-typedef void(__thiscall *func_buffer_virtual)(void *);
+typedef void (OriginalObject::*func_buffer_virtual)();
 
 constexpr size_t OwnedAllocationBase = 0x4BC;
 constexpr size_t OwnedAllocationCount = 20;
@@ -408,7 +409,7 @@ void *slot(void *object, size_t offset) {
 
 }  // namespace
 
-func_buffer_copy_full *BufferCopyFull = (func_buffer_copy_full *)0x005DFF00;
+func_buffer_copy_full BufferCopyFull = original_method<func_buffer_copy_full>(0x005DFF00);
 
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
@@ -423,8 +424,7 @@ repetition is the whole content of this overload.
 */
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
                  int height) {
-    return BufferCopyFull(this, buffer, xCoord, yCoord, xCoord, yCoord, width,
-                          height);
+    return (ORIGINAL(this)->*BufferCopyFull)(buffer, xCoord, yCoord, xCoord, yCoord, width, height);
 }
 
 int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
@@ -448,8 +448,7 @@ destination and once as the source.
 int Buffer::copy(Buffer *buffer, RECT *rect) {
     const int left = rect->left;
     const int top = rect->top;
-    return BufferCopyFull(this, buffer, left, top, left, top,
-                          rect->right - left, rect->bottom - top);
+    return (ORIGINAL(this)->*BufferCopyFull)(buffer, left, top, left, top, rect->right - left, rect->bottom - top);
 }
 
 int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
@@ -837,8 +836,8 @@ int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
     return self->set_clip(rect);
 }
 
-func_buffer_text_width_measured *BufferTextWidthMeasured =
-    (func_buffer_text_width_measured *)0x005DC7C0;
+func_buffer_text_width_measured BufferTextWidthMeasured =
+    original_method<func_buffer_text_width_measured>(0x005DC7C0);
 
 /*
 Purpose: Measure a null-terminated string with the buffer's text font.
@@ -850,7 +849,7 @@ int Buffer::text_width(LPSTR text) {
     if (!text) {
         return 0;
     }
-    return BufferTextWidthMeasured(this, text, strlen(text));
+    return (ORIGINAL(this)->*BufferTextWidthMeasured)(text, strlen(text));
 }
 
 int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text) {
@@ -880,8 +879,8 @@ int edge_int(uint32_t bits) {
 
 }  // namespace
 
-func_buffer_line *BufferHLine = (func_buffer_line *)0x005E1A80;
-func_buffer_line *BufferVLine = (func_buffer_line *)0x005E1BF0;
+func_buffer_line BufferHLine = original_method<func_buffer_line>(0x005E1A80);
+func_buffer_line BufferVLine = original_method<func_buffer_line>(0x005E1BF0);
 
 /*
 Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
@@ -911,14 +910,10 @@ int Buffer::box(RECT *rect, int color1, int color2) {
     const uint32_t top = edge_bits(rect->top);
     const uint32_t right_in = edge_bits(rect->right) - 1U;
     const uint32_t bottom_in = edge_bits(rect->bottom) - 1U;
-    BufferHLine(this, edge_int(left + 1U), edge_int(right_in), edge_int(top),
-                color1);
-    BufferHLine(this, edge_int(left), edge_int(right_in - 1U),
-                edge_int(bottom_in), color2);
-    BufferVLine(this, edge_int(left), edge_int(top), edge_int(bottom_in - 1U),
-                color1);
-    BufferVLine(this, edge_int(right_in), edge_int(top + 1U),
-                edge_int(bottom_in), color2);
+    (ORIGINAL(this)->*BufferHLine)(edge_int(left + 1U), edge_int(right_in), edge_int(top), color1);
+    (ORIGINAL(this)->*BufferHLine)(edge_int(left), edge_int(right_in - 1U), edge_int(bottom_in), color2);
+    (ORIGINAL(this)->*BufferVLine)(edge_int(left), edge_int(top), edge_int(bottom_in - 1U), color1);
+    (ORIGINAL(this)->*BufferVLine)(edge_int(right_in), edge_int(top + 1U), edge_int(bottom_in), color2);
     return 0;
 }
 
@@ -951,8 +946,8 @@ void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
     self->clear_links();
 }
 
-func_buffer_write_multi_font_raw_l *BufferWriteMultiFontRawL =
-    (func_buffer_write_multi_font_raw_l *)0x005DCAE0;
+func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL =
+    original_method<func_buffer_write_multi_font_raw_l>(0x005DCAE0);
 
 /*
 Purpose: Draw at most `len` characters of a string at an explicit pen
@@ -990,7 +985,7 @@ int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
     if (limit <= 0) {
         return x_coord;
     }
-    return BufferWriteMultiFontRawL(this, text, x_coord, y_coord, limit);
+    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, x_coord, y_coord, limit);
 }
 
 int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
@@ -1050,8 +1045,7 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     const uint32_t bottom = edge_bits(rect->bottom);
     const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
     const int y_coord = edge_int(top + edge_bits(y_span / 2));
-    return BufferWriteMultiFontRawL(this, text, edge_int(left), y_coord,
-                                    limit);
+    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, edge_int(left), y_coord, limit);
 }
 
 int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
@@ -1097,10 +1091,10 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
         return x_coord;
     }
     const int drawn =
-        BufferTextWidthMeasured(this, text, static_cast<size_t>(limit));
+        (ORIGINAL(this)->*BufferTextWidthMeasured)(text, static_cast<size_t>(limit));
     const int x_span = edge_int(edge_bits(width) - edge_bits(drawn));
     const int centred = edge_int(edge_bits(x_coord) + edge_bits(x_span / 2));
-    return BufferWriteMultiFontRawL(this, text, centred, y_coord, limit);
+    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, centred, y_coord, limit);
 }
 
 int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
@@ -1161,7 +1155,7 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
         return 0;
     }
     const int drawn =
-        BufferTextWidthMeasured(this, text, static_cast<size_t>(measured));
+        (ORIGINAL(this)->*BufferTextWidthMeasured)(text, static_cast<size_t>(measured));
     const int x_span = edge_int(right - edge_bits(drawn) - left);
     const int x_coord = edge_int(left + edge_bits(x_span / 2));
     if (!font1_) {
@@ -1169,7 +1163,7 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
     }
     const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
     const int y_coord = edge_int(top + edge_bits(y_span / 2));
-    return BufferWriteMultiFontRawL(this, text, x_coord, y_coord, limit);
+    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, x_coord, y_coord, limit);
 }
 
 int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,

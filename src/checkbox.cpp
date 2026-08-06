@@ -16,9 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "checkbox.h"
 
-func_dialog_close *CheckBoxOriginalDialogClose = (func_dialog_close *)0x00608F50;
+func_dialog_close CheckBoxOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
 uint32_t *CheckBoxDefault1 = (uint32_t *)0x00697104;
 uint32_t *CheckBoxDefault2 = (uint32_t *)0x00697108;
 
@@ -45,8 +46,7 @@ void CheckBox::close() {
     field_C_ = 0;
     field_14_ = *CheckBoxDefault2;
     field_10_ = *CheckBoxDefault1;
-    CheckBoxOriginalDialogClose(
-        reinterpret_cast<Dialog *>(self + vbtable[2]));
+    (ORIGINAL(reinterpret_cast<Dialog *>(self + vbtable[2]))->*CheckBoxOriginalDialogClose)();
     reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
 }
 

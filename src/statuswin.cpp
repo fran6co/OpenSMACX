@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "statuswin.h"
 
 /*
@@ -49,8 +50,8 @@ void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int 
     self->set_loc(x, y);
 }
 
-func_release_iface_mode *SubInterfaceOriginalReleaseIfaceMode =
-    (func_release_iface_mode *)0x0045D380;
+func_release_iface_mode SubInterfaceOriginalReleaseIfaceMode =
+    original_method<func_release_iface_mode>(0x0045D380);
 void *SubInterfaceGlobal = (void *)0x006EEED8;
 
 /*
@@ -63,7 +64,7 @@ Status: Complete
 void StatusWin::reset() {
     if (field_15D4_) {
         field_15D4_ = 0;
-        SubInterfaceOriginalReleaseIfaceMode(SubInterfaceGlobal);
+        (ORIGINAL(SubInterfaceGlobal)->*SubInterfaceOriginalReleaseIfaceMode)();
     }
 }
 

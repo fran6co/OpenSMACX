@@ -89,8 +89,14 @@ def read_bytes(pe: pefile.PE, address: int, length: int) -> bytes:
 # because two names for one address is NOT a link error - it is a fixture that
 # rebinds one of them and silently leaves the other pointing at the original
 # image.
+# The `*` is OPTIONAL. A seam used to be a free function pointer -
+# `extern func_buffer_line *BufferHLine; // 0x005E1A80` - and is now a
+# pointer-to-member, which carries its own indirection in the typedef and so
+# declares no star. Requiring one saw 11 of the 209 bindings, and a generator
+# blind to a binding mints a second name for the address, which is the exact
+# failure this scan exists to prevent.
 SEAM_BINDING_RE = re.compile(
-    r"^\s*extern\s+([\w:]+)\s*\*\s*(\w+)\s*;\s*//\s*0x([0-9A-Fa-f]+)")
+    r"^\s*extern\s+([\w:]+)\s*\*?\s*(\w+)\s*;\s*//\s*0x([0-9A-Fa-f]+)")
 
 
 def scan_seam_bindings(source_dir, exclude=()):

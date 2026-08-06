@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "infowin.h"
 
 /*
@@ -70,8 +71,8 @@ void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2) {
     self->UNK3(a1, a2);
 }
 
-func_info_win_timer_proc *InfoWinOriginalTimerProc =
-    (func_info_win_timer_proc *)0x00459150;
+func_info_win_timer_proc InfoWinOriginalTimerProc =
+    original_method<func_info_win_timer_proc>(0x00459150);
 
 /*
 Purpose: Cancel the pending info-window timer, if one is outstanding.
@@ -82,7 +83,7 @@ Status: Complete
 void InfoWin::reset() {
     if (field_A8_) {
         field_A8_ = 0;
-        InfoWinOriginalTimerProc(this, 1);
+        (ORIGINAL(this)->*InfoWinOriginalTimerProc)(1);
     }
 }
 

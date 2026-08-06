@@ -16,15 +16,16 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "netdaemon.h"
 #include "log.h"  // log_say, source-owned at 0x006262F0
 
-func_net_get *NetDaemonNetGet = (func_net_get *)0x00630A00;
-func_process_message *NetDaemonProcessMessage =
-    (func_process_message *)0x00534400;
+func_net_get NetDaemonNetGet = original_method<func_net_get>(0x00630A00);
+func_process_message NetDaemonProcessMessage =
+    original_method<func_process_message>(0x00534400);
 void *NetDaemonNet = reinterpret_cast<void *>(0x0093CD90);
-func_net_daemon_synch *NetDaemonSynch =
-    (func_net_daemon_synch *)0x00532E00;
+func_net_daemon_synch NetDaemonSynch =
+    original_method<func_net_daemon_synch>(0x00532E00);
 int *NetDaemonIsMultiplayerNet = (int *)0x0093F660;
 int *NetDaemonLocalFaction = (int *)0x00939284;
 func_net_message_data *NetDaemonMessageData =
@@ -45,12 +46,11 @@ sweep's surviving constant mutants on them are equivalent by construction.
 int NetDaemon::receive() {
     unsigned long first = 0;
     unsigned long second = 0;
-    const int result = NetDaemonNetGet(NetDaemonNet, &first, &second);
+    const int result = (ORIGINAL(NetDaemonNet)->*NetDaemonNetGet)(&first, &second);
     if (result == 0) {
         return 0;
     }
-    NetDaemonProcessMessage(this, reinterpret_cast<char *>(result), second,
-                            static_cast<int>(first));
+    (ORIGINAL(this)->*NetDaemonProcessMessage)(reinterpret_cast<char *>(result), second, static_cast<int>(first));
     return 1;
 }
 
@@ -67,7 +67,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_veh(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x11, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x11, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -77,7 +77,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_base(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x13, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x13, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -87,7 +87,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_energy(int id) {
-    NetDaemonSynch(NetDaemonNet, 0xB, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0xB, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -97,7 +97,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_researching(int id) {
-    NetDaemonSynch(NetDaemonNet, 0xA, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0xA, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -107,7 +107,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_leader(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x6, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x6, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -117,7 +117,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_ai(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x8, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x8, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -127,7 +127,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_research(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x9, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x9, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -138,7 +138,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_alloc(int id) {
-    NetDaemonSynch(NetDaemonNet, 0xC, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0xC, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -148,7 +148,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_soc(int id) {
-    NetDaemonSynch(NetDaemonNet, 0xD, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0xD, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -158,7 +158,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_proto(int id) {
-    NetDaemonSynch(NetDaemonNet, 0xE, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0xE, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -168,7 +168,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_obs(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x10, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x10, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -180,7 +180,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_diplo(int a, int b) {
-    NetDaemonSynch(NetDaemonNet, 0x16, a, b, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x16, a, b, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -190,7 +190,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_template(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x18, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x18, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -200,7 +200,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_radius(int id) {
-    NetDaemonSynch(NetDaemonNet, 0x23, id, 0, 0, nullptr, 1, 0x2101);
+    (ORIGINAL(NetDaemonNet)->*NetDaemonSynch)(0x23, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "basewin.h"
 #include "win.h"
 #include <cstdint>
@@ -125,8 +126,8 @@ void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a
     self->on_iface_selected(a1, a2);
 }
 
-func_base_win_iface_click *BaseWinIfaceClick =
-    (func_base_win_iface_click *)0x004160F0;
+func_base_win_iface_click BaseWinIfaceClick =
+    original_method<func_base_win_iface_click>(0x004160F0);
 
 /*
 Purpose: Report a left click on the interface. Reached through the interface
@@ -138,7 +139,7 @@ Status: Complete
 void BaseWin::on_iface_left_click(int a1, int a2) {
     auto *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    BaseWinIfaceClick(base, a1, a2, 0, 0);
+    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 0, 0);
 }
 
 /*
@@ -151,7 +152,7 @@ Status: Complete
 void BaseWin::on_iface_right_click(int a1, int a2) {
     auto *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    BaseWinIfaceClick(base, a1, a2, 1, 0);
+    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 1, 0);
 }
 
 /*
@@ -164,7 +165,7 @@ Status: Complete
 void BaseWin::on_iface_left_double_click(int a1, int a2) {
     auto *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    BaseWinIfaceClick(base, a1, a2, 0, 1);
+    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 0, 1);
 }
 
 /*
@@ -177,7 +178,7 @@ Status: Complete
 void BaseWin::on_iface_right_double_click(int a1, int a2) {
     auto *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    BaseWinIfaceClick(base, a1, a2, 1, 1);
+    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 1, 1);
 }
 
 void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
@@ -196,8 +197,8 @@ void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, voi
     self->on_iface_right_double_click(a1, a2);
 }
 
-func_base_win_draw_supported *BaseWinDrawSupported =
-    (func_base_win_draw_supported *)0x0040C850;
+func_base_win_draw_supported BaseWinDrawSupported =
+    original_method<func_base_win_draw_supported>(0x0040C850);
 
 /*
 Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
@@ -215,14 +216,14 @@ void BaseWin::on_iface_scrolled(int a1, int a2) {
     std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &a2, sizeof(a2));
     auto *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    BaseWinDrawSupported(base, 1);
+    (ORIGINAL(base)->*BaseWinDrawSupported)(1);
 }
 
 void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_iface_scrolled(a1, a2);
 }
 
-func_base_win_click *BaseWinClick = (func_base_win_click *)0x004165D0;
+func_base_win_click BaseWinClick = original_method<func_base_win_click>(0x004165D0);
 
 /*
 Purpose: Report a left click to the shared click handler. Unlike the
@@ -232,7 +233,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_left_click(int a1, int a2) {
-    BaseWinClick(this, a1, a2, 0, 0);
+    (ORIGINAL(this)->*BaseWinClick)(a1, a2, 0, 0);
 }
 
 /*
@@ -243,7 +244,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_right_click(int a1, int a2) {
-    BaseWinClick(this, a1, a2, 1, 0);
+    (ORIGINAL(this)->*BaseWinClick)(a1, a2, 1, 0);
 }
 
 /*
@@ -254,7 +255,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_left_double_click(int a1, int a2) {
-    BaseWinClick(this, a1, a2, 0, 1);
+    (ORIGINAL(this)->*BaseWinClick)(a1, a2, 0, 1);
 }
 
 void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2) {

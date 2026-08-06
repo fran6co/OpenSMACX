@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "sounddevice.h"
 
 /*
@@ -333,7 +334,7 @@ int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *) {
 namespace {
 // Midi_Device wraps its device at 0x14, the same offset Wave_Device uses, and
 // drives it through the device's own vtable.
-typedef void(__thiscall *midi_device_vfn)(void *device);
+typedef void (OriginalObject::*midi_device_vfn)();
 
 void dispatch_midi_device(Midi_Device *self, int vtable_offset) {
     void *device = *reinterpret_cast<void **>(
@@ -374,7 +375,7 @@ void __fastcall midi_device_disable_redirect(Midi_Device *self, void *) {
 }
 
 namespace {
-typedef int(__thiscall *device_query_vfn)(void *device);
+typedef int (OriginalObject::*device_query_vfn)();
 
 // The querying form of the same dispatch, shared by both device classes: the
 // original tail-jumps or calls into the device's method, and answers a fixed

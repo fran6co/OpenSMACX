@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "stringstruct_oracle.h"
 
 #include "runtime_oracle.h"
@@ -23,7 +24,7 @@ using ListFixture = runtime_oracle::Fixture<StringStruct>;
 const runtime_oracle::ClassSpec ListSpec = {
     sizeof(StringStruct), sizeof(uintptr_t), 0, nullptr, 0};
 
-typedef void (__thiscall *OriginalNoArg)(StringStruct *);
+typedef void (OriginalObject::*OriginalNoArg)();
 
 struct Probe {
     int visits;
@@ -219,7 +220,7 @@ bool verify_close() {
         {3, -1, true},
         {3, 0, false},
     };
-    typedef void (__thiscall *OriginalClose)(void *);
+    typedef void (OriginalObject::*OriginalClose)();
     // Both the base close and the derived two-stage close share the same
     // fixture shape; only the entry address, adjustor and expected primary
     // table differ.

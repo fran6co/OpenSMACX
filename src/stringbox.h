@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "scroll.h"
 
  /*
@@ -50,10 +52,10 @@ class DLLEXPORT StringBox : GraphicWin {
 // add() stages three fields into the embedded string struct at 0x2B70 and
 // then calls its add, falling back to a fixup pass when that reports the
 // entry did not fit. Neither callee is recovered yet.
-typedef int (__thiscall func_string_struct_add)(void *, int);
-typedef void (__thiscall func_string_box_add_fixup)(StringBox *);
-extern func_string_struct_add *StringBoxStructAdd;
-extern func_string_box_add_fixup *StringBoxAddFixup;
+typedef int (OriginalObject::*func_string_struct_add)(int);
+typedef void (OriginalObject::*func_string_box_add_fixup)();
+extern func_string_struct_add StringBoxStructAdd;
+extern func_string_box_add_fixup StringBoxAddFixup;
 
 void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
                                         int index, int flag);

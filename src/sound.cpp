@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include <algorithm>
 #include "sound.h"
 #include "general.h"
@@ -44,8 +45,8 @@ void Sound::fade(uint32_t a1) {
     // The object's own vtable is read at run time rather than declaring these
     // virtual, so the dispatch cannot disagree with the original's layout.
     uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
-    typedef int(__thiscall * fade_fn)(Sound *self, int a1);
-    typedef void(__thiscall * fallback_fn)(Sound *self);
+    typedef int (OriginalObject::*fade_fn)(int a1);
+    typedef void (OriginalObject::*fallback_fn)();
     if ((*reinterpret_cast<fade_fn *>(vtable))(this, a1) == 0) {
         uint8_t *const reread = *reinterpret_cast<uint8_t **>(this);
         (*reinterpret_cast<fallback_fn *>(reread + 0x28))(this);
@@ -64,7 +65,7 @@ namespace {
 // Sound wraps its device at 0x3C and asks it these questions through the
 // device's own vtable; the original tail-jumps, so the device's answer is the
 // caller's, and with no device wrapped the answer is zero.
-typedef int(__thiscall *sound_device_query)(void *device);
+typedef int (OriginalObject::*sound_device_query)();
 
 int query_sound_device(Sound *self, int vtable_offset) {
     void *device = *reinterpret_cast<void **>(
@@ -121,7 +122,7 @@ int __fastcall sound_get_time_redirect(Sound *self, void *) {
 }
 
 namespace {
-typedef int(__thiscall *sound_device_arg)(void *device, int a1);
+typedef int (OriginalObject::*sound_device_arg)(int a1);
 
 int forward_sound_device(Sound *self, int vtable_offset, int a1,
                          int no_device_result) {
@@ -296,7 +297,7 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
     if (!device) {
         return;
     }
-    typedef void(__thiscall * ramp_fn)(void *device, int a1, int a2, int a3);
+    typedef void (OriginalObject::*ramp_fn)(int a1, int a2, int a3);
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
     (*reinterpret_cast<ramp_fn *>(vtable + 0x34))(device, a1, a2,
                                                   static_cast<int>(a3));
@@ -391,7 +392,7 @@ int Sound::load(const char *a1) {
             return created;
         }
     } else {
-        typedef int(__thiscall * device_busy_fn)(void *device);
+        typedef int (OriginalObject::*device_busy_fn)();
         if ((*reinterpret_cast<device_busy_fn *>(
                 *reinterpret_cast<uint8_t **>(device_) + 0x60))(device_)) {
             return 0xF;
@@ -399,8 +400,7 @@ int Sound::load(const char *a1) {
     }
     int result;
     {
-        typedef int(__thiscall * device_load_fn)(void *device,
-                                                 const char *name);
+        typedef int (OriginalObject::*device_load_fn)(const char *name);
         result = (*reinterpret_cast<device_load_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x10))(device_, resolved);
     }
@@ -410,8 +410,7 @@ int Sound::load(const char *a1) {
             (*reinterpret_cast<void(__thiscall **)(Sound *)>(
                 *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
             if (loop_flag_30_) {
-                typedef void(__thiscall * device_loop_fn)(void *device,
-                                                          int on);
+                typedef void (OriginalObject::*device_loop_fn)(int on);
                 (*reinterpret_cast<device_loop_fn *>(
                     *reinterpret_cast<uint8_t **>(device_) + 0x48))(device_,
                                                                     1);
@@ -446,7 +445,7 @@ void Sound::set_volume(int a1) {
     const uint32_t vol = static_cast<uint32_t>(a1) & 0x7F;
     volume_ = vol;
     if (device_) {
-        typedef void(__thiscall * device_fn)(void *device, uint32_t vol);
+        typedef void (OriginalObject::*device_fn)(uint32_t vol);
         (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, vol);
     }
@@ -470,7 +469,7 @@ int Sound::set_fade(unsigned long a1) {
     }
     fade_38_ = a1;
     if (device_) {
-        typedef void(__thiscall * device_fn)(void *device, unsigned long t);
+        typedef void (OriginalObject::*device_fn)(unsigned long t);
         (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0))(device_, a1);
     }
@@ -495,7 +494,7 @@ int Sound::set_fade_in(unsigned int a1) {
     }
     fade_38_ = a1;
     if (device_) {
-        typedef void(__thiscall * device_fn)(void *device, unsigned int t);
+        typedef void (OriginalObject::*device_fn)(unsigned int t);
         (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x54))(device_, a1);
     }
@@ -515,7 +514,7 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::fade_in(unsigned int a1) {
-    typedef int(__thiscall * own_time_fn)(Sound *self, unsigned int t);
+    typedef int (OriginalObject::*own_time_fn)(unsigned int t);
     if ((*reinterpret_cast<own_time_fn *>(
             *reinterpret_cast<uint8_t **>(this) + 0x54))(this, a1) == 0) {
         (*reinterpret_cast<void(__thiscall **)(Sound *)>(
@@ -540,7 +539,7 @@ void Sound::set_pan(int a1) {
     const int pan = std::min(std::max(a1, -0x40), 0x3F);
     pan_8_ = pan;
     if (device_) {
-        typedef void(__thiscall * device_fn)(void *device, int pan);
+        typedef void (OriginalObject::*device_fn)(int pan);
         (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x44))(device_, pan);
     }
@@ -563,7 +562,7 @@ Status: Complete
 int Sound::unload() {
     int result = 0;
     if (device_) {
-        typedef int(__thiscall * device_fn)(void *device);
+        typedef int (OriginalObject::*device_fn)();
         result = (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x14))(device_);
     }

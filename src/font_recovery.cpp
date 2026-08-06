@@ -24,8 +24,8 @@ Font::~Font() {
 // The per-element teardown the queue passes: the Font destructor, bound here
 // under its own name so this file needs nothing from the generated thunk
 // family. atexit_thunks.cpp binds the same address as FontElementTeardown.
-func_thiscall_teardown *FontQueueElementTeardown =
-    (func_thiscall_teardown *)0x00618EE0;
+func_thiscall_teardown FontQueueElementTeardown =
+    original_method<func_thiscall_teardown>(0x00618EE0);
 
 /*
 Purpose: Destroy the queue: hand the three-slot walk to the CRT vector

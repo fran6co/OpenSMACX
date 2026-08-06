@@ -16,11 +16,12 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "stringbox.h"
 #include <cstring>
 
-func_string_struct_add *StringBoxStructAdd = (func_string_struct_add *)0x00401100;
-func_string_box_add_fixup *StringBoxAddFixup = (func_string_box_add_fixup *)0x00629490;
+func_string_struct_add StringBoxStructAdd = original_method<func_string_struct_add>(0x00401100);
+func_string_box_add_fixup StringBoxAddFixup = original_method<func_string_box_add_fixup>(0x00629490);
 
 /*
 Purpose: Add a string to the box - stage the text, index and a cleared flag
@@ -34,8 +35,8 @@ void StringBox::add(char *text, int index, int flag) {
     std::memcpy(&field_2B8C_, &text, sizeof(text));
     field_2B90_ = static_cast<uint32_t>(flag);
     field_2B94_ = 0;
-    if (StringBoxStructAdd(&field_2B70_, index) == 0) {
-        StringBoxAddFixup(this);
+    if ((ORIGINAL(&field_2B70_)->*StringBoxStructAdd)(index) == 0) {
+        (ORIGINAL(this)->*StringBoxAddFixup)();
     }
 }
 

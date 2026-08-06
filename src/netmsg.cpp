@@ -16,9 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "netmsg.h"
 
-func_popup_hide *PopupOriginalHide = (func_popup_hide *)0x00404A80;
+func_popup_hide PopupOriginalHide = original_method<func_popup_hide>(0x00404A80);
 
 /*
 Purpose: Close an outstanding network message - stop its timer and hide the
@@ -31,7 +32,7 @@ void NetMsg::close() {
     if (field_5384_) {
         field_5384_ = 0;
         timer_.close();
-        PopupOriginalHide(this);
+        (ORIGINAL(this)->*PopupOriginalHide)();
     }
 }
 

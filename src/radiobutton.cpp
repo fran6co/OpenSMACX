@@ -16,9 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "radiobutton.h"
 
-func_dialog_close *RadioButtonOriginalDialogClose = (func_dialog_close *)0x00608F50;
+func_dialog_close RadioButtonOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
 uint32_t *RadioButtonDefault1 = (uint32_t *)0x006970F0;
 uint32_t *RadioButtonDefault2 = (uint32_t *)0x006970F4;
 
@@ -44,8 +45,7 @@ void RadioButton::close() {
     field_10_ = 0;
     field_8_ = *RadioButtonDefault2;
     field_4_ = *RadioButtonDefault1;
-    RadioButtonOriginalDialogClose(
-        reinterpret_cast<Dialog *>(self + vbtable[2]));
+    (ORIGINAL(reinterpret_cast<Dialog *>(self + vbtable[2]))->*RadioButtonOriginalDialogClose)();
     reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
 }
 

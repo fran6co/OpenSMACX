@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.h"
+#include "original_seam.h"
 #include <new>
 #include "init_thunks.h"
 #include "atexit_thunks.h"
@@ -44,20 +45,20 @@ func_game_atexit *GameAtexit =
 // to, bound at the original addresses the ??_L call
 // sites pass; the hybrid redirects each to its
 // recovered body at run time.
-func_thiscall_teardown *BufferElementCtor =
-    (func_thiscall_teardown *)0x005D7210;
-func_thiscall_teardown *CaviarDataElementCtor =
-    (func_thiscall_teardown *)0x00616BC0;
-func_thiscall_teardown *FontElementCtor =
-    (func_thiscall_teardown *)0x00618EA0;
-func_thiscall_teardown *SpriteElementCtor =
-    (func_thiscall_teardown *)0x005E37E0;
-func_thiscall_teardown *TextIndexElementCtor =
-    (func_thiscall_teardown *)0x005FDF40;
-func_thiscall_teardown *TextureElementCtor =
-    (func_thiscall_teardown *)0x00619650;
-func_thiscall_teardown *WaveElementCtor =
-    (func_thiscall_teardown *)0x004C66E0;
+func_thiscall_teardown BufferElementCtor =
+    original_method<func_thiscall_teardown>(0x005D7210);
+func_thiscall_teardown CaviarDataElementCtor =
+    original_method<func_thiscall_teardown>(0x00616BC0);
+func_thiscall_teardown FontElementCtor =
+    original_method<func_thiscall_teardown>(0x00618EA0);
+func_thiscall_teardown SpriteElementCtor =
+    original_method<func_thiscall_teardown>(0x005E37E0);
+func_thiscall_teardown TextIndexElementCtor =
+    original_method<func_thiscall_teardown>(0x005FDF40);
+func_thiscall_teardown TextureElementCtor =
+    original_method<func_thiscall_teardown>(0x00619650);
+func_thiscall_teardown WaveElementCtor =
+    original_method<func_thiscall_teardown>(0x004C66E0);
 
 namespace {
 
@@ -107,93 +108,93 @@ void __thiscall waveinitctor_default(void *object) {
 
 }  // namespace
 
-func_thiscall_teardown *AmbienceInitCtor = &ambienceinitctor_default;
-func_thiscall_teardown *BufferInitCtor = &bufferinitctor_default;
-func_thiscall_teardown *ButtonGroupInitCtor = &buttongroupinitctor_default;
-func_thiscall_teardown *CaviarDataInitCtor = &caviardatainitctor_default;
-func_thiscall_teardown *CaviarInitCtor = &caviarinitctor_default;
-func_thiscall_teardown *FXInitCtor = &fxinitctor_default;
-func_thiscall_teardown *FontInitCtor = &fontinitctor_default;
-func_thiscall_teardown *SpriteInitCtor = &spriteinitctor_default;
-func_thiscall_teardown *StringsInitCtor = &stringsinitctor_default;
-func_thiscall_teardown *TextureInitCtor = &textureinitctor_default;
-func_thiscall_teardown *TimeInitCtor = &timeinitctor_default;
-func_thiscall_teardown *WaveDeviceInitCtor = &wavedeviceinitctor_default;
-func_thiscall_teardown *WaveInitCtor = &waveinitctor_default;
+func_thiscall_teardown AmbienceInitCtor = &ambienceinitctor_default;
+func_thiscall_teardown BufferInitCtor = &bufferinitctor_default;
+func_thiscall_teardown ButtonGroupInitCtor = &buttongroupinitctor_default;
+func_thiscall_teardown CaviarDataInitCtor = &caviardatainitctor_default;
+func_thiscall_teardown CaviarInitCtor = &caviarinitctor_default;
+func_thiscall_teardown FXInitCtor = &fxinitctor_default;
+func_thiscall_teardown FontInitCtor = &fontinitctor_default;
+func_thiscall_teardown SpriteInitCtor = &spriteinitctor_default;
+func_thiscall_teardown StringsInitCtor = &stringsinitctor_default;
+func_thiscall_teardown TextureInitCtor = &textureinitctor_default;
+func_thiscall_teardown TimeInitCtor = &timeinitctor_default;
+func_thiscall_teardown WaveDeviceInitCtor = &wavedeviceinitctor_default;
+func_thiscall_teardown WaveInitCtor = &waveinitctor_default;
 
 // The opaque-storage constructors, each defaulting to
 // the original the thunk calls; the hybrid redirects
 // it to a recovered body at run time.
-func_thiscall_teardown *BaseWinCtorTarget =
-    (func_thiscall_teardown *)0x00408490;
-func_thiscall_teardown *BattleWinCtorTarget =
-    (func_thiscall_teardown *)0x00422EE0;
-func_thiscall_teardown *CouncWinCtorTarget =
-    (func_thiscall_teardown *)0x00428620;
-func_thiscall_teardown *DatalinkCtorTarget =
-    (func_thiscall_teardown *)0x00428FC0;
-func_thiscall_teardown *DesignWinCtorTarget =
-    (func_thiscall_teardown *)0x00434480;
-func_thiscall_teardown *DiploPopCtorTarget =
-    (func_thiscall_teardown *)0x0043EFF0;
-func_thiscall_teardown *DiploWinCtorTarget =
-    (func_thiscall_teardown *)0x00444FC0;
-func_thiscall_teardown *FameWinCtorTarget =
-    (func_thiscall_teardown *)0x0044B200;
-func_thiscall_teardown *FactionArtCtorTarget =
-    (func_thiscall_teardown *)0x00455F10;
-func_thiscall_teardown *InfoWinCtorTarget =
-    (func_thiscall_teardown *)0x00459500;
-func_thiscall_teardown *MainInterfaceCtorTarget =
-    (func_thiscall_teardown *)0x0045EF10;
-func_opaque_ctor_i *MapWinCtorTarget =
-    (func_opaque_ctor_i *)0x004626E0;
-func_thiscall_teardown *MessageWinCtorTarget =
-    (func_thiscall_teardown *)0x00472190;
-func_thiscall_teardown *MonuWinCtorTarget =
-    (func_thiscall_teardown *)0x00477C80;
-func_thiscall_teardown *MultiWinCtorTarget =
-    (func_thiscall_teardown *)0x0047A590;
-func_opaque_ctor_iii *NetMsgCtorTarget =
-    (func_opaque_ctor_iii *)0x0047ACF0;
-func_thiscall_teardown *NetWinCtorTarget =
-    (func_thiscall_teardown *)0x00481C50;
-func_thiscall_teardown *NewTechWinCtorTarget =
-    (func_thiscall_teardown *)0x004849D0;
-func_thiscall_teardown *PickWinCtorTarget =
-    (func_thiscall_teardown *)0x0048AC10;
-func_opaque_ctor_i *PlanWinCtorTarget =
-    (func_opaque_ctor_i *)0x0048BCD0;
-func_thiscall_teardown *PrefWinCtorTarget =
-    (func_thiscall_teardown *)0x004921E0;
-func_thiscall_teardown *QuayleWinCtorTarget =
-    (func_thiscall_teardown *)0x00496810;
-func_thiscall_teardown *ReportIfCtorTarget =
-    (func_thiscall_teardown *)0x004AD170;
-func_thiscall_teardown *ReportWinCtorTarget =
-    (func_thiscall_teardown *)0x004AD6B0;
-func_thiscall_teardown *SocialWinCtorTarget =
-    (func_thiscall_teardown *)0x004AE9E0;
-func_thiscall_teardown *StatusWinCtorTarget =
-    (func_thiscall_teardown *)0x004BA1A0;
-func_thiscall_teardown *TutWinCtorTarget =
-    (func_thiscall_teardown *)0x004BA6B0;
-func_thiscall_teardown *WorldWinCtorTarget =
-    (func_thiscall_teardown *)0x004C4BF0;
-func_thiscall_teardown *Midi_DeviceCtorTarget =
-    (func_thiscall_teardown *)0x004C5740;
-func_thiscall_teardown *Wave_In_DeviceCtorTarget =
-    (func_thiscall_teardown *)0x004C5940;
-func_opaque_ctor_i *ConsoleCtorTarget =
-    (func_opaque_ctor_i *)0x0050F460;
-func_thiscall_teardown *NetDaemonCtorTarget =
-    (func_thiscall_teardown *)0x005389F0;
-func_thiscall_teardown *FontQueueCtorTarget =
-    (func_thiscall_teardown *)0x00559290;
-func_thiscall_teardown *MultiDebugCtorTarget =
-    (func_thiscall_teardown *)0x005C97F0;
-func_thiscall_teardown *PaletteCtorTarget =
-    (func_thiscall_teardown *)0x005FE2A0;
+func_thiscall_teardown BaseWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00408490);
+func_thiscall_teardown BattleWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00422EE0);
+func_thiscall_teardown CouncWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00428620);
+func_thiscall_teardown DatalinkCtorTarget =
+    original_method<func_thiscall_teardown>(0x00428FC0);
+func_thiscall_teardown DesignWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00434480);
+func_thiscall_teardown DiploPopCtorTarget =
+    original_method<func_thiscall_teardown>(0x0043EFF0);
+func_thiscall_teardown DiploWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00444FC0);
+func_thiscall_teardown FameWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x0044B200);
+func_thiscall_teardown FactionArtCtorTarget =
+    original_method<func_thiscall_teardown>(0x00455F10);
+func_thiscall_teardown InfoWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00459500);
+func_thiscall_teardown MainInterfaceCtorTarget =
+    original_method<func_thiscall_teardown>(0x0045EF10);
+func_opaque_ctor_i MapWinCtorTarget =
+    original_method<func_opaque_ctor_i>(0x004626E0);
+func_thiscall_teardown MessageWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00472190);
+func_thiscall_teardown MonuWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00477C80);
+func_thiscall_teardown MultiWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x0047A590);
+func_opaque_ctor_iii NetMsgCtorTarget =
+    original_method<func_opaque_ctor_iii>(0x0047ACF0);
+func_thiscall_teardown NetWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00481C50);
+func_thiscall_teardown NewTechWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004849D0);
+func_thiscall_teardown PickWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x0048AC10);
+func_opaque_ctor_i PlanWinCtorTarget =
+    original_method<func_opaque_ctor_i>(0x0048BCD0);
+func_thiscall_teardown PrefWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004921E0);
+func_thiscall_teardown QuayleWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x00496810);
+func_thiscall_teardown ReportIfCtorTarget =
+    original_method<func_thiscall_teardown>(0x004AD170);
+func_thiscall_teardown ReportWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004AD6B0);
+func_thiscall_teardown SocialWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004AE9E0);
+func_thiscall_teardown StatusWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004BA1A0);
+func_thiscall_teardown TutWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004BA6B0);
+func_thiscall_teardown WorldWinCtorTarget =
+    original_method<func_thiscall_teardown>(0x004C4BF0);
+func_thiscall_teardown Midi_DeviceCtorTarget =
+    original_method<func_thiscall_teardown>(0x004C5740);
+func_thiscall_teardown Wave_In_DeviceCtorTarget =
+    original_method<func_thiscall_teardown>(0x004C5940);
+func_opaque_ctor_i ConsoleCtorTarget =
+    original_method<func_opaque_ctor_i>(0x0050F460);
+func_thiscall_teardown NetDaemonCtorTarget =
+    original_method<func_thiscall_teardown>(0x005389F0);
+func_thiscall_teardown FontQueueCtorTarget =
+    original_method<func_thiscall_teardown>(0x00559290);
+func_thiscall_teardown MultiDebugCtorTarget =
+    original_method<func_thiscall_teardown>(0x005C97F0);
+func_thiscall_teardown PaletteCtorTarget =
+    original_method<func_thiscall_teardown>(0x005FE2A0);
 
 Sprite *g_NEWTECHWIN_SPRITES = (Sprite *)0x00822610;
 Caviar *g_VEHDRAW_CAVIAR = (Caviar *)0x008CC828;
@@ -218,7 +219,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_alphamenu_wave() {
-    WaveInitCtor(g_ALPHAMENU_WAVE);
+    (ORIGINAL(g_ALPHAMENU_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00402F30));
 }
 
@@ -229,7 +230,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var02() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR02);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR02)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404460));
 }
 
@@ -240,7 +241,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var11() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR11);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR11)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404490));
 }
 
@@ -251,7 +252,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var06() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR06);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR06)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004044C0));
 }
 
@@ -262,7 +263,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var09() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR09);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR09)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004044F0));
 }
 
@@ -273,7 +274,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var21() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR21);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR21)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404520));
 }
 
@@ -284,7 +285,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var05() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR05);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR05)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404550));
 }
 
@@ -295,7 +296,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var08() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR08);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR08)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404580));
 }
 
@@ -306,7 +307,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var04() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR04);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR04)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004045B0));
 }
 
@@ -317,7 +318,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var01() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR01);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR01)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004045E0));
 }
 
@@ -328,7 +329,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var18() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR18);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR18)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404610));
 }
 
@@ -339,7 +340,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var03() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR03);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR03)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404640));
 }
 
@@ -350,7 +351,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var20() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR20);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR20)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404670));
 }
 
@@ -361,7 +362,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var16() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR16);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR16)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004046A0));
 }
 
@@ -372,7 +373,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var14() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR14);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR14)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004046D0));
 }
 
@@ -383,7 +384,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var22() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR22);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR22)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404700));
 }
 
@@ -394,7 +395,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var10() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR10);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR10)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404730));
 }
 
@@ -405,7 +406,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var15() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR15);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR15)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404760));
 }
 
@@ -416,7 +417,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var13() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR13);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR13)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404790));
 }
 
@@ -427,7 +428,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var17() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR17);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR17)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004047C0));
 }
 
@@ -438,7 +439,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var19() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR19);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR19)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004047F0));
 }
 
@@ -449,7 +450,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var12() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR12);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR12)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404820));
 }
 
@@ -460,7 +461,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var07() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR07);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR07)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404850));
 }
 
@@ -471,7 +472,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_basewin() {
-    BaseWinCtorTarget(reinterpret_cast<void *>(0x006A7628));
+    (ORIGINAL(reinterpret_cast<void *>(0x006A7628))->*BaseWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004083D0));
 }
 
@@ -482,7 +483,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_basewin_wave() {
-    WaveInitCtor(g_BASEWIN_WAVE);
+    (ORIGINAL(g_BASEWIN_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00408400));
 }
 
@@ -493,7 +494,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battlewin() {
-    BattleWinCtorTarget(reinterpret_cast<void *>(0x006EEED8));
+    (ORIGINAL(reinterpret_cast<void *>(0x006EEED8))->*BattleWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004219D0));
 }
 
@@ -504,7 +505,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_councwin() {
-    CouncWinCtorTarget(reinterpret_cast<void *>(0x006FEC80));
+    (ORIGINAL(reinterpret_cast<void *>(0x006FEC80))->*CouncWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004243C0));
 }
 
@@ -515,7 +516,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_credits_wave() {
-    WaveInitCtor(g_CREDITS_WAVE);
+    (ORIGINAL(g_CREDITS_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00428770));
 }
 
@@ -526,7 +527,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_datalink() {
-    DatalinkCtorTarget(reinterpret_cast<void *>(0x00703EA0));
+    (ORIGINAL(reinterpret_cast<void *>(0x00703EA0))->*DatalinkCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00428FB0));
 }
 
@@ -537,7 +538,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_designwin() {
-    DesignWinCtorTarget(reinterpret_cast<void *>(0x0071F2B0));
+    (ORIGINAL(reinterpret_cast<void *>(0x0071F2B0))->*DesignWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00432870));
 }
 
@@ -548,7 +549,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_designwin_wave() {
-    WaveInitCtor(g_DESIGNWIN_WAVE);
+    (ORIGINAL(g_DESIGNWIN_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004328A0));
 }
 
@@ -559,7 +560,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_diplopop() {
-    DiploPopCtorTarget(reinterpret_cast<void *>(0x00733990));
+    (ORIGINAL(reinterpret_cast<void *>(0x00733990))->*DiploPopCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0043EFE0));
 }
 
@@ -570,7 +571,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_diplowin() {
-    DiploWinCtorTarget(reinterpret_cast<void *>(0x0073ACD8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0073ACD8))->*DiploWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00440F20));
 }
 
@@ -592,7 +593,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_menu_up_wave() {
-    WaveInitCtor(g_MENU_UP_WAVE);
+    (ORIGINAL(g_MENU_UP_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004454C0));
 }
 
@@ -603,7 +604,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_menu_down_wave() {
-    WaveInitCtor(g_MENU_DOWN_WAVE);
+    (ORIGINAL(g_MENU_DOWN_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004454F0));
 }
 
@@ -614,7 +615,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scoot_wave() {
-    WaveInitCtor(g_SCOOT_WAVE);
+    (ORIGINAL(g_SCOOT_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445520));
 }
 
@@ -625,7 +626,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ok_wave() {
-    WaveInitCtor(g_OK_WAVE);
+    (ORIGINAL(g_OK_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445550));
 }
 
@@ -636,7 +637,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_passover_wave() {
-    WaveInitCtor(g_PASSOVER_WAVE);
+    (ORIGINAL(g_PASSOVER_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445580));
 }
 
@@ -647,7 +648,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fx() {
-    FXInitCtor(g_FX);
+    (ORIGINAL(g_FX)->*FXInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455B0));
 }
 
@@ -658,7 +659,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ambience() {
-    AmbienceInitCtor(g_AMBIENCE);
+    (ORIGINAL(g_AMBIENCE)->*AmbienceInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455E0));
 }
 
@@ -669,7 +670,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_famewin() {
-    FameWinCtorTarget(reinterpret_cast<void *>(0x0074DAF8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0074DAF8))->*FameWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004483F0));
 }
 
@@ -680,7 +681,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_pcx_parse_temp_buffer1() {
-    BufferInitCtor(g_PCX_PARSE_TEMP_BUFFER1);
+    (ORIGINAL(g_PCX_PARSE_TEMP_BUFFER1)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CC40));
 }
 
@@ -813,7 +814,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_left_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CFE0));
 }
 
@@ -824,7 +825,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_right_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D010));
 }
 
@@ -835,7 +836,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_left_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D040));
 }
 
@@ -846,7 +847,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_right_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D070));
 }
 
@@ -857,7 +858,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_mid_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_TOP_MID_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_TOP_MID_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D0A0));
 }
 
@@ -868,7 +869,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_mid_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_BOT_MID_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_BOT_MID_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D0D0));
 }
 
@@ -879,7 +880,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_mid_left_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_MID_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_MID_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D100));
 }
 
@@ -890,7 +891,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_mid_right_sprite() {
-    SpriteInitCtor(g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D130));
 }
 
@@ -901,7 +902,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_middle_buffer() {
-    BufferInitCtor(g_IFACE_STD_POPUPS_MIDDLE_BUFFER);
+    (ORIGINAL(g_IFACE_STD_POPUPS_MIDDLE_BUFFER)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D160));
 }
 
@@ -912,7 +913,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_caviardata_var1() {
-    CaviarDataInitCtor(g_UNUSED_CAVIARDATA_VAR1);
+    (ORIGINAL(g_UNUSED_CAVIARDATA_VAR1)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D190));
 }
 
@@ -923,7 +924,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ssf_caviardata() {
-    CaviarDataInitCtor(g_SSF_CAVIARDATA);
+    (ORIGINAL(g_SSF_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D1C0));
 }
 
@@ -934,7 +935,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sdp_caviardata() {
-    CaviarDataInitCtor(g_SDP_CAVIARDATA);
+    (ORIGINAL(g_SDP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D1F0));
 }
 
@@ -945,7 +946,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sas_caviardata() {
-    CaviarDataInitCtor(g_SAS_CAVIARDATA);
+    (ORIGINAL(g_SAS_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D220));
 }
 
@@ -956,7 +957,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scd_caviardata() {
-    CaviarDataInitCtor(g_SCD_CAVIARDATA);
+    (ORIGINAL(g_SCD_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D250));
 }
 
@@ -967,7 +968,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scj_caviardata() {
-    CaviarDataInitCtor(g_SCJ_CAVIARDATA);
+    (ORIGINAL(g_SCJ_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D280));
 }
 
@@ -978,7 +979,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sags_caviardata() {
-    CaviarDataInitCtor(g_SAGS_CAVIARDATA);
+    (ORIGINAL(g_SAGS_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D2B0));
 }
 
@@ -989,7 +990,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sft_caviardata() {
-    CaviarDataInitCtor(g_SFT_CAVIARDATA);
+    (ORIGINAL(g_SFT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D2E0));
 }
 
@@ -1000,7 +1001,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhr_caviardata1() {
-    CaviarDataInitCtor(g_VHR_CAVIARDATA1);
+    (ORIGINAL(g_VHR_CAVIARDATA1)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D310));
 }
 
@@ -1011,7 +1012,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sht_caviardata() {
-    CaviarDataInitCtor(g_SHT_CAVIARDATA);
+    (ORIGINAL(g_SHT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D340));
 }
 
@@ -1022,7 +1023,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_srb_caviardata() {
-    CaviarDataInitCtor(g_SRB_CAVIARDATA);
+    (ORIGINAL(g_SRB_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D370));
 }
 
@@ -1033,7 +1034,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_asas_caviardata() {
-    CaviarDataInitCtor(g_ASAS_CAVIARDATA);
+    (ORIGINAL(g_ASAS_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D3A0));
 }
 
@@ -1044,7 +1045,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_reslaser_caviardata() {
-    CaviarDataInitCtor(g_RESLASER_CAVIARDATA);
+    (ORIGINAL(g_RESLASER_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D3D0));
 }
 
@@ -1055,7 +1056,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_resbolt_caviardata() {
-    CaviarDataInitCtor(g_RESBOLT_CAVIARDATA);
+    (ORIGINAL(g_RESBOLT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D400));
 }
 
@@ -1066,7 +1067,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_funload_caviardata() {
-    CaviarDataInitCtor(g_FUNLOAD_CAVIARDATA);
+    (ORIGINAL(g_FUNLOAD_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D430));
 }
 
@@ -1077,7 +1078,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_tecload_caviardata() {
-    CaviarDataInitCtor(g_TECLOAD_CAVIARDATA);
+    (ORIGINAL(g_TECLOAD_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D460));
 }
 
@@ -1088,7 +1089,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_disswave_caviardata() {
-    CaviarDataInitCtor(g_SP_DISSWAVE_CAVIARDATA);
+    (ORIGINAL(g_SP_DISSWAVE_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D490));
 }
 
@@ -1099,7 +1100,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_marined_caviardata() {
-    CaviarDataInitCtor(g_SP_MARINED_CAVIARDATA);
+    (ORIGINAL(g_SP_MARINED_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D4C0));
 }
 
@@ -1110,7 +1111,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_nanoo_caviardata() {
-    CaviarDataInitCtor(g_SP_NANOO_CAVIARDATA);
+    (ORIGINAL(g_SP_NANOO_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D4F0));
 }
 
@@ -1121,7 +1122,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_soporific_caviardata() {
-    CaviarDataInitCtor(g_SP_SOPORIFIC_CAVIARDATA);
+    (ORIGINAL(g_SP_SOPORIFIC_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D520));
 }
 
@@ -1132,7 +1133,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_aa01_caviardata() {
-    CaviarDataInitCtor(g_AA01_CAVIARDATA);
+    (ORIGINAL(g_AA01_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D550));
 }
 
@@ -1143,7 +1144,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_aa_rover_caviardata() {
-    CaviarDataInitCtor(g_AA_ROVER_CAVIARDATA);
+    (ORIGINAL(g_AA_ROVER_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D580));
 }
 
@@ -1176,7 +1177,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ax_caviardata() {
-    CaviarDataInitCtor(g_AX_CAVIARDATA);
+    (ORIGINAL(g_AX_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D650));
 }
 
@@ -1187,7 +1188,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_aa_caviardata() {
-    CaviarDataInitCtor(g_AA_CAVIARDATA);
+    (ORIGINAL(g_AA_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D680));
 }
 
@@ -1198,7 +1199,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_acolpod_caviardata() {
-    CaviarDataInitCtor(g_ACOLPOD_CAVIARDATA);
+    (ORIGINAL(g_ACOLPOD_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D6B0));
 }
 
@@ -1209,7 +1210,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_at_caviardata() {
-    CaviarDataInitCtor(g_AT_CAVIARDATA);
+    (ORIGINAL(g_AT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D6E0));
 }
 
@@ -1220,7 +1221,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vta_caviardata() {
-    CaviarDataInitCtor(g_VTA_CAVIARDATA);
+    (ORIGINAL(g_VTA_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D710));
 }
 
@@ -1231,7 +1232,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_atp_caviardata() {
-    CaviarDataInitCtor(g_ATP_CAVIARDATA);
+    (ORIGINAL(g_ATP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D740));
 }
 
@@ -1242,7 +1243,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ssfa_caviardata() {
-    CaviarDataInitCtor(g_SSFA_CAVIARDATA);
+    (ORIGINAL(g_SSFA_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D770));
 }
 
@@ -1253,7 +1254,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sfta_caviardata() {
-    CaviarDataInitCtor(g_SFTA_CAVIARDATA);
+    (ORIGINAL(g_SFTA_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D7A0));
 }
 
@@ -1264,7 +1265,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vw00_caviardata() {
-    CaviarDataInitCtor(g_VW00_CAVIARDATA);
+    (ORIGINAL(g_VW00_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D7D0));
 }
 
@@ -1275,7 +1276,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_viptawl_caviardata() {
-    CaviarDataInitCtor(g_VIPTAWL_CAVIARDATA);
+    (ORIGINAL(g_VIPTAWL_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D800));
 }
 
@@ -1286,7 +1287,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_viptasgn_caviardata() {
-    CaviarDataInitCtor(g_VIPTASGN_CAVIARDATA);
+    (ORIGINAL(g_VIPTASGN_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D830));
 }
 
@@ -1297,7 +1298,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_viptapsi_caviardata() {
-    CaviarDataInitCtor(g_VIPTAPSI_CAVIARDATA);
+    (ORIGINAL(g_VIPTAPSI_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D860));
 }
 
@@ -1330,7 +1331,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ptmod_caviardata() {
-    CaviarDataInitCtor(g_PTMOD_CAVIARDATA);
+    (ORIGINAL(g_PTMOD_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D930));
 }
 
@@ -1341,7 +1342,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vb_caviardata() {
-    CaviarDataInitCtor(g_VB_CAVIARDATA);
+    (ORIGINAL(g_VB_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D960));
 }
 
@@ -1352,7 +1353,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vbp_caviardata() {
-    CaviarDataInitCtor(g_VBP_CAVIARDATA);
+    (ORIGINAL(g_VBP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D990));
 }
 
@@ -1363,7 +1364,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmc_caviardata() {
-    CaviarDataInitCtor(g_VGMC_CAVIARDATA);
+    (ORIGINAL(g_VGMC_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D9C0));
 }
 
@@ -1374,7 +1375,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmcp_caviardata() {
-    CaviarDataInitCtor(g_VGMCP_CAVIARDATA);
+    (ORIGINAL(g_VGMCP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D9F0));
 }
 
@@ -1385,7 +1386,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vlights_caviardata() {
-    CaviarDataInitCtor(g_VLIGHTS_CAVIARDATA);
+    (ORIGINAL(g_VLIGHTS_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DA20));
 }
 
@@ -1396,7 +1397,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vpt_caviardata() {
-    CaviarDataInitCtor(g_VPT_CAVIARDATA);
+    (ORIGINAL(g_VPT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DA50));
 }
 
@@ -1407,7 +1408,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_a_caviardata() {
-    CaviarDataInitCtor(g_A_CAVIARDATA);
+    (ORIGINAL(g_A_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DA80));
 }
 
@@ -1418,7 +1419,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_apwall_caviardata() {
-    CaviarDataInitCtor(g_APWALL_CAVIARDATA);
+    (ORIGINAL(g_APWALL_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DAB0));
 }
 
@@ -1429,7 +1430,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_asgen_caviardata() {
-    CaviarDataInitCtor(g_ASGEN_CAVIARDATA);
+    (ORIGINAL(g_ASGEN_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DAE0));
 }
 
@@ -1440,7 +1441,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_apsid_caviardata() {
-    CaviarDataInitCtor(g_APSID_CAVIARDATA);
+    (ORIGINAL(g_APSID_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DB10));
 }
 
@@ -1451,7 +1452,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_va01_caviardata() {
-    CaviarDataInitCtor(g_VA01_CAVIARDATA);
+    (ORIGINAL(g_VA01_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DB40));
 }
 
@@ -1473,7 +1474,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhr_caviardata2() {
-    CaviarDataInitCtor(g_VHR_CAVIARDATA2);
+    (ORIGINAL(g_VHR_CAVIARDATA2)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DBC0));
 }
 
@@ -1495,7 +1496,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vi_caviardata() {
-    CaviarDataInitCtor(g_VI_CAVIARDATA);
+    (ORIGINAL(g_VI_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DC40));
 }
 
@@ -1506,7 +1507,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmt_caviardata() {
-    CaviarDataInitCtor(g_VGMT_CAVIARDATA);
+    (ORIGINAL(g_VGMT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DC70));
 }
 
@@ -1517,7 +1518,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmtp_caviardata() {
-    CaviarDataInitCtor(g_VGMTP_CAVIARDATA);
+    (ORIGINAL(g_VGMTP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DCA0));
 }
 
@@ -1528,7 +1529,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_caviardata_var2() {
-    CaviarDataInitCtor(g_UNUSED_CAVIARDATA_VAR2);
+    (ORIGINAL(g_UNUSED_CAVIARDATA_VAR2)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DCD0));
 }
 
@@ -1539,7 +1540,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwntu_caviardata() {
-    CaviarDataInitCtor(g_VWNTU_CAVIARDATA);
+    (ORIGINAL(g_VWNTU_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD00));
 }
 
@@ -1550,7 +1551,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vt_caviardata() {
-    CaviarDataInitCtor(g_VT_CAVIARDATA);
+    (ORIGINAL(g_VT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD30));
 }
 
@@ -1561,7 +1562,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_drop_caviardata() {
-    CaviarDataInitCtor(g_DROP_CAVIARDATA);
+    (ORIGINAL(g_DROP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD60));
 }
 
@@ -1572,7 +1573,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_droplet_caviardata() {
-    CaviarDataInitCtor(g_DROPLET_CAVIARDATA);
+    (ORIGINAL(g_DROPLET_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD90));
 }
 
@@ -1583,7 +1584,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcl_caviardata() {
-    CaviarDataInitCtor(g_VCL_CAVIARDATA);
+    (ORIGINAL(g_VCL_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DDC0));
 }
 
@@ -1605,7 +1606,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vclt00_caviardata() {
-    CaviarDataInitCtor(g_VCLT00_CAVIARDATA);
+    (ORIGINAL(g_VCLT00_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DE40));
 }
 
@@ -1616,7 +1617,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vht_vbp_caviardata() {
-    CaviarDataInitCtor(g_VHT_VBP_CAVIARDATA);
+    (ORIGINAL(g_VHT_VBP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DE70));
 }
 
@@ -1627,7 +1628,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhtp_caviardata() {
-    CaviarDataInitCtor(g_VHTP_CAVIARDATA);
+    (ORIGINAL(g_VHTP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DEA0));
 }
 
@@ -1649,7 +1650,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhttp_caviardata() {
-    CaviarDataInitCtor(g_VHTTP_CAVIARDATA);
+    (ORIGINAL(g_VHTTP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DF20));
 }
 
@@ -1671,7 +1672,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vsp_caviardata() {
-    CaviarDataInitCtor(g_VSP_CAVIARDATA);
+    (ORIGINAL(g_VSP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DFA0));
 }
 
@@ -1693,7 +1694,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vsptf_caviardata() {
-    CaviarDataInitCtor(g_VSPTF_CAVIARDATA);
+    (ORIGINAL(g_VSPTF_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E020));
 }
 
@@ -1704,7 +1705,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vsptb_caviardata() {
-    CaviarDataInitCtor(g_VSPTB_CAVIARDATA);
+    (ORIGINAL(g_VSPTB_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E050));
 }
 
@@ -1715,7 +1716,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vfl_caviardata() {
-    CaviarDataInitCtor(g_VFL_CAVIARDATA);
+    (ORIGINAL(g_VFL_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E080));
 }
 
@@ -1726,7 +1727,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgs_caviardata() {
-    CaviarDataInitCtor(g_VGS_CAVIARDATA);
+    (ORIGINAL(g_VGS_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E0B0));
 }
 
@@ -1737,7 +1738,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgsp_caviardata() {
-    CaviarDataInitCtor(g_VGSP_CAVIARDATA);
+    (ORIGINAL(g_VGSP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E0E0));
 }
 
@@ -1748,7 +1749,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vjtp_caviardata() {
-    CaviarDataInitCtor(g_VJTP_CAVIARDATA);
+    (ORIGINAL(g_VJTP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E110));
 }
 
@@ -1770,7 +1771,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcu_caviardata() {
-    CaviarDataInitCtor(g_VCU_CAVIARDATA);
+    (ORIGINAL(g_VCU_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E190));
 }
 
@@ -1781,7 +1782,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcup_caviardata() {
-    CaviarDataInitCtor(g_VCUP_CAVIARDATA);
+    (ORIGINAL(g_VCUP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E1C0));
 }
 
@@ -1803,7 +1804,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcuw_caviardata() {
-    CaviarDataInitCtor(g_VCUW_CAVIARDATA);
+    (ORIGINAL(g_VCUW_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E240));
 }
 
@@ -1814,7 +1815,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vct_caviardata() {
-    CaviarDataInitCtor(g_VCT_CAVIARDATA);
+    (ORIGINAL(g_VCT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E270));
 }
 
@@ -1825,7 +1826,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vctp_caviardata() {
-    CaviarDataInitCtor(g_VCTP_CAVIARDATA);
+    (ORIGINAL(g_VCTP_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E2A0));
 }
 
@@ -1836,7 +1837,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vctb_caviardata() {
-    CaviarDataInitCtor(g_VCTB_CAVIARDATA);
+    (ORIGINAL(g_VCTB_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E2D0));
 }
 
@@ -1858,7 +1859,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwntt_caviardata() {
-    CaviarDataInitCtor(g_VWNTT_CAVIARDATA);
+    (ORIGINAL(g_VWNTT_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E350));
 }
 
@@ -1869,7 +1870,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwnst_caviardata() {
-    CaviarDataInitCtor(g_VWNST_CAVIARDATA);
+    (ORIGINAL(g_VWNST_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E380));
 }
 
@@ -1880,7 +1881,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwnaa_caviardata() {
-    CaviarDataInitCtor(g_VWNAA_CAVIARDATA);
+    (ORIGINAL(g_VWNAA_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E3B0));
 }
 
@@ -1902,7 +1903,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vm_caviardata() {
-    CaviarDataInitCtor(g_VM_CAVIARDATA);
+    (ORIGINAL(g_VM_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E430));
 }
 
@@ -1913,7 +1914,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vm13_caviardata() {
-    CaviarDataInitCtor(g_VM13_CAVIARDATA);
+    (ORIGINAL(g_VM13_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E460));
 }
 
@@ -1946,7 +1947,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_nw_caviardata() {
-    CaviarDataInitCtor(g_NW_CAVIARDATA);
+    (ORIGINAL(g_NW_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E530));
 }
 
@@ -1957,7 +1958,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ni_caviardata() {
-    CaviarDataInitCtor(g_NI_CAVIARDATA);
+    (ORIGINAL(g_NI_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E560));
 }
 
@@ -1968,7 +1969,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_nlc_caviardata() {
-    CaviarDataInitCtor(g_NLC_CAVIARDATA);
+    (ORIGINAL(g_NLC_CAVIARDATA)->*CaviarDataInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E590));
 }
 
@@ -1990,7 +1991,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radius1_texture() {
-    TextureInitCtor(g_RADIUS1_TEXTURE);
+    (ORIGINAL(g_RADIUS1_TEXTURE)->*TextureInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E610));
 }
 
@@ -2001,7 +2002,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radius2_texture() {
-    TextureInitCtor(g_RADIUS2_TEXTURE);
+    (ORIGINAL(g_RADIUS2_TEXTURE)->*TextureInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E640));
 }
 
@@ -2034,7 +2035,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_flat_arid_land_texture() {
-    TextureInitCtor(g_FLAT_ARID_LAND_TEXTURE);
+    (ORIGINAL(g_FLAT_ARID_LAND_TEXTURE)->*TextureInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E710));
 }
 
@@ -2078,7 +2079,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_dune_land_texture() {
-    TextureInitCtor(g_DUNE_LAND_TEXTURE);
+    (ORIGINAL(g_DUNE_LAND_TEXTURE)->*TextureInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E830));
 }
 
@@ -2199,7 +2200,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_rainfall_single_tile_texture() {
-    TextureInitCtor(g_RAINFALL_SINGLE_TILE_TEXTURE);
+    (ORIGINAL(g_RAINFALL_SINGLE_TILE_TEXTURE)->*TextureInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EB80));
 }
 
@@ -2243,7 +2244,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_mine_sprite() {
-    SpriteInitCtor(g_TER1_MINE_SPRITE);
+    (ORIGINAL(g_TER1_MINE_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ECA0));
 }
 
@@ -2254,7 +2255,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_solar_collector_sprite() {
-    SpriteInitCtor(g_TER1_SOLAR_COLLECTOR_SPRITE);
+    (ORIGINAL(g_TER1_SOLAR_COLLECTOR_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ECD0));
 }
 
@@ -2265,7 +2266,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_tidal_harness_sprite() {
-    SpriteInitCtor(g_TER1_TIDAL_HARNESS_SPRITE);
+    (ORIGINAL(g_TER1_TIDAL_HARNESS_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED00));
 }
 
@@ -2276,7 +2277,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_mining_platform_sprite() {
-    SpriteInitCtor(g_TER1_MINING_PLATFORM_SPRITE);
+    (ORIGINAL(g_TER1_MINING_PLATFORM_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED30));
 }
 
@@ -2287,7 +2288,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_tut_blank_sprite() {
-    SpriteInitCtor(g_TER1_TUT_BLANK_SPRITE);
+    (ORIGINAL(g_TER1_TUT_BLANK_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED60));
 }
 
@@ -2298,7 +2299,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_kelp_farm_sprite() {
-    SpriteInitCtor(g_TER1_KELP_FARM_SPRITE);
+    (ORIGINAL(g_TER1_KELP_FARM_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED90));
 }
 
@@ -2309,7 +2310,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_condenser_sprite() {
-    SpriteInitCtor(g_TER1_CONDENSER_SPRITE);
+    (ORIGINAL(g_TER1_CONDENSER_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EDC0));
 }
 
@@ -2320,7 +2321,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_echelon_mirror_sprite() {
-    SpriteInitCtor(g_TER1_ECHELON_MIRROR_SPRITE);
+    (ORIGINAL(g_TER1_ECHELON_MIRROR_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EDF0));
 }
 
@@ -2331,7 +2332,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_borehole_sprite() {
-    SpriteInitCtor(g_TER1_BOREHOLE_SPRITE);
+    (ORIGINAL(g_TER1_BOREHOLE_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EE20));
 }
 
@@ -2342,7 +2343,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_borehole_cluster_sprite() {
-    SpriteInitCtor(g_TER1_BOREHOLE_CLUSTER_SPRITE);
+    (ORIGINAL(g_TER1_BOREHOLE_CLUSTER_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EE50));
 }
 
@@ -2474,7 +2475,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_monolith_sprite() {
-    SpriteInitCtor(g_TER1_MONOLITH_SPRITE);
+    (ORIGINAL(g_TER1_MONOLITH_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F1F0));
 }
 
@@ -2485,7 +2486,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_bunker_sprite() {
-    SpriteInitCtor(g_TER1_BUNKER_SPRITE);
+    (ORIGINAL(g_TER1_BUNKER_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F220));
 }
 
@@ -2496,7 +2497,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_airbase_sprite() {
-    SpriteInitCtor(g_TER1_AIRBASE_SPRITE);
+    (ORIGINAL(g_TER1_AIRBASE_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F250));
 }
 
@@ -2507,7 +2508,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_sensor_array_sprite() {
-    SpriteInitCtor(g_TER1_SENSOR_ARRAY_SPRITE);
+    (ORIGINAL(g_TER1_SENSOR_ARRAY_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F280));
 }
 
@@ -2661,7 +2662,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_red_alien_head_icon_sprite() {
-    SpriteInitCtor(g_RED_ALIEN_HEAD_ICON_SPRITE);
+    (ORIGINAL(g_RED_ALIEN_HEAD_ICON_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F6C0));
 }
 
@@ -2694,7 +2695,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_red_male_head_icon_sprite() {
-    SpriteInitCtor(g_RED_MALE_HEAD_ICON_SPRITE);
+    (ORIGINAL(g_RED_MALE_HEAD_ICON_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F790));
 }
 
@@ -2705,7 +2706,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_null_resource_icon_sprite() {
-    SpriteInitCtor(g_NULL_RESOURCE_ICON_SPRITE);
+    (ORIGINAL(g_NULL_RESOURCE_ICON_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F7C0));
 }
 
@@ -2727,7 +2728,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_icon_tile_square_sprite() {
-    SpriteInitCtor(g_ICON_TILE_SQUARE_SPRITE);
+    (ORIGINAL(g_ICON_TILE_SQUARE_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F840));
 }
 
@@ -2760,7 +2761,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_mind_worm_sprite() {
-    SpriteInitCtor(g_BATTLE_MIND_WORM_SPRITE);
+    (ORIGINAL(g_BATTLE_MIND_WORM_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F910));
 }
 
@@ -2771,7 +2772,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_isle_deep_sprite() {
-    SpriteInitCtor(g_BATTLE_ISLE_DEEP_SPRITE);
+    (ORIGINAL(g_BATTLE_ISLE_DEEP_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F940));
 }
 
@@ -2782,7 +2783,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_locusts_chiron_sprite() {
-    SpriteInitCtor(g_BATTLE_LOCUSTS_CHIRON_SPRITE);
+    (ORIGINAL(g_BATTLE_LOCUSTS_CHIRON_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F970));
 }
 
@@ -2793,7 +2794,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_fungal_tower_sprite() {
-    SpriteInitCtor(g_BATTLE_FUNGAL_TOWER_SPRITE);
+    (ORIGINAL(g_BATTLE_FUNGAL_TOWER_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F9A0));
 }
 
@@ -2804,7 +2805,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_spore_launcher_sprite() {
-    SpriteInitCtor(g_BATTLE_SPORE_LAUNCHER_SPRITE);
+    (ORIGINAL(g_BATTLE_SPORE_LAUNCHER_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F9D0));
 }
 
@@ -2815,7 +2816,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_sealurk_sprite() {
-    SpriteInitCtor(g_BATTLE_SEALURK_SPRITE);
+    (ORIGINAL(g_BATTLE_SEALURK_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FA00));
 }
 
@@ -2892,7 +2893,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scroll_bar_filler_icon_sprites() {
-    SpriteInitCtor(g_SCROLL_BAR_FILLER_ICON_SPRITES);
+    (ORIGINAL(g_SCROLL_BAR_FILLER_ICON_SPRITES)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FC10));
 }
 
@@ -2903,7 +2904,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scroll_bar_small_filler_icon_sprite() {
-    SpriteInitCtor(g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE);
+    (ORIGINAL(g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FC40));
 }
 
@@ -2936,7 +2937,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_left_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FD10));
 }
 
@@ -2947,7 +2948,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_right_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FD40));
 }
 
@@ -2958,7 +2959,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_left_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FD70));
 }
 
@@ -2969,7 +2970,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_right_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FDA0));
 }
 
@@ -2980,7 +2981,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_mid_left_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FDD0));
 }
 
@@ -2991,7 +2992,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_mid_right_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE00));
 }
 
@@ -3002,7 +3003,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_mid_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE30));
 }
 
@@ -3013,7 +3014,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_mid_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE60));
 }
 
@@ -3024,7 +3025,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_mid_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE90));
 }
 
@@ -3035,7 +3036,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_left_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FEC0));
 }
 
@@ -3046,7 +3047,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_right_sprite() {
-    SpriteInitCtor(g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE);
+    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FEF0));
 }
 
@@ -3057,7 +3058,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var23() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR23);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR23)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FF20));
 }
 
@@ -3068,7 +3069,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var24() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR24);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR24)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FF50));
 }
 
@@ -3079,7 +3080,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var25() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR25);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR25)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FF80));
 }
 
@@ -3090,7 +3091,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var26() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR26);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR26)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FFB0));
 }
 
@@ -3101,7 +3102,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var27() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR27);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR27)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FFE0));
 }
 
@@ -3112,7 +3113,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var28() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR28);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR28)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450010));
 }
 
@@ -3123,7 +3124,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var29() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR29);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR29)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450040));
 }
 
@@ -3134,7 +3135,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var30() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR30);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR30)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450070));
 }
 
@@ -3145,7 +3146,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var31() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR31);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR31)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004500A0));
 }
 
@@ -3156,7 +3157,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var32() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR32);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR32)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004500D0));
 }
 
@@ -3167,7 +3168,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var33() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR33);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR33)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450100));
 }
 
@@ -3178,7 +3179,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var34() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR34);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR34)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450130));
 }
 
@@ -3189,7 +3190,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var35() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR35);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR35)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450160));
 }
 
@@ -3200,7 +3201,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var36() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR36);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR36)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450190));
 }
 
@@ -3211,7 +3212,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var37() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR37);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR37)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004501C0));
 }
 
@@ -3222,7 +3223,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var38() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR38);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR38)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004501F0));
 }
 
@@ -3233,7 +3234,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var39() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR39);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR39)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450220));
 }
 
@@ -3244,7 +3245,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var40() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR40);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR40)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450250));
 }
 
@@ -3255,7 +3256,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var41() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR41);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR41)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450280));
 }
 
@@ -3266,7 +3267,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var42() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR42);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR42)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004502B0));
 }
 
@@ -3277,7 +3278,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var43() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR43);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR43)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004502E0));
 }
 
@@ -3288,7 +3289,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var44() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR44);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR44)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450310));
 }
 
@@ -3299,7 +3300,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var45() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR45);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR45)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450340));
 }
 
@@ -3310,7 +3311,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var46() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR46);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR46)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450370));
 }
 
@@ -3332,7 +3333,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var47() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR47);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR47)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004503F0));
 }
 
@@ -3343,7 +3344,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var48() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR48);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR48)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450420));
 }
 
@@ -3354,7 +3355,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var49() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR49);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR49)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450450));
 }
 
@@ -3365,7 +3366,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var50() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR50);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR50)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450480));
 }
 
@@ -3376,7 +3377,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var51() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR51);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR51)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004504B0));
 }
 
@@ -3387,7 +3388,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var52() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR52);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR52)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004504E0));
 }
 
@@ -3398,7 +3399,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var53() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR53);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR53)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450510));
 }
 
@@ -3409,7 +3410,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var54() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR54);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR54)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450540));
 }
 
@@ -3420,7 +3421,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var55() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR55);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR55)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450570));
 }
 
@@ -3431,7 +3432,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var56() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR56);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR56)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004505A0));
 }
 
@@ -3442,7 +3443,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var57() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR57);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR57)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004505D0));
 }
 
@@ -3453,7 +3454,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var58() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR58);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR58)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450600));
 }
 
@@ -3464,7 +3465,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var59() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR59);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR59)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450630));
 }
 
@@ -3475,7 +3476,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var60() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR60);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR60)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450660));
 }
 
@@ -3486,7 +3487,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var61() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR61);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR61)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450690));
 }
 
@@ -3497,7 +3498,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var62() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR62);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR62)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004506C0));
 }
 
@@ -3508,7 +3509,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var63() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR63);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR63)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004506F0));
 }
 
@@ -3519,7 +3520,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var64() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR64);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR64)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450720));
 }
 
@@ -3530,7 +3531,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var65() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR65);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR65)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450750));
 }
 
@@ -3541,7 +3542,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var66() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR66);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR66)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450780));
 }
 
@@ -3552,7 +3553,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var67() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR67);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR67)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004507B0));
 }
 
@@ -3563,7 +3564,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var68() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR68);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR68)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004507E0));
 }
 
@@ -3574,7 +3575,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var69() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR69);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR69)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450810));
 }
 
@@ -3585,7 +3586,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var70() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR70);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR70)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450840));
 }
 
@@ -3596,7 +3597,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var71() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR71);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR71)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450870));
 }
 
@@ -3607,7 +3608,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var72() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR72);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR72)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004508A0));
 }
 
@@ -3618,7 +3619,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var73() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR73);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR73)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004508D0));
 }
 
@@ -3629,7 +3630,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var74() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR74);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR74)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450900));
 }
 
@@ -3739,7 +3740,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var75() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR75);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR75)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C00));
 }
 
@@ -3750,7 +3751,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var76() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR76);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR76)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C30));
 }
 
@@ -3761,7 +3762,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var77() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR77);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR77)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C60));
 }
 
@@ -3772,7 +3773,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var78() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR78);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR78)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C90));
 }
 
@@ -3783,7 +3784,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var79() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR79);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR79)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450CC0));
 }
 
@@ -3794,7 +3795,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var80() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR80);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR80)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450CF0));
 }
 
@@ -3805,7 +3806,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var81() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR81);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR81)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450D20));
 }
 
@@ -3816,7 +3817,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var82() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR82);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR82)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450D50));
 }
 
@@ -3827,7 +3828,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var83() {
-    SpriteInitCtor(g_UNUSED_SPRITE_VAR83);
+    (ORIGINAL(g_UNUSED_SPRITE_VAR83)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450D80));
 }
 
@@ -3849,7 +3850,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_infowin() {
-    InfoWinCtorTarget(reinterpret_cast<void *>(0x007AD2A0));
+    (ORIGINAL(reinterpret_cast<void *>(0x007AD2A0))->*InfoWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004562E0));
 }
 
@@ -3860,7 +3861,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_maininterface() {
-    MainInterfaceCtorTarget(reinterpret_cast<void *>(0x007AE820));
+    (ORIGINAL(reinterpret_cast<void *>(0x007AE820))->*MainInterfaceCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00459580));
 }
 
@@ -3871,7 +3872,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_maininterface_wave() {
-    WaveInitCtor(g_MAININTERFACE_WAVE);
+    (ORIGINAL(g_MAININTERFACE_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004595B0));
 }
 
@@ -3882,7 +3883,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_jackal_font() {
-    FontInitCtor(g_JACKAL_FONT);
+    (ORIGINAL(g_JACKAL_FONT)->*FontInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0045F940));
 }
 
@@ -3893,7 +3894,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_mapwin() {
-    MapWinCtorTarget(reinterpret_cast<void *>(0x007D4060), 1);
+    (ORIGINAL(reinterpret_cast<void *>(0x007D4060))->*MapWinCtorTarget)(1);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004620A0));
 }
 
@@ -3904,7 +3905,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_messagewin() {
-    MessageWinCtorTarget(reinterpret_cast<void *>(0x007F67F8));
+    (ORIGINAL(reinterpret_cast<void *>(0x007F67F8))->*MessageWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00471340));
 }
 
@@ -3926,7 +3927,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_monuwin() {
-    MonuWinCtorTarget(reinterpret_cast<void *>(0x007F9F58));
+    (ORIGINAL(reinterpret_cast<void *>(0x007F9F58))->*MonuWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00472220));
 }
 
@@ -3937,7 +3938,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_multiwin() {
-    MultiWinCtorTarget(reinterpret_cast<void *>(0x007FD648));
+    (ORIGINAL(reinterpret_cast<void *>(0x007FD648))->*MultiWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00477E30));
 }
 
@@ -3948,7 +3949,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_multiwin_wave() {
-    WaveInitCtor(g_MULTIWIN_WAVE);
+    (ORIGINAL(g_MULTIWIN_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00477E60));
 }
 
@@ -3959,7 +3960,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netmsg1() {
-    NetMsgCtorTarget(reinterpret_cast<void *>(0x00805338), 4096, 8, 0);
+    (ORIGINAL(reinterpret_cast<void *>(0x00805338))->*NetMsgCtorTarget)(4096, 8, 0);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
 }
 
@@ -3970,7 +3971,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netmsg2() {
-    NetMsgCtorTarget(reinterpret_cast<void *>(0x007FFF80), -5, 40, 1);
+    (ORIGINAL(reinterpret_cast<void *>(0x007FFF80))->*NetMsgCtorTarget)(-5, 40, 1);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
 }
 
@@ -3981,7 +3982,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netwin() {
-    NetWinCtorTarget(reinterpret_cast<void *>(0x0080A6F8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0080A6F8))->*NetWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047B010));
 }
 
@@ -3992,7 +3993,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_newtechwin() {
-    NewTechWinCtorTarget(reinterpret_cast<void *>(0x00811E40));
+    (ORIGINAL(reinterpret_cast<void *>(0x00811E40))->*NewTechWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00483870));
 }
 
@@ -4014,7 +4015,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_pickwin() {
-    PickWinCtorTarget(reinterpret_cast<void *>(0x00822718));
+    (ORIGINAL(reinterpret_cast<void *>(0x00822718))->*PickWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00488770));
 }
 
@@ -4025,7 +4026,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_planwin() {
-    PlanWinCtorTarget(reinterpret_cast<void *>(0x00834D70), 1);
+    (ORIGINAL(reinterpret_cast<void *>(0x00834D70))->*PlanWinCtorTarget)(1);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048AE20));
 }
 
@@ -4036,7 +4037,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_prefwin() {
-    PrefWinCtorTarget(reinterpret_cast<void *>(0x008578D8));
+    (ORIGINAL(reinterpret_cast<void *>(0x008578D8))->*PrefWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048D510));
 }
 
@@ -4047,7 +4048,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_prefwin_buttongroup() {
-    ButtonGroupInitCtor(g_PREFWIN_BUTTONGROUP);
+    (ORIGINAL(g_PREFWIN_BUTTONGROUP)->*ButtonGroupInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048D540));
 }
 
@@ -4058,7 +4059,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_quaylewin() {
-    QuayleWinCtorTarget(reinterpret_cast<void *>(0x00872CB0));
+    (ORIGINAL(reinterpret_cast<void *>(0x00872CB0))->*QuayleWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00495190));
 }
 
@@ -4069,7 +4070,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_reportif() {
-    ReportIfCtorTarget(reinterpret_cast<void *>(0x00885F38));
+    (ORIGINAL(reinterpret_cast<void *>(0x00885F38))->*ReportIfCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00496920));
 }
 
@@ -4080,7 +4081,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_reportwin() {
-    ReportWinCtorTarget(reinterpret_cast<void *>(0x00876478));
+    (ORIGINAL(reinterpret_cast<void *>(0x00876478))->*ReportWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00496950));
 }
 
@@ -4091,7 +4092,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_socialwinparent() {
-    SocialWinCtorTarget(reinterpret_cast<void *>(0x008A6270));
+    (ORIGINAL(reinterpret_cast<void *>(0x008A6270))->*SocialWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004AE9D0));
 }
 
@@ -4102,7 +4103,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_statuswin() {
-    StatusWinCtorTarget(reinterpret_cast<void *>(0x008C5568));
+    (ORIGINAL(reinterpret_cast<void *>(0x008C5568))->*StatusWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004B3FC0));
 }
 
@@ -4113,7 +4114,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_tutwin() {
-    TutWinCtorTarget(reinterpret_cast<void *>(0x008C6E68));
+    (ORIGINAL(reinterpret_cast<void *>(0x008C6E68))->*TutWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BA5E0));
 }
 
@@ -4124,7 +4125,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vehdraw_caviar() {
-    CaviarInitCtor(g_VEHDRAW_CAVIAR);
+    (ORIGINAL(g_VEHDRAW_CAVIAR)->*CaviarInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BF700));
 }
 
@@ -4135,7 +4136,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vehdraw_buffer() {
-    BufferInitCtor(g_VEHDRAW_BUFFER);
+    (ORIGINAL(g_VEHDRAW_BUFFER)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BF730));
 }
 
@@ -4146,7 +4147,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_worldwin() {
-    WorldWinCtorTarget(reinterpret_cast<void *>(0x008E9F60));
+    (ORIGINAL(reinterpret_cast<void *>(0x008E9F60))->*WorldWinCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C38D0));
 }
 
@@ -4157,7 +4158,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_device() {
-    WaveDeviceInitCtor(g_WAVE_DEVICE);
+    (ORIGINAL(g_WAVE_DEVICE)->*WaveDeviceInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5C70));
 }
 
@@ -4168,7 +4169,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_midi_device() {
-    Midi_DeviceCtorTarget(reinterpret_cast<void *>(0x0090D950));
+    (ORIGINAL(reinterpret_cast<void *>(0x0090D950))->*Midi_DeviceCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5CA0));
 }
 
@@ -4179,7 +4180,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_in_device() {
-    Wave_In_DeviceCtorTarget(reinterpret_cast<void *>(0x0090DB50));
+    (ORIGINAL(reinterpret_cast<void *>(0x0090DB50))->*Wave_In_DeviceCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5CD0));
 }
 
@@ -4190,7 +4191,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_console() {
-    ConsoleCtorTarget(reinterpret_cast<void *>(0x009156B0), 1);
+    (ORIGINAL(reinterpret_cast<void *>(0x009156B0))->*ConsoleCtorTarget)(1);
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0050E870));
 }
 
@@ -4201,7 +4202,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_console_timer() {
-    TimeInitCtor(g_CONSOLE_TIMER);
+    (ORIGINAL(g_CONSOLE_TIMER)->*TimeInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0050E9A0));
 }
 
@@ -4223,7 +4224,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netdaemon() {
-    NetDaemonCtorTarget(reinterpret_cast<void *>(0x0093CD90));
+    (ORIGINAL(reinterpret_cast<void *>(0x0093CD90))->*NetDaemonCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0052DB30));
 }
 
@@ -4234,7 +4235,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fontqueue_val2() {
-    FontQueueCtorTarget(reinterpret_cast<void *>(0x0093FB88));
+    (ORIGINAL(reinterpret_cast<void *>(0x0093FB88))->*FontQueueCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00559250));
 }
 
@@ -4245,7 +4246,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fontqueue_val1() {
-    FontQueueCtorTarget(reinterpret_cast<void *>(0x0093FAE8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0093FAE8))->*FontQueueCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00559280));
 }
 
@@ -4256,7 +4257,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_top_menu_wave() {
-    WaveInitCtor(g_TOP_MENU_WAVE);
+    (ORIGINAL(g_TOP_MENU_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00584D20));
 }
 
@@ -4278,7 +4279,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_crash_landing_wave() {
-    WaveInitCtor(g_CRASH_LANDING_WAVE);
+    (ORIGINAL(g_CRASH_LANDING_WAVE)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005AE110));
 }
 
@@ -4289,7 +4290,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_general() {
-    WaveInitCtor(g_WAVE_GENERAL);
+    (ORIGINAL(g_WAVE_GENERAL)->*WaveInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005B9C30));
 }
 
@@ -4300,7 +4301,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_palette1() {
-    PaletteCtorTarget(reinterpret_cast<void *>(0x0094C590));
+    (ORIGINAL(reinterpret_cast<void *>(0x0094C590))->*PaletteCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005BEC60));
 }
 
@@ -4311,7 +4312,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_palette2() {
-    PaletteCtorTarget(reinterpret_cast<void *>(0x009523A0));
+    (ORIGINAL(reinterpret_cast<void *>(0x009523A0))->*PaletteCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005BEC90));
 }
 
@@ -4322,7 +4323,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_multidebug() {
-    MultiDebugCtorTarget(reinterpret_cast<void *>(0x009B22F0));
+    (ORIGINAL(reinterpret_cast<void *>(0x009B22F0))->*MultiDebugCtorTarget)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005C97E0));
 }
 
@@ -4333,7 +4334,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_buffer_sprite() {
-    SpriteInitCtor(g_BUFFER_SPRITE);
+    (ORIGINAL(g_BUFFER_SPRITE)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005D71F0));
 }
 
@@ -4344,7 +4345,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_buffer() {
-    BufferInitCtor(g_BUFFER);
+    (ORIGINAL(g_BUFFER)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005E37D0));
 }
 
@@ -4355,7 +4356,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_win_buffer() {
-    BufferInitCtor(g_WIN_BUFFER);
+    (ORIGINAL(g_WIN_BUFFER)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005EB370));
 }
 
@@ -4377,7 +4378,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_1() {
-    SpriteInitCtor(g_RADIOBUTTON_SPRITE_1);
+    (ORIGINAL(g_RADIOBUTTON_SPRITE_1)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060D080));
 }
 
@@ -4388,7 +4389,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_2() {
-    SpriteInitCtor(g_RADIOBUTTON_SPRITE_2);
+    (ORIGINAL(g_RADIOBUTTON_SPRITE_2)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060D0C0));
 }
 
@@ -4399,7 +4400,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_checkbox_sprite_1() {
-    SpriteInitCtor(g_CHECKBOX_SPRITE_1);
+    (ORIGINAL(g_CHECKBOX_SPRITE_1)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060E610));
 }
 
@@ -4410,7 +4411,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_checkbox_sprite_2() {
-    SpriteInitCtor(g_CHECKBOX_SPRITE_2);
+    (ORIGINAL(g_CHECKBOX_SPRITE_2)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060E650));
 }
 
@@ -4421,7 +4422,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_1() {
-    SpriteInitCtor(g_FILEWIN_SPRITE_1);
+    (ORIGINAL(g_FILEWIN_SPRITE_1)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x006137B0));
 }
 
@@ -4432,7 +4433,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_2() {
-    SpriteInitCtor(g_FILEWIN_SPRITE_2);
+    (ORIGINAL(g_FILEWIN_SPRITE_2)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x006137F0));
 }
 
@@ -4443,7 +4444,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_3() {
-    SpriteInitCtor(g_FILEWIN_SPRITE_3);
+    (ORIGINAL(g_FILEWIN_SPRITE_3)->*SpriteInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00613830));
 }
 
@@ -4454,7 +4455,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_stringtable() {
-    StringsInitCtor(StringTable);
+    (ORIGINAL(StringTable)->*StringsInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x006168C0));
 }
 
@@ -4465,7 +4466,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_caviar_buffer_1() {
-    BufferInitCtor(g_CAVIAR_BUFFER_1);
+    (ORIGINAL(g_CAVIAR_BUFFER_1)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00616AC0));
 }
 
@@ -4476,6 +4477,6 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_caviar_buffer_2() {
-    BufferInitCtor(g_CAVIAR_BUFFER_2);
+    (ORIGINAL(g_CAVIAR_BUFFER_2)->*BufferInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00616B00));
 }

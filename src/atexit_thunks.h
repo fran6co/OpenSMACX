@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "original_seam.h"
+
 class Ambience;
 class BattleWin;
 class Buffer;
@@ -44,18 +46,18 @@ class Wave;
  * dependency instead of a direct call.
  */
 
-typedef void(__thiscall func_wave_destructor)(Wave *wave);
-extern func_wave_destructor *WaveOriginalDestructor;
+typedef void (OriginalObject::*func_wave_destructor)();
+extern func_wave_destructor WaveOriginalDestructor;
 
 #include "vector_teardown.h"
-extern func_thiscall_teardown *BufferElementTeardown;
-extern func_thiscall_teardown *CaviarDataElementTeardown;
-extern func_thiscall_teardown *FactionArtElementTeardown;
-extern func_thiscall_teardown *FontElementTeardown;
-extern func_thiscall_teardown *SpriteElementTeardown;
-extern func_thiscall_teardown *TextIndexElementTeardown;
-extern func_thiscall_teardown *TextureElementTeardown;
-extern func_thiscall_teardown *WaveElementTeardown;
+extern func_thiscall_teardown BufferElementTeardown;
+extern func_thiscall_teardown CaviarDataElementTeardown;
+extern func_thiscall_teardown FactionArtElementTeardown;
+extern func_thiscall_teardown FontElementTeardown;
+extern func_thiscall_teardown SpriteElementTeardown;
+extern func_thiscall_teardown TextIndexElementTeardown;
+extern func_thiscall_teardown TextureElementTeardown;
+extern func_thiscall_teardown WaveElementTeardown;
 
 #include "deleting_thunks.h"
 
@@ -65,18 +67,18 @@ extern func_thiscall_teardown *WaveElementTeardown;
 // naming a type. Seams are deduped on the ADDRESS they default
 // to: one already bound at the same address elsewhere is reused
 // from the header above, never redefined here.
-extern func_thiscall_teardown *InfoWinDtorTarget;   // 0x004594A0
-extern func_thiscall_teardown *MessageWinDtorTarget;   // 0x00472020
-extern func_thiscall_teardown *ReportIfDtorTarget;   // 0x004ACDA0
-extern func_thiscall_teardown *StatusWinDtorTarget;   // 0x004BA120
-extern func_thiscall_teardown *Wave_DeviceDtorTarget;   // 0x004C4E60
-extern func_thiscall_teardown *Midi_DeviceDtorTarget;   // 0x004C5780
-extern func_thiscall_teardown *Wave_In_DeviceDtorTarget;   // 0x004C5980
-extern func_thiscall_teardown *NetDaemonDtorTarget;   // 0x00538D10
-extern func_thiscall_teardown *PaletteDtorTarget;   // 0x005FE2E0
-extern func_thiscall_teardown *TimeDtorTarget;   // 0x00616200
-extern func_thiscall_teardown *StringsDtorTarget;   // 0x006169C0
-extern func_thiscall_teardown *CaviarCloseTarget;   // 0x00617020
+extern func_thiscall_teardown InfoWinDtorTarget;   // 0x004594A0
+extern func_thiscall_teardown MessageWinDtorTarget;   // 0x00472020
+extern func_thiscall_teardown ReportIfDtorTarget;   // 0x004ACDA0
+extern func_thiscall_teardown StatusWinDtorTarget;   // 0x004BA120
+extern func_thiscall_teardown Wave_DeviceDtorTarget;   // 0x004C4E60
+extern func_thiscall_teardown Midi_DeviceDtorTarget;   // 0x004C5780
+extern func_thiscall_teardown Wave_In_DeviceDtorTarget;   // 0x004C5980
+extern func_thiscall_teardown NetDaemonDtorTarget;   // 0x00538D10
+extern func_thiscall_teardown PaletteDtorTarget;   // 0x005FE2E0
+extern func_thiscall_teardown TimeDtorTarget;   // 0x00616200
+extern func_thiscall_teardown StringsDtorTarget;   // 0x006169C0
+extern func_thiscall_teardown CaviarCloseTarget;   // 0x00617020
 
 extern Wave *g_ALPHAMENU_WAVE;
 extern Sprite *g_UNUSED_SPRITE_VAR02;

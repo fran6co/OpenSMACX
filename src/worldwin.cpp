@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "worldwin.h"
 
 /*
@@ -44,7 +45,7 @@ void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, 
     self->on_left_double_click(a1, a2);
 }
 
-func_world_win_click *WorldWinClick = (func_world_win_click *)0x004C3D40;
+func_world_win_click WorldWinClick = original_method<func_world_win_click>(0x004C3D40);
 
 /*
 Purpose: Report a left click to the world window's shared click handler.
@@ -53,7 +54,7 @@ Return Value: n/a
 Status: Complete
 */
 void WorldWin::on_left_click(int a1, int a2) {
-    WorldWinClick(this, a1, a2, 0, 0);
+    (ORIGINAL(this)->*WorldWinClick)(a1, a2, 0, 0);
 }
 
 /*
@@ -63,7 +64,7 @@ Return Value: n/a
 Status: Complete
 */
 void WorldWin::on_right_click(int a1, int a2) {
-    WorldWinClick(this, a1, a2, 1, 0);
+    (ORIGINAL(this)->*WorldWinClick)(a1, a2, 1, 0);
 }
 
 void __fastcall world_win_on_left_click_redirect(WorldWin *self, void *, int a1, int a2) {

@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "alphanet.h"
 
 /*
@@ -106,7 +107,7 @@ int __fastcall alpha_net_who_to_idx_redirect(
     return self->who_2_idx(identity);
 }
 
-func_net_close *NetCloseOriginal = (func_net_close *)0x0062E010;
+func_net_close NetCloseOriginal = original_method<func_net_close>(0x0062E010);
 
 /*
 Purpose: Clear every player's process slot and hand off to the network close.
@@ -124,7 +125,7 @@ void AlphaNet::close() {
     memcpy(bytes + 0x768, &zero, sizeof(zero));
     // The legacy body tail-jumps here with this unchanged, so the network
     // close runs against the same object.
-    NetCloseOriginal(this);
+    (ORIGINAL(this)->*NetCloseOriginal)();
 }
 
 void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {

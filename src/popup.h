@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "basepop.h"
 #include "graphicwin.h"
 #include "scroll.h"
@@ -49,16 +51,15 @@ void __fastcall popup_on_redraw_nc_redirect(
     Popup *self, void *, int a1, int a2);
 
 // BasePop::close is not recovered yet.
-typedef void (__thiscall func_base_pop_close)(BasePop *);
-extern func_base_pop_close *BasePopOriginalClose;
+typedef void (OriginalObject::*func_base_pop_close)();
+extern func_base_pop_close BasePopOriginalClose;
 
 void __fastcall popup_close_redirect(Popup *self, void *);
 
 // The six-argument Popup::start is not recovered; the five-argument form
 // forwards to it with a null final GraphicWin argument.
-typedef void (__thiscall func_popup_start_full)(Popup *, char *, const char *,
-                                                int, char *, int, void *);
-extern func_popup_start_full *PopupOriginalStartFull;
+typedef void (OriginalObject::*func_popup_start_full)(char *, const char *, int, char *, int, void *);
+extern func_popup_start_full PopupOriginalStartFull;
 
 void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
                                      const char *a2, int a3, char *a4, int a5);
@@ -179,8 +180,8 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 // forty-five entry popup wave bank with its last-played index beside it,
 // the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
 // that plays effect 0x38 after wave 0x10.
-typedef int(__thiscall func_popup_wave_query)(Wave *wave);
-typedef void(__thiscall func_popup_fx_play)(FX *fx, int effect);
+typedef int (OriginalObject::*func_popup_wave_query)();
+typedef void (OriginalObject::*func_popup_fx_play)(int effect);
 typedef unsigned long(__stdcall func_popup_time_source)(void);
 
 extern uint32_t *PopupWaveFlags;
@@ -190,10 +191,10 @@ extern Wave *PopupWaveBank;
 extern int32_t *PopupWaveLastIndex;
 extern void **PopupWaveOwnerSlot;
 extern FX *PopupWaveFx;
-extern func_popup_wave_query *PopupWaveIsPlaying;
-extern func_popup_wave_query *PopupWaveLoad;
-extern func_popup_wave_query *PopupWavePlay;
-extern func_popup_fx_play *PopupFxPlay;
+extern func_popup_wave_query PopupWaveIsPlaying;
+extern func_popup_wave_query PopupWaveLoad;
+extern func_popup_wave_query PopupWavePlay;
+extern func_popup_fx_play PopupFxPlay;
 extern func_popup_time_source **PopupWaveTimeSlot;
 
 DLLEXPORT void __cdecl popup_wave_callback(PopupWave *popup, int);

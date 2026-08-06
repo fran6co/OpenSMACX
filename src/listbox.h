@@ -82,7 +82,7 @@ static_assert(sizeof(ListBox) == 0xB54,
 // ListBox::close reaches Dialog::close (0x00608F50, still an original
 // dependency) through a rebindable seam, identical to CheckBox/RadioButton, so
 // tests can substitute a probe and the seam can later point at a recovered body.
-extern func_dialog_close *ListBoxOriginalDialogClose;   // default 0x00608F50
+extern func_dialog_close ListBoxOriginalDialogClose;   // default 0x00608F50
 extern uint32_t *ListBoxCloseStaticDefaults;            // 0x006970E0 [0..3]
 extern uint32_t *ListBoxCloseDynamicDefault;            // 0x009B8EE0
 

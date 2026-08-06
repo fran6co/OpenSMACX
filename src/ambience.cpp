@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "ambience.h"
 #include "wave.h"
 
@@ -421,7 +422,7 @@ void Ambience::construct() {
     object[0x40 / 4] |= 8;
     bytes[0x54] |= 1;
     object[0x00 / 4] = 0x0066E664;
-    SoundSetType(reinterpret_cast<Wave *>(this), 5);
+    (ORIGINAL(reinterpret_cast<Wave *>(this))->*SoundSetType)(5);
 }
 
 Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {

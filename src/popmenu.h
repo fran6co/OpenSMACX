@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "basepop.h"
 
  /*
@@ -37,7 +39,7 @@ class DLLEXPORT PopMenu : BasePop {
 };
 
 // BasePop::init is not recovered yet.
-typedef int (__thiscall func_base_pop_init)(BasePop *, int, long);
-extern func_base_pop_init *BasePopOriginalInit;
+typedef int (OriginalObject::*func_base_pop_init)(int, long);
+extern func_base_pop_init BasePopOriginalInit;
 
 int __fastcall pop_menu_init_redirect(PopMenu *self, void *);

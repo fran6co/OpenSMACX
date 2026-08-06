@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "sprite.h"
 
 #include <new>
@@ -93,7 +94,7 @@ void __fastcall sprite_close_redirect(Sprite *self, void *) {
 
 int *SpriteDrawOriginX = reinterpret_cast<int *>(0x00696D18);
 int *SpriteDrawOriginY = reinterpret_cast<int *>(0x00696D1C);
-func_sprite_draw_original *SpriteDrawOriginal = (func_sprite_draw_original *)0x005E4B9A;
+func_sprite_draw_original SpriteDrawOriginal = original_method<func_sprite_draw_original>(0x005E4B9A);
 
 /*
 Purpose: Draw the sprite with a temporarily substituted draw origin.
@@ -108,7 +109,7 @@ int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
     const int saved_y = *SpriteDrawOriginY;
     *SpriteDrawOriginX = x;
     *SpriteDrawOriginY = y;
-    const int result = SpriteDrawOriginal(this, buffer, a, b, c);
+    const int result = (ORIGINAL(this)->*SpriteDrawOriginal)(buffer, a, b, c);
     *SpriteDrawOriginY = saved_y;
     *SpriteDrawOriginX = saved_x;
     return result;

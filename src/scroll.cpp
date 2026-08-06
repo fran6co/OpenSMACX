@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "scroll.h"
 
 Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
@@ -26,17 +27,15 @@ uint32_t *ScrollCloseDynamicDefaults = (uint32_t *)0x009B8DE0;
 
 namespace {
 
-typedef int (__thiscall func_scroll_init)(
-    Scroll *, int, int, int, int, Win *, int, int);
-typedef uint32_t (__thiscall *func_noarg_virtual)(void *);
+typedef int (OriginalObject::*func_scroll_init)(int, int, int, int, Win *, int, int);
+typedef uint32_t (OriginalObject::*func_noarg_virtual)();
 
-func_scroll_init *ScrollOriginalInit = (func_scroll_init *)0x006054D0;
+func_scroll_init ScrollOriginalInit = original_method<func_scroll_init>(0x006054D0);
 
 int __cdecl call_original_scroll_init(
         Scroll *self, int x, int y, int width, int height, Win *parent,
         int setting, int options) {
-    return ScrollOriginalInit(
-        self, x, y, width, height, parent, setting, options);
+    return (ORIGINAL(self)->*ScrollOriginalInit)(x, y, width, height, parent, setting, options);
 }
 
 LONG long_from_bits(uint32_t bits) {

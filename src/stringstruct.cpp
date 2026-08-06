@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 
 #include "stringstruct.h"
 
@@ -116,8 +117,8 @@ __declspec(naked) int __fastcall string_struct_seek_id_redirect(
 
 namespace {
 
-typedef void(__thiscall func_entry_visitor)(void *, void *);
-typedef void(__thiscall func_scalar_deleting_destructor)(void *, int);
+typedef void (OriginalObject::*func_entry_visitor)(void *);
+typedef void (OriginalObject::*func_scalar_deleting_destructor)(int);
 
 // MSVC reaches these destructors through the virtual-base displacement stored
 // in the object's second vtable slot: the displacement selects a subobject

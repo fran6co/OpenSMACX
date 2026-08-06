@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "dialog.h"
 #include "graphicwin.h"
 
@@ -60,8 +62,8 @@ class DLLEXPORT EditGroup {
 
 // EditBox is not declared yet; its text setter is reached at its address, and
 // its text buffer sits 0xA14 into it.
-typedef void (__thiscall func_edit_box_set_text)(void *, char *);
-extern func_edit_box_set_text *EditBoxOriginalSetText;
+typedef void (OriginalObject::*func_edit_box_set_text)(char *);
+extern func_edit_box_set_text EditBoxOriginalSetText;
 
 void __fastcall edit_group_set_text_limits_redirect(EditGroup *self, void *, int limit);
 char *__fastcall edit_group_get_text_redirect(EditGroup *self, void *, int index);
