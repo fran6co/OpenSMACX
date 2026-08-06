@@ -46,6 +46,18 @@ class MembersTest(unittest.TestCase):
     def test_anything_unrecognised_refuses(self):
         self.assertIsNone(tool.members_of("  int a_ : 3;\n"))
 
+    def test_a_function_pointer_member_refuses(self):
+        # It IS storage and it contains a `(`, so the method test would skip
+        # it and every offset after it would move. sizeof catches that only
+        # when padding does not absorb the four bytes.
+        self.assertIsNone(tool.members_of("  void (*callback)(int);\n"))
+
+    def test_a_method_taking_a_function_pointer_still_parses(self):
+        # The difference is the identifier before the first paren.
+        self.assertEqual(
+            [("int", "a_", "")],
+            tool.members_of("  void init(void (*cb)(int));\n  int a_;\n"))
+
     def test_methods_and_access_labels_are_not_members(self):
         self.assertEqual([], tool.members_of(" public:\n  void f(int);\n"))
 
