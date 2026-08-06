@@ -59,11 +59,12 @@ AGREED = REPO_ROOT / "docs" / "recovery" / "agreed-class-sizes.csv"
 GENERATED = "hypothesis_layouts.h"
 
 
-def agreed_sizes() -> dict:
+def agreed_sizes(path: Path = None) -> dict:
     found = {}
-    if not AGREED.is_file():
+    path = path or AGREED
+    if not path.is_file():
         return found
-    with AGREED.open(newline="", encoding="utf-8-sig") as handle:
+    with path.open(newline="", encoding="utf-8-sig") as handle:
         for row in csv.DictReader(handle):
             try:
                 found[row["class"]] = int(row["size"], 16)
@@ -141,6 +142,12 @@ def main(argv=None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--apply", action="store_true",
                         help="write the headers (default: report only)")
+    # Any source that has already passed derive_class_layout.py --score-csv.
+    # The compile below is what actually admits each size, so a second source
+    # needs no second mechanism - only its own CSV.
+    parser.add_argument("--sizes", type=Path, default=AGREED,
+                        help="the scored size CSV to promote from "
+                             "(default: the two-source agreement)")
     args = parser.parse_args(argv)
 
     reason = bm.available()
@@ -148,9 +155,9 @@ def main(argv=None) -> int:
         print(f"SKIP: {reason}. This compiles the assertion for real.")
         return 0
 
-    sizes = agreed_sizes()
+    sizes = agreed_sizes(args.sizes)
     if not sizes:
-        print("SKIP: docs/recovery/agreed-class-sizes.csv is absent.")
+        print(f"SKIP: {args.sizes} is absent.")
         return 0
     pinned = derive_class_layout.load_pinned()
     home = declaring_header()

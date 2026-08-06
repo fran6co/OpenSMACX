@@ -408,6 +408,9 @@ struct RulesFacility {
     int sp_ai_power;
 };
 
+static_assert(sizeof(RulesFacility) == 0x30,
+              "RulesFacility layout must match the original executable");
+
 struct RulesCitizen {
     LPSTR singular_name;
     LPSTR plural_name;
