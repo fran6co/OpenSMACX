@@ -44,11 +44,7 @@ Original Offset: 0062B7F0
 Return Value: n/a
 Status: Complete
 */
-#ifdef _MSC_VER
-__declspec(noinline)
-#else
-__attribute__((noinline))
-#endif
+OPENSMACX_NOINLINE
 void ButtonGroup::close() {
     count_ = 0;
     field_8C_ = 0;

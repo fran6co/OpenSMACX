@@ -87,18 +87,13 @@ uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
     return result;
 }
 
-#ifdef _MSC_VER
-__declspec(noinline)
-#else
-__attribute__((noinline))
-#endif
+OPENSMACX_NOINLINE
 uint32_t call_noarg_virtual(void *self, size_t slot) {
     const uint32_t vtable_bits = read_volatile_bits(self, 0);
     const uint32_t target_bits = read_volatile_bits(
         reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)),
         slot);
-    return reinterpret_cast<func_noarg_virtual>(
-        static_cast<uintptr_t>(target_bits))(self);
+    return (ORIGINAL(self)->*original_method<func_noarg_virtual>(reinterpret_cast<unsigned long>(static_cast<uintptr_t>(target_bits))))();
 }
 
 void set_sprite_triplet(void *object, Sprite *volatile *primary,
@@ -128,11 +123,7 @@ uint32_t signed_min(uint32_t left, uint32_t right) {
     return long_from_bits(left) < long_from_bits(right) ? left : right;
 }
 
-#ifdef _MSC_VER
-__declspec(noinline)
-#else
-__attribute__((noinline))
-#endif
+OPENSMACX_NOINLINE
 uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
     LONG dividend = long_from_bits(dividend_bits);
     LONG divisor = long_from_bits(divisor_bits);

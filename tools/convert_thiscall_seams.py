@@ -132,6 +132,52 @@ def convert_calls(text: str, variables: set) -> tuple:
     return text, converted
 
 
+def convert_vtable_calls(text: str, seams: set) -> tuple:
+    """`reinterpret_cast<f *>(slot)(obj, a)` -> a pointer-to-member call.
+
+    A virtual of the original is reached by casting the vtable entry to the
+    seam type and calling it. Once the seam IS a pointer-to-member, that cast
+    produces a pointer to a pointer-to-member and the call stops being a call
+    at all - `error C2064: term does not evaluate to a function`. 198 sites,
+    and the converter's first pass did not see them because they go through a
+    cast rather than a declared variable.
+    """
+    converted = 0
+    for name in sorted(seams, key=len, reverse=True):
+        pattern = re.compile(rf"reinterpret_cast\s*<\s*{re.escape(name)}\s*\*?\s*>\s*\(")
+        index = 0
+        while True:
+            found = pattern.search(text, index)
+            if not found:
+                break
+            slot, after = call_arguments(text, found.end() - 1)
+            if slot is None:
+                index = found.end()
+                continue
+            # The call must follow immediately, or this is a cast used for
+            # something else and is left alone.
+            rest_of_text = text[after:]
+            offset = len(rest_of_text) - len(rest_of_text.lstrip())
+            if not rest_of_text[offset:offset + 1] == "(":
+                index = after
+                continue
+            arguments, end = call_arguments(text, after + offset)
+            if arguments is None:
+                index = after
+                continue
+            parts = split_arguments(arguments)
+            if not parts:
+                index = after
+                continue
+            receiver, rest = parts[0], ", ".join(parts[1:])
+            replacement = (f"(ORIGINAL({receiver})->*original_method<{name}>("
+                           f"reinterpret_cast<unsigned long>({slot.strip()})))({rest})")
+            text = text[:found.start()] + replacement + text[end:]
+            index = found.start() + len(replacement)
+            converted += 1
+    return text, converted
+
+
 def seam_variables(text: str, seams: set) -> set:
     """Every variable declared with a seam type, however it is spelled."""
     found = set()
@@ -158,12 +204,18 @@ def main() -> int:
                                 if p.name not in excluded]
 
     # Pass 1: every seam typedef in the tree, so a call site in one file can
-    # be rewritten against a typedef declared in another.
+    # be rewritten against a typedef declared in another. BOTH spellings are
+    # collected - the original `__thiscall` one and the converted
+    # pointer-to-member - because the vtable-cast sites are found in a later
+    # run, by which time the typedefs themselves are already converted.
     seams, function_typed = set(), set()
     for path in paths:
-        _, found = convert_typedefs(path.read_text(errors="ignore"))
+        text = path.read_text(errors="ignore")
+        _, found = convert_typedefs(text)
         seams |= set(found)
         function_typed |= {n for n, is_function in found.items() if is_function}
+        seams |= set(re.findall(
+            r"typedef\s+[\w\s:*&]+?\(\s*OriginalObject::\*(\w+)\s*\)", text))
 
     variables = set()
     for path in paths:
@@ -178,6 +230,8 @@ def main() -> int:
         text = convert_declarations(text, function_typed)
         text = convert_bindings(text, seams)
         text, n = convert_calls(text, variables)
+        text, vtable = convert_vtable_calls(text, seams)
+        n += vtable
         if text == original:
             continue
         if "original_seam.h" not in text and (n or "OriginalObject::" in text):

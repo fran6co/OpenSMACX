@@ -14,11 +14,7 @@
 
 namespace {
 
-#ifdef _MSC_VER
-__declspec(noinline)
-#else
-__attribute__((noinline))
-#endif
+OPENSMACX_NOINLINE
 uint32_t load_scaling_bits(const void *source) {
     uint32_t value;
     memcpy(&value, source, sizeof(value));

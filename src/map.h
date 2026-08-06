@@ -57,7 +57,7 @@ enum TerrainRockiness { // land modifiers only
     ROCKINESS_ROCKY = 2, // " "
 };
 
-enum TerrainBit : uint32_t {
+enum TerrainBit {  // was `: uint32_t`; C++11, and the compiler picks unsigned anyway for 0x80000000
     BIT_BASE_IN_TILE = 0x1,
     BIT_VEH_IN_TILE = 0x2,
     BIT_ROAD = 0x4,

@@ -91,8 +91,7 @@ void PlanWin::blink() {
     field_21A6C_ = (field_21A6C_ == 0) ? 1 : 0;
     uint8_t *const base = virtual_base_of(this);
     void **const vtable = *reinterpret_cast<void ***>(base);
-    reinterpret_cast<func_base_vtable_slot *>(
-        vtable[PlanWinBlinkSlot / sizeof(void *)])(base);
+    (ORIGINAL(base)->*original_method<func_base_vtable_slot>(reinterpret_cast<unsigned long>(vtable[PlanWinBlinkSlot / sizeof(void *)])))();
 }
 
 void __fastcall plan_win_blink_redirect(PlanWin *self, void *) {

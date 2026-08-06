@@ -400,16 +400,13 @@ void BaseButton::set(int value) {
     field_A18_ = value;
 
     void **const own_vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_button_refresh_slot *>(
-        own_vtable[BaseButtonRefreshSlot / sizeof(void *)])(this);
+    (ORIGINAL(this)->*original_method<func_button_refresh_slot>(reinterpret_cast<unsigned long>(own_vtable[BaseButtonRefreshSlot / sizeof(void *)])))();
 
     if (!win_parent_) {
         return;
     }
     void **const parent_vtable = *reinterpret_cast<void ***>(win_parent_);
-    reinterpret_cast<func_parent_notify_slot *>(
-        parent_vtable[WinValueChangedSlot / sizeof(void *)])(
-            win_parent_, static_cast<int>(field_A78_), value);
+    (ORIGINAL(win_parent_)->*original_method<func_parent_notify_slot>(reinterpret_cast<unsigned long>(parent_vtable[WinValueChangedSlot / sizeof(void *)])))(static_cast<int>(field_A78_), value);
 }
 
 void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
@@ -505,8 +502,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // button torn down. The original dispatches straight through `this` and
     // its vtable at 0x00607215 with no null check on either; none is added.
     void **const close_vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_button_init_close_slot *>(
-        close_vtable[BaseButtonInitCloseSlot / sizeof(void *)])(this);
+    (ORIGINAL(this)->*original_method<func_button_init_close_slot>(reinterpret_cast<unsigned long>(close_vtable[BaseButtonInitCloseSlot / sizeof(void *)])))();
 
     // Both remaining arguments are read after the close, not cached across it.
     if (!parent) {
@@ -571,8 +567,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // reloads the vtable pointer at 0x00607341, so a GraphicWin::init or a
     // Buffer setter that restaged the table is seen by the show.
     void **const show_vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_button_init_show_slot *>(
-        show_vtable[BaseButtonInitShowSlot / sizeof(void *)])(this, 0);
+    (ORIGINAL(this)->*original_method<func_button_init_show_slot>(reinterpret_cast<unsigned long>(show_vtable[BaseButtonInitShowSlot / sizeof(void *)])))(0);
     return 0;
 }
 

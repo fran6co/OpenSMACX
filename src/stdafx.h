@@ -52,4 +52,10 @@
 #include <windows.h>
 #include <vector>
 
-#define UNUSED(x) UNUSED_ ## x
+// Marks a parameter as deliberately unused. Expands to NOTHING, which
+// works for both spellings in this tree: `int UNUSED(x)` leaves an unnamed
+// parameter, and `LPSTR UNUSED(input) input` leaves a named one. It used to
+// paste `UNUSED_ ## x`, so the second spelling became `LPSTR UNUSED_input
+// input` - two identifiers before the name, which nothing accepts, and
+// `UNUSED_input` is defined nowhere.
+#define UNUSED(x)
