@@ -34,6 +34,10 @@ class DLLEXPORT FX {
 
  private:
   uint8_t effects_[0x61 * 0x6C];
+
+  // Storage the image proves is here: its own methods reach 0x28F0.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_28EC_[0x4];
 };
 
 // The per-element destructor the original passes: the Effect jump thunk at

@@ -47,6 +47,10 @@ class DLLEXPORT SocialWin : GraphicWin {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
+
+  // Storage the image proves is here: its own methods reach 0x2C28.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x2214];
 };
 
 void __fastcall social_win_unk2_redirect(SocialWin *self, void *);

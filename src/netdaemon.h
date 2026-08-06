@@ -41,6 +41,10 @@ class DLLEXPORT NetDaemon : AlphaNet {
   ~NetDaemon() { ; }
   int receive();
   uint32_t unlock_veh();
+
+  // Storage the image proves is here: its own methods reach 0x1BD0.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_14A0_[0x730];
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the

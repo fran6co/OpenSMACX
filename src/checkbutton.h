@@ -35,6 +35,10 @@ class DLLEXPORT CheckButton : GraphicWin {
   ~CheckButton() { ; }
   static void close_class();
   static int init_class();
+
+  // Storage the image proves is here: its own methods reach 0xA2C.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x18];
 };
 
 void __cdecl check_button_close_class_redirect();

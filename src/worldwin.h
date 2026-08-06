@@ -42,6 +42,10 @@ class DLLEXPORT WorldWin : GraphicWin {
   void on_left_double_click(int a1, int a2);
   void on_left_click(int a1, int a2);
   void on_right_click(int a1, int a2);
+
+  // Storage the image proves is here: its own methods reach 0x239D0.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x22FBC];
 };
 
 void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *);

@@ -45,6 +45,10 @@ class DLLEXPORT ProdPicker : GraphicWin {
 
  private:
   int32_t field_A14_;   // first field past the pinned GraphicWin base
+
+  // Storage the image proves is here: its own methods reach 0x7124.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A18_[0x670C];
 };
 
 int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1);

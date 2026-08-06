@@ -1094,6 +1094,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(access-bound-tests
                                    test_derive_access_bounds.py)
 
+    opensmacx_add_python_tool_test(short-class-tests
+                                   test_extend_short_classes.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)

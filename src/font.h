@@ -84,6 +84,10 @@ class DLLEXPORT FontQueue {
 
  private:
   uint8_t fonts_[3 * 0x28];
+
+  // Storage the image proves is here: its own methods reach 0x9C.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_78_[0x24];
 };
 
 #include "vector_teardown.h"

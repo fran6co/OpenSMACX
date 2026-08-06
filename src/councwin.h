@@ -48,6 +48,10 @@ class DLLEXPORT CouncWin : GraphicWin {
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
   int on_button_text_draw(int, int, int);
+
+  // Storage the image proves is here: its own methods reach 0xA38.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x24];
 };
 
 void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int a1, int a2);

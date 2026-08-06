@@ -30,6 +30,10 @@ class DLLEXPORT DeletionList {
   DeletionList() { ; }
   ~DeletionList() { ; }
   void clear(int index);
+
+  // Storage the image proves is here: its own methods reach 0x5A4.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_0_[0x5A4];
 };
 
 void __fastcall deletion_list_clear_redirect(DeletionList *self, void *, int index);

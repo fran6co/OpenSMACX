@@ -76,6 +76,10 @@ class DLLEXPORT Datalink : GraphicWin {
   uint8_t unmapped_29E4_[0x2A34 - 0x29E4];
   int32_t field_2A34_;
   int32_t field_2A38_;
+
+  // Storage the image proves is here: its own methods reach 0xF62C.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_2A3C_[0xCBF0];
 };
 
 int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2);
