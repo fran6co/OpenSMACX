@@ -24,7 +24,7 @@ class DLLEXPORT CaviarData {
 
  private:
   uint32_t field_0_;
-  uint32_t field_4_;
+  uint32_t fileDescriptor_;
   void *record_;   // 0x8, the renderer record close releases
 };
 

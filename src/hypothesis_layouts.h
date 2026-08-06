@@ -663,7 +663,7 @@ class Effect {
   uint8_t wave_[0x6C];  // 0x0
 };
 
-/* 0x16DC bytes, 175 member(s), 156 named. From Thinker. */
+/* 0x470 bytes, 123 member(s), 116 named. From Thinker. */
 struct Faction {
   uint32_t player_flags_;  // 0x0
   uint32_t ranking_;  // 0x4
@@ -788,58 +788,6 @@ struct Faction {
   uint32_t clean_minerals_modifier_;  // 0x464
   uint32_t base_id_attack_target_;  // 0x468
   uint32_t field_46C_;  // 0x46C
-  uint8_t saved_queue_size_[0x20];  // 0x470
-  uint8_t social_support_[0x20];  // 0x490
-  uint8_t social_effic_[0x24];  // 0x4B0
-  uint32_t field_4D4_;  // 0x4D4
-  uint32_t field_4D8_;  // 0x4D8
-  uint32_t field_4DC_;  // 0x4DC
-  uint32_t nutrient_surplus_total_;  // 0x4E0
-  uint32_t labs_total_;  // 0x4E4
-  uint32_t satellites_nutrient_;  // 0x4E8
-  uint32_t satellites_mineral_;  // 0x4EC
-  uint32_t satellites_energy_;  // 0x4F0
-  uint32_t satellites_ODP_;  // 0x4F4
-  uint32_t best_weapon_value_;  // 0x4F8
-  uint32_t best_psi_land_offense_;  // 0x4FC
-  uint32_t best_psi_land_defense_;  // 0x500
-  uint32_t best_armor_value_;  // 0x504
-  uint32_t best_land_speed_;  // 0x508
-  uint32_t enemy_best_weapon_value_;  // 0x50C
-  uint32_t enemy_best_armor_value_;  // 0x510
-  uint32_t enemy_best_land_speed_;  // 0x514
-  uint32_t enemy_best_psi_land_offense_;  // 0x518
-  uint32_t enemy_best_psi_land_defense_;  // 0x51C
-  uint32_t field_520_;  // 0x520
-  uint32_t field_524_;  // 0x524
-  uint32_t field_528_;  // 0x528
-  uint32_t field_52C_;  // 0x52C
-  uint32_t field_530_;  // 0x530
-  uint32_t field_534_;  // 0x534
-  uint8_t units_active_[0x200];  // 0x538
-  uint8_t units_queue_[0x200];  // 0x738
-  uint8_t units_lost_[0x400];  // 0x938
-  uint32_t total_combat_units_;  // 0xD38
-  uint32_t base_count_;  // 0xD3C
-  uint32_t mil_strength_1_;  // 0xD40
-  uint32_t mil_strength_2_;  // 0xD44
-  uint32_t pop_total_;  // 0xD48
-  uint32_t field_D4C_;  // 0xD4C
-  uint32_t planet_busters_;  // 0xD50
-  uint32_t field_D54_;  // 0xD54
-  uint32_t field_D58_;  // 0xD58
-  uint8_t region_total_combat_units_[0x100];  // 0xD5C
-  uint8_t region_total_bases_[0x80];  // 0xE5C
-  uint8_t region_total_offensive_units_[0x80];  // 0xEDC
-  uint8_t region_force_rating_[0x100];  // 0xF5C
-  uint8_t region_flags_[0x100];  // 0x105C
-  uint8_t region_territory_tiles_[0x100];  // 0x115C
-  uint8_t region_visible_tiles_[0x100];  // 0x125C
-  uint8_t region_good_tiles_[0x100];  // 0x135C
-  uint8_t region_unk_5_[0x100];  // 0x145C
-  uint8_t region_unk_6_[0x80];  // 0x155C
-  uint8_t region_territory_pods_[0x80];  // 0x15DC
-  uint8_t region_base_plan_[0x80];  // 0x165C
 };
 
 /* 0xB69C bytes, 49 member(s), 10 named. From the IDB. 9 function(s) in the image. */

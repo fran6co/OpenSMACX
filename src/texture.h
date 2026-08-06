@@ -36,8 +36,8 @@ class DLLEXPORT Texture {
 
  private:
   void *pixels_;        // 0x00
-  uint32_t field_4_;
-  uint32_t field_8_;
+  uint32_t iWidth_;
+  uint32_t iHeight_;
   uint8_t unmapped_[0x60];
   uint32_t borrowed_;   // 0x6C, nonzero when the pixels are not ours to free
 };
@@ -59,7 +59,7 @@ class DLLEXPORT TextureStore {
 
  private:
   uint32_t field_0_;
-  uint32_t field_4_;
+  uint32_t iWidth_;
 };
 
 // close releases the pixels through the executable's CRT free, as the other
