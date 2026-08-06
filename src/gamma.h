@@ -37,8 +37,33 @@ class DLLEXPORT Gamma : GraphicWin {
   int on_key_click(int a1, int a2);
 
   // Storage the image proves is here: its own methods reach 0x1920.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A14_[0xF0C];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 24 member(s) from the IDA database, 4 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint8_t rect1_[0x10];  // 0xA14
+  uint32_t field_A24_;  // 0xA24
+  uint32_t field_A28_;  // 0xA28
+  uint32_t field_A2C_;  // 0xA2C
+  uint32_t field_A30_;  // 0xA30
+  uint32_t field_A34_;  // 0xA34
+  uint32_t field_A38_;  // 0xA38
+  uint32_t field_A3C_;  // 0xA3C
+  uint32_t field_A40_;  // 0xA40
+  uint32_t field_A44_;  // 0xA44
+  uint32_t field_A48_;  // 0xA48
+  uint32_t field_A4C_;  // 0xA4C
+  uint32_t field_A50_;  // 0xA50
+  uint32_t field_A54_;  // 0xA54
+  uint32_t field_A58_;  // 0xA58
+  uint32_t field_A5C_;  // 0xA5C
+  uint32_t field_A60_;  // 0xA60
+  uint32_t field_A64_;  // 0xA64
+  uint8_t palette_[0x454];  // 0xA68
+  uint8_t font_[0x28];  // 0xEBC
+  uint32_t field_EE4_;  // 0xEE4
+  uint32_t field_EE8_;  // 0xEE8
+  uint32_t field_EEC_;  // 0xEEC
+  uint8_t field_EF0_[0xA30];  // 0xEF0
 };
 
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);

@@ -44,8 +44,15 @@ class DLLEXPORT WorldWin : GraphicWin {
   void on_right_click(int a1, int a2);
 
   // Storage the image proves is here: its own methods reach 0x239D0.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A14_[0x22FBC];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 5 member(s) from the IDA database, 3 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint32_t field_A14_;  // 0xA14
+  uint32_t field_A18_;  // 0xA18
+  uint8_t buffer1_[0x588];  // 0xA1C
+  uint8_t buffer2_[0x588];  // 0xFA4
+  uint8_t mapWin_[0x22480];  // 0x152C
+  uint8_t field_239AC_[0x24];  // 0x239AC
 };
 
 void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *);

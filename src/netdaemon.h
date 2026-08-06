@@ -43,7 +43,7 @@ class DLLEXPORT NetDaemon : AlphaNet {
   uint32_t unlock_veh();
 
   // Storage the image proves is here: its own methods reach 0x1BD0.
-  // Extent only - nothing here is named, and this class carries no size assertion.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
   uint8_t field_14A0_[0x730];
 };
 

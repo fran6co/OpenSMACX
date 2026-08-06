@@ -40,8 +40,10 @@ class DLLEXPORT Credits : GraphicWin {
   void on_button_clicked(int a1);
 
   // Storage the image proves is here: its own methods reach 0xA18.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A14_[0x4];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 1 member(s) from the IDA database, 0 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint32_t field_A14_;  // 0xA14
 };
 
 void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int a2);

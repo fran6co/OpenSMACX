@@ -38,8 +38,15 @@ class DLLEXPORT MessageWin : Sprite {
   void UNK4(int a1);
 
   // Storage the image proves is here: its own methods reach 0x68.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_2C_[0x3C];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 6 member(s) from the IDA database, 2 named; it starts a member at 0x2C, which is where src/ ends.
+
+  uint32_t field_2C_;  // 0x2C
+  uint32_t field_30_;  // 0x30
+  uint32_t field_34_;  // 0x34
+  uint32_t field_38_;  // 0x38
+  uint8_t font_[0x28];  // 0x3C
+  uint8_t field_64_[0x4];  // 0x64
 };
 
 void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int a2, int a3, int a4, int a5);

@@ -40,8 +40,11 @@ class DLLEXPORT SetupWin : GraphicWin {
   int UNK4(int a1);
 
   // Storage the image proves is here: its own methods reach 0xA1C.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A14_[0x8];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 2 member(s) from the IDA database, 0 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint32_t field_A14_;  // 0xA14
+  uint32_t field_A18_;  // 0xA18
 };
 
 int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1);

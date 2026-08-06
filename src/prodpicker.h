@@ -47,8 +47,31 @@ class DLLEXPORT ProdPicker : GraphicWin {
   int32_t field_A14_;   // first field past the pinned GraphicWin base
 
   // Storage the image proves is here: its own methods reach 0x7124.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A18_[0x670C];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 22 member(s) from the IDA database, 18 named; it starts a member at 0xA18, which is where src/ ends.
+
+  uint8_t sprite1_[0x2C];  // 0xA18
+  uint8_t sprite2_[0x2C];  // 0xA44
+  uint8_t sprite3_[0x2C];  // 0xA70
+  uint8_t font1_[0x28];  // 0xA9C
+  uint8_t font2_[0x28];  // 0xAC4
+  uint8_t font3_[0x28];  // 0xAEC
+  uint8_t font4_[0x28];  // 0xB14
+  uint8_t time_[0x28];  // 0xB3C
+  uint32_t field_B64_;  // 0xB64
+  uint32_t field_B68_;  // 0xB68
+  uint32_t field_B6C_;  // 0xB6C
+  uint32_t field_B70_;  // 0xB70
+  uint8_t flatButton1_[0xB4C];  // 0xB74
+  uint8_t flatButton2_[0xB4C];  // 0x16C0
+  uint8_t flatButton3_[0xB4C];  // 0x220C
+  uint8_t flatButton4_[0xB4C];  // 0x2D58
+  uint8_t flatButton5_[0xB4C];  // 0x38A4
+  uint8_t flatButton6_[0xB4C];  // 0x43F0
+  uint8_t flatButton7_[0xB4C];  // 0x4F3C
+  uint8_t flatButton8_[0xB4C];  // 0x5A88
+  uint8_t flatButton9_[0xB4C];  // 0x65D4
+  uint8_t field_7120_[0x4];  // 0x7120
 };
 
 int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1);

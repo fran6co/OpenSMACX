@@ -78,8 +78,29 @@ class DLLEXPORT Datalink : GraphicWin {
   int32_t field_2A38_;
 
   // Storage the image proves is here: its own methods reach 0xF62C.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_2A3C_[0xCBF0];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 20 member(s) from the IDA database, 20 named; it starts a member at 0x2A3C, which is where src/ ends.
+
+  uint8_t flatButton1_[0xB4C];  // 0x2A3C
+  uint8_t flatButton2_[0xB4C];  // 0x3588
+  uint8_t flatButton3_[0xB4C];  // 0x40D4
+  uint8_t flatButton4_[0xB4C];  // 0x4C20
+  uint8_t flatButton5_[0xB4C];  // 0x576C
+  uint8_t flatButton6_[0xB4C];  // 0x62B8
+  uint8_t flatButton7_[0xB4C];  // 0x6E04
+  uint8_t flatButton8_[0xB4C];  // 0x7950
+  uint8_t flatButton9_[0xB4C];  // 0x849C
+  uint8_t flatButton10_[0xB4C];  // 0x8FE8
+  uint8_t flatButton11_[0xB4C];  // 0x9B34
+  uint8_t flatButton12_[0xB4C];  // 0xA680
+  uint8_t flatButton13_[0xB4C];  // 0xB1CC
+  uint8_t flatButton14_[0xB4C];  // 0xBD18
+  uint8_t flatButton15_[0xB4C];  // 0xC864
+  uint8_t flatButton16_[0xB4C];  // 0xD3B0
+  uint8_t flatButton17_[0xB4C];  // 0xDEFC
+  uint8_t flatButton18_[0xB4C];  // 0xEA48
+  uint8_t buttonGroup_[0x94];  // 0xF594
+  uint8_t field_F628_[0x4];  // 0xF628
 };
 
 int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2);

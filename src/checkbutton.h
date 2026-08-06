@@ -37,8 +37,15 @@ class DLLEXPORT CheckButton : GraphicWin {
   static int init_class();
 
   // Storage the image proves is here: its own methods reach 0xA2C.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A14_[0x18];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 6 member(s) from the IDA database, 1 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint32_t field_A14_;  // 0xA14
+  uint32_t isToggled_;  // 0xA18
+  uint32_t field_A1C_;  // 0xA1C
+  uint32_t field_A20_;  // 0xA20
+  uint32_t field_A24_;  // 0xA24
+  uint32_t field_A28_;  // 0xA28
 };
 
 void __cdecl check_button_close_class_redirect();
