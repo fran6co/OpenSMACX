@@ -1097,6 +1097,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(behaviour-naming-tests
+                                   test_name_members_from_behaviour.py)
+
     opensmacx_add_python_tool_test(base-edge-tests
                                    test_derive_base_edges.py)
 
@@ -1439,6 +1442,13 @@ if(BUILD_TESTING)
     add_test(NAME access-lower-bounds-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # Skips without the pinned image; every name here is read out of it.
+    add_test(NAME behaviour-member-names-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/name_members_from_behaviour.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )

@@ -1,0 +1,19 @@
+class,offset,name,size,evidence
+Caviar,0xD5,scaling_,4,the only member ?set_scaling@Caviar@@QAEXM@Z touches
+Console,0x23D10,patrol_,4,the only member ?set_patrol@Console@@QAEXH@Z touches
+EditGroup,0x54,text_limits_,4,the only member ?set_text_limits@EditGroup@@QAEXH@Z touches
+MainInterface,0x216F0,alert_,4,the only member ?set_alert@MainInterface@@QAEXH@Z touches
+Menu,0xA14,menu_proc_,4,the only member ?set_menu_proc@Menu@@QAEXP6AXH@Z@Z touches
+Net,0x154,player_name_,4,the only member ?get_player_name@Net@@QAEPADK@Z touches
+NetWin,0x772C,player_color_,4,the only member ?get_player_color@NetWin@@QAEHH@Z touches
+Palette,0x404,pos_,4,the only member ?get_pos@Palette@@QAEHH@Z touches
+PullDown,0xF28,selected_,4,the only member ?get_selected@PullDown@@QAEHXZ touches
+Sound,0x4,volume_,4,the only member ?set_volume@Sound@@QAEXH@Z touches
+Sound,0x8,pan_,4,the only member ?set_pan@Sound@@QAEXH@Z touches
+Sound,0x30,loop_state_,4,the only member ?set_loop_state@Sound@@QAEXJ@Z touches
+Sound,0x34,delay_,4,the only member ?set_delay@Sound@@QAEXI@Z touches
+Spot,0x8,rect_,4,the only member ?get_rect@Spot@@QAEHHHPAURECT@@@Z touches
+Wave,0x58,pitch_,4,the only member ?set_pitch@Wave@@QAEXH@Z touches
+Wave,0x5C,reverb_mix_,4,the only member ?set_reverb_mix@Wave@@QAEHM@Z touches
+Wave,0x60,ms_length_,4,the only member ?get_ms_length@Wave@@QAEHXZ touches
+Win,0x9C,visible_,1,the only member ?is_visible@Win@@QAEHXZ touches
